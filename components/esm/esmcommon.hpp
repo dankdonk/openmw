@@ -11,8 +11,11 @@ namespace ESM
 {
 enum Version
   {
-    VER_12 = 0x3f99999a,
-    VER_13 = 0x3fa66666
+    VER_12 =  0x3f99999a,
+    VER_13 =  0x3fa66666,
+    VER_080 = 0x3f800000,
+    VER_094 = 0x3f70a3d7,
+    VER_17 =  0x3fd9999a
   };
 
 /* A structure used for holding fixed-length strings. In the case of

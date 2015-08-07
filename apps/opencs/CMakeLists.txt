@@ -23,14 +23,20 @@ opencs_units (model/world
 
 
 opencs_units_noqt (model/world
-    universalid record commands columnbase scriptcontext cell refidcollection
+    universalid record commands columnbase scriptcontext cell refidcollection columnimp
     refidadapter refiddata refidadapterimp ref collectionbase refcollection columns infocollection tablemimedata cellcoordinates cellselection resources resourcesmanager scope
     pathgrid landtexture land nestedtablewrapper nestedcollection nestedcoladapterimp nestedinfocollection
     idcompletionmanager npcstats metadata
     )
 
 opencs_hdrs_noqt (model/world
-    columnimp idcollection collection info subcellcollection
+    idcollection collection info subcellcollection
+    )
+
+
+opencs_units_noqt (model/foreign
+    navmeshinfo navigationcollection navmesh navmeshcollection
+    landscape landscapecollection cell cellcollection
     )
 
 
@@ -86,6 +92,7 @@ opencs_units (view/render
 opencs_units_noqt (view/render
     navigation navigation1st navigationfree navigationorbit lighting lightingday lightingnight
     lightingbright object cell terrainstorage textoverlay overlaymask overlaysystem mousestate
+    pathgridpoint
     )
 
 opencs_hdrs_noqt (view/render
@@ -204,6 +211,7 @@ target_link_libraries(openmw-cs
     ${OGRE_Overlay_LIBRARIES}
     ${OGRE_STATIC_PLUGINS}
     ${SHINY_LIBRARIES}
+    ${ESM4_LIBRARIES}
     ${Boost_SYSTEM_LIBRARY}
     ${Boost_FILESYSTEM_LIBRARY}
     ${Boost_PROGRAM_OPTIONS_LIBRARY}

@@ -71,12 +71,28 @@ void ESMReader::open(Ogre::DataStreamPtr _esm, const std::string &name)
 {
     openRaw(_esm, name);
 
-    if (getRecName() != "TES3")
+    NAME modVer = getRecName();
+    if (modVer == "TES3")
+    {
+        getRecHeader();
+
+        mHeader.load (*this);
+    }
+    else if (modVer == "TES4")
+    {
+        skip(16); // skip the rest of the header, note it may be 4 bytes longer
+        NAME hedr = getRecName();
+        if (hedr == "HEDR")
+            skip(2); // data size
+        else
+            skip(6);
+        getT(mHeader.mData.version);
+        getT(mHeader.mData.records);
+
+        return;
+    }
+    else
         fail("Not a valid Morrowind file");
-
-    getRecHeader();
-
-    mHeader.load (*this);
 }
 
 void ESMReader::open(const std::string &file)

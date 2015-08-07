@@ -21,6 +21,7 @@ namespace Ogre
 {
     class SceneManager;
     class SceneNode;
+    class ManualObject;
 }
 
 namespace CSMWorld
@@ -35,12 +36,15 @@ namespace CSVWorld
 
 namespace CSVRender
 {
+    class PathgridPoint;
+
     class Cell
     {
             CSMWorld::Data& mData;
             std::string mId;
             Ogre::SceneNode *mCellNode;
             std::map<std::string, Object *> mObjects;
+            std::map<std::string, PathgridPoint *> mPgPoints;
             std::auto_ptr<Terrain::TerrainGrid> mTerrain;
             boost::shared_ptr<CSVWorld::PhysicsSystem> mPhysics;
             Ogre::SceneManager *mSceneMgr;
@@ -86,6 +90,20 @@ namespace CSVRender
             bool referenceAdded (const QModelIndex& parent, int start, int end);
 
             float getTerrainHeightAt(const Ogre::Vector3 &pos) const;
+        private:
+
+            // for drawing pathgrid points & lines
+            void createGridMaterials();
+            void destroyGridMaterials();
+            void setupNavMesh();
+            Ogre::ManualObject *createPathgridEdge(const std::string &name,
+                    const Ogre::Vector3 &start, const Ogre::Vector3 &end);
+
+
+        public:
+
+            void clearNavMesh();
+            void buildNavMesh();
     };
 }
 

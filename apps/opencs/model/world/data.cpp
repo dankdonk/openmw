@@ -7,9 +7,13 @@
 #include <QAbstractItemModel>
 
 #include <components/esm/esmreader.hpp>
+#include <components/esm/esm4reader.hpp>
 #include <components/esm/defs.hpp>
 #include <components/esm/loadglob.hpp>
 #include <components/esm/cellref.hpp>
+
+#include <extern/esm4/common.hpp>
+#include <extern/esm4/loadwrld.hpp> // FIXME
 
 #include <components/autocalc/autocalc.hpp>
 #include <components/autocalc/autocalcspell.hpp>
@@ -130,8 +134,8 @@ int CSMWorld::Data::count (RecordBase::State state, const CollectionBase& collec
 }
 
 CSMWorld::Data::Data (ToUTF8::FromType encoding, const ResourcesManager& resourcesManager)
-: mEncoder (encoding), mPathgrids (mCells), mReferenceables(self()), mRefs (mCells),
-  mResourcesManager (resourcesManager), mReader (0), mDialogue (0), mReaderIndex(0)
+: mEncoder (encoding), mPathgrids (mCells), mReferenceables(self()), mRefs (mCells), mNavigation(mCells),
+  mNavMesh(mCells), mLandscape(mCells), mResourcesManager (resourcesManager), mReader (0), mDialogue (0), mReaderIndex(0)
 {
     int index = 0;
 
@@ -421,9 +425,11 @@ CSMWorld::Data::Data (ToUTF8::FromType encoding, const ResourcesManager& resourc
     mBodyParts.addColumn (new FlagColumn<ESM::BodyPart> (Columns::ColumnId_Female, ESM::BodyPart::BPF_Female));
     mBodyParts.addColumn (new FlagColumn<ESM::BodyPart> (Columns::ColumnId_Playable,
         ESM::BodyPart::BPF_NotPlayable, ColumnBase::Flag_Table | ColumnBase::Flag_Dialogue, true));
-    mBodyParts.addColumn (new MeshTypeColumn<ESM::BodyPart>);
+    mBodyParts.addColumn (new MeshTypeColumn<ESM::BodyPart>(
+        ColumnBase::Flag_Table | ColumnBase::Flag_Dialogue | ColumnBase::Flag_Dialogue_Refresh));
+    index = mBodyParts.getColumns()-1;
     mBodyParts.addColumn (new ModelColumn<ESM::BodyPart>);
-    mBodyParts.addColumn (new RaceColumn<ESM::BodyPart>);
+    mBodyParts.addColumn (new BodyPartRaceColumn(&mBodyParts.getColumn(index)));
 
     mSoundGens.addColumn (new StringIdColumn<ESM::SoundGenerator>);
     mSoundGens.addColumn (new RecordStateColumn<ESM::SoundGenerator>);
@@ -926,6 +932,46 @@ const CSMWorld::MetaData& CSMWorld::Data::getMetaData() const
     return mMetaData.getRecord (0).get();
 }
 
+const CSMForeign::NavigationCollection& CSMWorld::Data::getNavigation() const
+{
+    return mNavigation;
+}
+
+CSMForeign::NavigationCollection& CSMWorld::Data::getNavigation()
+{
+    return mNavigation;
+}
+
+const CSMForeign::NavMeshCollection& CSMWorld::Data::getNavMeshes() const
+{
+    return mNavMesh;
+}
+
+CSMForeign::NavMeshCollection& CSMWorld::Data::getNavMeshes()
+{
+    return mNavMesh;
+}
+
+const CSMForeign::LandscapeCollection& CSMWorld::Data::getLandscapes() const
+{
+    return mLandscape;
+}
+
+CSMForeign::LandscapeCollection& CSMWorld::Data::getLandscapes()
+{
+    return mLandscape;
+}
+
+const CSMForeign::CellCollection& CSMWorld::Data::getForeignCells() const
+{
+    return mForeignCells;
+}
+
+CSMForeign::CellCollection& CSMWorld::Data::getForeignCells()
+{
+    return mForeignCells;
+}
+
 QAbstractItemModel *CSMWorld::Data::getTableModel (const CSMWorld::UniversalId& id)
 {
     std::map<UniversalId::Type, QAbstractItemModel *>::iterator iter = mModelIndex.find (id.getType());
@@ -966,7 +1012,15 @@ int CSMWorld::Data::startLoading (const boost::filesystem::path& path, bool base
     mReader->setEncoder (&mEncoder);
     mReader->setIndex(mReaderIndex++);
     mReader->open (path.string());
-
+    if (mReader->getVer() == ESM::VER_080 // TES4
+        || mReader->getVer() == ESM::VER_094 || mReader->getVer() == ESM::VER_17) // TES5
+    {
+        delete mReader;
+        mReader = new ESM::ESM4Reader(mReader->getVer() == ESM::VER_080);
+        mReader->setEncoder(&mEncoder);
+        mReader->setIndex(mReaderIndex); // use the same index
+        static_cast<ESM::ESM4Reader*>(mReader)->openTes4File(path.string());
+    }
     mBase = base;
     mProject = project;
 
@@ -987,6 +1041,13 @@ bool CSMWorld::Data::continueLoading (CSMDoc::Messages& messages)
     if (!mReader)
         throw std::logic_error ("can't continue loading, because no load has been started");
 
+    // Check if previous record/group was the final one in this group.  Must be done before
+    // calling mReader->hasMoreRecs() below, because all records may have been processed when
+    // the previous group is popped off the stack.
+    if (mReader->getVer() == ESM::VER_080 // TES4
+            || mReader->getVer() == ESM::VER_094 || mReader->getVer() == ESM::VER_17) // TES5
+        static_cast<ESM::ESM4Reader*>(mReader)->reader().checkGroupStatus();
+
     if (!mReader->hasMoreRecs())
     {
         if (mBase)
@@ -1005,6 +1066,10 @@ bool CSMWorld::Data::continueLoading (CSMDoc::Messages& messages)
         mDialogue = 0;
         return true;
     }
+
+    if (mReader->getVer() == ESM::VER_080 // TES4
+            || mReader->getVer() == ESM::VER_094 || mReader->getVer() == ESM::VER_17) // TES5
+        return loadTes4Group(messages);
 
     ESM::NAME n = mReader->getRecName();
     mReader->getRecHeader();
@@ -1542,4 +1607,156 @@ CSMWorld::NpcStats* CSMWorld::Data::getCachedNpcData (const std::string& id) con
         return it->second;
     else
         return 0;
+}
+
+bool CSMWorld::Data::loadTes4Group (CSMDoc::Messages& messages)
+{
+    ESM4::Reader& reader = static_cast<ESM::ESM4Reader*>(mReader)->reader();
+
+    reader.getRecordHeader();
+    const ESM4::RecordHeader& hdr = reader.hdr();
+
+    if (hdr.record.typeId != ESM4::REC_GRUP)
+        return loadTes4Record(hdr, messages);
+
+    // Skip groups that are of no interest.  See also:
+    // http://www.uesp.net/wiki/Tes4Mod:Mod_File_Format#Hierarchical_Top_Groups
+    switch (hdr.group.type)
+    {
+        case ESM4::Grp_RecordType:
+        {
+            // FIXME: rewrite to workaround reliability issue
+            if (hdr.group.label.value == ESM4::REC_NAVI || hdr.group.label.value == ESM4::REC_WRLD ||
+                    hdr.group.label.value == ESM4::REC_CELL)
+            {
+                // NOTE: The label field of a group is not reliable.  See:
+                // http://www.uesp.net/wiki/Tes4Mod:Mod_File_Format
+                //
+                // Workaround by getting the record header and checking its typeId
+                reader.saveGroupStatus(hdr);
+                // CELL group with record type may have sub-groups
+                loadTes4Group(messages);
+                //reader.getRecordHeader(); // NOTE: header re-read
+                //return loadTes4Record(reader.hdr(), messages);
+            }
+            else
+            {
+                std::cout << "skipping group..." << std::endl;
+                reader.skipGroup();
+                return false;
+            }
+
+            break;
+        }
+        case ESM4::Grp_WorldChild:
+        case ESM4::Grp_ExteriorCell:
+        case ESM4::Grp_ExteriorSubCell:
+        case ESM4::Grp_InteriorCell:
+        case ESM4::Grp_InteriorSubCell:
+        case ESM4::Grp_CellChild:
+        case ESM4::Grp_TopicChild:
+        case ESM4::Grp_CellPersistentChild:
+        case ESM4::Grp_CellTemporaryChild:
+        case ESM4::Grp_CellVisibleDistChild:
+        {
+            reader.saveGroupStatus(hdr);
+            loadTes4Group(messages);
+
+            break;
+        }
+        default:
+            std::cout << "unknown group..." << std::endl;
+            break;
+    }
+
+    return false;
+}
+
+// Deal with Tes4 records separately, as some have the same name as Tes3, e.g. REC_CELL
+bool CSMWorld::Data::loadTes4Record (const ESM4::RecordHeader& hdr, CSMDoc::Messages& messages)
+{
+    ESM4::Reader& reader = static_cast<ESM::ESM4Reader*>(mReader)->reader();
+
+    switch (hdr.record.typeId)
+    {
+        case ESM4::REC_CELL:
+        {
+//FIXME: debug only
+//#if 0
+            std::string padding = "";
+            padding.insert(0, reader.stackSize()*2, ' ');
+            std::cout << padding << "CELL flags 0x" << std::hex << hdr.record.flags << std::endl;
+            std::cout << padding << "CELL id 0x" << std::hex << hdr.record.id << std::endl;
+//#endif
+            reader.getRecordData();
+            mForeignCells.load(reader, mBase);
+            break;
+        }
+        case ESM4::REC_NAVM:
+        {
+            // FIXME: should update mNavMesh to indicate this record was deleted
+            if ((hdr.record.flags & ESM4::Rec_Deleted) != 0)
+            {
+//FIXME: debug only
+//#if 0
+                std::string padding = "";
+                padding.insert(0, reader.stackSize()*2, ' ');
+                std::cout << padding << "NAVM: deleted record id "
+                          << std::hex << hdr.record.id << std::endl;
+//#endif
+                reader.skipRecordData();
+                break;
+            }
+
+            reader.getRecordData();
+            mNavMesh.load(reader, mBase);
+            break;
+        }
+        case ESM4::REC_NAVI:
+        {
+            reader.getRecordData();
+            mNavigation.load(reader, mBase);
+            break;
+        }
+        case ESM4::REC_WRLD:
+        {
+            reader.getRecordData();
+            ESM4::World world;  // FIXME
+            world.load(reader); // FIXME
+            break;
+        }
+        case ESM4::REC_LAND:
+        {
+            reader.getRecordData();
+            mLandscape.load(reader, mBase);
+            break;
+        }
+        case ESM4::REC_REFR:
+        {
+            //std::cout << ESM4::printName(hdr.record.typeId) << " skipping..." << std::endl;
+            reader.skipRecordData();
+            break;
+        }
+        case ESM4::REC_ACHR:
+        case ESM4::REC_PHZD:
+        case ESM4::REC_PGRE:
+        case ESM4::REC_PGRD: // Oblivion only?
+        case ESM4::REC_ACRE: // Oblivion only?
+        case ESM4::REC_ROAD: // Oblivion only?
+        {
+            std::cout << ESM4::printName(hdr.record.typeId) << " skipping..." << std::endl;
+            reader.skipRecordData();
+            break;
+        }
+        default:
+        {
+            messages.add (UniversalId::Type_None,
+                "Unsupported TES4 record type: " + ESM4::printName(hdr.record.typeId), "",
+                CSMDoc::Message::Severity_Error);
+
+            reader.skipRecordData();
+        }
+    }
+
+    return false;
 }

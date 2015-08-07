@@ -393,6 +393,10 @@ CSVWorld::Table::Table (const CSMWorld::UniversalId& id,
 
     if(mAdded || mModified)
         recordFilterChanged(boost::shared_ptr<CSMFilter::Node>());
+
+    // initial sort
+    if (sorting)
+        mProxyModel->sort(mModel->findColumnIndex (CSMWorld::Columns::ColumnId_Id));
 }
 
 void CSVWorld::Table::setEditLock (bool locked)
@@ -422,7 +426,7 @@ std::vector<std::string> CSVWorld::Table::getSelectedIds() const
     QModelIndexList selectedRows = selectionModel()->selectedRows();
     int columnIndex = mModel->findColumnIndex (CSMWorld::Columns::ColumnId_Id);
 
-    for (QModelIndexList::const_iterator iter (selectedRows.begin()); 
+    for (QModelIndexList::const_iterator iter (selectedRows.begin());
          iter != selectedRows.end();
          ++iter)
     {

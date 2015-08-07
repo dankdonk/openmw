@@ -23,6 +23,7 @@ class ESMReader
 public:
 
   ESMReader();
+  virtual ~ESMReader() {}
 
   /*************************************************************************
    *
@@ -269,8 +270,6 @@ public:
 private:
   Ogre::DataStreamPtr mEsm;
 
-  ESM_Context mCtx;
-
   unsigned int mRecordFlags;
 
   // Special file signifier (see SpecialFile enum above)
@@ -278,10 +277,13 @@ private:
   // Buffer for ESM strings
   std::vector<char> mBuffer;
 
-  Header mHeader;
-
   std::vector<ESMReader> *mGlobalReaderList;
   ToUTF8::Utf8Encoder* mEncoder;
+
+protected:
+  ESM_Context mCtx;
+
+  Header mHeader;
 };
 }
 #endif

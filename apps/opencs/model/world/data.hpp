@@ -33,6 +33,11 @@
 
 #include "../doc/stage.hpp"
 
+#include "../foreign/navigationcollection.hpp"
+#include "../foreign/navmeshcollection.hpp"
+#include "../foreign/landscapecollection.hpp"
+#include "../foreign/cellcollection.hpp"
+
 #include "idcollection.hpp"
 #include "nestedidcollection.hpp"
 #include "universalid.hpp"
@@ -97,6 +102,10 @@ namespace CSMWorld
             RefCollection mRefs;
             IdCollection<ESM::Filter> mFilters;
             Collection<MetaData> mMetaData;
+            CSMForeign::NavigationCollection mNavigation;
+            CSMForeign::NavMeshCollection mNavMesh;
+            CSMForeign::LandscapeCollection mLandscape;
+            CSMForeign::CellCollection mForeignCells;
             const ResourcesManager& mResourcesManager;
             std::vector<QAbstractItemModel *> mModels;
             std::map<UniversalId::Type, QAbstractItemModel *> mModelIndex;
@@ -127,6 +136,9 @@ namespace CSMWorld
             const Data& self ();
 
             void clearNpcStatsCache ();
+
+            bool loadTes4Group (CSMDoc::Messages& messages);
+            bool loadTes4Record (const ESM4::RecordHeader& hdr, CSMDoc::Messages& messages);
 
         public:
 
@@ -241,6 +253,22 @@ namespace CSMWorld
             const IdCollection<ESM::StartScript>& getStartScripts() const;
 
             IdCollection<ESM::StartScript>& getStartScripts();
+
+            const CSMForeign::NavigationCollection& getNavigation() const;
+
+            CSMForeign::NavigationCollection& getNavigation();
+
+            const CSMForeign::NavMeshCollection& getNavMeshes() const;
+
+            CSMForeign::NavMeshCollection& getNavMeshes();
+
+            const CSMForeign::LandscapeCollection& getLandscapes() const;
+
+            CSMForeign::LandscapeCollection& getLandscapes();
+
+            const CSMForeign::CellCollection& getForeignCells() const;
+
+            CSMForeign::CellCollection& getForeignCells();
 
             /// Throws an exception, if \a id does not match a resources list.
             const Resources& getResources (const UniversalId& id) const;

@@ -13,6 +13,11 @@
 #include "columns.hpp"
 #include "info.hpp"
 
+namespace ESM
+{
+    struct BodyPart;
+}
+
 namespace CSMWorld
 {
     /// \note Shares ID with VarValueColumn. A table can not have both.
@@ -1497,9 +1502,9 @@ namespace CSMWorld
     template<typename ESXRecordT>
     struct TopicColumn : public Column<ESXRecordT>
     {
-        TopicColumn (bool journal) 
+        TopicColumn (bool journal)
         : Column<ESXRecordT> (journal ? Columns::ColumnId_Journal : Columns::ColumnId_Topic,
-                              journal ? ColumnBase::Display_Journal : ColumnBase::Display_Topic) 
+                              journal ? ColumnBase::Display_Journal : ColumnBase::Display_Topic)
         {}
 
         virtual QVariant get (const Record<ESXRecordT>& record) const
@@ -1911,8 +1916,8 @@ namespace CSMWorld
     template<typename ESXRecordT>
     struct MeshTypeColumn : public Column<ESXRecordT>
     {
-        MeshTypeColumn()
-        : Column<ESXRecordT> (Columns::ColumnId_MeshType, ColumnBase::Display_MeshType)
+        MeshTypeColumn(int flags = ColumnBase::Flag_Table | ColumnBase::Flag_Dialogue)
+        : Column<ESXRecordT> (Columns::ColumnId_MeshType, ColumnBase::Display_MeshType, flags)
         {}
 
         virtual QVariant get (const Record<ESXRecordT>& record) const
@@ -2161,8 +2166,8 @@ namespace CSMWorld
     struct EffectTextureColumn : public Column<ESXRecordT>
     {
         EffectTextureColumn (Columns::ColumnId columnId)
-        : Column<ESXRecordT> (columnId, 
-                              columnId == Columns::ColumnId_Particle ? ColumnBase::Display_Texture 
+        : Column<ESXRecordT> (columnId,
+                              columnId == Columns::ColumnId_Particle ? ColumnBase::Display_Texture
                                                                      : ColumnBase::Display_Icon)
         {
             assert (this->mColumnId==Columns::ColumnId_Icon ||
@@ -2379,7 +2384,22 @@ namespace CSMWorld
         {
             return true;
         }
-    };        
+    };
+
+    struct BodyPartRaceColumn : public Column<ESM::BodyPart>
+    {
+    private:
+        const MeshTypeColumn<ESM::BodyPart> *mMeshType;
+
+    public:
+        BodyPartRaceColumn(const ColumnBase *mesh = 0);
+
+        virtual QVariant get (const Record<ESM::BodyPart>& record) const;
+
+        virtual void set (Record<ESM::BodyPart>& record, const QVariant& data);
+
+        virtual bool isEditable() const;
+    };
 }
 
 #endif
