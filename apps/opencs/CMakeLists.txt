@@ -19,6 +19,7 @@ opencs_hdrs_noqt (model/doc
 
 opencs_units (model/world
     idtable idtableproxymodel regionmap data commanddispatcher idtablebase resourcetable nestedtableproxymodel idtree infotableproxymodel
+    pathgridcommands
     )
 
 
@@ -41,13 +42,18 @@ opencs_units_noqt (model/foreign
 
 
 opencs_units (model/tools
-    tools reportmodel
+    tools reportmodel mergeoperation 
     )
 
 opencs_units_noqt (model/tools
     mandatoryid skillcheck classcheck factioncheck racecheck soundcheck regioncheck
     birthsigncheck spellcheck referencecheck referenceablecheck scriptcheck bodypartcheck
-    startscriptcheck search searchoperation searchstage pathgridcheck soundgencheck
+    startscriptcheck search searchoperation searchstage pathgridcheck soundgencheck magiceffectcheck
+    mergestages
+    )
+
+opencs_hdrs_noqt (model/tools
+    mergestate
     )
 
 
@@ -68,7 +74,7 @@ opencs_hdrs_noqt (view/doc
 
 opencs_units (view/world
     table tablesubview scriptsubview util regionmapsubview tablebottombox creator genericcreator
-    cellcreator referenceablecreator referencecreator scenesubview
+    cellcreator referenceablecreator startscriptcreator referencecreator scenesubview
     infocreator scriptedit dialoguesubview previewsubview regionmap dragrecordtable nestedtable
     dialoguespinbox recordbuttonbar tableeditidaction scripterrortable extendedcommandconfigurator
     )
@@ -101,7 +107,7 @@ opencs_hdrs_noqt (view/render
 
 
 opencs_units (view/tools
-    reportsubview reporttable searchsubview searchbox
+    reportsubview reporttable searchsubview searchbox merge
     )
 
 opencs_units_noqt (view/tools

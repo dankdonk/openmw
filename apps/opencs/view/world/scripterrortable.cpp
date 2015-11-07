@@ -1,4 +1,3 @@
-
 #include "scripterrortable.hpp"
 
 #include <QHeaderView>
@@ -130,6 +129,11 @@ void CSVWorld::ScriptErrorTable::update (const std::string& source)
 void CSVWorld::ScriptErrorTable::clear()
 {
     setRowCount (0);
+}
+
+bool CSVWorld::ScriptErrorTable::clearLocals (const std::string& script)
+{
+    return mContext.clearLocals (script);
 }
 
 void CSVWorld::ScriptErrorTable::cellClicked (int row, int column)

@@ -3,7 +3,6 @@
 
 #include <QVariant>
 
-#include <components/esm/loadpgrd.hpp>
 #include <components/esm/effectlist.hpp>
 #include <components/esm/loadmgef.hpp> // for converting magic effect id to string & back
 #include <components/esm/loadskil.hpp> // for converting skill names
@@ -24,21 +23,6 @@ namespace CSMWorld
 {
     struct Pathgrid;
     struct Info;
-
-    struct PathgridPointsWrap : public NestedTableWrapperBase
-    {
-        ESM::Pathgrid mRecord;
-
-        PathgridPointsWrap(ESM::Pathgrid pathgrid)
-            : mRecord(pathgrid) {}
-
-        virtual ~PathgridPointsWrap() {}
-
-        virtual int size() const
-        {
-            return mRecord.mPoints.size(); // used in IdTree::setNestedTable()
-        }
-    };
 
     class PathgridPointListAdapter : public NestedColumnAdapter<Pathgrid>
     {
@@ -317,8 +301,34 @@ namespace CSMWorld
                     else
                         throw std::runtime_error("Magic effects ID unexpected value");
                 }
-                case 1: return effect.mSkill;
-                case 2: return effect.mAttribute;
+                case 1:
+                {
+                    switch (effect.mEffectID)
+                    {
+                        case ESM::MagicEffect::DrainSkill:
+                        case ESM::MagicEffect::DamageSkill:
+                        case ESM::MagicEffect::RestoreSkill:
+                        case ESM::MagicEffect::FortifySkill:
+                        case ESM::MagicEffect::AbsorbSkill:
+                             return effect.mSkill;
+                        default:
+                            return QVariant();
+                    }
+                }
+                case 2:
+                {
+                    switch (effect.mEffectID)
+                    {
+                        case ESM::MagicEffect::DrainAttribute:
+                        case ESM::MagicEffect::DamageAttribute:
+                        case ESM::MagicEffect::RestoreAttribute:
+                        case ESM::MagicEffect::FortifyAttribute:
+                        case ESM::MagicEffect::AbsorbAttribute:
+                             return effect.mAttribute;
+                        default:
+                            return QVariant();
+                    }
+                }
                 case 3:
                 {
                     if (effect.mRange >=0 && effect.mRange <=2)

@@ -9,6 +9,10 @@
 
 #include <QColor>
 
+#include <components/esm/loadbody.hpp>
+#include <components/esm/loadskil.hpp>
+#include <components/esm/loadrace.hpp>
+
 #include "columnbase.hpp"
 #include "columns.hpp"
 #include "info.hpp"
@@ -2385,19 +2389,15 @@ namespace CSMWorld
             return true;
         }
     };
-
-    struct BodyPartRaceColumn : public Column<ESM::BodyPart>
+    
+    struct BodyPartRaceColumn : public RaceColumn<ESM::BodyPart>
     {
-    private:
         const MeshTypeColumn<ESM::BodyPart> *mMeshType;
 
-    public:
-        BodyPartRaceColumn(const ColumnBase *mesh = 0);
+        BodyPartRaceColumn(const MeshTypeColumn<ESM::BodyPart> *meshType);
 
-        virtual QVariant get (const Record<ESM::BodyPart>& record) const;
-
-        virtual void set (Record<ESM::BodyPart>& record, const QVariant& data);
-
+        virtual QVariant get(const Record<ESM::BodyPart> &record) const;
+        virtual void set(Record<ESM::BodyPart> &record, const QVariant &data);
         virtual bool isEditable() const;
     };
 }

@@ -1,4 +1,3 @@
-
 #include "data.hpp"
 
 #include <stdexcept>
@@ -210,22 +209,24 @@ CSMWorld::Data::Data (ToUTF8::FromType encoding, const ResourcesManager& resourc
     mRaces.getNestableColumn(index)->addColumn(
         new NestedChildColumn (Columns::ColumnId_SpellId, ColumnBase::Display_Spell));
     // Race attributes
-    mRaces.addColumn (new NestedParentColumn<ESM::Race> (Columns::ColumnId_RaceAttributes));
+    mRaces.addColumn (new NestedParentColumn<ESM::Race> (Columns::ColumnId_RaceAttributes,
+        ColumnBase::Flag_Dialogue, true)); // fixed rows table
     index = mRaces.getColumns()-1;
     mRaces.addAdapter (std::make_pair(&mRaces.getColumn(index), new RaceAttributeAdapter()));
     mRaces.getNestableColumn(index)->addColumn(
-        new NestedChildColumn (Columns::ColumnId_RaceAttributes, ColumnBase::Display_String,
+        new NestedChildColumn (Columns::ColumnId_Attribute, ColumnBase::Display_Attribute,
             ColumnBase::Flag_Dialogue, false));
     mRaces.getNestableColumn(index)->addColumn(
-        new NestedChildColumn (Columns::ColumnId_RaceMaleValue, ColumnBase::Display_Integer));
+        new NestedChildColumn (Columns::ColumnId_Male, ColumnBase::Display_Integer));
     mRaces.getNestableColumn(index)->addColumn(
-        new NestedChildColumn (Columns::ColumnId_RaceFemaleValue, ColumnBase::Display_Integer));
+        new NestedChildColumn (Columns::ColumnId_Female, ColumnBase::Display_Integer));
     // Race skill bonus
-    mRaces.addColumn (new NestedParentColumn<ESM::Race> (Columns::ColumnId_RaceSkillBonus));
+    mRaces.addColumn (new NestedParentColumn<ESM::Race> (Columns::ColumnId_RaceSkillBonus,
+        ColumnBase::Flag_Dialogue, true)); // fixed rows table
     index = mRaces.getColumns()-1;
     mRaces.addAdapter (std::make_pair(&mRaces.getColumn(index), new RaceSkillsBonusAdapter()));
     mRaces.getNestableColumn(index)->addColumn(
-        new NestedChildColumn (Columns::ColumnId_RaceSkill, ColumnBase::Display_RaceSkill));
+        new NestedChildColumn (Columns::ColumnId_Skill, ColumnBase::Display_SkillId));
     mRaces.getNestableColumn(index)->addColumn(
         new NestedChildColumn (Columns::ColumnId_RaceBonus, ColumnBase::Display_Integer));
 
@@ -287,9 +288,9 @@ CSMWorld::Data::Data (ToUTF8::FromType encoding, const ResourcesManager& resourc
     mSpells.getNestableColumn(index)->addColumn(
         new NestedChildColumn (Columns::ColumnId_EffectId, ColumnBase::Display_EffectId));
     mSpells.getNestableColumn(index)->addColumn(
-        new NestedChildColumn (Columns::ColumnId_SkillImpact, ColumnBase::Display_SkillImpact));
+        new NestedChildColumn (Columns::ColumnId_Skill, ColumnBase::Display_EffectSkill));
     mSpells.getNestableColumn(index)->addColumn(
-        new NestedChildColumn (Columns::ColumnId_Attribute, ColumnBase::Display_Attribute));
+        new NestedChildColumn (Columns::ColumnId_Attribute, ColumnBase::Display_EffectAttribute));
     mSpells.getNestableColumn(index)->addColumn(
         new NestedChildColumn (Columns::ColumnId_EffectRange, ColumnBase::Display_EffectRange));
     mSpells.getNestableColumn(index)->addColumn(
@@ -297,9 +298,9 @@ CSMWorld::Data::Data (ToUTF8::FromType encoding, const ResourcesManager& resourc
     mSpells.getNestableColumn(index)->addColumn(
         new NestedChildColumn (Columns::ColumnId_Duration, ColumnBase::Display_Integer)); // reuse from light
     mSpells.getNestableColumn(index)->addColumn(
-        new NestedChildColumn (Columns::ColumnId_MinRange, ColumnBase::Display_Integer)); // reuse from sound
+        new NestedChildColumn (Columns::ColumnId_MinMagnitude, ColumnBase::Display_Integer));
     mSpells.getNestableColumn(index)->addColumn(
-        new NestedChildColumn (Columns::ColumnId_MaxRange, ColumnBase::Display_Integer)); // reuse from sound
+        new NestedChildColumn (Columns::ColumnId_MaxMagnitude, ColumnBase::Display_Integer));
 
     mTopics.addColumn (new StringIdColumn<ESM::Dialogue>);
     mTopics.addColumn (new RecordStateColumn<ESM::Dialogue>);
@@ -403,9 +404,9 @@ CSMWorld::Data::Data (ToUTF8::FromType encoding, const ResourcesManager& resourc
     mEnchantments.getNestableColumn(index)->addColumn(
         new NestedChildColumn (Columns::ColumnId_EffectId, ColumnBase::Display_EffectId));
     mEnchantments.getNestableColumn(index)->addColumn(
-        new NestedChildColumn (Columns::ColumnId_SkillImpact, ColumnBase::Display_SkillImpact));
+        new NestedChildColumn (Columns::ColumnId_Skill, ColumnBase::Display_EffectSkill));
     mEnchantments.getNestableColumn(index)->addColumn(
-        new NestedChildColumn (Columns::ColumnId_Attribute, ColumnBase::Display_Attribute));
+        new NestedChildColumn (Columns::ColumnId_Attribute, ColumnBase::Display_EffectAttribute));
     mEnchantments.getNestableColumn(index)->addColumn(
         new NestedChildColumn (Columns::ColumnId_EffectRange, ColumnBase::Display_EffectRange));
     mEnchantments.getNestableColumn(index)->addColumn(
@@ -413,9 +414,9 @@ CSMWorld::Data::Data (ToUTF8::FromType encoding, const ResourcesManager& resourc
     mEnchantments.getNestableColumn(index)->addColumn(
         new NestedChildColumn (Columns::ColumnId_Duration, ColumnBase::Display_Integer)); // reuse from light
     mEnchantments.getNestableColumn(index)->addColumn(
-        new NestedChildColumn (Columns::ColumnId_MinRange, ColumnBase::Display_Integer)); // reuse from sound
+        new NestedChildColumn (Columns::ColumnId_MinMagnitude, ColumnBase::Display_Integer));
     mEnchantments.getNestableColumn(index)->addColumn(
-        new NestedChildColumn (Columns::ColumnId_MaxRange, ColumnBase::Display_Integer)); // reuse from sound
+        new NestedChildColumn (Columns::ColumnId_MaxMagnitude, ColumnBase::Display_Integer));
 
     mBodyParts.addColumn (new StringIdColumn<ESM::BodyPart>);
     mBodyParts.addColumn (new RecordStateColumn<ESM::BodyPart>);
@@ -425,11 +426,12 @@ CSMWorld::Data::Data (ToUTF8::FromType encoding, const ResourcesManager& resourc
     mBodyParts.addColumn (new FlagColumn<ESM::BodyPart> (Columns::ColumnId_Female, ESM::BodyPart::BPF_Female));
     mBodyParts.addColumn (new FlagColumn<ESM::BodyPart> (Columns::ColumnId_Playable,
         ESM::BodyPart::BPF_NotPlayable, ColumnBase::Flag_Table | ColumnBase::Flag_Dialogue, true));
-    mBodyParts.addColumn (new MeshTypeColumn<ESM::BodyPart>(
-        ColumnBase::Flag_Table | ColumnBase::Flag_Dialogue | ColumnBase::Flag_Dialogue_Refresh));
-    index = mBodyParts.getColumns()-1;
+
+    int meshTypeFlags = ColumnBase::Flag_Table | ColumnBase::Flag_Dialogue | ColumnBase::Flag_Dialogue_Refresh;
+    MeshTypeColumn<ESM::BodyPart> *meshTypeColumn = new MeshTypeColumn<ESM::BodyPart>(meshTypeFlags);
+    mBodyParts.addColumn (meshTypeColumn);
     mBodyParts.addColumn (new ModelColumn<ESM::BodyPart>);
-    mBodyParts.addColumn (new BodyPartRaceColumn(&mBodyParts.getColumn(index)));
+    mBodyParts.addColumn (new BodyPartRaceColumn(meshTypeColumn));
 
     mSoundGens.addColumn (new StringIdColumn<ESM::SoundGenerator>);
     mSoundGens.addColumn (new RecordStateColumn<ESM::SoundGenerator>);
@@ -877,7 +879,17 @@ const CSMWorld::IdCollection<CSMWorld::Land>& CSMWorld::Data::getLand() const
     return mLand;
 }
 
+CSMWorld::IdCollection<CSMWorld::Land>& CSMWorld::Data::getLand()
+{
+    return mLand;
+}
+
 const CSMWorld::IdCollection<CSMWorld::LandTexture>& CSMWorld::Data::getLandTextures() const
+{
+    return mLandTextures;
+}
+
+CSMWorld::IdCollection<CSMWorld::LandTexture>& CSMWorld::Data::getLandTextures()
 {
     return mLandTextures;
 }
@@ -930,6 +942,12 @@ const CSMWorld::Resources& CSMWorld::Data::getResources (const UniversalId& id) 
 const CSMWorld::MetaData& CSMWorld::Data::getMetaData() const
 {
     return mMetaData.getRecord (0).get();
+}
+
+void CSMWorld::Data::setMetaData (const MetaData& metaData)
+{
+    Record<MetaData> record (RecordBase::State_ModifiedOnly, 0, &metaData);
+    mMetaData.setRecord (0, record);
 }
 
 const CSMForeign::NavigationCollection& CSMWorld::Data::getNavigation() const
@@ -1102,8 +1120,10 @@ bool CSMWorld::Data::continueLoading (CSMDoc::Messages& messages)
         {
             int index = mLand.load(*mReader, mBase);
 
-            if (index!=-1 && !mBase)
-                mLand.getRecord (index).mModified.mLand->loadData (
+            // Load all land data for now. A future optimisation may only load non-base data
+            // if a suitable mechanism for avoiding race conditions can be established.
+            if (index!=-1/* && !mBase*/)
+                mLand.getRecord (index).get().loadData (
                     ESM::Land::DATA_VHGT | ESM::Land::DATA_VNML | ESM::Land::DATA_VCLR |
                     ESM::Land::DATA_VTEX | ESM::Land::DATA_WNAM);
 

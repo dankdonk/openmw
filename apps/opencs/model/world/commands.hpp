@@ -12,7 +12,6 @@
 #include <QModelIndex>
 
 #include "universalid.hpp"
-#include "nestedtablewrapper.hpp"
 
 class QModelIndex;
 class QAbstractItemModel;
@@ -200,9 +199,13 @@ namespace CSMWorld
 
             int mNestedRow;
 
+            // The command to redo/undo the Modified status of a record
+            ModifyCommand *mModifyParentCommand;
+
         public:
 
-            DeleteNestedCommand (IdTree& model, const std::string& id, int nestedRow, int parentColumn, QUndoCommand* parent = 0);
+            DeleteNestedCommand (IdTree& model,
+                    const std::string& id, int nestedRow, int parentColumn, QUndoCommand* parent = 0);
 
             virtual void redo();
 
@@ -219,9 +222,13 @@ namespace CSMWorld
 
             int mParentColumn;
 
+            // The command to redo/undo the Modified status of a record
+            ModifyCommand *mModifyParentCommand;
+
         public:
 
-            AddNestedCommand(IdTree& model, const std::string& id, int nestedRow, int parentColumn, QUndoCommand* parent = 0);
+            AddNestedCommand(IdTree& model,
+                    const std::string& id, int nestedRow, int parentColumn, QUndoCommand* parent = 0);
 
             virtual void redo();
 

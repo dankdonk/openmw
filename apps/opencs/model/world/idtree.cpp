@@ -95,8 +95,15 @@ bool CSMWorld::IdTree::setData (const QModelIndex &index, const QVariant &value,
             const std::pair<int, int>& parentAddress(unfoldIndexAddress(index.internalId()));
 
             mNestedCollection->setNestedData(parentAddress.first, parentAddress.second, value, index.row(), index.column());
+            emit dataChanged(index, index);
 
-            emit dataChanged (index, index);
+            // Modifying a value can also change the Modified status of a record.
+            int stateColumn = searchColumnIndex(Columns::ColumnId_Modification);
+            if (stateColumn != -1)
+            {
+                QModelIndex stateIndex = this->index(index.parent().row(), stateColumn);
+                emit dataChanged(stateIndex, stateIndex);
+            }
 
             return true;
         }
@@ -252,6 +259,10 @@ void CSMWorld::IdTree::setNestedTable(const QModelIndex& index, const CSMWorld::
     {
         emit resetEnd(this->index(index.row(), 0).data().toString());
     }
+    // FIXME: Removing pathgrid points will also remove pathgrid edges, but we have
+    //        no way of emitting signals to indicate those changes.  In addition, the
+    //        removed edges can be any index (and there can be several edges removed
+    //        but always by a factor of two)
 }
 
 CSMWorld::NestedTableWrapperBase* CSMWorld::IdTree::nestedTable(const QModelIndex& index) const

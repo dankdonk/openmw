@@ -24,9 +24,17 @@ namespace Ogre
     class ManualObject;
 }
 
+namespace CSMDoc
+{
+    class Document;
+}
+
 namespace CSMWorld
 {
-    class Data;
+    class Pathgrid;
+    class NestedTableProxyModel;
+    class IdTree;
+    class SignalHandler;
 }
 
 namespace CSVWorld
@@ -40,11 +48,18 @@ namespace CSVRender
 
     class Cell
     {
-            CSMWorld::Data& mData;
+            CSMDoc::Document& mDocument;
             std::string mId;
             Ogre::SceneNode *mCellNode;
             std::map<std::string, Object *> mObjects;
             std::map<std::string, PathgridPoint *> mPgPoints;
+            std::map<std::pair<int, int>, std::string> mPgEdges;
+
+            CSMWorld::NestedTableProxyModel *mProxyModel;
+            CSMWorld::IdTree *mModel;
+            int mPgIndex;
+            CSMWorld::SignalHandler *mHandler;
+
             std::auto_ptr<Terrain::TerrainGrid> mTerrain;
             boost::shared_ptr<CSVWorld::PhysicsSystem> mPhysics;
             Ogre::SceneManager *mSceneMgr;
@@ -63,7 +78,7 @@ namespace CSVRender
 
         public:
 
-            Cell (CSMWorld::Data& data, Ogre::SceneManager *sceneManager, const std::string& id,
+            Cell (CSMDoc::Document& document, Ogre::SceneManager *sceneManager, const std::string& id,
                 boost::shared_ptr<CSVWorld::PhysicsSystem> physics, const Ogre::Vector3& origin = Ogre::Vector3 (0, 0, 0));
 
             ~Cell();
@@ -90,21 +105,34 @@ namespace CSVRender
             bool referenceAdded (const QModelIndex& parent, int start, int end);
 
             float getTerrainHeightAt(const Ogre::Vector3 &pos) const;
+
+            void pathgridPointAdded(const Ogre::Vector3 &pos, bool interior = false);
+            void pathgridPointMoved(const std::string &name,
+                    const Ogre::Vector3 &newPos, bool interior = false);
+            void pathgridPointRemoved(const std::string &name);
+
+            void pathgridDataChanged (const QModelIndex& topLeft, const QModelIndex& bottomRight);
+
+            void clearPathgrid();
+            void buildPathgrid();
+            CSMWorld::SignalHandler *getSignalHandler();
+
+            void clearNavMesh();
+            void buildNavMesh();
+
         private:
 
             // for drawing pathgrid points & lines
             void createGridMaterials();
             void destroyGridMaterials();
-            void setupNavMesh();
+            void setupPathgrid();
             Ogre::ManualObject *createPathgridEdge(const std::string &name,
                     const Ogre::Vector3 &start, const Ogre::Vector3 &end);
 
+            void addPathgridEdge();
+            void removePathgridEdge();
 
-        public:
-
-            void clearNavMesh();
-            void buildNavMesh();
-    };
+            void setupNavMesh();    };
 }
 
 #endif

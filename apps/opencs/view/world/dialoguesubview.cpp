@@ -104,7 +104,9 @@ QWidget* CSVWorld::NotEditableSubDelegate::createEditor (QWidget *parent,
                                 const QStyleOptionViewItem& option,
                                 const QModelIndex& index) const
 {
-    return new QLabel(parent);
+    QLabel *label = new QLabel(parent);
+    label->setTextInteractionFlags (Qt::TextSelectableByMouse);
+    return label;
 }
 
 /*
@@ -562,8 +564,22 @@ void CSVWorld::EditWidget::remake(int row)
                     static_cast<CSMWorld::UniversalId::Type> (mTable->data (mTable->index (row, typeColumn)).toInt()),
                     mTable->data (mTable->index (row, idColumn)).toString().toUtf8().constData());
 
-                bool editable = mTable->index(row, i).data().type() != QVariant::UserType;
-                NestedTable* table = new NestedTable(mDocument, id, mNestedModels.back(), this, editable);
+                bool editable = true;
+                bool fixedRows = false;
+                QVariant v = mTable->index(row, i).data();
+                if (v.canConvert<CSMWorld::ColumnBase::TableEditModes>())
+                {
+                    assert (QString(v.typeName()) == "CSMWorld::ColumnBase::TableEditModes");
+
+                    if (v.value<CSMWorld::ColumnBase::TableEditModes>() == CSMWorld::ColumnBase::TableEdit_None)
+                        editable = false;
+                    else if (v.value<CSMWorld::ColumnBase::TableEditModes>() == CSMWorld::ColumnBase::TableEdit_FixedRows)
+                        fixedRows = true;
+                }
+
+                NestedTable* table =
+                    new NestedTable(mDocument, id, mNestedModels.back(), this, editable, fixedRows);
+                table->resizeColumnsToContents();
                 if (!editable)
                 {
                     table->setEditTriggers(QAbstractItemView::NoEditTriggers);
@@ -571,8 +587,9 @@ void CSVWorld::EditWidget::remake(int row)
                     table->setStyleSheet("QTableView { color: gray; }");
                     table->horizontalHeader()->setStyleSheet("QHeaderView { color: gray; }");
                 }
-                else
-                    table->setEditTriggers(QAbstractItemView::SelectedClicked | QAbstractItemView::CurrentChanged);
+                // Uncomment below two lines to activate editing of nested table cells by a single click
+                //else
+                    //table->setEditTriggers(QAbstractItemView::SelectedClicked | QAbstractItemView::CurrentChanged);
                 table->resizeColumnsToContents();
 
                 int rows = mTable->rowCount(mTable->index(row, i));
@@ -585,7 +602,7 @@ void CSVWorld::EditWidget::remake(int row)
                     new QLabel (mTable->headerData (i, Qt::Horizontal, Qt::DisplayRole).toString(), mMainWidget);
 
                 label->setSizePolicy (QSizePolicy::Fixed, QSizePolicy::Fixed);
-                if(mTable->index(row, i).data().type() == QVariant::UserType)
+                if(!editable)
                     label->setEnabled(false);
 
                 tablesLayout->addWidget(label);
@@ -744,8 +761,10 @@ CSVWorld::SimpleDialogueSubView::SimpleDialogueSubView (const CSMWorld::Universa
     mMainLayout = new QVBoxLayout(mainWidget);
     setWidget (mainWidget);
 
+    int idColumn = getTable().findColumnIndex (CSMWorld::Columns::ColumnId_Id);
+
     mEditWidget = new EditWidget(mainWidget,
-            mTable->getModelIndex(getUniversalId().getId(), 0).row(), mTable, mCommandDispatcher, document, false);
+            mTable->getModelIndex(getUniversalId().getId(), idColumn).row(), mTable, mCommandDispatcher, document, false);
 
     if (id.getType() == CSMWorld::UniversalId::Type_Referenceable)
     {
@@ -758,7 +777,7 @@ CSVWorld::SimpleDialogueSubView::SimpleDialogueSubView (const CSMWorld::Universa
     mMainLayout->addWidget(mEditWidget);
     mEditWidget->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);
 
-    dataChanged(mTable->getModelIndex (getUniversalId().getId(), 0));
+    dataChanged(mTable->getModelIndex (getUniversalId().getId(), idColumn));
 
     connect(mEditWidget,
             SIGNAL(editIdRequest(const CSMWorld::UniversalId &, const std::string &)),
@@ -771,8 +790,9 @@ void CSVWorld::SimpleDialogueSubView::setEditLock (bool locked)
     if (!mEditWidget) // hack to indicate that getUniversalId().getId() is no longer valid
         return;
 
+    int idColumn = getTable().findColumnIndex (CSMWorld::Columns::ColumnId_Id);
     mLocked = locked;
-    QModelIndex currentIndex(mTable->getModelIndex(getUniversalId().getId(), 0));
+    QModelIndex currentIndex(mTable->getModelIndex(getUniversalId().getId(), idColumn));
 
     if (currentIndex.isValid())
     {
@@ -787,7 +807,8 @@ void CSVWorld::SimpleDialogueSubView::setEditLock (bool locked)
 
 void CSVWorld::SimpleDialogueSubView::dataChanged (const QModelIndex & index)
 {
-    QModelIndex currentIndex(mTable->getModelIndex(getUniversalId().getId(), 0));
+    int idColumn = getTable().findColumnIndex (CSMWorld::Columns::ColumnId_Id);
+    QModelIndex currentIndex(mTable->getModelIndex(getUniversalId().getId(), idColumn));
 
     if (currentIndex.isValid() &&
             (index.parent().isValid() ? index.parent().row() : index.row()) == currentIndex.row())
@@ -820,9 +841,15 @@ void CSVWorld::SimpleDialogueSubView::dataChanged (const QModelIndex & index)
 
 void CSVWorld::SimpleDialogueSubView::rowsAboutToBeRemoved(const QModelIndex &parent, int start, int end)
 {
-    QModelIndex currentIndex(mTable->getModelIndex(getUniversalId().getId(), 0));
+    int idColumn = getTable().findColumnIndex (CSMWorld::Columns::ColumnId_Id);
+    QModelIndex currentIndex(mTable->getModelIndex(getUniversalId().getId(), idColumn));
 
-    if (currentIndex.isValid() && currentIndex.row() >= start && currentIndex.row() <= end)
+    if (!currentIndex.isValid())
+    {
+        return;
+    }
+
+    if (currentIndex.parent() == parent && currentIndex.row() >= start && currentIndex.row() <= end)
     {
         if(mEditWidget)
         {
@@ -936,7 +963,8 @@ void CSVWorld::DialogueSubView::updateUserSetting (const QString& name, const QS
 
 void CSVWorld::DialogueSubView::showPreview ()
 {
-    QModelIndex currentIndex (getTable().getModelIndex (getUniversalId().getId(), 0));
+    int idColumn = getTable().findColumnIndex (CSMWorld::Columns::ColumnId_Id);
+    QModelIndex currentIndex (getTable().getModelIndex (getUniversalId().getId(), idColumn));
 
     if (currentIndex.isValid() &&
         getTable().getFeatures() & CSMWorld::IdTable::Feature_Preview &&
@@ -948,7 +976,8 @@ void CSVWorld::DialogueSubView::showPreview ()
 
 void CSVWorld::DialogueSubView::viewRecord ()
 {
-    QModelIndex currentIndex (getTable().getModelIndex (getUniversalId().getId(), 0));
+    int idColumn = getTable().findColumnIndex (CSMWorld::Columns::ColumnId_Id);
+    QModelIndex currentIndex (getTable().getModelIndex (getUniversalId().getId(), idColumn));
 
     if (currentIndex.isValid() &&
         currentIndex.row() < getTable().rowCount())
@@ -983,7 +1012,8 @@ void CSVWorld::DialogueSubView::switchToRow (int row)
 
 void CSVWorld::DialogueSubView::requestFocus (const std::string& id)
 {
-    QModelIndex index = getTable().getModelIndex (id, 0);
+    int idColumn = getTable().findColumnIndex (CSMWorld::Columns::ColumnId_Id);
+    QModelIndex index = getTable().getModelIndex (id, idColumn);
 
     if (index.isValid())
         switchToRow (index.row());
