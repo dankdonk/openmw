@@ -32,18 +32,18 @@ int CSMForeign::NavMeshCollection::load (ESM4::Reader& reader, bool base)
     CSMForeign::NavMesh record;
     //std::cout << "new NavMesh " << std::hex << &record << std::endl; // FIXME
 
-    int index = this->searchId (id);
+    int index = this->searchId(id);
 
-    if (index==-1)
-        CSMWorld::IdAccessor<CSMForeign::NavMesh>().getId (record) = id;
+    if (index == -1)
+        CSMWorld::IdAccessor<CSMForeign::NavMesh>().getId(record) = id;
     else
     {
-        record = this->getRecord (index).get();
+        record = this->getRecord(index).get();
     }
 
-    loadRecord (record, reader);
+    loadRecord(record, reader);
 
-    return load (record, base, index);
+    return load(record, base, index);
 }
 
 void CSMForeign::NavMeshCollection::loadRecord (CSMForeign::NavMesh& record, ESM4::Reader& reader)
@@ -53,31 +53,32 @@ void CSMForeign::NavMeshCollection::loadRecord (CSMForeign::NavMesh& record, ESM
 
 int CSMForeign::NavMeshCollection::load (const CSMForeign::NavMesh& record, bool base, int index)
 {
-    if (index==-2)
-        index = this->searchId (CSMWorld::IdAccessor<CSMForeign::NavMesh>().getId (record));
+    if (index == -2)
+        index = this->searchId(CSMWorld::IdAccessor<CSMForeign::NavMesh>().getId(record));
 
-    if (index==-1)
+    if (index == -1)
     {
         // new record
-        CSMWorld::Record<CSMForeign::NavMesh> record2;
-        record2.mState = base ? CSMWorld::RecordBase::State_BaseOnly : CSMWorld::RecordBase::State_ModifiedOnly;
-        (base ? record2.mBase : record2.mModified) = record;
+        std::unique_ptr<CSMWorld::Record<CSMForeign::NavMesh> > record2(new CSMWorld::Record<CSMForeign::NavMesh>);
+        record2->mState = base ? CSMWorld::RecordBase::State_BaseOnly : CSMWorld::RecordBase::State_ModifiedOnly;
+        (base ? record2->mBase : record2->mModified) = record;
 
         index = this->getSize();
-        this->appendRecord (record2);
+        this->appendRecord(std::move(record2));
     }
     else
     {
         // old record
-        CSMWorld::Record<CSMForeign::NavMesh> record2
-            = CSMWorld::Collection<CSMForeign::NavMesh, CSMWorld::IdAccessor<CSMForeign::NavMesh> >::getRecord (index);
+        std::unique_ptr<CSMWorld::Record<CSMForeign::NavMesh> > record2(
+                new CSMWorld::Record<CSMForeign::NavMesh>(CSMWorld::Collection<CSMForeign::NavMesh,
+                    CSMWorld::IdAccessor<CSMForeign::NavMesh> >::getRecord(index)));
 
         if (base)
-            record2.mBase = record;
+            record2->mBase = record;
         else
-            record2.setModified (record);
+            record2->setModified(record);
 
-        this->setRecord (index, record2);
+        this->setRecord(index, std::move(record2));
     }
 
     return index;

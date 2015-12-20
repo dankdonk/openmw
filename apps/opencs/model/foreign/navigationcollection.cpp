@@ -56,7 +56,7 @@ void CSMForeign::NavigationCollection::load (ESM4::Reader& reader, bool base) //
         std::ostringstream ss;
         ss << std::hex << (*it).formId;
         std::string id = ss.str();
-        int index = this->searchId (id);
+        int index = this->searchId(id);
 
         if (index == -1)
             CSMWorld::IdAccessor<CSMForeign::NavMeshInfo>().getId(record) = id; // new record; set id
@@ -83,21 +83,21 @@ void CSMForeign::NavigationCollection::load (ESM4::Reader& reader, bool base) //
             stream << "#" << std::floor((float)(*it).cellGrid.grid.x/2)
                    << " " << std::floor((float)(*it).cellGrid.grid.y/2);
 
-            std::map<std::string, std::vector<std::string> >::iterator it =
+            std::map<std::string, std::vector<std::string> >::iterator iter =
                 mCellToFormIds.find(stream.str());
 
             // if new cell, insert a blank entry
-            if (it == mCellToFormIds.end())
+            if (iter == mCellToFormIds.end())
             {
                 std::pair<std::map<std::string, std::vector<std::string> >::iterator, bool> res =
                     mCellToFormIds.insert(std::make_pair(stream.str(), std::vector<std::string>()));
                 if (!res.second)
-                    throw std::runtime_error ("Navigation: cell to formid map insert failed.");
-                it = res.first;
+                    throw std::runtime_error("Navigation: cell to formid map insert failed.");
+                iter = res.first;
             }
 
             // add the formid to the cell (key) for fast lookup later (rendering,  pathfinding)
-            (*it).second.push_back(id);
+            (*iter).second.push_back(id);
         }
         else
             std::cout << "ignoring unknown worldspace " << std::hex << (*it).worldSpaceId << std::endl;
@@ -132,31 +132,34 @@ void CSMForeign::NavigationCollection::load (ESM4::Reader& reader, bool base) //
 
 int CSMForeign::NavigationCollection::load (const CSMForeign::NavMeshInfo& record, bool base, int index)
 {
-    if (index==-2)
-        index = this->searchId (CSMWorld::IdAccessor<CSMForeign::NavMeshInfo>().getId (record));
+    if (index == -2)
+        index = this->searchId(CSMWorld::IdAccessor<CSMForeign::NavMeshInfo>().getId(record));
 
-    if (index==-1)
+    if (index == -1)
     {
         // new record
-        CSMWorld::Record<CSMForeign::NavMeshInfo> record2;
-        record2.mState = base ? CSMWorld::RecordBase::State_BaseOnly : CSMWorld::RecordBase::State_ModifiedOnly;
-        (base ? record2.mBase : record2.mModified) = record;
+        std::unique_ptr<CSMWorld::Record<CSMForeign::NavMeshInfo> > record2(
+                new CSMWorld::Record<CSMForeign::NavMeshInfo>);
+
+        record2->mState = base ? CSMWorld::RecordBase::State_BaseOnly : CSMWorld::RecordBase::State_ModifiedOnly;
+        (base ? record2->mBase : record2->mModified) = record;
 
         index = this->getSize();
-        this->appendRecord (record2);
+        this->appendRecord(std::move(record2));
     }
     else
     {
         // old record
-        CSMWorld::Record<CSMForeign::NavMeshInfo> record2
-            = CSMWorld::Collection<CSMForeign::NavMeshInfo>::getRecord (index);
+        std::unique_ptr<CSMWorld::Record<CSMForeign::NavMeshInfo> > record2(
+                new CSMWorld::Record<CSMForeign::NavMeshInfo>(
+                    CSMWorld::Collection<CSMForeign::NavMeshInfo, CSMWorld::IdAccessor<CSMForeign::NavMeshInfo> >::getRecord(index)));
 
         if (base)
-            record2.mBase = record;
+            record2->mBase = record;
         else
-            record2.setModified (record);
+            record2->setModified(record);
 
-        this->setRecord (index, record2);
+        this->setRecord(index, std::move(record2));
     }
 
     return index;

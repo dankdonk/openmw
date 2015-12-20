@@ -32,18 +32,18 @@ int CSMForeign::LandscapeCollection::load (ESM4::Reader& reader, bool base)
     CSMForeign::Landscape record;
     //std::cout << "new Landscape " << std::hex << &record << std::endl; // FIXME
 
-    int index = this->searchId (id);
+    int index = this->searchId(id);
 
-    if (index==-1)
-        CSMWorld::IdAccessor<CSMForeign::Landscape>().getId (record) = id;
+    if (index == -1)
+        CSMWorld::IdAccessor<CSMForeign::Landscape>().getId(record) = id;
     else
     {
-        record = this->getRecord (index).get();
+        record = this->getRecord(index).get();
     }
 
-    loadRecord (record, reader);
+    loadRecord(record, reader);
 
-    return load (record, base, index);
+    return load(record, base, index);
 }
 
 void CSMForeign::LandscapeCollection::loadRecord (CSMForeign::Landscape& record,
@@ -54,31 +54,34 @@ void CSMForeign::LandscapeCollection::loadRecord (CSMForeign::Landscape& record,
 
 int CSMForeign::LandscapeCollection::load (const CSMForeign::Landscape& record, bool base, int index)
 {
-    if (index==-2)
-        index = this->searchId (CSMWorld::IdAccessor<CSMForeign::Landscape>().getId (record));
+    if (index == -2)
+        index = this->searchId(CSMWorld::IdAccessor<CSMForeign::Landscape>().getId(record));
 
-    if (index==-1)
+    if (index == -1)
     {
         // new record
-        CSMWorld::Record<CSMForeign::Landscape> record2;
-        record2.mState = base ? CSMWorld::RecordBase::State_BaseOnly : CSMWorld::RecordBase::State_ModifiedOnly;
-        (base ? record2.mBase : record2.mModified) = record;
+        std::unique_ptr<CSMWorld::Record<CSMForeign::Landscape> > record2(
+                new CSMWorld::Record<CSMForeign::Landscape>);
+
+        record2->mState = base ? CSMWorld::RecordBase::State_BaseOnly : CSMWorld::RecordBase::State_ModifiedOnly;
+        (base ? record2->mBase : record2->mModified) = record;
 
         index = this->getSize();
-        this->appendRecord (record2);
+        this->appendRecord(std::move(record2));
     }
     else
     {
         // old record
-        CSMWorld::Record<CSMForeign::Landscape> record2
-            = CSMWorld::Collection<CSMForeign::Landscape, CSMWorld::IdAccessor<CSMForeign::Landscape> >::getRecord (index);
+        std::unique_ptr<CSMWorld::Record<CSMForeign::Landscape> > record2(
+                new CSMWorld::Record<CSMForeign::Landscape>(
+                    CSMWorld::Collection<CSMForeign::Landscape, CSMWorld::IdAccessor<CSMForeign::Landscape> >::getRecord(index)));
 
         if (base)
-            record2.mBase = record;
+            record2->mBase = record;
         else
-            record2.setModified (record);
+            record2->setModified(record);
 
-        this->setRecord (index, record2);
+        this->setRecord(index, std::move(record2));
     }
 
     return index;
