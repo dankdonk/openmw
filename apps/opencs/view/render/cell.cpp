@@ -626,9 +626,9 @@ void CSVRender::Cell::buildNavMesh()
 
     const std::vector<std::string>& formids = cellmap.find(mId)->second;
 
-    for (std::vector<std::string>::const_iterator it = formids.begin(); it != formids.end(); ++it)
+    for (std::vector<std::string>::const_iterator iter = formids.begin(); iter != formids.end(); ++iter)
     {
-        int index = navmeshes.searchId(*it);
+        int index = navmeshes.searchId(*iter);
         const CSMForeign::NavMeshInfo &navmesh = navmeshes.getRecord(index).get();
 
         if (navmesh.islandInfo.empty())
