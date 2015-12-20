@@ -34,7 +34,6 @@ namespace ESM
     class CellRef
     {
         public:
-
             // Reference number
             // Note: Currently unused for items in containers
             RefNum mRefNum;
@@ -100,16 +99,25 @@ namespace ESM
             Position mPos;
 
             /// Calls loadId and loadData
-            void load (ESMReader& esm, bool wideRefNum = false);
+            void load (ESMReader& esm, bool &isDeleted, bool wideRefNum = false);
 
             void loadId (ESMReader& esm, bool wideRefNum = false);
 
             /// Implicitly called by load
-            void loadData (ESMReader& esm);
+            void loadData (ESMReader& esm, bool &isDeleted);
 
-            void save (ESMWriter &esm, bool wideRefNum = false, bool inInventory = false) const;
+            void save (ESMWriter &esm, bool wideRefNum = false, bool inInventory = false, bool isDeleted = false) const;
 
             void blank();
+
+            CellRef();
+            ~CellRef() = default;
+
+            CellRef(const CellRef&);
+            CellRef& operator=(const CellRef&) = default;
+
+            CellRef (CellRef&& other);
+            CellRef& operator=(CellRef&& other);
     };
 
     bool operator== (const RefNum& left, const RefNum& right);

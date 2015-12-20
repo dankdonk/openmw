@@ -119,8 +119,6 @@ else()
     endif()
 endif()
 
-set(SOUND_INPUT_LIBRARY ${FFMPEG_LIBRARIES})
-
 # TinyXML
 option(USE_SYSTEM_TINYXML "Use system TinyXML library instead of internal." OFF)
 if(USE_SYSTEM_TINYXML)
@@ -583,6 +581,7 @@ add_subdirectory (extern/ogre-ffmpeg-videoplayer)
 add_subdirectory (extern/oics)
 add_subdirectory (extern/sdl4ogre)
 add_subdirectory (extern/esm4)
+add_subdirectory (extern/murmurhash)
 
 # Components
 add_subdirectory (components)
@@ -710,6 +709,17 @@ if (WIN32)
         4702 # Unreachable code
         4800 # Boolean optimization warning, e.g. myBool = (myInt != 0) instead of myBool = myInt
         )
+
+    # MSVC 2015
+    if (MSVC_VERSION GREATER 1899)
+        set(WARNINGS_DISABLE ${WARNINGS_DISABLE}
+            4464 # relative include path contains '..'
+            5026 # move constructor was implicitly defined as deleted
+            5027 # move assignment operator was implicitly defined as deleted
+            5031 # #pragma warning(pop): likely mismatch, popping warning state pushed in different file
+            5032 # detected #pragma warning(push) with no corresponding #pragma warning(pop)
+            )
+    endif()
 
     foreach(d ${WARNINGS_DISABLE})
         set(WARNINGS "${WARNINGS} /wd${d}")

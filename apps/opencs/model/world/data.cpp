@@ -3,6 +3,8 @@
 #include <stdexcept>
 #include <algorithm>
 
+#include <boost/filesystem.hpp>
+
 #include <QAbstractItemModel>
 
 #include <components/esm/esmreader.hpp>
@@ -22,7 +24,6 @@
 #include "resourcesmanager.hpp"
 #include "resourcetable.hpp"
 #include "nestedcoladapterimp.hpp"
-#include "npcstats.hpp"
 #include "npcautocalc.hpp"
 
 void CSMWorld::Data::addModel (QAbstractItemModel *model, UniversalId::Type type, bool update)
@@ -110,7 +111,8 @@ CSMWorld::Data::Data (ToUTF8::FromType encoding, const ResourcesManager& resourc
     mFactions.addColumn (new StringIdColumn<ESM::Faction>);
     mFactions.addColumn (new RecordStateColumn<ESM::Faction>);
     mFactions.addColumn (new FixedRecordTypeColumn<ESM::Faction> (UniversalId::Type_Faction));
-    mFactions.addColumn (new NameColumn<ESM::Faction>);
+    // The savegame format limits the player faction string to 32 characters.
+    mFactions.addColumn (new NameColumn<ESM::Faction>(ColumnBase::Display_String32));
     mFactions.addColumn (new AttributesColumn<ESM::Faction> (0));
     mFactions.addColumn (new AttributesColumn<ESM::Faction> (1));
     mFactions.addColumn (new HiddenColumn<ESM::Faction>);
@@ -120,6 +122,7 @@ CSMWorld::Data::Data (ToUTF8::FromType encoding, const ResourcesManager& resourc
     mFactions.addColumn (new NestedParentColumn<ESM::Faction> (Columns::ColumnId_FactionReactions));
     index = mFactions.getColumns()-1;
     mFactions.addAdapter (std::make_pair(&mFactions.getColumn(index), new FactionReactionsAdapter ()));
+    // NAME32 enforced in IdCompletionDelegate::createEditor()
     mFactions.getNestableColumn(index)->addColumn(
         new NestedChildColumn (Columns::ColumnId_Faction, ColumnBase::Display_Faction));
     mFactions.getNestableColumn(index)->addColumn(
@@ -188,6 +191,7 @@ CSMWorld::Data::Data (ToUTF8::FromType encoding, const ResourcesManager& resourc
     index = mRegions.getColumns()-1;
     mRegions.addAdapter (std::make_pair(&mRegions.getColumn(index), new RegionSoundListAdapter ()));
     mRegions.getNestableColumn(index)->addColumn(
+    // NAME32 enforced in IdCompletionDelegate::createEditor()
         new NestedChildColumn (Columns::ColumnId_SoundName, ColumnBase::Display_Sound));
     mRegions.getNestableColumn(index)->addColumn(
         new NestedChildColumn (Columns::ColumnId_SoundChance, ColumnBase::Display_Integer));
@@ -294,7 +298,8 @@ CSMWorld::Data::Data (ToUTF8::FromType encoding, const ResourcesManager& resourc
     mCells.addColumn (new StringIdColumn<Cell>);
     mCells.addColumn (new RecordStateColumn<Cell>);
     mCells.addColumn (new FixedRecordTypeColumn<Cell> (UniversalId::Type_Cell));
-    mCells.addColumn (new NameColumn<Cell>);
+    // NAME64 enforced in IdCompletionDelegate::createEditor()
+    mCells.addColumn (new NameColumn<Cell>(ColumnBase::Display_String64));
     mCells.addColumn (new FlagColumn<Cell> (Columns::ColumnId_SleepForbidden, ESM::Cell::NoSleep));
     mCells.addColumn (new FlagColumn<Cell> (Columns::ColumnId_InteriorWater, ESM::Cell::HasWater,
         ColumnBase::Flag_Table | ColumnBase::Flag_Dialogue | ColumnBase::Flag_Dialogue_Refresh));
@@ -866,8 +871,8 @@ const CSMWorld::MetaData& CSMWorld::Data::getMetaData() const
 
 void CSMWorld::Data::setMetaData (const MetaData& metaData)
 {
-    Record<MetaData> record (RecordBase::State_ModifiedOnly, 0, &metaData);
-    mMetaData.setRecord (0, record);
+    mMetaData.setRecord (0, std::make_unique<Record<MetaData> >(
+            Record<MetaData>(RecordBase::State_ModifiedOnly, 0, &metaData)));
 }
 
 const CSMWorld::NpcAutoCalc& CSMWorld::Data::getNpcAutoCalc() const
@@ -942,6 +947,25 @@ void CSMWorld::Data::merge()
     mGlobals.merge();
 }
 
+int CSMWorld::Data::getTotalRecords (const std::vector<boost::filesystem::path>& files)
+{
+    int records = 0;
+
+    std::unique_ptr<ESM::ESMReader> reader = std::unique_ptr<ESM::ESMReader>(new ESM::ESMReader);
+
+    for (unsigned int i = 0; i < files.size(); ++i)
+    {
+        if (boost::filesystem::exists(files[i].string()))
+        {
+            reader->open(files[i].string());
+            records += reader->getRecordCount();
+            reader->close();
+        }
+    }
+
+    return records;
+}
+
 int CSMWorld::Data::startLoading (const boost::filesystem::path& path, bool base, bool project)
 {
     // Don't delete the Reader yet. Some record types store a reference to the Reader to handle on-demand loading
@@ -964,6 +988,35 @@ int CSMWorld::Data::startLoading (const boost::filesystem::path& path, bool base
         mReader->setIndex(mReaderIndex); // use the same index
         static_cast<ESM::ESM4Reader*>(mReader)->openTes4File(path.string());
     }
+    mLoadedFiles.push_back(path.filename().string());
+
+    // at this point mReader->mHeader.mMaster have been populated for the file being loaded
+    for (size_t f = 0; f < mReader->getGameFiles().size(); ++f)
+    {
+        ESM::Header::MasterData& m = const_cast<ESM::Header::MasterData&>(mReader->getGameFiles().at(f));
+
+        int index = -1;
+        for (size_t i = 0; i < mLoadedFiles.size()-1; ++i) // -1 to ignore the current file
+        {
+            if (Misc::StringUtils::ciEqual(m.name, mLoadedFiles.at(i)))
+            {
+                index = static_cast<int>(i);
+                break;
+            }
+        }
+
+        if (index == -1)
+        {
+            // Tried to load a parent file that has not been loaded yet. This is bad,
+            //  the launcher should have taken care of this.
+            std::string fstring = "File " + mReader->getName() + " asks for parent file " + m.name
+                + ", but it has not been loaded yet. Please check your load order.";
+            mReader->fail(fstring);
+        }
+
+        m.index = index;
+    }
+
     mBase = base;
     mProject = project;
 
@@ -973,7 +1026,8 @@ int CSMWorld::Data::startLoading (const boost::filesystem::path& path, bool base
         metaData.mId = "sys::meta";
         metaData.load (*mReader);
 
-        mMetaData.setRecord (0, Record<MetaData> (RecordBase::State_ModifiedOnly, 0, &metaData));
+        mMetaData.setRecord (0, std::make_unique<Record<MetaData> >(
+                    Record<MetaData> (RecordBase::State_ModifiedOnly, 0, &metaData)));
     }
 
     return mReader->getRecordCount();
@@ -1096,41 +1150,43 @@ bool CSMWorld::Data::continueLoading (CSMDoc::Messages& messages)
 
         case ESM::REC_DIAL:
         {
-            std::string id = mReader->getHNOString ("NAME");
-
             ESM::Dialogue record;
-            record.mId = id;
-            record.load (*mReader);
+            bool isDeleted = false;
 
-            if (record.mType==ESM::Dialogue::Journal)
-            {
-                mJournals.load (record, mBase);
-                mDialogue = &mJournals.getRecord (id).get();
-            }
-            else if (record.mType==ESM::Dialogue::Deleted)
-            {
-                mDialogue = 0; // record vector can be shuffled around which would make pointer
-                               // to record invalid
+            record.load (*mReader, isDeleted);
 
-                if (mJournals.tryDelete (id))
+            if (isDeleted)
+            {
+                // record vector can be shuffled around which would make pointer to record invalid
+                mDialogue = 0;
+
+                if (mJournals.tryDelete (record.mId))
                 {
-                    /// \todo handle info records
+                    mJournalInfos.removeDialogueInfos(record.mId);
                 }
-                else if (mTopics.tryDelete (id))
+                else if (mTopics.tryDelete (record.mId))
                 {
-                    /// \todo handle info records
+                    mTopicInfos.removeDialogueInfos(record.mId);
                 }
                 else
                 {
                     messages.add (UniversalId::Type_None,
-                        "Trying to delete dialogue record " + id + " which does not exist",
+                        "Trying to delete dialogue record " + record.mId + " which does not exist",
                         "", CSMDoc::Message::Severity_Warning);
                 }
             }
             else
             {
-                mTopics.load (record, mBase);
-                mDialogue = &mTopics.getRecord (id).get();
+                if (record.mType == ESM::Dialogue::Journal)
+                {
+                    mJournals.load (record, mBase);
+                    mDialogue = &mJournals.getRecord (record.mId).get();
+                }
+                else
+                {
+                    mTopics.load (record, mBase);
+                    mDialogue = &mTopics.getRecord (record.mId).get();
+                }
             }
 
             break;

@@ -11,7 +11,7 @@ namespace CSMWorld
     template<typename ESXRecordT, typename IdAccessorT = IdAccessor<ESXRecordT> >
     class IdCollection : public Collection<ESXRecordT, IdAccessorT>
     {
-            virtual void loadRecord (ESXRecordT& record, ESM::ESMReader& reader);
+            virtual void loadRecord (ESXRecordT& record, ESM::ESMReader& reader, bool& isDeleted);
 
         public:
 
@@ -33,107 +33,77 @@ namespace CSMWorld
 
     template<typename ESXRecordT, typename IdAccessorT>
     void IdCollection<ESXRecordT, IdAccessorT>::loadRecord (ESXRecordT& record,
-        ESM::ESMReader& reader)
+                                                            ESM::ESMReader& reader,
+                                                            bool& isDeleted)
     {
-        record.load (reader);
+        record.load (reader, isDeleted);
     }
 
     template<typename ESXRecordT, typename IdAccessorT>
     int IdCollection<ESXRecordT, IdAccessorT>::load (ESM::ESMReader& reader, bool base)
     {
-        std::string id = reader.getHNOString ("NAME");
+        ESXRecordT record;
+        bool isDeleted = false;
 
-        if (reader.isNextSub ("DELE"))
+        loadRecord (record, reader, isDeleted);
+
+        std::string id = IdAccessorT().getId (record);
+        int index = this->searchId (id);
+
+        if (isDeleted)
         {
-            int index = Collection<ESXRecordT, IdAccessorT>::searchId (id);
-
-            reader.skipRecord();
-
             if (index==-1)
             {
                 // deleting a record that does not exist
-
                 // ignore it for now
-
                 /// \todo report the problem to the user
-            }
-            else if (base)
-            {
-                Collection<ESXRecordT, IdAccessorT>::removeRows (index, 1);
-            }
-            else
-            {
-                Record<ESXRecordT> record = Collection<ESXRecordT, IdAccessorT>::getRecord (index);
-                record.mState = RecordBase::State_Deleted;
-                this->setRecord (index, record);
+                return -1;
             }
 
-            return -1;
+            if (base)
+            {
+                this->removeRows (index, 1);
+                return -1;
+            }
+
+            std::unique_ptr<Record<ESXRecordT> > baseRecord(new Record<ESXRecordT>(this->getRecord(index)));
+            baseRecord->mState = RecordBase::State_Deleted;
+            this->setRecord(index, std::move(baseRecord));
+            return index;
         }
-        else
-        {
-            ESXRecordT record;
 
-            // Sometimes id (i.e. NAME of the cell) may be different to the id we stored
-            // earlier.  e.g. NAME == "Vivec, Arena" but id == "#-4 11".  Sometime NAME is
-            // missing altogether for scripts or cells.
-            //
-            // In such cases the returned index will be -1.  We then try updating the
-            // IdAccessor's id manually (e.g. set mId of the record to "Vivec, Arena")
-            // and try getting the index once more after loading the record.  The mId of the
-            // record would have changed to "#-4 11" after the load, and searchId() should find
-            // it (if this is a modify)
-            int index = this->searchId (id);
-
-            if (index==-1)
-                IdAccessorT().getId (record) = id;
-            else
-            {
-                record = this->getRecord (index).get();
-            }
-
-            loadRecord (record, reader);
-
-            if (index==-1)
-            {
-                std::string newId = IdAccessorT().getId(record);
-                int newIndex = this->searchId(newId);
-                if (newIndex != -1 && id != newId)
-                    index = newIndex;
-            }
-
-            return load (record, base, index);
-        }
+        return load (record, base, index);
     }
 
     template<typename ESXRecordT, typename IdAccessorT>
     int IdCollection<ESXRecordT, IdAccessorT>::load (const ESXRecordT& record, bool base,
         int index)
     {
-        if (index==-2)
+        if (index==-2) // index unknown
             index = this->searchId (IdAccessorT().getId (record));
 
         if (index==-1)
         {
             // new record
-            Record<ESXRecordT> record2;
-            record2.mState = base ? RecordBase::State_BaseOnly : RecordBase::State_ModifiedOnly;
-            (base ? record2.mBase : record2.mModified) = record;
+            std::unique_ptr<Record<ESXRecordT> > record2(new Record<ESXRecordT>);
+            record2->mState = base ? RecordBase::State_BaseOnly : RecordBase::State_ModifiedOnly;
+            (base ? record2->mBase : record2->mModified) = record;
 
             index = this->getSize();
-            this->appendRecord (record2);
+            this->appendRecord(std::move(record2));
         }
         else
         {
             // old record
-            Record<ESXRecordT> record2 = Collection<ESXRecordT, IdAccessorT>::getRecord (index);
+            std::unique_ptr<Record<ESXRecordT> > record2(
+                    new Record<ESXRecordT>(Collection<ESXRecordT, IdAccessorT>::getRecord(index)));
 
             if (base)
-                record2.mBase = record;
+                record2->mBase = record;
             else
-                record2.setModified (record);
+                record2->setModified(record);
 
-            this->setRecord (index, record2);
+            this->setRecord(index, std::move(record2));
         }
 
         return index;
@@ -147,7 +117,7 @@ namespace CSMWorld
         if (index==-1)
             return false;
 
-        Record<ESXRecordT> record = Collection<ESXRecordT, IdAccessorT>::getRecord (index);
+        const Record<ESXRecordT>& record = Collection<ESXRecordT, IdAccessorT>::getRecord (index);
 
         if (record.isDeleted())
             return false;
@@ -158,8 +128,10 @@ namespace CSMWorld
         }
         else
         {
-            record.mState = RecordBase::State_Deleted;
-            this->setRecord (index, record);
+            std::unique_ptr<Record<ESXRecordT> > record2(
+                    new Record<ESXRecordT>(Collection<ESXRecordT, IdAccessorT>::getRecord(index)));
+            record2->mState = RecordBase::State_Deleted;
+            this->setRecord(index, std::move(record2));
         }
 
         return true;

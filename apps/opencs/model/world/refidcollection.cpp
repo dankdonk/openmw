@@ -58,8 +58,11 @@ CSMWorld::RefIdCollection::RefIdCollection(const CSMWorld::Data& data)
 
     NameColumns nameColumns (modelColumns);
 
-    mColumns.push_back (RefIdColumn (Columns::ColumnId_Name, ColumnBase::Display_String));
+    // Only items that can be placed in a container have the 32 character limit, but enforce
+    // that for all referenceable types for now.
+    mColumns.push_back (RefIdColumn (Columns::ColumnId_Name, ColumnBase::Display_String32));
     nameColumns.mName = &mColumns.back();
+    // NAME32 enforced in IdCompletionDelegate::createEditor()
     mColumns.push_back (RefIdColumn (Columns::ColumnId_Script, ColumnBase::Display_Script));
     nameColumns.mScript = &mColumns.back();
 
@@ -239,9 +242,9 @@ CSMWorld::RefIdCollection::RefIdCollection(const CSMWorld::Data& data)
     mColumns.back().addColumn(
             new RefIdColumn (Columns::ColumnId_AiWanderRepeat, CSMWorld::ColumnBase::Display_Boolean));
     mColumns.back().addColumn(
-            new RefIdColumn (Columns::ColumnId_AiActivateName, CSMWorld::ColumnBase::Display_String));
+            new RefIdColumn (Columns::ColumnId_AiActivateName, CSMWorld::ColumnBase::Display_String32));
     mColumns.back().addColumn(
-            new RefIdColumn (Columns::ColumnId_AiTargetId, CSMWorld::ColumnBase::Display_String));
+            new RefIdColumn (Columns::ColumnId_AiTargetId, CSMWorld::ColumnBase::Display_String32));
     mColumns.back().addColumn(
             new RefIdColumn (Columns::ColumnId_AiTargetCell, CSMWorld::ColumnBase::Display_String));
     mColumns.back().addColumn(
@@ -486,6 +489,7 @@ CSMWorld::RefIdCollection::RefIdCollection(const CSMWorld::Data& data)
     mColumns.push_back (RefIdColumn (Columns::ColumnId_Class, ColumnBase::Display_Class));
     npcColumns.mClass = &mColumns.back();
 
+    // NAME32 enforced in IdCompletionDelegate::createEditor()
     mColumns.push_back (RefIdColumn (Columns::ColumnId_Faction, ColumnBase::Display_Faction));
     npcColumns.mFaction = &mColumns.back();
 
@@ -810,30 +814,31 @@ int CSMWorld::RefIdCollection::searchId (const std::string& id) const
     return mData.localToGlobalIndex (localIndex);
 }
 
-void CSMWorld::RefIdCollection::replace (int index, const RecordBase& record)
+void CSMWorld::RefIdCollection::replace (int index, std::unique_ptr<RecordBase> record)
 {
-    mData.getRecord (mData.globalToLocalIndex (index)).assign (record);
+    mData.getRecord (mData.globalToLocalIndex (index)).assign (*record.release());
 }
 
 void CSMWorld::RefIdCollection::cloneRecord(const std::string& origin,
                                      const std::string& destination,
                                      const CSMWorld::UniversalId::Type type)
 {
-        std::auto_ptr<RecordBase> newRecord(mData.getRecord(mData.searchId(origin)).modifiedCopy());
+        std::unique_ptr<RecordBase> newRecord =
+            std::move(mData.getRecord(mData.searchId(origin)).modifiedCopy());
         mAdapters.find(type)->second->setId(*newRecord, destination);
-        mData.insertRecord(*newRecord, type, destination);
+        mData.insertRecord(std::move(newRecord), type, destination);
 }
 
-void CSMWorld::RefIdCollection::appendRecord (const RecordBase& record,
+void CSMWorld::RefIdCollection::appendRecord (std::unique_ptr<RecordBase> record,
     UniversalId::Type type)
 {
-    std::string id = findAdapter (type).getId (record);
+    std::string id = findAdapter (type).getId (*record.get());
 
     int index = mData.getAppendIndex (type);
 
     mData.appendRecord (type, id, false);
 
-    mData.getRecord (mData.globalToLocalIndex (index)).assign (record);
+    mData.getRecord (mData.globalToLocalIndex (index)).assign (*record.release());
 }
 
 const CSMWorld::RecordBase& CSMWorld::RefIdCollection::getRecord (const std::string& id) const
@@ -848,61 +853,7 @@ const CSMWorld::RecordBase& CSMWorld::RefIdCollection::getRecord (int index) con
 
 void CSMWorld::RefIdCollection::load (ESM::ESMReader& reader, bool base, UniversalId::Type type)
 {
-    std::string id = reader.getHNOString ("NAME");
-
-    int index = searchId (id);
-
-    if (reader.isNextSub ("DELE"))
-    {
-        reader.skipRecord();
-
-        if (index==-1)
-        {
-            // deleting a record that does not exist
-
-            // ignore it for now
-
-            /// \todo report the problem to the user
-        }
-        else if (base)
-        {
-            mData.erase (index, 1);
-        }
-        else
-        {
-            mData.getRecord (mData.globalToLocalIndex (index)).mState = RecordBase::State_Deleted;
-        }
-    }
-    else
-    {
-        if (index==-1)
-        {
-            // new record
-            int index = mData.getAppendIndex (type);
-            mData.appendRecord (type, id, base);
-
-            RefIdData::LocalIndex localIndex = mData.globalToLocalIndex (index);
-
-            mData.load (localIndex, reader, base);
-
-            mData.getRecord (localIndex).mState =
-                base ? RecordBase::State_BaseOnly : RecordBase::State_ModifiedOnly;
-        }
-        else
-        {
-            // old record
-            RefIdData::LocalIndex localIndex = mData.globalToLocalIndex (index);
-
-            if (!base)
-                if (mData.getRecord (localIndex).mState==RecordBase::State_Erased)
-                    throw std::logic_error ("attempt to access a deleted record");
-
-            mData.load (localIndex, reader, base);
-
-            if (!base)
-                mData.getRecord (localIndex).mState = RecordBase::State_Modified;
-        }
-    }
+    mData.load(reader, base, type);
 }
 
 int CSMWorld::RefIdCollection::getAppendIndex (const std::string& id, UniversalId::Type type) const

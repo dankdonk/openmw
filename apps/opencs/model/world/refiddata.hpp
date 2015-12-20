@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <map>
+#include <memory>
 
 #include <components/esm/loadacti.hpp>
 #include <components/esm/loadalch.hpp>
@@ -24,6 +25,8 @@
 #include <components/esm/loadnpc.hpp>
 #include <components/esm/loadmisc.hpp>
 #include <components/esm/esmwriter.hpp>
+
+#include <components/misc/stringops.hpp>
 
 #include "record.hpp"
 #include "universalid.hpp"
@@ -47,9 +50,10 @@ namespace CSMWorld
 
         virtual void appendRecord (const std::string& id, bool base) = 0;
 
-        virtual void insertRecord (RecordBase& record) = 0;
+        virtual void insertRecord (std::unique_ptr<RecordBase> record) = 0;
 
-        virtual void load (int index,  ESM::ESMReader& reader, bool base) = 0;
+        virtual int load (ESM::ESMReader& reader, bool base) = 0;
+        ///< \return index of a loaded record or -1 if no record was loaded
 
         virtual void erase (int index, int count) = 0;
 
@@ -61,7 +65,7 @@ namespace CSMWorld
     template<typename RecordT>
     struct RefIdDataContainer : public RefIdDataContainerBase
     {
-        std::vector<Record<RecordT> > mContainer;
+        std::vector<std::unique_ptr<Record<RecordT> > > mContainer;
 
         virtual int getSize() const;
 
@@ -71,9 +75,10 @@ namespace CSMWorld
 
         virtual void appendRecord (const std::string& id, bool base);
 
-        virtual void insertRecord (RecordBase& record);
+        virtual void insertRecord (std::unique_ptr<RecordBase> record);
 
-        virtual void load (int index,  ESM::ESMReader& reader, bool base);
+        virtual int load (ESM::ESMReader& reader, bool base);
+        ///< \return index of a loaded record or -1 if no record was loaded
 
         virtual void erase (int index, int count);
 
@@ -83,10 +88,18 @@ namespace CSMWorld
     };
 
     template<typename RecordT>
-    void RefIdDataContainer<RecordT>::insertRecord(RecordBase& record)
+    void RefIdDataContainer<RecordT>::insertRecord(std::unique_ptr<RecordBase> record)
     {
-        Record<RecordT>& newRecord = dynamic_cast<Record<RecordT>& >(record);
-        mContainer.push_back(newRecord);
+        Record<RecordT> *tmp = dynamic_cast<Record<RecordT>*>(record.get());
+        if(tmp != nullptr)
+        {
+            record.release();
+            std::unique_ptr<Record<RecordT> > newRecord;
+            newRecord.reset(tmp);
+            mContainer.push_back(std::move(newRecord));
+        }
+        else
+            throw std::runtime_error ("invalid record for RefIdDataContainer");
     }
 
     template<typename RecordT>
@@ -98,33 +111,82 @@ namespace CSMWorld
     template<typename RecordT>
     const RecordBase& RefIdDataContainer<RecordT>::getRecord (int index) const
     {
-        return mContainer.at (index);
+        return *mContainer.at (index);
     }
 
     template<typename RecordT>
     RecordBase& RefIdDataContainer<RecordT>::getRecord (int index)
     {
-        return mContainer.at (index);
+        return *mContainer.at (index);
     }
 
     template<typename RecordT>
     void RefIdDataContainer<RecordT>::appendRecord (const std::string& id, bool base)
     {
-        Record<RecordT> record;
+        std::unique_ptr<Record<RecordT> > record(new Record<RecordT>);
 
-        record.mState = base ? RecordBase::State_BaseOnly : RecordBase::State_ModifiedOnly;
+        record->mState = base ? RecordBase::State_BaseOnly : RecordBase::State_ModifiedOnly;
 
-        record.mBase.mId = id;
-        record.mModified.mId = id;
-        (base ? record.mBase : record.mModified).blank();
+        record->mBase.mId = id;
+        record->mModified.mId = id;
+        (base ? record->mBase : record->mModified).blank();
 
-        mContainer.push_back (record);
+        mContainer.push_back (std::move(record));
     }
 
     template<typename RecordT>
-    void RefIdDataContainer<RecordT>::load (int index,  ESM::ESMReader& reader, bool base)
+    int RefIdDataContainer<RecordT>::load (ESM::ESMReader& reader, bool base)
     {
-        (base ? mContainer.at (index).mBase : mContainer.at (index).mModified).load (reader);
+        RecordT record;
+        bool isDeleted = false;
+
+        record.load(reader, isDeleted);
+
+        int index = 0;
+        int numRecords = static_cast<int>(mContainer.size());
+        for (; index < numRecords; ++index)
+        {
+            if (Misc::StringUtils::ciEqual(mContainer[index]->get().mId, record.mId))
+            {
+                break;
+            }
+        }
+
+        if (isDeleted)
+        {
+            if (index == numRecords)
+            {
+                // deleting a record that does not exist
+                // ignore it for now
+                /// \todo report the problem to the user
+                return -1;
+            }
+
+            // Flag the record as Deleted even for a base content file.
+            // RefIdData is responsible for its erasure.
+            mContainer[index]->mState = RecordBase::State_Deleted;
+        }
+        else
+        {
+            if (index == numRecords)
+            {
+                appendRecord(record.mId, base);
+                if (base)
+                {
+                    mContainer.back()->mBase = record;
+                }
+                else
+                {
+                    mContainer.back()->mModified = record;
+                }
+            }
+            else if (!base)
+            {
+                mContainer[index]->setModified(record);
+            }
+        }
+
+        return index;
     }
 
     template<typename RecordT>
@@ -139,25 +201,20 @@ namespace CSMWorld
     template<typename RecordT>
     std::string RefIdDataContainer<RecordT>::getId (int index) const
     {
-        return mContainer.at (index).get().mId;
+        return mContainer.at (index)->get().mId;
     }
 
     template<typename RecordT>
     void RefIdDataContainer<RecordT>::save (int index, ESM::ESMWriter& writer) const
     {
-        CSMWorld::RecordBase::State state = mContainer.at (index).mState;
+        const Record<RecordT>& record = *mContainer.at(index);
 
-        if (state==CSMWorld::RecordBase::State_Modified ||
-            state==CSMWorld::RecordBase::State_ModifiedOnly)
+        if (record.isModified() || record.mState == RecordBase::State_Deleted)
         {
-            writer.startRecord (mContainer.at (index).mModified.sRecordId);
-            writer.writeHNCString ("NAME", getId (index));
-            mContainer.at (index).mModified.save (writer);
-            writer.endRecord (mContainer.at (index).mModified.sRecordId);
-        }
-        else if (state==CSMWorld::RecordBase::State_Deleted)
-        {
-            /// \todo write record with delete flag
+            RecordT esmRecord = record.get();
+            writer.startRecord(esmRecord.sRecordId);
+            esmRecord.save(writer, record.mState == RecordBase::State_Deleted);
+            writer.endRecord(esmRecord.sRecordId);
         }
     }
 
@@ -198,6 +255,8 @@ namespace CSMWorld
             void erase (const LocalIndex& index, int count);
             ///< Must not spill over into another type.
 
+            std::string getRecordId(const LocalIndex &index) const;
+
         public:
 
             RefIdData();
@@ -210,7 +269,7 @@ namespace CSMWorld
 
             void erase (int index, int count);
 
-            void insertRecord (CSMWorld::RecordBase& record, CSMWorld::UniversalId::Type type,
+            void insertRecord (std::unique_ptr<RecordBase> record, CSMWorld::UniversalId::Type type,
                 const std::string& id);
 
             const RecordBase& getRecord (const LocalIndex& index) const;
@@ -221,7 +280,7 @@ namespace CSMWorld
 
             int getAppendIndex (UniversalId::Type type) const;
 
-            void load (const LocalIndex& index, ESM::ESMReader& reader, bool base);
+            void load (ESM::ESMReader& reader, bool base, UniversalId::Type type);
 
             int getSize() const;
 

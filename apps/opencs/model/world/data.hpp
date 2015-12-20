@@ -66,7 +66,6 @@ namespace CSMWorld
 {
     class ResourcesManager;
     class Resources;
-    class NpcStats;
     class NpcAutoCalc;
 
     class Data : public QObject
@@ -114,8 +113,9 @@ namespace CSMWorld
             const ESM::Dialogue *mDialogue; // last loaded dialogue
             bool mBase;
             bool mProject;
-            std::map<std::string, std::map<ESM::RefNum, std::string> > mRefLoadCache;
+            std::map<std::string, std::map<unsigned int, unsigned int> > mRefLoadCache;
             int mReaderIndex;
+            std::vector<std::string> mLoadedFiles;
 
             std::vector<boost::shared_ptr<ESM::ESMReader> > mReaders;
 
@@ -135,8 +135,6 @@ namespace CSMWorld
             static int count (RecordBase::State state, const CollectionBase& collection);
 
             const Data& self ();
-
-            void clearNpcStatsCache ();
 
             bool loadTes4Group (CSMDoc::Messages& messages);
             bool loadTes4Record (const ESM4::RecordHeader& hdr, CSMDoc::Messages& messages);
@@ -290,6 +288,8 @@ namespace CSMWorld
 
             void merge();
             ///< Merge modified into base.
+
+            int getTotalRecords (const std::vector<boost::filesystem::path>& files); // for better loading bar
 
             int startLoading (const boost::filesystem::path& path, bool base, bool project);
             ///< Begin merging content of a file into base or modified.
