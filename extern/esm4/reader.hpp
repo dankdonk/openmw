@@ -56,6 +56,7 @@ namespace ESM4
         GroupStack      mGroupStack;      // keep track of bytes left to find when a group is done
         std::size_t     mEndOfRecord;     // number of bytes read by sub records
         CellGrid        mCurrCell;        // TODO: should keep keep a map of cell formids // FIXME
+        bool            mCellGridValid;
         std::size_t     mRecHeaderSize;
 
         // TODO: try fixed size buffers on the stack for both below (may be faster)
@@ -83,9 +84,24 @@ namespace ESM4
 
         inline const RecordHeader& hdr() const { return mRecordHeader; }
 
-        inline const GroupTypeHeader& grp() const { return mGroupStack.back().first; } // FIXME
-        inline const CellGrid currCell() const { return mCurrCell; }                   // FIXME
-        void setCurrCell(const CellGrid currCell) { mCurrCell = currCell; }            // FIXME
+        const GroupTypeHeader& grp(std::size_t pos = 0) const;
+
+        // Maybe should throw an exception if called when not valid?
+        const CellGrid& currCell() const;
+// if performance becomes an issue
+#if 0
+        inline const CellGrid& currCell() const {
+            assert(mCellGridValid && "Attempt to use an invalid cell grid");
+            return mCurrCell;
+        }
+#endif
+
+        // This is set while loading a CELL record (XCLC sub record) and cleared
+        // when entering an exterior cell group.
+        inline void setCurrCell(const CellGrid& currCell) {
+            mCellGridValid = true;
+            mCurrCell = currCell;
+        }
 
         // Get the data part of a record
         // Note: assumes the header was read correctly and nothing else was read

@@ -35,7 +35,7 @@
 #include <components/esm/esm4reader.hpp>
 
 ESM4::Reader::Reader()
-: mObserver(nullptr), mEndOfRecord(0), mRecHeaderSize(sizeof(ESM4::RecordHeader))
+: mObserver(nullptr), mEndOfRecord(0), mCellGridValid(false), mRecHeaderSize(sizeof(ESM4::RecordHeader))
 {
     mInBuf.reset();
     mDataBuf.reset();
@@ -105,6 +105,16 @@ void ESM4::Reader::saveGroupStatus(const ESM4::RecordHeader& hdr)
 
     // push group
     mGroupStack.push_back(std::make_pair(hdr.group, hdr.group.groupSize - (std::uint32_t)mRecHeaderSize));
+
+    mCellGridValid = false; // FIXME: is there a better place to set this?
+}
+
+const ESM4::CellGrid& ESM4::Reader::currCell() const
+{
+    // Maybe should throw an exception instead?
+    assert(mCellGridValid && "Attempt to use an invalid cell grid");
+
+    return mCurrCell;
 }
 
 void ESM4::Reader::checkGroupStatus()
@@ -132,6 +142,13 @@ void ESM4::Reader::checkGroupStatus()
 #endif
         mGroupStack.back().second -= groupSize;
     }
+}
+
+const ESM4::GroupTypeHeader& ESM4::Reader::grp(std::size_t pos) const
+{
+    assert(pos <= mGroupStack.size()-1 && "ESM4::Reader::grp - exceeded stack depth");
+
+    return (*(mGroupStack.end()-pos-1)).first;
 }
 
 void ESM4::Reader::getRecordData()

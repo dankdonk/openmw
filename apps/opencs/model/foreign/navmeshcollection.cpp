@@ -21,12 +21,22 @@ int CSMForeign::NavMeshCollection::load (ESM4::Reader& reader, bool base)
 {
     std::string id;
     // HACK // FIXME
-    if (reader.grp().type == ESM4::Grp_CellTemporaryChild)
+    if (reader.grp().type != ESM4::Grp_CellTemporaryChild)
+        return -1; // FIXME
+    else if (reader.grp(2).type == ESM4::Grp_InteriorCell)
     {
+        // FIXME: another id?
+        id = "";
+    }
+    else
+    {
+        // FIXME: navmesh can occur in interior cells
         std::ostringstream stream;
-        stream << "#" << std::floor((float)reader.currCell().grid.x/2)
-               << " " << std::floor((float)reader.currCell().grid.y/2);
-        id = stream.str();
+        //stream << "#" << reader.currCell().grid.x << " " << reader.currCell().grid.y;
+        //stream << "#" << std::floor((float)reader.currCell().grid.x/2)
+               //<< " " << std::floor((float)reader.currCell().grid.y/2);
+        id = ""; //stream.str();
+        //std::cout << "loading Cell " << id << std::endl; // FIXME
     }
 
     CSMForeign::NavMesh record;

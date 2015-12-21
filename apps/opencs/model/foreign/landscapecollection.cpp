@@ -19,19 +19,33 @@ CSMForeign::LandscapeCollection::~LandscapeCollection ()
 
 int CSMForeign::LandscapeCollection::load (ESM4::Reader& reader, bool base)
 {
-    std::string id;
-    // HACK // FIXME
-    if (reader.grp().type == ESM4::Grp_CellTemporaryChild)
-    {
-        std::ostringstream stream;
-        stream << "#" << std::floor((float)reader.currCell().grid.x/2)
-               << " " << std::floor((float)reader.currCell().grid.y/2);
-        id = stream.str();
-    }
+    // LAND records should only occur in a exterior cell.  Ensure this because we will make use
+    // of reader.currCell() later.
+    assert(reader.grp(3).type == ESM4::Grp_ExteriorCell &&
+           reader.grp(2).type == ESM4::Grp_ExteriorSubCell &&
+           reader.grp(1).type == ESM4::Grp_CellChild &&
+           reader.grp(0).type == ESM4::Grp_CellTemporaryChild &&
+           "LAND record found in an unexpected group heirarchy");
+
 
     CSMForeign::Landscape record;
     //std::cout << "new Landscape " << std::hex << &record << std::endl; // FIXME
 
+    std::string id;
+    std::ostringstream stream;
+    // If using Morrowind cell size, need to divide by 2
+    //stream << "#" << std::floor((float)reader.currCell().grid.x/2)
+           //<< " " << std::floor((float)reader.currCell().grid.y/2);
+    stream << "#" << reader.currCell().grid.x << " " << reader.currCell().grid.y;
+    id = stream.str();
+#if 0
+    std::string padding = "";
+    padding.insert(0, reader.stackSize()*2, ' ');
+    std::cout << padding << "LAND: formId " << std::hex << reader.hdr().record.id << std::endl; // FIXME
+    std::cout << padding << "LAND X " << std::dec << reader.currCell().grid.x << ", Y " << reader.currCell().grid.y << std::endl;
+#endif
+
+    // FIXME; should be using the formId as the lookup key
     int index = this->searchId(id);
 
     if (index == -1)

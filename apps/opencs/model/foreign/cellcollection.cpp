@@ -2,6 +2,10 @@
 
 #include <iostream> // FIXME
 
+#ifdef NDEBUG // FIXME: debugging only
+#undef NDEBUG
+#endif
+
 #include <extern/esm4/reader.hpp>
 
 #include "../world/record.hpp"
@@ -18,25 +22,34 @@ int CSMForeign::CellCollection::load (ESM4::Reader& reader, bool base)
 {
     CSMForeign::Cell record;
 
+    loadRecord(record, reader); // reader.currCell() is set during the load (sub record SUB_XCLC)
+
     std::string id;
     // HACK // FIXME
-    //if (reader.grp().type == ESM4::Grp_CellTemporaryChild)
+    if (reader.grp().type != ESM4::Grp_CellTemporaryChild)
+        return -1; // FIXME
+    else if (reader.grp(2).type == ESM4::Grp_InteriorCell)
     {
+        // FIXME: another id?
+        id = "";
+    }
+    else
+    {
+        assert(reader.grp(3).type == ESM4::Grp_ExteriorCell && "Unexpected group while loading cell");
         std::ostringstream stream;
         stream << "#" << reader.currCell().grid.x << " " << reader.currCell().grid.y;
         //stream << "#" << std::floor((float)reader.currCell().grid.x/2)
                //<< " " << std::floor((float)reader.currCell().grid.y/2);
         id = stream.str();
-        std::cout << "loading Cell " << id << std::endl; // FIXME
+        //std::cout << "loading Cell " << id << std::endl; // FIXME
     }
+
     int index = this->searchId(id);
 
     if (index == -1)
         CSMWorld::IdAccessor<CSMForeign::Cell>().getId(record) = id;
     else
         record = this->getRecord(index).get();
-
-    loadRecord(record, reader);
 
     return load(record, base, index);
 }

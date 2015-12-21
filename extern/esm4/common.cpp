@@ -23,6 +23,7 @@
 #include "common.hpp"
 
 #include <sstream>
+#include <algorithm>
 
 namespace ESM4
 {
@@ -30,13 +31,14 @@ namespace ESM4
     {
         "Record Type", "World Child", "Interior Cell", "Interior Sub Cell", "Exterior Cell",
         "Exterior Sub Cell", "Cell Child", "Topic Child", "Cell Persistent Child",
-        "Cell Temporary Child", "Cell Visible Dist Child"
+        "Cell Temporary Child", "Cell Visible Dist Child", "Unknown"
     };
 
     std::string printLabel(const GroupLabel& label, const std::uint32_t type)
     {
         std::ostringstream ss;
-        ss << std::string(sGroupType[type]);
+        
+        ss << std::string(sGroupType[std::min(type, (uint32_t)11)]);
         switch (type)
         {
             case ESM4::Grp_RecordType:
@@ -70,7 +72,7 @@ namespace ESM4
                 ss << ": FormId 0x" << std::hex << label.value;
                 return ss.str();
             }
-            default: return "";
+            default: return ss.str();
         }
     }
 

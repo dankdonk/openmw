@@ -34,10 +34,10 @@ void CSMForeign::NavMesh::load(ESM4::Reader& reader)
     {
         // HACK // FIXME
         std::ostringstream stream;
-        stream << "#" << std::floor((float)reader.currCell().grid.x/2)
-               << " " << std::floor((float)reader.currCell().grid.y/2);
+        //stream << "#" << std::floor((float)reader.currCell().grid.x/2)
+               //<< " " << std::floor((float)reader.currCell().grid.y/2);
 
-        mId = stream.str();
+        mId = "";// stream.str();
     }
     else
         mId = mCell;

@@ -1414,12 +1414,13 @@ bool CSMWorld::Data::loadTes4Record (const ESM4::RecordHeader& hdr, CSMDoc::Mess
         case ESM4::REC_CELL:
         {
 //FIXME: debug only
-//#if 0
+#if 0
             std::string padding = "";
             padding.insert(0, reader.stackSize()*2, ' ');
             std::cout << padding << "CELL flags 0x" << std::hex << hdr.record.flags << std::endl;
             std::cout << padding << "CELL id 0x" << std::hex << hdr.record.id << std::endl;
-//#endif
+            std::cout << padding << "CELL group " << ESM4::printLabel(reader.grp().label, reader.grp().type) << std::endl;
+#endif
             reader.getRecordData();
             mForeignCells.load(reader, mBase);
             break;

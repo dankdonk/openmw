@@ -62,6 +62,23 @@ void ESM4::Cell::load(ESM4::Reader& reader)
             }
             case ESM4::SUB_XCLC:
             {
+                // group grid   cell grid range
+                //
+                //        -7       -56 :-49
+                //        -6       -48 :-41
+                //        -5       -40 :-33
+                //        -4       -32 :-25
+                //        -3       -24 :-17
+                //        -2       -16 : -9
+                //        -1        -8 : -1
+                //         0         0 :  7
+                //         1         8 : 15
+                //         2        16 : 23
+                //         3        24 : 31
+                //         4        32 : 39
+                //         5        40 : 47
+                //         6        48 : 55
+
                 //(X, Y) grid location of the cell followed by flags. Always in
                 //exterior cells and never in interior cells.
                 //
@@ -78,12 +95,17 @@ void ESM4::Cell::load(ESM4::Reader& reader)
                 uint32_t flags;
                 reader.get(x);
                 reader.get(y);
+//#if 0
                 std::string padding = "";
                 padding.insert(0, reader.stackSize()*2, ' ');
+                std::cout << padding << "CELL group " << ESM4::printLabel(reader.grp().label, reader.grp().type) << std::endl;
                 std::cout << padding << "CELL X " << std::dec << x << ", Y " << y << std::endl;
+//#endif
                 if (reader.esmVersion() == ESM4::VER_094 || reader.esmVersion() == ESM4::VER_170)
                     reader.get(flags); // not in Obvlivion
                 // HACK // FIXME
+                // Remember cell grid for later (loading LAND, NAVM which should be CELL temporary children)
+                // Note that grids only apply for external cells.  For interior cells use the cell's formid.
                 ESM4::CellGrid currCell;
                 currCell.grid.x = (int16_t)x;
                 currCell.grid.y = (int16_t)y;

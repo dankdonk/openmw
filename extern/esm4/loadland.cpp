@@ -55,6 +55,7 @@ ESM4::Land::~Land()
 //           0 1 2 ... 30 31 32
 //
 //             overlap south
+//
 void ESM4::Land::load(ESM4::Reader& reader)
 {
     std::int8_t currentQuadrant = -1; // for VTXT following ATXT
