@@ -103,10 +103,11 @@ void ESM4::Reader::saveGroupStatus(const ESM4::RecordHeader& hdr)
         return;
     }
 
+    if (hdr.group.type == ESM4::Grp_ExteriorCell)
+        mCellGridValid = false; // FIXME: is there a better place to set this?
+
     // push group
     mGroupStack.push_back(std::make_pair(hdr.group, hdr.group.groupSize - (std::uint32_t)mRecHeaderSize));
-
-    mCellGridValid = false; // FIXME: is there a better place to set this?
 }
 
 const ESM4::CellGrid& ESM4::Reader::currCell() const

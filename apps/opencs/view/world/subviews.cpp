@@ -45,6 +45,8 @@ void CSVWorld::addSubViewFactories (CSVDoc::SubViewFactoryManager& manager)
         CSMWorld::UniversalId::Type_Pathgrids,
         CSMWorld::UniversalId::Type_LandTextures,
         CSMWorld::UniversalId::Type_Lands,
+        CSMWorld::UniversalId::Type_Landscapes,
+        CSMWorld::UniversalId::Type_ForeignCells, // FIXME: need a foreign cell creator
         CSMWorld::UniversalId::Type_StartScripts,
 
         CSMWorld::UniversalId::Type_None // end marker

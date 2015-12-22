@@ -35,6 +35,7 @@
 
 ESM4::Cell::Cell()
 {
+    mName.clear();
 }
 
 ESM4::Cell::~Cell()
@@ -55,9 +56,11 @@ void ESM4::Cell::load(ESM4::Reader& reader)
                     throw std::runtime_error ("CELL EDID data read error");
 
                 assert((size_t)subHdr.dataSize-1 == editorId.size() && "CELL EDID string size mismatch");
+//#if 0
                 std::string padding = "";
                 padding.insert(0, reader.stackSize()*2, ' ');
                 std::cout << padding << "Editor Id: " << editorId << std::endl;
+//#endif
                 break;
             }
             case ESM4::SUB_XCLC:
@@ -78,6 +81,8 @@ void ESM4::Cell::load(ESM4::Reader& reader)
                 //         4        32 : 39
                 //         5        40 : 47
                 //         6        48 : 55
+                //         7        56 : 63
+                //         8        64 : 71
 
                 //(X, Y) grid location of the cell followed by flags. Always in
                 //exterior cells and never in interior cells.
@@ -103,7 +108,7 @@ void ESM4::Cell::load(ESM4::Reader& reader)
 //#endif
                 if (reader.esmVersion() == ESM4::VER_094 || reader.esmVersion() == ESM4::VER_170)
                     reader.get(flags); // not in Obvlivion
-                // HACK // FIXME
+
                 // Remember cell grid for later (loading LAND, NAVM which should be CELL temporary children)
                 // Note that grids only apply for external cells.  For interior cells use the cell's formid.
                 ESM4::CellGrid currCell;
@@ -113,7 +118,28 @@ void ESM4::Cell::load(ESM4::Reader& reader)
                 break;
             }
             case ESM4::SUB_FULL:
+            {
+                if (!reader.getZString(mName, subHdr.dataSize))
+                    throw std::runtime_error ("CELL FULL data read error");
+
+                assert((size_t)subHdr.dataSize-1 == mName.size() && "CELL FULL string size mismatch");
+//#if 0
+                std::string padding = "";
+                padding.insert(0, reader.stackSize()*2, ' ');
+                std::cout << padding << "Name: " << mName << std::endl;
+//#endif
+                break;
+            }
             case ESM4::SUB_DATA:
+            {
+                reader.get(mFlags);
+//#if 0
+                std::string padding = "";
+                padding.insert(0, reader.stackSize()*2, ' ');
+                std::cout << padding  << "flags: " << std::hex << mFlags << std::endl;
+//#endif
+                break;
+            }
             case ESM4::SUB_XCLL:
             case ESM4::SUB_TVDT:
             case ESM4::SUB_MHDT:
@@ -140,8 +166,8 @@ void ESM4::Cell::load(ESM4::Reader& reader)
             case ESM4::SUB_XRNK: // Oblivion only?
             case ESM4::SUB_XGLB: // Oblivion only?
             {
-                //std::cout << ESM4::printName(reader.subRecordHeader().typeId)
-                          //<< " skipping..." << std::endl;
+                std::cout << ESM4::printName(reader.subRecordHeader().typeId)
+                          << " skipping..." << std::endl;
                 reader.skipSubRecordData();
                 break;
             }

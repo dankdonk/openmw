@@ -95,6 +95,7 @@ namespace ESM4
             return mCurrCell;
         }
 #endif
+        inline const bool hasCellGrid() const { return mCellGridValid; }
 
         // This is set while loading a CELL record (XCLC sub record) and cleared
         // when entering an exterior cell group.

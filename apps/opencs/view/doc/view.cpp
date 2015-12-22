@@ -161,6 +161,10 @@ void CSVDoc::View::setupWorldMenu()
     connect (cells, SIGNAL (triggered()), this, SLOT (addCellsSubView()));
     world->addAction (cells);
 
+    QAction *foreignCells = new QAction (tr ("Foreign Cells"), this);
+    connect (foreignCells, SIGNAL (triggered()), this, SLOT (addForeignCellsSubView()));
+    world->addAction (foreignCells);
+
     QAction *referenceables = new QAction (tr ("Objects"), this);
     connect (referenceables, SIGNAL (triggered()), this, SLOT (addReferenceablesSubView()));
     world->addAction (referenceables);
@@ -176,6 +180,10 @@ void CSVDoc::View::setupWorldMenu()
     QAction *land = new QAction (tr ("Lands"), this);
     connect (land, SIGNAL (triggered()), this, SLOT (addLandSubView()));
     world->addAction (land);
+
+    QAction *landscape = new QAction (tr ("Landscapes"), this);
+    connect (landscape, SIGNAL (triggered()), this, SLOT (addLandscapeSubView()));
+    world->addAction (landscape);
 
     world->addSeparator(); // items that don't represent single record lists follow here
 
@@ -751,6 +759,11 @@ void CSVDoc::View::addCellsSubView()
     addSubView (CSMWorld::UniversalId::Type_Cells);
 }
 
+void CSVDoc::View::addForeignCellsSubView()
+{
+    addSubView (CSMWorld::UniversalId::Type_ForeignCells);
+}
+
 void CSVDoc::View::addReferenceablesSubView()
 {
     addSubView (CSMWorld::UniversalId::Type_Referenceables);
@@ -864,6 +877,11 @@ void CSVDoc::View::addLandTextureSubView()
 void CSVDoc::View::addLandSubView()
 {
     addSubView (CSMWorld::UniversalId::Type_Lands);
+}
+
+void CSVDoc::View::addLandscapeSubView()
+{
+    addSubView (CSMWorld::UniversalId::Type_Landscapes);
 }
 
 void CSVDoc::View::addStartScriptsSubView()

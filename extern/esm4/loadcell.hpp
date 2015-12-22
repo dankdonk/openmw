@@ -31,10 +31,14 @@ namespace ESM4
 {
     class Reader;
 
+    // Unlike TES3, multiple cells can have the same exterior co-ordinates.
+    // The cells need to be organised under world spaces.
     struct Cell
     {
 #pragma pack(push,1)
 #pragma pack(pop)
+        std::string mName;
+        unsigned char mFlags;
 
         Cell();
         ~Cell();

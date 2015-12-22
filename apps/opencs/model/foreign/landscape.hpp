@@ -10,19 +10,10 @@ namespace ESM4
     class Reader;
 }
 
-namespace CSMWorld
-{
-    struct Cell;
-
-    template<typename T>
-    struct IdAccessor;
-
-    template<typename T, typename AT>
-    class IdCollection;
-}
-
 namespace CSMForeign
 {
+    class CellCollection;
+
     struct Landscape : public ESM4::Land
     {
         static unsigned int sRecordId;
@@ -105,8 +96,7 @@ namespace CSMForeign
 
 
 
-        void load(ESM4::Reader& esm,
-                const CSMWorld::IdCollection<CSMWorld::Cell, CSMWorld::IdAccessor<CSMWorld::Cell> >& cells);
+        void load(ESM4::Reader& esm, const CellCollection& cells);
 
         void load(ESM4::Reader& esm);
 

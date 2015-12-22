@@ -11,27 +11,17 @@ namespace ESM4
     class Reader;
 }
 
-namespace CSMWorld
-{
-    struct Cell;
-    //struct Landscape;
-
-    template<typename AT>
-    struct IdAccessor;
-
-    template<typename T, typename AT>
-    class IdCollection;
-}
-
 namespace CSMForeign
 {
+    class CellCollection;
+
     class LandscapeCollection : public CSMWorld::Collection<Landscape, CSMWorld::IdAccessor<Landscape> >//, public NestedCollection
     {
-        const CSMWorld::IdCollection<CSMWorld::Cell, CSMWorld::IdAccessor<CSMWorld::Cell> >& mCells;
+        const CSMForeign::CellCollection& mCells;
         //Landscape mNavMesh;
 
     public:
-        LandscapeCollection (const CSMWorld::IdCollection<CSMWorld::Cell, CSMWorld::IdAccessor<CSMWorld::Cell> >& cells);
+        LandscapeCollection (const CellCollection& cells);
         ~LandscapeCollection ();
 
         // similar to IdCollection but with ESM4::Reader

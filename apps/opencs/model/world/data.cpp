@@ -68,7 +68,7 @@ int CSMWorld::Data::count (RecordBase::State state, const CollectionBase& collec
 
 CSMWorld::Data::Data (ToUTF8::FromType encoding, const ResourcesManager& resourcesManager)
 : mEncoder (encoding), mPathgrids (mCells), mReferenceables(self()), mRefs (mCells), mNavigation(mCells),
-  mNavMesh(mCells), mLandscape(mCells), mResourcesManager (resourcesManager), mReader (0), mDialogue (0), mReaderIndex(0),
+  mNavMesh(mCells), mLandscape(mForeignCells), mResourcesManager (resourcesManager), mReader (0), mDialogue (0), mReaderIndex(0),
   mNpcAutoCalc (0)
 {
     int index = 0;
@@ -328,6 +328,17 @@ CSMWorld::Data::Data (ToUTF8::FromType encoding, const ResourcesManager& resourc
     mCells.getNestableColumn(index)->addColumn(
         new NestedChildColumn (Columns::ColumnId_MapColor, ColumnBase::Display_Integer));
 
+    mForeignCells.addColumn (new StringIdColumn<CSMForeign::Cell>);
+    mForeignCells.addColumn (new RecordStateColumn<CSMForeign::Cell>);
+    mForeignCells.addColumn (new FixedRecordTypeColumn<CSMForeign::Cell> (UniversalId::Type_ForeignCell));
+    mForeignCells.addColumn (new NameColumn<CSMForeign::Cell>);
+#if 0
+    mForeignCells.addColumn (new FlagColumn<Cell> (Columns::ColumnId_InteriorWater, ESM::Cell::HasWater,
+        ColumnBase::Flag_Table | ColumnBase::Flag_Dialogue | ColumnBase::Flag_Dialogue_Refresh));
+    mForeignCells.addColumn (new FlagColumn<Cell> (Columns::ColumnId_InteriorSky, ESM::Cell::QuasiEx,
+        ColumnBase::Flag_Table | ColumnBase::Flag_Dialogue | ColumnBase::Flag_Dialogue_Refresh));
+#endif
+
     mEnchantments.addColumn (new StringIdColumn<ESM::Enchantment>);
     mEnchantments.addColumn (new RecordStateColumn<ESM::Enchantment>);
     mEnchantments.addColumn (new FixedRecordTypeColumn<ESM::Enchantment> (UniversalId::Type_Enchantment));
@@ -508,6 +519,10 @@ CSMWorld::Data::Data (ToUTF8::FromType encoding, const ResourcesManager& resourc
     mLand.addColumn (new RecordStateColumn<Land>);
     mLand.addColumn (new FixedRecordTypeColumn<Land> (UniversalId::Type_Land));
 
+    mLandscape.addColumn (new StringIdColumn<CSMForeign::Landscape>);
+    mLandscape.addColumn (new RecordStateColumn<CSMForeign::Landscape>);
+    mLandscape.addColumn (new FixedRecordTypeColumn<CSMForeign::Landscape> (UniversalId::Type_Landscape));
+
     addModel (new IdTable (&mGlobals), UniversalId::Type_Global);
     addModel (new IdTable (&mGmsts), UniversalId::Type_Gmst);
     addModel (new IdTable (&mSkills), UniversalId::Type_Skill);
@@ -551,6 +566,8 @@ CSMWorld::Data::Data (ToUTF8::FromType encoding, const ResourcesManager& resourc
     addModel (new IdTable (&mMetaData), UniversalId::Type_MetaData);
     addModel (new IdTable (&mLand), UniversalId::Type_Land);
     addModel (new IdTable (&mLandTextures), UniversalId::Type_LandTexture);
+    addModel (new IdTable (&mLandscape), UniversalId::Type_Landscape);
+    addModel (new IdTable (&mForeignCells), UniversalId::Type_ForeignCell);
 
     // for autocalc updates when gmst/race/class/skils tables change
     CSMWorld::IdTable *gmsts =
@@ -968,6 +985,7 @@ int CSMWorld::Data::getTotalRecords (const std::vector<boost::filesystem::path>&
 
 int CSMWorld::Data::startLoading (const boost::filesystem::path& path, bool base, bool project)
 {
+    std::cout << "start loading" << std::endl;
     // Don't delete the Reader yet. Some record types store a reference to the Reader to handle on-demand loading
     boost::shared_ptr<ESM::ESMReader> ptr(mReader);
     mReaders.push_back(ptr);
@@ -1061,6 +1079,11 @@ bool CSMWorld::Data::continueLoading (CSMDoc::Messages& messages)
         mReader = 0;
 
         mDialogue = 0;
+
+        // FIXME: prints twice, why?
+        std::cout << "LAND size " << std::to_string(mLandscape.getSize()) << std::endl;
+        std::cout << "CELL size " << std::to_string(mForeignCells.getSize()) << std::endl;
+
         return true;
     }
 

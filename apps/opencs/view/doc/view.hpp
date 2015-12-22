@@ -186,6 +186,8 @@ namespace CSVDoc
 
             void addCellsSubView();
 
+            void addForeignCellsSubView();
+
             void addReferenceablesSubView();
 
             void addReferencesSubView();
@@ -231,6 +233,8 @@ namespace CSVDoc
             void addLandTextureSubView();
 
             void addLandSubView();
+
+            void addLandscapeSubView();
 
             void addStartScriptsSubView();
 

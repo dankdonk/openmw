@@ -137,6 +137,10 @@ namespace CSMWorld
                 Type_LandTexture,
                 Type_Lands,
                 Type_Land,
+                Type_Landscapes,
+                Type_Landscape,
+                Type_ForeignCells,
+                Type_ForeignCell,
                 Type_RunLog
             };
 
