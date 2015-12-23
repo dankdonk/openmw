@@ -13,6 +13,36 @@
 #include <libs/platform/strings.h>
 
 #include "../world/record.hpp"
+#include "../world/universalid.hpp"
+
+namespace CSMWorld
+{
+    template<>
+    void Collection<CSMForeign::Cell, IdAccessor<CSMForeign::Cell> >::removeRows (int index, int count)
+    {
+        mRecords.erase(mRecords.begin()+index, mRecords.begin()+index+count);
+
+        // index map is updated in CellCollection::removeRows()
+    }
+
+    template<>
+    void Collection<CSMForeign::Cell, IdAccessor<CSMForeign::Cell> >::insertRecord (std::unique_ptr<RecordBase> record,
+        int index, UniversalId::Type type)
+    {
+        int size = static_cast<int>(mRecords.size());
+        if (index < 0 || index > size)
+            throw std::runtime_error("index out of range");
+
+        std::unique_ptr<Record<CSMForeign::Cell> > record2(static_cast<Record<CSMForeign::Cell>*>(record.release()));
+
+        if (index == size)
+            mRecords.push_back(std::move(record2));
+        else
+            mRecords.insert(mRecords.begin()+index, std::move(record2));
+
+        // index map is updated in CellCollection::insertRecord()
+    }
+}
 
 CSMForeign::CellCollection::CellCollection ()
 {
@@ -86,13 +116,19 @@ int CSMForeign::CellCollection::load (ESM4::Reader& reader, bool base)
         else
             id = std::to_string(reader.hdr().record.id); // use formId instead
     }
+    record.mName = id; // FIXME: temporary, note id overwritten below
 
-    int index = this->searchId(id);
+    id = std::to_string(reader.hdr().record.id); // use formId instead
+
+    int index = searchId(reader.hdr().record.id);
 
     if (index == -1)
-        CSMWorld::IdAccessor<CSMForeign::Cell>().getId(record) = id;
+        CSMWorld::IdAccessor<CSMForeign::Cell>().getId(record) = id; // new record, set mId
     else
-        record = this->getRecord(index).get(); // FIXME: record (just loaded) is being overwritten
+    {
+        std::cout << "record overwritten" << std::endl;
+        //record = this->getRecord(index).get(); // FIXME: record (just loaded) is being overwritten
+    }
 
     return load(record, base, index);
 }
@@ -104,8 +140,8 @@ void CSMForeign::CellCollection::loadRecord (CSMForeign::Cell& record, ESM4::Rea
 
 int CSMForeign::CellCollection::load (const CSMForeign::Cell& record, bool base, int index)
 {
-    if (index == -2)
-        index = this->searchId(CSMWorld::IdAccessor<CSMForeign::Cell>().getId(record));
+    if (index == -2) // unknown index
+        index = this->searchId(CSMWorld::IdAccessor<CSMForeign::Cell>().getId(record)); // FIXME
 
     if (index == -1)
     {
@@ -133,6 +169,89 @@ int CSMForeign::CellCollection::load (const CSMForeign::Cell& record, bool base,
     }
 
     return index;
+}
+
+int CSMForeign::CellCollection::searchId (const std::string& id) const
+{
+#if 0
+    std::map<std::string, std::uint32_t>::const_iterator iter = mIdMap.find(id);
+
+    if (iter == mIdMap.end())
+        return -1;
+
+    return searchId(iter->second);
+#endif
+    return searchId(static_cast<std::uint32_t>(std::stoi(id)));
+}
+
+int CSMForeign::CellCollection::getIndex (std::uint32_t id) const
+{
+    int index = searchId(id);
+
+    if (index == -1)
+        throw std::runtime_error("invalid formId: " + std::to_string(id));
+
+    return index;
+}
+
+void CSMForeign::CellCollection::removeRows (int index, int count)
+{
+    CSMWorld::Collection<Cell, CSMWorld::IdAccessor<Cell> >::removeRows(index, count); // erase records only
+
+    std::map<std::uint32_t, int>::iterator iter = mCellIndex.begin();
+    while (iter != mCellIndex.end())
+    {
+        if (iter->second>=index)
+        {
+            if (iter->second >= index+count)
+            {
+                iter->second -= count;
+                ++iter;
+            }
+            else
+                mCellIndex.erase(iter++);
+        }
+        else
+            ++iter;
+    }
+}
+
+int CSMForeign::CellCollection::searchId (std::uint32_t id) const
+{
+    std::map<std::uint32_t, int>::const_iterator iter = mCellIndex.find(id);
+
+    if (iter == mCellIndex.end())
+        return -1;
+
+    return iter->second;
+}
+
+void CSMForeign::CellCollection::insertRecord (std::unique_ptr<CSMWorld::RecordBase> record, int index,
+    CSMWorld::UniversalId::Type type)
+{
+    int size = getAppendIndex(/*id*/"", type); // id is ignored
+    std::string id = static_cast<CSMWorld::Record<Cell>*>(record.get())->get().mId;
+    std::uint32_t formId = static_cast<CSMWorld::Record<Cell>*>(record.get())->get().mFormId;
+
+    CSMWorld::Collection<Cell, CSMWorld::IdAccessor<Cell> >::insertRecord(std::move(record), index, type); // add records only
+
+    if (index < size-1)
+    {
+        for (std::map<std::uint32_t, int>::iterator iter(mCellIndex.begin()); iter != mCellIndex.end(); ++iter)
+        {
+            if (iter->second >= index)
+                ++(iter->second);
+        }
+    }
+
+    mCellIndex.insert(std::make_pair(formId, index));
+#if 0
+    std::pair<std::map<std::string, std::uint32_t>::iterator, bool> res
+        = mIdMap.insert(std::make_pair(id, formId));
+
+    if (!res.second)
+        throw std::runtime_error("CELL id string already in the map");
+#endif
 }
 
 #if 0

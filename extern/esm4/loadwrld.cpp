@@ -33,7 +33,7 @@
 #include "reader.hpp"
 //#include "writer.hpp"
 
-unsigned int ESM4::World::sRecordId = ESM4::REC_WRLD;
+//unsigned int ESM4::World::sRecordId = ESM4::REC_WRLD;
 
 ESM4::World::World()
 {
@@ -45,6 +45,11 @@ ESM4::World::~World()
 
 void ESM4::World::load(ESM4::Reader& reader)
 {
+    mFormId = reader.hdr().record.id;
+    mFlags  = reader.hdr().record.flags;
+
+    reader.setCurrWorld(mFormId); // save for CELL later
+
     std::uint32_t subSize = 0; // for XXXX sub record
 
     while (reader.getSubRecordHeader())
@@ -52,16 +57,16 @@ void ESM4::World::load(ESM4::Reader& reader)
         const ESM4::SubRecordHeader& subHdr = reader.subRecordHeader();
         switch (subHdr.typeId)
         {
-            case ESM4::SUB_EDID:
+            case ESM4::SUB_EDID: // Editor name or the worldspace
             {
-                if (!reader.getZString(mEditorId, subHdr.dataSize))
+                if (!reader.getZString(mEditorId))
                     throw std::runtime_error ("WRLD EDID data read error");
 
                 assert((size_t)subHdr.dataSize-1 == mEditorId.size() && "WRLD EDID string size mismatch");
-                std::cout << "Editor Id: " << mEditorId << std::endl;
+                std::cout << "Editor Id: " << mEditorId << std::endl; // FIXME: temp
                 break;
             }
-            case ESM4::SUB_FULL:
+            case ESM4::SUB_FULL: // Name of the worldspace
             {
                 // NOTE: checking flags does not work, Skyrim.esm does not set the localized flag
                 //
@@ -71,19 +76,42 @@ void ESM4::World::load(ESM4::Reader& reader)
                 if ((reader.hdr().record.flags & Rec_Localized) != 0 || subHdr.dataSize == 4)
                 {
                     reader.skipSubRecordData(); // FIXME: process the subrecord rather than skip
+                    mFullName = "FIXME";
                     break;
                 }
 
-                if (!reader.getZString(mFullName, subHdr.dataSize))
+                if (!reader.getZString(mFullName))
                     throw std::runtime_error ("WRLD FULL data read error");
 
                 assert((size_t)subHdr.dataSize-1 == mFullName.size() && "WRLD FULL string size mismatch");
-                std::cout << "Full Name: " << mFullName << std::endl;
+                std::cout << "Full Name: " << mFullName << std::endl; // FIXME: temp
+                break;
+            }
+            case ESM4::SUB_WCTR: // Center cell, TES5 only
+            {
+                reader.get(mCenterCell);
+                break;
+            }
+            case ESM4::SUB_WNAM:
+            {
+                reader.get(mParent);
+                break;
+            }
+            case ESM4::SUB_SNAM: // sound, Oblivion only?
+            {
+                reader.get(mSound);
+                break;
+            }
+            case ESM4::SUB_ICON: // map filename, Oblivion only?
+            {
+                if (!reader.getZString(mMapFile))
+                    throw std::runtime_error ("WRLD ICON data read error");
+
+                assert((size_t)subHdr.dataSize-1 == mMapFile.size() && "WRLD ICON string size mismatch");
                 break;
             }
             case ESM4::SUB_RNAM: // multiple
             case ESM4::SUB_MHDT:
-            case ESM4::SUB_WCTR:
             case ESM4::SUB_LTMP:
             case ESM4::SUB_XEZN:
             case ESM4::SUB_XLCN:
@@ -94,20 +122,17 @@ void ESM4::World::load(ESM4::Reader& reader)
             case ESM4::SUB_DNAM:
             case ESM4::SUB_MODL:
             case ESM4::SUB_MNAM:
-            case ESM4::SUB_ONAM:
             case ESM4::SUB_NAMA:
             case ESM4::SUB_DATA:
             case ESM4::SUB_NAM0:
             case ESM4::SUB_NAM9:
-            case ESM4::SUB_WNAM:
             case ESM4::SUB_PNAM:
+            case ESM4::SUB_ONAM:
             case ESM4::SUB_TNAM:
             case ESM4::SUB_UNAM:
             case ESM4::SUB_ZNAM:
             case ESM4::SUB_XWEM:
             case ESM4::SUB_MODT: // from Dragonborn onwards?
-            case ESM4::SUB_ICON: // Oblivion only?
-            case ESM4::SUB_SNAM: // Oblivion only?
             {
                 reader.skipSubRecordData(); // FIXME: process the subrecord rather than skip
                 break;
@@ -139,6 +164,6 @@ void ESM4::World::load(ESM4::Reader& reader)
 //{
 //}
 
-//void ESM4::World::blank()
-//{
-//}
+void ESM4::World::blank()
+{
+}

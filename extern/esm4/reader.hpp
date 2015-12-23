@@ -57,6 +57,7 @@ namespace ESM4
         std::size_t     mEndOfRecord;     // number of bytes read by sub records
         CellGrid        mCurrCell;        // TODO: should keep keep a map of cell formids // FIXME
         bool            mCellGridValid;
+        std::uint32_t   mCurrWorld;       // formId of current world - for grouping CELL records
         std::size_t     mRecHeaderSize;
 
         // TODO: try fixed size buffers on the stack for both below (may be faster)
@@ -104,6 +105,10 @@ namespace ESM4
             mCurrCell = currCell;
         }
 
+        inline void setCurrWorld(std::uint32_t formId) { mCurrWorld = formId; }
+
+        inline const std::uint32_t currWorld() { return mCurrWorld; }
+
         // Get the data part of a record
         // Note: assumes the header was read correctly and nothing else was read
         void getRecordData();
@@ -150,7 +155,8 @@ namespace ESM4
         }
 
         // Note: does not convert to UTF8
-        bool getZString(std::string& str, std::uint16_t size);
+        // Note: assumes string size from the subrecord header
+        bool getZString(std::string& str);
 
         void checkGroupStatus();
 

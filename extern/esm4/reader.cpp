@@ -222,8 +222,10 @@ void ESM4::Reader::getRecordData()
 }
 
 // FIXME: how to without using a temp buffer?
-bool ESM4::Reader::getZString(std::string& str, std::uint16_t size)
+bool ESM4::Reader::getZString(std::string& str)
 {
+    std::uint16_t size = mSubRecordHeader.dataSize; // assumed size from the header is correct
+
     boost::scoped_array<char> buf(new char[size]);
     if (mStream->read(buf.get(), size) == (size_t)size)
     {

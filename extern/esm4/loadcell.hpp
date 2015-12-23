@@ -31,14 +31,31 @@ namespace ESM4
 {
     class Reader;
 
+    enum CellFlags               // TES4                     TES5
+    {                            // -----------------------  ------------------------------------
+        CELL_Interior = 0x0001,  // Can't travel from here   Interior
+        CELL_HasWater = 0x0002,  // Has water                Has Water
+        CELL_NoTravel = 0x0004,  //                          not Can't Travel From Here(Int only)
+        CELL_HideLand = 0x0008,  // Force hide land (Ext)    No LOD Water
+                                 // Oblivion interior (Int)
+        CELL_Public   = 0x0020,  // Public place             Public Area
+        CELL_HandChgd = 0x0040,  // Hand changed             Hand Changed
+        CELL_QuasiExt = 0x0080,  // Behave like exterior     Show Sky
+        CELL_SkyLight = 0x0100   //                          Use Sky Lighting
+    };
+
     // Unlike TES3, multiple cells can have the same exterior co-ordinates.
     // The cells need to be organised under world spaces.
     struct Cell
     {
-#pragma pack(push,1)
-#pragma pack(pop)
-        std::string mName;
-        unsigned char mFlags;
+        std::uint32_t mParent; // world formId (for grouping cells)
+
+        std::uint32_t mFormId; // from the header
+        std::uint32_t mFlags;  // from the header, see enum type RecordFlag for details
+
+        std::string mEditorId;
+        std::string mFullName;
+        std::uint16_t mCellFlags; // TES5 can also be 8 bits
 
         Cell();
         ~Cell();

@@ -90,6 +90,9 @@ namespace ESM4
 
         std::vector<NVNMstruct> mData; // Up to 4 skywind cells in one Morrowind cell
 
+        std::uint32_t mFormId; // from the header
+        std::uint32_t mFlags;  // from the header, see enum type RecordFlag for details
+
         NavMesh();
         ~NavMesh();
 

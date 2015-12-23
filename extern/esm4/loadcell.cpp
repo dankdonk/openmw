@@ -35,7 +35,7 @@
 
 ESM4::Cell::Cell()
 {
-    mName.clear();
+    mFullName.clear();
 }
 
 ESM4::Cell::~Cell()
@@ -44,6 +44,10 @@ ESM4::Cell::~Cell()
 
 void ESM4::Cell::load(ESM4::Reader& reader)
 {
+    mFormId = reader.hdr().record.id;
+    mFlags  = reader.hdr().record.flags;
+    mParent = reader.currWorld();
+
     while (reader.getSubRecordHeader())
     {
         const ESM4::SubRecordHeader& subHdr = reader.subRecordHeader();
@@ -51,15 +55,14 @@ void ESM4::Cell::load(ESM4::Reader& reader)
         {
             case ESM4::SUB_EDID:
             {
-                std::string editorId;
-                if (!reader.getZString(editorId, subHdr.dataSize))
+                if (!reader.getZString(mEditorId))
                     throw std::runtime_error ("CELL EDID data read error");
 
-                assert((size_t)subHdr.dataSize-1 == editorId.size() && "CELL EDID string size mismatch");
+                assert((size_t)subHdr.dataSize-1 == mEditorId.size() && "CELL EDID string size mismatch");
 //#if 0
                 std::string padding = "";
                 padding.insert(0, reader.stackSize()*2, ' ');
-                std::cout << padding << "Editor Id: " << editorId << std::endl;
+                std::cout << padding << "Editor Id: " << mEditorId << std::endl;
 //#endif
                 break;
             }
@@ -119,24 +122,53 @@ void ESM4::Cell::load(ESM4::Reader& reader)
             }
             case ESM4::SUB_FULL:
             {
-                if (!reader.getZString(mName, subHdr.dataSize))
+                // NOTE: checking flags does not work, Skyrim.esm does not set the localized flag
+                //
+                // A possible hack is to look for SUB_FULL subrecord size of 4 to indicate that
+                // a lookup is required.  This obviously does not work for a string size of 3,
+                // but the chance of having that is assumed to be low.
+                if ((reader.hdr().record.flags & Rec_Localized) != 0 || subHdr.dataSize == 4)
+                {
+                    reader.skipSubRecordData(); // FIXME: process the subrecord rather than skip
+                    mFullName = "FIXME";
+                    break;
+                }
+
+                if (!reader.getZString(mFullName))
                     throw std::runtime_error ("CELL FULL data read error");
 
-                assert((size_t)subHdr.dataSize-1 == mName.size() && "CELL FULL string size mismatch");
+                assert((size_t)subHdr.dataSize-1 == mFullName.size() && "CELL FULL string size mismatch");
 //#if 0
                 std::string padding = "";
                 padding.insert(0, reader.stackSize()*2, ' ');
-                std::cout << padding << "Name: " << mName << std::endl;
+                std::cout << padding << "Name: " << mFullName << std::endl;
 //#endif
                 break;
             }
             case ESM4::SUB_DATA:
             {
-                reader.get(mFlags);
+                if (reader.esmVersion() == ESM4::VER_094 || reader.esmVersion() == ESM4::VER_170)
+                    if (subHdr.dataSize == 2)
+                        reader.get(mCellFlags);
+                    else
+                    {
+                        assert(subHdr.dataSize == 1 && "CELL unexpected DATA flag size");
+                        //std::uint8_t flags;
+                        //reader.get(flags);
+                        //mCellFlags = flags;
+                        reader.get((std::uint8_t&)mCellFlags);
+                    }
+                else
+                {
+                    //std::uint8_t flags;
+                    //reader.get(flags);
+                    //mCellFlags = flags;
+                    reader.get((std::uint8_t&)mCellFlags); // 8 bits in Obvlivion
+                }
 //#if 0
                 std::string padding = "";
                 padding.insert(0, reader.stackSize()*2, ' ');
-                std::cout << padding  << "flags: " << std::hex << mFlags << std::endl;
+                std::cout << padding  << "flags: " << std::hex << mCellFlags << std::endl;
 //#endif
                 break;
             }

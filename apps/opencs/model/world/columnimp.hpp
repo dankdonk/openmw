@@ -2390,7 +2390,7 @@ namespace CSMWorld
             return true;
         }
     };
-    
+
     struct BodyPartRaceColumn : public RaceColumn<ESM::BodyPart>
     {
         const MeshTypeColumn<ESM::BodyPart> *mMeshType;
@@ -2400,6 +2400,52 @@ namespace CSMWorld
         virtual QVariant get(const Record<ESM::BodyPart> &record) const;
         virtual void set(Record<ESM::BodyPart> &record, const QVariant &data);
         virtual bool isEditable() const;
+    };
+
+    template<typename ESXRecordT>
+    struct EditorIdColumn : public Column<ESXRecordT>
+    {
+        EditorIdColumn()
+        : Column<ESXRecordT> (Columns::ColumnId_Name, ColumnBase::Display_String) // FIXME ColumnId
+        {}
+
+        virtual QVariant get (const Record<ESXRecordT>& record) const
+        {
+            return QString::fromUtf8 (record.get().mEditorId.c_str());
+        }
+
+        virtual void set (Record<ESXRecordT>& record, const QVariant& data)
+        {
+            return; // FIXME
+        }
+
+        virtual bool isEditable() const
+        {
+            return true;
+        }
+    };
+
+    template<typename ESXRecordT>
+    struct WorldColumn : public Column<ESXRecordT>
+    {
+        WorldColumn()
+        : Column<ESXRecordT> (Columns::ColumnId_Region, ColumnBase::Display_Integer) // FIXME ColumnId
+        {}
+
+        virtual QVariant get (const Record<ESXRecordT>& record) const
+        {
+            return record.get().mParent;
+        }
+
+        virtual void set (Record<ESXRecordT>& record, const QVariant& data)
+        {
+            return; // FIXME
+        }
+
+        virtual bool isEditable() const
+        {
+            return true;
+        }
     };
 }
 

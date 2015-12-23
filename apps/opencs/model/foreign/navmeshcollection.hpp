@@ -20,6 +20,15 @@ namespace CSMWorld
 
     template<typename T, typename AT>
     class IdCollection;
+
+    class UniversalId;
+
+    template<>
+    void Collection<CSMForeign::NavMesh, IdAccessor<CSMForeign::NavMesh> >::removeRows (int index, int count);
+
+    template<>
+    void Collection<CSMForeign::NavMesh, IdAccessor<CSMForeign::NavMesh> >::insertRecord (std::unique_ptr<RecordBase> record,
+        int index, UniversalId::Type type);
 }
 
 namespace CSMForeign
@@ -28,6 +37,8 @@ namespace CSMForeign
     {
         const CSMWorld::IdCollection<CSMWorld::Cell, CSMWorld::IdAccessor<CSMWorld::Cell> >& mCells;
         //NavMesh mNavMesh;
+
+        std::map<std::uint32_t, int> mNavMeshIndex;
 
     public:
         NavMeshCollection (const CSMWorld::IdCollection<CSMWorld::Cell, CSMWorld::IdAccessor<CSMWorld::Cell> >& cells);
@@ -40,6 +51,14 @@ namespace CSMForeign
         int load (const NavMesh& record, bool base, int index = -2);
 
         virtual void loadRecord (NavMesh& record, ESM4::Reader& reader);
+
+        virtual void removeRows (int index, int count);
+
+        virtual int searchId (const std::string& id) const;
+
+        virtual void insertRecord (std::unique_ptr<CSMWorld::RecordBase> record,
+                                   int index,
+                                   CSMWorld::UniversalId::Type type = CSMWorld::UniversalId::Type_None);
 #if 0
         virtual void addNestedRow (int row, int col, int position) = 0;
 
@@ -63,6 +82,10 @@ namespace CSMForeign
         NavMeshCollection ();
         NavMeshCollection (const NavMeshCollection& other);
         NavMeshCollection& operator= (const NavMeshCollection& other);
+
+        int getIndex (std::uint32_t id) const;
+
+        int searchId (std::uint32_t id) const;
     };
 }
 #endif // CSM_FOREIGN_NAVMESHCOLLECTION_H

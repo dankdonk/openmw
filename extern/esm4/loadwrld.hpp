@@ -27,13 +27,25 @@
 #include <string>
 #include <cstdint>
 
+#include "common.hpp"
+
 namespace ESM4
 {
     class Reader;
 
     struct World
     {
-        static unsigned int sRecordId;
+        enum WorldFlags                 // TES4                 TES5
+        {                               // -------------------- -----------------
+            WLD_Small          = 0x01,  // Small World          Small World
+            WLD_NoFastTravel   = 0x02,  // Can't Fast Travel    Can't Fast Travel
+            WLD_Oblivion       = 0x04,  // Oblivion worldspace
+            WLD_NoLODWater     = 0x08,  //                      No LOD Water
+            WLD_NoLandscpe     = 0x10,  // No LOD Water         No Landscape
+            WLD_NoSky          = 0x20,  //                      No Sky
+            wLD_FixedDimension = 0x40,  //                      Fixed Dimensions
+            WLD_NoGrass        = 0x80   //                      No Grass
+        };
 
         struct REFRcoord
         {
@@ -49,20 +61,33 @@ namespace ESM4
             std::vector<REFRcoord> refrs;
        };
 
-        World();
-        ~World();
-
-        //std::string mId; // FIXME required by Collection<T>
+        std::uint32_t mFormId; // from the header
+        std::uint32_t mFlags;  // from the header, see enum type RecordFlag for details
 
         std::string mEditorId;
         std::string mFullName;
+        std::uint32_t mParent; // parent worldspace formid
+        std::uint8_t mWorldFlags;
 
+        // ------ TES4 only -----
+
+        std::int32_t mSound;   // 0 = no record, 1 = Public, 2 = Dungeon
+        std::string mMapFile;
+
+        // ------ TES5 only -----
+
+        Grid mCenterCell;
         RNAMstruct mData;
+
+        // ----------------------
+
+        World();
+        ~World();
 
         void load(ESM4::Reader& reader);
         //void save(ESM4::Writer& reader) const;
 
-        //void blank(); // FIXME required by Collection<T>
+        void blank(); // FIXME required by Collection<T>
 
     //private:
         //World(const World& other);

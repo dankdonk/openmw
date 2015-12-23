@@ -20,7 +20,6 @@
   cc9cii cc9c@iinet.net.au
 
 */
-
 #include "loadnavm.hpp"
 
 #include <stdexcept>
@@ -183,6 +182,9 @@ void ESM4::NavMesh::NVNMstruct::load(ESM4::Reader& reader)
 
 void ESM4::NavMesh::load(ESM4::Reader& reader)
 {
+    mFormId = reader.hdr().record.id;
+    mFlags  = reader.hdr().record.flags;
+
     //std::cout << "NavMesh 0x" << std::hex << this << std::endl; // FIXME
     std::uint32_t subSize = 0; // for XXXX sub record
 

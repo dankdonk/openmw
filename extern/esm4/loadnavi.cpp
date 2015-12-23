@@ -242,7 +242,7 @@ void ESM4::Navigation::load(ESM4::Reader& reader)
         {
             case ESM4::SUB_EDID: // seems to be unused?
             {
-                if (!reader.getZString(mEditorId, subHdr.dataSize))
+                if (!reader.getZString(mEditorId))
                     throw std::runtime_error ("NAVI EDID data read error");
 
                 assert((size_t)subHdr.dataSize-1 == mEditorId.size() && "NAVI EDID string size mismatch");

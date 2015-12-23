@@ -99,6 +99,8 @@ void CSMForeign::NavigationCollection::load (ESM4::Reader& reader, bool base) //
             // add the formid to the cell (key) for fast lookup later (rendering,  pathfinding)
             (*iter).second.push_back(id);
         }
+        else if ((*it).worldSpaceId == ESM4::FLG_Tamriel)
+            continue;
         else
             std::cout << "ignoring unknown worldspace " << std::hex << (*it).worldSpaceId << std::endl;
     }

@@ -17,6 +17,7 @@ namespace CSMForeign
         static unsigned int sRecordId;
 
         std::string mId; // required by Collection<T>
+        std::string mName;
 
         void load (ESM4::Reader& reader);
 

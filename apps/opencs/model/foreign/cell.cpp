@@ -4,11 +4,12 @@
 
 void CSMForeign::Cell::load (ESM4::Reader& reader)
 {
-    //mName = mId;
-
     ESM4::Cell::load (reader);
 
-    //if (!(mData.mFlags & Interior)) // FIXME
+    mName = mFullName;
+
+#if 0
+    if (!(mData.mFlags & Interior)) // FIXME
     {
         std::ostringstream stream;
 
@@ -16,6 +17,7 @@ void CSMForeign::Cell::load (ESM4::Reader& reader)
 
         mId = stream.str();
     }
+#endif
 }
 
 void CSMForeign::Cell::blank()

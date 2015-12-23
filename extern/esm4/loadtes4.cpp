@@ -53,7 +53,7 @@ void ESM4::Header::load(ESM4::Reader& reader, const std::uint32_t size)
             }
             case ESM4::SUB_CNAM:
             {
-                if (!reader.getZString(mAuthor, subHdr.dataSize))
+                if (!reader.getZString(mAuthor))
                     throw std::runtime_error ("TES4 CNAM data read error");
 
                 assert((size_t)subHdr.dataSize-1 == mAuthor.size() && "TES4 CNAM string (author) size mismatch");
@@ -61,7 +61,7 @@ void ESM4::Header::load(ESM4::Reader& reader, const std::uint32_t size)
             }
             case ESM4::SUB_SNAM:
             {
-                if (!reader.getZString(mDesc, subHdr.dataSize))
+                if (!reader.getZString(mDesc))
                     throw std::runtime_error ("TES4 SNAM data read error");
 
                 assert((size_t)subHdr.dataSize-1 == mDesc.size() && "TES4 SNAM string (desc) size mismatch");
@@ -70,7 +70,7 @@ void ESM4::Header::load(ESM4::Reader& reader, const std::uint32_t size)
             case ESM4::SUB_MAST: // multiple
             {
                 MasterData m;
-                if (!reader.getZString(m.name, subHdr.dataSize) || !reader.getSubRecord(ESM4::SUB_DATA, m.size))
+                if (!reader.getZString(m.name) || !reader.getSubRecord(ESM4::SUB_DATA, m.size))
                     throw std::runtime_error ("TES4 MAST data read error");
                 mMaster.push_back (m);
                 break;
