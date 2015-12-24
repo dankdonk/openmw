@@ -582,6 +582,7 @@ add_subdirectory (extern/oics)
 add_subdirectory (extern/sdl4ogre)
 add_subdirectory (extern/esm4)
 add_subdirectory (extern/murmurhash)
+add_subdirectory (extern/strverscmp)
 
 # Components
 add_subdirectory (components)

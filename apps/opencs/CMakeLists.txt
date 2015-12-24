@@ -221,6 +221,7 @@ target_link_libraries(openmw-cs
     ${ESM4_LIBRARIES}
     ${ZLIB_LIBRARY}
     ${MURMURHASH_LIBRARIES}
+    ${STRVERSCMP_LIBRARIES}
     ${Boost_SYSTEM_LIBRARY}
     ${Boost_FILESYSTEM_LIBRARY}
     ${Boost_PROGRAM_OPTIONS_LIBRARY}

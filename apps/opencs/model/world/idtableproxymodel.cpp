@@ -2,7 +2,10 @@
 
 #include <vector>
 
+#include <extern/strverscmp/strverscmp.h>
+
 #include "idtablebase.hpp"
+#include "columns.hpp"
 
 namespace
 {
@@ -25,7 +28,7 @@ void CSMWorld::IdTableProxyModel::updateColumnMap()
     {
         std::vector<int> columns = mFilter->getReferencedColumns();
         for (std::vector<int>::const_iterator iter (columns.begin()); iter!=columns.end(); ++iter)
-            mColumnMap.insert (std::make_pair (*iter, 
+            mColumnMap.insert (std::make_pair (*iter,
                 mSourceModel->searchColumnIndex (static_cast<CSMWorld::Columns::ColumnId> (*iter))));
     }
 }
@@ -50,7 +53,7 @@ bool CSMWorld::IdTableProxyModel::filterAcceptsRow (int sourceRow, const QModelI
 }
 
 CSMWorld::IdTableProxyModel::IdTableProxyModel (QObject *parent)
-    : QSortFilterProxyModel (parent), 
+    : QSortFilterProxyModel (parent),
       mSourceModel(NULL)
 {
     setSortCaseSensitivity (Qt::CaseInsensitive);
@@ -68,17 +71,17 @@ void CSMWorld::IdTableProxyModel::setSourceModel(QAbstractItemModel *model)
     QSortFilterProxyModel::setSourceModel(model);
 
     mSourceModel = dynamic_cast<IdTableBase *>(sourceModel());
-    connect(mSourceModel, 
-            SIGNAL(rowsInserted(const QModelIndex &, int, int)), 
-            this, 
+    connect(mSourceModel,
+            SIGNAL(rowsInserted(const QModelIndex &, int, int)),
+            this,
             SLOT(sourceRowsInserted(const QModelIndex &, int, int)));
-    connect(mSourceModel, 
-            SIGNAL(rowsRemoved(const QModelIndex &, int, int)), 
+    connect(mSourceModel,
+            SIGNAL(rowsRemoved(const QModelIndex &, int, int)),
             this,
             SLOT(sourceRowsRemoved(const QModelIndex &, int, int)));
-    connect(mSourceModel, 
-            SIGNAL(dataChanged(const QModelIndex &, const QModelIndex &)), 
-            this, 
+    connect(mSourceModel,
+            SIGNAL(dataChanged(const QModelIndex &, const QModelIndex &)),
+            this,
             SLOT(sourceDataChanged(const QModelIndex &, const QModelIndex &)));
 }
 
@@ -93,6 +96,13 @@ void CSMWorld::IdTableProxyModel::setFilter (const boost::shared_ptr<CSMFilter::
 bool CSMWorld::IdTableProxyModel::lessThan(const QModelIndex &left, const QModelIndex &right) const
 {
     Columns::ColumnId id = static_cast<Columns::ColumnId>(left.data(ColumnBase::Role_ColumnId).toInt());
+
+    if (id == Columns::ColumnId_Id || id == Columns::ColumnId_Name)
+    {
+        return strverscmp(sourceModel()->data(left).toString().toStdString().c_str(),
+                          sourceModel()->data(right).toString().toStdString().c_str()) < 0;
+    }
+
     EnumColumnCache::const_iterator valuesIt = mEnumColumnCache.find(id);
     if (valuesIt == mEnumColumnCache.end())
     {
