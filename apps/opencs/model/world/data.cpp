@@ -14,7 +14,8 @@
 #include <components/esm/cellref.hpp>
 
 #include <extern/esm4/common.hpp>
-#include <extern/esm4/world.hpp> // FIXME
+
+//#include "../foreign/regionmap.hpp"
 
 #include "idtable.hpp"
 #include "idtree.hpp"
@@ -69,8 +70,7 @@ int CSMWorld::Data::count (RecordBase::State state, const CollectionBase& collec
 CSMWorld::Data::Data (ToUTF8::FromType encoding, const ResourcesManager& resourcesManager)
 : mEncoder (encoding), mPathgrids (mCells), mReferenceables(self()), mRefs (mCells),
   mForeignCells(mForeignWorlds), mNavigation(mCells), mNavMesh(mCells), mLandscape(mForeignCells),
-  mResourcesManager (resourcesManager), mReader (0), mDialogue (0), mReaderIndex(0),
-  mNpcAutoCalc (0)
+  mResourcesManager (resourcesManager), mReader (0), mDialogue (0), mReaderIndex(0), mNpcAutoCalc (0)
 {
     int index = 0;
 
@@ -515,6 +515,13 @@ CSMWorld::Data::Data (ToUTF8::FromType encoding, const ResourcesManager& resourc
     mForeignWorlds.addColumn (new NameColumn<CSMForeign::World>);
     mForeignWorlds.addColumn (new EditorIdColumn<CSMForeign::World>);
 
+    mForeignRegions.addColumn (new StringIdColumn<CSMForeign::Region>);
+    mForeignRegions.addColumn (new RecordStateColumn<CSMForeign::Region>);
+    mForeignRegions.addColumn (new FixedRecordTypeColumn<CSMForeign::Region> (UniversalId::Type_ForeignRegion));
+    mForeignRegions.addColumn (new EditorIdColumn<CSMForeign::Region>);
+    mForeignRegions.addColumn (new WorldColumn<CSMForeign::Region>);
+    mForeignRegions.addColumn (new MapColourColumn<CSMForeign::Region>);
+
     mForeignCells.addColumn (new StringIdColumn<CSMForeign::Cell>/*(true)*/);
     mForeignCells.addColumn (new RecordStateColumn<CSMForeign::Cell>);
     mForeignCells.addColumn (new FixedRecordTypeColumn<CSMForeign::Cell> (UniversalId::Type_ForeignCell));
@@ -579,10 +586,11 @@ CSMWorld::Data::Data (ToUTF8::FromType encoding, const ResourcesManager& resourc
     addModel (new ResourceTable (&mResourcesManager.get (UniversalId::Type_Videos)),
         UniversalId::Type_Video);
     addModel (new IdTable (&mMetaData), UniversalId::Type_MetaData);
-    addModel (new IdTable (&mLand), UniversalId::Type_Land);
     addModel (new IdTable (&mForeignWorlds), UniversalId::Type_ForeignWorld);
-    addModel (new IdTable (&mLandTextures), UniversalId::Type_LandTexture);
+    addModel (new IdTable (&mForeignRegions), UniversalId::Type_ForeignRegion);
     addModel (new IdTable (&mForeignCells), UniversalId::Type_ForeignCell);
+    addModel (new IdTable (&mLand), UniversalId::Type_Land);
+    addModel (new IdTable (&mLandTextures), UniversalId::Type_LandTexture);
     addModel (new IdTable (&mLandscapeTextures), UniversalId::Type_LandscapeTexture);
     addModel (new IdTable (&mLandscape), UniversalId::Type_Landscape);
 
@@ -980,6 +988,14 @@ QAbstractItemModel *CSMWorld::Data::getTableModel (const CSMWorld::UniversalId& 
             addModel (table = new RegionMap (*this), UniversalId::Type_RegionMap, false);
             return table;
         }
+#if 0
+        else if (id.getType()==UniversalId::Type_ForeignRegionMap)
+        {
+            CSMForeign::RegionMap *table = 0;
+            addModel (table = new CSMForeign::RegionMap (*this), UniversalId::Type_ForeignRegionMap, false);
+            return table;
+        }
+#endif
         throw std::logic_error ("No table model available for " + id.toString());
     }
 
@@ -1107,9 +1123,8 @@ bool CSMWorld::Data::continueLoading (CSMDoc::Messages& messages)
 
         mDialogue = 0;
 
-        // FIXME: prints twice, why?
-        std::cout << "LAND size " << std::to_string(mLandscape.getSize()) << std::endl;
-        std::cout << "CELL size " << std::to_string(mForeignCells.getSize()) << std::endl;
+        // FIXME: runs once per each document!
+        mForeignRegions.updateWorldNames(mForeignWorlds);
 
         return true;
     }
@@ -1409,6 +1424,7 @@ bool CSMWorld::Data::loadTes4Group (CSMDoc::Messages& messages)
         {
             // FIXME: rewrite to workaround reliability issue
             if (hdr.group.label.value == ESM4::REC_NAVI || hdr.group.label.value == ESM4::REC_WRLD ||
+                    hdr.group.label.value == ESM4::REC_REGN ||
                     hdr.group.label.value == ESM4::REC_CELL || hdr.group.label.value == ESM4::REC_LTEX)
             {
                 // NOTE: The label field of a group is not reliable.  See:
@@ -1505,6 +1521,12 @@ bool CSMWorld::Data::loadTes4Record (const ESM4::RecordHeader& hdr, CSMDoc::Mess
         {
             reader.getRecordData();
             mForeignWorlds.load(reader, mBase);
+            break;
+        }
+        case ESM4::REC_REGN:
+        {
+            reader.getRecordData();
+            mForeignRegions.load(reader, mBase);
             break;
         }
         case ESM4::REC_LAND:

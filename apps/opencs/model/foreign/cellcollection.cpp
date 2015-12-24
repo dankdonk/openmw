@@ -132,7 +132,7 @@ int CSMForeign::CellCollection::load (ESM4::Reader& reader, bool base)
         //record = this->getRecord(index).get(); // FIXME: record (just loaded) is being overwritten
     }
 
-    record.mWorld = mWorlds.getIdString(record.mParent);
+    record.mWorld = mWorlds.getIdString(record.mParent); // FIXME: assumes our world is already loaded
 
     return load(record, base, index);
 }

@@ -39,6 +39,7 @@
 #include "../foreign/cellcollection.hpp"
 #include "../foreign/ltexcollection.hpp"
 #include "../foreign/worldcollection.hpp"
+#include "../foreign/regioncollection.hpp"
 
 #include "idcollection.hpp"
 #include "nestedidcollection.hpp"
@@ -105,6 +106,7 @@ namespace CSMWorld
             IdCollection<ESM::Filter> mFilters;
             Collection<MetaData> mMetaData;
             CSMForeign::WorldCollection mForeignWorlds;
+            CSMForeign::RegionCollection mForeignRegions;
             CSMForeign::CellCollection mForeignCells;
             CSMForeign::NavigationCollection mNavigation;
             CSMForeign::NavMeshCollection mNavMesh;

@@ -281,7 +281,24 @@ namespace ESM4
       //SUB_TNAM = MKTAG('T','N','A','M'),
       //SUB_MNAM = MKTAG('M','N','A','M'),
         SUB_HNAM = MKTAG('H','N','A','M'),
-        SUB_GNAM = MKTAG('G','N','A','M')
+        SUB_GNAM = MKTAG('G','N','A','M'),
+
+        // below appear in REGN records
+      //SUB_EDID = MKTAG('E','D','I','D'),
+      //SUB_ICON = MKTAG('I','C','O','N'),
+      //SUB_WNAM = MKTAG('W','N','A','M'),
+        SUB_RCLR = MKTAG('R','C','L','R'),
+        SUB_RPLI = MKTAG('R','P','L','I'),
+        SUB_RPLD = MKTAG('R','P','L','D'),
+        SUB_RDAT = MKTAG('R','D','A','T'),
+        SUB_RDMD = MKTAG('R','D','M','D'), // Oblivion only?
+        SUB_RDSD = MKTAG('R','D','S','D'), // Oblivion only?
+        SUB_RDGS = MKTAG('R','D','G','S'), // Oblivion only?
+        SUB_RDMO = MKTAG('R','D','M','O'),
+        SUB_RDSA = MKTAG('R','D','S','A'),
+        SUB_RDWT = MKTAG('R','D','W','T'),
+        SUB_RDOT = MKTAG('R','D','O','T'),
+        SUB_RDMP = MKTAG('R','D','M','P')
     };
 
     // Based on http://www.uesp.net/wiki/Tes5Mod:Mod_File_Format#Groups

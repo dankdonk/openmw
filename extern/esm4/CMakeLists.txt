@@ -4,11 +4,12 @@ set(ESM4_SOURCE_FILES
     common.cpp
     tes4.cpp
     navi.cpp
-    world.cpp
+    wrld.cpp
     navm.cpp
     land.cpp
     ltex.cpp
     cell.cpp
+    regn.cpp
     reader.cpp
 )
 

@@ -28,10 +28,10 @@
 
 /* states: S_N: normal, S_I: comparing integral part, S_F: comparing
            fractional parts, S_Z: idem but with leading Zeroes only */
-#define S_N    0x0
-#define S_I    0x4
-#define S_F    0x8
-#define S_Z    0xC
+#define S_N    0x0  /* 0000 */
+#define S_I    0x4  /* 0100 */
+#define S_F    0x8  /* 1000 */
+#define S_Z    0xc  /* 1100 */
 
 /* result_type: CMP: return diff; LEN: compare using len_diff/diff */
 #define CMP    2
@@ -67,16 +67,17 @@ __strverscmp (const char *s1, const char *s2)
   unsigned char c1, c2;
   int state;
   int diff;
+  int negative = 0;
 
   /* Symbol(s)    0       [1-9]   others  (padding)
      Transition   (10) 0  (01) d  (00) x  (11) -   */
   static const unsigned int next_state[] =
   {
       /* state    x    d    0    - */
-      /* S_N */  S_N, S_I, S_Z, S_N,  // 0000  0100  1100  0000
-      /* S_I */  S_N, S_I, S_I, S_I,  // 0000  0100  0100  0100
-      /* S_F */  S_N, S_F, S_F, S_F,  // 0000  1000  1000  1000
-      /* S_Z */  S_N, S_F, S_Z, S_Z   // 0000  1000  1100  1100
+      /* S_N */  S_N, S_I, S_Z, S_N, /* 0000 0100 1100 0000 */
+      /* S_I */  S_N, S_I, S_I, S_I, /* 0000 0100 0100 0100 */
+      /* S_F */  S_N, S_F, S_F, S_F, /* 0000 1000 1000 1000 */
+      /* S_Z */  S_N, S_F, S_Z, S_Z  /* 0000 1000 1100 1100 */
   };
 
   static const int result_type[] =
@@ -99,6 +100,8 @@ __strverscmp (const char *s1, const char *s2)
 
   c1 = *p1++;
   c2 = *p2++;
+  if (c1 == '-')
+    negative = 1;
   /* Hint: '0' is a digit too.  */
   state = S_N | ((c1 == '0') + (ISDIGIT (c1) != 0)); // state = 2 if '0', state = 1 if '1' to '9', else state = 0
 
@@ -111,11 +114,24 @@ __strverscmp (const char *s1, const char *s2)
       // S_I + digit : 0100 -> next_state[0x0101] = S_I
       // S_I + zero  : 0100 -> next_state[0x0110] = S_I
       // S_Z + digit : 1100 -> next_state[0x1101] = S_F (I guess 023 sequence implies .023)
+      //
+      // A '-' character should result in S_N -> S_I
+      //                                  S_I -> S_N  e.g. #1 -10
+      //                                  S_Z -> S_N  e.g. Item00-special
+      //                                  S_F -> S_N  e.g. Item01-special
+      //
+      // A negative number that is longer is less than a shorter one.  (opposite of positive)
+      //
+      // !and(string("world", "#tamriel"),not string("editor id", ""))
       state |= (c1 == '0') + (ISDIGIT (c1) != 0);
+      if (negative && (state & 0x3) == 0)
+        negative = 0; // non-digit turns negative off
+      if (c1 == '-')
+        negative = 1;
     }
     // first char difference found, now check the state
 
-  // 0xbbbb
+  // 0x1100
   //   ^^^^
   //   ||||
   //   ||++----- c2 state
@@ -125,14 +141,19 @@ __strverscmp (const char *s1, const char *s2)
   switch (state)
     {
     case CMP:
-      return diff;
+      if (c1 == '-' && (ISDIGIT (c2) != 0))
+        return -1;
+      else if (c2 == '-' && (ISDIGIT (c1) != 0))
+        return 1;
+
+      return (negative ? -1 : 1) * diff;
 
     case LEN:
       while (ISDIGIT (*p1++))
         if (!ISDIGIT (*p2++))
-          return 1;
+          return negative ? -1 : 1; // if negative longer digits are less
 
-      return ISDIGIT (*p2) ? -1 : diff;
+      return (negative ? -1 : 1) * (ISDIGIT (*p2) ? -1 : diff);
 
     default:
       return state;

@@ -342,6 +342,10 @@ void CSVDoc::View::setupForeignMenu()
     connect (worlds, SIGNAL (triggered()), this, SLOT (addForeignWorldsSubView()));
     foreign->addAction (worlds);
 
+    QAction *regions = new QAction (tr ("Regions"), this);
+    connect (regions, SIGNAL (triggered()), this, SLOT (addForeignRegionsSubView()));
+    foreign->addAction (regions);
+
     QAction *foreignCells = new QAction (tr ("Cells"), this);
     connect (foreignCells, SIGNAL (triggered()), this, SLOT (addForeignCellsSubView()));
     foreign->addAction (foreignCells);
@@ -349,6 +353,12 @@ void CSVDoc::View::setupForeignMenu()
     QAction *landscape = new QAction (tr ("Landscapes"), this);
     connect (landscape, SIGNAL (triggered()), this, SLOT (addLandscapeSubView()));
     foreign->addAction (landscape);
+
+    foreign->addSeparator(); // items that don't represent single record lists follow here
+
+    QAction *regionMap = new QAction (tr ("Region Map"), this);
+    connect (regionMap, SIGNAL (triggered()), this, SLOT (addForeignRegionMapSubView()));
+    foreign->addAction (regionMap);
 
     foreign->addSeparator(); // items from foreign worlds follow here
 
@@ -775,11 +785,6 @@ void CSVDoc::View::addCellsSubView()
     addSubView (CSMWorld::UniversalId::Type_Cells);
 }
 
-void CSVDoc::View::addForeignCellsSubView()
-{
-    addSubView (CSMWorld::UniversalId::Type_ForeignCells);
-}
-
 void CSVDoc::View::addReferenceablesSubView()
 {
     addSubView (CSMWorld::UniversalId::Type_Referenceables);
@@ -900,6 +905,16 @@ void CSVDoc::View::addForeignWorldsSubView()
     addSubView (CSMWorld::UniversalId::Type_ForeignWorlds);
 }
 
+void CSVDoc::View::addForeignCellsSubView()
+{
+    addSubView (CSMWorld::UniversalId::Type_ForeignCells);
+}
+
+void CSVDoc::View::addForeignRegionsSubView()
+{
+    addSubView (CSMWorld::UniversalId::Type_ForeignRegions);
+}
+
 void CSVDoc::View::addLandscapeTextureSubView()
 {
     addSubView (CSMWorld::UniversalId::Type_LandscapeTextures);
@@ -908,6 +923,11 @@ void CSVDoc::View::addLandscapeTextureSubView()
 void CSVDoc::View::addLandscapeSubView()
 {
     addSubView (CSMWorld::UniversalId::Type_Landscapes);
+}
+
+void CSVDoc::View::addForeignRegionMapSubView()
+{
+    addSubView (CSMWorld::UniversalId::Type_ForeignRegionMap);
 }
 
 void CSVDoc::View::addStartScriptsSubView()

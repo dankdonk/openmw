@@ -36,7 +36,7 @@ opencs_hdrs_noqt (model/world
 
 
 opencs_units_noqt (model/foreign
-    world worldcollection cell cellcollection
+    world worldcollection region regioncollection cell cellcollection
     landscapetexture ltexcollection landscape landscapecollection
     navmeshinfo navigationcollection navmesh navmeshcollection
     )

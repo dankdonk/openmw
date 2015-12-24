@@ -236,11 +236,15 @@ namespace CSVDoc
 
             void addForeignWorldsSubView();
 
+            void addForeignRegionsSubView();
+
             void addForeignCellsSubView();
 
             void addLandscapeTextureSubView();
 
             void addLandscapeSubView();
+
+            void addForeignRegionMapSubView();
 
             void addStartScriptsSubView();
 

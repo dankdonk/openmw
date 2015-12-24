@@ -20,7 +20,7 @@
   cc9cii cc9c@iinet.net.au
 
 */
-#include "world.hpp"
+#include "wrld.hpp"
 
 #include <cassert>
 #include <stdexcept>

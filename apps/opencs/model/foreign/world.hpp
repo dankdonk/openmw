@@ -3,7 +3,7 @@
 
 #include <string>
 
-#include <extern/esm4/world.hpp>
+#include <extern/esm4/wrld.hpp>
 
 namespace ESM4
 {

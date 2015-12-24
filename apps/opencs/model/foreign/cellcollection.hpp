@@ -32,7 +32,7 @@ namespace CSMForeign
 
     class CellCollection : public CSMWorld::Collection<Cell, CSMWorld::IdAccessor<Cell> >//, public NestedCollection
     {
-        const WorldCollection& mWorlds;
+        const WorldCollection& mWorlds;  // for looking up World name strings (FULL or EDID)
 
         std::map<std::uint32_t, int> mCellIndex;
         std::map<std::string, std::uint32_t> mIdMap;

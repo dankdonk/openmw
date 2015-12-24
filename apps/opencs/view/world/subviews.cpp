@@ -46,6 +46,7 @@ void CSVWorld::addSubViewFactories (CSVDoc::SubViewFactoryManager& manager)
         CSMWorld::UniversalId::Type_LandTextures,
         CSMWorld::UniversalId::Type_Lands,
         CSMWorld::UniversalId::Type_ForeignWorlds,
+        CSMWorld::UniversalId::Type_ForeignRegions,
         CSMWorld::UniversalId::Type_ForeignCells, // FIXME: need a foreign cell creator
         CSMWorld::UniversalId::Type_LandscapeTextures,
         CSMWorld::UniversalId::Type_Landscapes,
@@ -102,6 +103,8 @@ void CSVWorld::addSubViewFactories (CSVDoc::SubViewFactoryManager& manager)
 
     // Other stuff (combined record tables)
     manager.add (CSMWorld::UniversalId::Type_RegionMap, new CSVDoc::SubViewFactory<RegionMapSubView>);
+   // manager.add (CSMWorld::UniversalId::Type_ForeignRegionMap,
+        //new CSVDoc::SubViewFactory<CSVForeign::RegionMapSubView>);
 
     manager.add (CSMWorld::UniversalId::Type_Scene, new CSVDoc::SubViewFactory<SceneSubView>);
 
