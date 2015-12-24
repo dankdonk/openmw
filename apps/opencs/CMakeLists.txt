@@ -36,8 +36,9 @@ opencs_hdrs_noqt (model/world
 
 
 opencs_units_noqt (model/foreign
+    world worldcollection cell cellcollection
+    landscapetexture ltexcollection landscape landscapecollection
     navmeshinfo navigationcollection navmesh navmeshcollection
-    landscape landscapecollection cell cellcollection
     )
 
 
@@ -218,6 +219,7 @@ target_link_libraries(openmw-cs
     ${OGRE_STATIC_PLUGINS}
     ${SHINY_LIBRARIES}
     ${ESM4_LIBRARIES}
+    ${ZLIB_LIBRARY}
     ${MURMURHASH_LIBRARIES}
     ${Boost_SYSTEM_LIBRARY}
     ${Boost_FILESYSTEM_LIBRARY}

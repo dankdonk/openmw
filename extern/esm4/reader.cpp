@@ -22,13 +22,13 @@
 */
 #include "reader.hpp"
 
+#include <cassert>
+#include <stdexcept>
+
+#include <iostream> // FIXME: debugging only
 #ifdef NDEBUG // FIXME: debugging only
 #undef NDEBUG
 #endif
-#include <stdexcept>
-#include <cassert>
-
-#include <iostream> // FIXME: debugging only
 
 #include <zlib.h>
 
@@ -110,12 +110,12 @@ void ESM4::Reader::saveGroupStatus(const ESM4::RecordHeader& hdr)
     mGroupStack.push_back(std::make_pair(hdr.group, hdr.group.groupSize - (std::uint32_t)mRecHeaderSize));
 }
 
-const ESM4::CellGrid& ESM4::Reader::currCell() const
+const ESM4::CellGrid& ESM4::Reader::currCellGrid() const
 {
     // Maybe should throw an exception instead?
     assert(mCellGridValid && "Attempt to use an invalid cell grid");
 
-    return mCurrCell;
+    return mCurrCellGrid;
 }
 
 void ESM4::Reader::checkGroupStatus()

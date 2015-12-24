@@ -3,7 +3,7 @@
 
 #include <string>
 
-#include <extern/esm4/loadcell.hpp>
+#include <extern/esm4/cell.hpp>
 
 namespace ESM4
 {
@@ -16,12 +16,14 @@ namespace CSMForeign
     {
         static unsigned int sRecordId;
 
-        std::string mId; // required by Collection<T>
+        std::string mId;
         std::string mName;
+
+        std::string mWorld;
 
         void load (ESM4::Reader& reader);
 
-        void blank(); // required by Collection<T>
+        void blank();
     };
 }
 

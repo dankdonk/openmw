@@ -24,14 +24,13 @@
 #define ESM4_WRLD_H
 
 #include <vector>
-#include <string>
-#include <cstdint>
 
 #include "common.hpp"
 
 namespace ESM4
 {
     class Reader;
+    class Writer;
 
     struct World
     {
@@ -85,13 +84,9 @@ namespace ESM4
         ~World();
 
         void load(ESM4::Reader& reader);
-        //void save(ESM4::Writer& reader) const;
+        //void save(ESM4::Writer& writer) const;
 
-        void blank(); // FIXME required by Collection<T>
-
-    //private:
-        //World(const World& other);
-        //World& operator=(const World& other); // FIXME required by Collection<T>
+        void blank();
     };
 }
 

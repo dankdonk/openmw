@@ -80,6 +80,8 @@ namespace CSVDoc
 
             void setupDebugMenu();
 
+            void setupForeignMenu();
+
             void setupUi();
 
             void updateActions();
@@ -186,8 +188,6 @@ namespace CSVDoc
 
             void addCellsSubView();
 
-            void addForeignCellsSubView();
-
             void addReferenceablesSubView();
 
             void addReferencesSubView();
@@ -233,6 +233,12 @@ namespace CSVDoc
             void addLandTextureSubView();
 
             void addLandSubView();
+
+            void addForeignWorldsSubView();
+
+            void addForeignCellsSubView();
+
+            void addLandscapeTextureSubView();
 
             void addLandscapeSubView();
 

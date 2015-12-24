@@ -161,10 +161,6 @@ void CSVDoc::View::setupWorldMenu()
     connect (cells, SIGNAL (triggered()), this, SLOT (addCellsSubView()));
     world->addAction (cells);
 
-    QAction *foreignCells = new QAction (tr ("Foreign Cells"), this);
-    connect (foreignCells, SIGNAL (triggered()), this, SLOT (addForeignCellsSubView()));
-    world->addAction (foreignCells);
-
     QAction *referenceables = new QAction (tr ("Objects"), this);
     connect (referenceables, SIGNAL (triggered()), this, SLOT (addReferenceablesSubView()));
     world->addAction (referenceables);
@@ -180,10 +176,6 @@ void CSVDoc::View::setupWorldMenu()
     QAction *land = new QAction (tr ("Lands"), this);
     connect (land, SIGNAL (triggered()), this, SLOT (addLandSubView()));
     world->addAction (land);
-
-    QAction *landscape = new QAction (tr ("Landscapes"), this);
-    connect (landscape, SIGNAL (triggered()), this, SLOT (addLandscapeSubView()));
-    world->addAction (landscape);
 
     world->addSeparator(); // items that don't represent single record lists follow here
 
@@ -342,6 +334,29 @@ void CSVDoc::View::setupDebugMenu()
     debug->addAction (runLog);
 }
 
+void CSVDoc::View::setupForeignMenu()
+{
+    QMenu *foreign = menuBar()->addMenu (tr ("Foreign World"));
+
+    QAction *worlds = new QAction (tr ("Worlds"), this);
+    connect (worlds, SIGNAL (triggered()), this, SLOT (addForeignWorldsSubView()));
+    foreign->addAction (worlds);
+
+    QAction *foreignCells = new QAction (tr ("Cells"), this);
+    connect (foreignCells, SIGNAL (triggered()), this, SLOT (addForeignCellsSubView()));
+    foreign->addAction (foreignCells);
+
+    QAction *landscape = new QAction (tr ("Landscapes"), this);
+    connect (landscape, SIGNAL (triggered()), this, SLOT (addLandscapeSubView()));
+    foreign->addAction (landscape);
+
+    foreign->addSeparator(); // items from foreign worlds follow here
+
+    QAction *ltex = new QAction (tr ("Landscape Textures"), this);
+    connect (ltex, SIGNAL (triggered()), this, SLOT (addLandscapeTextureSubView()));
+    foreign->addAction (ltex);
+}
+
 void CSVDoc::View::setupUi()
 {
     setupFileMenu();
@@ -352,6 +367,7 @@ void CSVDoc::View::setupUi()
     setupCharacterMenu();
     setupAssetsMenu();
     setupDebugMenu();
+    setupForeignMenu();
 }
 
 void CSVDoc::View::updateTitle()
@@ -877,6 +893,16 @@ void CSVDoc::View::addLandTextureSubView()
 void CSVDoc::View::addLandSubView()
 {
     addSubView (CSMWorld::UniversalId::Type_Lands);
+}
+
+void CSVDoc::View::addForeignWorldsSubView()
+{
+    addSubView (CSMWorld::UniversalId::Type_ForeignWorlds);
+}
+
+void CSVDoc::View::addLandscapeTextureSubView()
+{
+    addSubView (CSMWorld::UniversalId::Type_LandscapeTextures);
 }
 
 void CSVDoc::View::addLandscapeSubView()

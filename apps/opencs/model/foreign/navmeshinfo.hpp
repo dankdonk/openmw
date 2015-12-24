@@ -3,7 +3,7 @@
 
 #include <string>
 
-#include <extern/esm4/loadnavi.hpp>
+#include <extern/esm4/navi.hpp>
 
 namespace CSMForeign
 {

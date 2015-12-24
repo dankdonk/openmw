@@ -31,7 +31,7 @@
 namespace ESM4
 {
     class Reader;
-    //class Writer;
+    class Writer;
 
     struct Navigation
     {
@@ -98,11 +98,7 @@ namespace ESM4
         void load(ESM4::Reader& reader);
         //void save(ESM4::Writer& writer) const;
 
-    //private:
-
-        //Navigation(const Navigation& other);
-        //Navigation& operator=(const Navigation& other); // FIXME required by Collection<T>
-
+        //void blank();
     };
 }
 

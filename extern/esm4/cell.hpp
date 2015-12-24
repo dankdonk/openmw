@@ -23,13 +23,13 @@
 #ifndef ESM4_CELL_H
 #define ESM4_CELL_H
 
-#include <vector>
 #include <string>
 #include <cstdint>
 
 namespace ESM4
 {
     class Reader;
+    class Writer;
 
     enum CellFlags               // TES4                     TES5
     {                            // -----------------------  ------------------------------------
@@ -61,11 +61,9 @@ namespace ESM4
         ~Cell();
 
         void load(ESM4::Reader& reader);
-        //void save(ESM4::Writer& reader) const;
+        //void save(ESM4::Writer& writer) const;
 
-    //private:
-        //Cell(const Cell& other);
-        //Cell& operator=(const Cell& other);
+        void blank();
     };
 }
 

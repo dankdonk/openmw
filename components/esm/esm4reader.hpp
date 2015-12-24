@@ -1,7 +1,7 @@
 #ifndef COMPONENT_ESM_4READER_H
 #define COMPONENT_ESM_4READER_H
 
-#include <extern/esm4/loadtes4.hpp>
+#include <extern/esm4/tes4.hpp>
 #include <extern/esm4/reader.hpp>
 
 #include "esmreader.hpp"

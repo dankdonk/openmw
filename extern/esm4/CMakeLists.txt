@@ -2,12 +2,13 @@ set(ESM4_LIBRARY "esm4")
 
 set(ESM4_SOURCE_FILES
     common.cpp
-    loadtes4.cpp
-    loadnavi.cpp
-    loadwrld.cpp
-    loadnavm.cpp
-    loadland.cpp
-    loadcell.cpp
+    tes4.cpp
+    navi.cpp
+    world.cpp
+    navm.cpp
+    land.cpp
+    ltex.cpp
+    cell.cpp
     reader.cpp
 )
 

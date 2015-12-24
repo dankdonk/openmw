@@ -20,7 +20,7 @@
   cc9cii cc9c@iinet.net.au
 
 */
-#include "loadnavm.hpp"
+#include "navm.hpp"
 
 #include <stdexcept>
 
@@ -234,3 +234,7 @@ void ESM4::NavMesh::load(ESM4::Reader& reader)
 //void ESM4::NavMesh::save(ESM4::Writer& writer) const
 //{
 //}
+
+void ESM4::NavMesh::blank()
+{
+}

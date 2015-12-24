@@ -20,20 +20,18 @@
   cc9cii cc9c@iinet.net.au
 
 */
-#include "loadwrld.hpp"
+#include "world.hpp"
 
-#ifdef NDEBUG // FIXME: debuggigng only
-#undef NDEBUG
-#endif
 #include <cassert>
 #include <stdexcept>
 
 #include <iostream> // FIXME: debug only
+#ifdef NDEBUG // FIXME: debuggigng only
+#undef NDEBUG
+#endif
 
 #include "reader.hpp"
 //#include "writer.hpp"
-
-//unsigned int ESM4::World::sRecordId = ESM4::REC_WRLD;
 
 ESM4::World::World()
 {

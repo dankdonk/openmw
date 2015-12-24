@@ -30,7 +30,7 @@
 namespace ESM4
 {
     class Reader;
-    //class Writer;
+    class Writer;
 
     struct NavMesh
     {
@@ -99,10 +99,8 @@ namespace ESM4
         void load(ESM4::Reader& reader);
         //void save(ESM4::Writer& writer) const;
 
-    //private:
-        //NavMesh(const NavMesh& other);
-        //NavMesh& operator=(const NavMesh& other); // FIXME required by Collection<T>
-};
+        void blank();
+    };
 
 }
 

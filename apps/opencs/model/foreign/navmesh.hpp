@@ -3,7 +3,7 @@
 
 #include <string>
 
-#include <extern/esm4/loadnavm.hpp>
+#include <extern/esm4/navm.hpp>
 
 namespace ESM4
 {

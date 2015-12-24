@@ -20,20 +20,19 @@
   cc9cii cc9c@iinet.net.au
 
 */
-#include "loadtes4.hpp"
+#include "tes4.hpp"
 
-#ifdef NDEBUG // FIXME: debuggigng only
-#undef NDEBUG
-#endif
 #include <cassert>
 #include <stdexcept>
 
 #include <iostream> // FIXME: debugging only
-
-#include "reader.hpp"
-//#include "writer.hpp"
+#ifdef NDEBUG // FIXME: debuggigng only
+#undef NDEBUG
+#endif
 
 #include "common.hpp"
+#include "reader.hpp"
+//#include "writer.hpp"
 
 void ESM4::Header::load(ESM4::Reader& reader, const std::uint32_t size)
 {

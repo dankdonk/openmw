@@ -329,6 +329,11 @@ namespace CSMWorld
             ColumnId_SpellCost = 177,
             ColumnId_SpellChance = 254,
 
+
+            ColumnId_EditorId = 900,
+            ColumnId_World = 901,
+            ColumnId_TextureFile = 902,
+
             // Allocated to a separate value range, so we don't get a collision should we ever need
             // to extend the number of use values.
             ColumnId_UseValue1 = 0x10000,

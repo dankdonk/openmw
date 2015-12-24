@@ -30,8 +30,8 @@
 
 #include <OgreDataStream.h>
 
-#include "loadtes4.hpp"
 #include "common.hpp"
+#include "tes4.hpp"
 
 namespace ESM4
 {
@@ -55,9 +55,10 @@ namespace ESM4
         SubRecordHeader mSubRecordHeader; // header of the current sub record being processed
         GroupStack      mGroupStack;      // keep track of bytes left to find when a group is done
         std::size_t     mEndOfRecord;     // number of bytes read by sub records
-        CellGrid        mCurrCell;        // TODO: should keep keep a map of cell formids // FIXME
+        CellGrid        mCurrCellGrid;    // TODO: should keep keep a map of cell formids // FIXME
         bool            mCellGridValid;
         std::uint32_t   mCurrWorld;       // formId of current world - for grouping CELL records
+        std::uint32_t   mCurrCell;        // formId of current cell
         std::size_t     mRecHeaderSize;
 
         // TODO: try fixed size buffers on the stack for both below (may be faster)
@@ -88,7 +89,7 @@ namespace ESM4
         const GroupTypeHeader& grp(std::size_t pos = 0) const;
 
         // Maybe should throw an exception if called when not valid?
-        const CellGrid& currCell() const;
+        const CellGrid& currCellGrid() const;
 // if performance becomes an issue
 #if 0
         inline const CellGrid& currCell() const {
@@ -102,8 +103,12 @@ namespace ESM4
         // when entering an exterior cell group.
         inline void setCurrCell(const CellGrid& currCell) {
             mCellGridValid = true;
-            mCurrCell = currCell;
+            mCurrCellGrid = currCell;
         }
+
+        inline void setCurrCell(std::uint32_t formId) { mCurrCell = formId; }
+
+        inline const std::uint32_t currCell() { return mCurrCell; }
 
         inline void setCurrWorld(std::uint32_t formId) { mCurrWorld = formId; }
 

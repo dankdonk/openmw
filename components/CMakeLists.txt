@@ -69,6 +69,10 @@ add_component_dir (esmterrain
     storage
     )
 
+add_component_dir (esm4terrain
+    storage
+    )
+
 add_component_dir (misc
     utf8stream stringops resourcehelpers
     )

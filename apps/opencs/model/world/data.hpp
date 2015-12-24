@@ -37,6 +37,8 @@
 #include "../foreign/navmeshcollection.hpp"
 #include "../foreign/landscapecollection.hpp"
 #include "../foreign/cellcollection.hpp"
+#include "../foreign/ltexcollection.hpp"
+#include "../foreign/worldcollection.hpp"
 
 #include "idcollection.hpp"
 #include "nestedidcollection.hpp"
@@ -102,10 +104,12 @@ namespace CSMWorld
             RefCollection mRefs;
             IdCollection<ESM::Filter> mFilters;
             Collection<MetaData> mMetaData;
+            CSMForeign::WorldCollection mForeignWorlds;
+            CSMForeign::CellCollection mForeignCells;
             CSMForeign::NavigationCollection mNavigation;
             CSMForeign::NavMeshCollection mNavMesh;
+            CSMForeign::LTEXCollection mLandscapeTextures;
             CSMForeign::LandscapeCollection mLandscape;
-            CSMForeign::CellCollection mForeignCells;
             const ResourcesManager& mResourcesManager;
             std::vector<QAbstractItemModel *> mModels;
             std::map<UniversalId::Type, QAbstractItemModel *> mModelIndex;
@@ -269,9 +273,17 @@ namespace CSMWorld
 
             CSMForeign::LandscapeCollection& getLandscapes();
 
+            const CSMForeign::LTEXCollection& getLandscapeTexturess() const;
+
+            CSMForeign::LTEXCollection& getLandscapeTexturess();
+
             const CSMForeign::CellCollection& getForeignCells() const;
 
             CSMForeign::CellCollection& getForeignCells();
+
+            const CSMForeign::WorldCollection& getForeignWorlds() const;
+
+            CSMForeign::WorldCollection& getForeignWorlds();
 
             /// Throws an exception, if \a id does not match a resources list.
             const Resources& getResources (const UniversalId& id) const;

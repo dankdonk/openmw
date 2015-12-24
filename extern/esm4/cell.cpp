@@ -20,15 +20,15 @@
   cc9cii cc9c@iinet.net.au
 
 */
-#include "loadcell.hpp"
+#include "cell.hpp"
 
-#ifdef NDEBUG // FIXME: debuggigng only
-#undef NDEBUG
-#endif
 #include <cassert>
 #include <stdexcept>
 
 #include <iostream> // FIXME: debug only
+#ifdef NDEBUG // FIXME: debuggigng only
+#undef NDEBUG
+#endif
 
 #include "reader.hpp"
 //#include "writer.hpp"
@@ -47,6 +47,8 @@ void ESM4::Cell::load(ESM4::Reader& reader)
     mFormId = reader.hdr().record.id;
     mFlags  = reader.hdr().record.flags;
     mParent = reader.currWorld();
+
+    reader.setCurrCell(mFormId); // save for LAND later
 
     while (reader.getSubRecordHeader())
     {
@@ -214,3 +216,7 @@ void ESM4::Cell::load(ESM4::Reader& reader)
 //void ESM4::Cell::save(ESM4::Writer& writer) const
 //{
 //}
+
+void ESM4::Cell::blank()
+{
+}

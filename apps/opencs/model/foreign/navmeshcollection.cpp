@@ -67,9 +67,9 @@ int CSMForeign::NavMeshCollection::load (ESM4::Reader& reader, bool base)
     {
         // FIXME: navmesh can occur in interior cells
         std::ostringstream stream;
-        //stream << "#" << reader.currCell().grid.x << " " << reader.currCell().grid.y;
-        //stream << "#" << std::floor((float)reader.currCell().grid.x/2)
-               //<< " " << std::floor((float)reader.currCell().grid.y/2);
+        //stream << "#" << reader.currCellGrid().grid.x << " " << reader.currCellGrid().grid.y;
+        //stream << "#" << std::floor((float)reader.currCellGrid().grid.x/2)
+               //<< " " << std::floor((float)reader.currCellGrid().grid.y/2);
         id = ""; //stream.str();
         //std::cout << "loading Cell " << id << std::endl; // FIXME
     }

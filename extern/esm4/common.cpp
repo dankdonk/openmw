@@ -37,14 +37,14 @@ namespace ESM4
     std::string printLabel(const GroupLabel& label, const std::uint32_t type)
     {
         std::ostringstream ss;
-        
-        ss << std::string(sGroupType[std::min(type, (uint32_t)11)]);
+        ss << std::string(sGroupType[std::min(type, (uint32_t)11)]); // avoid out of range
+
         switch (type)
         {
             case ESM4::Grp_RecordType:
             {
                 ss << ": " << std::string((char*)label.recordType, 4);
-                return ss.str();
+                break;
             }
             case ESM4::Grp_ExteriorCell:
             case ESM4::Grp_ExteriorSubCell:
@@ -54,13 +54,13 @@ namespace ESM4
                 //x = (label >> 16) & 0xff;
                 ss << ": grid (x, y) " << std::dec << label.grid[1] << ", " << label.grid[0];
 
-                return ss.str();
+                break;
             }
             case ESM4::Grp_InteriorCell:
             case ESM4::Grp_InteriorSubCell:
             {
                 ss << ": block 0x" << std::hex << label.value;
-                return ss.str();
+                break;
             }
             case ESM4::Grp_WorldChild:
             case ESM4::Grp_CellChild:
@@ -70,10 +70,13 @@ namespace ESM4
             case ESM4::Grp_CellVisibleDistChild:
             {
                 ss << ": FormId 0x" << std::hex << label.value;
-                return ss.str();
+                break;
             }
-            default: return ss.str();
+            default:
+                break;
         }
+
+        return ss.str();
     }
 
     std::string printName(const std::uint32_t typeId)

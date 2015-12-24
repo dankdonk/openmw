@@ -28,8 +28,8 @@
 #ifndef ESM4_COMMON_H
 #define ESM4_COMMON_H
 
-#include <string>
 #include <cstdint>
+#include <string>
 
 // From ScummVM's endianness.h but for little endian
 #define MKTAG(a0,a1,a2,a3) ((std::uint32_t)((a0) | ((a1) << 8) | ((a2) << 16) | ((a3) << 24)))
@@ -272,7 +272,16 @@ namespace ESM4
         SUA_BTXT = MKTAG('B','T','X','T'),
         SUB_ATXT = MKTAG('A','T','X','T'),
         SUB_VTXT = MKTAG('V','T','X','T'),
-        SUB_VTEX = MKTAG('V','T','E','X')
+        SUB_VTEX = MKTAG('V','T','E','X'),
+
+        // below appear in LTEX records
+      //SUB_EDID = MKTAG('E','D','I','D'),
+      //SUB_ICON = MKTAG('I','C','O','N'), // Oblivion only?
+      //SUB_SNAM = MKTAG('S','N','A','M'), // Oblivion only?
+      //SUB_TNAM = MKTAG('T','N','A','M'),
+      //SUB_MNAM = MKTAG('M','N','A','M'),
+        SUB_HNAM = MKTAG('H','N','A','M'),
+        SUB_GNAM = MKTAG('G','N','A','M')
     };
 
     // Based on http://www.uesp.net/wiki/Tes5Mod:Mod_File_Format#Groups

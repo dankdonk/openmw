@@ -33,7 +33,7 @@ int CSMForeign::LandscapeCollection::load (ESM4::Reader& reader, bool base)
     if (reader.hasCellGrid())
     {
         // LAND records should only occur in a exterior cell.  Ensure this because we will make use
-        // of reader.currCell() later.
+        // of reader.currCellGrid() later.
         assert(reader.grp(3).type == ESM4::Grp_ExteriorCell &&
                reader.grp(2).type == ESM4::Grp_ExteriorSubCell &&
                reader.grp(1).type == ESM4::Grp_CellChild &&
@@ -42,19 +42,23 @@ int CSMForeign::LandscapeCollection::load (ESM4::Reader& reader, bool base)
 
         std::ostringstream stream;
         // If using Morrowind cell size, need to divide by 2
-        //stream << "#" << std::floor((float)reader.currCell().grid.x/2)
-               //<< " " << std::floor((float)reader.currCell().grid.y/2);
-        stream << "#" << reader.currCell().grid.x << " " << reader.currCell().grid.y;
+        //stream << "#" << std::floor((float)reader.currCellGrid().grid.x/2)
+               //<< " " << std::floor((float)reader.currCellGrid().grid.y/2);
+        stream << "#" << reader.currCellGrid().grid.x << " " << reader.currCellGrid().grid.y;
         id = stream.str();
 #if 0
         std::string padding = "";
         padding.insert(0, reader.stackSize()*2, ' ');
         std::cout << padding << "LAND: formId " << std::hex << reader.hdr().record.id << std::endl; // FIXME
-        std::cout << padding << "LAND X " << std::dec << reader.currCell().grid.x << ", Y " << reader.currCell().grid.y << std::endl;
+        std::cout << padding << "LAND X " << std::dec << reader.currCellGrid().grid.x << ", Y " << reader.currCellGrid().grid.y << std::endl;
 #endif
     }
     else
         id = std::to_string(reader.hdr().record.id); // use formId instead
+
+    record.mName = id; // FIXME: temporary, note id overwritten below
+
+    id = std::to_string(reader.hdr().record.id); // use formId instead
 
     // FIXME; should be using the formId as the lookup key
     int index = this->searchId(id);

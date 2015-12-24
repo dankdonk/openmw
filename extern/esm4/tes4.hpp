@@ -23,14 +23,14 @@
 #ifndef ESM4_TES4_H
 #define ESM4_TES4_H
 
+#include <cstdint>
 #include <vector>
 #include <string>
-#include <cstdint>
 
 namespace ESM4
 {
     class Reader;
-    //class Writer;
+    class Writer;
 
     struct Header
     {
@@ -65,10 +65,10 @@ namespace ESM4
 
         unsigned int mFlags; // 0x01 esm, 0x80 localised strings
 
-        //void blank();
-
         void load (Reader& reader, const std::uint32_t size);
         //void save (Writer& writer);
+
+        //void blank();
     };
 }
 

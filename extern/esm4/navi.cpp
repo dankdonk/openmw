@@ -20,18 +20,18 @@
   cc9cii cc9c@iinet.net.au
 
 */
-#include "loadnavi.hpp"
+#include "navi.hpp"
 
-#ifdef NDEBUG // FIXME: debuggigng only
-#undef NDEBUG
-#endif
 #include <cassert>
 #include <stdexcept>
 
 #include <iostream> // FIXME: debugging only
+#ifdef NDEBUG // FIXME: debuggigng only
+#undef NDEBUG
+#endif
 
 #include "reader.hpp"
-//#include "esmwriter.hpp"
+//#include "writer.hpp"
 
 ESM4::Navigation::Navigation()
 {
@@ -55,7 +55,7 @@ void ESM4::Navigation::IslandInfo::load(ESM4::Reader& reader)
     if (count)
     {
         triangles.resize(count);
-        std::cout << "NVMI island triangles " << std::dec << count << std::endl; // FIXME
+        //std::cout << "NVMI island triangles " << std::dec << count << std::endl; // FIXME
         for (std::vector<Navigation::Triangle>::iterator it = triangles.begin(); it != triangles.end(); ++it)
         {
             reader.get(*it);
@@ -70,11 +70,11 @@ void ESM4::Navigation::IslandInfo::load(ESM4::Reader& reader)
         {
             reader.get(*it);
 // FIXME: debugging only
-//#if 0
+#if 0
             std::string padding = "";
             padding.insert(0, reader.stackSize()*2, ' ');
             std::cout << padding << "NVMI vert " << std::dec << (*it).x << ", " << (*it).y << ", " << (*it).z << std::endl;
-//#endif
+#endif
         }
     }
 }
@@ -90,24 +90,25 @@ void ESM4::Navigation::NavMeshInfo::load(ESM4::Reader& reader)
     reader.get(z);
 
 // FIXME: for debugging only
-    std::string padding = "";
 #if 0
+    std::string padding = "";
     if (flags == ESM4::FLG_Modified)
         padding.insert(0, 2, '-');
     else if (flags == ESM4::FLG_Unmodified)
         padding.insert(0, 4, '.');
-#endif
+
     padding.insert(0, reader.stackSize()*2, ' ');
     std::cout << padding << "NVMI formId: 0x" << std::hex << formId << std::endl;
     std::cout << padding << "NVMI flags: " << std::hex << flags << std::endl;
     std::cout << padding << "NVMI center: " << std::dec << x << ", " << y << ", " << z << std::endl;
+#endif
 
     reader.get(flagPrefMerges);
 
     reader.get(count); // countMerged;
     if (count)
     {
-        std::cout << "NVMI countMerged " << std::dec << count << std::endl;
+        //std::cout << "NVMI countMerged " << std::dec << count << std::endl;
         formIdMerged.resize(count);
         for (std::vector<std::uint32_t>::iterator it = formIdMerged.begin(); it != formIdMerged.end(); ++it)
         {
@@ -118,7 +119,7 @@ void ESM4::Navigation::NavMeshInfo::load(ESM4::Reader& reader)
     reader.get(count); // countPrefMerged;
     if (count)
     {
-        std::cout << "NVMI countPrefMerged " << std::dec << count << std::endl;
+        //std::cout << "NVMI countPrefMerged " << std::dec << count << std::endl;
         formIdPrefMerged.resize(count);
         for (std::vector<std::uint32_t>::iterator it = formIdPrefMerged.begin(); it != formIdPrefMerged.end(); ++it)
         {
@@ -129,7 +130,7 @@ void ESM4::Navigation::NavMeshInfo::load(ESM4::Reader& reader)
     reader.get(count); // countLinkedDoors;
     if (count)
     {
-        std::cout << "NVMI countLinkedDoors " << std::dec << count << std::endl;
+        //std::cout << "NVMI countLinkedDoors " << std::dec << count << std::endl;
         linkedDoors.resize(count);
         for (std::vector<DoorRef>::iterator it = linkedDoors.begin(); it != linkedDoors.end(); ++it)
         {
@@ -156,23 +157,25 @@ void ESM4::Navigation::NavMeshInfo::load(ESM4::Reader& reader)
         reader.get(cellGrid.grid.y); // NOTE: reverse order
         reader.get(cellGrid.grid.x);
 // FIXME: debugging only
-//#if 0
+#if 0
     std::string padding = "";
     padding.insert(0, reader.stackSize()*2, ' ');
     if (worldSpaceId == ESM4::FLG_Morrowind)
         std::cout << padding << "NVMI MW: X " << std::dec << cellGrid.grid.x << ", Y " << cellGrid.grid.y << std::endl;
     else
         std::cout << padding << "NVMI SR: X " << std::dec << cellGrid.grid.x << ", Y " << cellGrid.grid.y << std::endl;
-//#endif
+#endif
     }
     else
     {
         reader.get(cellGrid.cellId);
 
+#if 0
         if (worldSpaceId == ESM4::FLG_Interior)
             std::cout << "NVMI Interior: cellId " << std::hex << cellGrid.cellId << std::endl;
         else
             std::cout << "NVMI FormID: cellId " << std::hex << cellGrid.cellId << std::endl;
+#endif
     }
 }
 
@@ -280,8 +283,10 @@ void ESM4::Navigation::load(ESM4::Reader& reader)
                         }
                     }
                     mPreferredPaths.push_back(std::make_pair(node, preferredPaths));
+#if 0
                     std::cout << "node " << std::hex << node // FIXME: debugging only
                         << ", count " << count << ", i " << std::dec << i << std::endl;
+#endif
                 }
                 reader.get(count);
                 assert(count == 1 && "expected separator");
@@ -289,8 +294,10 @@ void ESM4::Navigation::load(ESM4::Reader& reader)
                 reader.get(node); // HACK
                 std::vector<std::uint32_t> preferredPaths;
                 mPreferredPaths.push_back(std::make_pair(node, preferredPaths)); // empty
+#if 0
                 std::cout << "node " << std::hex << node // FIXME: debugging only
                         << ", count " << 0 << std::endl;
+#endif
 
                 reader.get(count); // HACK
                 assert(count == 10 && "expected 0xa");
@@ -299,8 +306,10 @@ void ESM4::Navigation::load(ESM4::Reader& reader)
                 {
                     reader.get(node);
                     reader.get(index);
+#if 0
                     std::cout << "node " << std::hex << node // FIXME: debugging only
                         << ", index " << index << ", i " << std::dec << total+i << std::endl;
+#endif
                     std::pair<std::map<std::uint32_t, std::uint32_t>::iterator, bool> res =
                         mPathIndexMap.insert(std::make_pair(node, index));
                     if (!res.second)
@@ -312,12 +321,12 @@ void ESM4::Navigation::load(ESM4::Reader& reader)
             {
                 std::uint32_t version; // always the same? (0x0c)
                 reader.get(version); // TODO: store this or use it for merging?
-                std::cout << "NAVI version " << std::dec << version << std::endl;
+                //std::cout << "NAVI version " << std::dec << version << std::endl;
                 break;
             }
             case ESM4::SUB_NVMI: // multiple
             {
-                std::cout << "\nNVMI start" << std::endl;
+                //std::cout << "\nNVMI start" << std::endl;
                 NavMeshInfo nvmi;
                 nvmi.load(reader);
                 mNavMeshInfo.push_back (nvmi);

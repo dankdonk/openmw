@@ -20,15 +20,15 @@
   cc9cii cc9c@iinet.net.au
 
 */
-#include "loadland.hpp"
+#include "land.hpp"
 
-#ifdef NDEBUG // FIXME: debuggigng only
-#undef NDEBUG
-#endif
 #include <cassert>
 #include <stdexcept>
 
 #include <iostream> // FIXME: debug only
+#ifdef NDEBUG // FIXME: debuggigng only
+#undef NDEBUG
+#endif
 
 #include "reader.hpp"
 //#include "writer.hpp"
@@ -39,6 +39,16 @@ ESM4::Land::Land()
 
 ESM4::Land::~Land()
 {
+}
+
+void ESM4::Land::LandData::transposeTextureData(const std::uint16_t *in, std::uint16_t *out)
+{
+    int readPos = 0; //bit ugly, but it works
+    for ( int y1 = 0; y1 < 4; y1++ )
+        for ( int x1 = 0; x1 < 4; x1++ )
+            for ( int y2 = 0; y2 < 4; y2++)
+                for ( int x2 = 0; x2 < 4; x2++ )
+                    out[(y1*4+y2)*16+(x1*4+x2)] = in[readPos++];
 }
 
 //             overlap north
@@ -58,6 +68,9 @@ ESM4::Land::~Land()
 //
 void ESM4::Land::load(ESM4::Reader& reader)
 {
+    mFormId = reader.hdr().record.id;
+    mFlags  = reader.hdr().record.flags;
+
     std::int8_t currentQuadrant = -1; // for VTXT following ATXT
 
     while (reader.getSubRecordHeader())
@@ -67,27 +80,48 @@ void ESM4::Land::load(ESM4::Reader& reader)
         {
             case ESM4::SUB_DATA: // flags
             {
-                reader.get(mFlags);
+                reader.get(mLandFlags);
                 break;
             }
             case ESM4::SUB_VNML: // vertex normals, 33x33x(1+1+1) = 3267
             {
-                reader.get(mVertNorm);
+                reader.get(mLandData.mVertNorm);
                 break;
             }
             case ESM4::SUB_VHGT: // vertex height gradient, 4+33x33+3 = 4+1089+3 = 1096
             {
+#if 0
                 reader.get(mHeightMap.heightOffset);
                 reader.get(mHeightMap.gradientData);
                 reader.get(mHeightMap.unknown1);
                 reader.get(mHeightMap.unknown2);
                 // FIXME: debug only
                 //std::cout << "mHeightMap offset " << mHeightMap.heightOffset << std::endl;
+#endif
+                static VHGT vhgt;
+                reader.get(vhgt);
+
+                //mLandData.mHeightOffset = vhgt.heightOffset; // FIXME: probably not used
+                float rowOffset = vhgt.heightOffset;
+                for (int y = 0; y < VERTS_SIDE; y++)
+                {
+                    rowOffset += vhgt.gradientData[y * VERTS_SIDE];
+
+                    mLandData.mHeights[y * VERTS_SIDE] = rowOffset * HEIGHT_SCALE;
+
+                    float colOffset = rowOffset;
+                    for (int x = 1; x < VERTS_SIDE; x++)
+                    {
+                        colOffset += vhgt.gradientData[y * VERTS_SIDE + x];
+                        mLandData.mHeights[x + y * VERTS_SIDE] = colOffset * HEIGHT_SCALE;
+                    }
+                }
+
                 break;
             }
             case ESM4::SUB_VCLR: // vertex colours, 24bit RGB, 33x33x(1+1+1) = 3267
             {
-                reader.get(mVertColr);
+                reader.get(mLandData.mVertColr);
                 break;
             }
             case ESM4::SUA_BTXT:
@@ -97,7 +131,7 @@ void ESM4::Land::load(ESM4::Reader& reader)
                 {
                     assert(base.quadrant < 4 && base.quadrant >= 0 && "base texture quadrant index error");
 
-                    mTextures[base.quadrant].base = base;  // FIXME: any way to avoid double-copying?
+                    mLandData.mTextures[base.quadrant].base = base;  // FIXME: any way to avoid double-copying?
                     //std::cout << "Base Texture formid: 0x"
                         //<< std::hex << mTextures[base.quadrant].base.formId << std::endl;
                 }
@@ -109,7 +143,7 @@ void ESM4::Land::load(ESM4::Reader& reader)
                 reader.get(add);
                 assert(add.quadrant < 4 && add.quadrant >= 0 && "additional texture quadrant index error");
 
-                mTextures[add.quadrant].additional = add;  // FIXME: any way to avoid double-copying?
+                mLandData.mTextures[add.quadrant].additional = add;  // FIXME: any way to avoid double-copying?
 #if 0
                 std::cout << "Additional Texture formId: 0x"
                     << std::hex << mTextures[add.quadrant].additional.formId << std::endl;
@@ -130,9 +164,9 @@ void ESM4::Land::load(ESM4::Reader& reader)
 
                 if (count)
                 {
-                    mTextures[currentQuadrant].data.resize(count);
-                    std::vector<ESM4::Land::VTXT>::iterator it = mTextures[currentQuadrant].data.begin();
-                    for (;it != mTextures[currentQuadrant].data.end(); ++it)
+                    mLandData.mTextures[currentQuadrant].data.resize(count);
+                    std::vector<ESM4::Land::VTXT>::iterator it = mLandData.mTextures[currentQuadrant].data.begin();
+                    for (;it != mLandData.mTextures[currentQuadrant].data.end(); ++it)
                     {
                         reader.get(*it);
                         // FIXME: debug only
@@ -150,8 +184,8 @@ void ESM4::Land::load(ESM4::Reader& reader)
 
                 if (count)
                 {
-                    mIds.resize(count);
-                    for (std::vector<std::uint32_t>::iterator it = mIds.begin(); it != mIds.end(); ++it)
+                    mLandData.mIds.resize(count);
+                    for (std::vector<std::uint32_t>::iterator it = mLandData.mIds.begin(); it != mLandData.mIds.end(); ++it)
                     {
                         reader.get(*it);
                         // FIXME: debug only
@@ -167,5 +201,9 @@ void ESM4::Land::load(ESM4::Reader& reader)
 }
 
 //void ESM4::Land::save(ESM4::Writer& writer) const
+//{
+//}
+
+//void ESM4::Land::blank()
 //{
 //}

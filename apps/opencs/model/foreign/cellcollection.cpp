@@ -2,8 +2,8 @@
 
 #include <stdexcept>
 #include <cassert>
-#include <iostream> // FIXME
 
+#include <iostream> // FIXME
 #ifdef NDEBUG // FIXME: debugging only
 #undef NDEBUG
 #endif
@@ -14,6 +14,8 @@
 
 #include "../world/record.hpp"
 #include "../world/universalid.hpp"
+
+#include "worldcollection.hpp"
 
 namespace CSMWorld
 {
@@ -44,7 +46,7 @@ namespace CSMWorld
     }
 }
 
-CSMForeign::CellCollection::CellCollection ()
+CSMForeign::CellCollection::CellCollection (const WorldCollection& worlds) :mWorlds(worlds)
 {
 }
 
@@ -70,7 +72,7 @@ int CSMForeign::CellCollection::load (ESM4::Reader& reader, bool base)
 
     std::string id;
 
-    // reader.currCell() is set during the load (sub record XCLC for an exterior cell)
+    // reader.currCellGrid() is set during the load (sub record XCLC for an exterior cell)
     if (reader.hasCellGrid())
     {
         assert((reader.grp().type == ESM4::Grp_ExteriorSubCell ||
@@ -80,17 +82,17 @@ int CSMForeign::CellCollection::load (ESM4::Reader& reader, bool base)
         padding.insert(0, reader.stackSize()*2, ' ');
         std::cout << padding << "CELL: formId " << std::dec << reader.hdr().record.id << std::endl; // FIXME
 #if 0
-        std::cout << padding << "CELL X " << std::dec << reader.currCell().grid.x << ", Y " << reader.currCell().grid.y << std::endl;
+        std::cout << padding << "CELL X " << std::dec << reader.currCellGrid().grid.x << ", Y " << reader.currCellGrid().grid.y << std::endl;
         std::cout << padding << "CELL type " << std::hex << reader.grp().type << std::endl;
 
         std::ostringstream stream;
-        stream << "#" << reader.currCell().grid.x << " " << reader.currCell().grid.y;
-        //stream << "#" << std::floor((float)reader.currCell().grid.x/2)
-               //<< " " << std::floor((float)reader.currCell().grid.y/2);
+        stream << "#" << reader.currCellGrid().grid.x << " " << reader.currCellGrid().grid.y;
+        //stream << "#" << std::floor((float)reader.currCellGrid().grid.x/2)
+               //<< " " << std::floor((float)reader.currCellGrid().grid.y/2);
         id = stream.str();
 #endif
         char buf[100];
-        int res = snprintf(buf, 100, "#%d %d", reader.currCell().grid.x, reader.currCell().grid.y);
+        int res = snprintf(buf, 100, "#%d %d", reader.currCellGrid().grid.x, reader.currCellGrid().grid.y);
         if (res > 0 && res < 100)
             id.assign(buf);
         else
@@ -129,6 +131,8 @@ int CSMForeign::CellCollection::load (ESM4::Reader& reader, bool base)
         std::cout << "record overwritten" << std::endl;
         //record = this->getRecord(index).get(); // FIXME: record (just loaded) is being overwritten
     }
+
+    record.mWorld = mWorlds.getIdString(record.mParent);
 
     return load(record, base, index);
 }

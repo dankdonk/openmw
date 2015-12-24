@@ -2406,7 +2406,7 @@ namespace CSMWorld
     struct EditorIdColumn : public Column<ESXRecordT>
     {
         EditorIdColumn()
-        : Column<ESXRecordT> (Columns::ColumnId_Name, ColumnBase::Display_String) // FIXME ColumnId
+        : Column<ESXRecordT> (Columns::ColumnId_EditorId, ColumnBase::Display_String)
         {}
 
         virtual QVariant get (const Record<ESXRecordT>& record) const
@@ -2429,12 +2429,35 @@ namespace CSMWorld
     struct WorldColumn : public Column<ESXRecordT>
     {
         WorldColumn()
-        : Column<ESXRecordT> (Columns::ColumnId_Region, ColumnBase::Display_Integer) // FIXME ColumnId
+        : Column<ESXRecordT> (Columns::ColumnId_World, ColumnBase::Display_String)
         {}
 
         virtual QVariant get (const Record<ESXRecordT>& record) const
         {
-            return record.get().mParent;
+            return QString::fromUtf8 (record.get().mWorld.c_str());
+        }
+
+        virtual void set (Record<ESXRecordT>& record, const QVariant& data)
+        {
+            return; // FIXME
+        }
+
+        virtual bool isEditable() const
+        {
+            return true;
+        }
+    };
+
+    template<typename ESXRecordT>
+    struct TextureFileColumn : public Column<ESXRecordT>
+    {
+        TextureFileColumn()
+        : Column<ESXRecordT> (Columns::ColumnId_TextureFile, ColumnBase::Display_String)
+        {}
+
+        virtual QVariant get (const Record<ESXRecordT>& record) const
+        {
+            return QString::fromUtf8 (record.get().mTextureFile.c_str());
         }
 
         virtual void set (Record<ESXRecordT>& record, const QVariant& data)
