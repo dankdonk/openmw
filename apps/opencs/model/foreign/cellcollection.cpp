@@ -98,7 +98,7 @@ int CSMForeign::CellCollection::load (ESM4::Reader& reader, bool base)
         char buf[100];
         int res = snprintf(buf, 100, "#%d %d", reader.currCellGrid().grid.x, reader.currCellGrid().grid.y);
         if (res > 0 && res < 100)
-            id.assign(buf);
+            record.mName.assign(buf); // use "#x y" for name
         else
             throw std::runtime_error("Cell Collection possible buffer overflow");
     }
