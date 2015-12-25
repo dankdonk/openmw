@@ -4,6 +4,7 @@
 #include <algorithm>
 
 #include <QBrush>
+#include <QString>
 
 #include <components/misc/stringops.hpp>
 
@@ -121,8 +122,19 @@ void CSMForeign::RegionMap::buildMap()
                             throw std::runtime_error("possible buffer overflow on formId");
 
                         const Region& region = regions.getRecord(regionString).get();
-                        if (!region.mMapName.empty())
+                        if (!region.mEditorId.empty())
                         {
+#if 0
+                            QString test = QString(region.mEditorId.c_str());
+                            if (test.contains(QRegExp("navmesh", Qt::CaseInsensitive)))
+                                continue;
+                            else if (test.contains(QRegExp("weather", Qt::CaseInsensitive)))
+                            {
+                                mapRegionString = regionString;
+                                break;
+                            }
+#endif
+//#if 0
                             if (mapPriority == -1)
                             {
                                 mapRegionString = regionString;
@@ -132,6 +144,7 @@ void CSMForeign::RegionMap::buildMap()
                             {
                                 mapRegionString = regionString;
                             }
+//#endif
                         }
                         //else
                     }
