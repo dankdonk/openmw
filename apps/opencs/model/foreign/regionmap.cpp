@@ -70,34 +70,7 @@ void CSMForeign::RegionMap::buildMap()
 {
     const CellCollection& cells = mData.getForeignCells();
     const RegionCollection& regions = mData.getForeignRegions();
-#if 0
-    if (!record.mRegions.empty())
-    {
-        char buf[8+1];
-        int res = 0;
-        // strategy:
-        //   if the only one then use it
-        //   if map name exists (type 0x04 or RDAT_Map) for the region use the highest priority
-        //   else use the highest priority
-        unsigned int size = record.mRegions.size();
-        if (size == 1)
-            res = snprintf(buf, 8+1, "%08x", record.mRegions.back());
-        else
-        {
 
-            int priority = record.mRegions.at(0).mData.pri;
-            for (unsigned int i = 1; i < size; ++i)
-            {
-                ;
-            }
-        }
-
-        if (res > 0 && res < 8+1)
-            record.mRegion.assign(buf);
-        else
-            throw std::runtime_error("Cell Collection possible buffer overflow on formId");
-    }
-#endif
     int size = cells.getSize();
 
     for (int i=0; i < size; ++i)
@@ -109,6 +82,64 @@ void CSMForeign::RegionMap::buildMap()
         if (cell2.mWorld == "Tamriel") // FIXME: make this configurable
         {
             CellDescription description (cell);
+
+            // update mRegion here (the last one was used in CellCollections)
+            if (!cell2.mRegions.empty())
+            {
+                // strategy:
+                //   if the only one then use it
+                //   if map name exists (type 0x04 or RDAT_Map) for the region use the highest priority
+                //   else make no change
+                unsigned int size = cell2.mRegions.size();
+                if (size == 1)
+                {
+                    char buf[8+1];
+                    int res = 0;
+                    res = snprintf(buf, 8+1, "%08x", cell2.mRegions.back());
+
+                    if (res > 0 && res < 8+1)
+                        description.mRegion.assign(buf);
+                    else
+                        throw std::runtime_error("possible buffer overflow on formId");
+                }
+                else
+                {
+                    std::string regionString;
+                    std::string mapRegionString;
+                    int priority = 0;
+                    int mapPriority = -1;
+                    //int priority = record.mRegions.at(0).mData.pri;
+                    for (unsigned int i = 1; i < size; ++i)
+                    {
+                        std::uint32_t regionId = cell2.mRegions[i];
+                        // does this one have a map name?
+                        char bufR[8+1];
+                        int resR = snprintf(bufR, 8+1, "%08x", regionId);
+                        if (resR > 0 && resR < 8+1)
+                            regionString.assign(bufR);
+                        else
+                            throw std::runtime_error("possible buffer overflow on formId");
+
+                        const Region& region = regions.getRecord(regionString).get();
+                        if (!region.mMapName.empty())
+                        {
+                            if (mapPriority == -1)
+                            {
+                                mapRegionString = regionString;
+                                mapPriority = region.mData[0x04].priority;
+                            }
+                            else if (region.mData[0x04].priority > mapPriority)
+                            {
+                                mapRegionString = regionString;
+                            }
+                        }
+                        //else
+                    }
+                    if (!mapRegionString.empty())
+                        description.mRegion = mapRegionString;
+                }
+
+            }
 
             CSMWorld::CellCoordinates index = getIndex (cell2);
 
@@ -402,7 +433,18 @@ QVariant CSMForeign::RegionMap::data (const QModelIndex& index, int role) const
                     mColours.find (Misc::StringUtils::lowerCase (cell->second.mRegion));
 
                 if (iter!=mColours.end())
-                    stream << cell->second.mRegion;
+                {
+                    // FIXME: inefficient hack
+                    const RegionCollection& regions = mData.getForeignRegions();
+                    const Region& region = regions.getRecord(cell->second.mRegion).get();
+
+                    if (!region.mMapName.empty())
+                        stream << region.mMapName;
+                    else if (!region.mEditorId.empty())
+                        stream << region.mEditorId;
+                    else
+                        stream << cell->second.mRegion;
+                }
                 else
                     stream << "<font color=red>" << cell->second.mRegion << "</font>";
             }
