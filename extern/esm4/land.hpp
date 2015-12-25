@@ -156,8 +156,7 @@ namespace ESM4
         ~Land();
 
         // FIXME
-        const LandData *getLandData(int flags) const;
-        const LandData *getLandData() const;
+        const LandData *getLandData(int flags = 0) const; // flags is unused, since all data is loaded up front
         LandData *getLandData();
 
         void load(Reader& reader);

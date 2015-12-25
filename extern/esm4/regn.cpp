@@ -59,9 +59,7 @@ void ESM4::Region::load(ESM4::Reader& reader)
             {
                 if (!reader.getZString(mEditorId))
                     throw std::runtime_error ("REGN EDID data read error");
-
-                assert((size_t)subHdr.dataSize-1 == mEditorId.size() && "REGN EDID string size mismatch");
-                std::cout << "Editor ID: " << mEditorId << std::endl; // FIXME: temp
+                std::cout << "REGN Editor ID: " << mEditorId << std::endl; // FIXME: temp
                 break;
             }
             case ESM4::SUB_RCLR:
@@ -78,8 +76,6 @@ void ESM4::Region::load(ESM4::Reader& reader)
             {
                 if (!reader.getZString(mShader))
                     throw std::runtime_error ("REGN ICON data read error");
-
-                assert((size_t)subHdr.dataSize-1 == mShader.size() && "REGN ICON string size mismatch");
                 break;
             }
             case ESM4::SUB_RPLI:
@@ -134,10 +130,6 @@ void ESM4::Region::load(ESM4::Reader& reader)
 
                 if (!reader.getZString(mMapName))
                     throw std::runtime_error ("REGN RDMP data read error");
-
-                assert((size_t)subHdr.dataSize-1 == mMapName.size() && "REGN Map string size mismatch");
-                std::cout << "Map Name: " << mMapName << std::endl; // FIXME: temp
-
                 break;
             }
             case ESM4::SUB_RDMD: // Only in Oblivion?

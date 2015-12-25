@@ -200,6 +200,16 @@ void ESM4::Land::load(ESM4::Reader& reader)
     }
 }
 
+const ESM4::Land::LandData *ESM4::Land::getLandData(int flags) const
+{
+    return &mLandData;
+}
+
+ESM4::Land::LandData *ESM4::Land::getLandData()
+{
+    return &mLandData;
+}
+
 //void ESM4::Land::save(ESM4::Writer& writer) const
 //{
 //}

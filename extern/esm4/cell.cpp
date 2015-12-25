@@ -49,6 +49,7 @@ void ESM4::Cell::load(ESM4::Reader& reader)
     mParent = reader.currWorld();
 
     reader.setCurrCell(mFormId); // save for LAND later
+    reader.clearCellGrid(); // clear until XCLC FIXME: somehow do this automatically?
 
     while (reader.getSubRecordHeader())
     {
@@ -59,12 +60,10 @@ void ESM4::Cell::load(ESM4::Reader& reader)
             {
                 if (!reader.getZString(mEditorId))
                     throw std::runtime_error ("CELL EDID data read error");
-
-                assert((size_t)subHdr.dataSize-1 == mEditorId.size() && "CELL EDID string size mismatch");
 //#if 0
                 std::string padding = "";
                 padding.insert(0, reader.stackSize()*2, ' ');
-                std::cout << padding << "Editor ID: " << mEditorId << std::endl;
+                std::cout << padding << "CELL Editor ID: " << mEditorId << std::endl;
 //#endif
                 break;
             }
@@ -109,6 +108,7 @@ void ESM4::Cell::load(ESM4::Reader& reader)
                 std::string padding = "";
                 padding.insert(0, reader.stackSize()*2, ' ');
                 std::cout << padding << "CELL group " << ESM4::printLabel(reader.grp().label, reader.grp().type) << std::endl;
+                std::cout << padding << "CELL formId " << std::hex << reader.hdr().record.id << std::endl;
                 std::cout << padding << "CELL X " << std::dec << x << ", Y " << y << std::endl;
 //#endif
                 if (reader.esmVersion() == ESM4::VER_094 || reader.esmVersion() == ESM4::VER_170)
@@ -138,8 +138,6 @@ void ESM4::Cell::load(ESM4::Reader& reader)
 
                 if (!reader.getZString(mFullName))
                     throw std::runtime_error ("CELL FULL data read error");
-
-                assert((size_t)subHdr.dataSize-1 == mFullName.size() && "CELL FULL string size mismatch");
 //#if 0
                 std::string padding = "";
                 padding.insert(0, reader.stackSize()*2, ' ');

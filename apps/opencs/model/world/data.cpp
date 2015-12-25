@@ -945,6 +945,16 @@ CSMForeign::NavMeshCollection& CSMWorld::Data::getNavMeshes()
     return mNavMesh;
 }
 
+const CSMForeign::LTEXCollection& CSMWorld::Data::getLandscapeTextures() const
+{
+    return mLandscapeTextures;
+}
+
+CSMForeign::LTEXCollection& CSMWorld::Data::getLandscapeTextures()
+{
+    return mLandscapeTextures;
+}
+
 const CSMForeign::LandscapeCollection& CSMWorld::Data::getLandscapes() const
 {
     return mLandscape;

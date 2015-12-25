@@ -106,6 +106,12 @@ namespace ESM4
             mCurrCellGrid = currCell;
         }
 
+        // FIXME: This is called each time a new CELL record is read.  Rather than calling this
+        // methos explicitly, mCellGridValid should be set automatically somehow.
+        //
+        // Cell 2c143 is loaded immedicatly after 1bdb1 and can mistakely appear to have grid 0, 1.
+        inline void clearCellGrid() { mCellGridValid = false; }
+
         inline void setCurrCell(std::uint32_t formId) { mCurrCell = formId; }
 
         inline const std::uint32_t currCell() { return mCurrCell; }

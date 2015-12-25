@@ -446,6 +446,8 @@ namespace ESM4
     std::string printLabel(const GroupLabel& label, const std::uint32_t type);
 
     std::string printName(const std::uint32_t typeId);
+
+    void formIdToString(std::uint32_t formId, std::string& str);
 }
 
 #endif // ESM4_COMMON_H

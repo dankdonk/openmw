@@ -55,8 +55,6 @@ void ESM4::LandTexture::load(ESM4::Reader& reader)
             {
                 if (!reader.getZString(mEditorId))
                     throw std::runtime_error ("LTEX EDID data read error");
-
-                assert((size_t)subHdr.dataSize-1 == mEditorId.size() && "LTEX EDID string size mismatch");
                 break;
             }
             case ESM4::SUB_TNAM: // TES5 only
@@ -90,8 +88,6 @@ void ESM4::LandTexture::load(ESM4::Reader& reader)
             {
                 if (!reader.getZString(mTextureFile))
                     throw std::runtime_error ("LTEX ICON data read error");
-
-                assert((size_t)subHdr.dataSize-1 == mTextureFile.size() && "LTEX ICON string size mismatch");
                 break;
             }
             case ESM4::SUB_SNAM:

@@ -103,10 +103,9 @@ namespace ESM4Terrain
         // Since plugins can define new texture palettes, we need to know the plugin index too
         // in order to retrieve the correct texture name.
         // pair  <texture id, plugin id>
-        typedef std::pair<short, short> UniqueTextureId;
+        typedef std::pair<std::uint32_t, short> UniqueTextureId;
 
-        UniqueTextureId getVtexIndexAt(int cellX, int cellY,
-                                               int x, int y);
+        UniqueTextureId getVtexIndexAt(int cellX, int cellY, int x, int y);
         std::string getTextureName (UniqueTextureId id);
 
         std::map<std::string, Terrain::LayerInfo> mLayerInfoMap;

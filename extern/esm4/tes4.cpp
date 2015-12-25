@@ -54,16 +54,12 @@ void ESM4::Header::load(ESM4::Reader& reader, const std::uint32_t size)
             {
                 if (!reader.getZString(mAuthor))
                     throw std::runtime_error ("TES4 CNAM data read error");
-
-                assert((size_t)subHdr.dataSize-1 == mAuthor.size() && "TES4 CNAM string (author) size mismatch");
                 break;
             }
             case ESM4::SUB_SNAM:
             {
                 if (!reader.getZString(mDesc))
                     throw std::runtime_error ("TES4 SNAM data read error");
-
-                assert((size_t)subHdr.dataSize-1 == mDesc.size() && "TES4 SNAM string (desc) size mismatch");
                 break;
             }
             case ESM4::SUB_MAST: // multiple

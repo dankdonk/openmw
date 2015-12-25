@@ -67,23 +67,27 @@ CSMForeign::CellCollection::~CellCollection ()
 int CSMForeign::CellCollection::load (ESM4::Reader& reader, bool base)
 {
     CSMForeign::Cell record;
-
-    loadRecord(record, reader);
-
     std::string id;
+    ESM4::formIdToString(reader.hdr().record.id, id);
+#if 0
+    std::string padding = "";
+    padding.insert(0, reader.stackSize()*2, ' ');
+    std::cout << padding << "CELL: formId " << std::hex << reader.hdr().record.id << std::endl;
+    std::cout << padding << "CELL type " << std::hex << reader.grp().type << std::endl;
+#endif
 
     // reader.currCellGrid() is set during the load (sub record XCLC for an exterior cell)
+    loadRecord(record, reader);
     if (reader.hasCellGrid())
     {
         assert((reader.grp().type == ESM4::Grp_ExteriorSubCell ||
                 reader.grp().type == ESM4::Grp_WorldChild) && "Unexpected group while loading cell");
 
+#if 0
         std::string padding = "";
         padding.insert(0, reader.stackSize()*2, ' ');
-        std::cout << padding << "CELL: formId " << std::hex << reader.hdr().record.id << std::endl; // FIXME
-#if 0
-        std::cout << padding << "CELL X " << std::dec << reader.currCellGrid().grid.x << ", Y " << reader.currCellGrid().grid.y << std::endl;
-        std::cout << padding << "CELL type " << std::hex << reader.grp().type << std::endl;
+        std::cout << padding << "CELL X " << std::dec << reader.currCellGrid().grid.x
+            << ", Y " << reader.currCellGrid().grid.y << std::endl;
 
         std::ostringstream stream;
         stream << "#" << reader.currCellGrid().grid.x << " " << reader.currCellGrid().grid.y;
@@ -100,33 +104,17 @@ int CSMForeign::CellCollection::load (ESM4::Reader& reader, bool base)
     }
     else
     {
+        // Toddland, EmptyWorld, Bloated Float at Sea, Skingrad, Plane of Oblivion, Bravil,
+        // etc, etc, are in Grp_WorldChild but without any grids
+        //
+        // TestRender, EmptyCell, OblivionMQKvatchBridge, thehill, Hawkhaven02, 000009bf, 0000169f,
+        // etc, etc, are in Grp_ExteriorSubCell but witout any grids
         assert((reader.grp().type == ESM4::Grp_ExteriorSubCell ||
-                reader.grp().type == ESM4::Grp_InteriorSubCell) && "Unexpected group while loading cell");
+                reader.grp().type == ESM4::Grp_InteriorSubCell ||
+                reader.grp().type == ESM4::Grp_WorldChild) && "Unexpected group while loading cell");
 
-        std::string padding = "";
-        padding.insert(0, reader.stackSize()*2, ' ');
-        std::cout << padding << "CELL: formId " << std::hex << reader.hdr().record.id << std::endl; // FIXME
-#if 0
-        std::cout << padding << "CELL type " << std::hex << reader.grp().type << std::endl;
-#endif
-        if (!record.mName.empty())
-        {
-            id = record.mName;
-            //if (id == "Arena" || id == "Arena ")
-                //std::cout << "formId " << std::to_string(reader.hdr().record.id) << std::endl;
-        }
-        else
-            id = std::to_string(reader.hdr().record.id); // use formId instead
+        record.mName = id; // use formId string instead of "#x y" for name
     }
-    record.mName = id; // FIXME: temporary, note id overwritten below
-
-    //id = std::to_string(reader.hdr().record.id); // use formId instead
-    char buf[8+1];
-    int res = snprintf(buf, 8+1, "%08x", reader.hdr().record.id);
-    if (res > 0 && res < 8+1)
-        id.assign(buf);
-    else
-        throw std::runtime_error("Cell Collection possible buffer overflow on formId");
 
     int index = searchId(reader.hdr().record.id);
 
@@ -139,15 +127,8 @@ int CSMForeign::CellCollection::load (ESM4::Reader& reader, bool base)
     }
 
     record.mWorld = mWorlds.getIdString(record.mParent); // FIXME: assumes our world is already loaded
-    //record.mRegion = "0001c40d"; // FIXME
     if (!record.mRegions.empty())
-    {
-        res = snprintf(buf, 8 + 1, "%08x", record.mRegions.back()); // NOTE: res and buf reusd
-        if (res > 0 && res < 8 + 1)
-            record.mRegion.assign(buf);
-        else
-            throw std::runtime_error("Cell Collection possible buffer overflow on formId");
-    }
+        ESM4::formIdToString(record.mRegions.back(), record.mRegion);
 
     return load(record, base, index);
 }
@@ -192,14 +173,6 @@ int CSMForeign::CellCollection::load (const CSMForeign::Cell& record, bool base,
 
 int CSMForeign::CellCollection::searchId (const std::string& id) const
 {
-#if 0
-    std::map<std::string, std::uint32_t>::const_iterator iter = mIdMap.find(id);
-
-    if (iter == mIdMap.end())
-        return -1;
-
-    return searchId(iter->second);
-#endif
     return searchId(static_cast<std::uint32_t>(std::stoi(id, nullptr, 16))); // hex
 }
 
@@ -264,52 +237,4 @@ void CSMForeign::CellCollection::insertRecord (std::unique_ptr<CSMWorld::RecordB
     }
 
     mCellIndex.insert(std::make_pair(formId, index));
-#if 0
-    std::pair<std::map<std::string, std::uint32_t>::iterator, bool> res
-        = mIdMap.insert(std::make_pair(id, formId));
-
-    if (!res.second)
-        throw std::runtime_error("CELL id string already in the map");
-#endif
 }
-
-#if 0
-void CSMForeign::CellCollection::addNestedRow (int row, int col, int position)
-{
-}
-
-void CSMForeign::CellCollection::removeNestedRows (int row, int column, int subRow)
-{
-}
-
-QVariant CSMForeign::CellCollection::getNestedData (int row,
-        int column, int subRow, int subColumn) const
-{
-}
-
-void CSMForeign::CellCollection::setNestedData (int row,
-        int column, const QVariant& data, int subRow, int subColumn)
-{
-}
-
-NestedTableWrapperBase* CSMForeign::CellCollection::nestedTable (int row, int column) const
-{
-}
-
-void CSMForeign::CellCollection::setNestedTable (int row,
-        int column, const NestedTableWrapperBase& nestedTable)
-{
-}
-
-int CSMForeign::CellCollection::getNestedRowsCount (int row, int column) const
-{
-}
-
-int CSMForeign::CellCollection::getNestedColumnsCount (int row, int column) const
-{
-}
-
-NestableColumn *CSMForeign::CellCollection::getNestableColumn (int column)
-{
-}
-#endif

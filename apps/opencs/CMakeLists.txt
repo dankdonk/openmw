@@ -106,6 +106,10 @@ opencs_units_noqt (view/render
     pathgridpoint
     )
 
+opencs_units_noqt (view/foreign
+    terrainstorage
+    )
+
 opencs_hdrs_noqt (view/render
     elements
     )

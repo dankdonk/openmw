@@ -59,9 +59,7 @@ void ESM4::World::load(ESM4::Reader& reader)
             {
                 if (!reader.getZString(mEditorId))
                     throw std::runtime_error ("WRLD EDID data read error");
-
-                assert((size_t)subHdr.dataSize-1 == mEditorId.size() && "WRLD EDID string size mismatch");
-                std::cout << "Editor ID: " << mEditorId << std::endl; // FIXME: temp
+                std::cout << "WRLD Editor ID: " << mEditorId << std::endl; // FIXME: temp
                 break;
             }
             case ESM4::SUB_FULL: // Name of the worldspace
@@ -80,9 +78,7 @@ void ESM4::World::load(ESM4::Reader& reader)
 
                 if (!reader.getZString(mFullName))
                     throw std::runtime_error ("WRLD FULL data read error");
-
-                assert((size_t)subHdr.dataSize-1 == mFullName.size() && "WRLD FULL string size mismatch");
-                std::cout << "Full Name: " << mFullName << std::endl; // FIXME: temp
+                std::cout << "WRLD Full Name: " << mFullName << std::endl; // FIXME: temp
                 break;
             }
             case ESM4::SUB_WCTR: // Center cell, TES5 only
@@ -104,8 +100,6 @@ void ESM4::World::load(ESM4::Reader& reader)
             {
                 if (!reader.getZString(mMapFile))
                     throw std::runtime_error ("WRLD ICON data read error");
-
-                assert((size_t)subHdr.dataSize-1 == mMapFile.size() && "WRLD ICON string size mismatch");
                 break;
             }
             case ESM4::SUB_RNAM: // multiple

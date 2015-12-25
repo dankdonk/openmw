@@ -103,9 +103,6 @@ void ESM4::Reader::saveGroupStatus(const ESM4::RecordHeader& hdr)
         return;
     }
 
-    if (hdr.group.type == ESM4::Grp_ExteriorCell)
-        mCellGridValid = false; // FIXME: is there a better place to set this?
-
     // push group
     mGroupStack.push_back(std::make_pair(hdr.group, hdr.group.groupSize - (std::uint32_t)mRecHeaderSize));
 }
@@ -233,6 +230,7 @@ bool ESM4::Reader::getZString(std::string& str)
             std::cerr << "ESM4::Reader - string is not terminated with a zero" << std::endl;
 
         str.assign(buf.get(), size-1); // don't copy null terminator
+        //assert((size_t)size-1 == str.size() && "ESM4::Reader - string size mismatch");
         return true;
     }
     else

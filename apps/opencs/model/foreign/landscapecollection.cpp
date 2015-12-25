@@ -27,71 +27,74 @@ CSMForeign::LandscapeCollection::~LandscapeCollection ()
 int CSMForeign::LandscapeCollection::load (ESM4::Reader& reader, bool base)
 {
     CSMForeign::Landscape record;
-    //std::cout << "new Landscape " << std::hex << &record << std::endl; // FIXME
 
     std::string id;
+    ESM4::formIdToString(reader.hdr().record.id, id);
 
+    record.mName = id; // default is formId
+
+    // check if parent cell left some bread crumbs
     if (reader.hasCellGrid())
     {
-        // LAND records should only occur in a exterior cell.  Ensure this because we will make use
-        // of reader.currCellGrid() later.
+        // LAND records should only occur in a exterior cell.
         assert(reader.grp(3).type == ESM4::Grp_ExteriorCell &&
                reader.grp(2).type == ESM4::Grp_ExteriorSubCell &&
                reader.grp(1).type == ESM4::Grp_CellChild &&
                reader.grp(0).type == ESM4::Grp_CellTemporaryChild &&
                "LAND record found in an unexpected group heirarchy");
 
+        std::uint32_t worldId = reader.currWorld();
+        std::map<std::uint32_t, CoordinateIndex>::iterator lb = mPositionIndex.lower_bound(worldId);
+
+        if (lb != mPositionIndex.end() && !(mPositionIndex.key_comp()(worldId, lb->first)))
+        {
+            std::pair<CoordinateIndex::iterator, bool> res = lb->second.insert(
+                { std::pair<int, int>(reader.currCellGrid().grid.x, reader.currCellGrid().grid.y), id });
+
+            assert(res.second && "existing LAND record found for the given coordinates");
+        }
+        else
+            mPositionIndex.insert(lb, std::map<std::uint32_t, CoordinateIndex>::value_type(worldId,
+                { {std::pair<int, int>(reader.currCellGrid().grid.x, reader.currCellGrid().grid.y), id } }));
+
         std::ostringstream stream;
         // If using Morrowind cell size, need to divide by 2
         //stream << "#" << std::floor((float)reader.currCellGrid().grid.x/2)
                //<< " " << std::floor((float)reader.currCellGrid().grid.y/2);
         stream << "#" << reader.currCellGrid().grid.x << " " << reader.currCellGrid().grid.y;
-        id = stream.str();
+        record.mName = stream.str(); // overwrite mName
 #if 0
         std::string padding = "";
         padding.insert(0, reader.stackSize()*2, ' ');
-        std::cout << padding << "LAND: formId " << std::hex << reader.hdr().record.id << std::endl; // FIXME
-        std::cout << padding << "LAND X " << std::dec << reader.currCellGrid().grid.x << ", Y " << reader.currCellGrid().grid.y << std::endl;
+        std::cout << padding << "LAND: formId " << std::hex << reader.hdr().record.id << std::endl;
+        std::cout << padding << "LAND X " << std::dec << reader.currCellGrid().grid.x
+            << ", Y " << reader.currCellGrid().grid.y << std::endl;
 #endif
     }
-    else
-        id = std::to_string(reader.hdr().record.id); // use formId instead
-
-    record.mName = id; // FIXME: temporary, note id overwritten below
-
-    //id = std::to_string(reader.hdr().record.id); // use formId converted to string instead
-    char buf[8+1];
-    int res = snprintf(buf, 8+1, "%08x", reader.hdr().record.id);
-    if (res > 0 && res < 100)
-        id.assign(buf);
-    else
-        throw std::runtime_error("Landscape Collection possible buffer overflow on formId");
 
     // FIXME; should be using the formId as the lookup key
-    int index = this->searchId(id);
+    int index = CSMWorld::Collection<Landscape, CSMWorld::IdAccessor<Landscape> >::searchId(id);
 
     if (index == -1)
         CSMWorld::IdAccessor<CSMForeign::Landscape>().getId(record) = id;
     else
-    {
         record = this->getRecord(index).get();
-    }
 
     loadRecord(record, reader);
 
     return load(record, base, index);
 }
 
-void CSMForeign::LandscapeCollection::loadRecord (CSMForeign::Landscape& record,
-    ESM4::Reader& reader)
+void CSMForeign::LandscapeCollection::loadRecord (Landscape& record, ESM4::Reader& reader)
 {
     record.load(reader, mCells);
 }
 
-int CSMForeign::LandscapeCollection::load (const CSMForeign::Landscape& record, bool base, int index)
+int CSMForeign::LandscapeCollection::load (const Landscape& record, bool base, int index)
 {
     if (index == -2)
-        index = this->searchId(CSMWorld::IdAccessor<CSMForeign::Landscape>().getId(record));
+        index = CSMWorld::Collection<Landscape, CSMWorld::IdAccessor<Landscape> >::searchId(
+            CSMWorld::IdAccessor<Landscape>().getId(record));
 
     if (index == -1)
     {
@@ -108,9 +111,8 @@ int CSMForeign::LandscapeCollection::load (const CSMForeign::Landscape& record, 
     else
     {
         // old record
-        std::unique_ptr<CSMWorld::Record<CSMForeign::Landscape> > record2(
-                new CSMWorld::Record<CSMForeign::Landscape>(
-                    CSMWorld::Collection<CSMForeign::Landscape, CSMWorld::IdAccessor<CSMForeign::Landscape> >::getRecord(index)));
+        std::unique_ptr<CSMWorld::Record<Landscape> > record2(
+                new CSMWorld::Record<Landscape>(CSMWorld::Collection<Landscape, CSMWorld::IdAccessor<Landscape> >::getRecord(index)));
 
         if (base)
             record2->mBase = record;
@@ -123,43 +125,15 @@ int CSMForeign::LandscapeCollection::load (const CSMForeign::Landscape& record, 
     return index;
 }
 
-#if 0
-void CSMForeign::LandscapeCollection::addNestedRow(int row, int col, int position)
+int CSMForeign::LandscapeCollection::searchId(int x, int y, std::uint32_t worldId) const
 {
-}
+    std::map<std::uint32_t, CoordinateIndex>::const_iterator iter = mPositionIndex.find(worldId);
+    if (iter == mPositionIndex.end())
+        return -1; // can't find world
 
-void CSMForeign::LandscapeCollection::removeNestedRows(int row, int column, int subRow)
-{
-}
+    CoordinateIndex::const_iterator it = iter->second.find(std::make_pair(x, y));
+    if (it == iter->second.end())
+        return -1; // cann't find coordinate
 
-QVariant CSMForeign::LandscapeCollection::getNestedData(int row,
-        int column, int subRow, int subColumn) const
-{
+    return CSMWorld::Collection<Landscape, CSMWorld::IdAccessor<Landscape> >::searchId(it->second);
 }
-
-void CSMForeign::LandscapeCollection::setNestedData(int row,
-        int column, const QVariant& data, int subRow, int subColumn)
-{
-}
-
-NestedTableWrapperBase* CSMForeign::LandscapeCollection::nestedTable(int row, int column) const
-{
-}
-
-void CSMForeign::LandscapeCollection::setNestedTable(int row,
-        int column, const NestedTableWrapperBase& nestedTable)
-{
-}
-
-int CSMForeign::LandscapeCollection::getNestedRowsCount(int row, int column) const
-{
-}
-
-int CSMForeign::LandscapeCollection::getNestedColumnsCount(int row, int column) const
-{
-}
-
-NestableColumn *CSMForeign::LandscapeCollection::getNestableColumn(int column)
-{
-}
-#endif

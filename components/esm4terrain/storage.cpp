@@ -25,6 +25,7 @@ namespace ESM4Terrain
 {
 
     // FIXME: land is not necessarily identified by x/y, may also need world formid
+    // initially workaround by fixing to Tamriel only
     const ESM4::Land::LandData *Storage::getLandData (int cellX, int cellY, int flags)
     {
         if (const ESM4::Land *land = getLand (cellX, cellY))
@@ -274,8 +275,7 @@ namespace ESM4Terrain
         assert(vertY_ == numVerts);  // Ensure we covered whole area
     }
 
-    Storage::UniqueTextureId Storage::getVtexIndexAt(int cellX, int cellY,
-                                           int x, int y)
+    Storage::UniqueTextureId Storage::getVtexIndexAt(int cellX, int cellY, int x, int y)
     {
         // For the first/last row/column, we need to get the texture from the neighbour cell
         // to get consistent blending at the borders
@@ -313,15 +313,15 @@ namespace ESM4Terrain
             return defaultTexture; // Not sure if the default texture really is hardcoded?
 
         // NB: All vtex ids are +1 compared to the ltex ids
-        const ESM4::LandTexture* ltex = getLandTexture(id.first-1, id.second);
-        if (!ltex)
+        const ESM4::LandTexture* ltex = getLandTexture(id.first, /*plugin*/id.second);
+        if (!ltex || ltex->mTextureFile.empty())
         {
             std::cerr << "Unable to find land texture index " << id.first-1 << " in plugin " << id.second << ", using default texture instead" << std::endl;
             return defaultTexture;
         }
 
         // this is needed due to MWs messed up texture handling
-        std::string texture = Misc::ResourceHelpers::correctTexturePath(/*ltex->mTexture*/""); // FIXME
+        std::string texture = Misc::ResourceHelpers::correctTexturePath(ltex->mTextureFile);
 
         return texture;
     }

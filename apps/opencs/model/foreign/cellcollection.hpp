@@ -35,7 +35,6 @@ namespace CSMForeign
         const WorldCollection& mWorlds;  // for looking up World name strings (FULL or EDID)
 
         std::map<std::uint32_t, int> mCellIndex;
-        std::map<std::string, std::uint32_t> mIdMap;
 
     public:
         CellCollection (const WorldCollection& worlds);

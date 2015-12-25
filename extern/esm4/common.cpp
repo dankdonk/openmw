@@ -24,6 +24,9 @@
 
 #include <sstream>
 #include <algorithm>
+#include <stdexcept>
+
+#include <libs/platform/strings.h>
 
 namespace ESM4
 {
@@ -88,5 +91,15 @@ namespace ESM4
         typeName[3] = (typeId >> 24) & 0xff;
 
         return std::string((char*)typeName, 4);
+    }
+
+    void formIdToString(std::uint32_t formId, std::string& str)
+    {
+        char buf[8+1];
+        int res = snprintf(buf, 8+1, "%08x", formId);
+        if (res > 0 && res < 8+1)
+            str.assign(buf);
+        else
+            throw std::runtime_error("Possible buffer overflow while converting formId");
     }
 }

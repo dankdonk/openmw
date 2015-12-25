@@ -271,9 +271,9 @@ namespace CSMWorld
 
             CSMForeign::CellCollection& getForeignCells();
 
-            const CSMForeign::LTEXCollection& getLandscapeTexturess() const;
+            const CSMForeign::LTEXCollection& getLandscapeTextures() const;
 
-            CSMForeign::LTEXCollection& getLandscapeTexturess();
+            CSMForeign::LTEXCollection& getLandscapeTextures();
 
             const CSMForeign::LandscapeCollection& getLandscapes() const;
 
