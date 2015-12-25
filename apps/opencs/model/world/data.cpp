@@ -527,8 +527,9 @@ CSMWorld::Data::Data (ToUTF8::FromType encoding, const ResourcesManager& resourc
     mForeignCells.addColumn (new StringIdColumn<CSMForeign::Cell>/*(true)*/);
     mForeignCells.addColumn (new RecordStateColumn<CSMForeign::Cell>);
     mForeignCells.addColumn (new FixedRecordTypeColumn<CSMForeign::Cell> (UniversalId::Type_ForeignCell));
-    mForeignCells.addColumn (new NameColumn<CSMForeign::Cell>);
     mForeignCells.addColumn (new EditorIdColumn<CSMForeign::Cell>);
+    mForeignCells.addColumn (new FullNameColumn<CSMForeign::Cell>);
+    mForeignCells.addColumn (new NameColumn<CSMForeign::Cell>);
     mForeignCells.addColumn (new WorldColumn<CSMForeign::Cell>);
 #if 0
     mForeignCells.addColumn (new FlagColumn<Cell> (Columns::ColumnId_InteriorWater, ESM::Cell::HasWater,

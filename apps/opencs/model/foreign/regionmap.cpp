@@ -25,6 +25,7 @@ CSMForeign::RegionMap::CellDescription::CellDescription (const CSMWorld::Record<
 
     mRegion = cell2.mRegion;
     mName = cell2.mName;
+    mFullName = cell2.mFullName;
 }
 
 CSMWorld::CellCoordinates CSMForeign::RegionMap::getIndex (const QModelIndex& index) const
@@ -41,6 +42,7 @@ QModelIndex CSMForeign::RegionMap::getIndex (const CSMWorld::CellCoordinates& in
 
 CSMWorld::CellCoordinates CSMForeign::RegionMap::getIndex (const Cell& cell) const
 {
+    // FIXME
     std::istringstream stream (cell.mName); // cells in Tamriel should hav names in the form of "#x y"
 
     char ignore;
@@ -91,8 +93,8 @@ void CSMForeign::RegionMap::buildMap()
                 //   if the only one then use it
                 //   if map name exists (type 0x04 or RDAT_Map) for the region use the highest priority
                 //   else make no change
-                unsigned int size = cell2.mRegions.size();
-                if (size == 1)
+                unsigned int regionSize = cell2.mRegions.size();
+                if (regionSize == 1)
                 {
                     char buf[8+1];
                     int res = 0;
@@ -107,12 +109,12 @@ void CSMForeign::RegionMap::buildMap()
                 {
                     std::string regionString;
                     std::string mapRegionString;
-                    int priority = 0;
-                    int mapPriority = -1;
+                    //int priority = 0;
+                    //int mapPriority = -1;
                     //int priority = record.mRegions.at(0).mData.pri;
-                    for (unsigned int i = 1; i < size; ++i)
+                    for (unsigned int j = 1; j < regionSize; ++j)
                     {
-                        std::uint32_t regionId = cell2.mRegions[i];
+                        std::uint32_t regionId = cell2.mRegions[j];
                         // does this one have a map name?
                         char bufR[8+1];
                         int resR = snprintf(bufR, 8+1, "%08x", regionId);
@@ -122,8 +124,27 @@ void CSMForeign::RegionMap::buildMap()
                             throw std::runtime_error("possible buffer overflow on formId");
 
                         const Region& region = regions.getRecord(regionString).get();
-                        if (!region.mEditorId.empty())
+                        if (!region.mMapName.empty())
                         {
+//#if 0
+                            QString test = QString(region.mMapName.c_str());
+                            if (test.contains(QRegExp("navmesh", Qt::CaseInsensitive)))
+                                continue;
+                            else if (test.contains(QRegExp("blackwood", Qt::CaseInsensitive))          ||
+                                     test.contains(QRegExp("colovian highlands", Qt::CaseInsensitive)) ||
+                                     test.contains(QRegExp("gold coast", Qt::CaseInsensitive))         ||
+                                     test.contains(QRegExp("great forest", Qt::CaseInsensitive))       ||
+                                     test.contains(QRegExp("heartlands", Qt::CaseInsensitive))         ||
+                                     test.contains(QRegExp("jerall mountains", Qt::CaseInsensitive))   ||
+                                     test.contains(QRegExp("nibenay basin", Qt::CaseInsensitive))      ||
+                                     test.contains(QRegExp("nibenay valley", Qt::CaseInsensitive))     ||
+                                     test.contains(QRegExp("valus mountains", Qt::CaseInsensitive))    ||
+                                     test.contains(QRegExp("west weald", Qt::CaseInsensitive)))
+                            {
+                                mapRegionString = regionString;
+                                break;
+                            }
+//#endif
 #if 0
                             QString test = QString(region.mEditorId.c_str());
                             if (test.contains(QRegExp("navmesh", Qt::CaseInsensitive)))
@@ -134,7 +155,7 @@ void CSMForeign::RegionMap::buildMap()
                                 break;
                             }
 #endif
-//#if 0
+#if 0
                             if (mapPriority == -1)
                             {
                                 mapRegionString = regionString;
@@ -144,7 +165,7 @@ void CSMForeign::RegionMap::buildMap()
                             {
                                 mapRegionString = regionString;
                             }
-//#endif
+#endif
                         }
                         //else
                     }
@@ -432,8 +453,8 @@ QVariant CSMForeign::RegionMap::data (const QModelIndex& index, int role) const
 
         if (cell!=mMap.end())
         {
-            if (!cell->second.mName.empty())
-                stream << " " << cell->second.mName;
+            if (!cell->second.mFullName.empty())
+                stream << " " << cell->second.mFullName;
 
             if (cell->second.mDeleted)
                 stream << " (deleted)";
