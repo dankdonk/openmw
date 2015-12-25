@@ -8,9 +8,9 @@
 #undef NDEBUG
 #endif
 
-#include <extern/esm4/reader.hpp>
-
 #include <libs/platform/strings.h>
+
+#include <extern/esm4/reader.hpp>
 
 #include "../world/record.hpp"
 #include "../world/universalid.hpp"
@@ -80,7 +80,7 @@ int CSMForeign::CellCollection::load (ESM4::Reader& reader, bool base)
 
         std::string padding = "";
         padding.insert(0, reader.stackSize()*2, ' ');
-        std::cout << padding << "CELL: formId " << std::dec << reader.hdr().record.id << std::endl; // FIXME
+        std::cout << padding << "CELL: formId " << std::hex << reader.hdr().record.id << std::endl; // FIXME
 #if 0
         std::cout << padding << "CELL X " << std::dec << reader.currCellGrid().grid.x << ", Y " << reader.currCellGrid().grid.y << std::endl;
         std::cout << padding << "CELL type " << std::hex << reader.grp().type << std::endl;
@@ -105,7 +105,7 @@ int CSMForeign::CellCollection::load (ESM4::Reader& reader, bool base)
 
         std::string padding = "";
         padding.insert(0, reader.stackSize()*2, ' ');
-        std::cout << padding << "CELL: formId " << std::dec << reader.hdr().record.id << std::endl; // FIXME
+        std::cout << padding << "CELL: formId " << std::hex << reader.hdr().record.id << std::endl; // FIXME
 #if 0
         std::cout << padding << "CELL type " << std::hex << reader.grp().type << std::endl;
 #endif
@@ -120,7 +120,13 @@ int CSMForeign::CellCollection::load (ESM4::Reader& reader, bool base)
     }
     record.mName = id; // FIXME: temporary, note id overwritten below
 
-    id = std::to_string(reader.hdr().record.id); // use formId instead
+    //id = std::to_string(reader.hdr().record.id); // use formId instead
+    char buf[8+1];
+    int res = snprintf(buf, 8+1, "%08x", reader.hdr().record.id);
+    if (res > 0 && res < 8+1)
+        id.assign(buf);
+    else
+        throw std::runtime_error("Cell Collection possible buffer overflow on formId");
 
     int index = searchId(reader.hdr().record.id);
 
@@ -133,6 +139,15 @@ int CSMForeign::CellCollection::load (ESM4::Reader& reader, bool base)
     }
 
     record.mWorld = mWorlds.getIdString(record.mParent); // FIXME: assumes our world is already loaded
+    //record.mRegion = "0001c40d"; // FIXME
+    if (!record.mRegions.empty())
+    {
+        res = snprintf(buf, 8 + 1, "%08x", record.mRegions.back()); // NOTE: res and buf reusd
+        if (res > 0 && res < 8 + 1)
+            record.mRegion.assign(buf);
+        else
+            throw std::runtime_error("Cell Collection possible buffer overflow on formId");
+    }
 
     return load(record, base, index);
 }
@@ -185,7 +200,7 @@ int CSMForeign::CellCollection::searchId (const std::string& id) const
 
     return searchId(iter->second);
 #endif
-    return searchId(static_cast<std::uint32_t>(std::stoi(id)));
+    return searchId(static_cast<std::uint32_t>(std::stoi(id, nullptr, 16))); // hex
 }
 
 int CSMForeign::CellCollection::getIndex (std::uint32_t id) const

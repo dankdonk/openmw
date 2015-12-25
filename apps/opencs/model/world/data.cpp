@@ -15,7 +15,7 @@
 
 #include <extern/esm4/common.hpp>
 
-//#include "../foreign/regionmap.hpp"
+#include "../foreign/regionmap.hpp"
 
 #include "idtable.hpp"
 #include "idtree.hpp"
@@ -520,6 +520,8 @@ CSMWorld::Data::Data (ToUTF8::FromType encoding, const ResourcesManager& resourc
     mForeignRegions.addColumn (new FixedRecordTypeColumn<CSMForeign::Region> (UniversalId::Type_ForeignRegion));
     mForeignRegions.addColumn (new EditorIdColumn<CSMForeign::Region>);
     mForeignRegions.addColumn (new WorldColumn<CSMForeign::Region>);
+    mForeignRegions.addColumn (new MapNameColumn<CSMForeign::Region>);
+    mForeignRegions.addColumn (new ShaderColumn<CSMForeign::Region>);
     mForeignRegions.addColumn (new MapColourColumn<CSMForeign::Region>);
 
     mForeignCells.addColumn (new StringIdColumn<CSMForeign::Cell>/*(true)*/);
@@ -962,6 +964,16 @@ CSMForeign::WorldCollection& CSMWorld::Data::getForeignWorlds()
     return mForeignWorlds;
 }
 
+const CSMForeign::RegionCollection& CSMWorld::Data::getForeignRegions() const
+{
+    return mForeignRegions;
+}
+
+CSMForeign::RegionCollection& CSMWorld::Data::getForeignRegions()
+{
+    return mForeignRegions;
+}
+
 const CSMForeign::CellCollection& CSMWorld::Data::getForeignCells() const
 {
     return mForeignCells;
@@ -988,14 +1000,12 @@ QAbstractItemModel *CSMWorld::Data::getTableModel (const CSMWorld::UniversalId& 
             addModel (table = new RegionMap (*this), UniversalId::Type_RegionMap, false);
             return table;
         }
-#if 0
         else if (id.getType()==UniversalId::Type_ForeignRegionMap)
         {
             CSMForeign::RegionMap *table = 0;
             addModel (table = new CSMForeign::RegionMap (*this), UniversalId::Type_ForeignRegionMap, false);
             return table;
         }
-#endif
         throw std::logic_error ("No table model available for " + id.toString());
     }
 

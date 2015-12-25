@@ -330,9 +330,11 @@ namespace CSMWorld
             { ColumnId_SpellCost, "Cast Cost" },
             { ColumnId_SpellChance, "Cast Chance" },
 
-            { ColumnId_EditorId, "Editor Id" },
+            { ColumnId_EditorId, "Editor ID" },
             { ColumnId_World, "World" },
             { ColumnId_TextureFile, "Texture File" },
+            { ColumnId_MapName, "Map Name" },
+            { ColumnId_Shader, "Shader" },
 
             { ColumnId_UseValue1, "Use value 1" },
             { ColumnId_UseValue2, "Use value 2" },

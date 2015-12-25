@@ -80,11 +80,12 @@ void ESM4::Header::load(ESM4::Reader& reader, const std::uint32_t size)
             case ESM4::SUB_OFST: // Oblivion only?
             case ESM4::SUB_DELE: // Oblivion only?
             {
+                //std::cout << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
                 reader.skipSubRecordData(); // FIXME: load/decode these
                 break;
             }
             default:
-                throw std::runtime_error("ESM4::Header::load - Unknown subrecord");
+                throw std::runtime_error("ESM4::Header::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
         }
     }
 }

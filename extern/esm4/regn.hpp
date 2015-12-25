@@ -23,6 +23,8 @@
 #ifndef ESM4_REGN_H
 #define ESM4_REGN_H
 
+#include <vector>
+
 #include "common.hpp"
 
 namespace ESM4
@@ -32,6 +34,25 @@ namespace ESM4
 
     struct Region
     {
+        enum RDAT_Types
+        {
+            RDAT_None      = 0x00,
+            RDAT_Objects   = 0x02,
+            RDAT_Weather   = 0x03,
+            RDAT_Map       = 0x04,
+            RDAT_Landscape = 0x05,
+            RDAT_Grass     = 0x06,
+            RDAT_Sound     = 0x07
+        };
+
+        struct RDAT
+        {
+            std::uint32_t type;
+            std::uint8_t  flag;
+            std::uint8_t  priority;
+            std::uint16_t unknown;
+        };
+
         std::uint32_t mFormId; // from the header
         std::uint32_t mFlags;  // from the header, see enum type RecordFlag for details
 
@@ -40,6 +61,10 @@ namespace ESM4
         std::uint32_t mWorldId; // worldspace formid
 
         std::string   mShader; //?? ICON
+        std::string   mMapName;
+        std::uint32_t mEdgeFalloff;
+        std::vector<std::uint32_t> mRPLD; // unknown
+        std::vector<RDAT> mData; // indexed by the type value
 
         Region();
         ~Region();

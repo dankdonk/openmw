@@ -20,6 +20,11 @@ void CSMForeign::Cell::load (ESM4::Reader& reader)
 #endif
 }
 
+std::string CSMForeign::Cell::getRegion() const
+{
+    return ""; // FIXME
+}
+
 void CSMForeign::Cell::blank()
 {
 }

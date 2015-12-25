@@ -259,9 +259,25 @@ namespace CSMWorld
 
             SubCellCollection<Pathgrid>& getPathgrids();
 
-            const IdCollection<ESM::StartScript>& getStartScripts() const;
+            const CSMForeign::WorldCollection& getForeignWorlds() const;
 
-            IdCollection<ESM::StartScript>& getStartScripts();
+            CSMForeign::WorldCollection& getForeignWorlds();
+
+            const CSMForeign::RegionCollection& getForeignRegions() const;
+
+            CSMForeign::RegionCollection& getForeignRegions();
+
+            const CSMForeign::CellCollection& getForeignCells() const;
+
+            CSMForeign::CellCollection& getForeignCells();
+
+            const CSMForeign::LTEXCollection& getLandscapeTexturess() const;
+
+            CSMForeign::LTEXCollection& getLandscapeTexturess();
+
+            const CSMForeign::LandscapeCollection& getLandscapes() const;
+
+            CSMForeign::LandscapeCollection& getLandscapes();
 
             const CSMForeign::NavigationCollection& getNavigation() const;
 
@@ -271,21 +287,9 @@ namespace CSMWorld
 
             CSMForeign::NavMeshCollection& getNavMeshes();
 
-            const CSMForeign::LandscapeCollection& getLandscapes() const;
+            const IdCollection<ESM::StartScript>& getStartScripts() const;
 
-            CSMForeign::LandscapeCollection& getLandscapes();
-
-            const CSMForeign::LTEXCollection& getLandscapeTexturess() const;
-
-            CSMForeign::LTEXCollection& getLandscapeTexturess();
-
-            const CSMForeign::CellCollection& getForeignCells() const;
-
-            CSMForeign::CellCollection& getForeignCells();
-
-            const CSMForeign::WorldCollection& getForeignWorlds() const;
-
-            CSMForeign::WorldCollection& getForeignWorlds();
+            IdCollection<ESM::StartScript>& getStartScripts();
 
             /// Throws an exception, if \a id does not match a resources list.
             const Resources& getResources (const UniversalId& id) const;

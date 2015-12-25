@@ -64,7 +64,7 @@ void ESM4::Cell::load(ESM4::Reader& reader)
 //#if 0
                 std::string padding = "";
                 padding.insert(0, reader.stackSize()*2, ' ');
-                std::cout << padding << "Editor Id: " << mEditorId << std::endl;
+                std::cout << padding << "Editor ID: " << mEditorId << std::endl;
 //#endif
                 break;
             }
@@ -155,16 +155,10 @@ void ESM4::Cell::load(ESM4::Reader& reader)
                     else
                     {
                         assert(subHdr.dataSize == 1 && "CELL unexpected DATA flag size");
-                        //std::uint8_t flags;
-                        //reader.get(flags);
-                        //mCellFlags = flags;
                         reader.get((std::uint8_t&)mCellFlags);
                     }
                 else
                 {
-                    //std::uint8_t flags;
-                    //reader.get(flags);
-                    //mCellFlags = flags;
                     reader.get((std::uint8_t&)mCellFlags); // 8 bits in Obvlivion
                 }
 //#if 0
@@ -172,6 +166,20 @@ void ESM4::Cell::load(ESM4::Reader& reader)
                 padding.insert(0, reader.stackSize()*2, ' ');
                 std::cout << padding  << "flags: " << std::hex << mCellFlags << std::endl;
 //#endif
+                break;
+            }
+            case ESM4::SUB_XCLR:
+            {
+                mRegions.resize(subHdr.dataSize/sizeof(std::uint32_t));
+                for (std::vector<std::uint32_t>::iterator it = mRegions.begin(); it != mRegions.end(); ++it)
+                {
+                    reader.get(*it);
+//#if 0
+                    std::string padding = "";
+                    padding.insert(0, reader.stackSize()*2, ' ');
+                    std::cout << padding  << "region: " << std::hex << *it << std::endl;
+//#endif
+                }
                 break;
             }
             case ESM4::SUB_XCLL:
@@ -182,7 +190,6 @@ void ESM4::Cell::load(ESM4::Reader& reader)
             case ESM4::SUB_LNAM:
             case ESM4::SUB_XCLW:
             case ESM4::SUB_XNAM:
-            case ESM4::SUB_XCLR:
             case ESM4::SUB_XLCN:
             case ESM4::SUB_XCWT:
             case ESM4::SUB_XWCS:
@@ -200,15 +207,12 @@ void ESM4::Cell::load(ESM4::Reader& reader)
             case ESM4::SUB_XRNK: // Oblivion only?
             case ESM4::SUB_XGLB: // Oblivion only?
             {
-                std::cout << ESM4::printName(reader.subRecordHeader().typeId)
-                          << " skipping..." << std::endl;
+                //std::cout << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
                 reader.skipSubRecordData();
                 break;
             }
             default:
-                std::cout << ESM4::printName(reader.subRecordHeader().typeId)
-                          << " unhandled TES4 CELL field" << std::endl;
-                throw std::runtime_error("ESM4::Cell::load - Unknown subrecord");
+                throw std::runtime_error("ESM4::CELL::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
         }
     }
 }

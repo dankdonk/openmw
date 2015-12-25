@@ -103,8 +103,7 @@ void CSVWorld::addSubViewFactories (CSVDoc::SubViewFactoryManager& manager)
 
     // Other stuff (combined record tables)
     manager.add (CSMWorld::UniversalId::Type_RegionMap, new CSVDoc::SubViewFactory<RegionMapSubView>);
-   // manager.add (CSMWorld::UniversalId::Type_ForeignRegionMap,
-        //new CSVDoc::SubViewFactory<CSVForeign::RegionMapSubView>);
+    manager.add (CSMWorld::UniversalId::Type_ForeignRegionMap, new CSVDoc::SubViewFactory<RegionMapSubView>);
 
     manager.add (CSMWorld::UniversalId::Type_Scene, new CSVDoc::SubViewFactory<SceneSubView>);
 

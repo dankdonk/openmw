@@ -61,7 +61,7 @@ void ESM4::World::load(ESM4::Reader& reader)
                     throw std::runtime_error ("WRLD EDID data read error");
 
                 assert((size_t)subHdr.dataSize-1 == mEditorId.size() && "WRLD EDID string size mismatch");
-                std::cout << "Editor Id: " << mEditorId << std::endl; // FIXME: temp
+                std::cout << "Editor ID: " << mEditorId << std::endl; // FIXME: temp
                 break;
             }
             case ESM4::SUB_FULL: // Name of the worldspace
@@ -132,6 +132,7 @@ void ESM4::World::load(ESM4::Reader& reader)
             case ESM4::SUB_XWEM:
             case ESM4::SUB_MODT: // from Dragonborn onwards?
             {
+                //std::cout << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
                 reader.skipSubRecordData(); // FIXME: process the subrecord rather than skip
                 break;
             }
@@ -153,7 +154,7 @@ void ESM4::World::load(ESM4::Reader& reader)
                 break;
             }
             default:
-                throw std::runtime_error("ESM4::World::load - Unknown subrecord");
+                throw std::runtime_error("ESM4::WRLD::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
         }
     }
 }

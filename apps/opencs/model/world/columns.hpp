@@ -333,6 +333,8 @@ namespace CSMWorld
             ColumnId_EditorId = 900,
             ColumnId_World = 901,
             ColumnId_TextureFile = 902,
+            ColumnId_MapName = 903,
+            ColumnId_Shader = 904,
 
             // Allocated to a separate value range, so we don't get a collision should we ever need
             // to extend the number of use values.

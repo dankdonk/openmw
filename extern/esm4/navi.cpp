@@ -223,7 +223,7 @@ void ESM4::Navigation::NavMeshInfo::load(ESM4::Reader& reader)
 // The same 10 formids seem to be used for the indicies, but not necessarily
 // with the same index value (but only Update.esm differs?)
 //
-// formid   cellid   X   Y Editor Id                   other formids in same X,Y    S U D D
+// formid   cellid   X   Y Editor ID                   other formids in same X,Y    S U D D
 // -------- ------ --- --- --------------------------- ---------------------------- - - - -
 // 00079bbf 9639     5  -4 WhiterunExterior17          00079bc3                     0 6 0 0
 // 0010377b 8ed5     6  24 DawnstarWesternMineExterior                              1 1 1 1
@@ -339,7 +339,7 @@ void ESM4::Navigation::load(ESM4::Reader& reader)
             }
             default:
             {
-                throw std::runtime_error("ESM4::Navigation::load - Unknown subrecord");
+                throw std::runtime_error("ESM4::NAVI::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
             }
         }
     }

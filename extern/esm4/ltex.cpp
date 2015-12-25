@@ -105,7 +105,7 @@ void ESM4::LandTexture::load(ESM4::Reader& reader)
                 break;
             }
             default:
-                throw std::runtime_error("ESM4::LandTexture::load - Unknown subrecord");
+                throw std::runtime_error("ESM4::LTEX::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
         }
     }
 }

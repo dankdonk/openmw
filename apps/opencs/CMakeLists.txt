@@ -35,6 +35,10 @@ opencs_hdrs_noqt (model/world
     )
 
 
+opencs_units (model/foreign
+    regionmap
+    )
+
 opencs_units_noqt (model/foreign
     world worldcollection region regioncollection cell cellcollection
     landscapetexture ltexcollection landscape landscapecollection

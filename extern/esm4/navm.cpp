@@ -68,25 +68,27 @@ void ESM4::NavMesh::NVNMstruct::load(ESM4::Reader& reader)
         reader.get(cellGrid.grid.y); // NOTE: reverse order
         reader.get(cellGrid.grid.x);
 // FIXME: debugging only
-//#if 0
+#if 0
         std::string padding = "";
         padding.insert(0, reader.stackSize()*2, ' ');
         if (worldSpaceId == ESM4::FLG_Morrowind)
             std::cout << padding << "NVNM MW: X " << std::dec << cellGrid.grid.x << ", Y " << cellGrid.grid.y << std::endl;
         else
             std::cout << padding << "NVNM SR: X " << std::dec << cellGrid.grid.x << ", Y " << cellGrid.grid.y << std::endl;
-//#endif
+#endif
     }
     else
     {
         reader.get(cellGrid.cellId);
 
+#if 0
         std::string padding = ""; // FIXME
         padding.insert(0, reader.stackSize()*2, ' ');
         if (worldSpaceId == ESM4::FLG_Interior)
             std::cout << padding << "NVNM Interior: cellId " << std::hex << cellGrid.cellId << std::endl;
         else
             std::cout << padding << "NVNM FormID: cellId " << std::hex << cellGrid.cellId << std::endl;
+#endif
     }
 
     reader.get(count); // numVerticies
@@ -174,10 +176,12 @@ void ESM4::NavMesh::NVNMstruct::load(ESM4::Reader& reader)
         }
         triSegments.push_back(indicies);
     }
-    //assert(triSegments.size() == divisor*divisor && "tiangle segments size is not the square of divisor");
+    assert(triSegments.size() == divisor*divisor && "tiangle segments size is not the square of divisor");
+#if 0
     if (triSegments.size() != divisor*divisor)
         std::cout << "divisor " << std::dec << divisor << ", segments " << triSegments.size() << //std::endl;
         "this 0x" << this << std::endl;
+#endif
 }
 
 void ESM4::NavMesh::load(ESM4::Reader& reader)
@@ -188,11 +192,13 @@ void ESM4::NavMesh::load(ESM4::Reader& reader)
     //std::cout << "NavMesh 0x" << std::hex << this << std::endl; // FIXME
     std::uint32_t subSize = 0; // for XXXX sub record
 
-    // FIXME: debugging only
+// FIXME: debugging only
+#if 0
     std::string padding = "";
     padding.insert(0, reader.stackSize()*2, ' ');
     std::cout << padding << "NAVM flags 0x" << std::hex << reader.hdr().record.flags << std::endl;
     std::cout << padding << "NAVM id 0x" << std::hex << reader.hdr().record.id << std::endl;
+#endif
     while (reader.getSubRecordHeader())
     {
         switch (reader.subRecordHeader().typeId)
@@ -214,6 +220,8 @@ void ESM4::NavMesh::load(ESM4::Reader& reader)
                     subSize = 0;
                 }
                 else
+                    //const ESM4::SubRecordHeader& subHdr = reader.subRecordHeader();
+                    //std::cout << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
                     reader.skipSubRecordData(); // FIXME: process the subrecord rather than skip
 
                 break;
@@ -224,11 +232,11 @@ void ESM4::NavMesh::load(ESM4::Reader& reader)
                 break;
             }
             default:
-                //std::cout << "unknown " << ESM4::printName(reader.subRecordHeader().typeId) << std::endl;
-                throw std::runtime_error("ESM4::NavMesh::load - Unknown subrecord");
+                throw std::runtime_error("ESM4::NAvM::load - Unknown subrecord " +
+                                          ESM4::printName(reader.subRecordHeader().typeId));
         }
     }
-    std::cout << "num nvnm " << std::dec << mData.size() << std::endl;
+    //std::cout << "num nvnm " << std::dec << mData.size() << std::endl; // FIXME
 }
 
 //void ESM4::NavMesh::save(ESM4::Writer& writer) const

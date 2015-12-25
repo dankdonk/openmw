@@ -182,6 +182,15 @@ CSVWorld::RegionMap::RegionMap (const CSMWorld::UniversalId& universalId,
     CSMDoc::Document& document, QWidget *parent)
 :  DragRecordTable(document, parent)
 {
+    //For Qt versions < 5
+    //verticalHeader()->setResizeMode(QHeaderView::Fixed);
+    //horizontalHeader()->setResizeMode(QHeaderView::Fixed);
+
+    verticalHeader()->sectionResizeMode(QHeaderView::Fixed);
+    horizontalHeader()->sectionResizeMode(QHeaderView::Fixed);
+    verticalHeader()->setDefaultSectionSize(10);
+    horizontalHeader()->setDefaultSectionSize(10);
+
     verticalHeader()->hide();
     horizontalHeader()->hide();
 
@@ -189,8 +198,8 @@ CSVWorld::RegionMap::RegionMap (const CSMWorld::UniversalId& universalId,
 
     setModel (document.getData().getTableModel (universalId));
 
-    resizeColumnsToContents();
-    resizeRowsToContents();
+    //resizeColumnsToContents();
+    //resizeRowsToContents();
 
     mSelectAllAction = new QAction (tr ("Select All"), this);
     connect (mSelectAllAction, SIGNAL (triggered()), this, SLOT (selectAll()));

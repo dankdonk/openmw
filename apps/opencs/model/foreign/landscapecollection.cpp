@@ -1,10 +1,11 @@
 #include "landscapecollection.hpp"
 
 #include <iostream> // FIXME
-
 #ifdef NDEBUG // FIXME for debugging only
 #undef NDEBUG
 #endif
+
+#include <libs/platform/strings.h>
 
 #include <extern/esm4/reader.hpp>
 
@@ -58,7 +59,13 @@ int CSMForeign::LandscapeCollection::load (ESM4::Reader& reader, bool base)
 
     record.mName = id; // FIXME: temporary, note id overwritten below
 
-    id = std::to_string(reader.hdr().record.id); // use formId instead
+    //id = std::to_string(reader.hdr().record.id); // use formId converted to string instead
+    char buf[8+1];
+    int res = snprintf(buf, 8+1, "%08x", reader.hdr().record.id);
+    if (res > 0 && res < 100)
+        id.assign(buf);
+    else
+        throw std::runtime_error("Landscape Collection possible buffer overflow on formId");
 
     // FIXME; should be using the formId as the lookup key
     int index = this->searchId(id);

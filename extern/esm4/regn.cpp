@@ -35,6 +35,8 @@
 
 ESM4::Region::Region()
 {
+    //mData.unknown = 1; // FIXME: temp use to indicate not loaded
+    mData.resize(8);
 }
 
 ESM4::Region::~Region()
@@ -45,6 +47,8 @@ void ESM4::Region::load(ESM4::Reader& reader)
 {
     mFormId = reader.hdr().record.id;
     mFlags  = reader.hdr().record.flags;
+
+    RDAT_Types next = RDAT_None;
 
     while (reader.getSubRecordHeader())
     {
@@ -57,7 +61,7 @@ void ESM4::Region::load(ESM4::Reader& reader)
                     throw std::runtime_error ("REGN EDID data read error");
 
                 assert((size_t)subHdr.dataSize-1 == mEditorId.size() && "REGN EDID string size mismatch");
-                std::cout << "Editor Id: " << mEditorId << std::endl; // FIXME: temp
+                std::cout << "Editor ID: " << mEditorId << std::endl; // FIXME: temp
                 break;
             }
             case ESM4::SUB_RCLR:
@@ -79,22 +83,91 @@ void ESM4::Region::load(ESM4::Reader& reader)
                 break;
             }
             case ESM4::SUB_RPLI:
+            {
+                reader.get(mEdgeFalloff);
+                break;
+            }
             case ESM4::SUB_RPLD:
+            {
+                mRPLD.resize(subHdr.dataSize/sizeof(std::uint32_t));
+                for (std::vector<std::uint32_t>::iterator it = mRPLD.begin(); it != mRPLD.end(); ++it)
+                {
+                    reader.get(*it);
+//#if 0
+                    std::string padding = "";
+                    padding.insert(0, reader.stackSize()*2, ' ');
+                    std::cout << padding  << "RPLD: 0x" << std::hex << *it << std::endl;
+//#endif
+                }
+                break;
+            }
             case ESM4::SUB_RDAT:
+            {
+                RDAT rdat;
+                reader.get(rdat);
+
+                next = static_cast<RDAT_Types>(rdat.type);
+
+                mData[rdat.type].type = rdat.type;
+                mData[rdat.type].flag = rdat.flag;
+                mData[rdat.type].priority = rdat.priority;
+                mData[rdat.type].unknown = rdat.unknown;
+
+                break;
+            }
+            case ESM4::SUB_RDMP:
+            {
+                assert(next == RDAT_Map && "REGN unexpected data type");
+                next = RDAT_None;
+
+                // NOTE: checking flags does not work, Skyrim.esm does not set the localized flag
+                //
+                // A possible hack is to look for SUB_FULL subrecord size of 4 to indicate that
+                // a lookup is required.  This obviously does not work for a string size of 3,
+                // but the chance of having that is assumed to be low.
+                if ((reader.hdr().record.flags & Rec_Localized) != 0 || subHdr.dataSize == 4)
+                {
+                    reader.skipSubRecordData(); // FIXME: process the subrecord rather than skip
+                    mMapName = "FIXME";
+                    break;
+                }
+
+                if (!reader.getZString(mMapName))
+                    throw std::runtime_error ("REGN RDMP data read error");
+
+                assert((size_t)subHdr.dataSize-1 == mMapName.size() && "REGN Map string size mismatch");
+                std::cout << "Map Name: " << mMapName << std::endl; // FIXME: temp
+
+                break;
+            }
             case ESM4::SUB_RDMD: // Only in Oblivion?
             case ESM4::SUB_RDSD: // Only in Oblivion?  Possibly the same as RDSA
-            case ESM4::SUB_RDGS: // Only in Oblivion?
+            case ESM4::SUB_RDGS: // Only in Oblivion? (ToddTestRegion1)
             case ESM4::SUB_RDMO:
             case ESM4::SUB_RDSA:
             case ESM4::SUB_RDWT:
             case ESM4::SUB_RDOT:
-            case ESM4::SUB_RDMP:
             {
+                //RDAT skipping... following is a map
+                //RDMP skipping... map name
+                //
+                //RDAT skipping... following is weather
+                //RDWT skipping... weather data
+                //
+                //RDAT skipping... following is sound
+                //RDMD skipping... unknown, maybe music data
+                //
+                //RDSD skipping... unknown, maybe sound data
+                //
+                //RDAT skipping... following is grass
+                //RDGS skipping... unknown, maybe grass
+
+                //std::cout << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
                 reader.skipSubRecordData(); // FIXME: process the subrecord rather than skip
                 break;
             }
             default:
-                throw std::runtime_error("ESM4::Region::load - Unknown subrecord");
+                throw std::runtime_error("ESM4::REGN::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
         }
     }
 }

@@ -20,8 +20,11 @@ namespace CSMForeign
         std::string mName;
 
         std::string mWorld;
+        std::string mRegion; // for region map, probably will be removed
 
         void load (ESM4::Reader& reader);
+
+        std::string getRegion() const;
 
         void blank();
     };

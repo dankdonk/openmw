@@ -2470,6 +2470,52 @@ namespace CSMWorld
             return true;
         }
     };
+
+    template<typename ESXRecordT>
+    struct MapNameColumn : public Column<ESXRecordT>
+    {
+        MapNameColumn()
+        : Column<ESXRecordT> (Columns::ColumnId_MapName, ColumnBase::Display_String)
+        {}
+
+        virtual QVariant get (const Record<ESXRecordT>& record) const
+        {
+            return QString::fromUtf8 (record.get().mMapName.c_str());
+        }
+
+        virtual void set (Record<ESXRecordT>& record, const QVariant& data)
+        {
+            return; // FIXME
+        }
+
+        virtual bool isEditable() const
+        {
+            return true;
+        }
+    };
+
+    template<typename ESXRecordT>
+    struct ShaderColumn : public Column<ESXRecordT>
+    {
+        ShaderColumn()
+        : Column<ESXRecordT> (Columns::ColumnId_Shader, ColumnBase::Display_String)
+        {}
+
+        virtual QVariant get (const Record<ESXRecordT>& record) const
+        {
+            return QString::fromUtf8 (record.get().mShader.c_str());
+        }
+
+        virtual void set (Record<ESXRecordT>& record, const QVariant& data)
+        {
+            return; // FIXME
+        }
+
+        virtual bool isEditable() const
+        {
+            return true;
+        }
+    };
 }
 
 #endif

@@ -23,8 +23,9 @@
 #ifndef ESM4_CELL_H
 #define ESM4_CELL_H
 
-#include <string>
 #include <cstdint>
+#include <string>
+#include <vector>
 
 namespace ESM4
 {
@@ -48,7 +49,7 @@ namespace ESM4
     // The cells need to be organised under world spaces.
     struct Cell
     {
-        std::uint32_t mParent; // world formId (for grouping cells)
+        std::uint32_t mParent; // world formId (for grouping cells), from the loading sequence
 
         std::uint32_t mFormId; // from the header
         std::uint32_t mFlags;  // from the header, see enum type RecordFlag for details
@@ -56,6 +57,8 @@ namespace ESM4
         std::string mEditorId;
         std::string mFullName;
         std::uint16_t mCellFlags; // TES5 can also be 8 bits
+
+        std::vector<std::uint32_t> mRegions;
 
         Cell();
         ~Cell();

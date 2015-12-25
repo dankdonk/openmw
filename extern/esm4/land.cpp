@@ -195,7 +195,7 @@ void ESM4::Land::load(ESM4::Reader& reader)
                 break;
             }
             default:
-                throw std::runtime_error("ESM4::Land::load - Unknown subrecord");
+                throw std::runtime_error("ESM4::LAND::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
         }
     }
 }
