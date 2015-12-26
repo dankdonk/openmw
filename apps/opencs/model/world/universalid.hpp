@@ -147,6 +147,8 @@ namespace CSMWorld
                 Type_ForeignLandTexture,
                 Type_ForeignLands,
                 Type_ForeignLand,
+                Type_ForeignStatics, // FIXME: should be refid
+                Type_ForeignStatic,
                 Type_ForeignRegionMap,
                 Type_RunLog
             };

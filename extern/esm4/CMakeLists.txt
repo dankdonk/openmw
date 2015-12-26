@@ -10,6 +10,7 @@ set(ESM4_SOURCE_FILES
     ltex.cpp
     cell.cpp
     regn.cpp
+    stat.cpp
     reader.cpp
 )
 

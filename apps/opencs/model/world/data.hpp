@@ -40,6 +40,7 @@
 #include "../foreign/landtexturecollection.hpp"
 #include "../foreign/worldcollection.hpp"
 #include "../foreign/regioncollection.hpp"
+#include "../foreign/staticcollection.hpp"
 
 #include "idcollection.hpp"
 #include "nestedidcollection.hpp"
@@ -110,6 +111,7 @@ namespace CSMWorld
             CSMForeign::CellCollection mForeignCells;
             CSMForeign::LandTextureCollection mForeignLandTextures;
             CSMForeign::LandCollection mForeignLands;
+            CSMForeign::StaticCollection mForeignStatics;
             CSMForeign::NavigationCollection mNavigation;
             CSMForeign::NavMeshCollection mNavMesh;
             const ResourcesManager& mResourcesManager;

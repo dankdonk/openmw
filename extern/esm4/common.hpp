@@ -298,7 +298,16 @@ namespace ESM4
         SUB_RDSA = MKTAG('R','D','S','A'),
         SUB_RDWT = MKTAG('R','D','W','T'),
         SUB_RDOT = MKTAG('R','D','O','T'),
-        SUB_RDMP = MKTAG('R','D','M','P')
+        SUB_RDMP = MKTAG('R','D','M','P'),
+
+        // below appear in STAT records
+      //SUB_EDID = MKTAG('E','D','I','D'),
+      //SUB_MODL = MKTAG('M','O','D','L'),
+        SUB_MODB = MKTAG('M','O','D','B'),
+        SUB_OBND = MKTAG('O','B','N','D'),
+      //SUB_MODT = MKTAG('M','O','D','T'),
+      //SUB_MNAM = MKTAG('M','N','A','M'),
+      //SUB_DNAM = MKTAG('D','N','A','M')
     };
 
     // Based on http://www.uesp.net/wiki/Tes5Mod:Mod_File_Format#Groups

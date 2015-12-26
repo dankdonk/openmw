@@ -244,6 +244,8 @@ namespace CSVDoc
 
             void addForeignLandSubView();
 
+            void addForeignStaticSubView();
+
             void addForeignRegionMapSubView();
 
             void addStartScriptsSubView();

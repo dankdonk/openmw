@@ -63,6 +63,8 @@ namespace
         { CSMWorld::UniversalId::Class_RecordList, CSMWorld::UniversalId::Type_ForeignRegions, "Foreign Regions", 0 },
         { CSMWorld::UniversalId::Class_RecordList, CSMWorld::UniversalId::Type_ForeignLandTextures, "Foreign Land Texture Table", 0 },
         { CSMWorld::UniversalId::Class_RecordList, CSMWorld::UniversalId::Type_ForeignLands, "Foreign Land Table", 0 },
+        // FIXME: should be foreign refid
+        { CSMWorld::UniversalId::Class_RecordList, CSMWorld::UniversalId::Type_ForeignStatics, "Foreign Static Table", 0 },
         { CSMWorld::UniversalId::Class_NonRecord, CSMWorld::UniversalId::Type_ForeignRegionMap,
             "Foreign Region Map", 0 },
 
@@ -137,6 +139,8 @@ namespace
         { CSMWorld::UniversalId::Class_Record, CSMWorld::UniversalId::Type_ForeignRegion, "Foreign Region", ":./land.png" },
         { CSMWorld::UniversalId::Class_Record, CSMWorld::UniversalId::Type_ForeignLandTexture, "Foreign Land Texture", 0 },
         { CSMWorld::UniversalId::Class_Record, CSMWorld::UniversalId::Type_ForeignLand, "Foreign Land", 0 },
+        // FIXME should be Class_ForeignRefRecord
+        { CSMWorld::UniversalId::Class_Record, CSMWorld::UniversalId::Type_ForeignStatic, "Foreign Static", ":./static.png" },
 
         { CSMWorld::UniversalId::Class_None, CSMWorld::UniversalId::Type_None, 0, 0 } // end marker
     };

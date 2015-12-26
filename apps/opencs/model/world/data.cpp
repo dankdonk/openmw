@@ -550,6 +550,11 @@ CSMWorld::Data::Data (ToUTF8::FromType encoding, const ResourcesManager& resourc
     mForeignLands.addColumn (new FixedRecordTypeColumn<CSMForeign::Land> (UniversalId::Type_ForeignLand));
     mForeignLands.addColumn (new CellIdColumn<CSMForeign::Land>);
 
+    mForeignStatics.addColumn (new StringIdColumn<CSMForeign::Static>);
+    mForeignStatics.addColumn (new RecordStateColumn<CSMForeign::Static>);
+    mForeignStatics.addColumn (new FixedRecordTypeColumn<CSMForeign::Static> (UniversalId::Type_ForeignStatic));
+    mForeignStatics.addColumn (new ModelColumn<CSMForeign::Static>);
+
     addModel (new IdTable (&mGlobals), UniversalId::Type_Global);
     addModel (new IdTable (&mGmsts), UniversalId::Type_Gmst);
     addModel (new IdTable (&mSkills), UniversalId::Type_Skill);
@@ -598,6 +603,7 @@ CSMWorld::Data::Data (ToUTF8::FromType encoding, const ResourcesManager& resourc
     addModel (new IdTable (&mForeignCells), UniversalId::Type_ForeignCell);
     addModel (new IdTable (&mForeignLandTextures), UniversalId::Type_ForeignLandTexture);
     addModel (new IdTable (&mForeignLands), UniversalId::Type_ForeignLand);
+    addModel (new IdTable (&mForeignStatics), UniversalId::Type_ForeignStatic); // FIXME: temp, should be refid
 
     // for autocalc updates when gmst/race/class/skils tables change
     CSMWorld::IdTable *gmsts =
@@ -1146,6 +1152,7 @@ bool CSMWorld::Data::continueLoading (CSMDoc::Messages& messages)
         mDialogue = 0;
 
         // FIXME: runs once per each document!
+        // check the number of docs and only run at the end, see mReader->getGameFiles().size()
         mForeignRegions.updateWorldNames(mForeignWorlds);
 
         return true;
@@ -1446,7 +1453,7 @@ bool CSMWorld::Data::loadTes4Group (CSMDoc::Messages& messages)
         {
             // FIXME: rewrite to workaround reliability issue
             if (hdr.group.label.value == ESM4::REC_NAVI || hdr.group.label.value == ESM4::REC_WRLD ||
-                    hdr.group.label.value == ESM4::REC_REGN ||
+                    hdr.group.label.value == ESM4::REC_REGN || hdr.group.label.value == ESM4::REC_STAT ||
                     hdr.group.label.value == ESM4::REC_CELL || hdr.group.label.value == ESM4::REC_LTEX)
             {
                 // NOTE: The label field of a group is not reliable.  See:
@@ -1561,6 +1568,12 @@ bool CSMWorld::Data::loadTes4Record (const ESM4::RecordHeader& hdr, CSMDoc::Mess
         {
             reader.getRecordData();
             mForeignLandTextures.load(reader, mBase);
+            break;
+        }
+        case ESM4::REC_STAT:
+        {
+            reader.getRecordData();
+            mForeignStatics.load(reader, mBase);
             break;
         }
         case ESM4::REC_REFR:

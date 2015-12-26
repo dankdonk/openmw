@@ -350,9 +350,13 @@ void CSVDoc::View::setupForeignMenu()
     connect (foreignCells, SIGNAL (triggered()), this, SLOT (addForeignCellsSubView()));
     foreign->addAction (foreignCells);
 
-    QAction *landscape = new QAction (tr ("Lands"), this);
-    connect (landscape, SIGNAL (triggered()), this, SLOT (addForeignLandSubView()));
-    foreign->addAction (landscape);
+    QAction *land = new QAction (tr ("Lands"), this);
+    connect (land, SIGNAL (triggered()), this, SLOT (addForeignLandSubView()));
+    foreign->addAction (land);
+
+    QAction *stat = new QAction (tr ("Statics"), this);
+    connect (stat, SIGNAL (triggered()), this, SLOT (addForeignStaticSubView()));
+    foreign->addAction (stat);
 
     foreign->addSeparator(); // items that don't represent single record lists follow here
 
@@ -923,6 +927,11 @@ void CSVDoc::View::addForeignLandTextureSubView()
 void CSVDoc::View::addForeignLandSubView()
 {
     addSubView (CSMWorld::UniversalId::Type_ForeignLands);
+}
+
+void CSVDoc::View::addForeignStaticSubView()
+{
+    addSubView (CSMWorld::UniversalId::Type_ForeignStatics);
 }
 
 void CSVDoc::View::addForeignRegionMapSubView()
