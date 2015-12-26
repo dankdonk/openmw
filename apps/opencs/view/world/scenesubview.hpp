@@ -20,6 +20,7 @@ namespace CSMDoc
 namespace CSVRender
 {
     class WorldspaceWidget;
+    class ForeignWorldspaceWidget;
     class PagedWorldspaceWidget;
     class UnpagedWorldspaceWidget;
 }
@@ -59,6 +60,8 @@ namespace CSVWorld
             virtual std::string getTitle() const;
 
         private:
+
+            void makeConnections(CSVRender::ForeignWorldspaceWidget* widget);
 
             void makeConnections(CSVRender::PagedWorldspaceWidget* widget);
 

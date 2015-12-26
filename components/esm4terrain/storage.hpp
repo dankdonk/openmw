@@ -6,6 +6,11 @@
 #include <extern/esm4/land.hpp>
 #include <extern/esm4/ltex.hpp>
 
+namespace ESM4
+{
+    typedef std::uint32_t FormId;
+}
+
 namespace ESM4Terrain
 {
 
@@ -17,7 +22,7 @@ namespace ESM4Terrain
 
         // Not implemented in this class, because we need different Store implementations for game and editor
         virtual const ESM4::Land* getLand (int cellX, int cellY)= 0;
-        virtual const ESM4::LandTexture* getLandTexture(int index, short plugin) = 0;
+        virtual const ESM4::LandTexture* getLandTexture(ESM4::FormId formId, short plugin) = 0;
 
     public:
 

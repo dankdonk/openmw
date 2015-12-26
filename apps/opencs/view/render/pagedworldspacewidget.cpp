@@ -446,7 +446,7 @@ std::string CSVRender::PagedWorldspaceWidget::getStartupInstruction()
 }
 
 CSVRender::PagedWorldspaceWidget::PagedWorldspaceWidget (QWidget* parent, CSMDoc::Document& document)
-: WorldspaceWidget (document, parent), mDocument (document), mWorldspace ("std::default"),
+: WorldspaceWidget (document, parent), mDocument (document), mWorldspace ("sys::default"),
   mControlElements(NULL), mDisplayCellCoord(true), mOverlayMask(NULL)
 {
     QAbstractItemModel *cells =

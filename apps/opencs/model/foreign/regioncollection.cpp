@@ -21,13 +21,7 @@ int CSMForeign::RegionCollection::load (ESM4::Reader& reader, bool base)
     Region record;
 
     std::string id;
-    //id = std::to_string(reader.hdr().record.id); // use formId converted to string instead
-    char buf[8+1];
-    int res = snprintf(buf, 8+1, "%08x", reader.hdr().record.id);
-    if (res > 0 && res < 100)
-        id.assign(buf);
-    else
-        throw std::runtime_error("Region Collection possible buffer overflow on formId");
+    ESM4::formIdToString(reader.hdr().record.id, id); // use formId converted to string instead
 
     // FIXME; should be using the formId as the lookup key
     int index = this->searchId(id);
@@ -52,8 +46,7 @@ void CSMForeign::RegionCollection::loadRecord (Region& record, ESM4::Reader& rea
 int CSMForeign::RegionCollection::load (const Region& record, bool base, int index)
 {
     if (index == -2)
-        index = this->searchId(CSMWorld::IdAccessor<Region>().getId(record));
-
+        index = this->searchId(record.mId);
     if (index == -1)
     {
         // new record

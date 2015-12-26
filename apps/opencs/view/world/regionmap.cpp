@@ -18,6 +18,8 @@
 #include "../../model/world/columns.hpp"
 #include "../../model/world/tablemimedata.hpp"
 
+#include "../../model/foreign/regionmap.hpp"
+
 void CSVWorld::RegionMap::contextMenuEvent (QContextMenuEvent *event)
 {
     QMenu menu (this);
@@ -61,7 +63,10 @@ void CSVWorld::RegionMap::contextMenuEvent (QContextMenuEvent *event)
     }
 
     if (selectionModel()->selectedIndexes().size()>0)
+    {
         menu.addAction (mViewAction);
+        menu.addAction (mViewForeignAction);
+    }
 
     menu.exec (event->globalPos());
 }
@@ -229,6 +234,10 @@ CSVWorld::RegionMap::RegionMap (const CSMWorld::UniversalId& universalId,
     connect (mViewAction, SIGNAL (triggered()), this, SLOT (view()));
     addAction (mViewAction);
 
+    mViewForeignAction = new QAction (tr ("View Foreign Cells"), this); // FIXME: maybe subclass RegionMap
+    connect (mViewForeignAction, SIGNAL (triggered()), this, SLOT (viewForeign()));
+    addAction (mViewForeignAction);
+
     mViewInTableAction = new QAction (tr ("View Cells in Table"), this);
     connect (mViewInTableAction, SIGNAL (triggered()), this, SLOT (viewInTable()));
     addAction (mViewInTableAction);
@@ -321,6 +330,33 @@ void CSVWorld::RegionMap::view()
     }
 
     emit editRequest (CSMWorld::UniversalId (CSMWorld::UniversalId::Type_Scene, "sys::default"),
+        hint.str());
+}
+
+// FIXME: almost identical as view
+void CSVWorld::RegionMap::viewForeign()
+{
+    std::ostringstream hint;
+    hint << "c:";
+
+    QModelIndexList selected = selectionModel()->selectedIndexes();
+
+    bool first = true;
+
+    for (QModelIndexList::const_iterator iter (selected.begin()); iter!=selected.end(); ++iter)
+    {
+        std::string cellId = model()->data (*iter, CSMWorld::RegionMap::Role_CellId).
+            toString().toUtf8().constData();
+
+        if (first)
+            first = false;
+        else
+            hint << "; ";
+
+        hint << cellId;
+    }
+
+    emit editRequest (CSMWorld::UniversalId (CSMWorld::UniversalId::Type_Scene, "sys::foreign"),
         hint.str());
 }
 

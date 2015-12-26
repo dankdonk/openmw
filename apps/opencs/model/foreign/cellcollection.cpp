@@ -73,10 +73,50 @@ int CSMForeign::CellCollection::load (ESM4::Reader& reader, bool base)
 
     // reader.currCellGrid() is set during the load (sub record XCLC for an exterior cell)
     loadRecord(record, reader);
+
     if (reader.hasCellGrid())
     {
         assert((reader.grp().type == ESM4::Grp_ExteriorSubCell ||
                 reader.grp().type == ESM4::Grp_WorldChild) && "Unexpected group while loading cell");
+
+        ESM4::FormId worldId = reader.currWorld();
+        std::map<ESM4::FormId, CoordinateIndex>::iterator lb = mPositionIndex.lower_bound(worldId);
+
+        if (lb != mPositionIndex.end() && !(mPositionIndex.key_comp()(worldId, lb->first)))
+        {
+            std::pair<CoordinateIndex::iterator, bool> res = lb->second.insert(
+                { std::pair<int, int>(reader.currCellGrid().grid.x, reader.currCellGrid().grid.y), formId });
+
+            // sometimes there are more than one cell with the same co-ordinates
+            // use the one with the editor id
+            //
+            // FIXME: this workaround is ok for regionmaps, etc, but also need a way to index
+            // the other one as well
+            if (!res.second)
+            {
+                if (!record.mEditorId.empty())
+                {
+                    // first check if both have editor id's
+                    if (!getRecord(searchId(res.first->second)).get().mEditorId.empty())
+                        std::cout << "two editor ids" << std::endl;
+                    res.first->second = formId;
+                }
+                else
+                {
+                    // check if both empty
+                    if (getRecord(searchId(res.first->second)).get().mEditorId.empty())
+                    {
+                        std::cout << "world " << worldId << ", x " << res.first->first.first
+                            << ", y " << res.first->first.second << std::endl;
+                        std::cout << "cell " << id << ", x " << reader.currCellGrid().grid.x
+                            << ", y " << reader.currCellGrid().grid.y << std::endl;
+                    }
+                }
+            }
+        }
+        else
+            mPositionIndex.insert(lb, std::map<ESM4::FormId, CoordinateIndex>::value_type(worldId,
+                { {std::pair<int, int>(reader.currCellGrid().grid.x, reader.currCellGrid().grid.y), formId } }));
 
         ESM4::gridToString(reader.currCellGrid().grid.x, reader.currCellGrid().grid.y, record.mCellId);
     }
@@ -219,4 +259,17 @@ void CSMForeign::CellCollection::insertRecord (std::unique_ptr<CSMWorld::RecordB
     }
 
     mCellIndex.insert(std::make_pair(formId, index));
+}
+
+std::string CSMForeign::CellCollection::searchId (std::int16_t x, std::int16_t y, ESM4::FormId world) const
+{
+    std::map<ESM4::FormId, CoordinateIndex>::const_iterator iter = mPositionIndex.find(world);
+    if (iter == mPositionIndex.end())
+        return ""; // can't find world // FIXME: exception instead?
+
+    CoordinateIndex::const_iterator it = iter->second.find(std::make_pair(x, y));
+    if (it == iter->second.end())
+        return ""; // cann't find coordinate // FIXME: exception instead?
+
+    return ESM4::formIdToString(it->second);
 }

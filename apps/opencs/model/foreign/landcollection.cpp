@@ -41,8 +41,8 @@ int CSMForeign::LandCollection::load (ESM4::Reader& reader, bool base)
                reader.grp(0).type == ESM4::Grp_CellTemporaryChild &&
                "LAND record found in an unexpected group heirarchy");
 
-        std::uint32_t worldId = reader.currWorld();
-        std::map<std::uint32_t, CoordinateIndex>::iterator lb = mPositionIndex.lower_bound(worldId);
+        ESM4::FormId worldId = reader.currWorld();
+        std::map<ESM4::FormId, CoordinateIndex>::iterator lb = mPositionIndex.lower_bound(worldId);
 
         if (lb != mPositionIndex.end() && !(mPositionIndex.key_comp()(worldId, lb->first)))
         {
@@ -52,7 +52,7 @@ int CSMForeign::LandCollection::load (ESM4::Reader& reader, bool base)
             assert(res.second && "existing LAND record found for the given coordinates");
         }
         else
-            mPositionIndex.insert(lb, std::map<std::uint32_t, CoordinateIndex>::value_type(worldId,
+            mPositionIndex.insert(lb, std::map<ESM4::FormId, CoordinateIndex>::value_type(worldId,
                 { {std::pair<int, int>(reader.currCellGrid().grid.x, reader.currCellGrid().grid.y), id } }));
 
         ESM4::gridToString(reader.currCellGrid().grid.x, reader.currCellGrid().grid.y, record.mCellId);
@@ -110,9 +110,10 @@ int CSMForeign::LandCollection::load (const Land& record, bool base, int index)
     return index;
 }
 
-int CSMForeign::LandCollection::searchId(int x, int y, std::uint32_t worldId) const
+// returns record index
+int CSMForeign::LandCollection::searchId(std::int16_t x, std::int16_t y, ESM4::FormId world) const
 {
-    std::map<std::uint32_t, CoordinateIndex>::const_iterator iter = mPositionIndex.find(worldId);
+    std::map<ESM4::FormId, CoordinateIndex>::const_iterator iter = mPositionIndex.find(world);
     if (iter == mPositionIndex.end())
         return -1; // can't find world
 

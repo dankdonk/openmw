@@ -13,6 +13,7 @@
 
 #include "../filter/filterbox.hpp"
 
+#include "../render/foreignworldspacewidget.hpp"
 #include "../render/pagedworldspacewidget.hpp"
 #include "../render/unpagedworldspacewidget.hpp"
 
@@ -37,7 +38,17 @@ CSVWorld::SceneSubView::SceneSubView (const CSMWorld::UniversalId& id, CSMDoc::D
     CSVRender::WorldspaceWidget* worldspaceWidget = NULL;
     widgetType whatWidget;
 
-    if (id.getId()=="sys::default")
+    if (id.getId()=="sys::foreign")
+    {
+        whatWidget = widget_Paged;
+
+        CSVRender::ForeignWorldspaceWidget *newWidget = new CSVRender::ForeignWorldspaceWidget (this, document);
+
+        worldspaceWidget = newWidget;
+
+        makeConnections(newWidget);
+    }
+    else if (id.getId()=="sys::default")
     {
         whatWidget = widget_Paged;
 
@@ -84,6 +95,17 @@ void CSVWorld::SceneSubView::makeConnections (CSVRender::UnpagedWorldspaceWidget
             this, SLOT(cellSelectionChanged(const CSMWorld::UniversalId&)));
 }
 
+void CSVWorld::SceneSubView::makeConnections (CSVRender::ForeignWorldspaceWidget* widget)
+{
+    connect (widget, SIGNAL (closeRequest()), this, SLOT (closeRequest()));
+
+    connect(widget, SIGNAL(dataDropped(const std::vector<CSMWorld::UniversalId>&)),
+            this, SLOT(handleDrop(const std::vector<CSMWorld::UniversalId>&)));
+
+    connect (widget, SIGNAL (cellSelectionChanged (const CSMWorld::CellSelection&)),
+             this, SLOT (cellSelectionChanged (const CSMWorld::CellSelection&)));
+}
+
 void CSVWorld::SceneSubView::makeConnections (CSVRender::PagedWorldspaceWidget* widget)
 {
     connect (widget, SIGNAL (closeRequest()), this, SLOT (closeRequest()));
@@ -111,11 +133,23 @@ CSVWidget::SceneToolbar* CSVWorld::SceneSubView::makeToolbar (CSVRender::Worldsp
 
     if (type==widget_Paged)
     {
-        CSVWidget::SceneToolToggle *controlVisibilityTool =
-            dynamic_cast<CSVRender::PagedWorldspaceWidget&> (*widget).
-            makeControlVisibilitySelector (toolbar);
+        CSVRender::PagedWorldspaceWidget *paged = dynamic_cast<CSVRender::PagedWorldspaceWidget *>(widget);
+        if (paged != NULL)
+        {
+            CSVWidget::SceneToolToggle *controlVisibilityTool =
+                dynamic_cast<CSVRender::PagedWorldspaceWidget&> (*widget).
+                makeControlVisibilitySelector (toolbar);
 
-        toolbar->addTool (controlVisibilityTool);
+            toolbar->addTool (controlVisibilityTool);
+        }
+        else
+        {
+            CSVWidget::SceneToolToggle *controlVisibilityTool =
+                dynamic_cast<CSVRender::ForeignWorldspaceWidget&> (*widget).
+                makeControlVisibilitySelector (toolbar);
+
+            toolbar->addTool (controlVisibilityTool);
+        }
     }
 
     CSVWidget::SceneToolRun *runTool = widget->makeRunTool (toolbar);

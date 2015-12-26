@@ -35,7 +35,13 @@ namespace CSMForeign
     {
         const WorldCollection& mWorlds;  // for looking up World name strings (FULL or EDID)
 
-        typedef std::map<std::uint32_t, int> CellIndexMap;
+        // key - x/y coordinates, value - cell formid
+        typedef std::map<std::pair<int, int>, ESM4::FormId> CoordinateIndex;
+
+        // key - world formId, value - map of cells
+        std::map<ESM4::FormId, CoordinateIndex> mPositionIndex;
+
+        typedef std::map<ESM4::FormId, int> CellIndexMap;
         CellIndexMap mCellIndex;
 
     public:
@@ -57,6 +63,8 @@ namespace CSMForeign
         virtual void insertRecord (std::unique_ptr<CSMWorld::RecordBase> record,
                                    int index,
                                    CSMWorld::UniversalId::Type type = CSMWorld::UniversalId::Type_None);
+
+        std::string searchId (std::int16_t x, std::int16_t y, ESM4::FormId world = 0x3c) const; // default is Tamriel
 
     private:
         CellCollection ();

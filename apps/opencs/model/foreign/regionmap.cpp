@@ -3,6 +3,8 @@
 #include <cmath>
 #include <algorithm>
 
+#include <iostream> // FIXME
+
 #include <QBrush>
 #include <QString>
 
@@ -93,16 +95,7 @@ void CSMForeign::RegionMap::buildMap()
                 //   else make no change
                 unsigned int regionSize = cell2.mRegions.size();
                 if (regionSize == 1)
-                {
-                    char buf[8+1];
-                    int res = 0;
-                    res = snprintf(buf, 8+1, "%08x", cell2.mRegions.back());
-
-                    if (res > 0 && res < 8+1)
-                        description.mRegion.assign(buf);
-                    else
-                        throw std::runtime_error("possible buffer overflow on formId");
-                }
+                    description.mRegion = ESM4::formIdToString(cell2.mRegions.back());
                 else
                 {
                     std::string regionString;
@@ -114,12 +107,7 @@ void CSMForeign::RegionMap::buildMap()
                     {
                         std::uint32_t regionId = cell2.mRegions[j];
                         // does this one have a map name?
-                        char bufR[8+1];
-                        int resR = snprintf(bufR, 8+1, "%08x", regionId);
-                        if (resR > 0 && resR < 8+1)
-                            regionString.assign(bufR);
-                        else
-                            throw std::runtime_error("possible buffer overflow on formId");
+                        regionString = ESM4::formIdToString(regionId);
 
                         const Region& region = regions.getRecord(regionString).get();
                         if (!region.mMapName.empty())

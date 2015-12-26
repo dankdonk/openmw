@@ -97,13 +97,13 @@ opencs_units (view/widget
 
 opencs_units (view/render
     scenewidget worldspacewidget pagedworldspacewidget unpagedworldspacewidget
-    previewwidget editmode
+    previewwidget editmode foreignworldspacewidget
     )
 
 opencs_units_noqt (view/render
     navigation navigation1st navigationfree navigationorbit lighting lightingday lightingnight
     lightingbright object cell terrainstorage textoverlay overlaymask overlaysystem mousestate
-    pathgridpoint
+    pathgridpoint foreigncell
     )
 
 opencs_units_noqt (view/foreign
