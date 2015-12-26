@@ -38,7 +38,7 @@ namespace ESM4Terrain
     {
         assert (size <= 1 && "Storage::getMinMaxHeights, chunk size should be <= 1 cell");
 
-        /// \todo investigate if min/max heights should be stored at load time in ESM::Land instead
+        /// \todo investigate if min/max heights should be stored at load time in ESM4::Land instead
 
         Ogre::Vector2 origin = center - Ogre::Vector2(size/2.f, size/2.f);
 

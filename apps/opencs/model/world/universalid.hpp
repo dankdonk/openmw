@@ -143,10 +143,10 @@ namespace CSMWorld
                 Type_ForeignCell,
                 Type_ForeignRegions,
                 Type_ForeignRegion,
-                Type_LandscapeTextures,
-                Type_LandscapeTexture,
-                Type_Landscapes,
-                Type_Landscape,
+                Type_ForeignLandTextures,
+                Type_ForeignLandTexture,
+                Type_ForeignLands,
+                Type_ForeignLand,
                 Type_ForeignRegionMap,
                 Type_RunLog
             };

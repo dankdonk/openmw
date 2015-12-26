@@ -14,12 +14,12 @@ namespace CSMForeign
 {
     class CellCollection;
 
-    struct Landscape : public ESM4::Land
+    struct Land : public ESM4::Land
     {
         static unsigned int sRecordId;
 
-        Landscape();
-        ~Landscape();
+        Land();
+        ~Land();
 
         std::string mId;     // used by OpenCS to identify records (string instead of FormId)
         std::string mCellId; // for region map (#x y for most exterior cells)

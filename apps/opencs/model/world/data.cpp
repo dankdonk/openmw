@@ -69,7 +69,7 @@ int CSMWorld::Data::count (RecordBase::State state, const CollectionBase& collec
 
 CSMWorld::Data::Data (ToUTF8::FromType encoding, const ResourcesManager& resourcesManager)
 : mEncoder (encoding), mPathgrids (mCells), mReferenceables(self()), mRefs (mCells),
-  mForeignCells(mForeignWorlds), mNavigation(mCells), mNavMesh(mCells), mLandscape(mForeignCells),
+  mForeignCells(mForeignWorlds), mNavigation(mCells), mNavMesh(mCells), mForeignLands(mForeignCells),
   mResourcesManager (resourcesManager), mReader (0), mDialogue (0), mReaderIndex(0), mNpcAutoCalc (0)
 {
     int index = 0;
@@ -538,17 +538,17 @@ CSMWorld::Data::Data (ToUTF8::FromType encoding, const ResourcesManager& resourc
         ColumnBase::Flag_Table | ColumnBase::Flag_Dialogue | ColumnBase::Flag_Dialogue_Refresh));
 #endif
 
-    mLandscapeTextures.addColumn (new StringIdColumn<CSMForeign::LandscapeTexture>);
-    mLandscapeTextures.addColumn (new RecordStateColumn<CSMForeign::LandscapeTexture>);
-    mLandscapeTextures.addColumn (
-            new FixedRecordTypeColumn<CSMForeign::LandscapeTexture> (UniversalId::Type_LandTexture));
-    mLandscapeTextures.addColumn (new EditorIdColumn<CSMForeign::LandscapeTexture>);
-    mLandscapeTextures.addColumn (new TextureFileColumn<CSMForeign::LandscapeTexture>);
+    mForeignLandTextures.addColumn (new StringIdColumn<CSMForeign::LandTexture>);
+    mForeignLandTextures.addColumn (new RecordStateColumn<CSMForeign::LandTexture>);
+    mForeignLandTextures.addColumn (
+             new FixedRecordTypeColumn<CSMForeign::LandTexture> (UniversalId::Type_ForeignLandTexture));
+    mForeignLandTextures.addColumn (new EditorIdColumn<CSMForeign::LandTexture>);
+    mForeignLandTextures.addColumn (new TextureFileColumn<CSMForeign::LandTexture>);
 
-    mLandscape.addColumn (new StringIdColumn<CSMForeign::Landscape>);
-    mLandscape.addColumn (new RecordStateColumn<CSMForeign::Landscape>);
-    mLandscape.addColumn (new FixedRecordTypeColumn<CSMForeign::Landscape> (UniversalId::Type_Landscape));
-    mLandscape.addColumn (new CellIdColumn<CSMForeign::Landscape>);
+    mForeignLands.addColumn (new StringIdColumn<CSMForeign::Land>);
+    mForeignLands.addColumn (new RecordStateColumn<CSMForeign::Land>);
+    mForeignLands.addColumn (new FixedRecordTypeColumn<CSMForeign::Land> (UniversalId::Type_ForeignLand));
+    mForeignLands.addColumn (new CellIdColumn<CSMForeign::Land>);
 
     addModel (new IdTable (&mGlobals), UniversalId::Type_Global);
     addModel (new IdTable (&mGmsts), UniversalId::Type_Gmst);
@@ -591,13 +591,13 @@ CSMWorld::Data::Data (ToUTF8::FromType encoding, const ResourcesManager& resourc
     addModel (new ResourceTable (&mResourcesManager.get (UniversalId::Type_Videos)),
         UniversalId::Type_Video);
     addModel (new IdTable (&mMetaData), UniversalId::Type_MetaData);
+    addModel (new IdTable (&mLand), UniversalId::Type_Land);
+    addModel (new IdTable (&mLandTextures), UniversalId::Type_LandTexture);
     addModel (new IdTable (&mForeignWorlds), UniversalId::Type_ForeignWorld);
     addModel (new IdTable (&mForeignRegions), UniversalId::Type_ForeignRegion);
     addModel (new IdTable (&mForeignCells), UniversalId::Type_ForeignCell);
-    addModel (new IdTable (&mLand), UniversalId::Type_Land);
-    addModel (new IdTable (&mLandTextures), UniversalId::Type_LandTexture);
-    addModel (new IdTable (&mLandscapeTextures), UniversalId::Type_LandscapeTexture);
-    addModel (new IdTable (&mLandscape), UniversalId::Type_Landscape);
+    addModel (new IdTable (&mForeignLandTextures), UniversalId::Type_ForeignLandTexture);
+    addModel (new IdTable (&mForeignLands), UniversalId::Type_ForeignLand);
 
     // for autocalc updates when gmst/race/class/skils tables change
     CSMWorld::IdTable *gmsts =
@@ -947,26 +947,6 @@ CSMForeign::NavMeshCollection& CSMWorld::Data::getNavMeshes()
     return mNavMesh;
 }
 
-const CSMForeign::LTEXCollection& CSMWorld::Data::getLandscapeTextures() const
-{
-    return mLandscapeTextures;
-}
-
-CSMForeign::LTEXCollection& CSMWorld::Data::getLandscapeTextures()
-{
-    return mLandscapeTextures;
-}
-
-const CSMForeign::LandscapeCollection& CSMWorld::Data::getLandscapes() const
-{
-    return mLandscape;
-}
-
-CSMForeign::LandscapeCollection& CSMWorld::Data::getLandscapes()
-{
-    return mLandscape;
-}
-
 const CSMForeign::WorldCollection& CSMWorld::Data::getForeignWorlds() const
 {
     return mForeignWorlds;
@@ -995,6 +975,26 @@ const CSMForeign::CellCollection& CSMWorld::Data::getForeignCells() const
 CSMForeign::CellCollection& CSMWorld::Data::getForeignCells()
 {
     return mForeignCells;
+}
+
+const CSMForeign::LandTextureCollection& CSMWorld::Data::getForeignLandTextures() const
+{
+    return mForeignLandTextures;
+}
+
+CSMForeign::LandTextureCollection& CSMWorld::Data::getForeignLandTextures()
+{
+    return mForeignLandTextures;
+}
+
+const CSMForeign::LandCollection& CSMWorld::Data::getForeignLands() const
+{
+    return mForeignLands;
+}
+
+CSMForeign::LandCollection& CSMWorld::Data::getForeignLands()
+{
+    return mForeignLands;
 }
 
 QAbstractItemModel *CSMWorld::Data::getTableModel (const CSMWorld::UniversalId& id)
@@ -1555,13 +1555,13 @@ bool CSMWorld::Data::loadTes4Record (const ESM4::RecordHeader& hdr, CSMDoc::Mess
         case ESM4::REC_LAND:
         {
             reader.getRecordData();
-            mLandscape.load(reader, mBase);
+            mForeignLands.load(reader, mBase);
             break;
         }
         case ESM4::REC_LTEX:
         {
             reader.getRecordData();
-            mLandscapeTextures.load(reader, mBase);
+            mForeignLandTextures.load(reader, mBase);
             break;
         }
         case ESM4::REC_REFR:

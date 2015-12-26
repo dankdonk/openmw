@@ -48,8 +48,8 @@ void CSVWorld::addSubViewFactories (CSVDoc::SubViewFactoryManager& manager)
         CSMWorld::UniversalId::Type_ForeignWorlds,
         CSMWorld::UniversalId::Type_ForeignRegions,
         CSMWorld::UniversalId::Type_ForeignCells, // FIXME: need a foreign cell creator
-        CSMWorld::UniversalId::Type_LandscapeTextures,
-        CSMWorld::UniversalId::Type_Landscapes,
+        CSMWorld::UniversalId::Type_ForeignLandTextures,
+        CSMWorld::UniversalId::Type_ForeignLands,
         CSMWorld::UniversalId::Type_StartScripts,
 
         CSMWorld::UniversalId::Type_None // end marker

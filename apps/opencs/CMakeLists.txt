@@ -41,7 +41,7 @@ opencs_units (model/foreign
 
 opencs_units_noqt (model/foreign
     world worldcollection region regioncollection cell cellcollection
-    landscapetexture ltexcollection landscape landscapecollection
+    landtexture landtexturecollection land landcollection
     navmeshinfo navigationcollection navmesh navmeshcollection
     )
 

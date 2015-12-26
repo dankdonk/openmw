@@ -1,4 +1,4 @@
-#include "ltexcollection.hpp"
+#include "landtexturecollection.hpp"
 
 #include <iostream> // FIXME
 
@@ -8,19 +8,19 @@
 
 #include "../world/record.hpp"
 
-CSMForeign::LTEXCollection::LTEXCollection ()
+CSMForeign::LandTextureCollection::LandTextureCollection ()
 {
 }
 
-CSMForeign::LTEXCollection::~LTEXCollection ()
+CSMForeign::LandTextureCollection::~LandTextureCollection ()
 {
 }
 
 // Can't reliably use cell grid as the id for LAND, since some cells can be "empty" or do not
 // have an XCLC sub-record. e.g. OblivionMQKvatchBridge, TheFrostFireGlade and CheydinhalOblivion
-int CSMForeign::LTEXCollection::load (ESM4::Reader& reader, bool base)
+int CSMForeign::LandTextureCollection::load (ESM4::Reader& reader, bool base)
 {
-    CSMForeign::LandscapeTexture record;
+    LandTexture record;
 
     std::string id;
 #if 0
@@ -53,7 +53,7 @@ int CSMForeign::LTEXCollection::load (ESM4::Reader& reader, bool base)
     int index = this->searchId(id);
 
     if (index == -1)
-        CSMWorld::IdAccessor<CSMForeign::LandscapeTexture>().getId(record) = id;
+        CSMWorld::IdAccessor<LandTexture>().getId(record) = id;
     else
     {
         record = this->getRecord(index).get();
@@ -64,22 +64,20 @@ int CSMForeign::LTEXCollection::load (ESM4::Reader& reader, bool base)
     return load(record, base, index);
 }
 
-void CSMForeign::LTEXCollection::loadRecord (CSMForeign::LandscapeTexture& record,
-    ESM4::Reader& reader)
+void CSMForeign::LandTextureCollection::loadRecord (LandTexture& record, ESM4::Reader& reader)
 {
     record.load(reader);
 }
 
-int CSMForeign::LTEXCollection::load (const CSMForeign::LandscapeTexture& record, bool base, int index)
+int CSMForeign::LandTextureCollection::load (const LandTexture& record, bool base, int index)
 {
     if (index == -2)
-        index = this->searchId(CSMWorld::IdAccessor<CSMForeign::LandscapeTexture>().getId(record));
+        index = this->searchId(CSMWorld::IdAccessor<LandTexture>().getId(record));
 
     if (index == -1)
     {
         // new record
-        std::unique_ptr<CSMWorld::Record<CSMForeign::LandscapeTexture> > record2(
-                new CSMWorld::Record<CSMForeign::LandscapeTexture>);
+        std::unique_ptr<CSMWorld::Record<LandTexture> > record2(new CSMWorld::Record<LandTexture>);
 
         record2->mState = base ? CSMWorld::RecordBase::State_BaseOnly : CSMWorld::RecordBase::State_ModifiedOnly;
         (base ? record2->mBase : record2->mModified) = record;
@@ -90,9 +88,8 @@ int CSMForeign::LTEXCollection::load (const CSMForeign::LandscapeTexture& record
     else
     {
         // old record
-        std::unique_ptr<CSMWorld::Record<CSMForeign::LandscapeTexture> > record2(
-                new CSMWorld::Record<CSMForeign::LandscapeTexture>(
-                    CSMWorld::Collection<CSMForeign::LandscapeTexture, CSMWorld::IdAccessor<CSMForeign::LandscapeTexture> >::getRecord(index)));
+        std::unique_ptr<CSMWorld::Record<LandTexture> > record2(new CSMWorld::Record<LandTexture>(
+                    CSMWorld::Collection<LandTexture, CSMWorld::IdAccessor<LandTexture> >::getRecord(index)));
 
         if (base)
             record2->mBase = record;

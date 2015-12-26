@@ -1,5 +1,5 @@
-#ifndef CSM_FOREIGN_LANDSCAPETEXTURE_H
-#define CSM_FOREIGN_LANDSCAPETEXTURE_H
+#ifndef CSM_FOREIGN_LANDTEXTURE_H
+#define CSM_FOREIGN_LANDTEXTURE_H
 
 #include <string>
 
@@ -12,12 +12,12 @@ namespace ESM4
 
 namespace CSMForeign
 {
-    struct LandscapeTexture : public ESM4::LandTexture
+    struct LandTexture : public ESM4::LandTexture
     {
         static unsigned int sRecordId;
 
-        LandscapeTexture();
-        ~LandscapeTexture();
+        LandTexture();
+        ~LandTexture();
 
         std::string mId;
         std::string mName;
@@ -28,4 +28,4 @@ namespace CSMForeign
     };
 }
 
-#endif // CSM_FOREIGN_LANDSCAPETEXTURE_H
+#endif // CSM_FOREIGN_LANDTEXTURE_H

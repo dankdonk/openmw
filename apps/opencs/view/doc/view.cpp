@@ -350,8 +350,8 @@ void CSVDoc::View::setupForeignMenu()
     connect (foreignCells, SIGNAL (triggered()), this, SLOT (addForeignCellsSubView()));
     foreign->addAction (foreignCells);
 
-    QAction *landscape = new QAction (tr ("Landscapes"), this);
-    connect (landscape, SIGNAL (triggered()), this, SLOT (addLandscapeSubView()));
+    QAction *landscape = new QAction (tr ("Lands"), this);
+    connect (landscape, SIGNAL (triggered()), this, SLOT (addForeignLandSubView()));
     foreign->addAction (landscape);
 
     foreign->addSeparator(); // items that don't represent single record lists follow here
@@ -362,8 +362,8 @@ void CSVDoc::View::setupForeignMenu()
 
     foreign->addSeparator(); // items from foreign worlds follow here
 
-    QAction *ltex = new QAction (tr ("Landscape Textures"), this);
-    connect (ltex, SIGNAL (triggered()), this, SLOT (addLandscapeTextureSubView()));
+    QAction *ltex = new QAction (tr ("Land Textures"), this);
+    connect (ltex, SIGNAL (triggered()), this, SLOT (addForeignLandTextureSubView()));
     foreign->addAction (ltex);
 }
 
@@ -915,14 +915,14 @@ void CSVDoc::View::addForeignRegionsSubView()
     addSubView (CSMWorld::UniversalId::Type_ForeignRegions);
 }
 
-void CSVDoc::View::addLandscapeTextureSubView()
+void CSVDoc::View::addForeignLandTextureSubView()
 {
-    addSubView (CSMWorld::UniversalId::Type_LandscapeTextures);
+    addSubView (CSMWorld::UniversalId::Type_ForeignLandTextures);
 }
 
-void CSVDoc::View::addLandscapeSubView()
+void CSVDoc::View::addForeignLandSubView()
 {
-    addSubView (CSMWorld::UniversalId::Type_Landscapes);
+    addSubView (CSMWorld::UniversalId::Type_ForeignLands);
 }
 
 void CSVDoc::View::addForeignRegionMapSubView()

@@ -1,4 +1,4 @@
-#include "landscapecollection.hpp"
+#include "landcollection.hpp"
 
 #include <iostream> // FIXME
 #ifdef NDEBUG // FIXME for debugging only
@@ -11,20 +11,20 @@
 
 #include "../world/record.hpp"
 
-CSMForeign::LandscapeCollection::LandscapeCollection (const CellCollection& cells)
+CSMForeign::LandCollection::LandCollection (const CellCollection& cells)
   : mCells (cells)
 {
 }
 
-CSMForeign::LandscapeCollection::~LandscapeCollection ()
+CSMForeign::LandCollection::~LandCollection ()
 {
 }
 
 // Can't reliably use cell grid as the id for LAND, since some cells can be "empty" or do not
 // have an XCLC sub-record. e.g. OblivionMQKvatchBridge, TheFrostFireGlade and CheydinhalOblivion
-int CSMForeign::LandscapeCollection::load (ESM4::Reader& reader, bool base)
+int CSMForeign::LandCollection::load (ESM4::Reader& reader, bool base)
 {
-    CSMForeign::Landscape record;
+    CSMForeign::Land record;
 
     std::string id;
     ESM4::formIdToString(reader.hdr().record.id, id);
@@ -59,7 +59,7 @@ int CSMForeign::LandscapeCollection::load (ESM4::Reader& reader, bool base)
     }
 
     // FIXME; should be using the formId as the lookup key rather than its string form
-    int index = CSMWorld::Collection<Landscape, CSMWorld::IdAccessor<Landscape> >::searchId(id);
+    int index = CSMWorld::Collection<Land, CSMWorld::IdAccessor<Land> >::searchId(id);
 
     if (index == -1)
         record.mId = id; // new record
@@ -71,21 +71,21 @@ int CSMForeign::LandscapeCollection::load (ESM4::Reader& reader, bool base)
     return load(record, base, index);
 }
 
-void CSMForeign::LandscapeCollection::loadRecord (Landscape& record, ESM4::Reader& reader)
+void CSMForeign::LandCollection::loadRecord (Land& record, ESM4::Reader& reader)
 {
     record.load(reader, mCells);
 }
 
-int CSMForeign::LandscapeCollection::load (const Landscape& record, bool base, int index)
+int CSMForeign::LandCollection::load (const Land& record, bool base, int index)
 {
     if (index == -2)
-        index = CSMWorld::Collection<Landscape, CSMWorld::IdAccessor<Landscape> >::searchId(
-            CSMWorld::IdAccessor<Landscape>().getId(record));
+        index = CSMWorld::Collection<Land, CSMWorld::IdAccessor<Land> >::searchId(
+            CSMWorld::IdAccessor<Land>().getId(record));
 
     if (index == -1)
     {
         // new record
-        std::unique_ptr<CSMWorld::Record<Landscape> > record2(new CSMWorld::Record<Landscape>);
+        std::unique_ptr<CSMWorld::Record<Land> > record2(new CSMWorld::Record<Land>);
 
         record2->mState = base ? CSMWorld::RecordBase::State_BaseOnly : CSMWorld::RecordBase::State_ModifiedOnly;
         (base ? record2->mBase : record2->mModified) = record;
@@ -96,8 +96,8 @@ int CSMForeign::LandscapeCollection::load (const Landscape& record, bool base, i
     else
     {
         // old record
-        std::unique_ptr<CSMWorld::Record<Landscape> > record2(new CSMWorld::Record<Landscape>(
-                CSMWorld::Collection<Landscape, CSMWorld::IdAccessor<Landscape> >::getRecord(index)));
+        std::unique_ptr<CSMWorld::Record<Land> > record2(new CSMWorld::Record<Land>(
+                CSMWorld::Collection<Land, CSMWorld::IdAccessor<Land> >::getRecord(index)));
 
         if (base)
             record2->mBase = record;
@@ -110,7 +110,7 @@ int CSMForeign::LandscapeCollection::load (const Landscape& record, bool base, i
     return index;
 }
 
-int CSMForeign::LandscapeCollection::searchId(int x, int y, std::uint32_t worldId) const
+int CSMForeign::LandCollection::searchId(int x, int y, std::uint32_t worldId) const
 {
     std::map<std::uint32_t, CoordinateIndex>::const_iterator iter = mPositionIndex.find(worldId);
     if (iter == mPositionIndex.end())
@@ -120,5 +120,5 @@ int CSMForeign::LandscapeCollection::searchId(int x, int y, std::uint32_t worldI
     if (it == iter->second.end())
         return -1; // cann't find coordinate
 
-    return CSMWorld::Collection<Landscape, CSMWorld::IdAccessor<Landscape> >::searchId(it->second);
+    return CSMWorld::Collection<Land, CSMWorld::IdAccessor<Land> >::searchId(it->second);
 }

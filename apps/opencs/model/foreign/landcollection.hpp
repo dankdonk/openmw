@@ -1,11 +1,11 @@
-#ifndef CSM_FOREIGN_LANDSCAPECOLLECTION_H
-#define CSM_FOREIGN_LANDSCAPECOLLECTION_H
+#ifndef CSM_FOREIGN_LANDCOLLECTION_H
+#define CSM_FOREIGN_LANDCOLLECTION_H
 
 #include <map>
 
 #include "../world/collection.hpp"
 
-#include "landscape.hpp"
+#include "land.hpp"
 
 namespace ESM4
 {
@@ -16,7 +16,7 @@ namespace CSMForeign
 {
     class CellCollection;
 
-    class LandscapeCollection : public CSMWorld::Collection<Landscape, CSMWorld::IdAccessor<Landscape> >//, public NestedCollection
+    class LandCollection : public CSMWorld::Collection<Land, CSMWorld::IdAccessor<Land> >
     {
         const CSMForeign::CellCollection& mCells;
 
@@ -27,23 +27,23 @@ namespace CSMForeign
         std::map<std::uint32_t, CoordinateIndex> mPositionIndex;
 
     public:
-        LandscapeCollection (const CellCollection& cells);
-        ~LandscapeCollection ();
+        LandCollection (const CellCollection& cells);
+        ~LandCollection ();
 
         // similar to IdCollection but with ESM4::Reader
         int load(ESM4::Reader& reader, bool base);
 
         // similar to IdCollection but with ESM4::Reader
-        int load (const Landscape& record, bool base, int index = -2);
+        int load (const Land& record, bool base, int index = -2);
 
-        virtual void loadRecord (Landscape& record, ESM4::Reader& reader);
+        virtual void loadRecord (Land& record, ESM4::Reader& reader);
 
         int searchId(int x, int y, std::uint32_t world = 0x3c) const; // defaults to Tamriel
 
     private:
-        LandscapeCollection ();
-        LandscapeCollection (const LandscapeCollection& other);
-        LandscapeCollection& operator= (const LandscapeCollection& other);
+        LandCollection ();
+        LandCollection (const LandCollection& other);
+        LandCollection& operator= (const LandCollection& other);
     };
 }
-#endif // CSM_FOREIGN_LANDSCAPECOLLECTION_H
+#endif // CSM_FOREIGN_LANDCOLLECTION_H

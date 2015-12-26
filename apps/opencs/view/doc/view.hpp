@@ -240,9 +240,9 @@ namespace CSVDoc
 
             void addForeignCellsSubView();
 
-            void addLandscapeTextureSubView();
+            void addForeignLandTextureSubView();
 
-            void addLandscapeSubView();
+            void addForeignLandSubView();
 
             void addForeignRegionMapSubView();
 

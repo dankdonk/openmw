@@ -35,9 +35,9 @@
 
 #include "../foreign/navigationcollection.hpp"
 #include "../foreign/navmeshcollection.hpp"
-#include "../foreign/landscapecollection.hpp"
+#include "../foreign/landcollection.hpp"
 #include "../foreign/cellcollection.hpp"
-#include "../foreign/ltexcollection.hpp"
+#include "../foreign/landtexturecollection.hpp"
 #include "../foreign/worldcollection.hpp"
 #include "../foreign/regioncollection.hpp"
 
@@ -108,10 +108,10 @@ namespace CSMWorld
             CSMForeign::WorldCollection mForeignWorlds;
             CSMForeign::RegionCollection mForeignRegions;
             CSMForeign::CellCollection mForeignCells;
+            CSMForeign::LandTextureCollection mForeignLandTextures;
+            CSMForeign::LandCollection mForeignLands;
             CSMForeign::NavigationCollection mNavigation;
             CSMForeign::NavMeshCollection mNavMesh;
-            CSMForeign::LTEXCollection mLandscapeTextures;
-            CSMForeign::LandscapeCollection mLandscape;
             const ResourcesManager& mResourcesManager;
             std::vector<QAbstractItemModel *> mModels;
             std::map<UniversalId::Type, QAbstractItemModel *> mModelIndex;
@@ -271,13 +271,13 @@ namespace CSMWorld
 
             CSMForeign::CellCollection& getForeignCells();
 
-            const CSMForeign::LTEXCollection& getLandscapeTextures() const;
+            const CSMForeign::LandTextureCollection& getForeignLandTextures() const;
 
-            CSMForeign::LTEXCollection& getLandscapeTextures();
+            CSMForeign::LandTextureCollection& getForeignLandTextures();
 
-            const CSMForeign::LandscapeCollection& getLandscapes() const;
+            const CSMForeign::LandCollection& getForeignLands() const;
 
-            CSMForeign::LandscapeCollection& getLandscapes();
+            CSMForeign::LandCollection& getForeignLands();
 
             const CSMForeign::NavigationCollection& getNavigation() const;
 

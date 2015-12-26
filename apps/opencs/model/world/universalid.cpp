@@ -58,11 +58,11 @@ namespace
         { CSMWorld::UniversalId::Class_RecordList, CSMWorld::UniversalId::Type_MetaDatas, "Meta Data Table", 0 },
         { CSMWorld::UniversalId::Class_RecordList, CSMWorld::UniversalId::Type_LandTextures, "Land Texture Table", 0 },
         { CSMWorld::UniversalId::Class_RecordList, CSMWorld::UniversalId::Type_Lands, "Land Table", 0 },
-        { CSMWorld::UniversalId::Class_RecordList, CSMWorld::UniversalId::Type_ForeignWorlds, "ForeignWorlds", 0 },
-        { CSMWorld::UniversalId::Class_RecordList, CSMWorld::UniversalId::Type_ForeignCells, "ForeignCells", 0 },
-        { CSMWorld::UniversalId::Class_RecordList, CSMWorld::UniversalId::Type_ForeignRegions, "ForeignRegions", 0 },
-        { CSMWorld::UniversalId::Class_RecordList, CSMWorld::UniversalId::Type_LandscapeTextures, "Landscape Texture Table", 0 },
-        { CSMWorld::UniversalId::Class_RecordList, CSMWorld::UniversalId::Type_Landscapes, "Landscape Table", 0 },
+        { CSMWorld::UniversalId::Class_RecordList, CSMWorld::UniversalId::Type_ForeignWorlds, "Foreign Worlds", 0 },
+        { CSMWorld::UniversalId::Class_RecordList, CSMWorld::UniversalId::Type_ForeignCells, "Foreign Cells", 0 },
+        { CSMWorld::UniversalId::Class_RecordList, CSMWorld::UniversalId::Type_ForeignRegions, "Foreign Regions", 0 },
+        { CSMWorld::UniversalId::Class_RecordList, CSMWorld::UniversalId::Type_ForeignLandTextures, "Foreign Land Texture Table", 0 },
+        { CSMWorld::UniversalId::Class_RecordList, CSMWorld::UniversalId::Type_ForeignLands, "Foreign Land Table", 0 },
         { CSMWorld::UniversalId::Class_NonRecord, CSMWorld::UniversalId::Type_ForeignRegionMap,
             "Foreign Region Map", 0 },
 
@@ -132,11 +132,11 @@ namespace
         { CSMWorld::UniversalId::Class_Record, CSMWorld::UniversalId::Type_MetaData, "Meta Data", 0 },
         { CSMWorld::UniversalId::Class_Record, CSMWorld::UniversalId::Type_LandTexture, "Land Texture", 0 },
         { CSMWorld::UniversalId::Class_Record, CSMWorld::UniversalId::Type_Land, "Land", 0 },
-        { CSMWorld::UniversalId::Class_Record, CSMWorld::UniversalId::Type_ForeignWorld, "ForeignWorld", 0 },
-        { CSMWorld::UniversalId::Class_Record, CSMWorld::UniversalId::Type_ForeignCell, "ForeignCell", ":./cell.png" },
-        { CSMWorld::UniversalId::Class_Record, CSMWorld::UniversalId::Type_ForeignRegion, "ForeignRegion", ":./land.png" },
-        { CSMWorld::UniversalId::Class_Record, CSMWorld::UniversalId::Type_LandscapeTexture, "Landscape Texture", 0 },
-        { CSMWorld::UniversalId::Class_Record, CSMWorld::UniversalId::Type_Landscape, "Landscape", 0 },
+        { CSMWorld::UniversalId::Class_Record, CSMWorld::UniversalId::Type_ForeignWorld, "Foreign World", 0 },
+        { CSMWorld::UniversalId::Class_Record, CSMWorld::UniversalId::Type_ForeignCell, "Foreign Cell", ":./cell.png" },
+        { CSMWorld::UniversalId::Class_Record, CSMWorld::UniversalId::Type_ForeignRegion, "Foreign Region", ":./land.png" },
+        { CSMWorld::UniversalId::Class_Record, CSMWorld::UniversalId::Type_ForeignLandTexture, "Foreign Land Texture", 0 },
+        { CSMWorld::UniversalId::Class_Record, CSMWorld::UniversalId::Type_ForeignLand, "Foreign Land", 0 },
 
         { CSMWorld::UniversalId::Class_None, CSMWorld::UniversalId::Type_None, 0, 0 } // end marker
     };
