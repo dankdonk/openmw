@@ -106,10 +106,12 @@ int CSMForeign::CellCollection::load (ESM4::Reader& reader, bool base)
                     // check if both empty
                     if (getRecord(searchId(res.first->second)).get().mEditorId.empty())
                     {
+#if 0
                         std::cout << "world " << worldId << ", x " << res.first->first.first
                             << ", y " << res.first->first.second << std::endl;
                         std::cout << "cell " << id << ", x " << reader.currCellGrid().grid.x
                             << ", y " << reader.currCellGrid().grid.y << std::endl;
+#endif
                     }
                 }
             }

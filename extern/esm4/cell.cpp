@@ -60,11 +60,11 @@ void ESM4::Cell::load(ESM4::Reader& reader)
             {
                 if (!reader.getZString(mEditorId))
                     throw std::runtime_error ("CELL EDID data read error");
-//#if 0
+#if 0
                 std::string padding = "";
                 padding.insert(0, reader.stackSize()*2, ' ');
                 std::cout << padding << "CELL Editor ID: " << mEditorId << std::endl;
-//#endif
+#endif
                 break;
             }
             case ESM4::SUB_XCLC:
@@ -104,13 +104,13 @@ void ESM4::Cell::load(ESM4::Reader& reader)
                 uint32_t flags;
                 reader.get(x);
                 reader.get(y);
-//#if 0
+#if 0
                 std::string padding = "";
                 padding.insert(0, reader.stackSize()*2, ' ');
                 std::cout << padding << "CELL group " << ESM4::printLabel(reader.grp().label, reader.grp().type) << std::endl;
                 std::cout << padding << "CELL formId " << std::hex << reader.hdr().record.id << std::endl;
                 std::cout << padding << "CELL X " << std::dec << x << ", Y " << y << std::endl;
-//#endif
+#endif
                 if (reader.esmVersion() == ESM4::VER_094 || reader.esmVersion() == ESM4::VER_170)
                     reader.get(flags); // not in Obvlivion
 
@@ -138,11 +138,11 @@ void ESM4::Cell::load(ESM4::Reader& reader)
 
                 if (!reader.getZString(mFullName))
                     throw std::runtime_error ("CELL FULL data read error");
-//#if 0
+#if 0
                 std::string padding = "";
                 padding.insert(0, reader.stackSize()*2, ' ');
                 std::cout << padding << "Name: " << mFullName << std::endl;
-//#endif
+#endif
                 break;
             }
             case ESM4::SUB_DATA:
@@ -159,11 +159,11 @@ void ESM4::Cell::load(ESM4::Reader& reader)
                 {
                     reader.get((std::uint8_t&)mCellFlags); // 8 bits in Obvlivion
                 }
-//#if 0
+#if 0
                 std::string padding = "";
                 padding.insert(0, reader.stackSize()*2, ' ');
                 std::cout << padding  << "flags: " << std::hex << mCellFlags << std::endl;
-//#endif
+#endif
                 break;
             }
             case ESM4::SUB_XCLR:
@@ -172,11 +172,11 @@ void ESM4::Cell::load(ESM4::Reader& reader)
                 for (std::vector<std::uint32_t>::iterator it = mRegions.begin(); it != mRegions.end(); ++it)
                 {
                     reader.get(*it);
-//#if 0
+#if 0
                     std::string padding = "";
                     padding.insert(0, reader.stackSize()*2, ' ');
                     std::cout << padding  << "region: " << std::hex << *it << std::endl;
-//#endif
+#endif
                 }
                 break;
             }

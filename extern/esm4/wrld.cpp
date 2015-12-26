@@ -59,7 +59,7 @@ void ESM4::World::load(ESM4::Reader& reader)
             {
                 if (!reader.getZString(mEditorId))
                     throw std::runtime_error ("WRLD EDID data read error");
-                std::cout << "WRLD Editor ID: " << mEditorId << std::endl; // FIXME: temp
+                ///std::cout << "WRLD Editor ID: " << mEditorId << std::endl; // FIXME: temp
                 break;
             }
             case ESM4::SUB_FULL: // Name of the worldspace
@@ -78,7 +78,7 @@ void ESM4::World::load(ESM4::Reader& reader)
 
                 if (!reader.getZString(mFullName))
                     throw std::runtime_error ("WRLD FULL data read error");
-                std::cout << "WRLD Full Name: " << mFullName << std::endl; // FIXME: temp
+                ///std::cout << "WRLD Full Name: " << mFullName << std::endl; // FIXME: temp
                 break;
             }
             case ESM4::SUB_WCTR: // Center cell, TES5 only

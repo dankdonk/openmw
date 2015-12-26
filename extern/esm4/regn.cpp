@@ -59,7 +59,7 @@ void ESM4::Region::load(ESM4::Reader& reader)
             {
                 if (!reader.getZString(mEditorId))
                     throw std::runtime_error ("REGN EDID data read error");
-                std::cout << "REGN Editor ID: " << mEditorId << std::endl; // FIXME: temp
+                //std::cout << "REGN Editor ID: " << mEditorId << std::endl; // FIXME: temp
                 break;
             }
             case ESM4::SUB_RCLR:
@@ -89,11 +89,11 @@ void ESM4::Region::load(ESM4::Reader& reader)
                 for (std::vector<std::uint32_t>::iterator it = mRPLD.begin(); it != mRPLD.end(); ++it)
                 {
                     reader.get(*it);
-//#if 0
+#if 0
                     std::string padding = "";
                     padding.insert(0, reader.stackSize()*2, ' ');
                     std::cout << padding  << "RPLD: 0x" << std::hex << *it << std::endl;
-//#endif
+#endif
                 }
                 break;
             }

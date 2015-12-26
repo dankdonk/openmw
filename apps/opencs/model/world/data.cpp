@@ -1051,7 +1051,6 @@ int CSMWorld::Data::getTotalRecords (const std::vector<boost::filesystem::path>&
 
 int CSMWorld::Data::startLoading (const boost::filesystem::path& path, bool base, bool project)
 {
-    std::cout << "start loading" << std::endl;
     // Don't delete the Reader yet. Some record types store a reference to the Reader to handle on-demand loading
     boost::shared_ptr<ESM::ESMReader> ptr(mReader);
     mReaders.push_back(ptr);
@@ -1462,7 +1461,7 @@ bool CSMWorld::Data::loadTes4Group (CSMDoc::Messages& messages)
             }
             else
             {
-                std::cout << "skipping group..." << std::endl;
+                //std::cout << "skipping group..." << std::endl; // FIXME
                 reader.skipGroup();
                 return false;
             }
@@ -1486,7 +1485,7 @@ bool CSMWorld::Data::loadTes4Group (CSMDoc::Messages& messages)
             break;
         }
         default:
-            std::cout << "unknown group..." << std::endl;
+            //std::cout << "unknown group..." << std::endl; // FIXME
             break;
     }
 
@@ -1520,12 +1519,12 @@ bool CSMWorld::Data::loadTes4Record (const ESM4::RecordHeader& hdr, CSMDoc::Mess
             if ((hdr.record.flags & ESM4::Rec_Deleted) != 0)
             {
 //FIXME: debug only
-//#if 0
+#if 0
                 std::string padding = "";
                 padding.insert(0, reader.stackSize()*2, ' ');
                 std::cout << padding << "NAVM: deleted record id "
                           << std::hex << hdr.record.id << std::endl;
-//#endif
+#endif
                 reader.skipRecordData();
                 break;
             }
@@ -1577,7 +1576,7 @@ bool CSMWorld::Data::loadTes4Record (const ESM4::RecordHeader& hdr, CSMDoc::Mess
         case ESM4::REC_ACRE: // Oblivion only?
         case ESM4::REC_ROAD: // Oblivion only?
         {
-            std::cout << ESM4::printName(hdr.record.typeId) << " skipping..." << std::endl;
+            //std::cout << ESM4::printName(hdr.record.typeId) << " skipping..." << std::endl;
             reader.skipRecordData();
             break;
         }

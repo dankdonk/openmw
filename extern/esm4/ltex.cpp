@@ -25,7 +25,6 @@
 #include <cassert>
 #include <stdexcept>
 
-#include <iostream> // FIXME: debug only
 #ifdef NDEBUG // FIXME: debuggigng only
 #undef NDEBUG
 #endif
