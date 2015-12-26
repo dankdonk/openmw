@@ -335,6 +335,7 @@ namespace CSMWorld
             { ColumnId_TextureFile, "Texture File" },
             { ColumnId_MapName, "Map Name" },
             { ColumnId_Shader, "Shader" },
+            { ColumnId_CellId, "Cell ID" },
 
             { ColumnId_UseValue1, "Use value 1" },
             { ColumnId_UseValue2, "Use value 2" },

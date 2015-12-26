@@ -24,8 +24,7 @@ CSMForeign::RegionMap::CellDescription::CellDescription (const CSMWorld::Record<
     mDeleted = cell.isDeleted();
 
     mRegion = cell2.mRegion;
-    mName = cell2.mName;
-    mFullName = cell2.mFullName;
+    mName = cell2.mEditorId;
 }
 
 CSMWorld::CellCoordinates CSMForeign::RegionMap::getIndex (const QModelIndex& index) const
@@ -42,8 +41,7 @@ QModelIndex CSMForeign::RegionMap::getIndex (const CSMWorld::CellCoordinates& in
 
 CSMWorld::CellCoordinates CSMForeign::RegionMap::getIndex (const Cell& cell) const
 {
-    // FIXME
-    std::istringstream stream (cell.mName); // cells in Tamriel should hav names in the form of "#x y"
+    std::istringstream stream (cell.mCellId); // most exterior cells should have names in the form of "#x y"
 
     char ignore;
     int x = 0;
@@ -453,8 +451,8 @@ QVariant CSMForeign::RegionMap::data (const QModelIndex& index, int role) const
 
         if (cell!=mMap.end())
         {
-            if (!cell->second.mFullName.empty())
-                stream << " " << cell->second.mFullName;
+            if (!cell->second.mName.empty())
+                stream << " " << cell->second.mName;
 
             if (cell->second.mDeleted)
                 stream << " (deleted)";

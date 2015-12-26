@@ -68,13 +68,8 @@ int CSMForeign::CellCollection::load (ESM4::Reader& reader, bool base)
 {
     CSMForeign::Cell record;
     std::string id;
-    ESM4::formIdToString(reader.hdr().record.id, id);
-#if 0
-    std::string padding = "";
-    padding.insert(0, reader.stackSize()*2, ' ');
-    std::cout << padding << "CELL: formId " << std::hex << reader.hdr().record.id << std::endl;
-    std::cout << padding << "CELL type " << std::hex << reader.grp().type << std::endl;
-#endif
+    ESM4::FormId formId = reader.hdr().record.id;
+    ESM4::formIdToString(formId, id);
 
     // reader.currCellGrid() is set during the load (sub record XCLC for an exterior cell)
     loadRecord(record, reader);
@@ -83,24 +78,7 @@ int CSMForeign::CellCollection::load (ESM4::Reader& reader, bool base)
         assert((reader.grp().type == ESM4::Grp_ExteriorSubCell ||
                 reader.grp().type == ESM4::Grp_WorldChild) && "Unexpected group while loading cell");
 
-#if 0
-        std::string padding = "";
-        padding.insert(0, reader.stackSize()*2, ' ');
-        std::cout << padding << "CELL X " << std::dec << reader.currCellGrid().grid.x
-            << ", Y " << reader.currCellGrid().grid.y << std::endl;
-
-        std::ostringstream stream;
-        stream << "#" << reader.currCellGrid().grid.x << " " << reader.currCellGrid().grid.y;
-        //stream << "#" << std::floor((float)reader.currCellGrid().grid.x/2)
-               //<< " " << std::floor((float)reader.currCellGrid().grid.y/2);
-        id = stream.str();
-#endif
-        char buf[100];
-        int res = snprintf(buf, 100, "#%d %d", reader.currCellGrid().grid.x, reader.currCellGrid().grid.y);
-        if (res > 0 && res < 100)
-            record.mName.assign(buf); // use "#x y" for name
-        else
-            throw std::runtime_error("Cell Collection possible buffer overflow");
+        ESM4::gridToString(reader.currCellGrid().grid.x, reader.currCellGrid().grid.y, record.mCellId);
     }
     else
     {
@@ -113,13 +91,16 @@ int CSMForeign::CellCollection::load (ESM4::Reader& reader, bool base)
                 reader.grp().type == ESM4::Grp_InteriorSubCell ||
                 reader.grp().type == ESM4::Grp_WorldChild) && "Unexpected group while loading cell");
 
-        record.mName = id; // use formId string instead of "#x y" for name
+        if (!record.mEditorId.empty()) // can't use Full Name since they are not unique
+            record.mCellId = record.mEditorId; // FIXME: check if editor id's are uplicated
+        else
+            record.mCellId = id; // use formId string instead of "#x y"
     }
 
-    int index = searchId(reader.hdr().record.id);
+    int index = searchId(formId);
 
     if (index == -1)
-        CSMWorld::IdAccessor<CSMForeign::Cell>().getId(record) = id; // new record, set mId
+        record.mId = id; // new record
     else
     {
         std::cout << "record overwritten" << std::endl;
@@ -133,20 +114,20 @@ int CSMForeign::CellCollection::load (ESM4::Reader& reader, bool base)
     return load(record, base, index);
 }
 
-void CSMForeign::CellCollection::loadRecord (CSMForeign::Cell& record, ESM4::Reader& reader)
+void CSMForeign::CellCollection::loadRecord (Cell& record, ESM4::Reader& reader)
 {
     record.load(reader);
 }
 
-int CSMForeign::CellCollection::load (const CSMForeign::Cell& record, bool base, int index)
+int CSMForeign::CellCollection::load (const Cell& record, bool base, int index)
 {
     if (index == -2) // unknown index
-        index = this->searchId(CSMWorld::IdAccessor<CSMForeign::Cell>().getId(record)); // FIXME
+        index = searchId(static_cast<ESM4::FormId>(std::stoi(record.mId, nullptr, 16)));
 
     if (index == -1)
     {
         // new record
-        std::unique_ptr<CSMWorld::Record<CSMForeign::Cell> > record2(new CSMWorld::Record<CSMForeign::Cell>);
+        std::unique_ptr<CSMWorld::Record<Cell> > record2(new CSMWorld::Record<Cell>);
         record2->mState = base ? CSMWorld::RecordBase::State_BaseOnly : CSMWorld::RecordBase::State_ModifiedOnly;
         (base ? record2->mBase : record2->mModified) = record;
 
@@ -156,9 +137,8 @@ int CSMForeign::CellCollection::load (const CSMForeign::Cell& record, bool base,
     else
     {
         // old record
-        std::unique_ptr<CSMWorld::Record<CSMForeign::Cell> > record2(
-                new CSMWorld::Record<CSMForeign::Cell>(
-                    CSMWorld::Collection<CSMForeign::Cell, CSMWorld::IdAccessor<CSMForeign::Cell> >::getRecord(index)));
+        std::unique_ptr<CSMWorld::Record<Cell> > record2(new CSMWorld::Record<Cell>(
+                    CSMWorld::Collection<Cell, CSMWorld::IdAccessor<Cell> >::getRecord(index)));
 
         if (base)
             record2->mBase = record;
@@ -173,15 +153,15 @@ int CSMForeign::CellCollection::load (const CSMForeign::Cell& record, bool base,
 
 int CSMForeign::CellCollection::searchId (const std::string& id) const
 {
-    return searchId(static_cast<std::uint32_t>(std::stoi(id, nullptr, 16))); // hex
+    return searchId(static_cast<ESM4::FormId>(std::stoi(id, nullptr, 16))); // hex
 }
 
-int CSMForeign::CellCollection::getIndex (std::uint32_t id) const
+int CSMForeign::CellCollection::getIndex (ESM4::FormId formId) const
 {
-    int index = searchId(id);
+    int index = searchId(formId);
 
     if (index == -1)
-        throw std::runtime_error("invalid formId: " + std::to_string(id));
+        throw std::runtime_error("CellCollection: invalid formId: " + ESM4::formIdToString(formId));
 
     return index;
 }
@@ -190,7 +170,7 @@ void CSMForeign::CellCollection::removeRows (int index, int count)
 {
     CSMWorld::Collection<Cell, CSMWorld::IdAccessor<Cell> >::removeRows(index, count); // erase records only
 
-    std::map<std::uint32_t, int>::iterator iter = mCellIndex.begin();
+    CellIndexMap::iterator iter = mCellIndex.begin();
     while (iter != mCellIndex.end())
     {
         if (iter->second>=index)
@@ -208,9 +188,9 @@ void CSMForeign::CellCollection::removeRows (int index, int count)
     }
 }
 
-int CSMForeign::CellCollection::searchId (std::uint32_t id) const
+int CSMForeign::CellCollection::searchId (ESM4::FormId formId) const
 {
-    std::map<std::uint32_t, int>::const_iterator iter = mCellIndex.find(id);
+    CellIndexMap::const_iterator iter = mCellIndex.find(formId);
 
     if (iter == mCellIndex.end())
         return -1;
@@ -223,13 +203,15 @@ void CSMForeign::CellCollection::insertRecord (std::unique_ptr<CSMWorld::RecordB
 {
     int size = getAppendIndex(/*id*/"", type); // id is ignored
     std::string id = static_cast<CSMWorld::Record<Cell>*>(record.get())->get().mId;
-    std::uint32_t formId = static_cast<CSMWorld::Record<Cell>*>(record.get())->get().mFormId;
+    ESM4::FormId formId = static_cast<CSMWorld::Record<Cell>*>(record.get())->get().mFormId;
 
-    CSMWorld::Collection<Cell, CSMWorld::IdAccessor<Cell> >::insertRecord(std::move(record), index, type); // add records only
+    // first add records only
+    CSMWorld::Collection<Cell, CSMWorld::IdAccessor<Cell> >::insertRecord(std::move(record), index, type);
 
+    // then update cell index
     if (index < size-1)
     {
-        for (std::map<std::uint32_t, int>::iterator iter(mCellIndex.begin()); iter != mCellIndex.end(); ++iter)
+        for (CellIndexMap::iterator iter(mCellIndex.begin()); iter != mCellIndex.end(); ++iter)
         {
             if (iter->second >= index)
                 ++(iter->second);

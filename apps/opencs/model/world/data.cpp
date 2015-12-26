@@ -529,7 +529,7 @@ CSMWorld::Data::Data (ToUTF8::FromType encoding, const ResourcesManager& resourc
     mForeignCells.addColumn (new FixedRecordTypeColumn<CSMForeign::Cell> (UniversalId::Type_ForeignCell));
     mForeignCells.addColumn (new EditorIdColumn<CSMForeign::Cell>);
     mForeignCells.addColumn (new FullNameColumn<CSMForeign::Cell>);
-    mForeignCells.addColumn (new NameColumn<CSMForeign::Cell>);
+    mForeignCells.addColumn (new CellIdColumn<CSMForeign::Cell>);
     mForeignCells.addColumn (new WorldColumn<CSMForeign::Cell>);
 #if 0
     mForeignCells.addColumn (new FlagColumn<Cell> (Columns::ColumnId_InteriorWater, ESM::Cell::HasWater,
@@ -540,13 +540,15 @@ CSMWorld::Data::Data (ToUTF8::FromType encoding, const ResourcesManager& resourc
 
     mLandscapeTextures.addColumn (new StringIdColumn<CSMForeign::LandscapeTexture>);
     mLandscapeTextures.addColumn (new RecordStateColumn<CSMForeign::LandscapeTexture>);
-    mLandscapeTextures.addColumn (new FixedRecordTypeColumn<CSMForeign::LandscapeTexture> (UniversalId::Type_LandTexture));
+    mLandscapeTextures.addColumn (
+            new FixedRecordTypeColumn<CSMForeign::LandscapeTexture> (UniversalId::Type_LandTexture));
     mLandscapeTextures.addColumn (new EditorIdColumn<CSMForeign::LandscapeTexture>);
     mLandscapeTextures.addColumn (new TextureFileColumn<CSMForeign::LandscapeTexture>);
 
     mLandscape.addColumn (new StringIdColumn<CSMForeign::Landscape>);
     mLandscape.addColumn (new RecordStateColumn<CSMForeign::Landscape>);
     mLandscape.addColumn (new FixedRecordTypeColumn<CSMForeign::Landscape> (UniversalId::Type_Landscape));
+    mLandscape.addColumn (new CellIdColumn<CSMForeign::Landscape>);
 
     addModel (new IdTable (&mGlobals), UniversalId::Type_Global);
     addModel (new IdTable (&mGmsts), UniversalId::Type_Gmst);

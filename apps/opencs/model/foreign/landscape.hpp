@@ -21,9 +21,9 @@ namespace CSMForeign
         Landscape();
         ~Landscape();
 
-        std::string mId;
-        std::string mName;
-        std::string mCell; // Cell name
+        std::string mId;     // used by OpenCS to identify records (string instead of FormId)
+        std::string mCellId; // for region map (#x y for most exterior cells)
+        std::string mCellName;  // Cell name
 
         // copied data structure of ESM::Land so that OpenMW/OpenCS can render terrain
 
@@ -38,9 +38,8 @@ namespace CSMForeign
         //ESMReader* mEsm;
         //ESM_Context mContext;
 
-        int mDataTypes;
         int mDataLoaded;
-
+#if 0
         enum
         {
             DATA_VNML = 1, // vertex normals
@@ -90,7 +89,7 @@ namespace CSMForeign
         };
 
         LandData *mLandData;
-
+#endif
 
 
 

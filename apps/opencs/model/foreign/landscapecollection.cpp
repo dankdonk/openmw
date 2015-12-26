@@ -9,8 +9,6 @@
 
 #include <extern/esm4/reader.hpp>
 
-#include "../world/idcollection.hpp"
-#include "../world/cell.hpp"
 #include "../world/record.hpp"
 
 CSMForeign::LandscapeCollection::LandscapeCollection (const CellCollection& cells)
@@ -31,7 +29,7 @@ int CSMForeign::LandscapeCollection::load (ESM4::Reader& reader, bool base)
     std::string id;
     ESM4::formIdToString(reader.hdr().record.id, id);
 
-    record.mName = id; // default is formId
+    record.mCellId = id; // default is formId
 
     // check if parent cell left some bread crumbs
     if (reader.hasCellGrid())
@@ -57,26 +55,14 @@ int CSMForeign::LandscapeCollection::load (ESM4::Reader& reader, bool base)
             mPositionIndex.insert(lb, std::map<std::uint32_t, CoordinateIndex>::value_type(worldId,
                 { {std::pair<int, int>(reader.currCellGrid().grid.x, reader.currCellGrid().grid.y), id } }));
 
-        std::ostringstream stream;
-        // If using Morrowind cell size, need to divide by 2
-        //stream << "#" << std::floor((float)reader.currCellGrid().grid.x/2)
-               //<< " " << std::floor((float)reader.currCellGrid().grid.y/2);
-        stream << "#" << reader.currCellGrid().grid.x << " " << reader.currCellGrid().grid.y;
-        record.mName = stream.str(); // overwrite mName
-#if 0
-        std::string padding = "";
-        padding.insert(0, reader.stackSize()*2, ' ');
-        std::cout << padding << "LAND: formId " << std::hex << reader.hdr().record.id << std::endl;
-        std::cout << padding << "LAND X " << std::dec << reader.currCellGrid().grid.x
-            << ", Y " << reader.currCellGrid().grid.y << std::endl;
-#endif
+        ESM4::gridToString(reader.currCellGrid().grid.x, reader.currCellGrid().grid.y, record.mCellId);
     }
 
-    // FIXME; should be using the formId as the lookup key
+    // FIXME; should be using the formId as the lookup key rather than its string form
     int index = CSMWorld::Collection<Landscape, CSMWorld::IdAccessor<Landscape> >::searchId(id);
 
     if (index == -1)
-        CSMWorld::IdAccessor<CSMForeign::Landscape>().getId(record) = id;
+        record.mId = id; // new record
     else
         record = this->getRecord(index).get();
 
@@ -99,8 +85,7 @@ int CSMForeign::LandscapeCollection::load (const Landscape& record, bool base, i
     if (index == -1)
     {
         // new record
-        std::unique_ptr<CSMWorld::Record<CSMForeign::Landscape> > record2(
-                new CSMWorld::Record<CSMForeign::Landscape>);
+        std::unique_ptr<CSMWorld::Record<Landscape> > record2(new CSMWorld::Record<Landscape>);
 
         record2->mState = base ? CSMWorld::RecordBase::State_BaseOnly : CSMWorld::RecordBase::State_ModifiedOnly;
         (base ? record2->mBase : record2->mModified) = record;
@@ -111,8 +96,8 @@ int CSMForeign::LandscapeCollection::load (const Landscape& record, bool base, i
     else
     {
         // old record
-        std::unique_ptr<CSMWorld::Record<Landscape> > record2(
-                new CSMWorld::Record<Landscape>(CSMWorld::Collection<Landscape, CSMWorld::IdAccessor<Landscape> >::getRecord(index)));
+        std::unique_ptr<CSMWorld::Record<Landscape> > record2(new CSMWorld::Record<Landscape>(
+                CSMWorld::Collection<Landscape, CSMWorld::IdAccessor<Landscape> >::getRecord(index)));
 
         if (base)
             record2->mBase = record;

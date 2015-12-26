@@ -51,7 +51,7 @@ namespace ESM4Terrain
         int endRow = startRow + (int)size * (ESM4::Land::VERTS_SIDE-1) + 1;
         int endColumn = startColumn + (int)size * (ESM4::Land::VERTS_SIDE-1) + 1;
 
-        if (const ESM4::Land::LandData *data = getLandData (cellX, cellY, ESM4::Land::DATA_VHGT))
+        if (const ESM4::Land::LandData *data = getLandData (cellX, cellY, ESM4::Land::LAND_VHGT))
         {
             min = std::numeric_limits<float>::max();
             max = -std::numeric_limits<float>::max();
@@ -95,7 +95,7 @@ namespace ESM4Terrain
             row += ESM4::Land::VERTS_SIDE-1;
         }
 
-        if (const ESM4::Land::LandData *data = getLandData (cellX, cellY, ESM4::Land::DATA_VNML))
+        if (const ESM4::Land::LandData *data = getLandData (cellX, cellY, ESM4::Land::LAND_VNML))
         {
             normal.x = data->mVertNorm[col*ESM4::Land::VERTS_SIDE*3+row*3];
             normal.y = data->mVertNorm[col*ESM4::Land::VERTS_SIDE*3+row*3+1];
@@ -130,7 +130,7 @@ namespace ESM4Terrain
             row = 0;
         }
 
-        if (const ESM4::Land::LandData *data = getLandData (cellX, cellY, ESM4::Land::DATA_VCLR))
+        if (const ESM4::Land::LandData *data = getLandData (cellX, cellY, ESM4::Land::LAND_VCLR))
         {
             color.r = data->mVertColr[col*ESM4::Land::VERTS_SIDE*3+row*3] / 255.f;
             color.g = data->mVertColr[col*ESM4::Land::VERTS_SIDE*3+row*3+1] / 255.f;
@@ -176,9 +176,9 @@ namespace ESM4Terrain
             float vertX_ = 0; // of current cell corner
             for (int cellX = startCellX; cellX < startCellX + std::ceil(size); ++cellX)
             {
-                const ESM4::Land::LandData *heightData = getLandData (cellX, cellY, ESM4::Land::DATA_VHGT);
-                const ESM4::Land::LandData *normalData = getLandData (cellX, cellY, ESM4::Land::DATA_VNML);
-                const ESM4::Land::LandData *colourData = getLandData (cellX, cellY, ESM4::Land::DATA_VCLR);
+                const ESM4::Land::LandData *heightData = getLandData (cellX, cellY, ESM4::Land::LAND_VHGT);
+                const ESM4::Land::LandData *normalData = getLandData (cellX, cellY, ESM4::Land::LAND_VNML);
+                const ESM4::Land::LandData *colourData = getLandData (cellX, cellY, ESM4::Land::LAND_VCLR);
 
                 int rowStart = 0;
                 int colStart = 0;
@@ -218,7 +218,7 @@ namespace ESM4Terrain
 
                         if (normalData)
                         {
-                            normal.x = normalData->mVertNorm[col*ESM4::Land::VERTS_SIDE*3+row*3];
+                            normal.x = normalData->mVertNorm[col*ESM4::Land::VERTS_SIDE*3+row*3+0];
                             normal.y = normalData->mVertNorm[col*ESM4::Land::VERTS_SIDE*3+row*3+1];
                             normal.z = normalData->mVertNorm[col*ESM4::Land::VERTS_SIDE*3+row*3+2];
                             normal.normalise();
@@ -236,13 +236,13 @@ namespace ESM4Terrain
 
                         assert(normal.z > 0);
 
-                        normals[static_cast<unsigned int>(vertX*numVerts * 3 + vertY * 3)] = normal.x;
+                        normals[static_cast<unsigned int>(vertX*numVerts * 3 + vertY * 3 + 0)] = normal.x;
                         normals[static_cast<unsigned int>(vertX*numVerts * 3 + vertY * 3 + 1)] = normal.y;
                         normals[static_cast<unsigned int>(vertX*numVerts * 3 + vertY * 3 + 2)] = normal.z;
 
                         if (colourData)
                         {
-                            color.r = colourData->mVertColr[col*ESM4::Land::VERTS_SIDE*3+row*3] / 255.f;
+                            color.r = colourData->mVertColr[col*ESM4::Land::VERTS_SIDE*3+row*3+0] / 255.f;
                             color.g = colourData->mVertColr[col*ESM4::Land::VERTS_SIDE*3+row*3+1] / 255.f;
                             color.b = colourData->mVertColr[col*ESM4::Land::VERTS_SIDE*3+row*3+2] / 255.f;
                         }
@@ -295,12 +295,12 @@ namespace ESM4Terrain
         assert(y < ESM4::Land::LAND_TEXTURE_SIZE);
 
         // FIXME: mTextures
-        if (const ESM4::Land::LandData *data = getLandData (cellX, cellY, ESM4::Land::DATA_VTEX))
+        if (const ESM4::Land::LandData *data = getLandData (cellX, cellY, ESM4::Land::LAND_VTEX))
         {
             int tex = 0;// data->mTextures[y * ESM4::Land::LAND_TEXTURE_SIZE + x]; // FIXME
             if (tex == 0)
                 return std::make_pair(0,0); // vtex 0 is always the base texture, regardless of plugin
-            return std::make_pair(tex, /*FIXMEgetLand (cellX, cellY)->mPlugin*/0);
+            return std::make_pair(tex, /*FIXME getLand (cellX, cellY)->mPlugin*/0);
         }
         else
             return std::make_pair(0,0);
@@ -316,7 +316,8 @@ namespace ESM4Terrain
         const ESM4::LandTexture* ltex = getLandTexture(id.first, /*plugin*/id.second);
         if (!ltex || ltex->mTextureFile.empty())
         {
-            std::cerr << "Unable to find land texture index " << id.first-1 << " in plugin " << id.second << ", using default texture instead" << std::endl;
+            std::cerr << "Unable to find land texture index " << id.first-1
+                << " in plugin " << id.second << ", using default texture instead" << std::endl;
             return defaultTexture;
         }
 
@@ -326,7 +327,8 @@ namespace ESM4Terrain
         return texture;
     }
 
-    void Storage::getBlendmaps (const std::vector<Terrain::QuadTreeNode*>& nodes, std::vector<Terrain::LayerCollection>& out, bool pack)
+    void Storage::getBlendmaps (const std::vector<Terrain::QuadTreeNode*>& nodes,
+            std::vector<Terrain::LayerCollection>& out, bool pack)
     {
         for (std::vector<Terrain::QuadTreeNode*>::const_iterator it = nodes.begin(); it != nodes.end(); ++it)
         {
@@ -367,10 +369,13 @@ namespace ESM4Terrain
         // Save the used texture indices so we know the total number of textures
         // and number of required blend maps
         std::set<UniqueTextureId> textureIndices;
-        // Due to the way the blending works, the base layer will always shine through in between
-        // blend transitions (eg halfway between two texels, both blend values will be 0.5, so 25% of base layer visible).
-        // To get a consistent look, we need to make sure to use the same base layer in all cells.
-        // So we're always adding _land_default.dds as the base layer here, even if it's not referenced in this cell.
+        // Due to the way the blending works, the base layer will always shine through in
+        // between blend transitions (eg halfway between two texels, both blend values will be
+        // 0.5, so 25% of base layer visible).
+        //
+        // To get a consistent look, we need to make sure to use the same base layer in all
+        // cells.  So we're always adding _land_default.dds as the base layer here, even if
+        // it's not referenced in this cell.
         textureIndices.insert(std::make_pair(0,0));
 
         for (int y=colStart; y<colEnd; ++y)
@@ -434,7 +439,7 @@ namespace ESM4Terrain
         int cellY = static_cast<int>(std::floor(worldPos.y / 4096.f));
 
         const ESM4::Land* land = getLand(cellX, cellY);
-        if (!land || !(land->mDataTypes & ESM4::Land::DATA_VHGT)) // FIXME: mDataTypes
+        if (!land || !(land->mDataTypes & ESM4::Land::LAND_VHGT))
             return -1024;
 
         // Mostly lifted from Ogre::Terrain::getHeightAtTerrainPosition

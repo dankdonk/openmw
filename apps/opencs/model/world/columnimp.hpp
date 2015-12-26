@@ -2495,6 +2495,29 @@ namespace CSMWorld
     };
 
     template<typename ESXRecordT>
+    struct CellIdColumn : public Column<ESXRecordT>
+    {
+        CellIdColumn()
+        : Column<ESXRecordT> (Columns::ColumnId_CellId, ColumnBase::Display_String)
+        {}
+
+        virtual QVariant get (const Record<ESXRecordT>& record) const
+        {
+            return QString::fromUtf8 (record.get().mCellId.c_str());
+        }
+
+        virtual void set (Record<ESXRecordT>& record, const QVariant& data)
+        {
+            return; // FIXME
+        }
+
+        virtual bool isEditable() const
+        {
+            return true;
+        }
+    };
+
+    template<typename ESXRecordT>
     struct FullNameColumn : public Column<ESXRecordT>
     {
         FullNameColumn()

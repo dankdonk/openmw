@@ -12,6 +12,7 @@
 namespace ESM4
 {
     class Reader;
+    typedef std::uint32_t FormId;
 }
 
 namespace CSMWorld
@@ -34,7 +35,8 @@ namespace CSMForeign
     {
         const WorldCollection& mWorlds;  // for looking up World name strings (FULL or EDID)
 
-        std::map<std::uint32_t, int> mCellIndex;
+        typedef std::map<std::uint32_t, int> CellIndexMap;
+        CellIndexMap mCellIndex;
 
     public:
         CellCollection (const WorldCollection& worlds);
@@ -61,9 +63,9 @@ namespace CSMForeign
         CellCollection (const CellCollection& other);
         CellCollection& operator= (const CellCollection& other);
 
-        int getIndex (std::uint32_t id) const;
+        int getIndex (ESM4::FormId id) const;
 
-        int searchId (std::uint32_t id) const;
+        int searchId (ESM4::FormId id) const;
     };
 }
 #endif // CSM_FOREIGN_CELLCOLLECTION_H

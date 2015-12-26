@@ -447,7 +447,12 @@ namespace ESM4
 
     std::string printName(const std::uint32_t typeId);
 
-    void formIdToString(std::uint32_t formId, std::string& str);
+    typedef std::uint32_t FormId;
+
+    void formIdToString(FormId formId, std::string& str);
+    std::string formIdToString(FormId formId);
+
+    void gridToString(std::int16_t x, std::int16_t y, std::string& str);
 }
 
 #endif // ESM4_COMMON_H

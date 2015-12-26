@@ -36,14 +36,12 @@ namespace ESM4
         // FIXME
         enum
         {
-            DATA_VNML = 1,
-            DATA_VHGT = 2,
-            DATA_WNAM = 4,
-            DATA_VCLR = 8,
-            DATA_VTEX = 16
+            LAND_VNML = 1,
+            LAND_VHGT = 2,
+            LAND_WNAM = 4, // only in TES3?
+            LAND_VCLR = 8,
+            LAND_VTEX = 16
         };
-
-        int mDataTypes; // FIXME
 
         // number of vertices per side
         static const int VERTS_SIDE = 33;
@@ -106,7 +104,9 @@ namespace ESM4
         std::uint32_t mFormId; // from the header
         std::uint32_t mFlags;  // from the header, see enum type RecordFlag for details
 
-        std::uint32_t mLandFlags;         // from DATA subrecord
+        std::uint32_t mLandFlags; // from DATA subrecord
+
+        int mDataTypes; // which data types are loaded
 
         // FIXME
         struct LandData

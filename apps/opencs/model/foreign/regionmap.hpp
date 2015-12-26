@@ -41,7 +41,6 @@ namespace CSMForeign
                 bool mDeleted;
                 std::string mRegion;
                 std::string mName;
-                std::string mFullName;
 
                 CellDescription();
 

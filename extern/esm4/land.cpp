@@ -33,7 +33,7 @@
 #include "reader.hpp"
 //#include "writer.hpp"
 
-ESM4::Land::Land()
+ESM4::Land::Land() : mFormId(0), mFlags(0), mLandFlags(0), mDataTypes(0)
 {
 }
 
@@ -86,6 +86,7 @@ void ESM4::Land::load(ESM4::Reader& reader)
             case ESM4::SUB_VNML: // vertex normals, 33x33x(1+1+1) = 3267
             {
                 reader.get(mLandData.mVertNorm);
+                mDataTypes |= LAND_VNML;
                 break;
             }
             case ESM4::SUB_VHGT: // vertex height gradient, 4+33x33+3 = 4+1089+3 = 1096
@@ -117,11 +118,14 @@ void ESM4::Land::load(ESM4::Reader& reader)
                     }
                 }
 
+                mDataTypes |= LAND_VHGT;
+
                 break;
             }
             case ESM4::SUB_VCLR: // vertex colours, 24bit RGB, 33x33x(1+1+1) = 3267
             {
                 reader.get(mLandData.mVertColr);
+                mDataTypes |= LAND_VCLR;
                 break;
             }
             case ESM4::SUA_BTXT:
@@ -192,6 +196,7 @@ void ESM4::Land::load(ESM4::Reader& reader)
                         //std::cout << "VTEX: " << std::hex << *it << std::endl;
                     }
                 }
+                mDataTypes |= LAND_VTEX;
                 break;
             }
             default:
