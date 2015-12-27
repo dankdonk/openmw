@@ -2,6 +2,7 @@
 #define CSM_FOREIGN_CELLREF_H
 
 #include <string>
+#include <vector>
 
 #include <extern/esm4/refr.hpp>
 

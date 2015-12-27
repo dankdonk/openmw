@@ -13,7 +13,7 @@
 #include <components/terrain/terraingrid.hpp>
 #endif
 
-#include "object.hpp"
+#include "foreignobject.hpp"
 
 class QModelIndex;
 
@@ -22,6 +22,11 @@ namespace Ogre
     class SceneManager;
     class SceneNode;
     class ManualObject;
+}
+
+namespace ESM4
+{
+    typedef std::uint32_t FormId;
 }
 
 namespace CSMDoc
@@ -49,9 +54,9 @@ namespace CSVRender
     class ForeignCell
     {
             CSMDoc::Document& mDocument;
-            std::string mId;
+            ESM4::FormId mFormId;
             Ogre::SceneNode *mCellNode;
-            std::map<std::string, Object *> mObjects;
+            std::map<ESM4::FormId, ForeignObject *> mObjects;
             std::map<std::string, PathgridPoint *> mPgPoints;
             std::map<std::pair<int, int>, std::string> mPgEdges;
 
@@ -74,11 +79,11 @@ namespace CSVRender
             /// Add objects from reference table that are within this cell.
             ///
             /// \return Have any objects been added?
-            bool addObjects (int start, int end);
+            bool addObjects (const std::vector<ESM4::FormId>& objects);
 
         public:
 
-            ForeignCell (CSMDoc::Document& document, Ogre::SceneManager *sceneManager, const std::string& id,
+            ForeignCell (CSMDoc::Document& document, Ogre::SceneManager *sceneManager, ESM4::FormId id,
                 boost::shared_ptr<CSVWorld::PhysicsSystem> physics, const Ogre::Vector3& origin = Ogre::Vector3 (0, 0, 0));
 
             ~ForeignCell();

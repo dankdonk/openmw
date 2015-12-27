@@ -64,7 +64,11 @@ namespace CSMForeign
                                    int index,
                                    CSMWorld::UniversalId::Type type = CSMWorld::UniversalId::Type_None);
 
-        std::string searchId (std::int16_t x, std::int16_t y, ESM4::FormId world = 0x3c) const; // default is Tamriel
+        int searchId (ESM4::FormId id) const;
+
+        ESM4::FormId searchFormId (std::int16_t x, std::int16_t y, ESM4::FormId world = /*Tamriel*/0x3c) const;
+
+        Cell& getCell(ESM4::FormId formId); // for updating cell children
 
     private:
         CellCollection ();
@@ -72,8 +76,6 @@ namespace CSMForeign
         CellCollection& operator= (const CellCollection& other);
 
         int getIndex (ESM4::FormId id) const;
-
-        int searchId (ESM4::FormId id) const;
     };
 }
 #endif // CSM_FOREIGN_CELLCOLLECTION_H

@@ -31,13 +31,13 @@ namespace CSMForeign
 
     class RefCollection : public CSMWorld::Collection<CellRef, CSMWorld::IdAccessor<CellRef> >
     {
-        const CSMForeign::CellCollection& mCells; // FIXME: not used, delete?
+        CSMForeign::CellCollection& mCells;
 
         typedef std::map<ESM4::FormId, int> RefIndexMap;
         RefIndexMap mRefIndex;
 
     public:
-        RefCollection (const CellCollection& cells);
+        RefCollection (CellCollection& cells);
         ~RefCollection ();
 
         int load(ESM4::Reader& reader, bool base);
@@ -52,14 +52,14 @@ namespace CSMForeign
                                    int index,
                                    CSMWorld::UniversalId::Type type = CSMWorld::UniversalId::Type_None);
 
+        int searchId (ESM4::FormId id) const;
+
     private:
         RefCollection ();
         RefCollection (const RefCollection& other);
         RefCollection& operator= (const RefCollection& other);
 
         int getIndex (ESM4::FormId id) const;
-
-        int searchId (ESM4::FormId id) const;
     };
 }
 #endif // CSM_FOREIGN_REFCOLLECTION_H

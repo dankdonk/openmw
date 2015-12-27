@@ -81,12 +81,12 @@ Ogre::ManualObject *CSVRender::ForeignCell::createPathgridEdge(const std::string
     return result;
 }
 
-bool CSVRender::ForeignCell::removeObject (const std::string& id)
+bool CSVRender::ForeignCell::removeObject (const std::string& id) // assume formId string
 {
-    std::map<std::string, Object *>::iterator iter =
-        mObjects.find (Misc::StringUtils::lowerCase (id));
+    std::map<ESM4::FormId, ForeignObject *>::iterator iter =
+        mObjects.find (static_cast<ESM4::FormId>(std::stoi(id, nullptr, 16)));
 
-    if (iter==mObjects.end())
+    if (iter == mObjects.end())
         return false;
 
     delete iter->second;
@@ -94,23 +94,21 @@ bool CSVRender::ForeignCell::removeObject (const std::string& id)
     return true;
 }
 
-bool CSVRender::ForeignCell::addObjects (int start, int end)
+bool CSVRender::ForeignCell::addObjects (const std::vector<ESM4::FormId>& objects)
 {
     bool modified = false;
 
-    const CSMWorld::RefCollection& collection = mDocument.getData().getReferences();
+    const CSMForeign::RefCollection& refs = mDocument.getData().getForeignReferences();
 
-    for (int i=start; i<=end; ++i)
+    for (unsigned int i = 0; i < objects.size(); ++i)
     {
-        std::string cell = Misc::StringUtils::lowerCase (collection.getRecord (i).get().mCell);
+        const CSMWorld::Record<CSMForeign::CellRef>& record = refs.getRecord(refs.searchId(objects[i]));
 
-        CSMWorld::RecordBase::State state = collection.getRecord (i).mState;
-
-        if (cell==mId && state!=CSMWorld::RecordBase::State_Deleted)
+        if (record.mState != CSMWorld::RecordBase::State_Deleted)
         {
-            std::string id = Misc::StringUtils::lowerCase (collection.getRecord (i).get().mId);
-
-            mObjects.insert (std::make_pair (id, new Object (mDocument.getData(), mCellNode, id, false, mPhysics)));
+            ESM4::FormId id = objects[i];
+            mObjects.insert(std::make_pair(id,
+                        new ForeignObject(mDocument.getData(), mCellNode, id, false, mPhysics)));
             modified = true;
         }
     }
@@ -119,33 +117,31 @@ bool CSVRender::ForeignCell::addObjects (int start, int end)
 }
 
 CSVRender::ForeignCell::ForeignCell (CSMDoc::Document& document, Ogre::SceneManager *sceneManager,
-    const std::string& id, boost::shared_ptr<CSVWorld::PhysicsSystem> physics, const Ogre::Vector3& origin)
-: mDocument (document), mId (Misc::StringUtils::lowerCase (id))
+    ESM4::FormId id, boost::shared_ptr<CSVWorld::PhysicsSystem> physics, const Ogre::Vector3& origin)
+: mDocument (document), mFormId (id)
 , mProxyModel(0), mModel(0), mPgIndex(-1)/*, mHandler(new CSMWorld::SignalHandler(this))*/
 , mPhysics(physics), mSceneMgr(sceneManager), mX(0), mY(0)
 {
     mCellNode = sceneManager->getRootSceneNode()->createChildSceneNode();
     mCellNode->setPosition (origin);
-#if 0
-    CSMWorld::IdTable& references = dynamic_cast<CSMWorld::IdTable&> (
-        *mDocument.getData().getTableModel (CSMWorld::UniversalId::Type_References));
 
-    int rows = references.rowCount();
+    const CSMForeign::CellCollection& cells = mDocument.getData().getForeignCells();
+    const CSMForeign::Cell& cell = cells.getRecord(cells.searchId(id)).get();
 
-    addObjects (0, rows-1);
-#endif
-    const CSMForeign::LandCollection& land = mDocument.getData().getForeignLands();
-    //int landIndex = land.searchId(mId);
-    std::istringstream stream (mId.c_str());
-    char ignore;
-    int x = 0;
-    int y = 0;
-    stream >> ignore >> x >> y;
-    int landIndex = land.searchId(x, y); // FIXME: assumes Tamriel
+    const CSMForeign::LandCollection& lands = mDocument.getData().getForeignLands();
+    int landIndex = lands.searchId(cell.mLandTemporary);
+
+    addObjects(cell.mRefPersistent); // FIXME: ignore visible distant and temporary children for now
 
     if (landIndex != -1)
     {
-        const CSMForeign::Land& esmLand = land.getRecord(landIndex).get();
+        std::istringstream stream (cell.mCellId.c_str());
+        char ignore; // '#'
+        int x = 0;
+        int y = 0;
+        stream >> ignore >> x >> y;
+
+        const CSMForeign::Land& esmLand = lands.getRecord(landIndex).get();
 
         if (esmLand.getLandData (ESM4::Land::LAND_VHGT))
         {
@@ -190,8 +186,8 @@ CSVRender::ForeignCell::~ForeignCell()
     if (mTerrain.get())
         mPhysics->removeHeightField(mSceneMgr, mX, mY);
 
-    for (std::map<std::string, Object *>::iterator iter (mObjects.begin());
-        iter!=mObjects.end(); ++iter)
+    for (std::map<ESM4::FormId, ForeignObject *>::iterator iter (mObjects.begin());
+        iter != mObjects.end(); ++iter)
         delete iter->second;
 
     mCellNode->getCreator()->destroySceneNode (mCellNode);
@@ -202,8 +198,8 @@ bool CSVRender::ForeignCell::referenceableDataChanged (const QModelIndex& topLef
 {
     bool modified = false;
 
-    for (std::map<std::string, Object *>::iterator iter (mObjects.begin());
-        iter!=mObjects.end(); ++iter)
+    for (std::map<ESM4::FormId, ForeignObject *>::iterator iter (mObjects.begin());
+        iter != mObjects.end(); ++iter)
         if (iter->second->referenceableDataChanged (topLeft, bottomRight))
             modified = true;
 
@@ -218,8 +214,8 @@ bool CSVRender::ForeignCell::referenceableAboutToBeRemoved (const QModelIndex& p
 
     bool modified = false;
 
-    for (std::map<std::string, Object *>::iterator iter (mObjects.begin());
-        iter!=mObjects.end(); ++iter)
+    for (std::map<ESM4::FormId, ForeignObject *>::iterator iter (mObjects.begin());
+        iter != mObjects.end(); ++iter)
         if (iter->second->referenceableAboutToBeRemoved (parent, start, end))
             modified = true;
 
@@ -229,6 +225,7 @@ bool CSVRender::ForeignCell::referenceableAboutToBeRemoved (const QModelIndex& p
 bool CSVRender::ForeignCell::referenceDataChanged (const QModelIndex& topLeft,
     const QModelIndex& bottomRight)
 {
+#if 0
     CSMWorld::IdTable& references = dynamic_cast<CSMWorld::IdTable&> (
         *mDocument.getData().getTableModel (CSMWorld::UniversalId::Type_References));
 
@@ -237,7 +234,7 @@ bool CSVRender::ForeignCell::referenceDataChanged (const QModelIndex& topLeft,
     int stateColumn = references.findColumnIndex (CSMWorld::Columns::ColumnId_Modification);
 
     // list IDs in cell
-    std::map<std::string, bool> ids; // id, deleted state
+    std::map<ESM4::FormId, bool> ids; // id, deleted state
 
     for (int i=topLeft.row(); i<=bottomRight.row(); ++i)
     {
@@ -258,8 +255,8 @@ bool CSVRender::ForeignCell::referenceDataChanged (const QModelIndex& topLeft,
     // perform update and remove where needed
     bool modified = false;
 
-    for (std::map<std::string, Object *>::iterator iter (mObjects.begin());
-        iter!=mObjects.end(); ++iter)
+    for (std::map<ESM4::FormId, ForeignObject *>::iterator iter (mObjects.begin());
+        iter != mObjects.end(); ++iter)
     {
         if (iter->second->referenceDataChanged (topLeft, bottomRight))
             modified = true;
@@ -282,12 +279,14 @@ bool CSVRender::ForeignCell::referenceDataChanged (const QModelIndex& topLeft,
     for (std::map<std::string, bool>::iterator iter (ids.begin()); iter!=ids.end(); ++iter)
     {
         mObjects.insert (std::make_pair (
-            iter->first, new Object (mDocument.getData(), mCellNode, iter->first, false, mPhysics)));
+            iter->first, new ForeignObject (mDocument.getData(), mCellNode, iter->first, false, mPhysics)));
 
         modified = true;
     }
 
     return modified;
+#endif
+    return false;
 }
 
 bool CSVRender::ForeignCell::referenceAboutToBeRemoved (const QModelIndex& parent, int start,
@@ -316,7 +315,7 @@ bool CSVRender::ForeignCell::referenceAdded (const QModelIndex& parent, int star
     if (parent.isValid())
         return false;
 
-    return addObjects (start, end);
+    return false;// addObjects(start, end); FIXME
 }
 
 float CSVRender::ForeignCell::getTerrainHeightAt(const Ogre::Vector3 &pos) const
@@ -343,7 +342,7 @@ void CSVRender::ForeignCell::pathgridDataChanged (const QModelIndex& topLeft, co
         std::string cell = Misc::StringUtils::lowerCase (pathgrids->data (
             pathgrids->index (i, idColumn)).toString().toUtf8().constData());
 
-        if (cell==mId && colPaths >= topLeft.column() && colPaths <= bottomRight.column())
+        if (/*cell==mId && */colPaths >= topLeft.column() && colPaths <= bottomRight.column())
         {
             if (!mModel)
                 setupPathgrid();
@@ -359,7 +358,7 @@ void CSVRender::ForeignCell::pathgridDataChanged (const QModelIndex& topLeft, co
 void CSVRender::ForeignCell::setupPathgrid()
 {
     const CSMWorld::SubCellCollection<CSMWorld::Pathgrid>& pathgrids = mDocument.getData().getPathgrids();
-    int index = pathgrids.searchId(mId);
+    int index = -1;// pathgrids.searchId(mId);
     if(index != -1)
     {
         int col = pathgrids.findColumnIndex(CSMWorld::Columns::ColumnId_PathgridPoints);
@@ -457,7 +456,7 @@ void CSVRender::ForeignCell::pathgridPointAdded(const Ogre::Vector3 &pos, bool i
     const CSMWorld::SubCellCollection<CSMWorld::Pathgrid>& pathgrids = mDocument.getData().getPathgrids();
     CSMWorld::Pathgrid pathgrid = pathgrids.getRecord(mPgIndex).get();
 
-    std::string name = PathgridPoint::getName(mId, pathgrid.mPoints.size()); // generate a new name
+    std::string name = "";// PathgridPoint::getName(mId, pathgrid.mPoints.size()); // generate a new name
 
     mPgPoints.insert(std::make_pair(name, new PathgridPoint(name, mCellNode, pos, mPhysics)));
 
@@ -614,7 +613,7 @@ void CSVRender::ForeignCell::setupNavMesh()
 {
     // FIXME: index throws exception
     const CSMForeign::NavMeshCollection& navmeshes = mDocument.getData().getNavMeshes();
-    int index = navmeshes.searchId(mId);
+    int index = -1;// navmeshes.searchId(mId);
     if(index != -1)
     {
         std::cout << "CSVRender::ForeignCell: found navmesh" << std::endl;
@@ -632,10 +631,10 @@ void CSVRender::ForeignCell::buildNavMesh()
 
     const std::map<std::string, std::vector<std::string> >& cellmap = navmeshes.cellToFormIds();
 
-    if (cellmap.find(mId) == cellmap.end())
+    if (cellmap.find(""/*mId*/) == cellmap.end())
         return;
 
-    const std::vector<std::string>& formids = cellmap.find(mId)->second;
+    const std::vector<std::string>& formids = cellmap.find(/*mId*/"")->second;
 
     for (std::vector<std::string>::const_iterator iter = formids.begin(); iter != formids.end(); ++iter)
     {
@@ -654,7 +653,7 @@ void CSVRender::ForeignCell::buildNavMesh()
             for (std::vector<ESM4::Vertex>::const_iterator i = (*it).verticies.begin();
                     i != (*it).verticies.end(); ++i)
             {
-                std::string name = PathgridPoint::getName(mId, index);
+                std::string name = PathgridPoint::getName(""/*mId*/, index);
 
                 Ogre::Vector3 pos = Ogre::Vector3((*i).x, (*i).y, (*i).z);
 

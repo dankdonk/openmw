@@ -11,7 +11,9 @@
 
 #include "../world/record.hpp"
 
-CSMForeign::LandCollection::LandCollection (const CellCollection& cells)
+#include "cellcollection.hpp"
+
+CSMForeign::LandCollection::LandCollection (CellCollection& cells)
   : mCells (cells)
 {
 }
@@ -27,9 +29,15 @@ int CSMForeign::LandCollection::load (ESM4::Reader& reader, bool base)
     CSMForeign::Land record;
 
     std::string id;
-    ESM4::formIdToString(reader.hdr().record.id, id);
+    ESM4::FormId formId = reader.hdr().record.id;
+    ESM4::formIdToString(formId, id);
 
-    record.mCellId = id; // default is formId
+    // cache the ref's formId to its parent cell
+    Cell& cell = mCells.getCell(reader.currCell()); // FIXME: const issue with Collection
+
+    assert(reader.grp().type == ESM4::Grp_CellTemporaryChild && "Unexpected Group type for LAND");
+    assert(cell.mLandTemporary == 0 && "CELL already has a LAND child");
+    cell.mLandTemporary = formId;
 
     // check if parent cell left some bread crumbs
     if (reader.hasCellGrid())
@@ -57,6 +65,8 @@ int CSMForeign::LandCollection::load (ESM4::Reader& reader, bool base)
 
         ESM4::gridToString(reader.currCellGrid().grid.x, reader.currCellGrid().grid.y, record.mCellId);
     }
+    else
+        record.mCellId = id; // use formId string instead
 
     // FIXME; should be using the formId as the lookup key rather than its string form
     int index = CSMWorld::Collection<Land, CSMWorld::IdAccessor<Land> >::searchId(id);
@@ -108,6 +118,11 @@ int CSMForeign::LandCollection::load (const Land& record, bool base, int index)
     }
 
     return index;
+}
+
+int CSMForeign::LandCollection::searchId(ESM4::FormId formId) const
+{
+    return CSMWorld::Collection<Land, CSMWorld::IdAccessor<Land> >::searchId(ESM4::formIdToString(formId));
 }
 
 // returns record index

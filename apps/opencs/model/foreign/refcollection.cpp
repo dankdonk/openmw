@@ -11,6 +11,8 @@
 
 #include "../world/record.hpp"
 
+#include "cellcollection.hpp"
+
 namespace CSMWorld
 {
     template<>
@@ -41,7 +43,7 @@ namespace CSMWorld
     }
 }
 
-CSMForeign::RefCollection::RefCollection (const CellCollection& cells)
+CSMForeign::RefCollection::RefCollection (CellCollection& cells)
   : mCells (cells)
 {
 }
@@ -58,16 +60,33 @@ int CSMForeign::RefCollection::load (ESM4::Reader& reader, bool base)
     ESM4::FormId formId = reader.hdr().record.id;
     ESM4::formIdToString(formId, id);
 
-    // FIXME: need to save the group types, e.g. persistent child, visible distant child, temporary child
+    // cache the ref's formId to its parent cell
+    Cell& cell = mCells.getCell(reader.currCell()); // FIXME: const issue with Collection
 
-    // FIXME: maybe add the formid to the parent cell?  this means the constructor needs
-    // non-const reference to CellCollection (3 different child types of vectors needed per cell)
+    switch (reader.grp().type)
+    {
+        case ESM4::Grp_CellPersistentChild:
+        {
+            cell.mRefPersistent.push_back(formId);
+            break;
+        }
+        case ESM4::Grp_CellVisibleDistChild:
+        {
+            cell.mRefVisibleDistant.push_back(formId);
+            break;
+        }
+        case ESM4::Grp_CellTemporaryChild:
+        {
+            cell.mRefTemporary.push_back(formId);
+            break;
+        }
+        default: break; // do nothing
+    }
 
-    record.mCell = id; // default is formId
-
-    // check if parent cell left some bread crumbs
     if (reader.hasCellGrid())
         ESM4::gridToString(reader.currCellGrid().grid.x, reader.currCellGrid().grid.y, record.mCell);
+    else
+        record.mCell = id; // use formId string instead
 
     int index = searchId(formId);
 

@@ -265,15 +265,20 @@ void CSMForeign::CellCollection::insertRecord (std::unique_ptr<CSMWorld::RecordB
     mCellIndex.insert(std::make_pair(formId, index));
 }
 
-std::string CSMForeign::CellCollection::searchId (std::int16_t x, std::int16_t y, ESM4::FormId world) const
+ESM4::FormId CSMForeign::CellCollection::searchFormId (std::int16_t x, std::int16_t y, ESM4::FormId world) const
 {
     std::map<ESM4::FormId, CoordinateIndex>::const_iterator iter = mPositionIndex.find(world);
     if (iter == mPositionIndex.end())
-        return ""; // can't find world // FIXME: exception instead?
+        return 0; // can't find world // FIXME: exception instead?
 
     CoordinateIndex::const_iterator it = iter->second.find(std::make_pair(x, y));
     if (it == iter->second.end())
-        return ""; // cann't find coordinate // FIXME: exception instead?
+        return 0; // cann't find coordinate // FIXME: exception instead?
 
-    return ESM4::formIdToString(it->second);
+    return it->second;
+}
+
+CSMForeign::Cell& CSMForeign::CellCollection::getCell(ESM4::FormId formId)
+{
+    return getModifiableRecord(searchId(formId)).get();
 }

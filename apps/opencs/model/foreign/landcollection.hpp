@@ -19,7 +19,7 @@ namespace CSMForeign
 
     class LandCollection : public CSMWorld::Collection<Land, CSMWorld::IdAccessor<Land> >
     {
-        const CSMForeign::CellCollection& mCells; // FIXME: not used, delete?
+        CSMForeign::CellCollection& mCells;
 
         // key - x/y coordinates, value - land formid (string)
         typedef std::map<std::pair<int, int>, std::string> CoordinateIndex;
@@ -28,7 +28,7 @@ namespace CSMForeign
         std::map<ESM4::FormId, CoordinateIndex> mPositionIndex;
 
     public:
-        LandCollection (const CellCollection& cells);
+        LandCollection (CellCollection& cells);
         ~LandCollection ();
 
         // similar to IdCollection but with ESM4::Reader
@@ -40,6 +40,8 @@ namespace CSMForeign
         virtual void loadRecord (Land& record, ESM4::Reader& reader);
 
         int searchId (std::int16_t x, std::int16_t y, ESM4::FormId world = 0x3c) const; // default is Tamriel
+
+        int searchId (ESM4::FormId formId) const;
 
     private:
         LandCollection ();

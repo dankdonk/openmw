@@ -48,15 +48,15 @@ namespace ESM4
 
         struct REFRcoord
         {
-            FormId        formId;
-            std::uint16_t unknown1;
-            std::uint16_t unknown2;
+            FormId       formId;
+            std::int16_t unknown1;
+            std::int16_t unknown2;
        };
 
         struct RNAMstruct
         {
-            std::uint16_t unknown1;
-            std::uint16_t unknown2;
+            std::int16_t unknown1;
+            std::int16_t unknown2;
             std::vector<REFRcoord> refrs;
        };
 
@@ -79,6 +79,8 @@ namespace ESM4
         RNAMstruct mData;
 
         // ----------------------
+
+        // TODO consider caching children formId's (e.g. CELL, ROAD)
 
         World();
         ~World();

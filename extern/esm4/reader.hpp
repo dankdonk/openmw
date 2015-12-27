@@ -90,17 +90,11 @@ namespace ESM4
 
         // Maybe should throw an exception if called when not valid?
         const CellGrid& currCellGrid() const;
-// if performance becomes an issue
-#if 0
-        inline const CellGrid& currCell() const {
-            assert(mCellGridValid && "Attempt to use an invalid cell grid");
-            return mCurrCell;
-        }
-#endif
+
         inline const bool hasCellGrid() const { return mCellGridValid; }
 
-        // This is set while loading a CELL record (XCLC sub record) and cleared
-        // when entering an exterior cell group.
+        // This is set while loading a CELL record (XCLC sub record) and invalidated
+        // each time loading a CELL (see clearCellGrid())
         inline void setCurrCell(const CellGrid& currCell) {
             mCellGridValid = true;
             mCurrCellGrid = currCell;
@@ -112,6 +106,7 @@ namespace ESM4
         // Cell 2c143 is loaded immedicatly after 1bdb1 and can mistakely appear to have grid 0, 1.
         inline void clearCellGrid() { mCellGridValid = false; }
 
+        // set at the beginning of a CELL load
         inline void setCurrCell(FormId formId) { mCurrCell = formId; }
 
         inline const FormId currCell() { return mCurrCell; }

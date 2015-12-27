@@ -51,8 +51,8 @@ bool CSVRender::ForeignWorldspaceWidget::adjustCells()
             int y = 0;
             stream >> ignore >> x >> y;
 
-            /*reused*/cellId = cells.searchId(x, y); // FIXME: assumes Tamriel
-            int index = cells.searchId (cellId); // FIXME: avoid double converssion!
+            int32_t formId = cells.searchFormId (x, y); // FIXME: assumes Tamriel
+            int index = cells.searchId (formId);
 
 
             if (!mSelection.has (iter->first) || index == -1 ||
@@ -128,14 +128,14 @@ bool CSVRender::ForeignWorldspaceWidget::adjustCells()
         int y = 0;
         stream >> ignore >> x >> y;
 
-        /*reused*/cellId = cells.searchId(x, y); // FIXME: assumes Tamriel
-        int index = cells.searchId (cellId); // FIXME: avoid double converssion!
+        int32_t formId = cells.searchFormId (x, y); // FIXME: assumes Tamriel
+        int index = cells.searchId (formId);
 
         if (index > 0 && cells.getRecord (index).mState != CSMWorld::RecordBase::State_Deleted &&
             mCells.find (*iter)==mCells.end())
         {
-            ForeignCell *cell = new ForeignCell (mDocument, getSceneManager(),
-                    iter->getId (mWorldspace), mDocument.getPhysics());
+            ForeignCell *cell = new ForeignCell (mDocument, getSceneManager(), formId, mDocument.getPhysics());
+
             //connect (cell->getSignalHandler(), SIGNAL(flagAsModified()), this, SLOT(flagAsModSlot()));
             mCells.insert (std::make_pair (*iter, cell));
 

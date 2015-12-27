@@ -59,7 +59,24 @@ namespace ESM4
         std::string mFullName;
         std::uint16_t mCellFlags; // TES5 can also be 8 bits
 
+        FormId mOwner;
+        FormId mGlobal;
+        FormId mClimate;
+        FormId mWater;
+        float  mWaterHeight;
+
         std::vector<FormId> mRegions;
+
+        // cache formId's of children
+        std::vector<FormId> mRefPersistent;
+        std::vector<FormId> mRefVisibleDistant;
+        std::vector<FormId> mRefTemporary;
+        FormId mLandTemporary; // assume only one LAND per CELL
+
+        // TODO consider caching otheer FormID's
+        // Persistent      ACHR, ACRE
+        // Visible Distant ACHR, ACRE
+        // Temporary       PGRD, ACHR, ACRE
 
         Cell();
         ~Cell();

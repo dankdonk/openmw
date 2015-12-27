@@ -33,7 +33,7 @@
 #include "reader.hpp"
 //#include "writer.hpp"
 
-ESM4::Cell::Cell()
+ESM4::Cell::Cell() : mLandTemporary(0)
 {
     mFullName.clear();
 }
@@ -48,7 +48,7 @@ void ESM4::Cell::load(ESM4::Reader& reader)
     mFlags  = reader.hdr().record.flags;
     mParent = reader.currWorld();
 
-    reader.setCurrCell(mFormId); // save for LAND later
+    reader.setCurrCell(mFormId); // save for LAND (and other children) to access later
     reader.clearCellGrid(); // clear until XCLC FIXME: somehow do this automatically?
 
     while (reader.getSubRecordHeader())
@@ -180,16 +180,39 @@ void ESM4::Cell::load(ESM4::Reader& reader)
                 }
                 break;
             }
+            case ESM4::SUB_XOWN:
+            {
+                reader.get(mOwner);
+                break;
+            }
+            case ESM4::SUB_XGLB: // Oblivion only?
+            {
+                reader.get(mGlobal);
+                break;
+            }
+            case ESM4::SUB_XCCM:
+            {
+                reader.get(mClimate);
+                break;
+            }
+            case ESM4::SUB_XCWT:
+            {
+                reader.get(mWater);
+                break;
+            }
+            case ESM4::SUB_XCLW:
+            {
+                reader.get(mWaterHeight);
+                break;
+            }
             case ESM4::SUB_XCLL:
             case ESM4::SUB_TVDT:
             case ESM4::SUB_MHDT:
             case ESM4::SUB_XCGD:
             case ESM4::SUB_LTMP:
             case ESM4::SUB_LNAM:
-            case ESM4::SUB_XCLW:
             case ESM4::SUB_XNAM:
             case ESM4::SUB_XLCN:
-            case ESM4::SUB_XCWT:
             case ESM4::SUB_XWCS:
             case ESM4::SUB_XWCU:
             case ESM4::SUB_XWCN:
@@ -197,13 +220,10 @@ void ESM4::Cell::load(ESM4::Reader& reader)
             case ESM4::SUB_XCIM:
             case ESM4::SUB_XCMO:
             case ESM4::SUB_XEZN:
-            case ESM4::SUB_XOWN:
-            case ESM4::SUB_XCCM:
             case ESM4::SUB_XWEM:
             case ESM4::SUB_XILL:
             case ESM4::SUB_XCMT: // Oblivion only?
             case ESM4::SUB_XRNK: // Oblivion only?
-            case ESM4::SUB_XGLB: // Oblivion only?
             {
                 //std::cout << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
                 reader.skipSubRecordData();
