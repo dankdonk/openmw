@@ -31,13 +31,14 @@ namespace ESM4
 {
     class Reader;
     class Writer;
+    typedef std::uint32_t FormId;
 
     // Unlike TES3, multiple cells can have the same exterior co-ordinates.
     // The cells need to be organised under world spaces.
     struct Static
     {
-        std::uint32_t mFormId; // from the header
-        std::uint32_t mFlags;  // from the header, see enum type RecordFlag for details
+        FormId mFormId;       // from the header
+        std::uint32_t mFlags; // from the header, see enum type RecordFlag for details
 
         std::string mEditorId;
         std::string mModel;

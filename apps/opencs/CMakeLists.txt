@@ -40,7 +40,7 @@ opencs_units (model/foreign
     )
 
 opencs_units_noqt (model/foreign
-    world worldcollection region regioncollection cell cellcollection
+    world worldcollection region regioncollection cell cellcollection cellref refcollection
     landtexture landtexturecollection land landcollection static staticcollection
     navmeshinfo navigationcollection navmesh navmeshcollection
     )
@@ -104,6 +104,10 @@ opencs_units_noqt (view/render
     navigation navigation1st navigationfree navigationorbit lighting lightingday lightingnight
     lightingbright object cell terrainstorage textoverlay overlaymask overlaysystem mousestate
     pathgridpoint foreigncell
+    )
+
+opencs_units (view/foreign
+    referencecreator
     )
 
 opencs_units_noqt (view/foreign

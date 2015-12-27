@@ -30,11 +30,12 @@ namespace ESM4
 {
     class Reader;
     class Writer;
+    typedef std::uint32_t FormId;
 
     struct LandTexture
     {
-        std::uint32_t mFormId; // from the header
-        std::uint32_t mFlags;  // from the header, see enum type RecordFlag for details
+        FormId mFormId;       // from the header
+        std::uint32_t mFlags; // from the header, see enum type RecordFlag for details
 
         std::string mEditorId;
 
@@ -42,7 +43,7 @@ namespace ESM4
         std::uint8_t mHavokRestitution;
 
         std::uint8_t mTextureSpecular; // default 30
-        std::uint32_t mGrass;
+        FormId mGrass;
 
         // ------ TES4 only -----
 
@@ -51,8 +52,8 @@ namespace ESM4
 
         // ------ TES5 only -----
 
-        std::uint32_t mTexture;
-        std::uint32_t mMaterial;
+        FormId mTexture;
+        FormId mMaterial;
 
         // ----------------------
 

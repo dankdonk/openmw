@@ -65,6 +65,10 @@ namespace
         { CSMWorld::UniversalId::Class_RecordList, CSMWorld::UniversalId::Type_ForeignLands, "Foreign Land Table", 0 },
         // FIXME: should be foreign refid
         { CSMWorld::UniversalId::Class_RecordList, CSMWorld::UniversalId::Type_ForeignStatics, "Foreign Static Table", 0 },
+        { CSMWorld::UniversalId::Class_RecordList, CSMWorld::UniversalId::Type_ForeignReferenceables,
+            "Foreign Objects", 0 },
+        { CSMWorld::UniversalId::Class_RecordList, CSMWorld::UniversalId::Type_ForeignReferences,
+            "References", 0 },
         { CSMWorld::UniversalId::Class_NonRecord, CSMWorld::UniversalId::Type_ForeignRegionMap,
             "Foreign Region Map", 0 },
 
@@ -132,15 +136,18 @@ namespace
         { CSMWorld::UniversalId::Class_Record, CSMWorld::UniversalId::Type_Pathgrid, "Pathgrid", 0 },
         { CSMWorld::UniversalId::Class_Record, CSMWorld::UniversalId::Type_StartScript, "Start Script", 0 },
         { CSMWorld::UniversalId::Class_Record, CSMWorld::UniversalId::Type_MetaData, "Meta Data", 0 },
-        { CSMWorld::UniversalId::Class_Record, CSMWorld::UniversalId::Type_LandTexture, "Land Texture", 0 },
+        { CSMWorld::UniversalId::Class_Resource, CSMWorld::UniversalId::Type_LandTexture, "Land Texture", 0 },
         { CSMWorld::UniversalId::Class_Record, CSMWorld::UniversalId::Type_Land, "Land", 0 },
         { CSMWorld::UniversalId::Class_Record, CSMWorld::UniversalId::Type_ForeignWorld, "Foreign World", 0 },
         { CSMWorld::UniversalId::Class_Record, CSMWorld::UniversalId::Type_ForeignCell, "Foreign Cell", ":./cell.png" },
         { CSMWorld::UniversalId::Class_Record, CSMWorld::UniversalId::Type_ForeignRegion, "Foreign Region", ":./land.png" },
-        { CSMWorld::UniversalId::Class_Record, CSMWorld::UniversalId::Type_ForeignLandTexture, "Foreign Land Texture", 0 },
+        { CSMWorld::UniversalId::Class_Resource, CSMWorld::UniversalId::Type_ForeignLandTexture, "Foreign Land Texture", 0 },
         { CSMWorld::UniversalId::Class_Record, CSMWorld::UniversalId::Type_ForeignLand, "Foreign Land", 0 },
         // FIXME should be Class_ForeignRefRecord
         { CSMWorld::UniversalId::Class_Record, CSMWorld::UniversalId::Type_ForeignStatic, "Foreign Static", ":./static.png" },
+        //{ CSMWorld::UniversalId::Class_ForeignRefRecord, CSMWorld::UniversalId::Type_ForeignStatic, "Foreign Static", ":./static.png" },
+        { CSMWorld::UniversalId::Class_Record, CSMWorld::UniversalId::Type_ForeignReferenceable, "Object", 0 },
+        { CSMWorld::UniversalId::Class_SubRecord, CSMWorld::UniversalId::Type_ForeignReference, "Reference", 0 },
 
         { CSMWorld::UniversalId::Class_None, CSMWorld::UniversalId::Type_None, 0, 0 } // end marker
     };
@@ -369,6 +376,17 @@ std::vector<CSMWorld::UniversalId::Type> CSMWorld::UniversalId::listReferenceabl
     return list;
 }
 
+std::vector<CSMWorld::UniversalId::Type> CSMWorld::UniversalId::listForeignReferenceableTypes()
+{
+    std::vector<CSMWorld::UniversalId::Type> list;
+
+    for (int i=0; sIdArg[i].mName; ++i)
+        if (sIdArg[i].mClass==Class_ForeignRefRecord)
+            list.push_back (sIdArg[i].mType);
+
+    return list;
+}
+
 std::vector<CSMWorld::UniversalId::Type> CSMWorld::UniversalId::listTypes (int classes)
 {
     std::vector<CSMWorld::UniversalId::Type> list;
@@ -395,6 +413,9 @@ CSMWorld::UniversalId::Type CSMWorld::UniversalId::getParentType (Type type)
         {
             if (sIdArg[i].mClass==Class_RefRecord)
                 return Type_Referenceables;
+
+            if (sIdArg[i].mClass==Class_ForeignRefRecord)
+                return Type_ForeignReferenceables;
 
             if (sIdArg[i].mClass==Class_SubRecord || sIdArg[i].mClass==Class_Record ||
                 sIdArg[i].mClass==Class_Resource)

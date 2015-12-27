@@ -57,8 +57,8 @@ namespace ESM4
         std::size_t     mEndOfRecord;     // number of bytes read by sub records
         CellGrid        mCurrCellGrid;    // TODO: should keep keep a map of cell formids // FIXME
         bool            mCellGridValid;
-        std::uint32_t   mCurrWorld;       // formId of current world - for grouping CELL records
-        std::uint32_t   mCurrCell;        // formId of current cell
+        FormId          mCurrWorld;       // formId of current world - for grouping CELL records
+        FormId          mCurrCell;        // formId of current cell
         std::size_t     mRecHeaderSize;
 
         // TODO: try fixed size buffers on the stack for both below (may be faster)
@@ -112,13 +112,13 @@ namespace ESM4
         // Cell 2c143 is loaded immedicatly after 1bdb1 and can mistakely appear to have grid 0, 1.
         inline void clearCellGrid() { mCellGridValid = false; }
 
-        inline void setCurrCell(std::uint32_t formId) { mCurrCell = formId; }
+        inline void setCurrCell(FormId formId) { mCurrCell = formId; }
 
-        inline const std::uint32_t currCell() { return mCurrCell; }
+        inline const FormId currCell() { return mCurrCell; }
 
-        inline void setCurrWorld(std::uint32_t formId) { mCurrWorld = formId; }
+        inline void setCurrWorld(FormId formId) { mCurrWorld = formId; }
 
-        inline const std::uint32_t currWorld() { return mCurrWorld; }
+        inline const FormId currWorld() { return mCurrWorld; }
 
         // Get the data part of a record
         // Note: assumes the header was read correctly and nothing else was read

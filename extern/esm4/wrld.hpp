@@ -48,7 +48,7 @@ namespace ESM4
 
         struct REFRcoord
         {
-            std::uint32_t formId;
+            FormId        formId;
             std::uint16_t unknown1;
             std::uint16_t unknown2;
        };
@@ -60,12 +60,12 @@ namespace ESM4
             std::vector<REFRcoord> refrs;
        };
 
-        std::uint32_t mFormId; // from the header
-        std::uint32_t mFlags;  // from the header, see enum type RecordFlag for details
+        FormId mFormId;       // from the header
+        std::uint32_t mFlags; // from the header, see enum type RecordFlag for details
 
         std::string mEditorId;
         std::string mFullName;
-        std::uint32_t mParent; // parent worldspace formid
+        FormId mParent;       // parent worldspace formid
         std::uint8_t mWorldFlags;
 
         // ------ TES4 only -----

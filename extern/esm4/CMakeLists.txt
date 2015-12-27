@@ -11,6 +11,7 @@ set(ESM4_SOURCE_FILES
     cell.cpp
     regn.cpp
     stat.cpp
+    refr.cpp
     reader.cpp
 )
 

@@ -2,6 +2,8 @@
 
 #include "../doc/subviewfactoryimp.hpp"
 
+#include "../foreign/referencecreator.hpp"
+
 #include "tablesubview.hpp"
 #include "dialoguesubview.hpp"
 #include "scriptsubview.hpp"
@@ -71,6 +73,12 @@ void CSVWorld::addSubViewFactories (CSVDoc::SubViewFactoryManager& manager)
 
     manager.add (CSMWorld::UniversalId::Type_References,
         new CSVDoc::SubViewFactoryWithCreator<TableSubView, ReferenceCreatorFactory>);
+
+    //manager.add (CSMWorld::UniversalId::Type_ForeignReferenceables,
+        //new CSVDoc::SubViewFactoryWithCreator<TableSubView, CreatorFactory<CSVForeign::ReferenceableCreator> >);
+
+    manager.add (CSMWorld::UniversalId::Type_ForeignReferences,
+        new CSVDoc::SubViewFactoryWithCreator<TableSubView, CSVForeign::ReferenceCreatorFactory>);
 
     manager.add (CSMWorld::UniversalId::Type_Topics,
         new CSVDoc::SubViewFactoryWithCreator<TableSubView, TopicCreatorFactory>);
@@ -163,6 +171,9 @@ void CSVWorld::addSubViewFactories (CSVDoc::SubViewFactoryManager& manager)
 
     manager.add (CSMWorld::UniversalId::Type_Reference,
         new CSVDoc::SubViewFactoryWithCreator<DialogueSubView, ReferenceCreatorFactory> (false));
+
+    //manager.add (CSMWorld::UniversalId::Type_ForeignReference,
+        //new CSVDoc::SubViewFactoryWithCreator<DialogueSubView, CSVForeign::ReferenceCreatorFactory> (false));
 
     manager.add (CSMWorld::UniversalId::Type_Cell,
         new CSVDoc::SubViewFactoryWithCreator<DialogueSubView, CreatorFactory<CellCreator> > (false));

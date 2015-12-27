@@ -110,7 +110,7 @@ void ESM4::Navigation::NavMeshInfo::load(ESM4::Reader& reader)
     {
         //std::cout << "NVMI countMerged " << std::dec << count << std::endl;
         formIdMerged.resize(count);
-        for (std::vector<std::uint32_t>::iterator it = formIdMerged.begin(); it != formIdMerged.end(); ++it)
+        for (std::vector<FormId>::iterator it = formIdMerged.begin(); it != formIdMerged.end(); ++it)
         {
             reader.get(*it);
         }
@@ -121,7 +121,7 @@ void ESM4::Navigation::NavMeshInfo::load(ESM4::Reader& reader)
     {
         //std::cout << "NVMI countPrefMerged " << std::dec << count << std::endl;
         formIdPrefMerged.resize(count);
-        for (std::vector<std::uint32_t>::iterator it = formIdPrefMerged.begin(); it != formIdPrefMerged.end(); ++it)
+        for (std::vector<FormId>::iterator it = formIdPrefMerged.begin(); it != formIdPrefMerged.end(); ++it)
         {
             reader.get(*it);
         }
@@ -264,7 +264,7 @@ void ESM4::Navigation::load(ESM4::Reader& reader)
                 std::uint32_t node;
                 for (std::uint32_t i = 0; i < total; ++i)
                 {
-                    std::vector<std::uint32_t> preferredPaths;
+                    std::vector<FormId> preferredPaths;
                     reader.get(count);
                     if (count == 1)
                     {
@@ -274,7 +274,7 @@ void ESM4::Navigation::load(ESM4::Reader& reader)
                     if (count)
                     {
                         preferredPaths.resize(count);
-                        for (std::vector<std::uint32_t>::iterator it = preferredPaths.begin();
+                        for (std::vector<FormId>::iterator it = preferredPaths.begin();
                                 it != preferredPaths.end(); ++it)
                         {
                             reader.get(*it);
@@ -290,7 +290,7 @@ void ESM4::Navigation::load(ESM4::Reader& reader)
                 assert(count == 1 && "expected separator");
 
                 reader.get(node); // HACK
-                std::vector<std::uint32_t> preferredPaths;
+                std::vector<FormId> preferredPaths;
                 mPreferredPaths.push_back(std::make_pair(node, preferredPaths)); // empty
 #if 0
                 std::cout << "node " << std::hex << node // FIXME: debugging only
@@ -308,7 +308,7 @@ void ESM4::Navigation::load(ESM4::Reader& reader)
                     std::cout << "node " << std::hex << node // FIXME: debugging only
                         << ", index " << index << ", i " << std::dec << total+i << std::endl;
 #endif
-                    std::pair<std::map<std::uint32_t, std::uint32_t>::iterator, bool> res =
+                    std::pair<std::map<FormId, std::uint32_t>::iterator, bool> res =
                         mPathIndexMap.insert(std::make_pair(node, index));
                     if (!res.second)
                         throw std::runtime_error ("node already exists in the preferred path index map");

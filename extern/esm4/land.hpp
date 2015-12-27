@@ -30,6 +30,7 @@
 namespace ESM4
 {
     class Reader;
+    typedef std::uint32_t FormId;
 
     struct Land
     {
@@ -71,7 +72,7 @@ namespace ESM4
 
         struct BTXT
         {
-            std::uint32_t formId;
+            FormId        formId;
             std::uint8_t  quadrant; // 0 = bottom left. 1 = bottom right. 2 = upper-left. 3 = upper-right
             std::uint8_t  unknown1;
             std::uint16_t unknown2;
@@ -79,7 +80,7 @@ namespace ESM4
 
         struct ATXT
         {
-            std::uint32_t formId;
+            FormId        formId;
             std::uint8_t  quadrant; // 0 = bottom left. 1 = bottom right. 2 = upper-left. 3 = upper-right
             std::uint8_t  unknown;
             std::uint16_t layer;    // texture layer, 0..7
@@ -101,8 +102,8 @@ namespace ESM4
             std::vector<VTXT> data;
         };
 
-        std::uint32_t mFormId; // from the header
-        std::uint32_t mFlags;  // from the header, see enum type RecordFlag for details
+        FormId mFormId;       // from the header
+        std::uint32_t mFlags; // from the header, see enum type RecordFlag for details
 
         std::uint32_t mLandFlags; // from DATA subrecord
 
@@ -144,7 +145,7 @@ namespace ESM4
             //float         mHeightOffset; // probably not used
             float         mHeights[VERTS_SIDE * VERTS_SIDE]; // filled during load
             Texture       mTextures[4]; // 0 = bottom left. 1 = bottom right. 2 = upper-left. 3 = upper-right
-            std::vector<std::uint32_t> mIds;  // land texture (LTEX) formids
+            std::vector<FormId> mIds;  // land texture (LTEX) formids
 
             //void save(Writer &writer) const;
             static void transposeTextureData(const std::uint16_t *in, std::uint16_t *out);

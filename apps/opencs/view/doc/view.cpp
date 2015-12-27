@@ -354,6 +354,10 @@ void CSVDoc::View::setupForeignMenu()
     connect (land, SIGNAL (triggered()), this, SLOT (addForeignLandSubView()));
     foreign->addAction (land);
 
+    QAction *refs = new QAction (tr ("References"), this);
+    connect (refs, SIGNAL (triggered()), this, SLOT (addForeignReferencesSubView()));
+    foreign->addAction (refs);
+
     QAction *stat = new QAction (tr ("Statics"), this);
     connect (stat, SIGNAL (triggered()), this, SLOT (addForeignStaticSubView()));
     foreign->addAction (stat);
@@ -937,6 +941,16 @@ void CSVDoc::View::addForeignStaticSubView()
 void CSVDoc::View::addForeignRegionMapSubView()
 {
     addSubView (CSMWorld::UniversalId::Type_ForeignRegionMap);
+}
+
+void CSVDoc::View::addForeignReferenceablesSubView()
+{
+    addSubView (CSMWorld::UniversalId::Type_ForeignReferenceables);
+}
+
+void CSVDoc::View::addForeignReferencesSubView()
+{
+    addSubView (CSMWorld::UniversalId::Type_ForeignReferences);
 }
 
 void CSVDoc::View::addStartScriptsSubView()

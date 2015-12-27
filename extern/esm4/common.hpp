@@ -307,7 +307,32 @@ namespace ESM4
         SUB_OBND = MKTAG('O','B','N','D'),
       //SUB_MODT = MKTAG('M','O','D','T'),
       //SUB_MNAM = MKTAG('M','N','A','M'),
-      //SUB_DNAM = MKTAG('D','N','A','M')
+      //SUB_DNAM = MKTAG('D','N','A','M'),
+
+        // below appear in REFR records
+      //SUB_EDID = MKTAG('E','D','I','D'),
+      //SUB_FULL = MKTAG('F','U','L','L'),
+      //SUB_DATA = MKTAG('D','A','T','A'),
+        SUB_NAME = MKTAG('N','A','M','E'),
+        SUB_XMRK = MKTAG('X','M','R','K'),
+        SUB_FNAM = MKTAG('F','N','A','M'),
+      //SUB_XOWN = MKTAG('X','O','W','N'),
+      //SUB_XRNK = MKTAG('X','R','N','K'),
+      //SUB_XGLB = MKTAG('X','G','L','B'),
+        SUB_XSCL = MKTAG('X','S','C','L'),
+        SUB_XTEL = MKTAG('X','T','E','L'),
+        SUB_XTRG = MKTAG('X','T','R','G'),
+        SUB_XSED = MKTAG('X','S','E','D'),
+        SUB_XLOD = MKTAG('X','L','O','D'),
+        SUB_XPCI = MKTAG('X','P','C','I'),
+        SUB_XLOC = MKTAG('X','L','O','C'),
+        SUB_XESP = MKTAG('X','E','S','P'),
+        SUB_XLCM = MKTAG('X','L','C','M'),
+        SUB_XRTM = MKTAG('X','R','T','M'),
+        SUB_XACT = MKTAG('X','A','C','T'),
+        SUB_XCNT = MKTAG('X','C','N','T')
+      //SUB_TNAM = MKTAG('T','N','A','M'),
+      //SUB_ONAM = MKTAG('O','N','A','M'),
     };
 
     // Based on http://www.uesp.net/wiki/Tes5Mod:Mod_File_Format#Groups
@@ -379,6 +404,8 @@ namespace ESM4
         FLG_Unmodified = 0x00000040  // not island
     };
 
+    typedef std::uint32_t FormId;
+
 #pragma pack(push, 1)
     // NOTE: the label field of a group is not reliable (http://www.uesp.net/wiki/Tes4Mod:Mod_File_Format)
     union GroupLabel
@@ -411,7 +438,7 @@ namespace ESM4
         std::uint32_t typeId;
         std::uint32_t dataSize;  // does *not* include 24 bytes of header
         std::uint32_t flags;
-        std::uint32_t id;
+        FormId        id;
         std::uint32_t revision;
         std::uint16_t version;  // not in Oblivion
         std::uint16_t unknown;  // not in Oblivion
@@ -439,15 +466,23 @@ namespace ESM4
 
     union CellGrid
     {
-        std::uint32_t cellId;
-        Grid          grid;
+        FormId cellId;
+        Grid   grid;
     };
 
-    struct Vertex
+    struct Vector
     {
         float x;
         float y;
         float z;
+    };
+
+    typedef Vector Vertex;
+
+    struct Position
+    {
+        Vector pos;
+        Vector rot; // angles are in radian, rz applied first and rx applied last
     };
 #pragma pack(pop)
 
@@ -455,8 +490,6 @@ namespace ESM4
     std::string printLabel(const GroupLabel& label, const std::uint32_t type);
 
     std::string printName(const std::uint32_t typeId);
-
-    typedef std::uint32_t FormId;
 
     void formIdToString(FormId formId, std::string& str);
     std::string formIdToString(FormId formId);

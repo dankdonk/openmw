@@ -69,7 +69,8 @@ int CSMWorld::Data::count (RecordBase::State state, const CollectionBase& collec
 
 CSMWorld::Data::Data (ToUTF8::FromType encoding, const ResourcesManager& resourcesManager)
 : mEncoder (encoding), mPathgrids (mCells), mReferenceables(self()), mRefs (mCells),
-  mForeignCells(mForeignWorlds), mNavigation(mCells), mNavMesh(mCells), mForeignLands(mForeignCells),
+  mForeignCells(mForeignWorlds), mForeignLands(mForeignCells), mForeignRefs(mForeignCells),
+  mNavigation(mCells), mNavMesh(mCells),
   mResourcesManager (resourcesManager), mReader (0), mDialogue (0), mReaderIndex(0), mNpcAutoCalc (0)
 {
     int index = 0;
@@ -550,10 +551,27 @@ CSMWorld::Data::Data (ToUTF8::FromType encoding, const ResourcesManager& resourc
     mForeignLands.addColumn (new FixedRecordTypeColumn<CSMForeign::Land> (UniversalId::Type_ForeignLand));
     mForeignLands.addColumn (new CellIdColumn<CSMForeign::Land>);
 
+    // FIXME: delete once refidcollection is available
     mForeignStatics.addColumn (new StringIdColumn<CSMForeign::Static>);
     mForeignStatics.addColumn (new RecordStateColumn<CSMForeign::Static>);
     mForeignStatics.addColumn (new FixedRecordTypeColumn<CSMForeign::Static> (UniversalId::Type_ForeignStatic));
     mForeignStatics.addColumn (new ModelColumn<CSMForeign::Static>);
+
+    mForeignRefs.addColumn (new StringIdColumn<CSMForeign::CellRef>/*(true)*/);
+    mForeignRefs.addColumn (new RecordStateColumn<CSMForeign::CellRef>);
+    mForeignRefs.addColumn (new FixedRecordTypeColumn<CSMForeign::CellRef> (UniversalId::Type_ForeignReference));
+    mForeignRefs.addColumn (new EditorIdColumn<CSMForeign::CellRef>);
+    mForeignRefs.addColumn (new FullNameColumn<CSMForeign::CellRef>);
+    mForeignRefs.addColumn (new CellColumn<CSMForeign::CellRef> (true));
+    //mForeignRefs.addColumn (new OriginalCellColumn<CSMForeign::CellRef>);
+    //mForeignRefs.addColumn (new IdColumn<CSMForeign::CellRef>); // mRefID
+    mForeignRefs.addColumn (new PosColumn<CSMForeign::CellRef> (&CSMForeign::CellRef::mPos, 0, false));
+    mForeignRefs.addColumn (new PosColumn<CSMForeign::CellRef> (&CSMForeign::CellRef::mPos, 1, false));
+    mForeignRefs.addColumn (new PosColumn<CSMForeign::CellRef> (&CSMForeign::CellRef::mPos, 2, false));
+    mForeignRefs.addColumn (new RotColumn<CSMForeign::CellRef> (&CSMForeign::CellRef::mPos, 0, false));
+    mForeignRefs.addColumn (new RotColumn<CSMForeign::CellRef> (&CSMForeign::CellRef::mPos, 1, false));
+    mForeignRefs.addColumn (new RotColumn<CSMForeign::CellRef> (&CSMForeign::CellRef::mPos, 2, false));
+    mForeignRefs.addColumn (new ScaleColumn<CSMForeign::CellRef>);
 
     addModel (new IdTable (&mGlobals), UniversalId::Type_Global);
     addModel (new IdTable (&mGmsts), UniversalId::Type_Gmst);
@@ -604,6 +622,8 @@ CSMWorld::Data::Data (ToUTF8::FromType encoding, const ResourcesManager& resourc
     addModel (new IdTable (&mForeignLandTextures), UniversalId::Type_ForeignLandTexture);
     addModel (new IdTable (&mForeignLands), UniversalId::Type_ForeignLand);
     addModel (new IdTable (&mForeignStatics), UniversalId::Type_ForeignStatic); // FIXME: temp, should be refid
+    addModel (new IdTable (&mForeignRefs, IdTable::Feature_ViewCell | IdTable::Feature_Preview),
+            UniversalId::Type_ForeignReference);
 
     // for autocalc updates when gmst/race/class/skils tables change
     CSMWorld::IdTable *gmsts =
@@ -1001,6 +1021,16 @@ const CSMForeign::LandCollection& CSMWorld::Data::getForeignLands() const
 CSMForeign::LandCollection& CSMWorld::Data::getForeignLands()
 {
     return mForeignLands;
+}
+
+const CSMForeign::RefCollection& CSMWorld::Data::getForeignReferences() const
+{
+    return mForeignRefs;
+}
+
+CSMForeign::RefCollection& CSMWorld::Data::getForeignReferences()
+{
+    return mForeignRefs;
 }
 
 QAbstractItemModel *CSMWorld::Data::getTableModel (const CSMWorld::UniversalId& id)
@@ -1579,7 +1609,9 @@ bool CSMWorld::Data::loadTes4Record (const ESM4::RecordHeader& hdr, CSMDoc::Mess
         case ESM4::REC_REFR:
         {
             //std::cout << ESM4::printName(hdr.record.typeId) << " skipping..." << std::endl;
-            reader.skipRecordData();
+            //reader.skipRecordData();
+            reader.getRecordData();
+            mForeignRefs.load(reader, mBase);
             break;
         }
         case ESM4::REC_ACHR:

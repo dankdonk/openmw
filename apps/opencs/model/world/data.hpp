@@ -41,6 +41,7 @@
 #include "../foreign/worldcollection.hpp"
 #include "../foreign/regioncollection.hpp"
 #include "../foreign/staticcollection.hpp"
+#include "../foreign/refcollection.hpp"
 
 #include "idcollection.hpp"
 #include "nestedidcollection.hpp"
@@ -111,7 +112,9 @@ namespace CSMWorld
             CSMForeign::CellCollection mForeignCells;
             CSMForeign::LandTextureCollection mForeignLandTextures;
             CSMForeign::LandCollection mForeignLands;
-            CSMForeign::StaticCollection mForeignStatics;
+            CSMForeign::StaticCollection mForeignStatics; // FIXME: delete
+            //CSMForeign::RefIdCollection mForeignReferenceables;
+            CSMForeign::RefCollection mForeignRefs;
             CSMForeign::NavigationCollection mNavigation;
             CSMForeign::NavMeshCollection mNavMesh;
             const ResourcesManager& mResourcesManager;
@@ -280,6 +283,14 @@ namespace CSMWorld
             const CSMForeign::LandCollection& getForeignLands() const;
 
             CSMForeign::LandCollection& getForeignLands();
+
+            //const CSMForeign::RefIdCollection& getForeignReferenceables() const;
+
+            //CSMForeign::RefIdCollection& getForeignReferenceables();
+
+            const CSMForeign::RefCollection& getForeignReferences() const;
+
+            CSMForeign::RefCollection& getForeignReferences();
 
             const CSMForeign::NavigationCollection& getNavigation() const;
 

@@ -39,7 +39,7 @@ namespace ESM4
         struct DoorRef
         {
             std::uint32_t unknown;
-            std::uint32_t formId;
+            FormId formId;
         };
 
         struct Triangle
@@ -66,19 +66,19 @@ namespace ESM4
 
         struct NavMeshInfo
         {
-            std::uint32_t formId;
+            FormId formId;
             std::uint32_t flags;
             // center point of the navmesh
             float x;
             float y;
             float z;
             std::uint32_t flagPrefMerges;
-            std::vector<std::uint32_t> formIdMerged;
-            std::vector<std::uint32_t> formIdPrefMerged;
+            std::vector<FormId> formIdMerged;
+            std::vector<FormId> formIdPrefMerged;
             std::vector<DoorRef> linkedDoors;
             std::vector<IslandInfo> islandInfo;
             std::uint32_t locationMarker;
-            std::uint32_t worldSpaceId;
+            FormId worldSpaceId;
             CellGrid cellGrid;
 
             void load(ESM4::Reader& reader);
@@ -88,9 +88,9 @@ namespace ESM4
 
         std::vector<NavMeshInfo> mNavMeshInfo;
 
-        std::vector<std::pair<std::uint32_t, std::vector<std::uint32_t> > > mPreferredPaths;
+        std::vector<std::pair<std::uint32_t, std::vector<FormId> > > mPreferredPaths;
 
-        std::map<std::uint32_t, std::uint32_t> mPathIndexMap;
+        std::map<FormId, std::uint32_t> mPathIndexMap;
 
         Navigation();
         ~Navigation();

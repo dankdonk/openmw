@@ -25,7 +25,8 @@ namespace CSMWorld
                 Class_NonRecord = 64, // record like data that is not part of the world
                 Class_Resource = 128, ///< \attention Resource IDs are unique only within the
                                 /// respective collection
-                Class_ResourceList = 256
+                Class_ResourceList = 256,
+                Class_ForeignRefRecord = 512 // referenceable record
             };
 
             enum ArgumentType
@@ -149,6 +150,10 @@ namespace CSMWorld
                 Type_ForeignLand,
                 Type_ForeignStatics, // FIXME: should be refid
                 Type_ForeignStatic,
+                Type_ForeignReferenceables,
+                Type_ForeignReferenceable,
+                Type_ForeignReferences,
+                Type_ForeignReference,
                 Type_ForeignRegionMap,
                 Type_RunLog
             };
@@ -199,6 +204,8 @@ namespace CSMWorld
             ///< Will return an empty string, if no icon is available.
 
             static std::vector<Type> listReferenceableTypes();
+
+            static std::vector<Type> listForeignReferenceableTypes();
 
             static std::vector<Type> listTypes (int classes);
 

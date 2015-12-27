@@ -146,7 +146,9 @@ int CSMForeign::CellCollection::load (ESM4::Reader& reader, bool base)
     else
     {
         std::cout << "record overwritten" << std::endl;
-        //record = this->getRecord(index).get(); // FIXME: record (just loaded) is being overwritten
+        // FIXME: record (just loaded) is being overwritten (this is because we loaded the cell
+        // already FIXME
+        //record = this->getRecord(index).get();
     }
 
     record.mWorld = mWorlds.getIdString(record.mParent); // FIXME: assumes our world is already loaded

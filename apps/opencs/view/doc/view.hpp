@@ -248,6 +248,10 @@ namespace CSVDoc
 
             void addForeignRegionMapSubView();
 
+            void addForeignReferenceablesSubView();
+
+            void addForeignReferencesSubView();
+
             void addStartScriptsSubView();
 
             void addSearchSubView();
