@@ -106,6 +106,25 @@ std::string NIFStream::getVersionString()
     return inp->getLine();
 }
 
+std::string NIFStream::getShortString(unsigned int ver)
+{
+    short size;
+
+    if (ver == 0x14000005) // 20.0.0.5
+    {
+        uint8_t short_buffer = read_byte();
+        size = (short)short_buffer;
+    }
+    else
+    {
+        //Size is big endian format, so it needs special processing
+        uint8_t short_buffer[2];
+        if(inp->read(short_buffer, 2) != 2) return 0;
+        size = (short_buffer[0]<<8) | short_buffer[1];
+    }
+    return getString(size);
+}
+
 void NIFStream::getShorts(std::vector<short> &vec, size_t size)
 {
     vec.resize(size);
@@ -142,5 +161,36 @@ void NIFStream::getQuaternions(std::vector<Ogre::Quaternion> &quat, size_t size)
     for(size_t i = 0;i < quat.size();i++)
         quat[i] = getQuaternion();
 }
+
+#if 0
+template <>
+char NIFStream::get<char>(){ return getChar(); }
+template <>
+short NIFStream::get<short>(){ return getShort(); }
+template <>
+unsigned short NIFStream::get<unsigned short>(){ return getUShort(); }
+template <>
+int NIFStream::get<int>(){ return getInt(); }
+template <>
+unsigned int NIFStream::get<unsigned int>(){ return getUInt(); }
+template <>
+float NIFStream::get<float>(){ return getFloat(); }
+
+template <>
+Ogre::Vector2 NIFStream::get<Ogre::Vector2>(){ return getVector2(); }
+template <>
+Ogre::Vector3 NIFStream::get<Ogre::Vector3>(){ return getVector3(); }
+template <>
+Ogre::Vector4 NIFStream::get<Ogre::Vector4>(){ return getVector4(); }
+template <>
+Ogre::Matrix3 NIFStream::get<Ogre::Matrix3>(){ return getMatrix3(); }
+template <>
+Ogre::Quaternion NIFStream::get<Ogre::Quaternion>(){ return getQuaternion(); }
+template <>
+Transformation NIFStream::get<Transformation>(){ return getTrafo(); }
+
+template <>
+std::string NIFStream::get<std::string>(){ return getString(); }
+#endif
 
 }

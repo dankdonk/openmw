@@ -131,7 +131,7 @@ CSVRender::ForeignCell::ForeignCell (CSMDoc::Document& document, Ogre::SceneMana
     const CSMForeign::LandCollection& lands = mDocument.getData().getForeignLands();
     int landIndex = lands.searchId(cell.mLandTemporary);
 
-    addObjects(cell.mRefPersistent); // FIXME: ignore visible distant and temporary children for now
+    addObjects(cell.mRefTemporary); // FIXME: ignore visible distant and persistent children for now
 
     if (landIndex != -1)
     {

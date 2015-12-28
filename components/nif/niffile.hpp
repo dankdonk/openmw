@@ -14,10 +14,6 @@ namespace Nif
 
 class NIFFile
 {
-    enum NIFVersion {
-        VER_MW    = 0x04000002    // Morrowind NIFs
-    };
-
     /// Nif file version
     unsigned int ver;
 
@@ -29,6 +25,10 @@ class NIFFile
 
     /// Root list.  This is a select portion of the pointers from records
     std::vector<Record*> roots;
+
+    /// Parse the file's header
+    ///\returns The number of records
+    size_t parseHeader(NIFStream nif, std::vector<std::string>& blocks);
 
     /// Parse the file
     void parse();
@@ -81,6 +81,9 @@ public:
 
     /// Get the name of the file
     std::string getFilename(){ return filename; }
+
+    /// Get the file's version
+    unsigned int getVersion(){ return ver; }
 };
 
 

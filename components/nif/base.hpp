@@ -57,18 +57,29 @@ public:
 /// Anything that has a controller
 class Controlled : public Extra
 {
+    // NiObjectNET
 public:
+    typedef RecordListT<Extra> ExtraList;
+    ExtraList extras;
     ControllerPtr controller;
 
     void read(NIFStream *nif)
     {
-        Extra::read(nif);
+        if (nifVer <= 0x04020200) // up to 4.2.2.0
+            Extra::read(nif);
+
+        if (nifVer >= 0x0a000100) // from 10.0.1.0
+            extras.read(nif);
+
         controller.read(nif);
     }
 
     void post(NIFFile *nif)
     {
-        Extra::post(nif);
+        if (nifVer <= 0x04020200) // up to 4.2.2.0
+            Extra::post(nif);
+        //if (nifVer >= 0x0a000100) // from 10.0.1.0
+            //extras.post(nif);
         controller.post(nif);
     }
 };
@@ -76,6 +87,7 @@ public:
 /// Has name, extra-data and controller
 class Named : public Controlled
 {
+// NiObjectNET
 public:
     std::string name;
 

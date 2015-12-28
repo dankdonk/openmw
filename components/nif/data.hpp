@@ -45,15 +45,18 @@ public:
 
         if(nif->getInt())
             nif->getVector3s(vertices, verts);
+            //vertices = nif->getItems<Ogre::Vector3>(verts);
 
         if(nif->getInt())
             nif->getVector3s(normals, verts);
+            //normals = nif->getItems<Ogre::Vector3>(verts);
 
         center = nif->getVector3();
         radius = nif->getFloat();
 
         if(nif->getInt())
             nif->getVector4s(colors, verts);
+            //colors = nif->getItems<Ogre::Vector4>(verts);
 
         // Only the first 6 bits are used as a count. I think the rest are
         // flags of some sort.
@@ -65,6 +68,7 @@ public:
             uvlist.resize(uvs);
             for(int i = 0;i < uvs;i++)
                 nif->getVector2s(uvlist[i], verts);
+                //uvlist[i] = nif->getItems<Ogre::Vector2>(verts);
         }
     }
 };
@@ -85,6 +89,7 @@ public:
         // is always equal to tris*3.
         int cnt = nif->getInt();
         nif->getShorts(triangles, cnt);
+        //triangles = nif->getItems<short>(cnt);
 
         // Read the match list, which lists the vertices that are equal to
         // vertices. We don't actually need need this for anything, so
@@ -124,6 +129,7 @@ public:
         {
             // Particle sizes
             nif->getFloats(sizes, vertices.size());
+            //sizes = nif->getItems<float>(vertices.size());
         }
     }
 };
@@ -141,6 +147,7 @@ public:
         {
             // Rotation quaternions.
             nif->getQuaternions(rotations, vertices.size());
+            //rotations = nif->getItems<Ogre::Quaternion>(vertices.size());
         }
     }
 };
@@ -342,6 +349,7 @@ struct NiMorphData : public Record
         {
             mMorphs[i].mData.read(nif, true);
             nif->getVector3s(mMorphs[i].mVertices, vertCount);
+            //mMorphs[i].mVertices = nif->getItems<Ogre::Vector3>(vertCount);
         }
     }
 };
@@ -371,6 +379,37 @@ struct NiKeyframeData : public Record
         }
         mTranslations.read(nif);
         mScales.read(nif);
+    }
+};
+
+class NiTriStripsData : public ShapeData
+{
+public:
+    // Triangles, three vertex indices per triangle
+    std::vector<short> triangles;
+
+    void read(NIFStream *nif)
+    {
+        ShapeData::read(nif);
+
+        /*int tris =*/ nif->getUShort();
+
+        // We have three times as many vertices as triangles, so this
+        // is always equal to tris*3.
+        int cnt = nif->getInt();
+        nif->getShorts(triangles, cnt);
+        //triangles = nif->getItems<short>(cnt);
+
+        // Read the match list, which lists the vertices that are equal to
+        // vertices. We don't actually need need this for anything, so
+        // just skip it.
+        int verts = nif->getUShort();
+        for(int i=0;i < verts;i++)
+        {
+            // Number of vertices matching vertex 'i'
+            int num = nif->getUShort();
+            nif->skip(num * sizeof(short));
+        }
     }
 };
 

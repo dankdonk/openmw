@@ -78,14 +78,74 @@ public:
        "MRK" - marker, only visible in the editor, not rendered in-game
        "NCO" - no collision
     */
+    std::string name;
     std::string string;
 
     void read(NIFStream *nif)
     {
-        Extra::read(nif);
+        if (nifVer >= 0x0a000100) // from 10.0.1.0
+            name = nif->getString();
 
-        nif->getInt(); // size of string + 4. Really useful...
+        if (nifVer <= 0x04020200) // up to 4.2.2.0
+        {
+            Extra::read(nif);
+
+            nif->getInt(); // size of string + 4. Really useful...
+        }
         string = nif->getString();
+    }
+};
+
+// http://niftools.sourceforge.net/doc/nif/BSXFlags.html
+//
+// Controls animation and collision. Integer holds flags:
+// Bit 0 : enable havok, bAnimated(Skyrim)
+// Bit 1 : enable collision, bHavok(Skyrim)
+// Bit 2 : is skeleton nif?, bRagdoll(Skyrim)
+// Bit 3 : enable animation, bComplex(Skyrim)
+// Bit 4 : FlameNodes present, bAddon(Skyrim)
+// Bit 5 : EditorMarkers present
+// Bit 6 : bDynamic(Skyrim)
+// Bit 7 : bArticulated(Skyrim)
+// Bit 8 : bIKTarget(Skyrim)
+// Bit 9 : Unknown(Skyrim)
+class BSXFlags : public Extra
+{
+public:
+    std::string name;
+
+    void read(NIFStream *nif)
+    {
+        if (nifVer >= 0x0a000100) // Name, from 10.0.1.0
+            name = nif->getString();
+
+        if (nifVer <= 0x04020200) // up to 4.2.2.0
+            Extra::read(nif);
+
+        nif->getInt(); // unsupported for now, see above for details
+    }
+};
+
+class NiBinaryExtraData : public Extra
+{
+public:
+    std::string string;
+    std::vector<char> data;
+
+    void read(NIFStream *nif)
+    {
+        if (nifVer >= 0x0a000100)
+            string = nif->getString(); // Name, from 10.0.1.0
+
+        if (nifVer <= 0x04020200) // up to 4.2.2.0
+            Extra::read(nif);
+
+        unsigned int size = nif->getUInt();
+        data.resize(size);
+        for(unsigned int i = 0; i< size; i++)
+        {
+            data[i] = nif->getChar();
+        }
     }
 };
 

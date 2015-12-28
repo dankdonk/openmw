@@ -564,7 +564,7 @@ CSMWorld::Data::Data (ToUTF8::FromType encoding, const ResourcesManager& resourc
     mForeignRefs.addColumn (new FullNameColumn<CSMForeign::CellRef>);
     mForeignRefs.addColumn (new CellColumn<CSMForeign::CellRef> (true));
     //mForeignRefs.addColumn (new OriginalCellColumn<CSMForeign::CellRef>);
-    //mForeignRefs.addColumn (new IdColumn<CSMForeign::CellRef>); // mRefID
+    mForeignRefs.addColumn (new IdColumn<CSMForeign::CellRef>); // mRefID
     mForeignRefs.addColumn (new PosColumn<CSMForeign::CellRef> (&CSMForeign::CellRef::mPos, 0, false));
     mForeignRefs.addColumn (new PosColumn<CSMForeign::CellRef> (&CSMForeign::CellRef::mPos, 1, false));
     mForeignRefs.addColumn (new PosColumn<CSMForeign::CellRef> (&CSMForeign::CellRef::mPos, 2, false));
@@ -1031,6 +1031,16 @@ const CSMForeign::RefCollection& CSMWorld::Data::getForeignReferences() const
 CSMForeign::RefCollection& CSMWorld::Data::getForeignReferences()
 {
     return mForeignRefs;
+}
+
+const CSMForeign::StaticCollection& CSMWorld::Data::getForeignStatics() const
+{
+    return mForeignStatics;
+}
+
+CSMForeign::StaticCollection& CSMWorld::Data::getForeignStatics()
+{
+    return mForeignStatics;
 }
 
 QAbstractItemModel *CSMWorld::Data::getTableModel (const CSMWorld::UniversalId& id)

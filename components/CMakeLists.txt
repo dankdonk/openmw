@@ -35,7 +35,8 @@ add_component_dir (bsa
     )
 
 add_component_dir (nif
-    controlled effect niftypes record controller extra node record_ptr data niffile property nifkey data node base nifstream
+    controlled effect niftypes record controller extra node record_ptr data niffile property
+    nifkey data node base nifstream collision
     )
 
 add_component_dir (nifcache

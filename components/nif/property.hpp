@@ -24,6 +24,8 @@
 #ifndef OPENMW_COMPONENTS_NIF_PROPERTY_HPP
 #define OPENMW_COMPONENTS_NIF_PROPERTY_HPP
 
+#include <iostream> // FIXME
+
 #include "base.hpp"
 
 namespace Nif
@@ -37,7 +39,9 @@ public:
 
     void read(NIFStream *nif)
     {
+        std::cout << "property read" << std::endl; // FIXME
         Named::read(nif);
+        std::cout << "property " << Named::name << std::endl; // FIXME
         flags = nif->getUShort();
     }
 };

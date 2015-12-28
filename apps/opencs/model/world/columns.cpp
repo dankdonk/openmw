@@ -336,6 +336,7 @@ namespace CSMWorld
             { ColumnId_MapName, "Map Name" },
             { ColumnId_Shader, "Shader" },
             { ColumnId_CellId, "Cell ID" },
+            { ColumnId_RefBaseId, "Ref Base ID" }, // use RefID instead
 
             { ColumnId_UseValue1, "Use value 1" },
             { ColumnId_UseValue2, "Use value 2" },

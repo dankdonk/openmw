@@ -10,6 +10,7 @@
 #include "niftypes.hpp"
 #include "controller.hpp"
 #include "base.hpp"
+#include "collision.hpp"
 
 namespace Nif
 {
@@ -22,12 +23,14 @@ struct NiNode;
  */
 class Node : public Named
 {
+// NiAVObject
 public:
     // Node flags. Interpretation depends somewhat on the type of node.
     int flags;
     Transformation trafo;
     Ogre::Vector3 velocity; // Unused? Might be a run-time game state
     PropertyList props;
+    unsigned int collision;
 
     // Bounding box info
     bool hasBounds;
@@ -40,29 +43,39 @@ public:
         Named::read(nif);
 
         flags = nif->getUShort();
-        trafo = nif->getTrafo();
-        velocity = nif->getVector3();
+        trafo = nif->getTrafo(); // scale (float) included
+
+        if (nifVer <= 0x04020200) // up to 4.2.2.0
+            velocity = nif->getVector3();
+
         props.read(nif);
 
-        hasBounds = !!nif->getInt();
-        if(hasBounds)
+        if (nifVer <= 0x04020200) // up to 4.2.2.0
         {
-            nif->getInt(); // always 1
-            boundPos = nif->getVector3();
-            boundRot = nif->getMatrix3();
-            boundXYZ = nif->getVector3();
+            hasBounds = !!nif->getInt();
+            if(hasBounds)
+            {
+                nif->getInt(); // always 1
+                boundPos = nif->getVector3();
+                boundRot = nif->getMatrix3();
+                boundXYZ = nif->getVector3();
+            }
         }
 
         parent = NULL;
 
         boneTrafo = NULL;
         boneIndex = -1;
+
+        if (nifVer >= 0x0a000100) // from 10.0.1.0
+            collision = nif->getUInt(); // reference to a collision object
     }
 
     void post(NIFFile *nif)
     {
         Named::post(nif);
         props.post(nif);
+        //collision.post(nif);
     }
 
     // Parent node, or NULL for the root node. As far as I'm aware, only
@@ -259,6 +272,33 @@ struct NiRotatingParticles : Node
     {
         Node::post(nif);
         data.post(nif);
+    }
+};
+
+struct NiTriStrips : Node
+{
+    /* Possible flags:
+        0x40 - mesh has no vertex normals ?
+
+        Only flags included in 0x47 (ie. 0x01, 0x02, 0x04 and 0x40) have
+        been observed so far.
+    */
+
+    NiTriShapeDataPtr data;
+    NiSkinInstancePtr skin;
+
+    void read(NIFStream *nif)
+    {
+        Node::read(nif);
+        data.read(nif);
+        skin.read(nif);
+    }
+
+    void post(NIFFile *nif)
+    {
+        Node::post(nif);
+        data.post(nif);
+        skin.post(nif);
     }
 };
 

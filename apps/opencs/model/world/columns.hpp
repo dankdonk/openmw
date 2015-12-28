@@ -336,6 +336,7 @@ namespace CSMWorld
             ColumnId_MapName = 903,
             ColumnId_Shader = 904,
             ColumnId_CellId = 905,
+            ColumnId_RefBaseId = 906,
 
             // Allocated to a separate value range, so we don't get a collision should we ever need
             // to extend the number of use values.

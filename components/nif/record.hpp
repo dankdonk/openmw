@@ -90,6 +90,15 @@ enum RecordType
   RC_NiSequenceStreamHelper,
   RC_NiSourceTexture,
   RC_NiSkinInstance,
+  RC_BSXFlags,                  // seen in NIF ver = 0x14000005 (20.0.0.5)
+  RC_hkPackedNiTriStripsData,   // seen in NIF ver = 0x14000005 (20.0.0.5)
+  RC_bhkPackedNiTriStripsShape, // seen in NIF ver = 0x14000005 (20.0.0.5)
+  RC_bhkMoppBvTreeShape,        // seen in NIF ver = 0x14000005 (20.0.0.5)
+  RC_bhkRigidBodyT,             // seen in NIF ver = 0x14000005 (20.0.0.5)
+  RC_bhkCollisionObject,        // seen in NIF ver = 0x14000005 (20.0.0.5)
+  RC_NiTriStrips,               // seen in NIF ver = 0x14000005 (20.0.0.5)
+  RC_NiBinaryExtraData,         // seen in NIF ver = 0x14000005 (20.0.0.5)
+  RC_NiTriStripsData,           // seen in NIF ver = 0x14000005 (20.0.0.5)
   RC_RootCollisionNode
 };
 
@@ -100,8 +109,9 @@ struct Record
     int recType;
     std::string recName;
     size_t recIndex;
+    unsigned int nifVer;
 
-    Record() : recType(RC_MISSING), recIndex(~(size_t)0) {}
+    Record() : recType(RC_MISSING), recIndex(~(size_t)0), nifVer(0x04000002) {}
 
     /// Parses the record from file
     virtual void read(NIFStream *nif) = 0;

@@ -18,9 +18,14 @@ namespace ESM4
 {
     typedef std::uint32_t FormId;
 }
+
 namespace CSMWorld
 {
     class Data;
+}
+
+namespace CSMForeign
+{
     struct CellRef;
 }
 
@@ -61,7 +66,7 @@ namespace CSVRender
             void adjust();
 
             /// Throws an exception if *this was constructed with referenceable
-            const CSMWorld::CellRef& getReference() const;
+            const CSMForeign::CellRef& getReference() const;
 
         public:
 

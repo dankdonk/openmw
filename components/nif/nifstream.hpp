@@ -5,6 +5,8 @@
 
 #include <stdint.h>
 #include <stdexcept>
+#include <typeinfo>
+#include <string>
 
 #include <OgreDataStream.h>
 #include <OgreVector2.h>
@@ -14,12 +16,11 @@
 #include <OgreQuaternion.h>
 #include <OgreStringConverter.h>
 
+#include "niffile.hpp"
 #include "niftypes.hpp"
 
 namespace Nif
 {
-
-class NIFFile;
 
 class NIFStream {
 
@@ -59,6 +60,8 @@ public:
     std::string getString();
     ///This is special since the version string doesn't start with a number, and ends with "\n"
     std::string getVersionString();
+    ///This is a strange type used by newer nif formats
+    std::string getShortString(unsigned int ver = 0x04000002);
 
     void getShorts(std::vector<short> &vec, size_t size);
     void getFloats(std::vector<float> &vec, size_t size);
@@ -66,6 +69,35 @@ public:
     void getVector3s(std::vector<Ogre::Vector3> &vec, size_t size);
     void getVector4s(std::vector<Ogre::Vector4> &vec, size_t size);
     void getQuaternions(std::vector<Ogre::Quaternion> &quat, size_t size);
+
+#if 0
+    //Templated functions to handle reads
+    template <typename T>
+    T get(){throw std::runtime_error("Can not read a <"+std::string(typeid(T).name())+"> from a NIF File!  The get() function was called with the wrong template!");}
+
+    ///Return a vector of whatever object is needed
+    template <typename T>
+    std::vector<T> getItems(size_t number_of_items)
+    {
+        std::vector<T> items;
+        items.reserve(number_of_items);
+        for(size_t i=0; i < number_of_items; ++i)
+        {
+            items.push_back(get<T>());
+        }
+        return items;
+    }
+#endif
+
+    template <typename T>
+    T getIfVer(unsigned int testVersion)
+    {
+        if (file->getVersion() == testVersion)
+            return get<T>();
+        else
+            return T();
+    }
+
 };
 
 }

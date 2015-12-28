@@ -1,5 +1,7 @@
 #include "foreignobject.hpp"
 
+#include "iostream" // FIXME
+
 #include <OgreSceneManager.h>
 #include <OgreSceneNode.h>
 #include <OgreEntity.h>
@@ -48,9 +50,14 @@ void CSVRender::ForeignObject::update()
     std::string model;
     int error = 0; // 1 referemceanöe does not exist, 2 referenceable does not specify a mesh
 
-    const CSMWorld::RefIdCollection& referenceables = mData.getReferenceables();
+    //const CSMForeign::RefIdCollection& referenceables = mData.getReferenceables();
+    const CSMForeign::StaticCollection& referenceables = mData.getForeignStatics(); // FIXME: use statics only for now
 
-    int index = referenceables.searchId (mReferenceableId);
+    //int index = referenceables.searchId (mReferenceableId);
+    // get the formId of the base object
+    const CSMForeign::RefCollection& refs = mData.getForeignReferences();
+    ESM4::FormId baseObj = refs.getRecord(refs.searchId(mReferenceId)).get().mBaseObj;
+    int index = referenceables.searchId (ESM4::formIdToString(baseObj)); // FIXME: double conversion to string
 
     if (index==-1)
         error = 1;
@@ -64,6 +71,8 @@ void CSVRender::ForeignObject::update()
 
         if (model.empty())
             error = 2;
+        else
+            std::cout << "Using model: " << model << std::endl;
     }
 
     if (error)
@@ -81,7 +90,7 @@ void CSVRender::ForeignObject::update()
 
         if (mPhysics && !(mReferenceId == 0))
         {
-            const CSMWorld::CellRef& reference = getReference();
+            const CSMForeign::CellRef& reference = getReference();
 
             // position
             Ogre::Vector3 position;
@@ -93,8 +102,7 @@ void CSVRender::ForeignObject::update()
             Ogre::Quaternion yr (Ogre::Radian (-reference.mPos.rot[1]), Ogre::Vector3::UNIT_Y);
             Ogre::Quaternion zr (Ogre::Radian (-reference.mPos.rot[2]), Ogre::Vector3::UNIT_Z);
 
-            // FIXME
-            //mPhysics->addObject("meshes\\" + model, mBase->getName(), mReferenceId, reference.mScale, position, xr*yr*zr);
+            mPhysics->addObject("meshes\\" + model, mBase->getName(), ESM4::formIdToString(mReferenceId), reference.mScale, position, xr*yr*zr);
         }
     }
 }
@@ -104,7 +112,7 @@ void CSVRender::ForeignObject::adjust()
     if (mReferenceId == 0)
         return;
 
-    const CSMWorld::CellRef& reference = getReference();
+    const CSMForeign::CellRef& reference = getReference();
 
     // position
     if (!mForceBaseToZero)
@@ -124,12 +132,13 @@ void CSVRender::ForeignObject::adjust()
     mBase->setScale (reference.mScale, reference.mScale, reference.mScale);
 }
 
-const CSMWorld::CellRef& CSVRender::ForeignObject::getReference() const
+const CSMForeign::CellRef& CSVRender::ForeignObject::getReference() const
 {
     if (mReferenceId == 0)
         throw std::logic_error ("object does not represent a reference");
 
-    return mData.getReferences().getRecord (mReferenceId).get();
+    const CSMForeign::RefCollection& refs = mData.getForeignReferences();
+    return refs.getRecord (refs.searchId(mReferenceId)).get();
 }
 
 CSVRender::ForeignObject::ForeignObject (const CSMWorld::Data& data, Ogre::SceneNode *cellNode,

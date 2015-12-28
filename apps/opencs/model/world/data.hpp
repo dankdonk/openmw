@@ -292,6 +292,10 @@ namespace CSMWorld
 
             CSMForeign::RefCollection& getForeignReferences();
 
+            const CSMForeign::StaticCollection& getForeignStatics() const;
+
+            CSMForeign::StaticCollection& getForeignStatics();
+
             const CSMForeign::NavigationCollection& getNavigation() const;
 
             CSMForeign::NavigationCollection& getNavigation();

@@ -20,7 +20,7 @@ namespace CSMForeign
         static unsigned int sRecordId;
 
         std::string mId;
-        std::string mRefID; // not used
+        std::string mRefID; // mBaseObj
         std::string mCell;  // for region map (#x y for most exterior cells)
         std::string mOriginalCell; // not used
 
