@@ -106,11 +106,11 @@ static std::map<std::string,RecordFactoryEntry> makeFactory()
     newFactory.insert(makeEntry("NiSkinInstance",             &construct <NiSkinInstance>              , RC_NiSkinInstance                ));
     //Seen in NIF ver 20.0.0.5
     newFactory.insert(makeEntry("BSXFlags",                   &construct <BSXFlags>                    , RC_BSXFlags                      ));
-    //newFactory.insert(makeEntry("hkPackedNiTriStripsData",    &construct <hkPackedNiTriStripsData>     , RC_hkPackedNiTriStripsData       ));
-    //newFactory.insert(makeEntry("bhkPackedNiTriStripsShape",  &construct <bhkPackedNiTriStripsShape>   , RC_bhkPackedNiTriStripsShape     ));
-    //newFactory.insert(makeEntry("bhkMoppBvTreeShape",         &construct <bhkMoppBvTreeShape>          , RC_bhkMoppBvTreeShape            ));
-    //newFactory.insert(makeEntry("bhkRigidBodyT",              &construct <bhkRigidBodyT>               , RC_bhkRigidBodyT                 ));
-    //newFactory.insert(makeEntry("bhkCollisionObject",         &construct <bhkCollisionObject>          , RC_bhkCollisionObject            ));
+    newFactory.insert(makeEntry("hkPackedNiTriStripsData",    &construct <hkPackedNiTriStripsData>     , RC_hkPackedNiTriStripsData       ));
+    newFactory.insert(makeEntry("bhkPackedNiTriStripsShape",  &construct <bhkPackedNiTriStripsShape>   , RC_bhkPackedNiTriStripsShape     ));
+    newFactory.insert(makeEntry("bhkMoppBvTreeShape",         &construct <bhkMoppBvTreeShape>          , RC_bhkMoppBvTreeShape            ));
+    newFactory.insert(makeEntry("bhkRigidBodyT",              &construct <bhkRigidBodyT>               , RC_bhkRigidBodyT                 ));
+    newFactory.insert(makeEntry("bhkCollisionObject",         &construct <bhkCollisionObject>          , RC_bhkCollisionObject            ));
     newFactory.insert(makeEntry("NiTriStrips",                &construct <NiTriStrips>                 , RC_NiTriStrips                   ));
     newFactory.insert(makeEntry("NiBinaryExtraData",          &construct <NiBinaryExtraData>           , RC_NiBinaryExtraData             ));
     newFactory.insert(makeEntry("NiTriStripsData",            &construct <NiTriStripsData>             , RC_NiTriStripsData               ));
@@ -187,11 +187,11 @@ size_t NIFFile::parseHeader(NIFStream nif, std::vector<std::string>& blocks)
         // block type: NiNode,                    0    node.hpp
         // block type: BSXFlags,                  1 <- extra.hpp
         // block type: NiStringExtraData,         2    extra.hpp
-        // block type: hkPackedNiTriStripsData,   3 <- collision.hpp (derive from Named?)
-        // block type: bhkPackedNiTriStripsShape, 4 <- collision.hpp
-        // block type: bhkMoppBvTreeShape,        5 <- collision.hpp
-        // block type: bhkRigidBodyT,             6 <- collision.hpp
-        // block type: bhkCollisionObject,        7 <- collision.hpp
+        // block type: hkPackedNiTriStripsData,   3 <- data collision.hpp (derive from Named?)
+        // block type: bhkPackedNiTriStripsShape, 4 <- node collision.hpp
+        // block type: bhkMoppBvTreeShape,        5 <- node collision.hpp
+        // block type: bhkRigidBodyT,             6 <- node collision.hpp
+        // block type: bhkCollisionObject,        7 <- node collision.hpp
         // block type: NiTriStrips,               8 <- node.hpp
         // block type: NiBinaryExtraData,         9 <- extra.hpp
         // block type: NiMaterialProperty,       10    property.hpp
@@ -257,12 +257,6 @@ size_t NIFFile::parseHeader(NIFStream nif, std::vector<std::string>& blocks)
     return numBlocks;
 }
 
-// NiNode ver 20.0.0.5
-//
-// String   Name
-// char     unknown
-// uint32_t Num Extra Data List
-// Ref<NiExtraData> Extra Data
 void NIFFile::parse()
 {
     NIFStream nif (this, Ogre::ResourceGroupManager::getSingleton().openResource(filename));

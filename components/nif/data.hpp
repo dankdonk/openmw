@@ -45,18 +45,15 @@ public:
 
         if(nif->getInt())
             nif->getVector3s(vertices, verts);
-            //vertices = nif->getItems<Ogre::Vector3>(verts);
 
         if(nif->getInt())
             nif->getVector3s(normals, verts);
-            //normals = nif->getItems<Ogre::Vector3>(verts);
 
         center = nif->getVector3();
         radius = nif->getFloat();
 
         if(nif->getInt())
             nif->getVector4s(colors, verts);
-            //colors = nif->getItems<Ogre::Vector4>(verts);
 
         // Only the first 6 bits are used as a count. I think the rest are
         // flags of some sort.
@@ -68,7 +65,6 @@ public:
             uvlist.resize(uvs);
             for(int i = 0;i < uvs;i++)
                 nif->getVector2s(uvlist[i], verts);
-                //uvlist[i] = nif->getItems<Ogre::Vector2>(verts);
         }
     }
 };
@@ -89,7 +85,6 @@ public:
         // is always equal to tris*3.
         int cnt = nif->getInt();
         nif->getShorts(triangles, cnt);
-        //triangles = nif->getItems<short>(cnt);
 
         // Read the match list, which lists the vertices that are equal to
         // vertices. We don't actually need need this for anything, so
@@ -129,7 +124,6 @@ public:
         {
             // Particle sizes
             nif->getFloats(sizes, vertices.size());
-            //sizes = nif->getItems<float>(vertices.size());
         }
     }
 };
@@ -147,7 +141,6 @@ public:
         {
             // Rotation quaternions.
             nif->getQuaternions(rotations, vertices.size());
-            //rotations = nif->getItems<Ogre::Quaternion>(vertices.size());
         }
     }
 };
@@ -349,11 +342,9 @@ struct NiMorphData : public Record
         {
             mMorphs[i].mData.read(nif, true);
             nif->getVector3s(mMorphs[i].mVertices, vertCount);
-            //mMorphs[i].mVertices = nif->getItems<Ogre::Vector3>(vertCount);
         }
     }
 };
-
 
 struct NiKeyframeData : public Record
 {
@@ -398,7 +389,6 @@ public:
         // is always equal to tris*3.
         int cnt = nif->getInt();
         nif->getShorts(triangles, cnt);
-        //triangles = nif->getItems<short>(cnt);
 
         // Read the match list, which lists the vertices that are equal to
         // vertices. We don't actually need need this for anything, so
@@ -410,6 +400,39 @@ public:
             int num = nif->getUShort();
             nif->skip(num * sizeof(short));
         }
+    }
+};
+
+struct hkTriangle
+{
+    std::vector<short> triangle;
+    unsigned short weldingInfo;
+    Ogre::Vector3 normal; // up to 20.0.0.5 only
+};
+
+struct hkPackedNiTriStripsData : public Record
+{
+    std::vector<hkTriangle> triangles;
+    std::vector<Ogre::Vector3> vertices;
+
+    void read(NIFStream *nif)
+    {
+        int tris = nif->getUInt();
+        triangles.resize(tris);
+        for(int i = 0; i < tris; i++)
+        {
+            triangles[i].triangle.resize(3);
+            triangles[i].triangle[0] = nif->getShort();
+            triangles[i].triangle[1] = nif->getShort();
+            triangles[i].triangle[2] = nif->getShort();
+            triangles[i].weldingInfo = nif->getUShort();
+            triangles[i].normal = nif->getVector3();
+        }
+
+        int verts = nif->getUInt();
+        vertices.resize(verts);
+        for(int i = 0; i < verts; i++)
+            vertices[i] = nif->getVector3();
     }
 };
 
