@@ -38,6 +38,7 @@ public:
 
     std::string filename; // In case of external textures
     NiPixelDataPtr data;  // In case of internal textures
+    std::string originalFile;
 
     /* Pixel layout
         0 - Palettised
@@ -61,6 +62,7 @@ public:
         3 - default (use material alpha, or multiply material with texture if present)
     */
     int alpha;
+    int directRenderer;
 
     void read(NIFStream *nif)
     {
@@ -68,10 +70,17 @@ public:
 
         external = !!nif->getChar();
         if(external)
+        {
             filename = nif->getString();
+            if (nifVer >= 0x0a010000) // 10.1.0.0
+                nif->getUInt(); // refNiObject // FIXME
+        }
         else
         {
-            nif->getChar(); // always 1
+            if (nifVer >= 0x0a010000) // 10.1.0.0
+                originalFile = nif->getString();
+            else
+                nif->getChar(); // always 1 // FIXME: is this presentn on 10.1.0.0?
             data.read(nif);
         }
 
@@ -80,6 +89,9 @@ public:
         alpha = nif->getInt();
 
         nif->getChar(); // always 1
+
+        if (nifVer >= 0x0a01006a) // 10.1.0.106
+            directRenderer = !!nif->getInt();
     }
 
     void post(NIFFile *nif)

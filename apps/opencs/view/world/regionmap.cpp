@@ -199,8 +199,11 @@ CSVWorld::RegionMap::RegionMap (const CSMWorld::UniversalId& universalId,
     horizontalHeader()->setResizeMode(QHeaderView::Fixed);
 #endif
 
-    verticalHeader()->setDefaultSectionSize(10);
-    horizontalHeader()->setDefaultSectionSize(10);
+    if (universalId.getType() == CSMWorld::UniversalId::Type_ForeignRegionMap)
+    {
+        verticalHeader()->setDefaultSectionSize(15);
+        horizontalHeader()->setDefaultSectionSize(15);
+    }
 
     verticalHeader()->hide();
     horizontalHeader()->hide();
@@ -209,8 +212,11 @@ CSVWorld::RegionMap::RegionMap (const CSMWorld::UniversalId& universalId,
 
     setModel (document.getData().getTableModel (universalId));
 
-    //resizeColumnsToContents();
-    //resizeRowsToContents();
+    if (universalId.getType() != CSMWorld::UniversalId::Type_ForeignRegionMap)
+    {
+        resizeColumnsToContents();
+        resizeRowsToContents();
+    }
 
     mSelectAllAction = new QAction (tr ("Select All"), this);
     connect (mSelectAllAction, SIGNAL (triggered()), this, SLOT (selectAll()));

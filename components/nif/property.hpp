@@ -34,13 +34,9 @@ namespace Nif
 class Property : public Named
 {
 public:
-    // The meaning of these depends on the actual property type.
-    int flags;
-
     void read(NIFStream *nif)
     {
         Named::read(nif);
-        flags = nif->getUShort();
     }
 };
 
@@ -91,6 +87,8 @@ public:
         }
     };
 
+    int flags;
+
     /* Apply mode:
         0 - replace
         1 - decal
@@ -127,6 +125,9 @@ public:
     void read(NIFStream *nif)
     {
         Property::read(nif);
+        if (nifVer <= 0x0a000102) // 10.0.1.2
+            flags = nif->getUShort();
+
         apply = nif->getInt();
 
         // Unknown, always 7. Probably the number of textures to read
@@ -157,7 +158,20 @@ public:
     }
 };
 
-class NiFogProperty : public Property
+class PropertyAndFlags : public Property
+{
+public:
+    // The meaning of these depends on the actual property type.
+    int flags;
+
+    void read(NIFStream *nif)
+    {
+        Property::read(nif);
+        flags = nif->getUShort();
+    }
+};
+
+class NiFogProperty : public PropertyAndFlags
 {
 public:
     float mFogDepth;
@@ -166,47 +180,133 @@ public:
 
     void read(NIFStream *nif)
     {
-        Property::read(nif);
+        PropertyAndFlags::read(nif);
 
         mFogDepth = nif->getFloat();
         mColour = nif->getVector3();
     }
 };
 
-// These contain no other data than the 'flags' field in Property
-class NiShadeProperty : public Property { };
-class NiDitherProperty : public Property { };
-class NiZBufferProperty : public Property { };
-class NiSpecularProperty : public Property { };
-class NiWireframeProperty : public Property { };
-
-// The rest are all struct-based
-template <typename T>
-struct StructPropT : Property
+class NiZBufferProperty : public PropertyAndFlags
 {
-    T data;
+public:
+    unsigned int zCompareMode;
 
     void read(NIFStream *nif)
     {
-        Property::read(nif);
-        data.read(nif);
+        PropertyAndFlags::read(nif);
+        if (nifVer >= 0x0401000c && nifVer <= 0x14000005) // 4.1.0.12 to 20.0.0.5
+            zCompareMode = nif->getUInt();
     }
 };
 
-struct S_MaterialProperty
+// These contain no other data than the 'flags' field in Property
+class NiShadeProperty : public PropertyAndFlags { };
+class NiDitherProperty : public PropertyAndFlags { };
+class NiSpecularProperty : public PropertyAndFlags { };
+class NiWireframeProperty : public PropertyAndFlags { };
+
+class NiMaterialProperty : public Property
 {
+public:
+    int flags;
+
     // The vector components are R,G,B
     Ogre::Vector3 ambient, diffuse, specular, emissive;
     float glossiness, alpha;
 
     void read(NIFStream *nif)
     {
+        Property::read(nif);
+        if (nifVer <= 0x0a000102) // 10.0.1.2
+            flags = nif->getUShort();
+
         ambient = nif->getVector3();
         diffuse = nif->getVector3();
         specular = nif->getVector3();
         emissive = nif->getVector3();
         glossiness = nif->getFloat();
         alpha = nif->getFloat();
+        // FIXME: emit multi?
+    }
+};
+
+/*
+    Docs taken from:
+    http://niftools.sourceforge.net/doc/nif/NiStencilProperty.html
+ */
+class NiStencilProperty : public Property
+{
+public:
+    int flags;
+
+    // Is stencil test enabled?
+    unsigned char enabled;
+
+    /*
+        0   TEST_NEVER
+        1   TEST_LESS
+        2   TEST_EQUAL
+        3   TEST_LESS_EQUAL
+        4   TEST_GREATER
+        5   TEST_NOT_EQUAL
+        6   TEST_GREATER_EQUAL
+        7   TEST_ALWAYS
+     */
+    int compareFunc;
+    unsigned stencilRef;
+    unsigned stencilMask;
+    /*
+        Stencil test fail action, depth test fail action and depth test pass action:
+        0   ACTION_KEEP
+        1   ACTION_ZERO
+        2   ACTION_REPLACE
+        3   ACTION_INCREMENT
+        4   ACTION_DECREMENT
+        5   ACTION_INVERT
+     */
+    int failAction;
+    int zFailAction;
+    int zPassAction;
+    /*
+        Face draw mode:
+        0   DRAW_CCW_OR_BOTH
+        1   DRAW_CCW        [default]
+        2   DRAW_CW
+        3   DRAW_BOTH
+     */
+    int drawMode;
+
+    void read(NIFStream *nif)
+    {
+        Property::read(nif);
+        if (nifVer <= 0x0a000102) // 10.0.1.2
+            flags = nif->getUShort();
+
+        enabled = nif->getChar();
+        compareFunc = nif->getInt();
+        stencilRef = nif->getUInt();
+        stencilMask = nif->getUInt();
+        failAction = nif->getInt();
+        zFailAction = nif->getInt();
+        zPassAction = nif->getInt();
+        drawMode = nif->getInt();
+    }
+};
+
+// The rest are all struct-based
+template <typename T>
+struct StructPropT : Property
+{
+    // The meaning of these depends on the actual property type.
+    int flags;
+    T data;
+
+    void read(NIFStream *nif)
+    {
+        Property::read(nif);
+        flags = nif->getUShort();
+        data.read(nif);
     }
 };
 
@@ -221,12 +321,12 @@ struct S_VertexColorProperty
         0 - lighting emmisive
         1 - lighting emmisive ambient/diffuse
     */
-    int vertmode, lightmode;
+    unsigned int vertmode, lightmode;
 
     void read(NIFStream *nif)
     {
-        vertmode = nif->getInt();
-        lightmode = nif->getInt();
+        vertmode = nif->getUInt();
+        lightmode = nif->getUInt();
     }
 };
 
@@ -286,66 +386,8 @@ struct S_AlphaProperty
     }
 };
 
-/*
-    Docs taken from:
-    http://niftools.sourceforge.net/doc/nif/NiStencilProperty.html
- */
-struct S_StencilProperty
-{
-    // Is stencil test enabled?
-    unsigned char enabled;
-
-    /*
-        0   TEST_NEVER
-        1   TEST_LESS
-        2   TEST_EQUAL
-        3   TEST_LESS_EQUAL
-        4   TEST_GREATER
-        5   TEST_NOT_EQUAL
-        6   TEST_GREATER_EQUAL
-        7   TEST_ALWAYS
-     */
-    int compareFunc;
-    unsigned stencilRef;
-    unsigned stencilMask;
-    /*
-        Stencil test fail action, depth test fail action and depth test pass action:
-        0   ACTION_KEEP
-        1   ACTION_ZERO
-        2   ACTION_REPLACE
-        3   ACTION_INCREMENT
-        4   ACTION_DECREMENT
-        5   ACTION_INVERT
-     */
-    int failAction;
-    int zFailAction;
-    int zPassAction;
-    /*
-        Face draw mode:
-        0   DRAW_CCW_OR_BOTH
-        1   DRAW_CCW        [default]
-        2   DRAW_CW
-        3   DRAW_BOTH
-     */
-    int drawMode;
-
-    void read(NIFStream *nif)
-    {
-        enabled = nif->getChar();
-        compareFunc = nif->getInt();
-        stencilRef = nif->getUInt();
-        stencilMask = nif->getUInt();
-        failAction = nif->getInt();
-        zFailAction = nif->getInt();
-        zPassAction = nif->getInt();
-        drawMode = nif->getInt();
-    }
-};
-
 class NiAlphaProperty : public StructPropT<S_AlphaProperty> { };
-class NiMaterialProperty : public StructPropT<S_MaterialProperty> { };
 class NiVertexColorProperty : public StructPropT<S_VertexColorProperty> { };
-class NiStencilProperty : public StructPropT<S_StencilProperty> { };
 
 } // Namespace
 #endif

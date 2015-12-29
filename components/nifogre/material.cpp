@@ -209,8 +209,8 @@ Ogre::String NIFMaterialLoader::getMaterial(const Nif::ShapeData *shapedata,
 
     if(stencilprop)
     {
-        drawMode = stencilprop->data.drawMode;
-        if (stencilprop->data.enabled)
+        drawMode = stencilprop->drawMode;
+        if (stencilprop->enabled)
             warn("Unhandled stencil test in "+name);
 
         Nif::ControllerPtr ctrls = stencilprop->controller;
@@ -224,12 +224,12 @@ Ogre::String NIFMaterialLoader::getMaterial(const Nif::ShapeData *shapedata,
     // Material
     if(matprop)
     {
-        ambient = matprop->data.ambient;
-        diffuse = matprop->data.diffuse;
-        specular = matprop->data.specular;
-        emissive = matprop->data.emissive;
-        glossiness = matprop->data.glossiness;
-        alpha = matprop->data.alpha;
+        ambient = matprop->ambient;
+        diffuse = matprop->diffuse;
+        specular = matprop->specular;
+        emissive = matprop->emissive;
+        glossiness = matprop->glossiness;
+        alpha = matprop->alpha;
 
         Nif::ControllerPtr ctrls = matprop->controller;
         while(!ctrls.empty())
