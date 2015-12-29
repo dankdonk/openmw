@@ -130,10 +130,10 @@ int CSMForeign::NavMeshCollection::load (const CSMForeign::NavMesh& record, bool
 
 int CSMForeign::NavMeshCollection::searchId (const std::string& id) const
 {
-    return searchId(static_cast<std::uint32_t>(std::stoi(id)));
+    return searchId(static_cast<ESM4::FormId>(std::stoi(id, nullptr, 16))); // hex base
 }
 
-int CSMForeign::NavMeshCollection::getIndex (std::uint32_t id) const
+int CSMForeign::NavMeshCollection::getIndex (ESM4::FormId id) const
 {
     int index = searchId(id);
 
@@ -147,7 +147,7 @@ void CSMForeign::NavMeshCollection::removeRows (int index, int count)
 {
     CSMWorld::Collection<NavMesh, CSMWorld::IdAccessor<NavMesh> >::removeRows(index, count); // erase records only
 
-    std::map<std::uint32_t, int>::iterator iter = mNavMeshIndex.begin();
+    std::map<ESM4::FormId, int>::iterator iter = mNavMeshIndex.begin();
     while (iter != mNavMeshIndex.end())
     {
         if (iter->second>=index)
@@ -165,9 +165,9 @@ void CSMForeign::NavMeshCollection::removeRows (int index, int count)
     }
 }
 
-int CSMForeign::NavMeshCollection::searchId (std::uint32_t id) const
+int CSMForeign::NavMeshCollection::searchId (ESM4::FormId id) const
 {
-    std::map<std::uint32_t, int>::const_iterator iter = mNavMeshIndex.find(id);
+    std::map<ESM4::FormId, int>::const_iterator iter = mNavMeshIndex.find(id);
 
     if (iter == mNavMeshIndex.end())
         return -1;
@@ -179,13 +179,13 @@ void CSMForeign::NavMeshCollection::insertRecord (std::unique_ptr<CSMWorld::Reco
     CSMWorld::UniversalId::Type type)
 {
     int size = getAppendIndex(/*id*/"", type); // id is ignored
-    std::uint32_t formId = static_cast<CSMWorld::Record<NavMesh>*>(record.get())->get().mFormId;
+    ESM4::FormId formId = static_cast<CSMWorld::Record<NavMesh>*>(record.get())->get().mFormId;
 
     CSMWorld::Collection<NavMesh, CSMWorld::IdAccessor<NavMesh> >::insertRecord(std::move(record), index, type); // add records only
 
     if (index < size-1)
     {
-        for (std::map<std::uint32_t, int>::iterator iter(mNavMeshIndex.begin()); iter != mNavMeshIndex.end(); ++iter)
+        for (std::map<ESM4::FormId, int>::iterator iter(mNavMeshIndex.begin()); iter != mNavMeshIndex.end(); ++iter)
         {
             if (iter->second >= index)
                 ++(iter->second);
@@ -194,44 +194,3 @@ void CSMForeign::NavMeshCollection::insertRecord (std::unique_ptr<CSMWorld::Reco
 
     mNavMeshIndex.insert(std::make_pair(formId, index));
 }
-
-#if 0
-void CSMForeign::NavMeshCollection::addNestedRow (int row, int col, int position)
-{
-}
-
-void CSMForeign::NavMeshCollection::removeNestedRows (int row, int column, int subRow)
-{
-}
-
-QVariant CSMForeign::NavMeshCollection::getNestedData (int row,
-        int column, int subRow, int subColumn) const
-{
-}
-
-void CSMForeign::NavMeshCollection::setNestedData (int row,
-        int column, const QVariant& data, int subRow, int subColumn)
-{
-}
-
-NestedTableWrapperBase* CSMForeign::NavMeshCollection::nestedTable (int row, int column) const
-{
-}
-
-void CSMForeign::NavMeshCollection::setNestedTable (int row,
-        int column, const NestedTableWrapperBase& nestedTable)
-{
-}
-
-int CSMForeign::NavMeshCollection::getNestedRowsCount (int row, int column) const
-{
-}
-
-int CSMForeign::NavMeshCollection::getNestedColumnsCount (int row, int column) const
-{
-}
-
-NestableColumn *CSMForeign::NavMeshCollection::getNestableColumn (int column)
-{
-}
-#endif

@@ -39,9 +39,7 @@ public:
 
     void read(NIFStream *nif)
     {
-        std::cout << "property read" << std::endl; // FIXME
         Named::read(nif);
-        std::cout << "property " << Named::name << std::endl; // FIXME
         flags = nif->getUShort();
     }
 };

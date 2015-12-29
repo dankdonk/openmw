@@ -1,5 +1,7 @@
 #include "cell.hpp"
 
+//#include <iostream> // FIXME
+
 #include <OgreSceneManager.h>
 #include <OgreSceneNode.h>
 #include <OgreManualObject.h>
@@ -124,6 +126,8 @@ CSVRender::Cell::Cell (CSMDoc::Document& document, Ogre::SceneManager *sceneMana
 , mProxyModel(0), mModel(0), mPgIndex(-1), mHandler(new CSMWorld::SignalHandler(this))
 , mPhysics(physics), mSceneMgr(sceneManager), mX(0), mY(0)
 {
+    //std::cout << "mId " << mId << std::endl;
+
     mCellNode = sceneManager->getRootSceneNode()->createChildSceneNode();
     mCellNode->setPosition (origin);
 
@@ -152,6 +156,7 @@ CSVRender::Cell::Cell (CSMDoc::Document& document, Ogre::SceneManager *sceneMana
             mX = esmLand.mX;
             mY = esmLand.mY;
 
+            //std::cout << "x " << mX << ", y " << mY << std::endl;
             mPhysics->addHeightField(sceneManager,
                 esmLand.getLandData(ESM::Land::DATA_VHGT)->mHeights, mX, mY, 0, worldsize / (verts-1), verts);
         }
@@ -602,12 +607,13 @@ CSMWorld::SignalHandler *CSVRender::Cell::getSignalHandler()
 }
 void CSVRender::Cell::setupNavMesh()
 {
-    const CSMForeign::NavMeshCollection& navmeshes = mDocument.getData().getNavMeshes();
-    int index = navmeshes.searchId(mId);
-    if(index != -1)
-    {
-        std::cout << "CSVRender::Cell: found navmesh" << std::endl;
-    }
+    // FIXME: disable until Cell/ForeignCell is figured out (incl. size diff and indexing)
+    //const CSMForeign::NavMeshCollection& navmeshes = mDocument.getData().getNavMeshes();
+    //int index = navmeshes.searchId(mId);
+    //if(index != -1)
+    //{
+        //std::cout << "CSVRender::Cell: found navmesh" << std::endl;
+    //}
 }
 
 void CSVRender::Cell::clearNavMesh()

@@ -4,6 +4,7 @@
 #include <set>
 #include <sstream>
 
+#include <QtGlobal>
 #include <QHeaderView>
 #include <QContextMenuEvent>
 #include <QMenu>
@@ -64,8 +65,11 @@ void CSVWorld::RegionMap::contextMenuEvent (QContextMenuEvent *event)
 
     if (selectionModel()->selectedIndexes().size()>0)
     {
-        menu.addAction (mViewAction);
-        menu.addAction (mViewForeignAction);
+        if (mViewForeignAction)
+            menu.addAction (mViewForeignAction);
+
+        if (mViewAction)
+            menu.addAction (mViewAction);
     }
 
     menu.exec (event->globalPos());
@@ -187,12 +191,14 @@ CSVWorld::RegionMap::RegionMap (const CSMWorld::UniversalId& universalId,
     CSMDoc::Document& document, QWidget *parent)
 :  DragRecordTable(document, parent)
 {
-    //For Qt versions < 5
-    //verticalHeader()->setResizeMode(QHeaderView::Fixed);
-    //horizontalHeader()->setResizeMode(QHeaderView::Fixed);
-
+#if QT_VERSION >= 0x050000
     verticalHeader()->sectionResizeMode(QHeaderView::Fixed);
     horizontalHeader()->sectionResizeMode(QHeaderView::Fixed);
+#else
+    verticalHeader()->setResizeMode(QHeaderView::Fixed);
+    horizontalHeader()->setResizeMode(QHeaderView::Fixed);
+#endif
+
     verticalHeader()->setDefaultSectionSize(10);
     horizontalHeader()->setDefaultSectionSize(10);
 
@@ -230,13 +236,22 @@ CSVWorld::RegionMap::RegionMap (const CSMWorld::UniversalId& universalId,
     connect (mUnsetRegionAction, SIGNAL (triggered()), this, SLOT (unsetRegion()));
     addAction (mUnsetRegionAction);
 
-    mViewAction = new QAction (tr ("View Cells"), this);
-    connect (mViewAction, SIGNAL (triggered()), this, SLOT (view()));
-    addAction (mViewAction);
+    if (universalId.getType() == CSMWorld::UniversalId::Type_ForeignRegionMap)
+    {
+        mViewAction = 0;
 
-    mViewForeignAction = new QAction (tr ("View Foreign Cells"), this); // FIXME: maybe subclass RegionMap
-    connect (mViewForeignAction, SIGNAL (triggered()), this, SLOT (viewForeign()));
-    addAction (mViewForeignAction);
+        mViewForeignAction = new QAction (tr ("View Foreign Cells"), this); // FIXME: maybe subclass RegionMap
+        connect (mViewForeignAction, SIGNAL (triggered()), this, SLOT (viewForeign()));
+        addAction (mViewForeignAction);
+    }
+    else
+    {
+        mViewForeignAction = 0;
+
+        mViewAction = new QAction (tr ("View Cells"), this);
+        connect (mViewAction, SIGNAL (triggered()), this, SLOT (view()));
+        addAction (mViewAction);
+    }
 
     mViewInTableAction = new QAction (tr ("View Cells in Table"), this);
     connect (mViewInTableAction, SIGNAL (triggered()), this, SLOT (viewInTable()));

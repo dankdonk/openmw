@@ -2,13 +2,13 @@
 #define CSM_FOREIGN_NAVMESHCOLLECTION_H
 
 #include "../world/collection.hpp"
-//#include "../world/nestedcollection.hpp"
-//#include "../world/record.hpp"
+
 #include "navmesh.hpp"
 
 namespace ESM4
 {
     class Reader;
+    typedef std::uint32_t FormId;
 }
 
 namespace CSMWorld
@@ -33,12 +33,12 @@ namespace CSMWorld
 
 namespace CSMForeign
 {
-    class NavMeshCollection : public CSMWorld::Collection<NavMesh, CSMWorld::IdAccessor<NavMesh> >//, public NestedCollection
+    class NavMeshCollection : public CSMWorld::Collection<NavMesh, CSMWorld::IdAccessor<NavMesh> >
     {
         const CSMWorld::IdCollection<CSMWorld::Cell, CSMWorld::IdAccessor<CSMWorld::Cell> >& mCells;
         //NavMesh mNavMesh;
 
-        std::map<std::uint32_t, int> mNavMeshIndex;
+        std::map<ESM4::FormId, int> mNavMeshIndex;
 
     public:
         NavMeshCollection (const CSMWorld::IdCollection<CSMWorld::Cell, CSMWorld::IdAccessor<CSMWorld::Cell> >& cells);
@@ -59,33 +59,14 @@ namespace CSMForeign
         virtual void insertRecord (std::unique_ptr<CSMWorld::RecordBase> record,
                                    int index,
                                    CSMWorld::UniversalId::Type type = CSMWorld::UniversalId::Type_None);
-#if 0
-        virtual void addNestedRow (int row, int col, int position) = 0;
-
-        virtual void removeNestedRows (int row, int column, int subRow) = 0;
-
-        virtual QVariant getNestedData (int row, int column, int subRow, int subColumn) const = 0;
-
-        virtual void setNestedData (int row, int column, const QVariant& data, int subRow, int subColumn) = 0;
-
-        virtual NestedTableWrapperBase* nestedTable (int row, int column) const = 0;
-
-        virtual void setNestedTable (int row, int column, const NestedTableWrapperBase& nestedTable) = 0;
-
-        virtual int getNestedRowsCount (int row, int column) const;
-
-        virtual int getNestedColumnsCount (int row, int column) const;
-
-        virtual NestableColumn *getNestableColumn (int column) = 0;
-#endif
     private:
         NavMeshCollection ();
         NavMeshCollection (const NavMeshCollection& other);
         NavMeshCollection& operator= (const NavMeshCollection& other);
 
-        int getIndex (std::uint32_t id) const;
+        int getIndex (ESM4::FormId id) const;
 
-        int searchId (std::uint32_t id) const;
+        int searchId (ESM4::FormId id) const;
     };
 }
 #endif // CSM_FOREIGN_NAVMESHCOLLECTION_H

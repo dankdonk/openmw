@@ -1,6 +1,8 @@
 #ifndef OPENCS_VIEW_FOREIGNOBJECT_H
 #define OPENCS_VIEW_FOREIGNOBJECT_H
 
+#include <cstdint>
+
 #include <boost/shared_ptr.hpp>
 
 #ifndef Q_MOC_RUN

@@ -167,68 +167,72 @@ size_t NIFFile::parseHeader(NIFStream nif, std::vector<std::string>& blocks)
     bool isGood = false;
     for (std::vector<std::string>::const_iterator it = goodHeaders.begin() ; it != goodHeaders.end(); it++)
     {
-        if(head.find(*it) != std::string::npos)
+        if (head.find(*it) != std::string::npos)
         isGood = true;
     }
-    if(!isGood)
+    if (!isGood)
 		fail("Invalid NIF header:  " + head);
 
     // Get BCD version
     ver=nif.getUInt();
-    if(GoodVersions.find(ver) == GoodVersions.end())
+    if (GoodVersions.find(ver) == GoodVersions.end())
         fail("Unsupported NIF version: " + printVersion(ver));
 
-    //If the file is a newer nif file:
-    if(ver > 0x04000002)
+    // Using model: Rocks\Water\RockBeachShell150.NIF
+    // NIF ver = 0x14000005 (20.0.0.5)
+    //
+    // block type: NiNode,                    0    node.hpp
+    // block type: BSXFlags,                  1 <- extra.hpp
+    // block type: NiStringExtraData,         2    extra.hpp
+    // block type: hkPackedNiTriStripsData,   3 <- data collision.hpp (derive from Named?)
+    // block type: bhkPackedNiTriStripsShape, 4 <- node collision.hpp
+    // block type: bhkMoppBvTreeShape,        5 <- node collision.hpp
+    // block type: bhkRigidBodyT,             6 <- node collision.hpp
+    // block type: bhkCollisionObject,        7 <- node collision.hpp
+    // block type: NiTriStrips,               8 <- node.hpp
+    // block type: NiBinaryExtraData,         9 <- extra.hpp
+    // block type: NiMaterialProperty,       10    property.hpp
+    // block type: NiVertexColorProperty,    11    property.hpp
+    // block type: NiTexturingProperty,      12    property.hpp
+    // block type: NiSourceTexture,          13    controlled.hpp
+    // block type: NiTriStripsData,          14 <- data.hpp
+    //
+    // block type index:  0,  0
+    // block type index:  1,  1
+    // block type index:  2,  2  _________________
+    // block type index:  3,  3
+    // block type index:  4,  4
+    // block type index:  5,  5
+    // block type index:  6,  6
+    // block type index:  7,  7  _________________
+    // block type index:  8,  8
+    // block type index:  9,  9
+    // block type index: 10, 10
+    // block type index: 11, 11
+    // block type index: 12, 12
+    // block type index: 13, 13
+    // block type index: 14, 14  _________________
+    // block type index: 08, 15  NiTriStrips
+    // block type index: 09, 16  NiBinaryExtraData
+    // block type index: 10, 17  NiMaterialProperty
+    // block type index: 12, 18  NiTexturingProperty (skips vertex color property)
+    // block type index: 13, 19  NiSourceTexture
+    // block type index: 14, 20  NiTriStripsData
+
+    if (ver >= 0x14000004) // 20.0.0.4
     {
-        // Using model: Rocks\Water\RockBeachShell150.NIF
-        // NIF ver = 0x14000005 (20.0.0.5)
-        //
-        // block type: NiNode,                    0    node.hpp
-        // block type: BSXFlags,                  1 <- extra.hpp
-        // block type: NiStringExtraData,         2    extra.hpp
-        // block type: hkPackedNiTriStripsData,   3 <- data collision.hpp (derive from Named?)
-        // block type: bhkPackedNiTriStripsShape, 4 <- node collision.hpp
-        // block type: bhkMoppBvTreeShape,        5 <- node collision.hpp
-        // block type: bhkRigidBodyT,             6 <- node collision.hpp
-        // block type: bhkCollisionObject,        7 <- node collision.hpp
-        // block type: NiTriStrips,               8 <- node.hpp
-        // block type: NiBinaryExtraData,         9 <- extra.hpp
-        // block type: NiMaterialProperty,       10    property.hpp
-        // block type: NiVertexColorProperty,    11    property.hpp
-        // block type: NiTexturingProperty,      12    property.hpp
-        // block type: NiSourceTexture,          13    controlled.hpp
-        // block type: NiTriStripsData,          14 <- data.hpp
-        //
-        // block type index:  0,  0
-        // block type index:  1,  1
-        // block type index:  2,  2  _________________
-        // block type index:  3,  3
-        // block type index:  4,  4
-        // block type index:  5,  5
-        // block type index:  6,  6
-        // block type index:  7,  7  _________________
-        // block type index:  8,  8
-        // block type index:  9,  9
-        // block type index: 10, 10
-        // block type index: 11, 11
-        // block type index: 12, 12
-        // block type index: 13, 13
-        // block type index: 14, 14  _________________
-        // block type index: 08, 15  NiTriStrips
-        // block type index: 09, 16  NiBinaryExtraData
-        // block type index: 10, 17  NiMaterialProperty
-        // block type index: 12, 18  NiTexturingProperty (skips vertex color property)
-        // block type index: 13, 19  NiSourceTexture
-        // block type index: 14, 20  NiTriStripsData
-
-        //Many of these have the type and variable commented out to prevent compiler warnings
-
-        bool isLittleEndian = nif.getChar();
-        if(!isLittleEndian)
+        bool isLittleEndian = !!nif.getChar();
+        if (!isLittleEndian)
             fail("Is not Little Endian");
+    }
+
+    if (ver >= 0x0a010000) // 10.1.0.0
         nif.getUInt(); //unsigned int userVersion
-        numBlocks = nif.getInt();
+
+    numBlocks = nif.getInt();
+
+    if (ver >= 0x0a010000) // 10.1.0.0
+    {
         nif.getUInt(); //unsigned int userVersion2
 
         //\FIXME This only works if Export Info is empty
@@ -239,21 +243,17 @@ size_t NIFFile::parseHeader(NIFStream nif, std::vector<std::string>& blocks)
         unsigned short numBlockTypes = nif.getShort();
         for (unsigned int i = 0; i < numBlockTypes; ++i)
         {
-            std::string type = nif.getString(); //string blockType
-            std::cout << "block type: " << type << ", " << i << std::endl;
+            std::string type = nif.getString(); //blockType
             blocks.push_back(type);
         }
+
+        // FIXME: the index info is probably useful somewhere
         for (unsigned int i = 0; i < numBlocks; ++i)
-        {
-            short index = nif.getShort(); //unsigned short blockTypeIndex
-            std::cout << "block type index: " << index << ", " << i << std::endl;
-        }
+            unsigned short index = nif.getUShort(); //blockTypeIndex
+
         nif.getUInt(); //unsigned int unknown
     }
-    else
-    {
-        numBlocks = nif.getInt();
-    }
+
     return numBlocks;
 }
 
@@ -264,19 +264,19 @@ void NIFFile::parse()
 
     // Parse the header, and get the Number of records
     size_t recNum = parseHeader(nif, blocks);
-    records.resize(recNum);
 
+    records.resize(recNum);
     for(size_t i = 0;i < recNum;i++)
     {
         Record *r = NULL;
 
         std::string rec;
-        if (ver == 0x14000005) // 20.0.0.5
+        if (ver >= 0x0a010000) // 10.1.0.0
             rec = blocks[i];
         else //    0x04000002      4.0.0.2
             rec = nif.getString();
 
-        if(rec.empty())
+        if (rec.empty())
           fail("Record number " + Ogre::StringConverter::toString(i) + " out of " + Ogre::StringConverter::toString(recNum) + " is blank.");
 
 

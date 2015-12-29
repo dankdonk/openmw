@@ -31,6 +31,7 @@ namespace Nif
 
 // Common ancestor for several data classes
 class ShapeData : public Record
+// NiGeometryData
 {
 public:
     std::vector<Ogre::Vector3> vertices, normals;
@@ -77,14 +78,24 @@ public:
 
     void read(NIFStream *nif)
     {
-        ShapeData::read(nif);
+        ShapeData::read(nif); // NiGeometryData
 
         /*int tris =*/ nif->getUShort();
 
         // We have three times as many vertices as triangles, so this
         // is always equal to tris*3.
         int cnt = nif->getInt();
-        nif->getShorts(triangles, cnt);
+
+        bool hasTriangles = false;
+        if (nifVer <= 0x0a000100) // up to 10.0.1.0
+            hasTriangles = true;
+        else
+            hasTriangles = !!nif->getInt();
+
+        if (hasTriangles)
+        {
+            nif->getShorts(triangles, cnt);
+        }
 
         // Read the match list, which lists the vertices that are equal to
         // vertices. We don't actually need need this for anything, so
@@ -376,29 +387,36 @@ struct NiKeyframeData : public Record
 class NiTriStripsData : public ShapeData
 {
 public:
-    // Triangles, three vertex indices per triangle
-    std::vector<short> triangles;
+    std::vector<unsigned short> strips;
+    std::vector<std::vector<unsigned short> > points;
 
     void read(NIFStream *nif)
     {
-        ShapeData::read(nif);
+        ShapeData::read(nif);            // NiGeometryData
 
-        /*int tris =*/ nif->getUShort();
+        /*int tris =*/ nif->getUShort(); // NiTriBasedGeomData
 
-        // We have three times as many vertices as triangles, so this
-        // is always equal to tris*3.
-        int cnt = nif->getInt();
-        nif->getShorts(triangles, cnt);
-
-        // Read the match list, which lists the vertices that are equal to
-        // vertices. We don't actually need need this for anything, so
-        // just skip it.
-        int verts = nif->getUShort();
-        for(int i=0;i < verts;i++)
+        unsigned short numStrips = nif->getUShort();
+        strips.resize(numStrips);
+        for (unsigned int i = 0; i < numStrips; ++i)
         {
-            // Number of vertices matching vertex 'i'
-            int num = nif->getUShort();
-            nif->skip(num * sizeof(short));
+            strips[i] = nif->getUShort();
+        }
+
+        unsigned short stripLengths = nif->getUShort();
+
+        bool hasPoints = false;
+        if (nifVer <= 0x0a000102) // up to 10.0.1.2
+            hasPoints = true;
+        else
+            hasPoints = !!nif->getInt();
+
+        points.resize(numStrips, std::vector<unsigned short>(stripLengths));
+        if (hasPoints)
+        {
+            for (unsigned int i = 0; i < numStrips; ++i)
+                for (unsigned int j = 0; j < stripLengths; ++j)
+                    points[i][j] = nif->getUShort();
         }
     }
 };

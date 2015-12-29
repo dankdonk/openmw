@@ -10,7 +10,6 @@
 #include "niftypes.hpp"
 #include "controller.hpp"
 #include "base.hpp"
-#include "collision.hpp"
 
 namespace Nif
 {
@@ -181,11 +180,24 @@ struct NiTriShape : Node
     NiTriShapeDataPtr data;
     NiSkinInstancePtr skin;
 
+    std::string shader;
+    int unknown;
+
     void read(NIFStream *nif)
     {
         Node::read(nif);
         data.read(nif);
         skin.read(nif);
+
+        if (nifVer >= 0x0a000100) // from 10.0.1.0
+        {
+            bool hasShader = !!nif->getInt();
+            if (hasShader)
+            {
+                shader = nif->getString();
+                unknown = nif->getInt();
+            }
+        }
     }
 
     void post(NIFFile *nif)
@@ -277,21 +289,27 @@ struct NiRotatingParticles : Node
 
 struct NiTriStrips : Node
 {
-    /* Possible flags:
-        0x40 - mesh has no vertex normals ?
-
-        Only flags included in 0x47 (ie. 0x01, 0x02, 0x04 and 0x40) have
-        been observed so far.
-    */
-
     NiTriShapeDataPtr data;
     NiSkinInstancePtr skin;
 
+    std::string shader;
+    int unknown;
+
     void read(NIFStream *nif)
     {
-        Node::read(nif);
-        data.read(nif);
+        Node::read(nif); // NiAVObject
+        data.read(nif);  // RefNiGeometryData
         skin.read(nif);
+
+        if (nifVer >= 0x0a000100) // from 10.0.1.0
+        {
+            bool hasShader = !!nif->getInt();
+            if (hasShader)
+            {
+                shader = nif->getString();
+                unknown = nif->getInt();
+            }
+        }
     }
 
     void post(NIFFile *nif)
@@ -299,6 +317,7 @@ struct NiTriStrips : Node
         Node::post(nif);
         data.post(nif);
         skin.post(nif);
+        // FIXME any other post stuff
     }
 };
 
