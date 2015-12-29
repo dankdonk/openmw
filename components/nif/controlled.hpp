@@ -24,6 +24,8 @@
 #ifndef OPENMW_COMPONENTS_NIF_CONTROLLED_HPP
 #define OPENMW_COMPONENTS_NIF_CONTROLLED_HPP
 
+#include <iostream> // FIXME
+
 #include "base.hpp"
 
 namespace Nif
@@ -68,6 +70,7 @@ public:
     {
         Named::read(nif);
 
+        std::cout << "about to read external " << std::to_string(nif->tell()) << std::endl;
         external = !!nif->getChar();
         if(external)
         {
@@ -91,7 +94,7 @@ public:
         nif->getChar(); // always 1
 
         if (nifVer >= 0x0a01006a) // 10.1.0.106
-            directRenderer = !!nif->getInt();
+            directRenderer = !!nif->getBool(nifVer);//Int();
     }
 
     void post(NIFFile *nif)

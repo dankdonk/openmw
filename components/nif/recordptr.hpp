@@ -152,6 +152,7 @@ typedef RecordPtrT<NiRotatingParticlesData> NiRotatingParticlesDataPtr;
 typedef RecordPtrT<NiAutoNormalParticlesData> NiAutoNormalParticlesDataPtr;
 
 typedef RecordListT<Node> NodeList;
+typedef RecordListT<Extra> ExtraList;
 typedef RecordListT<Property> PropertyList;
 typedef RecordListT<NiSourceTexture> NiSourceTextureList;
 

@@ -65,9 +65,15 @@ public:
         int clamp, uvSet, filter;
         short unknown2;
 
-        void read(NIFStream *nif)
+        Ogre::Vector2 translation;
+        Ogre::Vector2 tiling;
+        float wRotation;
+        unsigned int transformType;
+        Ogre::Vector2 cenerOffset;
+
+        void read(NIFStream *nif, unsigned int nifVer)
         {
-            inUse = !!nif->getInt();
+            inUse = nif->getBool(nifVer);
             if(!inUse) return;
 
             texture.read(nif);
@@ -78,7 +84,27 @@ public:
             // I have no idea, but I think these are actually two
             // PS2-specific shorts (ps2L and ps2K), followed by an unknown
             // short.
-            nif->skip(6);
+            if (nifVer <= 0x0a040001) // 10.4.0.1
+                nif->skip(4);
+            if (nifVer <= 0x04010002) // 4.1.0.2
+                nif->skip(2);
+
+            if (nifVer >= 0x0a010000) // 10.1.0.0
+            {
+                bool hasTextureTransform = false;
+                if (nifVer >= 0x04000002) // from 4.0.0.2
+                {
+                    hasTextureTransform = nif->getBool(nifVer);
+                    if (hasTextureTransform)
+                    {
+                        translation = nif->getVector2();
+                        tiling = nif->getVector2();
+                        wRotation = nif->getFloat();
+                        transformType = nif->getUInt();
+                        cenerOffset = nif->getVector2();
+                    }
+                }
+            }
         }
 
         void post(NIFFile *nif)
@@ -120,7 +146,15 @@ public:
         DecalTexture = 6
     };
 
+    struct ShaderTexture
+    {
+        Texture texture;
+        unsigned int mapIndex;
+
+    };
+
     Texture textures[7];
+    std::vector<ShaderTexture> shaderTextures;
 
     void read(NIFStream *nif)
     {
@@ -132,14 +166,16 @@ public:
 
         // Unknown, always 7. Probably the number of textures to read
         // below
-        nif->getInt();
+        int count = nif->getInt();
+        if (count != 7)
+            std::cout << "texture count: " << count << std::endl;
 
-        textures[0].read(nif); // Base
-        textures[1].read(nif); // Dark
-        textures[2].read(nif); // Detail
-        textures[3].read(nif); // Gloss (never present)
-        textures[4].read(nif); // Glow
-        textures[5].read(nif); // Bump map
+        textures[0].read(nif, nifVer); // Base
+        textures[1].read(nif, nifVer); // Dark
+        textures[2].read(nif, nifVer); // Detail
+        textures[3].read(nif, nifVer); // Gloss (never present)
+        textures[4].read(nif, nifVer); // Glow
+        textures[5].read(nif, nifVer); // Bump map
         if(textures[5].inUse)
         {
             // Ignore these at the moment
@@ -147,7 +183,18 @@ public:
             /*float lumaOffset =*/ nif->getFloat();
             /*const Vector4 *lumaMatrix =*/ nif->getVector4();
         }
-        textures[6].read(nif); // Decal
+        textures[6].read(nif, nifVer); // Decal
+
+        if (nifVer >= 0x0a000100) // 10.0.1.0
+        {
+            unsigned int numShaderTex = nif->getUInt();
+            shaderTextures.resize(numShaderTex);
+            for (unsigned int i = 0; i < numShaderTex; ++i)
+            {
+                shaderTextures[i].texture.read(nif, nifVer);
+                shaderTextures[i].mapIndex = nif->getUInt();
+            }
+        }
     }
 
     void post(NIFFile *nif)

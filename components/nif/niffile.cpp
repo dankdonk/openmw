@@ -193,9 +193,9 @@ size_t NIFFile::parseHeader(NIFStream nif, std::vector<std::string>& blocks)
     // block type: NiBinaryExtraData,         9 <- extra.hpp
     // block type: NiMaterialProperty,       10    property.hpp
     // block type: NiVertexColorProperty,    11    property.hpp
-    // block type: NiTexturingProperty,      12    property.hpp
-    // block type: NiSourceTexture,          13    controlled.hpp
-    // block type: NiTriStripsData,          14 <- data.hpp
+    // block type: NiTexturingProperty,      12    property.hpp (check bool)
+    // block type: NiSourceTexture,          13    controlled.hpp (check bool)
+    // block type: NiTriStripsData,          14 <- data.hpp (check bool)
     //
     // block type index:  0,  0
     // block type index:  1,  1
@@ -252,6 +252,8 @@ size_t NIFFile::parseHeader(NIFStream nif, std::vector<std::string>& blocks)
             unsigned short index = nif.getUShort(); //blockTypeIndex
 
         nif.getUInt(); //unsigned int unknown
+
+        return numBlockTypes;
     }
 
     return numBlocks;

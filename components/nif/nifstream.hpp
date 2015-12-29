@@ -40,12 +40,15 @@ public:
 
     void skip(size_t size) { inp->skip(size); }
 
+    size_t tell() { return inp->tell(); } // FIXME
+
     char getChar() { return read_byte(); }
     short getShort() { return read_le16(); }
     unsigned short getUShort() { return read_le16(); }
     int getInt() { return read_le32(); }
     unsigned int getUInt() { return read_le32(); }
     float getFloat() { return read_le32f(); }
+    bool getBool(unsigned int nifVer);
 
     Ogre::Vector2 getVector2();
     Ogre::Vector3 getVector3();

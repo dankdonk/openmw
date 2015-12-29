@@ -1,6 +1,8 @@
 #ifndef OPENMW_COMPONENTS_NIF_NODE_HPP
 #define OPENMW_COMPONENTS_NIF_NODE_HPP
 
+#include <iostream> // FIXME
+
 #include <OgreMatrix4.h>
 
 #include "controlled.hpp"
@@ -29,7 +31,7 @@ public:
     Transformation trafo;
     Ogre::Vector3 velocity; // Unused? Might be a run-time game state
     PropertyList props;
-    unsigned int collision;
+    unsigned int collision; // FIXME
 
     // Bounding box info
     bool hasBounds;
@@ -40,6 +42,7 @@ public:
     void read(NIFStream *nif)
     {
         Named::read(nif);
+        std::cout << "about to read Node (NiAVObject part) " << std::to_string(nif->tell()) << std::endl;
 
         flags = nif->getUShort();
         trafo = nif->getTrafo(); // scale (float) included
@@ -51,8 +54,7 @@ public:
 
         if (nifVer <= 0x04020200) // up to 4.2.2.0
         {
-            hasBounds = !!nif->getInt();
-            if(hasBounds)
+            if(nif->getBool(nifVer))
             {
                 nif->getInt(); // always 1
                 boundPos = nif->getVector3();
@@ -67,7 +69,7 @@ public:
         boneIndex = -1;
 
         if (nifVer >= 0x0a000100) // from 10.0.1.0
-            collision = nif->getUInt(); // reference to a collision object
+            collision = nif->getUInt(); // reference to a collision object // FIXME
     }
 
     void post(NIFFile *nif)
@@ -120,7 +122,7 @@ public:
 struct NiNode : Node
 {
     NodeList children;
-    NodeList effects;
+    NodeList effects; // FIXME: should be a list of NiDynamicEffect
 
     enum Flags {
         Flag_Hidden = 0x0001,
@@ -140,7 +142,9 @@ struct NiNode : Node
 
     void read(NIFStream *nif)
     {
+        std::cout << "about to read Node (NiNode) " << std::to_string(nif->tell()) << std::endl;
         Node::read(nif);
+        std::cout << "about to read NiNode (NiNode) " << std::to_string(nif->tell()) << std::endl;
         children.read(nif);
         effects.read(nif);
 
@@ -191,8 +195,8 @@ struct NiTriShape : Node
 
         if (nifVer >= 0x0a000100) // from 10.0.1.0
         {
-            bool hasShader = !!nif->getInt();
-            if (hasShader)
+            //bool hasShader = !!nif->getInt(); // FIXME: bool
+            if (nif->getBool(nifVer))
             {
                 shader = nif->getString();
                 unknown = nif->getInt();
@@ -287,9 +291,11 @@ struct NiRotatingParticles : Node
     }
 };
 
+typedef RecordPtrT<NiTriStripsData> NiTriStripsDataPtr;
+
 struct NiTriStrips : Node
 {
-    NiTriShapeDataPtr data;
+    NiTriStripsDataPtr data;
     NiSkinInstancePtr skin;
 
     std::string shader;
@@ -301,14 +307,10 @@ struct NiTriStrips : Node
         data.read(nif);  // RefNiGeometryData
         skin.read(nif);
 
-        if (nifVer >= 0x0a000100) // from 10.0.1.0
+        if (nifVer >= 0x0a000100 && nif->getBool(nifVer)) // from 10.0.1.0
         {
-            bool hasShader = !!nif->getInt();
-            if (hasShader)
-            {
-                shader = nif->getString();
-                unknown = nif->getInt();
-            }
+            shader = nif->getString();
+            unknown = nif->getInt();
         }
     }
 
@@ -387,15 +389,16 @@ struct bhkMoppBvTreeShape : Node
 
     void read(NIFStream *nif)
     {
+        //std::cout << "about to read bhkMoppBvTreeShape " << std::to_string(nif->tell()) << std::endl;
         refBhkShape = nif->getUInt();
         material = nif->getUInt();
-        materialSkyrim = nif->getUInt();
+        //materialSkyrim = nif->getUInt();  // not sure if this is version dependent
         unknown.resize(8);
         for (int i = 0; i < 8; ++i)
             unknown[i] = nif->getChar();
 
-        unsigned int size = nif->getUInt();
         unknownF1 = nif->getFloat();
+        unsigned int size = nif->getUInt();
         origin = nif->getVector3();
         scale = nif->getFloat();
 
@@ -424,8 +427,9 @@ struct bhkRigidBodyT : Node
     std::vector<int> unknownV1; // size 3
     unsigned char collisionResponse;
     unsigned char unknown1;
-    unsigned char unknown2;
-    unsigned char unknown3;
+    unsigned short callbackDelay;
+    unsigned short unknown2;
+    unsigned short unknown3;
     unsigned char layerCopy;
     unsigned char collisionFilterCopy;
     std::vector<unsigned short> unknownV2; // size 7
@@ -457,10 +461,11 @@ struct bhkRigidBodyT : Node
     int unknownI8;
     std::vector<unsigned int> constraints;
     int unknownI9;
-    unsigned short unknownS9;
+    //unsigned short unknownS9;
 
     void read(NIFStream *nif)
     {
+        //std::cout << "about to read bhkRigidBodyT " << std::to_string(nif->tell()) << std::endl;
         refBhkShape = nif->getInt();
         layer = nif->getChar();
         collisionFilter = nif->getChar();
@@ -473,8 +478,9 @@ struct bhkRigidBodyT : Node
             unknownV1[i] = nif->getInt();
         collisionResponse = nif->getChar();
         unknown1 = nif->getChar();
-        unknown2 = nif->getChar();
-        unknown3 = nif->getChar();
+        callbackDelay = nif->getUShort();
+        unknown2 = nif->getUShort();
+        unknown3 = nif->getUShort();
         layerCopy = nif->getChar();
         collisionFilterCopy = nif->getChar();
         unknownV2.resize(7);
@@ -498,8 +504,8 @@ struct bhkRigidBodyT : Node
         gravityFactor2 = nif->getFloat();
         rollingFrictionMultiplier = nif->getFloat();
         restitution = nif->getFloat();
-        maxVelocityLinear = nif->getFloat();
-        maxVelocityAngular = nif->getFloat();
+        //maxVelocityLinear = nif->getFloat(); // FIXME: check with nikscope
+        //maxVelocityAngular = nif->getFloat(); // don't read a couple of floats to see if the size fits
         penetrationDepth = nif->getFloat();
 
         motionSystem = nif->getChar();
@@ -510,12 +516,13 @@ struct bhkRigidBodyT : Node
         unknownI6 = nif->getInt();
         unknownI7 = nif->getInt();
         unknownI8 = nif->getInt();
+        // another unsigned int for Skyrim here?
         unsigned int numConst = nif->getUInt();
         constraints.resize(numConst);
         for(size_t i = 0; i < numConst; i++)
             constraints[i] = nif->getUInt();
         unknownI9 = nif->getInt();
-        unknownS9 = nif->getUShort();
+        //unknownS9 = nif->getUShort(); // FIXME: check with nikscope
     }
 
     void post(NIFFile *nif)
@@ -532,6 +539,7 @@ struct bhkCollisionObject : Node
 
     void read(NIFStream *nif)
     {
+        //std::cout << "about to read bhkCollisionObject " << std::to_string(nif->tell()) << std::endl;
         ptrNiAVObject = nif->getInt();
         flags = nif->getUShort();
         refNiObject = nif->getUInt();

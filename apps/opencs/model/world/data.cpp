@@ -1240,6 +1240,9 @@ bool CSMWorld::Data::continueLoading (CSMDoc::Messages& messages)
                     ESM::Land::DATA_VHGT | ESM::Land::DATA_VNML | ESM::Land::DATA_VCLR |
                     ESM::Land::DATA_VTEX | ESM::Land::DATA_WNAM);
 
+            // FIXME: if one cell does not have a heightmap none of the cells render
+            //if (!mLand.getRecord(index).get().getLandData (ESM::Land::DATA_VHGT))
+                //std::cout << "no heightmap: " << mLand.getRecord(index).get().mId << std::endl;
             break;
         }
 

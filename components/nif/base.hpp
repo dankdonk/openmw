@@ -2,6 +2,8 @@
 #ifndef OPENMW_COMPONENTS_NIF_BASE_HPP
 #define OPENMW_COMPONENTS_NIF_BASE_HPP
 
+#include <iostream> // FIXME
+
 #include "record.hpp"
 #include "niffile.hpp"
 #include "recordptr.hpp"
@@ -16,11 +18,28 @@ namespace Nif
 */
 class Extra : public Record
 {
+    // NiObjectNET (part)
 public:
-    ExtraPtr extra;
+    ExtraPtr extra; // FIXME: how to make this part of extras rather than keep separate members?
+    ExtraList extras;
 
-    void read(NIFStream *nif) { extra.read(nif); }
-    void post(NIFFile *nif) { extra.post(nif); }
+    void read(NIFStream *nif)
+    {
+        std::cout << "about to read Extra (NiObjectNET part) " << std::to_string(nif->tell()) << std::endl;
+        if (nifVer <= 0x04020200) // up to 4.2.2.0
+            extra.read(nif);
+
+        if (nifVer >= 0x0a000100) // from 10.0.1.0
+            extras.read(nif);
+    }
+    void post(NIFFile *nif)
+    {
+        if (nifVer <= 0x04020200) // up to 4.2.2.0
+            extra.post(nif);
+
+        if (nifVer >= 0x0a000100) // from 10.0.1.0
+            extras.post(nif);
+    }
 };
 
 class Controller : public Record
@@ -55,31 +74,24 @@ public:
 };
 
 /// Anything that has a controller
-class Controlled : public Extra
+class Controlled : public Extra // FIXME: should be changed from "is an Extra" to "has an Extra"
 {
-    // NiObjectNET
+    // NiObjectNET (part)
 public:
-    typedef RecordListT<Extra> ExtraList;
-    ExtraList extras;
     ControllerPtr controller;
 
     void read(NIFStream *nif)
     {
-        if (nifVer <= 0x04020200) // up to 4.2.2.0
-            Extra::read(nif);
-
-        if (nifVer >= 0x0a000100) // from 10.0.1.0
-            extras.read(nif);
+        std::cout << "about to read Controlled (NiObjectNET after string) " << std::to_string(nif->tell()) << std::endl;
+        Extra::read(nif);
 
         controller.read(nif);
     }
 
     void post(NIFFile *nif)
     {
-        if (nifVer <= 0x04020200) // up to 4.2.2.0
-            Extra::post(nif);
-        //if (nifVer >= 0x0a000100) // from 10.0.1.0
-            //extras.post(nif);
+        Extra::post(nif);
+
         controller.post(nif);
     }
 };
@@ -87,14 +99,15 @@ public:
 /// Has name, extra-data and controller
 class Named : public Controlled
 {
-// NiObjectNET
+    // NiAVObject
 public:
     std::string name;
 
     void read(NIFStream *nif)
     {
-        name = nif->getString();
-        Controlled::read(nif);
+        std::cout << "about to read Named (NiAVObject) " << std::to_string(nif->tell()) << std::endl;
+        name = nif->getString(); // according to niftools docs this string is part of NiObjectNET
+        Controlled::read(nif);   // read NiObjectNET
     }
 };
 typedef Named NiSequenceStreamHelper;

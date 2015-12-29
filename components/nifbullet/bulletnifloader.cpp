@@ -256,7 +256,7 @@ void ManualBulletShapeLoader::handleNode(const Nif::Node *node, int flags,
 
     // Check for extra data
     Nif::Extra const *e = node;
-    while (!e->extra.empty())
+    while (!e->extra.empty())  // FIXME: check extras instead (post 10.0.1.0)
     {
         // Get the next extra data in the list
         e = e->extra.getPtr();

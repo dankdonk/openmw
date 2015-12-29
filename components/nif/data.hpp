@@ -24,6 +24,8 @@
 #ifndef OPENMW_COMPONENTS_NIF_DATA_HPP
 #define OPENMW_COMPONENTS_NIF_DATA_HPP
 
+#include <iostream> // FIXME
+
 #include "base.hpp"
 
 namespace Nif
@@ -44,16 +46,16 @@ public:
     {
         int verts = nif->getUShort();
 
-        if(nif->getInt())
+        if(nif->getBool(nifVer)/*Int()*/) // has vertices
             nif->getVector3s(vertices, verts);
 
-        if(nif->getInt())
+        if(nif->getBool(nifVer)/*Int()*/) // has normals
             nif->getVector3s(normals, verts);
 
         center = nif->getVector3();
         radius = nif->getFloat();
 
-        if(nif->getInt())
+        if(nif->getBool(nifVer)/*Int()*/) // has vertex colors
             nif->getVector4s(colors, verts);
 
         // Only the first 6 bits are used as a count. I think the rest are
@@ -61,7 +63,7 @@ public:
         int uvs = nif->getUShort();
         uvs &= 0x3f;
 
-        if(nif->getInt())
+        if(nif->getBool(nifVer)/*Int()*/) // has Uv
         {
             uvlist.resize(uvs);
             for(int i = 0;i < uvs;i++)
@@ -409,7 +411,7 @@ public:
         if (nifVer <= 0x0a000102) // up to 10.0.1.2
             hasPoints = true;
         else
-            hasPoints = !!nif->getInt();
+            hasPoints = !!nif->getBool(nifVer);//Int();
 
         points.resize(numStrips, std::vector<unsigned short>(stripLengths));
         if (hasPoints)
@@ -418,6 +420,12 @@ public:
                 for (unsigned int j = 0; j < stripLengths; ++j)
                     points[i][j] = nif->getUShort();
         }
+        std::cout << "finished reading NiTriStripsData " << std::to_string(nif->tell()) << std::endl;
+    }
+
+    void post(NIFStream *nif)
+    {
+        // FIXME
     }
 };
 
