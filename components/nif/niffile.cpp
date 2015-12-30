@@ -157,7 +157,8 @@ std::string NIFFile::printVersion(unsigned int version)
     +"." + Ogre::StringConverter::toString(version_out.quad[0]);
 }
 
-size_t NIFFile::parseHeader(NIFStream nif, std::vector<std::string>& blocks)
+size_t NIFFile::parseHeader(NIFStream nif,
+        std::vector<std::string>& blockTypes, std::vector<unsigned short>& blockTypeIndex)
 {
     //The number of records/blocks to get from the file
     size_t numBlocks = 0;
@@ -174,7 +175,7 @@ size_t NIFFile::parseHeader(NIFStream nif, std::vector<std::string>& blocks)
 		fail("Invalid NIF header:  " + head);
 
     // Get BCD version
-    ver=nif.getUInt();
+    ver = nif.getUInt();
     if (GoodVersions.find(ver) == GoodVersions.end())
         fail("Unsupported NIF version: " + printVersion(ver));
 
@@ -240,20 +241,15 @@ size_t NIFFile::parseHeader(NIFStream nif, std::vector<std::string>& blocks)
         nif.getShortString(ver); //string exportInfo1
         nif.getShortString(ver); //string exportInfo1
 
-        unsigned short numBlockTypes = nif.getShort();
+        unsigned short numBlockTypes = nif.getUShort();
         for (unsigned int i = 0; i < numBlockTypes; ++i)
-        {
-            std::string type = nif.getString(); //blockType
-            blocks.push_back(type);
-        }
+            blockTypes.push_back(nif.getString());
 
-        // FIXME: the index info is probably useful somewhere
+        blockTypeIndex.resize(numBlocks);
         for (unsigned int i = 0; i < numBlocks; ++i)
-            unsigned short index = nif.getUShort(); //blockTypeIndex
+            blockTypeIndex[i] = nif.getUShort();
 
         nif.getUInt(); //unsigned int unknown
-
-        return numBlockTypes;
     }
 
     return numBlocks;
@@ -262,25 +258,27 @@ size_t NIFFile::parseHeader(NIFStream nif, std::vector<std::string>& blocks)
 void NIFFile::parse()
 {
     NIFStream nif (this, Ogre::ResourceGroupManager::getSingleton().openResource(filename));
-    std::vector<std::string> blocks;
+
+    std::vector<std::string> blockTypes;
+    std::vector<unsigned short> blockTypeIndex;
 
     // Parse the header, and get the Number of records
-    size_t recNum = parseHeader(nif, blocks);
+    size_t recNum = parseHeader(nif, blockTypes, blockTypeIndex);
 
     records.resize(recNum);
-    for(size_t i = 0;i < recNum;i++)
+    for(size_t i = 0; i < recNum; ++i)
     {
         Record *r = NULL;
 
         std::string rec;
         if (ver >= 0x0a010000) // 10.1.0.0
-            rec = blocks[i];
-        else //    0x04000002      4.0.0.2
+            rec = blockTypes[blockTypeIndex[i]];
+        else                   // 4.0.0.2 (for example)
             rec = nif.getString();
 
         if (rec.empty())
-          fail("Record number " + Ogre::StringConverter::toString(i) + " out of " + Ogre::StringConverter::toString(recNum) + " is blank.");
-
+            fail("Record number " + Ogre::StringConverter::toString(i)
+                     + " out of " + Ogre::StringConverter::toString(recNum) + " is blank.");
 
         std::map<std::string,RecordFactoryEntry>::const_iterator entry = factories.find(rec);
 
@@ -298,6 +296,7 @@ void NIFFile::parse()
         r->recIndex = i;
         r->nifVer = ver;
         records[i] = r;
+        std::cout << "Start of block: " << nif.tell() << std::endl; // FIXME
         r->read(&nif);
     }
 

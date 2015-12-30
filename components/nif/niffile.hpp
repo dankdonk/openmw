@@ -28,7 +28,8 @@ class NIFFile
 
     /// Parse the file's header
     ///\returns The number of records
-    size_t parseHeader(NIFStream nif, std::vector<std::string>& blocks);
+    size_t parseHeader(NIFStream nif,
+            std::vector<std::string>& blockTypes, std::vector<unsigned short>& blockTypeIndex);
 
     /// Parse the file
     void parse();

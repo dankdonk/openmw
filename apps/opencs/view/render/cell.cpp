@@ -143,6 +143,8 @@ CSVRender::Cell::Cell (CSMDoc::Document& document, Ogre::SceneManager *sceneMana
     if (landIndex != -1)
     {
         const ESM::Land& esmLand = land.getRecord(mId).get();
+        mX = esmLand.mX;
+        mY = esmLand.mY;
 
         if (esmLand.getLandData (ESM::Land::DATA_VHGT))
         {
@@ -153,13 +155,17 @@ CSVRender::Cell::Cell (CSMDoc::Document& document, Ogre::SceneManager *sceneMana
 
             float verts = ESM::Land::LAND_SIZE;
             float worldsize = ESM::Land::REAL_SIZE;
-            mX = esmLand.mX;
-            mY = esmLand.mY;
 
             //std::cout << "x " << mX << ", y " << mY << std::endl;
             mPhysics->addHeightField(sceneManager,
                 esmLand.getLandData(ESM::Land::DATA_VHGT)->mHeights, mX, mY, 0, worldsize / (verts-1), verts);
         }
+    }
+    else
+    {
+        std::istringstream stream (mId.c_str());
+        char ignore; // '#'
+        stream >> ignore >> mX >> mY;
     }
 
     createGridMaterials();
