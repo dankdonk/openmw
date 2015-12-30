@@ -71,8 +71,8 @@ void CSVRender::ForeignObject::update()
 
         if (model.empty())
             error = 2;
-        else
-            std::cout << "Using model: " << model << std::endl;
+        //else
+            //std::cout << "Using model: " << model << std::endl;
     }
 
     if (error)

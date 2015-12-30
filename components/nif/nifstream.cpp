@@ -166,7 +166,7 @@ bool NIFStream::getBool(unsigned int nifVer)
 {
     if (nifVer >= 0x04010001) // from 4.1.0.1
         return !!getChar();
-    else //       0x04000002     from 4.0.0.2
+    else //       0x04000002     e.g  4.0.0.2
         return !!getInt();
 }
 

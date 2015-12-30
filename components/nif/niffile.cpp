@@ -109,7 +109,9 @@ static std::map<std::string,RecordFactoryEntry> makeFactory()
     newFactory.insert(makeEntry("hkPackedNiTriStripsData",    &construct <hkPackedNiTriStripsData>     , RC_hkPackedNiTriStripsData       ));
     newFactory.insert(makeEntry("bhkPackedNiTriStripsShape",  &construct <bhkPackedNiTriStripsShape>   , RC_bhkPackedNiTriStripsShape     ));
     newFactory.insert(makeEntry("bhkMoppBvTreeShape",         &construct <bhkMoppBvTreeShape>          , RC_bhkMoppBvTreeShape            ));
+    newFactory.insert(makeEntry("bhkRigidBody",               &construct <bhkRigidBody>                , RC_bhkRigidBody                  ));
     newFactory.insert(makeEntry("bhkRigidBodyT",              &construct <bhkRigidBodyT>               , RC_bhkRigidBodyT                 ));
+    newFactory.insert(makeEntry("NiCollisionObject",          &construct <NiCollisionObject>           , RC_NiCollisionObject             ));
     newFactory.insert(makeEntry("bhkCollisionObject",         &construct <bhkCollisionObject>          , RC_bhkCollisionObject            ));
     newFactory.insert(makeEntry("NiTriStrips",                &construct <NiTriStrips>                 , RC_NiTriStrips                   ));
     newFactory.insert(makeEntry("NiBinaryExtraData",          &construct <NiBinaryExtraData>           , RC_NiBinaryExtraData             ));
@@ -178,47 +180,6 @@ size_t NIFFile::parseHeader(NIFStream nif,
     ver = nif.getUInt();
     if (GoodVersions.find(ver) == GoodVersions.end())
         fail("Unsupported NIF version: " + printVersion(ver));
-
-    // Using model: Rocks\Water\RockBeachShell150.NIF
-    // NIF ver = 0x14000005 (20.0.0.5)
-    //
-    // block type: NiNode,                    0    node.hpp
-    // block type: BSXFlags,                  1 <- extra.hpp
-    // block type: NiStringExtraData,         2    extra.hpp
-    // block type: hkPackedNiTriStripsData,   3 <- data collision.hpp (derive from Named?)
-    // block type: bhkPackedNiTriStripsShape, 4 <- node collision.hpp
-    // block type: bhkMoppBvTreeShape,        5 <- node collision.hpp
-    // block type: bhkRigidBodyT,             6 <- node collision.hpp
-    // block type: bhkCollisionObject,        7 <- node collision.hpp
-    // block type: NiTriStrips,               8 <- node.hpp
-    // block type: NiBinaryExtraData,         9 <- extra.hpp
-    // block type: NiMaterialProperty,       10    property.hpp
-    // block type: NiVertexColorProperty,    11    property.hpp
-    // block type: NiTexturingProperty,      12    property.hpp (check bool)
-    // block type: NiSourceTexture,          13    controlled.hpp (check bool)
-    // block type: NiTriStripsData,          14 <- data.hpp (check bool)
-    //
-    // block type index:  0,  0
-    // block type index:  1,  1
-    // block type index:  2,  2  _________________
-    // block type index:  3,  3
-    // block type index:  4,  4
-    // block type index:  5,  5
-    // block type index:  6,  6
-    // block type index:  7,  7  _________________
-    // block type index:  8,  8
-    // block type index:  9,  9
-    // block type index: 10, 10
-    // block type index: 11, 11
-    // block type index: 12, 12
-    // block type index: 13, 13
-    // block type index: 14, 14  _________________
-    // block type index: 08, 15  NiTriStrips
-    // block type index: 09, 16  NiBinaryExtraData
-    // block type index: 10, 17  NiMaterialProperty
-    // block type index: 12, 18  NiTexturingProperty (skips vertex color property)
-    // block type index: 13, 19  NiSourceTexture
-    // block type index: 14, 20  NiTriStripsData
 
     if (ver >= 0x14000004) // 20.0.0.4
     {
@@ -296,7 +257,7 @@ void NIFFile::parse()
         r->recIndex = i;
         r->nifVer = ver;
         records[i] = r;
-        std::cout << "Start of block: " << nif.tell() << std::endl; // FIXME
+        //std::cout << "Start of " << rec << ", block " << i << ": " << nif.tell() << std::endl; // FIXME
         r->read(&nif);
     }
 
@@ -305,7 +266,7 @@ void NIFFile::parse()
     roots.resize(rootNum);
 
     //Determine which records are roots
-    for(size_t i = 0;i < rootNum;i++)
+    for(size_t i = 0; i < rootNum; i++)
     {
         int idx = nif.getInt();
         if (idx >= 0)
@@ -320,7 +281,7 @@ void NIFFile::parse()
     }
 
     // Once parsing is done, do post-processing.
-    for(size_t i=0; i<recNum; i++)
+    for(size_t i = 0; i < recNum; i++)
         records[i]->post(this);
 }
 

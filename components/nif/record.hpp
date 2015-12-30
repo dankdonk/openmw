@@ -90,15 +90,18 @@ enum RecordType
   RC_NiSequenceStreamHelper,
   RC_NiSourceTexture,
   RC_NiSkinInstance,
-  RC_BSXFlags,                  // seen in NIF ver = 0x14000005 (20.0.0.5)
-  RC_hkPackedNiTriStripsData,   // seen in NIF ver = 0x14000005 (20.0.0.5)
-  RC_bhkPackedNiTriStripsShape, // seen in NIF ver = 0x14000005 (20.0.0.5)
-  RC_bhkMoppBvTreeShape,        // seen in NIF ver = 0x14000005 (20.0.0.5)
-  RC_bhkRigidBodyT,             // seen in NIF ver = 0x14000005 (20.0.0.5)
-  RC_bhkCollisionObject,        // seen in NIF ver = 0x14000005 (20.0.0.5)
-  RC_NiTriStrips,               // seen in NIF ver = 0x14000005 (20.0.0.5)
-  RC_NiBinaryExtraData,         // seen in NIF ver = 0x14000005 (20.0.0.5)
-  RC_NiTriStripsData,           // seen in NIF ver = 0x14000005 (20.0.0.5)
+  RC_BSXFlags,
+  RC_hkPackedNiTriStripsData,
+  RC_bhkPackedNiTriStripsShape,
+  RC_bhkMoppBvTreeShape,
+  RC_bhkRigidBody,
+  RC_bhkRigidBodyT,
+  RC_NiCollisionObject,
+  RC_NiCollisionData,
+  RC_bhkCollisionObject,
+  RC_NiTriStrips,
+  RC_NiBinaryExtraData,
+  RC_NiTriStripsData,
   RC_RootCollisionNode
 };
 

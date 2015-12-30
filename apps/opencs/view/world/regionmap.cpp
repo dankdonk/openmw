@@ -246,7 +246,7 @@ CSVWorld::RegionMap::RegionMap (const CSMWorld::UniversalId& universalId,
     {
         mViewAction = 0;
 
-        mViewForeignAction = new QAction (tr ("View Foreign Cells"), this); // FIXME: maybe subclass RegionMap
+        mViewForeignAction = new QAction (tr ("View Cells"), this); // FIXME: maybe subclass RegionMap
         connect (mViewForeignAction, SIGNAL (triggered()), this, SLOT (viewForeign()));
         addAction (mViewForeignAction);
     }

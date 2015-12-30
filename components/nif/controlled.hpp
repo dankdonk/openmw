@@ -70,7 +70,7 @@ public:
     {
         Named::read(nif);
 
-        std::cout << "about to read external " << std::to_string(nif->tell()) << std::endl;
+        //std::cout << "about to read external " << std::to_string(nif->tell()) << std::endl;
         external = !!nif->getChar();
         if(external)
         {
@@ -104,7 +104,7 @@ public:
     }
 };
 
-class NiParticleGrowFade : public Controlled
+class NiParticleGrowFade : public NiParticleModifier
 {
 public:
     float growTime;
@@ -112,31 +112,31 @@ public:
 
     void read(NIFStream *nif)
     {
-        Controlled::read(nif);
+        NiParticleModifier::read(nif);
         growTime = nif->getFloat();
         fadeTime = nif->getFloat();
     }
 };
 
-class NiParticleColorModifier : public Controlled
+class NiParticleColorModifier : public NiParticleModifier
 {
 public:
     NiColorDataPtr data;
 
     void read(NIFStream *nif)
     {
-        Controlled::read(nif);
+        NiParticleModifier::read(nif);
         data.read(nif);
     }
 
     void post(NIFFile *nif)
     {
-        Controlled::post(nif);
+        NiParticleModifier::post(nif);
         data.post(nif);
     }
 };
 
-class NiGravity : public Controlled
+class NiGravity : public NiParticleModifier
 {
 public:
     float mForce;
@@ -149,7 +149,7 @@ public:
 
     void read(NIFStream *nif)
     {
-        Controlled::read(nif);
+        NiParticleModifier::read(nif);
 
         /*unknown*/nif->getFloat();
         mForce = nif->getFloat();
@@ -160,24 +160,24 @@ public:
 };
 
 // NiPinaColada
-class NiPlanarCollider : public Controlled
+class NiPlanarCollider : public NiParticleModifier
 {
 public:
     void read(NIFStream *nif)
     {
-        Controlled::read(nif);
+        NiParticleModifier::read(nif);
 
         // (I think) 4 floats + 4 vectors
         nif->skip(4*16);
     }
 };
 
-class NiParticleRotation : public Controlled
+class NiParticleRotation : public NiParticleModifier
 {
 public:
     void read(NIFStream *nif)
     {
-        Controlled::read(nif);
+        NiParticleModifier::read(nif);
 
         /*
            byte (0 or 1)

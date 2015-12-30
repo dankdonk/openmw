@@ -1,8 +1,6 @@
 #ifndef OPENMW_COMPONENTS_NIF_NODE_HPP
 #define OPENMW_COMPONENTS_NIF_NODE_HPP
 
-#include <iostream> // FIXME
-
 #include <OgreMatrix4.h>
 
 #include "controlled.hpp"
@@ -24,14 +22,13 @@ struct NiNode;
  */
 class Node : public Named
 {
-// NiAVObject
 public:
     // Node flags. Interpretation depends somewhat on the type of node.
     int flags;
     Transformation trafo;
     Ogre::Vector3 velocity; // Unused? Might be a run-time game state
     PropertyList props;
-    unsigned int collision; // FIXME
+    NiCollisionObjectPtr collision;
 
     // Bounding box info
     bool hasBounds;
@@ -42,7 +39,6 @@ public:
     void read(NIFStream *nif)
     {
         Named::read(nif);
-        std::cout << "about to read Node (NiAVObject part) " << std::to_string(nif->tell()) << std::endl;
 
         flags = nif->getUShort();
         trafo = nif->getTrafo(); // scale (float) included
@@ -69,14 +65,14 @@ public:
         boneIndex = -1;
 
         if (nifVer >= 0x0a000100) // from 10.0.1.0
-            collision = nif->getUInt(); // reference to a collision object // FIXME
+            collision.read(nif);
     }
 
     void post(NIFFile *nif)
     {
         Named::post(nif);
         props.post(nif);
-        //collision.post(nif);
+        collision.post(nif);
     }
 
     // Parent node, or NULL for the root node. As far as I'm aware, only
@@ -142,9 +138,7 @@ struct NiNode : Node
 
     void read(NIFStream *nif)
     {
-        std::cout << "about to read Node (NiNode) " << std::to_string(nif->tell()) << std::endl;
         Node::read(nif);
-        std::cout << "about to read NiNode (NiNode) " << std::to_string(nif->tell()) << std::endl;
         children.read(nif);
         effects.read(nif);
 
@@ -195,7 +189,6 @@ struct NiTriShape : Node
 
         if (nifVer >= 0x0a000100) // from 10.0.1.0
         {
-            //bool hasShader = !!nif->getInt(); // FIXME: bool
             if (nif->getBool(nifVer))
             {
                 shader = nif->getString();
@@ -291,8 +284,6 @@ struct NiRotatingParticles : Node
     }
 };
 
-typedef RecordPtrT<NiTriStripsData> NiTriStripsDataPtr;
-
 struct NiTriStrips : Node
 {
     NiTriStripsDataPtr data;
@@ -332,7 +323,7 @@ struct OblivionSubShape
     unsigned int material; // http://niftools.sourceforge.net/doc/nif/HavokMaterial.html
 };
 
-struct bhkPackedNiTriStripsShape : Node
+struct bhkPackedNiTriStripsShape : public Node // bhkShape
 {
     std::vector<OblivionSubShape> subShapes;
     unsigned int unknown1;
@@ -376,11 +367,11 @@ struct bhkPackedNiTriStripsShape : Node
     }
 };
 
-struct bhkMoppBvTreeShape : Node
+struct bhkMoppBvTreeShape : public Node // bhkShape
 {
     unsigned int refBhkShape;
     unsigned int material; // http://niftools.sourceforge.net/doc/nif/HavokMaterial.html
-    unsigned int materialSkyrim;
+    //unsigned int materialSkyrim;
     std::vector<unsigned char> unknown;
     float unknownF1;
     Ogre::Vector3 origin;
@@ -389,7 +380,6 @@ struct bhkMoppBvTreeShape : Node
 
     void read(NIFStream *nif)
     {
-        //std::cout << "about to read bhkMoppBvTreeShape " << std::to_string(nif->tell()) << std::endl;
         refBhkShape = nif->getUInt();
         material = nif->getUInt();
         //materialSkyrim = nif->getUInt();  // not sure if this is version dependent
@@ -415,24 +405,43 @@ struct bhkMoppBvTreeShape : Node
     }
 };
 
-struct bhkRigidBodyT : Node
+class bhkConstraint : public Record
 {
+public:
+    std::vector<bhkRigidBodyPtr> entities;
+    unsigned int priority;
+
+    void read(NIFStream *nif)
+    {
+        unsigned int numEntities = nif->getUInt();
+        entities.resize(numEntities);
+        for (unsigned int i = 0; i < numEntities; ++i)
+        {
+            entities[0].read(nif);
+        }
+    }
+};
+
+class bhkRigidBody : public Record
+{
+public:
+    bkhShapeDataPtr shape;
     int refBhkShape;
     unsigned char layer; // http://niftools.sourceforge.net/doc/nif/OblivionLayer.html
     unsigned char collisionFilter;
-    unsigned short unknownS1;
+    unsigned short unknownShort;
 
-    int unknownI1;
-    int unknownI2;
-    std::vector<int> unknownV1; // size 3
+    int unknownInt1;
+    int unknownInt2;
+    std::vector<int> unknown3Ints;
     unsigned char collisionResponse;
-    unsigned char unknown1;
+    unsigned char unknownByte;
     unsigned short callbackDelay;
     unsigned short unknown2;
     unsigned short unknown3;
     unsigned char layerCopy;
     unsigned char collisionFilterCopy;
-    std::vector<unsigned short> unknownV2; // size 7
+    std::vector<unsigned short> unknown7Shorts;
 
     Ogre::Vector4 translation;
     Ogre::Vector4 rotation;
@@ -443,8 +452,9 @@ struct bhkRigidBodyT : Node
     float mass;
     float dampingLinear;
     float dampingAngular;
-    float gravityFactor1;
-    float gravityFactor2;
+    float friction;
+    //float gravityFactor1;
+    //float gravityFactor2;
     float rollingFrictionMultiplier;
     float restitution;
     float maxVelocityLinear;
@@ -456,36 +466,35 @@ struct bhkRigidBodyT : Node
     unsigned char solverDeactivation; // http://niftools.sourceforge.net/doc/nif/SolverDeactivation.html
     unsigned char motionQuality; // http://niftools.sourceforge.net/doc/nif/MotionQuality.html
 
-    int unknownI6;
-    int unknownI7;
-    int unknownI8;
-    std::vector<unsigned int> constraints;
-    int unknownI9;
+    int unknownInt6;
+    int unknownInt7;
+    int unknownInt8;
+    std::vector<bhkConstraintPtr> constraints;
+    int unknownInt9;
     //unsigned short unknownS9;
 
     void read(NIFStream *nif)
     {
-        //std::cout << "about to read bhkRigidBodyT " << std::to_string(nif->tell()) << std::endl;
-        refBhkShape = nif->getInt();
+        shape.read(nif);
         layer = nif->getChar();
         collisionFilter = nif->getChar();
-        unknownS1 = nif->getUShort();
+        unknownShort = nif->getUShort();
 
-        int unknownI1 = nif->getInt();
-        int unknownI2 = nif->getInt();
-        unknownV1.resize(3);
+        unknownInt1 = nif->getInt();
+        unknownInt2 = nif->getInt();
+        unknown3Ints.resize(3);
         for(size_t i = 0; i < 3; i++)
-            unknownV1[i] = nif->getInt();
+            unknown3Ints[i] = nif->getInt();
         collisionResponse = nif->getChar();
-        unknown1 = nif->getChar();
+        unknownByte = nif->getChar();
         callbackDelay = nif->getUShort();
         unknown2 = nif->getUShort();
         unknown3 = nif->getUShort();
         layerCopy = nif->getChar();
         collisionFilterCopy = nif->getChar();
-        unknownV2.resize(7);
+        unknown7Shorts.resize(7);
         for(size_t i = 0; i < 7; i++)
-            unknownV2[i] = nif->getUShort();
+            unknown7Shorts[i] = nif->getUShort();
 
         translation = nif->getVector4();
         rotation = nif->getVector4();
@@ -500,12 +509,13 @@ struct bhkRigidBodyT : Node
         mass = nif->getFloat();
         dampingLinear = nif->getFloat();
         dampingAngular = nif->getFloat();
-        gravityFactor1 = nif->getFloat();
-        gravityFactor2 = nif->getFloat();
-        rollingFrictionMultiplier = nif->getFloat();
+        //gravityFactor1 = nif->getFloat(); // FIXME: check why these need to be commented out
+        //gravityFactor2 = nif->getFloat();
+        friction = nif->getFloat();
+        //rollingFrictionMultiplier = nif->getFloat();
         restitution = nif->getFloat();
-        //maxVelocityLinear = nif->getFloat(); // FIXME: check with nikscope
-        //maxVelocityAngular = nif->getFloat(); // don't read a couple of floats to see if the size fits
+        maxVelocityLinear = nif->getFloat();
+        maxVelocityAngular = nif->getFloat();
         penetrationDepth = nif->getFloat();
 
         motionSystem = nif->getChar();
@@ -513,16 +523,16 @@ struct bhkRigidBodyT : Node
         solverDeactivation = nif->getChar();
         motionQuality = nif->getChar();
 
-        unknownI6 = nif->getInt();
-        unknownI7 = nif->getInt();
-        unknownI8 = nif->getInt();
+        unknownInt6 = nif->getInt();
+        unknownInt7 = nif->getInt();
+        unknownInt8 = nif->getInt();
         // another unsigned int for Skyrim here?
         unsigned int numConst = nif->getUInt();
         constraints.resize(numConst);
         for(size_t i = 0; i < numConst; i++)
-            constraints[i] = nif->getUInt();
-        unknownI9 = nif->getInt();
-        //unknownS9 = nif->getUShort(); // FIXME: check with nikscope
+            constraints[i].read(nif);
+        unknownInt9 = nif->getInt();
+        //unknownS9 = nif->getUShort();
     }
 
     void post(NIFFile *nif)
@@ -530,24 +540,117 @@ struct bhkRigidBodyT : Node
         // FIXME
     }
 };
+typedef bhkRigidBody bhkRigidBodyT;
 
-struct bhkCollisionObject : Node
+class NiCollisionObject : public Record
 {
-    int ptrNiAVObject;
-    unsigned short flags;
-    int refNiObject;
+public:
+    NodePtr target;
 
     void read(NIFStream *nif)
     {
-        //std::cout << "about to read bhkCollisionObject " << std::to_string(nif->tell()) << std::endl;
-        ptrNiAVObject = nif->getInt();
-        flags = nif->getUShort();
-        refNiObject = nif->getUInt();
+        target.read(nif);
     }
 
     void post(NIFFile *nif)
     {
-        // FIXME
+        target.post(nif);
+    }
+};
+
+class bhkCollisionObject : public NiCollisionObject
+{
+public:
+    unsigned short flags;
+    NiCollisionObjectPtr body;
+
+    void read(NIFStream *nif)
+    {
+        NiCollisionObject::read(nif);
+        flags = nif->getUShort();
+        body.read(nif);
+    }
+};
+
+struct SphereBV
+{
+    Ogre::Vector3 center;
+    float radius;
+};
+
+struct BoxBV
+{
+    Ogre::Vector3 center;
+    std::vector<Ogre::Vector3> axis;
+    std::vector<float> extent;
+};
+
+struct CapsuleBV
+{
+    Ogre::Vector3 center;
+    Ogre::Vector3 origin;
+    float unknown1;
+    float unknown2;
+};
+
+struct HalfSpaceBV
+{
+    Ogre::Vector3 normal;
+    Ogre::Vector3 center;
+};
+
+struct BoundingVolume
+{
+    unsigned int collisionType;
+    SphereBV sphere;
+    BoxBV box;
+    CapsuleBV capsule;
+    HalfSpaceBV halfspace;
+};
+
+class NiCollisionData : public NiCollisionObject
+{
+public:
+    unsigned int propagationMode;
+    unsigned int collisionMode;
+    BoundingVolume bv;
+
+    void read(NIFStream *nif)
+    {
+        NiCollisionObject::read(nif);
+        propagationMode = nif->getUInt();
+        collisionMode = nif->getUInt();
+        bool useABV = !!nif->getChar();
+        if (useABV)
+        {
+            bv.collisionType = nif->getUInt();
+            switch (bv.collisionType)
+            {
+                case 0:
+                    bv.sphere.center = nif->getVector3();
+                    bv.sphere.radius = nif->getFloat();
+                    break;
+                case 1:
+                    bv.box.center = nif->getVector3();
+                    for (int i = 0; i < 3; ++i)
+                        bv.box.axis.push_back(nif->getVector3());
+                    for (int i = 0; i < 3; ++i)
+                        bv.box.extent.push_back(nif->getFloat());
+                    break;
+                case 2:
+                    bv.capsule.center = nif->getVector3();
+                    bv.capsule.origin = nif->getVector3();
+                    bv.capsule.unknown1 = nif->getFloat();
+                    bv.capsule.unknown2 = nif->getFloat();
+                    break;
+                case 5:
+                    bv.halfspace.normal = nif->getVector3();
+                    bv.halfspace.center = nif->getVector3();
+                    break;
+                default:
+                    break;
+            }
+        }
     }
 };
 

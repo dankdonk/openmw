@@ -18,19 +18,26 @@ namespace Nif
 */
 class Extra : public Record
 {
-    // NiObjectNET (part)
 public:
     ExtraPtr extra; // FIXME: how to make this part of extras rather than keep separate members?
     ExtraList extras;
+    bool hasExtras;
 
     void read(NIFStream *nif)
     {
-        std::cout << "about to read Extra (NiObjectNET part) " << std::to_string(nif->tell()) << std::endl;
+        // FIXME: this is a linked list
         if (nifVer <= 0x04020200) // up to 4.2.2.0
+        {
             extra.read(nif);
+            hasExtras = false;
+        }
 
+        // FIXME: this is a vector
         if (nifVer >= 0x0a000100) // from 10.0.1.0
+        {
             extras.read(nif);
+            hasExtras = true;
+        }
     }
     void post(NIFFile *nif)
     {
@@ -82,7 +89,6 @@ public:
 
     void read(NIFStream *nif)
     {
-        std::cout << "about to read Controlled (NiObjectNET after string) " << std::to_string(nif->tell()) << std::endl;
         Extra::read(nif);
 
         controller.read(nif);
@@ -96,6 +102,25 @@ public:
     }
 };
 
+class NiParticleModifier : public Record
+{
+public:
+    NiParticleModifierPtr extra;
+    ControllerPtr controller;
+
+    void read(NIFStream *nif)
+    {
+        extra.read(nif);
+        controller.read(nif);
+    }
+
+    void post(NIFFile *nif)
+    {
+        extra.post(nif);
+        controller.post(nif);
+    }
+};
+
 /// Has name, extra-data and controller
 class Named : public Controlled
 {
@@ -105,7 +130,6 @@ public:
 
     void read(NIFStream *nif)
     {
-        std::cout << "about to read Named (NiAVObject) " << std::to_string(nif->tell()) << std::endl;
         name = nif->getString(); // according to niftools docs this string is part of NiObjectNET
         Controlled::read(nif);   // read NiObjectNET
     }

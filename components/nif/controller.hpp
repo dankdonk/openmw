@@ -72,7 +72,7 @@ public:
     int activeCount;
     std::vector<Particle> particles;
 
-    ExtraPtr extra;
+    NiParticleModifierPtr extra;
 
     void read(NIFStream *nif)
     {
@@ -123,7 +123,7 @@ public:
         }
 
         nif->getUInt(); /* -1? */
-        extra.read(nif);
+        extra.read(nif); // Ref<NiParticleModifier>
         nif->getUInt(); /* -1? */
         nif->getChar();
     }

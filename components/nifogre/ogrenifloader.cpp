@@ -875,7 +875,7 @@ private:
         emitter->setParameter("horizontal_direction", Ogre::StringConverter::toString(Ogre::Radian(partctrl->horizontalDir).valueDegrees()));
         emitter->setParameter("horizontal_angle", Ogre::StringConverter::toString(Ogre::Radian(partctrl->horizontalAngle).valueDegrees()));
 
-        Nif::ExtraPtr e = partctrl->extra;
+        Nif::NiParticleModifierPtr e = partctrl->extra;
         while(!e.empty())
         {
             if(e->recType == Nif::RC_NiParticleGrowFade)
@@ -1206,29 +1206,59 @@ private:
             scene->mBillboardNodes.push_back(bone);
         }
 
-        Nif::ExtraPtr e = node->extra;
-        while(!e.empty())
+        if (node->hasExtras)
         {
-            if(e->recType == Nif::RC_NiTextKeyExtraData)
+            for (unsigned int i = 0; i < node->extras.length(); ++i)
             {
-                const Nif::NiTextKeyExtraData *tk = static_cast<const Nif::NiTextKeyExtraData*>(e.getPtr());
+                Nif::ExtraPtr e = node->extras[i];
 
-                extractTextKeys(tk, scene->mTextKeys);
-            }
-            else if(e->recType == Nif::RC_NiStringExtraData)
-            {
-                const Nif::NiStringExtraData *sd = static_cast<const Nif::NiStringExtraData*>(e.getPtr());
-                // String markers may contain important information
-                // affecting the entire subtree of this obj
-                if(sd->string == "MRK" && !sShowMarkers)
+                // FIXME: duplicated code blocks
+                if(e->recType == Nif::RC_NiTextKeyExtraData)
                 {
-                    // Marker objects. These meshes are only visible in the
-                    // editor.
-                    flags |= 0x80000000;
+                    const Nif::NiTextKeyExtraData *tk = static_cast<const Nif::NiTextKeyExtraData*>(e.getPtr());
+
+                    extractTextKeys(tk, scene->mTextKeys);
+                }
+                else if(e->recType == Nif::RC_NiStringExtraData)
+                {
+                    const Nif::NiStringExtraData *sd = static_cast<const Nif::NiStringExtraData*>(e.getPtr());
+                    // String markers may contain important information
+                    // affecting the entire subtree of this obj
+                    if(sd->string == "MRK" && !sShowMarkers)
+                    {
+                        // Marker objects. These meshes are only visible in the
+                        // editor.
+                        flags |= 0x80000000;
+                    }
                 }
             }
+        }
+        else
+        {
+            Nif::ExtraPtr e = node->extra;
+            while(!e.empty())
+            {
+                if(e->recType == Nif::RC_NiTextKeyExtraData)
+                {
+                    const Nif::NiTextKeyExtraData *tk = static_cast<const Nif::NiTextKeyExtraData*>(e.getPtr());
 
-            e = e->extra;
+                    extractTextKeys(tk, scene->mTextKeys);
+                }
+                else if(e->recType == Nif::RC_NiStringExtraData)
+                {
+                    const Nif::NiStringExtraData *sd = static_cast<const Nif::NiStringExtraData*>(e.getPtr());
+                    // String markers may contain important information
+                    // affecting the entire subtree of this obj
+                    if(sd->string == "MRK" && !sShowMarkers)
+                    {
+                        // Marker objects. These meshes are only visible in the
+                        // editor.
+                        flags |= 0x80000000;
+                    }
+                }
+
+                e = e->extra;
+            }
         }
 
         if(!node->controller.empty())
@@ -1331,7 +1361,12 @@ public:
         }
         const Nif::NiSequenceStreamHelper *seq = static_cast<const Nif::NiSequenceStreamHelper*>(r);
 
-        Nif::ExtraPtr extra = seq->extra;
+        Nif::ExtraPtr extra;
+        if (seq->hasExtras)
+            extra = seq->extras[0];
+        else
+            extra = seq->extra;
+
         if(extra.empty() || extra->recType != Nif::RC_NiTextKeyExtraData)
         {
             nif->warn("First extra data was not a NiTextKeyExtraData, but a "+
@@ -1341,9 +1376,16 @@ public:
 
         extractTextKeys(static_cast<const Nif::NiTextKeyExtraData*>(extra.getPtr()), textKeys);
 
-        extra = extra->extra;
+        if (seq->hasExtras)
+            if (seq->extras.length() > 1)
+                extra = seq->extras[1];
+            else
+                return;
+        else
+            extra = extra->extra;
+
         Nif::ControllerPtr ctrl = seq->controller;
-        for(;!extra.empty() && !ctrl.empty();(extra=extra->extra),(ctrl=ctrl->next))
+        for(;!extra.empty() && !ctrl.empty();(extra=extra->extra/*FIXME*/),(ctrl=ctrl->next))
         {
             if(extra->recType != Nif::RC_NiStringExtraData || ctrl->recType != Nif::RC_NiKeyframeController)
             {

@@ -24,8 +24,6 @@
 #ifndef OPENMW_COMPONENTS_NIF_DATA_HPP
 #define OPENMW_COMPONENTS_NIF_DATA_HPP
 
-#include <iostream> // FIXME
-
 #include "base.hpp"
 
 namespace Nif
@@ -33,42 +31,70 @@ namespace Nif
 
 // Common ancestor for several data classes
 class ShapeData : public Record
-// NiGeometryData
 {
 public:
+    char keepFlags;
+    char compressFlags;
+    unsigned short numUVSets;
     std::vector<Ogre::Vector3> vertices, normals;
     std::vector<Ogre::Vector4> colors;
     std::vector< std::vector<Ogre::Vector2> > uvlist;
     Ogre::Vector3 center;
     float radius;
+    unsigned short consistencyFlags;
+    int refAbstractAdditionalGeometryData; // FIXME
 
     void read(NIFStream *nif)
     {
+        if (nifVer >= 0x0a020000) // from 10.2.0.0
+            int unknownInt = nif->getInt(); // always 0
+
         int verts = nif->getUShort();
 
-        if(nif->getBool(nifVer)/*Int()*/) // has vertices
+        if (nifVer >= 0x0a020000) // from 10.2.0.0
+        {
+            keepFlags = nif->getChar();
+            compressFlags = nif->getChar();
+        }
+
+        if(nif->getBool(nifVer)) // has vertices
             nif->getVector3s(vertices, verts);
 
-        if(nif->getBool(nifVer)/*Int()*/) // has normals
+        if (nifVer >= 0x0a000100) // from 10.0.1.0
+            numUVSets = nif->getUShort();
+
+        if(nif->getBool(nifVer)) // has normals
             nif->getVector3s(normals, verts);
 
         center = nif->getVector3();
         radius = nif->getFloat();
 
-        if(nif->getBool(nifVer)/*Int()*/) // has vertex colors
+        if(nif->getBool(nifVer)) // has vertex colors
             nif->getVector4s(colors, verts);
 
+        int uvs = 0;
         // Only the first 6 bits are used as a count. I think the rest are
         // flags of some sort.
-        int uvs = nif->getUShort();
-        uvs &= 0x3f;
+        if (nifVer <= 0x04020200) // up to 4.2.2.0
+            uvs = nif->getUShort() & 0x3f;
+        if (nifVer >= 0x0a000100) // from 10.0.1.0
+            uvs = numUVSets & 0x3f;
 
-        if(nif->getBool(nifVer)/*Int()*/) // has Uv
+        if (nifVer <= 0x04000002) // up to 4.0.0.2
+            bool hasUV = nif->getBool(nifVer);
+
+        if(uvs)
         {
             uvlist.resize(uvs);
             for(int i = 0;i < uvs;i++)
                 nif->getVector2s(uvlist[i], verts);
         }
+
+        if (nifVer >= 0x0a000100) // from 10.0.1.0
+            consistencyFlags = nif->getUShort();
+
+        if (nifVer >= 0x14000004) // from 20.0.0.4
+            refAbstractAdditionalGeometryData = nif->getInt(); // FIXME
     }
 };
 
@@ -405,22 +431,22 @@ public:
             strips[i] = nif->getUShort();
         }
 
-        unsigned short stripLengths = nif->getUShort();
-
         bool hasPoints = false;
         if (nifVer <= 0x0a000102) // up to 10.0.1.2
             hasPoints = true;
         else
-            hasPoints = !!nif->getBool(nifVer);//Int();
+            hasPoints = nif->getBool(nifVer);
 
-        points.resize(numStrips, std::vector<unsigned short>(stripLengths));
         if (hasPoints)
         {
+            points.resize(numStrips);
             for (unsigned int i = 0; i < numStrips; ++i)
-                for (unsigned int j = 0; j < stripLengths; ++j)
+            {
+                points[i].resize(strips[i]);
+                for (unsigned int j = 0; j < strips[i]; ++j)
                     points[i][j] = nif->getUShort();
+            }
         }
-        std::cout << "finished reading NiTriStripsData " << std::to_string(nif->tell()) << std::endl;
     }
 
     void post(NIFStream *nif)
