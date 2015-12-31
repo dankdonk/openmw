@@ -102,6 +102,10 @@ enum RecordType
   RC_NiTriStrips,
   RC_NiBinaryExtraData,
   RC_NiTriStripsData,
+  RC_bhkListShape,
+  RC_bhkBoxShape,
+  RC_bhkConvexTransformShape,
+  RC_bhkConvexVerticesShape,
   RC_RootCollisionNode
 };
 

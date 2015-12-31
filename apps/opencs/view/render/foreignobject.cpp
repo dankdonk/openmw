@@ -85,6 +85,8 @@ void CSVRender::ForeignObject::update()
     }
     else
     {
+        // Oblivion.eam contains some paths with leading space
+        model.erase(std::remove_if(model.begin(), model.end(), ::isspace), model.end());
         mObject = NifOgre::Loader::createObjects (mBase, "Meshes\\" + model);
         mObject->setVisibilityFlags (Element_Reference);
 

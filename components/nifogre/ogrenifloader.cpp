@@ -24,6 +24,7 @@
 #include "ogrenifloader.hpp"
 
 #include <algorithm>
+#include <iostream> // FIXME
 
 #include <OgreTechnique.h>
 #include <OgreEntity.h>
@@ -1337,6 +1338,7 @@ public:
             // Create a base skeleton entity if this NIF needs one
             createSkelBase(name, group, sceneNode->getCreator(), node, scene);
         }
+        //std::cout << "creating object "<< name << ", root " << node->name << std::endl; // FIXME
         createObjects(nif, name, group, sceneNode, node, scene, flags, 0, 0);
     }
 

@@ -323,7 +323,9 @@ struct OblivionSubShape
     unsigned int material; // http://niftools.sourceforge.net/doc/nif/HavokMaterial.html
 };
 
-struct bhkPackedNiTriStripsShape : public Node // bhkShape
+class bhkShape : public Record {};
+
+struct bhkPackedNiTriStripsShape : public  bhkShape
 {
     std::vector<OblivionSubShape> subShapes;
     unsigned int unknown1;
@@ -367,10 +369,134 @@ struct bhkPackedNiTriStripsShape : public Node // bhkShape
     }
 };
 
-struct bhkMoppBvTreeShape : public Node // bhkShape
+class bhkListShape : public bhkShape
 {
-    unsigned int refBhkShape;
+public:
+    std::vector<bhkShapePtr> subShapes;
     unsigned int material; // http://niftools.sourceforge.net/doc/nif/HavokMaterial.html
+    //unsigned int materialSkyrim; // http://niftools.sourceforge.net/doc/nif/SkyrimHavokMaterial.html
+    float unknownF1;
+    std::vector<float> unknown;
+    std::vector<unsigned int> unknownInts;
+
+    void read(NIFStream *nif)
+    {
+        material = nif->getUInt();
+        //materialSkyrim = nif->getUInt();  // not sure if this is version dependent
+        unknownF1 = nif->getFloat();
+
+        unknown.resize(6);
+        for (int i = 0; i < 6; ++i)
+            unknown[i] = nif->getFloat();
+
+        unknownInts.resize(nif->getUInt());
+        for (unsigned int i = 0; i < unknownInts.size(); ++i)
+            unknownInts[i] = nif->getUInt();
+    }
+
+    void post(NIFFile *nif)
+    {
+        // FIXME
+    }
+};
+
+class bhkBoxShape : public bhkShape
+{
+public:
+    unsigned int material; // http://niftools.sourceforge.net/doc/nif/HavokMaterial.html
+    //unsigned int materialSkyrim; // http://niftools.sourceforge.net/doc/nif/SkyrimHavokMaterial.html
+    float radius;
+    std::vector<unsigned char> unknown;
+    Ogre::Vector3 dimensions;
+    float minSize;
+
+    void read(NIFStream *nif)
+    {
+        material = nif->getUInt();
+        //materialSkyrim = nif->getUInt();  // not sure if this is version dependent
+        radius = nif->getFloat();
+        unknown.resize(8);
+        for (int i = 0; i < 8; ++i)
+            unknown[i] = nif->getChar();
+
+        dimensions = nif->getVector3();
+        minSize = nif->getFloat();
+    }
+
+    void post(NIFFile *nif)
+    {
+        // FIXME
+    }
+};
+
+class bhkConvexTransformShape : public bhkShape
+{
+public:
+    bhkShapePtr shape;
+    unsigned int material; // http://niftools.sourceforge.net/doc/nif/HavokMaterial.html
+    //unsigned int materialSkyrim; // http://niftools.sourceforge.net/doc/nif/SkyrimHavokMaterial.html
+    float unknownF1;
+    std::vector<unsigned char> unknown;
+    Ogre::Vector3 dimensions;
+    float transform[4][4];
+
+    void read(NIFStream *nif)
+    {
+        shape.read(nif);
+        material = nif->getUInt();
+        //materialSkyrim = nif->getUInt();  // not sure if this is version dependent
+        unknownF1 = nif->getFloat();
+        unknown.resize(8);
+        for (int i = 0; i < 8; ++i)
+            unknown[i] = nif->getChar();
+
+        for(size_t i = 0; i < 4; i++)
+            for(size_t j = 0; j < 4; j++)
+                transform[i][j] = nif->getFloat();
+    }
+
+    void post(NIFFile *nif)
+    {
+        shape.post(nif);
+
+        // FIXME
+    }
+};
+
+class bhkConvexVerticesShape : public bhkShape
+{
+public:
+    unsigned int material; // http://niftools.sourceforge.net/doc/nif/HavokMaterial.html
+    //unsigned int materialSkyrim; // http://niftools.sourceforge.net/doc/nif/SkyrimHavokMaterial.html
+    float radius;
+    std::vector<float> unknown;
+    std::vector<Ogre::Vector4> vertices;
+    std::vector<Ogre::Vector4> normals;
+
+    void read(NIFStream *nif)
+    {
+        material = nif->getUInt();
+        //materialSkyrim = nif->getUInt();  // not sure if this is version dependent
+        radius = nif->getFloat();
+        unknown.resize(6);
+        for (int i = 0; i < 6; ++i)
+            unknown[i] = nif->getFloat();
+
+        nif->getVector4s(vertices, nif->getUInt());
+        nif->getVector4s(normals, nif->getUInt());
+    }
+
+    void post(NIFFile *nif)
+    {
+        // FIXME
+    }
+};
+
+class bhkMoppBvTreeShape : public bhkShape
+{
+public:
+    unsigned int refBhkShape;
+    unsigned int material;
     //unsigned int materialSkyrim;
     std::vector<unsigned char> unknown;
     float unknownF1;
@@ -425,7 +551,7 @@ public:
 class bhkRigidBody : public Record
 {
 public:
-    bkhShapeDataPtr shape;
+    bhkShapePtr shape;
     int refBhkShape;
     unsigned char layer; // http://niftools.sourceforge.net/doc/nif/OblivionLayer.html
     unsigned char collisionFilter;
@@ -632,10 +758,12 @@ public:
                     break;
                 case 1:
                     bv.box.center = nif->getVector3();
+                    bv.box.axis.resize(3);
                     for (int i = 0; i < 3; ++i)
-                        bv.box.axis.push_back(nif->getVector3());
+                        bv.box.axis[i] = nif->getVector3();
+                    bv.box.extent.resize(3);
                     for (int i = 0; i < 3; ++i)
-                        bv.box.extent.push_back(nif->getFloat());
+                        bv.box.extent[i] = nif->getFloat();
                     break;
                 case 2:
                     bv.capsule.center = nif->getVector3();

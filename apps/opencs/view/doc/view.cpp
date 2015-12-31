@@ -362,17 +362,17 @@ void CSVDoc::View::setupForeignMenu()
     connect (stat, SIGNAL (triggered()), this, SLOT (addForeignStaticSubView()));
     foreign->addAction (stat);
 
-    foreign->addSeparator(); // items that don't represent single record lists follow here
-
-    QAction *regionMap = new QAction (tr ("Region Map"), this);
-    connect (regionMap, SIGNAL (triggered()), this, SLOT (addForeignRegionMapSubView()));
-    foreign->addAction (regionMap);
-
-    foreign->addSeparator(); // items from foreign worlds follow here
+    foreign->addSeparator();
 
     QAction *ltex = new QAction (tr ("Land Textures"), this);
     connect (ltex, SIGNAL (triggered()), this, SLOT (addForeignLandTextureSubView()));
     foreign->addAction (ltex);
+
+    foreign->addSeparator();
+
+    QAction *regionMap = new QAction (tr ("Region Map"), this);
+    connect (regionMap, SIGNAL (triggered()), this, SLOT (addForeignRegionMapSubView()));
+    foreign->addAction (regionMap);
 }
 
 void CSVDoc::View::setupUi()
