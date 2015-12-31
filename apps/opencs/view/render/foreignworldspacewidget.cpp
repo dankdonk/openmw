@@ -179,8 +179,23 @@ bool CSVRender::ForeignWorldspaceWidget::adjustCells()
                     new CSVRender::TextOverlay(manual, getCamera(), iter->getId(mWorldspace));
             textDisp->enable(true);
             textDisp->setCaption(iter->getId(mWorldspace));
-            std::string desc = cells.getRecord(index).get().mCellId;
-            if(desc == "") desc = cells.getRecord(index).get().mRegion;
+            std::string desc = cells.getRecord(index).get().mFullName;
+
+            // FIXME: inefficient hack
+            const CSMForeign::RegionCollection& regions = mDocument.getData().getForeignRegions();
+            const CSMForeign::Region& region = regions.getRecord(cells.getRecord(index).get().mRegion).get();
+
+            if (desc == "")
+            {
+                if (!region.mMapName.empty())
+                    desc = region.mMapName;
+                else if (!region.mEditorId.empty())
+                    desc = region.mEditorId;
+                else
+                    desc = cells.getRecord(index).get().mRegion;
+            }
+
+            //if(desc == "") desc = cells.getRecord(index).get().mRegion;
             textDisp->setDesc(desc); // FIXME: config setting
             textDisp->update();
             mTextOverlays.insert(std::make_pair(*iter, textDisp));

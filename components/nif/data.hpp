@@ -126,7 +126,7 @@ public:
         }
 
         // Read the match list, which lists the vertices that are equal to
-        // vertices. We don't actually need need this for anything, so
+        // vertices. We don't actually need this for anything, so
         // just skip it.
         int verts = nif->getUShort();
         for(int i=0;i < verts;i++)
@@ -412,11 +412,16 @@ struct NiKeyframeData : public Record
     }
 };
 
+// Ogre doesn't seem to allow meshes to be created using triangle strips
+// (unless using ManualObject)
 class NiTriStripsData : public ShapeData
 {
 public:
-    std::vector<unsigned short> strips;
+    std::vector<unsigned short> stripLengths;
     std::vector<std::vector<unsigned short> > points;
+
+    // Triangles, three vertex indices per triangle
+    std::vector<short> triangles;
 
     void read(NIFStream *nif)
     {
@@ -425,10 +430,10 @@ public:
         /*int tris =*/ nif->getUShort(); // NiTriBasedGeomData
 
         unsigned short numStrips = nif->getUShort();
-        strips.resize(numStrips);
+        stripLengths.resize(numStrips);
         for (unsigned int i = 0; i < numStrips; ++i)
         {
-            strips[i] = nif->getUShort();
+            stripLengths[i] = nif->getUShort();
         }
 
         bool hasPoints = false;
@@ -442,16 +447,44 @@ public:
             points.resize(numStrips);
             for (unsigned int i = 0; i < numStrips; ++i)
             {
-                points[i].resize(strips[i]);
-                for (unsigned int j = 0; j < strips[i]; ++j)
+                points[i].resize(stripLengths[i]);
+                for (unsigned int j = 0; j < stripLengths[i]; ++j)
                     points[i][j] = nif->getUShort();
             }
         }
-    }
 
-    void post(NIFStream *nif)
-    {
-        // FIXME
+        // there are (N-2)*3 vertex indicies for triangles
+        // where N = stripLengths[stripIndex]
+        //
+        // e.g. strip length = 150
+        //      (150-2)*3 = 148*3 = 444
+        unsigned int base = 0;
+        for (unsigned int i = 0; i < numStrips; ++i)
+        {
+            base = triangles.size();
+            triangles.resize(base + (stripLengths[i]-2)*3);
+            for (unsigned int j = 0; j < stripLengths[i]-2; ++j)
+            {
+                if (j & 1)
+                {
+                    // glVertex2d(tri.strip[s].vertex[v].x, tri.strip[s].vertex[v].y);
+                    // glVertex2d(tri.strip[s].vertex[v+1].x, tri.strip[s].vertex[v+1].y);
+                    // glVertex2d(tri.strip[s].vertex[v+2].x, tri.strip[s].vertex[v+2].y);
+                    triangles[base+j*3]   = points[i][j];
+                    triangles[base+j*3+1] = points[i][j+2];
+                    triangles[base+j*3+2] = points[i][j+1];
+                }
+                else
+                {
+                    // glVertex2d(tri.strip[s].vertex[v].x, tri.strip[s].vertex[v].y);
+                    // glVertex2d(tri.strip[s].vertex[v+2].x, tri.strip[s].vertex[v+2].y);
+                    // glVertex2d(tri.strip[s].vertex[v+1].x, tri.strip[s].vertex[v+1].y);
+                    triangles[base+j*3]   = points[i][j];
+                    triangles[base+j*3+1] = points[i][j+1];
+                    triangles[base+j*3+2] = points[i][j+2];
+                }
+            }
+        }
     }
 };
 

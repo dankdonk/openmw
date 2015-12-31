@@ -168,8 +168,8 @@ void ESM4::Cell::load(ESM4::Reader& reader)
             }
             case ESM4::SUB_XCLR:
             {
-                mRegions.resize(subHdr.dataSize/sizeof(std::uint32_t));
-                for (std::vector<std::uint32_t>::iterator it = mRegions.begin(); it != mRegions.end(); ++it)
+                mRegions.resize(subHdr.dataSize/sizeof(FormId));
+                for (std::vector<FormId>::iterator it = mRegions.begin(); it != mRegions.end(); ++it)
                 {
                     reader.get(*it);
 #if 0

@@ -1,6 +1,7 @@
 #include "mesh.hpp"
 
 #include <limits>
+#include <iostream> // FIXME
 
 #include <OgreMeshManager.h>
 #include <OgreMesh.h>
@@ -110,10 +111,36 @@ public:
 
 NIFMeshLoader::LoaderMap NIFMeshLoader::sLoaders;
 
-void NIFMeshLoader::createSubMesh(Ogre::Mesh *mesh, const Nif::NiTriShape *shape)
+//void NIFMeshLoader::createSubMesh(Ogre::Mesh *mesh, const Nif::NiTriShape *shape)
+void NIFMeshLoader::createSubMesh(Ogre::Mesh *mesh, const Nif::Record *record)
 {
+    const Nif::ShapeData *data = NULL;
+    const Nif::NiSkinInstance *skin = NULL;
+
+    const Nif::NiTriShape *shape = static_cast<const Nif::NiTriShape*>(record);
+    const Nif::NiTriStrips *strips = static_cast<const Nif::NiTriStrips*>(record);
+    if (!mStrips && shape)
+    {
+        data = shape->data.getPtr();
+        skin = (shape->skin.empty() ? NULL : shape->skin.getPtr());
+    }
+    else
+    {
+        if (strips)
+        {
+            data = strips->data.getPtr();
+            skin = (strips->skin.empty() ? NULL : strips->skin.getPtr());
+        }
+    }
+
+
+
+
+
+#if 0
     const Nif::NiTriShapeData *data = shape->data.getPtr();
     const Nif::NiSkinInstance *skin = (shape->skin.empty() ? NULL : shape->skin.getPtr());
+#endif
     std::vector<Ogre::Vector3> srcVerts = data->vertices;
     std::vector<Ogre::Vector3> srcNorms = data->normals;
     Ogre::HardwareBuffer::Usage vertUsage = Ogre::HardwareBuffer::HBU_STATIC;
@@ -169,7 +196,11 @@ void NIFMeshLoader::createSubMesh(Ogre::Mesh *mesh, const Nif::NiTriShape *shape
         {
             // No skinning and no skeleton, so just transform the vertices and
             // normals into position.
-            Ogre::Matrix4 mat4 = shape->getWorldTransform();
+            Ogre::Matrix4 mat4;
+            if (shape)
+                mat4 = shape->getWorldTransform();
+            else
+                mat4 = strips->getWorldTransform();
             for(size_t i = 0;i < srcVerts.size();i++)
             {
                 Ogre::Vector4 vec4(srcVerts[i].x, srcVerts[i].y, srcVerts[i].z, 1.0f);
@@ -217,7 +248,7 @@ void NIFMeshLoader::createSubMesh(Ogre::Mesh *mesh, const Nif::NiTriShape *shape
 
     decl = sub->vertexData->vertexDeclaration;
     bind = sub->vertexData->vertexBufferBinding;
-    if(srcVerts.size())
+    if(srcVerts.size()) // srcVerts == Nif::ShapeData::verticies (both shape/strips)
     {
         vbuf = hwBufMgr->createVertexBuffer(Ogre::VertexElement::getTypeSize(Ogre::VET_FLOAT3),
                                             srcVerts.size(), vertUsage, vertShadowBuffer);
@@ -228,7 +259,7 @@ void NIFMeshLoader::createSubMesh(Ogre::Mesh *mesh, const Nif::NiTriShape *shape
     }
 
     // Vertex normals
-    if(srcNorms.size())
+    if(srcNorms.size()) // srcVerts == Nif::ShapeData::normals (both shape/strips)
     {
         vbuf = hwBufMgr->createVertexBuffer(Ogre::VertexElement::getTypeSize(Ogre::VET_FLOAT3),
                                             srcNorms.size(), vertUsage, vertShadowBuffer);
@@ -240,7 +271,7 @@ void NIFMeshLoader::createSubMesh(Ogre::Mesh *mesh, const Nif::NiTriShape *shape
 
     // Vertex colors
     const std::vector<Ogre::Vector4> &colors = data->colors;
-    if(colors.size())
+    if(colors.size()) // data->colors == Nif::ShapeData::colors (both shape/strips)
     {
         Ogre::RenderSystem *rs = Ogre::Root::getSingleton().getRenderSystem();
         std::vector<Ogre::RGBA> colorsRGB(colors.size());
@@ -258,7 +289,7 @@ void NIFMeshLoader::createSubMesh(Ogre::Mesh *mesh, const Nif::NiTriShape *shape
 
     // Texture UV coordinates
     size_t numUVs = data->uvlist.size();
-    if (numUVs)
+    if (numUVs) // data->uvlist == Nif::ShapeData::uvlist (both shape/strips)
     {
         size_t elemSize = Ogre::VertexElement::getTypeSize(Ogre::VET_FLOAT2);
 
@@ -279,15 +310,21 @@ void NIFMeshLoader::createSubMesh(Ogre::Mesh *mesh, const Nif::NiTriShape *shape
         bind->setBinding(nextBuf++, vbuf);
     }
 
+    // ------------------------ shape/strips are different from here
+
     // Triangle faces
-    const std::vector<short> &srcIdx = data->triangles;
-    if(srcIdx.size())
+    const std::vector<short> *srcIdx;
+    if (!mStrips)
+        srcIdx = &shape->data.getPtr()->triangles;
+    else
+        srcIdx = &strips->data.getPtr()->triangles;
+    if(srcIdx->size())
     {
-        ibuf = hwBufMgr->createIndexBuffer(Ogre::HardwareIndexBuffer::IT_16BIT, srcIdx.size(),
+        ibuf = hwBufMgr->createIndexBuffer(Ogre::HardwareIndexBuffer::IT_16BIT, srcIdx->size(),
                                            Ogre::HardwareBuffer::HBU_STATIC);
-        ibuf->writeData(0, ibuf->getSizeInBytes(), &srcIdx[0], true);
+        ibuf->writeData(0, ibuf->getSizeInBytes(), &(*srcIdx)[0], true);
         sub->indexData->indexBuffer = ibuf;
-        sub->indexData->indexCount = srcIdx.size();
+        sub->indexData->indexCount = srcIdx->size();
         sub->indexData->indexStart = 0;
     }
 
@@ -323,7 +360,8 @@ void NIFMeshLoader::createSubMesh(Ogre::Mesh *mesh, const Nif::NiTriShape *shape
     const Nif::NiStencilProperty *stencilprop = NULL;
     bool needTangents = false;
 
-    shape->getProperties(texprop, matprop, alphaprop, vertprop, zprop, specprop, wireprop, stencilprop);
+    const Nif::Node *node = static_cast<const Nif::Node*>(record);
+    node->getProperties(texprop, matprop, alphaprop, vertprop, zprop, specprop, wireprop, stencilprop);
     std::string matname = NIFMaterialLoader::getMaterial(data, mesh->getName(), mGroup,
                                                          texprop, matprop, alphaprop,
                                                          vertprop, zprop, specprop,
@@ -340,9 +378,9 @@ void NIFMeshLoader::createSubMesh(Ogre::Mesh *mesh, const Nif::NiTriShape *shape
     }
 
 
-    if(!shape->controller.empty())
+    if(!node->controller.empty())
     {
-        Nif::ControllerPtr ctrl = shape->controller;
+        Nif::ControllerPtr ctrl = node->controller;
         do {
             // Load GeomMorpherController into an Ogre::Pose and Animation
             if(ctrl->recType == Nif::RC_NiGeomMorpherController && ctrl->flags & Nif::NiNode::ControllerFlag_Active)
@@ -374,9 +412,15 @@ void NIFMeshLoader::createSubMesh(Ogre::Mesh *mesh, const Nif::NiTriShape *shape
     }
 }
 
+#if 0
+void NIFMeshLoader::createStripsSubMesh(Ogre::Mesh *mesh, const Nif::NiTriStrips *strips)
+{
+    std::cout << "FIXME" << std::endl;
+}
+#endif
 
-NIFMeshLoader::NIFMeshLoader(const std::string &name, const std::string &group, size_t idx)
-  : mName(name), mGroup(group), mShapeIndex(idx)
+NIFMeshLoader::NIFMeshLoader(const std::string &name, const std::string &group, size_t idx, bool strips)
+  : mName(name), mGroup(group), mShapeIndex(idx), mStrips(strips)
 {
 }
 
@@ -395,14 +439,25 @@ void NIFMeshLoader::loadResource(Ogre::Resource *resource)
     }
 
     const Nif::Record *record = nif->getRecord(mShapeIndex);
-    createSubMesh(mesh, static_cast<const Nif::NiTriShape*>(record));
+    createSubMesh(mesh, record);
+#if 0
+    const Nif::NiTriShape *shape = static_cast<const Nif::NiTriShape*>(record);
+    if (shape)
+        createSubMesh(mesh, shape);
+    else
+    {
+        const Nif::NiTriStrips *strips = static_cast<const Nif::NiTriStrips*>(record);
+        if (strips)
+            createStripsSubMesh(mesh, strips);
+    }
+#endif
 }
 
 
-void NIFMeshLoader::createMesh(const std::string &name, const std::string &fullname, const std::string &group, size_t idx)
+void NIFMeshLoader::createMesh(const std::string &name, const std::string &fullname, const std::string &group, size_t idx, bool strips)
 {
     NIFMeshLoader::LoaderMap::iterator loader;
-    loader = sLoaders.insert(std::make_pair(fullname, NIFMeshLoader(name, group, idx))).first;
+    loader = sLoaders.insert(std::make_pair(fullname, NIFMeshLoader(name, group, idx, strips))).first;
 
     Ogre::MeshManager &meshMgr = Ogre::MeshManager::getSingleton();
     Ogre::MeshPtr mesh = meshMgr.createManual(fullname, group, &loader->second);

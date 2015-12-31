@@ -707,16 +707,34 @@ private:
                              Ogre::SceneManager *sceneMgr, ObjectScenePtr scene,
                              const Nif::Node *node, int flags, int animflags)
     {
+        int recIndex = 0;
+        std::string fullname;
+        const Nif::NiTriStrips *strips = static_cast<const Nif::NiTriStrips*>(node);
         const Nif::NiTriShape *shape = static_cast<const Nif::NiTriShape*>(node);
 
-        std::string fullname = name+"@index="+Ogre::StringConverter::toString(shape->recIndex);
-        if(shape->name.length() > 0)
-            fullname += "@shape="+shape->name;
+        bool isStrips = false; // FIXME not needed
+        if (node->recType == Nif::RC_NiTriStrips)
+        {
+            recIndex = strips->recIndex;
+
+            fullname = name+"@index="+Ogre::StringConverter::toString(recIndex);
+            if(strips->name.length() > 0)
+                fullname += "@strips="+strips->name;
+            isStrips = true;
+        }
+        else
+        {
+            recIndex = shape->recIndex;
+
+            fullname = name+"@index="+Ogre::StringConverter::toString(recIndex);
+            if(shape->name.length() > 0)
+                fullname += "@shape="+shape->name;
+        }
         Misc::StringUtils::toLower(fullname);
 
         Ogre::MeshManager &meshMgr = Ogre::MeshManager::getSingleton();
         if(meshMgr.getByName(fullname).isNull())
-            NIFMeshLoader::createMesh(name, fullname, group, shape->recIndex);
+            NIFMeshLoader::createMesh(name, fullname, group, recIndex, isStrips);
 
         Ogre::Entity *entity = sceneMgr->createEntity(fullname);
 
@@ -732,7 +750,7 @@ private:
         scene->mEntities.push_back(entity);
         if(scene->mSkelBase)
         {
-            int trgtid = NIFSkeletonLoader::lookupOgreBoneHandle(name, shape->recIndex);
+            int trgtid = NIFSkeletonLoader::lookupOgreBoneHandle(name, recIndex);
             Ogre::Bone *trgtbone = scene->mSkelBase->getSkeleton()->getBone(trgtid);
             trgtbone->getUserObjectBindings().setUserAny(Ogre::Any(static_cast<Ogre::MovableObject*>(entity)));
 
@@ -783,7 +801,10 @@ private:
             ctrl = ctrl->next;
         }
 
-        createMaterialControllers(shape, entity, animflags, scene);
+        if (node->recType == Nif::RC_NiTriStrips)
+            createMaterialControllers(strips, entity, animflags, scene);
+        else
+            createMaterialControllers(shape, entity, animflags, scene);
     }
 
     static void createMaterialControllers (const Nif::Node* node, Ogre::MovableObject* movable, int animflags, ObjectScenePtr scene)
@@ -1207,13 +1228,13 @@ private:
             scene->mBillboardNodes.push_back(bone);
         }
 
+        // FIXME: duplicated code
         if (node->hasExtras)
         {
             for (unsigned int i = 0; i < node->extras.length(); ++i)
             {
                 Nif::ExtraPtr e = node->extras[i];
 
-                // FIXME: duplicated code blocks
                 if(e->recType == Nif::RC_NiTextKeyExtraData)
                 {
                     const Nif::NiTextKeyExtraData *tk = static_cast<const Nif::NiTextKeyExtraData*>(e.getPtr());
@@ -1272,7 +1293,8 @@ private:
                 /* Ignored */
             }
 
-            if(node->recType == Nif::RC_NiTriShape && !(flags&0x80000000))
+            if((node->recType == Nif::RC_NiTriShape ||
+                node->recType == Nif::RC_NiTriStrips) && !(flags&0x80000000)) // ignore marker objects
             {
                 createEntity(name, group, sceneNode->getCreator(), scene, node, flags, animflags);
             }
@@ -1305,7 +1327,7 @@ private:
          * other entities are attached to bones and not skinned. */
         Ogre::MeshManager &meshMgr = Ogre::MeshManager::getSingleton();
         if(meshMgr.getByName(name).isNull())
-            NIFMeshLoader::createMesh(name, name, group, ~(size_t)0);
+            NIFMeshLoader::createMesh(name, name, group, ~(size_t)0, false); // FIXME false for now
 
         scene->mSkelBase = sceneMgr->createEntity(name);
         scene->mEntities.push_back(scene->mSkelBase);
@@ -1332,6 +1354,7 @@ public:
             return;
         }
 
+        //if (0)//node->recType != Nif::RC_NiTriStrips) // FIXME
         if(Ogre::SkeletonManager::getSingleton().resourceExists(name) ||
            !NIFSkeletonLoader::createSkeleton(name, group, node).isNull())
         {
