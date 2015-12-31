@@ -315,9 +315,9 @@ void NIFMeshLoader::createSubMesh(Ogre::Mesh *mesh, const Nif::Record *record)
     // Triangle faces
     const std::vector<short> *srcIdx;
     if (!mStrips)
-        srcIdx = &shape->data.getPtr()->triangles;
+        srcIdx = &static_cast<const Nif::NiTriShapeData*>(shape->data.getPtr())->triangles;
     else
-        srcIdx = &strips->data.getPtr()->triangles;
+        srcIdx = &static_cast<const Nif::NiTriStripsData*>(strips->data.getPtr())->triangles;
     if(srcIdx->size())
     {
         ibuf = hwBufMgr->createIndexBuffer(Ogre::HardwareIndexBuffer::IT_16BIT, srcIdx->size(),

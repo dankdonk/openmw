@@ -118,7 +118,7 @@ public:
         if (nifVer <= 0x0a000100) // up to 10.0.1.0
             hasTriangles = true;
         else
-            hasTriangles = !!nif->getInt();
+            hasTriangles = !!nif->getUShort(); // this is meant to be an Int?
 
         if (hasTriangles)
         {
@@ -401,8 +401,8 @@ struct NiKeyframeData : public Record
         mRotations.read(nif);
         if(mRotations.mInterpolationType == mRotations.sXYZInterpolation)
         {
-            //Chomp unused float
-            nif->getFloat();
+            if (nifVer <= 0x0a010000) // up to 10.1.0.0
+                nif->getFloat(); //Chomp unused float
             mXRotations.read(nif, true);
             mYRotations.read(nif, true);
             mZRotations.read(nif, true);
@@ -411,6 +411,8 @@ struct NiKeyframeData : public Record
         mScales.read(nif);
     }
 };
+
+struct NiTransformData : public NiKeyframeData {};
 
 // Ogre doesn't seem to allow meshes to be created using triangle strips
 // (unless using ManualObject)
@@ -463,22 +465,16 @@ public:
         {
             base = triangles.size();
             triangles.resize(base + (stripLengths[i]-2)*3);
-            for (unsigned int j = 0; j < stripLengths[i]-2; ++j)
+            for (unsigned int j = 0; j < (unsigned int)(stripLengths[i]-2); ++j)
             {
                 if (j & 1)
                 {
-                    // glVertex2d(tri.strip[s].vertex[v].x, tri.strip[s].vertex[v].y);
-                    // glVertex2d(tri.strip[s].vertex[v+1].x, tri.strip[s].vertex[v+1].y);
-                    // glVertex2d(tri.strip[s].vertex[v+2].x, tri.strip[s].vertex[v+2].y);
                     triangles[base+j*3]   = points[i][j];
                     triangles[base+j*3+1] = points[i][j+2];
                     triangles[base+j*3+2] = points[i][j+1];
                 }
                 else
                 {
-                    // glVertex2d(tri.strip[s].vertex[v].x, tri.strip[s].vertex[v].y);
-                    // glVertex2d(tri.strip[s].vertex[v+2].x, tri.strip[s].vertex[v+2].y);
-                    // glVertex2d(tri.strip[s].vertex[v+1].x, tri.strip[s].vertex[v+1].y);
                     triangles[base+j*3]   = points[i][j];
                     triangles[base+j*3+1] = points[i][j+1];
                     triangles[base+j*3+2] = points[i][j+2];

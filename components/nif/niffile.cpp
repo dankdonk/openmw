@@ -108,6 +108,7 @@ static std::map<std::string,RecordFactoryEntry> makeFactory()
     newFactory.insert(makeEntry("BSXFlags",                   &construct <BSXFlags>                    , RC_BSXFlags                      ));
     newFactory.insert(makeEntry("hkPackedNiTriStripsData",    &construct <hkPackedNiTriStripsData>     , RC_hkPackedNiTriStripsData       ));
     newFactory.insert(makeEntry("bhkPackedNiTriStripsShape",  &construct <bhkPackedNiTriStripsShape>   , RC_bhkPackedNiTriStripsShape     ));
+    newFactory.insert(makeEntry("bhkNiTriStripsShape",        &construct <bhkNiTriStripsShape>         , RC_bhkNiTriStripsShape           ));
     newFactory.insert(makeEntry("bhkMoppBvTreeShape",         &construct <bhkMoppBvTreeShape>          , RC_bhkMoppBvTreeShape            ));
     newFactory.insert(makeEntry("bhkRigidBody",               &construct <bhkRigidBody>                , RC_bhkRigidBody                  ));
     newFactory.insert(makeEntry("bhkRigidBodyT",              &construct <bhkRigidBodyT>               , RC_bhkRigidBodyT                 ));
@@ -120,6 +121,16 @@ static std::map<std::string,RecordFactoryEntry> makeFactory()
     newFactory.insert(makeEntry("bhkBoxShape",                &construct <bhkBoxShape>                 , RC_bhkBoxShape                   ));
     newFactory.insert(makeEntry("bhkConvexTransformShape",    &construct <bhkConvexTransformShape>     , RC_bhkConvexTransformShape       ));
     newFactory.insert(makeEntry("bhkConvexVerticesShape",     &construct <bhkConvexVerticesShape>      , RC_bhkConvexVerticesShape        ));
+    newFactory.insert(makeEntry("NiTransformController",      &construct <NiTransformController>       , RC_NiTransformController         ));
+    newFactory.insert(makeEntry("NiPathInterpolator",         &construct <NiPathInterpolator>          , RC_NiPathInterpolator            ));
+    newFactory.insert(makeEntry("NiTransformInterpolator",    &construct <NiTransformInterpolator>     , RC_NiTransformInterpolator       ));
+    newFactory.insert(makeEntry("NiTransformData",            &construct <NiTransformData>             , RC_NiTransformData               ));
+    newFactory.insert(makeEntry("NiGeometry",                 &construct <NiGeometry>                  , RC_NiGeometry                    ));
+    newFactory.insert(makeEntry("NiParticleSystem",           &construct <NiParticleSystem>            , RC_NiParticleSystem              ));
+    newFactory.insert(makeEntry("NiPSysModifier",             &construct <NiPSysModifier>              , RC_NiPSysModifier                ));
+    newFactory.insert(makeEntry("NiControllerManager",        &construct <NiControllerManager>         , RC_NiControllerManager           ));
+    newFactory.insert(makeEntry("NiSequence",                 &construct <NiSequence>                  , RC_NiSequence                    ));
+    newFactory.insert(makeEntry("NiControllerSequence",       &construct <NiControllerSequence>        , RC_NiControllerSequence          ));
     return newFactory;
 }
 

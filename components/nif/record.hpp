@@ -93,6 +93,7 @@ enum RecordType
   RC_BSXFlags,
   RC_hkPackedNiTriStripsData,
   RC_bhkPackedNiTriStripsShape,
+  RC_bhkNiTriStripsShape,
   RC_bhkMoppBvTreeShape,
   RC_bhkRigidBody,
   RC_bhkRigidBodyT,
@@ -106,6 +107,16 @@ enum RecordType
   RC_bhkBoxShape,
   RC_bhkConvexTransformShape,
   RC_bhkConvexVerticesShape,
+  RC_NiTransformController,
+  RC_NiPathInterpolator,
+  RC_NiTransformInterpolator,
+  RC_NiTransformData,
+  RC_NiGeometry,
+  RC_NiParticleSystem,
+  RC_NiPSysModifier,
+  RC_NiControllerManager,
+  RC_NiSequence,
+  RC_NiControllerSequence,
   RC_RootCollisionNode
 };
 

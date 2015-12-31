@@ -49,6 +49,7 @@ public:
     }
 };
 
+// NiTimeController
 class Controller : public Record
 {
 public:

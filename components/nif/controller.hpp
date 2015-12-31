@@ -300,5 +300,73 @@ public:
     }
 };
 
+class NiInterpolator : public Record
+{
+};
+
+class NiPathInterpolator : public NiInterpolator
+{
+    NiPosDataPtr posData;
+    NiFloatDataPtr floatData;
+public:
+    void read(NIFStream *nif)
+    {
+        nif->getUShort();
+        nif->getUInt();
+        nif->getFloat();
+        nif->getFloat();
+        nif->getUShort();
+
+        posData.read(nif);
+        floatData.read(nif);
+    }
+};
+
+class NiTransformInterpolator : public NiInterpolator
+{
+    Ogre::Vector3 translation;
+    Ogre::Quaternion rotation;
+    float scale;
+    NiTransformDataPtr transform;
+public:
+    void read(NIFStream *nif)
+    {
+        translation = nif->getVector3();
+        rotation = nif->getQuaternion();
+        scale = nif->getFloat();
+
+        transform.read(nif);
+    }
+};
+
+// replaces NiKeyframeController
+class NiTransformController : public Controller
+{
+public:
+    NiInterpolatorPtr interpolator;
+    NiKeyframeDataPtr data;
+
+    void read(NIFStream *nif)
+    {
+        Controller::read(nif);
+        if (nifVer >= 0x0a020000) // from 10.2.0.0
+            interpolator.read(nif);
+
+        if (nifVer <= 0x0a010000) // up to 10.1.0.0
+            data.read(nif);
+    }
+
+    void post(NIFFile *nif)
+    {
+        Controller::post(nif);
+
+        if (nifVer >= 0x0a020000) // from 10.2.0.0
+            interpolator.post(nif);
+
+        if (nifVer <= 0x0a010000) // up to 10.1.0.0
+            data.post(nif);
+    }
+};
+
 } // Namespace
 #endif

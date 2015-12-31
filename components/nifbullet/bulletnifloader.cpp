@@ -394,7 +394,7 @@ void ManualBulletShapeLoader::handleNiTriShape(const Nif::NiTriShape *shape, int
 
         btTriangleMesh* childMesh = new btTriangleMesh();
 
-        const Nif::NiTriShapeData *data = shape->data.getPtr();
+        const Nif::NiTriShapeData *data = static_cast<const Nif::NiTriShapeData*>(shape->data.getPtr());
 
         childMesh->preallocateVertices(data->vertices.size());
         childMesh->preallocateIndices(data->triangles.size());
@@ -438,7 +438,7 @@ void ManualBulletShapeLoader::handleNiTriShape(const Nif::NiTriShape *shape, int
             mStaticMesh = new btTriangleMesh();
 
         // Static shape, just transform all vertices into position
-        const Nif::NiTriShapeData *data = shape->data.getPtr();
+        const Nif::NiTriShapeData *data = static_cast<const Nif::NiTriShapeData*>(shape->data.getPtr());
         const std::vector<Ogre::Vector3> &vertices = data->vertices;
         const std::vector<short> &triangles = data->triangles;
 
