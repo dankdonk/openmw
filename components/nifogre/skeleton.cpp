@@ -49,7 +49,8 @@ void NIFSkeletonLoader::buildBones(Ogre::Skeleton *skel, const Nif::Node *node, 
          node->recType == Nif::RC_NiBSParticleNode ||
          node->recType == Nif::RC_NiCamera ||
          node->recType == Nif::RC_NiAutoNormalParticles ||
-         node->recType == Nif::RC_NiRotatingParticles
+         node->recType == Nif::RC_NiRotatingParticles ||
+         node->recType == Nif::RC_NiTriStrips // ignore for now, not sure if these are used for skeletons
          ))
         warn("Unhandled "+node->recName+" "+node->name+" in "+skel->getName());
 

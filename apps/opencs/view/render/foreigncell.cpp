@@ -107,6 +107,7 @@ bool CSVRender::ForeignCell::addObjects (const std::vector<ESM4::FormId>& object
         if (record.mState != CSMWorld::RecordBase::State_Deleted)
         {
             ESM4::FormId id = objects[i];
+            //std::cout << "Adding object: " << ESM4::formIdToString(id) << std::endl;
             mObjects.insert(std::make_pair(id,
                         new ForeignObject(mDocument.getData(), mCellNode, id, false, mPhysics)));
             modified = true;
@@ -132,6 +133,8 @@ CSVRender::ForeignCell::ForeignCell (CSMDoc::Document& document, Ogre::SceneMana
     int landIndex = lands.searchId(cell.mLandTemporary);
 
     addObjects(cell.mRefTemporary); // FIXME: ignore visible distant and persistent children for now
+    addObjects(cell.mRefPersistent); // FIXME: ignore visible distant children for now
+    addObjects(cell.mRefVisibleDistant);
 
     if (landIndex != -1)
     {

@@ -166,7 +166,7 @@ struct NiNode : Node
     }
 };
 
-struct NiCamera : Node
+struct NiCamera : public Node
 {
     struct Camera
     {
@@ -179,14 +179,21 @@ struct NiCamera : Node
         // Level of detail modifier
         float LOD;
 
+        bool useOrtho;
+        unsigned int nifVer;
+
         void read(NIFStream *nif)
         {
+            if (nifVer >= 0x0a010000) // from 10.1.0.0
+                nif->getUShort();
             left = nif->getFloat();
             right = nif->getFloat();
             top = nif->getFloat();
             bottom = nif->getFloat();
             nearDist = nif->getFloat();
             farDist = nif->getFloat();
+            if (nifVer >= 0x0a010000) // from 10.1.0.0
+                useOrtho = nif->getBool(nifVer);
 
             vleft = nif->getFloat();
             vright = nif->getFloat();
@@ -202,47 +209,20 @@ struct NiCamera : Node
     {
         Node::read(nif);
 
+        cam.nifVer = nifVer;
         cam.read(nif);
 
         nif->getInt(); // -1
         nif->getInt(); // 0
+        if (nifVer >= 0x04020100) // from 4.2.1.0
+            nif->getInt();
     }
 };
 
-struct NiAutoNormalParticles : Node
+struct MaterialExtraData
 {
-    NiAutoNormalParticlesDataPtr data;
-
-    void read(NIFStream *nif)
-    {
-        Node::read(nif);
-        data.read(nif);
-        nif->getInt(); // -1
-    }
-
-    void post(NIFFile *nif)
-    {
-        Node::post(nif);
-        data.post(nif);
-    }
-};
-
-struct NiRotatingParticles : Node
-{
-    NiRotatingParticlesDataPtr data;
-
-    void read(NIFStream *nif)
-    {
-        Node::read(nif);
-        data.read(nif);
-        nif->getInt(); // -1
-    }
-
-    void post(NIFFile *nif)
-    {
-        Node::post(nif);
-        data.post(nif);
-    }
+    std::string name;
+    int extraData;
 };
 
 /* Possible flags:
@@ -257,8 +237,12 @@ public:
     ShapeDataPtr data; // subclass includes NiTriShapeData
     NiSkinInstancePtr skin;
 
+    std::vector<MaterialExtraData> materials;
     std::string shader;
     int unknown;
+    bool dirtyFlag;
+    //NiPropertyPtr bs1;
+    //NiPropertyPtr bs2;
 
     void read(NIFStream *nif)
     {
@@ -266,10 +250,29 @@ public:
         data.read(nif);  // refNiGeometryData
         skin.read(nif);
 
-        if (nifVer >= 0x0a000100 && nif->getBool(nifVer)) // from 10.0.1.0
+        if (nifVer >= 0x14020007) // from 20.2.0.7 (Skyrim)
+        {
+            unsigned int numMaterials = nif->getUInt();
+            materials.resize(numMaterials);
+            for (unsigned int i = 0; i < numMaterials; ++i)
+            {
+                materials[i].name = nif->getString();
+                materials[i].extraData = nif->getInt();
+            }
+            nif->getInt(); // active material?
+        }
+
+        if (nifVer >= 0x0a000100 && nifVer <= 0x14010003 && nif->getBool(nifVer))
         {
             shader = nif->getString();
             unknown = nif->getInt();
+        }
+
+        if (nifVer >= 0x14020007) // from 20.2.0.7 (Skyrim)
+        {
+            dirtyFlag = nif->getBool(nifVer);
+            nif->getInt(); // bs1.read(nif);
+            nif->getInt(); // bs2.read(nif);
         }
     }
 
@@ -282,8 +285,9 @@ public:
     }
 };
 
+struct NiAutoNormalParticles : public NiGeometry {};
+struct NiRotatingParticles : public NiGeometry {};
 struct NiTriShape : public NiGeometry {};
-
 class NiTriStrips : public NiGeometry {};
 
 class NiParticleSystem : public NiGeometry
@@ -526,21 +530,32 @@ public:
     }
 };
 
-class bhkConvexVerticesShape : public bhkShape
+class bhkSphereShape : public bhkShape
 {
 public:
     unsigned int material; // http://niftools.sourceforge.net/doc/nif/HavokMaterial.html
     //unsigned int materialSkyrim; // http://niftools.sourceforge.net/doc/nif/SkyrimHavokMaterial.html
     float radius;
-    std::vector<float> unknown;
-    std::vector<Ogre::Vector4> vertices;
-    std::vector<Ogre::Vector4> normals;
 
     void read(NIFStream *nif)
     {
         material = nif->getUInt();
         //materialSkyrim = nif->getUInt();  // not sure if this is version dependent
         radius = nif->getFloat();
+    }
+};
+
+class bhkConvexVerticesShape : public bhkSphereShape
+{
+public:
+    std::vector<float> unknown;
+    std::vector<Ogre::Vector4> vertices;
+    std::vector<Ogre::Vector4> normals;
+
+    void read(NIFStream *nif)
+    {
+        bhkSphereShape::read(nif);
+
         unknown.resize(6);
         for (int i = 0; i < 6; ++i)
             unknown[i] = nif->getFloat();
@@ -551,6 +566,7 @@ public:
 
     void post(NIFFile *nif)
     {
+        //bhkSphereShape::post(nif);
         // FIXME
     }
 };
@@ -844,23 +860,6 @@ public:
     }
 };
 
-class NiPSysModifier : public Record
-{
-public:
-    std::string name;
-    unsigned int order;
-    NiParticleSystemPtr target;
-    bool active;
-
-    void read(NIFStream *nif)
-    {
-        name = nif->getString();
-        order = nif->getUInt();
-        target.read(nif);
-        active = nif->getBool(nifVer);
-    }
-};
-
 class NiControllerManager : public Controller
 {
 public:
@@ -886,14 +885,14 @@ public:
     }
 };
 
-struct ControllerLink : public Record
+struct ControllerLink
 {
     std::string targetName;
     ControllerPtr controller;
     NiInterpolatorPtr interpolator;
     ControllerPtr controller2;
     unsigned char priority;
-    //refNiSringPalette stringPalette;
+    NiStringPalettePtr stringPalette;
     std::string nodeName;
     int nodeNameOffset;
     std::string propertyType;
@@ -904,6 +903,8 @@ struct ControllerLink : public Record
     int variable1Offset;
     std::string variable2;
     int variable2Offset;
+
+    unsigned int nifVer;
 
     void read(NIFStream *nif)
     {
@@ -923,8 +924,8 @@ struct ControllerLink : public Record
             }
             priority = nif->getChar();
         }
-        if (nifVer >= 0x0a020000 && nifVer == 0x14000005)
-            nif->getUInt(); // FIXME
+        if (nifVer >= 0x0a020000 && nifVer <= 0x14000005)
+            stringPalette.read(nif);
         if (nifVer == 0x0a01006a) // 10.1.0.106
             nodeName = nif->getString();
         if (nifVer >= 0x0a020000 && nifVer <= 0x14000005)
@@ -970,7 +971,10 @@ public:
             unsigned int unknown = nif->getUInt();
         controlledBlocks.resize(numControlledBlocks);
         for (unsigned int i = 0; i < numControlledBlocks; ++i)
+        {
+            controlledBlocks[i].nifVer = nifVer;
             controlledBlocks[i].read(nif);
+        }
     }
 };
 
@@ -988,7 +992,7 @@ public:
     char unknownByte;
     NiControllerManagerPtr manager;
     std::string targetName;
-    //refNiSringPalette stringPalette;
+    NiStringPalettePtr stringPalette;
 
     void read(NIFStream *nif)
     {
@@ -1018,7 +1022,7 @@ public:
             targetName = nif->getString();
 
             if (nifVer >= 0x0a020000 && nifVer <= 0x14000005)
-                nif->getUInt(); // FIXME
+                stringPalette.read(nif);
         }
     }
 

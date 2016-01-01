@@ -34,6 +34,7 @@ struct KeyMapT {
     static const unsigned int sQuadraticInterpolation = 2;
     static const unsigned int sTBCInterpolation = 3;
     static const unsigned int sXYZInterpolation = 4;
+    static const unsigned int sConstInterpolation = 5;
 
     unsigned int mInterpolationType;
     MapType mKeys;
@@ -58,7 +59,8 @@ struct KeyMapT {
         KeyT<T> key;
         NIFStream &nifReference = *nif;
 
-        if(mInterpolationType == sLinearInterpolation)
+        if(mInterpolationType == sLinearInterpolation ||
+           mInterpolationType == sConstInterpolation)
         {
             for(size_t i = 0;i < count;i++)
             {
@@ -133,6 +135,7 @@ private:
     }
 };
 typedef KeyMapT<float,&NIFStream::getFloat> FloatKeyMap;
+typedef KeyMapT<char,&NIFStream::getChar> BoolKeyMap;
 typedef KeyMapT<Ogre::Vector3,&NIFStream::getVector3> Vector3KeyMap;
 typedef KeyMapT<Ogre::Vector4,&NIFStream::getVector4> Vector4KeyMap;
 typedef KeyMapT<Ogre::Quaternion,&NIFStream::getQuaternion> QuaternionKeyMap;

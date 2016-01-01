@@ -957,9 +957,11 @@ private:
     {
         const Nif::NiAutoNormalParticlesData *particledata = NULL;
         if(partnode->recType == Nif::RC_NiAutoNormalParticles)
-            particledata = static_cast<const Nif::NiAutoNormalParticles*>(partnode)->data.getPtr();
+            particledata = static_cast<const Nif::NiAutoNormalParticlesData*>(
+                static_cast<const Nif::NiAutoNormalParticles*>(partnode)->data.getPtr());
         else if(partnode->recType == Nif::RC_NiRotatingParticles)
-            particledata = static_cast<const Nif::NiRotatingParticles*>(partnode)->data.getPtr();
+            particledata = static_cast<const Nif::NiAutoNormalParticlesData*>(
+                static_cast<const Nif::NiRotatingParticles*>(partnode)->data.getPtr());
         else
             throw std::runtime_error("Unexpected particle node type");
 
@@ -1354,7 +1356,6 @@ public:
             return;
         }
 
-        //if (0)//node->recType != Nif::RC_NiTriStrips) // FIXME
         if(Ogre::SkeletonManager::getSingleton().resourceExists(name) ||
            !NIFSkeletonLoader::createSkeleton(name, group, node).isNull())
         {

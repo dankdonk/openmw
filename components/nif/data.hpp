@@ -24,6 +24,10 @@
 #ifndef OPENMW_COMPONENTS_NIF_DATA_HPP
 #define OPENMW_COMPONENTS_NIF_DATA_HPP
 
+#include <sstream>
+#include <iostream>
+#include <string>
+
 #include "base.hpp"
 
 namespace Nif
@@ -108,18 +112,19 @@ public:
     {
         ShapeData::read(nif); // NiGeometryData
 
-        /*int tris =*/ nif->getUShort();
+        unsigned short tris = nif->getUShort();
 
         // We have three times as many vertices as triangles, so this
         // is always equal to tris*3.
-        int cnt = nif->getInt();
+        unsigned int cnt = nif->getUInt();
 
         bool hasTriangles = false;
         if (nifVer <= 0x0a000100) // up to 10.0.1.0
             hasTriangles = true;
         else
-            hasTriangles = !!nif->getUShort(); // this is meant to be an Int?
+            hasTriangles = nif->getBool(nifVer);
 
+        std::cout << "about to read triangle " << nif->tell() << std::endl;
         if (hasTriangles)
         {
             nif->getShorts(triangles, cnt);
@@ -128,7 +133,7 @@ public:
         // Read the match list, which lists the vertices that are equal to
         // vertices. We don't actually need this for anything, so
         // just skip it.
-        int verts = nif->getUShort();
+        unsigned short verts = nif->getUShort();
         for(int i=0;i < verts;i++)
         {
             // Number of vertices matching vertex 'i'
@@ -211,6 +216,17 @@ class NiFloatData : public Record
 {
 public:
     FloatKeyMap mKeyList;
+
+    void read(NIFStream *nif)
+    {
+        mKeyList.read(nif);
+    }
+};
+
+class NiBoolData : public Record
+{
+public:
+    BoolKeyMap mKeyList;
 
     void read(NIFStream *nif)
     {
@@ -337,9 +353,13 @@ public:
         trafo.rotation = nif->getMatrix3();
         trafo.trans = nif->getVector3();
         trafo.scale = nif->getFloat();
+        unsigned char hasVertexWeights;
 
         int boneNum = nif->getInt();
-        nif->getInt(); // -1
+        if (nifVer >= 0x4a000002 && nifVer <= 0x0a010000)
+            nif->getInt(); // -1
+        if (nifVer >= 0x04020000) // up to 4.2.0.0
+            hasVertexWeights = nif->getChar();
 
         bones.resize(boneNum);
         for(int i=0;i<boneNum;i++)
@@ -365,6 +385,7 @@ public:
 struct NiMorphData : public Record
 {
     struct MorphData {
+        std::string mFrameName;
         FloatKeyMap mData;
         std::vector<Ogre::Vector3> mVertices;
     };
@@ -379,7 +400,18 @@ struct NiMorphData : public Record
         mMorphs.resize(morphCount);
         for(int i = 0;i < morphCount;i++)
         {
-            mMorphs[i].mData.read(nif, true);
+            if (nifVer >= 0x0a01006a) // from 10.1.0.106
+                mMorphs[i].mFrameName = nif->getString();
+
+            if (nifVer <= 0x0a010000) // up to 10.1.0.0
+            {
+                mMorphs[i].mData.read(nif, true);
+                if (nifVer >= 0x0a01006a && nifVer <= 0x0a020000)
+                    nif->getUInt();
+                // FIXME: need to check UserVersion == 0
+                //if (nifVer >= 0x14000004 && nifVer <= 0x14000005)
+                    //nif->getUInt();
+            }
             nif->getVector3s(mMorphs[i].mVertices, vertCount);
         }
     }
@@ -514,6 +546,46 @@ struct hkPackedNiTriStripsData : public Record
         vertices.resize(verts);
         for(int i = 0; i < verts; i++)
             vertices[i] = nif->getVector3();
+    }
+};
+
+class NiStringPalette : public Record
+{
+    std::vector<std::string> palette;
+
+    void read(NIFStream *nif)
+    {
+        unsigned int lth = nif->getUInt();
+
+        std::istringstream buf(nif->getString(lth).c_str());
+        std::string s;
+        while (std::getline(buf, s, '\0'))
+            palette.push_back(s);
+
+        unsigned int check = nif->getUInt();
+    }
+};
+
+struct AVObject
+{
+    std::string name;
+    NodePtr avObject;
+};
+
+struct NiDefaultAVObjectPalette : public Record
+{
+    std::vector<AVObject> objs;
+
+    void read(NIFStream *nif)
+    {
+        nif->getUInt();
+        unsigned int numObjs = nif->getUInt();
+        objs.resize(numObjs);
+        for(unsigned int i = 0; i < numObjs; i++)
+        {
+            objs[i].name = nif->getString();
+            objs[i].avObject.read(nif);
+        }
     }
 };
 

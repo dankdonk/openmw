@@ -147,6 +147,10 @@ class ShapeData;
 class NiControllerSequence;
 class NiControllerManager;
 class NiTextKeyExtraData;
+class Named;
+class NiStringPalette;
+class NiBoolData;
+class NiPSysSpawnModifier;
 
 typedef RecordPtrT<Node> NodePtr;
 typedef RecordPtrT<Extra> ExtraPtr;
@@ -182,6 +186,10 @@ typedef RecordPtrT<ShapeData> ShapeDataPtr;
 typedef RecordPtrT<NiControllerSequence> NiControllerSequencePtr;
 typedef RecordPtrT<NiControllerManager> NiControllerManagerPtr;
 typedef RecordPtrT<NiTextKeyExtraData> NiTextKeyExtraDataPtr;
+typedef RecordPtrT<Named> NamedPtr;
+typedef RecordPtrT<NiStringPalette> NiStringPalettePtr;
+typedef RecordPtrT<NiBoolData> NiBoolDataPtr;
+typedef RecordPtrT<NiPSysSpawnModifier> NiPSysSpawnModifierPtr;
 
 typedef RecordListT<Node> NodeList;
 typedef RecordListT<Extra> ExtraList;

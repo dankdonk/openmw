@@ -59,7 +59,8 @@ public:
     {
         Extra::read(nif);
 
-        nif->getInt(); // 0
+        if (nifVer <= 0x04020200) // up to 4.2.2.0
+            nif->getInt(); // 0
 
         int keynum = nif->getInt();
         list.resize(keynum);

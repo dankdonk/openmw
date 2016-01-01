@@ -119,6 +119,7 @@ static std::map<std::string,RecordFactoryEntry> makeFactory()
     newFactory.insert(makeEntry("NiTriStripsData",            &construct <NiTriStripsData>             , RC_NiTriStripsData               ));
     newFactory.insert(makeEntry("bhkListShape",               &construct <bhkListShape>                , RC_bhkListShape                  ));
     newFactory.insert(makeEntry("bhkBoxShape",                &construct <bhkBoxShape>                 , RC_bhkBoxShape                   ));
+    newFactory.insert(makeEntry("bhkSphereShape",             &construct <bhkSphereShape>              , RC_bhkSphereShape                ));
     newFactory.insert(makeEntry("bhkConvexTransformShape",    &construct <bhkConvexTransformShape>     , RC_bhkConvexTransformShape       ));
     newFactory.insert(makeEntry("bhkConvexVerticesShape",     &construct <bhkConvexVerticesShape>      , RC_bhkConvexVerticesShape        ));
     newFactory.insert(makeEntry("NiTransformController",      &construct <NiTransformController>       , RC_NiTransformController         ));
@@ -131,6 +132,23 @@ static std::map<std::string,RecordFactoryEntry> makeFactory()
     newFactory.insert(makeEntry("NiControllerManager",        &construct <NiControllerManager>         , RC_NiControllerManager           ));
     newFactory.insert(makeEntry("NiSequence",                 &construct <NiSequence>                  , RC_NiSequence                    ));
     newFactory.insert(makeEntry("NiControllerSequence",       &construct <NiControllerSequence>        , RC_NiControllerSequence          ));
+    newFactory.insert(makeEntry("NiStringPalette",            &construct <NiStringPalette>             , RC_NiStringPalette               ));
+    newFactory.insert(makeEntry("NiDefaultAVObjectPalette",   &construct <NiDefaultAVObjectPalette>    , RC_NiDefaultAVObjectPalette      ));
+    newFactory.insert(makeEntry("NiFloatInterpolator",        &construct <NiFloatInterpolator>         , RC_NiFloatInterpolator           ));
+    newFactory.insert(makeEntry("NiBlendFloatInterpolator",   &construct <NiBlendFloatInterpolator>    , RC_NiBlendFloatInterpolator      ));
+    newFactory.insert(makeEntry("NiPSysEmitterCtlr",          &construct <NiPSysEmitterCtlr>           , RC_NiPSysEmitterCtlr             ));
+    newFactory.insert(makeEntry("NiPSysUpdateCtlr",           &construct <NiPSysUpdateCtlr>            , RC_NiPSysUpdateCtlr              ));
+    newFactory.insert(makeEntry("NiBoolInterpolator",         &construct <NiBoolInterpolator>          , RC_NiBoolInterpolator            ));
+    newFactory.insert(makeEntry("NiBoolData",                 &construct <NiBoolData>                  , RC_NiBoolData                    ));
+    newFactory.insert(makeEntry("NiPSysBoxEmitter",           &construct <NiPSysBoxEmitter>            , RC_NiPSysBoxEmitter              ));
+    newFactory.insert(makeEntry("NiPSysAgeDeathModifier",     &construct <NiPSysAgeDeathModifier>      , RC_NiPSysAgeDeathModifier        ));
+    newFactory.insert(makeEntry("NiPSysSpawnModifier",        &construct <NiPSysSpawnModifier>         , RC_NiPSysSpawnModifier           ));
+    newFactory.insert(makeEntry("NiPSysGrowFadeModifier",     &construct <NiPSysGrowFadeModifier>      , RC_NiPSysGrowFadeModifier        ));
+    newFactory.insert(makeEntry("NiPSysColorModifier",        &construct <NiPSysColorModifier>         , RC_NiPSysColorModifier           ));
+    newFactory.insert(makeEntry("NiPSysGravityModifier",      &construct <NiPSysGravityModifier>       , RC_NiPSysGravityModifier         ));
+    newFactory.insert(makeEntry("NiPSysPositionModifier",     &construct <NiPSysPositionModifier>      , RC_NiPSysPositionModifier        ));
+    newFactory.insert(makeEntry("NiPSysBoundUpdateModifier",  &construct <NiPSysBoundUpdateModifier>   , RC_NiPSysBoundUpdateModifier     ));
+    newFactory.insert(makeEntry("NiMultiTargetTransformController", &construct <NiMultiTargetTransformController> , RC_NiMultiTargetTransformController));
     return newFactory;
 }
 
@@ -272,11 +290,13 @@ void NIFFile::parse()
         r->recIndex = i;
         r->nifVer = ver;
         records[i] = r;
-        //std::cout << "Start of " << rec << ", block " << i << ": " << nif.tell() << std::endl; // FIXME
+        std::cout << "Start of " << rec << ", block " << i << ": " << nif.tell() << std::endl; // FIXME
         r->read(&nif);
     }
 
 	//NiFooter
+    if (nif.tell() >= nif.size())
+        std::cerr << "Nif: " << filename << " EOF but footer not read " << std::endl;
     size_t rootNum = nif.getUInt();
     roots.resize(rootNum);
 
@@ -294,6 +314,8 @@ void NIFFile::parse()
             warn("Null Root found");
         }
     }
+    if (nif.tell() != nif.size())
+        std::cerr << "Nif: " << filename << " still has data after reading footer" << std::endl;
 
     // Once parsing is done, do post-processing.
     for(size_t i = 0; i < recNum; i++)

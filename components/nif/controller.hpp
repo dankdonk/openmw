@@ -140,18 +140,26 @@ typedef NiParticleSystemController NiBSPArrayController;
 class NiMaterialColorController : public Controller
 {
 public:
+    NiInterpolatorPtr interpolator;
+    unsigned short targetColor;
     NiPosDataPtr data;
 
     void read(NIFStream *nif)
     {
         Controller::read(nif);
-        data.read(nif);
+        if (nifVer >= 0x0a020000) // from 10.2.0.0
+            interpolator.read(nif);
+        if (nifVer >= 0x0a010000) // from 10.1.0.0
+            targetColor = nif->getUShort();
+        if (nifVer <= 0x0a010000) // up to 10.1.0.0
+            data.read(nif);
     }
 
     void post(NIFFile *nif)
     {
         Controller::post(nif);
-        data.post(nif);
+        if (nifVer <= 0x0a010000) // up to 10.1.0.0
+            data.post(nif);
     }
 };
 
@@ -164,6 +172,9 @@ public:
     void read(NIFStream *nif)
     {
         Controller::read(nif);
+
+        if (nifVer >= 0x0a010000) // from 10.1.0.0
+            nif->getUShort();
 
         /*
            int = 1
@@ -207,55 +218,107 @@ public:
 class NiKeyframeController : public Controller
 {
 public:
+    NiInterpolatorPtr interpolator;
     NiKeyframeDataPtr data;
 
     void read(NIFStream *nif)
     {
         Controller::read(nif);
-        data.read(nif);
+        if (nifVer >= 0x0a020000) // from 10.2.0.0
+            interpolator.read(nif);
+        if (nifVer <= 0x0a010000) // up to 10.1.0.0
+            data.read(nif);
     }
 
     void post(NIFFile *nif)
     {
         Controller::post(nif);
-        data.post(nif);
+        if (nifVer >= 0x0a020000) // from 10.2.0.0
+            interpolator.post(nif);
+        if (nifVer <= 0x0a010000) // up to 10.1.0.0
+            data.post(nif);
     }
 };
 
 class NiAlphaController : public Controller
 {
 public:
+    NiInterpolatorPtr interpolator;
     NiFloatDataPtr data;
 
     void read(NIFStream *nif)
     {
         Controller::read(nif);
-        data.read(nif);
+        if (nifVer >= 0x0a020000) // from 10.2.0.0
+            interpolator.read(nif);
+        if (nifVer <= 0x0a010000) // up to 10.1.0.0
+            data.read(nif);
     }
 
     void post(NIFFile *nif)
     {
         Controller::post(nif);
-        data.post(nif);
+        if (nifVer >= 0x0a020000) // from 10.2.0.0
+            interpolator.post(nif);
+        if (nifVer <= 0x0a010000) // up to 10.1.0.0
+            data.post(nif);
     }
+};
+
+struct MorphWeight
+{
+    NiInterpolatorPtr interpolator;
+    float weight;
 };
 
 class NiGeomMorpherController : public Controller
 {
 public:
+    unsigned short extraFlags;
     NiMorphDataPtr data;
+    std::vector<NiInterpolatorPtr> interpolators;
+    std::vector<MorphWeight> interpolatorWeights;
+    std::vector<unsigned int> unknownInts;
 
     void read(NIFStream *nif)
     {
         Controller::read(nif);
+        if (nifVer >= 0x0a000102) // from 10.0.1.2
+            extraFlags = nif->getUShort();
+        if (nifVer == 0x0a01006a) // 10.1.0.106
+            nif->getChar();
         data.read(nif);
         nif->getChar(); // always 0
+        if (nifVer >= 0x0a01006a) // from 10.1.0.106
+        {
+            unsigned int numInterpolators = nif->getUInt();
+            if (nifVer >= 0x0a020000 && nifVer <= 0x14000005)
+            {
+                interpolators.resize(numInterpolators);
+                for (unsigned int i = 0; i < numInterpolators; ++i)
+                    interpolators[i].read(nif);
+            }
+            if (nifVer >= 0x14010003) // from 20.1.0.3
+            {
+                interpolatorWeights.resize(numInterpolators);
+                for (unsigned int i = 0; i < numInterpolators; ++i)
+                {
+                    interpolatorWeights[i].interpolator.read(nif);
+                    interpolatorWeights[i].weight = nif->getFloat();
+                }
+            }
+            unsigned int count = nif->getUInt();
+            unknownInts.resize(count);
+            for (unsigned int i = 0; i < count; ++i)
+                unknownInts[i] = nif->getUInt();
+        }
     }
 
     void post(NIFFile *nif)
     {
         Controller::post(nif);
         data.post(nif);
+        // FIXME other post stuff
     }
 };
 
@@ -300,15 +363,78 @@ public:
     }
 };
 
+class NiPSysEmitterCtlr : public Controller
+{
+public:
+    NiInterpolatorPtr interpolator;
+    std::string modifierName;
+    NiInterpolatorPtr visibilityInterpolator;
+
+    void read(NIFStream *nif)
+    {
+        Controller::read(nif);
+        if (nifVer >= 0x0a020000) // from 10.2.0.0
+            interpolator.read(nif);
+        modifierName = nif->getString();
+        if (nifVer <= 0x0a010000) // up to 10.1.0.0
+            nif->getInt(); // refNiPSysEmtterCtlrData
+        if (nifVer >= 0x0a020000) // from 10.2.0.0
+            visibilityInterpolator.read(nif);
+    }
+};
+
+class NiPSysUpdateCtlr : public Controller {};
+
 class NiInterpolator : public Record
 {
 };
 
+class NiBoolInterpolator : public NiInterpolator
+{
+public:
+    bool value;
+    NiBoolDataPtr data;
+
+    void read(NIFStream *nif)
+    {
+        value = nif->getBool(nifVer);
+        data.read(nif);
+    }
+};
+
+class NiFloatInterpolator : public NiInterpolator
+{
+public:
+    float value;
+    NiFloatDataPtr floatData;
+
+    void read(NIFStream *nif)
+    {
+        value = nif->getFloat();
+        floatData.read(nif);
+    }
+};
+
+class NiBlendFloatInterpolator : public NiInterpolator
+{
+public:
+    float value;
+
+    void read(NIFStream *nif)
+    {
+        nif->getUShort();
+        nif->getUInt();
+
+        value = nif->getFloat();
+    }
+};
+
 class NiPathInterpolator : public NiInterpolator
 {
+public:
     NiPosDataPtr posData;
     NiFloatDataPtr floatData;
-public:
+
     void read(NIFStream *nif)
     {
         nif->getUShort();
@@ -324,11 +450,12 @@ public:
 
 class NiTransformInterpolator : public NiInterpolator
 {
+public:
     Ogre::Vector3 translation;
     Ogre::Quaternion rotation;
     float scale;
     NiTransformDataPtr transform;
-public:
+
     void read(NIFStream *nif)
     {
         translation = nif->getVector3();
@@ -365,6 +492,208 @@ public:
 
         if (nifVer <= 0x0a010000) // up to 10.1.0.0
             data.post(nif);
+    }
+};
+
+class NiMultiTargetTransformController : public Controller
+{
+public:
+    unsigned short numExtraTargets;
+    std::vector<NamedPtr> extraTargets;
+
+    void read(NIFStream *nif)
+    {
+        Controller::read(nif);
+
+        numExtraTargets = nif->getUShort();
+        extraTargets.resize(numExtraTargets);
+        for (unsigned int i = 0; i < numExtraTargets; ++i)
+            extraTargets[i].read(nif);
+    }
+
+    void post(NIFFile *nif)
+    {
+        Controller::post(nif);
+
+        for (unsigned int i = 0; i < extraTargets.size(); ++i)
+            extraTargets[i].post(nif);
+    }
+};
+
+class NiPSysModifier : public Record
+{
+public:
+    std::string name;
+    unsigned int order;
+    NiParticleSystemPtr target;
+    bool active;
+
+    void read(NIFStream *nif)
+    {
+        name = nif->getString();
+        order = nif->getUInt();
+        target.read(nif);
+        active = nif->getBool(nifVer);
+    }
+
+};
+
+class NiPSysBoxEmitter : public NiPSysModifier
+{
+public:
+    float speed;
+    float speedVar;
+    float declination;
+    float declinationVar;
+    float planarAngle;
+    float planarAngleVar;
+    Ogre::Vector4 initialColor;
+    float initialRadius;
+    float radiuVar;
+    float lifeSpan;
+    float lifeSpanVar;
+    NodePtr emitteObj;
+    float width;
+    float height;
+    float depth;
+
+    void read(NIFStream *nif)
+    {
+        NiPSysModifier::read(nif);
+
+        speed = nif->getFloat();
+        speedVar = nif->getFloat();
+        declination = nif->getFloat();
+        declinationVar = nif->getFloat();
+        planarAngle = nif->getFloat();
+        planarAngleVar = nif->getFloat();
+        initialColor = nif->getVector4();
+        initialRadius = nif->getFloat();
+        radiuVar = nif->getFloat();
+        lifeSpan = nif->getFloat();
+        lifeSpanVar = nif->getFloat();
+        emitteObj.read(nif);
+        width = nif->getFloat();
+        height = nif->getFloat();
+        depth = nif->getFloat();
+    }
+};
+
+class NiPSysAgeDeathModifier: public NiPSysModifier
+{
+public:
+    bool spawnOnDeath;
+    NiPSysSpawnModifierPtr spawnModifier;
+
+    void read(NIFStream *nif)
+    {
+        NiPSysModifier::read(nif);
+
+        spawnOnDeath = nif->getBool(nifVer);
+        spawnModifier.read(nif);
+    }
+};
+
+class NiPSysSpawnModifier: public NiPSysModifier
+{
+public:
+    unsigned short numSpawnGen;
+    float percentSpawn;
+    unsigned short minSpawn;
+    unsigned short maxSpawn;
+    float spawnSpeedChaos;
+    float spawnDirChaos;
+    float lifeSpan;
+    float lifeSpanVar;
+
+    void read(NIFStream *nif)
+    {
+        NiPSysModifier::read(nif);
+
+        numSpawnGen = nif->getUShort();
+        percentSpawn = nif->getFloat();
+        minSpawn = nif->getUShort();
+        maxSpawn = nif->getUShort();
+        spawnSpeedChaos = nif->getFloat();
+        spawnDirChaos = nif->getFloat();
+        lifeSpan = nif->getFloat();
+        lifeSpanVar = nif->getFloat();
+    }
+};
+
+class NiPSysGrowFadeModifier: public NiPSysModifier
+{
+public:
+    float growTime;
+    unsigned short growGen;
+    float fadeTime;
+    unsigned short fadeGen;
+    float baseScale;
+
+    void read(NIFStream *nif)
+    {
+        NiPSysModifier::read(nif);
+
+        growTime = nif->getFloat();
+        growGen = nif->getFloat();
+        fadeTime = nif->getFloat();
+        fadeGen = nif->getFloat();
+        if (nifVer >= 0x14020007) // from 20.2.0.7
+            baseScale = nif->getFloat();
+    }
+};
+
+class NiPSysColorModifier: public NiPSysModifier
+{
+public:
+    NiColorDataPtr data;
+
+    void read(NIFStream *nif)
+    {
+        NiPSysModifier::read(nif);
+
+        data.read(nif);
+    }
+};
+
+class NiPSysGravityModifier: public NiPSysModifier
+{
+public:
+    NodePtr gravityObj;
+    Ogre::Vector3 gravityAxis;
+    float decay;
+    float strength;
+    unsigned int forceType;
+    float turbulence;
+    float turbulenceScale;
+
+    void read(NIFStream *nif)
+    {
+        NiPSysModifier::read(nif);
+
+        gravityObj.read(nif);
+        gravityAxis = nif->getVector3();
+        decay = nif->getFloat();
+        strength = nif->getFloat();
+        forceType = nif->getUInt();
+        turbulence = nif->getFloat();
+        turbulenceScale = nif->getFloat();
+        if (nifVer >= 0x14020007) // from 20.2.0.7
+            nif->getChar();
+    }
+};
+
+class NiPSysPositionModifier: public NiPSysModifier {};
+
+class NiPSysBoundUpdateModifier: public NiPSysModifier
+{
+public:
+
+    void read(NIFStream *nif)
+    {
+        NiPSysModifier::read(nif);
+
+        nif->getUShort();
     }
 };
 

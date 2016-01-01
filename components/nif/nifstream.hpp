@@ -40,7 +40,8 @@ public:
 
     void skip(size_t size) { inp->skip(size); }
 
-    size_t tell() { return inp->tell(); } // FIXME
+    size_t tell() { return inp->tell(); } // FIXME: debugging only
+    size_t size() { return inp->size(); } // FIXME: debugging only
 
     char getChar() { return read_byte(); }
     short getShort() { return read_le16(); }

@@ -84,7 +84,6 @@ public:
 /// Anything that has a controller
 class Controlled : public Extra // FIXME: should be changed from "is an Extra" to "has an Extra"
 {
-    // NiObjectNET (part)
 public:
     ControllerPtr controller;
 
@@ -125,7 +124,6 @@ public:
 /// Has name, extra-data and controller
 class Named : public Controlled
 {
-    // NiAVObject
 public:
     std::string name;
 

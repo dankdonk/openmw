@@ -60,7 +60,10 @@ void CSVRender::ForeignObject::update()
     int index = referenceables.searchId (ESM4::formIdToString(baseObj)); // FIXME: double conversion to string
 
     if (index==-1)
+    {
         error = 1;
+        std::cout << "obj not static " << ESM4::formIdToString(baseObj) << std::endl;
+    }
     else
     {
         /// \todo check for Deleted state (error 1)
@@ -71,8 +74,6 @@ void CSVRender::ForeignObject::update()
 
         if (model.empty())
             error = 2;
-        //else
-            //std::cout << "Using model: " << model << std::endl;
     }
 
     if (error)
@@ -85,9 +86,34 @@ void CSVRender::ForeignObject::update()
     }
     else
     {
-        // Oblivion.eam contains some paths with leading space
-        model.erase(std::remove_if(model.begin(), model.end(), ::isspace), model.end());
-        mObject = NifOgre::Loader::createObjects (mBase, "Meshes\\" + model);
+        // Oblivion.eam contains some paths with leading space but can't use below since
+        // some file names have spaces
+        //   model.erase(std::remove_if(model.begin(), model.end(), ::isspace), model.end());
+
+        // first find the beginning of the filename
+        std::string::size_type separator = model.find_last_of('\\');
+        std::string filename;
+        if (separator != std::string::npos)
+            filename = model.substr(separator+1);
+        else
+            filename = model;
+
+        // then trim the front
+        std::string::size_type start = filename.find_first_not_of(' ');
+
+        if (start == std::string::npos)
+            throw std::runtime_error("empty model " + model); // huh? just checked above
+        if (start > 0)
+            std::cout << "faulty filename |" << filename << "|" << filename.substr(start) << std::endl;
+
+        // now put it back together
+        std::string trimmedModel = model.substr(0, separator+1) + filename.substr(start);
+
+        if (start > 0)
+            std::cout << trimmedModel << std::endl;
+
+        //std::cout << "Using model: " << model << std::endl;
+        mObject = NifOgre::Loader::createObjects (mBase, "Meshes\\" + trimmedModel);
         mObject->setVisibilityFlags (Element_Reference);
 
         if (mPhysics && !(mReferenceId == 0))
@@ -104,7 +130,7 @@ void CSVRender::ForeignObject::update()
             Ogre::Quaternion yr (Ogre::Radian (-reference.mPos.rot[1]), Ogre::Vector3::UNIT_Y);
             Ogre::Quaternion zr (Ogre::Radian (-reference.mPos.rot[2]), Ogre::Vector3::UNIT_Z);
 
-            mPhysics->addObject("meshes\\" + model, mBase->getName(), ESM4::formIdToString(mReferenceId), reference.mScale, position, xr*yr*zr);
+            mPhysics->addObject("meshes\\" + trimmedModel, mBase->getName(), ESM4::formIdToString(mReferenceId), reference.mScale, position, xr*yr*zr);
         }
     }
 }
