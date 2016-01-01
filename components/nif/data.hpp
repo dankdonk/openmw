@@ -124,11 +124,8 @@ public:
         else
             hasTriangles = nif->getBool(nifVer);
 
-        std::cout << "about to read triangle " << nif->tell() << std::endl;
         if (hasTriangles)
-        {
             nif->getShorts(triangles, cnt);
-        }
 
         // Read the match list, which lists the vertices that are equal to
         // vertices. We don't actually need this for anything, so
@@ -143,6 +140,8 @@ public:
     }
 };
 
+// FIXME: below looks wrong
+#if 0
 class NiAutoNormalParticlesData : public ShapeData
 {
 public:
@@ -171,21 +170,158 @@ public:
         }
     }
 };
+#endif
 
-class NiRotatingParticlesData : public NiAutoNormalParticlesData
+class NiParticlesData : public ShapeData
+{
+public:
+    int numParticles;
+
+    float particleRadius;
+
+    bool hasRadii;
+    std::vector<float> radii;
+    bool hasRotations;
+    std::vector<Ogre::Quaternion> rotations;
+    bool hasRotationAngles;
+    std::vector<float> rotationAngles;
+    bool hasRotationAxes;
+    std::vector<Ogre::Vector3> rotationAxes;
+    //bool hasUVQuads;
+    //std::vector<Ogre::Vector4> uvQuads;
+
+    int activeCount;
+
+    bool hasSizes;
+    std::vector<float> sizes;
+
+    void read(NIFStream *nif)
+    {
+        ShapeData::read(nif);
+
+        // Should always match the number of vertices
+        if (nifVer <= 0x04020200) // up to 4.2.2.0
+            numParticles = nif->getUShort();
+
+        if (nifVer <= 0x0a000100) // up to 10.0.1.0
+            particleRadius = nif->getFloat();
+
+        if (nifVer >= 0x0a010000) // from 10.1.0.0
+        {
+            hasRadii = nif->getBool(nifVer);
+            if (hasRadii)
+                nif->getFloats(radii, vertices.size());
+        }
+
+        activeCount = nif->getUShort();
+
+        hasSizes = nif->getBool(nifVer);
+        // Particle sizes
+        if (hasSizes)
+            nif->getFloats(sizes, vertices.size());
+
+        if (nifVer >= 0x0a010000) // from 10.1.0.0
+        {
+            hasRotations = nif->getBool(nifVer);
+            if (hasRotations)
+                nif->getQuaternions(rotations, vertices.size());
+        }
+
+        if (nifVer >= 0x14000004) // from 20.0.0.4
+        {
+            hasRotationAngles = nif->getBool(nifVer);
+            if (hasRotationAngles)
+                nif->getFloats(rotationAngles, vertices.size());
+
+            hasRotationAxes = nif->getBool(nifVer);
+            if (hasRotationAxes)
+                nif->getVector3s(rotationAxes, vertices.size());
+        }
+
+        // FIXME: these require User Version to detect properly
+        //hasUVQuads = nif->getBool(nifVer);
+        //unsigned char numUVQuads = nif->getChar();
+        //if (hasUVQuads)
+            //nif->getVector4s(uvQuads, numUVQuads);
+        //nif->getChar(); // unknown
+    }
+};
+
+class NiAutoNormalParticlesData : public NiParticlesData {};
+
+class NiRotatingParticlesData : public NiParticlesData
 {
 public:
     std::vector<Ogre::Quaternion> rotations;
 
     void read(NIFStream *nif)
     {
-        NiAutoNormalParticlesData::read(nif);
+        NiParticlesData::read(nif);
 
-        if(nif->getInt())
+        if (nifVer <= 0x04020200 && nif->getBool(nifVer)) // up to 4.2.2.0
         {
             // Rotation quaternions.
             nif->getQuaternions(rotations, vertices.size());
         }
+    }
+};
+
+struct Particle
+{
+    Ogre::Vector3 translation;
+    std::vector<float> unknownFloats;
+    float unknown1;
+    float unknown2;
+    float unknown3;
+    int unknown;
+
+    void read(NIFStream *nif, unsigned int nifVer)
+    {
+        translation = nif->getVector3();
+        if (nifVer <= 0x0a040001) // up to 10.4.0.1
+            nif->getFloats(unknownFloats, 3);
+        unknown1 = nif->getFloat();
+        unknown2 = nif->getFloat();
+        unknown3 = nif->getFloat();
+        unknown = nif->getInt();
+    }
+};
+
+class NiPSysData : public NiRotatingParticlesData
+{
+public:
+    std::vector<Particle> particleDesc;
+    std::vector<float> unknownFloats3;
+    bool hasSubTextureUVs;
+    std::vector<Ogre::Vector4> subTextureUVs;
+    float aspectRatio;
+
+    void read(NIFStream *nif)
+    {
+        NiRotatingParticlesData::read(nif);
+
+        particleDesc.resize(vertices.size());
+        for (unsigned int i = 0; i < vertices.size(); ++i)
+            particleDesc[i].read(nif, nifVer);
+
+        if (nifVer >= 0x14000004) // from 20.0.0.4
+        {
+            if (nif->getBool(nifVer))
+                nif->getFloats(unknownFloats3, 3);
+        }
+        nif->getUShort();
+        nif->getUShort();
+        // FIXME: these require User Version to detect properly
+        //hasSubTextureUVs = nif->getBool(nifVer);
+        //unsigned int numUVs;
+        //aspectRatio = nif->getFloat();
+        //nif->getVector4s(subTextureUVs, numUVs);
+
+        //nif->getUInt();
+        //nif->getUInt();
+        //nif->getUInt();
+        //nif->getUShort();
+        //nif->getChar();
     }
 };
 
@@ -358,7 +494,7 @@ public:
         int boneNum = nif->getInt();
         if (nifVer >= 0x4a000002 && nifVer <= 0x0a010000)
             nif->getInt(); // -1
-        if (nifVer >= 0x04020000) // up to 4.2.0.0
+        if (nifVer >= 0x04020100) // from 4.2.1.0
             hasVertexWeights = nif->getChar();
 
         bones.resize(boneNum);

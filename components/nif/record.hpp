@@ -135,6 +135,9 @@ enum RecordType
   RC_NiPSysGravityModifier,
   RC_NiPSysPositionModifier,
   RC_NiPSysBoundUpdateModifier,
+  RC_NiPSysData,
+  RC_NiPoint3Interpolator,
+  RC_bhkCapsuleShape,
   RC_RootCollisionNode
 };
 

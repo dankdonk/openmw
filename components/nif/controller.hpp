@@ -448,6 +448,20 @@ public:
     }
 };
 
+class NiPoint3Interpolator : public NiInterpolator
+{
+public:
+    Ogre::Vector3 value;
+    NiPosDataPtr posData;
+
+    void read(NIFStream *nif)
+    {
+        nif->getVector3();
+
+        posData.read(nif);
+    }
+};
+
 class NiTransformInterpolator : public NiInterpolator
 {
 public:
@@ -635,9 +649,9 @@ public:
         NiPSysModifier::read(nif);
 
         growTime = nif->getFloat();
-        growGen = nif->getFloat();
+        growGen = nif->getUShort();
         fadeTime = nif->getFloat();
-        fadeGen = nif->getFloat();
+        fadeGen = nif->getUShort();
         if (nifVer >= 0x14020007) // from 20.2.0.7
             baseScale = nif->getFloat();
     }

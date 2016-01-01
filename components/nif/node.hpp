@@ -180,9 +180,8 @@ struct NiCamera : public Node
         float LOD;
 
         bool useOrtho;
-        unsigned int nifVer;
 
-        void read(NIFStream *nif)
+        void read(NIFStream *nif, unsigned int nifVer)
         {
             if (nifVer >= 0x0a010000) // from 10.1.0.0
                 nif->getUShort();
@@ -209,8 +208,7 @@ struct NiCamera : public Node
     {
         Node::read(nif);
 
-        cam.nifVer = nifVer;
-        cam.read(nif);
+        cam.read(nif, nifVer);
 
         nif->getInt(); // -1
         nif->getInt(); // 0
@@ -545,6 +543,35 @@ public:
     }
 };
 
+class bhkCapsuleShape : public bhkShape
+{
+public:
+    unsigned int material;
+    //unsigned int materialSkyrim;
+    float radius;
+    Ogre::Vector3 firstPoint;
+    float radius1;
+    Ogre::Vector3 secondPoint;
+    float radius2;
+
+    void read(NIFStream *nif)
+    {
+        material = nif->getUInt();
+        //materialSkyrim = nif->getUInt();
+        radius = nif->getFloat();
+
+        std::vector<char> unknown;
+        unknown.resize(8);
+        for (int i = 0; i < 8; ++i)
+            unknown[i] = nif->getChar();
+
+        firstPoint= nif->getVector3();
+        radius1= nif->getFloat();
+        secondPoint= nif->getVector3();
+        radius2= nif->getFloat();
+    }
+};
+
 class bhkConvexVerticesShape : public bhkSphereShape
 {
 public:
@@ -574,7 +601,7 @@ public:
 class bhkMoppBvTreeShape : public bhkShape
 {
 public:
-    unsigned int refBhkShape;
+    bhkShapePtr shape;
     unsigned int material;
     //unsigned int materialSkyrim;
     std::vector<unsigned char> unknown;
@@ -585,7 +612,7 @@ public:
 
     void read(NIFStream *nif)
     {
-        refBhkShape = nif->getUInt();
+        shape.read(nif);
         material = nif->getUInt();
         //materialSkyrim = nif->getUInt();  // not sure if this is version dependent
         unknown.resize(8);
@@ -904,9 +931,7 @@ struct ControllerLink
     std::string variable2;
     int variable2Offset;
 
-    unsigned int nifVer;
-
-    void read(NIFStream *nif)
+    void read(NIFStream *nif, unsigned int nifVer)
     {
         if (nifVer <= 0x0a010000) // up to 10.1.0.0
         {
@@ -971,10 +996,7 @@ public:
             unsigned int unknown = nif->getUInt();
         controlledBlocks.resize(numControlledBlocks);
         for (unsigned int i = 0; i < numControlledBlocks; ++i)
-        {
-            controlledBlocks[i].nifVer = nifVer;
-            controlledBlocks[i].read(nif);
-        }
+            controlledBlocks[i].read(nif, nifVer);
     }
 };
 

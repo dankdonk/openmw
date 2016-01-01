@@ -62,7 +62,7 @@ void CSVRender::ForeignObject::update()
     if (index==-1)
     {
         error = 1;
-        std::cout << "obj not static " << ESM4::formIdToString(baseObj) << std::endl;
+        //std::cout << "obj not static " << ESM4::formIdToString(baseObj) << std::endl;
     }
     else
     {
@@ -103,14 +103,9 @@ void CSVRender::ForeignObject::update()
 
         if (start == std::string::npos)
             throw std::runtime_error("empty model " + model); // huh? just checked above
-        if (start > 0)
-            std::cout << "faulty filename |" << filename << "|" << filename.substr(start) << std::endl;
 
         // now put it back together
         std::string trimmedModel = model.substr(0, separator+1) + filename.substr(start);
-
-        if (start > 0)
-            std::cout << trimmedModel << std::endl;
 
         //std::cout << "Using model: " << model << std::endl;
         mObject = NifOgre::Loader::createObjects (mBase, "Meshes\\" + trimmedModel);
@@ -130,6 +125,7 @@ void CSVRender::ForeignObject::update()
             Ogre::Quaternion yr (Ogre::Radian (-reference.mPos.rot[1]), Ogre::Vector3::UNIT_Y);
             Ogre::Quaternion zr (Ogre::Radian (-reference.mPos.rot[2]), Ogre::Vector3::UNIT_Z);
 
+            // FIXME: sometimes wrong model name is passed to Ogre
             mPhysics->addObject("meshes\\" + trimmedModel, mBase->getName(), ESM4::formIdToString(mReferenceId), reference.mScale, position, xr*yr*zr);
         }
     }

@@ -148,6 +148,9 @@ static std::map<std::string,RecordFactoryEntry> makeFactory()
     newFactory.insert(makeEntry("NiPSysGravityModifier",      &construct <NiPSysGravityModifier>       , RC_NiPSysGravityModifier         ));
     newFactory.insert(makeEntry("NiPSysPositionModifier",     &construct <NiPSysPositionModifier>      , RC_NiPSysPositionModifier        ));
     newFactory.insert(makeEntry("NiPSysBoundUpdateModifier",  &construct <NiPSysBoundUpdateModifier>   , RC_NiPSysBoundUpdateModifier     ));
+    newFactory.insert(makeEntry("NiPSysData",                 &construct <NiPSysData>                  , RC_NiPSysData                    ));
+    newFactory.insert(makeEntry("NiPoint3Interpolator",       &construct <NiPoint3Interpolator>        , RC_NiPoint3Interpolator          ));
+    newFactory.insert(makeEntry("bhkCapsuleShape",            &construct <bhkCapsuleShape>             , RC_bhkCapsuleShape               ));
     newFactory.insert(makeEntry("NiMultiTargetTransformController", &construct <NiMultiTargetTransformController> , RC_NiMultiTargetTransformController));
     return newFactory;
 }
@@ -290,7 +293,7 @@ void NIFFile::parse()
         r->recIndex = i;
         r->nifVer = ver;
         records[i] = r;
-        std::cout << "Start of " << rec << ", block " << i << ": " << nif.tell() << std::endl; // FIXME
+        //std::cout << "Start of " << rec << ", block " << i << ": " << nif.tell() << std::endl; // FIXME
         r->read(&nif);
     }
 
