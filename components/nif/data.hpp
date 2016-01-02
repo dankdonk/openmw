@@ -441,16 +441,30 @@ public:
     }
 };
 
+// FIXME: incomplete
+class NiSkinPartition : public Record
+{
+public:
+    unsigned short num;
+
+    void read(NIFStream *nif)
+    {
+    }
+};
+
 class NiSkinInstance : public Record
 {
 public:
     NiSkinDataPtr data;
+    //NiSkinPartitionPtr skinPartition;
     NodePtr root;
     NodeList bones;
 
     void read(NIFStream *nif)
     {
         data.read(nif);
+        //if (nifVer >= 0x04020000) // from 4.2.0.0
+            //skinPartition.read(nif);
         root.read(nif);
         bones.read(nif);
     }
@@ -483,6 +497,7 @@ public:
 
     BoneTrafo trafo;
     std::vector<BoneInfo> bones;
+    //NiSkinPartitionPtr skinPartition;
 
     void read(NIFStream *nif)
     {
@@ -492,8 +507,8 @@ public:
         unsigned char hasVertexWeights;
 
         int boneNum = nif->getInt();
-        if (nifVer >= 0x4a000002 && nifVer <= 0x0a010000)
-            nif->getInt(); // -1
+        if (nifVer >= 0x04000002 && nifVer <= 0x0a010000)
+            nif->getInt(); // NiSkinPartitionPtr.read(nif);
         if (nifVer >= 0x04020100) // from 4.2.1.0
             hasVertexWeights = nif->getChar();
 

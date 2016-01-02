@@ -2,7 +2,11 @@
 #include "effect.hpp"
 
 #include <map>
+#include <cassert>
 #include <iostream> // FIXME
+#ifdef NDEBUG // FIXME: debuggigng only
+#undef NDEBUG
+#endif
 
 #include <OgreResourceGroupManager.h>
 
@@ -150,6 +154,8 @@ static std::map<std::string,RecordFactoryEntry> makeFactory()
     newFactory.insert(makeEntry("NiPSysBoundUpdateModifier",  &construct <NiPSysBoundUpdateModifier>   , RC_NiPSysBoundUpdateModifier     ));
     newFactory.insert(makeEntry("NiPSysData",                 &construct <NiPSysData>                  , RC_NiPSysData                    ));
     newFactory.insert(makeEntry("NiPoint3Interpolator",       &construct <NiPoint3Interpolator>        , RC_NiPoint3Interpolator          ));
+    newFactory.insert(makeEntry("NiBlendPoint3Interpolator",  &construct <NiBlendPoint3Interpolator>   , RC_NiBlendPoint3Interpolator     ));
+    newFactory.insert(makeEntry("NiSkinPartition",            &construct <NiSkinPartition>             , RC_NiSkinPartition               ));
     newFactory.insert(makeEntry("bhkCapsuleShape",            &construct <bhkCapsuleShape>             , RC_bhkCapsuleShape               ));
     newFactory.insert(makeEntry("NiMultiTargetTransformController", &construct <NiMultiTargetTransformController> , RC_NiMultiTargetTransformController));
     return newFactory;
@@ -294,12 +300,12 @@ void NIFFile::parse()
         r->nifVer = ver;
         records[i] = r;
         //std::cout << "Start of " << rec << ", block " << i << ": " << nif.tell() << std::endl; // FIXME
+        assert(nif.tell() >= nif.size() && "Nif: EOF but record not read ");
         r->read(&nif);
     }
 
 	//NiFooter
-    if (nif.tell() >= nif.size())
-        std::cerr << "Nif: " << filename << " EOF but footer not read " << std::endl;
+    assert(nif.tell() >= nif.size() && "Nif: EOF but footer not read ");
     size_t rootNum = nif.getUInt();
     roots.resize(rootNum);
 
@@ -317,8 +323,7 @@ void NIFFile::parse()
             warn("Null Root found");
         }
     }
-    if (nif.tell() != nif.size())
-        std::cerr << "Nif: " << filename << " still has data after reading footer" << std::endl;
+    assert(nif.tell() != nif.size() && "Nif: still has data after reading footer");
 
     // Once parsing is done, do post-processing.
     for(size_t i = 0; i < recNum; i++)

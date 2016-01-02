@@ -106,14 +106,18 @@ void ESM4::Reference::load(ESM4::Reader& reader)
             case ESM4::SUB_XCNT:
             case ESM4::SUB_TNAM:
             case ESM4::SUB_ONAM:
+            case ESM4::SUB_VMAD:
+            case ESM4::SUB_XPRM:
             {
-                //std::cout << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
+                //std::cout << "REFR " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
                 reader.skipSubRecordData();
                 break;
             }
             default:
             {
-                throw std::runtime_error("ESM4::REFR::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
+                std::cout << "REFR " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
+                reader.skipSubRecordData();
+                //throw std::runtime_error("ESM4::REFR::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
                 break;
             }
         }

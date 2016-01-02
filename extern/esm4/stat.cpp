@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015 cc9cii
+  Copyright (C) 2015, 2016 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -89,6 +89,11 @@ void ESM4::Static::load(ESM4::Reader& reader)
             }
             case ESM4::SUB_MODT:
             {
+                // version is only availabe in TES5
+                if (reader.esmVersion() == ESM4::VER_094 || reader.esmVersion() == ESM4::VER_170)
+                    std::cout << "STAT MODT ver: " << std::hex << reader.hdr().record.version << std::endl;
+
+                // for TES4 these are just a sequence of bytes
                 mMODT.resize(subHdr.dataSize/sizeof(std::uint8_t));
                 for (std::vector<std::uint8_t>::iterator it = mMODT.begin(); it != mMODT.end(); ++it)
                 {
@@ -103,9 +108,14 @@ void ESM4::Static::load(ESM4::Reader& reader)
             }
             case ESM4::SUB_OBND:
             case ESM4::SUB_DNAM:
-            case ESM4::SUB_MNAM:
             {
-                std::cout << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
+                reader.skipSubRecordData();
+                break;
+            }
+            case ESM4::SUB_MNAM:
+            case ESM4::SUB_MODS:
+            {
+                std::cout << "STAT " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
                 reader.skipSubRecordData();
                 break;
             }

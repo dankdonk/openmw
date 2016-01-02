@@ -456,9 +456,24 @@ public:
 
     void read(NIFStream *nif)
     {
-        nif->getVector3();
+        value = nif->getVector3();
 
         posData.read(nif);
+    }
+};
+
+// should inherit from NiBlendInterpolator
+class NiBlendPoint3Interpolator : public NiInterpolator
+{
+public:
+    Ogre::Vector3 value;
+
+    void read(NIFStream *nif)
+    {
+        nif->getUShort();
+        nif->getInt();
+
+        value = nif->getVector3();
     }
 };
 

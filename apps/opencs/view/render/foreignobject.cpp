@@ -48,7 +48,7 @@ void CSVRender::ForeignObject::update()
     clear();
 
     std::string model;
-    int error = 0; // 1 referemceanöe does not exist, 2 referenceable does not specify a mesh
+    int error = 0; // 1 referenceable does not exist, 2 referenceable does not specify a mesh
 
     //const CSMForeign::RefIdCollection& referenceables = mData.getReferenceables();
     const CSMForeign::StaticCollection& referenceables = mData.getForeignStatics(); // FIXME: use statics only for now
@@ -62,7 +62,7 @@ void CSVRender::ForeignObject::update()
     if (index==-1)
     {
         error = 1;
-        //std::cout << "obj not static " << ESM4::formIdToString(baseObj) << std::endl;
+        std::cout << "obj not static " << ESM4::formIdToString(baseObj) << std::endl;
     }
     else
     {

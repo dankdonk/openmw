@@ -137,6 +137,8 @@ enum RecordType
   RC_NiPSysBoundUpdateModifier,
   RC_NiPSysData,
   RC_NiPoint3Interpolator,
+  RC_NiBlendPoint3Interpolator,
+  RC_NiSkinPartition,
   RC_bhkCapsuleShape,
   RC_RootCollisionNode
 };

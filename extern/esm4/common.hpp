@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015 cc9cii
+  Copyright (C) 2015, 2016 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -308,6 +308,7 @@ namespace ESM4
       //SUB_MODT = MKTAG('M','O','D','T'),
       //SUB_MNAM = MKTAG('M','N','A','M'),
       //SUB_DNAM = MKTAG('D','N','A','M'),
+        SUB_MODS = MKTAG('M','O','D','S'),
 
         // below appear in REFR records
       //SUB_EDID = MKTAG('E','D','I','D'),
@@ -330,9 +331,58 @@ namespace ESM4
         SUB_XLCM = MKTAG('X','L','C','M'),
         SUB_XRTM = MKTAG('X','R','T','M'),
         SUB_XACT = MKTAG('X','A','C','T'),
-        SUB_XCNT = MKTAG('X','C','N','T')
+        SUB_XCNT = MKTAG('X','C','N','T'),
       //SUB_TNAM = MKTAG('T','N','A','M'),
       //SUB_ONAM = MKTAG('O','N','A','M'),
+        SUB_VMAD = MKTAG('V','M','A','D'),
+        SUB_XPRM = MKTAG('X','P','R','M'),
+        SUB_XMBO = MKTAG('X','M','B','O'),
+        SUB_XPOD = MKTAG('X','P','O','D'),
+        SUB_XRMR = MKTAG('X','R','M','R'),
+      //SUB_LNAM = MKTAG('L','N','A','M'),
+        SUB_INAM = MKTAG('I','N','A','M'),
+        SUB_SCHR = MKTAG('S','C','H','R'),
+        SUB_XLRM = MKTAG('X','L','R','M'),
+        SUB_XRGD = MKTAG('X','R','G','D'),
+        SUB_XRDS = MKTAG('X','R','D','S'),
+        SUB_XEMI = MKTAG('X','E','M','I'),
+        SUB_XLIG = MKTAG('X','L','I','G'),
+        SUB_XALP = MKTAG('X','A','L','P'),
+        SUB_XNDP = MKTAG('X','N','D','P'),
+        SUB_XAPD = MKTAG('X','A','P','D'),
+        SUB_XAPR = MKTAG('X','A','P','R'),
+        SUB_XLIB = MKTAG('X','L','I','B'),
+        SUB_XLKR = MKTAG('X','L','L','R'),
+        SUB_XLRT = MKTAG('X','L','R','T'),
+        SUB_XCVL = MKTAG('X','C','V','L'),
+        SUB_XCVR = MKTAG('X','C','V','R'),
+        SUB_XCZA = MKTAG('X','C','Z','A'),
+        SUB_XCZC = MKTAG('X','C','Z','C'),
+      //SUB_XEZN = MKTAG('X','E','Z','N'),
+        SUB_XFVC = MKTAG('X','F','V','C'),
+        SUB_XHTW = MKTAG('X','H','T','W'),
+        SUB_XIS2 = MKTAG('X','I','S','2'),
+        SUB_XMBR = MKTAG('X','M','B','R'),
+        SUB_XCCP = MKTAG('X','C','C','P'),
+        SUB_XPWR = MKTAG('X','P','W','R'),
+        SUB_XTRI = MKTAG('X','T','R','I'),
+        SUB_XATR = MKTAG('X','A','T','R'),
+      //SUB_XWCN = MKTAG('X','W','C','N'),
+      //SUB_XWCU = MKTAG('X','W','C','U'),
+        SUB_XPRD = MKTAG('X','P','R','D'),
+        SUB_XPPA = MKTAG('X','P','P','A'),
+        SUB_PDTO = MKTAG('P','D','T','O'),
+        SUB_XLRL = MKTAG('X','L','R','L'),
+
+        // below appear in CONT records
+      //SUB_MODB = MKTAG('M','O','D','B'),
+      //SUB_MODT = MKTAG('M','O','D','T'),
+      //SUB_MODS = MKTAG('M','O','D','S'),
+        SUB_QNAM = MKTAG('Q','N','N','M'),
+      //SUB_VMAD = MKTAG('V','M','A','D'),
+        SUB_COCT = MKTAG('C','O','C','T'),
+        SUB_COED = MKTAG('C','O','E','D'),
+        SUB_CNTO = MKTAG('C','N','T','O')
     };
 
     // Based on http://www.uesp.net/wiki/Tes5Mod:Mod_File_Format#Groups
@@ -470,19 +520,19 @@ namespace ESM4
         Grid   grid;
     };
 
-    struct Vector
+    struct Vector3
     {
         float x;
         float y;
         float z;
     };
 
-    typedef Vector Vertex;
+    typedef Vector3 Vertex;
 
     struct Position
     {
-        Vector pos;
-        Vector rot; // angles are in radian, rz applied first and rx applied last
+        Vector3 pos;
+        Vector3 rot; // angles are in radian, rz applied first and rx applied last
     };
 #pragma pack(pop)
 
