@@ -56,6 +56,12 @@ void ESM4::Container::load(ESM4::Reader& reader)
                     throw std::runtime_error ("CONT EDID data read error");
                 break;
             }
+            case ESM4::SUB_FULL:
+            {
+                if (!reader.getZString(mFullName))
+                    throw std::runtime_error ("CONT FULL data read error");
+                break;
+            }
             case ESM4::SUB_MODL:
             {
                 if (!reader.getZString(mModel))
@@ -69,7 +75,7 @@ void ESM4::Container::load(ESM4::Reader& reader)
             }
             case ESM4::SUB_DATA:
             {
-                reader.get(mFlags);
+                reader.get(mDataFlags);
                 reader.get(mWeight);
                 break;
             }
@@ -91,13 +97,14 @@ void ESM4::Container::load(ESM4::Reader& reader)
             }
             case ESM4::SUB_MODB:
             case ESM4::SUB_MODT:
+            case ESM4::SUB_SCRI:
             case ESM4::SUB_MODS: // TES5 only
             case ESM4::SUB_VMAD: // TES5 only
             case ESM4::SUB_OBND: // TES5 only
             case ESM4::SUB_COCT: // TES5 only
             case ESM4::SUB_COED: // TES5 only
             {
-                std::cout << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
+                //std::cout << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
                 reader.skipSubRecordData();
                 break;
             }

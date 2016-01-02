@@ -51,6 +51,8 @@ void CSVRender::ForeignObject::update()
     int error = 0; // 1 referenceable does not exist, 2 referenceable does not specify a mesh
 
     //const CSMForeign::RefIdCollection& referenceables = mData.getReferenceables();
+    const CSMForeign::IdCollection<CSMForeign::Container>& container = mData.getForeignContainers();
+    const CSMForeign::IdCollection<CSMForeign::AnimObject>& anio = mData.getForeignAnimObjs();
     const CSMForeign::StaticCollection& referenceables = mData.getForeignStatics(); // FIXME: use statics only for now
 
     //int index = referenceables.searchId (mReferenceableId);
@@ -62,15 +64,29 @@ void CSVRender::ForeignObject::update()
     if (index==-1)
     {
         error = 1;
-        std::cout << "obj not static " << ESM4::formIdToString(baseObj) << std::endl;
+
+        int contIndex = container.searchId(ESM4::formIdToString(baseObj));
+        if (contIndex != -1)
+        {
+            error = 0;
+
+            model = container.getData (contIndex,
+                   container.findColumnIndex (CSMWorld::Columns::ColumnId_Model)).toString().toUtf8().constData();
+
+            if (model.empty())
+                error = 2;
+        }
+        else if (anio.searchId(ESM4::formIdToString(baseObj)) != -1)
+            std::cout << "obj is an anim obj" << std::endl;
+        else
+            std::cout << "obj not static/anio/container " << ESM4::formIdToString(baseObj) << std::endl;
     }
     else
     {
         /// \todo check for Deleted state (error 1)
 
         model = referenceables.getData (index,
-            referenceables.findColumnIndex (CSMWorld::Columns::ColumnId_Model)).
-            toString().toUtf8().constData();
+                referenceables.findColumnIndex (CSMWorld::Columns::ColumnId_Model)).toString().toUtf8().constData();
 
         if (model.empty())
             error = 2;

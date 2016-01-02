@@ -378,11 +378,15 @@ namespace ESM4
       //SUB_MODB = MKTAG('M','O','D','B'),
       //SUB_MODT = MKTAG('M','O','D','T'),
       //SUB_MODS = MKTAG('M','O','D','S'),
-        SUB_QNAM = MKTAG('Q','N','N','M'),
+        SUB_QNAM = MKTAG('Q','N','A','M'),
       //SUB_VMAD = MKTAG('V','M','A','D'),
         SUB_COCT = MKTAG('C','O','C','T'),
         SUB_COED = MKTAG('C','O','E','D'),
-        SUB_CNTO = MKTAG('C','N','T','O')
+        SUB_CNTO = MKTAG('C','N','T','O'),
+        SUB_SCRI = MKTAG('S','C','R','I'),
+
+        // below appear in ANIO records
+        SUB_BNAM = MKTAG('B','N','A','M')
     };
 
     // Based on http://www.uesp.net/wiki/Tes5Mod:Mod_File_Format#Groups

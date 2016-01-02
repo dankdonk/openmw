@@ -42,6 +42,9 @@
 #include "../foreign/regioncollection.hpp"
 #include "../foreign/staticcollection.hpp"
 #include "../foreign/refcollection.hpp"
+#include "../foreign/idcollection.hpp"
+#include "../foreign/animobject.hpp"
+#include "../foreign/container.hpp"
 
 #include "idcollection.hpp"
 #include "nestedidcollection.hpp"
@@ -113,6 +116,8 @@ namespace CSMWorld
             CSMForeign::LandTextureCollection mForeignLandTextures;
             CSMForeign::LandCollection mForeignLands;
             CSMForeign::StaticCollection mForeignStatics; // FIXME: delete
+            CSMForeign::IdCollection<CSMForeign::AnimObject> mForeignAnimObjs;
+            CSMForeign::IdCollection<CSMForeign::Container> mForeignContainers;
             //CSMForeign::RefIdCollection mForeignReferenceables;
             CSMForeign::RefCollection mForeignRefs;
             CSMForeign::NavigationCollection mNavigation;
@@ -295,6 +300,14 @@ namespace CSMWorld
             const CSMForeign::StaticCollection& getForeignStatics() const;
 
             CSMForeign::StaticCollection& getForeignStatics();
+
+            const CSMForeign::IdCollection<CSMForeign::AnimObject>& getForeignAnimObjs() const;
+
+            CSMForeign::IdCollection<CSMForeign::AnimObject>& getForeignAnimObjs();
+
+            const CSMForeign::IdCollection<CSMForeign::Container>& getForeignContainers() const;
+
+            CSMForeign::IdCollection<CSMForeign::Container>& getForeignContainers();
 
             const CSMForeign::NavigationCollection& getNavigation() const;
 

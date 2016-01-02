@@ -362,6 +362,14 @@ void CSVDoc::View::setupForeignMenu()
     connect (stat, SIGNAL (triggered()), this, SLOT (addForeignStaticSubView()));
     foreign->addAction (stat);
 
+    QAction *anio = new QAction (tr ("AnimObjects"), this);
+    connect (anio, SIGNAL (triggered()), this, SLOT (addForeignAnimObjSubView()));
+    foreign->addAction (anio);
+
+    QAction *cont = new QAction (tr ("Containers"), this);
+    connect (cont, SIGNAL (triggered()), this, SLOT (addForeignContainerSubView()));
+    foreign->addAction (cont);
+
     foreign->addSeparator();
 
     QAction *ltex = new QAction (tr ("Land Textures"), this);
@@ -936,6 +944,16 @@ void CSVDoc::View::addForeignLandSubView()
 void CSVDoc::View::addForeignStaticSubView()
 {
     addSubView (CSMWorld::UniversalId::Type_ForeignStatics);
+}
+
+void CSVDoc::View::addForeignAnimObjSubView()
+{
+    addSubView (CSMWorld::UniversalId::Type_ForeignAnimObjs);
+}
+
+void CSVDoc::View::addForeignContainerSubView()
+{
+    addSubView (CSMWorld::UniversalId::Type_ForeignContainers);
 }
 
 void CSVDoc::View::addForeignRegionMapSubView()

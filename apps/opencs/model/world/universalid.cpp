@@ -65,6 +65,8 @@ namespace
         { CSMWorld::UniversalId::Class_RecordList, CSMWorld::UniversalId::Type_ForeignLands, "Foreign Land Table", 0 },
         // FIXME: should be foreign refid
         { CSMWorld::UniversalId::Class_RecordList, CSMWorld::UniversalId::Type_ForeignStatics, "Foreign Static Table", 0 },
+        { CSMWorld::UniversalId::Class_RecordList, CSMWorld::UniversalId::Type_ForeignAnimObjs, "Foreign Anim Obj Table", 0 },
+        { CSMWorld::UniversalId::Class_RecordList, CSMWorld::UniversalId::Type_ForeignContainers, "Foreign Container Table", ":./container.png" },
         { CSMWorld::UniversalId::Class_RecordList, CSMWorld::UniversalId::Type_ForeignReferenceables,
             "Foreign Objects", 0 },
         { CSMWorld::UniversalId::Class_RecordList, CSMWorld::UniversalId::Type_ForeignReferences,
@@ -145,6 +147,8 @@ namespace
         { CSMWorld::UniversalId::Class_Record, CSMWorld::UniversalId::Type_ForeignLand, "Foreign Land", 0 },
         // FIXME should be Class_ForeignRefRecord
         { CSMWorld::UniversalId::Class_Record, CSMWorld::UniversalId::Type_ForeignStatic, "Foreign Static", ":./static.png" },
+        { CSMWorld::UniversalId::Class_Record, CSMWorld::UniversalId::Type_ForeignAnimObj, "Foreign Anim Obj", 0 },
+        { CSMWorld::UniversalId::Class_Record, CSMWorld::UniversalId::Type_ForeignContainer, "Foreign Container", ":./container.png" },
         //{ CSMWorld::UniversalId::Class_ForeignRefRecord, CSMWorld::UniversalId::Type_ForeignStatic, "Foreign Static", ":./static.png" },
         { CSMWorld::UniversalId::Class_Record, CSMWorld::UniversalId::Type_ForeignReferenceable, "Object", 0 },
         { CSMWorld::UniversalId::Class_SubRecord, CSMWorld::UniversalId::Type_ForeignReference, "Reference", 0 },

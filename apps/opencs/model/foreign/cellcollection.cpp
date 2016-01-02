@@ -246,7 +246,7 @@ void CSMForeign::CellCollection::insertRecord (std::unique_ptr<CSMWorld::RecordB
     CSMWorld::UniversalId::Type type)
 {
     int size = getAppendIndex(/*id*/"", type); // id is ignored
-    std::string id = static_cast<CSMWorld::Record<Cell>*>(record.get())->get().mId;
+    //std::string id = static_cast<CSMWorld::Record<Cell>*>(record.get())->get().mId;
     ESM4::FormId formId = static_cast<CSMWorld::Record<Cell>*>(record.get())->get().mFormId;
 
     // first add records only

@@ -160,9 +160,12 @@ CSVRender::Cell::Cell (CSMDoc::Document& document, Ogre::SceneManager *sceneMana
             mPhysics->addHeightField(sceneManager,
                 esmLand.getLandData(ESM::Land::DATA_VHGT)->mHeights, mX, mY, 0, worldsize / (verts-1), verts);
         }
+        else
+            std::cerr << "Heightmap for " << mId << " not found" << std::endl;
     }
     else
     {
+        std::cerr << "Land record for " << mId << " not found" << std::endl;
         std::istringstream stream (mId.c_str());
         char ignore; // '#'
         stream >> ignore >> mX >> mY;

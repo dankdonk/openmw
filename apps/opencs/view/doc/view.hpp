@@ -246,6 +246,10 @@ namespace CSVDoc
 
             void addForeignStaticSubView();
 
+            void addForeignAnimObjSubView();
+
+            void addForeignContainerSubView();
+
             void addForeignRegionMapSubView();
 
             void addForeignReferenceablesSubView();

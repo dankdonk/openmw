@@ -557,6 +557,17 @@ CSMWorld::Data::Data (ToUTF8::FromType encoding, const ResourcesManager& resourc
     mForeignStatics.addColumn (new FixedRecordTypeColumn<CSMForeign::Static> (UniversalId::Type_ForeignStatic));
     mForeignStatics.addColumn (new ModelColumn<CSMForeign::Static>);
 
+    mForeignAnimObjs.addColumn (new StringIdColumn<CSMForeign::AnimObject>);
+    mForeignAnimObjs.addColumn (new RecordStateColumn<CSMForeign::AnimObject>);
+    mForeignAnimObjs.addColumn (new FixedRecordTypeColumn<CSMForeign::AnimObject> (UniversalId::Type_ForeignAnimObj));
+    mForeignAnimObjs.addColumn (new ModelColumn<CSMForeign::AnimObject>);
+
+    mForeignContainers.addColumn (new StringIdColumn<CSMForeign::Container>);
+    mForeignContainers.addColumn (new RecordStateColumn<CSMForeign::Container>);
+    mForeignContainers.addColumn (new FixedRecordTypeColumn<CSMForeign::Container> (UniversalId::Type_ForeignContainer));
+    mForeignContainers.addColumn (new FullNameColumn<CSMForeign::Container>);
+    mForeignContainers.addColumn (new ModelColumn<CSMForeign::Container>);
+
     mForeignRefs.addColumn (new StringIdColumn<CSMForeign::CellRef>/*(true)*/);
     mForeignRefs.addColumn (new RecordStateColumn<CSMForeign::CellRef>);
     mForeignRefs.addColumn (new FixedRecordTypeColumn<CSMForeign::CellRef> (UniversalId::Type_ForeignReference));
@@ -622,6 +633,8 @@ CSMWorld::Data::Data (ToUTF8::FromType encoding, const ResourcesManager& resourc
     addModel (new IdTable (&mForeignLandTextures), UniversalId::Type_ForeignLandTexture);
     addModel (new IdTable (&mForeignLands), UniversalId::Type_ForeignLand);
     addModel (new IdTable (&mForeignStatics), UniversalId::Type_ForeignStatic); // FIXME: temp, should be refid
+    addModel (new IdTable (&mForeignAnimObjs), UniversalId::Type_ForeignAnimObj); // FIXME: temp, should be refid
+    addModel (new IdTable (&mForeignContainers), UniversalId::Type_ForeignContainer); // FIXME: temp, should be refid
     addModel (new IdTable (&mForeignRefs, IdTable::Feature_ViewCell | IdTable::Feature_Preview),
             UniversalId::Type_ForeignReference);
 
@@ -1041,6 +1054,26 @@ const CSMForeign::StaticCollection& CSMWorld::Data::getForeignStatics() const
 CSMForeign::StaticCollection& CSMWorld::Data::getForeignStatics()
 {
     return mForeignStatics;
+}
+
+const CSMForeign::IdCollection<CSMForeign::AnimObject>& CSMWorld::Data::getForeignAnimObjs() const
+{
+    return mForeignAnimObjs;
+}
+
+CSMForeign::IdCollection<CSMForeign::AnimObject>& CSMWorld::Data::getForeignAnimObjs()
+{
+    return mForeignAnimObjs;
+}
+
+const CSMForeign::IdCollection<CSMForeign::Container>& CSMWorld::Data::getForeignContainers() const
+{
+    return mForeignContainers;
+}
+
+CSMForeign::IdCollection<CSMForeign::Container>& CSMWorld::Data::getForeignContainers()
+{
+    return mForeignContainers;
 }
 
 QAbstractItemModel *CSMWorld::Data::getTableModel (const CSMWorld::UniversalId& id)
@@ -1618,6 +1651,18 @@ bool CSMWorld::Data::loadTes4Record (const ESM4::RecordHeader& hdr, CSMDoc::Mess
         {
             reader.getRecordData();
             mForeignStatics.load(reader, mBase);
+            break;
+        }
+        case ESM4::REC_ANIO:
+        {
+            reader.getRecordData();
+            mForeignAnimObjs.load(reader, mBase);
+            break;
+        }
+        case ESM4::REC_CONT:
+        {
+            reader.getRecordData();
+            mForeignContainers.load(reader, mBase);
             break;
         }
         case ESM4::REC_REFR:

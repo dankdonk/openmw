@@ -77,15 +77,19 @@ void ESM4::AnimObject::load(ESM4::Reader& reader)
                 reader.get(mUnloadEvent);
                 break;
             }
+            case ESM4::SUB_MODB:
             case ESM4::SUB_MODT: // TES5 only
             case ESM4::SUB_MODS: // TES5 only
             {
-                std::cout << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
+                //std::cout << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
                 reader.skipSubRecordData();
                 break;
             }
             default:
-                throw std::runtime_error("ESM4::ANIO::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
+                std::cout << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
+                reader.skipSubRecordData();
+                break;
+                //throw std::runtime_error("ESM4::ANIO::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
         }
     }
 }

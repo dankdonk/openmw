@@ -150,6 +150,10 @@ namespace CSMWorld
                 Type_ForeignLand,
                 Type_ForeignStatics, // FIXME: should be refid
                 Type_ForeignStatic,
+                Type_ForeignAnimObjs, // FIXME: should be refid
+                Type_ForeignAnimObj,
+                Type_ForeignContainers, // FIXME: should be refid
+                Type_ForeignContainer,
                 Type_ForeignReferenceables,
                 Type_ForeignReferenceable,
                 Type_ForeignReferences,

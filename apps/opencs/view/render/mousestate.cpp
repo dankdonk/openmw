@@ -313,8 +313,8 @@ namespace CSVRender
     void MouseState::mouseDoubleClickEvent (QMouseEvent *event)
     {
         event->ignore();
-        //mPhysics->toggleDebugRendering(mSceneManager);
-        //mParent->flagAsModified();
+        mPhysics->toggleDebugRendering(mSceneManager);
+        mParent->flagAsModified();
     }
 
     bool MouseState::wheelEvent (QWheelEvent *event)

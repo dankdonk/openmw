@@ -300,12 +300,14 @@ void NIFFile::parse()
         r->nifVer = ver;
         records[i] = r;
         //std::cout << "Start of " << rec << ", block " << i << ": " << nif.tell() << std::endl; // FIXME
-        assert(nif.tell() >= nif.size() && "Nif: EOF but record not read ");
+        assert(nif.tell() < nif.size() && "Nif: EOF but record not read ");
         r->read(&nif);
     }
 
 	//NiFooter
-    assert(nif.tell() >= nif.size() && "Nif: EOF but footer not read ");
+    assert(nif.tell() < nif.size() && "Nif: EOF but footer not read ");
+    //if (nif.tell() >= nif.size())
+        //std::cerr << "Nif: " << filename << " EOF but footer not read " << std::endl;
     size_t rootNum = nif.getUInt();
     roots.resize(rootNum);
 
@@ -323,7 +325,9 @@ void NIFFile::parse()
             warn("Null Root found");
         }
     }
-    assert(nif.tell() != nif.size() && "Nif: still has data after reading footer");
+    assert(nif.tell() == nif.size() && "Nif: still has data after reading footer");
+    //if (nif.tell() != nif.size())
+        //std::cerr << "Nif: " << filename << " still has data after reading footer" << std::endl;
 
     // Once parsing is done, do post-processing.
     for(size_t i = 0; i < recNum; i++)

@@ -41,7 +41,7 @@ namespace ESM4
         std::string mFullName;
         std::string mModel;
 
-        unsigned char mFlags;
+        unsigned char mDataFlags;
         float mWeight;
 
         FormId mOpenSound;

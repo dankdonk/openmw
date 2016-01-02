@@ -164,7 +164,11 @@ CSVRender::ForeignCell::ForeignCell (CSMDoc::Document& document, Ogre::SceneMana
             mPhysics->addHeightField(sceneManager,
                 esmLand.getLandData(ESM4::Land::LAND_VHGT)->mHeights, mX, mY, 0, worldsize / (verts-1), verts);
         }
+        else
+            std::cerr << "Heightmap for " << cell.mCellId << " not found" << std::endl;
     }
+    else
+        std::cerr << "Land record for " << cell.mCellId << " not found" << std::endl;
 
     createGridMaterials();
 
