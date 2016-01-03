@@ -31,7 +31,7 @@ public:
     NiCollisionObjectPtr collision;
 
     // Bounding box info
-    bool hasBounds;
+    bool hasBounds = false; // NOTE: this needs to be set to false for NiTriStrips (see ManualBulletShapeLoader)
     Ogre::Vector3 boundPos;
     Ogre::Matrix3 boundRot;
     Ogre::Vector3 boundXYZ; // Box size
@@ -50,7 +50,8 @@ public:
 
         if (nifVer <= 0x04020200) // up to 4.2.2.0
         {
-            if(nif->getBool(nifVer))
+            hasBounds = nif->getBool(nifVer);
+            if(hasBounds)
             {
                 nif->getInt(); // always 1
                 boundPos = nif->getVector3();
@@ -286,7 +287,7 @@ public:
 struct NiAutoNormalParticles : public NiGeometry {};
 struct NiRotatingParticles : public NiGeometry {};
 struct NiTriShape : public NiGeometry {};
-class NiTriStrips : public NiGeometry {};
+struct NiTriStrips : public NiGeometry {};
 
 class NiParticleSystem : public NiGeometry
 {

@@ -1,5 +1,7 @@
 #include "BulletShapeLoader.h"
 
+#include <iostream> // FIXME
+
 namespace OEngine {
 namespace Physic
 {
@@ -108,6 +110,14 @@ BulletShapeManager::~BulletShapeManager()
 BulletShapePtr BulletShapeManager::getByName(const Ogre::String& name, const Ogre::String& groupName)
 {
     return getResourceByName(name, groupName).staticCast<BulletShape>();
+#if 0
+    BulletShapePtr ptr = getResourceByName(name, groupName).staticCast<BulletShape>();
+    if (!ptr.isNull())
+        std::cout << "BulletShape found " << ptr->getName() << std::endl; // FIXME
+    else
+        std::cout << "BulletShape null, not found " << name << std::endl; // FIXME
+    return ptr;
+#endif
 }
 
 BulletShapePtr BulletShapeManager::create (const Ogre::String& name, const Ogre::String& group,
@@ -115,6 +125,14 @@ BulletShapePtr BulletShapeManager::create (const Ogre::String& name, const Ogre:
                                 const Ogre::NameValuePairList* createParams)
 {
     return createResource(name,group,isManual,loader,createParams).staticCast<BulletShape>();
+#if 0
+    BulletShapePtr ptr = createResource(name,group,isManual,loader,createParams).staticCast<BulletShape>();
+    if (!ptr.isNull())
+        std::cout << "BulletShape created " << ptr->getName() << std::endl; // FIXME
+    else
+        std::cout << "BulletShape not created " << name << std::endl; // FIXME
+    return ptr;
+#endif
 }
 
 Ogre::ResourcePtr BulletShapeManager::load(const Ogre::String &name, const Ogre::String &group,

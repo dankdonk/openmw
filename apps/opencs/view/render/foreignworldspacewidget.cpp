@@ -51,7 +51,7 @@ bool CSVRender::ForeignWorldspaceWidget::adjustCells()
             int y = 0;
             stream >> ignore >> x >> y;
 
-            int32_t formId = cells.searchFormId (x, y); // FIXME: assumes Tamriel
+            std::uint32_t formId = cells.searchFormId (x, y); // FIXME: assumes Tamriel
             int index = cells.searchId (formId);
 
 
@@ -119,8 +119,6 @@ bool CSVRender::ForeignWorldspaceWidget::adjustCells()
     for (CSMWorld::CellSelection::Iterator iter (mSelection.begin()); iter!=mSelection.end();
         ++iter)
     {
-        //int index = cells.searchId (iter->getId (mWorldspace));
-
         std::string cellId = iter->getId (mWorldspace);
         std::istringstream stream (cellId.c_str());
         char ignore;
@@ -128,7 +126,7 @@ bool CSVRender::ForeignWorldspaceWidget::adjustCells()
         int y = 0;
         stream >> ignore >> x >> y;
 
-        int32_t formId = cells.searchFormId (x, y); // FIXME: assumes Tamriel
+        std::uint32_t formId = cells.searchFormId (x, y); // FIXME: assumes Tamriel
         int index = cells.searchId (formId);
 
         if (index > 0 && cells.getRecord (index).mState != CSMWorld::RecordBase::State_Deleted &&
@@ -136,6 +134,7 @@ bool CSVRender::ForeignWorldspaceWidget::adjustCells()
         {
             ForeignCell *cell = new ForeignCell (mDocument, getSceneManager(), formId, mDocument.getPhysics());
 
+            // FIXME: disable for now
             //connect (cell->getSignalHandler(), SIGNAL(flagAsModified()), this, SLOT(flagAsModSlot()));
             mCells.insert (std::make_pair (*iter, cell));
 
@@ -484,7 +483,7 @@ CSVRender::ForeignWorldspaceWidget::ForeignWorldspaceWidget (QWidget* parent, CS
   mControlElements(NULL), mDisplayCellCoord(true), mOverlayMask(NULL)
 {
     QAbstractItemModel *cells =
-        document.getData().getTableModel (CSMWorld::UniversalId::Type_Cells);
+        document.getData().getTableModel (CSMWorld::UniversalId::Type_ForeignCells);
 
     connect (cells, SIGNAL (dataChanged (const QModelIndex&, const QModelIndex&)),
         this, SLOT (cellDataChanged (const QModelIndex&, const QModelIndex&)));
@@ -492,6 +491,26 @@ CSVRender::ForeignWorldspaceWidget::ForeignWorldspaceWidget (QWidget* parent, CS
         this, SLOT (cellRemoved (const QModelIndex&, int, int)));
     connect (cells, SIGNAL (rowsInserted (const QModelIndex&, int, int)),
         this, SLOT (cellAdded (const QModelIndex&, int, int)));
+
+    // FIXME: this is usualy done in WorldspaceWidget
+    //
+    // sequence:
+    //
+    //  MouseState
+    //    UndoStack
+    //      IdTable::setData emit dataChanged
+    //        ForeignWorldspaceWidget referenceDataChanged
+    //          ForeignCell::referenceDataChanged
+    //            ForeignObject::referenceDataChanged
+    QAbstractItemModel *references =
+        document.getData().getTableModel (CSMWorld::UniversalId::Type_ForeignReferences);
+
+    connect (references, SIGNAL (dataChanged (const QModelIndex&, const QModelIndex&)),
+        this, SLOT (referenceDataChanged (const QModelIndex&, const QModelIndex&)));
+    connect (references, SIGNAL (rowsAboutToBeRemoved (const QModelIndex&, int, int)),
+        this, SLOT (referenceAboutToBeRemoved (const QModelIndex&, int, int)));
+    connect (references, SIGNAL (rowsInserted (const QModelIndex&, int, int)),
+        this, SLOT (referenceAdded (const QModelIndex&, int, int)));
 }
 
 CSVRender::ForeignWorldspaceWidget::~ForeignWorldspaceWidget()

@@ -24,7 +24,7 @@ http://www.gnu.org/licenses/ .
 #include "bulletnifloader.hpp"
 
 #include <cstdio>
-
+#include <iostream> // FIXME
 
 #include <components/misc/stringops.hpp>
 
@@ -347,6 +347,14 @@ void ManualBulletShapeLoader::handleNode(const Nif::Node *node, int flags,
             mShape->mCollide = !(flags&0x800);
             handleNiTriShape(static_cast<const Nif::NiTriShape*>(node), flags, node->getWorldTransform(), raycasting, isAnimated);
         }
+        else if (node->recType == Nif::RC_NiTriStrips)
+        {
+            mShape->mCollide = !(flags & 0x800);
+            handleNiTriStrips(static_cast<const Nif::NiTriStrips*>(node), flags, node->getWorldTransform(), raycasting, isAnimated);
+            //std::cout << "rectype " << node->recType << std::endl;
+        }
+        //else
+            //std::cout << "rectype " << node->recType << std::endl;
     }
 
     // For NiNodes, loop through children
@@ -439,6 +447,96 @@ void ManualBulletShapeLoader::handleNiTriShape(const Nif::NiTriShape *shape, int
 
         // Static shape, just transform all vertices into position
         const Nif::NiTriShapeData *data = static_cast<const Nif::NiTriShapeData*>(shape->data.getPtr());
+        const std::vector<Ogre::Vector3> &vertices = data->vertices;
+        const std::vector<short> &triangles = data->triangles;
+
+        for(size_t i = 0;i < data->triangles.size();i+=3)
+        {
+            Ogre::Vector3 b1 = transform*vertices[triangles[i+0]];
+            Ogre::Vector3 b2 = transform*vertices[triangles[i+1]];
+            Ogre::Vector3 b3 = transform*vertices[triangles[i+2]];
+            mStaticMesh->addTriangle(btVector3(b1.x,b1.y,b1.z),btVector3(b2.x,b2.y,b2.z),btVector3(b3.x,b3.y,b3.z));
+        }
+    }
+}
+
+void ManualBulletShapeLoader::handleNiTriStrips(const Nif::NiTriStrips *shape, int flags, const Ogre::Matrix4 &transform,
+                                               bool raycasting, bool isAnimated)
+{
+    assert(shape != NULL);
+
+    // Interpret flags
+    bool hidden    = (flags&Nif::NiNode::Flag_Hidden) != 0;
+    bool collide   = (flags&Nif::NiNode::Flag_MeshCollision) != 0;
+    bool bbcollide = (flags&Nif::NiNode::Flag_BBoxCollision) != 0;
+
+    // If the object was marked "NCO" earlier, it shouldn't collide with
+    // anything. So don't do anything.
+    if ((flags & 0x800) && !raycasting)
+    {
+        return;
+    }
+
+    if (!collide && !bbcollide && hidden && !raycasting)
+        // This mesh apparently isn't being used for anything, so don't
+        // bother setting it up.
+        return;
+
+    if (!shape->skin.empty())
+        isAnimated = false;
+
+    if (isAnimated)
+    {
+        if (!mCompoundShape)
+            mCompoundShape = new btCompoundShape();
+
+        btTriangleMesh* childMesh = new btTriangleMesh();
+
+        const Nif::NiTriStripsData *data = static_cast<const Nif::NiTriStripsData*>(shape->data.getPtr());
+
+        childMesh->preallocateVertices(data->vertices.size());
+        childMesh->preallocateIndices(data->triangles.size());
+
+        const std::vector<Ogre::Vector3> &vertices = data->vertices;
+        const std::vector<short> &triangles = data->triangles;
+
+        for(size_t i = 0;i < data->triangles.size();i+=3)
+        {
+            Ogre::Vector3 b1 = vertices[triangles[i+0]];
+            Ogre::Vector3 b2 = vertices[triangles[i+1]];
+            Ogre::Vector3 b3 = vertices[triangles[i+2]];
+            childMesh->addTriangle(btVector3(b1.x,b1.y,b1.z),btVector3(b2.x,b2.y,b2.z),btVector3(b3.x,b3.y,b3.z));
+        }
+
+        TriangleMeshShape* childShape = new TriangleMeshShape(childMesh,true);
+
+        float scale = shape->trafo.scale;
+        const Nif::Node* parent = shape;
+        while (parent->parent)
+        {
+            parent = parent->parent;
+            scale *= parent->trafo.scale;
+        }
+        Ogre::Quaternion q = transform.extractQuaternion();
+        Ogre::Vector3 v = transform.getTrans();
+        childShape->setLocalScaling(btVector3(scale, scale, scale));
+
+        btTransform trans(btQuaternion(q.x, q.y, q.z, q.w), btVector3(v.x, v.y, v.z));
+
+        if (raycasting)
+            mShape->mAnimatedRaycastingShapes.insert(std::make_pair(shape->recIndex, mCompoundShape->getNumChildShapes()));
+        else
+            mShape->mAnimatedShapes.insert(std::make_pair(shape->recIndex, mCompoundShape->getNumChildShapes()));
+
+        mCompoundShape->addChildShape(trans, childShape);
+    }
+    else
+    {
+        if (!mStaticMesh)
+            mStaticMesh = new btTriangleMesh();
+
+        // Static shape, just transform all vertices into position
+        const Nif::NiTriStripsData *data = static_cast<const Nif::NiTriStripsData*>(shape->data.getPtr());
         const std::vector<Ogre::Vector3> &vertices = data->vertices;
         const std::vector<short> &triangles = data->triangles;
 

@@ -90,6 +90,14 @@ void CSVRender::ForeignObject::update()
 
         if (model.empty())
             error = 2;
+
+#if 0
+        // sanity check position
+        const CSMForeign::CellRef& reference = getReference();
+        std::cout << "object cell " << floor(reference.mPos.pos[0]/4096) << ", "
+                                    << floor(reference.mPos.pos[1]/4096) << ", "
+                                    <<       reference.mPos.pos[2]       << std::endl;
+#endif
     }
 
     if (error)
@@ -141,8 +149,9 @@ void CSVRender::ForeignObject::update()
             Ogre::Quaternion yr (Ogre::Radian (-reference.mPos.rot[1]), Ogre::Vector3::UNIT_Y);
             Ogre::Quaternion zr (Ogre::Radian (-reference.mPos.rot[2]), Ogre::Vector3::UNIT_Z);
 
+            // NOTE: physics system and mouse picking assume reference naming convension (i.e."^ref#")
             // FIXME: sometimes wrong model name is passed to Ogre
-            mPhysics->addObject("meshes\\" + trimmedModel, mBase->getName(), ESM4::formIdToString(mReferenceId), reference.mScale, position, xr*yr*zr);
+            mPhysics->addObject("meshes\\" + trimmedModel, mBase->getName(), "ref#"+ESM4::formIdToString(mReferenceId), reference.mScale, position, xr*yr*zr);
         }
     }
 }

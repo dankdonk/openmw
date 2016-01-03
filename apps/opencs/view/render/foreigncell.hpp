@@ -75,7 +75,7 @@ namespace CSVRender
             /// Ignored if cell does not have an object with the given ID.
             ///
             /// \return Was the object deleted?
-            bool removeObject (const std::string& id);
+            bool removeObject (ESM4::FormId id);
 
             /// Add objects from reference table that are within this cell.
             ///

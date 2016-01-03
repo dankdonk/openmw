@@ -260,6 +260,35 @@ namespace CSVRender
                     }
                     else
                     {
+                        // FIXME: disable updating the document for now, since it assumes
+                        // Type_Reference (but it can be Type_ForeignReference)
+                        //
+                        // However, that means the physics model doesn't get updated with the
+                        // new position of the moved object
+//#if 0
+                        // FIXME
+                        // start quick hack for temporary testing
+                        const CSMForeign::RefCollection& references = mParent->mDocument.getData().getForeignReferences();
+
+                        mColIndexPosX = references.findColumnIndex(CSMWorld::Columns::ColumnId_PositionXPos);
+                        mColIndexPosY = references.findColumnIndex(CSMWorld::Columns::ColumnId_PositionYPos);
+                        mColIndexPosZ = references.findColumnIndex(CSMWorld::Columns::ColumnId_PositionZPos);
+
+                        mIdTableModel = static_cast<CSMWorld::IdTable *>(
+                            mParent->mDocument.getData().getTableModel(CSMWorld::UniversalId::Type_ForeignReference));
+                        std::string id = mGrabbedRefId.substr(4);
+
+                        mParent->mDocument.getUndoStack().beginMacro (QObject::tr("Move Object"));
+                        mParent->mDocument.getUndoStack().push(new CSMWorld::ModifyCommand(*mIdTableModel,
+                            mIdTableModel->getModelIndex(id, mColIndexPosX), pos.x));
+                        mParent->mDocument.getUndoStack().push(new CSMWorld::ModifyCommand(*mIdTableModel,
+                            mIdTableModel->getModelIndex(id, mColIndexPosY), pos.y));
+                        mParent->mDocument.getUndoStack().push(new CSMWorld::ModifyCommand(*mIdTableModel,
+                            mIdTableModel->getModelIndex(id, mColIndexPosZ), pos.z));
+                        mParent->mDocument.getUndoStack().endMacro();
+                        // end quick hack
+//#endif
+#if 0
                         mParent->mDocument.getUndoStack().beginMacro (QObject::tr("Move Object"));
                         mParent->mDocument.getUndoStack().push(new CSMWorld::ModifyCommand(*mIdTableModel,
                             mIdTableModel->getModelIndex(mGrabbedRefId, mColIndexPosX), pos.x));
@@ -268,6 +297,7 @@ namespace CSVRender
                         mParent->mDocument.getUndoStack().push(new CSMWorld::ModifyCommand(*mIdTableModel,
                             mIdTableModel->getModelIndex(mGrabbedRefId, mColIndexPosZ), pos.z));
                         mParent->mDocument.getUndoStack().endMacro();
+#endif
                     }
 
                     // FIXME: highlight current object?

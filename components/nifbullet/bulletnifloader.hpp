@@ -40,6 +40,7 @@ namespace Nif
     class Node;
     struct Transformation;
     struct NiTriShape;
+    struct NiTriStrips;
 }
 
 namespace NifBullet
@@ -119,6 +120,7 @@ private:
     *convert a NiTriShape to a bullet trishape.
     */
     void handleNiTriShape(const Nif::NiTriShape *shape, int flags, const Ogre::Matrix4 &transform, bool raycasting, bool isAnimated);
+    void handleNiTriStrips(const Nif::NiTriStrips *shape, int flags, const Ogre::Matrix4 &transform, bool raycasting, bool isAnimated);
 
     std::string mResourceName;
 

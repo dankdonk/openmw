@@ -86,17 +86,17 @@ bool ESM4::Reader::getSubRecordHeader()
 
 void ESM4::Reader::saveGroupStatus(const ESM4::RecordHeader& hdr)
 {
-//#if 0
+#if 0
     std::string padding = ""; // FIXME: debugging only
     padding.insert(0, mGroupStack.size()*2, ' ');
     std::cout << padding << "Starting record group " << ESM4::printLabel(hdr.group.label, hdr.group.type) << std::endl;
-//#endif
+#endif
     if (hdr.group.groupSize == (std::uint32_t)mRecHeaderSize)
     {
-//#if 0
+#if 0
         std::cout << padding << "Igorning record group " // FIXME: debugging only
             << ESM4::printLabel(hdr.group.label, hdr.group.type) << " (empty)" << std::endl;
-//#endif
+#endif
         // don't put on the stack, checkGroupStatus() may not get called before recursing into this method
         mGroupStack.back().second -= hdr.group.groupSize;
         checkGroupStatus();
@@ -123,11 +123,11 @@ void ESM4::Reader::checkGroupStatus()
         ESM4::GroupTypeHeader grp = mGroupStack.back().first; // FIXME: debugging only
         uint32_t groupSize = mGroupStack.back().first.groupSize;
         mGroupStack.pop_back();
-//#if 0
+#if 0
         std::string padding = ""; // FIXME: debugging only
         padding.insert(0, mGroupStack.size()*2, ' ');
         std::cout << padding << "Finished record group " << ESM4::printLabel(grp.label, grp.type) << std::endl;
-//#endif
+#endif
         // Check if the previous group was the final one
         if (mGroupStack.empty())
             return;
@@ -242,12 +242,12 @@ bool ESM4::Reader::getZString(std::string& str)
 
 void ESM4::Reader::skipGroup()
 {
-//#if 0
+#if 0
     std::string padding = ""; // FIXME: debugging only
     padding.insert(0, mGroupStack.size()*2, ' ');
     std::cout << padding << "Skipping record group "
               << ESM4::printLabel(mRecordHeader.group.label, mRecordHeader.group.type) << std::endl;
-//#endif
+#endif
     // Note: subtract the size of header already read before skipping
     mStream->skip(mRecordHeader.group.groupSize - (std::uint32_t)mRecHeaderSize);
 
