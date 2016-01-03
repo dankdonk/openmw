@@ -57,6 +57,8 @@ void CSVWorld::addSubViewFactories (CSVDoc::SubViewFactoryManager& manager)
         CSMWorld::UniversalId::Type_ForeignContainers, // FIXME: should be foren refs
         CSMWorld::UniversalId::Type_ForeignMiscItems, // FIXME: should be foren refs
         CSMWorld::UniversalId::Type_ForeignActivators, // FIXME: should be foren refs
+        CSMWorld::UniversalId::Type_ForeignArmors, // FIXME: should be foren refs
+        CSMWorld::UniversalId::Type_ForeignNpcs, // FIXME: should be foren refs
         CSMWorld::UniversalId::Type_StartScripts,
 
         CSMWorld::UniversalId::Type_None // end marker

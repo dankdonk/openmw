@@ -157,7 +157,7 @@ void ESM4::Region::load(ESM4::Reader& reader)
                 //RDAT skipping... following is grass
                 //RDGS skipping... unknown, maybe grass
 
-                //std::cout << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
+                //std::cout << "REGN " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
                 reader.skipSubRecordData(); // FIXME: process the subrecord rather than skip
                 break;
             }

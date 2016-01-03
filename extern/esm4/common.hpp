@@ -386,7 +386,48 @@ namespace ESM4
         SUB_SCRI = MKTAG('S','C','R','I'),
 
         // below appear in ANIO records
-        SUB_BNAM = MKTAG('B','N','A','M')
+        SUB_BNAM = MKTAG('B','N','A','M'),
+
+        // below appear in ARMO records
+        SUB_BMDT = MKTAG('B','M','D','T'),
+      //SUB_SCRI = MKTAG('S','C','R','I'),
+        SUB_MOD2 = MKTAG('M','O','D','2'),
+        SUB_MOD3 = MKTAG('M','O','D','3'),
+        SUB_MOD4 = MKTAG('M','O','D','4'),
+      //SUB_MODB = MKTAG('M','O','D','B'),
+        SUB_MO2B = MKTAG('M','O','2','B'),
+        SUB_MO3B = MKTAG('M','O','3','B'),
+        SUB_MO4B = MKTAG('M','O','4','B'),
+      //SUB_MODT = MKTAG('M','O','D','T'),
+        SUB_MO2T = MKTAG('M','O','2','T'),
+        SUB_MO3T = MKTAG('M','O','3','T'),
+        SUB_MO4T = MKTAG('M','O','4','T'),
+        SUB_ANAM = MKTAG('A','N','A','M'),
+        SUB_ENAM = MKTAG('E','N','A','M'),
+        SUB_ICO2 = MKTAG('I','C','O','2'),
+
+        // below appear in NPC_ records
+      //SUB_MODB = MKTAG('M','O','D','B'),
+        SUB_ACBS = MKTAG('A','C','B','S'),
+      //SUB_SNAM = MKTAG('S','N','A','M'),
+      //SUB_INAM = MKTAG('I','N','A','M'),
+      //SUB_RNAM = MKTAG('R','N','A','M'),
+        SUB_SPLO = MKTAG('S','P','L','O'),
+      //SUB_SCRI = MKTAG('S','C','R','I'),
+      //SUB_CNTO = MKTAG('C','N','T','O'),
+        SUB_AIDT = MKTAG('A','I','D','T'),
+        SUB_PKID = MKTAG('P','K','I','D'),
+      //SUB_CNAM = MKTAG('C','N','A','M'),
+      //SUB_HNAM = MKTAG('H','N','A','M'),
+      //SUB_LNAM = MKTAG('L','N','A','M'),
+      //SUB_ENAM = MKTAG('E','N','A','M'),
+        SUB_HCLR = MKTAG('H','C','L','R'),
+      //SUB_ZNAM = MKTAG('Z','N','A','M'),
+        SUB_FGGS = MKTAG('F','G','G','S'),
+        SUB_FGGA = MKTAG('F','G','G','A'),
+      //SUB_FNAM = MKTAG('F','N','A','M'),
+        SUB_FGTS = MKTAG('F','G','T','S'),
+        SUB_KFFZ = MKTAG('K','F','F','Z')
     };
 
     // Based on http://www.uesp.net/wiki/Tes5Mod:Mod_File_Format#Groups

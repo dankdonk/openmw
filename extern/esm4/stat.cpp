@@ -110,14 +110,10 @@ void ESM4::Static::load(ESM4::Reader& reader)
             }
             case ESM4::SUB_OBND:
             case ESM4::SUB_DNAM:
-            {
-                reader.skipSubRecordData();
-                break;
-            }
             case ESM4::SUB_MNAM:
             case ESM4::SUB_MODS:
             {
-                std::cout << "STAT " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
+                //std::cout << "STAT " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
                 reader.skipSubRecordData();
                 break;
             }

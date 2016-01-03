@@ -158,6 +158,10 @@ namespace CSMWorld
                 Type_ForeignMiscItem,
                 Type_ForeignActivators, // FIXME: should be refid
                 Type_ForeignActivator,
+                Type_ForeignArmors, // FIXME: should be refid
+                Type_ForeignArmor,
+                Type_ForeignNpcs, // FIXME: should be refid
+                Type_ForeignNpc,
                 Type_ForeignReferenceables,
                 Type_ForeignReferenceable,
                 Type_ForeignReferences,

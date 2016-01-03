@@ -100,8 +100,8 @@ void CSVRender::ForeignObject::update()
             if (model.empty())
                 error = 2;
         }
-        else
-            std::cout << "obj not static/anio/misc/acti/container " << ESM4::formIdToString(baseObj) << std::endl;
+        //else
+            //std::cout << "obj not static/anio/misc/acti/container " << ESM4::formIdToString(baseObj) << std::endl;
     }
     else
     {

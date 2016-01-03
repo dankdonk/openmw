@@ -378,6 +378,14 @@ void CSVDoc::View::setupForeignMenu()
     connect (acti, SIGNAL (triggered()), this, SLOT (addForeignActivatorSubView()));
     foreign->addAction (acti);
 
+    QAction *armo = new QAction (tr ("Armors"), this);
+    connect (armo, SIGNAL (triggered()), this, SLOT (addForeignArmorSubView()));
+    foreign->addAction (armo);
+
+    QAction *npc = new QAction (tr ("Npcs"), this);
+    connect (npc, SIGNAL (triggered()), this, SLOT (addForeignNpcSubView()));
+    foreign->addAction (npc);
+
     foreign->addSeparator();
 
     QAction *ltex = new QAction (tr ("Land Textures"), this);
@@ -972,6 +980,16 @@ void CSVDoc::View::addForeignMiscItemSubView()
 void CSVDoc::View::addForeignActivatorSubView()
 {
     addSubView (CSMWorld::UniversalId::Type_ForeignActivators);
+}
+
+void CSVDoc::View::addForeignArmorSubView()
+{
+    addSubView (CSMWorld::UniversalId::Type_ForeignArmors);
+}
+
+void CSVDoc::View::addForeignNpcSubView()
+{
+    addSubView (CSMWorld::UniversalId::Type_ForeignNpcs);
 }
 
 void CSVDoc::View::addForeignRegionMapSubView()

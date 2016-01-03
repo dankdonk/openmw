@@ -81,15 +81,12 @@ void ESM4::Activator::load(ESM4::Reader& reader)
             case ESM4::SUB_MODB:
             case ESM4::SUB_MODT:
             {
-                //std::cout << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
+                //std::cout << "ACTI " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
                 reader.skipSubRecordData();
                 break;
             }
             default:
-                std::cout << "ACTI " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
-                reader.skipSubRecordData();
-                break;
-                //throw std::runtime_error("ESM4::ACTI::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
+                throw std::runtime_error("ESM4::ACTI::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
         }
     }
 }

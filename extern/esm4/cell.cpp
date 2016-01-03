@@ -227,7 +227,7 @@ void ESM4::Cell::load(ESM4::Reader& reader)
             case ESM4::SUB_XCMT: // Oblivion only?
             case ESM4::SUB_XRNK: // Oblivion only?
             {
-                //std::cout << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
+                //std::cout << "CELL " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
                 reader.skipSubRecordData();
                 break;
             }

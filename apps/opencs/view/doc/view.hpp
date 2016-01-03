@@ -254,6 +254,10 @@ namespace CSVDoc
 
             void addForeignActivatorSubView();
 
+            void addForeignArmorSubView();
+
+            void addForeignNpcSubView();
+
             void addForeignRegionMapSubView();
 
             void addForeignReferenceablesSubView();

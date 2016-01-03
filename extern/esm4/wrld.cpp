@@ -129,7 +129,7 @@ void ESM4::World::load(ESM4::Reader& reader)
             case ESM4::SUB_XWEM:
             case ESM4::SUB_MODT: // from Dragonborn onwards?
             {
-                //std::cout << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
+                //std::cout << "WRLD " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
                 reader.skipSubRecordData(); // FIXME: process the subrecord rather than skip
                 break;
             }

@@ -47,6 +47,8 @@
 #include "../foreign/container.hpp"
 #include "../foreign/activator.hpp"
 #include "../foreign/miscitem.hpp"
+#include "../foreign/Armor.hpp"
+#include "../foreign/npc.hpp"
 
 #include "idcollection.hpp"
 #include "nestedidcollection.hpp"
@@ -122,6 +124,8 @@ namespace CSMWorld
             CSMForeign::IdCollection<CSMForeign::Container> mForeignContainers;
             CSMForeign::IdCollection<CSMForeign::MiscItem> mForeignMiscItems;
             CSMForeign::IdCollection<CSMForeign::Activator> mForeignActivators;
+            CSMForeign::IdCollection<CSMForeign::Armor> mForeignArmors;
+            CSMForeign::IdCollection<CSMForeign::Npc> mForeignNpcs;
             //CSMForeign::RefIdCollection mForeignReferenceables;
             CSMForeign::RefCollection mForeignRefs;
             CSMForeign::NavigationCollection mNavigation;
@@ -320,6 +324,14 @@ namespace CSMWorld
             const CSMForeign::IdCollection<CSMForeign::Activator>& getForeignActivators() const;
 
             CSMForeign::IdCollection<CSMForeign::Activator>& getForeignActivators();
+
+            const CSMForeign::IdCollection<CSMForeign::Armor>& getForeignArmors() const;
+
+            CSMForeign::IdCollection<CSMForeign::Armor>& getForeignArmors();
+
+            const CSMForeign::IdCollection<CSMForeign::Npc>& getForeignNpcs() const;
+
+            CSMForeign::IdCollection<CSMForeign::Npc>& getForeignNpcs();
 
             const CSMForeign::NavigationCollection& getNavigation() const;
 

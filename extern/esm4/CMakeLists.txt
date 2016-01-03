@@ -16,6 +16,8 @@ set(ESM4_SOURCE_FILES
     cont.cpp
     misc.cpp
     acti.cpp
+    armo.cpp
+    npc_.cpp
     reader.cpp
 )
 
