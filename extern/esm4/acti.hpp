@@ -20,8 +20,8 @@
   cc9cii cc9c@iinet.net.au
 
 */
-#ifndef ESM4_ANIO_H
-#define ESM4_ANIO_H
+#ifndef ESM4_ACTI_H
+#define ESM4_ACTI_H
 
 #include <string>
 #include <cstdint>
@@ -32,19 +32,17 @@ namespace ESM4
     class Writer;
     typedef std::uint32_t FormId;
 
-    struct AnimObject
+    struct Activator
     {
         FormId mFormId;       // from the header
         std::uint32_t mFlags; // from the header, see enum type RecordFlag for details
 
         std::string mEditorId;
+        std::string mFullName;
         std::string mModel;
 
-        FormId mIdleAnim;    // only in TES4
-        FormId mUnloadEvent; // only in TES5
-
-        AnimObject();
-        ~AnimObject();
+        Activator();
+        ~Activator();
 
         void load(ESM4::Reader& reader);
         //void save(ESM4::Writer& reader) const;
@@ -53,4 +51,4 @@ namespace ESM4
     };
 }
 
-#endif // ESM4_ANIO_H
+#endif // ESM4_ACTI_H

@@ -250,6 +250,10 @@ namespace CSVDoc
 
             void addForeignContainerSubView();
 
+            void addForeignMiscItemSubView();
+
+            void addForeignActivatorSubView();
+
             void addForeignRegionMapSubView();
 
             void addForeignReferenceablesSubView();

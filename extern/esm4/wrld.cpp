@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015 cc9cii
+  Copyright (C) 2015, 2016 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -33,8 +33,11 @@
 #include "reader.hpp"
 //#include "writer.hpp"
 
-ESM4::World::World()
+ESM4::World::World() : mSound(0)
 {
+    mEditorId.clear();
+    mFullName.clear();
+    mMapFile.clear();
 }
 
 ESM4::World::~World()

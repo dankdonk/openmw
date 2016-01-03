@@ -14,6 +14,8 @@ set(ESM4_SOURCE_FILES
     refr.cpp
     anio.cpp
     cont.cpp
+    misc.cpp
+    acti.cpp
     reader.cpp
 )
 

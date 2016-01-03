@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015 cc9cii
+  Copyright (C) 2015, 2016 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -33,8 +33,10 @@
 #include "reader.hpp"
 //#include "writer.hpp"
 
-ESM4::Cell::Cell() : mLandTemporary(0)
+ESM4::Cell::Cell() : mCellFlags(0), mOwner(0), mGlobal(0), mClimate(0), mWater(0),
+                     mWaterHeight(0.f), mLandTemporary(0)
 {
+    mEditorId.clear();
     mFullName.clear();
 }
 

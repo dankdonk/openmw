@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015 cc9cii
+  Copyright (C) 2015, 2016 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -35,6 +35,7 @@
 
 ESM4::Navigation::Navigation()
 {
+    mEditorId.clear();
 }
 
 ESM4::Navigation::~Navigation()

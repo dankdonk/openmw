@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015 cc9cii
+  Copyright (C) 2015, 2016 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -32,8 +32,11 @@
 #include "reader.hpp"
 //#include "writer.hpp"
 
-ESM4::LandTexture::LandTexture()
+ESM4::LandTexture::LandTexture() : mHavokFriction(0), mHavokRestitution(0), mTextureSpecular(0),
+                                   mGrass(0), mHavokMaterial(0), mTexture(0), mMaterial(0)
 {
+    mEditorId.clear();
+    mTextureFile.clear();
 }
 
 ESM4::LandTexture::~LandTexture()

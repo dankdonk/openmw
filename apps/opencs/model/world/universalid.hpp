@@ -154,6 +154,10 @@ namespace CSMWorld
                 Type_ForeignAnimObj,
                 Type_ForeignContainers, // FIXME: should be refid
                 Type_ForeignContainer,
+                Type_ForeignMiscItems, // FIXME: should be refid
+                Type_ForeignMiscItem,
+                Type_ForeignActivators, // FIXME: should be refid
+                Type_ForeignActivator,
                 Type_ForeignReferenceables,
                 Type_ForeignReferenceable,
                 Type_ForeignReferences,

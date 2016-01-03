@@ -20,7 +20,7 @@
   cc9cii cc9c@iinet.net.au
 
 */
-#include "anio.hpp"
+#include "misc.hpp"
 
 #include <cassert>
 #include <stdexcept>
@@ -32,17 +32,19 @@
 #include "reader.hpp"
 //#include "writer.hpp"
 
-ESM4::AnimObject::AnimObject() : mIdleAnim(0), mUnloadEvent(0)
+ESM4::MiscItem::MiscItem() : mValue(0), mWeight(0.f)
 {
     mEditorId.clear();
+    mFullName.clear();
     mModel.clear();
+    mIconModel.clear();
 }
 
-ESM4::AnimObject::~AnimObject()
+ESM4::MiscItem::~MiscItem()
 {
 }
 
-void ESM4::AnimObject::load(ESM4::Reader& reader)
+void ESM4::MiscItem::load(ESM4::Reader& reader)
 {
     mFormId = reader.hdr().record.id;
     mFlags  = reader.hdr().record.flags;
@@ -55,13 +57,19 @@ void ESM4::AnimObject::load(ESM4::Reader& reader)
             case ESM4::SUB_EDID: // Editor name or the worldspace
             {
                 if (!reader.getZString(mEditorId))
-                    throw std::runtime_error ("ANIO EDID data read error");
+                    throw std::runtime_error ("MISC EDID data read error");
+                break;
+            }
+            case ESM4::SUB_FULL:
+            {
+                if (!reader.getZString(mFullName))
+                    throw std::runtime_error ("MISC FULL data read error");
                 break;
             }
             case ESM4::SUB_MODL:
             {
                 if (!reader.getZString(mModel))
-                    throw std::runtime_error ("ANIO MODL data read error");
+                    throw std::runtime_error ("MISC MODL data read error");
 
                 //if (reader.esmVersion() == ESM4::VER_094 || reader.esmVersion() == ESM4::VER_170)
                 //{
@@ -69,34 +77,39 @@ void ESM4::AnimObject::load(ESM4::Reader& reader)
                 //}
                 break;
             }
+            case ESM4::SUB_ICON:
+            {
+                if (!reader.getZString(mIconModel))
+                    throw std::runtime_error ("MISC ICON data read error");
+                break;
+            }
             case ESM4::SUB_DATA:
             {
-                reader.get(mIdleAnim);
+                reader.get(mValue);
+                reader.get(mWeight);
                 break;
             }
-            case ESM4::SUB_BNAM:
-            {
-                reader.get(mUnloadEvent);
-                break;
-            }
+            case ESM4::SUB_SCRI:
             case ESM4::SUB_MODB:
-            case ESM4::SUB_MODT: // TES5 only
-            case ESM4::SUB_MODS: // TES5 only
+            case ESM4::SUB_MODT:
             {
                 //std::cout << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
                 reader.skipSubRecordData();
                 break;
             }
             default:
-                throw std::runtime_error("ESM4::ANIO::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
+                std::cout << "MISC " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
+                reader.skipSubRecordData();
+                break;
+                //throw std::runtime_error("ESM4::MISC::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
         }
     }
 }
 
-//void ESM4::AnimObject::save(ESM4::Writer& writer) const
+//void ESM4::MiscItem::save(ESM4::Writer& writer) const
 //{
 //}
 
-//void ESM4::AnimObject::blank()
+//void ESM4::MiscItem::blank()
 //{
 //}

@@ -50,8 +50,6 @@ namespace ESM4
         FormId mItem;
         std::uint32_t mItemCount;
 
-        // ----------------------
-
         Container();
         ~Container();
 

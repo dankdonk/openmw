@@ -568,6 +568,18 @@ CSMWorld::Data::Data (ToUTF8::FromType encoding, const ResourcesManager& resourc
     mForeignContainers.addColumn (new FullNameColumn<CSMForeign::Container>);
     mForeignContainers.addColumn (new ModelColumn<CSMForeign::Container>);
 
+    mForeignMiscItems.addColumn (new StringIdColumn<CSMForeign::MiscItem>);
+    mForeignMiscItems.addColumn (new RecordStateColumn<CSMForeign::MiscItem>);
+    mForeignMiscItems.addColumn (new FixedRecordTypeColumn<CSMForeign::MiscItem> (UniversalId::Type_ForeignMiscItem));
+    mForeignMiscItems.addColumn (new FullNameColumn<CSMForeign::MiscItem>);
+    mForeignMiscItems.addColumn (new ModelColumn<CSMForeign::MiscItem>);
+
+    mForeignActivators.addColumn (new StringIdColumn<CSMForeign::Activator>);
+    mForeignActivators.addColumn (new RecordStateColumn<CSMForeign::Activator>);
+    mForeignActivators.addColumn (new FixedRecordTypeColumn<CSMForeign::Activator> (UniversalId::Type_ForeignActivator));
+    mForeignActivators.addColumn (new FullNameColumn<CSMForeign::Activator>);
+    mForeignActivators.addColumn (new ModelColumn<CSMForeign::Activator>);
+
     mForeignRefs.addColumn (new StringIdColumn<CSMForeign::CellRef>/*(true)*/);
     mForeignRefs.addColumn (new RecordStateColumn<CSMForeign::CellRef>);
     mForeignRefs.addColumn (new FixedRecordTypeColumn<CSMForeign::CellRef> (UniversalId::Type_ForeignReference));
@@ -635,6 +647,8 @@ CSMWorld::Data::Data (ToUTF8::FromType encoding, const ResourcesManager& resourc
     addModel (new IdTable (&mForeignStatics), UniversalId::Type_ForeignStatic); // FIXME: temp, should be refid
     addModel (new IdTable (&mForeignAnimObjs), UniversalId::Type_ForeignAnimObj); // FIXME: temp, should be refid
     addModel (new IdTable (&mForeignContainers), UniversalId::Type_ForeignContainer); // FIXME: temp, should be refid
+    addModel (new IdTable (&mForeignMiscItems), UniversalId::Type_ForeignMiscItem); // FIXME: temp, should be refid
+    addModel (new IdTable (&mForeignActivators), UniversalId::Type_ForeignActivator); // FIXME: temp, should be refid
     addModel (new IdTable (&mForeignRefs, IdTable::Feature_ViewCell | IdTable::Feature_Preview),
             UniversalId::Type_ForeignReference);
 
@@ -1074,6 +1088,26 @@ const CSMForeign::IdCollection<CSMForeign::Container>& CSMWorld::Data::getForeig
 CSMForeign::IdCollection<CSMForeign::Container>& CSMWorld::Data::getForeignContainers()
 {
     return mForeignContainers;
+}
+
+const CSMForeign::IdCollection<CSMForeign::MiscItem>& CSMWorld::Data::getForeignMiscItems() const
+{
+    return mForeignMiscItems;
+}
+
+CSMForeign::IdCollection<CSMForeign::MiscItem>& CSMWorld::Data::getForeignMiscItems()
+{
+    return mForeignMiscItems;
+}
+
+const CSMForeign::IdCollection<CSMForeign::Activator>& CSMWorld::Data::getForeignActivators() const
+{
+    return mForeignActivators;
+}
+
+CSMForeign::IdCollection<CSMForeign::Activator>& CSMWorld::Data::getForeignActivators()
+{
+    return mForeignActivators;
 }
 
 QAbstractItemModel *CSMWorld::Data::getTableModel (const CSMWorld::UniversalId& id)
@@ -1531,6 +1565,7 @@ bool CSMWorld::Data::loadTes4Group (CSMDoc::Messages& messages)
             if (hdr.group.label.value == ESM4::REC_NAVI || hdr.group.label.value == ESM4::REC_WRLD ||
                     hdr.group.label.value == ESM4::REC_REGN || hdr.group.label.value == ESM4::REC_STAT ||
                     hdr.group.label.value == ESM4::REC_ANIO || hdr.group.label.value == ESM4::REC_CONT ||
+                    hdr.group.label.value == ESM4::REC_MISC || hdr.group.label.value == ESM4::REC_ACTI ||
                     hdr.group.label.value == ESM4::REC_CELL || hdr.group.label.value == ESM4::REC_LTEX)
             {
                 // NOTE: The label field of a group is not reliable.  See:
@@ -1663,6 +1698,18 @@ bool CSMWorld::Data::loadTes4Record (const ESM4::RecordHeader& hdr, CSMDoc::Mess
         {
             reader.getRecordData();
             mForeignContainers.load(reader, mBase);
+            break;
+        }
+        case ESM4::REC_MISC:
+        {
+            reader.getRecordData();
+            mForeignMiscItems.load(reader, mBase);
+            break;
+        }
+        case ESM4::REC_ACTI:
+        {
+            reader.getRecordData();
+            mForeignActivators.load(reader, mBase);
             break;
         }
         case ESM4::REC_REFR:

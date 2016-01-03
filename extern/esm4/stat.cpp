@@ -35,6 +35,8 @@
 
 ESM4::Static::Static()
 {
+    mEditorId.clear();
+    mModel.clear();
 }
 
 ESM4::Static::~Static()

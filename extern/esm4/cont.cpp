@@ -32,8 +32,12 @@
 #include "reader.hpp"
 //#include "writer.hpp"
 
-ESM4::Container::Container()
+ESM4::Container::Container() : mDataFlags(0), mWeight(0.f), mOpenSound(0), mCloseSound(0),
+                               mScript(0), mItem(0), mItemCount(0)
 {
+    mEditorId.clear();
+    mFullName.clear();
+    mModel.clear();
 }
 
 ESM4::Container::~Container()

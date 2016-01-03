@@ -53,6 +53,8 @@ void CSVRender::ForeignObject::update()
     //const CSMForeign::RefIdCollection& referenceables = mData.getReferenceables();
     const CSMForeign::IdCollection<CSMForeign::Container>& container = mData.getForeignContainers();
     const CSMForeign::IdCollection<CSMForeign::AnimObject>& anio = mData.getForeignAnimObjs();
+    const CSMForeign::IdCollection<CSMForeign::MiscItem>& misc = mData.getForeignMiscItems();
+    const CSMForeign::IdCollection<CSMForeign::Activator>& acti = mData.getForeignActivators();
     const CSMForeign::StaticCollection& referenceables = mData.getForeignStatics(); // FIXME: use statics only for now
 
     //int index = referenceables.searchId (mReferenceableId);
@@ -61,6 +63,8 @@ void CSVRender::ForeignObject::update()
     ESM4::FormId baseObj = refs.getRecord(refs.searchId(mReferenceId)).get().mBaseObj;
     int index = referenceables.searchId (ESM4::formIdToString(baseObj)); // FIXME: double conversion to string
 
+    // FIXME: this is a massive hack to get around the lack of a referenceable table
+    int extraIndex = -1;
     if (index==-1)
     {
         error = 1;
@@ -78,8 +82,26 @@ void CSVRender::ForeignObject::update()
         }
         else if (anio.searchId(ESM4::formIdToString(baseObj)) != -1)
             std::cout << "obj is an anim obj" << std::endl;
+        else if (extraIndex = misc.searchId(ESM4::formIdToString(baseObj)) != -1)
+        {
+            //std::cout << "obj is an misc obj" << std::endl;
+            model = misc.getData (extraIndex,
+                   misc.findColumnIndex (CSMWorld::Columns::ColumnId_Model)).toString().toUtf8().constData();
+
+            if (model.empty())
+                error = 2;
+        }
+        else if (extraIndex = acti.searchId(ESM4::formIdToString(baseObj)) != -1)
+        {
+            //std::cout << "obj is an acti obj" << std::endl;
+            model = acti.getData (extraIndex,
+                   acti.findColumnIndex (CSMWorld::Columns::ColumnId_Model)).toString().toUtf8().constData();
+
+            if (model.empty())
+                error = 2;
+        }
         else
-            std::cout << "obj not static/anio/container " << ESM4::formIdToString(baseObj) << std::endl;
+            std::cout << "obj not static/anio/misc/acti/container " << ESM4::formIdToString(baseObj) << std::endl;
     }
     else
     {

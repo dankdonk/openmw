@@ -45,6 +45,8 @@
 #include "../foreign/idcollection.hpp"
 #include "../foreign/animobject.hpp"
 #include "../foreign/container.hpp"
+#include "../foreign/activator.hpp"
+#include "../foreign/miscitem.hpp"
 
 #include "idcollection.hpp"
 #include "nestedidcollection.hpp"
@@ -118,6 +120,8 @@ namespace CSMWorld
             CSMForeign::StaticCollection mForeignStatics; // FIXME: delete
             CSMForeign::IdCollection<CSMForeign::AnimObject> mForeignAnimObjs;
             CSMForeign::IdCollection<CSMForeign::Container> mForeignContainers;
+            CSMForeign::IdCollection<CSMForeign::MiscItem> mForeignMiscItems;
+            CSMForeign::IdCollection<CSMForeign::Activator> mForeignActivators;
             //CSMForeign::RefIdCollection mForeignReferenceables;
             CSMForeign::RefCollection mForeignRefs;
             CSMForeign::NavigationCollection mNavigation;
@@ -308,6 +312,14 @@ namespace CSMWorld
             const CSMForeign::IdCollection<CSMForeign::Container>& getForeignContainers() const;
 
             CSMForeign::IdCollection<CSMForeign::Container>& getForeignContainers();
+
+            const CSMForeign::IdCollection<CSMForeign::MiscItem>& getForeignMiscItems() const;
+
+            CSMForeign::IdCollection<CSMForeign::MiscItem>& getForeignMiscItems();
+
+            const CSMForeign::IdCollection<CSMForeign::Activator>& getForeignActivators() const;
+
+            CSMForeign::IdCollection<CSMForeign::Activator>& getForeignActivators();
 
             const CSMForeign::NavigationCollection& getNavigation() const;
 
