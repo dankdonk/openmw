@@ -20,6 +20,8 @@ set(ESM4_SOURCE_FILES
     npc_.cpp
     flor.cpp
     gras.cpp
+    tree.cpp
+    ligh.cpp
     reader.cpp
 )
 
