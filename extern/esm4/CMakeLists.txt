@@ -18,6 +18,8 @@ set(ESM4_SOURCE_FILES
     acti.cpp
     armo.cpp
     npc_.cpp
+    flor.cpp
+    gras.cpp
     reader.cpp
 )
 

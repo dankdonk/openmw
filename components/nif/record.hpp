@@ -140,9 +140,14 @@ enum RecordType
   RC_NiBlendPoint3Interpolator,
   RC_NiSkinPartition,
   RC_bhkCapsuleShape,
+  RC_bhkSPCollisionObject,
+  RC_bhkSimpleShapePhantom,
+  RC_NiPSysRotationModifier,
+  RC_NiPSysCylinderEmitter,
+  RC_bhkLimitedHingeConstraint,
+  RC_NiBlendBoolInterpolator,
   RC_RootCollisionNode
 };
-
 /// Base class for all records
 struct Record
 {

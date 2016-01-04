@@ -55,6 +55,10 @@ void CSVRender::ForeignObject::update()
     const CSMForeign::IdCollection<CSMForeign::AnimObject>& anio = mData.getForeignAnimObjs();
     const CSMForeign::IdCollection<CSMForeign::MiscItem>& misc = mData.getForeignMiscItems();
     const CSMForeign::IdCollection<CSMForeign::Activator>& acti = mData.getForeignActivators();
+    const CSMForeign::IdCollection<CSMForeign::Npc>& npc = mData.getForeignNpcs();
+    const CSMForeign::IdCollection<CSMForeign::Armor>& armor = mData.getForeignArmors();
+    const CSMForeign::IdCollection<CSMForeign::Flora>& flora = mData.getForeignFloras();
+    const CSMForeign::IdCollection<CSMForeign::Grass>& grass = mData.getForeignGrasses();
     const CSMForeign::StaticCollection& referenceables = mData.getForeignStatics(); // FIXME: use statics only for now
 
     //int index = referenceables.searchId (mReferenceableId);
@@ -82,23 +86,61 @@ void CSVRender::ForeignObject::update()
         }
         else if (anio.searchId(ESM4::formIdToString(baseObj)) != -1)
             std::cout << "obj is an anim obj" << std::endl;
+        else if (npc.searchId(ESM4::formIdToString(baseObj)) != -1)
+            std::cout << "obj is an npc" << std::endl;
+        else if (armor.searchId(ESM4::formIdToString(baseObj)) != -1)
+            std::cout << "obj is an armor" << std::endl;
         else if (extraIndex = misc.searchId(ESM4::formIdToString(baseObj)) != -1)
         {
-            //std::cout << "obj is an misc obj" << std::endl;
+            std::cout << "obj is an misc obj" << std::endl;
             model = misc.getData (extraIndex,
                    misc.findColumnIndex (CSMWorld::Columns::ColumnId_Model)).toString().toUtf8().constData();
 
             if (model.empty())
                 error = 2;
+            else
+                error = 0;
         }
-        else if (extraIndex = acti.searchId(ESM4::formIdToString(baseObj)) != -1)
+        else if (extraIndex = grass.searchId(ESM4::formIdToString(baseObj)) != -1)
         {
-            //std::cout << "obj is an acti obj" << std::endl;
-            model = acti.getData (extraIndex,
-                   acti.findColumnIndex (CSMWorld::Columns::ColumnId_Model)).toString().toUtf8().constData();
+            std::cout << "obj is a grass" << std::endl;
+            model = grass.getData (extraIndex,
+                   grass.findColumnIndex (CSMWorld::Columns::ColumnId_Model)).toString().toUtf8().constData();
 
             if (model.empty())
                 error = 2;
+            else
+                error = 0;
+        }
+        else
+        {
+            int florIndex = flora.searchId(ESM4::formIdToString(baseObj));
+            if (florIndex != -1)
+            {
+                model = flora.getData (florIndex,
+                       flora.findColumnIndex (CSMWorld::Columns::ColumnId_Model)).toString().toUtf8().constData();
+                std::cout << "obj is a flora " << ESM4::formIdToString(baseObj) << ", " << model << std::endl;
+
+                if (model.empty())
+                    error = 2;
+                else
+                    error = 0;
+            }
+            else
+            {
+                int actiIndex = acti.searchId(ESM4::formIdToString(baseObj));
+                if (actiIndex != -1)
+                {
+                    model = acti.getData (actiIndex,
+                           acti.findColumnIndex (CSMWorld::Columns::ColumnId_Model)).toString().toUtf8().constData();
+                    std::cout << "obj is an acti obj " << ESM4::formIdToString(baseObj) << ", " << model << std::endl;
+
+                    if (model.empty())
+                        error = 2;
+                    else
+                        error = 0;
+                }
+            }
         }
         //else
             //std::cout << "obj not static/anio/misc/acti/container " << ESM4::formIdToString(baseObj) << std::endl;

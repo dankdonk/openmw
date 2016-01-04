@@ -213,6 +213,8 @@ public:
           , mMaterialControllerMgr(materialControllerMgr)
         {
             mTexSlot = ctrl->mTexSlot;
+            if (ctrl->nifVer <= 0x0a010000) // up to 10.1.0.0
+                mDelta = 0.5f; // FIXME: should be using the float interpolator here!
             mDelta = ctrl->mDelta;
             for (unsigned int i=0; i<ctrl->mSources.length(); ++i)
             {
@@ -233,7 +235,7 @@ public:
         {
             if (mDelta == 0)
                 return;
-            int curTexture = int(time / mDelta) % mTextures.size();
+            int curTexture = int(time / mDelta) % mTextures.size(); // FIXME: maybe the interpolator is used here?
 
             Ogre::MaterialPtr mat = mMaterialControllerMgr->getWritableMaterial(mMovable);
             Ogre::Material::TechniqueIterator techs = mat->getTechniqueIterator();

@@ -167,6 +167,24 @@ struct NiNode : Node
     }
 };
 
+struct NiBillboardNode : public NiNode
+{
+    unsigned short billboardMode;
+
+    void read(NIFStream *nif)
+    {
+        NiNode::read(nif);
+
+        if (nifVer >= 0x0a010000) // from 10.1.0.0
+            billboardMode = nif->getUShort();
+    }
+
+    void post(NIFFile *nif)
+    {
+        NiNode::post(nif);
+    }
+};
+
 struct NiCamera : public Node
 {
     struct Camera
@@ -652,6 +670,42 @@ public:
         {
             entities[0].read(nif);
         }
+        priority = nif->getUInt();
+    }
+};
+
+// FIXME: different for Skyrim
+class bhkLimitedHingeConstraint : public bhkConstraint
+{
+public:
+    //LimitedHingeDescriptor limitedHinge;
+    Ogre::Vector4 pivotA;
+    Ogre::Vector4 axleA;
+    Ogre::Vector4 perp2AxleA1;
+    Ogre::Vector4 perp2AxleA2;
+    Ogre::Vector4 pivotB;
+    Ogre::Vector4 axleB;
+    Ogre::Vector4 perp2AxleB2;
+    float minAngle;
+    float maxAngle;
+    float maxFriction;
+
+    void read(NIFStream *nif)
+    {
+        bhkConstraint::read(nif);
+
+        //limitedHinge.read(nif);
+        pivotA = nif->getVector4();
+        axleA = nif->getVector4();
+        perp2AxleA1 = nif->getVector4();
+        perp2AxleA2 = nif->getVector4();
+        pivotB = nif->getVector4();
+        axleB = nif->getVector4();
+        perp2AxleB2 = nif->getVector4();
+
+        minAngle = nif->getFloat();
+        maxAngle = nif->getFloat();
+        maxFriction = nif->getFloat();
     }
 };
 
@@ -801,6 +855,24 @@ public:
         NiCollisionObject::read(nif);
         flags = nif->getUShort();
         body.read(nif);
+    }
+};
+
+struct bhkSimpleShapePhantom: public Record
+{
+    bhkShapePtr shape;
+    unsigned char oblivionLayer;
+    unsigned char colFilter;
+
+    void read(NIFStream *nif)
+    {
+        shape.read(nif);
+        oblivionLayer = nif->getChar();
+        colFilter = nif->getChar();
+
+        nif->getUShort();
+        for (unsigned int i = 0; i < 23; ++i) // 7 + 3*5 +1
+            nif->getFloat();
     }
 };
 

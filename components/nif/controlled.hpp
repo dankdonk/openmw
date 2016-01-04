@@ -70,7 +70,6 @@ public:
     {
         Named::read(nif);
 
-        //std::cout << "about to read external " << std::to_string(nif->tell()) << std::endl;
         external = !!nif->getChar();
         if(external)
         {
@@ -94,7 +93,7 @@ public:
         nif->getChar(); // always 1
 
         if (nifVer >= 0x0a01006a) // 10.1.0.106
-            directRenderer = !!nif->getBool(nifVer);//Int();
+            directRenderer = nif->getBool(nifVer);
     }
 
     void post(NIFFile *nif)

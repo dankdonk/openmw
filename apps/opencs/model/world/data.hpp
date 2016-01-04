@@ -49,6 +49,8 @@
 #include "../foreign/miscitem.hpp"
 #include "../foreign/Armor.hpp"
 #include "../foreign/npc.hpp"
+#include "../foreign/flora.hpp"
+#include "../foreign/grass.hpp"
 
 #include "idcollection.hpp"
 #include "nestedidcollection.hpp"
@@ -126,6 +128,8 @@ namespace CSMWorld
             CSMForeign::IdCollection<CSMForeign::Activator> mForeignActivators;
             CSMForeign::IdCollection<CSMForeign::Armor> mForeignArmors;
             CSMForeign::IdCollection<CSMForeign::Npc> mForeignNpcs;
+            CSMForeign::IdCollection<CSMForeign::Flora> mForeignFloras;
+            CSMForeign::IdCollection<CSMForeign::Grass> mForeignGrasses;
             //CSMForeign::RefIdCollection mForeignReferenceables;
             CSMForeign::RefCollection mForeignRefs;
             CSMForeign::NavigationCollection mNavigation;
@@ -332,6 +336,14 @@ namespace CSMWorld
             const CSMForeign::IdCollection<CSMForeign::Npc>& getForeignNpcs() const;
 
             CSMForeign::IdCollection<CSMForeign::Npc>& getForeignNpcs();
+
+            const CSMForeign::IdCollection<CSMForeign::Flora>& getForeignFloras() const;
+
+            CSMForeign::IdCollection<CSMForeign::Flora>& getForeignFloras();
+
+            const CSMForeign::IdCollection<CSMForeign::Grass>& getForeignGrasses() const;
+
+            CSMForeign::IdCollection<CSMForeign::Grass>& getForeignGrasses();
 
             const CSMForeign::NavigationCollection& getNavigation() const;
 

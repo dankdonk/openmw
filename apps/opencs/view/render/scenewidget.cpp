@@ -48,7 +48,7 @@ namespace CSVRender
 
         mCamera->setPosition (300, 0, 0);
         mCamera->lookAt (0, 0, 0);
-        mCamera->setNearClipDistance (0.1);
+        mCamera->setNearClipDistance (10.f);
 
         CSMSettings::UserSettings &userSettings = CSMSettings::UserSettings::instance();
 

@@ -162,6 +162,10 @@ namespace CSMWorld
                 Type_ForeignArmor,
                 Type_ForeignNpcs, // FIXME: should be refid
                 Type_ForeignNpc,
+                Type_ForeignFloras, // FIXME: should be refid
+                Type_ForeignFlora,
+                Type_ForeignGrasses, // FIXME: should be refid
+                Type_ForeignGrass,
                 Type_ForeignReferenceables,
                 Type_ForeignReferenceable,
                 Type_ForeignReferences,

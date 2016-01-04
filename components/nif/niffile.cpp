@@ -55,7 +55,7 @@ static std::map<std::string,RecordFactoryEntry> makeFactory()
     newFactory.insert(makeEntry("AvoidNode",                  &construct <NiNode>                      , RC_AvoidNode                     ));
     newFactory.insert(makeEntry("NiBSParticleNode",           &construct <NiNode>                      , RC_NiBSParticleNode              ));
     newFactory.insert(makeEntry("NiBSAnimationNode",          &construct <NiNode>                      , RC_NiBSAnimationNode             ));
-    newFactory.insert(makeEntry("NiBillboardNode",            &construct <NiNode>                      , RC_NiBillboardNode               ));
+    newFactory.insert(makeEntry("NiBillboardNode",            &construct <NiBillboardNode>             , RC_NiBillboardNode               ));
     newFactory.insert(makeEntry("NiTriShape",                 &construct <NiTriShape>                  , RC_NiTriShape                    ));
     newFactory.insert(makeEntry("NiRotatingParticles",        &construct <NiRotatingParticles>         , RC_NiRotatingParticles           ));
     newFactory.insert(makeEntry("NiAutoNormalParticles",      &construct <NiAutoNormalParticles>       , RC_NiAutoNormalParticles         ));
@@ -118,6 +118,7 @@ static std::map<std::string,RecordFactoryEntry> makeFactory()
     newFactory.insert(makeEntry("bhkRigidBodyT",              &construct <bhkRigidBodyT>               , RC_bhkRigidBodyT                 ));
     newFactory.insert(makeEntry("NiCollisionObject",          &construct <NiCollisionObject>           , RC_NiCollisionObject             ));
     newFactory.insert(makeEntry("bhkCollisionObject",         &construct <bhkCollisionObject>          , RC_bhkCollisionObject            ));
+    newFactory.insert(makeEntry("bhkSPCollisionObject",       &construct <bhkCollisionObject>          , RC_bhkSPCollisionObject          ));
     newFactory.insert(makeEntry("NiTriStrips",                &construct <NiTriStrips>                 , RC_NiTriStrips                   ));
     newFactory.insert(makeEntry("NiBinaryExtraData",          &construct <NiBinaryExtraData>           , RC_NiBinaryExtraData             ));
     newFactory.insert(makeEntry("NiTriStripsData",            &construct <NiTriStripsData>             , RC_NiTriStripsData               ));
@@ -157,6 +158,11 @@ static std::map<std::string,RecordFactoryEntry> makeFactory()
     newFactory.insert(makeEntry("NiBlendPoint3Interpolator",  &construct <NiBlendPoint3Interpolator>   , RC_NiBlendPoint3Interpolator     ));
     newFactory.insert(makeEntry("NiSkinPartition",            &construct <NiSkinPartition>             , RC_NiSkinPartition               ));
     newFactory.insert(makeEntry("bhkCapsuleShape",            &construct <bhkCapsuleShape>             , RC_bhkCapsuleShape               ));
+    newFactory.insert(makeEntry("bhkSimpleShapePhantom",      &construct <bhkSimpleShapePhantom>       , RC_bhkSimpleShapePhantom         ));
+    newFactory.insert(makeEntry("NiPSysRotationModifier",     &construct <NiPSysRotationModifier>      , RC_NiPSysRotationModifier        ));
+    newFactory.insert(makeEntry("NiPSysCylinderEmitter",      &construct <NiPSysCylinderEmitter>       , RC_NiPSysCylinderEmitter         ));
+    newFactory.insert(makeEntry("bhkLimitedHingeConstraint",  &construct <bhkLimitedHingeConstraint>   , RC_bhkLimitedHingeConstraint     ));
+    newFactory.insert(makeEntry("NiBlendBoolInterpolator",    &construct <NiBlendBoolInterpolator>     , RC_NiBlendBoolInterpolator       ));
     newFactory.insert(makeEntry("NiMultiTargetTransformController", &construct <NiMultiTargetTransformController> , RC_NiMultiTargetTransformController));
     return newFactory;
 }
@@ -179,6 +185,7 @@ static std::set<unsigned int> makeGoodVersions()
 {
     std::set<unsigned int> versions;
     versions.insert(0x04000002);// Morrowind NIF version
+    versions.insert(0x14000004);
     versions.insert(0x14000005);// Some mods use this
     return versions;
 }
@@ -299,7 +306,7 @@ void NIFFile::parse()
         r->recIndex = i;
         r->nifVer = ver;
         records[i] = r;
-        //std::cout << "Start of " << rec << ", block " << i << ": " << nif.tell() << std::endl; // FIXME
+        std::cout << "Start of " << rec << ", block " << i << ": " << nif.tell() << std::endl; // FIXME
         assert(nif.tell() < nif.size() && "Nif: EOF but record not read ");
         r->read(&nif);
     }

@@ -592,6 +592,17 @@ CSMWorld::Data::Data (ToUTF8::FromType encoding, const ResourcesManager& resourc
     mForeignNpcs.addColumn (new FullNameColumn<CSMForeign::Npc>);
     mForeignNpcs.addColumn (new ModelColumn<CSMForeign::Npc>);
 
+    mForeignFloras.addColumn (new StringIdColumn<CSMForeign::Flora>);
+    mForeignFloras.addColumn (new RecordStateColumn<CSMForeign::Flora>);
+    mForeignFloras.addColumn (new FixedRecordTypeColumn<CSMForeign::Flora> (UniversalId::Type_ForeignFloras));
+    mForeignFloras.addColumn (new FullNameColumn<CSMForeign::Flora>);
+    mForeignFloras.addColumn (new ModelColumn<CSMForeign::Flora>);
+
+    mForeignGrasses.addColumn (new StringIdColumn<CSMForeign::Grass>);
+    mForeignGrasses.addColumn (new RecordStateColumn<CSMForeign::Grass>);
+    mForeignGrasses.addColumn (new FixedRecordTypeColumn<CSMForeign::Grass> (UniversalId::Type_ForeignGrasses));
+    mForeignGrasses.addColumn (new ModelColumn<CSMForeign::Grass>);
+
     mForeignRefs.addColumn (new StringIdColumn<CSMForeign::CellRef>/*(true)*/);
     mForeignRefs.addColumn (new RecordStateColumn<CSMForeign::CellRef>);
     mForeignRefs.addColumn (new FixedRecordTypeColumn<CSMForeign::CellRef> (UniversalId::Type_ForeignReference));
@@ -663,6 +674,8 @@ CSMWorld::Data::Data (ToUTF8::FromType encoding, const ResourcesManager& resourc
     addModel (new IdTable (&mForeignActivators), UniversalId::Type_ForeignActivator); // FIXME: temp, should be refid
     addModel (new IdTable (&mForeignArmors), UniversalId::Type_ForeignArmor); // FIXME: temp, should be refid
     addModel (new IdTable (&mForeignNpcs), UniversalId::Type_ForeignNpc); // FIXME: temp, should be refid
+    addModel (new IdTable (&mForeignFloras), UniversalId::Type_ForeignFlora); // FIXME: temp, should be refid
+    addModel (new IdTable (&mForeignGrasses), UniversalId::Type_ForeignGrass); // FIXME: temp, should be refid
     addModel (new IdTable (&mForeignRefs, IdTable::Feature_ViewCell | IdTable::Feature_Preview),
             UniversalId::Type_ForeignReference);
 
@@ -1144,6 +1157,26 @@ CSMForeign::IdCollection<CSMForeign::Npc>& CSMWorld::Data::getForeignNpcs()
     return mForeignNpcs;
 }
 
+const CSMForeign::IdCollection<CSMForeign::Flora>& CSMWorld::Data::getForeignFloras() const
+{
+    return mForeignFloras;
+}
+
+CSMForeign::IdCollection<CSMForeign::Flora>& CSMWorld::Data::getForeignFloras()
+{
+    return mForeignFloras;
+}
+
+const CSMForeign::IdCollection<CSMForeign::Grass>& CSMWorld::Data::getForeignGrasses() const
+{
+    return mForeignGrasses;
+}
+
+CSMForeign::IdCollection<CSMForeign::Grass>& CSMWorld::Data::getForeignGrasses()
+{
+    return mForeignGrasses;
+}
+
 QAbstractItemModel *CSMWorld::Data::getTableModel (const CSMWorld::UniversalId& id)
 {
     std::map<UniversalId::Type, QAbstractItemModel *>::iterator iter = mModelIndex.find (id.getType());
@@ -1601,6 +1634,7 @@ bool CSMWorld::Data::loadTes4Group (CSMDoc::Messages& messages)
                     hdr.group.label.value == ESM4::REC_ANIO || hdr.group.label.value == ESM4::REC_CONT ||
                     hdr.group.label.value == ESM4::REC_MISC || hdr.group.label.value == ESM4::REC_ACTI ||
                     hdr.group.label.value == ESM4::REC_ARMO || hdr.group.label.value == ESM4::REC_NPC_ ||
+                    hdr.group.label.value == ESM4::REC_FLOR || hdr.group.label.value == ESM4::REC_GRAS ||
                     hdr.group.label.value == ESM4::REC_CELL || hdr.group.label.value == ESM4::REC_LTEX)
             {
                 // NOTE: The label field of a group is not reliable.  See:
@@ -1757,6 +1791,18 @@ bool CSMWorld::Data::loadTes4Record (const ESM4::RecordHeader& hdr, CSMDoc::Mess
         {
             reader.getRecordData();
             mForeignNpcs.load(reader, mBase);
+            break;
+        }
+        case ESM4::REC_FLOR:
+        {
+            reader.getRecordData();
+            mForeignFloras.load(reader, mBase);
+            break;
+        }
+        case ESM4::REC_GRAS:
+        {
+            reader.getRecordData();
+            mForeignGrasses.load(reader, mBase);
             break;
         }
         case ESM4::REC_REFR:

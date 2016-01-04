@@ -307,7 +307,7 @@ public:
         if (nifVer >= 0x14000004) // from 20.0.0.4
         {
             if (nif->getBool(nifVer))
-                nif->getFloats(unknownFloats3, 3);
+                nif->getFloats(unknownFloats3, vertices.size());
         }
         nif->getUShort();
         nif->getUShort();

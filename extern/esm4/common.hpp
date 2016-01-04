@@ -427,7 +427,11 @@ namespace ESM4
         SUB_FGGA = MKTAG('F','G','G','A'),
       //SUB_FNAM = MKTAG('F','N','A','M'),
         SUB_FGTS = MKTAG('F','G','T','S'),
-        SUB_KFFZ = MKTAG('K','F','F','Z')
+        SUB_KFFZ = MKTAG('K','F','F','Z'),
+
+        // below appear in FLOR records
+        SUB_PFIG = MKTAG('P','F','I','G'),
+        SUB_PFPC = MKTAG('P','F','P','C')
     };
 
     // Based on http://www.uesp.net/wiki/Tes5Mod:Mod_File_Format#Groups

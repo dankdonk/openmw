@@ -110,7 +110,7 @@ std::string NIFStream::getShortString(unsigned int ver)
 {
     short size;
 
-    if (ver == 0x14000005) // 20.0.0.5
+    if (ver >= 0x14000004) // from 20.0.0.4
     {
         uint8_t short_buffer = read_byte();
         size = (short)short_buffer;

@@ -386,6 +386,14 @@ void CSVDoc::View::setupForeignMenu()
     connect (npc, SIGNAL (triggered()), this, SLOT (addForeignNpcSubView()));
     foreign->addAction (npc);
 
+    QAction *flor = new QAction (tr ("Floras"), this);
+    connect (flor, SIGNAL (triggered()), this, SLOT (addForeignFloraSubView()));
+    foreign->addAction (flor);
+
+    QAction *gras = new QAction (tr ("Grasses"), this);
+    connect (gras, SIGNAL (triggered()), this, SLOT (addForeignGrassSubView()));
+    foreign->addAction (gras);
+
     foreign->addSeparator();
 
     QAction *ltex = new QAction (tr ("Land Textures"), this);
@@ -990,6 +998,16 @@ void CSVDoc::View::addForeignArmorSubView()
 void CSVDoc::View::addForeignNpcSubView()
 {
     addSubView (CSMWorld::UniversalId::Type_ForeignNpcs);
+}
+
+void CSVDoc::View::addForeignFloraSubView()
+{
+    addSubView (CSMWorld::UniversalId::Type_ForeignFloras);
+}
+
+void CSVDoc::View::addForeignGrassSubView()
+{
+    addSubView (CSMWorld::UniversalId::Type_ForeignGrasses);
 }
 
 void CSVDoc::View::addForeignRegionMapSubView()

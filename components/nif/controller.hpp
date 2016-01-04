@@ -343,6 +343,7 @@ public:
 class NiFlipController : public Controller
 {
 public:
+    NiInterpolatorPtr interpolator;
     int mTexSlot; // NiTexturingProperty::TextureType
     float mDelta; // Time between two flips. delta = (start_time - stop_time) / num_sources
     NiSourceTextureList mSources;
@@ -350,9 +351,13 @@ public:
     void read(NIFStream *nif)
     {
         Controller::read(nif);
+        if (nifVer >= 0x0a020000) // from 10.2.0.0
+            interpolator.read(nif);
         mTexSlot = nif->getUInt();
-        /*unknown=*/nif->getUInt();/*0?*/
-        mDelta = nif->getFloat();
+        if (nifVer >= 0x04000000  && nifVer <= 0x0a010000)
+            /*unknown=*/nif->getUInt();/*0?*/
+        if (nifVer <= 0x0a010000) // up to 10.1.0.0
+            mDelta = nif->getFloat();
         mSources.read(nif);
     }
 
@@ -399,6 +404,20 @@ public:
     {
         value = nif->getBool(nifVer);
         data.read(nif);
+    }
+};
+
+class NiBlendBoolInterpolator : public NiInterpolator
+{
+public:
+    unsigned char value;
+
+    void read(NIFStream *nif)
+    {
+        nif->getUShort();
+        nif->getUInt();
+
+        value = nif->getChar();
     }
 };
 
@@ -578,7 +597,7 @@ public:
     float planarAngleVar;
     Ogre::Vector4 initialColor;
     float initialRadius;
-    float radiuVar;
+    float radiusVar;
     float lifeSpan;
     float lifeSpanVar;
     NodePtr emitteObj;
@@ -598,13 +617,52 @@ public:
         planarAngleVar = nif->getFloat();
         initialColor = nif->getVector4();
         initialRadius = nif->getFloat();
-        radiuVar = nif->getFloat();
+        radiusVar = nif->getFloat();
         lifeSpan = nif->getFloat();
         lifeSpanVar = nif->getFloat();
         emitteObj.read(nif);
         width = nif->getFloat();
         height = nif->getFloat();
         depth = nif->getFloat();
+    }
+};
+
+class NiPSysCylinderEmitter : public NiPSysModifier
+{
+public:
+    float speed;
+    float speedVar;
+    float declination;
+    float declinationVar;
+    float planarAngle;
+    float planarAngleVar;
+    Ogre::Vector4 initialColor;
+    float initialRadius;
+    float radiusVar;
+    float lifeSpan;
+    float lifeSpanVar;
+    NodePtr emitteObj;
+    float radius;
+    float height;
+
+    void read(NIFStream *nif)
+    {
+        NiPSysModifier::read(nif);
+
+        speed = nif->getFloat();
+        speedVar = nif->getFloat();
+        declination = nif->getFloat();
+        declinationVar = nif->getFloat();
+        planarAngle = nif->getFloat();
+        planarAngleVar = nif->getFloat();
+        initialColor = nif->getVector4();
+        initialRadius = nif->getFloat();
+        radiusVar = nif->getFloat();
+        lifeSpan = nif->getFloat();
+        lifeSpanVar = nif->getFloat();
+        emitteObj.read(nif);
+        radius = nif->getFloat();
+        height = nif->getFloat();
     }
 };
 
@@ -723,6 +781,33 @@ public:
         NiPSysModifier::read(nif);
 
         nif->getUShort();
+    }
+};
+
+class NiPSysRotationModifier: public NiPSysModifier
+{
+public:
+    float initialRotSpeed;
+    float initialRotSpeedVar;
+    float initialRotAngle;
+    float initialRotAngleVar;
+    bool randomRotSpeedSign;
+
+    void read(NIFStream *nif)
+    {
+        NiPSysModifier::read(nif);
+
+        initialRotSpeed = nif->getFloat();
+
+        if (nifVer >= 0x14000004) // from 20.0.0.4
+        {
+            initialRotSpeedVar = nif->getFloat();
+            initialRotAngle = nif->getFloat();
+            initialRotAngleVar = nif->getFloat();
+            randomRotSpeedSign = nif->getBool(nifVer);
+        }
+        nif->getBool(nifVer);
+        nif->getVector3();
     }
 };
 
