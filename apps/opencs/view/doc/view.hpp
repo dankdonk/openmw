@@ -262,6 +262,10 @@ namespace CSVDoc
 
             void addForeignGrassSubView();
 
+            void addForeignTreeSubView();
+
+            void addForeignLightSubView();
+
             void addForeignRegionMapSubView();
 
             void addForeignReferenceablesSubView();

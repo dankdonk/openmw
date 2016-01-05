@@ -20,7 +20,7 @@
   cc9cii cc9c@iinet.net.au
 
 */
-#include "tree.hpp"
+#include "achr.hpp"
 
 #include <cassert>
 #include <stdexcept>
@@ -32,18 +32,17 @@
 #include "reader.hpp"
 //#include "writer.hpp"
 
-ESM4::Tree::Tree()
+ESM4::Character::Character() : mBaseObj(0), mScale(1.f)
 {
     mEditorId.clear();
-    mModel.clear();
-    mLeafTexture.clear();
+    mFullName.clear();
 }
 
-ESM4::Tree::~Tree()
+ESM4::Character::~Character()
 {
 }
 
-void ESM4::Tree::load(ESM4::Reader& reader)
+void ESM4::Character::load(ESM4::Reader& reader)
 {
     mFormId = reader.hdr().record.id;
     mFlags  = reader.hdr().record.flags;
@@ -56,48 +55,53 @@ void ESM4::Tree::load(ESM4::Reader& reader)
             case ESM4::SUB_EDID: // Editor name or the worldspace
             {
                 if (!reader.getZString(mEditorId))
-                    throw std::runtime_error ("TREE EDID data read error");
+                    throw std::runtime_error ("ACHR EDID data read error");
                 break;
             }
-            case ESM4::SUB_MODL:
+            case ESM4::SUB_FULL:
             {
-                if (!reader.getZString(mModel))
-                    throw std::runtime_error ("TREE MODL data read error");
-
-                //if (reader.esmVersion() == ESM4::VER_094 || reader.esmVersion() == ESM4::VER_170)
-                //{
-                    // read MODT/MODS here?
-                //}
+                if (!reader.getZString(mFullName))
+                    throw std::runtime_error ("ACHR FULL data read error");
                 break;
             }
-            case ESM4::SUB_ICON:
+            case ESM4::SUB_NAME:
             {
-                if (!reader.getZString(mLeafTexture))
-                    throw std::runtime_error ("TREE ICON data read error");
+                reader.get(mBaseObj);
                 break;
             }
-            case ESM4::SUB_CNAM:
-            case ESM4::SUB_BNAM:
-            case ESM4::SUB_SNAM:
-            case ESM4::SUB_MODB:
-            case ESM4::SUB_MODT:
+            case ESM4::SUB_DATA:
             {
-                //std::cout << "TREE " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
+                reader.get(mPosition);
+                break;
+            }
+            case ESM4::SUB_XSCL:
+            {
+                reader.get(mScale);
+                break;
+            }
+            case ESM4::SUB_XRGD: // ragdoll
+            case ESM4::SUB_XESP: // parent obj
+            case ESM4::SUB_XHRS:
+            case ESM4::SUB_XMRC:
+            case ESM4::SUB_XPCI:
+            case ESM4::SUB_XLOD:
+            {
+                //std::cout << "ACHR " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
                 reader.skipSubRecordData();
                 break;
             }
             default:
-                std::cout << "TREE " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
+                std::cout << "ACHR " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
                 reader.skipSubRecordData();
-                //throw std::runtime_error("ESM4::TREE::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
+                //throw std::runtime_error("ESM4::ACHR::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
         }
     }
 }
 
-//void ESM4::Tree::save(ESM4::Writer& writer) const
+//void ESM4::Character::save(ESM4::Writer& writer) const
 //{
 //}
 
-//void ESM4::Tree::blank()
+//void ESM4::Character::blank()
 //{
 //}

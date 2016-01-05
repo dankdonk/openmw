@@ -306,7 +306,7 @@ void NIFFile::parse()
         r->recIndex = i;
         r->nifVer = ver;
         records[i] = r;
-        std::cout << "Start of " << rec << ", block " << i << ": " << nif.tell() << std::endl; // FIXME
+        //std::cout << "Start of " << rec << ", block " << i << ": " << nif.tell() << std::endl; // FIXME
         assert(nif.tell() < nif.size() && "Nif: EOF but record not read ");
         r->read(&nif);
     }

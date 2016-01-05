@@ -431,7 +431,11 @@ namespace ESM4
 
         // below appear in FLOR records
         SUB_PFIG = MKTAG('P','F','I','G'),
-        SUB_PFPC = MKTAG('P','F','P','C')
+        SUB_PFPC = MKTAG('P','F','P','C'),
+
+        // below appear in ACHR records
+        SUB_XHRS = MKTAG('X','H','R','S'),
+        SUB_XMRC = MKTAG('X','M','R','C')
     };
 
     // Based on http://www.uesp.net/wiki/Tes5Mod:Mod_File_Format#Groups

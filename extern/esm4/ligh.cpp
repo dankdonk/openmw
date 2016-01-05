@@ -32,8 +32,7 @@
 #include "reader.hpp"
 //#include "writer.hpp"
 
-ESM4::Light::Light() : mLightFlags(0), mDuration(-1), mRadius(0), mColour(0), mFalloff(1.f),
-    mFOV(90), mValue(0), mWeight(0.f) // FIXME: FOV in degrees or radians?
+ESM4::Light::Light()
 {
     mEditorId.clear();
     mFullName.clear();
@@ -90,8 +89,11 @@ void ESM4::Light::load(ESM4::Reader& reader)
                 reader.get(mData.radius);
                 reader.get(mData.colour);
                 reader.get(mData.flags);
-                reader.get(mData.falloff);
-                reader.get(mData.FOV);
+                if (subHdr.dataSize == 32)
+                {
+                    reader.get(mData.falloff);
+                    reader.get(mData.FOV);
+                }
                 reader.get(mData.value);
                 reader.get(mData.weight);
                 break;
@@ -107,7 +109,9 @@ void ESM4::Light::load(ESM4::Reader& reader)
                 break;
             }
             default:
-                throw std::runtime_error("ESM4::LIGH::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
+                std::cout << "LIGH " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
+                reader.skipSubRecordData();
+                //throw std::runtime_error("ESM4::LIGH::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
         }
     }
 }

@@ -117,7 +117,9 @@ void ESM4::Reference::load(ESM4::Reader& reader)
             }
             default:
             {
-                throw std::runtime_error("ESM4::REFR::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
+                std::cout << "REFR " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
+                reader.skipSubRecordData();
+                //throw std::runtime_error("ESM4::REFR::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
                 break;
             }
         }

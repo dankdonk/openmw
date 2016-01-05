@@ -22,6 +22,7 @@ set(ESM4_SOURCE_FILES
     gras.cpp
     tree.cpp
     ligh.cpp
+    achr.cpp
     reader.cpp
 )
 

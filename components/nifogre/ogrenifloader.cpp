@@ -840,7 +840,7 @@ private:
                     Ogre::ControllerFunctionRealPtr func(function);
                     scene->mControllers.push_back(Ogre::Controller<Ogre::Real>(srcval, dstval, func));
                 }
-                else if (ctrls->recType == Nif::RC_NiMaterialColorController)
+                else if (ctrls->nifVer <= 0x0a010000 && ctrls->recType == Nif::RC_NiMaterialColorController) // FIXME: interpolator not yet implemented
                 {
                     const Nif::NiMaterialColorController *matCtrl = static_cast<const Nif::NiMaterialColorController*>(ctrls.getPtr());
                     Ogre::ControllerValueRealPtr dstval(OGRE_NEW MaterialColorController::Value(movable, matCtrl->data.getPtr(), &scene->mMaterialControllerMgr));

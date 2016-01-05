@@ -166,10 +166,16 @@ namespace CSMWorld
                 Type_ForeignFlora,
                 Type_ForeignGrasses, // FIXME: should be refid
                 Type_ForeignGrass,
+                Type_ForeignTrees, // FIXME: should be refid
+                Type_ForeignTree,
+                Type_ForeignLights, // FIXME: should be refid
+                Type_ForeignLight,
                 Type_ForeignReferenceables,
                 Type_ForeignReferenceable,
                 Type_ForeignReferences,
                 Type_ForeignReference,
+                Type_ForeignChars, // FIXME: duplication
+                Type_ForeignChar,
                 Type_ForeignRegionMap,
                 Type_RunLog
             };

@@ -394,6 +394,14 @@ void CSVDoc::View::setupForeignMenu()
     connect (gras, SIGNAL (triggered()), this, SLOT (addForeignGrassSubView()));
     foreign->addAction (gras);
 
+    QAction *tree = new QAction (tr ("Trees"), this);
+    connect (tree, SIGNAL (triggered()), this, SLOT (addForeignTreeSubView()));
+    foreign->addAction (tree);
+
+    QAction *light = new QAction (tr ("Lights"), this);
+    connect (light, SIGNAL (triggered()), this, SLOT (addForeignLightSubView()));
+    foreign->addAction (light);
+
     foreign->addSeparator();
 
     QAction *ltex = new QAction (tr ("Land Textures"), this);
@@ -1008,6 +1016,16 @@ void CSVDoc::View::addForeignFloraSubView()
 void CSVDoc::View::addForeignGrassSubView()
 {
     addSubView (CSMWorld::UniversalId::Type_ForeignGrasses);
+}
+
+void CSVDoc::View::addForeignTreeSubView()
+{
+    addSubView (CSMWorld::UniversalId::Type_ForeignTrees);
+}
+
+void CSVDoc::View::addForeignLightSubView()
+{
+    addSubView (CSMWorld::UniversalId::Type_ForeignLights);
 }
 
 void CSVDoc::View::addForeignRegionMapSubView()

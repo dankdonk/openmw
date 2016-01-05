@@ -42,6 +42,7 @@
 #include "../foreign/regioncollection.hpp"
 #include "../foreign/staticcollection.hpp"
 #include "../foreign/refcollection.hpp"
+#include "../foreign/charcollection.hpp"
 #include "../foreign/idcollection.hpp"
 #include "../foreign/animobject.hpp"
 #include "../foreign/container.hpp"
@@ -51,6 +52,8 @@
 #include "../foreign/npc.hpp"
 #include "../foreign/flora.hpp"
 #include "../foreign/grass.hpp"
+#include "../foreign/tree.hpp"
+#include "../foreign/light.hpp"
 
 #include "idcollection.hpp"
 #include "nestedidcollection.hpp"
@@ -130,8 +133,11 @@ namespace CSMWorld
             CSMForeign::IdCollection<CSMForeign::Npc> mForeignNpcs;
             CSMForeign::IdCollection<CSMForeign::Flora> mForeignFloras;
             CSMForeign::IdCollection<CSMForeign::Grass> mForeignGrasses;
+            CSMForeign::IdCollection<CSMForeign::Tree> mForeignTrees;
+            CSMForeign::IdCollection<CSMForeign::Light> mForeignLights;
             //CSMForeign::RefIdCollection mForeignReferenceables;
             CSMForeign::RefCollection mForeignRefs;
+            CSMForeign::CharCollection mForeignChars;
             CSMForeign::NavigationCollection mNavigation;
             CSMForeign::NavMeshCollection mNavMesh;
             const ResourcesManager& mResourcesManager;
@@ -309,6 +315,10 @@ namespace CSMWorld
 
             CSMForeign::RefCollection& getForeignReferences();
 
+            const CSMForeign::CharCollection& getForeignChars() const;
+
+            CSMForeign::CharCollection& getForeignChars();
+
             const CSMForeign::StaticCollection& getForeignStatics() const;
 
             CSMForeign::StaticCollection& getForeignStatics();
@@ -344,6 +354,14 @@ namespace CSMWorld
             const CSMForeign::IdCollection<CSMForeign::Grass>& getForeignGrasses() const;
 
             CSMForeign::IdCollection<CSMForeign::Grass>& getForeignGrasses();
+
+            const CSMForeign::IdCollection<CSMForeign::Tree>& getForeignTrees() const;
+
+            CSMForeign::IdCollection<CSMForeign::Tree>& getForeignTrees();
+
+            const CSMForeign::IdCollection<CSMForeign::Light>& getForeignLights() const;
+
+            CSMForeign::IdCollection<CSMForeign::Light>& getForeignLights();
 
             const CSMForeign::NavigationCollection& getNavigation() const;
 

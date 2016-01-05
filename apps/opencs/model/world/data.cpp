@@ -70,6 +70,7 @@ int CSMWorld::Data::count (RecordBase::State state, const CollectionBase& collec
 CSMWorld::Data::Data (ToUTF8::FromType encoding, const ResourcesManager& resourcesManager)
 : mEncoder (encoding), mPathgrids (mCells), mReferenceables(self()), mRefs (mCells),
   mForeignCells(mForeignWorlds), mForeignLands(mForeignCells), mForeignRefs(mForeignCells),
+  mForeignChars(mForeignCells),
   mNavigation(mCells), mNavMesh(mCells),
   mResourcesManager (resourcesManager), mReader (0), mDialogue (0), mReaderIndex(0), mNpcAutoCalc (0)
 {
@@ -603,6 +604,16 @@ CSMWorld::Data::Data (ToUTF8::FromType encoding, const ResourcesManager& resourc
     mForeignGrasses.addColumn (new FixedRecordTypeColumn<CSMForeign::Grass> (UniversalId::Type_ForeignGrasses));
     mForeignGrasses.addColumn (new ModelColumn<CSMForeign::Grass>);
 
+    mForeignTrees.addColumn (new StringIdColumn<CSMForeign::Tree>);
+    mForeignTrees.addColumn (new RecordStateColumn<CSMForeign::Tree>);
+    mForeignTrees.addColumn (new FixedRecordTypeColumn<CSMForeign::Tree> (UniversalId::Type_ForeignTrees));
+    mForeignTrees.addColumn (new ModelColumn<CSMForeign::Tree>);
+
+    mForeignLights.addColumn (new StringIdColumn<CSMForeign::Light>);
+    mForeignLights.addColumn (new RecordStateColumn<CSMForeign::Light>);
+    mForeignLights.addColumn (new FixedRecordTypeColumn<CSMForeign::Light> (UniversalId::Type_ForeignLights));
+    mForeignLights.addColumn (new ModelColumn<CSMForeign::Light>);
+
     mForeignRefs.addColumn (new StringIdColumn<CSMForeign::CellRef>/*(true)*/);
     mForeignRefs.addColumn (new RecordStateColumn<CSMForeign::CellRef>);
     mForeignRefs.addColumn (new FixedRecordTypeColumn<CSMForeign::CellRef> (UniversalId::Type_ForeignReference));
@@ -618,6 +629,22 @@ CSMWorld::Data::Data (ToUTF8::FromType encoding, const ResourcesManager& resourc
     mForeignRefs.addColumn (new RotColumn<CSMForeign::CellRef> (&CSMForeign::CellRef::mPos, 1, false));
     mForeignRefs.addColumn (new RotColumn<CSMForeign::CellRef> (&CSMForeign::CellRef::mPos, 2, false));
     mForeignRefs.addColumn (new ScaleColumn<CSMForeign::CellRef>);
+
+    // FIXME: duplication
+    mForeignChars.addColumn (new StringIdColumn<CSMForeign::CellChar>/*(true)*/);
+    mForeignChars.addColumn (new RecordStateColumn<CSMForeign::CellChar>);
+    mForeignChars.addColumn (new FixedRecordTypeColumn<CSMForeign::CellChar> (UniversalId::Type_ForeignReference));
+    mForeignChars.addColumn (new EditorIdColumn<CSMForeign::CellChar>);
+    mForeignChars.addColumn (new CellColumn<CSMForeign::CellChar> (true));
+    //mForeignChars.addColumn (new OriginalCellColumn<CSMForeign::CellChar>);
+    mForeignChars.addColumn (new IdColumn<CSMForeign::CellChar>); // mRefID
+    mForeignChars.addColumn (new PosColumn<CSMForeign::CellChar> (&CSMForeign::CellChar::mPos, 0, false));
+    mForeignChars.addColumn (new PosColumn<CSMForeign::CellChar> (&CSMForeign::CellChar::mPos, 1, false));
+    mForeignChars.addColumn (new PosColumn<CSMForeign::CellChar> (&CSMForeign::CellChar::mPos, 2, false));
+    mForeignChars.addColumn (new RotColumn<CSMForeign::CellChar> (&CSMForeign::CellChar::mPos, 0, false));
+    mForeignChars.addColumn (new RotColumn<CSMForeign::CellChar> (&CSMForeign::CellChar::mPos, 1, false));
+    mForeignChars.addColumn (new RotColumn<CSMForeign::CellChar> (&CSMForeign::CellChar::mPos, 2, false));
+    mForeignChars.addColumn (new ScaleColumn<CSMForeign::CellChar>);
 
     addModel (new IdTable (&mGlobals), UniversalId::Type_Global);
     addModel (new IdTable (&mGmsts), UniversalId::Type_Gmst);
@@ -676,8 +703,12 @@ CSMWorld::Data::Data (ToUTF8::FromType encoding, const ResourcesManager& resourc
     addModel (new IdTable (&mForeignNpcs), UniversalId::Type_ForeignNpc); // FIXME: temp, should be refid
     addModel (new IdTable (&mForeignFloras), UniversalId::Type_ForeignFlora); // FIXME: temp, should be refid
     addModel (new IdTable (&mForeignGrasses), UniversalId::Type_ForeignGrass); // FIXME: temp, should be refid
+    addModel (new IdTable (&mForeignTrees), UniversalId::Type_ForeignTree); // FIXME: temp, should be refid
+    addModel (new IdTable (&mForeignLights), UniversalId::Type_ForeignLight); // FIXME: temp, should be refid
     addModel (new IdTable (&mForeignRefs, IdTable::Feature_ViewCell | IdTable::Feature_Preview),
             UniversalId::Type_ForeignReference);
+    addModel (new IdTable (&mForeignChars, IdTable::Feature_ViewCell | IdTable::Feature_Preview),
+            UniversalId::Type_ForeignChar);
 
     // for autocalc updates when gmst/race/class/skils tables change
     CSMWorld::IdTable *gmsts =
@@ -1087,6 +1118,16 @@ CSMForeign::RefCollection& CSMWorld::Data::getForeignReferences()
     return mForeignRefs;
 }
 
+const CSMForeign::CharCollection& CSMWorld::Data::getForeignChars() const
+{
+    return mForeignChars;
+}
+
+CSMForeign::CharCollection& CSMWorld::Data::getForeignChars()
+{
+    return mForeignChars;
+}
+
 const CSMForeign::StaticCollection& CSMWorld::Data::getForeignStatics() const
 {
     return mForeignStatics;
@@ -1175,6 +1216,26 @@ const CSMForeign::IdCollection<CSMForeign::Grass>& CSMWorld::Data::getForeignGra
 CSMForeign::IdCollection<CSMForeign::Grass>& CSMWorld::Data::getForeignGrasses()
 {
     return mForeignGrasses;
+}
+
+const CSMForeign::IdCollection<CSMForeign::Tree>& CSMWorld::Data::getForeignTrees() const
+{
+    return mForeignTrees;
+}
+
+CSMForeign::IdCollection<CSMForeign::Tree>& CSMWorld::Data::getForeignTrees()
+{
+    return mForeignTrees;
+}
+
+const CSMForeign::IdCollection<CSMForeign::Light>& CSMWorld::Data::getForeignLights() const
+{
+    return mForeignLights;
+}
+
+CSMForeign::IdCollection<CSMForeign::Light>& CSMWorld::Data::getForeignLights()
+{
+    return mForeignLights;
 }
 
 QAbstractItemModel *CSMWorld::Data::getTableModel (const CSMWorld::UniversalId& id)
@@ -1635,6 +1696,7 @@ bool CSMWorld::Data::loadTes4Group (CSMDoc::Messages& messages)
                     hdr.group.label.value == ESM4::REC_MISC || hdr.group.label.value == ESM4::REC_ACTI ||
                     hdr.group.label.value == ESM4::REC_ARMO || hdr.group.label.value == ESM4::REC_NPC_ ||
                     hdr.group.label.value == ESM4::REC_FLOR || hdr.group.label.value == ESM4::REC_GRAS ||
+                    hdr.group.label.value == ESM4::REC_TREE || hdr.group.label.value == ESM4::REC_LIGH ||
                     hdr.group.label.value == ESM4::REC_CELL || hdr.group.label.value == ESM4::REC_LTEX)
             {
                 // NOTE: The label field of a group is not reliable.  See:
@@ -1805,6 +1867,24 @@ bool CSMWorld::Data::loadTes4Record (const ESM4::RecordHeader& hdr, CSMDoc::Mess
             mForeignGrasses.load(reader, mBase);
             break;
         }
+        case ESM4::REC_TREE:
+        {
+            reader.getRecordData();
+            mForeignTrees.load(reader, mBase);
+            break;
+        }
+        case ESM4::REC_LIGH:
+        {
+            reader.getRecordData();
+            mForeignLights.load(reader, mBase);
+            break;
+        }
+        case ESM4::REC_ACHR:
+        {
+            reader.getRecordData();
+            mForeignChars.load(reader, mBase);
+            break;
+        }
         case ESM4::REC_REFR:
         {
             //std::cout << ESM4::printName(hdr.record.typeId) << " skipping..." << std::endl;
@@ -1813,7 +1893,6 @@ bool CSMWorld::Data::loadTes4Record (const ESM4::RecordHeader& hdr, CSMDoc::Mess
             mForeignRefs.load(reader, mBase);
             break;
         }
-        case ESM4::REC_ACHR:
         case ESM4::REC_PHZD:
         case ESM4::REC_PGRE:
         case ESM4::REC_PGRD: // Oblivion only?
