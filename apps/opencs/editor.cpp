@@ -428,6 +428,9 @@ std::auto_ptr<sh::Factory> CS::Editor::setupGraphics()
     // for pathgrid point nif
     Ogre::Root::getSingleton().addResourceLocation ((mResources / "materials").string(),
             "FileSystem", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, true);
+    // for water
+    Ogre::Root::getSingleton().addResourceLocation ((mResources / "water").string(),
+            "FileSystem", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, true);
 
     if (!boost::filesystem::exists (mCfgMgr.getCachePath()))
         boost::filesystem::create_directories (mCfgMgr.getCachePath());
@@ -489,9 +492,9 @@ std::auto_ptr<sh::Factory> CS::Editor::setupGraphics()
 
     /// \todo add more configurable shiny settings
     sh::Factory::getInstance ().setGlobalSetting ("shader", "true");
-    sh::Factory::getInstance ().setGlobalSetting ("simple_water", "false");
-    sh::Factory::getInstance ().setGlobalSetting ("reflection", "true");
-    sh::Factory::getInstance ().setGlobalSetting ("refraction", "true");
+    sh::Factory::getInstance ().setGlobalSetting ("simple_water", "true");
+    sh::Factory::getInstance ().setGlobalSetting ("reflection", "false");
+    sh::Factory::getInstance ().setGlobalSetting ("refraction", "false");
 
     sh::Factory::getInstance ().setSharedParameter ("waterEnabled", sh::makeProperty<sh::FloatValue> (new sh::FloatValue(0.0)));
     sh::Factory::getInstance ().setSharedParameter ("waterLevel", sh::makeProperty<sh::FloatValue>(new sh::FloatValue(0)));

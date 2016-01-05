@@ -40,9 +40,9 @@ namespace CSVRender
         void update(float dt, Ogre::Vector2 position);
 
         /// adds an emitter, position will be tracked automatically
-        void addEmitter (/*const MWWorld::Ptr& ptr, */float scale = 1.f, float force = 1.f);
-        void removeEmitter (/*const MWWorld::Ptr& ptr*/);
-        void updateEmitterPtr (/*const MWWorld::Ptr& old, const MWWorld::Ptr& ptr*/);
+        //void addEmitter (/*const MWWorld::Ptr& ptr, */float scale = 1.f, float force = 1.f);
+        //void removeEmitter (/*const MWWorld::Ptr& ptr*/);
+        //void updateEmitterPtr (/*const MWWorld::Ptr& old, const MWWorld::Ptr& ptr*/);
 
         /// Change the height of the water surface, thus moving all ripples with it
         void setWaterHeight(float height);

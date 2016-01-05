@@ -11,7 +11,7 @@ namespace Ogre
     class RenderTarget;
 }
 
-namespace MWRender
+namespace CSVRender
 {
 
     class Refraction : public Ogre::RenderTargetListener, public Ogre::RenderQueueListener

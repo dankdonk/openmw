@@ -12,10 +12,10 @@
 #include <OgreSceneNode.h>
 #include <OgreTechnique.h>
 
-//#include "sky.hpp"
+#include "sky.hpp"
 //#include "renderingmanager.hpp"
-//#include "ripplesimulation.hpp"
-//#include "refraction.hpp"
+#include "ripplesimulation.hpp"
+#include "refraction.hpp"
 
 #include <extern/shiny/Main/Factory.hpp>
 #include <extern/shiny/Platforms/Ogre/OgreMaterial.hpp>
@@ -24,7 +24,6 @@ using namespace Ogre;
 
 namespace CSVRender
 {
-#if 0
 CubeReflection::CubeReflection(Ogre::SceneManager* sceneManager)
     : Reflection(sceneManager)
 {
@@ -182,7 +181,6 @@ void PlaneReflection::setVisibilityMask (int flags)
     mRenderTarget->getViewport (0)->setVisibilityMask (flags);
 }
 
-#endif
 // --------------------------------------------------------------------------------------------------------------------------------
 
 Water::Water (Ogre::Camera *camera, SceneNode* root, SkyManager* sky/*, RenderingManager* rend, const MWWorld::Fallback* fallback*/) :
@@ -298,8 +296,8 @@ Water::~Water()
     mSceneMgr->destroyEntity(mWater);
     mSceneMgr->destroySceneNode(mWaterNode);
 
-    //delete mReflection;
-    //delete mRefraction;
+    delete mReflection;
+    delete mRefraction;
     //delete mSimulation;
 }
 
@@ -317,12 +315,10 @@ void Water::setHeight(const float height)
 
     mWaterPlane = Plane(Vector3::UNIT_Z, -height);
 
-#if 0
     if (mReflection)
         mReflection->setHeight(height);
     if (mRefraction)
         mRefraction->setHeight(height);
-#endif
 
     mWaterNode->setPosition(0, 0, height);
     sh::Factory::getInstance ().setSharedParameter ("waterLevel", sh::makeProperty<sh::FloatValue>(new sh::FloatValue(height)));
@@ -345,12 +341,11 @@ Water::updateUnderwater(bool underwater)
         underwater &&
         mWater->isVisible() &&
         mCamera->getPolygonMode() == Ogre::PM_SOLID;
-#if 0
+
     if (mReflection)
         mReflection->setUnderwater (mIsUnderwater);
     if (mRefraction)
         mRefraction->setUnderwater (mIsUnderwater);
-#endif
     updateVisible();
 }
 
@@ -361,17 +356,17 @@ Vector3 Water::getSceneNodeCoordinates(int gridX, int gridY)
 
 void Water::setViewportBackground(const ColourValue& bg)
 {
-    //if (mReflection)
-        //mReflection->setViewportBackground(bg);
+    if (mReflection)
+        mReflection->setViewportBackground(bg);
 }
 
 void Water::updateVisible()
 {
     mWater->setVisible(mToggled && mActive);
-    //if (mReflection)
-        //mReflection->setActive(mToggled && mActive);
-    //if (mRefraction)
-        //mRefraction->setActive(mToggled && mActive);
+    if (mReflection)
+        mReflection->setActive(mToggled && mActive);
+    if (mRefraction)
+        mRefraction->setActive(mToggled && mActive);
 }
 
 void Water::update(float dt, Ogre::Vector3 player)
@@ -379,7 +374,7 @@ void Water::update(float dt, Ogre::Vector3 player)
     mWaterTimer += dt;
     sh::Factory::getInstance ().setSharedParameter ("waterTimer", sh::makeProperty<sh::FloatValue>(new sh::FloatValue(mWaterTimer)));
 
-    //mRendering->getSkyManager ()->setGlareEnabled (!mIsUnderwater);
+    mSky->setGlareEnabled (!mIsUnderwater);
 
     mPlayer = Ogre::Vector2(player.x, player.y);
 }
@@ -391,10 +386,10 @@ void Water::frameStarted(float dt)
 
     //mSimulation->update(dt, mPlayer);
 
-    //if (mReflection)
-    //{
-        //mReflection->update();
-    //}
+    if (mReflection)
+    {
+        mReflection->update();
+    }
 }
 
 void Water::applyRTT()
@@ -407,20 +402,18 @@ void Water::applyRTT()
     // Create rendertarget for reflection
     //int rttsize = Settings::Manager::getInt("rtt size", "Water");
 
-#if 0
-    if (Settings::Manager::getBool("shader", "Water"))
+    if (1)//Settings::Manager::getBool("shader", "Water"))
     {
         mReflection = new PlaneReflection(mSceneMgr, mSky);
         mReflection->setParentCamera (mCamera);
         mReflection->setHeight(mTop);
 
-        if (Settings::Manager::getBool("refraction", "Water"))
+        if (1)//Settings::Manager::getBool("refraction", "Water"))
         {
             mRefraction = new Refraction(mCamera);
             mRefraction->setHeight(mTop);
         }
     }
-#endif
 
     updateVisible();
 }

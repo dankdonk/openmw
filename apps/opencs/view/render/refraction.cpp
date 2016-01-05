@@ -14,7 +14,7 @@
 
 #include "renderconst.hpp"
 
-namespace MWRender
+namespace CSVRender
 {
 
     Refraction::Refraction(Ogre::Camera *parentCamera)

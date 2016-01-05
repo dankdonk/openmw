@@ -103,6 +103,7 @@ RippleSimulation::~RippleSimulation()
 
 void RippleSimulation::update(float dt, Ogre::Vector2 position)
 {
+#if 0
     bool newParticle = false;
     for (std::vector<Emitter>::iterator it=mEmitters.begin(); it !=mEmitters.end(); ++it)
     {
@@ -156,8 +157,10 @@ void RippleSimulation::update(float dt, Ogre::Vector2 position)
 
     if (newParticle) // now apparently needs another update, otherwise it won't render in the first frame after a particle is created. TODO: patch Ogre to handle this better
         mParticleSystem->_update(0.f);
+#endif
 }
 
+#if 0
 void RippleSimulation::addEmitter(const MWWorld::Ptr& ptr, float scale, float force)
 {
     Emitter newEmitter;
@@ -191,6 +194,7 @@ void RippleSimulation::updateEmitterPtr (const MWWorld::Ptr& old, const MWWorld:
         }
     }
 }
+#endif
 
 void RippleSimulation::setWaterHeight(float height)
 {

@@ -621,11 +621,23 @@ void SkyManager::update(float duration)
 
     mSunGlare->setVisible(mSunEnabled);
     mSun->setVisible(mSunEnabled);
-    mMasser->setVisible(mMasserEnabled);
-    mSecunda->setVisible(mSecundaEnabled);
+    //mMasser->setVisible(mMasserEnabled);
+    //mSecunda->setVisible(mSecundaEnabled);
 
     // rotate the stars by 360 degrees every 4 days
     //mAtmosphereNight->roll(Degree(MWBase::Environment::get().getWorld()->getTimeScaleFactor()*duration*360 / (3600*96.f)));
+
+    sh::Factory::getInstance().setSharedParameter ("atmosphereColour", sh::makeProperty<sh::Vector4>(new sh::Vector4(
+            95, 135, 203, 255)));
+
+    sh::Factory::getInstance().setSharedParameter ("horizonColour", sh::makeProperty<sh::Vector4>(new sh::Vector4(
+            206, 227, 255, 255)));
+
+    //float strength = 1.f;
+
+    //mSunGlare->setVisibility(weather.mGlareView * mGlareFade * strength);
+
+    //mSun->setVisibility(weather.mGlareView * strength);
 }
 
 void SkyManager::enable()

@@ -78,9 +78,14 @@ namespace CSVRender
         connect (focusToolbar, SIGNAL (activated()), this, SIGNAL (focusToolbarRequest()));
 
         mSkyManager = new SkyManager(mCamera, mSceneMgr->getRootSceneNode());
+        //mSkyManager->enable();
+        //mSkyManager->sunEnable();
         mWater = new Water(mCamera, mSceneMgr->getRootSceneNode(), mSkyManager);
         mWater->setActive(true);
+        //Ogre::Light *sun = mSceneMgr->createLight();
+        //sun->setType(Ogre::Light::LT_DIRECTIONAL);
 
+        //mSkyManager->update(1.f); // value just a guess
         updateOgreWindow();
     }
 

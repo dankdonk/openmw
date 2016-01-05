@@ -108,7 +108,7 @@ opencs_units (view/render
 opencs_units_noqt (view/render
     navigation navigation1st navigationfree navigationorbit lighting lightingday lightingnight
     lightingbright object cell terrainstorage textoverlay overlaymask overlaysystem mousestate
-    pathgridpoint foreigncell foreignobject water sky
+    pathgridpoint foreigncell foreignobject water sky refraction ripplesimulation
     )
 
 opencs_units (view/foreign

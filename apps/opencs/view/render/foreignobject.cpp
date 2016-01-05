@@ -92,10 +92,6 @@ void CSVRender::ForeignObject::update()
             std::cout << "obj is an armor" << std::endl;
         else if (anio.searchId(ESM4::formIdToString(baseObj)) != -1)
             std::cout << "obj is an anim obj" << std::endl;
-        else if (npc.searchId(ESM4::formIdToString(baseObj)) != -1)
-            std::cout << "obj is an npc" << std::endl;
-        else if (armor.searchId(ESM4::formIdToString(baseObj)) != -1)
-            std::cout << "obj is an armor" << std::endl;
         else if (extraIndex = misc.searchId(ESM4::formIdToString(baseObj)) != -1)
         {
             model = misc.getData (extraIndex,
@@ -151,7 +147,9 @@ void CSVRender::ForeignObject::update()
                     if (treeIndex != -1)
                     {
                         //model = "_DoD_flora_tree_b_1.NIF";
-                        model = "J_W\\JW_TREE_A2.NIF";
+                        //model = "J_W\\JW_TREE_A2.NIF";
+                        //model = "plants\\floraflaxyellow.nif";
+                        model = "f\\flora_bush_01.nif";
                         std::string realModel = trees.getData (treeIndex,
                                trees.findColumnIndex (CSMWorld::Columns::ColumnId_Model)).toString().toUtf8().constData();
                         std::cout << "obj is an tree obj " << ESM4::formIdToString(baseObj) << ", " << realModel << std::endl;
@@ -252,7 +250,7 @@ void CSVRender::ForeignObject::update()
 
             // NOTE: physics system and mouse picking assume reference naming convension (i.e."^ref#")
             // FIXME: sometimes wrong model name is passed to Ogre
-            mPhysics->addObject("meshes\\" + trimmedModel, mBase->getName(), "ref#"+ESM4::formIdToString(mReferenceId), reference.mScale, position, xr*yr*zr);
+            mPhysics->addObject("meshes\\" + trimmedModel, mBase->getName(), "ref#"+ESM4::formIdToString(mReferenceId), reference.mScale, position, zr*yr*xr); // FIXME: EXperiment
         }
     }
 }
@@ -271,12 +269,10 @@ void CSVRender::ForeignObject::adjust()
 
     // orientation
     Ogre::Quaternion xr (Ogre::Radian (-reference.mPos.rot[0]), Ogre::Vector3::UNIT_X);
-
     Ogre::Quaternion yr (Ogre::Radian (-reference.mPos.rot[1]), Ogre::Vector3::UNIT_Y);
-
     Ogre::Quaternion zr (Ogre::Radian (-reference.mPos.rot[2]), Ogre::Vector3::UNIT_Z);
 
-    mBase->setOrientation (xr*yr*zr);
+    mBase->setOrientation (zr*yr*xr); // FIXME: EXperiment
 
     // scale
     mBase->setScale (reference.mScale, reference.mScale, reference.mScale);
