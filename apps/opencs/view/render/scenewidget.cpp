@@ -19,6 +19,8 @@
 #include "navigation.hpp"
 #include "lighting.hpp"
 #include "overlaysystem.hpp"
+#include "sky.hpp"
+#include "water.hpp"
 
 namespace CSVRender
 {
@@ -74,6 +76,10 @@ namespace CSVRender
         /// \todo make shortcut configurable
         QShortcut *focusToolbar = new QShortcut (Qt::Key_T, this, 0, 0, Qt::WidgetWithChildrenShortcut);
         connect (focusToolbar, SIGNAL (activated()), this, SIGNAL (focusToolbarRequest()));
+
+        mSkyManager = new SkyManager(mCamera, mSceneMgr->getRootSceneNode());
+        mWater = new Water(mCamera, mSceneMgr->getRootSceneNode(), mSkyManager);
+        mWater->setActive(true);
 
         updateOgreWindow();
     }
@@ -164,6 +170,9 @@ namespace CSVRender
 
     SceneWidget::~SceneWidget()
     {
+        delete mWater;
+        delete mSkyManager;
+
         if (mWindow)
             Ogre::Root::getSingleton().destroyRenderTarget (mWindow);
 

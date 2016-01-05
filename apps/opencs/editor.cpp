@@ -488,6 +488,17 @@ std::auto_ptr<sh::Factory> CS::Editor::setupGraphics()
     sh::Factory::getInstance ().setGlobalSetting ("num_lights", num_lights);
 
     /// \todo add more configurable shiny settings
+    sh::Factory::getInstance ().setGlobalSetting ("shader", "true");
+    sh::Factory::getInstance ().setGlobalSetting ("simple_water", "false");
+    sh::Factory::getInstance ().setGlobalSetting ("reflection", "true");
+    sh::Factory::getInstance ().setGlobalSetting ("refraction", "true");
+
+    sh::Factory::getInstance ().setSharedParameter ("waterEnabled", sh::makeProperty<sh::FloatValue> (new sh::FloatValue(0.0)));
+    sh::Factory::getInstance ().setSharedParameter ("waterLevel", sh::makeProperty<sh::FloatValue>(new sh::FloatValue(0)));
+    sh::Factory::getInstance ().setSharedParameter ("waterTimer", sh::makeProperty<sh::FloatValue>(new sh::FloatValue(0)));
+    sh::Factory::getInstance ().setSharedParameter ("windDir_windSpeed", sh::makeProperty<sh::Vector3>(new sh::Vector3(0.5f, -0.8f, 0.2f)));
+    sh::Factory::getInstance ().setSharedParameter ("waterSunFade_sunHeight", sh::makeProperty<sh::Vector2>(new sh::Vector2(1, 0.6f)));
+    sh::Factory::getInstance ().setSharedParameter ("vpRow2Fix", sh::makeProperty<sh::Vector4> (new sh::Vector4(0,0,0,0)));
 
     return factory;
 }

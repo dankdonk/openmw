@@ -29,6 +29,8 @@ namespace CSVRender
 {
     class Navigation;
     class Lighting;
+    class SkyManager;
+    class Water;
 
     class SceneWidget : public QWidget
     {
@@ -100,6 +102,9 @@ namespace CSVRender
             Ogre::RenderWindow* mWindow;
             Ogre::Viewport *mViewport;
             Ogre::OverlaySystem *mOverlaySystem;
+
+            SkyManager* mSkyManager;
+            Water* mWater;
 
             Navigation *mNavigation;
             Lighting *mLighting;
