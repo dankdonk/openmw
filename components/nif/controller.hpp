@@ -382,7 +382,7 @@ public:
             interpolator.read(nif);
         modifierName = nif->getString();
         if (nifVer <= 0x0a010000) // up to 10.1.0.0
-            nif->getInt(); // refNiPSysEmtterCtlrData
+            nif->getInt(); // NiPSysEmtterCtlrDataPtr
         if (nifVer >= 0x0a020000) // from 10.2.0.0
             visibilityInterpolator.read(nif);
     }
@@ -392,6 +392,40 @@ class NiPSysUpdateCtlr : public Controller {};
 
 class NiInterpolator : public Record
 {
+};
+
+class NiPSysModifierActiveCtlr : public Controller
+{
+public:
+    NiInterpolatorPtr interpolator;
+    std::string modifierName;
+
+    void read(NIFStream *nif)
+    {
+        Controller::read(nif);
+        if (nifVer >= 0x0a020000) // from 10.2.0.0
+            interpolator.read(nif);
+        modifierName = nif->getString();
+        if (nifVer <= 0x0a010000) // up to 10.1.0.0
+            nif->getInt(); // NiVisDataPtr
+    }
+};
+
+class NiPSysGravityStrengthCtlr : public Controller
+{
+public:
+    NiInterpolatorPtr interpolator;
+    std::string modifierName;
+
+    void read(NIFStream *nif)
+    {
+        Controller::read(nif);
+        if (nifVer >= 0x0a020000) // from 10.2.0.0
+            interpolator.read(nif);
+        modifierName = nif->getString();
+        if (nifVer <= 0x0a010000) // up to 10.1.0.0
+            nif->getInt(); // NiFloatDataPtr
+    }
 };
 
 class NiBoolInterpolator : public NiInterpolator
@@ -406,6 +440,8 @@ public:
         data.read(nif);
     }
 };
+
+class NiBoolTimelineInterpolator : public NiBoolInterpolator {};
 
 class NiBlendBoolInterpolator : public NiInterpolator
 {
@@ -666,7 +702,7 @@ public:
     }
 };
 
-class NiPSysAgeDeathModifier: public NiPSysModifier
+class NiPSysAgeDeathModifier : public NiPSysModifier
 {
 public:
     bool spawnOnDeath;
@@ -681,7 +717,28 @@ public:
     }
 };
 
-class NiPSysSpawnModifier: public NiPSysModifier
+class NiPSysDragModifier : public NiPSysModifier
+{
+public:
+    NodePtr parent;
+    Ogre::Vector3 dragAxis;
+    float percent;
+    float range;
+    float rangeFalloff;
+
+    void read(NIFStream *nif)
+    {
+        NiPSysModifier::read(nif);
+
+        parent.read(nif);
+        dragAxis = nif->getVector3();
+        percent = nif->getFloat();
+        range = nif->getFloat();
+        rangeFalloff = nif->getFloat();
+    }
+};
+
+class NiPSysSpawnModifier : public NiPSysModifier
 {
 public:
     unsigned short numSpawnGen;
@@ -708,7 +765,7 @@ public:
     }
 };
 
-class NiPSysGrowFadeModifier: public NiPSysModifier
+class NiPSysGrowFadeModifier : public NiPSysModifier
 {
 public:
     float growTime;
@@ -730,7 +787,7 @@ public:
     }
 };
 
-class NiPSysColorModifier: public NiPSysModifier
+class NiPSysColorModifier : public NiPSysModifier
 {
 public:
     NiColorDataPtr data;
@@ -743,7 +800,7 @@ public:
     }
 };
 
-class NiPSysGravityModifier: public NiPSysModifier
+class NiPSysGravityModifier : public NiPSysModifier
 {
 public:
     NodePtr gravityObj;
@@ -770,9 +827,9 @@ public:
     }
 };
 
-class NiPSysPositionModifier: public NiPSysModifier {};
+class NiPSysPositionModifier : public NiPSysModifier {};
 
-class NiPSysBoundUpdateModifier: public NiPSysModifier
+class NiPSysBoundUpdateModifier : public NiPSysModifier
 {
 public:
 
@@ -784,7 +841,7 @@ public:
     }
 };
 
-class NiPSysRotationModifier: public NiPSysModifier
+class NiPSysRotationModifier : public NiPSysModifier
 {
 public:
     float initialRotSpeed;

@@ -163,6 +163,10 @@ static std::map<std::string,RecordFactoryEntry> makeFactory()
     newFactory.insert(makeEntry("NiPSysCylinderEmitter",      &construct <NiPSysCylinderEmitter>       , RC_NiPSysCylinderEmitter         ));
     newFactory.insert(makeEntry("bhkLimitedHingeConstraint",  &construct <bhkLimitedHingeConstraint>   , RC_bhkLimitedHingeConstraint     ));
     newFactory.insert(makeEntry("NiBlendBoolInterpolator",    &construct <NiBlendBoolInterpolator>     , RC_NiBlendBoolInterpolator       ));
+    newFactory.insert(makeEntry("NiPSysModifierActiveCtlr",   &construct <NiPSysModifierActiveCtlr>    , RC_NiPSysModifierActiveCtlr      ));
+    newFactory.insert(makeEntry("NiPSysDragModifier",         &construct <NiPSysDragModifier>          , RC_NiPSysDragModifier            ));
+    newFactory.insert(makeEntry("NiPSysGravityStrengthCtlr",  &construct <NiPSysGravityStrengthCtlr>   , RC_NiPSysGravityStrengthCtlr     ));
+    newFactory.insert(makeEntry("NiBoolTimelineInterpolator", &construct <NiBoolTimelineInterpolator>  , RC_NiBoolTimelineInterpolator    ));
     newFactory.insert(makeEntry("NiMultiTargetTransformController", &construct <NiMultiTargetTransformController> , RC_NiMultiTargetTransformController));
     return newFactory;
 }

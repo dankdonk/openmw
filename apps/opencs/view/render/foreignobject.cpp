@@ -70,7 +70,6 @@ void CSVRender::ForeignObject::update()
     int index = referenceables.searchId (ESM4::formIdToString(baseObj)); // FIXME: double conversion to string
 
     // FIXME: this is a massive hack to get around the lack of a referenceable table
-    int extraIndex = -1;
     if (index==-1)
     {
         error = 1;
@@ -92,8 +91,10 @@ void CSVRender::ForeignObject::update()
             std::cout << "obj is an armor" << std::endl;
         else if (anio.searchId(ESM4::formIdToString(baseObj)) != -1)
             std::cout << "obj is an anim obj" << std::endl;
-        else if (extraIndex = misc.searchId(ESM4::formIdToString(baseObj)) != -1)
+        else if (misc.searchId(ESM4::formIdToString(baseObj)) != -1)
         {
+            int extraIndex = -1;
+            extraIndex = misc.searchId(ESM4::formIdToString(baseObj));
             model = misc.getData (extraIndex,
                    misc.findColumnIndex (CSMWorld::Columns::ColumnId_Model)).toString().toUtf8().constData();
             std::cout << "obj is a misc obj " << ESM4::formIdToString(baseObj) << ", " << model << std::endl;
@@ -103,8 +104,10 @@ void CSVRender::ForeignObject::update()
             else
                 error = 0;
         }
-        else if (extraIndex = grass.searchId(ESM4::formIdToString(baseObj)) != -1)
+        else if (grass.searchId(ESM4::formIdToString(baseObj)) != -1)
         {
+            int extraIndex = -1;
+            extraIndex = grass.searchId(ESM4::formIdToString(baseObj));
             model = grass.getData (extraIndex,
                    grass.findColumnIndex (CSMWorld::Columns::ColumnId_Model)).toString().toUtf8().constData();
             std::cout << "obj is a grass " << ESM4::formIdToString(baseObj) << ", " << model << std::endl;

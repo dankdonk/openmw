@@ -146,6 +146,10 @@ enum RecordType
   RC_NiPSysCylinderEmitter,
   RC_bhkLimitedHingeConstraint,
   RC_NiBlendBoolInterpolator,
+  RC_NiPSysModifierActiveCtlr,
+  RC_NiPSysDragModifier,
+  RC_NiPSysGravityStrengthCtlr,
+  RC_NiBoolTimelineInterpolator,
   RC_RootCollisionNode
 };
 /// Base class for all records
