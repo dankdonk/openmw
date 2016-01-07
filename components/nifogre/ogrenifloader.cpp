@@ -732,7 +732,7 @@ private:
             if(shape->name.length() > 0)
                 fullname += "@shape="+shape->name;
         }
-        Misc::StringUtils::toLower(fullname);
+        Misc::StringUtils::lowerCaseInPlace(fullname);
 
         Ogre::MeshManager &meshMgr = Ogre::MeshManager::getSingleton();
         if(meshMgr.getByName(fullname).isNull())
@@ -970,7 +970,7 @@ private:
         std::string fullname = name+"@index="+Ogre::StringConverter::toString(partnode->recIndex);
         if(partnode->name.length() > 0)
             fullname += "@type="+partnode->name;
-        Misc::StringUtils::toLower(fullname);
+        Misc::StringUtils::lowerCaseInPlace(fullname);
 
         Ogre::ParticleSystem *partsys = sceneNode->getCreator()->createParticleSystem();
 
@@ -1198,7 +1198,7 @@ private:
                     nextpos = std::distance(str.begin(), ++last);
                 }
                 std::string result = str.substr(pos, nextpos-pos);
-                textkeys.insert(std::make_pair(tk->list[i].time, Misc::StringUtils::toLower(result)));
+                textkeys.insert(std::make_pair(tk->list[i].time, Misc::StringUtils::lowerCase(result)));
 
                 pos = nextpos;
             }
@@ -1447,7 +1447,7 @@ ObjectScenePtr Loader::createObjects(Ogre::SceneNode *parentNode, std::string na
 {
     ObjectScenePtr scene = ObjectScenePtr (new ObjectScene(parentNode->getCreator()));
 
-    Misc::StringUtils::toLower(name);
+    Misc::StringUtils::lowerCaseInPlace(name);
     NIFObjectLoader::load(parentNode, scene, name, group);
 
     for(size_t i = 0;i < scene->mEntities.size();i++)
@@ -1469,7 +1469,7 @@ ObjectScenePtr Loader::createObjects(Ogre::Entity *parent, const std::string &bo
 {
     ObjectScenePtr scene = ObjectScenePtr (new ObjectScene(parentNode->getCreator()));
 
-    Misc::StringUtils::toLower(name);
+    Misc::StringUtils::lowerCaseInPlace(name);
     NIFObjectLoader::load(parentNode, scene, name, group);
 
     bool isskinned = false;
@@ -1492,8 +1492,8 @@ ObjectScenePtr Loader::createObjects(Ogre::Entity *parent, const std::string &bo
         // accepts anything named "filter*" or "tri filter*"
         std::string filter = "@shape=tri "+bonefilter;
         std::string filter2 = "@shape="+bonefilter;
-        Misc::StringUtils::toLower(filter);
-        Misc::StringUtils::toLower(filter2);
+        Misc::StringUtils::lowerCaseInPlace(filter);
+        Misc::StringUtils::lowerCaseInPlace(filter2);
         for(size_t i = 0;i < scene->mEntities.size();i++)
         {
             Ogre::Entity *entity = scene->mEntities[i];
@@ -1535,7 +1535,7 @@ ObjectScenePtr Loader::createObjectBase(Ogre::SceneNode *parentNode, std::string
 {
     ObjectScenePtr scene = ObjectScenePtr (new ObjectScene(parentNode->getCreator()));
 
-    Misc::StringUtils::toLower(name);
+    Misc::StringUtils::lowerCaseInPlace(name);
     NIFObjectLoader::load(parentNode, scene, name, group, 0xC0000000);
 
     if(scene->mSkelBase)

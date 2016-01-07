@@ -22,7 +22,7 @@ namespace MWClass
             ptr.get<ESM::Static>();
 
         if (!model.empty()) {
-            renderingInterface.getObjects().insertModel(ptr, model, !ref->mBase->mPersistent);
+            renderingInterface.getObjects().insertModel(ptr, model/*, !ref->mBase->mPersistent*/); // FIXME
         }
     }
 

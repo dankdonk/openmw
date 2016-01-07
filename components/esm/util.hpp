@@ -4,6 +4,12 @@
 #include <OgreVector3.h>
 #include <OgreQuaternion.h>
 
+#include "esmreader.hpp"
+#include "esmwriter.hpp"
+#include "loadsscr.hpp"
+#include "loadrace.hpp"
+#include "loadgmst.hpp"
+
 namespace ESM
 {
 
@@ -45,6 +51,25 @@ struct Vector3
         return Ogre::Vector3(&mValues[0]);
     }
 };
+
+bool readDeleSubRecord(ESMReader &esm);
+void writeDeleSubRecord(ESMWriter &esm);
+
+template <class RecordT>
+bool isRecordDeleted(const RecordT &record)
+{
+    return record.mIsDeleted;
+}
+
+// The following records can't be deleted (for now)
+template <>
+bool isRecordDeleted<StartScript>(const StartScript &script);
+
+template <>
+bool isRecordDeleted<Race>(const Race &race);
+
+template <>
+bool isRecordDeleted<GameSetting>(const GameSetting &gmst);
 
 }
 

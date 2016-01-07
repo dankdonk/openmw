@@ -43,6 +43,27 @@ public:
         flags = nif->getUShort();
         trafo = nif->getTrafo(); // scale (float) included
 
+#if 0
+        int y = Ogre::Math::ATan2(-trafo.rotation[2][0], trafo.rotation[0][0]).valueDegrees();
+        if (/*recIndex == 0 &&*/ y != 0)
+            std::cout << this->name << " Y " << y << std::endl;
+        int r = Ogre::Math::ATan2(-trafo.rotation[1][2], trafo.rotation[1][1]).valueDegrees();
+        if (/*recIndex == 0 &&*/ r != 0)
+            std::cout << this->name << " R " << r << std::endl;
+        if (name == "ANCastleWallCurve02" || name == "AnCastleWallEnd01")
+        {
+            std::cout << trafo.rotation[0][0] << ", " << trafo.rotation[0][1] << ", " << trafo.rotation[0][2] << std::endl;
+            std::cout << trafo.rotation[1][0] << ", " << trafo.rotation[1][1] << ", " << trafo.rotation[1][2] << std::endl;
+            std::cout << trafo.rotation[2][0] << ", " << trafo.rotation[2][1] << ", " << trafo.rotation[2][2] << std::endl;
+            if (recIndex == 0)
+            {
+                std::cout << "root" << std::endl;
+                std::cout << "Y " << Ogre::Math::ATan2(-trafo.rotation[2][0], trafo.rotation[0][0]) << std::endl;
+                std::cout << "R " << Ogre::Math::ATan2(-trafo.rotation[1][2], trafo.rotation[1][1]) << std::endl;
+            }
+        }
+#endif
+
         if (nifVer <= 0x04020200) // up to 4.2.2.0
             velocity = nif->getVector3();
 
@@ -148,6 +169,8 @@ struct NiNode : Node
         // can be expanded if needed.
         if (0 == recIndex)
         {
+            if (static_cast<Nif::Node*>(this)->trafo.rotation != Nif::Transformation::getIdentity().rotation)
+                std::cout << "Non-identity rotation: " << this->name << ", ver " << std::hex << nifVer << std::endl;
             static_cast<Nif::Node*>(this)->trafo = Nif::Transformation::getIdentity();
         }
     }

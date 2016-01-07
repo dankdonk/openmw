@@ -134,11 +134,11 @@ namespace MWMechanics
 
     bool ActiveSpells::isSpellActive(std::string id) const
     {
-        Misc::StringUtils::toLower(id);
+        Misc::StringUtils::lowerCaseInPlace(id);
         for (TContainer::iterator iter = mSpells.begin(); iter != mSpells.end(); ++iter)
         {
             std::string left = iter->first;
-            Misc::StringUtils::toLower(left);
+            Misc::StringUtils::lowerCaseInPlace(left);
 
             if (iter->first == id)
                 return true;
