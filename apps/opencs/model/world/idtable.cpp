@@ -248,6 +248,22 @@ std::pair<CSMWorld::UniversalId, std::string> CSMWorld::IdTable::view (int row) 
             hint = "c:" + id;
         }
     }
+    else if (getFeatures() & Feature_ViewCells)
+    {
+        int idColumn = mIdCollection->searchColumnIndex (Columns::ColumnId_Id);
+
+        if (idColumn!=-1)
+        {
+            id = mIdCollection->getData (row, idColumn).toString().toUtf8().constData();
+            hint = id;
+
+            // FIXME: need a new univeral id type for displaying a subset of cells belonging to a world
+            if (id.empty())
+                return std::make_pair (UniversalId::Type_None, "");
+            else
+                return std::make_pair (UniversalId (UniversalId::Type_ForeignCells), hint);
+        }
+    }
 
     if (id.empty())
         return std::make_pair (UniversalId::Type_None, "");

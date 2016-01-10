@@ -689,7 +689,7 @@ CSMWorld::Data::Data (ToUTF8::FromType encoding, const ResourcesManager& resourc
     addModel (new IdTable (&mMetaData), UniversalId::Type_MetaData);
     addModel (new IdTable (&mLand), UniversalId::Type_Land);
     addModel (new IdTable (&mLandTextures), UniversalId::Type_LandTexture);
-    addModel (new IdTable (&mForeignWorlds), UniversalId::Type_ForeignWorld);
+    addModel (new IdTable (&mForeignWorlds, IdTable::Feature_ViewCells), UniversalId::Type_ForeignWorld);
     addModel (new IdTable (&mForeignRegions), UniversalId::Type_ForeignRegion);
     addModel (new IdTable (&mForeignCells), UniversalId::Type_ForeignCell);
     addModel (new IdTable (&mForeignLandTextures), UniversalId::Type_ForeignLandTexture);
@@ -1257,7 +1257,7 @@ QAbstractItemModel *CSMWorld::Data::getTableModel (const CSMWorld::UniversalId& 
         else if (id.getType()==UniversalId::Type_ForeignRegionMap)
         {
             CSMForeign::RegionMap *table = 0;
-            addModel (table = new CSMForeign::RegionMap (*this), UniversalId::Type_ForeignRegionMap, false);
+            addModel (table = new CSMForeign::RegionMap (*this, id.getId()), UniversalId::Type_ForeignRegionMap, false);
             return table;
         }
         throw std::logic_error ("No table model available for " + id.toString());

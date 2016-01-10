@@ -81,8 +81,6 @@ namespace
             "References", 0 },
         { CSMWorld::UniversalId::Class_RecordList, CSMWorld::UniversalId::Type_ForeignChars,
             "Chars", 0 },
-        { CSMWorld::UniversalId::Class_NonRecord, CSMWorld::UniversalId::Type_ForeignRegionMap,
-            "Foreign Region Map", 0 },
 
         { CSMWorld::UniversalId::Class_None, CSMWorld::UniversalId::Type_None, 0, 0 } // end marker
     };
@@ -171,6 +169,8 @@ namespace
         { CSMWorld::UniversalId::Class_Record, CSMWorld::UniversalId::Type_ForeignReferenceable, "Object", 0 },
         { CSMWorld::UniversalId::Class_SubRecord, CSMWorld::UniversalId::Type_ForeignReference, "Reference", 0 },
         { CSMWorld::UniversalId::Class_SubRecord, CSMWorld::UniversalId::Type_ForeignChar, "Action Char", 0 },
+        { CSMWorld::UniversalId::Class_NonRecord, CSMWorld::UniversalId::Type_ForeignRegionMap,
+            "Foreign Region Map", 0 },
 
         { CSMWorld::UniversalId::Class_None, CSMWorld::UniversalId::Type_None, 0, 0 } // end marker
     };

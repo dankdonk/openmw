@@ -153,6 +153,19 @@ void CSVWorld::Table::contextMenuEvent (QContextMenuEvent *event)
             if (state!=CSMWorld::RecordBase::State_Deleted)
                 menu.addAction (mPreviewAction);
         }
+
+        if (mModel->getFeatures() & CSMWorld::IdTableBase::Feature_ViewCells)
+        {
+            //CSMWorld::UniversalId id = mModel->view (row).first;
+
+            int index = mDocument.getData().getForeignWorlds().searchId (mModel->view(row).second);
+
+            if (!mDocument.getData().getForeignWorlds().getRecord (index).isDeleted())
+            {
+                menu.addAction (mOpenTableAction);
+                menu.addAction (mOpenRegionMapAction);
+            }
+        }
     }
 
     menu.exec (event->globalPos());
@@ -358,6 +371,14 @@ CSVWorld::Table::Table (const CSMWorld::UniversalId& id,
     connect (mEditIdAction, SIGNAL (triggered()), this, SLOT (editCell()));
     addAction (mEditIdAction);
 
+    mOpenTableAction = new QAction (tr ("Open Table"), this);
+    connect (mOpenTableAction, SIGNAL (triggered()), this, SLOT (viewTable()));
+    addAction (mOpenTableAction);
+
+    mOpenRegionMapAction = new QAction (tr ("Open Region Map"), this);
+    connect (mOpenRegionMapAction, SIGNAL (triggered()), this, SLOT (viewRegionMap()));
+    addAction (mOpenRegionMapAction);
+
     connect (mProxyModel, SIGNAL (rowsRemoved (const QModelIndex&, int, int)),
         this, SLOT (tableSizeUpdate()));
 
@@ -537,6 +558,40 @@ void CSVWorld::Table::moveDownRecord()
 void CSVWorld::Table::editCell()
 {
     emit editRequest(mEditIdAction->getCurrentId(), "");
+}
+
+void CSVWorld::Table::viewTable()
+{
+    QModelIndexList selectedRows = selectionModel()->selectedRows();
+
+    if (selectedRows.size()==1)
+    {
+        int row = selectedRows.begin()->row();
+
+        row = mProxyModel->mapToSource (mProxyModel->index (row, 0)).row();
+
+        std::pair<CSMWorld::UniversalId, std::string> params = mModel->view (row);
+
+        if (params.first.getType()!=CSMWorld::UniversalId::Type_None)
+            emit editRequest (params.first, params.second); // pass on the world formid as the hint
+    }
+}
+
+void CSVWorld::Table::viewRegionMap()
+{
+    QModelIndexList selectedRows = selectionModel()->selectedRows();
+
+    if (selectedRows.size()==1)
+    {
+        int row = selectedRows.begin()->row();
+
+        row = mProxyModel->mapToSource (mProxyModel->index (row, 0)).row();
+
+        std::pair<CSMWorld::UniversalId, std::string> params = mModel->view (row);
+
+        if (params.first.getType()!=CSMWorld::UniversalId::Type_None)
+            emit editRequest (CSMWorld::UniversalId(CSMWorld::UniversalId::Type_ForeignRegionMap, params.second), params.second);
+    }
 }
 
 void CSVWorld::Table::viewRecord()

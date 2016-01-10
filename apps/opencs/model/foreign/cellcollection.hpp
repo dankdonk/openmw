@@ -33,7 +33,7 @@ namespace CSMForeign
 
     class CellCollection : public CSMWorld::Collection<Cell, CSMWorld::IdAccessor<Cell> >//, public NestedCollection
     {
-        const WorldCollection& mWorlds;  // for looking up World name strings (FULL or EDID)
+        WorldCollection& mWorlds; // for looking up World name strings (FULL or EDID) and to register
 
         // key - x/y coordinates, value - cell formid
         typedef std::map<std::pair<int, int>, ESM4::FormId> CoordinateIndex;
@@ -45,7 +45,7 @@ namespace CSMForeign
         CellIndexMap mCellIndex;
 
     public:
-        CellCollection (const WorldCollection& worlds);
+        CellCollection (WorldCollection& worlds);
         ~CellCollection ();
 
         // similar to IdCollection but with ESM4::Reader
@@ -68,7 +68,7 @@ namespace CSMForeign
 
         ESM4::FormId searchFormId (std::int16_t x, std::int16_t y, ESM4::FormId world = /*Tamriel*/0x3c) const;
 
-        Cell& getCell(ESM4::FormId formId); // for updating cell children
+        Cell *getCell(ESM4::FormId formId); // for updating cell children
 
     private:
         CellCollection ();

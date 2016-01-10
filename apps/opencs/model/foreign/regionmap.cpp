@@ -352,8 +352,9 @@ std::pair<CSMWorld::CellCoordinates, CSMWorld::CellCoordinates> CSMForeign::Regi
     return std::make_pair (min, max);
 }
 
-CSMForeign::RegionMap::RegionMap (CSMWorld::Data& data) : mData (data)
+CSMForeign::RegionMap::RegionMap (CSMWorld::Data& data, const std::string& world) : mData (data), mWorld(world)
 {
+    std::cout << world << std::endl;
     buildRegions();
     buildMap();
 

@@ -46,7 +46,7 @@ namespace CSMWorld
     }
 }
 
-CSMForeign::CellCollection::CellCollection (const WorldCollection& worlds) :mWorlds(worlds)
+CSMForeign::CellCollection::CellCollection (WorldCollection& worlds) :mWorlds(worlds)
 {
 }
 
@@ -70,6 +70,11 @@ int CSMForeign::CellCollection::load (ESM4::Reader& reader, bool base)
     std::string id;
     ESM4::FormId formId = reader.hdr().record.id;
     ESM4::formIdToString(formId, id);
+
+    // cache the cell's formId to its parent world
+    World *world = mWorlds.getWorld(reader.currWorld()); // FIXME: const issue with Collection
+    if (world)
+        world->mCells.push_back(formId);
 
     // reader.currCellGrid() is set during the load (sub record XCLC for an exterior cell)
     loadRecord(record, reader);
@@ -278,7 +283,11 @@ ESM4::FormId CSMForeign::CellCollection::searchFormId (std::int16_t x, std::int1
     return it->second;
 }
 
-CSMForeign::Cell& CSMForeign::CellCollection::getCell(ESM4::FormId formId)
+CSMForeign::Cell *CSMForeign::CellCollection::getCell(ESM4::FormId formId)
 {
-    return getModifiableRecord(searchId(formId)).get();
+    int index = searchId(formId);
+    if (index == -1)
+        return nullptr;
+
+    return &getModifiableRecord(index).get();
 }

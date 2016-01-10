@@ -622,6 +622,19 @@ void CSVDoc::View::updateProgress (int current, int max, int type, int threads)
     mOperations->setProgress (current, max, type, threads);
 }
 
+// CSVWorld::Table::contextMenuEvent()
+//   --> CSMWorld::IdTable::view() : check what features are available
+//   <-- returns pair<UniversalId id, std::string hint>
+//
+//   --> signal triggered() : when a context menu feature is selected
+//       --> slot CSVWorld::Table::viewCells() <--- ensure  hint is correct here
+//           --> signal editRequest(id, hint)
+//               --> slot CSVWorld::TableSubview::editRequest(id, hint)
+//                   --> CSVDoc::SubView::focusId(id, hint)
+//                       --> slot CSVDoc::View::addSubView(id, hint)
+//
+// Remember to add any new subview types to CSVWorld::addSubViewFactories() so that
+// mSubViewFactory.makeSubView (id, *mDocument) returns the correct subview.
 void CSVDoc::View::addSubView (const CSMWorld::UniversalId& id, const std::string& hint)
 {
     CSMSettings::UserSettings &userSettings = CSMSettings::UserSettings::instance();
@@ -1030,7 +1043,7 @@ void CSVDoc::View::addForeignLightSubView()
 
 void CSVDoc::View::addForeignRegionMapSubView()
 {
-    addSubView (CSMWorld::UniversalId::Type_ForeignRegionMap);
+    addSubView (CSMWorld::UniversalId (CSMWorld::UniversalId::Type_ForeignRegionMap, "0000003c"));
 }
 
 void CSVDoc::View::addForeignReferenceablesSubView()

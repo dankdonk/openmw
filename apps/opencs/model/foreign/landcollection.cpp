@@ -24,7 +24,7 @@ CSMForeign::LandCollection::~LandCollection ()
 
 // Can't reliably use cell grid as the id for LAND, since some cells can be "empty" or do not
 // have an XCLC sub-record. e.g. OblivionMQKvatchBridge, TheFrostFireGlade and CheydinhalOblivion
-int CSMForeign::LandCollection::load (ESM4::Reader& reader, bool base)
+int CSMForeign::LandCollection::load(ESM4::Reader& reader, bool base)
 {
     CSMForeign::Land record;
 
@@ -33,11 +33,14 @@ int CSMForeign::LandCollection::load (ESM4::Reader& reader, bool base)
     ESM4::formIdToString(formId, id);
 
     // cache the ref's formId to its parent cell
-    Cell& cell = mCells.getCell(reader.currCell()); // FIXME: const issue with Collection
+    Cell *cell = mCells.getCell(reader.currCell()); // FIXME: const issue with Collection
 
     assert(reader.grp().type == ESM4::Grp_CellTemporaryChild && "Unexpected Group type for LAND");
-    assert(cell.mLandTemporary == 0 && "CELL already has a LAND child");
-    cell.mLandTemporary = formId;
+    if (cell)
+    {
+        assert(cell->mLandTemporary == 0 && "CELL already has a LAND child");
+        cell->mLandTemporary = formId;
+    }
 
     // check if parent cell left some bread crumbs
     if (reader.hasCellGrid())

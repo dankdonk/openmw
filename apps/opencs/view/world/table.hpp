@@ -61,6 +61,8 @@ namespace CSVWorld
             QAction *mPreviewAction;
             QAction *mExtendedDeleteAction;
             QAction *mExtendedRevertAction;
+            QAction *mOpenTableAction;
+            QAction *mOpenRegionMapAction;
             TableEditIdAction *mEditIdAction;
             CSMWorld::IdTableProxyModel *mProxyModel;
             CSMWorld::IdTableBase *mModel;
@@ -142,6 +144,10 @@ namespace CSVWorld
             void executeExtendedDelete();
 
             void executeExtendedRevert();
+
+            void viewTable();
+
+            void viewRegionMap();
 
         public slots:
 

@@ -29,6 +29,8 @@ namespace CSMForeign
 
         std::string getIdString(std::uint32_t formId) const;
 
+        World *WorldCollection::getWorld(ESM4::FormId formId); // for updating world children
+
     private:
         WorldCollection (const WorldCollection& other);
         WorldCollection& operator= (const WorldCollection& other);

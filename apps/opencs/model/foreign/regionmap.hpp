@@ -48,6 +48,7 @@ namespace CSMForeign
             };
 
             CSMWorld::Data& mData;
+            std::string mWorld; // FIXME: should be ESM4::FormId
             std::map<CSMWorld::CellCoordinates, CellDescription> mMap;
             CSMWorld::CellCoordinates mMin; ///< inclusive
             CSMWorld::CellCoordinates mMax; ///< exclusive
@@ -93,7 +94,7 @@ namespace CSMForeign
 
         public:
 
-            RegionMap (CSMWorld::Data& data);
+            RegionMap (CSMWorld::Data& data, const std::string& world);
 
             virtual int rowCount (const QModelIndex& parent = QModelIndex()) const;
 

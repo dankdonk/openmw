@@ -19,13 +19,8 @@ int CSMForeign::WorldCollection::load (ESM4::Reader& reader, bool base)
     CSMForeign::World record;
 
     std::string id;
-    //id = std::to_string(reader.hdr().record.id); // use formId converted to string instead
-    char buf[8+1];
-    int res = snprintf(buf, 8+1, "%08x", reader.hdr().record.id);
-    if (res > 0 && res < 100)
-        id.assign(buf);
-    else
-        throw std::runtime_error("World Collection possible buffer overflow on formId");
+    ESM4::FormId formId = reader.hdr().record.id;
+    ESM4::formIdToString(formId, id);
 
     // FIXME; should be using the formId as the lookup key
     int index = this->searchId(id);
@@ -102,4 +97,13 @@ std::string CSMForeign::WorldCollection::getIdString(std::uint32_t formId) const
         return "#"+getRecord(index).get().mFullName;
     else
         return name;
+}
+
+CSMForeign::World *CSMForeign::WorldCollection::getWorld(ESM4::FormId formId)
+{
+    int index = searchId(ESM4::formIdToString(formId));
+    if (index == -1)
+        return nullptr;
+
+    return &getModifiableRecord(index).get();
 }

@@ -121,7 +121,7 @@ void ESM4::Land::load(ESM4::Reader& reader)
                 if (currentAddQuad != -1)
                 {
                     // FIXME: sometimes there are no VTXT following an ATXT?  Just add a dummy one for now
-                    std::cout << "ESM4::Land VTXT empty layer " << (int)layer.additional.layer << std::endl;
+                    //std::cout << "ESM4::Land VTXT empty layer " << (int)layer.additional.layer << std::endl;
                     mTextures[currentAddQuad].layers.push_back(layer);
                 }
                 reader.get(layer.additional);

@@ -61,27 +61,28 @@ int CSMForeign::RefCollection::load (ESM4::Reader& reader, bool base)
     ESM4::formIdToString(formId, id);
 
     // cache the ref's formId to its parent cell
-    Cell& cell = mCells.getCell(reader.currCell()); // FIXME: const issue with Collection
+    Cell *cell = mCells.getCell(reader.currCell()); // FIXME: const issue with Collection
 
-    switch (reader.grp().type)
-    {
-        case ESM4::Grp_CellPersistentChild:
+    if (cell)
+        switch (reader.grp().type)
         {
-            cell.mRefPersistent.push_back(formId);
-            break;
+            case ESM4::Grp_CellPersistentChild:
+            {
+                cell->mRefPersistent.push_back(formId);
+                break;
+            }
+            case ESM4::Grp_CellVisibleDistChild:
+            {
+                cell->mRefVisibleDistant.push_back(formId);
+                break;
+            }
+            case ESM4::Grp_CellTemporaryChild:
+            {
+                cell->mRefTemporary.push_back(formId);
+                break;
+            }
+            default: break; // do nothing
         }
-        case ESM4::Grp_CellVisibleDistChild:
-        {
-            cell.mRefVisibleDistant.push_back(formId);
-            break;
-        }
-        case ESM4::Grp_CellTemporaryChild:
-        {
-            cell.mRefTemporary.push_back(formId);
-            break;
-        }
-        default: break; // do nothing
-    }
 
     if (reader.hasCellGrid())
         ESM4::gridToString(reader.currCellGrid().grid.x, reader.currCellGrid().grid.y, record.mCell);
