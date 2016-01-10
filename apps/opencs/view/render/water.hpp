@@ -14,11 +14,6 @@
 
 #include <extern/shiny/Main/MaterialInstance.hpp>
 
-
-#include "renderconst.hpp"
-
-//#include "../mwworld/ptr.hpp"
-
 namespace Ogre
 {
     class Camera;
@@ -30,20 +25,7 @@ namespace Ogre
     struct RenderTargetEvent;
 }
 
-#if 0
-namespace MWWorld
-{
-    class Fallback;
-}
-#endif
-
 namespace CSVRender {
-
-    class SkyManager;
-    //class RenderingManager;
-    //class RippleSimulation;
-    class Refraction;
-    class SkyManager;
 
     class Reflection
     {
@@ -86,7 +68,7 @@ namespace CSVRender {
     class PlaneReflection : public Reflection, public Ogre::RenderQueueListener, public Ogre::RenderTargetListener
     {
     public:
-        PlaneReflection(Ogre::SceneManager* sceneManager, SkyManager* sky);
+        PlaneReflection(Ogre::SceneManager* sceneManager/*, SkyManager* sky*/);
         virtual ~PlaneReflection();
 
         virtual void setHeight (float height);
@@ -103,7 +85,7 @@ namespace CSVRender {
 
     protected:
         Ogre::RenderTarget* mRenderTarget;
-        SkyManager* mSky;
+        //SkyManager* mSky;
         Ogre::Plane mWaterPlane;
         Ogre::Plane mErrorPlane;
         Ogre::Plane mErrorPlaneUnderwater;
@@ -129,7 +111,7 @@ namespace CSVRender {
 
         float mWaterTimer;
 
-        SkyManager *mSky;
+        //SkyManager *mSky;
 
         Ogre::Vector3 getSceneNodeCoordinates(int gridX, int gridY);
 
@@ -139,22 +121,17 @@ namespace CSVRender {
 
         void updateVisible();
 
-        //RenderingManager* mRendering;
-        //SkyManager* mSky;
-
         Ogre::MaterialPtr mMaterial;
 
         bool mUnderwaterEffect;
         int mVisibilityFlags;
 
         Reflection* mReflection;
-        Refraction* mRefraction;
-        //RippleSimulation* mSimulation;
 
         Ogre::Vector2 mPlayer;
 
     public:
-        Water (Ogre::Camera *camera, Ogre::SceneNode *root, SkyManager* sky/*, RenderingManager* rend, const MWWorld::Fallback* fallback*/);
+        Water (Ogre::Camera *camera, Ogre::SceneNode *root);
         ~Water();
 
         void clearRipples();
