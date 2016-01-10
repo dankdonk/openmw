@@ -43,6 +43,8 @@ set(MATERIAL_FILES
     mygui.shader
     mygui.shaderset
     ripples.particle
+    clouds.jpg
+    clouds.material
 )
 
 copy_all_files(${CMAKE_CURRENT_SOURCE_DIR}/water "${OpenMW_BINARY_DIR}/resources/water/" "${WATER_FILES}")

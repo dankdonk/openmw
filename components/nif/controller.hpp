@@ -622,7 +622,7 @@ public:
 
 };
 
-class NiPSysBoxEmitter : public NiPSysModifier
+class NiPSysEmitter : public NiPSysModifier
 {
 public:
     float speed;
@@ -636,6 +636,28 @@ public:
     float radiusVar;
     float lifeSpan;
     float lifeSpanVar;
+
+    void read(NIFStream *nif)
+    {
+        NiPSysModifier::read(nif);
+
+        speed = nif->getFloat();
+        speedVar = nif->getFloat();
+        declination = nif->getFloat();
+        declinationVar = nif->getFloat();
+        planarAngle = nif->getFloat();
+        planarAngleVar = nif->getFloat();
+        initialColor = nif->getVector4();
+        initialRadius = nif->getFloat();
+        radiusVar = nif->getFloat();
+        lifeSpan = nif->getFloat();
+        lifeSpanVar = nif->getFloat();
+    }
+};
+
+class NiPSysBoxEmitter : public NiPSysEmitter
+{
+public:
     NodePtr emitteObj;
     float width;
     float height;
@@ -643,19 +665,8 @@ public:
 
     void read(NIFStream *nif)
     {
-        NiPSysModifier::read(nif);
+        NiPSysEmitter::read(nif);
 
-        speed = nif->getFloat();
-        speedVar = nif->getFloat();
-        declination = nif->getFloat();
-        declinationVar = nif->getFloat();
-        planarAngle = nif->getFloat();
-        planarAngleVar = nif->getFloat();
-        initialColor = nif->getVector4();
-        initialRadius = nif->getFloat();
-        radiusVar = nif->getFloat();
-        lifeSpan = nif->getFloat();
-        lifeSpanVar = nif->getFloat();
         emitteObj.read(nif);
         width = nif->getFloat();
         height = nif->getFloat();
@@ -663,42 +674,41 @@ public:
     }
 };
 
-class NiPSysCylinderEmitter : public NiPSysModifier
+class NiPSysCylinderEmitter : public NiPSysEmitter
 {
 public:
-    float speed;
-    float speedVar;
-    float declination;
-    float declinationVar;
-    float planarAngle;
-    float planarAngleVar;
-    Ogre::Vector4 initialColor;
-    float initialRadius;
-    float radiusVar;
-    float lifeSpan;
-    float lifeSpanVar;
     NodePtr emitteObj;
     float radius;
     float height;
 
     void read(NIFStream *nif)
     {
-        NiPSysModifier::read(nif);
+        NiPSysEmitter::read(nif);
 
-        speed = nif->getFloat();
-        speedVar = nif->getFloat();
-        declination = nif->getFloat();
-        declinationVar = nif->getFloat();
-        planarAngle = nif->getFloat();
-        planarAngleVar = nif->getFloat();
-        initialColor = nif->getVector4();
-        initialRadius = nif->getFloat();
-        radiusVar = nif->getFloat();
-        lifeSpan = nif->getFloat();
-        lifeSpanVar = nif->getFloat();
         emitteObj.read(nif);
         radius = nif->getFloat();
         height = nif->getFloat();
+    }
+};
+
+class NiPSysMeshEmitter : public NiPSysEmitter
+{
+public:
+    //std::vector<NiTriBasedGeomPtr> emitterMeshes;
+    unsigned int velocityType;
+    unsigned int emissionType;
+    Ogre::Vector3 emissionAxis;
+
+    void read(NIFStream *nif)
+    {
+        NiPSysEmitter::read(nif);
+
+        unsigned int numMesh = nif->getUInt();
+        for (unsigned int i = 0; i < numMesh; ++i)
+            nif->getUInt(); // FIXME
+        velocityType = nif->getUInt();
+        emissionType = nif->getUInt();
+        emissionAxis = nif->getVector3();
     }
 };
 

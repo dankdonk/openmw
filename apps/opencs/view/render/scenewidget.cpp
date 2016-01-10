@@ -12,6 +12,8 @@
 #include <OgreSceneNode.h>
 #include <OgreViewport.h>
 #include <OgreOverlaySystem.h>
+#include <OgreMaterialManager.h>
+#include <OgreTechnique.h>
 
 //#include <extern/shiny/Main/Factory.hpp>
 //#include <extern/shiny/Platforms/Ogre/OgreMaterial.hpp>
@@ -88,12 +90,33 @@ namespace CSVRender
                                         //sh::makeProperty<sh::Vector4>(new sh::Vector4(95, 135, 203, 128)));
         //sh::Factory::getInstance().setSharedParameter ("horizonColour",
                                         //sh::makeProperty<sh::Vector4>(new sh::Vector4(206, 227, 255, 128)));
-        //mSceneMgr->setSkyDome(true, "material_sky", 3, 3.2);
+        //mSceneMgr->setSkyDome(true, "openmw_atmosphere");
+        Ogre::MaterialPtr skyMaterial = Ogre::MaterialManager::getSingleton().getByName(
+                    "SkyMaterial");
+        if(skyMaterial.isNull())
+        {
+            skyMaterial = Ogre::MaterialManager::getSingleton().create(
+                        "SkyMaterial",
+                        Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, true );
+            Ogre::Pass *pass = skyMaterial->getTechnique( 0 )->getPass( 0 );
+            pass->setLightingEnabled( false );
+            pass->setDepthWriteEnabled( false );
+            //pass->setSceneBlending( Ogre::SBT_TRANSPARENT_ALPHA );
+
+            Ogre::TextureUnitState *tex = pass->createTextureUnitState("MyCustomState", 0);
+            //tex->setTextureName("cloudsclear.dds");
+            tex->setTextureName("clouds.jpg");
+            //tex->setTextureFiltering( Ogre::TFO_ANISOTROPIC );
+            skyMaterial->load();
+        }
+        Ogre::Quaternion r(Ogre::Degree(90), Ogre::Vector3::UNIT_X);
+        mSceneMgr->setSkyDome(true, "SkyMaterial", 10, 8, 4000, true, r);
+        //mSceneMgr->setSkyBox(true, "SkyMaterial");
         //
         //
         //
-        mSkyManager = new SkyManager(mCamera, mSceneMgr->getRootSceneNode());
-        mSkyManager->enable();
+        //mSkyManager = new SkyManager(mCamera, mSceneMgr->getRootSceneNode());
+        //mSkyManager->enable();
         //mSkyManager->sunEnable();
         mWater = new Water(mCamera, mSceneMgr->getRootSceneNode(), mSkyManager);
         mWater->setActive(true);
@@ -186,7 +209,7 @@ namespace CSVRender
         Ogre::Real aspectRatio = Ogre::Real(width()) / Ogre::Real(height());
         mCamera->setAspectRatio(aspectRatio);
 
-        mSkyManager->update(10.f); // value just a guess
+        //mSkyManager->update(10.f); // value just a guess
     }
 
     SceneWidget::~SceneWidget()

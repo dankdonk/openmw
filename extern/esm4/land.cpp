@@ -108,32 +108,32 @@ void ESM4::Land::load(ESM4::Reader& reader)
                     assert(base.quadrant < 4 && base.quadrant >= 0 && "base texture quadrant index error");
 
                     mTextures[base.quadrant].base = base;  // FIXME: any way to avoid double-copying?
-//#if 0
+#if 0
                     std::cout << "Base Texture formid: 0x"
                         << std::hex << mTextures[base.quadrant].base.formId
                         << ", quad " << std::dec << (int)base.quadrant << std::endl;
-//#endif
+#endif
                 }
                 break;
             }
             case ESM4::SUB_ATXT:
             {
+                if (currentAddQuad != -1)
+                {
+                    // FIXME: sometimes there are no VTXT following an ATXT?  Just add a dummy one for now
+                    std::cout << "ESM4::Land VTXT empty layer " << (int)layer.additional.layer << std::endl;
+                    mTextures[currentAddQuad].layers.push_back(layer);
+                }
                 reader.get(layer.additional);
                 assert(layer.additional.quadrant < 4 && layer.additional.quadrant >= 0
                        && "additional texture quadrant index error");
-//#if 0
+#if 0
                 std::cout << "Additional Texture formId: 0x"
                     << std::hex << layer.additional.formId
                     << ", quad " << std::dec << (int)layer.additional.quadrant << std::endl;
                 std::cout << "Additional Texture layer: "
                     << std::dec << (int)layer.additional.layer << std::endl;
-//#endif
-                if (currentAddQuad != -1)
-                {
-                    // FIXME: sometimes there are no VTXT following an ATXT?  Just add a dummy one for now
-                    std::cerr << "ESM4::Land::VTXT empty layer " << (int)layer.additional.layer << std::endl;
-                    mTextures[currentAddQuad].layers.push_back(layer);
-                }
+#endif
                 currentAddQuad = layer.additional.quadrant;
                 break;
             }
@@ -143,7 +143,7 @@ void ESM4::Land::load(ESM4::Reader& reader)
 
                 int count = (int)reader.subRecordHeader().dataSize / sizeof(ESM4::Land::VTXT);
                 int remainder = reader.subRecordHeader().dataSize % sizeof(ESM4::Land::VTXT);
-                assert(remainder == 0 && "ESM4::Land::VTXT data size error");
+                assert(remainder == 0 && "ESM4::LAND VTXT data size error");
 
                 if (count)
                 {
@@ -164,14 +164,14 @@ void ESM4::Land::load(ESM4::Reader& reader)
 
                 currentAddQuad = -1;
                 // FIXME: debug only
-                std::cout << "VTXT: count " << std::dec << count << std::endl;
+                //std::cout << "VTXT: count " << std::dec << count << std::endl;
                 break;
             }
             case ESM4::SUB_VTEX: // only in Oblivion?
             {
                 int count = (int)reader.subRecordHeader().dataSize / sizeof(std::uint32_t);
                 int remainder = reader.subRecordHeader().dataSize % sizeof(std::uint32_t);
-                assert(remainder == 0 && "ESM4::Land::VTEX data size error");
+                assert(remainder == 0 && "ESM4::LAND VTEX data size error");
 
                 if (count)
                 {
@@ -190,12 +190,18 @@ void ESM4::Land::load(ESM4::Reader& reader)
         }
     }
 
+    bool missing = false;
     for (int i = 0; i < 4; ++i)
     {
         if (mTextures[i].base.formId == 0)
-            return; // at least one of the quadrants do not have a base texture, return without setting the flag
+        {
+            //std::cout << "ESM::LAND " << ESM4::formIdToString(mFormId) << " missing base, quad " << i << std::endl;
+            missing = true;
+        }
     }
-    mDataTypes |= LAND_VTEX;
+    // at least one of the quadrants do not have a base texture, return without setting the flag
+    if (!missing)
+        mDataTypes |= LAND_VTEX;
 }
 
 //void ESM4::Land::save(ESM4::Writer& writer) const

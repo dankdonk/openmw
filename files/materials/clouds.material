@@ -1,0 +1,17 @@
+material Example/CloudySky
+{
+	technique
+	{
+		pass
+		{
+			lighting off
+			depth_write off
+
+			texture_unit
+			{
+				texture cloudsclear.dds
+				scroll_anim 0.15 0
+			}
+		}
+	}
+}
