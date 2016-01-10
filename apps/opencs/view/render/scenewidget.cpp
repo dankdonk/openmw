@@ -13,6 +13,9 @@
 #include <OgreViewport.h>
 #include <OgreOverlaySystem.h>
 
+//#include <extern/shiny/Main/Factory.hpp>
+//#include <extern/shiny/Platforms/Ogre/OgreMaterial.hpp>
+
 #include "../widget/scenetoolmode.hpp"
 #include "../../model/settings/usersettings.hpp"
 
@@ -77,15 +80,26 @@ namespace CSVRender
         QShortcut *focusToolbar = new QShortcut (Qt::Key_T, this, 0, 0, Qt::WidgetWithChildrenShortcut);
         connect (focusToolbar, SIGNAL (activated()), this, SIGNAL (focusToolbarRequest()));
 
+        //
+        //
+        //
+        //mSceneMgr->setSkyDome(true, "textures\\sky\\cloudsclear.dds", 5, 8);
+        //sh::Factory::getInstance().setSharedParameter ("atmosphereColour",
+                                        //sh::makeProperty<sh::Vector4>(new sh::Vector4(95, 135, 203, 128)));
+        //sh::Factory::getInstance().setSharedParameter ("horizonColour",
+                                        //sh::makeProperty<sh::Vector4>(new sh::Vector4(206, 227, 255, 128)));
+        //mSceneMgr->setSkyDome(true, "material_sky", 3, 3.2);
+        //
+        //
+        //
         mSkyManager = new SkyManager(mCamera, mSceneMgr->getRootSceneNode());
-        //mSkyManager->enable();
+        mSkyManager->enable();
         //mSkyManager->sunEnable();
         mWater = new Water(mCamera, mSceneMgr->getRootSceneNode(), mSkyManager);
         mWater->setActive(true);
         //Ogre::Light *sun = mSceneMgr->createLight();
         //sun->setType(Ogre::Light::LT_DIRECTIONAL);
 
-        //mSkyManager->update(1.f); // value just a guess
         updateOgreWindow();
     }
 
@@ -171,12 +185,14 @@ namespace CSVRender
 
         Ogre::Real aspectRatio = Ogre::Real(width()) / Ogre::Real(height());
         mCamera->setAspectRatio(aspectRatio);
+
+        mSkyManager->update(10.f); // value just a guess
     }
 
     SceneWidget::~SceneWidget()
     {
         delete mWater;
-        delete mSkyManager;
+        //delete mSkyManager;
 
         if (mWindow)
             Ogre::Root::getSingleton().destroyRenderTarget (mWindow);

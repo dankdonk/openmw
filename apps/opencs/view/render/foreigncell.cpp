@@ -153,15 +153,16 @@ CSVRender::ForeignCell::ForeignCell (CSMDoc::Document& document, Ogre::SceneMana
 
         if (esmLand.getLandData (ESM4::Land::LAND_VHGT))
         {
-            mTerrain.reset(new Terrain::TerrainGrid(sceneManager,
-                                                    new CSVForeign::TerrainStorage(mDocument.getData()),
+            mTerrain.reset(new ESM4Terrain::TerrainGrid(sceneManager,
+                                                    new CSVForeign::TerrainStorage(mDocument.getData(), 0x3c),
                                                     Element_Terrain,
                                                     true,
-                                                    Terrain::Align_XY));
+                                                    Terrain::Align_XY,
+                                                    0x3c)); // Fixed to Tamriel for now
             mTerrain->loadCell(/*esmLand.mX*/x,
                                /*esmLand.mY*/y);
 
-            float verts = ESM4::Land::VERTS_SIDE;
+            float verts = ESM4::Land::VERTS_PER_SIDE;
             float worldsize = ESM4::Land::REAL_SIZE;
             mX = /*esmLand.mX*/x;
             mY = /*esmLand.mY*/y;

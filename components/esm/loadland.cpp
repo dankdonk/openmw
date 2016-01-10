@@ -193,39 +193,48 @@ namespace ESM
         }
         mEsm->restoreContext(mContext);
 
-        if (mEsm->isNextSub("VNML")) {
-            condLoad(flags, DATA_VNML, mLandData->mNormals, sizeof(mLandData->mNormals));
-        }
+        while (mEsm->hasMoreSubs())
+        {
+            mEsm->getSubName();
+            switch (mEsm->retSubName().val)
+            {
+                case ESM::FourCC<'V','N','M','L'>::value:
+                    condLoad(flags, DATA_VNML, mLandData->mNormals, sizeof(mLandData->mNormals));
+                    break;
+                case ESM::FourCC<'V','H','G','T'>::value:
+                    static VHGT vhgt;
+                    if (condLoad(flags, DATA_VHGT, &vhgt, sizeof(vhgt))) {
+                        float rowOffset = vhgt.mHeightOffset;
+                        for (int y = 0; y < LAND_SIZE; y++) {
+                            rowOffset += vhgt.mHeightData[y * LAND_SIZE];
 
-        if (mEsm->isNextSub("VHGT")) {
-            static VHGT vhgt;
-            if (condLoad(flags, DATA_VHGT, &vhgt, sizeof(vhgt))) {
-                float rowOffset = vhgt.mHeightOffset;
-                for (int y = 0; y < LAND_SIZE; y++) {
-                    rowOffset += vhgt.mHeightData[y * LAND_SIZE];
+                            mLandData->mHeights[y * LAND_SIZE] = rowOffset * HEIGHT_SCALE;
 
-                    mLandData->mHeights[y * LAND_SIZE] = rowOffset * HEIGHT_SCALE;
-
-                    float colOffset = rowOffset;
-                    for (int x = 1; x < LAND_SIZE; x++) {
-                        colOffset += vhgt.mHeightData[y * LAND_SIZE + x];
-                        mLandData->mHeights[x + y * LAND_SIZE] = colOffset * HEIGHT_SCALE;
+                            float colOffset = rowOffset;
+                            for (int x = 1; x < LAND_SIZE; x++) {
+                                colOffset += vhgt.mHeightData[y * LAND_SIZE + x];
+                                mLandData->mHeights[x + y * LAND_SIZE] = colOffset * HEIGHT_SCALE;
+                            }
+                        }
+                        mLandData->mUnk1 = vhgt.mUnk1;
+                        mLandData->mUnk2 = vhgt.mUnk2;
                     }
-                }
-                mLandData->mUnk1 = vhgt.mUnk1;
-                mLandData->mUnk2 = vhgt.mUnk2;
-            }
-        }
-
-        if (mEsm->isNextSub("WNAM")) {
-            condLoad(flags, DATA_WNAM, mLandData->mWnam, 81);
-        }
-        if (mEsm->isNextSub("VCLR"))
-            condLoad(flags, DATA_VCLR, mLandData->mColours, 3 * LAND_NUM_VERTS);
-        if (mEsm->isNextSub("VTEX")) {
-            static uint16_t vtex[LAND_NUM_TEXTURES];
-            if (condLoad(flags, DATA_VTEX, vtex, sizeof(vtex))) {
-                LandData::transposeTextureData(vtex, mLandData->mTextures);
+                    break;
+                case ESM::FourCC<'W','N','A','M'>::value:
+                    condLoad(flags, DATA_WNAM, mLandData->mWnam, 81);
+                    break;
+                case ESM::FourCC<'V','C','L','R'>::value:
+                    condLoad(flags, DATA_VCLR, mLandData->mColours, 3 * LAND_NUM_VERTS);
+                    break;
+                case ESM::FourCC<'V','T','E','X'>::value:
+                    static uint16_t vtex[LAND_NUM_TEXTURES];
+                    if (condLoad(flags, DATA_VTEX, vtex, sizeof(vtex))) {
+                        LandData::transposeTextureData(vtex, mLandData->mTextures);
+                    }
+                    break;
+                default:
+                    mEsm->fail("Unknown subrecord");
+                    break;
             }
         }
     }

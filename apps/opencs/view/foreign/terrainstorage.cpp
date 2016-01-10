@@ -5,12 +5,12 @@
 namespace CSVForeign
 {
 
-    TerrainStorage::TerrainStorage(const CSMWorld::Data &data)
-        : mData(data)
+    TerrainStorage::TerrainStorage(const CSMWorld::Data &data, ESM4::FormId world)
+        : mData(data), mWorld(world)
     {
     }
 
-    const ESM4::Land* TerrainStorage::getLand(int cellX, int cellY)
+    const ESM4Terrain::Land* TerrainStorage::getLand(int cellX, int cellY)
     {
         // The cell isn't guaranteed to have Land. This is because the terrain implementation
         // has to wrap the vertices of the last row and column to the next cell, which may be a nonexisting cell

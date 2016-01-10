@@ -16,6 +16,7 @@
 //#include "renderingmanager.hpp"
 #include "ripplesimulation.hpp"
 #include "refraction.hpp"
+#include "elements.hpp"
 
 #include <extern/shiny/Main/Factory.hpp>
 #include <extern/shiny/Platforms/Ogre/OgreMaterial.hpp>
@@ -214,16 +215,16 @@ Water::Water (Ogre::Camera *camera, SceneNode* root, SkyManager* sky/*, Renderin
         40, 40, true, 1, static_cast<Ogre::Real>(3 * waterScale), static_cast<Ogre::Real>(3 * waterScale), Vector3::UNIT_Y);
 
     mWater = mSceneMgr->createEntity("water");
-    mWater->setVisibilityFlags(RV_Water);
+    mWater->setVisibilityFlags(Element_Water);
     mWater->setCastShadows(false);
-    mWater->setRenderQueueGroup(RQG_Alpha);
+    //mWater->setRenderQueueGroup(RQG_Alpha);
 
     mWaterNode = mSceneMgr->getRootSceneNode()->createChildSceneNode();
 
     mWaterNode->attachObject(mWater);
 
     applyRTT();
-    applyVisibilityMask();
+    //applyVisibilityMask();
 
     mWater->setMaterial(mMaterial);
 
@@ -468,7 +469,7 @@ void Water::requestedConfiguration (sh::MaterialInstance* m, const std::string& 
 
 void Water::createdConfiguration (sh::MaterialInstance* m, const std::string& configuration)
 {
-    if (configuration == "local_map" /*|| !Settings::Manager::getBool("shader", "Water")*/) // hard coded shader to be "water" for now in editor.cpp
+    if (1)//configuration == "local_map" /*|| !Settings::Manager::getBool("shader", "Water")*/) // hard coded shader to be "water" for now in editor.cpp
     {
         // for simple water, set animated texture names
         // these have to be set in code

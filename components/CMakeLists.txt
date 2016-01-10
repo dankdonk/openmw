@@ -70,7 +70,7 @@ add_component_dir (esmterrain
     )
 
 add_component_dir (esm4terrain
-    storage
+    storage terraingrid land
     )
 
 add_component_dir (misc

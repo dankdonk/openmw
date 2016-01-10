@@ -109,6 +109,14 @@ namespace Terrain
             }
             else
             {
+                // struct Terrain::LayerInfo
+                // {
+                //     std::string mDiffuseMap;
+                //     std::string mNormalMap;
+                //     bool mParallax; // Height info in normal map alpha channel?
+                //     bool mSpecular; // Specular info in diffuse map alpha channel?
+                // };
+                // std::vector<Terrain::LayerInfo> mLayerList;
                 assert(mLayerList.size() == mBlendmapList.size()+1);
                 std::vector<Ogre::TexturePtr>::iterator blend = mBlendmapList.begin();
                 for (std::vector<LayerInfo>::iterator layer = mLayerList.begin(); layer != mLayerList.end(); ++layer)

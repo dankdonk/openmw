@@ -16,12 +16,7 @@ CSMForeign::Land::~Land()
 
 void CSMForeign::Land::load(ESM4::Reader& reader, const CellCollection& cells)
 {
-    load(reader);
-}
-
-void CSMForeign::Land::load(ESM4::Reader& reader)
-{
-    ESM4::Land::load(reader);
+    ESM4Terrain::Land::load(reader);
 }
 
 void CSMForeign::Land::blank()

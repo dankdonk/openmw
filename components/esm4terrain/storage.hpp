@@ -1,9 +1,9 @@
-#ifndef COMPONENTS_ESM_TERRAIN_STORAGE_H
-#define COMPONENTS_ESM_TERRAIN_STORAGE_H
+#ifndef COMPONENTS_ESM4TERRAIN_STORAGE_H
+#define COMPONENTS_ESM4TERRAIN_STORAGE_H
 
 #include <components/terrain/storage.hpp>
 
-#include <extern/esm4/land.hpp>
+#include "land.hpp"
 #include <extern/esm4/ltex.hpp>
 
 namespace ESM4
@@ -21,7 +21,7 @@ namespace ESM4Terrain
     private:
 
         // Not implemented in this class, because we need different Store implementations for game and editor
-        virtual const ESM4::Land* getLand (int cellX, int cellY)= 0;
+        virtual const Land* getLand (int cellX, int cellY)= 0;
         virtual const ESM4::LandTexture* getLandTexture(ESM4::FormId formId, short plugin) = 0;
 
     public:
@@ -29,7 +29,7 @@ namespace ESM4Terrain
         /// Data is loaded first, if necessary. Will return a 0-pointer if there is no data for
         /// any of the data types specified via \a flags. Will also return a 0-pointer if there
         /// is no land record for the coordinates \a cellX / \a cellY.
-        const ESM4::Land::LandData *getLandData (int cellX, int cellY, int flags);
+        const LandData *getLandData (int cellX, int cellY, int flags);
 
         // Not implemented in this class, because we need different Store implementations for game and editor
         /// Get bounds of the whole terrain in cell units
@@ -103,7 +103,7 @@ namespace ESM4Terrain
         void fixColour (Ogre::ColourValue& colour, int cellX, int cellY, int col, int row);
         void averageNormal (Ogre::Vector3& normal, int cellX, int cellY, int col, int row);
 
-        float getVertexHeight (const ESM4::Land* land, int x, int y);
+        float getVertexHeight (const Land* land, int x, int y);
 
         // Since plugins can define new texture palettes, we need to know the plugin index too
         // in order to retrieve the correct texture name.

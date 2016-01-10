@@ -68,7 +68,7 @@
 //fallback=PixelWater_Resolution,256
 
 #include "renderconst.hpp"
-//#include "renderingmanager.hpp"
+#include "elements.hpp"
 
 using namespace CSVRender;
 using namespace Ogre;
@@ -129,7 +129,7 @@ BillboardObject::BillboardObject( const String& textureName,
     plane->_setBounds(Ogre::AxisAlignedBox::BOX_INFINITE);
     mEntity = sceneMgr->createEntity("billboard");
     mEntity->setMaterialName("BillboardMaterial"+StringConverter::toString(bodyCount));
-    mEntity->setVisibilityFlags(RV_Sky);
+    mEntity->setVisibilityFlags(Element_Water);
     mEntity->setCastShadows(false);
 
     mNode = rootNode->createChildSceneNode();
@@ -339,8 +339,10 @@ void SkyManager::create()
         sh::makeProperty<sh::FloatValue>(new sh::FloatValue(0)));
     sh::Factory::getInstance().setSharedParameter ("nightFade",
         sh::makeProperty<sh::FloatValue>(new sh::FloatValue(0)));
-    sh::Factory::getInstance().setSharedParameter ("atmosphereColour", sh::makeProperty<sh::Vector4>(new sh::Vector4(0,0,0,1)));
-    sh::Factory::getInstance().setSharedParameter ("horizonColour", sh::makeProperty<sh::Vector4>(new sh::Vector4(0,0,0,1)));
+    //sh::Factory::getInstance().setSharedParameter ("atmosphereColour", sh::makeProperty<sh::Vector4>(new sh::Vector4(0,0,0,1)));
+    sh::Factory::getInstance().setSharedParameter ("atmosphereColour", sh::makeProperty<sh::Vector4>(new sh::Vector4(95, 135, 203, 1)));
+    //sh::Factory::getInstance().setSharedParameter ("horizonColour", sh::makeProperty<sh::Vector4>(new sh::Vector4(0,0,0,1)));
+    sh::Factory::getInstance().setSharedParameter ("horizonColour", sh::makeProperty<sh::Vector4>(new sh::Vector4(206, 227, 255, 1)));
 
     sh::Factory::getInstance().setTextureAlias ("cloud_texture_1", "");
     sh::Factory::getInstance().setTextureAlias ("cloud_texture_2", "");
@@ -363,9 +365,9 @@ void SkyManager::create()
     mMasser->setType(Moon::Type_Masser);
 #endif
     mSun = new BillboardObject("textures\\tx_sun_05.dds", 1, Vector3(0.4f, 0.4f, 0.4f), mRootNode, "openmw_sun");
-    mSun->setRenderQueue(RQG_SkiesEarly+4);
+    //mSun->setRenderQueue(RQG_SkiesEarly+4);
     mSunGlare = new BillboardObject("textures\\tx_sun_flash_grey_05.dds", 3, Vector3(0.4f, 0.4f, 0.4f), mRootNode, "openmw_sun");
-    mSunGlare->setRenderQueue(RQG_SkiesLate);
+    //mSunGlare->setRenderQueue(RQG_SkiesLate);
     mSunGlare->setVisibilityFlags(RV_NoReflection);
 
     Ogre::AxisAlignedBox aabInf = Ogre::AxisAlignedBox::BOX_INFINITE;
@@ -381,8 +383,8 @@ void SkyManager::create()
     for(size_t i = 0, matidx = 0;i < objects->mEntities.size();i++)
     {
         Entity* night1_ent = objects->mEntities[i];
-        night1_ent->setRenderQueueGroup(RQG_SkiesEarly+1);
-        night1_ent->setVisibilityFlags(RV_Sky);
+        //night1_ent->setRenderQueueGroup(RQG_SkiesEarly+1);
+        night1_ent->setVisibilityFlags(Element_Water);
         night1_ent->setCastShadows(false);
         night1_ent->getMesh()->_setBounds (aabInf);
 
@@ -404,12 +406,13 @@ void SkyManager::create()
     // Atmosphere (day)
     mAtmosphereDay = mRootNode->createChildSceneNode();
     objects = NifOgre::Loader::createObjects(mAtmosphereDay, "meshes\\sky_atmosphere.nif");
+    //objects = NifOgre::Loader::createObjects(mAtmosphereDay, "meshes\\sky\\atmosphere.nif");
     for(size_t i = 0;i < objects->mEntities.size();i++)
     {
         Entity* atmosphere_ent = objects->mEntities[i];
         atmosphere_ent->setCastShadows(false);
-        atmosphere_ent->setRenderQueueGroup(RQG_SkiesEarly);
-        atmosphere_ent->setVisibilityFlags(RV_Sky);
+        atmosphere_ent->setRenderQueueGroup(Ogre::RENDER_QUEUE_SKIES_EARLY);
+        atmosphere_ent->setVisibilityFlags(Element_Water);
 
         for(unsigned int j = 0;j < atmosphere_ent->getNumSubEntities();j++)
             atmosphere_ent->getSubEntity (j)->setMaterialName("openmw_atmosphere");
@@ -425,8 +428,8 @@ void SkyManager::create()
     for(size_t i = 0;i < objects->mEntities.size();i++)
     {
         Entity* clouds_ent = objects->mEntities[i];
-        clouds_ent->setVisibilityFlags(RV_Sky);
-        clouds_ent->setRenderQueueGroup(RQG_SkiesEarly+5);
+        clouds_ent->setVisibilityFlags(Element_Water);
+        //clouds_ent->setRenderQueueGroup(RQG_SkiesEarly+5);
         for(unsigned int j = 0;j < clouds_ent->getNumSubEntities();j++)
             clouds_ent->getSubEntity(j)->setMaterialName("openmw_clouds");
         clouds_ent->setCastShadows(false);
@@ -524,13 +527,13 @@ void SkyManager::updateRain(float dt)
             NifOgre::ObjectScenePtr objects = NifOgre::Loader::createObjects(offsetNode, mRainEffect);
             for (unsigned int i=0; i<objects->mEntities.size(); ++i)
             {
-                objects->mEntities[i]->setRenderQueueGroup(RQG_Alpha);
-                objects->mEntities[i]->setVisibilityFlags(RV_Sky);
+                //objects->mEntities[i]->setRenderQueueGroup(RQG_Alpha);
+                objects->mEntities[i]->setVisibilityFlags(Element_Water);
             }
             for (unsigned int i=0; i<objects->mParticles.size(); ++i)
             {
-                objects->mParticles[i]->setRenderQueueGroup(RQG_Alpha);
-                objects->mParticles[i]->setVisibilityFlags(RV_Sky);
+                //objects->mParticles[i]->setRenderQueueGroup(RQG_Alpha);
+                objects->mParticles[i]->setVisibilityFlags(Element_Water);
             }
             mRainModels[offsetNode] = objects;
         }
@@ -627,11 +630,9 @@ void SkyManager::update(float duration)
     // rotate the stars by 360 degrees every 4 days
     //mAtmosphereNight->roll(Degree(MWBase::Environment::get().getWorld()->getTimeScaleFactor()*duration*360 / (3600*96.f)));
 
-    sh::Factory::getInstance().setSharedParameter ("atmosphereColour", sh::makeProperty<sh::Vector4>(new sh::Vector4(
-            95, 135, 203, 255)));
+    //sh::Factory::getInstance().setSharedParameter ("atmosphereColour", sh::makeProperty<sh::Vector4>(new sh::Vector4( 95, 135, 203, 255)));
 
-    sh::Factory::getInstance().setSharedParameter ("horizonColour", sh::makeProperty<sh::Vector4>(new sh::Vector4(
-            206, 227, 255, 255)));
+    //sh::Factory::getInstance().setSharedParameter ("horizonColour", sh::makeProperty<sh::Vector4>(new sh::Vector4( 206, 227, 255, 255)));
 
     //float strength = 1.f;
 
@@ -694,8 +695,8 @@ void SkyManager::setWeather(const MWWorld::WeatherResult& weather)
             for(size_t i = 0; i < mParticle->mParticles.size(); ++i)
             {
                 ParticleSystem* particle = mParticle->mParticles[i];
-                particle->setRenderQueueGroup(RQG_Alpha);
-                particle->setVisibilityFlags(RV_Sky);
+                //particle->setRenderQueueGroup(RQG_Alpha);
+                particle->setVisibilityFlags(Element_Water);
             }
             for (size_t i = 0; i < mParticle->mControllers.size(); ++i)
             {

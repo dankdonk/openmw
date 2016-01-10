@@ -10,9 +10,9 @@
 
 #include <OgreVector3.h>
 
-#ifndef Q_MOC_RUN
-#include <components/terrain/terraingrid.hpp>
-#endif
+//#ifndef Q_MOC_RUN
+#include <components/esm4terrain/terraingrid.hpp>
+//#endif
 
 #include "foreignobject.hpp"
 
@@ -66,7 +66,7 @@ namespace CSVRender
             int mPgIndex;
             CSMWorld::SignalHandler *mHandler;
 
-            std::auto_ptr<Terrain::TerrainGrid> mTerrain;
+            std::auto_ptr<ESM4Terrain::TerrainGrid> mTerrain;
             boost::shared_ptr<CSVWorld::PhysicsSystem> mPhysics;
             Ogre::SceneManager *mSceneMgr;
             int mX;

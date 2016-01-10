@@ -21,19 +21,26 @@
 #include <components/terrain/quadtreenode.hpp>
 #include <components/misc/resourcehelpers.hpp>
 
+#include "../../apps/opencs/model/foreign/land.hpp" // a bit ugly including it here...
+
 namespace ESM4Terrain
 {
 
     // FIXME: land is not necessarily identified by x/y, may also need world formid
     // initially workaround by fixing to Tamriel only
-    const ESM4::Land::LandData *Storage::getLandData (int cellX, int cellY, int flags)
+    const LandData *Storage::getLandData (int cellX, int cellY, int flags)
     {
-        if (const ESM4::Land *land = getLand (cellX, cellY))
+        if (const Land *land = getLand (cellX, cellY))
             return land->getLandData (flags);
 
         return 0;
     }
 
+    //bool Storage::getMinMaxQuadHeights(float size, const Ogre::Vector2 &center, float &min, float &max, int quad)
+    //{
+    //}
+
+    // DefaultWorld::buildQuadTree() and TerrainGrid::loadCell(1, ...) calls this method
     bool Storage::getMinMaxHeights(float size, const Ogre::Vector2 &center, float &min, float &max)
     {
         assert (size <= 1 && "Storage::getMinMaxHeights, chunk size should be <= 1 cell");
@@ -45,13 +52,13 @@ namespace ESM4Terrain
         int cellX = static_cast<int>(std::floor(origin.x));
         int cellY = static_cast<int>(std::floor(origin.y));
 
-        int startRow = ((int)origin.x - cellX) * ESM4::Land::VERTS_SIDE;
-        int startColumn = ((int)origin.y - cellY) * ESM4::Land::VERTS_SIDE;
+        int startRow = ((int)origin.x - cellX) * ESM4::Land::VERTS_PER_SIDE;
+        int startColumn = ((int)origin.y - cellY) * ESM4::Land::VERTS_PER_SIDE;
 
-        int endRow = startRow + (int)size * (ESM4::Land::VERTS_SIDE-1) + 1;
-        int endColumn = startColumn + (int)size * (ESM4::Land::VERTS_SIDE-1) + 1;
+        int endRow = startRow + (int)size * (ESM4::Land::VERTS_PER_SIDE-1) + 1;
+        int endColumn = startColumn + (int)size * (ESM4::Land::VERTS_PER_SIDE-1) + 1;
 
-        if (const ESM4::Land::LandData *data = getLandData (cellX, cellY, ESM4::Land::LAND_VHGT))
+        if (const LandData *data = getLandData (cellX, cellY, ESM4::Land::LAND_VHGT))
         {
             min = std::numeric_limits<float>::max();
             max = -std::numeric_limits<float>::max();
@@ -59,7 +66,7 @@ namespace ESM4Terrain
             {
                 for (int col=startColumn; col<endColumn; ++col)
                 {
-                    float h = data->mHeights[col*ESM4::Land::VERTS_SIDE+row];
+                    float h = data->mHeights[col*ESM4::Land::VERTS_PER_SIDE+row];
                     if (h > max)
                         max = h;
                     if (h < min)
@@ -74,32 +81,32 @@ namespace ESM4Terrain
 
     void Storage::fixNormal (Ogre::Vector3& normal, int cellX, int cellY, int col, int row)
     {
-        while (col >= ESM4::Land::VERTS_SIDE-1)
+        while (col >= ESM4::Land::VERTS_PER_SIDE-1)
         {
             ++cellY;
-            col -= ESM4::Land::VERTS_SIDE-1;
+            col -= ESM4::Land::VERTS_PER_SIDE-1;
         }
-        while (row >= ESM4::Land::VERTS_SIDE-1)
+        while (row >= ESM4::Land::VERTS_PER_SIDE-1)
         {
             ++cellX;
-            row -= ESM4::Land::VERTS_SIDE-1;
+            row -= ESM4::Land::VERTS_PER_SIDE-1;
         }
         while (col < 0)
         {
             --cellY;
-            col += ESM4::Land::VERTS_SIDE-1;
+            col += ESM4::Land::VERTS_PER_SIDE-1;
         }
         while (row < 0)
         {
             --cellX;
-            row += ESM4::Land::VERTS_SIDE-1;
+            row += ESM4::Land::VERTS_PER_SIDE-1;
         }
 
-        if (const ESM4::Land::LandData *data = getLandData (cellX, cellY, ESM4::Land::LAND_VNML))
+        if (const Land *data = getLand/*Data*/ (cellX, cellY/*, ESM4::Land::LAND_VNML*/))
         {
-            normal.x = data->mVertNorm[col*ESM4::Land::VERTS_SIDE*3+row*3];
-            normal.y = data->mVertNorm[col*ESM4::Land::VERTS_SIDE*3+row*3+1];
-            normal.z = data->mVertNorm[col*ESM4::Land::VERTS_SIDE*3+row*3+2];
+            normal.x = data->mVertNorm[col*ESM4::Land::VERTS_PER_SIDE*3+row*3];
+            normal.y = data->mVertNorm[col*ESM4::Land::VERTS_PER_SIDE*3+row*3+1];
+            normal.z = data->mVertNorm[col*ESM4::Land::VERTS_PER_SIDE*3+row*3+2];
             normal.normalise();
         }
         else
@@ -119,22 +126,22 @@ namespace ESM4Terrain
 
     void Storage::fixColour (Ogre::ColourValue& color, int cellX, int cellY, int col, int row)
     {
-        if (col == ESM4::Land::VERTS_SIDE-1)
+        if (col == ESM4::Land::VERTS_PER_SIDE-1)
         {
             ++cellY;
             col = 0;
         }
-        if (row == ESM4::Land::VERTS_SIDE-1)
+        if (row == ESM4::Land::VERTS_PER_SIDE-1)
         {
             ++cellX;
             row = 0;
         }
 
-        if (const ESM4::Land::LandData *data = getLandData (cellX, cellY, ESM4::Land::LAND_VCLR))
+        if (const Land *data = getLand/*Data*/ (cellX, cellY/*, ESM4::Land::LAND_VCLR*/))
         {
-            color.r = data->mVertColr[col*ESM4::Land::VERTS_SIDE*3+row*3] / 255.f;
-            color.g = data->mVertColr[col*ESM4::Land::VERTS_SIDE*3+row*3+1] / 255.f;
-            color.b = data->mVertColr[col*ESM4::Land::VERTS_SIDE*3+row*3+2] / 255.f;
+            color.r = data->mVertColr[col*ESM4::Land::VERTS_PER_SIDE*3+row*3] / 255.f;
+            color.g = data->mVertColr[col*ESM4::Land::VERTS_PER_SIDE*3+row*3+1] / 255.f;
+            color.b = data->mVertColr[col*ESM4::Land::VERTS_PER_SIDE*3+row*3+2] / 255.f;
         }
         else
         {
@@ -145,6 +152,7 @@ namespace ESM4Terrain
 
     }
 
+    // DefaultWorld::handleRequest() and TerrainGrid::loadCell(0, 1, ...) calls this method
     void Storage::fillVertexBuffers (int lodLevel, float size, const Ogre::Vector2& center, Terrain::Alignment align,
                                             std::vector<float>& positions,
                                             std::vector<float>& normals,
@@ -158,7 +166,7 @@ namespace ESM4Terrain
         int startCellX = static_cast<int>(std::floor(origin.x));
         int startCellY = static_cast<int>(std::floor(origin.y));
 
-        size_t numVerts = static_cast<size_t>(size*(ESM4::Land::VERTS_SIDE - 1) / increment + 1);
+        size_t numVerts = static_cast<size_t>(size*(ESM4::Land::VERTS_PER_SIDE - 1) / increment + 1);
 
         positions.resize(numVerts*numVerts*3);
         normals.resize(numVerts*numVerts*3);
@@ -176,9 +184,9 @@ namespace ESM4Terrain
             float vertX_ = 0; // of current cell corner
             for (int cellX = startCellX; cellX < startCellX + std::ceil(size); ++cellX)
             {
-                const ESM4::Land::LandData *heightData = getLandData (cellX, cellY, ESM4::Land::LAND_VHGT);
-                const ESM4::Land::LandData *normalData = getLandData (cellX, cellY, ESM4::Land::LAND_VNML);
-                const ESM4::Land::LandData *colourData = getLandData (cellX, cellY, ESM4::Land::LAND_VCLR);
+                const Land *heightData = getLand/*Data*/ (cellX, cellY/*, ESM4::Land::LAND_VHGT*/);
+                const Land *normalData = getLand/*Data*/ (cellX, cellY/*, ESM4::Land::LAND_VNML*/);
+                const Land *colourData = getLand/*Data*/ (cellX, cellY/*, ESM4::Land::LAND_VCLR*/);
 
                 int rowStart = 0;
                 int colStart = 0;
@@ -191,10 +199,10 @@ namespace ESM4Terrain
                     rowStart += increment;
 
                 // Only relevant for chunks smaller than (contained in) one cell
-                rowStart += ((int)origin.x - startCellX) * ESM4::Land::VERTS_SIDE;
-                colStart += ((int)origin.y - startCellY) * ESM4::Land::VERTS_SIDE;
-                int rowEnd = rowStart + (int)std::min(1.f, size) * (ESM4::Land::VERTS_SIDE-1) + 1;
-                int colEnd = colStart + (int)std::min(1.f, size) * (ESM4::Land::VERTS_SIDE-1) + 1;
+                rowStart += ((int)origin.x - startCellX) * ESM4::Land::VERTS_PER_SIDE;
+                colStart += ((int)origin.y - startCellY) * ESM4::Land::VERTS_PER_SIDE;
+                int rowEnd = rowStart + (int)std::min(1.f, size) * (ESM4::Land::VERTS_PER_SIDE-1) + 1;
+                int colEnd = colStart + (int)std::min(1.f, size) * (ESM4::Land::VERTS_PER_SIDE-1) + 1;
 
                 vertY = vertY_;
                 for (int col=colStart; col<colEnd; col += increment)
@@ -202,36 +210,39 @@ namespace ESM4Terrain
                     vertX = vertX_;
                     for (int row=rowStart; row<rowEnd; row += increment)
                     {
-                        positions[static_cast<unsigned int>(vertX*numVerts * 3 + vertY * 3)] = ((vertX / float(numVerts - 1) - 0.5f) * size * 4096);
-                        positions[static_cast<unsigned int>(vertX*numVerts * 3 + vertY * 3 + 1)] = ((vertY / float(numVerts - 1) - 0.5f) * size * 4096);
+                        positions[static_cast<unsigned int>(vertX*numVerts * 3 + vertY * 3)]
+                            = ((vertX / float(numVerts - 1) - 0.5f) * size * 4096);
+                        positions[static_cast<unsigned int>(vertX*numVerts * 3 + vertY * 3 + 1)]
+                            = ((vertY / float(numVerts - 1) - 0.5f) * size * 4096);
 
-                        assert(row >= 0 && row < ESM4::Land::VERTS_SIDE);
-                        assert(col >= 0 && col < ESM4::Land::VERTS_SIDE);
+                        assert(row >= 0 && row < ESM4::Land::VERTS_PER_SIDE);
+                        assert(col >= 0 && col < ESM4::Land::VERTS_PER_SIDE);
 
                         assert (vertX < numVerts);
                         assert (vertY < numVerts);
 
                         float height = -1024;
                         if (heightData)
-                            height = heightData->mHeights[col*ESM4::Land::VERTS_SIDE + row];
+                            height = heightData->mLandData.mHeights[col*ESM4::Land::VERTS_PER_SIDE + row];
                         positions[static_cast<unsigned int>(vertX*numVerts * 3 + vertY * 3 + 2)] = height;
 
                         if (normalData)
                         {
-                            normal.x = normalData->mVertNorm[col*ESM4::Land::VERTS_SIDE*3+row*3+0];
-                            normal.y = normalData->mVertNorm[col*ESM4::Land::VERTS_SIDE*3+row*3+1];
-                            normal.z = normalData->mVertNorm[col*ESM4::Land::VERTS_SIDE*3+row*3+2];
+                            normal.x = normalData->mVertNorm[col*ESM4::Land::VERTS_PER_SIDE*3+row*3+0];
+                            normal.y = normalData->mVertNorm[col*ESM4::Land::VERTS_PER_SIDE*3+row*3+1];
+                            normal.z = normalData->mVertNorm[col*ESM4::Land::VERTS_PER_SIDE*3+row*3+2];
                             normal.normalise();
                         }
                         else
                             normal = Ogre::Vector3(0,0,1);
 
                         // Normals apparently don't connect seamlessly between cells
-                        if (col == ESM4::Land::VERTS_SIDE-1 || row == ESM4::Land::VERTS_SIDE-1)
+                        if (col == ESM4::Land::VERTS_PER_SIDE-1 || row == ESM4::Land::VERTS_PER_SIDE-1)
                             fixNormal(normal, cellX, cellY, col, row);
 
                         // some corner normals appear to be complete garbage (z < 0)
-                        if ((row == 0 || row == ESM4::Land::VERTS_SIDE-1) && (col == 0 || col == ESM4::Land::VERTS_SIDE-1))
+                        if ((row == 0 || row == ESM4::Land::VERTS_PER_SIDE-1)
+                                && (col == 0 || col == ESM4::Land::VERTS_PER_SIDE-1))
                             averageNormal(normal, cellX, cellY, col, row);
 
                         assert(normal.z > 0);
@@ -242,9 +253,9 @@ namespace ESM4Terrain
 
                         if (colourData)
                         {
-                            color.r = colourData->mVertColr[col*ESM4::Land::VERTS_SIDE*3+row*3+0] / 255.f;
-                            color.g = colourData->mVertColr[col*ESM4::Land::VERTS_SIDE*3+row*3+1] / 255.f;
-                            color.b = colourData->mVertColr[col*ESM4::Land::VERTS_SIDE*3+row*3+2] / 255.f;
+                            color.r = colourData->mVertColr[col*ESM4::Land::VERTS_PER_SIDE*3+row*3+0] / 255.f;
+                            color.g = colourData->mVertColr[col*ESM4::Land::VERTS_PER_SIDE*3+row*3+1] / 255.f;
+                            color.b = colourData->mVertColr[col*ESM4::Land::VERTS_PER_SIDE*3+row*3+2] / 255.f;
                         }
                         else
                         {
@@ -254,13 +265,14 @@ namespace ESM4Terrain
                         }
 
                         // Unlike normals, colors mostly connect seamlessly between cells, but not always...
-                        if (col == ESM4::Land::VERTS_SIDE-1 || row == ESM4::Land::VERTS_SIDE-1)
+                        if (col == ESM4::Land::VERTS_PER_SIDE-1 || row == ESM4::Land::VERTS_PER_SIDE-1)
                             fixColour(color, cellX, cellY, col, row);
 
                         color.a = 1;
                         Ogre::uint32 rsColor;
                         Ogre::Root::getSingleton().getRenderSystem()->convertColourValue(color, &rsColor);
-                        memcpy(&colours[static_cast<unsigned int>(vertX*numVerts * 4 + vertY * 4)], &rsColor, sizeof(Ogre::uint32));
+                        memcpy(&colours[static_cast<unsigned int>(vertX*numVerts * 4 + vertY * 4)],
+                                &rsColor, sizeof(Ogre::uint32));
 
                         ++vertX;
                     }
@@ -283,19 +295,19 @@ namespace ESM4Terrain
         if (x < 0)
         {
             --cellX;
-            x += ESM4::Land::LAND_TEXTURE_SIZE;
+            x += 16/*ESM4::Land::LAND_TEXTURE_SIZE*/;
         }
-        if (y >= ESM4::Land::LAND_TEXTURE_SIZE) // Y appears to be wrapped from the other side because why the hell not?
+        if (y >= 16/*ESM4::Land::LAND_TEXTURE_SIZE*/) // Y appears to be wrapped from the other side because why the hell not?
         {
             ++cellY;
-            y -= ESM4::Land::LAND_TEXTURE_SIZE;
+            y -= 16/*ESM4::Land::LAND_TEXTURE_SIZE*/;
         }
 
-        assert(x < ESM4::Land::LAND_TEXTURE_SIZE);
-        assert(y < ESM4::Land::LAND_TEXTURE_SIZE);
+        assert(x < 16/*ESM4::Land::LAND_TEXTURE_SIZE*/);
+        assert(y < 16/*ESM4::Land::LAND_TEXTURE_SIZE*/);
 
         // FIXME: mTextures
-        if (const ESM4::Land::LandData *data = getLandData (cellX, cellY, ESM4::Land::LAND_VTEX))
+        if (const Land *data = getLand/*Data*/ (cellX, cellY/*, ESM4::Land::LAND_VTEX*/))
         {
             int tex = 0;// data->mTextures[y * ESM4::Land::LAND_TEXTURE_SIZE + x]; // FIXME
             if (tex == 0)
@@ -306,7 +318,7 @@ namespace ESM4Terrain
             return std::make_pair(0,0);
     }
 
-    std::string Storage::getTextureName(UniqueTextureId id)
+    std::string Storage::getTextureName(UniqueTextureId id) // pair<texture id, plugin id>
     {
         static const std::string defaultTexture = "textures\\_land_default.dds";
         if (id.first == 0)
@@ -322,9 +334,10 @@ namespace ESM4Terrain
         }
 
         // this is needed due to MWs messed up texture handling
-        std::string texture = Misc::ResourceHelpers::correctTexturePath(ltex->mTextureFile);
+        //std::string texture = Misc::ResourceHelpers::correctTexturePath(ltex->mTextureFile);
 
-        return texture;
+        //return texture;
+        return ltex->mTextureFile;
     }
 
     void Storage::getBlendmaps (const std::vector<Terrain::QuadTreeNode*>& nodes,
@@ -355,7 +368,7 @@ namespace ESM4Terrain
         int cellX = static_cast<int>(std::floor(origin.x));
         int cellY = static_cast<int>(std::floor(origin.y));
 
-        int realTextureSize = ESM4::Land::LAND_TEXTURE_SIZE+1; // add 1 to wrap around next cell
+        int realTextureSize = 16/*ESM4::Land::LAND_TEXTURE_SIZE*/+1; // add 1 to wrap around next cell
 
         int rowStart = ((int)origin.x - cellX) * realTextureSize;
         int colStart = ((int)origin.y - cellY) * realTextureSize;
@@ -365,6 +378,98 @@ namespace ESM4Terrain
         assert (rowStart >= 0 && colStart >= 0);
         assert (rowEnd <= realTextureSize);
         assert (colEnd <= realTextureSize);
+
+        // struct ESM4::Land::BTXT
+        // {
+        //     FormId        formId;   // base texture
+        //     std::uint8_t  quadrant;
+        //     std::uint8_t  unknown1;
+        //     std::uint16_t unknown2;
+        // };
+        //
+        // struct ESM4::Land::ATXT
+        // {
+        //     FormId        formId;   // additional texture
+        //     std::uint8_t  quadrant;
+        //     std::uint8_t  unknown;
+        //     std::uint16_t layer;    // texture layer, 0..7
+        // };
+        //
+        // struct ESM4::Land::VTXT
+        // {
+        //     std::uint16_t position; // 0..288 (17x17 grid)
+        //     std::uint8_t  unknown1;
+        //     std::uint8_t  unknown2;
+        //     float         opacity;
+        // };
+        //
+        // struct ESM4::Land::Texture
+        // {
+        //     BTXT          base;
+        //     ATXT          additional; // <--- FIXME: looks to be wrong, needs to be a vector
+        //     std::vector<VTXT> data;
+        // };
+        //
+        // Texture       mTextures[4]; // 0 = bottom left. 1 = bottom right. 2 = upper-left. 3 = upper-right
+        //
+        //  33 +----------------+-----------------+
+        //  32 |                |                 |
+        //  31 |                |                 |
+        //     |                |                 |
+        //   . |                |                 |
+        //   . |       2        |        3        |
+        //   . |                |                 |
+        //   . |                |                 |
+        //     |                |                 |
+        //     +----------------+-----------------+
+        //  16 |                |                 |
+        //  15 |                |                 |
+        //   . |                |                 |
+        //   . |                |                 |
+        //   . |       0        |        1        |
+        //   . |                |                 |
+        //   2 |                |                 |
+        //   1 |                |                 |
+        //   0 +----------------+-----------------+
+        //                   111                333
+        //     0123  ......  456      .....     123
+        //
+        // struct Terrain::LayerInfo
+        // {
+        //     std::string mDiffuseMap;
+        //     std::string mNormalMap;
+        //     bool mParallax; // Height info in normal map alpha channel?
+        //     bool mSpecular; // Specular info in diffuse map alpha channel?
+        // };
+        //
+        // CSVRender::ForeignCell::ForeignCell()
+        //     --> ESM4Terrain::TerrainGrid::TerrainGrid(..., world)
+        //     --> ESM4Terrain::TerrainGrid::loadCell(x, y)
+        //             ----> ESM4Terrain::Storage::getBlendmaps()
+        //                   ----> ESM4Terrain::Storage::getBlendmapsImpl()
+        //             ----> Terrain::MaterialGenerator::setLayerList()
+        //
+        // FIXME:
+        // maybe terrain also needs to change if the concept of worldspace is to be introduced
+        //
+        const ESM4::Land *land = getLand (cellX, cellY); // FIXME: support world
+        if (!land)
+            return; // FIXME maybe return default textures?  throw an exception? assert?
+
+        // ESM4::LandTexture::mTextureFile can be obtained from Data::getForeignLandTextures()
+        // using mTextures[quad].additional.formId
+        //
+        // CSVForeign::TerrainStorage::getLandTexture(ESM4::FormId formId, short plugin)
+
+
+        // Q: how to use mTextures[quad].data[point].opacity
+        // Q: each quad may have a different number of layers and in different order as well
+        // Q: also each quad may have a differnt base texture
+        // maybe TerrainGrid class itself may need to change?
+
+
+
+
 
         // Save the used texture indices so we know the total number of textures
         // and number of required blend maps
@@ -395,6 +500,11 @@ namespace ESM4Terrain
             textureIndicesMap[*it] = size;
             layerList.push_back(getLayerInfo(getTextureName(*it)));
         }
+
+
+
+
+
 
         int numTextures = (int)textureIndices.size();
         // numTextures-1 since the base layer doesn't need blending
@@ -438,7 +548,7 @@ namespace ESM4Terrain
         int cellX = static_cast<int>(std::floor(worldPos.x / 4096.f));
         int cellY = static_cast<int>(std::floor(worldPos.y / 4096.f));
 
-        const ESM4::Land* land = getLand(cellX, cellY);
+        const Land* land = getLand(cellX, cellY);
         if (!land || !(land->mDataTypes & ESM4::Land::LAND_VHGT))
             return -1024;
 
@@ -449,7 +559,7 @@ namespace ESM4Terrain
         float nY = (worldPos.y - (cellY * 4096))/4096.f;
 
         // get left / bottom points (rounded down)
-        float factor = ESM4::Land::VERTS_SIDE - 1.0f;
+        float factor = ESM4::Land::VERTS_PER_SIDE - 1.0f;
         float invFactor = 1.0f / factor;
 
         int startX = static_cast<int>(nX * factor);
@@ -457,8 +567,8 @@ namespace ESM4Terrain
         int endX = startX + 1;
         int endY = startY + 1;
 
-        endX = std::min(endX, ESM4::Land::VERTS_SIDE-1);
-        endY = std::min(endY, ESM4::Land::VERTS_SIDE-1);
+        endX = std::min(endX, ESM4::Land::VERTS_PER_SIDE-1);
+        endY = std::min(endY, ESM4::Land::VERTS_PER_SIDE-1);
 
         // now get points in terrain space (effectively rounding them to boundaries)
         float startXTS = startX * invFactor;
@@ -511,11 +621,11 @@ namespace ESM4Terrain
 
     }
 
-    float Storage::getVertexHeight(const ESM4::Land *land, int x, int y)
+    float Storage::getVertexHeight(const Land *land, int x, int y)
     {
-        assert(x < ESM4::Land::VERTS_SIDE);
-        assert(y < ESM4::Land::VERTS_SIDE);
-        return land->getLandData()->mHeights[y * ESM4::Land::VERTS_SIDE + x];
+        assert(x < ESM4::Land::VERTS_PER_SIDE);
+        assert(y < ESM4::Land::VERTS_PER_SIDE);
+        return land->/*getLandData*()->*/mLandData.mHeights[y * ESM4::Land::VERTS_PER_SIDE + x];
     }
 
     Terrain::LayerInfo Storage::getLayerInfo(const std::string& texture)
@@ -580,7 +690,7 @@ namespace ESM4Terrain
 
     int Storage::getCellVertices()
     {
-        return ESM4::Land::VERTS_SIDE;
+        return ESM4::Land::VERTS_PER_SIDE;
     }
 
 }

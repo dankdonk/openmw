@@ -86,7 +86,7 @@ void ESM4::LandTexture::load(ESM4::Reader& reader)
                 }
                 break;
             }
-            case ESM4::SUB_ICON: // map filename, Oblivion only?
+            case ESM4::SUB_ICON: // Oblivion only?
             {
                 if (!reader.getZString(mTextureFile))
                     throw std::runtime_error ("LTEX ICON data read error");

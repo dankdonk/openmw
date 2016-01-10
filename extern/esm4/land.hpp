@@ -34,7 +34,6 @@ namespace ESM4
 
     struct Land
     {
-        // FIXME
         enum
         {
             LAND_VNML = 1,
@@ -45,27 +44,24 @@ namespace ESM4
         };
 
         // number of vertices per side
-        static const int VERTS_SIDE = 33;
+        static const int VERTS_PER_SIDE = 33;
 
         // cell terrain size in world coords
         static const int REAL_SIZE = 4096;
 
         // total number of vertices
-        //static const int LAND_NUM_VERTS = VERTS_SIDE * VERTS_SIDE;
+        static const int LAND_NUM_VERTS = VERTS_PER_SIDE * VERTS_PER_SIDE;
 
         static const int HEIGHT_SCALE = 8;
 
-        //number of textures per side of land
-        static const int LAND_TEXTURE_SIZE = 16;
-
-        //total number of textures per land
-        //static const int LAND_NUM_TEXTURES = LAND_TEXTURE_SIZE * LAND_TEXTURE_SIZE;
+        //number of textures per side of a land quadrant
+        static const int QUAD_TEXTURE_PER_SIDE = 16;
 
 #pragma pack(push,1)
         struct VHGT
         {
             float         heightOffset;
-            std::int8_t   gradientData[VERTS_SIDE * VERTS_SIDE];
+            std::int8_t   gradientData[VERTS_PER_SIDE * VERTS_PER_SIDE];
             std::uint16_t unknown1;
             unsigned char unknown2;
         };
@@ -95,11 +91,16 @@ namespace ESM4
         };
 #pragma pack(pop)
 
+        struct TxtLayer
+        {
+            ATXT          additional;
+            std::vector<VTXT> data; // FIXME: is this UV map?
+        };
+
         struct Texture
         {
             BTXT          base;
-            ATXT          additional;
-            std::vector<VTXT> data;
+            std::vector<TxtLayer> layers;
         };
 
         FormId mFormId;       // from the header
@@ -107,58 +108,17 @@ namespace ESM4
 
         std::uint32_t mLandFlags; // from DATA subrecord
 
+        // FIXME: lazy loading not yet implemented
         int mDataTypes; // which data types are loaded
 
-        // FIXME
-        struct LandData
-        {
-#if 0
-            // Initial reference height for the first vertex, only needed for filling mHeights
-            float mHeightOffset;
-            // Height in world space for each vertex
-            float mHeights[LAND_NUM_VERTS];
-
-            // 24-bit normals, these aren't always correct though. Edge and corner normals may be garbage.
-            signed char mNormals[LAND_NUM_VERTS * 3];
-
-            // 2D array of texture indices. An index can be used to look up an ESM::LandTexture,
-            // but to do so you must subtract 1 from the index first!
-            // An index of 0 indicates the default texture.
-            uint16_t mTextures[LAND_NUM_TEXTURES];
-
-            // 24-bit RGB color for each vertex
-            unsigned char mColours[3 * LAND_NUM_VERTS];
-
-            // DataTypes available in this LandData, accessing data that is not available is an undefined operation
-            int mDataTypes;
-
-            // low-LOD heightmap (used for rendering the global map)
-            signed char mWnam[81];
-
-            // ???
-            short mUnk1;
-            uint8_t mUnk2;
-#endif
-            signed char   mVertNorm[VERTS_SIDE * VERTS_SIDE * 3]; // from VNML subrecord
-            signed char   mVertColr[VERTS_SIDE * VERTS_SIDE * 3]; // from VCLR subrecord
-            //VHGT          mHeightMap;
-            //float         mHeightOffset; // probably not used
-            float         mHeights[VERTS_SIDE * VERTS_SIDE]; // filled during load
-            Texture       mTextures[4]; // 0 = bottom left. 1 = bottom right. 2 = upper-left. 3 = upper-right
-            std::vector<FormId> mIds;  // land texture (LTEX) formids
-
-            //void save(Writer &writer) const;
-            static void transposeTextureData(const std::uint16_t *in, std::uint16_t *out);
-        };
-
-        LandData mLandData;
+        signed char   mVertNorm[VERTS_PER_SIDE * VERTS_PER_SIDE * 3]; // from VNML subrecord
+        signed char   mVertColr[VERTS_PER_SIDE * VERTS_PER_SIDE * 3]; // from VCLR subrecord
+        VHGT          mHeightMap;
+        Texture       mTextures[4]; // 0 = bottom left. 1 = bottom right. 2 = upper-left. 3 = upper-right
+        std::vector<FormId> mIds;  // land texture (LTEX) formids
 
         Land();
         ~Land();
-
-        // FIXME
-        const LandData *getLandData(int flags = 0) const; // flags is unused, since all data is loaded up front
-        LandData *getLandData();
 
         void load(Reader& reader);
         //void save(Writer& writer) const;

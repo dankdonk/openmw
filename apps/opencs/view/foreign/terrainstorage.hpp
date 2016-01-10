@@ -1,5 +1,5 @@
-#ifndef OPENCS_RENDER_TERRAINSTORAGE_H
-#define OPENCS_RENDER_TERRAINSTORAGE_H
+#ifndef CSV_FOREIGN_TERRAINSTORAGE_H
+#define CSV_FOREIGN_TERRAINSTORAGE_H
 
 #include <components/esm4terrain/storage.hpp>
 
@@ -8,8 +8,12 @@
 namespace ESM4
 {
     struct LandTexture;
-    struct Land;
     typedef std::uint32_t FormId;
+}
+
+namespace ESM4Terrain
+{
+    struct Land;
 }
 
 namespace CSVForeign
@@ -21,12 +25,13 @@ namespace CSVForeign
     class TerrainStorage : public ESM4Terrain::Storage
     {
     public:
-        TerrainStorage(const CSMWorld::Data& data);
+        TerrainStorage(const CSMWorld::Data& data, ESM4::FormId world = 0x3c); // assume Tamriel
 
     private:
         const CSMWorld::Data& mData;
+        ESM4::FormId mWorld;
 
-        virtual const ESM4::Land* getLand (int cellX, int cellY);
+        virtual const ESM4Terrain::Land* getLand (int cellX, int cellY);
         virtual const ESM4::LandTexture* getLandTexture(ESM4::FormId formId, short plugin);
 
         virtual void getBounds(float& minX, float& maxX, float& minY, float& maxY);

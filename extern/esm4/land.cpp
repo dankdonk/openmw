@@ -35,20 +35,12 @@
 
 ESM4::Land::Land() : mFormId(0), mFlags(0), mLandFlags(0), mDataTypes(0)
 {
+    for (int i = 0; i < 4; ++i)
+        mTextures[i].base.formId = 0;
 }
 
 ESM4::Land::~Land()
 {
-}
-
-void ESM4::Land::LandData::transposeTextureData(const std::uint16_t *in, std::uint16_t *out)
-{
-    int readPos = 0; //bit ugly, but it works
-    for ( int y1 = 0; y1 < 4; y1++ )
-        for ( int x1 = 0; x1 < 4; x1++ )
-            for ( int y2 = 0; y2 < 4; y2++)
-                for ( int x2 = 0; x2 < 4; x2++ )
-                    out[(y1*4+y2)*16+(x1*4+x2)] = in[readPos++];
 }
 
 //             overlap north
@@ -71,21 +63,22 @@ void ESM4::Land::load(ESM4::Reader& reader)
     mFormId = reader.hdr().record.id;
     mFlags  = reader.hdr().record.flags;
 
-    std::int8_t currentQuadrant = -1; // for VTXT following ATXT
+    TxtLayer layer;
+    std::int8_t currentAddQuad = -1; // for VTXT following ATXT
 
     while (reader.getSubRecordHeader())
     {
         const ESM4::SubRecordHeader& subHdr = reader.subRecordHeader();
         switch (subHdr.typeId)
         {
-            case ESM4::SUB_DATA: // flags
+            case ESM4::SUB_DATA:
             {
                 reader.get(mLandFlags);
                 break;
             }
             case ESM4::SUB_VNML: // vertex normals, 33x33x(1+1+1) = 3267
             {
-                reader.get(mLandData.mVertNorm);
+                reader.get(mVertNorm);
                 mDataTypes |= LAND_VNML;
                 break;
             }
@@ -96,35 +89,14 @@ void ESM4::Land::load(ESM4::Reader& reader)
                 reader.get(mHeightMap.gradientData);
                 reader.get(mHeightMap.unknown1);
                 reader.get(mHeightMap.unknown2);
-                // FIXME: debug only
-                //std::cout << "mHeightMap offset " << mHeightMap.heightOffset << std::endl;
 #endif
-                static VHGT vhgt;
-                reader.get(vhgt);
-
-                //mLandData.mHeightOffset = vhgt.heightOffset; // FIXME: probably not used
-                float rowOffset = vhgt.heightOffset;
-                for (int y = 0; y < VERTS_SIDE; y++)
-                {
-                    rowOffset += vhgt.gradientData[y * VERTS_SIDE];
-
-                    mLandData.mHeights[y * VERTS_SIDE] = rowOffset * HEIGHT_SCALE;
-
-                    float colOffset = rowOffset;
-                    for (int x = 1; x < VERTS_SIDE; x++)
-                    {
-                        colOffset += vhgt.gradientData[y * VERTS_SIDE + x];
-                        mLandData.mHeights[x + y * VERTS_SIDE] = colOffset * HEIGHT_SCALE;
-                    }
-                }
-
+                reader.get(mHeightMap);
                 mDataTypes |= LAND_VHGT;
-
                 break;
             }
             case ESM4::SUB_VCLR: // vertex colours, 24bit RGB, 33x33x(1+1+1) = 3267
             {
-                reader.get(mLandData.mVertColr);
+                reader.get(mVertColr);
                 mDataTypes |= LAND_VCLR;
                 break;
             }
@@ -135,32 +107,39 @@ void ESM4::Land::load(ESM4::Reader& reader)
                 {
                     assert(base.quadrant < 4 && base.quadrant >= 0 && "base texture quadrant index error");
 
-                    mLandData.mTextures[base.quadrant].base = base;  // FIXME: any way to avoid double-copying?
-                    //std::cout << "Base Texture formid: 0x"
-                        //<< std::hex << mTextures[base.quadrant].base.formId << std::endl;
+                    mTextures[base.quadrant].base = base;  // FIXME: any way to avoid double-copying?
+//#if 0
+                    std::cout << "Base Texture formid: 0x"
+                        << std::hex << mTextures[base.quadrant].base.formId
+                        << ", quad " << std::dec << (int)base.quadrant << std::endl;
+//#endif
                 }
                 break;
             }
             case ESM4::SUB_ATXT:
             {
-                ATXT add;
-                reader.get(add);
-                assert(add.quadrant < 4 && add.quadrant >= 0 && "additional texture quadrant index error");
-
-                mLandData.mTextures[add.quadrant].additional = add;  // FIXME: any way to avoid double-copying?
-#if 0
+                reader.get(layer.additional);
+                assert(layer.additional.quadrant < 4 && layer.additional.quadrant >= 0
+                       && "additional texture quadrant index error");
+//#if 0
                 std::cout << "Additional Texture formId: 0x"
-                    << std::hex << mTextures[add.quadrant].additional.formId << std::endl;
+                    << std::hex << layer.additional.formId
+                    << ", quad " << std::dec << (int)layer.additional.quadrant << std::endl;
                 std::cout << "Additional Texture layer: "
-                    << std::dec << (int)mTextures[add.quadrant].additional.layer << std::endl;
-#endif
-                currentQuadrant = add.quadrant;
+                    << std::dec << (int)layer.additional.layer << std::endl;
+//#endif
+                if (currentAddQuad != -1)
+                {
+                    // FIXME: sometimes there are no VTXT following an ATXT?  Just add a dummy one for now
+                    std::cerr << "ESM4::Land::VTXT empty layer " << (int)layer.additional.layer << std::endl;
+                    mTextures[currentAddQuad].layers.push_back(layer);
+                }
+                currentAddQuad = layer.additional.quadrant;
                 break;
             }
             case ESM4::SUB_VTXT:
             {
-                // Cannot assume that at least one VTXT record follows ATXT
-                assert(currentQuadrant != -1 && "VTXT without ATXT found");
+                assert(currentAddQuad != -1 && "VTXT without ATXT found");
 
                 int count = (int)reader.subRecordHeader().dataSize / sizeof(ESM4::Land::VTXT);
                 int remainder = reader.subRecordHeader().dataSize % sizeof(ESM4::Land::VTXT);
@@ -168,16 +147,24 @@ void ESM4::Land::load(ESM4::Reader& reader)
 
                 if (count)
                 {
-                    mLandData.mTextures[currentQuadrant].data.resize(count);
-                    std::vector<ESM4::Land::VTXT>::iterator it = mLandData.mTextures[currentQuadrant].data.begin();
-                    for (;it != mLandData.mTextures[currentQuadrant].data.end(); ++it)
+                    layer.data.resize(count);
+                    std::vector<ESM4::Land::VTXT>::iterator it = layer.data.begin();
+                    for (;it != layer.data.end(); ++it)
                     {
                         reader.get(*it);
                         // FIXME: debug only
                         //std::cout << "pos: " << std::dec << (int)(*it).position << std::endl;
                     }
                 }
-                currentQuadrant = -1;
+                mTextures[currentAddQuad].layers.push_back(layer);
+
+                // Assumed that the layers are added in the correct sequence
+                assert(layer.additional.layer == mTextures[currentAddQuad].layers.size()-1
+                        && "additional texture layer index error");
+
+                currentAddQuad = -1;
+                // FIXME: debug only
+                std::cout << "VTXT: count " << std::dec << count << std::endl;
                 break;
             }
             case ESM4::SUB_VTEX: // only in Oblivion?
@@ -188,31 +175,27 @@ void ESM4::Land::load(ESM4::Reader& reader)
 
                 if (count)
                 {
-                    mLandData.mIds.resize(count);
-                    for (std::vector<std::uint32_t>::iterator it = mLandData.mIds.begin(); it != mLandData.mIds.end(); ++it)
+                    mIds.resize(count);
+                    for (std::vector<std::uint32_t>::iterator it = mIds.begin(); it != mIds.end(); ++it)
                     {
                         reader.get(*it);
                         // FIXME: debug only
                         //std::cout << "VTEX: " << std::hex << *it << std::endl;
                     }
                 }
-                mDataTypes |= LAND_VTEX;
                 break;
             }
             default:
                 throw std::runtime_error("ESM4::LAND::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
         }
     }
-}
 
-const ESM4::Land::LandData *ESM4::Land::getLandData(int flags) const
-{
-    return &mLandData;
-}
-
-ESM4::Land::LandData *ESM4::Land::getLandData()
-{
-    return &mLandData;
+    for (int i = 0; i < 4; ++i)
+    {
+        if (mTextures[i].base.formId == 0)
+            return; // at least one of the quadrants do not have a base texture, return without setting the flag
+    }
+    mDataTypes |= LAND_VTEX;
 }
 
 //void ESM4::Land::save(ESM4::Writer& writer) const
