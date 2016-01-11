@@ -20,7 +20,7 @@
   cc9cii cc9c@iinet.net.au
 
 */
-#include "ligh.hpp"
+#include "weap.hpp"
 
 #include <cassert>
 #include <stdexcept>
@@ -32,7 +32,7 @@
 #include "reader.hpp"
 //#include "writer.hpp"
 
-ESM4::Light::Light() : mScript(0)
+ESM4::Weapon::Weapon() : mScript(0), mEnchantmentPoints(0), mEnchantment(0)
 {
     mEditorId.clear();
     mFullName.clear();
@@ -40,11 +40,11 @@ ESM4::Light::Light() : mScript(0)
     mIcon.clear();
 }
 
-ESM4::Light::~Light()
+ESM4::Weapon::~Weapon()
 {
 }
 
-void ESM4::Light::load(ESM4::Reader& reader)
+void ESM4::Weapon::load(ESM4::Reader& reader)
 {
     mFormId = reader.hdr().record.id;
     mFlags  = reader.hdr().record.flags;
@@ -57,19 +57,19 @@ void ESM4::Light::load(ESM4::Reader& reader)
             case ESM4::SUB_EDID: // Editor name or the worldspace
             {
                 if (!reader.getZString(mEditorId))
-                    throw std::runtime_error ("LIGH EDID data read error");
+                    throw std::runtime_error ("WEAP EDID data read error");
                 break;
             }
             case ESM4::SUB_FULL:
             {
                 if (!reader.getZString(mFullName))
-                    throw std::runtime_error ("LIGH FULL data read error");
+                    throw std::runtime_error ("WEAP FULL data read error");
                 break;
             }
             case ESM4::SUB_MODL:
             {
                 if (!reader.getZString(mModel))
-                    throw std::runtime_error ("LIGH MODL data read error");
+                    throw std::runtime_error ("WEAP MODL data read error");
 
                 //if (reader.esmVersion() == ESM4::VER_094 || reader.esmVersion() == ESM4::VER_170)
                 //{
@@ -88,40 +88,47 @@ void ESM4::Light::load(ESM4::Reader& reader)
                 reader.get(mScript);
                 break;
             }
-            case ESM4::SUB_DATA:
+            case ESM4::SUB_ANAM:
             {
-                reader.get(mData.duration);
-                reader.get(mData.radius);
-                reader.get(mData.colour);
-                reader.get(mData.flags);
-                if (subHdr.dataSize == 32)
-                {
-                    reader.get(mData.falloff);
-                    reader.get(mData.FOV);
-                }
-                reader.get(mData.value);
-                reader.get(mData.weight);
+                reader.get(mEnchantmentPoints);
                 break;
             }
-            case ESM4::SUB_FNAM:
-            case ESM4::SUB_SNAM:
+            case ESM4::SUB_ENAM:
+            {
+                reader.get(mEnchantment);
+                break;
+            }
+            case ESM4::SUB_DATA:
+            {
+                reader.get(mData.type);
+                reader.get(mData.speed);
+                reader.get(mData.reach);
+                reader.get(mData.flags);
+                reader.get(mData.value);
+                reader.get(mData.health);
+                reader.get(mData.weight);
+                reader.get(mData.damage);
+                break;
+            }
             case ESM4::SUB_MODB:
             case ESM4::SUB_MODT:
             {
-                //std::cout << "LIGH " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
+                //std::cout << "WEAP " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
                 reader.skipSubRecordData();
                 break;
             }
             default:
-                throw std::runtime_error("ESM4::LIGH::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
+                std::cout << "WEAP " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
+                reader.skipSubRecordData();
+                //throw std::runtime_error("ESM4::WEAP::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
         }
     }
 }
 
-//void ESM4::Light::save(ESM4::Writer& writer) const
+//void ESM4::Weapon::save(ESM4::Writer& writer) const
 //{
 //}
 
-//void ESM4::Light::blank()
+//void ESM4::Weapon::blank()
 //{
 //}

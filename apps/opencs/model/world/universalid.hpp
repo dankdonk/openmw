@@ -174,6 +174,10 @@ namespace CSMWorld
                 Type_ForeignBook,
                 Type_ForeignFurnitures, // FIXME: should be refid
                 Type_ForeignFurniture,
+                Type_ForeignSounds, // FIXME: should be refid
+                Type_ForeignSound,
+                Type_ForeignWeapons, // FIXME: should be refid
+                Type_ForeignWeapon,
                 Type_ForeignReferenceables,
                 Type_ForeignReferenceable,
                 Type_ForeignReferences,

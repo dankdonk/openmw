@@ -56,6 +56,8 @@
 #include "../foreign/light.hpp"
 #include "../foreign/book.hpp"
 #include "../foreign/furniture.hpp"
+#include "../foreign/sound.hpp"
+#include "../foreign/weapon.hpp"
 
 #include "idcollection.hpp"
 #include "nestedidcollection.hpp"
@@ -139,6 +141,8 @@ namespace CSMWorld
             CSMForeign::IdCollection<CSMForeign::Light> mForeignLights;
             CSMForeign::IdCollection<CSMForeign::Book> mForeignBooks;
             CSMForeign::IdCollection<CSMForeign::Furniture> mForeignFurnitures;
+            CSMForeign::IdCollection<CSMForeign::Sound> mForeignSounds;
+            CSMForeign::IdCollection<CSMForeign::Weapon> mForeignWeapons;
             //CSMForeign::RefIdCollection mForeignReferenceables;
             CSMForeign::RefCollection mForeignRefs;
             CSMForeign::CharCollection mForeignChars;
@@ -375,6 +379,14 @@ namespace CSMWorld
             const CSMForeign::IdCollection<CSMForeign::Furniture>& getForeignFurnitures() const;
 
             CSMForeign::IdCollection<CSMForeign::Furniture>& getForeignFurnitures();
+
+            const CSMForeign::IdCollection<CSMForeign::Sound>& getForeignSounds() const;
+
+            CSMForeign::IdCollection<CSMForeign::Sound>& getForeignSounds();
+
+            const CSMForeign::IdCollection<CSMForeign::Weapon>& getForeignWeapons() const;
+
+            CSMForeign::IdCollection<CSMForeign::Weapon>& getForeignWeapons();
 
             const CSMForeign::NavigationCollection& getNavigation() const;
 

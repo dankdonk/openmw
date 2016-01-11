@@ -20,8 +20,8 @@
   cc9cii cc9c@iinet.net.au
 
 */
-#ifndef ESM4_LIGH_H
-#define ESM4_LIGH_H
+#ifndef ESM4_WEAP_H
+#define ESM4_WEAP_H
 
 #include <string>
 #include <cstdint>
@@ -32,21 +32,19 @@ namespace ESM4
     class Writer;
     typedef std::uint32_t FormId;
 
-    struct Light
+    struct Weapon
     {
         struct Data
         {
-            float         duration;
-            std::uint32_t radius;
-            std::uint32_t colour; // RGBA
-            std::int32_t  flags;
-            float         falloff;
-            float         FOV;
-            std::uint32_t value;   // gold
+            std::uint32_t type;
+            float         speed;
+            float         reach;
+            std::uint32_t flags;
+            std::uint32_t value; // gold
+            std::uint32_t health;
             float         weight;
-            Data() : duration(-1), radius(0), flags(0), colour(0), falloff(1.f),
-                     FOV(90), value(0), weight(0.f) // FIXME: FOV in degrees or radians?
-            {}
+            std::uint16_t damage;
+            Data() : type(0), speed(0.f), reach(0.f), flags(0), value(0), health(0), weight(0.f), damage(0) {}
         };
 
         FormId mFormId;       // from the header
@@ -58,11 +56,13 @@ namespace ESM4
 
         std::string mIcon;
         FormId      mScript;
+        std::uint16_t mEnchantmentPoints;
+        FormId      mEnchantment;
 
         Data mData;
 
-        Light();
-        ~Light();
+        Weapon();
+        ~Weapon();
 
         void load(ESM4::Reader& reader);
         //void save(ESM4::Writer& reader) const;
@@ -71,4 +71,4 @@ namespace ESM4
     };
 }
 
-#endif // ESM4_LIGH_H
+#endif // ESM4_WEAP_H

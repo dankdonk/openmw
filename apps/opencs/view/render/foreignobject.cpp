@@ -65,6 +65,8 @@ void CSVRender::ForeignObject::update()
     const CSMForeign::IdCollection<CSMForeign::Light>& lights = mData.getForeignLights();
     const CSMForeign::IdCollection<CSMForeign::Book>& book = mData.getForeignBooks();
     const CSMForeign::IdCollection<CSMForeign::Furniture>& furn = mData.getForeignFurnitures();
+    const CSMForeign::IdCollection<CSMForeign::Sound>& sound = mData.getForeignSounds();
+    const CSMForeign::IdCollection<CSMForeign::Weapon>& weap = mData.getForeignWeapons();
     const CSMForeign::StaticCollection& referenceables = mData.getForeignStatics(); // FIXME: use statics only for now
 
     //int index = referenceables.searchId (mReferenceableId);
@@ -102,6 +104,31 @@ void CSVRender::ForeignObject::update()
             model = misc.getData (extraIndex,
                    misc.findColumnIndex (CSMWorld::Columns::ColumnId_Model)).toString().toUtf8().constData();
             std::cout << "obj is a misc obj " << ESM4::formIdToString(baseObj) << ", " << model << std::endl;
+
+            if (model.empty())
+                error = 2;
+            else
+                error = 0;
+        }
+        else if (sound.searchId(ESM4::formIdToString(baseObj)) != -1)
+        {
+            int extraIndex = -1;
+            extraIndex = sound.searchId(ESM4::formIdToString(baseObj));
+            //std::cout << "obj is a sound obj " << ESM4::formIdToString(baseObj) << std::endl;
+            model = "marker_sound.nif";
+
+            if (0)
+                error = 3; // FIXME for testing only
+            else
+                error = 0;
+        }
+        else if (weap.searchId(ESM4::formIdToString(baseObj)) != -1)
+        {
+            int extraIndex = -1;
+            extraIndex = weap.searchId(ESM4::formIdToString(baseObj));
+            model = weap.getData (extraIndex,
+                   weap.findColumnIndex (CSMWorld::Columns::ColumnId_Model)).toString().toUtf8().constData();
+            std::cout << "obj is a weapon obj " << ESM4::formIdToString(baseObj) << ", " << model << std::endl;
 
             if (model.empty())
                 error = 2;
@@ -249,7 +276,7 @@ void CSVRender::ForeignObject::update()
         entity->setVisibilityFlags (Element_Reference);
 
         if (error != 3)
-            mBase->attachObject (entity); // ignore light errors
+            mBase->attachObject (entity); // ignore script lights or sounds
     }
     else
     {

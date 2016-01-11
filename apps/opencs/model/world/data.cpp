@@ -624,6 +624,15 @@ CSMWorld::Data::Data (ToUTF8::FromType encoding, const ResourcesManager& resourc
     mForeignFurnitures.addColumn (new FixedRecordTypeColumn<CSMForeign::Furniture> (UniversalId::Type_ForeignFurnitures));
     mForeignFurnitures.addColumn (new ModelColumn<CSMForeign::Furniture>);
 
+    mForeignSounds.addColumn (new StringIdColumn<CSMForeign::Sound>);
+    mForeignSounds.addColumn (new RecordStateColumn<CSMForeign::Sound>);
+    mForeignSounds.addColumn (new FixedRecordTypeColumn<CSMForeign::Sound> (UniversalId::Type_ForeignSounds));
+
+    mForeignWeapons.addColumn (new StringIdColumn<CSMForeign::Weapon>);
+    mForeignWeapons.addColumn (new RecordStateColumn<CSMForeign::Weapon>);
+    mForeignWeapons.addColumn (new FixedRecordTypeColumn<CSMForeign::Weapon> (UniversalId::Type_ForeignWeapons));
+    mForeignWeapons.addColumn (new ModelColumn<CSMForeign::Weapon>);
+
     mForeignRefs.addColumn (new StringIdColumn<CSMForeign::CellRef>/*(true)*/);
     mForeignRefs.addColumn (new RecordStateColumn<CSMForeign::CellRef>);
     mForeignRefs.addColumn (new FixedRecordTypeColumn<CSMForeign::CellRef> (UniversalId::Type_ForeignReference));
@@ -717,6 +726,8 @@ CSMWorld::Data::Data (ToUTF8::FromType encoding, const ResourcesManager& resourc
     addModel (new IdTable (&mForeignLights), UniversalId::Type_ForeignLight); // FIXME: temp, should be refid
     addModel (new IdTable (&mForeignBooks), UniversalId::Type_ForeignBook); // FIXME: temp, should be refid
     addModel (new IdTable (&mForeignFurnitures), UniversalId::Type_ForeignFurniture); // FIXME: temp, should be refid
+    addModel (new IdTable (&mForeignSounds), UniversalId::Type_ForeignSound); // FIXME: temp, should be refid
+    addModel (new IdTable (&mForeignWeapons), UniversalId::Type_ForeignWeapon); // FIXME: temp, should be refid
     addModel (new IdTable (&mForeignRefs, IdTable::Feature_ViewCell | IdTable::Feature_Preview),
             UniversalId::Type_ForeignReference);
     addModel (new IdTable (&mForeignChars, IdTable::Feature_ViewCell | IdTable::Feature_Preview),
@@ -1270,6 +1281,26 @@ CSMForeign::IdCollection<CSMForeign::Furniture>& CSMWorld::Data::getForeignFurni
     return mForeignFurnitures;
 }
 
+const CSMForeign::IdCollection<CSMForeign::Sound>& CSMWorld::Data::getForeignSounds() const
+{
+    return mForeignSounds;
+}
+
+CSMForeign::IdCollection<CSMForeign::Sound>& CSMWorld::Data::getForeignSounds()
+{
+    return mForeignSounds;
+}
+
+const CSMForeign::IdCollection<CSMForeign::Weapon>& CSMWorld::Data::getForeignWeapons() const
+{
+    return mForeignWeapons;
+}
+
+CSMForeign::IdCollection<CSMForeign::Weapon>& CSMWorld::Data::getForeignWeapons()
+{
+    return mForeignWeapons;
+}
+
 QAbstractItemModel *CSMWorld::Data::getTableModel (const CSMWorld::UniversalId& id)
 {
     std::map<UniversalId::Type, QAbstractItemModel *>::iterator iter = mModelIndex.find (id.getType());
@@ -1738,6 +1769,7 @@ bool CSMWorld::Data::loadTes4Group (CSMDoc::Messages& messages)
                     hdr.group.label.value == ESM4::REC_FLOR || hdr.group.label.value == ESM4::REC_GRAS ||
                     hdr.group.label.value == ESM4::REC_TREE || hdr.group.label.value == ESM4::REC_LIGH ||
                     hdr.group.label.value == ESM4::REC_BOOK || hdr.group.label.value == ESM4::REC_FURN ||
+                    hdr.group.label.value == ESM4::REC_SOUN || hdr.group.label.value == ESM4::REC_WEAP ||
                     hdr.group.label.value == ESM4::REC_CELL || hdr.group.label.value == ESM4::REC_LTEX)
             {
                 // NOTE: The label field of a group is not reliable.  See:
@@ -1930,6 +1962,18 @@ bool CSMWorld::Data::loadTes4Record (const ESM4::RecordHeader& hdr, CSMDoc::Mess
         {
             reader.getRecordData();
             mForeignFurnitures.load(reader, mBase);
+            break;
+        }
+        case ESM4::REC_SOUN:
+        {
+            reader.getRecordData();
+            mForeignSounds.load(reader, mBase);
+            break;
+        }
+        case ESM4::REC_WEAP:
+        {
+            reader.getRecordData();
+            mForeignWeapons.load(reader, mBase);
             break;
         }
         case ESM4::REC_ACHR:

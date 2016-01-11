@@ -25,6 +25,8 @@ set(ESM4_SOURCE_FILES
     achr.cpp
     book.cpp
     furn.cpp
+    soun.cpp
+    weap.cpp
     reader.cpp
 )
 

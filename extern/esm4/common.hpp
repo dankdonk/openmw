@@ -437,6 +437,10 @@ namespace ESM4
         SUB_XHRS = MKTAG('X','H','R','S'),
         SUB_XMRC = MKTAG('X','M','R','C'),
 
+        // below appear in SOUN records
+        SUB_SNDD = MKTAG('S','N','D','D'),
+        SUB_SNDX = MKTAG('S','N','D','X'),
+
         SUB_DESC = MKTAG('D','E','S','C')
     };
 

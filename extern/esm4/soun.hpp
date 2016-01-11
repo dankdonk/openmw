@@ -20,8 +20,8 @@
   cc9cii cc9c@iinet.net.au
 
 */
-#ifndef ESM4_LIGH_H
-#define ESM4_LIGH_H
+#ifndef ESM4_SOUN_H
+#define ESM4_SOUN_H
 
 #include <string>
 #include <cstdint>
@@ -32,37 +32,45 @@ namespace ESM4
     class Writer;
     typedef std::uint32_t FormId;
 
-    struct Light
+    struct Sound
     {
-        struct Data
+        enum Flags
         {
-            float         duration;
-            std::uint32_t radius;
-            std::uint32_t colour; // RGBA
-            std::int32_t  flags;
-            float         falloff;
-            float         FOV;
-            std::uint32_t value;   // gold
-            float         weight;
-            Data() : duration(-1), radius(0), flags(0), colour(0), falloff(1.f),
-                     FOV(90), value(0), weight(0.f) // FIXME: FOV in degrees or radians?
-            {}
+            Flags_RandomFreqShift = 0x0001,
+            Flags_PlayAtRandom    = 0x0002,
+            Flags_EnvIgnored      = 0x0004,
+            Flags_RandomLocation  = 0x0008,
+            Flags_Loop            = 0x0010,
+            Flags_MenuSound       = 0x0020,
+            Flags_2D              = 0x0040,
+            Flags_360LFE          = 0x0080
         };
+
+#pragma pack(push, 1)
+        struct SNDX
+        {
+            std::uint8_t  minAttenuation;
+            std::uint8_t  maxAttenuation;
+            std::int8_t   freqAdjustment; // %, signed
+            std::uint8_t  unknown;
+            std::uint16_t flags;
+            std::uint16_t unknown2;
+            std::uint16_t staticAttenuation; // divide by 100 to get value in dB
+            std::uint8_t  stopTime;  // multipy vy 1440/256 to get value in minutes
+            std::uint8_t  startTime; // multipy vy 1440/256 to get value in minutes
+        };
+#pragma pack(pop)
 
         FormId mFormId;       // from the header
         std::uint32_t mFlags; // from the header, see enum type RecordFlag for details
 
         std::string mEditorId;
-        std::string mFullName;
-        std::string mModel;
 
-        std::string mIcon;
-        FormId      mScript;
+        std::string mSoundFile;
+        SNDX mData;
 
-        Data mData;
-
-        Light();
-        ~Light();
+        Sound();
+        ~Sound();
 
         void load(ESM4::Reader& reader);
         //void save(ESM4::Writer& reader) const;
@@ -71,4 +79,4 @@ namespace ESM4
     };
 }
 
-#endif // ESM4_LIGH_H
+#endif // ESM4_SOUN_H
