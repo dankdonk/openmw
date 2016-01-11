@@ -20,8 +20,8 @@
   cc9cii cc9c@iinet.net.au
 
 */
-#ifndef ESM4_ARMO_H
-#define ESM4_ARMO_H
+#ifndef ESM4_BOOK_H
+#define ESM4_BOOK_H
 
 #include <string>
 #include <cstdint>
@@ -32,17 +32,47 @@ namespace ESM4
     class Writer;
     typedef std::uint32_t FormId;
 
-    struct Armor
+    struct Book
     {
-#pragma pack(push, 1)
+        enum Flags
+        {
+            Flag_Scroll = 0x0001,
+            Flag_NoTake = 0x0002
+        };
+
+        enum BookSkill
+        {
+            BookSkill_None        = -1,
+            BookSkill_Armorer     =  0,
+            BookSkill_Athletics   =  1,
+            BookSkill_Blade       =  2,
+            BookSkill_Block       =  3,
+            BookSkill_Blunt       =  4,
+            BookSkill_HandToHand  =  5,
+            BookSkill_HeavyArmor  =  6,
+            BookSkill_Alchemy     =  7,
+            BookSkill_Alteration  =  8,
+            BookSkill_Conjuration =  9,
+            BookSkill_Destruction = 10,
+            BookSkill_Illusion    = 11,
+            BookSkill_Mysticism   = 12,
+            BookSkill_Restoration = 13,
+            BookSkill_Acrobatics  = 14,
+            BookSkill_LightArmor  = 15,
+            BookSkill_Marksman    = 16,
+            BookSkill_Mercantile  = 17,
+            BookSkill_Security    = 18,
+            BookSkill_Sneak       = 19,
+            BookSkill_Speechcraft = 20
+        };
+
         struct Data
         {
-            std::uint16_t armor;
+            std::uint8_t  flags;
+            std::int8_t   bookSkill;
             std::uint32_t value;
-            std::uint32_t health;
             float         weight;
         };
-#pragma pack(pop)
 
         FormId mFormId;       // from the header
         std::uint32_t mFlags; // from the header, see enum type RecordFlag for details
@@ -50,13 +80,17 @@ namespace ESM4
         std::string mEditorId;
         std::string mFullName;
         std::string mModel;
-        std::string mIconMale;
-        std::string mIconFemale;
+
+        std::string mText;
+        FormId      mScript;
+        std::string mIcon;
+        std::uint16_t mEnchantmentPoints;
+        FormId      mEnchantment;
 
         Data mData;
 
-        Armor();
-        ~Armor();
+        Book();
+        ~Book();
 
         void load(ESM4::Reader& reader);
         //void save(ESM4::Writer& reader) const;
@@ -65,4 +99,4 @@ namespace ESM4
     };
 }
 
-#endif // ESM4_ARMO_H
+#endif // ESM4_BOOK_H

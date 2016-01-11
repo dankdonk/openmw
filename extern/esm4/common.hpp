@@ -435,7 +435,9 @@ namespace ESM4
 
         // below appear in ACHR records
         SUB_XHRS = MKTAG('X','H','R','S'),
-        SUB_XMRC = MKTAG('X','M','R','C')
+        SUB_XMRC = MKTAG('X','M','R','C'),
+
+        SUB_DESC = MKTAG('D','E','S','C')
     };
 
     // Based on http://www.uesp.net/wiki/Tes5Mod:Mod_File_Format#Groups

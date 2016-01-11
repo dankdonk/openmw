@@ -591,7 +591,7 @@ public:
     bhkShapePtr shape;
     unsigned int material;
     //unsigned int materialSkyrim;
-    Transformation transform;
+    Ogre::Vector4 transform;
 
     void read(NIFStream *nif)
     {
@@ -601,7 +601,8 @@ public:
         nif->getFloat(); // unknown
         for (int i = 0; i < 8; ++i)
             nif->getChar(); // unknown
-        transform = nif->getTrafo();
+        for (int i = 0; i < 16; ++i)
+            nif->getFloat(); // FIXME: construct transform
     }
 };
 

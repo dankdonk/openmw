@@ -20,8 +20,8 @@
   cc9cii cc9c@iinet.net.au
 
 */
-#ifndef ESM4_ARMO_H
-#define ESM4_ARMO_H
+#ifndef ESM4_FURN_H
+#define ESM4_FURN_H
 
 #include <string>
 #include <cstdint>
@@ -32,31 +32,20 @@ namespace ESM4
     class Writer;
     typedef std::uint32_t FormId;
 
-    struct Armor
+    struct Furniture
     {
-#pragma pack(push, 1)
-        struct Data
-        {
-            std::uint16_t armor;
-            std::uint32_t value;
-            std::uint32_t health;
-            float         weight;
-        };
-#pragma pack(pop)
-
         FormId mFormId;       // from the header
         std::uint32_t mFlags; // from the header, see enum type RecordFlag for details
 
         std::string mEditorId;
         std::string mFullName;
         std::string mModel;
-        std::string mIconMale;
-        std::string mIconFemale;
 
-        Data mData;
+        FormId      mScript;
+        std::uint32_t mActiveMarkerFlags;
 
-        Armor();
-        ~Armor();
+        Furniture();
+        ~Furniture();
 
         void load(ESM4::Reader& reader);
         //void save(ESM4::Writer& reader) const;
@@ -65,4 +54,4 @@ namespace ESM4
     };
 }
 
-#endif // ESM4_ARMO_H
+#endif // ESM4_FURN_H

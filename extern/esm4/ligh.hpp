@@ -56,7 +56,8 @@ namespace ESM4
         std::string mFullName;
         std::string mModel;
 
-        std::string mIconModel;
+        std::string mIcon;
+        FormId      mScript;
 
         Data mData;
 

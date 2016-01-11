@@ -32,12 +32,15 @@
 #include "reader.hpp"
 //#include "writer.hpp"
 
-ESM4::MiscItem::MiscItem() : mValue(0), mWeight(0.f)
+ESM4::MiscItem::MiscItem()
 {
     mEditorId.clear();
     mFullName.clear();
     mModel.clear();
     mIconModel.clear();
+
+    mData.value = 0;
+    mData.weight = 0.f;
 }
 
 ESM4::MiscItem::~MiscItem()
@@ -85,8 +88,7 @@ void ESM4::MiscItem::load(ESM4::Reader& reader)
             }
             case ESM4::SUB_DATA:
             {
-                reader.get(mValue);
-                reader.get(mWeight);
+                reader.get(mData);
                 break;
             }
             case ESM4::SUB_SCRI:

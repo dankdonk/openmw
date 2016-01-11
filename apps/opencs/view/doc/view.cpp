@@ -402,6 +402,14 @@ void CSVDoc::View::setupForeignMenu()
     connect (light, SIGNAL (triggered()), this, SLOT (addForeignLightSubView()));
     foreign->addAction (light);
 
+    QAction *book = new QAction (tr ("Books"), this);
+    connect (book, SIGNAL (triggered()), this, SLOT (addForeignBookSubView()));
+    foreign->addAction (book);
+
+    QAction *furn = new QAction (tr ("Furnitures"), this);
+    connect (furn, SIGNAL (triggered()), this, SLOT (addForeignFurnitureSubView()));
+    foreign->addAction (furn);
+
     foreign->addSeparator();
 
     QAction *ltex = new QAction (tr ("Land Textures"), this);
@@ -1039,6 +1047,16 @@ void CSVDoc::View::addForeignTreeSubView()
 void CSVDoc::View::addForeignLightSubView()
 {
     addSubView (CSMWorld::UniversalId::Type_ForeignLights);
+}
+
+void CSVDoc::View::addForeignBookSubView()
+{
+    addSubView (CSMWorld::UniversalId::Type_ForeignBooks);
+}
+
+void CSVDoc::View::addForeignFurnitureSubView()
+{
+    addSubView (CSMWorld::UniversalId::Type_ForeignFurnitures);
 }
 
 void CSVDoc::View::addForeignRegionMapSubView()

@@ -81,6 +81,8 @@ namespace CSVRender
         QShortcut *focusToolbar = new QShortcut (Qt::Key_T, this, 0, 0, Qt::WidgetWithChildrenShortcut);
         connect (focusToolbar, SIGNAL (activated()), this, SIGNAL (focusToolbarRequest()));
 
+        // FIXME: move sky/water to pagedworldspacewidget/foreignworldspacewidget so that
+        // oblivion sky/lava can be supported
         Ogre::MaterialPtr skyMaterial = Ogre::MaterialManager::getSingleton().getByName(
                     "SkyMaterial");
         if(skyMaterial.isNull())
@@ -94,6 +96,7 @@ namespace CSVRender
 
             Ogre::TextureUnitState *tex = pass->createTextureUnitState("MyCustomState", 0);
             tex->setTextureName("clouds.jpg");
+            //tex->setTextureName("oblivion_sky01.dds");
             skyMaterial->load();
         }
         Ogre::Quaternion r(Ogre::Degree(90), Ogre::Vector3::UNIT_X);

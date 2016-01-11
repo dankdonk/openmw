@@ -32,13 +32,18 @@
 #include "reader.hpp"
 //#include "writer.hpp"
 
-ESM4::Armor::Armor() : mArmor(0), mValue(0), mHealth(0), mWeight(0.f)
+ESM4::Armor::Armor()
 {
     mEditorId.clear();
     mFullName.clear();
     mModel.clear();
     mIconMale.clear();
     mIconFemale.clear();
+
+    mData.armor = 0;
+    mData.value = 0;
+    mData.health = 0;
+    mData.weight = 0.f;
 }
 
 ESM4::Armor::~Armor()
@@ -92,10 +97,7 @@ void ESM4::Armor::load(ESM4::Reader& reader)
             }
             case ESM4::SUB_DATA:
             {
-                reader.get(mArmor);
-                reader.get(mValue);
-                reader.get(mHealth);
-                reader.get(mWeight);
+                reader.get(mData);
                 break;
             }
             case ESM4::SUB_BMDT:

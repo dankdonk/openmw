@@ -54,6 +54,8 @@
 #include "../foreign/grass.hpp"
 #include "../foreign/tree.hpp"
 #include "../foreign/light.hpp"
+#include "../foreign/book.hpp"
+#include "../foreign/furniture.hpp"
 
 #include "idcollection.hpp"
 #include "nestedidcollection.hpp"
@@ -135,6 +137,8 @@ namespace CSMWorld
             CSMForeign::IdCollection<CSMForeign::Grass> mForeignGrasses;
             CSMForeign::IdCollection<CSMForeign::Tree> mForeignTrees;
             CSMForeign::IdCollection<CSMForeign::Light> mForeignLights;
+            CSMForeign::IdCollection<CSMForeign::Book> mForeignBooks;
+            CSMForeign::IdCollection<CSMForeign::Furniture> mForeignFurnitures;
             //CSMForeign::RefIdCollection mForeignReferenceables;
             CSMForeign::RefCollection mForeignRefs;
             CSMForeign::CharCollection mForeignChars;
@@ -363,6 +367,14 @@ namespace CSMWorld
             const CSMForeign::IdCollection<CSMForeign::Light>& getForeignLights() const;
 
             CSMForeign::IdCollection<CSMForeign::Light>& getForeignLights();
+
+            const CSMForeign::IdCollection<CSMForeign::Book>& getForeignBooks() const;
+
+            CSMForeign::IdCollection<CSMForeign::Book>& getForeignBooks();
+
+            const CSMForeign::IdCollection<CSMForeign::Furniture>& getForeignFurnitures() const;
+
+            CSMForeign::IdCollection<CSMForeign::Furniture>& getForeignFurnitures();
 
             const CSMForeign::NavigationCollection& getNavigation() const;
 

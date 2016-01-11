@@ -170,6 +170,10 @@ namespace CSMWorld
                 Type_ForeignTree,
                 Type_ForeignLights, // FIXME: should be refid
                 Type_ForeignLight,
+                Type_ForeignBooks, // FIXME: should be refid
+                Type_ForeignBook,
+                Type_ForeignFurnitures, // FIXME: should be refid
+                Type_ForeignFurniture,
                 Type_ForeignReferenceables,
                 Type_ForeignReferenceable,
                 Type_ForeignReferences,

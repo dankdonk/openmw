@@ -43,6 +43,7 @@ opencs_units_noqt (model/foreign
     world worldcollection region regioncollection cell cellcollection cellref refcollection
     landtexture landtexturecollection land landcollection static staticcollection
     animobject container miscitem activator armor npc flora grass tree light cellchar charcollection
+    book furniture
     navmeshinfo navigationcollection navmesh navmeshcollection
     )
 

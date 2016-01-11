@@ -63,6 +63,8 @@ void CSVRender::ForeignObject::update()
     const CSMForeign::IdCollection<CSMForeign::Grass>& grass = mData.getForeignGrasses();
     const CSMForeign::IdCollection<CSMForeign::Tree>& trees = mData.getForeignTrees();
     const CSMForeign::IdCollection<CSMForeign::Light>& lights = mData.getForeignLights();
+    const CSMForeign::IdCollection<CSMForeign::Book>& book = mData.getForeignBooks();
+    const CSMForeign::IdCollection<CSMForeign::Furniture>& furn = mData.getForeignFurnitures();
     const CSMForeign::StaticCollection& referenceables = mData.getForeignStatics(); // FIXME: use statics only for now
 
     //int index = referenceables.searchId (mReferenceableId);
@@ -100,6 +102,32 @@ void CSVRender::ForeignObject::update()
             model = misc.getData (extraIndex,
                    misc.findColumnIndex (CSMWorld::Columns::ColumnId_Model)).toString().toUtf8().constData();
             std::cout << "obj is a misc obj " << ESM4::formIdToString(baseObj) << ", " << model << std::endl;
+
+            if (model.empty())
+                error = 2;
+            else
+                error = 0;
+        }
+        else if (book.searchId(ESM4::formIdToString(baseObj)) != -1)
+        {
+            int extraIndex = -1;
+            extraIndex = book.searchId(ESM4::formIdToString(baseObj));
+            model = book.getData (extraIndex,
+                   book.findColumnIndex (CSMWorld::Columns::ColumnId_Model)).toString().toUtf8().constData();
+            std::cout << "obj is a book obj " << ESM4::formIdToString(baseObj) << ", " << model << std::endl;
+
+            if (model.empty())
+                error = 2;
+            else
+                error = 0;
+        }
+        else if (furn.searchId(ESM4::formIdToString(baseObj)) != -1)
+        {
+            int extraIndex = -1;
+            extraIndex = furn.searchId(ESM4::formIdToString(baseObj));
+            model = furn.getData (extraIndex,
+                   furn.findColumnIndex (CSMWorld::Columns::ColumnId_Model)).toString().toUtf8().constData();
+            std::cout << "obj is a furniture obj " << ESM4::formIdToString(baseObj) << ", " << model << std::endl;
 
             if (model.empty())
                 error = 2;
@@ -181,7 +209,7 @@ void CSVRender::ForeignObject::update()
                             std::cout << "obj is an light obj " << ESM4::formIdToString(baseObj) << ", " << model << std::endl;
 
                             if (model.empty())
-                                error = 2;
+                                error = 3;
                             else
                                 error = 0;
                         }
@@ -220,7 +248,8 @@ void CSVRender::ForeignObject::update()
         entity->setMaterialName("BaseWhite"); /// \todo adjust material according to error
         entity->setVisibilityFlags (Element_Reference);
 
-        mBase->attachObject (entity);
+        if (error != 3)
+            mBase->attachObject (entity); // ignore light errors
     }
     else
     {

@@ -102,7 +102,11 @@ bool CSVRender::ForeignCell::addObjects (const std::vector<ESM4::FormId>& object
 
     for (unsigned int i = 0; i < objects.size(); ++i)
     {
-        const CSMWorld::Record<CSMForeign::CellRef>& record = refs.getRecord(refs.searchId(objects[i]));
+        int index = refs.searchId(objects[i]);
+        if (index == -1)
+            continue; // FIXME: maybe not a ref but something else?
+
+        const CSMWorld::Record<CSMForeign::CellRef>& record = refs.getRecord(index);
 
         if (record.mState != CSMWorld::RecordBase::State_Deleted)
         {
@@ -155,11 +159,11 @@ CSVRender::ForeignCell::ForeignCell (CSMDoc::Document& document, Ogre::SceneMana
         if (esmLand.getLandData (ESM4::Land::LAND_VHGT))
         {
             mTerrain.reset(new ESM4Terrain::TerrainGrid(sceneManager,
-                                                    new CSVForeign::TerrainStorage(mDocument.getData(), 0x3c),
+                                                    new CSVForeign::TerrainStorage(mDocument.getData(), mWorld),
                                                     Element_Terrain,
                                                     true,
                                                     Terrain::Align_XY,
-                                                    0x3c)); // Fixed to Tamriel for now
+                                                    mWorld));
             mTerrain->loadCell(/*esmLand.mX*/x,
                                /*esmLand.mY*/y);
 

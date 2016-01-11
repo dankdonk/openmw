@@ -21,13 +21,12 @@
 #include <components/terrain/quadtreenode.hpp>
 #include <components/misc/resourcehelpers.hpp>
 
-#include "../../apps/opencs/model/foreign/land.hpp" // a bit ugly including it here...
+#include "../../apps/opencs/model/foreign/land.hpp" // FIXME: a bit ugly including it here...
 
 namespace ESM4Terrain
 {
 
-    // FIXME: land is not necessarily identified by x/y, may also need world formid
-    // initially workaround by fixing to Tamriel only
+    // land is not necessarily identified by x/y, also need world formid i.e. CSVForeign::TerrainStorage::mWorld
     const LandData *Storage::getLandData (int cellX, int cellY, int flags)
     {
         if (const Land *land = getLand (cellX, cellY))
@@ -245,7 +244,8 @@ namespace ESM4Terrain
                                 && (col == 0 || col == ESM4::Land::VERTS_PER_SIDE-1))
                             averageNormal(normal, cellX, cellY, col, row);
 
-                        assert(normal.z > 0);
+                        //assert(normal.z > 0); // ToddLand triggers this
+                        if (normal.z < 0) normal.z = 0;
 
                         normals[static_cast<unsigned int>(vertX*numVerts * 3 + vertY * 3 + 0)] = normal.x;
                         normals[static_cast<unsigned int>(vertX*numVerts * 3 + vertY * 3 + 1)] = normal.y;

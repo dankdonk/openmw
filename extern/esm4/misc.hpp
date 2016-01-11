@@ -34,6 +34,14 @@ namespace ESM4
 
     struct MiscItem
     {
+#pragma pack(push, 1)
+        struct Data
+        {
+            std::uint32_t value;   // gold
+            float         weight;
+        };
+#pragma pack(pop)
+
         FormId mFormId;       // from the header
         std::uint32_t mFlags; // from the header, see enum type RecordFlag for details
 
@@ -42,8 +50,7 @@ namespace ESM4
         std::string mModel;
         std::string mIconModel; // inventory
 
-        std::uint32_t mValue;   // gold
-        float mWeight;
+        Data mData;
 
         MiscItem();
         ~MiscItem();

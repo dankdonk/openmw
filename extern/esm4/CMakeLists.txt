@@ -23,6 +23,8 @@ set(ESM4_SOURCE_FILES
     tree.cpp
     ligh.cpp
     achr.cpp
+    book.cpp
+    furn.cpp
     reader.cpp
 )
 
