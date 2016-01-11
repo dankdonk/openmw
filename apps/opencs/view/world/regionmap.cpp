@@ -370,13 +370,19 @@ void CSVWorld::RegionMap::viewForeign()
             toString().toUtf8().constData();
 
         if (first)
+        {
             first = false;
+            hint << model()->data (
+                    *iter, CSMWorld::RegionMap::Role_WorldId).toString().toUtf8().constData();
+            hint << ":";
+        }
         else
             hint << "; ";
 
         hint << cellId;
     }
 
+    // the id is used by SceneSubView constructor
     emit editRequest (CSMWorld::UniversalId (CSMWorld::UniversalId::Type_Scene, "sys::foreign"),
         hint.str());
 }

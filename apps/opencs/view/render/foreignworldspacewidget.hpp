@@ -8,6 +8,11 @@
 #include "worldspacewidget.hpp"
 #include "foreigncell.hpp"
 
+namespace ESM4
+{
+    typedef std::uint32_t FormId;
+}
+
 namespace CSVWidget
 {
    class SceneToolToggle;
@@ -30,6 +35,7 @@ namespace CSVRender
             bool mDisplayCellCoord;
             std::map<CSMWorld::CellCoordinates, TextOverlay *> mTextOverlays;
             OverlayMask *mOverlayMask;
+            ESM4::FormId mWorld;
 
         private:
 

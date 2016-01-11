@@ -51,23 +51,26 @@ bool CSVRender::ForeignWorldspaceWidget::adjustCells()
             int y = 0;
             stream >> ignore >> x >> y;
 
-            std::uint32_t formId = cells.searchFormId (x, y); // FIXME: assumes Tamriel
+            std::uint32_t formId = cells.searchFormId (x, y, mWorld);
             int index = cells.searchId (formId);
 
 
             if (!mSelection.has (iter->first) || index == -1 ||
                 cells.getRecord(index).mState == CSMWorld::RecordBase::State_Deleted)
             {
-                // delete overlays
-                std::map<CSMWorld::CellCoordinates, TextOverlay *>::iterator itOverlay = mTextOverlays.find(iter->first);
-                if(itOverlay != mTextOverlays.end())
+                if (mWorld == 0x3c) // FIXME: limit to Tamriel for now
                 {
-                    delete itOverlay->second;
-                    mTextOverlays.erase(itOverlay);
-                }
+                    // delete overlays
+                    std::map<CSMWorld::CellCoordinates, TextOverlay *>::iterator itOverlay = mTextOverlays.find(iter->first);
+                    if(itOverlay != mTextOverlays.end())
+                    {
+                        delete itOverlay->second;
+                        mTextOverlays.erase(itOverlay);
+                    }
 
-                // destroy manual objects
-                getSceneManager()->destroyManualObject("manual"+iter->first.getId(mWorldspace));
+                    // destroy manual objects
+                    getSceneManager()->destroyManualObject("manual"+iter->first.getId(mWorldspace));
+                }
 
                 delete iter->second;
                 mCells.erase (iter++);
@@ -76,36 +79,39 @@ bool CSVRender::ForeignWorldspaceWidget::adjustCells()
             }
             else
             {
-                // check if name or region field has changed
-                // FIXME: config setting
-                std::string name = cells.getRecord(index).get().mCellId;
-                std::string region = cells.getRecord(index).get().mRegion;
-
-                std::map<CSMWorld::CellCoordinates, TextOverlay *>::iterator it = mTextOverlays.find(iter->first);
-                if(it != mTextOverlays.end())
+                if (mWorld == 0x3c) // FIXME: limit to Tamriel for now
                 {
-                    if(it->second->getDesc() != "") // previously had name
+                    // check if name or region field has changed
+                    // FIXME: config setting
+                    std::string name = cells.getRecord(index).get().mCellId;
+                    std::string region = cells.getRecord(index).get().mRegion;
+
+                    std::map<CSMWorld::CellCoordinates, TextOverlay *>::iterator it = mTextOverlays.find(iter->first);
+                    if(it != mTextOverlays.end())
                     {
-                        if(name != it->second->getDesc()) // new name
+                        if(it->second->getDesc() != "") // previously had name
                         {
-                            if(name != "")
-                                it->second->setDesc(name);
-                            else // name deleted, use region
-                                it->second->setDesc(region);
+                            if(name != it->second->getDesc()) // new name
+                            {
+                                if(name != "")
+                                    it->second->setDesc(name);
+                                else // name deleted, use region
+                                    it->second->setDesc(region);
+                                it->second->update();
+                            }
+                        }
+                        else if(name != "") // name added
+                        {
+                            it->second->setDesc(name);
                             it->second->update();
                         }
+                        else if(region != it->second->getDesc()) // new region
+                        {
+                            it->second->setDesc(region);
+                            it->second->update();
+                        }
+                        modified = true;
                     }
-                    else if(name != "") // name added
-                    {
-                        it->second->setDesc(name);
-                        it->second->update();
-                    }
-                    else if(region != it->second->getDesc()) // new region
-                    {
-                        it->second->setDesc(region);
-                        it->second->update();
-                    }
-                    modified = true;
                 }
                 ++iter;
             }
@@ -126,13 +132,14 @@ bool CSVRender::ForeignWorldspaceWidget::adjustCells()
         int y = 0;
         stream >> ignore >> x >> y;
 
-        std::uint32_t formId = cells.searchFormId (x, y); // FIXME: assumes Tamriel
+        std::uint32_t formId = cells.searchFormId (x, y, mWorld);
         int index = cells.searchId (formId);
 
         if (index > 0 && cells.getRecord (index).mState != CSMWorld::RecordBase::State_Deleted &&
             mCells.find (*iter)==mCells.end())
         {
-            ForeignCell *cell = new ForeignCell (mDocument, getSceneManager(), formId, mDocument.getPhysics());
+            ForeignCell *cell
+                = new ForeignCell (mDocument, getSceneManager(), formId, mWorld, mDocument.getPhysics());
 
             // FIXME: disable for now
             //connect (cell->getSignalHandler(), SIGNAL(flagAsModified()), this, SLOT(flagAsModSlot()));
@@ -153,55 +160,58 @@ bool CSVRender::ForeignWorldspaceWidget::adjustCells()
                 getCamera()->move(getCamera()->getDirection() * -6000); // FIXME: config setting
             }
 
-            Ogre::ManualObject* manual =
-                    getSceneManager()->createManualObject("manual" + iter->getId(mWorldspace));
-            manual->begin("BaseWhite", Ogre::RenderOperation::OT_LINE_LIST);
-            // define start and end point (x, y, z)
-            manual-> position(ESM4::Land::REAL_SIZE * iter->getX() + ESM4::Land::REAL_SIZE/2,
-                              ESM4::Land::REAL_SIZE * iter->getY() + ESM4::Land::REAL_SIZE/2,
-                              height);
-            manual-> position(ESM4::Land::REAL_SIZE * iter->getX() + ESM4::Land::REAL_SIZE/2,
-                              ESM4::Land::REAL_SIZE * iter->getY() + ESM4::Land::REAL_SIZE/2,
-                              height+200); // FIXME: config setting
-            manual->end();
-            manual->setBoundingBox(Ogre::AxisAlignedBox(
-                              ESM4::Land::REAL_SIZE * iter->getX() + ESM4::Land::REAL_SIZE/2,
-                              ESM4::Land::REAL_SIZE * iter->getY() + ESM4::Land::REAL_SIZE/2,
-                              height,
-                              ESM4::Land::REAL_SIZE * iter->getX() + ESM4::Land::REAL_SIZE/2,
-                              ESM4::Land::REAL_SIZE * iter->getY() + ESM4::Land::REAL_SIZE/2,
-                              height+200));
-            getSceneManager()->getRootSceneNode()->createChildSceneNode()->attachObject(manual);
-            manual->setVisible(false);
-
-            CSVRender::TextOverlay *textDisp =
-                    new CSVRender::TextOverlay(manual, getCamera(), iter->getId(mWorldspace));
-            textDisp->enable(true);
-            textDisp->setCaption(iter->getId(mWorldspace));
-            std::string desc = cells.getRecord(index).get().mFullName;
-
-            // FIXME: inefficient hack
-            const CSMForeign::RegionCollection& regions = mDocument.getData().getForeignRegions();
-            const CSMForeign::Region& region = regions.getRecord(cells.getRecord(index).get().mRegion).get();
-
-            if (desc == "")
+            if (mWorld == 0x3c) // FIXME: limit to Tamriel for now
             {
-                if (!region.mMapName.empty())
-                    desc = region.mMapName;
-                else if (!region.mEditorId.empty())
-                    desc = region.mEditorId;
-                else
-                    desc = cells.getRecord(index).get().mRegion;
-            }
+                Ogre::ManualObject* manual =
+                        getSceneManager()->createManualObject("manual" + iter->getId(mWorldspace));
+                manual->begin("BaseWhite", Ogre::RenderOperation::OT_LINE_LIST);
+                // define start and end point (x, y, z)
+                manual-> position(ESM4::Land::REAL_SIZE * iter->getX() + ESM4::Land::REAL_SIZE/2,
+                                  ESM4::Land::REAL_SIZE * iter->getY() + ESM4::Land::REAL_SIZE/2,
+                                  height);
+                manual-> position(ESM4::Land::REAL_SIZE * iter->getX() + ESM4::Land::REAL_SIZE/2,
+                                  ESM4::Land::REAL_SIZE * iter->getY() + ESM4::Land::REAL_SIZE/2,
+                                  height+200); // FIXME: config setting
+                manual->end();
+                manual->setBoundingBox(Ogre::AxisAlignedBox(
+                                  ESM4::Land::REAL_SIZE * iter->getX() + ESM4::Land::REAL_SIZE/2,
+                                  ESM4::Land::REAL_SIZE * iter->getY() + ESM4::Land::REAL_SIZE/2,
+                                  height,
+                                  ESM4::Land::REAL_SIZE * iter->getX() + ESM4::Land::REAL_SIZE/2,
+                                  ESM4::Land::REAL_SIZE * iter->getY() + ESM4::Land::REAL_SIZE/2,
+                                  height+200));
+                getSceneManager()->getRootSceneNode()->createChildSceneNode()->attachObject(manual);
+                manual->setVisible(false);
 
-            //if(desc == "") desc = cells.getRecord(index).get().mRegion;
-            textDisp->setDesc(desc); // FIXME: config setting
-            textDisp->update();
-            mTextOverlays.insert(std::make_pair(*iter, textDisp));
-            if(!mOverlayMask)
-            {
-                mOverlayMask = new OverlayMask(mTextOverlays, getViewport());
-                addRenderTargetListener(mOverlayMask);
+                CSVRender::TextOverlay *textDisp =
+                        new CSVRender::TextOverlay(manual, getCamera(), iter->getId(mWorldspace));
+                textDisp->enable(true);
+                textDisp->setCaption(iter->getId(mWorldspace));
+                std::string desc = cells.getRecord(index).get().mFullName;
+
+                // FIXME: inefficient hack
+                const CSMForeign::RegionCollection& regions = mDocument.getData().getForeignRegions();
+                const CSMForeign::Region& region = regions.getRecord(cells.getRecord(index).get().mRegion).get();
+
+                if (desc == "")
+                {
+                    if (!region.mMapName.empty())
+                        desc = region.mMapName;
+                    else if (!region.mEditorId.empty())
+                        desc = region.mEditorId;
+                    else
+                        desc = cells.getRecord(index).get().mRegion;
+                }
+
+                //if(desc == "") desc = cells.getRecord(index).get().mRegion;
+                textDisp->setDesc(desc); // FIXME: config setting
+                textDisp->update();
+                mTextOverlays.insert(std::make_pair(*iter, textDisp));
+                if(!mOverlayMask)
+                {
+                    mOverlayMask = new OverlayMask(mTextOverlays, getViewport());
+                    addRenderTargetListener(mOverlayMask);
+                }
             }
 
             modified = true;
@@ -536,6 +546,13 @@ CSVRender::ForeignWorldspaceWidget::~ForeignWorldspaceWidget()
 }
 }
 
+// CSVWorld::RegionMap::viewForeign()
+//     --> emit editRequest(id, hint) where hint is "c:0000003c:cell;cell;cell"
+//             --> CSVDoc::SubView::focusId(id, hint) <-- not so sure, check
+//                 --> slot CSVDoc::View::addSubView(id, hint)
+//                     --> scene subview created
+//                     --> scene subview useHint()
+//                         --> WorldspaceWidget::useViewHint()
 void CSVRender::ForeignWorldspaceWidget::useViewHint (const std::string& hint)
 {
     if (!hint.empty())
@@ -544,10 +561,15 @@ void CSVRender::ForeignWorldspaceWidget::useViewHint (const std::string& hint)
 
         if (hint[0]=='c')
         {
-            // syntax: c:#x1 y1; #x2 y2 (number of coordinate pairs can be 0 or larger)
+            // syntax: c:wwwwwwww:#x1 y1; #x2 y2 (number of coordinate pairs can be 0 or larger)
+            //           ^       ^
+            //           |       |
+            //         0123456789
+            // FIXME: check length of the string first
+            mWorld = static_cast<ESM4::FormId>(std::stoi(hint.substr(2, 8), nullptr, 16));
             char ignore;
 
-            std::istringstream stream (hint.c_str());
+            std::istringstream stream (hint.substr(9).c_str());
             if (stream >> ignore)
             {
                 char ignore1; // : or ;

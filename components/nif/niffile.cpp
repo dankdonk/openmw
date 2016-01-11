@@ -167,8 +167,14 @@ static std::map<std::string,RecordFactoryEntry> makeFactory()
     newFactory.insert(makeEntry("NiPSysDragModifier",         &construct <NiPSysDragModifier>          , RC_NiPSysDragModifier            ));
     newFactory.insert(makeEntry("NiPSysGravityStrengthCtlr",  &construct <NiPSysGravityStrengthCtlr>   , RC_NiPSysGravityStrengthCtlr     ));
     newFactory.insert(makeEntry("NiBoolTimelineInterpolator", &construct <NiBoolTimelineInterpolator>  , RC_NiBoolTimelineInterpolator    ));
+    newFactory.insert(makeEntry("BSParentVelocityModifier",   &construct <BSParentVelocityModifier>    , RC_BSParentVelocityModifier      ));
+    newFactory.insert(makeEntry("NiPSysDragModifier",         &construct <NiPSysDragModifier>          , RC_NiPSysDragModifier            ));
     newFactory.insert(makeEntry("NiPSysEmitter",              &construct <NiPSysEmitter>               , RC_NiPSysEmitter                 ));
     newFactory.insert(makeEntry("NiPSysMeshEmitter",          &construct <NiPSysMeshEmitter>           , RC_NiPSysMeshEmitter             ));
+    newFactory.insert(makeEntry("NiPSysEmitterSpeedCtlr",     &construct <NiPSysEmitterSpeedCtlr>      , RC_NiPSysEmitterSpeedCtlr        ));
+    newFactory.insert(makeEntry("bhkRagdollConstraint",       &construct <bhkRagdollConstraint>        , RC_bhkRagdollConstraint          ));
+    newFactory.insert(makeEntry("NiTextureTransformController", &construct <NiTextureTransformController> , RC_NiTextureTransformController));
+    newFactory.insert(makeEntry("bhkTransformShape",          &construct <bhkTransformShape>           , RC_bhkTransformShape             ));
     newFactory.insert(makeEntry("NiMultiTargetTransformController", &construct <NiMultiTargetTransformController> , RC_NiMultiTargetTransformController));
     return newFactory;
 }

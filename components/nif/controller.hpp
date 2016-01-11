@@ -411,6 +411,43 @@ public:
     }
 };
 
+class NiPSysEmitterSpeedCtlr : public Controller
+{
+public:
+    NiInterpolatorPtr interpolator;
+    std::string modifierName;
+
+    void read(NIFStream *nif)
+    {
+        Controller::read(nif);
+        if (nifVer >= 0x0a020000) // from 10.2.0.0
+            interpolator.read(nif);
+        modifierName = nif->getString();
+        if (nifVer <= 0x0a010000) // up to 10.1.0.0
+            nif->getFloat(); // NiFloatDataPtr
+    }
+};
+
+class NiTextureTransformController : public Controller
+{
+public:
+    NiInterpolatorPtr interpolator;
+    unsigned int textureSlot;
+    unsigned int operation;
+
+    void read(NIFStream *nif)
+    {
+        Controller::read(nif);
+        if (nifVer >= 0x0a020000) // from 10.2.0.0
+            interpolator.read(nif);
+        nif->getChar();
+        textureSlot = nif->getUInt();
+        operation = nif->getUInt();
+        if (nifVer <= 0x0a010000) // up to 10.1.0.0
+            nif->getFloat(); // NiFloatDataPtr
+    }
+};
+
 class NiPSysGravityStrengthCtlr : public Controller
 {
 public:
@@ -694,7 +731,7 @@ public:
 class NiPSysMeshEmitter : public NiPSysEmitter
 {
 public:
-    //std::vector<NiTriBasedGeomPtr> emitterMeshes;
+    std::vector<NiGeometryPtr> emitterMeshes; // NiTriBasedGeom
     unsigned int velocityType;
     unsigned int emissionType;
     Ogre::Vector3 emissionAxis;
@@ -703,9 +740,11 @@ public:
     {
         NiPSysEmitter::read(nif);
 
-        unsigned int numMesh = nif->getUInt();
-        for (unsigned int i = 0; i < numMesh; ++i)
-            nif->getUInt(); // FIXME
+        unsigned int numMeshes = nif->getUInt();
+        emitterMeshes.resize(numMeshes);
+        for (unsigned int i = 0; i < numMeshes; ++i)
+            emitterMeshes[i].read(nif);
+
         velocityType = nif->getUInt();
         emissionType = nif->getUInt();
         emissionAxis = nif->getVector3();
@@ -875,6 +914,19 @@ public:
         }
         nif->getBool(nifVer);
         nif->getVector3();
+    }
+};
+
+class BSParentVelocityModifier : public NiPSysModifier
+{
+public:
+    float damping;
+
+    void read(NIFStream *nif)
+    {
+        NiPSysModifier::read(nif);
+
+        damping = nif->getFloat();
     }
 };
 

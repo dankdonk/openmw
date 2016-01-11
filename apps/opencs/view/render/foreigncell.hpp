@@ -56,6 +56,7 @@ namespace CSVRender
     {
             CSMDoc::Document& mDocument;
             ESM4::FormId mFormId;
+            ESM4::FormId mWorld;
             Ogre::SceneNode *mCellNode;
             std::map<ESM4::FormId, ForeignObject *> mObjects;
             std::map<std::string, PathgridPoint *> mPgPoints;
@@ -85,7 +86,9 @@ namespace CSVRender
         public:
 
             ForeignCell (CSMDoc::Document& document, Ogre::SceneManager *sceneManager, ESM4::FormId id,
-                boost::shared_ptr<CSVWorld::PhysicsSystem> physics, const Ogre::Vector3& origin = Ogre::Vector3 (0, 0, 0));
+                         ESM4::FormId world,
+                         boost::shared_ptr<CSVWorld::PhysicsSystem> physics,
+                         const Ogre::Vector3& origin = Ogre::Vector3 (0, 0, 0));
 
             ~ForeignCell();
 

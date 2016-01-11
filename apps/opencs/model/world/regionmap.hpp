@@ -27,7 +27,8 @@ namespace CSMWorld
             enum Role
             {
                 Role_Region = Qt::UserRole,
-                Role_CellId = Qt::UserRole+1
+                Role_CellId = Qt::UserRole+1,
+                Role_WorldId = Qt::UserRole+2
             };
 
         private:

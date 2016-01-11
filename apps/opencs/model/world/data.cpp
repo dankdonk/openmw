@@ -1256,9 +1256,17 @@ QAbstractItemModel *CSMWorld::Data::getTableModel (const CSMWorld::UniversalId& 
         }
         else if (id.getType()==UniversalId::Type_ForeignRegionMap)
         {
-            CSMForeign::RegionMap *table = 0;
-            addModel (table = new CSMForeign::RegionMap (*this, id.getId()), UniversalId::Type_ForeignRegionMap, false);
-            return table;
+            std::map<std::string, QAbstractItemModel *>::iterator it = mRegionMapIndex.find (id.getId());
+
+            if (it != mRegionMapIndex.end())
+                return it->second;
+
+            // don't add to the model map, since each regionmap model may be different, keep a separate map
+            CSMForeign::RegionMap *model = new CSMForeign::RegionMap (*this, id.getId());
+            mModels.push_back (model);
+            mRegionMapIndex.insert (std::make_pair (id.getId(), model));
+
+            return model;
         }
         throw std::logic_error ("No table model available for " + id.toString());
     }

@@ -6,6 +6,8 @@
 #include <OgreSceneNode.h>
 #include <OgreEntity.h>
 
+#include <QRegExp>
+
 #include "../../model/world/data.hpp"
 #include "../../model/world/ref.hpp"
 #include "../../model/world/refidcollection.hpp"
@@ -149,13 +151,20 @@ void CSVRender::ForeignObject::update()
                     int treeIndex = trees.searchId(ESM4::formIdToString(baseObj));
                     if (treeIndex != -1)
                     {
-                        //model = "_DoD_flora_tree_b_1.NIF";
-                        //model = "J_W\\JW_TREE_A2.NIF";
-                        //model = "plants\\floraflaxyellow.nif";
-                        model = "f\\flora_bush_01.nif";
                         std::string realModel = trees.getData (treeIndex,
                                trees.findColumnIndex (CSMWorld::Columns::ColumnId_Model)).toString().toUtf8().constData();
-                        std::cout << "obj is an tree obj " << ESM4::formIdToString(baseObj) << ", " << realModel << std::endl;
+                        //model = "_DoD_flora_tree_b_1.NIF";
+                        //model = "J_W\\JW_TREE_A2.NIF";
+                        if (QString(realModel.c_str()).contains(QRegExp("Tree", Qt::CaseInsensitive)))
+                            model = "f\\flora_tree_01.nif";
+                        else if (QString(realModel.c_str()).contains(QRegExp("Shrub", Qt::CaseInsensitive)))
+                            model = "f\\flora_bush_01.nif";
+                        else
+                        {
+                            model = "plants\\floraflaxyellow.nif";
+                            std::cout << "obj is an tree obj " << ESM4::formIdToString(baseObj)
+                                      << ", " << realModel << std::endl;
+                        }
 
                         if (model.empty())
                             error = 2;
@@ -169,13 +178,16 @@ void CSVRender::ForeignObject::update()
                         {
                             model = lights.getData (lightIndex,
                                    lights.findColumnIndex (CSMWorld::Columns::ColumnId_Model)).toString().toUtf8().constData();
-                            //std::cout << "obj is an light obj " << ESM4::formIdToString(baseObj) << ", " << model << std::endl;
+                            std::cout << "obj is an light obj " << ESM4::formIdToString(baseObj) << ", " << model << std::endl;
 
                             if (model.empty())
                                 error = 2;
                             else
                                 error = 0;
                         }
+                        else
+                            std::cout << "obj not static/anio/misc/acti/container/whatever "
+                                      << ESM4::formIdToString(baseObj) << std::endl;
                     }
                 }
             }

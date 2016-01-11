@@ -24,7 +24,7 @@ CSMForeign::LandCollection::~LandCollection ()
 
 // Can't reliably use cell grid as the id for LAND, since some cells can be "empty" or do not
 // have an XCLC sub-record. e.g. OblivionMQKvatchBridge, TheFrostFireGlade and CheydinhalOblivion
-int CSMForeign::LandCollection::load(ESM4::Reader& reader, bool base)
+int CSMForeign::LandCollection::load (ESM4::Reader& reader, bool base)
 {
     CSMForeign::Land record;
 

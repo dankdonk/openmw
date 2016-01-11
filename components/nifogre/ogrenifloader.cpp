@@ -721,7 +721,7 @@ private:
 
             fullname = name+"@index="+Ogre::StringConverter::toString(recIndex);
             if(strips->name.length() > 0)
-                fullname += "@strips="+strips->name;
+                fullname += "@shape="+strips->name; // FIXME: is this for filtering?
             isStrips = true;
         }
         else
@@ -840,7 +840,7 @@ private:
                     Ogre::ControllerFunctionRealPtr func(function);
                     scene->mControllers.push_back(Ogre::Controller<Ogre::Real>(srcval, dstval, func));
                 }
-                else if (ctrls->nifVer <= 0x0a010000 && ctrls->recType == Nif::RC_NiMaterialColorController) // FIXME: interpolator not yet implemented
+                else if (ctrls->nifVer <= 0x0a010000 && ctrls->recType == Nif::RC_NiMaterialColorController) // FIXME: interpolator not yet implemented for newer nif versions
                 {
                     const Nif::NiMaterialColorController *matCtrl = static_cast<const Nif::NiMaterialColorController*>(ctrls.getPtr());
                     Ogre::ControllerValueRealPtr dstval(OGRE_NEW MaterialColorController::Value(movable, matCtrl->data.getPtr(), &scene->mMaterialControllerMgr));

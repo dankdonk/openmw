@@ -167,7 +167,7 @@ struct NiNode : Node
         // Discard tranformations for the root node, otherwise some meshes
         // occasionally get wrong orientation. Only for NiNode-s for now, but
         // can be expanded if needed.
-        if (0 == recIndex)
+        if (0 == recIndex && nifVer <= 0x04010000) // FIXME experiment
         {
             if (static_cast<Nif::Node*>(this)->trafo.rotation != Nif::Transformation::getIdentity().rotation)
                 std::cout << "Non-identity rotation: " << this->name << ", ver " << std::hex << nifVer << std::endl;
@@ -585,6 +585,26 @@ public:
     }
 };
 
+class bhkTransformShape : public bhkShape
+{
+public:
+    bhkShapePtr shape;
+    unsigned int material;
+    //unsigned int materialSkyrim;
+    Transformation transform;
+
+    void read(NIFStream *nif)
+    {
+        shape.read(nif);
+        material = nif->getUInt();
+        //materialSkyrim = nif->getUInt();  // not sure if this is version dependent
+        nif->getFloat(); // unknown
+        for (int i = 0; i < 8; ++i)
+            nif->getChar(); // unknown
+        transform = nif->getTrafo();
+    }
+};
+
 class bhkCapsuleShape : public bhkShape
 {
 public:
@@ -694,6 +714,48 @@ public:
             entities[0].read(nif);
         }
         priority = nif->getUInt();
+    }
+};
+
+// FIXME: not correct from 20.2.0.7 (i.e. Skyrim)
+struct RagdollDescriptor
+{
+    Ogre::Vector4 pivotA;
+    Ogre::Vector4 planeA;
+    Ogre::Vector4 twistA;
+    Ogre::Vector4 pivotB;
+    Ogre::Vector4 planeB;
+    Ogre::Vector4 twistB;
+    float coneMaxAngle;
+    float planeMinAngle;
+    float planeMaxAngle;
+    float twistMinAngle;
+    float twistMaxAngle;
+    float maxFriction;
+};
+
+class bhkRagdollConstraint : public bhkConstraint
+{
+public:
+    RagdollDescriptor ragdoll;
+
+    void read(NIFStream *nif)
+    {
+        bhkConstraint::read(nif);
+
+        ragdoll.pivotA = nif->getVector4();
+        ragdoll.planeA = nif->getVector4();
+        ragdoll.twistA = nif->getVector4();
+        ragdoll.planeB = nif->getVector4();
+        ragdoll.pivotB = nif->getVector4();
+        ragdoll.twistB = nif->getVector4();
+
+        ragdoll.coneMaxAngle = nif->getFloat();
+        ragdoll.planeMinAngle = nif->getFloat();
+        ragdoll.planeMaxAngle = nif->getFloat();
+        ragdoll.twistMinAngle = nif->getFloat();
+        ragdoll.twistMaxAngle = nif->getFloat();
+        ragdoll.maxFriction = nif->getFloat();
     }
 };
 

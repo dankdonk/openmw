@@ -127,8 +127,9 @@ bool CSVRender::ForeignCell::addObjects (const std::vector<ESM4::FormId>& object
 }
 
 CSVRender::ForeignCell::ForeignCell (CSMDoc::Document& document, Ogre::SceneManager *sceneManager,
-    ESM4::FormId id, boost::shared_ptr<CSVWorld::PhysicsSystem> physics, const Ogre::Vector3& origin)
-: mDocument (document), mFormId (id)
+    ESM4::FormId id, ESM4::FormId world, boost::shared_ptr<CSVWorld::PhysicsSystem> physics,
+    const Ogre::Vector3& origin)
+: mDocument (document), mFormId (id), mWorld(world)
 , mProxyModel(0), mModel(0), mPgIndex(-1)//, mHandler(new CSMWorld::SignalHandler(this))
 , mPhysics(physics), mSceneMgr(sceneManager), mX(0), mY(0)
 {
@@ -268,7 +269,7 @@ bool CSVRender::ForeignCell::referenceDataChanged (const QModelIndex& topLeft,
         int y = 0;
         stream >> ignore >> x >> y;
 
-        std::uint32_t formId = cells.searchFormId (x, y); // FIXME: assumes Tamriel
+        std::uint32_t formId = cells.searchFormId (x, y, mWorld);
 
         // check if the cell matches for this foreign reference
         if (formId == mFormId)

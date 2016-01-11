@@ -150,8 +150,13 @@ enum RecordType
   RC_NiPSysDragModifier,
   RC_NiPSysGravityStrengthCtlr,
   RC_NiBoolTimelineInterpolator,
+  RC_BSParentVelocityModifier,
   RC_NiPSysEmitter,
   RC_NiPSysMeshEmitter,
+  RC_bhkRagdollConstraint,
+  RC_NiPSysEmitterSpeedCtlr,
+  RC_NiTextureTransformController,
+  RC_bhkTransformShape,
   RC_RootCollisionNode
 };
 /// Base class for all records

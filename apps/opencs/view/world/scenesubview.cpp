@@ -192,6 +192,7 @@ void CSVWorld::SceneSubView::cellSelectionChanged (const CSMWorld::UniversalId& 
     emit updateTitle();
 }
 
+// FIXME: this needs update for foreign cells
 void CSVWorld::SceneSubView::cellSelectionChanged (const CSMWorld::CellSelection& selection)
 {
     setUniversalId(CSMWorld::UniversalId(CSMWorld::UniversalId::Type_Scene, "sys::default"));

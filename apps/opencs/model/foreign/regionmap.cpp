@@ -20,8 +20,8 @@ CSMForeign::RegionMap::CellDescription::CellDescription (const CSMWorld::Record<
 {
     const Cell& cell2 = cell.get();
 
-    if (cell2.mWorld != "Tamriel") // FIXME: make this configurable
-        throw std::logic_error ("Interior cell in region map");
+    //if (cell2.mWorld != "Tamriel") // FIXME: make this configurable
+        //throw std::logic_error ("Interior cell in region map");
 
     mDeleted = cell.isDeleted();
 
@@ -82,7 +82,8 @@ void CSMForeign::RegionMap::buildMap()
 
         const Cell& cell2 = cell.get();
 
-        if (cell2.mWorld == "Tamriel") // FIXME: make this configurable
+        if (ESM4::formIdToString(cell2.mParent) == mWorld)
+        //if (cell2.mWorld == "Tamriel") // FIXME: make this configurable
         {
             CellDescription description (cell);
 
@@ -203,7 +204,8 @@ void CSMForeign::RegionMap::addCells (int start, int end)
 
         const Cell& cell2 = cell.get();
 
-        if (cell2.mWorld == "Tamriel") // FIXME: make this configurable
+        if (ESM4::formIdToString(cell2.mParent) == mWorld)
+        //if (cell2.mWorld == "Tamriel") // FIXME: make this configurable
         {
             CSMWorld::CellCoordinates index = getIndex (cell2);
 
@@ -325,7 +327,8 @@ std::pair<CSMWorld::CellCoordinates, CSMWorld::CellCoordinates> CSMForeign::Regi
 
         const Cell& cell2 = cell.get();
 
-        if (cell2.mWorld == "Tamriel") // FIXME: make this configurable
+        if (ESM4::formIdToString(cell2.mParent) == mWorld)
+        //if (cell2.mWorld == "Tamriel") // FIXME: make this configurable
         {
             CSMWorld::CellCoordinates index = getIndex (cell2);
 
@@ -354,7 +357,6 @@ std::pair<CSMWorld::CellCoordinates, CSMWorld::CellCoordinates> CSMForeign::Regi
 
 CSMForeign::RegionMap::RegionMap (CSMWorld::Data& data, const std::string& world) : mData (data), mWorld(world)
 {
-    std::cout << world << std::endl;
     buildRegions();
     buildMap();
 
@@ -497,6 +499,11 @@ QVariant CSMForeign::RegionMap::data (const QModelIndex& index, int role) const
         return QString::fromUtf8 (stream.str().c_str());
     }
 
+    if (role==CSMWorld::RegionMap::Role_WorldId)
+    {
+        return QString::fromUtf8 (mWorld.c_str());
+    }
+
     return QVariant();
 }
 
@@ -578,7 +585,8 @@ void CSMForeign::RegionMap::cellsAboutToBeRemoved (const QModelIndex& parent, in
 
         const Cell& cell2 = cell.get();
 
-        if (cell2.mWorld == "Tamriel") // FIXME: make this configurable
+        if (ESM4::formIdToString(cell2.mParent) == mWorld)
+        //if (cell2.mWorld == "Tamriel") // FIXME: make this configurable
             removeCell (getIndex (cell2));
     }
 }

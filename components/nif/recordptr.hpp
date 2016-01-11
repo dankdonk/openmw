@@ -152,6 +152,7 @@ class NiStringPalette;
 class NiBoolData;
 class NiPSysSpawnModifier;
 class NiSkinPartition;
+class NiGeometry;
 
 typedef RecordPtrT<Node> NodePtr;
 typedef RecordPtrT<Extra> ExtraPtr;
@@ -192,6 +193,7 @@ typedef RecordPtrT<NiStringPalette> NiStringPalettePtr;
 typedef RecordPtrT<NiBoolData> NiBoolDataPtr;
 typedef RecordPtrT<NiPSysSpawnModifier> NiPSysSpawnModifierPtr;
 typedef RecordPtrT<NiSkinPartition> NiSkinPartitionPtr;
+typedef RecordPtrT<NiGeometry> NiGeometryPtr;
 
 typedef RecordListT<Node> NodeList;
 typedef RecordListT<Extra> ExtraList;

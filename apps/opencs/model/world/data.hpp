@@ -143,6 +143,7 @@ namespace CSMWorld
             const ResourcesManager& mResourcesManager;
             std::vector<QAbstractItemModel *> mModels;
             std::map<UniversalId::Type, QAbstractItemModel *> mModelIndex;
+            std::map<std::string, QAbstractItemModel *> mRegionMapIndex;
             ESM::ESMReader *mReader;
             const ESM::Dialogue *mDialogue; // last loaded dialogue
             bool mBase;
