@@ -6,6 +6,16 @@
 #include <components/esm/records.hpp>
 #include "store.hpp"
 
+namespace ESM
+{
+    class ESM4Reader;
+}
+
+namespace ESM4
+{
+    union RecordHeader;
+}
+
 namespace Loading
 {
     class Listener;
@@ -72,6 +82,9 @@ namespace MWWorld
         ESM::NPC mPlayerTemplate;
 
         unsigned int mDynamicCount;
+
+        void loadTes4Group (ESM::ESMReader &esm);
+        void loadTes4Record (ESM::ESMReader &esm, const ESM4::RecordHeader& hdr);
 
     public:
         /// \todo replace with SharedIterator<StoreBase>

@@ -87,8 +87,8 @@ public:
   void setIndex(const int index) {mIdx = index; mCtx.index = index;}
   int getIndex() {return mIdx;}
 
-  void setGlobalReaderList(std::vector<ESMReader> *list) {mGlobalReaderList = list;}
-  std::vector<ESMReader> *getGlobalReaderList() {return mGlobalReaderList;}
+  void setGlobalReaderList(std::vector<ESMReader*> *list) {mGlobalReaderList = list;}
+  std::vector<ESMReader*> *getGlobalReaderList() {return mGlobalReaderList;}
 
   /*************************************************************************
    *
@@ -300,7 +300,7 @@ private:
   // Buffer for ESM strings
   std::vector<char> mBuffer;
 
-  std::vector<ESMReader> *mGlobalReaderList;
+  std::vector<ESMReader*> *mGlobalReaderList;
   ToUTF8::Utf8Encoder* mEncoder;
 
 protected:

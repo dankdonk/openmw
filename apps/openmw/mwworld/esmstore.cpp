@@ -5,10 +5,13 @@
 
 #include <boost/filesystem/operations.hpp>
 
+#include <extern/esm4/common.hpp>
+
 #include <components/loadinglistener/loadinglistener.hpp>
 
 #include <components/esm/esmreader.hpp>
 #include <components/esm/esmwriter.hpp>
+#include <components/esm/esm4reader.hpp>
 
 namespace MWWorld
 {
@@ -27,30 +30,36 @@ static bool isCacheableRecord(int id)
     return false;
 }
 
+// FIXME: Foreign:
+// This section is similar to 2nd half of CSMWorld::Data::startLoading() and CSMWorld::Data::continueLoading()
 void ESMStore::load(ESM::ESMReader &esm, Loading::Listener* listener)
 {
     listener->setProgressRange(1000);
 
     ESM::Dialogue *dialogue = 0;
 
-    // Land texture loading needs to use a separate internal store for each plugin.
-    // We set the number of plugins here to avoid continual resizes during loading,
-    // and so we can properly verify if valid plugin indices are being passed to the
-    // LandTexture Store retrieval methods.
-    mLandTextures.resize(esm.getGlobalReaderList()->size());
+    if (esm.getVer() != ESM::VER_080 // TES4
+            && esm.getVer() != ESM::VER_094 && esm.getVer() != ESM::VER_17) // TES5
+    {
+        // Land texture loading needs to use a separate internal store for each plugin.
+        // We set the number of plugins here to avoid continual resizes during loading,
+        // and so we can properly verify if valid plugin indices are being passed to the
+        // LandTexture Store retrieval methods.
+        mLandTextures.resize(esm.getGlobalReaderList()->size());
+    }
 
     /// \todo Move this to somewhere else. ESMReader?
     // Cache parent esX files by tracking their indices in the global list of
     //  all files/readers used by the engine. This will greaty accelerate
     //  refnumber mangling, as required for handling moved references.
     const std::vector<ESM::Header::MasterData> &masters = esm.getGameFiles();
-    std::vector<ESM::ESMReader> *allPlugins = esm.getGlobalReaderList();
+    std::vector<ESM::ESMReader*> *allPlugins = esm.getGlobalReaderList();
     for (size_t j = 0; j < masters.size(); j++) {
         ESM::Header::MasterData &mast = const_cast<ESM::Header::MasterData&>(masters[j]);
         std::string fname = mast.name;
         int index = ~0;
         for (int i = 0; i < esm.getIndex(); i++) {
-            const std::string &candidate = allPlugins->at(i).getContext().filename;
+            const std::string &candidate = allPlugins->at(i)->getContext().filename;
             std::string fnamecandidate = boost::filesystem::path(candidate).filename().string();
             if (Misc::StringUtils::ciEqual(fname, fnamecandidate)) {
                 index = i;
@@ -67,9 +76,20 @@ void ESMStore::load(ESM::ESMReader &esm, Loading::Listener* listener)
         mast.index = index;
     }
 
+    if (esm.getVer() == ESM::VER_080 // TES4
+            || esm.getVer() == ESM::VER_094 || esm.getVer() == ESM::VER_17) // TES5
+        static_cast<ESM::ESM4Reader*>(&esm)->reader().checkGroupStatus();
+
     // Loop through all records
     while(esm.hasMoreRecs())
     {
+        if (esm.getVer() == ESM::VER_080 // TES4
+                || esm.getVer() == ESM::VER_094 || esm.getVer() == ESM::VER_17) // TES5
+        {
+            loadTes4Group(esm);
+            continue; // FIXME: skip progress bar for now
+        }
+
         ESM::NAME n = esm.getRecName();
         esm.getRecHeader();
 
@@ -118,6 +138,125 @@ void ESMStore::load(ESM::ESMReader &esm, Loading::Listener* listener)
         }
         listener->setProgress(static_cast<size_t>(esm.getFileOffset() / (float)esm.getFileSize() * 1000));
     }
+}
+
+void ESMStore::loadTes4Group (ESM::ESMReader &esm)
+{
+    ESM4::Reader& reader = static_cast<ESM::ESM4Reader*>(&esm)->reader();
+
+    reader.getRecordHeader();
+    const ESM4::RecordHeader& hdr = reader.hdr();
+
+    if (hdr.record.typeId != ESM4::REC_GRUP)
+        return loadTes4Record(esm, hdr);
+
+    switch (hdr.group.type)
+    {
+        case ESM4::Grp_RecordType:
+        {
+            // FIXME: rewrite to workaround reliability issue
+            if (0)//hdr.group.label.value == ESM4::REC_NAVI || hdr.group.label.value == ESM4::REC_WRLD ||
+                  //hdr.group.label.value == ESM4::REC_REGN || hdr.group.label.value == ESM4::REC_STAT ||
+                  //hdr.group.label.value == ESM4::REC_ANIO || hdr.group.label.value == ESM4::REC_CONT ||
+                  //hdr.group.label.value == ESM4::REC_MISC || hdr.group.label.value == ESM4::REC_ACTI ||
+                  //hdr.group.label.value == ESM4::REC_ARMO || hdr.group.label.value == ESM4::REC_NPC_ ||
+                  //hdr.group.label.value == ESM4::REC_FLOR || hdr.group.label.value == ESM4::REC_GRAS ||
+                  //hdr.group.label.value == ESM4::REC_TREE || hdr.group.label.value == ESM4::REC_LIGH ||
+                  //hdr.group.label.value == ESM4::REC_BOOK || hdr.group.label.value == ESM4::REC_FURN ||
+                  //hdr.group.label.value == ESM4::REC_SOUN || hdr.group.label.value == ESM4::REC_WEAP ||
+                  //hdr.group.label.value == ESM4::REC_CELL || hdr.group.label.value == ESM4::REC_LTEX)
+            {
+                // NOTE: The label field of a group is not reliable.  See:
+                // http://www.uesp.net/wiki/Tes4Mod:Mod_File_Format
+                //
+                // Workaround by getting the record header and checking its typeId
+                reader.saveGroupStatus(hdr);
+                loadTes4Group(esm);
+            }
+            else
+            {
+                // Skip groups that are of no interest.
+                // FIXME: The label field of a group is not reliable, so we will need to check
+                // here as well
+                //std::cout << "skipping group..." << std::endl; // FIXME
+                reader.skipGroup();
+                return;
+            }
+
+            break;
+        }
+        case ESM4::Grp_WorldChild:
+        case ESM4::Grp_ExteriorCell:
+        case ESM4::Grp_ExteriorSubCell:
+        case ESM4::Grp_InteriorCell:
+        case ESM4::Grp_InteriorSubCell:
+        case ESM4::Grp_CellChild:
+        case ESM4::Grp_TopicChild:
+        case ESM4::Grp_CellPersistentChild:
+        case ESM4::Grp_CellTemporaryChild:
+        case ESM4::Grp_CellVisibleDistChild:
+        {
+            reader.saveGroupStatus(hdr);
+            loadTes4Group(esm);
+
+            break;
+        }
+        default:
+            //std::cout << "unknown group..." << std::endl; // FIXME
+            break;
+    }
+
+    return;
+}
+
+void ESMStore::loadTes4Record (ESM::ESMReader &esm, const ESM4::RecordHeader& hdr)
+{
+    ESM4::Reader& reader = static_cast<ESM::ESM4Reader*>(&esm)->reader();
+
+    switch (hdr.record.typeId)
+    {
+        case ESM4::REC_CELL:
+        case ESM4::REC_NAVM:
+        case ESM4::REC_NAVI:
+        case ESM4::REC_WRLD:
+        case ESM4::REC_REGN:
+        case ESM4::REC_LAND:
+        case ESM4::REC_LTEX:
+        case ESM4::REC_STAT:
+        case ESM4::REC_ANIO:
+        case ESM4::REC_CONT:
+        case ESM4::REC_MISC:
+        case ESM4::REC_ACTI:
+        case ESM4::REC_ARMO:
+        case ESM4::REC_NPC_:
+        case ESM4::REC_FLOR:
+        case ESM4::REC_GRAS:
+        case ESM4::REC_TREE:
+        case ESM4::REC_LIGH:
+        case ESM4::REC_BOOK:
+        case ESM4::REC_FURN:
+        case ESM4::REC_SOUN:
+        case ESM4::REC_WEAP:
+        case ESM4::REC_ACHR:
+        case ESM4::REC_REFR:
+        case ESM4::REC_PHZD:
+        case ESM4::REC_PGRE:
+        case ESM4::REC_PGRD:
+        case ESM4::REC_ACRE:
+        case ESM4::REC_ROAD:
+        {
+            //std::cout << ESM4::printName(hdr.record.typeId) << " skipping..." << std::endl;
+            reader.skipRecordData();
+            break;
+        }
+        default:
+        {
+            std::cout << "Unsupported TES4 record type: " + ESM4::printName(hdr.record.typeId) << std::endl;
+            reader.skipRecordData();
+        }
+    }
+
+    return;
 }
 
 void ESMStore::setUp()

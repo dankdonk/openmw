@@ -16,7 +16,7 @@ namespace ESM
 
     public:
 
-        ESM4Reader(bool oldHeader);
+        ESM4Reader(bool oldHeader = true);
         virtual ~ESM4Reader();
 
         ESM4::Reader& reader() { return mReader; }
