@@ -33,8 +33,8 @@
 #include "reader.hpp"
 //#include "writer.hpp"
 
-ESM4::Cell::Cell() : mCellFlags(0), mOwner(0), mGlobal(0), mClimate(0), mWater(0),
-                     mWaterHeight(0.f), mLandTemporary(0)
+ESM4::Cell::Cell() : mCellFlags(0), mX(0), mY(0), mOwner(0), mGlobal(0), mClimate(0),
+                     mWater(0), mWaterHeight(0.f), mLandTemporary(0)
 {
     mEditorId.clear();
     mFullName.clear();
@@ -101,17 +101,15 @@ void ESM4::Cell::load(ESM4::Reader& reader)
                 //        0x2 - Force Hide Land Quad 2
                 //        0x4 - Force Hide Land Quad 3
                 //        0x8 - Force Hide Land Quad 4
-                int32_t x;
-                int32_t y;
                 uint32_t flags;
-                reader.get(x);
-                reader.get(y);
+                reader.get(mX);
+                reader.get(mY);
 #if 0
                 std::string padding = "";
                 padding.insert(0, reader.stackSize()*2, ' ');
                 std::cout << padding << "CELL group " << ESM4::printLabel(reader.grp().label, reader.grp().type) << std::endl;
                 std::cout << padding << "CELL formId " << std::hex << reader.hdr().record.id << std::endl;
-                std::cout << padding << "CELL X " << std::dec << x << ", Y " << y << std::endl;
+                std::cout << padding << "CELL X " << std::dec << mX << ", Y " << mY << std::endl;
 #endif
                 if (reader.esmVersion() == ESM4::VER_094 || reader.esmVersion() == ESM4::VER_170)
                     reader.get(flags); // not in Obvlivion
@@ -119,8 +117,8 @@ void ESM4::Cell::load(ESM4::Reader& reader)
                 // Remember cell grid for later (loading LAND, NAVM which should be CELL temporary children)
                 // Note that grids only apply for external cells.  For interior cells use the cell's formid.
                 ESM4::CellGrid currCell;
-                currCell.grid.x = (int16_t)x;
-                currCell.grid.y = (int16_t)y;
+                currCell.grid.x = (int16_t)mX;
+                currCell.grid.y = (int16_t)mY;
                 reader.setCurrCell(currCell);
                 break;
             }

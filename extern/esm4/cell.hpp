@@ -59,6 +59,9 @@ namespace ESM4
         std::string mFullName;
         std::uint16_t mCellFlags; // TES5 can also be 8 bits
 
+        std::int32_t mX;
+        std::int32_t mY;
+
         FormId mOwner;
         FormId mGlobal;
         FormId mClimate;

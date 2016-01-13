@@ -71,11 +71,16 @@ void CSMForeign::RegionMap::buildRegions()
 
 void CSMForeign::RegionMap::buildMap()
 {
+    const WorldCollection& worlds = mData.getForeignWorlds();
+    const World& world = worlds.getRecord(worlds.searchId(mWorld)).get();
+
     const CellCollection& cells = mData.getForeignCells();
     const RegionCollection& regions = mData.getForeignRegions();
 
     int size = cells.getSize();
 
+    std::cout << "min x " << world.mMinX/4096 << ", y " << world.mMinY/4096 << std::endl;
+    std::cout << "max x " << world.mMaxX/4096 << ", y " << world.mMaxY/4096 << std::endl;
     for (int i=0; i < size; ++i)
     {
         const CSMWorld::Record<Cell>& cell = cells.getRecord (i);
@@ -83,6 +88,12 @@ void CSMForeign::RegionMap::buildMap()
         const Cell& cell2 = cell.get();
 
         if (ESM4::formIdToString(cell2.mParent) == mWorld)
+#if 0
+                && (world.mMinX == 0 ? true : cell2.mX >= world.mMinX)
+                && (world.mMaxX == 0 ? true : cell2.mX <= world.mMaxX)
+                && (world.mMinY == 0 ? true : cell2.mY >= world.mMinY)
+                && (world.mMaxY == 0 ? true : cell2.mY <= world.mMaxY))
+#endif
         //if (cell2.mWorld == "Tamriel") // FIXME: make this configurable
         {
             CellDescription description (cell);

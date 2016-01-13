@@ -14,6 +14,7 @@
 #include "../filter/filterbox.hpp"
 
 #include "../render/foreignworldspacewidget.hpp"
+#include "../render/foreigninteriorwidget.hpp"
 #include "../render/pagedworldspacewidget.hpp"
 #include "../render/unpagedworldspacewidget.hpp"
 
@@ -43,6 +44,16 @@ CSVWorld::SceneSubView::SceneSubView (const CSMWorld::UniversalId& id, CSMDoc::D
         whatWidget = widget_Paged;
 
         CSVRender::ForeignWorldspaceWidget *newWidget = new CSVRender::ForeignWorldspaceWidget (this, document);
+
+        worldspaceWidget = newWidget;
+
+        makeConnections(newWidget);
+    }
+    else if (id.getId() == "sys::foreignInterior")
+    {
+        whatWidget = widget_Unpaged;
+
+        CSVRender::ForeignInteriorWidget *newWidget = new CSVRender::ForeignInteriorWidget (id.getId(), document, this);
 
         worldspaceWidget = newWidget;
 
@@ -84,15 +95,15 @@ CSVWorld::SceneSubView::SceneSubView (const CSMWorld::UniversalId& id, CSMDoc::D
     setWidget (widget);
 }
 
-void CSVWorld::SceneSubView::makeConnections (CSVRender::UnpagedWorldspaceWidget* widget)
+void CSVWorld::SceneSubView::makeConnections (CSVRender::ForeignInteriorWidget* widget)
 {
     connect (widget, SIGNAL (closeRequest()), this, SLOT (closeRequest()));
 
     connect(widget, SIGNAL(dataDropped(const std::vector<CSMWorld::UniversalId>&)),
             this, SLOT(handleDrop(const std::vector<CSMWorld::UniversalId>&)));
 
-    connect(widget, SIGNAL(cellChanged(const CSMWorld::UniversalId&)),
-            this, SLOT(cellSelectionChanged(const CSMWorld::UniversalId&)));
+    connect (widget, SIGNAL (cellSelectionChanged (const CSMWorld::CellSelection&)),
+             this, SLOT (cellSelectionChanged (const CSMWorld::CellSelection&)));
 }
 
 void CSVWorld::SceneSubView::makeConnections (CSVRender::ForeignWorldspaceWidget* widget)
@@ -104,6 +115,17 @@ void CSVWorld::SceneSubView::makeConnections (CSVRender::ForeignWorldspaceWidget
 
     connect (widget, SIGNAL (cellSelectionChanged (const CSMWorld::CellSelection&)),
              this, SLOT (cellSelectionChanged (const CSMWorld::CellSelection&)));
+}
+
+void CSVWorld::SceneSubView::makeConnections (CSVRender::UnpagedWorldspaceWidget* widget)
+{
+    connect (widget, SIGNAL (closeRequest()), this, SLOT (closeRequest()));
+
+    connect(widget, SIGNAL(dataDropped(const std::vector<CSMWorld::UniversalId>&)),
+            this, SLOT(handleDrop(const std::vector<CSMWorld::UniversalId>&)));
+
+    connect(widget, SIGNAL(cellChanged(const CSMWorld::UniversalId&)),
+            this, SLOT(cellSelectionChanged(const CSMWorld::UniversalId&)));
 }
 
 void CSVWorld::SceneSubView::makeConnections (CSVRender::PagedWorldspaceWidget* widget)

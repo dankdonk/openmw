@@ -37,20 +37,20 @@ ESM4Terrain::Land::~Land()
 //       heightmap[c, r] = offset + row_offset;
 //   }
 
-
 void ESM4Terrain::Land::load(ESM4::Reader& reader)
 {
     ESM4::Land::load(reader);
 
     mLandData.mHeightOffset = mHeightMap.heightOffset;
+    float rowOffset = mHeightMap.heightOffset;
 
     for (int y = 0; y < ESM4::Land::VERTS_PER_SIDE; y++)
     {
-        mLandData.mHeightOffset += mHeightMap.gradientData[y * ESM4::Land::VERTS_PER_SIDE];
+        rowOffset += mHeightMap.gradientData[y * ESM4::Land::VERTS_PER_SIDE];
 
-        mLandData.mHeights[y * ESM4::Land::VERTS_PER_SIDE] = mLandData.mHeightOffset * ESM4::Land::HEIGHT_SCALE;
+        mLandData.mHeights[y * ESM4::Land::VERTS_PER_SIDE] = rowOffset * ESM4::Land::HEIGHT_SCALE;
 
-        float colOffset = mLandData.mHeightOffset;
+        float colOffset = rowOffset;
         for (int x = 1; x < ESM4::Land::VERTS_PER_SIDE; x++)
         {
             colOffset += mHeightMap.gradientData[y * ESM4::Land::VERTS_PER_SIDE + x];

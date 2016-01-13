@@ -20,8 +20,8 @@
   cc9cii cc9c@iinet.net.au
 
 */
-#ifndef ESM4_ARMO_H
-#define ESM4_ARMO_H
+#ifndef ESM4_CLOT_H
+#define ESM4_CLOT_H
 
 #include <string>
 #include <cstdint>
@@ -32,7 +32,7 @@ namespace ESM4
     class Writer;
     typedef std::uint32_t FormId;
 
-    struct Armor
+    struct Clothing
     {
         enum Flags
         {
@@ -63,9 +63,7 @@ namespace ESM4
 #pragma pack(push, 1)
         struct Data
         {
-            std::uint16_t armor;
-            std::uint32_t value;
-            std::uint32_t health;
+            std::uint32_t value;   // gold
             float         weight;
         };
 #pragma pack(pop)
@@ -76,18 +74,18 @@ namespace ESM4
         std::string mEditorId;
         std::string mFullName;
         std::string mModel;
-        std::string mIconMale;
-        std::string mIconFemale;
+        std::string mIconMale;   // inventory
+        std::string mIconFemale; // inventory
 
-        std::uint32_t mArmorFlags;
+        std::uint32_t mClothingFlags;
         FormId        mScript;
         std::uint16_t mEnchantmentPoints;
         FormId        mEnchantment;
 
         Data mData;
 
-        Armor();
-        ~Armor();
+        Clothing();
+        ~Clothing();
 
         void load(ESM4::Reader& reader);
         //void save(ESM4::Writer& reader) const;
@@ -96,4 +94,4 @@ namespace ESM4
     };
 }
 
-#endif // ESM4_ARMO_H
+#endif // ESM4_CLOT_H

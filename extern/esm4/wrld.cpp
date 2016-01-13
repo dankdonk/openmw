@@ -33,7 +33,8 @@
 #include "reader.hpp"
 //#include "writer.hpp"
 
-ESM4::World::World() : mSound(0)
+ESM4::World::World() : mParent(0), mWorldFlags(0), mClimate(0), mWater(0)
+                     , mMinX(0), mMinY(0), mMaxX(0), mMaxY(0), mSound(0)
 {
     mEditorId.clear();
     mFullName.clear();
@@ -105,13 +106,33 @@ void ESM4::World::load(ESM4::Reader& reader)
                     throw std::runtime_error ("WRLD ICON data read error");
                 break;
             }
+            case ESM4::SUB_CNAM:
+            {
+                reader.get(mClimate);
+                break;
+            }
+            case ESM4::SUB_NAM2:
+            {
+                reader.get(mWater);
+                break;
+            }
+            case ESM4::SUB_NAM0:
+            {
+                reader.get(mMinX);
+                reader.get(mMinY);
+                break;
+            }
+            case ESM4::SUB_NAM9:
+            {
+                reader.get(mMaxX);
+                reader.get(mMaxY);
+                break;
+            }
             case ESM4::SUB_RNAM: // multiple
             case ESM4::SUB_MHDT:
             case ESM4::SUB_LTMP:
             case ESM4::SUB_XEZN:
             case ESM4::SUB_XLCN:
-            case ESM4::SUB_CNAM:
-            case ESM4::SUB_NAM2:
             case ESM4::SUB_NAM3:
             case ESM4::SUB_NAM4:
             case ESM4::SUB_DNAM:
@@ -119,8 +140,6 @@ void ESM4::World::load(ESM4::Reader& reader)
             case ESM4::SUB_MNAM:
             case ESM4::SUB_NAMA:
             case ESM4::SUB_DATA:
-            case ESM4::SUB_NAM0:
-            case ESM4::SUB_NAM9:
             case ESM4::SUB_PNAM:
             case ESM4::SUB_ONAM:
             case ESM4::SUB_TNAM:

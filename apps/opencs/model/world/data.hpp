@@ -58,6 +58,10 @@
 #include "../foreign/furniture.hpp"
 #include "../foreign/sound.hpp"
 #include "../foreign/weapon.hpp"
+#include "../foreign/door.hpp"
+#include "../foreign/ammo.hpp"
+#include "../foreign/clothing.hpp"
+#include "../foreign/potion.hpp"
 
 #include "idcollection.hpp"
 #include "nestedidcollection.hpp"
@@ -143,6 +147,10 @@ namespace CSMWorld
             CSMForeign::IdCollection<CSMForeign::Furniture> mForeignFurnitures;
             CSMForeign::IdCollection<CSMForeign::Sound> mForeignSounds;
             CSMForeign::IdCollection<CSMForeign::Weapon> mForeignWeapons;
+            CSMForeign::IdCollection<CSMForeign::Door> mForeignDoors;
+            CSMForeign::IdCollection<CSMForeign::Ammo> mForeignAmmos;
+            CSMForeign::IdCollection<CSMForeign::Clothing> mForeignClothings;
+            CSMForeign::IdCollection<CSMForeign::Potion> mForeignPotions;
             //CSMForeign::RefIdCollection mForeignReferenceables;
             CSMForeign::RefCollection mForeignRefs;
             CSMForeign::CharCollection mForeignChars;
@@ -387,6 +395,22 @@ namespace CSMWorld
             const CSMForeign::IdCollection<CSMForeign::Weapon>& getForeignWeapons() const;
 
             CSMForeign::IdCollection<CSMForeign::Weapon>& getForeignWeapons();
+
+            const CSMForeign::IdCollection<CSMForeign::Door>& getForeignDoors() const;
+
+            CSMForeign::IdCollection<CSMForeign::Door>& getForeignDoors();
+
+            const CSMForeign::IdCollection<CSMForeign::Ammo>& getForeignAmmos() const;
+
+            CSMForeign::IdCollection<CSMForeign::Ammo>& getForeignAmmos();
+
+            const CSMForeign::IdCollection<CSMForeign::Clothing>& getForeignClothings() const;
+
+            CSMForeign::IdCollection<CSMForeign::Clothing>& getForeignClothings();
+
+            const CSMForeign::IdCollection<CSMForeign::Potion>& getForeignPotions() const;
+
+            CSMForeign::IdCollection<CSMForeign::Potion>& getForeignPotions();
 
             const CSMForeign::NavigationCollection& getNavigation() const;
 

@@ -157,6 +157,8 @@ enum RecordType
   RC_NiPSysEmitterSpeedCtlr,
   RC_NiTextureTransformController,
   RC_bhkTransformShape,
+  RC_BSFurnitureMarker,
+  RC_bhkPrismaticConstraint,
   RC_RootCollisionNode
 };
 /// Base class for all records

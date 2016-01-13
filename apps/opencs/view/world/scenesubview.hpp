@@ -21,6 +21,7 @@ namespace CSVRender
 {
     class WorldspaceWidget;
     class ForeignWorldspaceWidget;
+    class ForeignInteriorWidget;
     class PagedWorldspaceWidget;
     class UnpagedWorldspaceWidget;
 }
@@ -62,6 +63,8 @@ namespace CSVWorld
         private:
 
             void makeConnections(CSVRender::ForeignWorldspaceWidget* widget);
+
+            void makeConnections(CSVRender::ForeignInteriorWidget* widget);
 
             void makeConnections(CSVRender::PagedWorldspaceWidget* widget);
 

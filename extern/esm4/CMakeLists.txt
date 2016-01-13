@@ -27,6 +27,10 @@ set(ESM4_SOURCE_FILES
     furn.cpp
     soun.cpp
     weap.cpp
+    door.cpp
+    clot.cpp
+    alch.cpp
+    ammo.cpp
     reader.cpp
 )
 

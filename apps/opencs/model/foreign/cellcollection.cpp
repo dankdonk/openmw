@@ -137,6 +137,12 @@ int CSMForeign::CellCollection::load (ESM4::Reader& reader, bool base)
         assert((reader.grp().type == ESM4::Grp_ExteriorSubCell ||
                 reader.grp().type == ESM4::Grp_InteriorSubCell ||
                 reader.grp().type == ESM4::Grp_WorldChild) && "Unexpected group while loading cell");
+#if 0
+        if ((reader.grp().type != ESM4::Grp_ExteriorSubCell &&
+                reader.grp().type != ESM4::Grp_InteriorSubCell &&
+                reader.grp().type != ESM4::Grp_WorldChild))
+            std::cout << "unexpected group " << reader.grp().type << std::endl;
+#endif
 
         if (!record.mEditorId.empty()) // can't use Full Name since they are not unique
             record.mCellId = record.mEditorId; // FIXME: check if editor id's are uplicated

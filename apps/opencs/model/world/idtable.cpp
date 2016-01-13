@@ -222,13 +222,22 @@ void CSMWorld::IdTable::reorderRows (int baseIndex, const std::vector<int>& newO
                 index (baseIndex+newOrder.size()-1, mIdCollection->getColumns()-1));
 }
 
+// called from CSVWorld::Table::viewRecord() and other places
+//
+// FIXME: comments may be out of date
+// Can't really use Feature_ViewCell for TES4 cell records since they are not in the normal
+// cell table.  i.e. mIdCollection->searchColumnIndex (Columns::ColumnId_Cell) will fail
+// Hence we need to use something else like Feature_ViewForeignCell
 std::pair<CSMWorld::UniversalId, std::string> CSMWorld::IdTable::view (int row) const
 {
     std::string id;
     std::string hint;
 
-    if (getFeatures() & Feature_ViewCell)
+    if (getFeatures() & Feature_ViewCell) // mRefs and mForeignRefs have this feature
     {
+        // FIXME: duplicate comment
+        // Use cell column to generate view request (cell ID is transformed
+        // into worldspace and record ID is passed as hint with r: prefix).
         int cellColumn = mIdCollection->searchColumnIndex (Columns::ColumnId_Cell);
         int idColumn = mIdCollection->searchColumnIndex (Columns::ColumnId_Id);
 
@@ -238,8 +247,11 @@ std::pair<CSMWorld::UniversalId, std::string> CSMWorld::IdTable::view (int row) 
             hint = "r:" + std::string (mIdCollection->getData (row, idColumn).toString().toUtf8().constData());
         }
     }
-    else if (getFeatures() & Feature_ViewId)
+    else if (getFeatures() & Feature_ViewId) // mCells and mForeignCells have this feature
     {
+        // FIXME: duplicate comment
+        // Use ID column to generate view request (ID is transformed into
+        // worldspace and original ID is passed as hint with c: prefix).
         int column = mIdCollection->searchColumnIndex (Columns::ColumnId_Id);
 
         if (column!=-1)
@@ -258,6 +270,7 @@ std::pair<CSMWorld::UniversalId, std::string> CSMWorld::IdTable::view (int row) 
             hint = id;
 
             // FIXME: need a new univeral id type for displaying a subset of cells belonging to a world
+            // FIXME: shouldn't hard-code Type_ForeignCells here
             if (id.empty())
                 return std::make_pair (UniversalId::Type_None, "");
             else
@@ -270,6 +283,8 @@ std::pair<CSMWorld::UniversalId, std::string> CSMWorld::IdTable::view (int row) 
 
     if (id[0]=='#')
         id = "sys::default";
+    else
+        id = "sys::foreignInterior"; // see CSVWorld::SceneSubView
 
     return std::make_pair (UniversalId (UniversalId::Type_Scene, id), hint);
 }

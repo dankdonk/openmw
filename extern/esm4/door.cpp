@@ -20,7 +20,7 @@
   cc9cii cc9c@iinet.net.au
 
 */
-#include "armo.hpp"
+#include "door.hpp"
 
 #include <cassert>
 #include <stdexcept>
@@ -32,25 +32,19 @@
 #include "reader.hpp"
 //#include "writer.hpp"
 
-ESM4::Armor::Armor() : mArmorFlags(0)
+ESM4::Door::Door() : mDoorFlags(0), mScript(0), mOpenSound(0), mCloseSound(0)
+                   , mLoopSound(0), mRandomTeleport(0)
 {
     mEditorId.clear();
     mFullName.clear();
     mModel.clear();
-    mIconMale.clear();
-    mIconFemale.clear();
-
-    mData.armor = 0;
-    mData.value = 0;
-    mData.health = 0;
-    mData.weight = 0.f;
 }
 
-ESM4::Armor::~Armor()
+ESM4::Door::~Door()
 {
 }
 
-void ESM4::Armor::load(ESM4::Reader& reader)
+void ESM4::Door::load(ESM4::Reader& reader)
 {
     mFormId = reader.hdr().record.id;
     mFlags  = reader.hdr().record.flags;
@@ -63,19 +57,19 @@ void ESM4::Armor::load(ESM4::Reader& reader)
             case ESM4::SUB_EDID: // Editor name or the worldspace
             {
                 if (!reader.getZString(mEditorId))
-                    throw std::runtime_error ("ARMO EDID data read error");
+                    throw std::runtime_error ("DOOR EDID data read error");
                 break;
             }
             case ESM4::SUB_FULL:
             {
                 if (!reader.getZString(mFullName))
-                    throw std::runtime_error ("ARMO FULL data read error");
+                    throw std::runtime_error ("DOOR FULL data read error");
                 break;
             }
             case ESM4::SUB_MODL:
             {
                 if (!reader.getZString(mModel))
-                    throw std::runtime_error ("ARMO MODL data read error");
+                    throw std::runtime_error ("DOOR MODL data read error");
 
                 //if (reader.esmVersion() == ESM4::VER_094 || reader.esmVersion() == ESM4::VER_170)
                 //{
@@ -83,69 +77,53 @@ void ESM4::Armor::load(ESM4::Reader& reader)
                 //}
                 break;
             }
-            case ESM4::SUB_ICON:
-            {
-                if (!reader.getZString(mIconMale))
-                    throw std::runtime_error ("ARMO ICON data read error");
-                break;
-            }
-            case ESM4::SUB_ICO2:
-            {
-                if (!reader.getZString(mIconFemale))
-                    throw std::runtime_error ("ARMO ICO2 data read error");
-                break;
-            }
-            case ESM4::SUB_DATA:
-            {
-                reader.get(mData);
-                break;
-            }
-            case ESM4::SUB_BMDT:
-            {
-                reader.get(mArmorFlags);
-                break;
-            }
             case ESM4::SUB_SCRI:
             {
                 reader.get(mScript);
                 break;
             }
+            case ESM4::SUB_SNAM:
+            {
+                reader.get(mOpenSound);
+                break;
+            }
             case ESM4::SUB_ANAM:
             {
-                reader.get(mEnchantmentPoints);
+                reader.get(mCloseSound);
                 break;
             }
-            case ESM4::SUB_ENAM:
+            case ESM4::SUB_BNAM:
             {
-                reader.get(mEnchantment);
+                reader.get(mLoopSound);
                 break;
             }
-            case ESM4::SUB_MOD2:
-            case ESM4::SUB_MOD3:
-            case ESM4::SUB_MOD4:
+            case ESM4::SUB_FNAM:
+            {
+                reader.get(mDoorFlags);
+                break;
+            }
+            case ESM4::SUB_TNAM:
+            {
+                reader.get(mRandomTeleport);
+                break;
+            }
             case ESM4::SUB_MODB:
-            case ESM4::SUB_MO2B:
-            case ESM4::SUB_MO3B:
-            case ESM4::SUB_MO4B:
             case ESM4::SUB_MODT:
-            case ESM4::SUB_MO2T:
-            case ESM4::SUB_MO3T:
-            case ESM4::SUB_MO4T:
             {
-                //std::cout << "ARMO " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
+                //std::cout << "DOOR " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
                 reader.skipSubRecordData();
                 break;
             }
             default:
-                throw std::runtime_error("ESM4::ARMO::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
+                throw std::runtime_error("ESM4::DOOR::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
         }
     }
 }
 
-//void ESM4::Armor::save(ESM4::Writer& writer) const
+//void ESM4::Door::save(ESM4::Writer& writer) const
 //{
 //}
 
-//void ESM4::Armor::blank()
+//void ESM4::Door::blank()
 //{
 //}

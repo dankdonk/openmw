@@ -67,6 +67,7 @@ namespace ESM4
         REC_CLAS = MKTAG('C','L','A','S'), // Class
         REC_CLFM = MKTAG('C','L','F','M'), // Color
         REC_CLMT = MKTAG('C','L','M','T'), // Climate
+        REC_CLOT = MKTAG('C','L','O','T'), // Clothing
         REC_COBJ = MKTAG('C','O','B','J'), // Constructible Object (recipes)
         REC_COLL = MKTAG('C','O','L','L'), // Collision Layer
         REC_CONT = MKTAG('C','O','N','T'), // Container
@@ -441,7 +442,12 @@ namespace ESM4
         SUB_SNDD = MKTAG('S','N','D','D'),
         SUB_SNDX = MKTAG('S','N','D','X'),
 
-        SUB_DESC = MKTAG('D','E','S','C')
+        SUB_DESC = MKTAG('D','E','S','C'),
+
+        SUB_ENIT = MKTAG('E','N','I','T'),
+        SUB_EFID = MKTAG('E','F','I','D'),
+        SUB_EFIT = MKTAG('E','F','I','T'),
+        SUB_SCIT = MKTAG('S','C','I','T')
     };
 
     // Based on http://www.uesp.net/wiki/Tes5Mod:Mod_File_Format#Groups

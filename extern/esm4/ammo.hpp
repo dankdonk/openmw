@@ -20,8 +20,8 @@
   cc9cii cc9c@iinet.net.au
 
 */
-#ifndef ESM4_ARMO_H
-#define ESM4_ARMO_H
+#ifndef ESM4_AMMO_H
+#define ESM4_AMMO_H
 
 #include <string>
 #include <cstdint>
@@ -32,43 +32,18 @@ namespace ESM4
     class Writer;
     typedef std::uint32_t FormId;
 
-    struct Armor
+    struct Ammo
     {
-        enum Flags
-        {
-            // Biped Object Flags
-            Flag_Head        = 0x00000001,
-            Flag_Hair        = 0x00000002,
-            Flag_UpperBody   = 0x00000004,
-            Flag_LowerBody   = 0x00000008,
-            Flag_Hand        = 0x00000010,
-            Flag_Foot        = 0x00000020,
-            Flag_RightRing   = 0x00000040,
-            Flag_LeftRing    = 0x00000080,
-            Flag_Amulet      = 0x00000100,
-            Flag_Weapon      = 0x00000200,
-            Flag_BackWeapon  = 0x00000400,
-            Flag_SideWeapon  = 0x00000800,
-            Flag_Quiver      = 0x00001000,
-            Flag_Shield      = 0x00002000,
-            Flag_Torch       = 0x00004000,
-            Flag_Tail        = 0x00008000,
-            // General Flags
-            Flag_HideRings   = 0x00010000,
-            Flag_HideAmulet  = 0x00020000,
-            Flag_NonPlayable = 0x00400000,
-            Flag_Unknown     = 0xCD000000
-        };
-
-#pragma pack(push, 1)
         struct Data
         {
-            std::uint16_t armor;
-            std::uint32_t value;
-            std::uint32_t health;
+            float         speed;
+            std::uint32_t flags;
+            std::uint32_t value;   // gold
             float         weight;
+            std::uint16_t damage;
+
+            Data() : speed(0.f), flags(0), value(0), weight(0.f), damage(0) {}
         };
-#pragma pack(pop)
 
         FormId mFormId;       // from the header
         std::uint32_t mFlags; // from the header, see enum type RecordFlag for details
@@ -76,18 +51,15 @@ namespace ESM4
         std::string mEditorId;
         std::string mFullName;
         std::string mModel;
-        std::string mIconMale;
-        std::string mIconFemale;
+        std::string mIcon; // inventory
 
-        std::uint32_t mArmorFlags;
-        FormId        mScript;
         std::uint16_t mEnchantmentPoints;
-        FormId        mEnchantment;
+        FormId mEnchantment;
 
         Data mData;
 
-        Armor();
-        ~Armor();
+        Ammo();
+        ~Ammo();
 
         void load(ESM4::Reader& reader);
         //void save(ESM4::Writer& reader) const;
@@ -96,4 +68,4 @@ namespace ESM4
     };
 }
 
-#endif // ESM4_ARMO_H
+#endif // ESM4_AMMO_H

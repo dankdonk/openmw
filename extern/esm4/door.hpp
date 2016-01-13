@@ -20,8 +20,8 @@
   cc9cii cc9c@iinet.net.au
 
 */
-#ifndef ESM4_MISC_H
-#define ESM4_MISC_H
+#ifndef ESM4_DOOR_H
+#define ESM4_DOOR_H
 
 #include <string>
 #include <cstdint>
@@ -32,15 +32,15 @@ namespace ESM4
     class Writer;
     typedef std::uint32_t FormId;
 
-    struct MiscItem
+    struct Door
     {
-#pragma pack(push, 1)
-        struct Data
+        enum Flags
         {
-            std::uint32_t value;   // gold
-            float         weight;
+            Flag_OblivionGate  = 0x01,
+            Flag_AutomaticDoor = 0x02,
+            Flag_Hidden        = 0x04,
+            Flag_MinimalUse    = 0x08
         };
-#pragma pack(pop)
 
         FormId mFormId;       // from the header
         std::uint32_t mFlags; // from the header, see enum type RecordFlag for details
@@ -48,12 +48,16 @@ namespace ESM4
         std::string mEditorId;
         std::string mFullName;
         std::string mModel;
-        std::string mIcon; // inventory
 
-        Data mData;
+        std::uint8_t mDoorFlags;
+        FormId mScript;
+        FormId mOpenSound;
+        FormId mCloseSound;
+        FormId mLoopSound;
+        FormId mRandomTeleport;
 
-        MiscItem();
-        ~MiscItem();
+        Door();
+        ~Door();
 
         void load(ESM4::Reader& reader);
         //void save(ESM4::Writer& reader) const;
@@ -62,4 +66,4 @@ namespace ESM4
     };
 }
 
-#endif // ESM4_MISC_H
+#endif // ESM4_DOOR_H

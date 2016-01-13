@@ -35,7 +35,10 @@ namespace CSMWorld
                 Feature_Constant = 16,
 
                 // Open a new table of Cells associated with the world
-                Feature_ViewCells = 32
+                Feature_ViewCells = 32,
+
+                // Almost the same as Feature_ViewId
+                Feature_ViewForeignId = 64
             };
 
         private:

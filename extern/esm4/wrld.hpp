@@ -63,10 +63,17 @@ namespace ESM4
         FormId mFormId;       // from the header
         std::uint32_t mFlags; // from the header, see enum type RecordFlag for details
 
-        std::string mEditorId;
-        std::string mFullName;
-        FormId mParent;       // parent worldspace formid
+        std::string  mEditorId;
+        std::string  mFullName;
+        FormId       mParent;       // parent worldspace formid
         std::uint8_t mWorldFlags;
+        FormId       mClimate;
+        FormId       mWater;
+
+        std::int32_t mMinX;
+        std::int32_t mMinY;
+        std::int32_t mMaxX;
+        std::int32_t mMaxY;
 
         // ------ TES4 only -----
 

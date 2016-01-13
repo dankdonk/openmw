@@ -633,6 +633,26 @@ CSMWorld::Data::Data (ToUTF8::FromType encoding, const ResourcesManager& resourc
     mForeignWeapons.addColumn (new FixedRecordTypeColumn<CSMForeign::Weapon> (UniversalId::Type_ForeignWeapons));
     mForeignWeapons.addColumn (new ModelColumn<CSMForeign::Weapon>);
 
+    mForeignDoors.addColumn (new StringIdColumn<CSMForeign::Door>);
+    mForeignDoors.addColumn (new RecordStateColumn<CSMForeign::Door>);
+    mForeignDoors.addColumn (new FixedRecordTypeColumn<CSMForeign::Door> (UniversalId::Type_ForeignDoors));
+    mForeignDoors.addColumn (new ModelColumn<CSMForeign::Door>);
+
+    mForeignAmmos.addColumn (new StringIdColumn<CSMForeign::Ammo>);
+    mForeignAmmos.addColumn (new RecordStateColumn<CSMForeign::Ammo>);
+    mForeignAmmos.addColumn (new FixedRecordTypeColumn<CSMForeign::Ammo> (UniversalId::Type_ForeignAmmos));
+    mForeignAmmos.addColumn (new ModelColumn<CSMForeign::Ammo>);
+
+    mForeignClothings.addColumn (new StringIdColumn<CSMForeign::Clothing>);
+    mForeignClothings.addColumn (new RecordStateColumn<CSMForeign::Clothing>);
+    mForeignClothings.addColumn (new FixedRecordTypeColumn<CSMForeign::Clothing> (UniversalId::Type_ForeignClothings));
+    mForeignClothings.addColumn (new ModelColumn<CSMForeign::Clothing>);
+
+    mForeignPotions.addColumn (new StringIdColumn<CSMForeign::Potion>);
+    mForeignPotions.addColumn (new RecordStateColumn<CSMForeign::Potion>);
+    mForeignPotions.addColumn (new FixedRecordTypeColumn<CSMForeign::Potion> (UniversalId::Type_ForeignPotions));
+    mForeignPotions.addColumn (new ModelColumn<CSMForeign::Potion>);
+
     mForeignRefs.addColumn (new StringIdColumn<CSMForeign::CellRef>/*(true)*/);
     mForeignRefs.addColumn (new RecordStateColumn<CSMForeign::CellRef>);
     mForeignRefs.addColumn (new FixedRecordTypeColumn<CSMForeign::CellRef> (UniversalId::Type_ForeignReference));
@@ -710,7 +730,7 @@ CSMWorld::Data::Data (ToUTF8::FromType encoding, const ResourcesManager& resourc
     addModel (new IdTable (&mLandTextures), UniversalId::Type_LandTexture);
     addModel (new IdTable (&mForeignWorlds, IdTable::Feature_ViewCells), UniversalId::Type_ForeignWorld);
     addModel (new IdTable (&mForeignRegions), UniversalId::Type_ForeignRegion);
-    addModel (new IdTable (&mForeignCells), UniversalId::Type_ForeignCell);
+    addModel (new IdTable (&mForeignCells, IdTable::Feature_ViewId), UniversalId::Type_ForeignCell);
     addModel (new IdTable (&mForeignLandTextures), UniversalId::Type_ForeignLandTexture);
     addModel (new IdTable (&mForeignLands), UniversalId::Type_ForeignLand);
     addModel (new IdTable (&mForeignStatics), UniversalId::Type_ForeignStatic); // FIXME: temp, should be refid
@@ -728,6 +748,10 @@ CSMWorld::Data::Data (ToUTF8::FromType encoding, const ResourcesManager& resourc
     addModel (new IdTable (&mForeignFurnitures), UniversalId::Type_ForeignFurniture); // FIXME: temp, should be refid
     addModel (new IdTable (&mForeignSounds), UniversalId::Type_ForeignSound); // FIXME: temp, should be refid
     addModel (new IdTable (&mForeignWeapons), UniversalId::Type_ForeignWeapon); // FIXME: temp, should be refid
+    addModel (new IdTable (&mForeignDoors), UniversalId::Type_ForeignDoor); // FIXME: temp, should be refid
+    addModel (new IdTable (&mForeignAmmos), UniversalId::Type_ForeignAmmo); // FIXME: temp, should be refid
+    addModel (new IdTable (&mForeignClothings), UniversalId::Type_ForeignClothing); // FIXME: temp, should be refid
+    addModel (new IdTable (&mForeignPotions), UniversalId::Type_ForeignPotion); // FIXME: temp, should be refid
     addModel (new IdTable (&mForeignRefs, IdTable::Feature_ViewCell | IdTable::Feature_Preview),
             UniversalId::Type_ForeignReference);
     addModel (new IdTable (&mForeignChars, IdTable::Feature_ViewCell | IdTable::Feature_Preview),
@@ -1301,6 +1325,46 @@ CSMForeign::IdCollection<CSMForeign::Weapon>& CSMWorld::Data::getForeignWeapons(
     return mForeignWeapons;
 }
 
+const CSMForeign::IdCollection<CSMForeign::Door>& CSMWorld::Data::getForeignDoors() const
+{
+    return mForeignDoors;
+}
+
+CSMForeign::IdCollection<CSMForeign::Door>& CSMWorld::Data::getForeignDoors()
+{
+    return mForeignDoors;
+}
+
+const CSMForeign::IdCollection<CSMForeign::Ammo>& CSMWorld::Data::getForeignAmmos() const
+{
+    return mForeignAmmos;
+}
+
+CSMForeign::IdCollection<CSMForeign::Ammo>& CSMWorld::Data::getForeignAmmos()
+{
+    return mForeignAmmos;
+}
+
+const CSMForeign::IdCollection<CSMForeign::Clothing>& CSMWorld::Data::getForeignClothings() const
+{
+    return mForeignClothings;
+}
+
+CSMForeign::IdCollection<CSMForeign::Clothing>& CSMWorld::Data::getForeignClothings()
+{
+    return mForeignClothings;
+}
+
+const CSMForeign::IdCollection<CSMForeign::Potion>& CSMWorld::Data::getForeignPotions() const
+{
+    return mForeignPotions;
+}
+
+CSMForeign::IdCollection<CSMForeign::Potion>& CSMWorld::Data::getForeignPotions()
+{
+    return mForeignPotions;
+}
+
 QAbstractItemModel *CSMWorld::Data::getTableModel (const CSMWorld::UniversalId& id)
 {
     std::map<UniversalId::Type, QAbstractItemModel *>::iterator iter = mModelIndex.find (id.getType());
@@ -1770,6 +1834,8 @@ bool CSMWorld::Data::loadTes4Group (CSMDoc::Messages& messages)
                     hdr.group.label.value == ESM4::REC_TREE || hdr.group.label.value == ESM4::REC_LIGH ||
                     hdr.group.label.value == ESM4::REC_BOOK || hdr.group.label.value == ESM4::REC_FURN ||
                     hdr.group.label.value == ESM4::REC_SOUN || hdr.group.label.value == ESM4::REC_WEAP ||
+                    hdr.group.label.value == ESM4::REC_DOOR || hdr.group.label.value == ESM4::REC_AMMO ||
+                    hdr.group.label.value == ESM4::REC_CLOT || hdr.group.label.value == ESM4::REC_ALCH ||
                     hdr.group.label.value == ESM4::REC_CELL || hdr.group.label.value == ESM4::REC_LTEX)
             {
                 // NOTE: The label field of a group is not reliable.  See:
@@ -1974,6 +2040,30 @@ bool CSMWorld::Data::loadTes4Record (const ESM4::RecordHeader& hdr, CSMDoc::Mess
         {
             reader.getRecordData();
             mForeignWeapons.load(reader, mBase);
+            break;
+        }
+        case ESM4::REC_DOOR:
+        {
+            reader.getRecordData();
+            mForeignDoors.load(reader, mBase);
+            break;
+        }
+        case ESM4::REC_AMMO:
+        {
+            reader.getRecordData();
+            mForeignAmmos.load(reader, mBase);
+            break;
+        }
+        case ESM4::REC_CLOT:
+        {
+            reader.getRecordData();
+            mForeignClothings.load(reader, mBase);
+            break;
+        }
+        case ESM4::REC_ALCH:
+        {
+            reader.getRecordData();
+            mForeignPotions.load(reader, mBase);
             break;
         }
         case ESM4::REC_ACHR:

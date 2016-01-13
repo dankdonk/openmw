@@ -635,7 +635,8 @@ void CSVDoc::View::updateProgress (int current, int max, int type, int threads)
 //   <-- returns pair<UniversalId id, std::string hint>
 //
 //   --> signal triggered() : when a context menu feature is selected
-//       --> slot CSVWorld::Table::viewCells() <--- ensure  hint is correct here
+//       --> slot CSVWorld::Table::viewCells() <--- ensure  hint is correct here, call view()
+//                                                  again if necessary
 //           --> signal editRequest(id, hint)
 //               --> slot CSVWorld::TableSubview::editRequest(id, hint)
 //                   --> CSVDoc::SubView::focusId(id, hint)
@@ -643,6 +644,17 @@ void CSVDoc::View::updateProgress (int current, int max, int type, int threads)
 //
 // Remember to add any new subview types to CSVWorld::addSubViewFactories() so that
 // mSubViewFactory.makeSubView (id, *mDocument) returns the correct subview.
+//
+// For UniversalId::Type_Scene, SceneSubView constructor will decide on which type of widget to
+// create and use.  This is based on the content of the id.
+//
+// IdTable::view() would have replaced id with "sys::default" for exterior cells while leaving
+// id alone for interior cells.  Exterior cells then rely on the hints to figure out which
+// cells to load.  Also see IdTableBase::Features enum values.
+//
+// For Foreign cells ?
+//
+// Current hack from ForeignRegionMap is to encode hint with the world id string after "c:"
 void CSVDoc::View::addSubView (const CSMWorld::UniversalId& id, const std::string& hint)
 {
     CSMSettings::UserSettings &userSettings = CSMSettings::UserSettings::instance();

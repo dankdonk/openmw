@@ -740,5 +740,43 @@ struct NiDefaultAVObjectPalette : public Record
     }
 };
 
+struct FurniturePosition
+{
+    Ogre::Vector3 offset;
+    unsigned short orientation;
+    unsigned char posRef1;
+    unsigned char posRef2;
+    float heading;
+    unsigned short animType;
+    unsigned short entryProperties;
+};
+
+class BSFurnitureMarker : public Record
+{
+public:
+    std::string name;
+    std::vector<FurniturePosition> positions;
+
+    void read(NIFStream *nif)
+    {
+        if (nifVer >= 0x0a000100) // from 10.0.1.0
+            name = nif->getString();
+        if (nifVer <= 0x04020200) // up to 4.2.2.0
+            nif->getInt();
+        unsigned int numPos = nif->getUInt();
+        positions.resize(numPos);
+        for (unsigned int i = 0; i < numPos; ++i)
+        {
+            positions[i].offset = nif->getVector3();
+            positions[i].orientation = nif->getUShort();
+            positions[i].posRef1 = nif->getChar();
+            positions[i].posRef2 = nif->getChar();
+            positions[i].heading = nif->getFloat();
+            positions[i].animType = nif->getUShort();
+            positions[i].entryProperties = nif->getUShort();
+        }
+    }
+};
+
 } // Namespace
 #endif

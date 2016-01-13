@@ -37,7 +37,7 @@ ESM4::MiscItem::MiscItem()
     mEditorId.clear();
     mFullName.clear();
     mModel.clear();
-    mIconModel.clear();
+    mIcon.clear();
 
     mData.value = 0;
     mData.weight = 0.f;
@@ -82,7 +82,7 @@ void ESM4::MiscItem::load(ESM4::Reader& reader)
             }
             case ESM4::SUB_ICON:
             {
-                if (!reader.getZString(mIconModel))
+                if (!reader.getZString(mIcon))
                     throw std::runtime_error ("MISC ICON data read error");
                 break;
             }

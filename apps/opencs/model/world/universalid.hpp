@@ -178,6 +178,14 @@ namespace CSMWorld
                 Type_ForeignSound,
                 Type_ForeignWeapons, // FIXME: should be refid
                 Type_ForeignWeapon,
+                Type_ForeignDoors, // FIXME: should be refid
+                Type_ForeignDoor,
+                Type_ForeignAmmos, // FIXME: should be refid
+                Type_ForeignAmmo,
+                Type_ForeignClothings, // FIXME: should be refid
+                Type_ForeignClothing,
+                Type_ForeignPotions, // FIXME: should be refid
+                Type_ForeignPotion,
                 Type_ForeignReferenceables,
                 Type_ForeignReferenceable,
                 Type_ForeignReferences,

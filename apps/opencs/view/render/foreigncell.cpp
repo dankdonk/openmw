@@ -131,12 +131,17 @@ bool CSVRender::ForeignCell::addObjects (const std::vector<ESM4::FormId>& object
 }
 
 CSVRender::ForeignCell::ForeignCell (CSMDoc::Document& document, Ogre::SceneManager *sceneManager,
-    ESM4::FormId id, ESM4::FormId world, boost::shared_ptr<CSVWorld::PhysicsSystem> physics,
+    ESM4::FormId id, ESM4::FormId worldId, boost::shared_ptr<CSVWorld::PhysicsSystem> physics,
     const Ogre::Vector3& origin)
-: mDocument (document), mFormId (id), mWorld(world)
+: mDocument (document), mFormId (id), mWorld(worldId)
 , mProxyModel(0), mModel(0), mPgIndex(-1)//, mHandler(new CSMWorld::SignalHandler(this))
 , mPhysics(physics), mSceneMgr(sceneManager), mX(0), mY(0)
 {
+    const CSMForeign::WorldCollection& worlds = mDocument.getData().getForeignWorlds();
+    const CSMForeign::World& world = worlds.getRecord(worlds.searchId(ESM4::formIdToString(worldId))).get();
+    if (world.mParent != 0)
+        mWorld = world.mParent; // yes, really (but needs more testing - maybe have both or merge?)
+
     mCellNode = sceneManager->getRootSceneNode()->createChildSceneNode();
     mCellNode->setPosition (origin);
 
@@ -179,7 +184,10 @@ CSVRender::ForeignCell::ForeignCell (CSMDoc::Document& document, Ogre::SceneMana
             std::cerr << "Heightmap for " << cell.mCellId << " not found" << std::endl;
     }
     else
-        std::cerr << "Land record for " << cell.mCellId << " not found" << std::endl;
+        std::cerr << "Land record for " << cell.mCellId << " not found, land formId " <<
+            ESM4::formIdToString(cell.mLandTemporary) << " cell formId " <<
+            ESM4::formIdToString(cell.mFormId)
+            << std::endl;
 
     // Moved from before terrain to after to get terrain heights for z position sanity check
     addObjects(cell.mRefTemporary); // FIXME: ignore visible distant and persistent children for now

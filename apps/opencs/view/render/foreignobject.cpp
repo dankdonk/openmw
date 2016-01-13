@@ -67,6 +67,10 @@ void CSVRender::ForeignObject::update()
     const CSMForeign::IdCollection<CSMForeign::Furniture>& furn = mData.getForeignFurnitures();
     const CSMForeign::IdCollection<CSMForeign::Sound>& sound = mData.getForeignSounds();
     const CSMForeign::IdCollection<CSMForeign::Weapon>& weap = mData.getForeignWeapons();
+    const CSMForeign::IdCollection<CSMForeign::Door>& door = mData.getForeignDoors();
+    const CSMForeign::IdCollection<CSMForeign::Ammo>& ammo = mData.getForeignAmmos();
+    const CSMForeign::IdCollection<CSMForeign::Clothing>& cloth = mData.getForeignClothings();
+    const CSMForeign::IdCollection<CSMForeign::Potion>& potion = mData.getForeignPotions();
     const CSMForeign::StaticCollection& referenceables = mData.getForeignStatics(); // FIXME: use statics only for now
 
     //int index = referenceables.searchId (mReferenceableId);
@@ -103,7 +107,7 @@ void CSVRender::ForeignObject::update()
             extraIndex = misc.searchId(ESM4::formIdToString(baseObj));
             model = misc.getData (extraIndex,
                    misc.findColumnIndex (CSMWorld::Columns::ColumnId_Model)).toString().toUtf8().constData();
-            std::cout << "obj is a misc obj " << ESM4::formIdToString(baseObj) << ", " << model << std::endl;
+            //std::cout << "obj is a misc obj " << ESM4::formIdToString(baseObj) << ", " << model << std::endl;
 
             if (model.empty())
                 error = 2;
@@ -129,6 +133,58 @@ void CSVRender::ForeignObject::update()
             model = weap.getData (extraIndex,
                    weap.findColumnIndex (CSMWorld::Columns::ColumnId_Model)).toString().toUtf8().constData();
             std::cout << "obj is a weapon obj " << ESM4::formIdToString(baseObj) << ", " << model << std::endl;
+
+            if (model.empty())
+                error = 2;
+            else
+                error = 0;
+        }
+        else if (door.searchId(ESM4::formIdToString(baseObj)) != -1)
+        {
+            int extraIndex = -1;
+            extraIndex = door.searchId(ESM4::formIdToString(baseObj));
+            model = door.getData (extraIndex,
+                   door.findColumnIndex (CSMWorld::Columns::ColumnId_Model)).toString().toUtf8().constData();
+            std::cout << "obj is a door obj " << ESM4::formIdToString(baseObj) << ", " << model << std::endl;
+
+            if (model.empty())
+                error = 2;
+            else
+                error = 0;
+        }
+        else if (ammo.searchId(ESM4::formIdToString(baseObj)) != -1)
+        {
+            int extraIndex = -1;
+            extraIndex = ammo.searchId(ESM4::formIdToString(baseObj));
+            model = ammo.getData (extraIndex,
+                   ammo.findColumnIndex (CSMWorld::Columns::ColumnId_Model)).toString().toUtf8().constData();
+            std::cout << "obj is a ammo obj " << ESM4::formIdToString(baseObj) << ", " << model << std::endl;
+
+            if (model.empty())
+                error = 2;
+            else
+                error = 0;
+        }
+        else if (cloth.searchId(ESM4::formIdToString(baseObj)) != -1)
+        {
+            int extraIndex = -1;
+            extraIndex = cloth.searchId(ESM4::formIdToString(baseObj));
+            model = cloth.getData (extraIndex,
+                   cloth.findColumnIndex (CSMWorld::Columns::ColumnId_Model)).toString().toUtf8().constData();
+            std::cout << "obj is a cloth obj " << ESM4::formIdToString(baseObj) << ", " << model << std::endl;
+
+            if (model.empty())
+                error = 2;
+            else
+                error = 0;
+        }
+        else if (potion.searchId(ESM4::formIdToString(baseObj)) != -1)
+        {
+            int extraIndex = -1;
+            extraIndex = potion.searchId(ESM4::formIdToString(baseObj));
+            model = potion.getData (extraIndex,
+                   potion.findColumnIndex (CSMWorld::Columns::ColumnId_Model)).toString().toUtf8().constData();
+            std::cout << "obj is a potion obj " << ESM4::formIdToString(baseObj) << ", " << model << std::endl;
 
             if (model.empty())
                 error = 2;
@@ -217,8 +273,8 @@ void CSVRender::ForeignObject::update()
                         else
                         {
                             model = "plants\\floraflaxyellow.nif";
-                            std::cout << "obj is an tree obj " << ESM4::formIdToString(baseObj)
-                                      << ", " << realModel << std::endl;
+                            //std::cout << "obj is an tree obj " << ESM4::formIdToString(baseObj)
+                                      //<< ", " << realModel << std::endl;
                         }
 
                         if (model.empty())
@@ -233,7 +289,7 @@ void CSVRender::ForeignObject::update()
                         {
                             model = lights.getData (lightIndex,
                                    lights.findColumnIndex (CSMWorld::Columns::ColumnId_Model)).toString().toUtf8().constData();
-                            std::cout << "obj is an light obj " << ESM4::formIdToString(baseObj) << ", " << model << std::endl;
+                            //std::cout << "obj is an light obj " << ESM4::formIdToString(baseObj) << ", " << model << std::endl;
 
                             if (model.empty())
                                 error = 3;

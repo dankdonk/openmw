@@ -594,6 +594,7 @@ void CSVWorld::Table::viewRegionMap()
     }
 }
 
+// See further notes in CSVDoc::View::addSubView()
 void CSVWorld::Table::viewRecord()
 {
     if (!(mModel->getFeatures() & CSMWorld::IdTableBase::Feature_View))
@@ -609,6 +610,8 @@ void CSVWorld::Table::viewRecord()
 
         std::pair<CSMWorld::UniversalId, std::string> params = mModel->view (row);
 
+        // if the model has IdTableBase::Feature_ViewCell editRequest will be called with
+        // UniversalId::Type_Scene, which is processed by CSVDoc::View::addSubView()
         if (params.first.getType()!=CSMWorld::UniversalId::Type_None)
             emit editRequest (params.first, params.second);
     }

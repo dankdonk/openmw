@@ -795,6 +795,37 @@ public:
     }
 };
 
+// FIXME: different for Skyrim
+class bhkPrismaticConstraint : public bhkConstraint
+{
+public:
+    Ogre::Vector4 pivotA;
+    std::vector<Ogre::Vector4> rotationMatrixA;
+    Ogre::Vector4 pivotB;
+    Ogre::Vector4 slidingB;
+    Ogre::Vector4 planeB;
+    float minDistance;
+    float maxDistance;
+    float friction;
+
+    void read(NIFStream *nif)
+    {
+        bhkConstraint::read(nif);
+
+        pivotA = nif->getVector4();
+        rotationMatrixA.resize(4);
+        for (int i = 0; i < 4; ++i)
+            rotationMatrixA[i] = nif->getVector4();
+        pivotB = nif->getVector4();
+        slidingB = nif->getVector4();
+        planeB = nif->getVector4();
+
+        minDistance = nif->getFloat();
+        maxDistance = nif->getFloat();
+        friction = nif->getFloat();
+    }
+};
+
 class bhkRigidBody : public Record
 {
 public:

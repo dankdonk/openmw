@@ -20,7 +20,7 @@
   cc9cii cc9c@iinet.net.au
 
 */
-#include "armo.hpp"
+#include "clot.hpp"
 
 #include <cassert>
 #include <stdexcept>
@@ -32,7 +32,7 @@
 #include "reader.hpp"
 //#include "writer.hpp"
 
-ESM4::Armor::Armor() : mArmorFlags(0)
+ESM4::Clothing::Clothing() : mClothingFlags(0), mScript(0), mEnchantmentPoints(0), mEnchantment(0)
 {
     mEditorId.clear();
     mFullName.clear();
@@ -40,17 +40,15 @@ ESM4::Armor::Armor() : mArmorFlags(0)
     mIconMale.clear();
     mIconFemale.clear();
 
-    mData.armor = 0;
     mData.value = 0;
-    mData.health = 0;
     mData.weight = 0.f;
 }
 
-ESM4::Armor::~Armor()
+ESM4::Clothing::~Clothing()
 {
 }
 
-void ESM4::Armor::load(ESM4::Reader& reader)
+void ESM4::Clothing::load(ESM4::Reader& reader)
 {
     mFormId = reader.hdr().record.id;
     mFlags  = reader.hdr().record.flags;
@@ -63,19 +61,19 @@ void ESM4::Armor::load(ESM4::Reader& reader)
             case ESM4::SUB_EDID: // Editor name or the worldspace
             {
                 if (!reader.getZString(mEditorId))
-                    throw std::runtime_error ("ARMO EDID data read error");
+                    throw std::runtime_error ("CLOT EDID data read error");
                 break;
             }
             case ESM4::SUB_FULL:
             {
                 if (!reader.getZString(mFullName))
-                    throw std::runtime_error ("ARMO FULL data read error");
+                    throw std::runtime_error ("CLOT FULL data read error");
                 break;
             }
             case ESM4::SUB_MODL:
             {
                 if (!reader.getZString(mModel))
-                    throw std::runtime_error ("ARMO MODL data read error");
+                    throw std::runtime_error ("CLOT MODL data read error");
 
                 //if (reader.esmVersion() == ESM4::VER_094 || reader.esmVersion() == ESM4::VER_170)
                 //{
@@ -86,13 +84,13 @@ void ESM4::Armor::load(ESM4::Reader& reader)
             case ESM4::SUB_ICON:
             {
                 if (!reader.getZString(mIconMale))
-                    throw std::runtime_error ("ARMO ICON data read error");
+                    throw std::runtime_error ("CLOT ICON data read error");
                 break;
             }
             case ESM4::SUB_ICO2:
             {
                 if (!reader.getZString(mIconFemale))
-                    throw std::runtime_error ("ARMO ICO2 data read error");
+                    throw std::runtime_error ("CLOT ICO2 data read error");
                 break;
             }
             case ESM4::SUB_DATA:
@@ -102,7 +100,7 @@ void ESM4::Armor::load(ESM4::Reader& reader)
             }
             case ESM4::SUB_BMDT:
             {
-                reader.get(mArmorFlags);
+                reader.get(mClothingFlags);
                 break;
             }
             case ESM4::SUB_SCRI:
@@ -110,14 +108,14 @@ void ESM4::Armor::load(ESM4::Reader& reader)
                 reader.get(mScript);
                 break;
             }
-            case ESM4::SUB_ANAM:
-            {
-                reader.get(mEnchantmentPoints);
-                break;
-            }
             case ESM4::SUB_ENAM:
             {
                 reader.get(mEnchantment);
+                break;
+            }
+            case ESM4::SUB_ANAM:
+            {
+                reader.get(mEnchantmentPoints);
                 break;
             }
             case ESM4::SUB_MOD2:
@@ -132,20 +130,20 @@ void ESM4::Armor::load(ESM4::Reader& reader)
             case ESM4::SUB_MO3T:
             case ESM4::SUB_MO4T:
             {
-                //std::cout << "ARMO " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
+                //std::cout << "CLOT " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
                 reader.skipSubRecordData();
                 break;
             }
             default:
-                throw std::runtime_error("ESM4::ARMO::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
+                throw std::runtime_error("ESM4::CLOT::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
         }
     }
 }
 
-//void ESM4::Armor::save(ESM4::Writer& writer) const
+//void ESM4::Clothing::save(ESM4::Writer& writer) const
 //{
 //}
 
-//void ESM4::Armor::blank()
+//void ESM4::Clothing::blank()
 //{
 //}
