@@ -51,9 +51,12 @@ CSVWorld::SceneSubView::SceneSubView (const CSMWorld::UniversalId& id, CSMDoc::D
     }
     else if (id.getId() == "sys::foreignInterior")
     {
+        // searchId() is not available from CSVRender, so we can't use it to determine whether to
+        // create a normal cell widget or a foreign cell widget.  That approach is a little
+        // problematic anyway, since an interior cell name may match on both.
         whatWidget = widget_Unpaged;
 
-        CSVRender::ForeignInteriorWidget *newWidget = new CSVRender::ForeignInteriorWidget (id.getId(), document, this);
+        CSVRender::ForeignInteriorWidget *newWidget = new CSVRender::ForeignInteriorWidget (this, document);
 
         worldspaceWidget = newWidget;
 

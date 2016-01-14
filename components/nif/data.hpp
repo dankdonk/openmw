@@ -771,9 +771,10 @@ public:
             positions[i].orientation = nif->getUShort();
             positions[i].posRef1 = nif->getChar();
             positions[i].posRef2 = nif->getChar();
-            positions[i].heading = nif->getFloat();
-            positions[i].animType = nif->getUShort();
-            positions[i].entryProperties = nif->getUShort();
+            // FIXME: >= 20.2.0.7 && userversion needed
+            //positions[i].heading = nif->getFloat();
+            //positions[i].animType = nif->getUShort();
+            //positions[i].entryProperties = nif->getUShort();
         }
     }
 };

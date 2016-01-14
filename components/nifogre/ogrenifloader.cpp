@@ -1239,13 +1239,13 @@ private:
             {
                 Nif::ExtraPtr e = node->extras[i];
 
-                if(e->recType == Nif::RC_NiTextKeyExtraData)
+                if(!e.empty() && e->recType == Nif::RC_NiTextKeyExtraData)
                 {
                     const Nif::NiTextKeyExtraData *tk = static_cast<const Nif::NiTextKeyExtraData*>(e.getPtr());
 
                     extractTextKeys(tk, scene->mTextKeys);
                 }
-                else if(e->recType == Nif::RC_NiStringExtraData)
+                else if(!e.empty() && e->recType == Nif::RC_NiStringExtraData)
                 {
                     const Nif::NiStringExtraData *sd = static_cast<const Nif::NiStringExtraData*>(e.getPtr());
                     // String markers may contain important information

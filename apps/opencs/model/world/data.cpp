@@ -730,7 +730,7 @@ CSMWorld::Data::Data (ToUTF8::FromType encoding, const ResourcesManager& resourc
     addModel (new IdTable (&mLandTextures), UniversalId::Type_LandTexture);
     addModel (new IdTable (&mForeignWorlds, IdTable::Feature_ViewCells), UniversalId::Type_ForeignWorld);
     addModel (new IdTable (&mForeignRegions), UniversalId::Type_ForeignRegion);
-    addModel (new IdTable (&mForeignCells, IdTable::Feature_ViewId), UniversalId::Type_ForeignCell);
+    addModel (new IdTable (&mForeignCells, IdTable::Feature_ViewForeignId), UniversalId::Type_ForeignCell);
     addModel (new IdTable (&mForeignLandTextures), UniversalId::Type_ForeignLandTexture);
     addModel (new IdTable (&mForeignLands), UniversalId::Type_ForeignLand);
     addModel (new IdTable (&mForeignStatics), UniversalId::Type_ForeignStatic); // FIXME: temp, should be refid

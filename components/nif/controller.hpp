@@ -521,6 +521,17 @@ public:
     }
 };
 
+class NiBlendTransformInterpolator : public NiInterpolator
+{
+public:
+
+    void read(NIFStream *nif)
+    {
+        nif->getUShort();
+        nif->getUInt();
+    }
+};
+
 class NiPathInterpolator : public NiInterpolator
 {
 public:

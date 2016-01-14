@@ -247,7 +247,7 @@ std::pair<CSMWorld::UniversalId, std::string> CSMWorld::IdTable::view (int row) 
             hint = "r:" + std::string (mIdCollection->getData (row, idColumn).toString().toUtf8().constData());
         }
     }
-    else if (getFeatures() & Feature_ViewId) // mCells and mForeignCells have this feature
+    else if (getFeatures() & Feature_ViewId) // mCells has this feature
     {
         // FIXME: duplicate comment
         // Use ID column to generate view request (ID is transformed into
@@ -260,8 +260,20 @@ std::pair<CSMWorld::UniversalId, std::string> CSMWorld::IdTable::view (int row) 
             hint = "c:" + id;
         }
     }
+    else if (getFeatures() & Feature_ViewForeignId) // mForeignCells has this feature
+    {
+        int column = mIdCollection->searchColumnIndex (Columns::ColumnId_Id);
+
+        if (column!=-1)
+        {
+            id = mIdCollection->getData (row, column).toString().toUtf8().constData();
+            hint = "c:" + id;
+            id = "sys::foreignInterior"; // replace id; also see CSVWorld::SceneSubView
+        }
+    }
     else if (getFeatures() & Feature_ViewCells)
     {
+        // FIXME: not happy with this section of the code
         int idColumn = mIdCollection->searchColumnIndex (Columns::ColumnId_Id);
 
         if (idColumn!=-1)
@@ -281,10 +293,9 @@ std::pair<CSMWorld::UniversalId, std::string> CSMWorld::IdTable::view (int row) 
     if (id.empty())
         return std::make_pair (UniversalId::Type_None, "");
 
+    // determine if this is internal or external (but only for non-foreign cells)
     if (id[0]=='#')
         id = "sys::default";
-    else
-        id = "sys::foreignInterior"; // see CSVWorld::SceneSubView
 
     return std::make_pair (UniversalId (UniversalId::Type_Scene, id), hint);
 }

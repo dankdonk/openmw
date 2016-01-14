@@ -277,7 +277,7 @@ void ManualBulletShapeLoader::handleNode(const Nif::Node *node, int flags,
             e = node->extras[i].getPtr();
             assert(e != NULL);
 
-            if (e->recType == Nif::RC_NiStringExtraData)
+            if (e && e->recType == Nif::RC_NiStringExtraData)
             {
                 // String markers may contain important information
                 // affecting the entire subtree of this node

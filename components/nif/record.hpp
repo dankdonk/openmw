@@ -159,6 +159,7 @@ enum RecordType
   RC_bhkTransformShape,
   RC_BSFurnitureMarker,
   RC_bhkPrismaticConstraint,
+  RC_NiBlendTransformInterpolator,
   RC_RootCollisionNode
 };
 /// Base class for all records

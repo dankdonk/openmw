@@ -80,7 +80,7 @@ namespace CSVRender
         /// \todo make shortcut configurable
         QShortcut *focusToolbar = new QShortcut (Qt::Key_T, this, 0, 0, Qt::WidgetWithChildrenShortcut);
         connect (focusToolbar, SIGNAL (activated()), this, SIGNAL (focusToolbarRequest()));
-
+#if 0
         // FIXME: move sky/water to pagedworldspacewidget/foreignworldspacewidget so that
         // oblivion sky/lava can be supported
         Ogre::MaterialPtr skyMaterial = Ogre::MaterialManager::getSingleton().getByName(
@@ -103,7 +103,7 @@ namespace CSVRender
         mSceneMgr->setSkyDome(true, "SkyMaterial", 10, 8, 4000, true, r);
         mWater = new Water(mCamera, mSceneMgr->getRootSceneNode());
         mWater->setActive(true);
-
+#endif
         updateOgreWindow();
     }
 
@@ -193,7 +193,7 @@ namespace CSVRender
 
     SceneWidget::~SceneWidget()
     {
-        delete mWater;
+        //delete mWater;
         //delete mSkyManager;
 
         if (mWindow)

@@ -130,7 +130,8 @@ void CSVWorld::Table::contextMenuEvent (QContextMenuEvent *event)
 
         row = mProxyModel->mapToSource (mProxyModel->index (row, 0)).row();
 
-        if (mModel->getFeatures() & CSMWorld::IdTableBase::Feature_View)
+        if ((mModel->getFeatures() & CSMWorld::IdTableBase::Feature_View) ||
+           (mModel->getFeatures() & CSMWorld::IdTableBase::Feature_ViewForeignId))
         {
             CSMWorld::UniversalId id = mModel->view (row).first;
 
@@ -597,7 +598,8 @@ void CSVWorld::Table::viewRegionMap()
 // See further notes in CSVDoc::View::addSubView()
 void CSVWorld::Table::viewRecord()
 {
-    if (!(mModel->getFeatures() & CSMWorld::IdTableBase::Feature_View))
+    if (!(mModel->getFeatures() & CSMWorld::IdTableBase::Feature_View) &&
+        !(mModel->getFeatures() & CSMWorld::IdTableBase::Feature_ViewForeignId))
         return;
 
     QModelIndexList selectedRows = selectionModel()->selectedRows();

@@ -177,6 +177,7 @@ static std::map<std::string,RecordFactoryEntry> makeFactory()
     newFactory.insert(makeEntry("bhkTransformShape",          &construct <bhkTransformShape>           , RC_bhkTransformShape             ));
     newFactory.insert(makeEntry("BSFurnitureMarker",          &construct <BSFurnitureMarker>           , RC_BSFurnitureMarker             ));
     newFactory.insert(makeEntry("bhkPrismaticConstraint",     &construct <bhkPrismaticConstraint>      , RC_bhkPrismaticConstraint        ));
+    newFactory.insert(makeEntry("NiBlendTransformInterpolator", &construct <NiBlendTransformInterpolator> , RC_NiBlendTransformInterpolator));
     newFactory.insert(makeEntry("NiMultiTargetTransformController", &construct <NiMultiTargetTransformController> , RC_NiMultiTargetTransformController));
     return newFactory;
 }

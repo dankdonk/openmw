@@ -137,10 +137,14 @@ CSVRender::ForeignCell::ForeignCell (CSMDoc::Document& document, Ogre::SceneMana
 , mProxyModel(0), mModel(0), mPgIndex(-1)//, mHandler(new CSMWorld::SignalHandler(this))
 , mPhysics(physics), mSceneMgr(sceneManager), mX(0), mY(0)
 {
-    const CSMForeign::WorldCollection& worlds = mDocument.getData().getForeignWorlds();
-    const CSMForeign::World& world = worlds.getRecord(worlds.searchId(ESM4::formIdToString(worldId))).get();
-    if (world.mParent != 0)
-        mWorld = world.mParent; // yes, really (but needs more testing - maybe have both or merge?)
+    if (worldId) // no worldId for internal cells
+    {
+        const CSMForeign::WorldCollection& worlds = mDocument.getData().getForeignWorlds();
+        const CSMForeign::World& world
+            = worlds.getRecord(worlds.searchId(ESM4::formIdToString(worldId))).get();
+        if (world.mParent != 0)
+            mWorld = world.mParent; // yes, really (but needs more testing - maybe have both or merge?)
+    }
 
     mCellNode = sceneManager->getRootSceneNode()->createChildSceneNode();
     mCellNode->setPosition (origin);
