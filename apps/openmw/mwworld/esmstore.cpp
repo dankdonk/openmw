@@ -86,7 +86,8 @@ void ESMStore::load(ESM::ESMReader &esm, Loading::Listener* listener)
         if (esm.getVer() == ESM::VER_080 // TES4
                 || esm.getVer() == ESM::VER_094 || esm.getVer() == ESM::VER_17) // TES5
         {
-            loadTes4Group(esm);
+            ESM4::Reader& reader = static_cast<ESM::ESM4Reader*>(&esm)->reader();
+            loadTes4Group(reader);
             continue; // FIXME: skip progress bar for now
         }
 
@@ -140,15 +141,13 @@ void ESMStore::load(ESM::ESMReader &esm, Loading::Listener* listener)
     }
 }
 
-void ESMStore::loadTes4Group (ESM::ESMReader &esm)
+void ESMStore::loadTes4Group (ESM4::Reader& reader)
 {
-    ESM4::Reader& reader = static_cast<ESM::ESM4Reader*>(&esm)->reader();
-
     reader.getRecordHeader();
     const ESM4::RecordHeader& hdr = reader.hdr();
 
     if (hdr.record.typeId != ESM4::REC_GRUP)
-        return loadTes4Record(esm, hdr);
+        return loadTes4Record(reader, hdr);
 
     switch (hdr.group.type)
     {
@@ -171,7 +170,7 @@ void ESMStore::loadTes4Group (ESM::ESMReader &esm)
                 //
                 // Workaround by getting the record header and checking its typeId
                 reader.saveGroupStatus(hdr);
-                loadTes4Group(esm);
+                loadTes4Group(reader);
             }
             else
             {
@@ -197,7 +196,7 @@ void ESMStore::loadTes4Group (ESM::ESMReader &esm)
         case ESM4::Grp_CellVisibleDistChild:
         {
             reader.saveGroupStatus(hdr);
-            loadTes4Group(esm);
+            loadTes4Group(reader);
 
             break;
         }
@@ -209,10 +208,8 @@ void ESMStore::loadTes4Group (ESM::ESMReader &esm)
     return;
 }
 
-void ESMStore::loadTes4Record (ESM::ESMReader &esm, const ESM4::RecordHeader& hdr)
+void ESMStore::loadTes4Record (ESM4::Reader& reader, const ESM4::RecordHeader& hdr)
 {
-    ESM4::Reader& reader = static_cast<ESM::ESM4Reader*>(&esm)->reader();
-
     switch (hdr.record.typeId)
     {
         case ESM4::REC_CELL:
