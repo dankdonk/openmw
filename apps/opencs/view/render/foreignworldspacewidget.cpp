@@ -13,6 +13,8 @@
 #include <OgreSceneQuery.h>
 #include <OgreSceneNode.h>
 #include <OgreViewport.h>
+#include <OgreMaterialManager.h>
+#include <OgreTechnique.h>
 
 #include <components/esm/loadland.hpp>
 #include "textoverlay.hpp"
@@ -29,6 +31,7 @@
 
 #include "pathgridpoint.hpp"
 #include "editmode.hpp"
+#include "water.hpp"
 #include "elements.hpp"
 
 bool CSVRender::ForeignWorldspaceWidget::adjustCells()
@@ -521,6 +524,29 @@ CSVRender::ForeignWorldspaceWidget::ForeignWorldspaceWidget (QWidget* parent, CS
         this, SLOT (referenceAboutToBeRemoved (const QModelIndex&, int, int)));
     connect (references, SIGNAL (rowsInserted (const QModelIndex&, int, int)),
         this, SLOT (referenceAdded (const QModelIndex&, int, int)));
+
+    // FIXME: move sky/water to pagedworldspacewidget/foreignworldspacewidget so that
+    // oblivion sky/lava can be supported
+    Ogre::MaterialPtr skyMaterial = Ogre::MaterialManager::getSingleton().getByName(
+                "SkyMaterial");
+    if(skyMaterial.isNull())
+    {
+        skyMaterial = Ogre::MaterialManager::getSingleton().create(
+                    "SkyMaterial",
+                    Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, true );
+        Ogre::Pass *pass = skyMaterial->getTechnique( 0 )->getPass( 0 );
+        pass->setLightingEnabled( false );
+        pass->setDepthWriteEnabled( false );
+
+        Ogre::TextureUnitState *tex = pass->createTextureUnitState("MyCustomState", 0);
+        tex->setTextureName("clouds.jpg");
+        //tex->setTextureName("oblivion_sky01.dds");
+        skyMaterial->load();
+    }
+    Ogre::Quaternion r(Ogre::Degree(90), Ogre::Vector3::UNIT_X);
+    getSceneManager()->setSkyDome(true, "SkyMaterial", 10, 8, 4000, true, r);
+    mWater = new Water(getCamera(), getSceneManager()->getRootSceneNode());
+    mWater->setActive(true);
 }
 
 CSVRender::ForeignWorldspaceWidget::~ForeignWorldspaceWidget()
@@ -541,9 +567,11 @@ CSVRender::ForeignWorldspaceWidget::~ForeignWorldspaceWidget()
 
     if(mOverlayMask)
     {
-    removeRenderTargetListener(mOverlayMask);
-    delete mOverlayMask;
-}
+        removeRenderTargetListener(mOverlayMask);
+        delete mOverlayMask;
+    }
+
+    delete mWater;
 }
 
 // CSVWorld::RegionMap::viewForeign()

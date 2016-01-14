@@ -160,6 +160,8 @@ enum RecordType
   RC_BSFurnitureMarker,
   RC_bhkPrismaticConstraint,
   RC_NiBlendTransformInterpolator,
+  RC_NiPSysSphereEmitter,
+  RC_NiPSysEmitterLifeSpanCtlr,
   RC_RootCollisionNode
 };
 /// Base class for all records

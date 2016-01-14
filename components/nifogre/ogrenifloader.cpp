@@ -831,8 +831,8 @@ private:
             Nif::ControllerPtr ctrls = matprop->controller;
             while(!ctrls.empty())
             {
-                if (ctrls->recType == Nif::RC_NiAlphaController)
-                {
+                if (ctrls->nifVer <= 0x0a010000 && ctrls->recType == Nif::RC_NiAlphaController)
+                {                                                            // FIXME: Data exists only up to NIF version 10.1.0.0, need to implement an interpolator instead
                     const Nif::NiAlphaController *alphaCtrl = static_cast<const Nif::NiAlphaController*>(ctrls.getPtr());
                     Ogre::ControllerValueRealPtr dstval(OGRE_NEW AlphaController::Value(movable, alphaCtrl->data.getPtr(), &scene->mMaterialControllerMgr));
                     AlphaController::Function* function = OGRE_NEW AlphaController::Function(alphaCtrl, isAnimationAutoPlay);
@@ -1121,7 +1121,7 @@ private:
     static void createNodeControllers(const Nif::NIFFilePtr& nif, const std::string &name, Nif::ControllerPtr ctrl, ObjectScenePtr scene, int animflags)
     {
         do {
-            if (ctrl->flags & Nif::NiNode::ControllerFlag_Active)
+            if (ctrl->nifVer <= 0x0a010000 && ctrl->flags & Nif::NiNode::ControllerFlag_Active) // FIXME no data
             {
                 bool isAnimationAutoPlay = (animflags & Nif::NiNode::AnimFlag_AutoPlay) != 0;
                 if(ctrl->recType == Nif::RC_NiVisController)

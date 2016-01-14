@@ -53,14 +53,20 @@ public:
         float time;
         std::string text;
     };
+    std::string objectName;
+    NodePtr next;
     std::vector<TextKey> list;
 
     void read(NIFStream *nif)
     {
-        Extra::read(nif);
+        if (nifVer >= 0x0a000100) // from 10.0.1.0
+            objectName = nif->getString();
 
         if (nifVer <= 0x04020200) // up to 4.2.2.0
+        {
+            next.read(nif);
             nif->getInt(); // 0
+        }
 
         int keynum = nif->getInt();
         list.resize(keynum);

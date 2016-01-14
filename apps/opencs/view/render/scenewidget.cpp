@@ -12,11 +12,6 @@
 #include <OgreSceneNode.h>
 #include <OgreViewport.h>
 #include <OgreOverlaySystem.h>
-#include <OgreMaterialManager.h>
-#include <OgreTechnique.h>
-
-//#include <extern/shiny/Main/Factory.hpp>
-//#include <extern/shiny/Platforms/Ogre/OgreMaterial.hpp>
 
 #include "../widget/scenetoolmode.hpp"
 #include "../../model/settings/usersettings.hpp"
@@ -24,7 +19,6 @@
 #include "navigation.hpp"
 #include "lighting.hpp"
 #include "overlaysystem.hpp"
-#include "water.hpp"
 
 namespace CSVRender
 {
@@ -80,30 +74,7 @@ namespace CSVRender
         /// \todo make shortcut configurable
         QShortcut *focusToolbar = new QShortcut (Qt::Key_T, this, 0, 0, Qt::WidgetWithChildrenShortcut);
         connect (focusToolbar, SIGNAL (activated()), this, SIGNAL (focusToolbarRequest()));
-#if 0
-        // FIXME: move sky/water to pagedworldspacewidget/foreignworldspacewidget so that
-        // oblivion sky/lava can be supported
-        Ogre::MaterialPtr skyMaterial = Ogre::MaterialManager::getSingleton().getByName(
-                    "SkyMaterial");
-        if(skyMaterial.isNull())
-        {
-            skyMaterial = Ogre::MaterialManager::getSingleton().create(
-                        "SkyMaterial",
-                        Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, true );
-            Ogre::Pass *pass = skyMaterial->getTechnique( 0 )->getPass( 0 );
-            pass->setLightingEnabled( false );
-            pass->setDepthWriteEnabled( false );
 
-            Ogre::TextureUnitState *tex = pass->createTextureUnitState("MyCustomState", 0);
-            tex->setTextureName("clouds.jpg");
-            //tex->setTextureName("oblivion_sky01.dds");
-            skyMaterial->load();
-        }
-        Ogre::Quaternion r(Ogre::Degree(90), Ogre::Vector3::UNIT_X);
-        mSceneMgr->setSkyDome(true, "SkyMaterial", 10, 8, 4000, true, r);
-        mWater = new Water(mCamera, mSceneMgr->getRootSceneNode());
-        mWater->setActive(true);
-#endif
         updateOgreWindow();
     }
 
@@ -193,9 +164,6 @@ namespace CSVRender
 
     SceneWidget::~SceneWidget()
     {
-        //delete mWater;
-        //delete mSkyManager;
-
         if (mWindow)
             Ogre::Root::getSingleton().destroyRenderTarget (mWindow);
 

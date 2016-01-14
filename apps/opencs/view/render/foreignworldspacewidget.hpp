@@ -22,6 +22,7 @@ namespace CSVRender
 {
     class TextOverlay;
     class OverlayMask;
+    class Water;
 
     class ForeignWorldspaceWidget : public WorldspaceWidget
     {
@@ -36,6 +37,7 @@ namespace CSVRender
             std::map<CSMWorld::CellCoordinates, TextOverlay *> mTextOverlays;
             OverlayMask *mOverlayMask;
             ESM4::FormId mWorld;
+            Water* mWater;
 
         private:
 

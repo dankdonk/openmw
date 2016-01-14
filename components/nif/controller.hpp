@@ -411,6 +411,23 @@ public:
     }
 };
 
+class NiPSysEmitterLifeSpanCtlr : public Controller
+{
+public:
+    NiInterpolatorPtr interpolator;
+    std::string modifierName;
+
+    void read(NIFStream *nif)
+    {
+        Controller::read(nif);
+        if (nifVer >= 0x0a020000) // from 10.2.0.0
+            interpolator.read(nif);
+        modifierName = nif->getString();
+        if (nifVer <= 0x0a010000) // up to 10.1.0.0
+            nif->getInt(); // NiFloatDataPtr
+    }
+};
+
 class NiPSysEmitterSpeedCtlr : public Controller
 {
 public:
@@ -424,7 +441,7 @@ public:
             interpolator.read(nif);
         modifierName = nif->getString();
         if (nifVer <= 0x0a010000) // up to 10.1.0.0
-            nif->getFloat(); // NiFloatDataPtr
+            nif->getInt(); // NiFloatDataPtr
     }
 };
 
@@ -759,6 +776,21 @@ public:
         velocityType = nif->getUInt();
         emissionType = nif->getUInt();
         emissionAxis = nif->getVector3();
+    }
+};
+
+class NiPSysSphereEmitter : public NiPSysEmitter
+{
+public:
+    NodePtr emitteObj;
+    float radius;
+
+    void read(NIFStream *nif)
+    {
+        NiPSysEmitter::read(nif);
+
+        emitteObj.read(nif);
+        radius = nif->getFloat();
     }
 };
 

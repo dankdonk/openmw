@@ -96,11 +96,44 @@ void CSVRender::ForeignObject::update()
                 error = 2;
         }
         else if (npc.searchId(ESM4::formIdToString(baseObj)) != -1)
-            std::cout << "obj is an npc" << std::endl;
+        {
+            int extraIndex = -1;
+            extraIndex = npc.searchId(ESM4::formIdToString(baseObj));
+            model = npc.getData (extraIndex,
+                   npc.findColumnIndex (CSMWorld::Columns::ColumnId_Model)).toString().toUtf8().constData();
+            std::cout << "obj is an npc " << ESM4::formIdToString(baseObj) << ", " << model << std::endl;
+
+            if (model.empty())
+                error = 2;
+            else
+                error = 0;
+        }
         else if (armor.searchId(ESM4::formIdToString(baseObj)) != -1)
-            std::cout << "obj is an armor" << std::endl;
+        {
+            int extraIndex = -1;
+            extraIndex = armor.searchId(ESM4::formIdToString(baseObj));
+            model = armor.getData (extraIndex,
+                   armor.findColumnIndex (CSMWorld::Columns::ColumnId_Model)).toString().toUtf8().constData();
+            std::cout << "obj is a armor obj " << ESM4::formIdToString(baseObj) << ", " << model << std::endl;
+
+            if (model.empty())
+                error = 2;
+            else
+                error = 0;
+        }
         else if (anio.searchId(ESM4::formIdToString(baseObj)) != -1)
-            std::cout << "obj is an anim obj" << std::endl;
+        {
+            int extraIndex = -1;
+            extraIndex = anio.searchId(ESM4::formIdToString(baseObj));
+            model = anio.getData (extraIndex,
+                   anio.findColumnIndex (CSMWorld::Columns::ColumnId_Model)).toString().toUtf8().constData();
+            std::cout << "obj is a anim obj " << ESM4::formIdToString(baseObj) << ", " << model << std::endl;
+
+            if (model.empty())
+                error = 2;
+            else
+                error = 0;
+        }
         else if (misc.searchId(ESM4::formIdToString(baseObj)) != -1)
         {
             int extraIndex = -1;
@@ -359,7 +392,7 @@ void CSVRender::ForeignObject::update()
 
         //std::cout << "Using model: " << model << std::endl;
         mObject = NifOgre::Loader::createObjects (mBase, "Meshes\\" + trimmedModel);
-        mObject->setVisibilityFlags (Element_Reference);
+        if (!mObject.isNull()) mObject->setVisibilityFlags (Element_Reference); // FIXME: find root cause of null pointer
 
         if (mPhysics && !(mReferenceId == 0))
         {

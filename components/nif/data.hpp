@@ -441,30 +441,142 @@ public:
     }
 };
 
-// FIXME: incomplete
 class NiSkinPartition : public Record
 {
 public:
-    unsigned short num;
+    struct Triangle
+    {
+        unsigned short v1;
+        unsigned short v2;
+        unsigned short v3;
+    };
+
+    struct SkinPartitionBlock
+    {
+        unsigned short numVerts;
+        unsigned short numTriangles;
+        unsigned short numBones;
+        unsigned short numStrips;
+        unsigned short numWeightsPerVert;
+        std::vector<unsigned short> bones;
+        bool hasVertMap;
+        std::vector<unsigned short> vertMap;
+        bool hasVertWeights;
+        std::vector<std::vector<float> > vertWeights;
+        std::vector<unsigned short> stripLengths;
+        bool hasFaces;
+        std::vector<std::vector<float> > strips;
+        std::vector<Triangle> triangles;
+        bool hasBoneIndicies;
+        std::vector<std::vector<unsigned char> > boneIndicies;
+
+        void read(NIFStream *nif, unsigned int nifVer)
+        {
+            numVerts = nif->getUShort();
+            numTriangles = nif->getUShort();
+            numBones = nif->getUShort();
+            numStrips = nif->getUShort();
+            numWeightsPerVert = nif->getUShort();
+
+            bones.resize(numBones);
+            for (unsigned int i = 0; i < numBones; ++i)
+                bones[i] = nif->getUShort();
+
+            hasVertMap = nif->getBool(nifVer);
+            if (hasVertMap)
+            {
+                vertMap.resize(numVerts);
+                for (unsigned int i = 0; i < numVerts; ++i)
+                {
+                    vertMap[i] = nif->getUShort();
+                    std::cout << "i " << i << ", " << vertMap[i] << std::endl; // FIXME
+                }
+            }
+
+            hasVertWeights = nif->getBool(nifVer);
+            if (hasVertWeights)
+            {
+                vertWeights.resize(numVerts);
+                for (unsigned int i = 0; i < numVerts; ++i)
+                {
+                    vertWeights[i].resize(numWeightsPerVert);
+                    for (unsigned int j = 0; j < numWeightsPerVert; ++j)
+                    {
+                        vertWeights[i][j] = nif->getFloat();
+                    }
+                }
+            }
+
+            stripLengths.resize(numStrips);
+            for (unsigned int i = 0; i < numStrips; ++i)
+                stripLengths[i] = nif->getUShort();
+
+            hasFaces = nif->getBool(nifVer);
+            if (hasFaces && numStrips != 0)
+            {
+                strips.resize(numStrips);
+                for (unsigned int i = 0; i < numStrips; ++i)
+                {
+                    strips[i].resize(stripLengths[i]);
+                    for (unsigned int j = 0; j < stripLengths[i]; ++j)
+                    {
+                        strips[i][j] = nif->getUShort();
+                    }
+                }
+            }
+            else if (hasFaces && numStrips == 0)
+            {
+                triangles.resize(numTriangles);
+                for (unsigned int i = 0; i < numTriangles; ++i)
+                {
+                    triangles[i].v1 = nif->getUShort();
+                    triangles[i].v2 = nif->getUShort();
+                    triangles[i].v3 = nif->getUShort();
+                }
+            }
+
+            hasBoneIndicies = nif->getBool(nifVer);
+            if (hasBoneIndicies)
+            {
+                boneIndicies.resize(numVerts);
+                for (unsigned int i = 0; i < numVerts; ++i)
+                {
+                    boneIndicies[i].resize(numWeightsPerVert);
+                    for (unsigned int j = 0; j < numWeightsPerVert; ++j)
+                    {
+                        boneIndicies[i][j] = nif->getChar();
+                    }
+                }
+            }
+        }
+    };
+
+    unsigned int numSkinPartitionBlocks;
+    std::vector<SkinPartitionBlock> skinPartitionBlocks;
 
     void read(NIFStream *nif)
     {
+        numSkinPartitionBlocks = nif->getUInt();
+        skinPartitionBlocks.resize(numSkinPartitionBlocks);
+        for (unsigned int i = 0; i < numSkinPartitionBlocks; ++i)
+            skinPartitionBlocks[i].read(nif, nifVer);
     }
+
 };
 
 class NiSkinInstance : public Record
 {
 public:
     NiSkinDataPtr data;
-    //NiSkinPartitionPtr skinPartition;
+    NiSkinPartitionPtr skinPartition;
     NodePtr root;
     NodeList bones;
 
     void read(NIFStream *nif)
     {
         data.read(nif);
-        //if (nifVer >= 0x04020000) // from 4.2.0.0
-            //skinPartition.read(nif);
+        if (nifVer >= 0x0a020000) // from 10.2.0.0
+            skinPartition.read(nif);
         root.read(nif);
         bones.read(nif);
     }
