@@ -20,11 +20,12 @@
   cc9cii cc9c@iinet.net.au
 
 */
-#ifndef ESM4_ALCH_H
-#define ESM4_ALCH_H
+#ifndef ESM4_INGR_H
+#define ESM4_INGR_H
 
 #include <string>
 #include <cstdint>
+#include <vector>
 
 namespace ESM4
 {
@@ -32,12 +33,18 @@ namespace ESM4
     class Writer;
     typedef std::uint32_t FormId;
 
-    struct Potion
+    struct Ingredient
     {
 #pragma pack(push, 1)
         struct Data
         {
-            float weight;
+            float         weight;
+        };
+
+        struct ENIT
+        {
+            std::uint32_t value;
+            std::uint32_t flags;
         };
 #pragma pack(pop)
 
@@ -49,12 +56,14 @@ namespace ESM4
         std::string mModel;
         std::string mIcon; // inventory
 
+        std::vector<std::string> mScriptEffect; // FIXME: prob. should be in a struct
         FormId mScript;
+        ENIT   mEnchantment;
 
         Data mData;
 
-        Potion();
-        ~Potion();
+        Ingredient();
+        ~Ingredient();
 
         void load(ESM4::Reader& reader);
         //void save(ESM4::Writer& reader) const;
@@ -63,4 +72,4 @@ namespace ESM4
     };
 }
 
-#endif // ESM4_ALCH_H
+#endif // ESM4_INGR_H

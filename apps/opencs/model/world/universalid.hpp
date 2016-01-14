@@ -186,6 +186,12 @@ namespace CSMWorld
                 Type_ForeignClothing,
                 Type_ForeignPotions, // FIXME: should be refid
                 Type_ForeignPotion,
+                Type_ForeignApparatuses, // FIXME: should be refid
+                Type_ForeignApparatus,
+                Type_ForeignIngredients, // FIXME: should be refid
+                Type_ForeignIngredient,
+                Type_ForeignSigilStones, // FIXME: should be refid
+                Type_ForeignSigilStone,
                 Type_ForeignReferenceables,
                 Type_ForeignReferenceable,
                 Type_ForeignReferences,

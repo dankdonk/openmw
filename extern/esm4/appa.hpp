@@ -20,8 +20,8 @@
   cc9cii cc9c@iinet.net.au
 
 */
-#ifndef ESM4_ALCH_H
-#define ESM4_ALCH_H
+#ifndef ESM4_APPA_H
+#define ESM4_APPA_H
 
 #include <string>
 #include <cstdint>
@@ -32,14 +32,15 @@ namespace ESM4
     class Writer;
     typedef std::uint32_t FormId;
 
-    struct Potion
+    struct Apparatus
     {
-#pragma pack(push, 1)
         struct Data
         {
-            float weight;
+            std::uint8_t  type;  // 0 = Mortar and Pestle, 1 = Alembic, 2 = Calcinator, 3 = Retort
+            std::uint32_t value; // gold
+            float         weight;
+            float         quality;
         };
-#pragma pack(pop)
 
         FormId mFormId;       // from the header
         std::uint32_t mFlags; // from the header, see enum type RecordFlag for details
@@ -53,8 +54,8 @@ namespace ESM4
 
         Data mData;
 
-        Potion();
-        ~Potion();
+        Apparatus();
+        ~Apparatus();
 
         void load(ESM4::Reader& reader);
         //void save(ESM4::Writer& reader) const;
@@ -63,4 +64,4 @@ namespace ESM4
     };
 }
 
-#endif // ESM4_ALCH_H
+#endif // ESM4_APPA_H

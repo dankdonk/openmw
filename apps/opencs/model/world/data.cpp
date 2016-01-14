@@ -653,6 +653,21 @@ CSMWorld::Data::Data (ToUTF8::FromType encoding, const ResourcesManager& resourc
     mForeignPotions.addColumn (new FixedRecordTypeColumn<CSMForeign::Potion> (UniversalId::Type_ForeignPotions));
     mForeignPotions.addColumn (new ModelColumn<CSMForeign::Potion>);
 
+    mForeignApparatuses.addColumn (new StringIdColumn<CSMForeign::Apparatus>);
+    mForeignApparatuses.addColumn (new RecordStateColumn<CSMForeign::Apparatus>);
+    mForeignApparatuses.addColumn (new FixedRecordTypeColumn<CSMForeign::Apparatus> (UniversalId::Type_ForeignApparatuses));
+    mForeignApparatuses.addColumn (new ModelColumn<CSMForeign::Apparatus>);
+
+    mForeignIngredients.addColumn (new StringIdColumn<CSMForeign::Ingredient>);
+    mForeignIngredients.addColumn (new RecordStateColumn<CSMForeign::Ingredient>);
+    mForeignIngredients.addColumn (new FixedRecordTypeColumn<CSMForeign::Ingredient> (UniversalId::Type_ForeignIngredients));
+    mForeignIngredients.addColumn (new ModelColumn<CSMForeign::Ingredient>);
+
+    mForeignSigilStones.addColumn (new StringIdColumn<CSMForeign::SigilStone>);
+    mForeignSigilStones.addColumn (new RecordStateColumn<CSMForeign::SigilStone>);
+    mForeignSigilStones.addColumn (new FixedRecordTypeColumn<CSMForeign::SigilStone> (UniversalId::Type_ForeignSigilStones));
+    mForeignSigilStones.addColumn (new ModelColumn<CSMForeign::SigilStone>);
+
     mForeignRefs.addColumn (new StringIdColumn<CSMForeign::CellRef>/*(true)*/);
     mForeignRefs.addColumn (new RecordStateColumn<CSMForeign::CellRef>);
     mForeignRefs.addColumn (new FixedRecordTypeColumn<CSMForeign::CellRef> (UniversalId::Type_ForeignReference));
@@ -752,6 +767,9 @@ CSMWorld::Data::Data (ToUTF8::FromType encoding, const ResourcesManager& resourc
     addModel (new IdTable (&mForeignAmmos), UniversalId::Type_ForeignAmmo); // FIXME: temp, should be refid
     addModel (new IdTable (&mForeignClothings), UniversalId::Type_ForeignClothing); // FIXME: temp, should be refid
     addModel (new IdTable (&mForeignPotions), UniversalId::Type_ForeignPotion); // FIXME: temp, should be refid
+    addModel (new IdTable (&mForeignApparatuses), UniversalId::Type_ForeignApparatus); // FIXME: temp, should be refid
+    addModel (new IdTable (&mForeignIngredients), UniversalId::Type_ForeignIngredient); // FIXME: temp, should be refid
+    addModel (new IdTable (&mForeignSigilStones), UniversalId::Type_ForeignSigilStone); // FIXME: temp, should be refid
     addModel (new IdTable (&mForeignRefs, IdTable::Feature_ViewCell | IdTable::Feature_Preview),
             UniversalId::Type_ForeignReference);
     addModel (new IdTable (&mForeignChars, IdTable::Feature_ViewCell | IdTable::Feature_Preview),
@@ -1363,6 +1381,36 @@ const CSMForeign::IdCollection<CSMForeign::Potion>& CSMWorld::Data::getForeignPo
 CSMForeign::IdCollection<CSMForeign::Potion>& CSMWorld::Data::getForeignPotions()
 {
     return mForeignPotions;
+}
+
+const CSMForeign::IdCollection<CSMForeign::Apparatus>& CSMWorld::Data::getForeignApparatuses() const
+{
+    return mForeignApparatuses;
+}
+
+CSMForeign::IdCollection<CSMForeign::Apparatus>& CSMWorld::Data::getForeignApparatuses()
+{
+    return mForeignApparatuses;
+}
+
+const CSMForeign::IdCollection<CSMForeign::Ingredient>& CSMWorld::Data::getForeignIngredients() const
+{
+    return mForeignIngredients;
+}
+
+CSMForeign::IdCollection<CSMForeign::Ingredient>& CSMWorld::Data::getForeignIngredients()
+{
+    return mForeignIngredients;
+}
+
+const CSMForeign::IdCollection<CSMForeign::SigilStone>& CSMWorld::Data::getForeignSigilStones() const
+{
+    return mForeignSigilStones;
+}
+
+CSMForeign::IdCollection<CSMForeign::SigilStone>& CSMWorld::Data::getForeignSigilStones()
+{
+    return mForeignSigilStones;
 }
 
 QAbstractItemModel *CSMWorld::Data::getTableModel (const CSMWorld::UniversalId& id)

@@ -31,6 +31,9 @@ set(ESM4_SOURCE_FILES
     clot.cpp
     alch.cpp
     ammo.cpp
+    appa.cpp
+    ingr.cpp
+    sgst.cpp
     reader.cpp
 )
 

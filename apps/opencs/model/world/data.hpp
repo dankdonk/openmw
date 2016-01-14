@@ -62,6 +62,9 @@
 #include "../foreign/ammo.hpp"
 #include "../foreign/clothing.hpp"
 #include "../foreign/potion.hpp"
+#include "../foreign/apparatus.hpp"
+#include "../foreign/ingredient.hpp"
+#include "../foreign/sigilstone.hpp"
 
 #include "idcollection.hpp"
 #include "nestedidcollection.hpp"
@@ -151,6 +154,9 @@ namespace CSMWorld
             CSMForeign::IdCollection<CSMForeign::Ammo> mForeignAmmos;
             CSMForeign::IdCollection<CSMForeign::Clothing> mForeignClothings;
             CSMForeign::IdCollection<CSMForeign::Potion> mForeignPotions;
+            CSMForeign::IdCollection<CSMForeign::Apparatus> mForeignApparatuses;
+            CSMForeign::IdCollection<CSMForeign::Ingredient> mForeignIngredients;
+            CSMForeign::IdCollection<CSMForeign::SigilStone> mForeignSigilStones;
             //CSMForeign::RefIdCollection mForeignReferenceables;
             CSMForeign::RefCollection mForeignRefs;
             CSMForeign::CharCollection mForeignChars;
@@ -411,6 +417,18 @@ namespace CSMWorld
             const CSMForeign::IdCollection<CSMForeign::Potion>& getForeignPotions() const;
 
             CSMForeign::IdCollection<CSMForeign::Potion>& getForeignPotions();
+
+            const CSMForeign::IdCollection<CSMForeign::Apparatus>& getForeignApparatuses() const;
+
+            CSMForeign::IdCollection<CSMForeign::Apparatus>& getForeignApparatuses();
+
+            const CSMForeign::IdCollection<CSMForeign::Ingredient>& getForeignIngredients() const;
+
+            CSMForeign::IdCollection<CSMForeign::Ingredient>& getForeignIngredients();
+
+            const CSMForeign::IdCollection<CSMForeign::SigilStone>& getForeignSigilStones() const;
+
+            CSMForeign::IdCollection<CSMForeign::SigilStone>& getForeignSigilStones();
 
             const CSMForeign::NavigationCollection& getNavigation() const;
 

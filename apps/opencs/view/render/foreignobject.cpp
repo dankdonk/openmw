@@ -71,6 +71,9 @@ void CSVRender::ForeignObject::update()
     const CSMForeign::IdCollection<CSMForeign::Ammo>& ammo = mData.getForeignAmmos();
     const CSMForeign::IdCollection<CSMForeign::Clothing>& cloth = mData.getForeignClothings();
     const CSMForeign::IdCollection<CSMForeign::Potion>& potion = mData.getForeignPotions();
+    const CSMForeign::IdCollection<CSMForeign::Apparatus>& appa = mData.getForeignApparatuses();
+    const CSMForeign::IdCollection<CSMForeign::Ingredient>& ingr = mData.getForeignIngredients();
+    const CSMForeign::IdCollection<CSMForeign::SigilStone>& sigil = mData.getForeignSigilStones();
     const CSMForeign::StaticCollection& referenceables = mData.getForeignStatics(); // FIXME: use statics only for now
 
     //int index = referenceables.searchId (mReferenceableId);
@@ -178,7 +181,7 @@ void CSVRender::ForeignObject::update()
             extraIndex = door.searchId(ESM4::formIdToString(baseObj));
             model = door.getData (extraIndex,
                    door.findColumnIndex (CSMWorld::Columns::ColumnId_Model)).toString().toUtf8().constData();
-            std::cout << "obj is a door obj " << ESM4::formIdToString(baseObj) << ", " << model << std::endl;
+            //std::cout << "obj is a door obj " << ESM4::formIdToString(baseObj) << ", " << model << std::endl;
 
             if (model.empty())
                 error = 2;
@@ -217,7 +220,46 @@ void CSVRender::ForeignObject::update()
             extraIndex = potion.searchId(ESM4::formIdToString(baseObj));
             model = potion.getData (extraIndex,
                    potion.findColumnIndex (CSMWorld::Columns::ColumnId_Model)).toString().toUtf8().constData();
-            std::cout << "obj is a potion obj " << ESM4::formIdToString(baseObj) << ", " << model << std::endl;
+            //std::cout << "obj is a potion obj " << ESM4::formIdToString(baseObj) << ", " << model << std::endl;
+
+            if (model.empty())
+                error = 2;
+            else
+                error = 0;
+        }
+        else if (appa.searchId(ESM4::formIdToString(baseObj)) != -1)
+        {
+            int extraIndex = -1;
+            extraIndex = appa.searchId(ESM4::formIdToString(baseObj));
+            model = appa.getData (extraIndex,
+                   appa.findColumnIndex (CSMWorld::Columns::ColumnId_Model)).toString().toUtf8().constData();
+            std::cout << "obj is a appa obj " << ESM4::formIdToString(baseObj) << ", " << model << std::endl;
+
+            if (model.empty())
+                error = 2;
+            else
+                error = 0;
+        }
+        else if (ingr.searchId(ESM4::formIdToString(baseObj)) != -1)
+        {
+            int extraIndex = -1;
+            extraIndex = ingr.searchId(ESM4::formIdToString(baseObj));
+            model = ingr.getData (extraIndex,
+                   ingr.findColumnIndex (CSMWorld::Columns::ColumnId_Model)).toString().toUtf8().constData();
+            std::cout << "obj is a ingr obj " << ESM4::formIdToString(baseObj) << ", " << model << std::endl;
+
+            if (model.empty())
+                error = 2;
+            else
+                error = 0;
+        }
+        else if (sigil.searchId(ESM4::formIdToString(baseObj)) != -1)
+        {
+            int extraIndex = -1;
+            extraIndex = sigil.searchId(ESM4::formIdToString(baseObj));
+            model = sigil.getData (extraIndex,
+                   sigil.findColumnIndex (CSMWorld::Columns::ColumnId_Model)).toString().toUtf8().constData();
+            std::cout << "obj is a sigil stone " << ESM4::formIdToString(baseObj) << ", " << model << std::endl;
 
             if (model.empty())
                 error = 2;
@@ -230,7 +272,7 @@ void CSVRender::ForeignObject::update()
             extraIndex = book.searchId(ESM4::formIdToString(baseObj));
             model = book.getData (extraIndex,
                    book.findColumnIndex (CSMWorld::Columns::ColumnId_Model)).toString().toUtf8().constData();
-            std::cout << "obj is a book obj " << ESM4::formIdToString(baseObj) << ", " << model << std::endl;
+            //std::cout << "obj is a book obj " << ESM4::formIdToString(baseObj) << ", " << model << std::endl;
 
             if (model.empty())
                 error = 2;
@@ -243,7 +285,7 @@ void CSVRender::ForeignObject::update()
             extraIndex = furn.searchId(ESM4::formIdToString(baseObj));
             model = furn.getData (extraIndex,
                    furn.findColumnIndex (CSMWorld::Columns::ColumnId_Model)).toString().toUtf8().constData();
-            std::cout << "obj is a furniture obj " << ESM4::formIdToString(baseObj) << ", " << model << std::endl;
+            //std::cout << "obj is a furniture obj " << ESM4::formIdToString(baseObj) << ", " << model << std::endl;
 
             if (model.empty())
                 error = 2;
@@ -283,7 +325,7 @@ void CSVRender::ForeignObject::update()
                 {
                     model = acti.getData (actiIndex,
                            acti.findColumnIndex (CSMWorld::Columns::ColumnId_Model)).toString().toUtf8().constData();
-                    //std::cout << "obj is an acti obj " << ESM4::formIdToString(baseObj) << ", " << model << std::endl;
+                    std::cout << "obj is an acti obj " << ESM4::formIdToString(baseObj) << ", " << model << std::endl;
 
                     if (model.empty())
                         error = 2;
@@ -330,8 +372,13 @@ void CSVRender::ForeignObject::update()
                                 error = 0;
                         }
                         else
+                        {
                             std::cout << "obj not static/anio/misc/acti/container/whatever "
                                       << ESM4::formIdToString(baseObj) << std::endl;
+    const CSMForeign::RefCollection& refs = mData.getForeignReferences();
+    ESM4::FormId baseObj = refs.getRecord(refs.searchId(mReferenceId)).get().mBaseObj;
+    int index = referenceables.searchId (ESM4::formIdToString(baseObj)); // FIXME: double conversion to string
+                        }
                     }
                 }
             }

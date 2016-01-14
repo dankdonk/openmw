@@ -145,6 +145,7 @@ namespace ESM4
         REC_RFCT = MKTAG('R','F','C','T'), // Visual Effect
         REC_SCEN = MKTAG('S','C','E','N'), // Scene
         REC_SCRL = MKTAG('S','C','R','L'), // Scroll
+        REC_SGST = MKTAG('S','G','S','T'), // Sigil Stone
         REC_SHOU = MKTAG('S','H','O','U'), // Shout
         REC_SLGM = MKTAG('S','L','G','M'), // Soul Gem
         REC_SMBN = MKTAG('S','M','B','N'), // Story Manager Branch Node

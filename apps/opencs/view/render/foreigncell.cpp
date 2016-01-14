@@ -187,7 +187,7 @@ CSVRender::ForeignCell::ForeignCell (CSMDoc::Document& document, Ogre::SceneMana
         else
             std::cerr << "Heightmap for " << cell.mCellId << " not found" << std::endl;
     }
-    else
+    else if (mWorld != 0) // FIXME need a better check for interiors
         std::cerr << "Land record for " << cell.mCellId << " not found, land formId " <<
             ESM4::formIdToString(cell.mLandTemporary) << " cell formId " <<
             ESM4::formIdToString(cell.mFormId)

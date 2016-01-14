@@ -20,7 +20,7 @@
   cc9cii cc9c@iinet.net.au
 
 */
-#include "alch.hpp"
+#include "appa.hpp"
 
 #include <cassert>
 #include <stdexcept>
@@ -32,21 +32,24 @@
 #include "reader.hpp"
 //#include "writer.hpp"
 
-ESM4::Potion::Potion() : mScript(0)
+ESM4::Apparatus::Apparatus() : mScript(0)
 {
     mEditorId.clear();
     mFullName.clear();
     mModel.clear();
     mIcon.clear();
 
+    mData.type = 0;
+    mData.value = 0;
     mData.weight = 0.f;
+    mData.quality = 0.f;
 }
 
-ESM4::Potion::~Potion()
+ESM4::Apparatus::~Apparatus()
 {
 }
 
-void ESM4::Potion::load(ESM4::Reader& reader)
+void ESM4::Apparatus::load(ESM4::Reader& reader)
 {
     mFormId = reader.hdr().record.id;
     mFlags  = reader.hdr().record.flags;
@@ -59,19 +62,19 @@ void ESM4::Potion::load(ESM4::Reader& reader)
             case ESM4::SUB_EDID: // Editor name or the worldspace
             {
                 if (!reader.getZString(mEditorId))
-                    throw std::runtime_error ("ALCH EDID data read error");
+                    throw std::runtime_error ("APPA EDID data read error");
                 break;
             }
             case ESM4::SUB_FULL:
             {
                 if (!reader.getZString(mFullName))
-                    throw std::runtime_error ("ALCH FULL data read error");
+                    throw std::runtime_error ("APPA FULL data read error");
                 break;
             }
             case ESM4::SUB_MODL:
             {
                 if (!reader.getZString(mModel))
-                    throw std::runtime_error ("ALCH MODL data read error");
+                    throw std::runtime_error ("APPA MODL data read error");
 
                 //if (reader.esmVersion() == ESM4::VER_094 || reader.esmVersion() == ESM4::VER_170)
                 //{
@@ -82,7 +85,7 @@ void ESM4::Potion::load(ESM4::Reader& reader)
             case ESM4::SUB_ICON:
             {
                 if (!reader.getZString(mIcon))
-                    throw std::runtime_error ("ALCH ICON data read error");
+                    throw std::runtime_error ("APPA ICON data read error");
                 break;
             }
             case ESM4::SUB_DATA:
@@ -97,25 +100,21 @@ void ESM4::Potion::load(ESM4::Reader& reader)
             }
             case ESM4::SUB_MODB:
             case ESM4::SUB_MODT:
-            case ESM4::SUB_ENIT:
-            case ESM4::SUB_EFID:
-            case ESM4::SUB_EFIT:
-            case ESM4::SUB_SCIT:
             {
-                //std::cout << "ALCH " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
+                //std::cout << "APPA " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
                 reader.skipSubRecordData();
                 break;
             }
             default:
-                throw std::runtime_error("ESM4::ALCH::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
+                throw std::runtime_error("ESM4::APPAPPAoad - Unknown subrecord " + ESM4::printName(subHdr.typeId));
         }
     }
 }
 
-//void ESM4::Potion::save(ESM4::Writer& writer) const
+//void ESM4::Apparatus::save(ESM4::Writer& writer) const
 //{
 //}
 
-//void ESM4::Potion::blank()
+//void ESM4::Apparatus::blank()
 //{
 //}
