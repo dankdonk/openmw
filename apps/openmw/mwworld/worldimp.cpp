@@ -187,7 +187,7 @@ namespace MWWorld
         listener->loadingOff();
 
         // insert records that may not be present in all versions of MW
-        if (mEsm[0].getFormat() == 0)
+        if (mEsm[0]->getFormat() == 0)
             ensureNeededRecords();
 
         mStore.setUp();
@@ -474,6 +474,9 @@ namespace MWWorld
         delete mPhysics;
 
         delete mPlayer;
+
+        for (unsigned int i = 0; i < mEsm.size(); ++i)
+            delete mEsm[i];
     }
 
     const ESM::Cell *World::getExterior (const std::string& cellName) const
@@ -542,7 +545,7 @@ namespace MWWorld
         return mStore;
     }
 
-    std::vector<ESM::ESMReader>& World::getEsmReader()
+    std::vector<ESM::ESMReader*>& World::getEsmReader()
     {
         return mEsm;
     }
@@ -2937,7 +2940,7 @@ namespace MWWorld
         MWWorld::ActionTeleport action(cellName, closestMarker.getRefData().getPosition(), false);
         action.execute(ptr);
     }
-    
+
     void World::updateWeather(float duration, bool paused)
     {
         if (mPlayer->wasTeleported())
@@ -2945,7 +2948,7 @@ namespace MWWorld
             mPlayer->setTeleported(false);
             mWeatherManager->switchToNextWeather(true);
         }
-        
+
         mWeatherManager->update(duration, paused);
     }
 
