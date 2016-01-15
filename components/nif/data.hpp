@@ -862,6 +862,25 @@ struct FurniturePosition
     unsigned short entryProperties;
 };
 
+class BSBound : public Record
+{
+public:
+    std::string name;
+    Ogre::Vector3 center;
+    Ogre::Vector3 dimensions;
+
+    void read(NIFStream *nif)
+    {
+        if (nifVer >= 0x0a000100) // from 10.0.1.0
+            name = nif->getString();
+        if (nifVer <= 0x04020200) // up to 4.2.2.0
+            nif->getInt();
+
+        center = nif->getVector3();
+        dimensions = nif->getVector3();
+    }
+};
+
 class BSFurnitureMarker : public Record
 {
 public:

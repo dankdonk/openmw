@@ -179,6 +179,12 @@ static std::map<std::string,RecordFactoryEntry> makeFactory()
     newFactory.insert(makeEntry("bhkPrismaticConstraint",     &construct <bhkPrismaticConstraint>      , RC_bhkPrismaticConstraint        ));
     newFactory.insert(makeEntry("NiPSysSphereEmitter",        &construct <NiPSysSphereEmitter>         , RC_NiPSysSphereEmitter           ));
     newFactory.insert(makeEntry("NiPSysEmitterLifeSpanCtlr",  &construct <NiPSysEmitterLifeSpanCtlr>   , RC_NiPSysEmitterLifeSpanCtlr     ));
+    newFactory.insert(makeEntry("BSBound",                    &construct <BSBound>                     , RC_BSBound                       ));
+    newFactory.insert(makeEntry("bhkStiffSpringConstraint",   &construct <bhkStiffSpringConstraint>    , RC_bhkStiffSpringConstraint      ));
+    newFactory.insert(makeEntry("NiBSBoneLODController",      &construct <NiBSBoneLODController>       , RC_NiBSBoneLODController         ));
+    newFactory.insert(makeEntry("bhkBlendController",         &construct <bhkBlendController>          , RC_bhkBlendController            ));
+    newFactory.insert(makeEntry("bhkBlendCollisionObject",    &construct <bhkBlendCollisionObject>     , RC_bhkBlendCollisionObject       ));
+    newFactory.insert(makeEntry("bhkMalleableConstraint",     &construct <bhkMalleableConstraint>      , RC_bhkMalleableConstraint        ));
     newFactory.insert(makeEntry("NiBlendTransformInterpolator", &construct <NiBlendTransformInterpolator> , RC_NiBlendTransformInterpolator));
     newFactory.insert(makeEntry("NiMultiTargetTransformController", &construct <NiMultiTargetTransformController> , RC_NiMultiTargetTransformController));
     return newFactory;

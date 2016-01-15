@@ -72,6 +72,7 @@ namespace ESM4
         REC_COLL = MKTAG('C','O','L','L'), // Collision Layer
         REC_CONT = MKTAG('C','O','N','T'), // Container
         REC_CPTH = MKTAG('C','P','T','H'), // Camera Path
+        REC_CREA = MKTAG('C','R','E','A'), // Creature
         REC_CSTY = MKTAG('C','S','T','Y'), // Combat Style
         REC_DEBR = MKTAG('D','E','B','R'), // Debris
         REC_DIAL = MKTAG('D','I','A','L'), // Dialog Topic
@@ -116,6 +117,7 @@ namespace ESM4
         REC_LIGH = MKTAG('L','I','G','H'), // Light
         REC_LSCR = MKTAG('L','S','C','R'), // Load Screen
         REC_LTEX = MKTAG('L','T','E','X'), // Land Texture
+        REC_LVLC = MKTAG('L','V','L','C'), // Leveled Creature
         REC_LVLI = MKTAG('L','V','L','I'), // Leveled Item
         REC_LVLN = MKTAG('L','V','L','N'), // Leveled Actor
         REC_LVSP = MKTAG('L','V','S','P'), // Leveled Spell
@@ -449,7 +451,23 @@ namespace ESM4
         SUB_ENIT = MKTAG('E','N','I','T'),
         SUB_EFID = MKTAG('E','F','I','D'),
         SUB_EFIT = MKTAG('E','F','I','T'),
-        SUB_SCIT = MKTAG('S','C','I','T')
+        SUB_SCIT = MKTAG('S','C','I','T'),
+
+        // below appear in SLGM records
+        SUB_SOUL = MKTAG('S','O','U','L'),
+        SUB_SLCP = MKTAG('S','L','C','P'),
+
+        SUB_CSCR = MKTAG('C','S','C','R'),
+        SUB_CSDI = MKTAG('C','S','D','I'),
+        SUB_CSDC = MKTAG('C','S','D','C'),
+        SUB_NIFZ = MKTAG('N','I','F','Z'),
+        SUB_CSDT = MKTAG('C','S','D','T'),
+        SUB_NAM1 = MKTAG('N','A','M','1'),
+        SUB_NIFT = MKTAG('N','I','F','T'),
+
+        SUB_LVLD = MKTAG('L','V','L','D'),
+        SUB_LVLF = MKTAG('L','V','L','F'),
+        SUB_LVLO = MKTAG('L','V','L','O')
     };
 
     // Based on http://www.uesp.net/wiki/Tes5Mod:Mod_File_Format#Groups

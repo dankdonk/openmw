@@ -96,8 +96,16 @@ void ESM4::SoulGem::load(ESM4::Reader& reader)
                 reader.get(mScript);
                 break;
             }
-            //case ESM4::SUB_SOUL: // FIXME
-            //case ESM4::SUB_SLCP: // FIXME
+            case ESM4::SUB_SOUL:
+            {
+                reader.get(mSoul);
+                break;
+            }
+            case ESM4::SUB_SLCP:
+            {
+                reader.get(mSoulCapacity);
+                break;
+            }
             case ESM4::SUB_MODB:
             case ESM4::SUB_MODT:
             {
@@ -106,9 +114,7 @@ void ESM4::SoulGem::load(ESM4::Reader& reader)
                 break;
             }
             default:
-                std::cout << "SLGM " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
-                reader.skipSubRecordData();
-                //throw std::runtime_error("ESM4::SLGM::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
+                throw std::runtime_error("ESM4::SLGM::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
         }
     }
 }

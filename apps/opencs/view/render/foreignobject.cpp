@@ -78,6 +78,8 @@ void CSVRender::ForeignObject::update()
     const CSMForeign::IdCollection<CSMForeign::Key>& keys = mData.getForeignKeys();
     const CSMForeign::IdCollection<CSMForeign::Hair>& hair = mData.getForeignHairs();
     const CSMForeign::IdCollection<CSMForeign::Eyes>& eyes = mData.getForeignEyesSet();
+    const CSMForeign::IdCollection<CSMForeign::Creature>& crea = mData.getForeignCreatures();
+    const CSMForeign::IdCollection<CSMForeign::LeveledCreature>& lvlc = mData.getForeignLvlCreatures();
     const CSMForeign::StaticCollection& referenceables = mData.getForeignStatics(); // FIXME: use statics only for now
 
     //int index = referenceables.searchId (mReferenceableId);
@@ -114,6 +116,65 @@ void CSVRender::ForeignObject::update()
                 error = 2;
             else
                 error = 0;
+        }
+        else if (crea.searchId(ESM4::formIdToString(baseObj)) != -1)
+        {
+            int extraIndex = -1;
+            extraIndex = crea.searchId(ESM4::formIdToString(baseObj));
+            model = crea.getData (extraIndex,
+                   crea.findColumnIndex (CSMWorld::Columns::ColumnId_Model)).toString().toUtf8().constData();
+            std::cout << "obj is an creature " << ESM4::formIdToString(baseObj) << ", " << model << std::endl;
+
+            if (model.empty())
+                error = 2;
+            else
+                error = 0;
+        }
+        else if (lvlc.searchId(ESM4::formIdToString(baseObj)) != -1)
+        {
+            const CSMForeign::LeveledCreature& lcreature = lvlc.getRecord(ESM4::formIdToString(baseObj)).get();
+            ESM4::FormId templ = 0;
+            for (unsigned int i = 0; i < lcreature.mLvlObject.size(); ++i)
+            {
+                templ = lcreature.mLvlObject[i].item;
+                //ESM4::FormId templ = lcreature.mTemplate;
+                int extraIndex = -1;
+                extraIndex = crea.searchId(ESM4::formIdToString(templ));
+                if (extraIndex != -1)
+                {
+                    model = crea.getData (extraIndex,
+                       crea.findColumnIndex (CSMWorld::Columns::ColumnId_Model)).toString().toUtf8().constData();
+                    //std::cout << "obj is an leveled creature " << ESM4::formIdToString(templ) << ", " << model << std::endl;
+                    break;
+                }
+            }
+
+            if (model.empty())
+            {
+                error = 2;
+
+                for (unsigned int i = 0; i < lcreature.mLvlObject.size(); ++i)
+                {
+                    templ = lcreature.mLvlObject[i].item;
+                    //ESM4::FormId templ = lcreature.mTemplate;
+                    int extraIndex = -1;
+                    extraIndex = npc.searchId(ESM4::formIdToString(templ));
+                    if (extraIndex != -1)
+                    {
+                        model = npc.getData (extraIndex,
+                           npc.findColumnIndex (CSMWorld::Columns::ColumnId_Model)).toString().toUtf8().constData();
+                        break;
+                    }
+                }
+                std::cout << "obj is an leveled npc " << ESM4::formIdToString(templ) << ", " << model << std::endl;
+                if (!model.empty())
+                    error = 0;
+            }
+            else
+            {
+                std::cout << "obj is an leveled creature " << ESM4::formIdToString(templ) << ", " << model << std::endl;
+                error = 0;
+            }
         }
         else if (eyes.searchId(ESM4::formIdToString(baseObj)) != -1)
         {
@@ -237,7 +298,7 @@ void CSVRender::ForeignObject::update()
             extraIndex = cloth.searchId(ESM4::formIdToString(baseObj));
             model = cloth.getData (extraIndex,
                    cloth.findColumnIndex (CSMWorld::Columns::ColumnId_Model)).toString().toUtf8().constData();
-            std::cout << "obj is a cloth obj " << ESM4::formIdToString(baseObj) << ", " << model << std::endl;
+            //std::cout << "obj is a cloth obj " << ESM4::formIdToString(baseObj) << ", " << model << std::endl;
 
             if (model.empty())
                 error = 2;
@@ -276,7 +337,7 @@ void CSVRender::ForeignObject::update()
             extraIndex = ingr.searchId(ESM4::formIdToString(baseObj));
             model = ingr.getData (extraIndex,
                    ingr.findColumnIndex (CSMWorld::Columns::ColumnId_Model)).toString().toUtf8().constData();
-            std::cout << "obj is a ingr obj " << ESM4::formIdToString(baseObj) << ", " << model << std::endl;
+            //std::cout << "obj is a ingr obj " << ESM4::formIdToString(baseObj) << ", " << model << std::endl;
 
             if (model.empty())
                 error = 2;
@@ -381,7 +442,7 @@ void CSVRender::ForeignObject::update()
                 {
                     model = acti.getData (actiIndex,
                            acti.findColumnIndex (CSMWorld::Columns::ColumnId_Model)).toString().toUtf8().constData();
-                    std::cout << "obj is an acti obj " << ESM4::formIdToString(baseObj) << ", " << model << std::endl;
+                    //std::cout << "obj is an acti obj " << ESM4::formIdToString(baseObj) << ", " << model << std::endl;
 
                     if (model.empty())
                         error = 2;

@@ -681,12 +681,21 @@ CSMWorld::Data::Data (ToUTF8::FromType encoding, const ResourcesManager& resourc
     mForeignHairs.addColumn (new StringIdColumn<CSMForeign::Hair>);
     mForeignHairs.addColumn (new RecordStateColumn<CSMForeign::Hair>);
     mForeignHairs.addColumn (new FixedRecordTypeColumn<CSMForeign::Hair> (UniversalId::Type_ForeignHairs));
-    //mForeignHairs.addColumn (new ModelColumn<CSMForeign::Hair>);
+    mForeignHairs.addColumn (new ModelColumn<CSMForeign::Hair>);
 
     mForeignEyesSet.addColumn (new StringIdColumn<CSMForeign::Eyes>);
     mForeignEyesSet.addColumn (new RecordStateColumn<CSMForeign::Eyes>);
     mForeignEyesSet.addColumn (new FixedRecordTypeColumn<CSMForeign::Eyes> (UniversalId::Type_ForeignEyesSet));
     //mForeignEyesSet.addColumn (new ModelColumn<CSMForeign::Eyes>);
+
+    mForeignCreatures.addColumn (new StringIdColumn<CSMForeign::Creature>);
+    mForeignCreatures.addColumn (new RecordStateColumn<CSMForeign::Creature>);
+    mForeignCreatures.addColumn (new FixedRecordTypeColumn<CSMForeign::Creature> (UniversalId::Type_ForeignCreatures));
+    mForeignCreatures.addColumn (new ModelColumn<CSMForeign::Creature>);
+
+    mForeignLvlCreatures.addColumn (new StringIdColumn<CSMForeign::LeveledCreature>);
+    mForeignLvlCreatures.addColumn (new RecordStateColumn<CSMForeign::LeveledCreature>);
+    mForeignLvlCreatures.addColumn (new FixedRecordTypeColumn<CSMForeign::LeveledCreature> (UniversalId::Type_ForeignLvlCreatures));
 
     mForeignRefs.addColumn (new StringIdColumn<CSMForeign::CellRef>/*(true)*/);
     mForeignRefs.addColumn (new RecordStateColumn<CSMForeign::CellRef>);
@@ -794,6 +803,8 @@ CSMWorld::Data::Data (ToUTF8::FromType encoding, const ResourcesManager& resourc
     addModel (new IdTable (&mForeignKeys), UniversalId::Type_ForeignKey); // FIXME: temp, should be refid
     addModel (new IdTable (&mForeignHairs), UniversalId::Type_ForeignHair); // FIXME: temp, should be refid
     addModel (new IdTable (&mForeignEyesSet), UniversalId::Type_ForeignEyes); // FIXME: temp, should be refid
+    addModel (new IdTable (&mForeignCreatures), UniversalId::Type_ForeignCreature); // FIXME: temp, should be refid
+    addModel (new IdTable (&mForeignLvlCreatures), UniversalId::Type_ForeignLvlCreature); // FIXME: temp, should be refid
     addModel (new IdTable (&mForeignRefs, IdTable::Feature_ViewCell | IdTable::Feature_Preview),
             UniversalId::Type_ForeignReference);
     addModel (new IdTable (&mForeignChars, IdTable::Feature_ViewCell | IdTable::Feature_Preview),
@@ -1477,6 +1488,26 @@ CSMForeign::IdCollection<CSMForeign::Eyes>& CSMWorld::Data::getForeignEyesSet()
     return mForeignEyesSet;
 }
 
+const CSMForeign::IdCollection<CSMForeign::Creature>& CSMWorld::Data::getForeignCreatures() const
+{
+    return mForeignCreatures;
+}
+
+CSMForeign::IdCollection<CSMForeign::Creature>& CSMWorld::Data::getForeignCreatures()
+{
+    return mForeignCreatures;
+}
+
+const CSMForeign::IdCollection<CSMForeign::LeveledCreature>& CSMWorld::Data::getForeignLvlCreatures() const
+{
+    return mForeignLvlCreatures;
+}
+
+CSMForeign::IdCollection<CSMForeign::LeveledCreature>& CSMWorld::Data::getForeignLvlCreatures()
+{
+    return mForeignLvlCreatures;
+}
+
 QAbstractItemModel *CSMWorld::Data::getTableModel (const CSMWorld::UniversalId& id)
 {
     std::map<UniversalId::Type, QAbstractItemModel *>::iterator iter = mModelIndex.find (id.getType());
@@ -1948,11 +1979,12 @@ bool CSMWorld::Data::loadTes4Group (CSMDoc::Messages& messages)
                     hdr.group.label.value == ESM4::REC_SOUN || hdr.group.label.value == ESM4::REC_WEAP ||
                     hdr.group.label.value == ESM4::REC_DOOR || hdr.group.label.value == ESM4::REC_AMMO ||
                     hdr.group.label.value == ESM4::REC_CLOT || hdr.group.label.value == ESM4::REC_ALCH ||
-                                                               hdr.group.label.value == ESM4::REC_APPA ||
-                    hdr.group.label.value == ESM4::REC_INGR || hdr.group.label.value == ESM4::REC_SGST ||
-                    hdr.group.label.value == ESM4::REC_SLGM || hdr.group.label.value == ESM4::REC_KEYM ||
-                    hdr.group.label.value == ESM4::REC_HAIR || hdr.group.label.value == ESM4::REC_EYES ||
-                    hdr.group.label.value == ESM4::REC_CELL || hdr.group.label.value == ESM4::REC_LTEX)
+                    hdr.group.label.value == ESM4::REC_APPA || hdr.group.label.value == ESM4::REC_INGR ||
+                    hdr.group.label.value == ESM4::REC_SGST || hdr.group.label.value == ESM4::REC_SLGM ||
+                    hdr.group.label.value == ESM4::REC_KEYM || hdr.group.label.value == ESM4::REC_HAIR ||
+                    hdr.group.label.value == ESM4::REC_EYES || hdr.group.label.value == ESM4::REC_CELL ||
+                    hdr.group.label.value == ESM4::REC_CREA || hdr.group.label.value == ESM4::REC_LVLC ||
+                    hdr.group.label.value == ESM4::REC_LTEX)
             {
                 // NOTE: The label field of a group is not reliable.  See:
                 // http://www.uesp.net/wiki/Tes4Mod:Mod_File_Format
@@ -2222,6 +2254,18 @@ bool CSMWorld::Data::loadTes4Record (const ESM4::RecordHeader& hdr, CSMDoc::Mess
         {
             reader.getRecordData();
             mForeignEyesSet.load(reader, mBase);
+            break;
+        }
+        case ESM4::REC_CREA:
+        {
+            reader.getRecordData();
+            mForeignCreatures.load(reader, mBase);
+            break;
+        }
+        case ESM4::REC_LVLC:
+        {
+            reader.getRecordData();
+            mForeignLvlCreatures.load(reader, mBase);
             break;
         }
         case ESM4::REC_ACHR:

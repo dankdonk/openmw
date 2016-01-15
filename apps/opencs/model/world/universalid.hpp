@@ -200,6 +200,10 @@ namespace CSMWorld
                 Type_ForeignHair,
                 Type_ForeignEyesSet, // FIXME: should be refid
                 Type_ForeignEyes,
+                Type_ForeignCreatures, // FIXME: should be refid
+                Type_ForeignCreature,
+                Type_ForeignLvlCreatures, // FIXME: should be refid
+                Type_ForeignLvlCreature,
                 Type_ForeignReferenceables,
                 Type_ForeignReferenceable,
                 Type_ForeignReferences,

@@ -38,6 +38,8 @@ set(ESM4_SOURCE_FILES
     keym.cpp
     hair.cpp
     eyes.cpp
+    crea.cpp
+    lvlc.cpp
     reader.cpp
 )
 

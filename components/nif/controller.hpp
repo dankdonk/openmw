@@ -482,6 +482,94 @@ public:
     }
 };
 
+struct NodeGroup
+{
+    unsigned int numNodes;
+    std::vector<NodePtr> nodes;
+
+    void read(NIFStream *nif, unsigned int nifVer)
+    {
+        numNodes = nif->getUInt();
+        nodes.resize(numNodes);
+        for (unsigned int i = 0; i < numNodes; ++i)
+            nodes[i].read(nif);
+    }
+};
+
+struct SkinShape
+{
+    NiGeometryPtr shape;
+    NiSkinInstancePtr skin;
+
+    void read(NIFStream *nif, unsigned int nifVer)
+    {
+        shape.read(nif);
+        skin.read(nif);
+    }
+};
+
+struct SkinShapeGroup
+{
+    unsigned int numLinkPairs;
+    std::vector<SkinShape> linkPairs;
+
+    void read(NIFStream *nif, unsigned int nifVer)
+    {
+        numLinkPairs = nif->getUInt();
+        linkPairs.resize(numLinkPairs);
+        for (unsigned int i = 0; i < numLinkPairs; ++i)
+            linkPairs[i].read(nif, nifVer);
+    }
+};
+
+class NiBSBoneLODController : public Controller
+{
+public:
+    std::vector<NodeGroup> nodeGroups;
+    std::vector<SkinShapeGroup> shapeGroups;
+    std::vector<NiGeometryPtr> shapeGroups2;
+
+    void read(NIFStream *nif)
+    {
+        Controller::read(nif);
+
+        nif->getUInt();
+        unsigned int numNodeGrp = nif->getUInt();
+        unsigned int numNodeGrp2 = nif->getUInt();
+
+        nodeGroups.resize(numNodeGrp);
+        for (unsigned int i = 0; i < numNodeGrp; ++i)
+            nodeGroups[i].read(nif, nifVer);
+
+#if 0 // seems to be user version controlled
+        if (nifVer >= 0x04020200) // from 4.2.2.0
+        {
+            unsigned int numShapeGrp = nif->getUInt();
+            shapeGroups.resize(numShapeGrp);
+            for (unsigned int i = 0; i < numShapeGrp; ++i)
+                shapeGroups[i].read(nif, nifVer);
+
+            unsigned int numShapeGrp2 = nif->getUInt();
+            shapeGroups2.resize(numShapeGrp2);
+            for (unsigned int i = 0; i < numShapeGrp2; ++i)
+                shapeGroups2[i].read(nif);
+        }
+#endif
+    }
+};
+
+class bhkBlendController : public Controller
+{
+public:
+    unsigned int unknown;
+
+    void read(NIFStream *nif)
+    {
+        Controller::read(nif);
+        unknown = nif->getUInt();
+    }
+};
+
 class NiBoolInterpolator : public NiInterpolator
 {
 public:

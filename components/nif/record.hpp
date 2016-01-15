@@ -162,6 +162,12 @@ enum RecordType
   RC_NiBlendTransformInterpolator,
   RC_NiPSysSphereEmitter,
   RC_NiPSysEmitterLifeSpanCtlr,
+  RC_BSBound,
+  RC_bhkStiffSpringConstraint,
+  RC_NiBSBoneLODController,
+  RC_bhkBlendController,
+  RC_bhkBlendCollisionObject,
+  RC_bhkMalleableConstraint,
   RC_RootCollisionNode
 };
 /// Base class for all records

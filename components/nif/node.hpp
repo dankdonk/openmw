@@ -733,6 +733,23 @@ struct RagdollDescriptor
     float twistMinAngle;
     float twistMaxAngle;
     float maxFriction;
+
+    void read(NIFStream *nif, unsigned int nifVer)
+    {
+        pivotA = nif->getVector4();
+        planeA = nif->getVector4();
+        twistA = nif->getVector4();
+        planeB = nif->getVector4();
+        pivotB = nif->getVector4();
+        twistB = nif->getVector4();
+
+        coneMaxAngle = nif->getFloat();
+        planeMinAngle = nif->getFloat();
+        planeMaxAngle = nif->getFloat();
+        twistMinAngle = nif->getFloat();
+        twistMaxAngle = nif->getFloat();
+        maxFriction = nif->getFloat();
+    }
 };
 
 class bhkRagdollConstraint : public bhkConstraint
@@ -743,28 +760,13 @@ public:
     void read(NIFStream *nif)
     {
         bhkConstraint::read(nif);
-
-        ragdoll.pivotA = nif->getVector4();
-        ragdoll.planeA = nif->getVector4();
-        ragdoll.twistA = nif->getVector4();
-        ragdoll.planeB = nif->getVector4();
-        ragdoll.pivotB = nif->getVector4();
-        ragdoll.twistB = nif->getVector4();
-
-        ragdoll.coneMaxAngle = nif->getFloat();
-        ragdoll.planeMinAngle = nif->getFloat();
-        ragdoll.planeMaxAngle = nif->getFloat();
-        ragdoll.twistMinAngle = nif->getFloat();
-        ragdoll.twistMaxAngle = nif->getFloat();
-        ragdoll.maxFriction = nif->getFloat();
+        ragdoll.read(nif, nifVer);
     }
 };
 
 // FIXME: different for Skyrim
-class bhkLimitedHingeConstraint : public bhkConstraint
+struct LimitedHingeDescriptor
 {
-public:
-    //LimitedHingeDescriptor limitedHinge;
     Ogre::Vector4 pivotA;
     Ogre::Vector4 axleA;
     Ogre::Vector4 perp2AxleA1;
@@ -776,11 +778,8 @@ public:
     float maxAngle;
     float maxFriction;
 
-    void read(NIFStream *nif)
+    void read(NIFStream *nif, unsigned int nifVer)
     {
-        bhkConstraint::read(nif);
-
-        //limitedHinge.read(nif);
         pivotA = nif->getVector4();
         axleA = nif->getVector4();
         perp2AxleA1 = nif->getVector4();
@@ -792,6 +791,18 @@ public:
         minAngle = nif->getFloat();
         maxAngle = nif->getFloat();
         maxFriction = nif->getFloat();
+    }
+};
+
+class bhkLimitedHingeConstraint : public bhkConstraint
+{
+public:
+    LimitedHingeDescriptor limitedHinge;
+
+    void read(NIFStream *nif)
+    {
+        bhkConstraint::read(nif);
+        limitedHinge.read(nif, nifVer);
     }
 };
 
@@ -823,6 +834,79 @@ public:
         minDistance = nif->getFloat();
         maxDistance = nif->getFloat();
         friction = nif->getFloat();
+    }
+};
+
+class bhkStiffSpringConstraint : public bhkConstraint
+{
+public:
+    Ogre::Vector4 pivotA;
+    Ogre::Vector4 pivotB;
+    float length;
+
+    void read(NIFStream *nif)
+    {
+        bhkConstraint::read(nif);
+
+        pivotA = nif->getVector4();
+        pivotB = nif->getVector4();
+        length = nif->getFloat();
+    }
+};
+
+// FIXME: incomplete for Skyrim
+struct HingeDescriptor
+{
+    Ogre::Vector4 pivotA;
+    Ogre::Vector4 perp2AxleA1;
+    Ogre::Vector4 perp2AxleA2;
+    Ogre::Vector4 pivotB;
+    Ogre::Vector4 axleB;
+
+    void read(NIFStream *nif, unsigned int nifVer)
+    {
+        pivotA = nif->getVector4();
+        perp2AxleA1 = nif->getVector4();
+        perp2AxleA2 = nif->getVector4();
+        pivotB = nif->getVector4();
+        axleB = nif->getVector4();
+    }
+};
+
+class bhkMalleableConstraint : public bhkConstraint
+{
+public:
+    unsigned int type;
+    unsigned int unknown2;
+    NodePtr link1;
+    NodePtr link2;
+    unsigned int unknown3;
+    HingeDescriptor hinge;
+    RagdollDescriptor ragdoll;
+    LimitedHingeDescriptor limitedHinge;
+    float tau;
+    float damping;
+
+    void read(NIFStream *nif)
+    {
+        bhkConstraint::read(nif);
+
+        type = nif->getUInt();
+        unknown2 = nif->getUInt();
+        link1.read(nif);
+        link2.read(nif);
+        unknown3 = nif->getUInt();
+
+        if (type == 1)
+            hinge.read(nif, nifVer);
+        else if (type == 2)
+            limitedHinge.read(nif, nifVer);
+        else if (type == 7)
+            ragdoll.read(nif, nifVer);
+
+        if (nifVer <= 0x14000005) // up to 20.0.0.5
+            tau = nif->getFloat();
+        damping = nif->getFloat();
     }
 };
 
@@ -972,6 +1056,20 @@ public:
         NiCollisionObject::read(nif);
         flags = nif->getUShort();
         body.read(nif);
+    }
+};
+
+class bhkBlendCollisionObject : public bhkCollisionObject
+{
+public:
+    float unknown1;
+    float unknown2;
+
+    void read(NIFStream *nif)
+    {
+        bhkCollisionObject::read(nif);
+        unknown1 = nif->getFloat();
+        unknown2 = nif->getFloat();
     }
 };
 

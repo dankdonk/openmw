@@ -69,6 +69,8 @@
 #include "../foreign/key.hpp"
 #include "../foreign/hair.hpp"
 #include "../foreign/eyes.hpp"
+#include "../foreign/creature.hpp"
+#include "../foreign/leveledcreature.hpp"
 
 #include "idcollection.hpp"
 #include "nestedidcollection.hpp"
@@ -165,6 +167,8 @@ namespace CSMWorld
             CSMForeign::IdCollection<CSMForeign::Key> mForeignKeys;
             CSMForeign::IdCollection<CSMForeign::Hair> mForeignHairs;
             CSMForeign::IdCollection<CSMForeign::Eyes> mForeignEyesSet;
+            CSMForeign::IdCollection<CSMForeign::Creature> mForeignCreatures;
+            CSMForeign::IdCollection<CSMForeign::LeveledCreature> mForeignLvlCreatures;
             //CSMForeign::RefIdCollection mForeignReferenceables;
             CSMForeign::RefCollection mForeignRefs;
             CSMForeign::CharCollection mForeignChars;
@@ -453,6 +457,14 @@ namespace CSMWorld
             const CSMForeign::IdCollection<CSMForeign::Eyes>& getForeignEyesSet() const;
 
             CSMForeign::IdCollection<CSMForeign::Eyes>& getForeignEyesSet();
+
+            const CSMForeign::IdCollection<CSMForeign::Creature>& getForeignCreatures() const;
+
+            CSMForeign::IdCollection<CSMForeign::Creature>& getForeignCreatures();
+
+            const CSMForeign::IdCollection<CSMForeign::LeveledCreature>& getForeignLvlCreatures() const;
+
+            CSMForeign::IdCollection<CSMForeign::LeveledCreature>& getForeignLvlCreatures();
 
             const CSMForeign::NavigationCollection& getNavigation() const;
 
