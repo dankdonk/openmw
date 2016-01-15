@@ -192,6 +192,14 @@ namespace CSMWorld
                 Type_ForeignIngredient,
                 Type_ForeignSigilStones, // FIXME: should be refid
                 Type_ForeignSigilStone,
+                Type_ForeignSoulGems, // FIXME: should be refid
+                Type_ForeignSoulGem,
+                Type_ForeignKeys, // FIXME: should be refid
+                Type_ForeignKey,
+                Type_ForeignHairs, // FIXME: should be refid
+                Type_ForeignHair,
+                Type_ForeignEyesSet, // FIXME: should be refid
+                Type_ForeignEyes,
                 Type_ForeignReferenceables,
                 Type_ForeignReferenceable,
                 Type_ForeignReferences,

@@ -74,6 +74,10 @@ void CSVRender::ForeignObject::update()
     const CSMForeign::IdCollection<CSMForeign::Apparatus>& appa = mData.getForeignApparatuses();
     const CSMForeign::IdCollection<CSMForeign::Ingredient>& ingr = mData.getForeignIngredients();
     const CSMForeign::IdCollection<CSMForeign::SigilStone>& sigil = mData.getForeignSigilStones();
+    const CSMForeign::IdCollection<CSMForeign::SoulGem>& soul = mData.getForeignSoulGems();
+    const CSMForeign::IdCollection<CSMForeign::Key>& keys = mData.getForeignKeys();
+    const CSMForeign::IdCollection<CSMForeign::Hair>& hair = mData.getForeignHairs();
+    const CSMForeign::IdCollection<CSMForeign::Eyes>& eyes = mData.getForeignEyesSet();
     const CSMForeign::StaticCollection& referenceables = mData.getForeignStatics(); // FIXME: use statics only for now
 
     //int index = referenceables.searchId (mReferenceableId);
@@ -105,6 +109,32 @@ void CSVRender::ForeignObject::update()
             model = npc.getData (extraIndex,
                    npc.findColumnIndex (CSMWorld::Columns::ColumnId_Model)).toString().toUtf8().constData();
             std::cout << "obj is an npc " << ESM4::formIdToString(baseObj) << ", " << model << std::endl;
+
+            if (model.empty())
+                error = 2;
+            else
+                error = 0;
+        }
+        else if (eyes.searchId(ESM4::formIdToString(baseObj)) != -1)
+        {
+            int extraIndex = -1;
+            extraIndex = eyes.searchId(ESM4::formIdToString(baseObj));
+            model = eyes.getData (extraIndex,
+                   eyes.findColumnIndex (CSMWorld::Columns::ColumnId_Model)).toString().toUtf8().constData();
+            std::cout << "obj is an eye " << ESM4::formIdToString(baseObj) << ", " << model << std::endl;
+
+            if (1)//model.empty())
+                error = 3;
+            else
+                error = 0;
+        }
+        else if (hair.searchId(ESM4::formIdToString(baseObj)) != -1)
+        {
+            int extraIndex = -1;
+            extraIndex = hair.searchId(ESM4::formIdToString(baseObj));
+            model = hair.getData (extraIndex,
+                   hair.findColumnIndex (CSMWorld::Columns::ColumnId_Model)).toString().toUtf8().constData();
+            std::cout << "obj is hair " << ESM4::formIdToString(baseObj) << ", " << model << std::endl;
 
             if (model.empty())
                 error = 2;
@@ -266,6 +296,32 @@ void CSVRender::ForeignObject::update()
             else
                 error = 0;
         }
+        else if (soul.searchId(ESM4::formIdToString(baseObj)) != -1)
+        {
+            int extraIndex = -1;
+            extraIndex = soul.searchId(ESM4::formIdToString(baseObj));
+            model = soul.getData (extraIndex,
+                   soul.findColumnIndex (CSMWorld::Columns::ColumnId_Model)).toString().toUtf8().constData();
+            std::cout << "obj is a soul gem " << ESM4::formIdToString(baseObj) << ", " << model << std::endl;
+
+            if (model.empty())
+                error = 2;
+            else
+                error = 0;
+        }
+        else if (keys.searchId(ESM4::formIdToString(baseObj)) != -1)
+        {
+            int extraIndex = -1;
+            extraIndex = keys.searchId(ESM4::formIdToString(baseObj));
+            model = keys.getData (extraIndex,
+                   keys.findColumnIndex (CSMWorld::Columns::ColumnId_Model)).toString().toUtf8().constData();
+            std::cout << "obj is a key " << ESM4::formIdToString(baseObj) << ", " << model << std::endl;
+
+            if (model.empty())
+                error = 2;
+            else
+                error = 0;
+        }
         else if (book.searchId(ESM4::formIdToString(baseObj)) != -1)
         {
             int extraIndex = -1;
@@ -375,9 +431,9 @@ void CSVRender::ForeignObject::update()
                         {
                             std::cout << "obj not static/anio/misc/acti/container/whatever "
                                       << ESM4::formIdToString(baseObj) << std::endl;
-    const CSMForeign::RefCollection& refs = mData.getForeignReferences();
-    ESM4::FormId baseObj = refs.getRecord(refs.searchId(mReferenceId)).get().mBaseObj;
-    int index = referenceables.searchId (ESM4::formIdToString(baseObj)); // FIXME: double conversion to string
+    //const CSMForeign::RefCollection& refs = mData.getForeignReferences();
+    //ESM4::FormId baseObj = refs.getRecord(refs.searchId(mReferenceId)).get().mBaseObj;
+    //int index = referenceables.searchId (ESM4::formIdToString(baseObj)); // FIXME: double conversion to string
                         }
                     }
                 }

@@ -489,7 +489,6 @@ public:
                 for (unsigned int i = 0; i < numVerts; ++i)
                 {
                     vertMap[i] = nif->getUShort();
-                    std::cout << "i " << i << ", " << vertMap[i] << std::endl; // FIXME
                 }
             }
 

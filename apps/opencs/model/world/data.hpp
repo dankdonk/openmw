@@ -65,6 +65,10 @@
 #include "../foreign/apparatus.hpp"
 #include "../foreign/ingredient.hpp"
 #include "../foreign/sigilstone.hpp"
+#include "../foreign/soulgem.hpp"
+#include "../foreign/key.hpp"
+#include "../foreign/hair.hpp"
+#include "../foreign/eyes.hpp"
 
 #include "idcollection.hpp"
 #include "nestedidcollection.hpp"
@@ -157,6 +161,10 @@ namespace CSMWorld
             CSMForeign::IdCollection<CSMForeign::Apparatus> mForeignApparatuses;
             CSMForeign::IdCollection<CSMForeign::Ingredient> mForeignIngredients;
             CSMForeign::IdCollection<CSMForeign::SigilStone> mForeignSigilStones;
+            CSMForeign::IdCollection<CSMForeign::SoulGem> mForeignSoulGems;
+            CSMForeign::IdCollection<CSMForeign::Key> mForeignKeys;
+            CSMForeign::IdCollection<CSMForeign::Hair> mForeignHairs;
+            CSMForeign::IdCollection<CSMForeign::Eyes> mForeignEyesSet;
             //CSMForeign::RefIdCollection mForeignReferenceables;
             CSMForeign::RefCollection mForeignRefs;
             CSMForeign::CharCollection mForeignChars;
@@ -429,6 +437,22 @@ namespace CSMWorld
             const CSMForeign::IdCollection<CSMForeign::SigilStone>& getForeignSigilStones() const;
 
             CSMForeign::IdCollection<CSMForeign::SigilStone>& getForeignSigilStones();
+
+            const CSMForeign::IdCollection<CSMForeign::SoulGem>& getForeignSoulGems() const;
+
+            CSMForeign::IdCollection<CSMForeign::SoulGem>& getForeignSoulGems();
+
+            const CSMForeign::IdCollection<CSMForeign::Key>& getForeignKeys() const;
+
+            CSMForeign::IdCollection<CSMForeign::Key>& getForeignKeys();
+
+            const CSMForeign::IdCollection<CSMForeign::Hair>& getForeignHairs() const;
+
+            CSMForeign::IdCollection<CSMForeign::Hair>& getForeignHairs();
+
+            const CSMForeign::IdCollection<CSMForeign::Eyes>& getForeignEyesSet() const;
+
+            CSMForeign::IdCollection<CSMForeign::Eyes>& getForeignEyesSet();
 
             const CSMForeign::NavigationCollection& getNavigation() const;
 

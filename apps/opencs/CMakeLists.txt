@@ -44,6 +44,7 @@ opencs_units_noqt (model/foreign
     landtexture landtexturecollection land landcollection static staticcollection
     animobject container miscitem activator armor npc flora grass tree light cellchar charcollection
     book furniture sound weapon potion door ammo clothing apparatus ingredient sigilstone
+    soulgem key hair eyes
     navmeshinfo navigationcollection navmesh navmeshcollection
     )
 

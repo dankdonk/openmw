@@ -34,6 +34,10 @@ set(ESM4_SOURCE_FILES
     appa.cpp
     ingr.cpp
     sgst.cpp
+    slgm.cpp
+    keym.cpp
+    hair.cpp
+    eyes.cpp
     reader.cpp
 )
 

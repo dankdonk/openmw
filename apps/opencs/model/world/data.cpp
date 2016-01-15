@@ -668,6 +668,26 @@ CSMWorld::Data::Data (ToUTF8::FromType encoding, const ResourcesManager& resourc
     mForeignSigilStones.addColumn (new FixedRecordTypeColumn<CSMForeign::SigilStone> (UniversalId::Type_ForeignSigilStones));
     mForeignSigilStones.addColumn (new ModelColumn<CSMForeign::SigilStone>);
 
+    mForeignSoulGems.addColumn (new StringIdColumn<CSMForeign::SoulGem>);
+    mForeignSoulGems.addColumn (new RecordStateColumn<CSMForeign::SoulGem>);
+    mForeignSoulGems.addColumn (new FixedRecordTypeColumn<CSMForeign::SoulGem> (UniversalId::Type_ForeignSoulGems));
+    mForeignSoulGems.addColumn (new ModelColumn<CSMForeign::SoulGem>);
+
+    mForeignKeys.addColumn (new StringIdColumn<CSMForeign::Key>);
+    mForeignKeys.addColumn (new RecordStateColumn<CSMForeign::Key>);
+    mForeignKeys.addColumn (new FixedRecordTypeColumn<CSMForeign::Key> (UniversalId::Type_ForeignKeys));
+    mForeignKeys.addColumn (new ModelColumn<CSMForeign::Key>);
+
+    mForeignHairs.addColumn (new StringIdColumn<CSMForeign::Hair>);
+    mForeignHairs.addColumn (new RecordStateColumn<CSMForeign::Hair>);
+    mForeignHairs.addColumn (new FixedRecordTypeColumn<CSMForeign::Hair> (UniversalId::Type_ForeignHairs));
+    //mForeignHairs.addColumn (new ModelColumn<CSMForeign::Hair>);
+
+    mForeignEyesSet.addColumn (new StringIdColumn<CSMForeign::Eyes>);
+    mForeignEyesSet.addColumn (new RecordStateColumn<CSMForeign::Eyes>);
+    mForeignEyesSet.addColumn (new FixedRecordTypeColumn<CSMForeign::Eyes> (UniversalId::Type_ForeignEyesSet));
+    //mForeignEyesSet.addColumn (new ModelColumn<CSMForeign::Eyes>);
+
     mForeignRefs.addColumn (new StringIdColumn<CSMForeign::CellRef>/*(true)*/);
     mForeignRefs.addColumn (new RecordStateColumn<CSMForeign::CellRef>);
     mForeignRefs.addColumn (new FixedRecordTypeColumn<CSMForeign::CellRef> (UniversalId::Type_ForeignReference));
@@ -770,6 +790,10 @@ CSMWorld::Data::Data (ToUTF8::FromType encoding, const ResourcesManager& resourc
     addModel (new IdTable (&mForeignApparatuses), UniversalId::Type_ForeignApparatus); // FIXME: temp, should be refid
     addModel (new IdTable (&mForeignIngredients), UniversalId::Type_ForeignIngredient); // FIXME: temp, should be refid
     addModel (new IdTable (&mForeignSigilStones), UniversalId::Type_ForeignSigilStone); // FIXME: temp, should be refid
+    addModel (new IdTable (&mForeignSoulGems), UniversalId::Type_ForeignSoulGem); // FIXME: temp, should be refid
+    addModel (new IdTable (&mForeignKeys), UniversalId::Type_ForeignKey); // FIXME: temp, should be refid
+    addModel (new IdTable (&mForeignHairs), UniversalId::Type_ForeignHair); // FIXME: temp, should be refid
+    addModel (new IdTable (&mForeignEyesSet), UniversalId::Type_ForeignEyes); // FIXME: temp, should be refid
     addModel (new IdTable (&mForeignRefs, IdTable::Feature_ViewCell | IdTable::Feature_Preview),
             UniversalId::Type_ForeignReference);
     addModel (new IdTable (&mForeignChars, IdTable::Feature_ViewCell | IdTable::Feature_Preview),
@@ -1413,6 +1437,46 @@ CSMForeign::IdCollection<CSMForeign::SigilStone>& CSMWorld::Data::getForeignSigi
     return mForeignSigilStones;
 }
 
+const CSMForeign::IdCollection<CSMForeign::SoulGem>& CSMWorld::Data::getForeignSoulGems() const
+{
+    return mForeignSoulGems;
+}
+
+CSMForeign::IdCollection<CSMForeign::SoulGem>& CSMWorld::Data::getForeignSoulGems()
+{
+    return mForeignSoulGems;
+}
+
+const CSMForeign::IdCollection<CSMForeign::Key>& CSMWorld::Data::getForeignKeys() const
+{
+    return mForeignKeys;
+}
+
+CSMForeign::IdCollection<CSMForeign::Key>& CSMWorld::Data::getForeignKeys()
+{
+    return mForeignKeys;
+}
+
+const CSMForeign::IdCollection<CSMForeign::Hair>& CSMWorld::Data::getForeignHairs() const
+{
+    return mForeignHairs;
+}
+
+CSMForeign::IdCollection<CSMForeign::Hair>& CSMWorld::Data::getForeignHairs()
+{
+    return mForeignHairs;
+}
+
+const CSMForeign::IdCollection<CSMForeign::Eyes>& CSMWorld::Data::getForeignEyesSet() const
+{
+    return mForeignEyesSet;
+}
+
+CSMForeign::IdCollection<CSMForeign::Eyes>& CSMWorld::Data::getForeignEyesSet()
+{
+    return mForeignEyesSet;
+}
+
 QAbstractItemModel *CSMWorld::Data::getTableModel (const CSMWorld::UniversalId& id)
 {
     std::map<UniversalId::Type, QAbstractItemModel *>::iterator iter = mModelIndex.find (id.getType());
@@ -1884,6 +1948,10 @@ bool CSMWorld::Data::loadTes4Group (CSMDoc::Messages& messages)
                     hdr.group.label.value == ESM4::REC_SOUN || hdr.group.label.value == ESM4::REC_WEAP ||
                     hdr.group.label.value == ESM4::REC_DOOR || hdr.group.label.value == ESM4::REC_AMMO ||
                     hdr.group.label.value == ESM4::REC_CLOT || hdr.group.label.value == ESM4::REC_ALCH ||
+                                                               hdr.group.label.value == ESM4::REC_APPA ||
+                    hdr.group.label.value == ESM4::REC_INGR || hdr.group.label.value == ESM4::REC_SGST ||
+                    hdr.group.label.value == ESM4::REC_SLGM || hdr.group.label.value == ESM4::REC_KEYM ||
+                    hdr.group.label.value == ESM4::REC_HAIR || hdr.group.label.value == ESM4::REC_EYES ||
                     hdr.group.label.value == ESM4::REC_CELL || hdr.group.label.value == ESM4::REC_LTEX)
             {
                 // NOTE: The label field of a group is not reliable.  See:
@@ -2112,6 +2180,48 @@ bool CSMWorld::Data::loadTes4Record (const ESM4::RecordHeader& hdr, CSMDoc::Mess
         {
             reader.getRecordData();
             mForeignPotions.load(reader, mBase);
+            break;
+        }
+        case ESM4::REC_APPA:
+        {
+            reader.getRecordData();
+            mForeignApparatuses.load(reader, mBase);
+            break;
+        }
+        case ESM4::REC_INGR:
+        {
+            reader.getRecordData();
+            mForeignIngredients.load(reader, mBase);
+            break;
+        }
+        case ESM4::REC_SGST:
+        {
+            reader.getRecordData();
+            mForeignSigilStones.load(reader, mBase);
+            break;
+        }
+        case ESM4::REC_SLGM:
+        {
+            reader.getRecordData();
+            mForeignSoulGems.load(reader, mBase);
+            break;
+        }
+        case ESM4::REC_KEYM:
+        {
+            reader.getRecordData();
+            mForeignKeys.load(reader, mBase);
+            break;
+        }
+        case ESM4::REC_HAIR:
+        {
+            reader.getRecordData();
+            mForeignHairs.load(reader, mBase);
+            break;
+        }
+        case ESM4::REC_EYES:
+        {
+            reader.getRecordData();
+            mForeignEyesSet.load(reader, mBase);
             break;
         }
         case ESM4::REC_ACHR:

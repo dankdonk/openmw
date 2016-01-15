@@ -96,6 +96,7 @@ namespace ESM4
         REC_GMST = MKTAG('G','M','S','T'), // Game Setting
         REC_GRAS = MKTAG('G','R','A','S'), // Grass
         REC_GRUP = MKTAG('G','R','U','P'), // Form Group
+        REC_HAIR = MKTAG('H','A','I','R'), // Hair
       //REC_HAZD = MKTAG('H','A','Z','D'), // Hazard
         REC_HDPT = MKTAG('H','D','P','T'), // Head Part
         REC_IDLE = MKTAG('I','D','L','E'), // Idle Animation
