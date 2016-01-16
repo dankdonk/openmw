@@ -185,8 +185,13 @@ static std::map<std::string,RecordFactoryEntry> makeFactory()
     newFactory.insert(makeEntry("bhkBlendController",         &construct <bhkBlendController>          , RC_bhkBlendController            ));
     newFactory.insert(makeEntry("bhkBlendCollisionObject",    &construct <bhkBlendCollisionObject>     , RC_bhkBlendCollisionObject       ));
     newFactory.insert(makeEntry("bhkMalleableConstraint",     &construct <bhkMalleableConstraint>      , RC_bhkMalleableConstraint        ));
-    newFactory.insert(makeEntry("NiBlendTransformInterpolator", &construct <NiBlendTransformInterpolator> , RC_NiBlendTransformInterpolator));
-    newFactory.insert(makeEntry("NiMultiTargetTransformController", &construct <NiMultiTargetTransformController> , RC_NiMultiTargetTransformController));
+    newFactory.insert(makeEntry("NiPSysColliderManager",      &construct <NiPSysColliderManager>       , RC_NiPSysColliderManager         ));
+    newFactory.insert(makeEntry("NiPSysPlanarCollider",       &construct <NiPSysPlanarCollider>        , RC_NiPSysPlanarCollider          ));
+    newFactory.insert(makeEntry("NiPSysCollider",             &construct <NiPSysCollider>              , RC_NiPSysCollider                ));
+    newFactory.insert(makeEntry("bhkMultiSphereShape",        &construct <bhkMultiSphereShape>         , RC_bhkMultiSphereShape           ));
+    newFactory.insert(makeEntry("NiPSysEmitterInitialRadiusCtlr", &construct <NiPSysEmitterInitialRadiusCtlr>, RC_NiPSysEmitterInitialRadiusCtlr));
+    newFactory.insert(makeEntry("NiBlendTransformInterpolator", &construct <NiBlendTransformInterpolator>, RC_NiBlendTransformInterpolator));
+    newFactory.insert(makeEntry("NiMultiTargetTransformController", &construct <NiMultiTargetTransformController>, RC_NiMultiTargetTransformController));
     return newFactory;
 }
 

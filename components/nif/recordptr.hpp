@@ -153,6 +153,7 @@ class NiBoolData;
 class NiPSysSpawnModifier;
 class NiSkinPartition;
 class NiGeometry;
+class NiPSysCollider;
 
 typedef RecordPtrT<Node> NodePtr;
 typedef RecordPtrT<Extra> ExtraPtr;
@@ -194,6 +195,7 @@ typedef RecordPtrT<NiBoolData> NiBoolDataPtr;
 typedef RecordPtrT<NiPSysSpawnModifier> NiPSysSpawnModifierPtr;
 typedef RecordPtrT<NiSkinPartition> NiSkinPartitionPtr;
 typedef RecordPtrT<NiGeometry> NiGeometryPtr;
+typedef RecordPtrT<NiPSysCollider> NiPSysColliderPtr;
 
 typedef RecordListT<Node> NodeList;
 typedef RecordListT<Extra> ExtraList;

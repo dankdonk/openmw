@@ -411,6 +411,23 @@ public:
     }
 };
 
+class NiPSysEmitterInitialRadiusCtlr : public Controller
+{
+public:
+    NiInterpolatorPtr interpolator;
+    std::string modifierName;
+
+    void read(NIFStream *nif)
+    {
+        Controller::read(nif);
+        if (nifVer >= 0x0a020000) // from 10.2.0.0
+            interpolator.read(nif);
+        modifierName = nif->getString();
+        if (nifVer <= 0x0a010000) // up to 10.1.0.0
+            nif->getFloat(); // NiFloatDataPtr
+    }
+};
+
 class NiPSysEmitterLifeSpanCtlr : public Controller
 {
 public:
@@ -424,7 +441,7 @@ public:
             interpolator.read(nif);
         modifierName = nif->getString();
         if (nifVer <= 0x0a010000) // up to 10.1.0.0
-            nif->getInt(); // NiFloatDataPtr
+            nif->getFloat(); // NiFloatDataPtr
     }
 };
 
@@ -441,7 +458,7 @@ public:
             interpolator.read(nif);
         modifierName = nif->getString();
         if (nifVer <= 0x0a010000) // up to 10.1.0.0
-            nif->getInt(); // NiFloatDataPtr
+            nif->getFloat(); // NiFloatDataPtr
     }
 };
 
@@ -478,7 +495,7 @@ public:
             interpolator.read(nif);
         modifierName = nif->getString();
         if (nifVer <= 0x0a010000) // up to 10.1.0.0
-            nif->getInt(); // NiFloatDataPtr
+            nif->getFloat(); // NiFloatDataPtr
     }
 };
 
@@ -1058,6 +1075,61 @@ public:
         NiPSysModifier::read(nif);
 
         damping = nif->getFloat();
+    }
+};
+
+class NiPSysColliderManager : public NiPSysModifier
+{
+public:
+    NiPSysColliderPtr collider;
+
+    void read(NIFStream *nif)
+    {
+        NiPSysModifier::read(nif);
+
+       collider.read(nif);
+    }
+};
+
+class NiPSysCollider : public Record
+{
+public:
+    float bounce;
+    bool spawnOnCollide;
+    bool dieOnCollide;
+    //NiPSysSpawnModifierPtr spawnModifier;
+    NodePtr parent;
+    NodePtr nextCollider;
+    NodePtr colliderObj;
+
+    void read(NIFStream *nif)
+    {
+        bounce = nif->getFloat();
+        spawnOnCollide = nif->getBool(nifVer);
+        dieOnCollide = nif->getBool(nifVer);
+        nif->getInt(); // spawnModifier.read(nif);
+        parent.read(nif);
+        nextCollider.read(nif);
+        colliderObj.read(nif);
+    }
+};
+
+class NiPSysPlanarCollider : public NiPSysCollider
+{
+public:
+    float width;
+    float height;
+    Ogre::Vector3 xAxis;
+    Ogre::Vector3 yAxis;
+
+    void read(NIFStream *nif)
+    {
+        NiPSysCollider::read(nif);
+
+        width = nif->getFloat();
+        height = nif->getFloat();
+        xAxis = nif->getVector3();
+        yAxis = nif->getVector3();
     }
 };
 

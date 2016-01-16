@@ -168,6 +168,11 @@ enum RecordType
   RC_bhkBlendController,
   RC_bhkBlendCollisionObject,
   RC_bhkMalleableConstraint,
+  RC_NiPSysColliderManager,
+  RC_NiPSysPlanarCollider,
+  RC_NiPSysCollider,
+  RC_NiPSysEmitterInitialRadiusCtlr,
+  RC_bhkMultiSphereShape,
   RC_RootCollisionNode
 };
 /// Base class for all records

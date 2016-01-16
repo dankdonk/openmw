@@ -551,7 +551,7 @@ public:
     {
         shape.read(nif);
         material = nif->getUInt();
-        //materialSkyrim = nif->getUInt();  // not sure if this is version dependent
+        //materialSkyrim = nif->getUInt(); // not sure if this is version dependent
         unknownF1 = nif->getFloat();
         unknown.resize(8);
         for (int i = 0; i < 8; ++i)
@@ -573,15 +573,48 @@ public:
 class bhkSphereShape : public bhkShape
 {
 public:
-    unsigned int material; // http://niftools.sourceforge.net/doc/nif/HavokMaterial.html
-    //unsigned int materialSkyrim; // http://niftools.sourceforge.net/doc/nif/SkyrimHavokMaterial.html
+    unsigned int material;
+    //unsigned int materialSkyrim;
     float radius;
 
     void read(NIFStream *nif)
     {
         material = nif->getUInt();
-        //materialSkyrim = nif->getUInt();  // not sure if this is version dependent
+        //materialSkyrim = nif->getUInt(); // not sure if this is version dependent
         radius = nif->getFloat();
+    }
+};
+
+struct SphereBV
+{
+    Ogre::Vector3 center;
+    float radius;
+};
+
+class bhkMultiSphereShape : public bhkShape
+{
+public:
+    unsigned int material;
+    //unsigned int materialSkyrim;
+    float radius;
+    float unknown1;
+    float unknown2;
+    std::vector<SphereBV> spheres;
+
+    void read(NIFStream *nif)
+    {
+        material = nif->getUInt();
+        //materialSkyrim = nif->getUInt(); // not sure if this is version dependent
+        radius = nif->getFloat();
+        unknown1 = nif->getFloat();
+        unknown2 = nif->getFloat();
+        unsigned int numSpheres = nif->getUInt();
+        spheres.resize(numSpheres);
+        for (unsigned int i = 0; i < numSpheres; ++i)
+        {
+            spheres[i].center = nif->getVector3();
+            spheres[i].radius = nif->getFloat();
+        }
     }
 };
 
@@ -1089,12 +1122,6 @@ struct bhkSimpleShapePhantom: public Record
         for (unsigned int i = 0; i < 23; ++i) // 7 + 3*5 +1
             nif->getFloat();
     }
-};
-
-struct SphereBV
-{
-    Ogre::Vector3 center;
-    float radius;
 };
 
 struct BoxBV

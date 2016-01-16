@@ -208,7 +208,7 @@ void CSVRender::ForeignObject::update()
             extraIndex = armor.searchId(ESM4::formIdToString(baseObj));
             model = armor.getData (extraIndex,
                    armor.findColumnIndex (CSMWorld::Columns::ColumnId_Model)).toString().toUtf8().constData();
-            std::cout << "obj is a armor obj " << ESM4::formIdToString(baseObj) << ", " << model << std::endl;
+            //std::cout << "obj is a armor obj " << ESM4::formIdToString(baseObj) << ", " << model << std::endl;
 
             if (model.empty())
                 error = 2;
@@ -259,7 +259,7 @@ void CSVRender::ForeignObject::update()
             extraIndex = weap.searchId(ESM4::formIdToString(baseObj));
             model = weap.getData (extraIndex,
                    weap.findColumnIndex (CSMWorld::Columns::ColumnId_Model)).toString().toUtf8().constData();
-            std::cout << "obj is a weapon obj " << ESM4::formIdToString(baseObj) << ", " << model << std::endl;
+            //std::cout << "obj is a weapon obj " << ESM4::formIdToString(baseObj) << ", " << model << std::endl;
 
             if (model.empty())
                 error = 2;
@@ -285,7 +285,7 @@ void CSVRender::ForeignObject::update()
             extraIndex = ammo.searchId(ESM4::formIdToString(baseObj));
             model = ammo.getData (extraIndex,
                    ammo.findColumnIndex (CSMWorld::Columns::ColumnId_Model)).toString().toUtf8().constData();
-            std::cout << "obj is a ammo obj " << ESM4::formIdToString(baseObj) << ", " << model << std::endl;
+            //std::cout << "obj is a ammo obj " << ESM4::formIdToString(baseObj) << ", " << model << std::endl;
 
             if (model.empty())
                 error = 2;
@@ -324,7 +324,7 @@ void CSVRender::ForeignObject::update()
             extraIndex = appa.searchId(ESM4::formIdToString(baseObj));
             model = appa.getData (extraIndex,
                    appa.findColumnIndex (CSMWorld::Columns::ColumnId_Model)).toString().toUtf8().constData();
-            std::cout << "obj is a appa obj " << ESM4::formIdToString(baseObj) << ", " << model << std::endl;
+            //std::cout << "obj is a appa obj " << ESM4::formIdToString(baseObj) << ", " << model << std::endl;
 
             if (model.empty())
                 error = 2;
@@ -363,7 +363,7 @@ void CSVRender::ForeignObject::update()
             extraIndex = soul.searchId(ESM4::formIdToString(baseObj));
             model = soul.getData (extraIndex,
                    soul.findColumnIndex (CSMWorld::Columns::ColumnId_Model)).toString().toUtf8().constData();
-            std::cout << "obj is a soul gem " << ESM4::formIdToString(baseObj) << ", " << model << std::endl;
+            //std::cout << "obj is a soul gem " << ESM4::formIdToString(baseObj) << ", " << model << std::endl;
 
             if (model.empty())
                 error = 2;

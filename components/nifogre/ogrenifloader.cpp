@@ -1326,12 +1326,14 @@ private:
                                Ogre::SceneManager *sceneMgr, const Nif::Node *node,
                                ObjectScenePtr scene)
     {
+        bool isStrips = node->recType == Nif::RC_NiTriStrips;
+
         /* This creates an empty mesh to which a skeleton gets attached. This
          * is to ensure we have an entity with a skeleton instance, even if all
          * other entities are attached to bones and not skinned. */
         Ogre::MeshManager &meshMgr = Ogre::MeshManager::getSingleton();
         if(meshMgr.getByName(name).isNull())
-            NIFMeshLoader::createMesh(name, name, group, ~(size_t)0, false); // FIXME false for now
+            NIFMeshLoader::createMesh(name, name, group, ~(size_t)0, isStrips);
 
         scene->mSkelBase = sceneMgr->createEntity(name);
         scene->mEntities.push_back(scene->mSkelBase);
