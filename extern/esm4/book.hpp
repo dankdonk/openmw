@@ -40,7 +40,7 @@ namespace ESM4
             Flag_NoTake = 0x0002
         };
 
-        enum BookSkill
+        enum BookSkill // for TES4 only
         {
             BookSkill_None        = -1,
             BookSkill_Armorer     =  0,
@@ -69,7 +69,8 @@ namespace ESM4
         struct Data
         {
             std::uint8_t  flags;
-            std::int8_t   bookSkill;
+            std::uint8_t  type;      // TES5 only
+            std::uint32_t bookSkill; // uint8_t for TES4
             std::uint32_t value;
             float         weight;
         };

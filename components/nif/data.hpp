@@ -34,28 +34,41 @@ namespace Nif
 {
 
 // Common ancestor for several data classes
-class ShapeData : public Record
+class ShapeData : public Record // NiGeometryData
 {
+protected:
+    bool mIsNiPSysData;
 public:
     char keepFlags;
     char compressFlags;
+    unsigned short bsMaxVerts;
     unsigned short numUVSets;
+    unsigned short bsNumUVSets;
     std::vector<Ogre::Vector3> vertices, normals;
+    std::vector<Ogre::Vector3> tangents, bitangents;
     std::vector<Ogre::Vector4> colors;
     std::vector< std::vector<Ogre::Vector2> > uvlist;
     Ogre::Vector3 center;
     float radius;
     unsigned short consistencyFlags;
-    int refAbstractAdditionalGeometryData; // FIXME
+    //refAbstractAdditionalGeometryDataPtr additionalData; // FIXME
+
+    ShapeData()
+        : mIsNiPSysData(false), numUVSets(0), bsNumUVSets(0)  {}
 
     void read(NIFStream *nif)
     {
         if (nifVer >= 0x0a020000) // from 10.2.0.0
             int unknownInt = nif->getInt(); // always 0
 
-        int verts = nif->getUShort();
+        unsigned int verts = 0;
+        if (!mIsNiPSysData || (mIsNiPSysData && (nifVer < 0x14020007 || userVer < 11)))
+            verts = nif->getUShort();
 
-        if (nifVer >= 0x0a020000) // from 10.2.0.0
+        if (mIsNiPSysData && nifVer >= 0x14020007 && userVer >= 11)
+            bsMaxVerts = nif->getUShort();
+
+        if (nifVer >= 0x0a010000) // from 10.1.0.0
         {
             keepFlags = nif->getChar();
             compressFlags = nif->getChar();
@@ -65,10 +78,26 @@ public:
             nif->getVector3s(vertices, verts);
 
         if (nifVer >= 0x0a000100) // from 10.0.1.0
-            numUVSets = nif->getUShort();
+        {
+            if (nifVer < 0x14020007 || userVer < 11)
+                numUVSets = nif->getUShort();
 
-        if(nif->getBool(nifVer)) // has normals
+            if (nifVer >= 0x14020007 && userVer >= 11)
+                bsNumUVSets = nif->getUShort();
+        }
+
+        if (!mIsNiPSysData && nifVer >= 0x14020007 && userVer == 12)
+            nif->getUInt(); // Unknown Int 2
+
+        bool hasNormals = nif->getBool(nifVer);
+        if(hasNormals)
             nif->getVector3s(normals, verts);
+
+        if (hasNormals && ((numUVSets & 0xf000) || (bsNumUVSets & 0xf000)))
+        {
+            nif->getVector3s(tangents, verts);
+            nif->getVector3s(bitangents, verts);
+        }
 
         center = nif->getVector3();
         radius = nif->getFloat();
@@ -83,6 +112,8 @@ public:
             uvs = nif->getUShort() & 0x3f;
         if (nifVer >= 0x0a000100) // from 10.0.1.0
             uvs = numUVSets & 0x3f;
+        if (nifVer >= 0x14020007 && userVer >= 11)
+            uvs |= bsNumUVSets & 1;
 
         if (nifVer <= 0x04000002) // up to 4.0.0.2
             bool hasUV = nif->getBool(nifVer);
@@ -94,11 +125,14 @@ public:
                 nif->getVector2s(uvlist[i], verts);
         }
 
+        consistencyFlags = 0;
         if (nifVer >= 0x0a000100) // from 10.0.1.0
-            consistencyFlags = nif->getUShort();
+            if (userVer < 12 || (userVer >= 12 && !mIsNiPSysData))
+                consistencyFlags = nif->getUShort();
 
         if (nifVer >= 0x14000004) // from 20.0.0.4
-            refAbstractAdditionalGeometryData = nif->getInt(); // FIXME
+            if (userVer < 12 || (userVer >= 12 && !mIsNiPSysData))
+                /*additionalData.read(nif);*/ nif->getInt(); // FIXME
     }
 };
 
@@ -187,8 +221,8 @@ public:
     std::vector<float> rotationAngles;
     bool hasRotationAxes;
     std::vector<Ogre::Vector3> rotationAxes;
-    //bool hasUVQuads;
-    //std::vector<Ogre::Vector4> uvQuads;
+    bool hasUVQuads;
+    std::vector<Ogre::Vector4> uvQuads;
 
     int activeCount;
 
@@ -209,7 +243,7 @@ public:
         if (nifVer >= 0x0a010000) // from 10.1.0.0
         {
             hasRadii = nif->getBool(nifVer);
-            if (hasRadii)
+            if (hasRadii && !(nifVer >= 0x14020007 && userVer >= 11))
                 nif->getFloats(radii, vertices.size());
         }
 
@@ -217,33 +251,46 @@ public:
 
         hasSizes = nif->getBool(nifVer);
         // Particle sizes
-        if (hasSizes)
+        if (hasSizes && !(nifVer >= 0x14020007 && userVer >= 11))
             nif->getFloats(sizes, vertices.size());
 
         if (nifVer >= 0x0a010000) // from 10.1.0.0
         {
             hasRotations = nif->getBool(nifVer);
-            if (hasRotations)
+            if (hasRotations && !(nifVer >= 0x14020007 && userVer >= 11))
                 nif->getQuaternions(rotations, vertices.size());
+        }
+
+        if (nifVer >= 0x14020007 && userVer >= 12)
+        {
+            nif->getChar(); // Unknown byte 1
+            nif->getInt(); // NiNodePtr
         }
 
         if (nifVer >= 0x14000004) // from 20.0.0.4
         {
             hasRotationAngles = nif->getBool(nifVer);
-            if (hasRotationAngles)
+            if (hasRotationAngles && !(nifVer >= 0x14020007 && userVer >= 11))
                 nif->getFloats(rotationAngles, vertices.size());
+        }
 
+        if (nifVer >= 0x14000004) // from 20.0.0.4
+        {
             hasRotationAxes = nif->getBool(nifVer);
-            if (hasRotationAxes)
+            if (hasRotationAxes && !(nifVer >= 0x14020007 && userVer >= 11))
                 nif->getVector3s(rotationAxes, vertices.size());
         }
 
-        // FIXME: these require User Version to detect properly
-        //hasUVQuads = nif->getBool(nifVer);
-        //unsigned char numUVQuads = nif->getChar();
-        //if (hasUVQuads)
-            //nif->getVector4s(uvQuads, numUVQuads);
-        //nif->getChar(); // unknown
+        if (nifVer >= 0x14020007 && userVer == 11)
+        {
+            hasUVQuads = nif->getBool(nifVer);
+            unsigned char numUVQuads = nif->getChar();
+            if (hasUVQuads)
+                nif->getVector4s(uvQuads, numUVQuads);
+        }
+
+        if (nifVer == 0x14020007 && userVer >= 11)
+            nif->getChar(); // Unknown byte 2
     }
 };
 
@@ -298,30 +345,44 @@ public:
 
     void read(NIFStream *nif)
     {
+        mIsNiPSysData = true;
+
         NiRotatingParticlesData::read(nif);
 
-        particleDesc.resize(vertices.size());
-        for (unsigned int i = 0; i < vertices.size(); ++i)
-            particleDesc[i].read(nif, nifVer);
+        if (!(nifVer >= 0x14020007 && userVer >= 11))
+        {
+            particleDesc.resize(vertices.size());
+            for (unsigned int i = 0; i < vertices.size(); ++i)
+                particleDesc[i].read(nif, nifVer);
+        }
 
-        if (nifVer >= 0x14000004) // from 20.0.0.4
+        if (nifVer >= 0x14000004 && !(nifVer >= 0x14020007 && userVer >= 11))
         {
             if (nif->getBool(nifVer))
                 nif->getFloats(unknownFloats3, vertices.size());
         }
-        nif->getUShort();
-        nif->getUShort();
-        // FIXME: these require User Version to detect properly
-        //hasSubTextureUVs = nif->getBool(nifVer);
-        //unsigned int numUVs;
-        //aspectRatio = nif->getFloat();
-        //nif->getVector4s(subTextureUVs, numUVs);
 
-        //nif->getUInt();
-        //nif->getUInt();
-        //nif->getUInt();
-        //nif->getUShort();
-        //nif->getChar();
+        if (!(nifVer >= 0x14020007 && userVer == 11))
+        {
+            nif->getUShort(); // Unknown short 1
+            nif->getUShort(); // Unknown short 2
+        }
+
+        if (nifVer >= 0x14020007 && userVer >= 12)
+        {
+            std::vector<Ogre::Vector4> subTexOffsetUVs;
+
+            bool hasSubTexOffsetUVs = nif->getBool(nifVer);
+            unsigned int numSubTexOffsetUVs = nif->getUInt();
+            float aspectRatiro = nif->getFloat();
+            if (hasSubTexOffsetUVs)
+                nif->getVector4s(subTexOffsetUVs, numSubTexOffsetUVs);
+            nif->getUInt(); // Unknown Int 4
+            nif->getUInt(); // Unknown Int 5
+            nif->getUInt(); // Unknown Int 6
+            nif->getUShort(); // Unknown short 3
+            nif->getChar(); // Unknown byte 4
+        }
     }
 };
 
@@ -470,7 +531,7 @@ public:
         bool hasBoneIndicies;
         std::vector<std::vector<unsigned char> > boneIndicies;
 
-        void read(NIFStream *nif, unsigned int nifVer)
+        void read(NIFStream *nif, unsigned int nifVer, unsigned int userVer)
         {
             numVerts = nif->getUShort();
             numTriangles = nif->getUShort();
@@ -547,6 +608,9 @@ public:
                     }
                 }
             }
+
+            if (userVer >= 12)
+                nif->getUShort();
         }
     };
 
@@ -558,7 +622,7 @@ public:
         numSkinPartitionBlocks = nif->getUInt();
         skinPartitionBlocks.resize(numSkinPartitionBlocks);
         for (unsigned int i = 0; i < numSkinPartitionBlocks; ++i)
-            skinPartitionBlocks[i].read(nif, nifVer);
+            skinPartitionBlocks[i].read(nif, nifVer, userVer);
     }
 
 };
@@ -845,66 +909,25 @@ struct NiDefaultAVObjectPalette : public Record
         objs.resize(numObjs);
         for(unsigned int i = 0; i < numObjs; i++)
         {
-            objs[i].name = nif->getString();
+            objs[i].name = nif->getString(); // TODO: sized string?
             objs[i].avObject.read(nif);
         }
     }
 };
 
-struct FurniturePosition
-{
-    Ogre::Vector3 offset;
-    unsigned short orientation;
-    unsigned char posRef1;
-    unsigned char posRef2;
-    float heading;
-    unsigned short animType;
-    unsigned short entryProperties;
-};
-
-class BSBound : public Record
+class BSShaderTextureSet : public Record
 {
 public:
-    std::string name;
-    Ogre::Vector3 center;
-    Ogre::Vector3 dimensions;
+    std::vector<std::string> textures;
 
     void read(NIFStream *nif)
     {
-        if (nifVer >= 0x0a000100) // from 10.0.1.0
-            name = nif->getString();
-        if (nifVer <= 0x04020200) // up to 4.2.2.0
-            nif->getInt();
-
-        center = nif->getVector3();
-        dimensions = nif->getVector3();
-    }
-};
-
-class BSFurnitureMarker : public Record
-{
-public:
-    std::string name;
-    std::vector<FurniturePosition> positions;
-
-    void read(NIFStream *nif)
-    {
-        if (nifVer >= 0x0a000100) // from 10.0.1.0
-            name = nif->getString();
-        if (nifVer <= 0x04020200) // up to 4.2.2.0
-            nif->getInt();
-        unsigned int numPos = nif->getUInt();
-        positions.resize(numPos);
-        for (unsigned int i = 0; i < numPos; ++i)
+        unsigned int numTextures = nif->getUInt();
+        textures.resize(numTextures);
+        for (unsigned int i = 0; i < numTextures; ++i)
         {
-            positions[i].offset = nif->getVector3();
-            positions[i].orientation = nif->getUShort();
-            positions[i].posRef1 = nif->getChar();
-            positions[i].posRef2 = nif->getChar();
-            // FIXME: >= 20.2.0.7 && userversion needed
-            //positions[i].heading = nif->getFloat();
-            //positions[i].animType = nif->getUShort();
-            //positions[i].entryProperties = nif->getUShort();
+            unsigned int size = nif->getUInt();
+            textures[i] = nif->getString(size);
         }
     }
 };

@@ -215,6 +215,119 @@ public:
     }
 };
 
+class BSLightingShaderPropertyColorController : public Controller
+{
+public:
+    unsigned int targetVariable;
+    NiInterpolatorPtr interpolator;
+
+    void read(NIFStream *nif)
+    {
+        Controller::read(nif);
+
+        if (nifVer >= 0x0a020000) // from 10.2.0.0
+            interpolator.read(nif);
+
+        targetVariable = nif->getUInt();
+    }
+
+    void post(NIFFile *nif)
+    {
+        Controller::post(nif);
+    }
+};
+
+// FIXME looks identical to BSLightingShaderPropertyColorController
+class BSLightingShaderPropertyFloatController : public Controller
+{
+public:
+    unsigned int targetVariable;
+    NiInterpolatorPtr interpolator;
+
+    void read(NIFStream *nif)
+    {
+        Controller::read(nif);
+
+        if (nifVer >= 0x0a020000) // from 10.2.0.0
+            interpolator.read(nif);
+
+        targetVariable = nif->getUInt();
+    }
+
+    void post(NIFFile *nif)
+    {
+        Controller::post(nif);
+    }
+};
+
+// FIXME looks identical to BSLightingShaderPropertyColorController
+class BSEffectShaderPropertyColorController : public Controller
+{
+public:
+    unsigned int targetVariable;
+    NiInterpolatorPtr interpolator;
+
+    void read(NIFStream *nif)
+    {
+        Controller::read(nif);
+
+        if (nifVer >= 0x0a020000) // from 10.2.0.0
+            interpolator.read(nif);
+
+        targetVariable = nif->getUInt();
+    }
+
+    void post(NIFFile *nif)
+    {
+        Controller::post(nif);
+    }
+};
+
+// FIXME looks identical to BSLightingShaderPropertyColorController
+class BSEffectShaderPropertyFloatController : public Controller
+{
+public:
+    unsigned int targetVariable;
+    NiInterpolatorPtr interpolator;
+
+    void read(NIFStream *nif)
+    {
+        Controller::read(nif);
+
+        if (nifVer >= 0x0a020000) // from 10.2.0.0
+            interpolator.read(nif);
+
+        targetVariable = nif->getUInt();
+    }
+
+    void post(NIFFile *nif)
+    {
+        Controller::post(nif);
+    }
+};
+
+class BSLagBoneController : public Controller
+{
+public:
+    float linearVelocity;
+    float linearRotation;
+    float maxDistance;
+
+    void read(NIFStream *nif)
+    {
+        Controller::read(nif);
+
+        linearVelocity = nif->getFloat();
+        linearRotation = nif->getFloat();
+        maxDistance = nif->getFloat();
+    }
+
+    void post(NIFFile *nif)
+    {
+        Controller::post(nif);
+    }
+};
+
 class NiKeyframeController : public Controller
 {
 public:
@@ -380,7 +493,7 @@ public:
         Controller::read(nif);
         if (nifVer >= 0x0a020000) // from 10.2.0.0
             interpolator.read(nif);
-        modifierName = nif->getString();
+        modifierName = nif->getSkyrimString(nifVer, Record::strings);
         if (nifVer <= 0x0a010000) // up to 10.1.0.0
             nif->getInt(); // NiPSysEmtterCtlrDataPtr
         if (nifVer >= 0x0a020000) // from 10.2.0.0
@@ -405,7 +518,7 @@ public:
         Controller::read(nif);
         if (nifVer >= 0x0a020000) // from 10.2.0.0
             interpolator.read(nif);
-        modifierName = nif->getString();
+        modifierName = nif->getSkyrimString(nifVer, Record::strings);
         if (nifVer <= 0x0a010000) // up to 10.1.0.0
             nif->getInt(); // NiVisDataPtr
     }
@@ -422,7 +535,7 @@ public:
         Controller::read(nif);
         if (nifVer >= 0x0a020000) // from 10.2.0.0
             interpolator.read(nif);
-        modifierName = nif->getString();
+        modifierName = nif->getSkyrimString(nifVer, Record::strings);
         if (nifVer <= 0x0a010000) // up to 10.1.0.0
             nif->getFloat(); // NiFloatDataPtr
     }
@@ -439,7 +552,7 @@ public:
         Controller::read(nif);
         if (nifVer >= 0x0a020000) // from 10.2.0.0
             interpolator.read(nif);
-        modifierName = nif->getString();
+        modifierName = nif->getSkyrimString(nifVer, Record::strings);
         if (nifVer <= 0x0a010000) // up to 10.1.0.0
             nif->getFloat(); // NiFloatDataPtr
     }
@@ -456,7 +569,7 @@ public:
         Controller::read(nif);
         if (nifVer >= 0x0a020000) // from 10.2.0.0
             interpolator.read(nif);
-        modifierName = nif->getString();
+        modifierName = nif->getSkyrimString(nifVer, Record::strings);
         if (nifVer <= 0x0a010000) // up to 10.1.0.0
             nif->getFloat(); // NiFloatDataPtr
     }
@@ -493,7 +606,7 @@ public:
         Controller::read(nif);
         if (nifVer >= 0x0a020000) // from 10.2.0.0
             interpolator.read(nif);
-        modifierName = nif->getString();
+        modifierName = nif->getSkyrimString(nifVer, Record::strings);
         if (nifVer <= 0x0a010000) // up to 10.1.0.0
             nif->getFloat(); // NiFloatDataPtr
     }
@@ -784,12 +897,138 @@ public:
 
     void read(NIFStream *nif)
     {
-        name = nif->getString();
+        name = nif->getSkyrimString(nifVer, Record::strings);
         order = nif->getUInt();
         target.read(nif);
         active = nif->getBool(nifVer);
     }
 
+};
+
+class BSPSysSubTexModifier : public NiPSysModifier
+{
+public:
+    unsigned int startFrame;
+    float startFrameFudge;
+    float endFrame;
+    float loopStartFrame;
+    float loopStartFrameFudge;
+    float frameCount;
+    float frameCountFudge;
+
+    void read(NIFStream *nif)
+    {
+        NiPSysModifier::read(nif);
+
+        startFrame = nif->getUInt();
+        startFrameFudge = nif->getFloat();
+        endFrame = nif->getFloat();
+        loopStartFrame = nif->getFloat();
+        loopStartFrameFudge = nif->getFloat();
+        frameCount = nif->getFloat();
+        frameCountFudge = nif->getFloat();
+    }
+};
+
+class NiPSysBombModifier : public NiPSysModifier
+{
+public:
+    NiNodePtr bombObject;
+    Ogre::Vector3 bombAxis;
+    float decay;
+    float deltaV;
+    unsigned int decayType;
+    unsigned int symmetryType;
+
+    void read(NIFStream *nif)
+    {
+        NiPSysModifier::read(nif);
+
+        bombObject.read(nif);
+        bombAxis = nif->getVector3();
+        decay = nif->getFloat();
+        deltaV = nif->getFloat();
+        decayType = nif->getUInt();
+        symmetryType = nif->getUInt();
+    }
+};
+
+class BSPSysInheritVelocityModifier : public NiPSysModifier
+{
+public:
+    unsigned int unknownI1;
+    float unknownF1;
+    float unknownF2;
+    float unknownF3;
+
+    void read(NIFStream *nif)
+    {
+        NiPSysModifier::read(nif);
+
+        unknownI1 = nif->getUInt();
+        unknownF1 = nif->getFloat();
+        unknownF2 = nif->getFloat();
+        unknownF3 = nif->getFloat();
+    }
+};
+
+class BSPSysLODModifier : public NiPSysModifier
+{
+public:
+    float unknown1;
+    float unknown2;
+    float unknown3;
+    float unknown4;
+
+    void read(NIFStream *nif)
+    {
+        NiPSysModifier::read(nif);
+
+        unknown1 = nif->getFloat();
+        unknown2 = nif->getFloat();
+        unknown3 = nif->getFloat();
+        unknown4 = nif->getFloat();
+    }
+};
+
+class BSPSysScaleModifier : public NiPSysModifier
+{
+public:
+    std::vector<float> floats;
+
+    void read(NIFStream *nif)
+    {
+        NiPSysModifier::read(nif);
+
+        unsigned int numFloats = nif->getUInt();
+        nif->getFloats(floats, numFloats);
+    }
+};
+
+class BSPSysSimpleColorModifier : public NiPSysModifier
+{
+public:
+    float fadeInPercent;
+    float fadeOutPercent;
+    float color1EndPerCent;
+    float color1StartPerCent;
+    float color2EndPerCent;
+    float color2StartPerCent;
+    std::vector<Ogre::Vector4> colors;
+
+    void read(NIFStream *nif)
+    {
+        NiPSysModifier::read(nif);
+
+        fadeInPercent = nif->getFloat();
+        fadeOutPercent = nif->getFloat();
+        color1EndPerCent = nif->getFloat();
+        color1StartPerCent = nif->getFloat();
+        color2EndPerCent = nif->getFloat();
+        color2StartPerCent = nif->getFloat();
+
+        nif->getVector4s(colors, 3);
+    }
 };
 
 class NiPSysEmitter : public NiPSysModifier
@@ -1130,6 +1369,19 @@ public:
         height = nif->getFloat();
         xAxis = nif->getVector3();
         yAxis = nif->getVector3();
+    }
+};
+
+class NiPSysSphericalCollider : public NiPSysCollider
+{
+public:
+    float radius;
+
+    void read(NIFStream *nif)
+    {
+        NiPSysCollider::read(nif);
+
+        radius = nif->getFloat();
     }
 };
 

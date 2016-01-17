@@ -1,10 +1,11 @@
 #include "foreignobject.hpp"
 
-#include "iostream" // FIXME
+#include <iostream> // FIXME
 
 #include <OgreSceneManager.h>
 #include <OgreSceneNode.h>
 #include <OgreEntity.h>
+#include <OgreResourceGroupManager.h> // FIXME
 
 #include <QRegExp>
 
@@ -458,6 +459,8 @@ void CSVRender::ForeignObject::update()
                                trees.findColumnIndex (CSMWorld::Columns::ColumnId_Model)).toString().toUtf8().constData();
                         //model = "_DoD_flora_tree_b_1.NIF";
                         //model = "J_W\\JW_TREE_A2.NIF";
+                        //if (QString(realModel.c_str()).contains(QRegExp("nif$", Qt::CaseInsensitive)))
+                            //model = realModel;
                         if (QString(realModel.c_str()).contains(QRegExp("Tree", Qt::CaseInsensitive)))
                             model = "f\\flora_tree_01.nif";
                         else if (QString(realModel.c_str()).contains(QRegExp("Shrub", Qt::CaseInsensitive)))
@@ -553,6 +556,10 @@ void CSVRender::ForeignObject::update()
 
         // now put it back together
         std::string trimmedModel = model.substr(0, separator+1) + filename.substr(start);
+
+        // FIXME: quick hack to continue testing
+        if (!Ogre::ResourceGroupManager::getSingleton().resourceExistsInAnyGroup("Meshes\\"+trimmedModel))
+            return;
 
         //std::cout << "Using model: " << model << std::endl;
         mObject = NifOgre::Loader::createObjects (mBase, "Meshes\\" + trimmedModel);

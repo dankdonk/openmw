@@ -19,8 +19,8 @@ namespace Nif
 class Extra : public Record
 {
 public:
-    ExtraPtr extra; // FIXME: how to make this part of extras rather than keep separate members?
-    ExtraList extras;
+    NiExtraDataPtr extra; // FIXME: how to make this part of extras rather than keep separate members?
+    NiExtraDataList extras;
     bool hasExtras;
 
     void read(NIFStream *nif)
@@ -129,7 +129,8 @@ public:
 
     void read(NIFStream *nif)
     {
-        name = nif->getString(); // according to niftools docs this string is part of NiObjectNET
+        name = nif->getSkyrimString(nifVer, Record::strings);
+
         Controlled::read(nif);   // read NiObjectNET
     }
 };

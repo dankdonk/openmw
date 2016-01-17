@@ -38,6 +38,7 @@ namespace ESM4
 #pragma pack(push, 1)
         struct Data
         {
+            std::uint32_t value;
             float         weight;
         };
 

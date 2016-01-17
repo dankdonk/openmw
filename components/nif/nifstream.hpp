@@ -67,6 +67,8 @@ public:
     ///This is a strange type used by newer nif formats
     std::string getShortString(unsigned int ver = 0x04000002);
 
+    std::string getSkyrimString(unsigned int nifVer = 0x04000002, std::vector<std::string> *strings = 0);
+
     void getShorts(std::vector<short> &vec, size_t size);
     void getFloats(std::vector<float> &vec, size_t size);
     void getVector2s(std::vector<Ogre::Vector2> &vec, size_t size);

@@ -76,15 +76,14 @@ void ESM4::Grass::load(ESM4::Reader& reader)
             }
             case ESM4::SUB_MODB:
             case ESM4::SUB_MODT:
+            case ESM4::SUB_OBND:
             {
                 //std::cout << "GRAS " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
                 reader.skipSubRecordData();
                 break;
             }
             default:
-                std::cout << "GRAS " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
-                reader.skipSubRecordData();
-                //throw std::runtime_error("ESM4::GRAS::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
+                throw std::runtime_error("ESM4::GRAS::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
         }
     }
 }

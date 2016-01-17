@@ -14,7 +14,7 @@
 namespace Nif
 {
 
-struct NiNode;
+class NiNode;
 
 /** A Node is an object that's part of the main NIF tree. It has
     parent node (unless it's the root), and transformation (location
@@ -41,6 +41,9 @@ public:
         Named::read(nif);
 
         flags = nif->getUShort();
+        if (nifVer >= 0x14020007 && (userVer >= 11 || userVer2 > 26)) // from 20.2.0.7
+            nif->getUShort();
+
         trafo = nif->getTrafo(); // scale (float) included
 
 #if 0
@@ -67,7 +70,8 @@ public:
         if (nifVer <= 0x04020200) // up to 4.2.2.0
             velocity = nif->getVector3();
 
-        props.read(nif);
+        if (nifVer < 0x14020007) // less than 20.2.0.7 (or user version <= 11)
+            props.read(nif);
 
         if (nifVer <= 0x04020200) // up to 4.2.2.0
         {
@@ -137,8 +141,9 @@ public:
     Ogre::Matrix4 getWorldTransform() const;
 };
 
-struct NiNode : Node
+class NiNode : public Node
 {
+public:
     NodeList children;
     NodeList effects; // FIXME: should be a list of NiDynamicEffect
 
@@ -187,6 +192,300 @@ struct NiNode : Node
             if(!children[i].empty())
                 children[i]->parent = this;
         }
+    }
+};
+
+class BSMultiBound : public Record
+{
+public:
+    //BSMultiBoundDataPtr data;
+    void read(NIFStream *nif)
+    {
+        nif->getInt(); // data.read(nif);
+    }
+};
+
+class BSMultiBoundOBB : public Record
+{
+public:
+    Ogre::Vector3 center;
+    Ogre::Vector3 size;
+    Ogre::Matrix3 rotation;
+
+    void read(NIFStream *nif)
+    {
+        center = nif->getVector3();
+        size = nif->getVector3();
+        rotation = nif->getMatrix3();
+    }
+};
+
+struct BSFadeNode : public NiNode {};
+struct BSLeafAnimNode : public NiNode {};
+
+class BSTreeNode : public NiNode
+{
+public:
+    std::vector<NiNodePtr> bones1;
+    std::vector<NiNodePtr> bones2;
+
+    void read(NIFStream *nif)
+    {
+        NiNode::read(nif);
+
+        unsigned int numBones = nif->getUInt();
+        bones1.resize(numBones);
+        for (unsigned int i = 0; i < numBones; ++i)
+            bones1[i].read(nif);
+
+        numBones = nif->getUInt();
+        bones2.resize(numBones);
+        for (unsigned int i = 0; i < numBones; ++i)
+            bones2[i].read(nif);
+    }
+};
+
+class BSValueNode : public NiNode
+{
+public:
+    int value;
+
+    void read(NIFStream *nif)
+    {
+        NiNode::read(nif);
+
+        value = nif->getInt();
+
+        nif->getChar(); // unknown byte
+    }
+};
+
+class BSOrderedNode : public NiNode
+{
+public:
+    Ogre::Vector4 alphaSortBound;
+    unsigned char isStaticBound;
+
+    void read(NIFStream *nif)
+    {
+        NiNode::read(nif);
+
+        alphaSortBound = nif->getVector4();
+        isStaticBound = nif->getChar();
+    }
+};
+
+class BSMultiBoundNode : public NiNode
+{
+public:
+
+    void read(NIFStream *nif)
+    {
+        NiNode::read(nif);
+
+        nif->getInt(); // BSMultiBoundPtr
+        if (nifVer >= 0x14020007) // from 20.2.0.7
+            nif->getUInt();
+    }
+};
+
+class BSBlastNode : public NiNode
+{
+public:
+    char unknown1;;
+    short unknown2;
+
+    void read(NIFStream *nif)
+    {
+        NiNode::read(nif);
+
+        unknown1 = nif->getChar();
+        unknown2 = nif->getShort();
+    }
+};
+
+class NiSwitchNode : public NiNode
+{
+public:
+
+    void read(NIFStream *nif)
+    {
+        NiNode::read(nif);
+
+        if (nifVer >= 0x0a010000) // from 10.1.0.0
+            nif->getUShort();
+
+        nif->getInt();
+    }
+};
+
+struct TexCoord
+{
+    float u;
+    float v;
+};
+
+class BSLightingShaderProperty : public Named
+{
+public:
+    unsigned int skyrimShaderType;
+    unsigned int shaderFlags1;
+    unsigned int shaderFlags2;
+    TexCoord uvOffset;
+    TexCoord uvScale;
+    //BSShaderTextureSetPtr textureSet;
+    Ogre::Vector3 emissiveColor;
+    float emissiveMultiple;
+    unsigned int textureClampMode;
+    float alpha;
+    float unknown2;
+    float glossiness;
+    Ogre::Vector3 specularColor;
+    float specularStrength;
+    float lightingEffect1;
+    float lightingEffect2;
+
+    float envMapScale;
+    Ogre::Vector3 skinTintColor;
+    Ogre::Vector3 hairTintColor;
+    float maxPasses;
+    float scale;
+    float parallaxInnerLayerThickness;
+    float parallaxRefractionScale;
+    TexCoord parallaxInnerLayerTextureScale;
+    float parallaxEnvmapStrength;
+    Ogre::Vector4 sparkleParm;
+    float eyeCubemapScale;
+    Ogre::Vector3 leftEyeReflectionCenter;
+    Ogre::Vector3 rightEyeReflectionCenter;
+
+    void read(NIFStream *nif)
+    {
+        if (userVer >= 12)
+            skyrimShaderType = nif->getUInt();
+        else
+            skyrimShaderType = 0;
+
+        Named::read(nif);
+
+        if (userVer == 12)
+        {
+            shaderFlags1 = nif->getUInt();
+            shaderFlags2 = nif->getUInt();
+        }
+        uvOffset.u = nif->getFloat();
+        uvOffset.v = nif->getFloat();
+        uvScale.u = nif->getFloat();
+        uvScale.v = nif->getFloat();
+        nif->getInt();//textureSet.read(nif);
+        emissiveColor = nif->getVector3();
+        emissiveMultiple = nif->getFloat();
+        textureClampMode = nif->getUInt();
+        alpha = nif->getFloat();
+        unknown2 = nif->getFloat();
+        glossiness = nif->getFloat();
+        specularColor = nif->getVector3();
+        specularStrength = nif->getFloat();
+        lightingEffect1 = nif->getFloat();
+        lightingEffect2 = nif->getFloat();
+
+        if (skyrimShaderType == 1)
+            envMapScale = nif->getFloat();
+        else if (skyrimShaderType == 5)
+            skinTintColor = nif->getVector3();
+        else if (skyrimShaderType == 6)
+            hairTintColor = nif->getVector3();
+        else if (skyrimShaderType == 7)
+        {
+            maxPasses = nif->getFloat();
+            scale = nif->getFloat();
+        }
+        else if (skyrimShaderType == 11)
+        {
+            parallaxInnerLayerThickness = nif->getFloat();
+            parallaxRefractionScale = nif->getFloat();
+            parallaxInnerLayerTextureScale.u = nif->getFloat();
+            parallaxInnerLayerTextureScale.v = nif->getFloat();
+            parallaxEnvmapStrength = nif->getFloat();
+        }
+        else if (skyrimShaderType == 14)
+            sparkleParm = nif->getVector4();
+        else if (skyrimShaderType == 16)
+        {
+            eyeCubemapScale = nif->getFloat();
+            leftEyeReflectionCenter = nif->getVector3();
+            rightEyeReflectionCenter = nif->getVector3();
+        }
+    }
+};
+
+class BSEffectShaderProperty : public Named
+{
+public:
+    unsigned int shaderFlags1;
+    unsigned int shaderFlags2;
+    TexCoord uvOffset;
+    TexCoord uvScale;
+    std::string sourceTexture;
+    unsigned int textureClampMode;
+    float falloffStartAngle;
+    float falloffStopAngle;
+    float falloffStartOpacity;
+    float falloffStopOpacity;
+    Ogre::Vector4 emissiveColor;
+    float emissiveMultiple;
+    float softFalloffDepth;
+    std::string greyscaleTexture;
+
+    void read(NIFStream *nif)
+    {
+        Named::read(nif);
+
+        shaderFlags1 = nif->getUInt();
+        shaderFlags2 = nif->getUInt();
+        uvOffset.u = nif->getFloat();
+        uvOffset.v = nif->getFloat();
+        uvScale.u = nif->getFloat();
+        uvScale.v = nif->getFloat();
+        unsigned int size = nif->getUInt();
+        sourceTexture = nif->getString(size);
+        textureClampMode = nif->getUInt();
+        falloffStartAngle = nif->getFloat();
+        falloffStopAngle = nif->getFloat();
+        falloffStartOpacity = nif->getFloat();
+        falloffStopOpacity = nif->getFloat();
+        emissiveColor = nif->getVector4();
+        emissiveMultiple = nif->getFloat();
+        softFalloffDepth = nif->getFloat();
+        size = nif->getUInt();
+        greyscaleTexture = nif->getString(size);
+    }
+};
+
+class BSWaterShaderProperty : public Named
+{
+public:
+    unsigned int shaderFlags1;
+    unsigned int shaderFlags2;
+    TexCoord uvOffset;
+    TexCoord uvScale;
+    unsigned char waterShaderFlags;
+    unsigned char waterDirection;
+    unsigned short unknownS3;
+
+    void read(NIFStream *nif)
+    {
+        Named::read(nif);
+
+        shaderFlags1 = nif->getUInt();
+        shaderFlags2 = nif->getUInt();
+        uvOffset.u = nif->getFloat();
+        uvOffset.v = nif->getFloat();
+        uvScale.u = nif->getFloat();
+        uvScale.v = nif->getFloat();
+        waterShaderFlags = nif->getChar();
+        waterDirection = nif->getChar();
+        unknownS3 = nif->getUShort();
     }
 };
 
@@ -334,13 +633,20 @@ class NiParticleSystem : public NiGeometry
 {
     unsigned short unknownS2;
     unsigned short unknownS3;
-    unsigned int unknown1;
+    unsigned int unknownI1;
     bool worldSpace;
     std::vector<NiPSysModifierPtr> modifiers;
 
     void read(NIFStream *nif)
     {
         NiGeometry::read(nif);
+
+        if (userVer >= 12)
+        {
+            unknownS2 = nif->getUShort();
+            unknownS3 = nif->getUShort();
+            unknownI1 = nif->getInt();
+        }
 
         if (nifVer >= 0x0a010000) // from 10.1.0.0
         {
@@ -356,6 +662,24 @@ class NiParticleSystem : public NiGeometry
     {
         NiGeometry::post(nif);
     }
+};
+
+class BSLODTriShape : public NiGeometry
+{
+public:
+    unsigned int level0Size;
+    unsigned int level1Size;
+    unsigned int level2Size;
+
+    void read(NIFStream *nif)
+    {
+        NiGeometry::read(nif);
+
+        level0Size = nif->getUInt();
+        level1Size = nif->getUInt();
+        level2Size = nif->getUInt();
+    }
+
 };
 
 struct OblivionSubShape
@@ -699,7 +1023,6 @@ class bhkMoppBvTreeShape : public bhkShape
 public:
     bhkShapePtr shape;
     unsigned int material;
-    //unsigned int materialSkyrim;
     std::vector<unsigned char> unknown;
     float unknownF1;
     Ogre::Vector3 origin;
@@ -709,22 +1032,57 @@ public:
     void read(NIFStream *nif)
     {
         shape.read(nif);
-        material = nif->getUInt();
-        //materialSkyrim = nif->getUInt();  // not sure if this is version dependent
+        material = nif->getUInt(); //if userVer >= 12, Skyrim material
+
         unknown.resize(8);
         for (int i = 0; i < 8; ++i)
             unknown[i] = nif->getChar();
 
         unknownF1 = nif->getFloat();
-        unsigned int size = nif->getUInt();
+
+        unsigned int dataSize = nif->getUInt();
         origin = nif->getVector3();
         scale = nif->getFloat();
 
-        moppData.resize(size);
-        for (unsigned int i = 0; i < size; ++i)
-        {
+        moppData.resize(dataSize);
+        for (unsigned int i = 0; i < dataSize; ++i)
             moppData[i] = nif->getChar();
-        }
+
+        if (nifVer >= 0x14020005 && userVer >= 12) // from 20.2.0.7
+            nif->getChar(); // Unknown Byte1
+    }
+
+    void post(NIFFile *nif)
+    {
+        // FIXME
+    }
+};
+
+class bhkCompressedMeshShape : public bhkShape
+{
+public:
+    NodePtr target;
+    unsigned int materialSkyrim;
+    std::vector<unsigned char> unknown;
+    float radius;
+    float scale;
+    bhkCompressedMeshShapeDataPtr data;
+
+    void read(NIFStream *nif)
+    {
+        target.read(nif);
+        materialSkyrim = nif->getUInt();
+        nif->getFloat();
+        unknown.resize(4);
+        for (int i = 0; i < 4; ++i)
+            unknown[i] = nif->getChar();
+        nif->getVector4();
+        radius = nif->getFloat();
+        scale = nif->getFloat();
+        nif->getFloat();
+        nif->getFloat();
+        nif->getFloat();
+        data.read(nif);
     }
 
     void post(NIFFile *nif)
@@ -751,7 +1109,6 @@ public:
     }
 };
 
-// FIXME: not correct from 20.2.0.7 (i.e. Skyrim)
 struct RagdollDescriptor
 {
     Ogre::Vector4 pivotA;
@@ -760,6 +1117,8 @@ struct RagdollDescriptor
     Ogre::Vector4 pivotB;
     Ogre::Vector4 planeB;
     Ogre::Vector4 twistB;
+    Ogre::Vector4 motorA;
+    Ogre::Vector4 motorB;
     float coneMaxAngle;
     float planeMinAngle;
     float planeMaxAngle;
@@ -769,12 +1128,27 @@ struct RagdollDescriptor
 
     void read(NIFStream *nif, unsigned int nifVer)
     {
-        pivotA = nif->getVector4();
-        planeA = nif->getVector4();
-        twistA = nif->getVector4();
-        planeB = nif->getVector4();
-        pivotB = nif->getVector4();
-        twistB = nif->getVector4();
+        if (nifVer <= 0x14000005)
+        {
+            pivotA = nif->getVector4();
+            planeA = nif->getVector4();
+            twistA = nif->getVector4();
+            planeB = nif->getVector4();
+            pivotB = nif->getVector4();
+            twistB = nif->getVector4();
+        }
+
+        if (nifVer >= 0x14020007)
+        {
+            twistA = nif->getVector4();
+            planeA = nif->getVector4();
+            motorA = nif->getVector4();
+            pivotA = nif->getVector4();
+            twistB = nif->getVector4();
+            planeB = nif->getVector4();
+            motorB = nif->getVector4();
+            pivotB = nif->getVector4();
+        }
 
         coneMaxAngle = nif->getFloat();
         planeMinAngle = nif->getFloat();
@@ -782,6 +1156,21 @@ struct RagdollDescriptor
         twistMinAngle = nif->getFloat();
         twistMaxAngle = nif->getFloat();
         maxFriction = nif->getFloat();
+
+        if (nifVer >= 0x14020007)
+        {
+            bool enableMotor = nif->getBool(nifVer);
+            if (enableMotor)
+            {
+                nif->getFloat(); // unknown float 1
+                nif->getFloat(); // unknown float 2
+                nif->getFloat(); // unknown float 3
+                nif->getFloat(); // unknown float 4
+                nif->getFloat(); // unknown float 5
+                nif->getFloat(); // unknown float 6
+                nif->getChar();  // unknown byte 1
+            }
+        }
     }
 };
 
@@ -797,7 +1186,6 @@ public:
     }
 };
 
-// FIXME: different for Skyrim
 struct LimitedHingeDescriptor
 {
     Ogre::Vector4 pivotA;
@@ -807,23 +1195,57 @@ struct LimitedHingeDescriptor
     Ogre::Vector4 pivotB;
     Ogre::Vector4 axleB;
     Ogre::Vector4 perp2AxleB2;
+    Ogre::Vector4 perp2AxleB1;
+
     float minAngle;
     float maxAngle;
     float maxFriction;
 
+    bool enableMotor;
+
     void read(NIFStream *nif, unsigned int nifVer)
     {
-        pivotA = nif->getVector4();
-        axleA = nif->getVector4();
-        perp2AxleA1 = nif->getVector4();
-        perp2AxleA2 = nif->getVector4();
-        pivotB = nif->getVector4();
-        axleB = nif->getVector4();
-        perp2AxleB2 = nif->getVector4();
+        if (nifVer <= 0x14000005)
+        {
+            pivotA = nif->getVector4();
+            axleA = nif->getVector4();
+            perp2AxleA1 = nif->getVector4();
+            perp2AxleA2 = nif->getVector4();
+            pivotB = nif->getVector4();
+            axleB = nif->getVector4();
+            perp2AxleB2 = nif->getVector4();
+        }
+
+        if (nifVer >= 0x14020007)
+        {
+            axleA = nif->getVector4();
+            perp2AxleA1 = nif->getVector4();
+            perp2AxleA2 = nif->getVector4();
+            pivotA = nif->getVector4();
+            axleB = nif->getVector4();
+            perp2AxleB1 = nif->getVector4();
+            perp2AxleB2 = nif->getVector4();
+            pivotB = nif->getVector4();
+        }
 
         minAngle = nif->getFloat();
         maxAngle = nif->getFloat();
         maxFriction = nif->getFloat();
+
+        if (nifVer >= 0x14020007)
+        {
+            enableMotor = nif->getBool(nifVer);
+            if (enableMotor)
+            {
+                nif->getFloat(); // unknown float 1
+                nif->getFloat(); // unknown float 2
+                nif->getFloat(); // unknown float 3
+                nif->getFloat(); // unknown float 4
+                nif->getFloat(); // unknown float 5
+                nif->getFloat(); // unknown float 6
+                nif->getChar();  // unknown byte 1
+            }
+        }
     }
 };
 
@@ -839,7 +1261,6 @@ public:
     }
 };
 
-// FIXME: different for Skyrim
 class bhkPrismaticConstraint : public bhkConstraint
 {
 public:
@@ -848,6 +1269,10 @@ public:
     Ogre::Vector4 pivotB;
     Ogre::Vector4 slidingB;
     Ogre::Vector4 planeB;
+    Ogre::Vector4 slidingA;
+    Ogre::Vector4 rotationA;
+    Ogre::Vector4 planeA;
+    Ogre::Vector4 rotationB;
     float minDistance;
     float maxDistance;
     float friction;
@@ -856,17 +1281,35 @@ public:
     {
         bhkConstraint::read(nif);
 
-        pivotA = nif->getVector4();
-        rotationMatrixA.resize(4);
-        for (int i = 0; i < 4; ++i)
-            rotationMatrixA[i] = nif->getVector4();
-        pivotB = nif->getVector4();
-        slidingB = nif->getVector4();
-        planeB = nif->getVector4();
+        if (nifVer <= 0x14000005)
+        {
+            pivotA = nif->getVector4();
+            rotationMatrixA.resize(4);
+            for (int i = 0; i < 4; ++i)
+                rotationMatrixA[i] = nif->getVector4();
+            pivotB = nif->getVector4();
+            slidingB = nif->getVector4();
+            planeB = nif->getVector4();
+        }
+
+        if (nifVer >= 0x14020007)
+        {
+            slidingA = nif->getVector4();
+            rotationA = nif->getVector4();
+            planeA = nif->getVector4();
+            pivotA = nif->getVector4();
+            slidingB = nif->getVector4();
+            rotationB = nif->getVector4();
+            planeB = nif->getVector4();
+            pivotB = nif->getVector4();
+        }
 
         minDistance = nif->getFloat();
         maxDistance = nif->getFloat();
         friction = nif->getFloat();
+
+        if (nifVer >= 0x14020007)
+            nif->getChar();
     }
 };
 
@@ -887,7 +1330,6 @@ public:
     }
 };
 
-// FIXME: incomplete for Skyrim
 struct HingeDescriptor
 {
     Ogre::Vector4 pivotA;
@@ -895,14 +1337,32 @@ struct HingeDescriptor
     Ogre::Vector4 perp2AxleA2;
     Ogre::Vector4 pivotB;
     Ogre::Vector4 axleB;
+    Ogre::Vector4 axleA;
+    Ogre::Vector4 perp2AxleB1;
+    Ogre::Vector4 perp2AxleB2;
 
     void read(NIFStream *nif, unsigned int nifVer)
     {
-        pivotA = nif->getVector4();
-        perp2AxleA1 = nif->getVector4();
-        perp2AxleA2 = nif->getVector4();
-        pivotB = nif->getVector4();
-        axleB = nif->getVector4();
+        if (nifVer <= 0x14000005)
+        {
+            pivotA = nif->getVector4();
+            perp2AxleA1 = nif->getVector4();
+            perp2AxleA2 = nif->getVector4();
+            pivotB = nif->getVector4();
+            axleB = nif->getVector4();
+        }
+
+        if (nifVer >= 0x14020007)
+        {
+            axleA = nif->getVector4();
+            perp2AxleA1 = nif->getVector4();
+            perp2AxleA2 = nif->getVector4();
+            pivotA = nif->getVector4();
+            axleB = nif->getVector4();
+            perp2AxleB1 = nif->getVector4();
+            perp2AxleB2 = nif->getVector4();
+            pivotB = nif->getVector4();
+        }
     }
 };
 
@@ -973,8 +1433,8 @@ public:
     float dampingLinear;
     float dampingAngular;
     float friction;
-    //float gravityFactor1;
-    //float gravityFactor2;
+    float gravityFactor1;
+    float gravityFactor2;
     float rollingFrictionMultiplier;
     float restitution;
     float maxVelocityLinear;
@@ -991,7 +1451,7 @@ public:
     int unknownInt8;
     std::vector<bhkConstraintPtr> constraints;
     int unknownInt9;
-    //unsigned short unknownS9;
+    unsigned short unknownS9;
 
     void read(NIFStream *nif)
     {
@@ -1029,10 +1489,14 @@ public:
         mass = nif->getFloat();
         dampingLinear = nif->getFloat();
         dampingAngular = nif->getFloat();
-        //gravityFactor1 = nif->getFloat(); // FIXME: check why these need to be commented out
-        //gravityFactor2 = nif->getFloat();
+        if (userVer >= 12)
+        {
+            gravityFactor1 = nif->getFloat();
+            gravityFactor2 = nif->getFloat();
+        }
         friction = nif->getFloat();
-        //rollingFrictionMultiplier = nif->getFloat();
+        if (userVer >= 12)
+            rollingFrictionMultiplier = nif->getFloat();
         restitution = nif->getFloat();
         maxVelocityLinear = nif->getFloat();
         maxVelocityAngular = nif->getFloat();
@@ -1046,13 +1510,16 @@ public:
         unknownInt6 = nif->getInt();
         unknownInt7 = nif->getInt();
         unknownInt8 = nif->getInt();
-        // another unsigned int for Skyrim here?
+        if (userVer >= 12)
+            nif->getInt();
         unsigned int numConst = nif->getUInt();
         constraints.resize(numConst);
         for(size_t i = 0; i < numConst; i++)
             constraints[i].read(nif);
-        unknownInt9 = nif->getInt();
-        //unknownS9 = nif->getUShort();
+        if (userVer <= 11)
+            unknownInt9 = nif->getInt();
+        if (userVer >= 12)
+            unknownS9 = nif->getUShort();
     }
 
     void post(NIFFile *nif)
@@ -1246,13 +1713,14 @@ struct ControllerLink
     std::string variable2;
     int variable2Offset;
 
-    void read(NIFStream *nif, unsigned int nifVer)
+    void read(NIFStream *nif, unsigned int nifVer, std::vector<std::string> *strings)
     {
         if (nifVer <= 0x0a010000) // up to 10.1.0.0
         {
             targetName = nif->getString();
             controller.read(nif);
         }
+
         if (nifVer >= 0x0a01006a) // from 10.1.0.106
         {
             interpolator.read(nif);
@@ -1262,30 +1730,66 @@ struct ControllerLink
                 nif->getUInt(); // FIXME
                 nif->getUShort();
             }
-            priority = nif->getChar();
+            priority = nif->getChar(); // TODO userVer >= 10
         }
+
         if (nifVer >= 0x0a020000 && nifVer <= 0x14000005)
             stringPalette.read(nif);
-        if (nifVer == 0x0a01006a) // 10.1.0.106
+
+        if (nifVer >= 0x1401003) // 20.1.0.3
+            getSkyrimString(nodeName, nif, nifVer, strings);
+        else if (nifVer == 0x0a01006a) // 10.1.0.106
             nodeName = nif->getString();
+
         if (nifVer >= 0x0a020000 && nifVer <= 0x14000005)
             nodeNameOffset = nif->getInt();
-        if (nifVer == 0x0a01006a) // 10.1.0.106
+
+        if (nifVer >= 0x1401003) // 20.1.0.3
+            getSkyrimString(propertyType, nif, nifVer, strings);
+        else if (nifVer == 0x0a01006a) // 10.1.0.106
             propertyType = nif->getString();
+
         if (nifVer >= 0x0a020000 && nifVer <= 0x14000005)
             propertyTypeOffset = nif->getInt();
-        if (nifVer == 0x0a01006a) // 10.1.0.106
+
+        if (nifVer >= 0x1401003) // 20.1.0.3
+            getSkyrimString(controllerType, nif, nifVer, strings);
+        else if (nifVer == 0x0a01006a) // 10.1.0.106
             controllerType = nif->getString();
+
         if (nifVer >= 0x0a020000 && nifVer <= 0x14000005)
             controllerTypeOffset = nif->getInt();
-        if (nifVer == 0x0a01006a) // 10.1.0.106
+
+        if (nifVer >= 0x1401003) // 20.1.0.3
+            getSkyrimString(variable1, nif, nifVer, strings);
+        else if (nifVer == 0x0a01006a) // 10.1.0.106
             variable1 = nif->getString();
+
         if (nifVer >= 0x0a020000 && nifVer <= 0x14000005)
             variable1Offset = nif->getInt();
-        if (nifVer == 0x0a01006a) // 10.1.0.106
+
+        if (nifVer >= 0x1401003) // 20.1.0.3
+            getSkyrimString(variable2, nif, nifVer, strings);
+        else if (nifVer == 0x0a01006a) // 10.1.0.106
             variable2 = nif->getString();
+
         if (nifVer >= 0x0a020000 && nifVer <= 0x14000005)
             variable2Offset = nif->getInt();
+    }
+
+private:
+    void getSkyrimString(std::string& str, NIFStream *nif, unsigned int nifVer, std::vector<std::string> *strings)
+    {
+        if (nifVer >= 0x14020007 && !strings->empty()) // from 20.2.0.7 (Skyrim)
+        {
+            unsigned int index = nif->getUInt();
+            if (index == -1)
+                str = "";
+            else
+                str = (*strings)[index]; // FIXME: validate index size
+        }
+        else
+            str = nif->getString(); // FIXME just a guess
     }
 };
 
@@ -1299,7 +1803,7 @@ public:
 
     void read(NIFStream *nif)
     {
-        name = nif->getString();
+        name = nif->getSkyrimString(nifVer, Record::strings);
 
         if (nifVer <= 0x0a010000) // up to 10.1.0.0
         {
@@ -1311,7 +1815,7 @@ public:
             unsigned int unknown = nif->getUInt();
         controlledBlocks.resize(numControlledBlocks);
         for (unsigned int i = 0; i < numControlledBlocks; ++i)
-            controlledBlocks[i].read(nif, nifVer);
+            controlledBlocks[i].read(nif, nifVer, Record::strings);
     }
 };
 
@@ -1356,16 +1860,157 @@ public:
                 unknownByte = nif->getChar();
 
             manager.read(nif);
-            targetName = nif->getString();
+
+            if (nifVer >= 0x14020007 && !Record::strings->empty()) // from 20.2.0.7 (Skyrim)
+            {
+                unsigned int index = nif->getUInt();
+                if (index == -1)
+                    targetName = "";
+                else
+                    targetName = (*Record::strings)[index]; // FIXME: validate index size
+            }
+            else
+                targetName = nif->getString(); // FIXME just a guess
 
             if (nifVer >= 0x0a020000 && nifVer <= 0x14000005)
                 stringPalette.read(nif);
+
+            if (nifVer >= 0x14020007 && userVer >= 11 && (userVer2 >= 24 && userVer2 <= 28))
+                nif->getInt(); // FIXME BSAnimNotesPtr
+
+            if (nifVer >= 0x14020007 && userVer2 > 28)
+                nif->getUShort(); // Unknown Short 1
         }
     }
 
     void post(NIFFile *nif)
     {
         NiSequence::post(nif);
+    }
+};
+
+struct bhkCMSDMaterial
+{
+    unsigned int skyrimMaterial;
+    unsigned int unknown;
+};
+
+struct bhkCMSDTransform
+{
+    Ogre::Vector4 translation;
+    Ogre::Quaternion rotation;
+};
+
+struct bhkCMSDBigTris
+{
+    unsigned short triangle1;
+    unsigned short triangle2;
+    unsigned short triangle3;
+    unsigned int   unknown1;
+    unsigned short unknown2;
+};
+
+struct bhkCMSDChunk
+{
+    Ogre::Vector4 translation;
+    unsigned int   materialIndex;
+    unsigned short unknown1;
+    unsigned short transformIndex;
+    std::vector<unsigned short> vertices;
+    std::vector<unsigned short> indicies;
+    std::vector<unsigned short> strips;
+    std::vector<unsigned short> indicies2;
+
+    void read(NIFStream *nif, unsigned int nifVer)
+    {
+        translation = nif->getVector4();
+        materialIndex = nif->getUInt();
+        unknown1 = nif->getUShort();
+        transformIndex = nif->getUShort();
+        unsigned int numVert = nif->getUInt();
+        vertices.resize(numVert);
+        for (unsigned int i = 0; i < numVert; ++i)
+            vertices[i] = nif->getUShort();
+        unsigned int numIndicies = nif->getUInt();
+        indicies.resize(numIndicies);
+        for (unsigned int i = 0; i < numIndicies; ++i)
+            indicies[i] = nif->getUShort();
+        unsigned int numStrips = nif->getUInt();
+        strips.resize(numStrips);
+        for (unsigned int i = 0; i < numStrips; ++i)
+            strips[i] = nif->getUShort();
+        unsigned int numIndicies2 = nif->getUInt();
+        indicies2.resize(numIndicies2);
+        for (unsigned int i = 0; i < numIndicies2; ++i)
+            indicies2[i] = nif->getUShort();
+    }
+};
+
+class bhkCompressedMeshShapeData : public Record
+{
+public:
+    unsigned int bitsPerIndex;
+    unsigned int bitsPerWIndex;
+    unsigned int maskWIndex;
+    unsigned int maskIndex;
+    float error;
+    Ogre::Vector4 boundsMin;
+    Ogre::Vector4 boundsMax;
+
+    std::vector<bhkCMSDMaterial> chunkMaterials;
+    std::vector<bhkCMSDTransform> chunkTransforms;
+    std::vector<Ogre::Vector4> bigVerts;
+    std::vector<bhkCMSDBigTris> bigTris;
+    std::vector<bhkCMSDChunk> chunks;
+
+    void read(NIFStream *nif)
+    {
+        bitsPerIndex = nif->getUInt();
+        bitsPerWIndex = nif->getUInt();
+        maskWIndex = nif->getUInt();
+        maskIndex = nif->getUInt();
+        error = nif->getFloat();
+        boundsMin = nif->getVector4();
+        boundsMax = nif->getVector4();
+        nif->getChar();
+        nif->getInt();
+        nif->getInt();
+        nif->getInt();
+        nif->getChar();
+        unsigned int numMat = nif->getUInt();
+        chunkMaterials.resize(numMat);
+        for (unsigned int i = 0; i < numMat; ++i)
+        {
+            chunkMaterials[i].skyrimMaterial = nif->getUInt();
+            chunkMaterials[i].unknown = nif->getUInt();
+        }
+        nif->getInt();
+        unsigned int numTrans = nif->getUInt();
+        chunkTransforms.resize(numTrans);
+        for (unsigned int i = 0; i < numTrans; ++i)
+        {
+            chunkTransforms[i].translation = nif->getVector4();
+            chunkTransforms[i].rotation = nif->getQuaternion();
+        }
+        unsigned int numBigVerts = nif->getUInt();
+        bigVerts.resize(numBigVerts);
+        for (unsigned int i = 0; i < numBigVerts; ++i)
+            bigVerts[i] = nif->getVector4();
+        unsigned int numBigTris = nif->getUInt();
+        bigTris.resize(numBigTris);
+        for (unsigned int i = 0; i < numBigTris; ++i)
+        {
+            bigTris[i].triangle1 = nif->getUShort();
+            bigTris[i].triangle2 = nif->getUShort();
+            bigTris[i].triangle3 = nif->getUShort();
+            bigTris[i].unknown1 = nif->getUInt();
+            bigTris[i].unknown2 = nif->getUShort();
+        }
+        unsigned int numChunks = nif->getUInt();
+        chunks.resize(numChunks);
+        for (unsigned int i = 0; i < numChunks; ++i)
+            chunks[i].read(nif, nifVer);
+        nif->getInt();
     }
 };
 

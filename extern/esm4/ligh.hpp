@@ -42,10 +42,15 @@ namespace ESM4
             std::int32_t  flags;
             float         falloff;
             float         FOV;
+            float         nearClip;           // TES5 only
+            float         frequency;          // TES5 only
+            float         intensityAmplitude; // TES5 only
+            float         movementAmplitude;  // TES5 only
             std::uint32_t value;   // gold
             float         weight;
-            Data() : duration(-1), radius(0), flags(0), colour(0), falloff(1.f),
-                     FOV(90), value(0), weight(0.f) // FIXME: FOV in degrees or radians?
+            Data() : duration(-1), radius(0), flags(0), colour(0), falloff(1.f), FOV(90),
+                     nearClip(0.f), frequency(0.f), intensityAmplitude(0.f), movementAmplitude(0.f),
+                     value(0), weight(0.f) // FIXME: FOV in degrees or radians?
             {}
         };
 

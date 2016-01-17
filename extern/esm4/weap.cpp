@@ -62,6 +62,18 @@ void ESM4::Weapon::load(ESM4::Reader& reader)
             }
             case ESM4::SUB_FULL:
             {
+                // NOTE: checking flags does not work, Skyrim.esm does not set the localized flag
+                //
+                // A possible hack is to look for SUB_FULL subrecord size of 4 to indicate that
+                // a lookup is required.  This obviously does not work for a string size of 3,
+                // but the chance of having that is assumed to be low.
+                if ((reader.hdr().record.flags & Rec_Localized) != 0 || subHdr.dataSize == 4)
+                {
+                    reader.skipSubRecordData(); // FIXME: process the subrecord rather than skip
+                    mFullName = "FIXME";
+                    break;
+                }
+
                 if (!reader.getZString(mFullName))
                     throw std::runtime_error ("WEAP FULL data read error");
                 break;
@@ -100,27 +112,57 @@ void ESM4::Weapon::load(ESM4::Reader& reader)
             }
             case ESM4::SUB_DATA:
             {
-                reader.get(mData.type);
-                reader.get(mData.speed);
-                reader.get(mData.reach);
-                reader.get(mData.flags);
-                reader.get(mData.value);
-                reader.get(mData.health);
-                reader.get(mData.weight);
-                reader.get(mData.damage);
+                if (reader.esmVersion() == ESM4::VER_094 || reader.esmVersion() == ESM4::VER_170)
+                {
+                    reader.get(mData.value);
+                    reader.get(mData.weight);
+                    reader.get(mData.damage);
+                }
+                else
+                {
+                    reader.get(mData.type);
+                    reader.get(mData.speed);
+                    reader.get(mData.reach);
+                    reader.get(mData.flags);
+                    reader.get(mData.value);
+                    reader.get(mData.health);
+                    reader.get(mData.weight);
+                    reader.get(mData.damage);
+                }
                 break;
             }
             case ESM4::SUB_MODB:
             case ESM4::SUB_MODT:
+            case ESM4::SUB_BAMT:
+            case ESM4::SUB_BIDS:
+            case ESM4::SUB_INAM:
+            case ESM4::SUB_CNAM:
+            case ESM4::SUB_CRDT:
+            case ESM4::SUB_DESC:
+            case ESM4::SUB_DNAM:
+            case ESM4::SUB_EAMT:
+            case ESM4::SUB_EITM:
+            case ESM4::SUB_ETYP:
+            case ESM4::SUB_KSIZ:
+            case ESM4::SUB_KWDA:
+            case ESM4::SUB_NAM8:
+            case ESM4::SUB_NAM9:
+            case ESM4::SUB_OBND:
+            case ESM4::SUB_SNAM:
+            case ESM4::SUB_TNAM:
+            case ESM4::SUB_UNAM:
+            case ESM4::SUB_VMAD:
+            case ESM4::SUB_VNAM:
+            case ESM4::SUB_WNAM:
+            case ESM4::SUB_NNAM:
+            case ESM4::SUB_MODS:
             {
                 //std::cout << "WEAP " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
                 reader.skipSubRecordData();
                 break;
             }
             default:
-                std::cout << "WEAP " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
-                reader.skipSubRecordData();
-                //throw std::runtime_error("ESM4::WEAP::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
+                throw std::runtime_error("ESM4::WEAP::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
         }
     }
 }

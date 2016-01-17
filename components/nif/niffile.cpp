@@ -15,7 +15,7 @@ namespace Nif
 
 /// Open a NIF stream. The name is used for error messages.
 NIFFile::NIFFile(const std::string &name)
-    : ver(0)
+    : mVer(0), mUserVer(0), mUserVer2(0)
     , filename(name)
 {
     parse();
@@ -192,6 +192,43 @@ static std::map<std::string,RecordFactoryEntry> makeFactory()
     newFactory.insert(makeEntry("NiPSysEmitterInitialRadiusCtlr", &construct <NiPSysEmitterInitialRadiusCtlr>, RC_NiPSysEmitterInitialRadiusCtlr));
     newFactory.insert(makeEntry("NiBlendTransformInterpolator", &construct <NiBlendTransformInterpolator>, RC_NiBlendTransformInterpolator));
     newFactory.insert(makeEntry("NiMultiTargetTransformController", &construct <NiMultiTargetTransformController>, RC_NiMultiTargetTransformController));
+    //
+    newFactory.insert(makeEntry("BSFadeNode",                 &construct <BSFadeNode>                  , RC_BSFadeNode                    ));
+    newFactory.insert(makeEntry("bhkCompressedMeshShape",     &construct <bhkCompressedMeshShape>      , RC_bhkCompressedMeshShape        ));
+    newFactory.insert(makeEntry("bhkCompressedMeshShapeData", &construct <bhkCompressedMeshShapeData>  , RC_bhkCompressedMeshShapeData    ));
+    newFactory.insert(makeEntry("BSLightingShaderProperty",   &construct <BSLightingShaderProperty>    , RC_BSLightingShaderProperty      ));
+    newFactory.insert(makeEntry("BSEffectShaderProperty",     &construct <BSEffectShaderProperty>      , RC_BSEffectShaderProperty        ));
+    newFactory.insert(makeEntry("BSShaderTextureSet",         &construct <BSShaderTextureSet>          , RC_BSShaderTextureSet            ));
+    newFactory.insert(makeEntry("BSFurnitureMarkerNode",      &construct <BSFurnitureMarkerNode>       , RC_BSFurnitureMarkerNode         ));
+    newFactory.insert(makeEntry("BSLODTriShape",              &construct <BSLODTriShape>               , RC_BSLODTriShape                 ));
+    newFactory.insert(makeEntry("NiExtraData",                &construct <NiExtraData>                 , RC_NiExtraData                   ));
+    newFactory.insert(makeEntry("NiBooleanExtraData",         &construct <NiBooleanExtraData>          , RC_NiBooleanExtraData            ));
+    newFactory.insert(makeEntry("NiSwitchNode",               &construct <NiSwitchNode>                , RC_NiSwitchNode                  ));
+    newFactory.insert(makeEntry("BSValueNode",                &construct <BSValueNode>                 , RC_BSValueNode                   ));
+    newFactory.insert(makeEntry("BSInvMarker",                &construct <BSInvMarker>                 , RC_BSInvMarker                   ));
+    newFactory.insert(makeEntry("BSBehaviorGraphExtraData",   &construct <BSBehaviorGraphExtraData>    , RC_BSBehaviorGraphExtraData      ));
+    newFactory.insert(makeEntry("BSPSysLODModifier",          &construct <BSPSysLODModifier>           , RC_BSPSysLODModifier             ));
+    newFactory.insert(makeEntry("BSPSysScaleModifier",        &construct <BSPSysScaleModifier>         , RC_BSPSysScaleModifier           ));
+    newFactory.insert(makeEntry("NiPSysSphericalCollider",    &construct <NiPSysSphericalCollider>     , RC_NiPSysSphericalCollider       ));
+    newFactory.insert(makeEntry("BSLightingShaderPropertyColorController", &construct <BSLightingShaderPropertyColorController>, RC_BSLightingShaderPropertyColorController));
+    newFactory.insert(makeEntry("BSLightingShaderPropertyFloatController", &construct <BSLightingShaderPropertyFloatController>, RC_BSLightingShaderPropertyFloatController));
+    newFactory.insert(makeEntry("BSPSysSimpleColorModifier",  &construct <BSPSysSimpleColorModifier>   , RC_BSPSysSimpleColorModifier     ));
+    newFactory.insert(makeEntry("BSOrderedNode",              &construct <BSOrderedNode>               , RC_BSOrderedNode                 ));
+    newFactory.insert(makeEntry("BSEffectShaderPropertyColorController", &construct <BSLightingShaderPropertyColorController>, RC_BSLightingShaderPropertyColorController));
+    newFactory.insert(makeEntry("BSEffectShaderPropertyFloatController", &construct <BSLightingShaderPropertyFloatController>, RC_BSLightingShaderPropertyFloatController));
+    newFactory.insert(makeEntry("BSBlastNode",                &construct <BSBlastNode>                 , RC_BSBlastNode                   ));
+    newFactory.insert(makeEntry("BSPSysInheritVelocityModifier", &construct <BSPSysInheritVelocityModifier>, RC_BSPSysInheritVelocityModifier));
+    newFactory.insert(makeEntry("NiPSysBombModifier",         &construct <NiPSysBombModifier>          , RC_NiPSysBombModifier            ));
+    newFactory.insert(makeEntry("BSPSysSubTexModifier",       &construct <BSPSysSubTexModifier>        , RC_BSPSysSubTexModifier          ));
+    newFactory.insert(makeEntry("BSMultiBoundNode",           &construct <BSMultiBoundNode>            , RC_BSMultiBoundNode              ));
+    newFactory.insert(makeEntry("BSMultiBound",               &construct <BSMultiBound>                , RC_BSMultiBound                  ));
+    newFactory.insert(makeEntry("BSWaterShaderProperty",      &construct <BSWaterShaderProperty>       , RC_BSWaterShaderProperty         ));
+    newFactory.insert(makeEntry("BSLeafAnimNode",             &construct <BSLeafAnimNode>              , RC_BSLeafAnimNode                ));
+    newFactory.insert(makeEntry("BSTreeNode",                 &construct <BSTreeNode>                  , RC_BSTreeNode                    ));
+    newFactory.insert(makeEntry("BSMultiBoundOBB",            &construct <BSMultiBoundOBB>             , RC_BSMultiBoundOBB               ));
+    newFactory.insert(makeEntry("BSDecalPlacementVectorExtraData", &construct <BSDecalPlacementVectorExtraData>, RC_BSDecalPlacementVectorExtraData));
+    newFactory.insert(makeEntry("NiFloatExtraData",           &construct <NiFloatExtraData>            , RC_NiFloatExtraData              ));
+    newFactory.insert(makeEntry("BSLagBoneController",        &construct <BSLagBoneController>         , RC_BSLagBoneController           ));
     return newFactory;
 }
 
@@ -212,9 +249,10 @@ static const std::vector<std::string> goodHeaders = makeGoodHeaders();
 static std::set<unsigned int> makeGoodVersions()
 {
     std::set<unsigned int> versions;
-    versions.insert(0x04000002);// Morrowind NIF version
+    versions.insert(0x04000002); // Morrowind NIF version
     versions.insert(0x14000004);
-    versions.insert(0x14000005);// Some mods use this
+    versions.insert(0x14000005); // Oblivion
+    versions.insert(0x14020007); // Skyrim
     return versions;
 }
 static const std::set<unsigned int> GoodVersions = makeGoodVersions();
@@ -237,7 +275,8 @@ std::string NIFFile::printVersion(unsigned int version)
 }
 
 size_t NIFFile::parseHeader(NIFStream nif,
-        std::vector<std::string>& blockTypes, std::vector<unsigned short>& blockTypeIndex)
+        std::vector<std::string>& blockTypes, std::vector<unsigned short>& blockTypeIndex,
+        std::vector<unsigned int>& blockSize, std::vector<std::string>& strings)
 {
     //The number of records/blocks to get from the file
     size_t numBlocks = 0;
@@ -254,30 +293,30 @@ size_t NIFFile::parseHeader(NIFStream nif,
 		fail("Invalid NIF header:  " + head);
 
     // Get BCD version
-    ver = nif.getUInt();
-    if (GoodVersions.find(ver) == GoodVersions.end())
-        fail("Unsupported NIF version: " + printVersion(ver));
+    mVer = nif.getUInt();
+    if (GoodVersions.find(mVer) == GoodVersions.end())
+        fail("Unsupported NIF version: " + printVersion(mVer));
 
-    if (ver >= 0x14000004) // 20.0.0.4
+    if (mVer >= 0x14000004) // 20.0.0.4
     {
         bool isLittleEndian = !!nif.getChar();
         if (!isLittleEndian)
             fail("Is not Little Endian");
     }
 
-    if (ver >= 0x0a010000) // 10.1.0.0
-        nif.getUInt(); //unsigned int userVersion
+    if (mVer >= 0x0a010000) // 10.1.0.0
+        mUserVer = nif.getUInt();
 
     numBlocks = nif.getInt();
 
-    if (ver >= 0x0a010000) // 10.1.0.0
+    if (mVer >= 0x0a010000) // 10.1.0.0
     {
-        nif.getUInt(); //unsigned int userVersion2
+        mUserVer2 = nif.getUInt();
 
         //\FIXME This only works if Export Info is empty
-        nif.getShortString(ver); //string creator
-        nif.getShortString(ver); //string exportInfo1
-        nif.getShortString(ver); //string exportInfo1
+        nif.getShortString(mVer); //string creator
+        nif.getShortString(mVer); //string exportInfo1
+        nif.getShortString(mVer); //string exportInfo1
 
         unsigned short numBlockTypes = nif.getUShort();
         for (unsigned int i = 0; i < numBlockTypes; ++i)
@@ -286,9 +325,30 @@ size_t NIFFile::parseHeader(NIFStream nif,
         blockTypeIndex.resize(numBlocks);
         for (unsigned int i = 0; i < numBlocks; ++i)
             blockTypeIndex[i] = nif.getUShort();
-
-        nif.getUInt(); //unsigned int unknown
     }
+
+    if (mVer >= 0x14020007) // 20.2.0.7
+    {
+        blockSize.resize(numBlocks);
+        for (unsigned int i = 0; i < numBlocks; ++i)
+            blockSize[i] = nif.getUInt();
+    }
+
+    if (mVer >= 0x14010003) // 20.1.0.3
+    {
+        unsigned int numStrings = nif.getUInt();
+        unsigned int maxStringLength = nif.getUInt();
+        unsigned int size = 0;
+        strings.resize(numStrings);
+        for (unsigned int i = 0; i < numStrings; ++i)
+        {
+            size = nif.getUInt();
+            strings[i] = nif.getString(size);
+        }
+    }
+
+    if (mVer >= 0x0a010000) // 10.1.0.0
+        nif.getUInt(); //unsigned int unknown
 
     return numBlocks;
 }
@@ -299,9 +359,11 @@ void NIFFile::parse()
 
     std::vector<std::string> blockTypes;
     std::vector<unsigned short> blockTypeIndex;
+    std::vector<unsigned int> blockSize;
+    std::vector<std::string> strings;
 
     // Parse the header, and get the Number of records
-    size_t recNum = parseHeader(nif, blockTypes, blockTypeIndex);
+    size_t recNum = parseHeader(nif, blockTypes, blockTypeIndex, blockSize, strings);
 
     records.resize(recNum);
     for(size_t i = 0; i < recNum; ++i)
@@ -309,7 +371,7 @@ void NIFFile::parse()
         Record *r = NULL;
 
         std::string rec;
-        if (ver >= 0x0a010000) // 10.1.0.0
+        if (mVer >= 0x0a010000) // 10.1.0.0
             rec = blockTypes[blockTypeIndex[i]];
         else                   // 4.0.0.2 (for example)
             rec = nif.getString();
@@ -332,7 +394,10 @@ void NIFFile::parse()
         assert(r->recType != RC_MISSING);
         r->recName = rec;
         r->recIndex = i;
-        r->nifVer = ver;
+        r->nifVer = mVer;
+        r->userVer = mUserVer;
+        r->userVer2 = mUserVer2;
+        r->strings = &strings;
         records[i] = r;
         //std::cout << "Start of " << rec << ", block " << i << ": " << nif.tell() << std::endl; // FIXME
         assert(nif.tell() < nif.size() && "Nif: EOF but record not read ");

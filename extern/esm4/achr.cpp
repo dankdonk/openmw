@@ -85,15 +85,29 @@ void ESM4::Character::load(ESM4::Reader& reader)
             case ESM4::SUB_XMRC:
             case ESM4::SUB_XPCI:
             case ESM4::SUB_XLOD:
+            case ESM4::SUB_INAM:
+            case ESM4::SUB_PDTO:
+            case ESM4::SUB_VMAD:
+            case ESM4::SUB_XAPD:
+            case ESM4::SUB_XAPR:
+            case ESM4::SUB_XEZN:
+            case ESM4::SUB_XHOR:
+            case ESM4::SUB_XIS2:
+            case ESM4::SUB_XLCM:
+            case ESM4::SUB_XLCN:
+            case ESM4::SUB_XLKR:
+            case ESM4::SUB_XLRT:
+            case ESM4::SUB_XOWN:
+            case ESM4::SUB_XPPA:
+            case ESM4::SUB_XPRD:
+            case ESM4::SUB_XRGB:
             {
                 //std::cout << "ACHR " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
                 reader.skipSubRecordData();
                 break;
             }
             default:
-                std::cout << "ACHR " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
-                reader.skipSubRecordData();
-                //throw std::runtime_error("ESM4::ACHR::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
+                throw std::runtime_error("ESM4::ACHR::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
         }
     }
 }

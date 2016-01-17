@@ -61,6 +61,18 @@ void ESM4::Npc::load(ESM4::Reader& reader)
             }
             case ESM4::SUB_FULL:
             {
+                // NOTE: checking flags does not work, Skyrim.esm does not set the localized flag
+                //
+                // A possible hack is to look for SUB_FULL subrecord size of 4 to indicate that
+                // a lookup is required.  This obviously does not work for a string size of 3,
+                // but the chance of having that is assumed to be low.
+                if ((reader.hdr().record.flags & Rec_Localized) != 0 || subHdr.dataSize == 4)
+                {
+                    reader.skipSubRecordData(); // FIXME: process the subrecord rather than skip
+                    mFullName = "FIXME";
+                    break;
+                }
+
                 if (!reader.getZString(mFullName))
                     throw std::runtime_error ("NPC_ FULL data read error");
                 break;
@@ -98,6 +110,51 @@ void ESM4::Npc::load(ESM4::Reader& reader)
             case ESM4::SUB_FGTS:
             case ESM4::SUB_FNAM:
             case ESM4::SUB_KFFZ:
+            case ESM4::SUB_ATKR:
+            case ESM4::SUB_COCT:
+            case ESM4::SUB_CRIF:
+            case ESM4::SUB_CSCR:
+            case ESM4::SUB_CSDC:
+            case ESM4::SUB_CSDI:
+            case ESM4::SUB_CSDT:
+            case ESM4::SUB_DNAM:
+            case ESM4::SUB_DOFT:
+            case ESM4::SUB_DPLT:
+            case ESM4::SUB_ECOR:
+            case ESM4::SUB_ANAM:
+            case ESM4::SUB_ATKD:
+            case ESM4::SUB_ATKE:
+            case ESM4::SUB_DEST:
+            case ESM4::SUB_DSTD:
+            case ESM4::SUB_DSTF:
+            case ESM4::SUB_FTST:
+            case ESM4::SUB_HCLF:
+            case ESM4::SUB_KSIZ:
+            case ESM4::SUB_KWDA:
+            case ESM4::SUB_NAM5:
+            case ESM4::SUB_NAM6:
+            case ESM4::SUB_NAM7:
+            case ESM4::SUB_NAM8:
+            case ESM4::SUB_NAM9:
+            case ESM4::SUB_NAMA:
+            case ESM4::SUB_OBND:
+            case ESM4::SUB_PNAM:
+            case ESM4::SUB_PRKR:
+            case ESM4::SUB_PRKZ:
+            case ESM4::SUB_QNAM:
+            case ESM4::SUB_SOFT:
+            case ESM4::SUB_SPCT:
+            case ESM4::SUB_TIAS:
+            case ESM4::SUB_TINC:
+            case ESM4::SUB_TINI:
+            case ESM4::SUB_TINV:
+            case ESM4::SUB_TPLT:
+            case ESM4::SUB_VMAD:
+            case ESM4::SUB_VTCK:
+            case ESM4::SUB_WNAM:
+            case ESM4::SUB_GNAM:
+            case ESM4::SUB_SHRT:
+            case ESM4::SUB_SPOR:
             {
                 //std::cout << "NPC_ " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
                 reader.skipSubRecordData();

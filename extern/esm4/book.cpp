@@ -41,7 +41,8 @@ ESM4::Book::Book() : mScript(0), mEnchantmentPoints(0), mEnchantment(0)
     mIcon.clear();
 
     mData.flags = 0;
-    mData.bookSkill = -1;
+    mData.type = 0;
+    mData.bookSkill = 0;
     mData.value = 0;
     mData.weight = 0.f;
 }
@@ -68,12 +69,36 @@ void ESM4::Book::load(ESM4::Reader& reader)
             }
             case ESM4::SUB_FULL:
             {
+                // NOTE: checking flags does not work, Skyrim.esm does not set the localized flag
+                //
+                // A possible hack is to look for SUB_FULL subrecord size of 4 to indicate that
+                // a lookup is required.  This obviously does not work for a string size of 3,
+                // but the chance of having that is assumed to be low.
+                if ((reader.hdr().record.flags & Rec_Localized) != 0 || subHdr.dataSize == 4)
+                {
+                    reader.skipSubRecordData(); // FIXME: process the subrecord rather than skip
+                    mFullName = "FIXME";
+                    break;
+                }
+
                 if (!reader.getZString(mFullName))
                     throw std::runtime_error ("BOOK FULL data read error");
                 break;
             }
             case ESM4::SUB_DESC:
             {
+                // NOTE: checking flags does not work, Skyrim.esm does not set the localized flag
+                //
+                // A possible hack is to look for SUB_FULL subrecord size of 4 to indicate that
+                // a lookup is required.  This obviously does not work for a string size of 3,
+                // but the chance of having that is assumed to be low.
+                if ((reader.hdr().record.flags & Rec_Localized) != 0 || subHdr.dataSize == 4)
+                {
+                    reader.skipSubRecordData(); // FIXME: process the subrecord rather than skip
+                    mFullName = "FIXME";
+                    break;
+                }
+
                 if (!reader.getZString(mText))
                     throw std::runtime_error ("BOOK DESC data read error");
                 break;
@@ -113,13 +138,33 @@ void ESM4::Book::load(ESM4::Reader& reader)
             case ESM4::SUB_DATA:
             {
                 reader.get(mData.flags);
-                reader.get(mData.bookSkill);
+                if (reader.esmVersion() == ESM4::VER_094 || reader.esmVersion() == ESM4::VER_170)
+                {
+                    static std::uint8_t dummy;
+                    reader.get(mData.type);
+                    reader.get(dummy);
+                    reader.get(dummy);
+                    reader.get(mData.bookSkill);
+                }
+                else
+                {
+                    std::uint8_t bookSkill;
+                    reader.get(bookSkill);
+                    mData.bookSkill = bookSkill;
+                }
                 reader.get(mData.value);
                 reader.get(mData.weight);
                 break;
             }
             case ESM4::SUB_MODB:
             case ESM4::SUB_MODT:
+            case ESM4::SUB_OBND:
+            case ESM4::SUB_KSIZ:
+            case ESM4::SUB_KWDA:
+            case ESM4::SUB_CNAM:
+            case ESM4::SUB_INAM:
+            case ESM4::SUB_YNAM:
+            case ESM4::SUB_VMAD:
             {
                 //std::cout << "BOOK " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
                 reader.skipSubRecordData();

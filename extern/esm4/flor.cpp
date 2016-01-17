@@ -61,6 +61,18 @@ void ESM4::Flora::load(ESM4::Reader& reader)
             }
             case ESM4::SUB_FULL:
             {
+                // NOTE: checking flags does not work, Skyrim.esm does not set the localized flag
+                //
+                // A possible hack is to look for SUB_FULL subrecord size of 4 to indicate that
+                // a lookup is required.  This obviously does not work for a string size of 3,
+                // but the chance of having that is assumed to be low.
+                if ((reader.hdr().record.flags & Rec_Localized) != 0 || subHdr.dataSize == 4)
+                {
+                    reader.skipSubRecordData(); // FIXME: process the subrecord rather than skip
+                    mFullName = "FIXME";
+                    break;
+                }
+
                 if (!reader.getZString(mFullName))
                     throw std::runtime_error ("FLOR FULL data read error");
                 break;
@@ -98,15 +110,19 @@ void ESM4::Flora::load(ESM4::Reader& reader)
             }
             case ESM4::SUB_MODB:
             case ESM4::SUB_MODT:
+            case ESM4::SUB_FNAM:
+            case ESM4::SUB_MODS:
+            case ESM4::SUB_OBND:
+            case ESM4::SUB_PNAM:
+            case ESM4::SUB_RNAM:
+            case ESM4::SUB_VMAD:
             {
                 //std::cout << "FLOR " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
                 reader.skipSubRecordData();
                 break;
             }
             default:
-                std::cout << "FLOR " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
-                reader.skipSubRecordData();
-                //throw std::runtime_error("ESM4::FLOR::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
+                throw std::runtime_error("ESM4::FLOR::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
         }
     }
 }

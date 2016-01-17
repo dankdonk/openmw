@@ -70,15 +70,15 @@ void ESM4::Sound::load(ESM4::Reader& reader)
                 break;
             }
             case ESM4::SUB_SNDD:
+            case ESM4::SUB_OBND: // TES5 only
+            case ESM4::SUB_SDSC: // TES5 only
             {
                 //std::cout << "SOUN " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
                 reader.skipSubRecordData();
                 break;
             }
             default:
-                std::cout << "SOUN " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
-                reader.skipSubRecordData();
-                //throw std::runtime_error("ESM4::SOUSOUNoad - Unknown subrecord " + ESM4::printName(subHdr.typeId));
+                throw std::runtime_error("ESM4::SOUN::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
         }
     }
 }

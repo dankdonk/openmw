@@ -66,6 +66,18 @@ void ESM4::Reference::load(ESM4::Reader& reader)
             }
             case ESM4::SUB_FULL:
             {
+                // NOTE: checking flags does not work, Skyrim.esm does not set the localized flag
+                //
+                // A possible hack is to look for SUB_FULL subrecord size of 4 to indicate that
+                // a lookup is required.  This obviously does not work for a string size of 3,
+                // but the chance of having that is assumed to be low.
+                if ((reader.hdr().record.flags & Rec_Localized) != 0 || subHdr.dataSize == 4)
+                {
+                    reader.skipSubRecordData(); // FIXME: process the subrecord rather than skip
+                    mFullName = "FIXME";
+                    break;
+                }
+
                 if (!reader.getZString(mFullName))
                     throw std::runtime_error ("REFR FULL data read error");
 #if 0
@@ -110,18 +122,54 @@ void ESM4::Reference::load(ESM4::Reader& reader)
             case ESM4::SUB_ONAM:
             case ESM4::SUB_VMAD:
             case ESM4::SUB_XPRM:
+            case ESM4::SUB_INAM:
+            case ESM4::SUB_LNAM:
+            case ESM4::SUB_PDTO:
+            case ESM4::SUB_SCHR:
+            case ESM4::SUB_SCTX:
+            case ESM4::SUB_XALP:
+            case ESM4::SUB_XAPD:
+            case ESM4::SUB_XAPR:
+            case ESM4::SUB_XCVL:
+            case ESM4::SUB_XCZA:
+            case ESM4::SUB_XCZC:
+            case ESM4::SUB_XEMI:
+            case ESM4::SUB_XEZN:
+            case ESM4::SUB_XFVC:
+            case ESM4::SUB_XHTW:
+            case ESM4::SUB_XIS2:
+            case ESM4::SUB_XLCN:
+            case ESM4::SUB_XLIB:
+            case ESM4::SUB_XLIG:
+            case ESM4::SUB_XLKR:
+            case ESM4::SUB_XLRM:
+            case ESM4::SUB_XLRT:
+            case ESM4::SUB_XLTW:
+            case ESM4::SUB_XMBO:
+            case ESM4::SUB_XMBP:
+            case ESM4::SUB_XMBR:
+            case ESM4::SUB_XNDP:
+            case ESM4::SUB_XOCP:
+            case ESM4::SUB_XPOD:
+            case ESM4::SUB_XPPA:
+            case ESM4::SUB_XPRD:
+            case ESM4::SUB_XPWR:
+            case ESM4::SUB_XRDS:
+            case ESM4::SUB_XRGB:
+            case ESM4::SUB_XRGD:
+            case ESM4::SUB_XRMR:
+            case ESM4::SUB_XSPC:
+            case ESM4::SUB_XTNM:
+            case ESM4::SUB_XTRI:
+            case ESM4::SUB_XWCN:
+            case ESM4::SUB_XWCU:
             {
                 //std::cout << "REFR " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
                 reader.skipSubRecordData();
                 break;
             }
             default:
-            {
-                std::cout << "REFR " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
-                reader.skipSubRecordData();
-                //throw std::runtime_error("ESM4::REFR::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
-                break;
-            }
+                throw std::runtime_error("ESM4::REFR::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
         }
     }
 }

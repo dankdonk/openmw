@@ -154,6 +154,9 @@ class NiPSysSpawnModifier;
 class NiSkinPartition;
 class NiGeometry;
 class NiPSysCollider;
+class bhkCompressedMeshShapeData;
+class NiExtraData;
+class NiNode;
 
 typedef RecordPtrT<Node> NodePtr;
 typedef RecordPtrT<Extra> ExtraPtr;
@@ -196,9 +199,12 @@ typedef RecordPtrT<NiPSysSpawnModifier> NiPSysSpawnModifierPtr;
 typedef RecordPtrT<NiSkinPartition> NiSkinPartitionPtr;
 typedef RecordPtrT<NiGeometry> NiGeometryPtr;
 typedef RecordPtrT<NiPSysCollider> NiPSysColliderPtr;
+typedef RecordPtrT<bhkCompressedMeshShapeData> bhkCompressedMeshShapeDataPtr;
+typedef RecordPtrT<NiExtraData> NiExtraDataPtr;
+typedef RecordPtrT<NiNode> NiNodePtr;
 
 typedef RecordListT<Node> NodeList;
-typedef RecordListT<Extra> ExtraList;
+typedef RecordListT<NiExtraData> NiExtraDataList;
 typedef RecordListT<Property> PropertyList;
 typedef RecordListT<NiSourceTexture> NiSourceTextureList;
 

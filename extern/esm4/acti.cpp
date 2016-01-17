@@ -61,6 +61,18 @@ void ESM4::Activator::load(ESM4::Reader& reader)
             }
             case ESM4::SUB_FULL:
             {
+                // NOTE: checking flags does not work, Skyrim.esm does not set the localized flag
+                //
+                // A possible hack is to look for SUB_FULL subrecord size of 4 to indicate that
+                // a lookup is required.  This obviously does not work for a string size of 3,
+                // but the chance of having that is assumed to be low.
+                if ((reader.hdr().record.flags & Rec_Localized) != 0 || subHdr.dataSize == 4)
+                {
+                    reader.skipSubRecordData(); // FIXME: process the subrecord rather than skip
+                    mFullName = "FIXME";
+                    break;
+                }
+
                 if (!reader.getZString(mFullName))
                     throw std::runtime_error ("ACTI FULL data read error");
                 break;
@@ -80,6 +92,23 @@ void ESM4::Activator::load(ESM4::Reader& reader)
             case ESM4::SUB_SNAM:
             case ESM4::SUB_MODB:
             case ESM4::SUB_MODT:
+            case ESM4::SUB_DEST:
+            case ESM4::SUB_DMDL:
+            case ESM4::SUB_DMDS:
+            case ESM4::SUB_DMDT:
+            case ESM4::SUB_DSTD:
+            case ESM4::SUB_DSTF:
+            case ESM4::SUB_FNAM:
+            case ESM4::SUB_KNAM:
+            case ESM4::SUB_KSIZ:
+            case ESM4::SUB_KWDA:
+            case ESM4::SUB_MODS:
+            case ESM4::SUB_OBND:
+            case ESM4::SUB_PNAM:
+            case ESM4::SUB_RNAM:
+            case ESM4::SUB_VMAD:
+            case ESM4::SUB_VNAM:
+            case ESM4::SUB_WNAM:
             {
                 //std::cout << "ACTI " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
                 reader.skipSubRecordData();

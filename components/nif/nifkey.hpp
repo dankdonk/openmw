@@ -35,6 +35,7 @@ struct KeyMapT {
     static const unsigned int sTBCInterpolation = 3;
     static const unsigned int sXYZInterpolation = 4;
     static const unsigned int sConstInterpolation = 5;
+    static const unsigned int sIgnoreForNow = 7;
 
     unsigned int mInterpolationType;
     MapType mKeys;
@@ -86,6 +87,10 @@ struct KeyMapT {
                 readTBC(nifReference, key);
                 mKeys[time] = key;
             }
+        }
+        else if(mInterpolationType == sIgnoreForNow)
+        {
+            // do nothing for now, have no idea what this is meant to do
         }
         //XYZ keys aren't actually read here.
         //data.hpp sees that the last type read was sXYZInterpolation and:

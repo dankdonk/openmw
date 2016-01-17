@@ -40,8 +40,8 @@ namespace ESM4
         std::string mEditorId;
         std::string mModel;
 
-        FormId mIdleAnim;    // only in TES4
-        FormId mUnloadEvent; // only in TES5
+        FormId mIdleAnim;         // only in TES4
+        std::string mUnloadEvent; // only in TES5
 
         AnimObject();
         ~AnimObject();

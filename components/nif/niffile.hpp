@@ -15,7 +15,9 @@ namespace Nif
 class NIFFile
 {
     /// Nif file version
-    unsigned int ver;
+    unsigned int mVer;
+    unsigned int mUserVer;
+    unsigned int mUserVer2;
 
     /// File name, used for error messages and opening the file
     std::string filename;
@@ -29,7 +31,8 @@ class NIFFile
     /// Parse the file's header
     ///\returns The number of records
     size_t parseHeader(NIFStream nif,
-            std::vector<std::string>& blockTypes, std::vector<unsigned short>& blockTypeIndex);
+            std::vector<std::string>& blockTypes, std::vector<unsigned short>& blockTypeIndex,
+            std::vector<unsigned int>& blockSize, std::vector<std::string>& strings);
 
     /// Parse the file
     void parse();
@@ -84,7 +87,9 @@ public:
     std::string getFilename(){ return filename; }
 
     /// Get the file's version
-    unsigned int getVersion(){ return ver; }
+    unsigned int getVersion(){ return mVer; }
+    unsigned int getUserVer(){ return mUserVer; }
+    unsigned int getUserVer2(){ return mUserVer2; }
 };
 
 

@@ -62,6 +62,18 @@ void ESM4::Light::load(ESM4::Reader& reader)
             }
             case ESM4::SUB_FULL:
             {
+                // NOTE: checking flags does not work, Skyrim.esm does not set the localized flag
+                //
+                // A possible hack is to look for SUB_FULL subrecord size of 4 to indicate that
+                // a lookup is required.  This obviously does not work for a string size of 3,
+                // but the chance of having that is assumed to be low.
+                if ((reader.hdr().record.flags & Rec_Localized) != 0 || subHdr.dataSize == 4)
+                {
+                    reader.skipSubRecordData(); // FIXME: process the subrecord rather than skip
+                    mFullName = "FIXME";
+                    break;
+                }
+
                 if (!reader.getZString(mFullName))
                     throw std::runtime_error ("LIGH FULL data read error");
                 break;
@@ -94,7 +106,16 @@ void ESM4::Light::load(ESM4::Reader& reader)
                 reader.get(mData.radius);
                 reader.get(mData.colour);
                 reader.get(mData.flags);
-                if (subHdr.dataSize == 32)
+                if (reader.esmVersion() == ESM4::VER_094 || reader.esmVersion() == ESM4::VER_170)
+                {
+                    reader.get(mData.falloff);
+                    reader.get(mData.FOV);
+                    reader.get(mData.nearClip);
+                    reader.get(mData.frequency);
+                    reader.get(mData.intensityAmplitude);
+                    reader.get(mData.movementAmplitude);
+                }
+                else if (subHdr.dataSize == 32)
                 {
                     reader.get(mData.falloff);
                     reader.get(mData.FOV);
@@ -107,6 +128,7 @@ void ESM4::Light::load(ESM4::Reader& reader)
             case ESM4::SUB_SNAM:
             case ESM4::SUB_MODB:
             case ESM4::SUB_MODT:
+            case ESM4::SUB_OBND:
             {
                 //std::cout << "LIGH " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
                 reader.skipSubRecordData();

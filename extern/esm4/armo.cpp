@@ -68,6 +68,18 @@ void ESM4::Armor::load(ESM4::Reader& reader)
             }
             case ESM4::SUB_FULL:
             {
+                // NOTE: checking flags does not work, Skyrim.esm does not set the localized flag
+                //
+                // A possible hack is to look for SUB_FULL subrecord size of 4 to indicate that
+                // a lookup is required.  This obviously does not work for a string size of 3,
+                // but the chance of having that is assumed to be low.
+                if ((reader.hdr().record.flags & Rec_Localized) != 0 || subHdr.dataSize == 4)
+                {
+                    reader.skipSubRecordData(); // FIXME: process the subrecord rather than skip
+                    mFullName = "FIXME";
+                    break;
+                }
+
                 if (!reader.getZString(mFullName))
                     throw std::runtime_error ("ARMO FULL data read error");
                 break;
@@ -77,10 +89,6 @@ void ESM4::Armor::load(ESM4::Reader& reader)
                 if (!reader.getZString(mModel))
                     throw std::runtime_error ("ARMO MODL data read error");
 
-                //if (reader.esmVersion() == ESM4::VER_094 || reader.esmVersion() == ESM4::VER_170)
-                //{
-                    // read MODT/MODS here?
-                //}
                 break;
             }
             case ESM4::SUB_ICON:
@@ -97,7 +105,14 @@ void ESM4::Armor::load(ESM4::Reader& reader)
             }
             case ESM4::SUB_DATA:
             {
-                reader.get(mData);
+                if (reader.esmVersion() == ESM4::VER_094 || reader.esmVersion() == ESM4::VER_170)
+                {
+                    reader.get(mData.value);
+                    reader.get(mData.weight);
+                }
+                else
+                    reader.get(mData);
+
                 break;
             }
             case ESM4::SUB_BMDT:
@@ -129,8 +144,30 @@ void ESM4::Armor::load(ESM4::Reader& reader)
             case ESM4::SUB_MO4B:
             case ESM4::SUB_MODT:
             case ESM4::SUB_MO2T:
+            case ESM4::SUB_MO2S:
             case ESM4::SUB_MO3T:
             case ESM4::SUB_MO4T:
+            case ESM4::SUB_MO4S:
+            case ESM4::SUB_OBND:
+            case ESM4::SUB_BODT:
+            case ESM4::SUB_BOD2:
+            case ESM4::SUB_YNAM:
+            case ESM4::SUB_ZNAM:
+            case ESM4::SUB_RNAM:
+            case ESM4::SUB_KSIZ:
+            case ESM4::SUB_KWDA:
+            case ESM4::SUB_DESC:
+            case ESM4::SUB_TNAM:
+            case ESM4::SUB_DNAM:
+            case ESM4::SUB_BAMT:
+            case ESM4::SUB_BIDS:
+            case ESM4::SUB_ETYP:
+            case ESM4::SUB_BMCT:
+            case ESM4::SUB_MICO:
+            case ESM4::SUB_MIC2:
+            case ESM4::SUB_EAMT:
+            case ESM4::SUB_EITM:
+            case ESM4::SUB_VMAD:
             {
                 //std::cout << "ARMO " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
                 reader.skipSubRecordData();

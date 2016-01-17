@@ -81,15 +81,17 @@ void ESM4::Tree::load(ESM4::Reader& reader)
             case ESM4::SUB_SNAM:
             case ESM4::SUB_MODB:
             case ESM4::SUB_MODT:
+            case ESM4::SUB_FULL:
+            case ESM4::SUB_OBND:
+            case ESM4::SUB_PFIG:
+            case ESM4::SUB_PFPC:
             {
                 //std::cout << "TREE " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
                 reader.skipSubRecordData();
                 break;
             }
             default:
-                std::cout << "TREE " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
-                reader.skipSubRecordData();
-                //throw std::runtime_error("ESM4::TREE::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
+                throw std::runtime_error("ESM4::TREE::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
         }
     }
 }

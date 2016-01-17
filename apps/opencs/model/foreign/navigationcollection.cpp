@@ -74,7 +74,7 @@ void CSMForeign::NavigationCollection::load (ESM4::Reader& reader, bool base) //
         if ((*it).worldSpaceId == ESM4::FLG_Interior)
         {
             // FIXME: how to map internal cell names to formids?
-            std::cout << "ignoring interior worldspace " << std::hex << (*it).worldSpaceId << std::endl;
+            //std::cout << "ignoring interior worldspace " << std::hex << (*it).worldSpaceId << std::endl;
         }
         else if ((*it).worldSpaceId == ESM4::FLG_Morrowind)
         {
@@ -101,8 +101,8 @@ void CSMForeign::NavigationCollection::load (ESM4::Reader& reader, bool base) //
         }
         else if ((*it).worldSpaceId == ESM4::FLG_Tamriel)
             continue;
-        else
-            std::cout << "ignoring unknown worldspace " << std::hex << (*it).worldSpaceId << std::endl;
+        //else
+            //std::cout << "ignoring unknown worldspace " << std::hex << (*it).worldSpaceId << std::endl; // FIXME
     }
 
     for (std::map<std::string, std::vector<std::string> >::iterator it = mCellToFormIds.begin();

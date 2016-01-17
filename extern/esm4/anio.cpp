@@ -32,10 +32,11 @@
 #include "reader.hpp"
 //#include "writer.hpp"
 
-ESM4::AnimObject::AnimObject() : mIdleAnim(0), mUnloadEvent(0)
+ESM4::AnimObject::AnimObject() : mIdleAnim(0)
 {
     mEditorId.clear();
     mModel.clear();
+    mUnloadEvent.clear();
 }
 
 ESM4::AnimObject::~AnimObject()
@@ -76,7 +77,8 @@ void ESM4::AnimObject::load(ESM4::Reader& reader)
             }
             case ESM4::SUB_BNAM:
             {
-                reader.get(mUnloadEvent);
+                if (!reader.getZString(mUnloadEvent))
+                    throw std::runtime_error ("ANIO EDID data read error");
                 break;
             }
             case ESM4::SUB_MODB:

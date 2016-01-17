@@ -1237,7 +1237,7 @@ private:
         {
             for (unsigned int i = 0; i < node->extras.length(); ++i)
             {
-                Nif::ExtraPtr e = node->extras[i];
+                Nif::NiExtraDataPtr e = node->extras[i];
 
                 if(!e.empty() && e->recType == Nif::RC_NiTextKeyExtraData)
                 {
@@ -1250,7 +1250,7 @@ private:
                     const Nif::NiStringExtraData *sd = static_cast<const Nif::NiStringExtraData*>(e.getPtr());
                     // String markers may contain important information
                     // affecting the entire subtree of this obj
-                    if(sd->string == "MRK" && !sShowMarkers)
+                    if(sd->stringData == "MRK" && !sShowMarkers)
                     {
                         // Marker objects. These meshes are only visible in the
                         // editor.
@@ -1261,7 +1261,7 @@ private:
         }
         else
         {
-            Nif::ExtraPtr e = node->extra;
+            Nif::NiExtraDataPtr e = node->extra;
             while(!e.empty())
             {
                 if(e->recType == Nif::RC_NiTextKeyExtraData)
@@ -1275,7 +1275,7 @@ private:
                     const Nif::NiStringExtraData *sd = static_cast<const Nif::NiStringExtraData*>(e.getPtr());
                     // String markers may contain important information
                     // affecting the entire subtree of this obj
-                    if(sd->string == "MRK" && !sShowMarkers)
+                    if(sd->stringData == "MRK" && !sShowMarkers)
                     {
                         // Marker objects. These meshes are only visible in the
                         // editor.
@@ -1283,7 +1283,7 @@ private:
                     }
                 }
 
-                e = e->extra;
+                e = e->next;
             }
         }
 
@@ -1391,7 +1391,7 @@ public:
         }
         const Nif::NiSequenceStreamHelper *seq = static_cast<const Nif::NiSequenceStreamHelper*>(r);
 
-        Nif::ExtraPtr extra;
+        Nif::NiExtraDataPtr extra;
         if (seq->hasExtras)
             extra = seq->extras[0];
         else
@@ -1412,10 +1412,10 @@ public:
             else
                 return;
         else
-            extra = extra->extra;
+            extra = extra->next;
 
         Nif::ControllerPtr ctrl = seq->controller;
-        for(;!extra.empty() && !ctrl.empty();(extra=extra->extra/*FIXME*/),(ctrl=ctrl->next))
+        for(;!extra.empty() && !ctrl.empty();(extra=extra->next/*FIXME*/),(ctrl=ctrl->next))
         {
             if(extra->recType != Nif::RC_NiStringExtraData || ctrl->recType != Nif::RC_NiKeyframeController)
             {
@@ -1431,10 +1431,10 @@ public:
 
             if(key->data.empty())
                 continue;
-            if(!skel->hasBone(strdata->string))
+            if(!skel->hasBone(strdata->stringData))
                 continue;
 
-            Ogre::Bone *trgtbone = skel->getBone(strdata->string);
+            Ogre::Bone *trgtbone = skel->getBone(strdata->stringData);
             Ogre::ControllerValueRealPtr srcval;
             Ogre::ControllerValueRealPtr dstval(OGRE_NEW KeyframeController::Value(trgtbone, nif, key->data.getPtr()));
             Ogre::ControllerFunctionRealPtr func(OGRE_NEW KeyframeController::Function(key, false));

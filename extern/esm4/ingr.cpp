@@ -39,6 +39,7 @@ ESM4::Ingredient::Ingredient() : mScript(0)
     mModel.clear();
     mIcon.clear();
 
+    mData.value = 0;
     mData.weight = 0.f;
     mEnchantment.value = 0;
     mEnchantment.flags = 0;
@@ -66,6 +67,18 @@ void ESM4::Ingredient::load(ESM4::Reader& reader)
             }
             case ESM4::SUB_FULL:
             {
+                // NOTE: checking flags does not work, Skyrim.esm does not set the localized flag
+                //
+                // A possible hack is to look for SUB_FULL subrecord size of 4 to indicate that
+                // a lookup is required.  This obviously does not work for a string size of 3,
+                // but the chance of having that is assumed to be low.
+                if ((reader.hdr().record.flags & Rec_Localized) != 0 || subHdr.dataSize == 4)
+                {
+                    reader.skipSubRecordData(); // FIXME: process the subrecord rather than skip
+                    mFullName = "FIXME";
+                    break;
+                }
+
                 if (mFullName.empty())
                 {
                     if (!reader.getZString(mFullName))
@@ -100,7 +113,11 @@ void ESM4::Ingredient::load(ESM4::Reader& reader)
             }
             case ESM4::SUB_DATA:
             {
-                reader.get(mData);
+                if (reader.esmVersion() == ESM4::VER_094 || reader.esmVersion() == ESM4::VER_170)
+                    reader.get(mData);
+                else
+                    reader.get(mData.weight);
+
                 break;
             }
             case ESM4::SUB_SCRI:
@@ -118,15 +135,19 @@ void ESM4::Ingredient::load(ESM4::Reader& reader)
             case ESM4::SUB_EFID:
             case ESM4::SUB_EFIT:
             case ESM4::SUB_SCIT:
+            case ESM4::SUB_OBND:
+            case ESM4::SUB_KSIZ:
+            case ESM4::SUB_KWDA:
+            case ESM4::SUB_VMAD:
+            case ESM4::SUB_YNAM:
+            case ESM4::SUB_ZNAM:
             {
                 //std::cout << "INGR " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
                 reader.skipSubRecordData();
                 break;
             }
             default:
-                std::cout << "INGR " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
-                reader.skipSubRecordData();
-                //throw std::runtime_error("ESM4::INGR::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
+                throw std::runtime_error("ESM4::INGR::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
         }
     }
 }

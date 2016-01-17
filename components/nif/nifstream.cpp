@@ -170,4 +170,18 @@ bool NIFStream::getBool(unsigned int nifVer)
         return !!getInt();
 }
 
+std::string NIFStream::getSkyrimString(unsigned int nifVer, std::vector<std::string> *strings)
+{
+    if (nifVer >= 0x14020007 && !strings->empty()) // from 20.2.0.7 (Skyrim)
+    {
+        int index = getInt();
+        if (index == -1)
+            return "";
+        else
+            return (*strings)[index]; // FIXME: validate index size
+    }
+    else
+        return getString(); // FIXME may need to check version
+}
+
 }
