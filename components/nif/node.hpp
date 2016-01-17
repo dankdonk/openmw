@@ -664,6 +664,8 @@ class NiParticleSystem : public NiGeometry
     }
 };
 
+class BSStripParticleSystem : public NiParticleSystem {};
+
 class BSLODTriShape : public NiGeometry
 {
 public:
@@ -1094,7 +1096,7 @@ public:
 class bhkConstraint : public Record
 {
 public:
-    std::vector<bhkRigidBodyPtr> entities;
+    std::vector<bhkEntityPtr> entities;
     unsigned int priority;
 
     void read(NIFStream *nif)
@@ -1103,7 +1105,7 @@ public:
         entities.resize(numEntities);
         for (unsigned int i = 0; i < numEntities; ++i)
         {
-            entities[0].read(nif);
+            entities[i].read(nif);
         }
         priority = nif->getUInt();
     }
@@ -1330,6 +1332,53 @@ public:
     }
 };
 
+class bhkBreakableConstraint : public bhkConstraint
+{
+public:
+    unsigned int unknownI1;
+    std::vector<bhkEntityPtr> entities2;
+    unsigned int priority2;
+    unsigned int unknownI2;
+    Ogre::Vector3 position;
+    Ogre::Vector3 rotation;
+    unsigned int unknownI3;
+    float threshold;
+    float unknownF1;
+
+    void read(NIFStream *nif)
+    {
+        bhkConstraint::read(nif);
+
+        if (userVer <= 11)
+        {
+            for (int i = 0; i < 41; ++i)
+                nif->getInt();
+            nif->getShort();
+        }
+
+        if (userVer == 12)
+        {
+            unknownI1 = nif->getUInt();
+
+            unsigned int numEnt2 = nif->getUInt();
+            entities2.resize(numEnt2);
+            for (unsigned int i = 0; i < numEnt2; ++i)
+                entities2[i].read(nif);
+
+            priority2 = nif->getUInt();
+
+            unknownI2 = nif->getUInt();
+            position = nif->getVector3();
+            rotation = nif->getVector3();
+            unknownI3 = nif->getUInt();
+            threshold = nif->getFloat();
+            if (unknownI1 >= 1)
+                unknownF1 = nif->getFloat();
+            nif->getChar();
+        }
+    }
+};
+
 struct HingeDescriptor
 {
     Ogre::Vector4 pivotA;
@@ -1403,13 +1452,27 @@ public:
     }
 };
 
-class bhkRigidBody : public Record
+class bhkEntity : public Record
 {
 public:
+
     bhkShapePtr shape;
     unsigned char layer; // http://niftools.sourceforge.net/doc/nif/OblivionLayer.html
     unsigned char collisionFilter;
     unsigned short unknownShort;
+
+    void read(NIFStream *nif)
+    {
+        shape.read(nif);
+        layer = nif->getChar();
+        collisionFilter = nif->getChar();
+        unknownShort = nif->getUShort();
+    }
+};
+
+class bhkRigidBody : public bhkEntity
+{
+public:
 
     int unknownInt1;
     int unknownInt2;
@@ -1455,10 +1518,7 @@ public:
 
     void read(NIFStream *nif)
     {
-        shape.read(nif);
-        layer = nif->getChar();
-        collisionFilter = nif->getChar();
-        unknownShort = nif->getUShort();
+        bhkEntity::read(nif);
 
         unknownInt1 = nif->getInt();
         unknownInt2 = nif->getInt();

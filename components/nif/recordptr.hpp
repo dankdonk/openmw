@@ -157,6 +157,7 @@ class NiPSysCollider;
 class bhkCompressedMeshShapeData;
 class NiExtraData;
 class NiNode;
+class bhkEntity;
 
 typedef RecordPtrT<Node> NodePtr;
 typedef RecordPtrT<Extra> ExtraPtr;
@@ -202,6 +203,7 @@ typedef RecordPtrT<NiPSysCollider> NiPSysColliderPtr;
 typedef RecordPtrT<bhkCompressedMeshShapeData> bhkCompressedMeshShapeDataPtr;
 typedef RecordPtrT<NiExtraData> NiExtraDataPtr;
 typedef RecordPtrT<NiNode> NiNodePtr;
+typedef RecordPtrT<bhkEntity> bhkEntityPtr;
 
 typedef RecordListT<Node> NodeList;
 typedef RecordListT<NiExtraData> NiExtraDataList;

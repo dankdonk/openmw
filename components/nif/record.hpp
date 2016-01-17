@@ -212,7 +212,11 @@ enum RecordType
   RC_BSMultiBoundOBB,
   RC_BSDecalPlacementVectorExtraData,
   RC_NiFloatExtraData,
-  RC_BSLagBoneController
+  RC_BSLagBoneController,
+  RC_NiFloatExtraDataController,
+  RC_bhkBreakableConstraint,
+  RC_bhkEntity,
+  RC_BSStripParticleSystem
 };
 /// Base class for all records
 struct Record

@@ -700,6 +700,36 @@ public:
     }
 };
 
+class NiFloatExtraDataController : public Controller
+{
+public:
+    NiInterpolatorPtr interpolator;
+    std::string controllerData;
+
+    void read(NIFStream *nif)
+    {
+        Controller::read(nif);
+        if (nifVer >= 0x0a020000) // from 10.2.0.0
+        {
+            interpolator.read(nif);
+            controllerData = nif->getSkyrimString(nifVer, Record::strings);
+        }
+        if (nifVer <= 0x0a010000) // up to 10.1.0.0
+        {
+            unsigned char numExtra = nif->getChar();
+            for (unsigned int i = 0; i < 7; ++i)
+                nif->getChar();
+            for (unsigned int i = 0; i < numExtra; ++i)
+                nif->getChar();
+        }
+    }
+
+    void post(NIFFile *nif)
+    {
+        Controller::post(nif);
+    }
+};
+
 class NiBoolInterpolator : public NiInterpolator
 {
 public:
