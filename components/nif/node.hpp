@@ -70,7 +70,7 @@ public:
         if (nifVer <= 0x04020200) // up to 4.2.2.0
             velocity = nif->getVector3();
 
-        if (nifVer < 0x14020007) // less than 20.2.0.7 (or user version <= 11)
+        if (nifVer < 0x14020007 || userVer <= 11) // less than 20.2.0.7 (or user version <= 11)
             props.read(nif);
 
         if (nifVer <= 0x04020200) // up to 4.2.2.0
@@ -128,14 +128,15 @@ public:
         boneIndex = ind;
     }
 
-    void getProperties(const Nif::NiTexturingProperty *&texprop,
-                       const Nif::NiMaterialProperty *&matprop,
-                       const Nif::NiAlphaProperty *&alphaprop,
-                       const Nif::NiVertexColorProperty *&vertprop,
-                       const Nif::NiZBufferProperty *&zprop,
-                       const Nif::NiSpecularProperty *&specprop,
-                       const Nif::NiWireframeProperty *&wireprop,
-                       const Nif::NiStencilProperty *&stencilprop) const;
+    virtual void getProperties(const Nif::NiTexturingProperty *&texprop,
+                               const Nif::NiMaterialProperty *&matprop,
+                               const Nif::NiAlphaProperty *&alphaprop,
+                               const Nif::NiVertexColorProperty *&vertprop,
+                               const Nif::NiZBufferProperty *&zprop,
+                               const Nif::NiSpecularProperty *&specprop,
+                               const Nif::NiWireframeProperty *&wireprop,
+                               const Nif::NiStencilProperty *&stencilprop,
+                               const Nif::BSLightingShaderProperty *&bsprop) const;
 
     Ogre::Matrix4 getLocalTransform() const;
     Ogre::Matrix4 getWorldTransform() const;
@@ -410,8 +411,7 @@ public:
     std::string shader;
     int unknown;
     bool dirtyFlag;
-    //NiPropertyPtr bs1;
-    //NiPropertyPtr bs2;
+    std::vector<PropertyPtr> bsprops;
 
     void read(NIFStream *nif)
     {
@@ -440,8 +440,9 @@ public:
         if (nifVer >= 0x14020007) // from 20.2.0.7 (Skyrim)
         {
             dirtyFlag = nif->getBool(nifVer);
-            nif->getInt(); // bs1.read(nif);
-            nif->getInt(); // bs2.read(nif);
+            bsprops.resize(2);
+            bsprops[0].read(nif);
+            bsprops[1].read(nif);
         }
     }
 
@@ -450,8 +451,22 @@ public:
         Node::post(nif);
         data.post(nif);
         skin.post(nif);
-        // FIXME any other post stuff
+        if (nifVer >= 0x14020007) // from 20.2.0.7 (Skyrim)
+        {
+            bsprops[0].post(nif);
+            bsprops[1].post(nif);
+        }
     }
+
+    virtual void getProperties(const Nif::NiTexturingProperty *&texprop,
+                               const Nif::NiMaterialProperty *&matprop,
+                               const Nif::NiAlphaProperty *&alphaprop,
+                               const Nif::NiVertexColorProperty *&vertprop,
+                               const Nif::NiZBufferProperty *&zprop,
+                               const Nif::NiSpecularProperty *&specprop,
+                               const Nif::NiWireframeProperty *&wireprop,
+                               const Nif::NiStencilProperty *&stencilprop,
+                               const Nif::BSLightingShaderProperty *&bsprop) const;
 };
 
 struct NiAutoNormalParticles : public NiGeometry {};

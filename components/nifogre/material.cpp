@@ -1,5 +1,7 @@
 #include "material.hpp"
 
+#include <iostream> // FIXME
+
 #include <components/nif/node.hpp>
 #include <components/misc/resourcehelpers.hpp>
 #include <components/settings/settings.hpp>
@@ -86,6 +88,7 @@ Ogre::String NIFMaterialLoader::getMaterial(const Nif::ShapeData *shapedata,
                                             const Nif::NiSpecularProperty *specprop,
                                             const Nif::NiWireframeProperty *wireprop,
                                             const Nif::NiStencilProperty *stencilprop,
+                                            const Nif::BSLightingShaderProperty *bsprop,
                                             bool &needTangents, bool particleMaterial)
 {
     Ogre::MaterialManager &matMgr = Ogre::MaterialManager::getSingleton();
@@ -139,6 +142,34 @@ Ogre::String NIFMaterialLoader::getMaterial(const Nif::ShapeData *shapedata,
                 warn("Unhandled texture controller "+ctrls->recName+" in "+name);
             ctrls = ctrls->next;
         }
+    }
+    else if(bsprop) // FIXME cleanup below
+    {
+        const Nif::BSShaderTextureSet *sts = bsprop->textureSet.getPtr();
+        if (sts && !sts->textures.empty())
+        {
+            texName[Nif::NiTexturingProperty::BaseTexture] = sts->textures[0]; // diffuse
+            //std::cout << "diffuse " << " " << texName[0] << ", tex size " << sts->textures.size() << std::endl;
+            if (!sts->textures[1].empty())
+            {
+                texName[Nif::NiTexturingProperty::BumpTexture] = sts->textures[1];
+                //std::cout << "normal? " << " " << sts->textures[1] << std::endl; // FIXME
+            }
+            if (!sts->textures[2].empty())
+            {
+                texName[Nif::NiTexturingProperty::GlowTexture] = sts->textures[2];
+                //std::cout << "glow? " << " " << sts->textures[2] << std::endl; // FIXME
+            }
+
+            // FIXME: other textures
+            for (unsigned int i = 3; i < sts->textures.size(); ++i)
+            {
+                if (!sts->textures[i].empty())
+                    std::cout << "tex " << i  << ", " << sts->textures[i] << std::endl; // FIXME
+            }
+        }
+
+        // FIXME: texture controllers not yet supported
     }
 
     // Alpha modifiers
@@ -245,6 +276,7 @@ Ogre::String NIFMaterialLoader::getMaterial(const Nif::ShapeData *shapedata,
         alpha = 1.f; // Apparently ignored, might be overridden by particle vertex colors?
     }
 
+    if (texprop) // FIXME
     {
         // Generate a hash out of all properties that can affect the material.
         size_t h = 0;
@@ -264,7 +296,7 @@ Ogre::String NIFMaterialLoader::getMaterial(const Nif::ShapeData *shapedata,
         boost::hash_combine(h, emissive.z);
         for(int i = 0;i < 7;i++)
         {
-            if(!texName[i].empty())
+            if(!texName[i].empty() && texprop) // FIXME: texName may have been from bsprop
             {
                 boost::hash_combine(h, texName[i]);
                 boost::hash_combine(h, texprop->textures[i].clamp);
@@ -344,26 +376,46 @@ Ogre::String NIFMaterialLoader::getMaterial(const Nif::ShapeData *shapedata,
     if (!texName[Nif::NiTexturingProperty::BaseTexture].empty())
     {
         instance->setProperty("use_diffuse_map", sh::makeProperty(new sh::BooleanValue(true)));
-        setTextureProperties(instance, "diffuseMap", texprop->textures[Nif::NiTexturingProperty::BaseTexture]);
+        if (texprop)
+            setTextureProperties(instance, "diffuseMap", texprop->textures[Nif::NiTexturingProperty::BaseTexture]);
+        else if (bsprop)
+        {
+            Nif::NiTexturingProperty::Texture tex; // FIXME hack
+            tex.uvSet = 0; // ???
+            tex.clamp = bsprop->textureClampMode;
+            setTextureProperties(instance, "diffuseMap", tex);
+        }
     }
     if (!texName[Nif::NiTexturingProperty::GlowTexture].empty())
     {
         instance->setProperty("use_emissive_map", sh::makeProperty(new sh::BooleanValue(true)));
-        setTextureProperties(instance, "emissiveMap", texprop->textures[Nif::NiTexturingProperty::GlowTexture]);
+        if (texprop) // FIXME
+            setTextureProperties(instance, "emissiveMap", texprop->textures[Nif::NiTexturingProperty::GlowTexture]);
+        else if (bsprop)
+        {
+            Nif::NiTexturingProperty::Texture tex; // FIXME hack
+            tex.uvSet = 0; // ???
+            tex.clamp = bsprop->textureClampMode;
+            setTextureProperties(instance, "emissiveMap", tex);
+        }
     }
     if (!texName[Nif::NiTexturingProperty::DetailTexture].empty())
     {
         instance->setProperty("use_detail_map", sh::makeProperty(new sh::BooleanValue(true)));
-        setTextureProperties(instance, "detailMap", texprop->textures[Nif::NiTexturingProperty::DetailTexture]);
+        if (texprop) // FIXME
+            setTextureProperties(instance, "detailMap", texprop->textures[Nif::NiTexturingProperty::DetailTexture]);
     }
     if (!texName[Nif::NiTexturingProperty::DarkTexture].empty())
     {
         instance->setProperty("use_dark_map", sh::makeProperty(new sh::BooleanValue(true)));
-        setTextureProperties(instance, "darkMap", texprop->textures[Nif::NiTexturingProperty::DarkTexture]);
+        if (texprop) // FIXME
+            setTextureProperties(instance, "darkMap", texprop->textures[Nif::NiTexturingProperty::DarkTexture]);
     }
 
     bool useParallax = !texName[Nif::NiTexturingProperty::BumpTexture].empty()
-            && texName[Nif::NiTexturingProperty::BumpTexture].find("_nh.") != std::string::npos;
+            && (texName[Nif::NiTexturingProperty::BumpTexture].find("_nh.") != std::string::npos
+            || texName[Nif::NiTexturingProperty::BumpTexture].find("_n.") != std::string::npos
+            || texName[Nif::NiTexturingProperty::BumpTexture].find("_N.") != std::string::npos); // FIXME HACK
     instance->setProperty("use_parallax", sh::makeProperty(new sh::BooleanValue(useParallax)));
 
     for(int i = 0;i < 7;i++)

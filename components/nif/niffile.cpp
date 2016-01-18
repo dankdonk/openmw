@@ -232,6 +232,7 @@ static std::map<std::string,RecordFactoryEntry> makeFactory()
     newFactory.insert(makeEntry("BSStripParticleSystem",      &construct <BSStripParticleSystem>       , RC_BSStripParticleSystem         ));
     newFactory.insert(makeEntry("NiFloatExtraDataController", &construct <NiFloatExtraDataController>  , RC_NiFloatExtraDataController    ));
     newFactory.insert(makeEntry("bhkBreakableConstraint",     &construct <bhkBreakableConstraint>      , RC_bhkBreakableConstraint        ));
+//    newFactory.insert(makeEntry("Property",                   &construct <Property>                    , RC_Property                      ));
     return newFactory;
 }
 
@@ -402,8 +403,8 @@ void NIFFile::parse()
         r->userVer2 = mUserVer2;
         r->strings = &strings;
         records[i] = r;
-        std::cout << "Start of " << rec << ", block " << i << ": " << nif.tell() << std::endl; // FIXME
-        //assert(nif.tell() < nif.size() && "Nif: EOF but record not read ");
+        //std::cout << "Start of " << rec << ", block " << i << ": " << nif.tell() << std::endl; // FIXME
+        assert(nif.tell() < nif.size() && "Nif: EOF but record not read ");
         r->read(&nif);
     }
 

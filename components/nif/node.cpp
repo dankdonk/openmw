@@ -10,18 +10,20 @@ void Node::getProperties(const Nif::NiTexturingProperty *&texprop,
                          const Nif::NiZBufferProperty *&zprop,
                          const Nif::NiSpecularProperty *&specprop,
                          const Nif::NiWireframeProperty *&wireprop,
-                         const Nif::NiStencilProperty *&stencilprop) const
+                         const Nif::NiStencilProperty *&stencilprop,
+                         const Nif::BSLightingShaderProperty *&bsprop) const
 {
     if(parent)
-        parent->getProperties(texprop, matprop, alphaprop, vertprop, zprop, specprop, wireprop, stencilprop);
+        parent->getProperties(texprop, matprop, alphaprop, vertprop, zprop, specprop, wireprop, stencilprop, bsprop);
 
-    for(size_t i = 0;i < props.length();i++)
+    for(size_t i = 0; i < props.length(); ++i)
     {
         // Entries may be empty
         if(props[i].empty())
             continue;
 
         const Nif::Property *pr = props[i].getPtr();
+
         if(pr->recType == Nif::RC_NiTexturingProperty)
             texprop = static_cast<const Nif::NiTexturingProperty*>(pr);
         else if(pr->recType == Nif::RC_NiMaterialProperty)
@@ -43,6 +45,74 @@ void Node::getProperties(const Nif::NiTexturingProperty *&texprop,
                  && pr->recType != Nif::RC_NiDitherProperty
                  && pr->recType != Nif::RC_NiShadeProperty)
             std::cerr<< "Unhandled property type: "<<pr->recName <<std::endl;
+    }
+}
+
+void NiGeometry::getProperties(const Nif::NiTexturingProperty *&texprop,
+                               const Nif::NiMaterialProperty *&matprop,
+                               const Nif::NiAlphaProperty *&alphaprop,
+                               const Nif::NiVertexColorProperty *&vertprop,
+                               const Nif::NiZBufferProperty *&zprop,
+                               const Nif::NiSpecularProperty *&specprop,
+                               const Nif::NiWireframeProperty *&wireprop,
+                               const Nif::NiStencilProperty *&stencilprop,
+                               const Nif::BSLightingShaderProperty *&bsprop) const
+{
+    if(parent)
+        parent->getProperties(texprop, matprop, alphaprop, vertprop, zprop, specprop, wireprop, stencilprop, bsprop);
+
+    if (nifVer < 0x14020007 || userVer <= 11)
+    {
+        for(size_t i = 0; i < props.length(); ++i)
+        {
+            // Entries may be empty
+            if(props[i].empty())
+                continue;
+
+            const Nif::Property *pr = props[i].getPtr();
+
+            if(pr->recType == Nif::RC_NiTexturingProperty)
+                texprop = static_cast<const Nif::NiTexturingProperty*>(pr);
+            else if(pr->recType == Nif::RC_NiMaterialProperty)
+                matprop = static_cast<const Nif::NiMaterialProperty*>(pr);
+            else if(pr->recType == Nif::RC_NiAlphaProperty)
+                alphaprop = static_cast<const Nif::NiAlphaProperty*>(pr);
+            else if(pr->recType == Nif::RC_NiVertexColorProperty)
+                vertprop = static_cast<const Nif::NiVertexColorProperty*>(pr);
+            else if(pr->recType == Nif::RC_NiZBufferProperty)
+                zprop = static_cast<const Nif::NiZBufferProperty*>(pr);
+            else if(pr->recType == Nif::RC_NiSpecularProperty)
+                specprop = static_cast<const Nif::NiSpecularProperty*>(pr);
+            else if(pr->recType == Nif::RC_NiWireframeProperty)
+                wireprop = static_cast<const Nif::NiWireframeProperty*>(pr);
+            else if (pr->recType == Nif::RC_NiStencilProperty)
+                stencilprop = static_cast<const Nif::NiStencilProperty*>(pr);
+            // the following are unused by the MW engine
+            else if (pr->recType != Nif::RC_NiFogProperty
+                     && pr->recType != Nif::RC_NiDitherProperty
+                     && pr->recType != Nif::RC_NiShadeProperty)
+                std::cerr<< "Unhandled property type: "<<pr->recName <<std::endl;
+        }
+    }
+    else
+    {
+        for(size_t i = 0; i < 2; ++i)
+        {
+            const Nif::Property *pr = bsprops[i].getPtr();
+            if (!pr)
+                continue; // may be empty
+
+            if (pr->recType == Nif::RC_BSLightingShaderProperty)
+                bsprop = static_cast<const Nif::BSLightingShaderProperty*>(pr);
+            else if (pr->recType == Nif::RC_NiAlphaProperty)
+                alphaprop = static_cast<const Nif::NiAlphaProperty*>(pr);
+            else if (pr->recType == Nif::RC_BSEffectShaderProperty)
+                ;// FIXME do nothing for now
+            else if (pr->recType == Nif::RC_BSWaterShaderProperty)
+                ;// FIXME do nothing for now
+            else
+                std::cout<< "Unhandled property type: "<< pr->recName << std::endl;
+        }
     }
 }
 

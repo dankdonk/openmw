@@ -31,6 +31,7 @@
 namespace Nif
 {
 
+// NiProperty
 class Property : public Named
 {
 public:
@@ -451,7 +452,7 @@ public:
     unsigned int shaderFlags2;
     TexCoord uvOffset;
     TexCoord uvScale;
-    //BSShaderTextureSetPtr textureSet;
+    BSShaderTextureSetPtr textureSet;
     Ogre::Vector3 emissiveColor;
     float emissiveMultiple;
     unsigned int textureClampMode;
@@ -495,7 +496,7 @@ public:
         uvOffset.v = nif->getFloat();
         uvScale.u = nif->getFloat();
         uvScale.v = nif->getFloat();
-        nif->getInt();//textureSet.read(nif);
+        textureSet.read(nif);
         emissiveColor = nif->getVector3();
         emissiveMultiple = nif->getFloat();
         textureClampMode = nif->getUInt();
@@ -534,6 +535,11 @@ public:
             leftEyeReflectionCenter = nif->getVector3();
             rightEyeReflectionCenter = nif->getVector3();
         }
+    }
+
+    void post(NIFFile *nif)
+    {
+        textureSet.post(nif);
     }
 };
 

@@ -158,6 +158,7 @@ class bhkCompressedMeshShapeData;
 class NiExtraData;
 class NiNode;
 class bhkEntity;
+class BSShaderTextureSet;
 
 typedef RecordPtrT<Node> NodePtr;
 typedef RecordPtrT<Extra> ExtraPtr;
@@ -204,6 +205,8 @@ typedef RecordPtrT<bhkCompressedMeshShapeData> bhkCompressedMeshShapeDataPtr;
 typedef RecordPtrT<NiExtraData> NiExtraDataPtr;
 typedef RecordPtrT<NiNode> NiNodePtr;
 typedef RecordPtrT<bhkEntity> bhkEntityPtr;
+typedef RecordPtrT<BSShaderTextureSet> BSShaderTextureSetPtr;
+typedef RecordPtrT<Property> PropertyPtr;
 
 typedef RecordListT<Node> NodeList;
 typedef RecordListT<NiExtraData> NiExtraDataList;

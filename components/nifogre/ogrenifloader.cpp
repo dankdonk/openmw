@@ -819,7 +819,7 @@ private:
     }
 
     // 1. Nif::Node::getProperties()
-    //    - handle textprop and matprop
+    //    - handle texprop and matprop
     //    - process the controllers
     //      - for material Nif::NiAlphaController and Nif::RC_NiMaterialColorController
     //      - for texture Nif::RC_NiFlipController
@@ -833,7 +833,8 @@ private:
         const Nif::NiSpecularProperty *specprop = NULL;
         const Nif::NiWireframeProperty *wireprop = NULL;
         const Nif::NiStencilProperty *stencilprop = NULL;
-        node->getProperties(texprop, matprop, alphaprop, vertprop, zprop, specprop, wireprop, stencilprop);
+        const Nif::BSLightingShaderProperty *bsprop = NULL;
+        node->getProperties(texprop, matprop, alphaprop, vertprop, zprop, specprop, wireprop, stencilprop, bsprop);
 
         bool isAnimationAutoPlay = (animflags & Nif::NiNode::AnimFlag_AutoPlay) != 0;
         Ogre::ControllerValueRealPtr srcval(isAnimationAutoPlay ?
@@ -996,13 +997,14 @@ private:
         const Nif::NiSpecularProperty *specprop = NULL;
         const Nif::NiWireframeProperty *wireprop = NULL;
         const Nif::NiStencilProperty *stencilprop = NULL;
+        const Nif::BSLightingShaderProperty *bsprop = NULL;
         bool needTangents = false;
 
-        partnode->getProperties(texprop, matprop, alphaprop, vertprop, zprop, specprop, wireprop, stencilprop);
+        partnode->getProperties(texprop, matprop, alphaprop, vertprop, zprop, specprop, wireprop, stencilprop, bsprop);
         partsys->setMaterialName(NIFMaterialLoader::getMaterial(particledata, fullname, group,
                                                                 texprop, matprop, alphaprop,
                                                                 vertprop, zprop, specprop,
-                                                                wireprop, stencilprop, needTangents,
+                                                                wireprop, stencilprop, bsprop, needTangents,
                                                                 // MW doesn't light particles, but the MaterialProperty
                                                                 // used still has lighting, so that must be ignored.
                                                                 true));

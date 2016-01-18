@@ -531,7 +531,7 @@ void CSVRender::ForeignObject::update()
         entity->setMaterialName("BaseWhite"); /// \todo adjust material according to error
         entity->setVisibilityFlags (Element_Reference);
 
-        if (error != 3)
+        if (0)//error != 3) // FIXME for testing Skyrim
             mBase->attachObject (entity); // ignore script lights or sounds
     }
     else

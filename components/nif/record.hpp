@@ -217,6 +217,7 @@ enum RecordType
   RC_bhkBreakableConstraint,
   RC_bhkEntity,
   RC_BSStripParticleSystem
+  //RC_Property
 };
 /// Base class for all records
 struct Record
