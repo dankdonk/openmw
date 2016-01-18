@@ -436,5 +436,176 @@ struct S_AlphaProperty
 class NiAlphaProperty : public StructPropT<S_AlphaProperty> { };
 class NiVertexColorProperty : public StructPropT<S_VertexColorProperty> { };
 
+// FIXME: use Ogre::Vector2 instead
+struct TexCoord
+{
+    float u;
+    float v;
+};
+
+class BSLightingShaderProperty : public Property
+{
+public:
+    unsigned int skyrimShaderType;
+    unsigned int shaderFlags1;
+    unsigned int shaderFlags2;
+    TexCoord uvOffset;
+    TexCoord uvScale;
+    //BSShaderTextureSetPtr textureSet;
+    Ogre::Vector3 emissiveColor;
+    float emissiveMultiple;
+    unsigned int textureClampMode;
+    float alpha;
+    float unknown2;
+    float glossiness;
+    Ogre::Vector3 specularColor;
+    float specularStrength;
+    float lightingEffect1;
+    float lightingEffect2;
+
+    float envMapScale;
+    Ogre::Vector3 skinTintColor;
+    Ogre::Vector3 hairTintColor;
+    float maxPasses;
+    float scale;
+    float parallaxInnerLayerThickness;
+    float parallaxRefractionScale;
+    TexCoord parallaxInnerLayerTextureScale;
+    float parallaxEnvmapStrength;
+    Ogre::Vector4 sparkleParm;
+    float eyeCubemapScale;
+    Ogre::Vector3 leftEyeReflectionCenter;
+    Ogre::Vector3 rightEyeReflectionCenter;
+
+    void read(NIFStream *nif)
+    {
+        if (userVer >= 12)
+            skyrimShaderType = nif->getUInt();
+        else
+            skyrimShaderType = 0;
+
+        Property::read(nif);
+
+        if (userVer == 12)
+        {
+            shaderFlags1 = nif->getUInt();
+            shaderFlags2 = nif->getUInt();
+        }
+        uvOffset.u = nif->getFloat();
+        uvOffset.v = nif->getFloat();
+        uvScale.u = nif->getFloat();
+        uvScale.v = nif->getFloat();
+        nif->getInt();//textureSet.read(nif);
+        emissiveColor = nif->getVector3();
+        emissiveMultiple = nif->getFloat();
+        textureClampMode = nif->getUInt();
+        alpha = nif->getFloat();
+        unknown2 = nif->getFloat();
+        glossiness = nif->getFloat();
+        specularColor = nif->getVector3();
+        specularStrength = nif->getFloat();
+        lightingEffect1 = nif->getFloat();
+        lightingEffect2 = nif->getFloat();
+
+        if (skyrimShaderType == 1)
+            envMapScale = nif->getFloat();
+        else if (skyrimShaderType == 5)
+            skinTintColor = nif->getVector3();
+        else if (skyrimShaderType == 6)
+            hairTintColor = nif->getVector3();
+        else if (skyrimShaderType == 7)
+        {
+            maxPasses = nif->getFloat();
+            scale = nif->getFloat();
+        }
+        else if (skyrimShaderType == 11)
+        {
+            parallaxInnerLayerThickness = nif->getFloat();
+            parallaxRefractionScale = nif->getFloat();
+            parallaxInnerLayerTextureScale.u = nif->getFloat();
+            parallaxInnerLayerTextureScale.v = nif->getFloat();
+            parallaxEnvmapStrength = nif->getFloat();
+        }
+        else if (skyrimShaderType == 14)
+            sparkleParm = nif->getVector4();
+        else if (skyrimShaderType == 16)
+        {
+            eyeCubemapScale = nif->getFloat();
+            leftEyeReflectionCenter = nif->getVector3();
+            rightEyeReflectionCenter = nif->getVector3();
+        }
+    }
+};
+
+class BSEffectShaderProperty : public Property
+{
+public:
+    unsigned int shaderFlags1;
+    unsigned int shaderFlags2;
+    TexCoord uvOffset;
+    TexCoord uvScale;
+    std::string sourceTexture;
+    unsigned int textureClampMode;
+    float falloffStartAngle;
+    float falloffStopAngle;
+    float falloffStartOpacity;
+    float falloffStopOpacity;
+    Ogre::Vector4 emissiveColor;
+    float emissiveMultiple;
+    float softFalloffDepth;
+    std::string greyscaleTexture;
+
+    void read(NIFStream *nif)
+    {
+        Property::read(nif);
+
+        shaderFlags1 = nif->getUInt();
+        shaderFlags2 = nif->getUInt();
+        uvOffset.u = nif->getFloat();
+        uvOffset.v = nif->getFloat();
+        uvScale.u = nif->getFloat();
+        uvScale.v = nif->getFloat();
+        unsigned int size = nif->getUInt();
+        sourceTexture = nif->getString(size);
+        textureClampMode = nif->getUInt();
+        falloffStartAngle = nif->getFloat();
+        falloffStopAngle = nif->getFloat();
+        falloffStartOpacity = nif->getFloat();
+        falloffStopOpacity = nif->getFloat();
+        emissiveColor = nif->getVector4();
+        emissiveMultiple = nif->getFloat();
+        softFalloffDepth = nif->getFloat();
+        size = nif->getUInt();
+        greyscaleTexture = nif->getString(size);
+    }
+};
+
+class BSWaterShaderProperty : public Property
+{
+public:
+    unsigned int shaderFlags1;
+    unsigned int shaderFlags2;
+    TexCoord uvOffset;
+    TexCoord uvScale;
+    unsigned char waterShaderFlags;
+    unsigned char waterDirection;
+    unsigned short unknownS3;
+
+    void read(NIFStream *nif)
+    {
+        Property::read(nif);
+
+        shaderFlags1 = nif->getUInt();
+        shaderFlags2 = nif->getUInt();
+        uvOffset.u = nif->getFloat();
+        uvOffset.v = nif->getFloat();
+        uvScale.u = nif->getFloat();
+        uvScale.v = nif->getFloat();
+        waterShaderFlags = nif->getChar();
+        waterDirection = nif->getChar();
+        unknownS3 = nif->getUShort();
+    }
+};
+
 } // Namespace
 #endif

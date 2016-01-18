@@ -705,6 +705,15 @@ private:
         std::cerr << "NIFObjectLoader: Warn: " << msg << std::endl;
     }
 
+    // 1. NIFMeshLoader::createMesh() - see mesh.cpp
+    // 2. Ogre::SceneManager::createEntity()
+    // 3. Make the entity visible and add to the scene
+    // 4. Handle skeleton - not so sure about this
+    // 5. Process Nif::Controller's
+    //    - seems to only support Nif::RC_NiUVController and Nif::RC_NiGeomMorpherController
+    //    - need to add more here, especially for the new NIF's
+    // 6. Create material controller
+    //    - see notes below in createMaterialControllers()
     static void createEntity(const std::string &name, const std::string &group,
                              Ogre::SceneManager *sceneMgr, ObjectScenePtr scene,
                              const Nif::Node *node, int flags, int animflags)
@@ -809,6 +818,11 @@ private:
             createMaterialControllers(shape, entity, animflags, scene);
     }
 
+    // 1. Nif::Node::getProperties()
+    //    - handle textprop and matprop
+    //    - process the controllers
+    //      - for material Nif::NiAlphaController and Nif::RC_NiMaterialColorController
+    //      - for texture Nif::RC_NiFlipController
     static void createMaterialControllers (const Nif::Node* node, Ogre::MovableObject* movable, int animflags, ObjectScenePtr scene)
     {
         const Nif::NiTexturingProperty *texprop = NULL;
