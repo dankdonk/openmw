@@ -38,7 +38,7 @@ public:
 
     NIFStream (NIFFile * file, Ogre::DataStreamPtr inp): inp (inp), file (file) {}
 
-    void skip(size_t size) { inp->skip(size); }
+    void skip(size_t size) { inp->skip((long)size); } // WARNING: possible loss of data for very large files
 
     size_t tell() { return inp->tell(); } // FIXME: debugging only
     size_t size() { return inp->size(); } // FIXME: debugging only

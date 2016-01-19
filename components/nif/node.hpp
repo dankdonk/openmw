@@ -97,8 +97,12 @@ public:
     void post(NIFFile *nif)
     {
         Named::post(nif);
-        props.post(nif);
-        collision.post(nif);
+
+        if (nifVer < 0x14020007 || userVer <= 11)
+            props.post(nif);
+
+        if (nifVer >= 0x0a000100)
+            collision.post(nif);
     }
 
     // Parent node, or NULL for the root node. As far as I'm aware, only
@@ -204,6 +208,11 @@ public:
     {
         nif->getInt(); // data.read(nif);
     }
+
+    void post(NIFFile *nif)
+    {
+        //data::post(nif);
+    }
 };
 
 class BSMultiBoundOBB : public Record
@@ -243,6 +252,15 @@ public:
         bones2.resize(numBones);
         for (unsigned int i = 0; i < numBones; ++i)
             bones2[i].read(nif);
+    }
+
+    void post(NIFFile *nif)
+    {
+        for (unsigned int i = 0; i < bones1.size(); ++i)
+            bones1[i].post(nif);
+
+        for (unsigned int i = 0; i < bones2.size(); ++i)
+            bones2[i].post(nif);
     }
 };
 
@@ -287,6 +305,11 @@ public:
         nif->getInt(); // BSMultiBoundPtr
         if (nifVer >= 0x14020007) // from 20.2.0.7
             nif->getUInt();
+    }
+
+    void post(NIFFile *nif)
+    {
+        //multiBound.post(nif);
     }
 };
 
@@ -506,6 +529,10 @@ class NiParticleSystem : public NiGeometry
     void post(NIFFile *nif)
     {
         NiGeometry::post(nif);
+
+        if (nifVer >= 0x0a010000) // from 10.1.0.0
+            for (unsigned int i = 0; i < modifiers.size(); ++i)
+                modifiers[i].post(nif);
     }
 };
 
@@ -638,7 +665,8 @@ struct bhkNiTriStripsShape : public  bhkShape
 
     void post(NIFFile *nif)
     {
-        // FIXME
+        for (unsigned int i = 0; i < stripsData.size(); ++i)
+            stripsData[i].post(nif);
     }
 };
 
@@ -674,7 +702,8 @@ public:
 
     void post(NIFFile *nif)
     {
-        // FIXME
+        for (unsigned int i = 0; i < subShapes.size(); ++i)
+            subShapes[i].post(nif);
     }
 };
 
@@ -699,11 +728,6 @@ public:
 
         dimensions = nif->getVector3();
         minSize = nif->getFloat();
-    }
-
-    void post(NIFFile *nif)
-    {
-        // FIXME
     }
 };
 
@@ -736,8 +760,6 @@ public:
     void post(NIFFile *nif)
     {
         shape.post(nif);
-
-        // FIXME
     }
 };
 
@@ -807,6 +829,11 @@ public:
             nif->getChar(); // unknown
         for (int i = 0; i < 16; ++i)
             nif->getFloat(); // FIXME: construct transform
+    }
+
+    void post(NIFFile *nif)
+    {
+        shape.post(nif);
     }
 };
 
@@ -901,7 +928,7 @@ public:
 
     void post(NIFFile *nif)
     {
-        // FIXME
+        shape.post(nif);
     }
 };
 
@@ -934,7 +961,8 @@ public:
 
     void post(NIFFile *nif)
     {
-        // FIXME
+        target.post(nif);
+        data.post(nif);
     }
 };
 
@@ -953,6 +981,12 @@ public:
             entities[i].read(nif);
         }
         priority = nif->getUInt();
+    }
+
+    void post(NIFFile *nif)
+    {
+        for (unsigned int i = 0; i < entities.size(); ++i)
+            entities[i].post(nif);
     }
 };
 
@@ -1222,6 +1256,12 @@ public:
             nif->getChar();
         }
     }
+
+    void post(NIFFile *nif)
+    {
+        for (unsigned int i = 0; i < entities2.size(); ++i)
+            entities2[i].post(nif);
+    }
 };
 
 struct HingeDescriptor
@@ -1295,6 +1335,12 @@ public:
             tau = nif->getFloat();
         damping = nif->getFloat();
     }
+
+    void post(NIFFile *nif)
+    {
+        link1.post(nif);
+        link2.post(nif);
+    }
 };
 
 class bhkEntity : public Record
@@ -1312,6 +1358,11 @@ public:
         layer = nif->getChar();
         collisionFilter = nif->getChar();
         unknownShort = nif->getUShort();
+    }
+
+    void post(NIFFile *nif)
+    {
+        shape.post(nif);
     }
 };
 
@@ -1429,7 +1480,8 @@ public:
 
     void post(NIFFile *nif)
     {
-        // FIXME
+        for (unsigned int i = 0; i < constraints.size(); ++i)
+            constraints[i].post(nif);
     }
 };
 typedef bhkRigidBody bhkRigidBodyT;
@@ -1462,6 +1514,11 @@ public:
         flags = nif->getUShort();
         body.read(nif);
     }
+
+    void post(NIFFile *nif)
+    {
+        body.post(nif);
+    }
 };
 
 class bhkBlendCollisionObject : public bhkCollisionObject
@@ -1493,6 +1550,11 @@ struct bhkSimpleShapePhantom: public Record
         nif->getUShort();
         for (unsigned int i = 0; i < 23; ++i) // 7 + 3*5 +1
             nif->getFloat();
+    }
+
+    void post(NIFFile *nif)
+    {
+        shape.post(nif);
     }
 };
 
@@ -1596,6 +1658,10 @@ public:
     void post(NIFFile *nif)
     {
         Controller::post(nif);
+
+        for (unsigned int i = 0; i < controllerSequences.size(); ++i)
+            controllerSequences[i].post(nif);
+        //objectPalette.post(nif);
     }
 };
 
@@ -1642,7 +1708,7 @@ struct ControllerLink
             stringPalette.read(nif);
 
         if (nifVer >= 0x14010003) // 20.1.0.3
-            getSkyrimString(nodeName, nif, nifVer, strings);
+            nodeName =  nif->getSkyrimString(nifVer, strings);
         else if (nifVer == 0x0a01006a) // 10.1.0.106
             nodeName = nif->getString();
 
@@ -1650,7 +1716,7 @@ struct ControllerLink
             nodeNameOffset = nif->getInt();
 
         if (nifVer >= 0x14010003) // 20.1.0.3
-            getSkyrimString(propertyType, nif, nifVer, strings);
+            propertyType =  nif->getSkyrimString(nifVer, strings);
         else if (nifVer == 0x0a01006a) // 10.1.0.106
             propertyType = nif->getString();
 
@@ -1658,7 +1724,7 @@ struct ControllerLink
             propertyTypeOffset = nif->getInt();
 
         if (nifVer >= 0x14010003) // 20.1.0.3
-            getSkyrimString(controllerType, nif, nifVer, strings);
+            controllerType =  nif->getSkyrimString(nifVer, strings);
         else if (nifVer == 0x0a01006a) // 10.1.0.106
             controllerType = nif->getString();
 
@@ -1666,7 +1732,7 @@ struct ControllerLink
             controllerTypeOffset = nif->getInt();
 
         if (nifVer >= 0x14010003) // 20.1.0.3
-            getSkyrimString(variable1, nif, nifVer, strings);
+            variable1 =  nif->getSkyrimString(nifVer, strings);
         else if (nifVer == 0x0a01006a) // 10.1.0.106
             variable1 = nif->getString();
 
@@ -1674,7 +1740,7 @@ struct ControllerLink
             variable1Offset = nif->getInt();
 
         if (nifVer >= 0x14010003) // 20.1.0.3
-            getSkyrimString(variable2, nif, nifVer, strings);
+            variable2 =  nif->getSkyrimString(nifVer, strings);
         else if (nifVer == 0x0a01006a) // 10.1.0.106
             variable2 = nif->getString();
 
@@ -1682,19 +1748,19 @@ struct ControllerLink
             variable2Offset = nif->getInt();
     }
 
-private:
-    void getSkyrimString(std::string& str, NIFStream *nif, unsigned int nifVer, std::vector<std::string> *strings)
+    void post(NIFFile *nif, unsigned int nifVer)
     {
-        if (nifVer >= 0x14020007 && !strings->empty()) // from 20.2.0.7 (Skyrim)
+        if (nifVer <= 0x0a010000) // up to 10.1.0.0
+            controller.post(nif);
+
+        if (nifVer >= 0x0a01006a) // from 10.1.0.106
         {
-            unsigned int index = nif->getUInt();
-            if (index == -1)
-                str = "";
-            else
-                str = (*strings)[index]; // FIXME: validate index size
+            interpolator.post(nif);
+            controller2.post(nif);
         }
-        else
-            str = nif->getString(); // FIXME just a guess
+
+        if (nifVer >= 0x0a020000 && nifVer <= 0x14000005)
+            stringPalette.post(nif);
     }
 };
 
@@ -1721,6 +1787,15 @@ public:
         controlledBlocks.resize(numControlledBlocks);
         for (unsigned int i = 0; i < numControlledBlocks; ++i)
             controlledBlocks[i].read(nif, nifVer, Record::strings);
+    }
+
+    void post(NIFFile *nif)
+    {
+        if (nifVer <= 0x0a010000) // up to 10.1.0.0
+            textKeys.post(nif);
+
+        for (unsigned int i = 0; i < controlledBlocks.size(); ++i)
+            controlledBlocks[i].post(nif, nifVer);
     }
 };
 
@@ -1791,6 +1866,14 @@ public:
     void post(NIFFile *nif)
     {
         NiSequence::post(nif);
+
+        if (nifVer >= 0x0a01006a) // from 10.1.0.106
+        {
+            textKeys2.post(nif);
+            manager.post(nif);
+            if (nifVer >= 0x0a020000 && nifVer <= 0x14000005)
+                stringPalette.post(nif);
+        }
     }
 };
 

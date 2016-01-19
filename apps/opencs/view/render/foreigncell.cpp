@@ -155,14 +155,16 @@ CSVRender::ForeignCell::ForeignCell (CSMDoc::Document& document, Ogre::SceneMana
     const CSMForeign::LandCollection& lands = mDocument.getData().getForeignLands();
     int landIndex = lands.searchId(cell.mLandTemporary);
 
+    std::istringstream stream (cell.mCellId.c_str());
+    char ignore; // '#'
+    int x = 0;
+    int y = 0;
+    stream >> ignore >> x >> y;
+    mX = x;
+    mY = y;
+
     if (landIndex != -1)
     {
-        std::istringstream stream (cell.mCellId.c_str());
-        char ignore; // '#'
-        int x = 0;
-        int y = 0;
-        stream >> ignore >> x >> y;
-
         const CSMForeign::Land& esmLand = lands.getRecord(landIndex).get();
 
         if (esmLand.getLandData (ESM4::Land::LAND_VHGT))
@@ -178,8 +180,8 @@ CSVRender::ForeignCell::ForeignCell (CSMDoc::Document& document, Ogre::SceneMana
 
             float verts = ESM4::Land::VERTS_PER_SIDE;
             float worldsize = ESM4::Land::REAL_SIZE;
-            mX = /*esmLand.mX*/x;
-            mY = /*esmLand.mY*/y;
+            //mX = esmLand.mX;
+            //mY = esmLand.mY;
 
             mPhysics->addHeightField(sceneManager,
                 esmLand.getLandData(ESM4::Land::LAND_VHGT)->mHeights, mX, mY, 0, worldsize / (verts-1), verts);

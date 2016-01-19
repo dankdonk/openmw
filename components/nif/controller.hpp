@@ -137,6 +137,11 @@ public:
 };
 typedef NiParticleSystemController NiBSPArrayController;
 
+class NiInterpolator : public Record
+{
+    void read(NIFStream *nif) {}; // FIXME: for debugging (printing recName)
+};
+
 class NiMaterialColorController : public Controller
 {
 public:
@@ -158,6 +163,8 @@ public:
     void post(NIFFile *nif)
     {
         Controller::post(nif);
+        if (nifVer >= 0x0a020000) // from 10.2.0.0
+            interpolator.post(nif);
         if (nifVer <= 0x0a010000) // up to 10.1.0.0
             data.post(nif);
     }
@@ -234,6 +241,8 @@ public:
     void post(NIFFile *nif)
     {
         Controller::post(nif);
+        if (nifVer >= 0x0a020000) // from 10.2.0.0
+            interpolator.post(nif);
     }
 };
 
@@ -257,6 +266,8 @@ public:
     void post(NIFFile *nif)
     {
         Controller::post(nif);
+        if (nifVer >= 0x0a020000) // from 10.2.0.0
+            interpolator.post(nif);
     }
 };
 
@@ -280,6 +291,8 @@ public:
     void post(NIFFile *nif)
     {
         Controller::post(nif);
+        if (nifVer >= 0x0a020000) // from 10.2.0.0
+            interpolator.post(nif);
     }
 };
 
@@ -303,6 +316,8 @@ public:
     void post(NIFFile *nif)
     {
         Controller::post(nif);
+        if (nifVer >= 0x0a020000) // from 10.2.0.0
+            interpolator.post(nif);
     }
 };
 
@@ -431,7 +446,15 @@ public:
     {
         Controller::post(nif);
         data.post(nif);
-        // FIXME other post stuff
+
+        if (nifVer >= 0x0a01006a) // from 10.1.0.106
+        {
+            if (nifVer >= 0x0a020000 && nifVer <= 0x14000005)
+            {
+                for (unsigned int i = 0; i < interpolators.size(); ++i)
+                    interpolators[i].post(nif);
+            }
+        }
     }
 };
 
@@ -477,6 +500,8 @@ public:
     void post(NIFFile *nif)
     {
         Controller::post(nif);
+        if (nifVer >= 0x0a020000) // from 10.2.0.0
+            interpolator.post(nif);
         mSources.post(nif);
     }
 };
@@ -499,13 +524,21 @@ public:
         if (nifVer >= 0x0a020000) // from 10.2.0.0
             visibilityInterpolator.read(nif);
     }
+
+    void post(NIFFile *nif)
+    {
+        Controller::post(nif);
+
+        if (nifVer >= 0x0a020000) // from 10.2.0.0
+            interpolator.post(nif);
+        //if (nifVer <= 0x0a010000) // up to 10.1.0.0
+            // NiPSysEmtterCtlrDataPtr
+        if (nifVer >= 0x0a020000) // from 10.2.0.0
+            visibilityInterpolator.post(nif);
+    }
 };
 
 class NiPSysUpdateCtlr : public Controller {};
-
-class NiInterpolator : public Record
-{
-};
 
 class NiPSysModifierActiveCtlr : public Controller
 {
@@ -521,6 +554,16 @@ public:
         modifierName = nif->getSkyrimString(nifVer, Record::strings);
         if (nifVer <= 0x0a010000) // up to 10.1.0.0
             nif->getInt(); // NiVisDataPtr
+    }
+
+    void post(NIFFile *nif)
+    {
+        Controller::post(nif);
+
+        if (nifVer >= 0x0a020000) // from 10.2.0.0
+            interpolator.post(nif);
+        //if (nifVer <= 0x0a010000) // up to 10.1.0.0
+            // NiVisDataPtr
     }
 };
 
@@ -539,6 +582,16 @@ public:
         if (nifVer <= 0x0a010000) // up to 10.1.0.0
             nif->getFloat(); // NiFloatDataPtr
     }
+
+    void post(NIFFile *nif)
+    {
+        Controller::post(nif);
+
+        if (nifVer >= 0x0a020000) // from 10.2.0.0
+            interpolator.post(nif);
+        //if (nifVer <= 0x0a010000) // up to 10.1.0.0
+            // NiFloatDataPtr
+    }
 };
 
 class NiPSysEmitterLifeSpanCtlr : public Controller
@@ -556,6 +609,16 @@ public:
         if (nifVer <= 0x0a010000) // up to 10.1.0.0
             nif->getFloat(); // NiFloatDataPtr
     }
+
+    void post(NIFFile *nif)
+    {
+        Controller::post(nif);
+
+        if (nifVer >= 0x0a020000) // from 10.2.0.0
+            interpolator.post(nif);
+        //if (nifVer <= 0x0a010000) // up to 10.1.0.0
+            // NiFloatDataPtr
+    }
 };
 
 class NiPSysEmitterSpeedCtlr : public Controller
@@ -572,6 +635,16 @@ public:
         modifierName = nif->getSkyrimString(nifVer, Record::strings);
         if (nifVer <= 0x0a010000) // up to 10.1.0.0
             nif->getFloat(); // NiFloatDataPtr
+    }
+
+    void post(NIFFile *nif)
+    {
+        Controller::post(nif);
+
+        if (nifVer >= 0x0a020000) // from 10.2.0.0
+            interpolator.post(nif);
+        //if (nifVer <= 0x0a010000) // up to 10.1.0.0
+            // NiFloatDataPtr
     }
 };
 
@@ -593,6 +666,16 @@ public:
         if (nifVer <= 0x0a010000) // up to 10.1.0.0
             nif->getFloat(); // NiFloatDataPtr
     }
+
+    void post(NIFFile *nif)
+    {
+        Controller::post(nif);
+
+        if (nifVer >= 0x0a020000) // from 10.2.0.0
+            interpolator.post(nif);
+        //if (nifVer <= 0x0a010000) // up to 10.1.0.0
+            // NiFloatDataPtr
+    }
 };
 
 class NiPSysGravityStrengthCtlr : public Controller
@@ -610,19 +693,34 @@ public:
         if (nifVer <= 0x0a010000) // up to 10.1.0.0
             nif->getFloat(); // NiFloatDataPtr
     }
+
+    void post(NIFFile *nif)
+    {
+        Controller::post(nif);
+
+        if (nifVer >= 0x0a020000) // from 10.2.0.0
+            interpolator.post(nif);
+        //if (nifVer <= 0x0a010000) // up to 10.1.0.0
+            // NiFloatDataPtr
+    }
 };
 
 struct NodeGroup
 {
-    unsigned int numNodes;
     std::vector<NodePtr> nodes;
 
     void read(NIFStream *nif, unsigned int nifVer)
     {
-        numNodes = nif->getUInt();
+        unsigned int numNodes = nif->getUInt();
         nodes.resize(numNodes);
         for (unsigned int i = 0; i < numNodes; ++i)
             nodes[i].read(nif);
+    }
+
+    void post(NIFFile *nif)
+    {
+        for (unsigned int i = 0; i < nodes.size(); ++i)
+            nodes[i].post(nif);
     }
 };
 
@@ -636,19 +734,30 @@ struct SkinShape
         shape.read(nif);
         skin.read(nif);
     }
+
+    void post(NIFFile *nif)
+    {
+        shape.post(nif);
+        skin.post(nif);
+    }
 };
 
 struct SkinShapeGroup
 {
-    unsigned int numLinkPairs;
     std::vector<SkinShape> linkPairs;
 
     void read(NIFStream *nif, unsigned int nifVer)
     {
-        numLinkPairs = nif->getUInt();
+        unsigned int numLinkPairs = nif->getUInt();
         linkPairs.resize(numLinkPairs);
         for (unsigned int i = 0; i < numLinkPairs; ++i)
             linkPairs[i].read(nif, nifVer);
+    }
+
+    void post(NIFFile *nif)
+    {
+        for (unsigned int i = 0; i < linkPairs.size(); ++i)
+            linkPairs[i].post(nif);
     }
 };
 
@@ -686,6 +795,13 @@ public:
         }
 #endif
     }
+
+    void post(NIFFile *nif)
+    {
+        Controller::post(nif);
+
+        // FIXME: the rest
+    }
 };
 
 class bhkBlendController : public Controller
@@ -698,6 +814,11 @@ public:
         Controller::read(nif);
         unknown = nif->getUInt();
     }
+
+    void post(NIFFile *nif)
+    {
+        Controller::post(nif);
+    }
 };
 
 class NiFloatExtraDataController : public Controller
@@ -709,11 +830,13 @@ public:
     void read(NIFStream *nif)
     {
         Controller::read(nif);
+
         if (nifVer >= 0x0a020000) // from 10.2.0.0
         {
             interpolator.read(nif);
             controllerData = nif->getSkyrimString(nifVer, Record::strings);
         }
+
         if (nifVer <= 0x0a010000) // up to 10.1.0.0
         {
             unsigned char numExtra = nif->getChar();
@@ -727,6 +850,9 @@ public:
     void post(NIFFile *nif)
     {
         Controller::post(nif);
+
+        if (nifVer >= 0x0a020000) // from 10.2.0.0
+            interpolator.post(nif);
     }
 };
 
@@ -734,12 +860,17 @@ class NiBoolInterpolator : public NiInterpolator
 {
 public:
     bool value;
-    NiBoolDataPtr data;
+    NiBoolDataPtr boolData;
 
     void read(NIFStream *nif)
     {
         value = nif->getBool(nifVer);
-        data.read(nif);
+        boolData.read(nif);
+    }
+
+    void post(NIFFile *nif)
+    {
+        boolData.post(nif);
     }
 };
 
@@ -769,6 +900,11 @@ public:
     {
         value = nif->getFloat();
         floatData.read(nif);
+    }
+
+    void post(NIFFile *nif)
+    {
+        floatData.post(nif);
     }
 };
 
@@ -814,6 +950,12 @@ public:
         posData.read(nif);
         floatData.read(nif);
     }
+
+    void post(NIFFile *nif)
+    {
+        posData.post(nif);
+        floatData.post(nif);
+    }
 };
 
 class NiPoint3Interpolator : public NiInterpolator
@@ -827,6 +969,11 @@ public:
         value = nif->getVector3();
 
         posData.read(nif);
+    }
+
+    void post(NIFFile *nif)
+    {
+        posData.post(nif);
     }
 };
 
@@ -933,6 +1080,24 @@ public:
         active = nif->getBool(nifVer);
     }
 
+    void post(NIFFile *nif)
+    {
+        target.post(nif);
+    }
+
+};
+
+class BSWindModifier : public NiPSysModifier
+{
+public:
+    float strength;
+
+    void read(NIFStream *nif)
+    {
+        NiPSysModifier::read(nif);
+
+        strength = nif->getFloat();
+    }
 };
 
 class BSPSysSubTexModifier : public NiPSysModifier
@@ -1151,6 +1316,12 @@ public:
         emissionType = nif->getUInt();
         emissionAxis = nif->getVector3();
     }
+
+    void post(NIFFile *nif)
+    {
+        for (unsigned int i = 0; i < emitterMeshes.size(); ++i)
+            emitterMeshes[i].post(nif);
+    }
 };
 
 class NiPSysSphereEmitter : public NiPSysEmitter
@@ -1180,6 +1351,11 @@ public:
 
         spawnOnDeath = nif->getBool(nifVer);
         spawnModifier.read(nif);
+    }
+
+    void post(NIFFile *nif)
+    {
+        spawnModifier.post(nif);
     }
 };
 
@@ -1256,13 +1432,18 @@ public:
 class NiPSysColorModifier : public NiPSysModifier
 {
 public:
-    NiColorDataPtr data;
+    NiColorDataPtr colorData;
 
     void read(NIFStream *nif)
     {
         NiPSysModifier::read(nif);
 
-        data.read(nif);
+        colorData.read(nif);
+    }
+
+    void post(NIFFile *nif)
+    {
+        colorData.post(nif);
     }
 };
 
@@ -1358,6 +1539,11 @@ public:
 
        collider.read(nif);
     }
+
+    void post(NIFFile *nif)
+    {
+        collider.post(nif);
+    }
 };
 
 class NiPSysCollider : public Record
@@ -1380,6 +1566,11 @@ public:
         parent.read(nif);
         nextCollider.read(nif);
         colliderObj.read(nif);
+    }
+
+    void post(NIFFile *nif)
+    {
+        //spawnModifier.post(nif);
     }
 };
 

@@ -192,6 +192,8 @@ static std::map<std::string,RecordFactoryEntry> makeFactory()
     newFactory.insert(makeEntry("NiPSysEmitterInitialRadiusCtlr", &construct <NiPSysEmitterInitialRadiusCtlr>, RC_NiPSysEmitterInitialRadiusCtlr));
     newFactory.insert(makeEntry("NiBlendTransformInterpolator", &construct <NiBlendTransformInterpolator>, RC_NiBlendTransformInterpolator));
     newFactory.insert(makeEntry("NiMultiTargetTransformController", &construct <NiMultiTargetTransformController>, RC_NiMultiTargetTransformController));
+    newFactory.insert(makeEntry("BSWindModifier",             &construct <BSWindModifier>              , RC_BSWindModifier                ));
+    newFactory.insert(makeEntry("NiInterpolator",             &construct <NiInterpolator>              , RC_NiInterpolator                ));
     //
     newFactory.insert(makeEntry("BSFadeNode",                 &construct <BSFadeNode>                  , RC_BSFadeNode                    ));
     newFactory.insert(makeEntry("bhkCompressedMeshShape",     &construct <bhkCompressedMeshShape>      , RC_bhkCompressedMeshShape        ));

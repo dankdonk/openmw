@@ -198,7 +198,7 @@ void ObjectScene::_notifyAttached()
 class FlipController
 {
 public:
-    class Value : public Ogre::ControllerValue<Ogre::Real>
+    class Value : public Ogre::ControllerValue<Ogre::Real>, public ValueInterpolator
     {
     private:
         Ogre::MovableObject* mMovable;
@@ -207,15 +207,28 @@ public:
         std::vector<std::string> mTextures;
         MaterialControllerManager* mMaterialControllerMgr;
 
+        using ValueInterpolator::interpKey;
+
     public:
         Value(Ogre::MovableObject *movable, const Nif::NiFlipController *ctrl, MaterialControllerManager* materialControllerMgr)
           : mMovable(movable)
           , mMaterialControllerMgr(materialControllerMgr)
         {
             mTexSlot = ctrl->mTexSlot;
-            if (ctrl->nifVer <= 0x0a010000) // up to 10.1.0.0
-                mDelta = 0.5f; // FIXME: should be using the float interpolator here!
-            mDelta = ctrl->mDelta;
+            if (ctrl->nifVer >= 0x0a020000) // from 10.2.0.0
+            {
+                if (ctrl->interpolator.getPtr()->recType == Nif::RC_NiFloatInterpolator)
+                {
+                    const Nif::NiFloatInterpolator* fi
+                        = static_cast<const Nif::NiFloatInterpolator*>(ctrl->interpolator.getPtr());
+                    // FIXME: this key is probably not the right one to use
+                    float key = fi->value;
+                    // use 0.5f as the default, not sure what it should be
+                    mDelta = interpKey(fi->floatData.getPtr()->mKeyList.mKeys, key, 0.5f);
+                }
+            }
+            else if (ctrl->nifVer <= 0x0a010000) // up to 10.1.0.0
+                mDelta = ctrl->mDelta;
             for (unsigned int i=0; i<ctrl->mSources.length(); ++i)
             {
                 const Nif::NiSourceTexture* tex = ctrl->mSources[i].getPtr();
@@ -718,7 +731,7 @@ private:
                              Ogre::SceneManager *sceneMgr, ObjectScenePtr scene,
                              const Nif::Node *node, int flags, int animflags)
     {
-        int recIndex = 0;
+        size_t recIndex = 0;
         std::string fullname;
         const Nif::NiTriStrips *strips = static_cast<const Nif::NiTriStrips*>(node);
         const Nif::NiTriShape *shape = static_cast<const Nif::NiTriShape*>(node);

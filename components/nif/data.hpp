@@ -706,6 +706,12 @@ public:
             }
         }
     }
+
+    void post(NIFFile *nif)
+    {
+        //if (nifVer >= 0x04000002 && nifVer <= 0x0a010000)
+            //skinPartition.post(nif);
+    }
 };
 
 struct NiMorphData : public Record
@@ -821,7 +827,7 @@ public:
         unsigned int base = 0;
         for (unsigned int i = 0; i < numStrips; ++i)
         {
-            base = triangles.size();
+            base = static_cast<unsigned int>(triangles.size());
             triangles.resize(base + (stripLengths[i]-2)*3);
             for (unsigned int j = 0; j < (unsigned int)(stripLengths[i]-2); ++j)
             {
@@ -896,6 +902,11 @@ struct AVObject
 {
     std::string name;
     NodePtr avObject;
+
+    void post(NIFFile *nif)
+    {
+        avObject.post(nif);
+    }
 };
 
 struct NiDefaultAVObjectPalette : public Record
@@ -912,6 +923,12 @@ struct NiDefaultAVObjectPalette : public Record
             objs[i].name = nif->getString(); // TODO: sized string?
             objs[i].avObject.read(nif);
         }
+    }
+
+    void post(NIFFile *nif)
+    {
+        for (unsigned int i = 0; i < objs.size(); ++i)
+            objs[i].post(nif);
     }
 };
 

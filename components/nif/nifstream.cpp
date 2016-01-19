@@ -37,7 +37,7 @@ float NIFStream::read_le32f()
 Ogre::Vector2 NIFStream::getVector2()
 {
     float a[2];
-    for(size_t i = 0;i < 2;i++)
+    for(size_t i = 0; i < 2; i++)
         a[i] = getFloat();
     return Ogre::Vector2(a);
 }
@@ -84,7 +84,7 @@ Transformation NIFStream::getTrafo()
 std::string NIFStream::getString(size_t length)
 {
     //Make sure we're not reading in too large of a string
-    unsigned int fileSize = inp->size();
+    size_t fileSize = inp->size();
     if(fileSize != 0 && fileSize < length)
         file->fail("Attempted to read a string with " + Ogre::StringConverter::toString(length) + " characters , but file is only "+Ogre::StringConverter::toString(fileSize)+ " bytes!");
 
