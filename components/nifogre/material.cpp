@@ -89,6 +89,8 @@ Ogre::String NIFMaterialLoader::getMaterial(const Nif::ShapeData *shapedata,
                                             const Nif::NiWireframeProperty *wireprop,
                                             const Nif::NiStencilProperty *stencilprop,
                                             const Nif::BSLightingShaderProperty *bsprop,
+                                            const Nif::BSEffectShaderProperty *effectprop,
+                                            const Nif::BSWaterShaderProperty *waterprop,
                                             bool &needTangents, bool particleMaterial)
 {
     Ogre::MaterialManager &matMgr = Ogre::MaterialManager::getSingleton();

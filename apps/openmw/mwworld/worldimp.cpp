@@ -988,6 +988,17 @@ namespace MWWorld
         addContainerScripts(getPlayerPtr(), getPlayerPtr().getCell());
     }
 
+    void World::changeToForeignInteriorCell (const std::string& cellName, const ESM::Position& position)
+    {
+        mPhysics->clearQueuedMovement();
+
+        mRendering->notifyWorldSpaceChanged();
+
+        removeContainerScripts(getPlayerPtr());
+        mWorldScene->changeToForeignInteriorCell(cellName, position);
+        addContainerScripts(getPlayerPtr(), getPlayerPtr().getCell());
+    }
+
     void World::changeToExteriorCell (const ESM::Position& position)
     {
         mPhysics->clearQueuedMovement();
@@ -1000,6 +1011,17 @@ namespace MWWorld
         }
         removeContainerScripts(getPlayerPtr());
         mWorldScene->changeToExteriorCell(position, true);
+        addContainerScripts(getPlayerPtr(), getPlayerPtr().getCell());
+    }
+
+    void World::changeToForeignExteriorCell (const ESM::Position& position)
+    {
+        mPhysics->clearQueuedMovement();
+
+        mRendering->notifyWorldSpaceChanged();
+
+        removeContainerScripts(getPlayerPtr());
+        mWorldScene->changeToForeignExteriorCell(position, true);
         addContainerScripts(getPlayerPtr(), getPlayerPtr().getCell());
     }
 
@@ -2442,6 +2464,12 @@ namespace MWWorld
         return false;
     }
 
+    bool World::findForeignInteriorPosition(const std::string &name, ESM::Position &pos)
+    {
+        pos.rot[0] = pos.rot[1] = pos.rot[2] = 0;
+        return false;
+    }
+
     bool World::findExteriorPosition(const std::string &name, ESM::Position &pos)
     {
         pos.rot[0] = pos.rot[1] = pos.rot[2] = 0;
@@ -2456,6 +2484,12 @@ namespace MWWorld
 
             return true;
         }
+        return false;
+    }
+
+    bool World::findForeignExteriorPosition(const std::string &name, ESM::Position &pos)
+    {
+        pos.rot[0] = pos.rot[1] = pos.rot[2] = 0;
         return false;
     }
 

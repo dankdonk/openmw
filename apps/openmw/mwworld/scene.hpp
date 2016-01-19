@@ -90,9 +90,11 @@ namespace MWWorld
 
             void changeToInteriorCell (const std::string& cellName, const ESM::Position& position);
             ///< Move to interior cell.
+            void changeToForeignInteriorCell (const std::string& cellName, const ESM::Position& position);
 
             void changeToExteriorCell (const ESM::Position& position, bool adjustPlayerPos);
             ///< Move to exterior cell.
+            void changeToForeignExteriorCell (const ESM::Position& position, bool adjustPlayerPos);
 
             void changeToVoid();
             ///< Change into a void

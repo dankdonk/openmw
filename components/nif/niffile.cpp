@@ -1,5 +1,6 @@
 #include "niffile.hpp"
 #include "effect.hpp"
+#include "collision.hpp"
 
 #include <map>
 #include <cassert>
@@ -117,8 +118,9 @@ static std::map<std::string,RecordFactoryEntry> makeFactory()
     newFactory.insert(makeEntry("bhkRigidBody",               &construct <bhkRigidBody>                , RC_bhkRigidBody                  ));
     newFactory.insert(makeEntry("bhkRigidBodyT",              &construct <bhkRigidBodyT>               , RC_bhkRigidBodyT                 ));
     newFactory.insert(makeEntry("NiCollisionObject",          &construct <NiCollisionObject>           , RC_NiCollisionObject             ));
+    newFactory.insert(makeEntry("bhkNiCollisionObject",       &construct <bhkNiCollisionObject>        , RC_bhkNiCollisionObject          ));
     newFactory.insert(makeEntry("bhkCollisionObject",         &construct <bhkCollisionObject>          , RC_bhkCollisionObject            ));
-    newFactory.insert(makeEntry("bhkSPCollisionObject",       &construct <bhkCollisionObject>          , RC_bhkSPCollisionObject          ));
+    newFactory.insert(makeEntry("bhkSPCollisionObject",       &construct <bhkSPCollisionObject>        , RC_bhkSPCollisionObject          ));
     newFactory.insert(makeEntry("NiTriStrips",                &construct <NiTriStrips>                 , RC_NiTriStrips                   ));
     newFactory.insert(makeEntry("NiBinaryExtraData",          &construct <NiBinaryExtraData>           , RC_NiBinaryExtraData             ));
     newFactory.insert(makeEntry("NiTriStripsData",            &construct <NiTriStripsData>             , RC_NiTriStripsData               ));
@@ -227,6 +229,7 @@ static std::map<std::string,RecordFactoryEntry> makeFactory()
     newFactory.insert(makeEntry("BSWaterShaderProperty",      &construct <BSWaterShaderProperty>       , RC_BSWaterShaderProperty         ));
     newFactory.insert(makeEntry("BSLeafAnimNode",             &construct <BSLeafAnimNode>              , RC_BSLeafAnimNode                ));
     newFactory.insert(makeEntry("BSTreeNode",                 &construct <BSTreeNode>                  , RC_BSTreeNode                    ));
+    newFactory.insert(makeEntry("BSMultiBoundData",           &construct <BSMultiBoundData>            , RC_BSMultiBoundData              ));
     newFactory.insert(makeEntry("BSMultiBoundOBB",            &construct <BSMultiBoundOBB>             , RC_BSMultiBoundOBB               ));
     newFactory.insert(makeEntry("BSDecalPlacementVectorExtraData", &construct <BSDecalPlacementVectorExtraData>, RC_BSDecalPlacementVectorExtraData));
     newFactory.insert(makeEntry("NiFloatExtraData",           &construct <NiFloatExtraData>            , RC_NiFloatExtraData              ));
@@ -234,7 +237,8 @@ static std::map<std::string,RecordFactoryEntry> makeFactory()
     newFactory.insert(makeEntry("BSStripParticleSystem",      &construct <BSStripParticleSystem>       , RC_BSStripParticleSystem         ));
     newFactory.insert(makeEntry("NiFloatExtraDataController", &construct <NiFloatExtraDataController>  , RC_NiFloatExtraDataController    ));
     newFactory.insert(makeEntry("bhkBreakableConstraint",     &construct <bhkBreakableConstraint>      , RC_bhkBreakableConstraint        ));
-//    newFactory.insert(makeEntry("Property",                   &construct <Property>                    , RC_Property                      ));
+    newFactory.insert(makeEntry("Property",                   &construct <Property>                    , RC_Property                      ));
+    newFactory.insert(makeEntry("bhkBallSocketConstraintChain", &construct <bhkBallSocketConstraintChain>, RC_bhkBallSocketConstraintChain));
     return newFactory;
 }
 

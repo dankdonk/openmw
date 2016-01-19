@@ -506,6 +506,10 @@ namespace MWWorld
         mNeedMapUpdate = true;
     }
 
+    void Scene::changeToForeignInteriorCell (const std::string& cellName, const ESM::Position& position)
+    {
+    }
+
     void Scene::changeToExteriorCell (const ESM::Position& position, bool adjustPlayerPos)
     {
         int x = 0;
@@ -519,6 +523,11 @@ namespace MWWorld
         changePlayerCell(current, position, adjustPlayerPos);
 
         mRendering.updateTerrain();
+    }
+
+    // FIXME: assume Tamriel for now
+    void Scene::changeToForeignExteriorCell (const ESM::Position& position, bool adjustPlayerPos)
+    {
     }
 
     CellStore* Scene::getCurrentCell ()

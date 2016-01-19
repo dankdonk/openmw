@@ -159,6 +159,9 @@ class NiExtraData;
 class NiNode;
 class bhkEntity;
 class BSShaderTextureSet;
+class BSMultiBound;
+class BSMultiBoundData;
+class hkPackedNiTriStripsData;
 
 typedef RecordPtrT<Node> NodePtr;
 typedef RecordPtrT<Extra> ExtraPtr;
@@ -178,7 +181,7 @@ typedef RecordPtrT<NiSkinInstance> NiSkinInstancePtr;
 typedef RecordPtrT<NiSourceTexture> NiSourceTexturePtr;
 typedef RecordPtrT<NiRotatingParticlesData> NiRotatingParticlesDataPtr;
 typedef RecordPtrT<NiAutoNormalParticlesData> NiAutoNormalParticlesDataPtr;
-typedef RecordPtrT<bhkSerializable> bhkSerializableDataPtr;
+typedef RecordPtrT<bhkSerializable> bhkSerializablePtr;
 typedef RecordPtrT<bhkShape> bhkShapePtr;
 typedef RecordPtrT<NiTriStripsData> NiTriStripsDataPtr;
 typedef RecordPtrT<NiParticleModifier> NiParticleModifierPtr;
@@ -207,6 +210,9 @@ typedef RecordPtrT<NiNode> NiNodePtr;
 typedef RecordPtrT<bhkEntity> bhkEntityPtr;
 typedef RecordPtrT<BSShaderTextureSet> BSShaderTextureSetPtr;
 typedef RecordPtrT<Property> PropertyPtr;
+typedef RecordPtrT<BSMultiBound> BSMultiBoundPtr;
+typedef RecordPtrT<BSMultiBoundData> BSMultiBoundDataPtr;
+typedef RecordPtrT<hkPackedNiTriStripsData> hkPackedNiTriStripsDataPtr;
 
 typedef RecordListT<Node> NodeList;
 typedef RecordListT<NiExtraData> NiExtraDataList;

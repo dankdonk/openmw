@@ -49,6 +49,11 @@ namespace MWScript
                         world->changeToExteriorCell(pos);
                         world->fixPosition(world->getPlayerPtr());
                     }
+                    else if (cell.substr(0, 8) == "foreign:")
+                    {
+                        world->findForeignInteriorPosition(cell, pos);
+                        world->changeToForeignInteriorCell(cell, pos);
+                    }
                     else
                     {
                         // Change to interior even if findInteriorPosition()

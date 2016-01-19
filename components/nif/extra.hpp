@@ -221,14 +221,13 @@ public:
 class BSXFlags : public NiExtraData
 {
 public:
-    std::string name;
+    unsigned int integerData;
 
     void read(NIFStream *nif)
     {
         NiExtraData::read(nif);
 
-        // unsupported for now
-        nif->getInt(); // http://niftools.sourceforge.net/doc/nif/BSXFlags.html
+        integerData = nif->getUInt(); // http://niftools.sourceforge.net/doc/nif/BSXFlags.html
     }
 };
 

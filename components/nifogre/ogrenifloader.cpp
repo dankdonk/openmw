@@ -847,7 +847,25 @@ private:
         const Nif::NiWireframeProperty *wireprop = NULL;
         const Nif::NiStencilProperty *stencilprop = NULL;
         const Nif::BSLightingShaderProperty *bsprop = NULL;
-        node->getProperties(texprop, matprop, alphaprop, vertprop, zprop, specprop, wireprop, stencilprop, bsprop);
+        const Nif::BSEffectShaderProperty *effectprop = NULL;
+        const Nif::BSWaterShaderProperty *waterprop = NULL;
+
+        node->getProperties(texprop, matprop, alphaprop, vertprop, zprop, specprop, wireprop, stencilprop);
+
+        if (node->nifVer >= 0x14020007 && node->userVer == 12)
+        {
+            const Nif::NiGeometry *geom = static_cast<const Nif::NiGeometry*>(node);
+            if (geom)
+            {
+                bool hasAlphaprop = alphaprop != 0;
+                alphaprop = NULL;
+                geom->getBSProperties(bsprop, alphaprop, effectprop, waterprop);
+
+                // FIXME: what happens if both have alphaprop?
+                if (hasAlphaprop && alphaprop)
+                    std::cout << "alphaprop over written" << std::endl;
+            }
+        }
 
         bool isAnimationAutoPlay = (animflags & Nif::NiNode::AnimFlag_AutoPlay) != 0;
         Ogre::ControllerValueRealPtr srcval(isAnimationAutoPlay ?
@@ -1011,13 +1029,25 @@ private:
         const Nif::NiWireframeProperty *wireprop = NULL;
         const Nif::NiStencilProperty *stencilprop = NULL;
         const Nif::BSLightingShaderProperty *bsprop = NULL;
+        const Nif::BSEffectShaderProperty *effectprop = NULL;
+        const Nif::BSWaterShaderProperty *waterprop = NULL;
         bool needTangents = false;
 
-        partnode->getProperties(texprop, matprop, alphaprop, vertprop, zprop, specprop, wireprop, stencilprop, bsprop);
+        partnode->getProperties(texprop, matprop, alphaprop, vertprop, zprop, specprop, wireprop, stencilprop);
+
+        if (partnode->nifVer >= 0x14020007 && partnode->userVer == 12)
+        {
+            const Nif::NiGeometry *geom = static_cast<const Nif::NiGeometry*>(partnode);
+            if (geom)
+                geom->getBSProperties(bsprop, alphaprop, effectprop, waterprop);
+        }
+
         partsys->setMaterialName(NIFMaterialLoader::getMaterial(particledata, fullname, group,
                                                                 texprop, matprop, alphaprop,
                                                                 vertprop, zprop, specprop,
-                                                                wireprop, stencilprop, bsprop, needTangents,
+                                                                wireprop, stencilprop,
+                                                                bsprop, effectprop, waterprop,
+                                                                needTangents,
                                                                 // MW doesn't light particles, but the MaterialProperty
                                                                 // used still has lighting, so that must be ignored.
                                                                 true));

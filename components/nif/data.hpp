@@ -848,39 +848,6 @@ public:
     }
 };
 
-struct hkTriangle
-{
-    std::vector<short> triangle;
-    unsigned short weldingInfo;
-    Ogre::Vector3 normal; // up to 20.0.0.5 only
-};
-
-struct hkPackedNiTriStripsData : public Record
-{
-    std::vector<hkTriangle> triangles;
-    std::vector<Ogre::Vector3> vertices;
-
-    void read(NIFStream *nif)
-    {
-        int tris = nif->getUInt();
-        triangles.resize(tris);
-        for(int i = 0; i < tris; i++)
-        {
-            triangles[i].triangle.resize(3);
-            triangles[i].triangle[0] = nif->getShort();
-            triangles[i].triangle[1] = nif->getShort();
-            triangles[i].triangle[2] = nif->getShort();
-            triangles[i].weldingInfo = nif->getUShort();
-            triangles[i].normal = nif->getVector3();
-        }
-
-        int verts = nif->getUInt();
-        vertices.resize(verts);
-        for(int i = 0; i < verts; i++)
-            vertices[i] = nif->getVector3();
-    }
-};
-
 class NiStringPalette : public Record
 {
     std::vector<std::string> palette;

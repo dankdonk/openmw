@@ -48,8 +48,8 @@ namespace sh
 	};
 
 	/**
-	 * @brief Used for retrieving a named property from a context
-	 */
+     * @brief Used for retrieving a named property from a context
+     */
 	class LinkedValue : public PropertyValue
 	{
 	public:

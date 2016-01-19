@@ -154,16 +154,28 @@ void ESMStore::loadTes4Group (ESM4::Reader& reader)
         case ESM4::Grp_RecordType:
         {
             // FIXME: rewrite to workaround reliability issue
-            if (0)//hdr.group.label.value == ESM4::REC_NAVI || hdr.group.label.value == ESM4::REC_WRLD ||
-                  //hdr.group.label.value == ESM4::REC_REGN || hdr.group.label.value == ESM4::REC_STAT ||
-                  //hdr.group.label.value == ESM4::REC_ANIO || hdr.group.label.value == ESM4::REC_CONT ||
-                  //hdr.group.label.value == ESM4::REC_MISC || hdr.group.label.value == ESM4::REC_ACTI ||
-                  //hdr.group.label.value == ESM4::REC_ARMO || hdr.group.label.value == ESM4::REC_NPC_ ||
-                  //hdr.group.label.value == ESM4::REC_FLOR || hdr.group.label.value == ESM4::REC_GRAS ||
-                  //hdr.group.label.value == ESM4::REC_TREE || hdr.group.label.value == ESM4::REC_LIGH ||
-                  //hdr.group.label.value == ESM4::REC_BOOK || hdr.group.label.value == ESM4::REC_FURN ||
-                  //hdr.group.label.value == ESM4::REC_SOUN || hdr.group.label.value == ESM4::REC_WEAP ||
-                  //hdr.group.label.value == ESM4::REC_CELL || hdr.group.label.value == ESM4::REC_LTEX)
+            if (
+                //hdr.group.label.value == ESM4::REC_HAIR || hdr.group.label.value == ESM4::REC_EYES ||
+                //hdr.group.label.value == ESM4::REC_SOUN || hdr.group.label.value == ESM4::REC_LTEX ||
+
+                //hdr.group.label.value == ESM4::REC_ACTI || hdr.group.label.value == ESM4::REC_APPA ||
+                //hdr.group.label.value == ESM4::REC_ARMO || hdr.group.label.value == ESM4::REC_BOOK ||
+                //hdr.group.label.value == ESM4::REC_CLOT || hdr.group.label.value == ESM4::REC_CONT ||
+                //hdr.group.label.value == ESM4::REC_DOOR || hdr.group.label.value == ESM4::REC_INGR ||
+                //hdr.group.label.value == ESM4::REC_LIGH || hdr.group.label.value == ESM4::REC_MISC ||
+                //hdr.group.label.value == ESM4::REC_STAT || hdr.group.label.value == ESM4::REC_GRAS ||
+                //hdr.group.label.value == ESM4::REC_TREE || hdr.group.label.value == ESM4::REC_FLOR ||
+                //hdr.group.label.value == ESM4::REC_FURN || hdr.group.label.value == ESM4::REC_WEAP ||
+                //hdr.group.label.value == ESM4::REC_AMMO || hdr.group.label.value == ESM4::REC_NPC_ ||
+                //hdr.group.label.value == ESM4::REC_CREA || hdr.group.label.value == ESM4::REC_LVLC ||
+                //hdr.group.label.value == ESM4::REC_SLGM || hdr.group.label.value == ESM4::REC_KEYM ||
+                //hdr.group.label.value == ESM4::REC_ALCH || hdr.group.label.value == ESM4::REC_SGST ||
+
+                //hdr.group.label.value == ESM4::REC_REGN || hdr.group.label.value == ESM4::REC_CELL ||
+                hdr.group.label.value == ESM4::REC_WRLD //|| hdr.group.label.value == ESM4::REC_ANIO ||
+
+                //hdr.group.label.value == ESM4::REC_NAVI
+            )
             {
                 // NOTE: The label field of a group is not reliable.  See:
                 // http://www.uesp.net/wiki/Tes4Mod:Mod_File_Format
@@ -195,8 +207,9 @@ void ESMStore::loadTes4Group (ESM4::Reader& reader)
         case ESM4::Grp_CellTemporaryChild:
         case ESM4::Grp_CellVisibleDistChild:
         {
-            reader.saveGroupStatus(hdr);
-            loadTes4Group(reader);
+            reader.skipGroup();
+            //reader.saveGroupStatus(hdr);
+            //loadTes4Group(reader);
 
             break;
         }
@@ -212,35 +225,20 @@ void ESMStore::loadTes4Record (ESM4::Reader& reader, const ESM4::RecordHeader& h
 {
     switch (hdr.record.typeId)
     {
-        case ESM4::REC_CELL:
-        case ESM4::REC_NAVM:
-        case ESM4::REC_NAVI:
-        case ESM4::REC_WRLD:
-        case ESM4::REC_REGN:
-        case ESM4::REC_LAND:
-        case ESM4::REC_LTEX:
-        case ESM4::REC_STAT:
-        case ESM4::REC_ANIO:
-        case ESM4::REC_CONT:
-        case ESM4::REC_MISC:
-        case ESM4::REC_ACTI:
-        case ESM4::REC_ARMO:
-        case ESM4::REC_NPC_:
-        case ESM4::REC_FLOR:
-        case ESM4::REC_GRAS:
-        case ESM4::REC_TREE:
-        case ESM4::REC_LIGH:
-        case ESM4::REC_BOOK:
-        case ESM4::REC_FURN:
-        case ESM4::REC_SOUN:
-        case ESM4::REC_WEAP:
-        case ESM4::REC_ACHR:
-        case ESM4::REC_REFR:
-        case ESM4::REC_PHZD:
-        case ESM4::REC_PGRE:
-        case ESM4::REC_PGRD:
-        case ESM4::REC_ACRE:
-        case ESM4::REC_ROAD:
+        case ESM4::REC_HAIR: case ESM4::REC_EYES: case ESM4::REC_SOUN: case ESM4::REC_LTEX:
+
+        case ESM4::REC_ACTI: case ESM4::REC_APPA: case ESM4::REC_ARMO: case ESM4::REC_BOOK:
+        case ESM4::REC_CLOT: case ESM4::REC_CONT: case ESM4::REC_DOOR: case ESM4::REC_INGR:
+        case ESM4::REC_LIGH: case ESM4::REC_MISC: case ESM4::REC_STAT: case ESM4::REC_GRAS:
+        case ESM4::REC_TREE: case ESM4::REC_FLOR: case ESM4::REC_FURN: case ESM4::REC_WEAP:
+        case ESM4::REC_AMMO: case ESM4::REC_NPC_: case ESM4::REC_CREA: case ESM4::REC_LVLC:
+        case ESM4::REC_SLGM: case ESM4::REC_KEYM: case ESM4::REC_ALCH: case ESM4::REC_SGST:
+
+        case ESM4::REC_REGN: case ESM4::REC_CELL: case ESM4::REC_WRLD: case ESM4::REC_ANIO:
+
+        case ESM4::REC_REFR: case ESM4::REC_ACHR: case ESM4::REC_ACRE: case ESM4::REC_PGRD:
+        case ESM4::REC_PHZD: case ESM4::REC_PGRE:
+        case ESM4::REC_ROAD: case ESM4::REC_LAND: case ESM4::REC_NAVM: case ESM4::REC_NAVI:
         {
             //std::cout << ESM4::printName(hdr.record.typeId) << " skipping..." << std::endl;
             reader.skipRecordData();

@@ -97,6 +97,7 @@ enum RecordType
   RC_bhkBlendController,
   RC_bhkBoxShape,
   RC_bhkCapsuleShape,
+  RC_bhkNiCollisionObject,
   RC_bhkCollisionObject,
   RC_bhkConvexTransformShape,
   RC_bhkConvexVerticesShape,
@@ -211,6 +212,7 @@ enum RecordType
   RC_BSWaterShaderProperty,
   RC_BSLeafAnimNode,
   RC_BSTreeNode,
+  RC_BSMultiBoundData,
   RC_BSMultiBoundOBB,
   RC_BSDecalPlacementVectorExtraData,
   RC_NiFloatExtraData,
@@ -218,8 +220,9 @@ enum RecordType
   RC_NiFloatExtraDataController,
   RC_bhkBreakableConstraint,
   RC_bhkEntity,
-  RC_BSStripParticleSystem
-  //RC_Property
+  RC_BSStripParticleSystem,
+  RC_Property,
+  RC_bhkBallSocketConstraintChain
 };
 /// Base class for all records
 struct Record

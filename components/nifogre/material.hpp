@@ -20,6 +20,8 @@ namespace Nif
     class NiWireframeProperty;
     class NiStencilProperty;
     class BSLightingShaderProperty;
+    class BSEffectShaderProperty;
+    class BSWaterShaderProperty;
 }
 
 namespace NifOgre
@@ -45,6 +47,8 @@ public:
                                     const Nif::NiWireframeProperty *wireprop,
                                     const Nif::NiStencilProperty *stencilprop,
                                     const Nif::BSLightingShaderProperty *bsprop,
+                                    const Nif::BSEffectShaderProperty *effectprop,
+                                    const Nif::BSWaterShaderProperty *waterprop,
                                     bool &needTangents, bool particleMaterial=false);
 };
 

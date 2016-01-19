@@ -359,14 +359,34 @@ void NIFMeshLoader::createSubMesh(Ogre::Mesh *mesh, const Nif::Record *record)
     const Nif::NiWireframeProperty *wireprop = NULL;
     const Nif::NiStencilProperty *stencilprop = NULL;
     const Nif::BSLightingShaderProperty *bsprop = NULL;
+    const Nif::BSEffectShaderProperty *effectprop = NULL;
+    const Nif::BSWaterShaderProperty *waterprop = NULL;
     bool needTangents = false;
 
     const Nif::Node *node = static_cast<const Nif::Node*>(record);
-    node->getProperties(texprop, matprop, alphaprop, vertprop, zprop, specprop, wireprop, stencilprop, bsprop);
+    node->getProperties(texprop, matprop, alphaprop, vertprop, zprop, specprop, wireprop, stencilprop);
+
+    if (node->nifVer >= 0x14020007 && node->userVer == 12)
+    {
+        const Nif::NiGeometry *geom = static_cast<const Nif::NiGeometry*>(node);
+        if (geom)
+        {
+            bool hasAlphaprop = alphaprop != 0;
+            alphaprop = NULL;
+            geom->getBSProperties(bsprop, alphaprop, effectprop, waterprop);
+
+            // FIXME: what happens if both have alphaprop?
+            if (hasAlphaprop && alphaprop)
+                std::cout << "alphaprop over written" << std::endl;
+        }
+    }
+
     std::string matname = NIFMaterialLoader::getMaterial(data, mesh->getName(), mGroup,
                                                          texprop, matprop, alphaprop,
                                                          vertprop, zprop, specprop,
-                                                         wireprop, stencilprop, bsprop, needTangents);
+                                                         wireprop, stencilprop,
+                                                         bsprop, effectprop, waterprop,
+                                                         needTangents);
     if(matname.length() > 0)
         sub->setMaterialName(matname);
 
