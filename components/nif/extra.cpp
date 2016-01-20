@@ -98,6 +98,13 @@ void Nif::NiBooleanExtraData::read(NIFStream *nif)
     booleanData = nif->getChar();
 }
 
+void Nif::NiIntegerExtraData::read(NIFStream *nif)
+{
+    NiExtraData::read(nif);
+
+    integerData = nif->getUInt();
+}
+
 void Nif::NiFloatExtraData::read(NIFStream *nif)
 {
     NiExtraData::read(nif);

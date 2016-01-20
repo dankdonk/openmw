@@ -243,6 +243,12 @@ static std::map<std::string,RecordFactoryEntry> makeFactory()
     newFactory.insert(makeEntry("bhkBreakableConstraint",     &construct <bhkBreakableConstraint>      , RC_bhkBreakableConstraint        ));
     newFactory.insert(makeEntry("Property",                   &construct <Property>                    , RC_Property                      ));
     newFactory.insert(makeEntry("bhkBallSocketConstraintChain", &construct <bhkBallSocketConstraintChain>, RC_bhkBallSocketConstraintChain));
+    newFactory.insert(makeEntry("BSDamageStage",              &construct <BSDamageStage>               , RC_BSDamageStage                 ));
+    newFactory.insert(makeEntry("BSNiAlphaPropertyTestRefController", &construct <NiAlphaController>   , RC_BSNiAlphaPropertyTestRefController));
+    newFactory.insert(makeEntry("NiLookAtInterpolator",       &construct <NiLookAtInterpolator>        , RC_NiLookAtInterpolator          ));
+    newFactory.insert(makeEntry("NiIntegerExtraData",         &construct <NiIntegerExtraData>          , RC_NiIntegerExtraData            ));
+    newFactory.insert(makeEntry("BSFrustumFOVController",     &construct <BSFrustumFOVController>      , RC_BSFrustumFOVController        ));
+    newFactory.insert(makeEntry("bhkHingeConstraint",         &construct <bhkHingeConstraint>          , RC_bhkHingeConstraint            ));
     return newFactory;
 }
 

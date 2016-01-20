@@ -1,5 +1,6 @@
 #include "foreignworldspacewidget.hpp"
 
+#include <cmath> // fmin, fmax
 #include <sstream>
 
 #include <QMouseEvent>
@@ -124,6 +125,16 @@ bool CSVRender::ForeignWorldspaceWidget::adjustCells()
     if (mCells.begin()==mCells.end())
         setCamera = true;
 
+    // for camera position
+    int minX = 0;
+    int maxX = 0;
+    int minY = 0;
+    int maxY = 0;
+    float minZ = 0.f;
+    float maxZ = 0.f;
+    bool first = true;
+    const CSMForeign::LandCollection& lands = mDocument.getData().getForeignLands();
+
     // add
     for (CSMWorld::CellSelection::Iterator iter (mSelection.begin()); iter!=mSelection.end();
         ++iter)
@@ -137,6 +148,7 @@ bool CSVRender::ForeignWorldspaceWidget::adjustCells()
 
         std::uint32_t formId = cells.searchFormId (x, y, mWorld);
         int index = cells.searchId (formId);
+        const CSMForeign::Cell& cellRec = cells.getRecord(cells.searchId(formId)).get();
 
         if (index > 0 && cells.getRecord (index).mState != CSMWorld::RecordBase::State_Deleted &&
             mCells.find (*iter)==mCells.end())
@@ -148,11 +160,34 @@ bool CSVRender::ForeignWorldspaceWidget::adjustCells()
             //connect (cell->getSignalHandler(), SIGNAL(flagAsModified()), this, SLOT(flagAsModSlot()));
             mCells.insert (std::make_pair (*iter, cell));
 
-            float height = cell->getTerrainHeightAt(Ogre::Vector3(
-                              ESM4::Land::REAL_SIZE * iter->getX() + ESM4::Land::REAL_SIZE/2,
-                              ESM4::Land::REAL_SIZE * iter->getY() + ESM4::Land::REAL_SIZE/2,
-                              0));
-            if (setCamera)
+            float height = 0.f;
+            int landIndex = lands.searchId(cellRec.mLandTemporary); // assume only one
+            if (landIndex != -1)
+            {
+                // height at the center of the cell
+                height = cell->getTerrainHeightAt(Ogre::Vector3(
+                                  ESM4::Land::REAL_SIZE * iter->getX() + ESM4::Land::REAL_SIZE/2,
+                                  ESM4::Land::REAL_SIZE * iter->getY() + ESM4::Land::REAL_SIZE/2,
+                                  0));
+            }
+
+            if (first)
+            {
+                minZ = maxZ = height;
+                minX = maxX = iter->getX();
+                minY = maxY = iter->getY();
+            }
+            else
+            {
+                minZ = std::fmin(minZ, height);
+                maxZ = std::fmax(maxZ, height);
+                minX = std::min(minX, iter->getX());
+                maxX = std::max(maxX, iter->getX());
+                minY = std::min(minY, iter->getY());
+                maxY = std::max(maxY, iter->getY());
+            }
+
+            if (0)//setCamera)
             {
                 setCamera = false;
                 getCamera()->setPosition (
@@ -219,6 +254,17 @@ bool CSVRender::ForeignWorldspaceWidget::adjustCells()
 
             modified = true;
         }
+    }
+
+    // try to look at the center of the group of cells
+    if (setCamera)
+    {
+        getCamera()->setPosition (
+                      ESM4::Land::REAL_SIZE * (minX+maxX)/2 + ESM4::Land::REAL_SIZE/2,
+                      ESM4::Land::REAL_SIZE * (minY+maxY)/2 + ESM4::Land::REAL_SIZE/2,
+                      (minZ+maxZ)/2);
+        // better camera position at the start
+        getCamera()->move(getCamera()->getDirection() * -6000); // FIXME: config setting
     }
 
     return modified;
@@ -294,6 +340,9 @@ void CSVRender::ForeignWorldspaceWidget::addEditModeSelectorButtons (
 
 void CSVRender::ForeignWorldspaceWidget::updateOverlay()
 {
+	if (mWorld != 0x3c) // FIXME: limit to Tamriel for now
+		return;
+
     if(getCamera()->getViewport())
     {
         if((uint32_t)getCamera()->getViewport()->getVisibilityMask()

@@ -222,7 +222,13 @@ enum RecordType
   RC_bhkEntity,
   RC_BSStripParticleSystem,
   RC_Property,
-  RC_bhkBallSocketConstraintChain
+  RC_bhkBallSocketConstraintChain,
+  RC_BSDamageStage,
+  RC_BSNiAlphaPropertyTestRefController,
+  RC_NiLookAtInterpolator,
+  RC_NiIntegerExtraData,
+  RC_BSFrustumFOVController,
+  RC_bhkHingeConstraint
 };
 /// Base class for all records
 struct Record

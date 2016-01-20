@@ -1,6 +1,7 @@
 #include "controller.hpp"
 
 #include "controlled.hpp" // NiSouceTexture
+#include "extra.hpp" // NiTextKeyExtraData
 
 void Nif::NiParticleSystemController::read(NIFStream *nif)
 {
@@ -659,6 +660,41 @@ void Nif::NiTransformInterpolator::read(NIFStream *nif)
     transform.read(nif);
 }
 
+void Nif::NiLookAtInterpolator::read(NIFStream *nif)
+{
+    unknown = nif->getUShort();
+    lookAt.read(nif);
+    target = nif->getSkyrimString(nifVer, Record::strings);
+    if (nifVer <= 0x14050000) // up to 20.5.0.0
+    {
+        translation = nif->getVector3();
+        rotation = nif->getQuaternion();
+        scale = nif->getFloat();
+    }
+    nif->getInt();
+    nif->getInt();
+    nif->getInt();
+}
+
+void Nif::NiLookAtInterpolator::post(NIFFile *nif)
+{
+    lookAt.post(nif);
+}
+
+void Nif::BSFrustumFOVController::read(NIFStream *nif)
+{
+    Controller::read(nif);
+
+    interpolator.read(nif);
+}
+
+void Nif::BSFrustumFOVController::post(NIFFile *nif)
+{
+    Controller::post(nif);
+
+    interpolator.post(nif);
+}
+
 void Nif::NiTransformController::read(NIFStream *nif)
 {
     Controller::read(nif);
@@ -696,4 +732,191 @@ void Nif::NiMultiTargetTransformController::post(NIFFile *nif)
 
     for (unsigned int i = 0; i < extraTargets.size(); ++i)
         extraTargets[i].post(nif);
+}
+
+void Nif::NiControllerManager::read(NIFStream *nif)
+{
+    Controller::read(nif);
+
+    cumulative = nif->getBool(nifVer);
+    unsigned int numControllerSequences = nif->getUInt();
+    controllerSequences.resize(numControllerSequences);
+    for (unsigned int i = 0; i < numControllerSequences; ++i)
+        controllerSequences[i].read(nif);
+    nif->getUInt(); // FIXME
+}
+
+void Nif::NiControllerManager::post(NIFFile *nif)
+{
+    Controller::post(nif);
+
+    for (unsigned int i = 0; i < controllerSequences.size(); ++i)
+        controllerSequences[i].post(nif);
+    //objectPalette.post(nif);
+}
+
+void Nif::ControllerLink::read(NIFStream *nif, unsigned int nifVer, std::vector<std::string> *strings)
+{
+    if (nifVer <= 0x0a010000) // up to 10.1.0.0
+    {
+        targetName = nif->getString();
+        controller.read(nif);
+    }
+
+    if (nifVer >= 0x0a01006a) // from 10.1.0.106
+    {
+        interpolator.read(nif);
+        controller2.read(nif);
+        if (nifVer == 0x0a01006a) // 10.1.0.106
+        {
+            nif->getUInt(); // FIXME
+            nif->getUShort();
+        }
+        priority = nif->getChar(); // TODO userVer >= 10
+    }
+
+    if (nifVer >= 0x0a020000 && nifVer <= 0x14000005)
+        stringPalette.read(nif);
+
+    if (nifVer >= 0x14010003) // 20.1.0.3
+        nodeName = nif->getSkyrimString(nifVer, strings);
+    else if (nifVer == 0x0a01006a) // 10.1.0.106
+        nodeName = nif->getString();
+
+    if (nifVer >= 0x0a020000 && nifVer <= 0x14000005)
+        nodeNameOffset = nif->getInt();
+
+    if (nifVer >= 0x14010003) // 20.1.0.3
+        propertyType = nif->getSkyrimString(nifVer, strings);
+    else if (nifVer == 0x0a01006a) // 10.1.0.106
+        propertyType = nif->getString();
+
+    if (nifVer >= 0x0a020000 && nifVer <= 0x14000005)
+        propertyTypeOffset = nif->getInt();
+
+    if (nifVer >= 0x14010003) // 20.1.0.3
+        controllerType = nif->getSkyrimString(nifVer, strings);
+    else if (nifVer == 0x0a01006a) // 10.1.0.106
+        controllerType = nif->getString();
+
+    if (nifVer >= 0x0a020000 && nifVer <= 0x14000005)
+        controllerTypeOffset = nif->getInt();
+
+    if (nifVer >= 0x14010003) // 20.1.0.3
+        variable1 = nif->getSkyrimString(nifVer, strings);
+    else if (nifVer == 0x0a01006a) // 10.1.0.106
+        variable1 = nif->getString();
+
+    if (nifVer >= 0x0a020000 && nifVer <= 0x14000005)
+        variable1Offset = nif->getInt();
+
+    if (nifVer >= 0x14010003) // 20.1.0.3
+        variable2 = nif->getSkyrimString(nifVer, strings);
+    else if (nifVer == 0x0a01006a) // 10.1.0.106
+        variable2 = nif->getString();
+
+    if (nifVer >= 0x0a020000 && nifVer <= 0x14000005)
+        variable2Offset = nif->getInt();
+}
+
+void Nif::ControllerLink::post(NIFFile *nif, unsigned int nifVer)
+{
+    if (nifVer <= 0x0a010000) // up to 10.1.0.0
+        controller.post(nif);
+
+    if (nifVer >= 0x0a01006a) // from 10.1.0.106
+    {
+        interpolator.post(nif);
+        controller2.post(nif);
+    }
+
+    if (nifVer >= 0x0a020000 && nifVer <= 0x14000005)
+        stringPalette.post(nif);
+}
+
+void Nif::NiSequence::read(NIFStream *nif)
+{
+    name = nif->getSkyrimString(nifVer, Record::strings);
+
+    if (nifVer <= 0x0a010000) // up to 10.1.0.0
+    {
+        textKeysName = nif->getString();
+        textKeys.read(nif);
+    }
+    unsigned int numControlledBlocks = nif->getUInt();
+    if (nifVer >= 0x0a01006a) // from 10.1.0.106
+        unsigned int unknown = nif->getUInt();
+    controlledBlocks.resize(numControlledBlocks);
+    for (unsigned int i = 0; i < numControlledBlocks; ++i)
+        controlledBlocks[i].read(nif, nifVer, Record::strings);
+}
+
+void Nif::NiSequence::post(NIFFile *nif)
+{
+    if (nifVer <= 0x0a010000) // up to 10.1.0.0
+        textKeys.post(nif);
+
+    for (unsigned int i = 0; i < controlledBlocks.size(); ++i)
+        controlledBlocks[i].post(nif, nifVer);
+}
+
+void Nif::NiControllerSequence::read(NIFStream *nif)
+{
+    NiSequence::read(nif);
+
+    if (nifVer >= 0x0a01006a) // from 10.1.0.106
+    {
+        weight = nif->getFloat();
+        textKeys2.read(nif);
+        cycleType = nif->getUInt();
+
+        if (nifVer == 0x0a01006a) // 10.1.0.106
+            unknown0 = nif->getUInt();
+
+        frequency = nif->getFloat();
+        startTime = nif->getFloat();
+
+        if (nifVer >= 0x0a020000 && nifVer <= 0x01040001)
+            unknown2 = nif->getFloat();
+
+        stopTime = nif->getFloat();
+
+        if (nifVer == 0x0a01006a) // 10.1.0.106
+            unknownByte = nif->getChar();
+
+        manager.read(nif);
+
+        if (nifVer >= 0x14020007 && !Record::strings->empty()) // from 20.2.0.7 (Skyrim)
+        {
+            unsigned int index = nif->getUInt();
+            if (index == -1)
+                targetName = "";
+            else
+                targetName = (*Record::strings)[index]; // FIXME: validate index size
+        }
+        else
+            targetName = nif->getString(); // FIXME just a guess
+
+        if (nifVer >= 0x0a020000 && nifVer <= 0x14000005)
+            stringPalette.read(nif);
+
+        if (nifVer >= 0x14020007 && userVer >= 11 && (userVer2 >= 24 && userVer2 <= 28))
+            nif->getInt(); // FIXME BSAnimNotesPtr
+
+        if (nifVer >= 0x14020007 && userVer2 > 28)
+            nif->getUShort(); // Unknown Short 1
+    }
+}
+
+void Nif::NiControllerSequence::post(NIFFile *nif)
+{
+    NiSequence::post(nif);
+
+    if (nifVer >= 0x0a01006a) // from 10.1.0.106
+    {
+        textKeys2.post(nif);
+        manager.post(nif);
+        if (nifVer >= 0x0a020000 && nifVer <= 0x14000005)
+            stringPalette.post(nif);
+    }
 }

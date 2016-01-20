@@ -126,6 +126,14 @@ public:
     void read(NIFStream *nif);
 };
 
+class NiIntegerExtraData : public NiExtraData
+{
+public:
+    unsigned int integerData;
+
+    void read(NIFStream *nif);
+};
+
 class NiFloatExtraData : public NiExtraData
 {
 public:

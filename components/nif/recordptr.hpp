@@ -162,6 +162,7 @@ class BSShaderTextureSet;
 class BSMultiBound;
 class BSMultiBoundData;
 class hkPackedNiTriStripsData;
+class NiFloatInterpolator;
 
 typedef RecordPtrT<Node> NodePtr;
 typedef RecordPtrT<Extra> ExtraPtr;
@@ -213,6 +214,7 @@ typedef RecordPtrT<Property> PropertyPtr;
 typedef RecordPtrT<BSMultiBound> BSMultiBoundPtr;
 typedef RecordPtrT<BSMultiBoundData> BSMultiBoundDataPtr;
 typedef RecordPtrT<hkPackedNiTriStripsData> hkPackedNiTriStripsDataPtr;
+typedef RecordPtrT<NiFloatInterpolator> NiFloatInterpolatorPtr;
 
 typedef RecordListT<Node> NodeList;
 typedef RecordListT<NiExtraData> NiExtraDataList;

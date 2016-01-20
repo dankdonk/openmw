@@ -412,6 +412,36 @@ void Nif::bhkLimitedHingeConstraint::read(NIFStream *nif)
     limitedHinge.read(nif, nifVer);
 }
 
+void Nif::HingeDescriptor::read(NIFStream *nif, unsigned int nifVer)
+{
+    if (nifVer <= 0x14000005)
+    {
+        pivotA = nif->getVector4();
+        perp2AxleA1 = nif->getVector4();
+        perp2AxleA2 = nif->getVector4();
+        pivotB = nif->getVector4();
+        axleB = nif->getVector4();
+    }
+
+    if (nifVer >= 0x14020007)
+    {
+        axleA = nif->getVector4();
+        perp2AxleA1 = nif->getVector4();
+        perp2AxleA2 = nif->getVector4();
+        pivotA = nif->getVector4();
+        axleB = nif->getVector4();
+        perp2AxleB1 = nif->getVector4();
+        perp2AxleB2 = nif->getVector4();
+        pivotB = nif->getVector4();
+    }
+}
+
+void Nif::bhkHingeConstraint::read(NIFStream *nif)
+{
+    bhkConstraint::read(nif);
+    hinge.read(nif, nifVer);
+}
+
 void Nif::bhkPrismaticConstraint::read(NIFStream *nif)
 {
     bhkConstraint::read(nif);
@@ -524,30 +554,6 @@ void Nif::bhkBallSocketConstraintChain::post(NIFFile *nif)
 
     for (unsigned int i = 0; i < links2.size(); ++i)
         links2[i].post(nif);
-}
-
-void Nif::HingeDescriptor::read(NIFStream *nif, unsigned int nifVer)
-{
-    if (nifVer <= 0x14000005)
-    {
-        pivotA = nif->getVector4();
-        perp2AxleA1 = nif->getVector4();
-        perp2AxleA2 = nif->getVector4();
-        pivotB = nif->getVector4();
-        axleB = nif->getVector4();
-    }
-
-    if (nifVer >= 0x14020007)
-    {
-        axleA = nif->getVector4();
-        perp2AxleA1 = nif->getVector4();
-        perp2AxleA2 = nif->getVector4();
-        pivotA = nif->getVector4();
-        axleB = nif->getVector4();
-        perp2AxleB1 = nif->getVector4();
-        perp2AxleB2 = nif->getVector4();
-        pivotB = nif->getVector4();
-    }
 }
 
 void Nif::bhkMalleableConstraint::read(NIFStream *nif)

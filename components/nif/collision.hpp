@@ -284,6 +284,28 @@ namespace Nif
         void read(NIFStream *nif);
     };
 
+    struct HingeDescriptor
+    {
+        Ogre::Vector4 pivotA;
+        Ogre::Vector4 perp2AxleA1;
+        Ogre::Vector4 perp2AxleA2;
+        Ogre::Vector4 pivotB;
+        Ogre::Vector4 axleB;
+        Ogre::Vector4 axleA;
+        Ogre::Vector4 perp2AxleB1;
+        Ogre::Vector4 perp2AxleB2;
+
+        void read(NIFStream *nif, unsigned int nifVer);
+    };
+
+    class bhkHingeConstraint : public bhkConstraint
+    {
+    public:
+        HingeDescriptor hinge;
+
+        void read(NIFStream *nif);
+    };
+
     class bhkPrismaticConstraint : public bhkConstraint
     {
     public:
@@ -344,20 +366,6 @@ namespace Nif
 
         void read(NIFStream *nif);
         void post(NIFFile *nif);
-    };
-
-    struct HingeDescriptor
-    {
-        Ogre::Vector4 pivotA;
-        Ogre::Vector4 perp2AxleA1;
-        Ogre::Vector4 perp2AxleA2;
-        Ogre::Vector4 pivotB;
-        Ogre::Vector4 axleB;
-        Ogre::Vector4 axleA;
-        Ogre::Vector4 perp2AxleB1;
-        Ogre::Vector4 perp2AxleB2;
-
-        void read(NIFStream *nif, unsigned int nifVer);
     };
 
     class bhkMalleableConstraint : public bhkConstraint

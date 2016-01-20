@@ -189,6 +189,8 @@ public:
     void post(NIFFile *nif);
 };
 
+//class BSNiAlphaPropertyTestRefController : public NiAlphaController {};
+
 struct MorphWeight
 {
     NiInterpolatorPtr interpolator;
@@ -435,6 +437,20 @@ public:
     void read(NIFStream *nif);
 };
 
+class NiLookAtInterpolator : public NiInterpolator
+{
+public:
+    unsigned short unknown;
+    NiNodePtr lookAt;
+    std::string target;
+    Ogre::Vector3 translation;
+    Ogre::Quaternion rotation;
+    float scale;
+
+    void read(NIFStream *nif);
+    void post(NIFFile *nif);
+};
+
 // replaces NiKeyframeController
 class NiTransformController : public Controller
 {
@@ -455,5 +471,81 @@ public:
     void read(NIFStream *nif);
     void post(NIFFile *nif);
 };
+
+class BSFrustumFOVController : public Controller
+{
+public:
+    NiFloatInterpolatorPtr interpolator;
+
+    void read(NIFStream *nif);
+    void post(NIFFile *nif);
+};
+
+class NiControllerManager : public Controller
+{
+public:
+    bool cumulative;
+    std::vector<NiControllerSequencePtr> controllerSequences;
+    //NiDefaultAvObjectPalettePtr objectPalette;
+
+    void read(NIFStream *nif);
+    void post(NIFFile *nif);
+};
+
+struct ControllerLink
+{
+    std::string targetName;
+    ControllerPtr controller;
+    NiInterpolatorPtr interpolator;
+    ControllerPtr controller2;
+    unsigned char priority;
+    NiStringPalettePtr stringPalette;
+    std::string nodeName;
+    int nodeNameOffset;
+    std::string propertyType;
+    int propertyTypeOffset;
+    std::string controllerType;
+    int controllerTypeOffset;
+    std::string variable1;
+    int variable1Offset;
+    std::string variable2;
+    int variable2Offset;
+
+    void read(NIFStream *nif, unsigned int nifVer, std::vector<std::string> *strings);
+    void post(NIFFile *nif, unsigned int nifVer);
+};
+
+class NiSequence : public Record
+{
+public:
+    std::string name;
+    std::string textKeysName;
+    NiTextKeyExtraDataPtr textKeys;
+    std::vector<ControllerLink> controlledBlocks;
+
+    void read(NIFStream *nif);
+    void post(NIFFile *nif);
+};
+
+class NiControllerSequence : public NiSequence
+{
+public:
+    float weight;
+    NiTextKeyExtraDataPtr textKeys2;
+    unsigned int cycleType;
+    unsigned int unknown0;
+    float frequency;
+    float startTime;
+    float unknown2;
+    float stopTime;
+    char unknownByte;
+    NiControllerManagerPtr manager;
+    std::string targetName;
+    NiStringPalettePtr stringPalette;
+
+    void read(NIFStream *nif);
+    void post(NIFFile *nif);
+};
+
 } // Namespace
 #endif

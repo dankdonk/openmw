@@ -525,7 +525,10 @@ void CSVRender::ForeignObject::update()
 #endif
     }
 
-    if (error)
+    //meshes\furniture\blacksmithforgemarker.nif
+    //meshes\furniture\smeltermarker.nif has more than 256 bones
+    if (error || QString(model.c_str()).contains(QRegExp("blacksmithforgemarker", Qt::CaseInsensitive))
+              || QString(model.c_str()).contains(QRegExp("smeltermarker", Qt::CaseInsensitive)))
     {
         Ogre::Entity* entity = mBase->getCreator()->createEntity (Ogre::SceneManager::PT_CUBE);
         entity->setMaterialName("BaseWhite"); /// \todo adjust material according to error
