@@ -111,7 +111,7 @@ bool CSVRender::ForeignCell::addObjects (const std::vector<ESM4::FormId>& object
         if (record.mState != CSMWorld::RecordBase::State_Deleted)
         {
             ESM4::FormId id = objects[i];
-            //std::cout << "Adding object: " << ESM4::formIdToString(id) << std::endl;
+            std::cout << "Adding object: " << ESM4::formIdToString(id) << std::endl;
             mObjects.insert(std::make_pair(id,
                         new ForeignObject(mDocument.getData(), mCellNode, id, false, mPhysics)));
             modified = true;

@@ -36,6 +36,7 @@ http://www.gnu.org/licenses/ .
 #include "../nif/property.hpp"
 #include "../nif/controller.hpp"
 #include "../nif/extra.hpp"
+#include "../nif/collision.hpp"
 #include <libs/platform/strings.h>
 
 #include <vector>

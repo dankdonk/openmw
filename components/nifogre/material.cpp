@@ -3,6 +3,8 @@
 #include <iostream> // FIXME
 
 #include <components/nif/node.hpp>
+#include <components/nif/property.hpp>
+#include <components/nif/controlled.hpp>
 #include <components/misc/resourcehelpers.hpp>
 #include <components/settings/settings.hpp>
 #include <components/nifoverrides/nifoverrides.hpp>

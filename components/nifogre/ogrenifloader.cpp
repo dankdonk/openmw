@@ -46,6 +46,10 @@
 #include <extern/shiny/Main/Factory.hpp>
 
 #include <components/nif/node.hpp>
+#include <components/nif/controller.hpp>
+#include <components/nif/property.hpp>
+#include <components/nif/controlled.hpp>
+#include <components/nif/extra.hpp>
 #include <components/nifcache/nifcache.hpp>
 #include <components/misc/stringops.hpp>
 #include <components/misc/resourcehelpers.hpp>

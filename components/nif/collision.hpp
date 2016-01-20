@@ -1,18 +1,10 @@
 #ifndef OPENMW_COMPONENTS_NIF_COLLISION_HPP
 #define OPENMW_COMPONENTS_NIF_COLLISION_HPP
 
-//#include <OgreMatrix4.h>
+#include <OgreVector3.h>
 
-//#include "node.hpp"
-//#include "recordptr.hpp"
-
-//#include "controlled.hpp"
-//#include "extra.hpp"
-//#include "data.hpp"
-//#include "property.hpp"
-//#include "niftypes.hpp"
-//#include "controller.hpp"
-#include "base.hpp"
+#include "record.hpp"
+#include "recordptr.hpp"
 
 namespace Nif
 {
@@ -62,7 +54,7 @@ namespace Nif
         float unknownF3;
         Ogre::Vector3 scale;
         float unknownF4;
-        hkPackedNiTriStripsData data;
+        hkPackedNiTriStripsDataPtr data;
 
         void read(NIFStream *nif);
         void post(NIFFile *nif);

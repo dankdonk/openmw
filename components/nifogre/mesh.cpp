@@ -16,6 +16,7 @@
 #include <OgreKeyFrame.h>
 
 #include <components/nif/node.hpp>
+#include <components/nif/controller.hpp>
 #include <components/nifcache/nifcache.hpp>
 #include <components/misc/stringops.hpp>
 

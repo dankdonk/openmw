@@ -1,6 +1,10 @@
 #include "niffile.hpp"
 #include "effect.hpp"
 #include "collision.hpp"
+#include "property.hpp"
+#include "controller.hpp"
+#include "controlled.hpp"
+#include "extra.hpp"
 
 #include <map>
 #include <cassert>
@@ -410,7 +414,10 @@ void NIFFile::parse()
         r->strings = &strings;
         records[i] = r;
         //std::cout << "Start of " << rec << ", block " << i << ": " << nif.tell() << std::endl; // FIXME
-        assert(nif.tell() < nif.size() && "Nif: EOF but record not read ");
+        //assert(nif.tell() < nif.size() && "Nif: EOF but record not read ");
+        if (nif.tell() >= nif.size())
+            fail ("Nif:: EOF but record not read");
+
         r->read(&nif);
     }
 

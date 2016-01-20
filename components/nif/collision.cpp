@@ -1,15 +1,6 @@
 #include "collision.hpp"
 
-//#include <OgreMatrix4.h>
-
-//#include "controlled.hpp"
-#include "extra.hpp"
-#include "data.hpp"
 #include "node.hpp"
-//#include "property.hpp"
-//#include "niftypes.hpp"
-//#include "controller.hpp"
-//#include "base.hpp"
 
 void Nif::hkTriangle::read(NIFStream *nif, unsigned int nifVer)
 {

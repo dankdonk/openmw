@@ -2,8 +2,6 @@
 #ifndef OPENMW_COMPONENTS_NIF_BASE_HPP
 #define OPENMW_COMPONENTS_NIF_BASE_HPP
 
-#include <iostream> // FIXME
-
 #include "record.hpp"
 #include "niffile.hpp"
 #include "recordptr.hpp"
@@ -23,30 +21,8 @@ public:
     NiExtraDataList extras;
     bool hasExtras;
 
-    void read(NIFStream *nif)
-    {
-        // FIXME: this is a linked list
-        if (nifVer <= 0x04020200) // up to 4.2.2.0
-        {
-            extra.read(nif);
-            hasExtras = false;
-        }
-
-        // FIXME: this is a vector
-        if (nifVer >= 0x0a000100) // from 10.0.1.0
-        {
-            extras.read(nif);
-            hasExtras = true;
-        }
-    }
-    void post(NIFFile *nif)
-    {
-        if (nifVer <= 0x04020200) // up to 4.2.2.0
-            extra.post(nif);
-
-        if (nifVer >= 0x0a000100) // from 10.0.1.0
-            extras.post(nif);
-    }
+    void read(NIFStream *nif);
+    void post(NIFFile *nif);
 };
 
 // NiTimeController
@@ -59,26 +35,8 @@ public:
     float timeStart, timeStop;
     ControlledPtr target;
 
-    void read(NIFStream *nif)
-    {
-        next.read(nif);
-
-        flags = nif->getUShort();
-
-        frequency = nif->getFloat();
-        phase = nif->getFloat();
-        timeStart = nif->getFloat();
-        timeStop = nif->getFloat();
-
-        target.read(nif);
-    }
-
-    void post(NIFFile *nif)
-    {
-        Record::post(nif);
-        next.post(nif);
-        target.post(nif);
-    }
+    void read(NIFStream *nif);
+    void post(NIFFile *nif);
 };
 
 /// Anything that has a controller
@@ -87,19 +45,8 @@ class Controlled : public Extra // FIXME: should be changed from "is an Extra" t
 public:
     ControllerPtr controller;
 
-    void read(NIFStream *nif)
-    {
-        Extra::read(nif);
-
-        controller.read(nif);
-    }
-
-    void post(NIFFile *nif)
-    {
-        Extra::post(nif);
-
-        controller.post(nif);
-    }
+    void read(NIFStream *nif);
+    void post(NIFFile *nif);
 };
 
 class NiParticleModifier : public Record
@@ -108,17 +55,8 @@ public:
     NiParticleModifierPtr extra;
     ControllerPtr controller;
 
-    void read(NIFStream *nif)
-    {
-        extra.read(nif);
-        controller.read(nif);
-    }
-
-    void post(NIFFile *nif)
-    {
-        extra.post(nif);
-        controller.post(nif);
-    }
+    void read(NIFStream *nif);
+    void post(NIFFile *nif);
 };
 
 /// Has name, extra-data and controller
@@ -127,12 +65,7 @@ class Named : public Controlled
 public:
     std::string name;
 
-    void read(NIFStream *nif)
-    {
-        name = nif->getSkyrimString(nifVer, Record::strings);
-
-        Controlled::read(nif);   // read NiObjectNET
-    }
+    void read(NIFStream *nif);
 };
 typedef Named NiSequenceStreamHelper;
 

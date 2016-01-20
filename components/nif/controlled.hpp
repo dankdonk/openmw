@@ -24,8 +24,6 @@
 #ifndef OPENMW_COMPONENTS_NIF_CONTROLLED_HPP
 #define OPENMW_COMPONENTS_NIF_CONTROLLED_HPP
 
-#include <iostream> // FIXME
-
 #include "base.hpp"
 
 namespace Nif
@@ -66,41 +64,8 @@ public:
     int alpha;
     int directRenderer;
 
-    void read(NIFStream *nif)
-    {
-        Named::read(nif);
-
-        external = !!nif->getChar();
-        if(external)
-        {
-            filename = nif->getString();
-            if (nifVer >= 0x0a010000) // 10.1.0.0
-                nif->getUInt(); // refNiObject // FIXME
-        }
-        else
-        {
-            if (nifVer >= 0x0a010000) // 10.1.0.0
-                originalFile = nif->getString();
-            else
-                nif->getChar(); // always 1 // FIXME: is this presentn on 10.1.0.0?
-            data.read(nif);
-        }
-
-        pixel = nif->getInt();
-        mipmap = nif->getInt();
-        alpha = nif->getInt();
-
-        nif->getChar(); // always 1
-
-        if (nifVer >= 0x0a01006a) // 10.1.0.106
-            directRenderer = nif->getBool(nifVer);
-    }
-
-    void post(NIFFile *nif)
-    {
-        Named::post(nif);
-        data.post(nif);
-    }
+    void read(NIFStream *nif);
+    void post(NIFFile *nif);
 };
 
 class NiParticleGrowFade : public NiParticleModifier
@@ -109,12 +74,7 @@ public:
     float growTime;
     float fadeTime;
 
-    void read(NIFStream *nif)
-    {
-        NiParticleModifier::read(nif);
-        growTime = nif->getFloat();
-        fadeTime = nif->getFloat();
-    }
+    void read(NIFStream *nif);
 };
 
 class NiParticleColorModifier : public NiParticleModifier
@@ -122,17 +82,8 @@ class NiParticleColorModifier : public NiParticleModifier
 public:
     NiColorDataPtr data;
 
-    void read(NIFStream *nif)
-    {
-        NiParticleModifier::read(nif);
-        data.read(nif);
-    }
-
-    void post(NIFFile *nif)
-    {
-        NiParticleModifier::post(nif);
-        data.post(nif);
-    }
+    void read(NIFStream *nif);
+    void post(NIFFile *nif);
 };
 
 class NiGravity : public NiParticleModifier
@@ -146,48 +97,316 @@ public:
     Ogre::Vector3 mPosition;
     Ogre::Vector3 mDirection;
 
-    void read(NIFStream *nif)
-    {
-        NiParticleModifier::read(nif);
-
-        /*unknown*/nif->getFloat();
-        mForce = nif->getFloat();
-        mType = nif->getUInt();
-        mPosition = nif->getVector3();
-        mDirection = nif->getVector3();
-    }
+    void read(NIFStream *nif);
 };
 
 // NiPinaColada
 class NiPlanarCollider : public NiParticleModifier
 {
 public:
-    void read(NIFStream *nif)
-    {
-        NiParticleModifier::read(nif);
-
-        // (I think) 4 floats + 4 vectors
-        nif->skip(4*16);
-    }
+    void read(NIFStream *nif);
 };
 
 class NiParticleRotation : public NiParticleModifier
 {
 public:
-    void read(NIFStream *nif)
-    {
-        NiParticleModifier::read(nif);
-
-        /*
-           byte (0 or 1)
-           float (1)
-           float*3
-        */
-        nif->skip(17);
-    }
+    void read(NIFStream *nif);
 };
 
+class NiPSysModifier : public Record
+{
+public:
+    std::string name;
+    unsigned int order;
+    NiParticleSystemPtr target;
+    bool active;
 
+    void read(NIFStream *nif);
+    void post(NIFFile *nif);
+};
+
+class BSWindModifier : public NiPSysModifier
+{
+public:
+    float strength;
+
+    void read(NIFStream *nif);
+};
+
+class BSPSysSubTexModifier : public NiPSysModifier
+{
+public:
+    unsigned int startFrame;
+    float startFrameFudge;
+    float endFrame;
+    float loopStartFrame;
+    float loopStartFrameFudge;
+    float frameCount;
+    float frameCountFudge;
+
+    void read(NIFStream *nif);
+};
+
+class NiPSysBombModifier : public NiPSysModifier
+{
+public:
+    NiNodePtr bombObject;
+    Ogre::Vector3 bombAxis;
+    float decay;
+    float deltaV;
+    unsigned int decayType;
+    unsigned int symmetryType;
+
+    void read(NIFStream *nif);
+};
+
+class BSPSysInheritVelocityModifier : public NiPSysModifier
+{
+public:
+    unsigned int unknownI1;
+    float unknownF1;
+    float unknownF2;
+    float unknownF3;
+
+    void read(NIFStream *nif);
+};
+
+class BSPSysLODModifier : public NiPSysModifier
+{
+public:
+    float unknown1;
+    float unknown2;
+    float unknown3;
+    float unknown4;
+
+    void read(NIFStream *nif);
+};
+
+class BSPSysScaleModifier : public NiPSysModifier
+{
+public:
+    std::vector<float> floats;
+
+    void read(NIFStream *nif);
+};
+
+class BSPSysSimpleColorModifier : public NiPSysModifier
+{
+public:
+    float fadeInPercent;
+    float fadeOutPercent;
+    float color1EndPerCent;
+    float color1StartPerCent;
+    float color2EndPerCent;
+    float color2StartPerCent;
+    std::vector<Ogre::Vector4> colors;
+
+    void read(NIFStream *nif);
+};
+
+class NiPSysEmitter : public NiPSysModifier
+{
+public:
+    float speed;
+    float speedVar;
+    float declination;
+    float declinationVar;
+    float planarAngle;
+    float planarAngleVar;
+    Ogre::Vector4 initialColor;
+    float initialRadius;
+    float radiusVar;
+    float lifeSpan;
+    float lifeSpanVar;
+
+    void read(NIFStream *nif);
+};
+
+class NiPSysBoxEmitter : public NiPSysEmitter
+{
+public:
+    NodePtr emitteObj;
+    float width;
+    float height;
+    float depth;
+
+    void read(NIFStream *nif);
+};
+
+class NiPSysCylinderEmitter : public NiPSysEmitter
+{
+public:
+    NodePtr emitteObj;
+    float radius;
+    float height;
+
+    void read(NIFStream *nif);
+};
+
+class NiPSysMeshEmitter : public NiPSysEmitter
+{
+public:
+    std::vector<NiGeometryPtr> emitterMeshes; // NiTriBasedGeom
+    unsigned int velocityType;
+    unsigned int emissionType;
+    Ogre::Vector3 emissionAxis;
+
+    void read(NIFStream *nif);
+    void post(NIFFile *nif);
+};
+
+class NiPSysSphereEmitter : public NiPSysEmitter
+{
+public:
+    NodePtr emitteObj;
+    float radius;
+
+    void read(NIFStream *nif);
+};
+
+class NiPSysAgeDeathModifier : public NiPSysModifier
+{
+public:
+    bool spawnOnDeath;
+    NiPSysSpawnModifierPtr spawnModifier;
+
+    void read(NIFStream *nif);
+    void post(NIFFile *nif);
+};
+
+class NiPSysDragModifier : public NiPSysModifier
+{
+public:
+    NodePtr parent;
+    Ogre::Vector3 dragAxis;
+    float percent;
+    float range;
+    float rangeFalloff;
+
+    void read(NIFStream *nif);
+};
+
+class NiPSysSpawnModifier : public NiPSysModifier
+{
+public:
+    unsigned short numSpawnGen;
+    float percentSpawn;
+    unsigned short minSpawn;
+    unsigned short maxSpawn;
+    float spawnSpeedChaos;
+    float spawnDirChaos;
+    float lifeSpan;
+    float lifeSpanVar;
+
+    void read(NIFStream *nif);
+};
+
+class NiPSysGrowFadeModifier : public NiPSysModifier
+{
+public:
+    float growTime;
+    unsigned short growGen;
+    float fadeTime;
+    unsigned short fadeGen;
+    float baseScale;
+
+    void read(NIFStream *nif);
+};
+
+class NiPSysColorModifier : public NiPSysModifier
+{
+public:
+    NiColorDataPtr colorData;
+
+    void read(NIFStream *nif);
+    void post(NIFFile *nif);
+};
+
+class NiPSysGravityModifier : public NiPSysModifier
+{
+public:
+    NodePtr gravityObj;
+    Ogre::Vector3 gravityAxis;
+    float decay;
+    float strength;
+    unsigned int forceType;
+    float turbulence;
+    float turbulenceScale;
+
+    void read(NIFStream *nif);
+};
+
+class NiPSysPositionModifier : public NiPSysModifier {};
+
+class NiPSysBoundUpdateModifier : public NiPSysModifier
+{
+public:
+
+    void read(NIFStream *nif);
+};
+
+class NiPSysRotationModifier : public NiPSysModifier
+{
+public:
+    float initialRotSpeed;
+    float initialRotSpeedVar;
+    float initialRotAngle;
+    float initialRotAngleVar;
+    bool randomRotSpeedSign;
+
+    void read(NIFStream *nif);
+};
+
+class BSParentVelocityModifier : public NiPSysModifier
+{
+public:
+    float damping;
+
+    void read(NIFStream *nif);
+};
+
+class NiPSysColliderManager : public NiPSysModifier
+{
+public:
+    NiPSysColliderPtr collider;
+
+    void read(NIFStream *nif);
+    void post(NIFFile *nif);
+};
+
+class NiPSysCollider : public Record
+{
+public:
+    float bounce;
+    bool spawnOnCollide;
+    bool dieOnCollide;
+    //NiPSysSpawnModifierPtr spawnModifier;
+    NodePtr parent;
+    NodePtr nextCollider;
+    NodePtr colliderObj;
+
+    void read(NIFStream *nif);
+    void post(NIFFile *nif);
+};
+
+class NiPSysPlanarCollider : public NiPSysCollider
+{
+public:
+    float width;
+    float height;
+    Ogre::Vector3 xAxis;
+    Ogre::Vector3 yAxis;
+
+    void read(NIFStream *nif);
+};
+
+class NiPSysSphericalCollider : public NiPSysCollider
+{
+public:
+    float radius;
+
+    void read(NIFStream *nif);
+};
 
 } // Namespace
 #endif
