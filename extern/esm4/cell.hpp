@@ -50,6 +50,22 @@ namespace ESM4
     // The cells need to be organised under world spaces.
     struct Cell
     {
+#pragma pack(push, 1)
+        // TES4 (guesses only), TES5 are 96 bytes
+        struct Lighting
+        {                              //               | Aichan Prison values
+            std::uint32_t ambient;     //               | 16 17 19 00 (RGBA)
+            std::uint32_t directional; //               | 00 00 00 00 (RGBA)
+            std::uint32_t fogNear;     //               | 1D 1B 16 00 (RGBA)
+            float         unknown1;    // Fog Near      | 00 00 00 00 = 0.f
+            float         unknown2;    // Fog Far       | 00 80 3B 45 = 3000.f
+            std::int32_t  unknown3;    // rotation xy   | 00 00 00 00 = 0
+            std::int32_t  unknown4;    // rotation z    | 00 00 00 00 = 0
+            float         unknown5;    // Fog dir fade  | 00 00 80 3F = 1.f
+            float         unknown6;    // Fog clip dist | 00 80 3B 45 = 3000.f
+        };
+#pragma pack(pop)
+
         FormId mParent;       // world formId (for grouping cells), from the loading sequence
 
         FormId mFormId;       // from the header
@@ -75,6 +91,7 @@ namespace ESM4
         std::vector<FormId> mRefVisibleDistant;
         std::vector<FormId> mRefTemporary;
         FormId mLandTemporary; // assume only one LAND per CELL
+        Lighting mLighting;
 
         // TODO consider caching otheer FormID's
         // Persistent      ACHR, ACRE

@@ -38,6 +38,16 @@ ESM4::Cell::Cell() : mCellFlags(0), mX(0), mY(0), mOwner(0), mGlobal(0), mClimat
 {
     mEditorId.clear();
     mFullName.clear();
+
+    mLighting.ambient = 0;
+    mLighting.directional = 0;
+    mLighting.fogNear = 0;
+    mLighting.unknown1 = 0.f;
+    mLighting.unknown2 = 0.f;
+    mLighting.unknown3 = 0;
+    mLighting.unknown4 = 0;
+    mLighting.unknown5 = 0.f;
+    mLighting.unknown6 = 0.f;
 }
 
 ESM4::Cell::~Cell()
@@ -206,6 +216,16 @@ void ESM4::Cell::load(ESM4::Reader& reader)
                 break;
             }
             case ESM4::SUB_XCLL:
+            {
+                if (reader.esmVersion() == ESM4::VER_094 || reader.esmVersion() == ESM4::VER_170)
+                    reader.skipSubRecordData();
+                else
+                {
+                    assert(subHdr.dataSize == 36 && "CELL lighting size error");
+                    reader.get(mLighting);
+                }
+                break;
+            }
             case ESM4::SUB_TVDT:
             case ESM4::SUB_MHDT:
             case ESM4::SUB_XCGD:

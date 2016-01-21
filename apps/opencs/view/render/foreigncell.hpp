@@ -115,6 +115,8 @@ namespace CSVRender
 
             float getTerrainHeightAt(const Ogre::Vector3 &pos) const;
 
+            Ogre::SceneNode *getSceneNode() { return mCellNode; } // for camera position
+
             void pathgridPointAdded(const Ogre::Vector3 &pos, bool interior = false);
             void pathgridPointMoved(const std::string &name,
                     const Ogre::Vector3 &newPos, bool interior = false);

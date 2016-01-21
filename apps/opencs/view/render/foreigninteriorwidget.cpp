@@ -4,6 +4,8 @@
 #include <iostream> // FIXME
 
 #include <OgreColourValue.h>
+#include <OgreSceneManager.h>
+#include <OgreSceneNode.h>
 #include <OgreCamera.h>
 
 #include <QEvent>
@@ -24,6 +26,7 @@ void CSVRender::ForeignInteriorWidget::update()
 {
     const CSMWorld::Record<CSMForeign::Cell>& record =
         dynamic_cast<const CSMWorld::Record<CSMForeign::Cell>&> (mCellsModel->getRecord (mCellId));
+#if 0
 
     ESM4::FormId formId = static_cast<ESM4::FormId>(std::stoi(mCellId, nullptr, 16));
 
@@ -32,12 +35,23 @@ void CSVRender::ForeignInteriorWidget::update()
 
     //connect (cell->getSignalHandler(), SIGNAL(flagAsModified()), this, SLOT(flagAsModSlot()));
     mCell.reset (cell);
-
+#endif
     Ogre::ColourValue colour;
-    //colour.setAsABGR (record.get().mAmbi.mAmbient); // FIXME: where to get mAmbient?
+    colour.setAsABGR (record.get().mLighting.ambient);
     setDefaultAmbient (colour);
 
     /// \todo deal with mSunlight and mFog/mForDensity
+
+    // FIXME: how to detect whether to apply fog?
+    if (record.get().mLighting.fogNear != 0) // assume we don't have black fog...
+    {
+        colour.setAsABGR (record.get().mLighting.fogNear); // variable colour reused
+        getSceneManager()->setFog(Ogre::FogMode::FOG_LINEAR, // FIXME: how to detect which mode?
+                colour,
+                0.001f, // unused for FOG_LINEAR
+                record.get().mLighting.unknown1,  // near
+                record.get().mLighting.unknown2); // far
+    }
 
     flagAsModified();
 }
@@ -80,6 +94,7 @@ void CSVRender::ForeignInteriorWidget::update()
 //                 on SceneSubView, which in turn calls useViewHint()
 void CSVRender::ForeignInteriorWidget::useViewHint (const std::string& hint)
 {
+#if 0
     if (!hint.empty())
     {
         if (hint[0]=='c')
@@ -100,10 +115,12 @@ void CSVRender::ForeignInteriorWidget::useViewHint (const std::string& hint)
     }
 
     update();
+#endif
 }
 
-CSVRender::ForeignInteriorWidget::ForeignInteriorWidget (QWidget* parent, CSMDoc::Document& document)
-: WorldspaceWidget (document, parent), mDocument(document)
+CSVRender::ForeignInteriorWidget::ForeignInteriorWidget (const std::string& cellId,
+        QWidget* parent, CSMDoc::Document& document)
+: WorldspaceWidget (document, parent), mCellId(cellId), mDocument(document)
 {
     mCellsModel = &dynamic_cast<CSMWorld::IdTable&> (
         *document.getData().getTableModel (CSMWorld::UniversalId::Type_ForeignCells));
@@ -116,12 +133,25 @@ CSVRender::ForeignInteriorWidget::ForeignInteriorWidget (QWidget* parent, CSMDoc
     connect (mCellsModel, SIGNAL (rowsAboutToBeRemoved (const QModelIndex&, int, int)),
         this, SLOT (cellRowsAboutToBeRemoved (const QModelIndex&, int, int)));
 
-    /*update();*/
+    update();
 
-    // FIXME: mCellId will need to come from hint
-    //Cell *cell = new Cell (document, getSceneManager(), mCellId, document.getPhysics());
+    ESM4::FormId formId = static_cast<ESM4::FormId>(std::stoi(mCellId, nullptr, 16));
+
+    ForeignCell *cell
+                = new ForeignCell (mDocument, getSceneManager(), formId, 0, mDocument.getPhysics());
+
     //connect (cell->getSignalHandler(), SIGNAL(flagAsModified()), this, SLOT(flagAsModSlot()));
-    //mCell.reset (cell);
+    mCell.reset (cell);
+
+    //Ogre::Vector3 corner
+        //= cell->getSceneNode()->_getWorldAABB().getCorner(Ogre::AxisAlignedBox::NEAR_RIGHT_TOP);
+    //Ogre::Vector3 center
+        //= cell->getSceneNode()->_getWorldAABB().getCenter();
+
+    //getCamera()->setPosition(Ogre::Vector3(center.x+300, center.y, center.z));
+    //getCamera()->lookAt(center);
+    //getCamera()->move(getCamera()->getDirection() * -2000); // FIXME: config setting
+    //getCamera()->roll (Ogre::Degree (-90));
 }
 
 void CSVRender::ForeignInteriorWidget::cellDataChanged (const QModelIndex& topLeft,
@@ -161,15 +191,19 @@ bool CSVRender::ForeignInteriorWidget::handleDrop (const std::vector<CSMWorld::U
 
     if (type!=Type_CellsInterior)
         return false;
-#if 0 // FIXME: can't use getId()
+
     mCellId = dropData.begin()->getId();
-    ForeignCell *cell = new ForeignCell (getDocument(), getSceneManager(), mCellId, getDocument().getPhysics());
-    connect (cell->getSignalHandler(), SIGNAL(flagAsModified()), this, SLOT(flagAsModSlot()));
+    ESM4::FormId formId = static_cast<ESM4::FormId>(std::stoi(mCellId, nullptr, 16));
+
+    ForeignCell *cell
+        = new ForeignCell (getDocument(), getSceneManager(), formId, 0, getDocument().getPhysics());
+
+    //connect (cell->getSignalHandler(), SIGNAL(flagAsModified()), this, SLOT(flagAsModSlot()));
     mCell.reset (cell);
 
     update();
     emit cellChanged(*dropData.begin());
-#endif
+
     return true;
 }
 

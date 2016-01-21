@@ -35,7 +35,7 @@ namespace CSVRender
 
         public:
 
-            ForeignInteriorWidget (QWidget *parent, CSMDoc::Document& document);
+            ForeignInteriorWidget (const std::string& cellId, QWidget *parent, CSMDoc::Document& document);
 
             virtual dropRequirments getDropRequirements(DropType type) const;
 
