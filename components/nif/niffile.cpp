@@ -249,6 +249,8 @@ static std::map<std::string,RecordFactoryEntry> makeFactory()
     newFactory.insert(makeEntry("NiIntegerExtraData",         &construct <NiIntegerExtraData>          , RC_NiIntegerExtraData            ));
     newFactory.insert(makeEntry("BSFrustumFOVController",     &construct <BSFrustumFOVController>      , RC_BSFrustumFOVController        ));
     newFactory.insert(makeEntry("bhkHingeConstraint",         &construct <bhkHingeConstraint>          , RC_bhkHingeConstraint            ));
+    newFactory.insert(makeEntry("BSStripPSysData",            &construct <BSStripPSysData>             , RC_BSStripPSysData               ));
+    newFactory.insert(makeEntry("BSPSysStripUpdateModifier",  &construct <BSPSysStripUpdateModifier>   , RC_BSPSysStripUpdateModifier     ));
     return newFactory;
 }
 

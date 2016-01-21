@@ -228,7 +228,9 @@ enum RecordType
   RC_NiLookAtInterpolator,
   RC_NiIntegerExtraData,
   RC_BSFrustumFOVController,
-  RC_bhkHingeConstraint
+  RC_bhkHingeConstraint,
+  RC_BSStripPSysData,
+  RC_BSPSysStripUpdateModifier
 };
 /// Base class for all records
 struct Record

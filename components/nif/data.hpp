@@ -159,6 +159,17 @@ public:
     void read(NIFStream *nif);
 };
 
+class BSStripPSysData : public NiPSysData
+{
+public:
+    short unknown5;
+    char unknown6;
+    int unknown7;
+    float unknown8;
+
+    void read(NIFStream *nif);
+};
+
 class NiPosData : public Record
 {
 public:

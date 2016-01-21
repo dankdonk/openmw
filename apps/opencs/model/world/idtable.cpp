@@ -317,7 +317,7 @@ std::pair<CSMWorld::UniversalId, std::string> CSMWorld::IdTable::view (int row) 
         return std::make_pair (UniversalId::Type_None, "");
 
     // determine if this is internal or external (but only for non-foreign cells)
-    if (id[0]=='#')
+    if (id[0] == '#')
         id = "sys::default";
     else if (isFormId(id))
     {
@@ -326,8 +326,14 @@ std::pair<CSMWorld::UniversalId, std::string> CSMWorld::IdTable::view (int row) 
         if (column!=-1)
         {
             std::string cellId = mIdCollection->getData(row, column).toString().toUtf8().constData();
-            if (cellId[0]=='#')
-                cellId = "sys::foreign";
+            if (cellId[0] == '#')
+            {
+                int parentColumn = mIdCollection->searchColumnIndex (Columns::ColumnId_Parent);
+                std::string world = mIdCollection->getData(row, parentColumn).toString().toUtf8().constData();
+
+                hint = "c:" + world + ":" + cellId;
+                id = "sys::foreign";
+            }
         }
     }
 

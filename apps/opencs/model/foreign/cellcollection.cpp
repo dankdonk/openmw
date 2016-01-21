@@ -126,6 +126,9 @@ int CSMForeign::CellCollection::load (ESM4::Reader& reader, bool base)
                 { {std::pair<int, int>(reader.currCellGrid().grid.x, reader.currCellGrid().grid.y), formId } }));
 
         ESM4::gridToString(reader.currCellGrid().grid.x, reader.currCellGrid().grid.y, record.mCellId);
+
+        // FIXME: use the loading sequence to then validate using the existance of cell grid
+        record.isInterior = false;
     }
     else
     {
@@ -148,6 +151,9 @@ int CSMForeign::CellCollection::load (ESM4::Reader& reader, bool base)
             record.mCellId = record.mEditorId; // FIXME: check if editor id's are uplicated
         else
             record.mCellId = id; // use formId string instead of "#x y"
+
+        // FIXME: use the loading sequence to then validate using the existance of cell grid
+        record.isInterior = true;
     }
 
     int index = searchId(formId);
@@ -163,6 +169,7 @@ int CSMForeign::CellCollection::load (ESM4::Reader& reader, bool base)
     }
 
     record.mWorld = mWorlds.getIdString(record.mParent); // FIXME: assumes our world is already loaded
+    record.mWorldFormId = ESM4::formIdToString(record.mParent);
     if (!record.mRegions.empty())
         ESM4::formIdToString(record.mRegions.back(), record.mRegion);
 

@@ -244,6 +244,16 @@ void Nif::NiPSysData::read(NIFStream *nif)
     }
 }
 
+void Nif::BSStripPSysData::read(NIFStream *nif)
+{
+    NiPSysData::read(nif);
+
+    unknown5 = nif->getShort();
+    unknown6 = nif->getChar();
+    unknown7 = nif->getInt();
+    unknown8 = nif->getFloat();
+}
+
 void Nif::NiPosData::read(NIFStream *nif)
 {
     mKeyList.read(nif);

@@ -332,6 +332,7 @@ namespace CSMWorld
 
             { ColumnId_EditorId, "Editor ID" },
             { ColumnId_World, "World" },
+            { ColumnId_Parent, "World FormId" },
             { ColumnId_TextureFile, "Texture File" },
             { ColumnId_MapName, "Map Name" },
             { ColumnId_Shader, "Shader" },

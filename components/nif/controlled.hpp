@@ -204,6 +204,14 @@ public:
     void read(NIFStream *nif);
 };
 
+class BSPSysStripUpdateModifier : public NiPSysModifier
+{
+public:
+    float updateDeltaTime;
+
+    void read(NIFStream *nif);
+};
+
 class NiPSysEmitter : public NiPSysModifier
 {
 public:

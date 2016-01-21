@@ -636,9 +636,9 @@ void CSVRender::ForeignWorldspaceWidget::useViewHint (const std::string& hint)
     {
         CSMWorld::CellSelection selection;
 
-        if (hint[0]=='c')
+        if (hint[0] == 'c')
         {
-            // syntax: c:wwwwwwww:#x1 y1; #x2 y2 (number of coordinate pairs can be 0 or larger)
+            // syntax: c:wwwwwwww:#x1 y1; #x2 y2 (number of coordinate pairs can be 0 or more)
             //           ^       ^
             //           |       |
             //         0123456789
@@ -660,7 +660,7 @@ void CSVRender::ForeignWorldspaceWidget::useViewHint (const std::string& hint)
                 /// \todo adjust camera position
             }
         }
-        else if (hint[0]=='r')
+        else if (hint[0] == 'r')
         {
             /// \todo implement 'r' type hints
         }
@@ -679,33 +679,32 @@ void CSVRender::ForeignWorldspaceWidget::setCellSelection (const CSMWorld::CellS
     emit cellSelectionChanged (mSelection);
 }
 
-std::pair< int, int > CSVRender::ForeignWorldspaceWidget::getCoordinatesFromId (const std::string& record) const
-{
-    std::istringstream stream (record.c_str());
-    char ignore;
-    int x, y;
-    stream >> ignore >> x >> y;
-    return std::make_pair(x, y);
-}
-
 bool CSVRender::ForeignWorldspaceWidget::handleDrop (
     const std::vector< CSMWorld::UniversalId >& dropData, DropType type)
 {
     if (WorldspaceWidget::handleDrop (dropData, type))
         return true;
 
-    if (type!=Type_CellsExterior)
+    if (type != Type_CellsForeign)
         return false;
+
+    const CSMForeign::CellCollection& cells = mDocument.getData().getForeignCells();
 
     bool selectionChanged = false;
     for (unsigned i = 0; i < dropData.size(); ++i)
     {
-        std::pair<int, int> coordinates(getCoordinatesFromId(dropData[i].getId()));
-        if (mSelection.add(CSMWorld::CellCoordinates(coordinates.first, coordinates.second)))
-        {
+        ESM4::FormId formId = static_cast<ESM4::FormId>(std::stoi(dropData[i].getId(), nullptr, 16));
+        int index = cells.searchId(formId);
+        if (index == -1)
+            return false;
+        const CSMForeign::Cell& cell = cells.getRecord(cells.searchId(formId)).get();
+        if (cell.isInterior)
+            continue; // if any of the drops are interior just ignore it
+
+        if (mSelection.add(CSMWorld::CellCoordinates(cell.mX, cell.mY)))
             selectionChanged = true;
-        }
     }
+
     if (selectionChanged)
     {
         if (adjustCells())
@@ -721,13 +720,16 @@ CSVRender::WorldspaceWidget::dropRequirments CSVRender::ForeignWorldspaceWidget:
 {
     dropRequirments requirements = WorldspaceWidget::getDropRequirements (type);
 
-    if (requirements!=ignored)
+    if (requirements != ignored)
         return requirements;
 
     switch (type)
     {
-        case Type_CellsExterior:
+        case Type_CellsForeign:
             return canHandle;
+
+        case Type_CellsExterior:
+            return needPaged;
 
         case Type_CellsInterior:
             return needUnpaged;

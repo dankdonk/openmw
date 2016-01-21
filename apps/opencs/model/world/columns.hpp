@@ -332,11 +332,12 @@ namespace CSMWorld
 
             ColumnId_EditorId = 900,
             ColumnId_World = 901,
-            ColumnId_TextureFile = 902,
-            ColumnId_MapName = 903,
-            ColumnId_Shader = 904,
-            ColumnId_CellId = 905,
-            ColumnId_RefBaseId = 906,
+            ColumnId_Parent = 902,
+            ColumnId_TextureFile = 903,
+            ColumnId_MapName = 904,
+            ColumnId_Shader = 905,
+            ColumnId_CellId = 906,
+            ColumnId_RefBaseId = 907,
 
             // Allocated to a separate value range, so we don't get a collision should we ever need
             // to extend the number of use values.

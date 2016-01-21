@@ -455,6 +455,134 @@ public:
     typedef DefaultFunction Function;
 };
 
+class TransformController
+{
+public:
+    class Value : public NodeTargetValue<Ogre::Real>, public ValueInterpolator
+    {
+    private:
+        const Nif::QuaternionKeyMap* mRotations;
+        const Nif::FloatKeyMap* mXRotations;
+        const Nif::FloatKeyMap* mYRotations;
+        const Nif::FloatKeyMap* mZRotations;
+        const Nif::Vector3KeyMap* mTranslations;
+        const Nif::FloatKeyMap* mScales;
+        const Nif::NiInterpolator* mData;
+        Nif::NIFFilePtr mNif; // Hold a SharedPtr to make sure key lists stay valid
+
+        using ValueInterpolator::interpKey;
+
+        static Ogre::Quaternion interpKey(const Nif::QuaternionKeyMap::MapType &keys, float time)
+        {
+            if(time <= keys.begin()->first)
+                return keys.begin()->second.mValue;
+
+            Nif::QuaternionKeyMap::MapType::const_iterator it = keys.lower_bound(time);
+            if (it != keys.end())
+            {
+                float aTime = it->first;
+                const Nif::QuaternionKey* aKey = &it->second;
+
+                assert (it != keys.begin()); // Shouldn't happen, was checked at beginning of this function
+
+                Nif::QuaternionKeyMap::MapType::const_iterator last = --it;
+                float aLastTime = last->first;
+                const Nif::QuaternionKey* aLastKey = &last->second;
+
+                float a = (time - aLastTime) / (aTime - aLastTime);
+                return Ogre::Quaternion::nlerp(a, aLastKey->mValue, aKey->mValue);
+            }
+            else
+                return keys.rbegin()->second.mValue;
+        }
+
+        Ogre::Quaternion getXYZRotation(float time) const
+        {
+            float xrot = interpKey(mXRotations->mKeys, time);
+            float yrot = interpKey(mYRotations->mKeys, time);
+            float zrot = interpKey(mZRotations->mKeys, time);
+            Ogre::Quaternion xr(Ogre::Radian(xrot), Ogre::Vector3::UNIT_X);
+            Ogre::Quaternion yr(Ogre::Radian(yrot), Ogre::Vector3::UNIT_Y);
+            Ogre::Quaternion zr(Ogre::Radian(zrot), Ogre::Vector3::UNIT_Z);
+            return (zr*yr*xr);
+        }
+
+    public:
+        // data may be:
+        //   BSTreadTransfInterpolator
+        //   NiBSplineInterpolator
+        //     NiBSplineFloatInterpolator
+        //     NiBSplinePoint3Interpolator
+        //     NiBSplineTransformInterpolator
+        //   NiBlendInterpolator
+        //     NiBlendBoolInterpolator
+        //     NiBlendFloatInterpolator
+        //     NiBlendPoint3Interpolator
+        //     NiBlendTransformInterpolator
+        //   NiKeyBasedInterpolator
+        //     NiBoolInterpolator
+        //     NiFloatInterpolator
+        //     NiPathInterpolator
+        //     NiPoint3Interpolator
+        //     NiTransformInterpolator
+        //   NiLookAtInterpolator
+        Value(Ogre::Node *target, const Nif::NIFFilePtr& nif, const Nif::NiInterpolator *data)
+          : NodeTargetValue<Ogre::Real>(target)
+          , mRotations(NULL)
+          , mXRotations(NULL)
+          , mYRotations(NULL)
+          , mZRotations(NULL)
+          , mTranslations(NULL)
+          , mScales(NULL)
+          , mData(data)
+          , mNif(nif)
+        { }
+
+        virtual Ogre::Quaternion getRotation(float time) const
+        {
+            if(mRotations->mKeys.size() > 0)
+                return interpKey(mRotations->mKeys, time);
+            else if (!mXRotations->mKeys.empty() || !mYRotations->mKeys.empty() || !mZRotations->mKeys.empty())
+                return getXYZRotation(time);
+            return mNode->getOrientation();
+        }
+
+        virtual Ogre::Vector3 getTranslation(float time) const
+        {
+            if(mTranslations->mKeys.size() > 0)
+                return interpKey(mTranslations->mKeys, time);
+            return mNode->getPosition();
+        }
+
+        virtual Ogre::Vector3 getScale(float time) const
+        {
+            if(mScales->mKeys.size() > 0)
+                return Ogre::Vector3(interpKey(mScales->mKeys, time));
+            return mNode->getScale();
+        }
+
+        virtual Ogre::Real getValue() const
+        {
+            // Should not be called
+            return 0.0f;
+        }
+
+        virtual void setValue(Ogre::Real time)
+        {
+            if(mRotations->mKeys.size() > 0)
+                mNode->setOrientation(interpKey(mRotations->mKeys, time));
+            else if (!mXRotations->mKeys.empty() || !mYRotations->mKeys.empty() || !mZRotations->mKeys.empty())
+                mNode->setOrientation(getXYZRotation(time));
+            if(mTranslations->mKeys.size() > 0)
+                mNode->setPosition(interpKey(mTranslations->mKeys, time));
+            if(mScales->mKeys.size() > 0)
+                mNode->setScale(Ogre::Vector3(interpKey(mScales->mKeys, time)));
+        }
+    };
+
+    typedef DefaultFunction Function;
+};
+
 class KeyframeController
 {
 public:
@@ -1184,7 +1312,7 @@ private:
     static void createNodeControllers(const Nif::NIFFilePtr& nif, const std::string &name, Nif::ControllerPtr ctrl, ObjectScenePtr scene, int animflags)
     {
         do {
-            if (ctrl->nifVer <= 0x0a010000 && ctrl->flags & Nif::NiNode::ControllerFlag_Active) // FIXME no data
+            if (ctrl->flags & Nif::NiNode::ControllerFlag_Active)
             {
                 bool isAnimationAutoPlay = (animflags & Nif::NiNode::AnimFlag_AutoPlay) != 0;
                 if(ctrl->recType == Nif::RC_NiVisController)
@@ -1196,13 +1324,48 @@ private:
                     Ogre::ControllerValueRealPtr srcval(isAnimationAutoPlay ?
                                                         Ogre::ControllerManager::getSingleton().getFrameTimeSource() :
                                                         Ogre::ControllerValueRealPtr());
-                    Ogre::ControllerValueRealPtr dstval(OGRE_NEW VisController::Value(trgtbone, vis->data.getPtr()));
 
-                    VisController::Function* function = OGRE_NEW VisController::Function(vis, isAnimationAutoPlay);
-                    scene->mMaxControllerLength = std::max(function->mStopTime, scene->mMaxControllerLength);
-                    Ogre::ControllerFunctionRealPtr func(function);
+                    if (ctrl->nifVer >= 0x0a020000) // from 10.2.0.0
+                    {
+#if 0
+                        if (ctrl->interpolator.getPtr()->recType == Nif::RC_NiFloatInterpolator)
+                        {
 
-                    scene->mControllers.push_back(Ogre::Controller<Ogre::Real>(srcval, dstval, func));
+
+
+                            const Nif::NiFloatInterpolator* fi
+                                = static_cast<const Nif::NiFloatInterpolator*>(ctrl->interpolator.getPtr());
+                            // FIXME: this key is probably not the right one to use
+                            float key = fi->value;
+                            // use 0.5f as the default, not sure what it should be
+                            mDelta = interpKey(fi->floatData.getPtr()->mKeyList.mKeys, key, 0.5f);
+
+
+
+
+
+                            Ogre::ControllerValueRealPtr
+                                dstval(OGRE_NEW VisController::Value(trgtbone, vis->data.getPtr()));
+                        }
+                        else
+                            std::cout << "interpolator not supported" << std::endl;
+#endif
+                        ctrl = ctrl->next;
+                        continue;
+                    }
+                    else if (ctrl->nifVer <= 0x0a010000) // up to 10.1.0.0
+                    {
+                        Ogre::ControllerValueRealPtr dstval(
+                                OGRE_NEW VisController::Value(trgtbone, vis->data.getPtr()));
+
+                        VisController::Function* function
+                            = OGRE_NEW VisController::Function(vis, isAnimationAutoPlay);
+
+                        scene->mMaxControllerLength = std::max(function->mStopTime, scene->mMaxControllerLength);
+                        Ogre::ControllerFunctionRealPtr func(function);
+
+                        scene->mControllers.push_back(Ogre::Controller<Ogre::Real>(srcval, dstval, func));
+                    }
                 }
                 else if(ctrl->recType == Nif::RC_NiKeyframeController)
                 {
@@ -1216,12 +1379,27 @@ private:
                         Ogre::ControllerValueRealPtr srcval(isAnimationAutoPlay ?
                                                             Ogre::ControllerManager::getSingleton().getFrameTimeSource() :
                                                             Ogre::ControllerValueRealPtr());
-                        Ogre::ControllerValueRealPtr dstval(OGRE_NEW KeyframeController::Value(trgtbone, nif, key->data.getPtr()));
-                        KeyframeController::Function* function = OGRE_NEW KeyframeController::Function(key, isAnimationAutoPlay);
-                        scene->mMaxControllerLength = std::max(function->mStopTime, scene->mMaxControllerLength);
-                        Ogre::ControllerFunctionRealPtr func(function);
 
-                        scene->mControllers.push_back(Ogre::Controller<Ogre::Real>(srcval, dstval, func));
+                        if (ctrl->nifVer >= 0x0a020000) // from 10.2.0.0
+                        {
+#if 0
+#endif
+                            ctrl = ctrl->next;
+                            continue;
+                        }
+                        else if (ctrl->nifVer <= 0x0a010000) // up to 10.1.0.0
+                        {
+                            Ogre::ControllerValueRealPtr dstval(
+                                    OGRE_NEW KeyframeController::Value(trgtbone, nif, key->data.getPtr()));
+
+                            KeyframeController::Function* function
+                                = OGRE_NEW KeyframeController::Function(key, isAnimationAutoPlay);
+
+                            scene->mMaxControllerLength = std::max(function->mStopTime, scene->mMaxControllerLength);
+                            Ogre::ControllerFunctionRealPtr func(function);
+
+                            scene->mControllers.push_back(Ogre::Controller<Ogre::Real>(srcval, dstval, func));
+                        }
                     }
                 }
             }

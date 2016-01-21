@@ -41,8 +41,6 @@ namespace CSVRender
 
         private:
 
-            std::pair<int, int> getCoordinatesFromId(const std::string& record) const;
-
             /// Bring mCells into sync with mSelection again.
             ///
             /// \return Any cells added or removed?

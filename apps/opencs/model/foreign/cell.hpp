@@ -19,9 +19,12 @@ namespace CSMForeign
         std::string mId;     // used by OpenCS to identify records (string instead of FormId)
 
         std::string mWorld;
+        std::string mWorldFormId; // keeping a string allows columnimp.hpp free of formId conversions
 
         std::string mCellId; // for region map (#x y for most exterior cells)
         std::string mRegion; // for region map, probably will be removed
+
+        bool isInterior; // FIXME: needs a better way
 
         void load (ESM4::Reader& reader);
 

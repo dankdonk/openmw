@@ -189,11 +189,20 @@ bool CSVRender::ForeignInteriorWidget::handleDrop (const std::vector<CSMWorld::U
     if (WorldspaceWidget::handleDrop (dropData, type))
         return true;
 
-    if (type!=Type_CellsInterior)
+    if (type != Type_CellsForeign)
         return false;
+
+    const CSMForeign::CellCollection& cells = mDocument.getData().getForeignCells();
 
     mCellId = dropData.begin()->getId();
     ESM4::FormId formId = static_cast<ESM4::FormId>(std::stoi(mCellId, nullptr, 16));
+    int index = cells.searchId(formId);
+    if (index == -1)
+        return false;
+
+    const CSMForeign::Cell& cellrec = cells.getRecord(cells.searchId(formId)).get();
+    if (!cellrec.isInterior)
+        return false;
 
     ForeignCell *cell
         = new ForeignCell (getDocument(), getSceneManager(), formId, 0, getDocument().getPhysics());
@@ -300,8 +309,11 @@ CSVRender::WorldspaceWidget::dropRequirments CSVRender::ForeignInteriorWidget::g
 
     switch(type)
     {
-        case Type_CellsInterior:
+        case Type_CellsForeign:
             return canHandle;
+
+        case Type_CellsInterior:
+            return needUnpaged;
 
         case Type_CellsExterior:
             return needPaged;

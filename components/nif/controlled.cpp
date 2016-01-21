@@ -176,6 +176,14 @@ void Nif::BSPSysSimpleColorModifier::read(NIFStream *nif)
     nif->getVector4s(colors, 3);
 }
 
+
+void Nif::BSPSysStripUpdateModifier::read(NIFStream *nif)
+{
+    NiPSysModifier::read(nif);
+
+    updateDeltaTime = nif->getFloat();
+}
+
 void Nif::NiPSysEmitter::read(NIFStream *nif)
 {
     NiPSysModifier::read(nif);

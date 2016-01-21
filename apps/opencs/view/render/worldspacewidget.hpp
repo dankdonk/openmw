@@ -52,6 +52,7 @@ namespace CSVRender
             {
                 Type_CellsInterior,
                 Type_CellsExterior,
+                Type_CellsForeign, // the widget will need to determine whether interior or exterior
                 Type_Other,
                 Type_DebugProfile
             };
