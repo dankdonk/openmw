@@ -229,16 +229,20 @@ bool CSVRender::ForeignWorldspaceWidget::adjustCells()
 
                 // FIXME: inefficient hack
                 const CSMForeign::RegionCollection& regions = mDocument.getData().getForeignRegions();
-                const CSMForeign::Region& region = regions.getRecord(cells.getRecord(index).get().mRegion).get();
-
-                if (desc == "")
+                int regionIndex = regions.searchId(cells.getRecord(index).get().mRegion);
+                if (regionIndex != -1)
                 {
-                    if (!region.mMapName.empty())
-                        desc = region.mMapName;
-                    else if (!region.mEditorId.empty())
-                        desc = region.mEditorId;
-                    else
-                        desc = cells.getRecord(index).get().mRegion;
+                    const CSMForeign::Region& region = regions.getRecord(regionIndex).get();
+
+                    if (desc == "")
+                    {
+                        if (!region.mMapName.empty())
+                            desc = region.mMapName;
+                        else if (!region.mEditorId.empty())
+                            desc = region.mEditorId;
+                        else
+                            desc = cells.getRecord(index).get().mRegion;
+                    }
                 }
 
                 //if(desc == "") desc = cells.getRecord(index).get().mRegion;
@@ -680,7 +684,7 @@ void CSVRender::ForeignWorldspaceWidget::setCellSelection (const CSMWorld::CellS
 }
 
 bool CSVRender::ForeignWorldspaceWidget::handleDrop (
-    const std::vector< CSMWorld::UniversalId >& dropData, DropType type)
+        const std::vector< CSMWorld::UniversalId >& dropData, DropType type)
 {
     if (WorldspaceWidget::handleDrop (dropData, type))
         return true;
@@ -697,9 +701,14 @@ bool CSVRender::ForeignWorldspaceWidget::handleDrop (
         int index = cells.searchId(formId);
         if (index == -1)
             return false;
+
         const CSMForeign::Cell& cell = cells.getRecord(cells.searchId(formId)).get();
+
         if (cell.isInterior)
             continue; // if any of the drops are interior just ignore it
+
+        if (cell.mParent != mWorld)
+            continue; // if any of the drops are not in the current worldspace ignore it
 
         if (mSelection.add(CSMWorld::CellCoordinates(cell.mX, cell.mY)))
             selectionChanged = true;

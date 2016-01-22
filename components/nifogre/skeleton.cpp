@@ -36,6 +36,56 @@ void NIFSkeletonLoader::buildBones(Ogre::Skeleton *skel, const Nif::Node *node, 
     if(parent) parent->addChild(bone);
     mNifToOgreHandleMap[node->recIndex] = bone->getHandle();
 
+    // Nif::Node (NiAVObject) has trafo
+    // - so, need to ignore records that are not based on NiAVObject?
+    //
+    // NiGeometry
+    //   NiParticles
+    //     NiAutoNormalParticles <-- ok*
+    //     NiParticleMeshes      x-- not supported
+    //     NiParticleSystem                       <- TBD
+    //       BSStripParticleSystem                <- TBD
+    //       NiMeshParticleSystem x-- not supported
+    //     NiRotatingParticles   <-- ok*
+    //   NiTriBasedGeom
+    //     BSLODTriShape                          <- TBD
+    //     NiClod                x-- not supported
+    //     NiLines               x-- not supported
+    //     NiTriShape            <-- ok*
+    //       BSSegmentedTriShape x-- not supported
+    //       NiScreenElements    x-- not supported
+    //     NiTriStrips           <-- ok*
+    //
+    // NiNode
+    //   AvoidNode
+    //   BSBlastNode
+    //   BSDamageStage
+    //   BSDebrisNode
+    //   BSFadeNode
+    //   BSLeafAnimNode
+    //   BSMasterParticleSystem
+    //   BSMultiBoundNode
+    //   BSOrderedNode
+    //   BSTreeNode
+    //   BSValueNode
+    //     FxWidget
+    //     FxButton
+    //   FxRadioButton
+    //   NiBSAnimationNode
+    //   NiBSParticleNode
+    //   NiBillboardNode
+    //   NiBone
+    //   NiRoom
+    //   NiRoomGroup
+    //   NiSortAdjustNode
+    //   NiSwitchNode
+    //     NiLODNode
+    //   RootCollisionNode
+    //
+    // NiPSParticleSystem
+    //   NiPSMeshParticleSystem
+    //
+    // NiPortal
     bone->setOrientation(node->trafo.rotation);
     bone->setPosition(node->trafo.pos);
     bone->setScale(Ogre::Vector3(node->trafo.scale));
@@ -80,6 +130,8 @@ void NIFSkeletonLoader::buildBones(Ogre::Skeleton *skel, const Nif::Node *node, 
     }
 }
 
+// callback class for the 3rd parameter in Ogre::SkeletonManager::create()
+// which is called by createSkeleton()
 void NIFSkeletonLoader::loadResource(Ogre::Resource *resource)
 {
     Ogre::Skeleton *skel = dynamic_cast<Ogre::Skeleton*>(resource);
@@ -99,6 +151,16 @@ void NIFSkeletonLoader::loadResource(Ogre::Resource *resource)
 }
 
 
+// Conditions seem to be that:
+//
+// - boneTrafo exists, or
+// - at least one controller in the chain is NiKeyFrameController (and is active?), or
+// - node name is "AttachLight" or "ArrowBone", or
+// - one of the child node requires a skeleton, or
+// - the tree is not limited to NiNode, RootCollisionNode, NiTriShape or NiTriStrips only
+//
+// - ?? what are the remaining node types?
+//
 bool NIFSkeletonLoader::needSkeleton(const Nif::Node *node)
 {
     /* We need to be a little aggressive here, since some NIFs have a crap-ton
@@ -114,7 +176,8 @@ bool NIFSkeletonLoader::needSkeleton(const Nif::Node *node)
     {
         Nif::ControllerPtr ctrl = node->controller;
         do {
-            if(ctrl->recType == Nif::RC_NiKeyframeController && ctrl->flags & Nif::NiNode::ControllerFlag_Active)
+            if(ctrl->recType == Nif::RC_NiKeyframeController
+                    && ((ctrl->flags & Nif::NiNode::ControllerFlag_Active) != 0))
                 return true;
         } while(!(ctrl=ctrl->next).empty());
     }
@@ -136,13 +199,15 @@ bool NIFSkeletonLoader::needSkeleton(const Nif::Node *node)
         }
         return false;
     }
-    if(node->recType == Nif::RC_NiTriShape)
+
+    if(node->recType == Nif::RC_NiTriShape || node->recType == Nif::RC_NiTriStrips)
         return false;
 
     return true;
 }
 
-Ogre::SkeletonPtr NIFSkeletonLoader::createSkeleton(const std::string &name, const std::string &group, const Nif::Node *node)
+Ogre::SkeletonPtr NIFSkeletonLoader::createSkeleton(const std::string &name,
+                                                    const std::string &group, const Nif::Node *node)
 {
     bool forceskel = false;
     std::string::size_type extpos = name.rfind('.');
@@ -172,7 +237,8 @@ int NIFSkeletonLoader::lookupOgreBoneHandle(const std::string &nifname, int idx)
         if(entry != loader->second.mNifToOgreHandleMap.end())
             return entry->second;
     }
-    throw std::runtime_error("Invalid NIF record lookup ("+nifname+", index "+Ogre::StringConverter::toString(idx)+")");
+    throw std::runtime_error("Invalid NIF record lookup ("
+            +nifname+", index "+Ogre::StringConverter::toString(idx)+")");
 }
 
 NIFSkeletonLoader::LoaderMap NIFSkeletonLoader::sLoaders;

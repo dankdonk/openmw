@@ -1581,7 +1581,8 @@ private:
     }
 
 public:
-    static void load(Ogre::SceneNode *sceneNode, ObjectScenePtr scene, const std::string &name, const std::string &group, int flags=0)
+    static void load(Ogre::SceneNode *sceneNode,
+            ObjectScenePtr scene, const std::string &name, const std::string &group, int flags=0)
     {
         Nif::NIFFilePtr nif = Nif::Cache::getInstance().load(name);
         if(nif->numRoots() < 1)
