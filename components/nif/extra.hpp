@@ -37,6 +37,7 @@ public:
     NiExtraDataPtr next;
 
     void read(NIFStream *nif);
+    void post(NIFFile *nif);
 };
 
 class BSBehaviorGraphExtraData : public NiExtraData
@@ -46,6 +47,7 @@ public:
     unsigned char controlBaseSkeleton;
 
     void read(NIFStream *nif);
+    void post(NIFFile *nif);
 };
 
 struct DecalVectorArray
@@ -63,6 +65,7 @@ public:
     std::vector<DecalVectorArray> vectorBlocks;
 
     void read(NIFStream *nif);
+    void post(NIFFile *nif);
 };
 
 class BSBound : public NiExtraData
@@ -72,6 +75,7 @@ public:
     Ogre::Vector3 dimensions;
 
     void read(NIFStream *nif);
+    void post(NIFFile *nif);
 };
 
 struct FurniturePosition
@@ -94,6 +98,7 @@ public:
     std::vector<FurniturePosition> positions;
 
     void read(NIFStream *nif);
+    void post(NIFFile *nif);
 };
 
 class BSFurnitureMarkerNode : public BSFurnitureMarker {};
@@ -107,6 +112,7 @@ public:
     float zoom;
 
     void read(NIFStream *nif);
+    void post(NIFFile *nif);
 };
 
 class NiBinaryExtraData : public NiExtraData
@@ -116,6 +122,7 @@ public:
     std::vector<char> data;
 
     void read(NIFStream *nif);
+    void post(NIFFile *nif);
 };
 
 class NiBooleanExtraData : public NiExtraData
@@ -124,6 +131,7 @@ public:
     unsigned char booleanData;
 
     void read(NIFStream *nif);
+    void post(NIFFile *nif);
 };
 
 class NiIntegerExtraData : public NiExtraData
@@ -132,6 +140,7 @@ public:
     unsigned int integerData;
 
     void read(NIFStream *nif);
+    void post(NIFFile *nif);
 };
 
 class NiFloatExtraData : public NiExtraData
@@ -140,6 +149,7 @@ public:
     float floatData;
 
     void read(NIFStream *nif);
+    void post(NIFFile *nif);
 };
 
 class BSXFlags : public NiExtraData
@@ -148,6 +158,7 @@ public:
     unsigned int integerData;
 
     void read(NIFStream *nif);
+    void post(NIFFile *nif);
 };
 
 class NiStringExtraData : public NiExtraData
@@ -160,6 +171,7 @@ public:
     std::string stringData;
 
     void read(NIFStream *nif);
+    void post(NIFFile *nif);
 };
 
 class NiTextKeyExtraData : public NiExtraData
@@ -173,12 +185,14 @@ public:
     std::vector<TextKey> list;
 
     void read(NIFStream *nif);
+    void post(NIFFile *nif);
 };
 
 class NiVertWeightsExtraData : public NiExtraData
 {
 public:
     void read(NIFStream *nif);
+    void post(NIFFile *nif);
 };
 
 } // Namespace

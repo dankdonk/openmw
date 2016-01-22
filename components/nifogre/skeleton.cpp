@@ -58,29 +58,29 @@ void NIFSkeletonLoader::buildBones(Ogre::Skeleton *skel, const Nif::Node *node, 
     //
     // NiNode
     //   AvoidNode
-    //   BSBlastNode
-    //   BSDamageStage
-    //   BSDebrisNode
-    //   BSFadeNode
-    //   BSLeafAnimNode
-    //   BSMasterParticleSystem
-    //   BSMultiBoundNode
-    //   BSOrderedNode
-    //   BSTreeNode
-    //   BSValueNode
+    //   BSBlastNode                              <- TBD
+    //   BSDamageStage                            <- TBD
+    //   BSDebrisNode            <-- not supported
+    //   BSFadeNode                               <- TBD
+    //   BSLeafAnimNode                           <- TBD
+    //   BSMasterParticleSystem  <-- not supported
+    //   BSMultiBoundNode                         <- TBD
+    //   BSOrderedNode                            <- TBD
+    //   BSTreeNode                               <- TBD
+    //   BSValueNode                              <- TBD
     //     FxWidget
     //     FxButton
-    //   FxRadioButton
-    //   NiBSAnimationNode
-    //   NiBSParticleNode
-    //   NiBillboardNode
-    //   NiBone
-    //   NiRoom
-    //   NiRoomGroup
-    //   NiSortAdjustNode
-    //   NiSwitchNode
-    //     NiLODNode
-    //   RootCollisionNode
+    //   FxRadioButton           <-- not suppported
+    //   NiBSAnimationNode       <-- ok*
+    //   NiBSParticleNode                        <-- TBD
+    //   NiBillboardNode         <-- ok*
+    //   NiBone                  <-- not supported
+    //   NiRoom                  <-- not supported
+    //   NiRoomGroup             <-- not supported
+    //   NiSortAdjustNode        <-- not supported
+    //   NiSwitchNode                            <-- TBD
+    //     NiLODNode             <-- not supported
+    //   RootCollisionNode       <-- ok*
     //
     // NiPSParticleSystem
     //   NiPSMeshParticleSystem
@@ -185,7 +185,9 @@ bool NIFSkeletonLoader::needSkeleton(const Nif::Node *node)
     if (node->name == "AttachLight" || node->name == "ArrowBone")
         return true;
 
-    if(node->recType == Nif::RC_NiNode || node->recType == Nif::RC_RootCollisionNode)
+    if(node->recType == Nif::RC_NiNode ||
+            node->recType == Nif::RC_BSFadeNode || // FIXME not sure what BSFadeNode does
+            node->recType == Nif::RC_RootCollisionNode)
     {
         const Nif::NiNode *ninode = static_cast<const Nif::NiNode*>(node);
         const Nif::NodeList &children = ninode->children;

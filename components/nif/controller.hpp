@@ -189,6 +189,7 @@ public:
     void post(NIFFile *nif);
 };
 
+// construct NiAlphaController instead
 //class BSNiAlphaPropertyTestRefController : public NiAlphaController {};
 
 struct MorphWeight

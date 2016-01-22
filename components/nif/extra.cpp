@@ -9,6 +9,12 @@ void Nif::NiExtraData::read(NIFStream *nif)
         next.read(nif);
 }
 
+void Nif::NiExtraData::post(NIFFile *nif)
+{
+    if (nifVer <= 0x04020200) // up to 4.2.2.0
+        next.post(nif);
+}
+
 void Nif::BSBehaviorGraphExtraData::read(NIFStream *nif)
 {
     NiExtraData::read(nif);
@@ -16,6 +22,11 @@ void Nif::BSBehaviorGraphExtraData::read(NIFStream *nif)
     behaviourGraphFile = nif->getSkyrimString(nifVer, Record::strings);
 
     controlBaseSkeleton = nif->getChar();
+}
+
+void Nif::BSBehaviorGraphExtraData::post(NIFFile *nif)
+{
+    NiExtraData::post(nif);
 }
 
 void Nif::DecalVectorArray::read(NIFStream *nif)
@@ -37,12 +48,22 @@ void Nif::BSDecalPlacementVectorExtraData::read(NIFStream *nif)
         vectorBlocks[i].read(nif);
 }
 
+void Nif::BSDecalPlacementVectorExtraData::post(NIFFile *nif)
+{
+    NiExtraData::post(nif);
+}
+
 void Nif::BSBound::read(NIFStream *nif)
 {
     NiExtraData::read(nif);
 
     center = nif->getVector3();
     dimensions = nif->getVector3();
+}
+
+void Nif::BSBound::post(NIFFile *nif)
+{
+    NiExtraData::post(nif);
 }
 
 void Nif::BSFurnitureMarker::read(NIFStream *nif)
@@ -69,6 +90,11 @@ void Nif::BSFurnitureMarker::read(NIFStream *nif)
     }
 }
 
+void Nif::BSFurnitureMarker::post(NIFFile *nif)
+{
+    NiExtraData::post(nif);
+}
+
 void Nif::BSInvMarker::read(NIFStream *nif)
 {
     NiExtraData::read(nif);
@@ -77,6 +103,11 @@ void Nif::BSInvMarker::read(NIFStream *nif)
     rotationY = nif->getUShort();
     rotationZ = nif->getUShort();
     zoom = nif->getFloat();
+}
+
+void Nif::BSInvMarker::post(NIFFile *nif)
+{
+    NiExtraData::post(nif);
 }
 
 void Nif::NiBinaryExtraData::read(NIFStream *nif)
@@ -91,11 +122,21 @@ void Nif::NiBinaryExtraData::read(NIFStream *nif)
     }
 }
 
+void Nif::NiBinaryExtraData::post(NIFFile *nif)
+{
+    NiExtraData::post(nif);
+}
+
 void Nif::NiBooleanExtraData::read(NIFStream *nif)
 {
     NiExtraData::read(nif);
 
     booleanData = nif->getChar();
+}
+
+void Nif::NiBooleanExtraData::post(NIFFile *nif)
+{
+    NiExtraData::post(nif);
 }
 
 void Nif::NiIntegerExtraData::read(NIFStream *nif)
@@ -105,6 +146,11 @@ void Nif::NiIntegerExtraData::read(NIFStream *nif)
     integerData = nif->getUInt();
 }
 
+void Nif::NiIntegerExtraData::post(NIFFile *nif)
+{
+    NiExtraData::post(nif);
+}
+
 void Nif::NiFloatExtraData::read(NIFStream *nif)
 {
     NiExtraData::read(nif);
@@ -112,11 +158,21 @@ void Nif::NiFloatExtraData::read(NIFStream *nif)
     floatData = nif->getFloat();
 }
 
+void Nif::NiFloatExtraData::post(NIFFile *nif)
+{
+    NiExtraData::post(nif);
+}
+
 void Nif::BSXFlags::read(NIFStream *nif)
 {
     NiExtraData::read(nif);
 
     integerData = nif->getUInt(); // http://niftools.sourceforge.net/doc/nif/BSXFlags.html
+}
+
+void Nif::BSXFlags::post(NIFFile *nif)
+{
+    NiExtraData::post(nif);
 }
 
 void Nif::NiStringExtraData::read(NIFStream *nif)
@@ -127,6 +183,11 @@ void Nif::NiStringExtraData::read(NIFStream *nif)
         nif->getInt(); // size of string + 4. Really useful...
 
     stringData = nif->getSkyrimString(nifVer, Record::strings);
+}
+
+void Nif::NiStringExtraData::post(NIFFile *nif)
+{
+    NiExtraData::post(nif);
 }
 
 void Nif::NiTextKeyExtraData::read(NIFStream *nif)
@@ -145,6 +206,11 @@ void Nif::NiTextKeyExtraData::read(NIFStream *nif)
     }
 }
 
+void Nif::NiTextKeyExtraData::post(NIFFile *nif)
+{
+    NiExtraData::post(nif);
+}
+
 void Nif::NiVertWeightsExtraData::read(NIFStream *nif)
 {
     NiExtraData::read(nif);
@@ -155,4 +221,9 @@ void Nif::NiVertWeightsExtraData::read(NIFStream *nif)
     int s = nif->getUShort();
 
     nif->skip(s * sizeof(float)); // vertex weights I guess
+}
+
+void Nif::NiVertWeightsExtraData::post(NIFFile *nif)
+{
+    NiExtraData::post(nif);
 }
