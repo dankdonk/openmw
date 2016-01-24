@@ -17,15 +17,82 @@ namespace Nif
 class Extra : public Record
 {
 public:
-    NiExtraDataPtr extra; // FIXME: how to make this part of extras rather than keep separate members?
+    NiExtraDataPtr extra;
     NiExtraDataList extras;
-    bool hasExtras;
+    bool hasExtras; // FIXME: how to make this part of extras rather than keep separate members?
+
+    void read(NIFStream *nif);
+    void post(NIFFile *nif);
+};
+#if 0
+// same as Controller
+class NiTimeController : public Record
+{
+public:
+    NiTimeControllerPtr next;
+    unsigned short flags;
+    float frequency, phase;
+    float timeStart, timeStop;
+    NiObjectNETPtr target;
 
     void read(NIFStream *nif);
     void post(NIFFile *nif);
 };
 
-// NiTimeController
+// same as Name
+class NiObjectNET : public Record
+{
+public:
+    std::string name;
+    NiExtraDataPtr extra;
+    NiExtraDataList extras;
+    bool hasExtras; // FIXME
+    NiTimeControllerPtr controller;
+
+    void read(NIFStream *nif);
+    void post(NIFFile *nif);
+};
+
+// same as Node
+class NiAVObject : public NiObjectNET
+{
+public:
+    unsigned short flags;
+    Transformation transfrom;
+    Ogre::Vector3 velocity; // Unused? Might be a run-time game state
+    NiPropertyList props;
+
+    bool hasBounds = false; // NOTE: this needs to be set to false for NiTriStrips (see ManualBulletShapeLoader)
+    Ogre::Vector3 translation;
+    Ogre::Matrix3 rotation;
+    Ogre::Vector3 raidus;   // per direction
+
+    NiCollisionObjectPtr collision;
+
+    void read(NIFStream *nif);
+    void post(NIFFile *nif);
+
+    NiNode *parent; // FIXME: move this to NiNode?
+
+    const NiSkinData::BoneTrafo *boneTrafo;
+    const NiSkinData::BoneInfo *boneInfo;
+    short boneIndex;
+    void makeRootBone(const NiSkinData::BoneTrafo *tr);
+    void makeBone(short ind, const NiSkinData::BoneInfo &bi);
+
+    void getProperties(const Nif::NiTexturingProperty *&texprop,
+                       const Nif::NiMaterialProperty *&matprop,
+                       const Nif::NiAlphaProperty *&alphaprop,
+                       const Nif::NiVertexColorProperty *&vertprop,
+                       const Nif::NiZBufferProperty *&zprop,
+                       const Nif::NiSpecularProperty *&specprop,
+                       const Nif::NiWireframeProperty *&wireprop,
+                       const Nif::NiStencilProperty *&stencilprop) const;
+
+    Ogre::Matrix4 getLocalTransform() const;
+    Ogre::Matrix4 getWorldTransform() const;
+};
+#endif
 class Controller : public Record
 {
 public:

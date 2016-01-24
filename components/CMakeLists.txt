@@ -44,7 +44,8 @@ add_component_dir (nifcache
     )
 
 add_component_dir (nifogre
-    ogrenifloader skeleton material mesh particles controller
+    ogrenifloader skeleton material mesh particles controller nifobjectloader objectscene
+    controller
     )
 
 add_component_dir (nifbullet

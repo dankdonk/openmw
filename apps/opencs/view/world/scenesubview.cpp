@@ -30,6 +30,7 @@
 
 namespace
 {
+    // FIXME: duplicate, move to ESM4
     bool isFormId(const std::string& str)
     {
         if (str.size() != 8)

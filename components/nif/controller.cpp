@@ -293,13 +293,19 @@ void Nif::NiGeomMorpherController::post(NIFFile *nif)
 void Nif::NiVisController::read(NIFStream *nif)
 {
     Controller::read(nif);
-    data.read(nif);
+    if (nifVer >= 0x0a020000) // from 10.2.0.0
+        interpolator.read(nif);
+    if (nifVer <= 0x0a010000) // up to 10.1.0.0
+        data.read(nif);
 }
 
 void Nif::NiVisController::post(NIFFile *nif)
 {
     Controller::post(nif);
-    data.post(nif);
+    if (nifVer >= 0x0a020000) // from 10.2.0.0
+        interpolator.post(nif);
+    if (nifVer <= 0x0a010000) // up to 10.1.0.0
+        data.post(nif);
 }
 
 void Nif::NiFlipController::read(NIFStream *nif)
@@ -609,8 +615,8 @@ void Nif::NiBlendFloatInterpolator::read(NIFStream *nif)
 
 void Nif::NiBlendTransformInterpolator::read(NIFStream *nif)
 {
-    nif->getUShort();
-    nif->getUInt();
+    unknown1 = nif->getUShort();
+    unknown2 = nif->getUInt();
 }
 
 void Nif::NiPathInterpolator::read(NIFStream *nif)

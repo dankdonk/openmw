@@ -5,6 +5,8 @@
 #include <OgreVector3.h>
 
 #include <components/nifogre/ogrenifloader.hpp>
+#include <components/nifogre/objectscene.hpp> // TextKeyMap
+#include <components/nifogre/nodetargetvalue.hpp>
 
 #include "../mwworld/ptr.hpp"
 

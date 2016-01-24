@@ -179,6 +179,17 @@ public:
     void post(NIFFile *nif);
 };
 
+// replaces NiKeyframeController
+class NiTransformController : public Controller
+{
+public:
+    NiInterpolatorPtr interpolator;
+    NiKeyframeDataPtr data;
+
+    void read(NIFStream *nif);
+    void post(NIFFile *nif);
+};
+
 class NiAlphaController : public Controller
 {
 public:
@@ -214,6 +225,7 @@ public:
 class NiVisController : public Controller
 {
 public:
+    NiInterpolatorPtr interpolator;
     NiVisDataPtr data;
 
     void read(NIFStream *nif);
@@ -394,6 +406,8 @@ public:
 class NiBlendTransformInterpolator : public NiInterpolator
 {
 public:
+    unsigned short unknown1;
+    unsigned int unknown2;
 
     void read(NIFStream *nif);
 };
@@ -447,17 +461,6 @@ public:
     Ogre::Vector3 translation;
     Ogre::Quaternion rotation;
     float scale;
-
-    void read(NIFStream *nif);
-    void post(NIFFile *nif);
-};
-
-// replaces NiKeyframeController
-class NiTransformController : public Controller
-{
-public:
-    NiInterpolatorPtr interpolator;
-    NiKeyframeDataPtr data;
 
     void read(NIFStream *nif);
     void post(NIFFile *nif);

@@ -65,6 +65,9 @@ void animateCollisionShapes (std::map<OEngine::Physic::RigidBody*, OEngine::Phys
 
             const std::string& mesh = animation->getObjectRootName();
             int boneHandle = NifOgre::NIFSkeletonLoader::lookupOgreBoneHandle(mesh, shapeIt->first);
+            if (boneHandle == -1)
+                continue;
+
             Ogre::Node* bone = animation->getNode(boneHandle);
 
             if (bone == NULL)

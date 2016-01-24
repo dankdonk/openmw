@@ -202,6 +202,7 @@ void NIFMeshLoader::createSubMesh(Ogre::Mesh *mesh, const Nif::Record *record)
                 mat4 = shape->getWorldTransform();
             else
                 mat4 = strips->getWorldTransform();
+
             for(size_t i = 0;i < srcVerts.size();i++)
             {
                 Ogre::Vector4 vec4(srcVerts[i].x, srcVerts[i].y, srcVerts[i].z, 1.0f);

@@ -5,6 +5,7 @@
 #include <OgreSceneManager.h>
 #include <OgreSceneNode.h>
 #include <OgreEntity.h>
+#include <OgreSkeletonInstance.h>
 #include <OgreResourceGroupManager.h> // FIXME
 
 #include <QRegExp>
@@ -566,7 +567,33 @@ void CSVRender::ForeignObject::update()
 
         //std::cout << "Using model: " << model << std::endl;
         mObject = NifOgre::Loader::createObjects (mBase, "Meshes\\" + trimmedModel);
-        if (!mObject.isNull()) mObject->setVisibilityFlags (Element_Reference); // FIXME: find root cause of null pointer
+
+        if (!mObject.isNull())
+            mObject->setVisibilityFlags (Element_Reference); // FIXME: find root cause of null pointer
+
+        if (mObject->mSkelBase && mObject->mSkelBase->getSkeleton()->hasBone("AttachLight"))
+        {
+            std::cout << "Light, model: " << model << std::endl;
+            mObject->mLights.push_back(mBase->getCreator()->createLight());
+            Ogre::Light *light = mObject->mLights.back();
+            light->setType(Ogre::Light::LT_POINT);
+            light->setDiffuseColour(0.8, 0.7, 0.0);
+            //http://www.ogre3d.org/tikiwiki/tiki-index.php?page=-Point%20Light%20Attenuation
+            light->setSpecularColour(1.0, 1.0, 0.0);
+            //light->setCastShadows(true);
+
+            float radius = 512;
+
+            // copied from MWRender::Animation
+            float threshold = 0.03f;
+            float linearAttenuation = /*linearValue*/3.0 / radius;
+            float quadraticAttenuation = /*quadraticValue*/16.0 / std::pow(radius, 2);
+            float activationRange = std::max(activationRange, 1.0f / (threshold * linearAttenuation));
+            //float activationRange = std::sqrt(1.0f / (threshold * quadraticAttenuation));
+            light->setAttenuation(activationRange, 0.5, linearAttenuation, quadraticAttenuation);
+
+            mObject->mSkelBase->attachObjectToBone("AttachLight", light);
+        }
 
         if (mPhysics && !(mReferenceId == 0))
         {

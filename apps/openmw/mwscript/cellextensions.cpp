@@ -49,7 +49,7 @@ namespace MWScript
                         world->changeToExteriorCell(pos);
                         world->fixPosition(world->getPlayerPtr());
                     }
-                    else if (cell.substr(0, 8) == "foreign:")
+                    else if (cell.substr(0, 9) == "foreign::")  // FIXME test only, always go to an interior cell
                     {
                         world->findForeignInteriorPosition(cell, pos);
                         world->changeToForeignInteriorCell(cell, pos);
