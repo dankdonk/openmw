@@ -88,6 +88,43 @@ void ESMReader::open(Ogre::DataStreamPtr _esm, const std::string &name)
             skip(6);
         getT(mHeader.mData.version);
         getT(mHeader.mData.records);
+        skip(4); // next available object id
+
+        NAME rec = getRecName();
+        if (rec == "CNAM")
+        {
+            unsigned short size;
+            getT(size);
+            skip(size);
+
+            rec = getRecName();
+            while (rec == "MAST")
+            {
+                Header::MasterData m;
+                char buf[100]; // arbitrary number
+                getT(size);
+                getExact(buf, size);
+                if (buf[size - 1] != 0)
+                    fail("string is not terminated with a zero");
+
+                m.name.assign(buf, size-1); // don't copy null terminator
+                rec = getRecName();
+                if (rec != "DATA")
+                {
+                    m.size = 0;
+                    return; // some esp's don't have DATA subrecord
+                }
+
+                getT(size); // short
+                getT(m.size); // 64 bits
+                mHeader.mMaster.push_back (m);
+
+                if (mEsm->size() - mEsm->tell() >= 4)
+                    rec = getRecName(); // another "MAST"?
+                else
+                    return; // Shivering Isles file ends here
+            }
+        }
 
         return;
     }

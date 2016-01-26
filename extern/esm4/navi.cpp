@@ -313,6 +313,7 @@ void ESM4::Navigation::load(ESM4::Reader& reader)
 #endif
                     std::pair<std::map<FormId, std::uint32_t>::iterator, bool> res =
                         mPathIndexMap.insert(std::make_pair(node, index));
+                    // FIXME: this throws if more than one file is being loaded
                     if (!res.second)
                         throw std::runtime_error ("node already exists in the preferred path index map");
                 }
