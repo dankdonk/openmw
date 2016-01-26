@@ -50,6 +50,8 @@ namespace ESM4
         std::string mModel;
         std::string mIcon; // inventory
 
+        float mBoundRadius;
+
         FormId mScript;
         std::uint8_t mSoul;         // 0 = None, 1 = Petty, 2 = Lesser, 3 = Common, 4 = Greater, 5 = Grand
         std::uint8_t mSoulCapacity; // 0 = None, 1 = Petty, 2 = Lesser, 3 = Common, 4 = Greater, 5 = Grand

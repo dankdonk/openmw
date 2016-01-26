@@ -20,7 +20,7 @@
   cc9cii cc9c@iinet.net.au
 
 */
-#include "gras.hpp"
+#include "lvli.hpp"
 
 #include <cassert>
 #include <stdexcept>
@@ -32,17 +32,16 @@
 #include "reader.hpp"
 //#include "writer.hpp"
 
-ESM4::Grass::Grass() : mFormId(0), mFlags(0), mBoundRadius(0.f)
+ESM4::LeveledItem::LeveledItem() : mFormId(0), mFlags(0), mChanceNone(0), mLvlItemFlags(0), mData(0)
 {
     mEditorId.clear();
-    mModel.clear();
 }
 
-ESM4::Grass::~Grass()
+ESM4::LeveledItem::~LeveledItem()
 {
 }
 
-void ESM4::Grass::load(ESM4::Reader& reader)
+void ESM4::LeveledItem::load(ESM4::Reader& reader)
 {
     mFormId = reader.hdr().record.id;
     mFlags  = reader.hdr().record.flags;
@@ -53,26 +52,42 @@ void ESM4::Grass::load(ESM4::Reader& reader)
         switch (subHdr.typeId)
         {
             case ESM4::SUB_EDID: reader.getZString(mEditorId); break;
-            case ESM4::SUB_MODL: reader.getZString(mModel); break;
+            case ESM4::SUB_LVLD: reader.get(mChanceNone);   break;
+            case ESM4::SUB_LVLF: reader.get(mLvlItemFlags); break;
             case ESM4::SUB_DATA: reader.get(mData);         break;
-            case ESM4::SUB_MODB: reader.get(mBoundRadius);  break;
-            case ESM4::SUB_MODT:
-            case ESM4::SUB_OBND:
+            case ESM4::SUB_LVLO:
             {
-                //std::cout << "GRAS " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
-                reader.skipSubRecordData();
+                static LVLO lvlo;
+                if (subHdr.dataSize != 12)
+                {
+                    if (subHdr.dataSize == 8)
+                    {
+                        reader.get(lvlo.level);
+                        reader.get(lvlo.item);
+                        reader.get(lvlo.count);
+                        std::cout << "LVLI " << mEditorId << " LVLO lev " << lvlo.level << ", item " << lvlo.item
+                                  << ", count " << lvlo.count << std::endl;
+                        break;
+                    }
+                    else
+                        throw std::runtime_error("ESM4::LVLI::load - " + mEditorId + " LVLO size error");
+                }
+                else
+                    reader.get(lvlo);
+
+                mLvlObject.push_back(lvlo);
                 break;
             }
             default:
-                throw std::runtime_error("ESM4::GRAS::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
+                throw std::runtime_error("ESM4::LVLI::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
         }
     }
 }
 
-//void ESM4::Grass::save(ESM4::Writer& writer) const
+//void ESM4::LeveledItem::save(ESM4::Writer& writer) const
 //{
 //}
 
-//void ESM4::Grass::blank()
+//void ESM4::LeveledItem::blank()
 //{
 //}

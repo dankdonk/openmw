@@ -50,6 +50,8 @@ namespace ESM4
         std::string mModel;
         std::string mIcon; // inventory
 
+        float mBoundRadius;
+
         Data mData;
 
         MiscItem();

@@ -40,6 +40,11 @@ set(ESM4_SOURCE_FILES
     eyes.cpp
     crea.cpp
     lvlc.cpp
+    lvli.cpp
+    acre.cpp
+    idle.cpp
+    mato.cpp
+    sbsp.cpp
     reader.cpp
 )
 

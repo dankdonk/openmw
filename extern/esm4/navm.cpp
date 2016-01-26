@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015 cc9cii
+  Copyright (C) 2015, 2016 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -29,7 +29,7 @@
 #include "reader.hpp"
 //#include "writer.hpp"
 
-ESM4::NavMesh::NavMesh()
+ESM4::NavMesh::NavMesh() : mFormId(0), mFlags(0)
 {
 }
 
@@ -47,7 +47,9 @@ void ESM4::NavMesh::NVNMstruct::load(ESM4::Reader& reader)
     reader.get(unknownNVER);
     reader.get(unknownLCTN);
     reader.get(worldSpaceId);
-    if (worldSpaceId == ESM4::FLG_Tamriel || worldSpaceId == ESM4::FLG_Morrowind)
+    //FLG_Tamriel    = 0x0000003c, // grid info follows, possibly Tamriel?
+    //FLG_Morrowind  = 0x01380000, // grid info follows, probably Skywind
+    if (worldSpaceId == 0x0000003c || worldSpaceId == 0x01380000)
     {
         //   ^
         // Y |                   X Y Index
@@ -84,7 +86,7 @@ void ESM4::NavMesh::NVNMstruct::load(ESM4::Reader& reader)
 #if 0
         std::string padding = ""; // FIXME
         padding.insert(0, reader.stackSize()*2, ' ');
-        if (worldSpaceId == ESM4::FLG_Interior)
+        if (worldSpaceId == 0) // interior
             std::cout << padding << "NVNM Interior: cellId " << std::hex << cellGrid.cellId << std::endl;
         else
             std::cout << padding << "NVNM FormID: cellId " << std::hex << cellGrid.cellId << std::endl;

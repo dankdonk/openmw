@@ -33,7 +33,7 @@
 #include "reader.hpp"
 //#include "writer.hpp"
 
-ESM4::Static::Static()
+ESM4::Static::Static() : mFormId(0), mFlags(0), mBoundRadius(0.f)
 {
     mEditorId.clear();
     mModel.clear();
@@ -53,42 +53,9 @@ void ESM4::Static::load(ESM4::Reader& reader)
         const ESM4::SubRecordHeader& subHdr = reader.subRecordHeader();
         switch (subHdr.typeId)
         {
-            case ESM4::SUB_EDID:
-            {
-                if (!reader.getZString(mEditorId))
-                    throw std::runtime_error ("STAT EDID data read error");
-#if 0
-                std::string padding = "";
-                padding.insert(0, reader.stackSize()*2, ' ');
-                std::cout << padding << "STAT Editor ID: " << mEditorId << std::endl;
-#endif
-                break;
-            }
-            case ESM4::SUB_MODL:
-            {
-                if (!reader.getZString(mModel))
-                    throw std::runtime_error ("STAT MODL data read error");
-#if 0
-                std::string padding = "";
-                padding.insert(0, reader.stackSize()*2, ' ');
-                std::cout << padding << "Model: " << mModel << std::endl;
-#endif
-                break;
-            }
-            case ESM4::SUB_MODB:
-            {
-                mMODB.resize(subHdr.dataSize/sizeof(std::uint8_t));
-                for (std::vector<std::uint8_t>::iterator it = mMODB.begin(); it != mMODB.end(); ++it)
-                {
-                    reader.get(*it);
-#if 0
-                    std::string padding = "";
-                    padding.insert(0, reader.stackSize()*2, ' ');
-                    std::cout << padding  << "MODB: " << std::hex << *it << std::endl;
-#endif
-                }
-                break;
-            }
+            case ESM4::SUB_EDID: reader.getZString(mEditorId); break;
+            case ESM4::SUB_MODL: reader.getZString(mModel); break;
+            case ESM4::SUB_MODB: reader.get(mBoundRadius);  break;
             case ESM4::SUB_MODT:
             {
                 // version is only availabe in TES5 (seems to be 27 or 28?)
@@ -108,10 +75,10 @@ void ESM4::Static::load(ESM4::Reader& reader)
                 }
                 break;
             }
+            case ESM4::SUB_MODS:
             case ESM4::SUB_OBND:
             case ESM4::SUB_DNAM:
             case ESM4::SUB_MNAM:
-            case ESM4::SUB_MODS:
             {
                 //std::cout << "STAT " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
                 reader.skipSubRecordData();

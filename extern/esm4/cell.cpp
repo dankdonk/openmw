@@ -33,8 +33,8 @@
 #include "reader.hpp"
 //#include "writer.hpp"
 
-ESM4::Cell::Cell() : mCellFlags(0), mX(0), mY(0), mOwner(0), mGlobal(0), mClimate(0),
-                     mWater(0), mWaterHeight(0.f), mLandTemporary(0)
+ESM4::Cell::Cell() : mFormId(0), mFlags(0), mCellFlags(0), mX(0), mY(0), mOwner(0), mGlobal(0),
+                     mClimate(0), mWater(0), mWaterHeight(0.f), mLandTemporary(0)
 {
     mEditorId.clear();
     mFullName.clear();
@@ -190,31 +190,11 @@ void ESM4::Cell::load(ESM4::Reader& reader)
                 }
                 break;
             }
-            case ESM4::SUB_XOWN:
-            {
-                reader.get(mOwner);
-                break;
-            }
-            case ESM4::SUB_XGLB: // Oblivion only?
-            {
-                reader.get(mGlobal);
-                break;
-            }
-            case ESM4::SUB_XCCM:
-            {
-                reader.get(mClimate);
-                break;
-            }
-            case ESM4::SUB_XCWT:
-            {
-                reader.get(mWater);
-                break;
-            }
-            case ESM4::SUB_XCLW:
-            {
-                reader.get(mWaterHeight);
-                break;
-            }
+            case ESM4::SUB_XOWN: reader.get(mOwner);   break;
+            case ESM4::SUB_XGLB: reader.get(mGlobal);  break; // Oblivion only?
+            case ESM4::SUB_XCCM: reader.get(mClimate); break;
+            case ESM4::SUB_XCWT: reader.get(mWater);   break;
+            case ESM4::SUB_XCLW: reader.get(mWaterHeight); break;
             case ESM4::SUB_XCLL:
             {
                 if (reader.esmVersion() == ESM4::VER_094 || reader.esmVersion() == ESM4::VER_170)

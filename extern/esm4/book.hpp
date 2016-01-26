@@ -82,6 +82,8 @@ namespace ESM4
         std::string mFullName;
         std::string mModel;
 
+        float mBoundRadius;
+
         std::string mText;
         FormId      mScript;
         std::string mIcon;

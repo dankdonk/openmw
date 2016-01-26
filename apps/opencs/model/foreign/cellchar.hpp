@@ -15,7 +15,7 @@ namespace ESM4
 
 namespace CSMForeign
 {
-    struct CellChar : public ESM4::Character
+    struct CellChar : public ESM4::ActorCharacter
     {
         static unsigned int sRecordId;
 

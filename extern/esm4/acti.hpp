@@ -41,6 +41,8 @@ namespace ESM4
         std::string mFullName;
         std::string mModel;
 
+        float mBoundRadius;
+
         Activator();
         ~Activator();
 

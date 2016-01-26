@@ -53,8 +53,10 @@ namespace ESM4
         std::string mEditorId;
         std::string mFullName;
         std::string mModel;
-
         std::string mIcon;
+
+        float mBoundRadius;
+
         FormId      mScript;
         std::uint16_t mEnchantmentPoints;
         FormId      mEnchantment;

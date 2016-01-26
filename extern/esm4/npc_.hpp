@@ -25,6 +25,7 @@
 
 #include <string>
 #include <cstdint>
+#include <vector>
 
 namespace ESM4
 {
@@ -40,6 +41,9 @@ namespace ESM4
         std::string mEditorId;
         std::string mFullName;
         std::string mModel;
+
+        float mBoundRadius;
+        std::vector<std::string> mKf;
 
         Npc();
         ~Npc();

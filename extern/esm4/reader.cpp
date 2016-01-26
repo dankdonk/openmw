@@ -97,9 +97,12 @@ void ESM4::Reader::saveGroupStatus(const ESM4::RecordHeader& hdr)
         std::cout << padding << "Igorning record group " // FIXME: debugging only
             << ESM4::printLabel(hdr.group.label, hdr.group.type) << " (empty)" << std::endl;
 #endif
-        // don't put on the stack, checkGroupStatus() may not get called before recursing into this method
-        mGroupStack.back().second -= hdr.group.groupSize;
-        checkGroupStatus();
+        if (!mGroupStack.empty()) // top group may be empty (e.g. HAIR in Skyrim)
+        {
+            // don't put on the stack, checkGroupStatus() may not get called before recursing into this method
+            mGroupStack.back().second -= hdr.group.groupSize;
+            checkGroupStatus();
+        }
         return;
     }
 
@@ -236,7 +239,7 @@ bool ESM4::Reader::getZString(std::string& str)
     else
     {
         str.clear();
-        return false;
+        return false; // FIXME: throw instead?
     }
 }
 

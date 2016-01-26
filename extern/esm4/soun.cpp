@@ -32,7 +32,7 @@
 #include "reader.hpp"
 //#include "writer.hpp"
 
-ESM4::Sound::Sound()
+ESM4::Sound::Sound() : mFormId(0), mFlags(0)
 {
     mEditorId.clear();
     mSoundFile.clear();
@@ -52,23 +52,9 @@ void ESM4::Sound::load(ESM4::Reader& reader)
         const ESM4::SubRecordHeader& subHdr = reader.subRecordHeader();
         switch (subHdr.typeId)
         {
-            case ESM4::SUB_EDID: // Editor name or the worldspace
-            {
-                if (!reader.getZString(mEditorId))
-                    throw std::runtime_error ("SOUN EDID data read error");
-                break;
-            }
-            case ESM4::SUB_FNAM:
-            {
-                if (!reader.getZString(mSoundFile))
-                    throw std::runtime_error ("SOUN FNAM data read error");
-                break;
-            }
-            case ESM4::SUB_SNDX:
-            {
-                reader.get(mData);
-                break;
-            }
+            case ESM4::SUB_EDID: reader.getZString(mEditorId);  break;
+            case ESM4::SUB_FNAM: reader.getZString(mSoundFile); break;
+            case ESM4::SUB_SNDX: reader.get(mData); break;
             case ESM4::SUB_SNDD:
             case ESM4::SUB_OBND: // TES5 only
             case ESM4::SUB_SDSC: // TES5 only

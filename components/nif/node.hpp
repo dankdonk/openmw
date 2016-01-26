@@ -134,7 +134,14 @@ public:
     void read(NIFStream *nif);
 };
 
-struct BSFadeNode : public NiNode {};
+class BSFadeNode : public NiNode
+{
+public:
+
+    void read(NIFStream *nif);
+    void post(NIFFile *nif);
+};
+
 struct BSLeafAnimNode : public NiNode {};
 
 class BSTreeNode : public NiNode

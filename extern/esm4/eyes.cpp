@@ -32,7 +32,7 @@
 #include "reader.hpp"
 //#include "writer.hpp"
 
-ESM4::Eyes::Eyes()
+ESM4::Eyes::Eyes() : mFormId(0), mFlags(0)
 {
     mEditorId.clear();
     mFullName.clear();
@@ -55,12 +55,7 @@ void ESM4::Eyes::load(ESM4::Reader& reader)
         const ESM4::SubRecordHeader& subHdr = reader.subRecordHeader();
         switch (subHdr.typeId)
         {
-            case ESM4::SUB_EDID: // Editor name or the worldspace
-            {
-                if (!reader.getZString(mEditorId))
-                    throw std::runtime_error ("EYES EDID data read error");
-                break;
-            }
+            case ESM4::SUB_EDID: reader.getZString(mEditorId); break;
             case ESM4::SUB_FULL:
             {
                 // NOTE: checking flags does not work, Skyrim.esm does not set the localized flag
@@ -79,17 +74,8 @@ void ESM4::Eyes::load(ESM4::Reader& reader)
                     throw std::runtime_error ("EYES FULL data read error");
                 break;
             }
-            case ESM4::SUB_ICON:
-            {
-                if (!reader.getZString(mIcon))
-                    throw std::runtime_error ("EYES ICON data read error");
-                break;
-            }
-            case ESM4::SUB_DATA:
-            {
-                reader.get(mData);
-                break;
-            }
+            case ESM4::SUB_ICON: reader.getZString(mIcon); break;
+            case ESM4::SUB_DATA: reader.get(mData); break;
             default:
                 throw std::runtime_error("ESM4::EYES::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
         }

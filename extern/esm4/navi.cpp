@@ -147,13 +147,15 @@ void ESM4::Navigation::NavMeshInfo::load(ESM4::Reader& reader)
         island.load(reader);
         islandInfo.push_back(island); // Maybe don't use a vector for just one entry?
     }
-    else if (flags == ESM4::FLG_Island) // FIXME: debug only
+    else if (flags == FLG_Island) // FIXME: debug only
         std::cerr << "nvmi no island but has 0x20 flag" << std::endl;
 
     reader.get(locationMarker);
 
     reader.get(worldSpaceId);
-    if (worldSpaceId == ESM4::FLG_Tamriel || worldSpaceId == ESM4::FLG_Morrowind)
+    //FLG_Tamriel    = 0x0000003c, // grid info follows, possibly Tamriel?
+    //FLG_Morrowind  = 0x01380000, // grid info follows, probably Skywind
+    if (worldSpaceId == 0x0000003c || worldSpaceId == 0x01380000)
     {
         reader.get(cellGrid.grid.y); // NOTE: reverse order
         reader.get(cellGrid.grid.x);
@@ -172,7 +174,7 @@ void ESM4::Navigation::NavMeshInfo::load(ESM4::Reader& reader)
         reader.get(cellGrid.cellId);
 
 #if 0
-        if (worldSpaceId == ESM4::FLG_Interior)
+        if (worldSpaceId == 0) // interior
             std::cout << "NVMI Interior: cellId " << std::hex << cellGrid.cellId << std::endl;
         else
             std::cout << "NVMI FormID: cellId " << std::hex << cellGrid.cellId << std::endl;

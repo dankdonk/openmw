@@ -20,8 +20,8 @@
   cc9cii cc9c@iinet.net.au
 
 */
-#ifndef ESM4_AMMO_H
-#define ESM4_AMMO_H
+#ifndef ESM4_SBSP_H
+#define ESM4_SBSP_H
 
 #include <string>
 #include <cstdint>
@@ -29,45 +29,31 @@
 namespace ESM4
 {
     class Reader;
-    class Writer;
     typedef std::uint32_t FormId;
 
-    struct Ammo
+    struct Subspace
     {
-        struct Data
+        struct Dimension
         {
-            float         speed;
-            std::uint32_t flags;
-            std::uint32_t value;   // gold
-            float         weight;
-            std::uint16_t damage;
-
-            Data() : speed(0.f), flags(0), value(0), weight(0.f), damage(0) {}
+            float x;
+            float y;
+            float z;
         };
 
         FormId mFormId;       // from the header
         std::uint32_t mFlags; // from the header, see enum type RecordFlag for details
 
         std::string mEditorId;
-        std::string mFullName;
-        std::string mModel;
-        std::string mIcon; // inventory
+        Dimension mDimension;
 
-        float mBoundRadius;
+        Subspace();
+        ~Subspace();
 
-        std::uint16_t mEnchantmentPoints;
-        FormId mEnchantment;
-
-        Data mData;
-
-        Ammo();
-        ~Ammo();
-
-        void load(ESM4::Reader& reader);
-        //void save(ESM4::Writer& reader) const;
+        void load(Reader& reader);
+        //void save(Writer& writer) const;
 
         //void blank();
     };
 }
 
-#endif // ESM4_AMMO_H
+#endif // ESM4_SBSP_H

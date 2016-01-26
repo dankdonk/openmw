@@ -49,6 +49,8 @@ namespace ESM4
         std::string mModel;
         std::string mIcon; // inventory
 
+        float mBoundRadius;
+
         FormId mScript;
 
         Data mData;

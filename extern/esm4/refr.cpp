@@ -33,10 +33,14 @@
 #include "reader.hpp"
 //#include "writer.hpp"
 
-ESM4::Reference::Reference() : mBaseObj(0), mScale(1.f)
+ESM4::Reference::Reference() : mFormId(0), mFlags(0), mDisabled(false), mBaseObj(0), mScale(1.f),
+                               mOwner(0), mGlobal(0), mFactionRank(0), mCount(1)
 {
     mEditorId.clear();
     mFullName.clear();
+
+    mEsp.parent = 0;
+    mEsp.flags = 0;
 }
 
 ESM4::Reference::~Reference()
@@ -47,23 +51,15 @@ void ESM4::Reference::load(ESM4::Reader& reader)
 {
     mFormId = reader.hdr().record.id;
     mFlags  = reader.hdr().record.flags;
+    // TODO: Let the engine apply this? Saved games?
+    //mDisabled = ((mFlags & ESM4::Rec_Disabled) != 0) ? true : false;
 
     while (reader.getSubRecordHeader())
     {
         const ESM4::SubRecordHeader& subHdr = reader.subRecordHeader();
         switch (subHdr.typeId)
         {
-            case ESM4::SUB_EDID:
-            {
-                if (!reader.getZString(mEditorId))
-                    throw std::runtime_error ("REFR EDID data read error");
-#if 0
-                std::string padding = "";
-                padding.insert(0, reader.stackSize()*2, ' ');
-                std::cout << padding << "REFR Editor ID: " << mEditorId << std::endl;
-#endif
-                break;
-            }
+            case ESM4::SUB_EDID: reader.getZString(mEditorId); break;
             case ESM4::SUB_FULL:
             {
                 // NOTE: checking flags does not work, Skyrim.esm does not set the localized flag
@@ -90,27 +86,36 @@ void ESM4::Reference::load(ESM4::Reader& reader)
             case ESM4::SUB_NAME:
             {
                 reader.get(mBaseObj);
+#if 0
+                if (mFlags & ESM4::Rec_Disabled)
+                    std::cout << "REFR disable at start " << formIdToString(mFormId) <<
+                        " baseobj " << formIdToString(mBaseObj) <<
+                        " " << (mEditorId.empty() ? "" : mEditorId) << std::endl; // FIXME
+#endif
                 break;
             }
-            case ESM4::SUB_DATA:
-            {
-                reader.get(mPosition);
-                break;
-            }
-            case ESM4::SUB_XSCL:
-            {
-                reader.get(mScale);
-                break;
-            }
+            case ESM4::SUB_DATA: reader.get(mPosition);    break;
+            case ESM4::SUB_XSCL: reader.get(mScale);       break;
+            case ESM4::SUB_XOWN: reader.get(mOwner);       break;
+            case ESM4::SUB_XGLB: reader.get(mGlobal);      break;
+            case ESM4::SUB_XRNK: reader.get(mFactionRank); break;
+            case ESM4::SUB_XESP: reader.get(mEsp);         break;
+                //std::cout << "REFR  parent: " << formIdToString(mEsp.parent) << " ref " << formIdToString(mFormId)
+                    //<< ", 0x" << std::hex << (mEsp.flags & 0xff) << std::endl; break;// FIXME
+            // lighting
+            case ESM4::SUB_LNAM: // lighting template formId
+            case ESM4::SUB_XLIG: // struct, FOV, fade, etc
+            case ESM4::SUB_XEMI: // LIGH formId
+            case ESM4::SUB_XRDS: // Radius or Radiance
+            case ESM4::SUB_XRGB:
+            case ESM4::SUB_XRGD: // tangent data?
+            case ESM4::SUB_XALP: // alpha cutoff
+            //
             case ESM4::SUB_XTEL:
-            case ESM4::SUB_XESP:
-            case ESM4::SUB_XOWN:
             case ESM4::SUB_XLOC:
             case ESM4::SUB_XACT:
-            case ESM4::SUB_XRNK:
             case ESM4::SUB_XMRK:
             case ESM4::SUB_FNAM:
-            case ESM4::SUB_XGLB:
             case ESM4::SUB_XTRG:
             case ESM4::SUB_XSED:
             case ESM4::SUB_XLOD:
@@ -123,24 +128,20 @@ void ESM4::Reference::load(ESM4::Reader& reader)
             case ESM4::SUB_VMAD:
             case ESM4::SUB_XPRM:
             case ESM4::SUB_INAM:
-            case ESM4::SUB_LNAM:
             case ESM4::SUB_PDTO:
             case ESM4::SUB_SCHR:
             case ESM4::SUB_SCTX:
-            case ESM4::SUB_XALP:
             case ESM4::SUB_XAPD:
             case ESM4::SUB_XAPR:
             case ESM4::SUB_XCVL:
             case ESM4::SUB_XCZA:
             case ESM4::SUB_XCZC:
-            case ESM4::SUB_XEMI:
             case ESM4::SUB_XEZN:
             case ESM4::SUB_XFVC:
             case ESM4::SUB_XHTW:
             case ESM4::SUB_XIS2:
             case ESM4::SUB_XLCN:
             case ESM4::SUB_XLIB:
-            case ESM4::SUB_XLIG:
             case ESM4::SUB_XLKR:
             case ESM4::SUB_XLRM:
             case ESM4::SUB_XLRT:
@@ -154,15 +155,13 @@ void ESM4::Reference::load(ESM4::Reader& reader)
             case ESM4::SUB_XPPA:
             case ESM4::SUB_XPRD:
             case ESM4::SUB_XPWR:
-            case ESM4::SUB_XRDS:
-            case ESM4::SUB_XRGB:
-            case ESM4::SUB_XRGD:
             case ESM4::SUB_XRMR:
             case ESM4::SUB_XSPC:
             case ESM4::SUB_XTNM:
             case ESM4::SUB_XTRI:
             case ESM4::SUB_XWCN:
             case ESM4::SUB_XWCU:
+            case ESM4::SUB_XATR: // Dawnguard only?
             {
                 //std::cout << "REFR " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
                 reader.skipSubRecordData();

@@ -40,6 +40,8 @@ namespace ESM4
         std::string mEditorId;
         std::string mModel;
 
+        float mBoundRadius;
+
         FormId mIdleAnim;         // only in TES4
         std::string mUnloadEvent; // only in TES5
 

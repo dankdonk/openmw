@@ -49,6 +49,8 @@ namespace ESM4
         std::string mFullName;
         std::string mModel;
 
+        float mBoundRadius;
+
         std::uint8_t mDoorFlags;
         FormId mScript;
         FormId mOpenSound;

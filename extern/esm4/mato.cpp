@@ -20,29 +20,24 @@
   cc9cii cc9c@iinet.net.au
 
 */
-#include "gras.hpp"
+#include "mato.hpp"
 
-#include <cassert>
 #include <stdexcept>
-
-#ifdef NDEBUG // FIXME: debuggigng only
-#undef NDEBUG
-#endif
 
 #include "reader.hpp"
 //#include "writer.hpp"
 
-ESM4::Grass::Grass() : mFormId(0), mFlags(0), mBoundRadius(0.f)
+ESM4::Material::Material() : mFormId(0), mFlags(0)
 {
     mEditorId.clear();
     mModel.clear();
 }
 
-ESM4::Grass::~Grass()
+ESM4::Material::~Material()
 {
 }
 
-void ESM4::Grass::load(ESM4::Reader& reader)
+void ESM4::Material::load(ESM4::Reader& reader)
 {
     mFormId = reader.hdr().record.id;
     mFlags  = reader.hdr().record.flags;
@@ -53,26 +48,24 @@ void ESM4::Grass::load(ESM4::Reader& reader)
         switch (subHdr.typeId)
         {
             case ESM4::SUB_EDID: reader.getZString(mEditorId); break;
-            case ESM4::SUB_MODL: reader.getZString(mModel); break;
-            case ESM4::SUB_DATA: reader.get(mData);         break;
-            case ESM4::SUB_MODB: reader.get(mBoundRadius);  break;
-            case ESM4::SUB_MODT:
-            case ESM4::SUB_OBND:
+            case ESM4::SUB_MODL: reader.getZString(mModel);    break;
+            case ESM4::SUB_DNAM:
+            case ESM4::SUB_DATA:
             {
-                //std::cout << "GRAS " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
+                //std::cout << "MATO " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
                 reader.skipSubRecordData();
                 break;
             }
             default:
-                throw std::runtime_error("ESM4::GRAS::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
+                throw std::runtime_error("ESM4::MATO::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
         }
     }
 }
 
-//void ESM4::Grass::save(ESM4::Writer& writer) const
+//void ESM4::Material::save(ESM4::Writer& writer) const
 //{
 //}
 
-//void ESM4::Grass::blank()
+//void ESM4::Material::blank()
 //{
 //}

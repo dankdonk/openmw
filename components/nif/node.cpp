@@ -215,6 +215,26 @@ void Nif::NiNode::post(NIFFile *nif)
     }
 }
 
+void Nif::BSFadeNode::read(NIFStream *nif)
+{
+    NiNode::read(nif);
+
+    // Discard tranformations for the root node, otherwise some meshes
+    // occasionally get wrong orientation. Only for NiNode-s for now, but
+    // can be expanded if needed.
+    if (0 == recIndex/* && nifVer <= 0x04010000*/) // FIXME experiment
+    {
+        if (static_cast<Nif::Node*>(this)->trafo.rotation != Nif::Transformation::getIdentity().rotation)
+            std::cout << "Non-identity rotation: " << this->name << ", ver " << std::hex << nifVer << std::endl;
+        static_cast<Nif::Node*>(this)->trafo = Nif::Transformation::getIdentity();
+    }
+}
+
+void Nif::BSFadeNode::post(NIFFile *nif)
+{
+    NiNode::post(nif);
+}
+
 void Nif::BSMultiBound::read(NIFStream *nif)
 {
     data.read(nif);

@@ -927,6 +927,13 @@ void NifOgre::NIFObjectLoader::load (Ogre::SceneNode *sceneNode,
     createObjects(nif, name, group, sceneNode, node, scene, flags, 0, 0);
 }
 
+// Each .kf file is started with a NiSequenceStreamHelper block with NiTextKeyExtraData
+// following it.  These are then followed by NiStringExtraData and NiKeyframeController blocks.
+//
+// Newer .kf files are different.  It is started with NiControllerSequence which points to
+// NiTextKeyExtraData and  has a number of Controlled Blocks.  Each Controlled Block has a node
+// name string, and points to a NiTransformInterpolator which in turn points to
+// NiTransformData.
 void NifOgre::NIFObjectLoader::loadKf (Ogre::Skeleton *skel,
             const std::string &name, TextKeyMap &textKeys, std::vector<Ogre::Controller<Ogre::Real> > &ctrls)
 {
@@ -949,6 +956,7 @@ void NifOgre::NIFObjectLoader::loadKf (Ogre::Skeleton *skel,
     const Nif::NiSequenceStreamHelper *seq = static_cast<const Nif::NiSequenceStreamHelper*>(r);
 
     Nif::NiExtraDataPtr extra;
+    // FIXME: should be handled with nifVer instead
     if (seq->hasExtras)
         extra = seq->extras[0];
     else

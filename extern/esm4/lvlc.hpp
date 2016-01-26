@@ -23,9 +23,9 @@
 #ifndef ESM4_LVLC_H
 #define ESM4_LVLC_H
 
-#include <string>
-#include <cstdint>
 #include <vector>
+
+#include "common.hpp"
 
 namespace ESM4
 {
@@ -35,17 +35,6 @@ namespace ESM4
 
     struct LeveledCreature
     {
-#pragma pack(push, 1)
-        struct LVLO
-        {
-            std::int16_t  level;
-            std::uint16_t unknown;
-            FormId        item;
-            std::int16_t  count;
-            std::uint16_t unknown2;
-        };
-#pragma pack(pop)
-
         FormId mFormId;       // from the header
         std::uint32_t mFlags; // from the header, see enum type RecordFlag for details
 

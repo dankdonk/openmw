@@ -41,6 +41,7 @@ namespace ESM4
         std::string mFullName;
         std::string mModel;
 
+        float mBoundRadius;
         unsigned char mDataFlags;
         float mWeight;
 

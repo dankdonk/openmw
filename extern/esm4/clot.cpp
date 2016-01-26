@@ -32,7 +32,8 @@
 #include "reader.hpp"
 //#include "writer.hpp"
 
-ESM4::Clothing::Clothing() : mClothingFlags(0), mScript(0), mEnchantmentPoints(0), mEnchantment(0)
+ESM4::Clothing::Clothing() : mFormId(0), mFlags(0), mBoundRadius(0.f), mClothingFlags(0),
+                             mScript(0), mEnchantmentPoints(0), mEnchantment(0)
 {
     mEditorId.clear();
     mFullName.clear();
@@ -58,74 +59,24 @@ void ESM4::Clothing::load(ESM4::Reader& reader)
         const ESM4::SubRecordHeader& subHdr = reader.subRecordHeader();
         switch (subHdr.typeId)
         {
-            case ESM4::SUB_EDID: // Editor name or the worldspace
-            {
-                if (!reader.getZString(mEditorId))
-                    throw std::runtime_error ("CLOT EDID data read error");
-                break;
-            }
-            case ESM4::SUB_FULL:
-            {
-                if (!reader.getZString(mFullName))
-                    throw std::runtime_error ("CLOT FULL data read error");
-                break;
-            }
-            case ESM4::SUB_MODL:
-            {
-                if (!reader.getZString(mModel))
-                    throw std::runtime_error ("CLOT MODL data read error");
-
-                //if (reader.esmVersion() == ESM4::VER_094 || reader.esmVersion() == ESM4::VER_170)
-                //{
-                    // read MODT/MODS here?
-                //}
-                break;
-            }
-            case ESM4::SUB_ICON:
-            {
-                if (!reader.getZString(mIconMale))
-                    throw std::runtime_error ("CLOT ICON data read error");
-                break;
-            }
-            case ESM4::SUB_ICO2:
-            {
-                if (!reader.getZString(mIconFemale))
-                    throw std::runtime_error ("CLOT ICO2 data read error");
-                break;
-            }
-            case ESM4::SUB_DATA:
-            {
-                reader.get(mData);
-                break;
-            }
-            case ESM4::SUB_BMDT:
-            {
-                reader.get(mClothingFlags);
-                break;
-            }
-            case ESM4::SUB_SCRI:
-            {
-                reader.get(mScript);
-                break;
-            }
-            case ESM4::SUB_ENAM:
-            {
-                reader.get(mEnchantment);
-                break;
-            }
-            case ESM4::SUB_ANAM:
-            {
-                reader.get(mEnchantmentPoints);
-                break;
-            }
+            case ESM4::SUB_EDID: reader.getZString(mEditorId); break;
+            case ESM4::SUB_FULL: reader.getZString(mFullName); break;
+            case ESM4::SUB_MODL: reader.getZString(mModel);  break;
+            case ESM4::SUB_ICON: reader.getZString(mIconMale); break;
+            case ESM4::SUB_ICO2: reader.getZString(mIconFemale); break;
+            case ESM4::SUB_DATA: reader.get(mData);          break;
+            case ESM4::SUB_BMDT: reader.get(mClothingFlags); break;
+            case ESM4::SUB_SCRI: reader.get(mScript);        break;
+            case ESM4::SUB_ENAM: reader.get(mEnchantment);   break;
+            case ESM4::SUB_ANAM: reader.get(mEnchantmentPoints); break;
+            case ESM4::SUB_MODB: reader.get(mBoundRadius);   break;
+            case ESM4::SUB_MODT:
             case ESM4::SUB_MOD2:
             case ESM4::SUB_MOD3:
             case ESM4::SUB_MOD4:
-            case ESM4::SUB_MODB:
             case ESM4::SUB_MO2B:
             case ESM4::SUB_MO3B:
             case ESM4::SUB_MO4B:
-            case ESM4::SUB_MODT:
             case ESM4::SUB_MO2T:
             case ESM4::SUB_MO3T:
             case ESM4::SUB_MO4T:

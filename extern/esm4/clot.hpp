@@ -77,6 +77,8 @@ namespace ESM4
         std::string mIconMale;   // inventory
         std::string mIconFemale; // inventory
 
+        float mBoundRadius;
+
         std::uint32_t mClothingFlags;
         FormId        mScript;
         std::uint16_t mEnchantmentPoints;

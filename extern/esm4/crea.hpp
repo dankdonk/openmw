@@ -25,6 +25,7 @@
 
 #include <string>
 #include <cstdint>
+#include <vector>
 
 namespace ESM4
 {
@@ -97,6 +98,10 @@ namespace ESM4
         float mFootWeight;
         std::string mBloodSpray;
         std::string mBloodDecal;
+
+        float mBoundRadius;
+        std::vector<std::string> mNif; // NIF filenames, get directory from mModel
+        std::vector<std::string> mKf;
 
         Creature();
         ~Creature();

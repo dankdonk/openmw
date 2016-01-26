@@ -40,6 +40,8 @@ namespace ESM4
         std::string mEditorId;
         std::string mModel;
 
+        float mBoundRadius;
+
         std::string mLeafTexture;
 
         Tree();

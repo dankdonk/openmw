@@ -32,7 +32,7 @@
 #include "reader.hpp"
 //#include "writer.hpp"
 
-ESM4::SigilStone::SigilStone() : mScript(0)
+ESM4::SigilStone::SigilStone() : mFormId(0), mFlags(0), mBoundRadius(0.f), mScript(0)
 {
     mEditorId.clear();
     mFullName.clear();
@@ -58,12 +58,7 @@ void ESM4::SigilStone::load(ESM4::Reader& reader)
         const ESM4::SubRecordHeader& subHdr = reader.subRecordHeader();
         switch (subHdr.typeId)
         {
-            case ESM4::SUB_EDID: // Editor name or the worldspace
-            {
-                if (!reader.getZString(mEditorId))
-                    throw std::runtime_error ("SGST EDID data read error");
-                break;
-            }
+            case ESM4::SUB_EDID: reader.getZString(mEditorId); break;
             case ESM4::SUB_FULL:
             {
                 if (mFullName.empty())
@@ -81,23 +76,6 @@ void ESM4::SigilStone::load(ESM4::Reader& reader)
                 }
                 break;
             }
-            case ESM4::SUB_MODL:
-            {
-                if (!reader.getZString(mModel))
-                    throw std::runtime_error ("SGST MODL data read error");
-
-                //if (reader.esmVersion() == ESM4::VER_094 || reader.esmVersion() == ESM4::VER_170)
-                //{
-                    // read MODT/MODS here?
-                //}
-                break;
-            }
-            case ESM4::SUB_ICON:
-            {
-                if (!reader.getZString(mIcon))
-                    throw std::runtime_error ("SGST ICON data read error");
-                break;
-            }
             case ESM4::SUB_DATA:
             {
                 reader.get(mData.uses);
@@ -105,12 +83,10 @@ void ESM4::SigilStone::load(ESM4::Reader& reader)
                 reader.get(mData.weight);
                 break;
             }
-            case ESM4::SUB_SCRI:
-            {
-                reader.get(mScript);
-                break;
-            }
-            case ESM4::SUB_MODB:
+            case ESM4::SUB_MODL: reader.getZString(mModel); break;
+            case ESM4::SUB_ICON: reader.getZString(mIcon); break;
+            case ESM4::SUB_SCRI: reader.get(mScript);      break;
+            case ESM4::SUB_MODB: reader.get(mBoundRadius); break;
             case ESM4::SUB_MODT:
             case ESM4::SUB_EFID:
             case ESM4::SUB_EFIT:

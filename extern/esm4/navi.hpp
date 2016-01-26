@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015 cc9cii
+  Copyright (C) 2015, 2016 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -62,6 +62,13 @@ namespace ESM4
             std::vector<Vertex> verticies;
 
             void load(ESM4::Reader& reader);
+        };
+
+        enum Flags // NVMI island flags (not certain)
+        {
+            FLG_Island     = 0x00000020,
+            FLG_Modified   = 0x00000000, // not island
+            FLG_Unmodified = 0x00000040  // not island
         };
 
         struct NavMeshInfo

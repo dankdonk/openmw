@@ -71,12 +71,12 @@ void CSMForeign::NavigationCollection::load (ESM4::Reader& reader, bool base) //
         (void)load(record, base, index);
 
         // update cell map
-        if ((*it).worldSpaceId == ESM4::FLG_Interior)
+        if ((*it).worldSpaceId == 0) // interior
         {
             // FIXME: how to map internal cell names to formids?
             //std::cout << "ignoring interior worldspace " << std::hex << (*it).worldSpaceId << std::endl;
         }
-        else if ((*it).worldSpaceId == ESM4::FLG_Morrowind)
+        else if ((*it).worldSpaceId == 0x01380000) // FIXME Morrowind? Skywind?
         {
             // external cell; convert to OpenCS cell id format
             std::ostringstream stream;
@@ -99,7 +99,7 @@ void CSMForeign::NavigationCollection::load (ESM4::Reader& reader, bool base) //
             // add the formid to the cell (key) for fast lookup later (rendering,  pathfinding)
             (*iter).second.push_back(id);
         }
-        else if ((*it).worldSpaceId == ESM4::FLG_Tamriel)
+        else if ((*it).worldSpaceId == 0x0000003c) // FIXME Tamriel
             continue;
         //else
             //std::cout << "ignoring unknown worldspace " << std::hex << (*it).worldSpaceId << std::endl; // FIXME

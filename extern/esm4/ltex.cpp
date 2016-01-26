@@ -32,8 +32,9 @@
 #include "reader.hpp"
 //#include "writer.hpp"
 
-ESM4::LandTexture::LandTexture() : mHavokFriction(0), mHavokRestitution(0), mTextureSpecular(0),
-                                   mGrass(0), mHavokMaterial(0), mTexture(0), mMaterial(0)
+ESM4::LandTexture::LandTexture() : mFormId(0), mFlags(0), mHavokFriction(0), mHavokRestitution(0),
+                                   mTextureSpecular(0), mGrass(0), mHavokMaterial(0), mTexture(0),
+                                   mMaterial(0)
 {
     mEditorId.clear();
     mTextureFile.clear();
@@ -53,22 +54,7 @@ void ESM4::LandTexture::load(ESM4::Reader& reader)
         const ESM4::SubRecordHeader& subHdr = reader.subRecordHeader();
         switch (subHdr.typeId)
         {
-            case ESM4::SUB_EDID: // Editor name or the worldspace
-            {
-                if (!reader.getZString(mEditorId))
-                    throw std::runtime_error ("LTEX EDID data read error");
-                break;
-            }
-            case ESM4::SUB_TNAM: // TES5 only
-            {
-                reader.get(mTexture);
-                break;
-            }
-            case ESM4::SUB_MNAM: // TES5 only
-            {
-                reader.get(mMaterial);
-                break;
-            }
+            case ESM4::SUB_EDID: reader.getZString(mEditorId); break;
             case ESM4::SUB_HNAM:
             {
                 if (reader.esmVersion() == ESM4::VER_094 || reader.esmVersion() == ESM4::VER_170)
@@ -86,22 +72,11 @@ void ESM4::LandTexture::load(ESM4::Reader& reader)
                 }
                 break;
             }
-            case ESM4::SUB_ICON: // Oblivion only?
-            {
-                if (!reader.getZString(mTextureFile))
-                    throw std::runtime_error ("LTEX ICON data read error");
-                break;
-            }
-            case ESM4::SUB_SNAM:
-            {
-                reader.get(mTextureSpecular);
-                break;
-            }
-            case ESM4::SUB_GNAM:
-            {
-                reader.get(mGrass);
-                break;
-            }
+            case ESM4::SUB_ICON: reader.getZString(mTextureFile); break; // Oblivion only?
+            case ESM4::SUB_SNAM: reader.get(mTextureSpecular); break;
+            case ESM4::SUB_GNAM: reader.get(mGrass);           break;
+            case ESM4::SUB_TNAM: reader.get(mTexture);         break; // TES5 only
+            case ESM4::SUB_MNAM: reader.get(mMaterial);        break; // TES5 only
             default:
                 throw std::runtime_error("ESM4::LTEX::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
         }

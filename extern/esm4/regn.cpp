@@ -33,7 +33,7 @@
 #include "reader.hpp"
 //#include "writer.hpp"
 
-ESM4::Region::Region()
+ESM4::Region::Region() : mFormId(0), mFlags(0)
 {
     mEditorId.clear();
     mShader.clear();
@@ -58,34 +58,11 @@ void ESM4::Region::load(ESM4::Reader& reader)
         const ESM4::SubRecordHeader& subHdr = reader.subRecordHeader();
         switch (subHdr.typeId)
         {
-            case ESM4::SUB_EDID: // Editor name or the worldspace
-            {
-                if (!reader.getZString(mEditorId))
-                    throw std::runtime_error ("REGN EDID data read error");
-                //std::cout << "REGN Editor ID: " << mEditorId << std::endl; // FIXME: temp
-                break;
-            }
-            case ESM4::SUB_RCLR:
-            {
-                reader.get(mColour);
-                break;
-            }
-            case ESM4::SUB_WNAM:
-            {
-                reader.get(mWorldId);
-                break;
-            }
-            case ESM4::SUB_ICON:
-            {
-                if (!reader.getZString(mShader))
-                    throw std::runtime_error ("REGN ICON data read error");
-                break;
-            }
-            case ESM4::SUB_RPLI:
-            {
-                reader.get(mEdgeFalloff);
-                break;
-            }
+            case ESM4::SUB_EDID: reader.getZString(mEditorId); break;
+            case ESM4::SUB_RCLR: reader.get(mColour);        break;
+            case ESM4::SUB_WNAM: reader.get(mWorldId);       break;
+            case ESM4::SUB_ICON: reader.getZString(mShader); break;
+            case ESM4::SUB_RPLI: reader.get(mEdgeFalloff);   break;
             case ESM4::SUB_RPLD:
             {
                 mRPLD.resize(subHdr.dataSize/sizeof(std::uint32_t));

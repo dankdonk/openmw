@@ -57,6 +57,8 @@ namespace ESM4
         std::string mModel;
         std::string mIcon; // inventory
 
+        float mBoundRadius;
+
         std::vector<std::string> mScriptEffect; // FIXME: prob. should be in a struct
         FormId mScript;
         ENIT   mEnchantment;

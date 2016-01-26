@@ -76,6 +76,8 @@ namespace ESM4
         std::string mEditorId;
         std::string mModel;
 
+        float mBoundRadius;
+
         Data mData;
 
         Grass();

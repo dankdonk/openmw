@@ -33,8 +33,8 @@
 #include "reader.hpp"
 //#include "writer.hpp"
 
-ESM4::World::World() : mParent(0), mWorldFlags(0), mClimate(0), mWater(0)
-                     , mMinX(0), mMinY(0), mMaxX(0), mMaxY(0), mSound(0)
+ESM4::World::World() : mFormId(0), mFlags(0), mParent(0), mWorldFlags(0), mClimate(0), mWater(0),
+                       mMinX(0), mMinY(0), mMaxX(0), mMaxY(0), mSound(0)
 {
     mEditorId.clear();
     mFullName.clear();
@@ -59,13 +59,7 @@ void ESM4::World::load(ESM4::Reader& reader)
         const ESM4::SubRecordHeader& subHdr = reader.subRecordHeader();
         switch (subHdr.typeId)
         {
-            case ESM4::SUB_EDID: // Editor name or the worldspace
-            {
-                if (!reader.getZString(mEditorId))
-                    throw std::runtime_error ("WRLD EDID data read error");
-                ///std::cout << "WRLD Editor ID: " << mEditorId << std::endl; // FIXME: temp
-                break;
-            }
+            case ESM4::SUB_EDID: reader.getZString(mEditorId); break;
             case ESM4::SUB_FULL: // Name of the worldspace
             {
                 // NOTE: checking flags does not work, Skyrim.esm does not set the localized flag
@@ -82,40 +76,14 @@ void ESM4::World::load(ESM4::Reader& reader)
 
                 if (!reader.getZString(mFullName))
                     throw std::runtime_error ("WRLD FULL data read error");
-                ///std::cout << "WRLD Full Name: " << mFullName << std::endl; // FIXME: temp
                 break;
             }
-            case ESM4::SUB_WCTR: // Center cell, TES5 only
-            {
-                reader.get(mCenterCell);
-                break;
-            }
-            case ESM4::SUB_WNAM:
-            {
-                reader.get(mParent);
-                break;
-            }
-            case ESM4::SUB_SNAM: // sound, Oblivion only?
-            {
-                reader.get(mSound);
-                break;
-            }
-            case ESM4::SUB_ICON: // map filename, Oblivion only?
-            {
-                if (!reader.getZString(mMapFile))
-                    throw std::runtime_error ("WRLD ICON data read error");
-                break;
-            }
-            case ESM4::SUB_CNAM:
-            {
-                reader.get(mClimate);
-                break;
-            }
-            case ESM4::SUB_NAM2:
-            {
-                reader.get(mWater);
-                break;
-            }
+            case ESM4::SUB_WCTR: reader.get(mCenterCell); break; // Center cell, TES5 only
+            case ESM4::SUB_WNAM: reader.get(mParent);     break;
+            case ESM4::SUB_SNAM: reader.get(mSound);      break; // sound, Oblivion only?
+            case ESM4::SUB_ICON: reader.getZString(mMapFile); break; // map filename, Oblivion only?
+            case ESM4::SUB_CNAM: reader.get(mClimate);    break;
+            case ESM4::SUB_NAM2: reader.get(mWater);      break;
             case ESM4::SUB_NAM0:
             {
                 reader.get(mMinX);

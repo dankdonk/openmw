@@ -20,7 +20,7 @@
   cc9cii cc9c@iinet.net.au
 
 */
-#include "gras.hpp"
+#include "idle.hpp"
 
 #include <cassert>
 #include <stdexcept>
@@ -32,17 +32,18 @@
 #include "reader.hpp"
 //#include "writer.hpp"
 
-ESM4::Grass::Grass() : mFormId(0), mFlags(0), mBoundRadius(0.f)
+ESM4::IdleAnimation::IdleAnimation() : mFormId(0), mFlags(0), mParent(0), mPrevious(0)
 {
     mEditorId.clear();
-    mModel.clear();
+    mCollision.clear();
+    mEvent.clear();
 }
 
-ESM4::Grass::~Grass()
+ESM4::IdleAnimation::~IdleAnimation()
 {
 }
 
-void ESM4::Grass::load(ESM4::Reader& reader)
+void ESM4::IdleAnimation::load(ESM4::Reader& reader)
 {
     mFormId = reader.hdr().record.id;
     mFlags  = reader.hdr().record.flags;
@@ -52,27 +53,32 @@ void ESM4::Grass::load(ESM4::Reader& reader)
         const ESM4::SubRecordHeader& subHdr = reader.subRecordHeader();
         switch (subHdr.typeId)
         {
-            case ESM4::SUB_EDID: reader.getZString(mEditorId); break;
-            case ESM4::SUB_MODL: reader.getZString(mModel); break;
-            case ESM4::SUB_DATA: reader.get(mData);         break;
-            case ESM4::SUB_MODB: reader.get(mBoundRadius);  break;
-            case ESM4::SUB_MODT:
-            case ESM4::SUB_OBND:
+            case ESM4::SUB_EDID: reader.getZString(mEditorId);  break;
+            case ESM4::SUB_DNAM: reader.getZString(mCollision); break;
+            case ESM4::SUB_ENAM: reader.getZString(mEvent);     break;
+            case ESM4::SUB_ANAM:
             {
-                //std::cout << "GRAS " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
+                reader.get(mParent);
+                reader.get(mPrevious);
+                break;
+            }
+            case ESM4::SUB_CTDA:
+            case ESM4::SUB_DATA:
+            {
+                //std::cout << "IDLE " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
                 reader.skipSubRecordData();
                 break;
             }
             default:
-                throw std::runtime_error("ESM4::GRAS::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
+                throw std::runtime_error("ESM4::IDLE::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
         }
     }
 }
 
-//void ESM4::Grass::save(ESM4::Writer& writer) const
+//void ESM4::IdleAnimation::save(ESM4::Writer& writer) const
 //{
 //}
 
-//void ESM4::Grass::blank()
+//void ESM4::IdleAnimation::blank()
 //{
 //}

@@ -23,15 +23,14 @@
 #ifndef ESM4_ACHR_H
 #define ESM4_ACHR_H
 
-#include "common.hpp" // Position
+#include "common.hpp"
 
 namespace ESM4
 {
     class Reader;
     class Writer;
-    typedef std::uint32_t FormId;
 
-    struct Character
+    struct ActorCharacter
     {
         FormId mFormId;       // from the header
         std::uint32_t mFlags; // from the header, see enum type RecordFlag for details
@@ -41,10 +40,15 @@ namespace ESM4
         FormId      mBaseObj;
 
         Position mPosition;
-        float    mScale;
+        float    mScale;      // default 1.f
+        FormId   mOwner;
+        FormId   mGlobal;
 
-        Character();
-        ~Character();
+        bool mDisabled;
+        EnableParent mEsp;    // TODO may need to check mFlags & 0x800 (initially disabled)
+
+        ActorCharacter();
+        ~ActorCharacter();
 
         void load(ESM4::Reader& reader);
         //void save(ESM4::Writer& reader) const;

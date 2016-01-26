@@ -14,7 +14,7 @@ CSMForeign::CellChar::~CellChar()
 
 void CSMForeign::CellChar::load(ESM4::Reader& reader)
 {
-    ESM4::Character::load(reader);
+    ESM4::ActorCharacter::load(reader);
 
     mRefID = ESM4::formIdToString(mBaseObj);
 

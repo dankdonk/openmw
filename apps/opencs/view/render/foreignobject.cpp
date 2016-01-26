@@ -90,6 +90,22 @@ void CSVRender::ForeignObject::update()
     ESM4::FormId baseObj = refs.getRecord(refs.searchId(mReferenceId)).get().mBaseObj;
     int index = referenceables.searchId (ESM4::formIdToString(baseObj)); // FIXME: double conversion to string
 
+    ESM4::FormId parent = refs.getRecord(refs.searchId(mReferenceId)).get().mEsp.parent;
+    if (parent == 0x000e4ee3 || // FIXME testing WhiterunPlayerHouseKitchenStart
+        parent == 0x000e4ef9 ||               // WhiterunPlayerHouseAlchemyLaboratoryStart
+        parent == 0x000e4f0a ||               // WhiterunPlayerHousePackageHouseCarlStart
+        parent == 0x000e4efb ||               // WhiterunPlayerHouseLoftStart
+        parent == 0x000e4ef1 ||               // WhiterunPlayerHouseDiningRoomStart
+        parent == 0x000e4ecb /*||               // WhiterunPlayerHouseBedroomStart
+        parent == 0x000e4ec8 ||               // WhiterunPlayerHouseAlchemyLaboratory
+        parent == 0x000e4eca ||               // WhiterunPlayerHousePackageHouseCarl
+        parent == 0x000e4ec9 */                 // WhiterunPlayerHouseDecoratoinDiningRoom
+        )
+    {
+        index = 0;
+        error = 3; // Do not draw
+    }
+
     // FIXME: this is a massive hack to get around the lack of a referenceable table
     if (index==-1)
     {
@@ -577,7 +593,7 @@ void CSVRender::ForeignObject::update()
             mObject->mLights.push_back(mBase->getCreator()->createLight());
             Ogre::Light *light = mObject->mLights.back();
             light->setType(Ogre::Light::LT_POINT);
-            light->setDiffuseColour(0.8, 0.7, 0.0);
+            light->setDiffuseColour(0.9, 0.8, 0.0);
             //http://www.ogre3d.org/tikiwiki/tiki-index.php?page=-Point%20Light%20Attenuation
             light->setSpecularColour(1.0, 1.0, 0.0);
             //light->setCastShadows(true);

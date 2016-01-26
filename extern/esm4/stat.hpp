@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015 cc9cii
+  Copyright (C) 2015, 2016 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -43,8 +43,8 @@ namespace ESM4
         std::string mEditorId;
         std::string mModel;
 
-        std::vector<std::uint8_t> mMODB;
-        std::vector<std::uint8_t> mMODT;
+        float mBoundRadius;
+        std::vector<std::uint8_t> mMODT; // FIXME texture hash
 
         Static();
         ~Static();

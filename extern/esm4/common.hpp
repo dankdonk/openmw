@@ -591,19 +591,6 @@ namespace ESM4
         Rec_MultiBound = 0x80000000  // (REFR) MultiBound
     };
 
-    enum Flags
-    {
-        // NVNM/NVMI world space field
-        FLG_Interior   = 0x00000000, // cell formid follows
-        FLG_Tamriel    = 0x0000003c, // grid info follows, possibly Tamriel?
-        FLG_Morrowind  = 0x01380000, // grid info follows, probably Skywind
-
-        // NVMI island flags (not certain)
-        FLG_Island     = 0x00000020,
-        FLG_Modified   = 0x00000000, // not island
-        FLG_Unmodified = 0x00000040  // not island
-    };
-
     typedef std::uint32_t FormId;
 
 #pragma pack(push, 1)
@@ -679,10 +666,28 @@ namespace ESM4
 
     typedef Vector3 Vertex;
 
+    // REFR, ACHR, ACRE
     struct Position
     {
         Vector3 pos;
         Vector3 rot; // angles are in radian, rz applied first and rx applied last
+    };
+
+    // REFR, ACHR, ACRE
+    struct EnableParent
+    {
+        FormId        parent;
+        std::uint32_t flags; //0x0001 = Set Enable State Opposite Parent, 0x0002 = Pop In
+    };
+
+    // LVLC, LVLI
+    struct LVLO
+    {
+        std::int16_t  level;
+        std::uint16_t unknown;  // sometimes missing
+        FormId        item;
+        std::int16_t  count;
+        std::uint16_t unknown2; // sometimes missing
     };
 #pragma pack(pop)
 

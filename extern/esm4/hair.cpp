@@ -32,7 +32,7 @@
 #include "reader.hpp"
 //#include "writer.hpp"
 
-ESM4::Hair::Hair()
+ESM4::Hair::Hair() : mFormId(0), mFlags(0), mBoundRadius(0.f)
 {
     mEditorId.clear();
     mFullName.clear();
@@ -56,41 +56,12 @@ void ESM4::Hair::load(ESM4::Reader& reader)
         const ESM4::SubRecordHeader& subHdr = reader.subRecordHeader();
         switch (subHdr.typeId)
         {
-            case ESM4::SUB_EDID: // Editor name or the worldspace
-            {
-                if (!reader.getZString(mEditorId))
-                    throw std::runtime_error ("HAIR EDID data read error");
-                break;
-            }
-            case ESM4::SUB_FULL:
-            {
-                if (!reader.getZString(mFullName))
-                    throw std::runtime_error ("HAIR FULL data read error");
-                break;
-            }
-            case ESM4::SUB_MODL:
-            {
-                if (!reader.getZString(mModel))
-                    throw std::runtime_error ("HAIR MODL data read error");
-
-                //if (reader.esmVersion() == ESM4::VER_094 || reader.esmVersion() == ESM4::VER_170)
-                //{
-                    // read MODT/MODS here?
-                //}
-                break;
-            }
-            case ESM4::SUB_ICON:
-            {
-                if (!reader.getZString(mIcon))
-                    throw std::runtime_error ("HAIR ICON data read error");
-                break;
-            }
-            case ESM4::SUB_DATA:
-            {
-                reader.get(mData);
-                break;
-            }
-            case ESM4::SUB_MODB:
+            case ESM4::SUB_EDID: reader.getZString(mEditorId); break;
+            case ESM4::SUB_FULL: reader.getZString(mFullName); break;
+            case ESM4::SUB_MODL: reader.getZString(mModel); break;
+            case ESM4::SUB_ICON: reader.getZString(mIcon);  break;
+            case ESM4::SUB_DATA: reader.get(mData);         break;
+            case ESM4::SUB_MODB: reader.get(mBoundRadius);  break;
             case ESM4::SUB_MODT:
             {
                 //std::cout << "HAIR " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;

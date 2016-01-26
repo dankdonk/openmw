@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015 cc9cii
+  Copyright (C) 2015, 2016 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -42,7 +42,15 @@ namespace ESM4
         FormId      mBaseObj;
 
         Position mPosition;
-        float    mScale;
+        float    mScale;      // default 1.f
+        FormId   mOwner;
+        FormId   mGlobal;
+        std::uint32_t mFactionRank;
+
+        bool mDisabled;
+        EnableParent mEsp;    // TODO may need to check mFlags & 0x800 (initially disabled)
+
+        std::uint32_t mCount; // only if > 1 (default 1)
 
         Reference();
         ~Reference();

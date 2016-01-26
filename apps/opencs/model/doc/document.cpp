@@ -1483,7 +1483,7 @@ void CSMDoc::Document::addGmsts()
         "sMagicWingedTwilightID",
         "sMagnitude",
         "sMagnitudeDes",
-        "sMake",
+        "sMake Enchantment",
         "sMap",
         "sMaster",
         "sMastPlugMismatchMsg",
