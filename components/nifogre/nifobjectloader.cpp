@@ -934,6 +934,14 @@ void NifOgre::NIFObjectLoader::load (Ogre::SceneNode *sceneNode,
 // NiTextKeyExtraData and  has a number of Controlled Blocks.  Each Controlled Block has a node
 // name string, and points to a NiTransformInterpolator which in turn points to
 // NiTransformData.
+//
+//void Animation::addAnimSource(const std::string &model)
+//void Loader::createKfControllers (Ogre::Entity *skelBase,
+//void NifOgre::NIFObjectLoader::loadKf (Ogre::Skeleton *skel,
+//
+// given skeleton and name, populate textKeys and ctrls
+// textKeys and ctrls are extracted from the nif file (which we get from name) and skel is used
+// to confirm/match the bone name in the string extra data
 void NifOgre::NIFObjectLoader::loadKf (Ogre::Skeleton *skel,
             const std::string &name, TextKeyMap &textKeys, std::vector<Ogre::Controller<Ogre::Real> > &ctrls)
 {

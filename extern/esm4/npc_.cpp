@@ -93,8 +93,10 @@ void ESM4::Npc::load(ESM4::Reader& reader)
                 reader.get(item);
                 std::uint32_t count;
                 reader.get(count);
-                //if (mFormId == 0x0004b939) //FIXME
+                //if (mFormId == 0x0004b939) //FIXME Necromancer Wellspring cave
                     //std::cout << formIdToString(item) << " " << count << std::endl;
+                if (mFormId == 0x0000bfdf) //FIXME Anvil Guard
+                    std::cout << formIdToString(item) << " " << count << std::endl;
 
                 break;
             }

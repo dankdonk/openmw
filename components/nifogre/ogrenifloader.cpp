@@ -137,6 +137,7 @@ ObjectScenePtr Loader::createObjectBase (Ogre::SceneNode *parentNode, std::strin
 }
 
 
+// given skelBase and name, populate textKeys and ctrls
 void Loader::createKfControllers (Ogre::Entity *skelBase,
                                   const std::string &name,
                                   TextKeyMap &textKeys,

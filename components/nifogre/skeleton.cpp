@@ -64,6 +64,13 @@ namespace NifOgre
 //
 // NiPortal
 //
+// -------------------------------------------------------------------
+//
+// some options for TES4:
+//  - existance of NiBSBoneLODController (how to add the branches later in buildBones()?)
+//  - look for name "Bip01" (possibly slow?)
+//  - nodes in node groups of NiBSBoneLODController
+//  - all children of NiBSBoneLODController target (prob. Bip01)
 void NIFSkeletonLoader::buildBones (Ogre::Skeleton *skel, const Nif::Node *node, Ogre::Bone *parent)
 {
     const Nif::NiNode *ninode = dynamic_cast<const Nif::NiNode*>(node);
@@ -89,12 +96,12 @@ void NIFSkeletonLoader::buildBones (Ogre::Skeleton *skel, const Nif::Node *node,
           node->recType == Nif::RC_NiBSAnimationNode || /* Handled in the object loader */
           node->recType == Nif::RC_NiBillboardNode ||   /* Handled in the object loader */
           node->recType == Nif::RC_NiBSParticleNode ||
-          node->recType == Nif::RC_NiCamera ||              // <-- ignored above (ToDo: should confirm)
-          node->recType == Nif::RC_NiAutoNormalParticles || // <-- ignored above (NiGeometry)
-          node->recType == Nif::RC_NiParticleSystem ||      // <-- ignored above (NiGeometry)
-          node->recType == Nif::RC_BSStripParticleSystem || // <-- ignored above (NiGeometry)
-          node->recType == Nif::RC_NiRotatingParticles ||   // <-- ignored above (NiGeometry)
-          node->recType == Nif::RC_NiTriStrips              // <-- ignored above (NiGeometry)
+          node->recType == Nif::RC_NiCamera ||              // <-- ignored (ToDo: should confirm)
+          node->recType == Nif::RC_NiAutoNormalParticles || // <-- should be ignored (NiGeometry)
+          node->recType == Nif::RC_NiParticleSystem ||      // <-- should be ignored (NiGeometry)
+          node->recType == Nif::RC_BSStripParticleSystem || // <-- should be ignored (NiGeometry)
+          node->recType == Nif::RC_NiRotatingParticles ||   // <-- should be ignored (NiGeometry)
+          node->recType == Nif::RC_NiTriStrips              // <-- should be ignored (NiGeometry)
           ))
         warn("Unhandled "+node->recName+" "+node->name+" in "+skel->getName());
 
@@ -109,15 +116,21 @@ void NIFSkeletonLoader::buildBones (Ogre::Skeleton *skel, const Nif::Node *node,
               ctrl->recType == Nif::RC_NiKeyframeController ||
               ctrl->recType == Nif::RC_NiTransformController ||
               ctrl->recType == Nif::RC_NiGeomMorpherController ||
-              // FIXME: see NifOgre::NIFObjectLoader::createNodeControllers()
+              // FIXME: implement below ones in NifOgre::NIFObjectLoader::createNodeControllers()
+              // for now suppress warning
+              ctrl->recType == Nif::RC_NiBSBoneLODController ||
+              ctrl->recType == Nif::RC_bhkBlendController ||
               ctrl->recType == Nif::RC_NiControllerManager ||
               ctrl->recType == Nif::RC_NiMultiTargetTransformController
               ))
             warn("Unhandled "+ctrl->recName+" from node "+node->name+" in "+skel->getName());
         ctrl = ctrl->next;
     }
+    // about to add a bone
+    //std::cout << "added bone " << node->name << std::endl;
 //#endif
-    // FIXME: often a bone is created under BSFadeNode but none of the children have bones...
+    // FIXME: sometimes a bone is created under BSFadeNode but none of the children have bones...
+    //        currently resolved by ignoring BSFadeNode in NifOgre::NIFSkeletonLoader::needSkeleton()
     Ogre::Bone *bone;
     if (node->name.empty())
     {
@@ -205,11 +218,12 @@ bool NIFSkeletonLoader::needSkeleton(const Nif::Node *node)
     if(node->boneTrafo)
         return true;
 
+    // TES3 checks for NiKeyframeController, TES4 checks for NiBSBoneLODController
     if(!node->controller.empty())
     {
         Nif::ControllerPtr ctrl = node->controller;
         do {
-            if(ctrl->recType == Nif::RC_NiKeyframeController
+            if((ctrl->recType == Nif::RC_NiKeyframeController || Nif::RC_NiBSBoneLODController)
                     && ((ctrl->flags & Nif::NiNode::ControllerFlag_Active) != 0))
                 return true;
         } while(!(ctrl=ctrl->next).empty());
@@ -240,7 +254,8 @@ bool NIFSkeletonLoader::needSkeleton(const Nif::Node *node)
         return false;
     }
 
-    // check if have skin, else no need for a skeleton on this branch
+    // check if have skin, else no need for a skeleton on this branch (TES3)
+    // TES4 skeleton.nif nodes do not have skins, need another way to identify (see above)
     if(node->recType == Nif::RC_NiTriShape || node->recType == Nif::RC_NiTriStrips ||
        node->recType == Nif::RC_BSLODTriShape)
     {
@@ -275,6 +290,7 @@ Ogre::SkeletonPtr NIFSkeletonLoader::createSkeleton(const std::string &name,
 
     if(forceskel || needSkeleton(node))
     {
+        // skeleton will be loaded when loadResource() is called back
         Ogre::SkeletonManager &skelMgr = Ogre::SkeletonManager::getSingleton();
         return skelMgr.create(name, group, true, &sLoaders[name]);
     }
