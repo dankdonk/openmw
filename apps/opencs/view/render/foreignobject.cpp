@@ -185,6 +185,7 @@ void CSVRender::ForeignObject::update()
                     }
                 }
                 std::cout << "obj is an leveled npc " << ESM4::formIdToString(templ) << ", " << model << std::endl;
+
                 if (!model.empty())
                     error = 0;
             }

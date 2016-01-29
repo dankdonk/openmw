@@ -93,21 +93,23 @@ void ESMReader::open(Ogre::DataStreamPtr _esm, const std::string &name)
         NAME rec = getRecName();
         if (rec == "CNAM")
         {
+            char buf[512]; // arbitrary number
             unsigned short size;
             getT(size);
-            skip(size);
+            getExact(buf, size);
+            std::string author;
+            size = std::min(size, (unsigned short)32); // clamp for TES3 format
+            author.assign(buf, size - 1); // don't copy null terminator
+            mHeader.mData.author.assign(author);
 
             rec = getRecName();
             while (rec == "MAST")
             {
                 Header::MasterData m;
-                char buf[100]; // arbitrary number
                 getT(size);
                 getExact(buf, size);
-                if (buf[size - 1] != 0)
-                    fail("string is not terminated with a zero");
-
                 m.name.assign(buf, size-1); // don't copy null terminator
+
                 rec = getRecName();
                 if (rec != "DATA")
                 {

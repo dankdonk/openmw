@@ -35,6 +35,14 @@ namespace ESM4
 
     struct Npc
     {
+#pragma pack(push, 1)
+        struct InventoryItem
+        {
+            FormId        item;
+            std::uint32_t count;
+        };
+#pragma pack(pop)
+
         FormId mFormId;       // from the header
         std::uint32_t mFlags; // from the header, see enum type RecordFlag for details
 
@@ -43,7 +51,9 @@ namespace ESM4
         std::string mModel;
 
         float mBoundRadius;
-        std::vector<std::string> mKf;
+        std::vector<std::string> mKf; // filenames only, get directory path from mModel
+
+        std::vector<InventoryItem> mInventory;
 
         Npc();
         ~Npc();

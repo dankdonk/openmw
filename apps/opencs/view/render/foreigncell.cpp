@@ -115,6 +115,88 @@ bool CSVRender::ForeignCell::addObjects (const std::vector<ESM4::FormId>& object
                         new ForeignObject(mDocument.getData(), mCellNode, id, false, mPhysics)));
             modified = true;
 
+            // FIXME: temporarily add body parts here
+            const CSMForeign::IdCollection<CSMForeign::Npc>& npc
+                                                 = mDocument.getData().getForeignNpcs();
+            const CSMForeign::IdCollection<CSMForeign::Creature>& crea
+                                                 = mDocument.getData().getForeignCreatures();
+            const CSMForeign::IdCollection<CSMForeign::LeveledCreature>& lvlc
+                                                 = mDocument.getData().getForeignLvlCreatures();
+            //
+            const CSMForeign::IdCollection<CSMForeign::Armor>& armor
+                                                 = mDocument.getData().getForeignArmors();
+            const CSMForeign::IdCollection<CSMForeign::Weapon>& weap
+                                                 = mDocument.getData().getForeignWeapons();
+            const CSMForeign::IdCollection<CSMForeign::Ammo>& ammo
+                                                 = mDocument.getData().getForeignAmmos();
+            const CSMForeign::IdCollection<CSMForeign::Clothing>& cloth
+                                                 = mDocument.getData().getForeignClothings();
+            const CSMForeign::IdCollection<CSMForeign::Potion>& potion
+                                                 = mDocument.getData().getForeignPotions();
+            const CSMForeign::IdCollection<CSMForeign::Apparatus>& appa
+                                                 = mDocument.getData().getForeignApparatuses();
+            const CSMForeign::IdCollection<CSMForeign::Ingredient>& ingr
+                                                 = mDocument.getData().getForeignIngredients();
+            const CSMForeign::IdCollection<CSMForeign::SigilStone>& sigil
+                                                 = mDocument.getData().getForeignSigilStones();
+            const CSMForeign::IdCollection<CSMForeign::SoulGem>& soul
+                                                 = mDocument.getData().getForeignSoulGems();
+            const CSMForeign::IdCollection<CSMForeign::Key>& keys
+                                                 = mDocument.getData().getForeignKeys();
+            const CSMForeign::IdCollection<CSMForeign::Hair>& hair
+                                                 = mDocument.getData().getForeignHairs();
+            const CSMForeign::IdCollection<CSMForeign::Eyes>& eyes
+                                                 = mDocument.getData().getForeignEyesSet();
+
+            const CSMForeign::RefCollection& refs = mDocument.getData().getForeignReferences();
+            ESM4::FormId baseObj = refs.getRecord(refs.searchId(id)).get().mBaseObj;
+            if (lvlc.searchId (ESM4::formIdToString(baseObj)) != -1)
+            {
+                const CSMForeign::LeveledCreature& lcreature
+                                                  = lvlc.getRecord(ESM4::formIdToString(baseObj)).get();
+                ESM4::FormId templ = 0;
+                for (unsigned int i = 0; i < lcreature.mLvlObject.size(); ++i)
+                {
+                    templ = lcreature.mLvlObject[i].item;
+                    int extraIndex = -1;
+                    extraIndex = crea.searchId(ESM4::formIdToString(templ));
+                    if (extraIndex != -1)
+                    {
+                        continue; // do nothing for now
+                    }
+                }
+
+                int extraIndex = -1;
+                for (unsigned int i = 0; i < lcreature.mLvlObject.size(); ++i)
+                {
+                    templ = lcreature.mLvlObject[i].item;
+                    extraIndex = npc.searchId(ESM4::formIdToString(templ));
+                    if (extraIndex != -1)
+                    {
+                        break;
+                    }
+                }
+
+                if (extraIndex != -1)
+                {
+                    CSMForeign::Npc npcRec = npc.getRecord(extraIndex).get();
+                    for (unsigned int i = 0; i < npcRec.mInventory.size(); ++i)
+                    {
+                        int invIndex = cloth.searchId(ESM4::formIdToString(npcRec.mInventory[i].item));
+                        if (invIndex != -1)
+                        {
+                            const CSMForeign::Clothing& clothRec = cloth.getRecord(invIndex).get();
+                            std::cout << clothRec.mEditorId << std::endl;
+                        }
+                        else
+                            std::cout << "not cloth" << std::endl;
+                        //std::cout << "inventory " << ESM4::formIdToString(npcRec.mInventory[i].item)
+                        //<< ", " << npcRec.mInventory[i].count << std::endl;
+                        // FIXME: attach to bones and add to mObjects
+                    }
+                }
+            }
+
 #if 0
             // sanity check z position
             float diff = record.get().mPos.pos[2] - getTerrainHeightAt(Ogre::Vector3(record.get().mPos.pos[0],

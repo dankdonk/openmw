@@ -789,6 +789,7 @@ void NifOgre::NIFObjectLoader::createObjects (const Nif::NIFFilePtr& nif, const 
             std::cout << "createObjects: no bone " << node->recIndex << ", " << name << std::endl;
     }
 
+    // FIXME: should be able to handle this using nifVer, rather than boolean hasExtras
     // FIXME: duplicated code
     if (node->hasExtras)
     {
@@ -927,6 +928,20 @@ void NifOgre::NIFObjectLoader::load (Ogre::SceneNode *sceneNode,
     createObjects(nif, name, group, sceneNode, node, scene, flags, 0, 0);
 }
 
+// given 'skeleton' and 'name', populate textKeys and ctrls
+//
+// textKeys and ctrls are extracted from the nif file (which is derived from 'name') and 'skeleton'
+// is used to confirm/match the bone name in the string extra data
+//
+// This method assumes that 'name' has a corresponding '.kf' file. (e.g. abc.nif <-> abc.kf)
+// For TES4/5 the nif file tends to be 'skeleton.nif' so we need a different algorithm.
+// addAnimSource() may need to pass additional info (e.g. from KFFZ subrecord for additional
+// special animations).  FIXME: need to find out what are the 'hard coded' animations are
+//
+// MWRender::Animation::addAnimSource() /* add animation to a model (a nif file in MW/OpenMW) */
+//   --> NifOgre::Loader::createKfControllers()   /* just an interface, doesn't do anything */
+//         --> NifOgre::NIFObjectLoader::loadKf() /* this method */
+//
 // Each .kf file is started with a NiSequenceStreamHelper block with NiTextKeyExtraData
 // following it.  These are then followed by NiStringExtraData and NiKeyframeController blocks.
 //
@@ -934,16 +949,8 @@ void NifOgre::NIFObjectLoader::load (Ogre::SceneNode *sceneNode,
 // NiTextKeyExtraData and  has a number of Controlled Blocks.  Each Controlled Block has a node
 // name string, and points to a NiTransformInterpolator which in turn points to
 // NiTransformData.
-//
-//void Animation::addAnimSource(const std::string &model)
-//void Loader::createKfControllers (Ogre::Entity *skelBase,
-//void NifOgre::NIFObjectLoader::loadKf (Ogre::Skeleton *skel,
-//
-// given skeleton and name, populate textKeys and ctrls
-// textKeys and ctrls are extracted from the nif file (which we get from name) and skel is used
-// to confirm/match the bone name in the string extra data
-void NifOgre::NIFObjectLoader::loadKf (Ogre::Skeleton *skel,
-            const std::string &name, TextKeyMap &textKeys, std::vector<Ogre::Controller<Ogre::Real> > &ctrls)
+void NifOgre::NIFObjectLoader::loadKf (Ogre::Skeleton *skel, const std::string &name,
+            TextKeyMap &textKeys, std::vector<Ogre::Controller<Ogre::Real> > &ctrls)
 {
     Nif::NIFFilePtr nif = Nif::Cache::getInstance().load(name);
     if (nif->numRoots() < 1)
