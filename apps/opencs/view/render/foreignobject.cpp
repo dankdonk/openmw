@@ -181,6 +181,21 @@ void CSVRender::ForeignObject::update()
                     {
                         model = npc.getData (extraIndex,
                            npc.findColumnIndex (CSMWorld::Columns::ColumnId_Model)).toString().toUtf8().constData();
+#if 0
+                        // FIXME temp testing
+                        CSMForeign::Npc npcRec = npc.getRecord(extraIndex).get();
+                        for (unsigned int j = 0; j < npcRec.mInventory.size(); ++j)
+                        {
+                            int invIndex = cloth.searchId(ESM4::formIdToString(npcRec.mInventory[j].item));
+                            if (invIndex != -1)
+                            {
+                                const CSMForeign::Clothing& clothRec = cloth.getRecord(invIndex).get();
+                                model = clothRec.mModel;
+                                //std::cout << clothRec.mEditorId << std::endl;
+                                break;
+                            }
+                        }
+#endif
                         break;
                     }
                 }
@@ -203,8 +218,8 @@ void CSVRender::ForeignObject::update()
                    eyes.findColumnIndex (CSMWorld::Columns::ColumnId_Model)).toString().toUtf8().constData();
             std::cout << "obj is an eye " << ESM4::formIdToString(baseObj) << ", " << model << std::endl;
 
-            if (1)//model.empty())
-                error = 3;
+            if (model.empty())
+                error = 3; // FIXME
             else
                 error = 0;
         }
@@ -267,7 +282,7 @@ void CSVRender::ForeignObject::update()
             //std::cout << "obj is a sound obj " << ESM4::formIdToString(baseObj) << std::endl;
             model = "marker_sound.nif";
 
-            if (0)
+            if (model.empty())
                 error = 3; // FIXME for testing only
             else
                 error = 0;
@@ -552,7 +567,7 @@ void CSVRender::ForeignObject::update()
         entity->setMaterialName("BaseWhite"); /// \todo adjust material according to error
         entity->setVisibilityFlags (Element_Reference);
 
-        if (0)//error != 3) // FIXME for testing Skyrim
+        if (error != 3) // FIXME for testing Skyrim
             mBase->attachObject (entity); // ignore script lights or sounds
     }
     else
@@ -777,4 +792,13 @@ std::string CSVRender::ForeignObject::getReferenceId() const
 std::string CSVRender::ForeignObject::getReferenceableId() const
 {
     return mReferenceableId;
+}
+
+NifOgre::ObjectScenePtr CSVRender::ForeignObject::getObject() const
+{
+    return mObject;
+}
+Ogre::SceneNode *CSVRender::ForeignObject::getSceneNode() const
+{
+    return mBase;
 }

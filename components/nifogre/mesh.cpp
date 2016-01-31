@@ -112,36 +112,11 @@ public:
 
 NIFMeshLoader::LoaderMap NIFMeshLoader::sLoaders;
 
-//void NIFMeshLoader::createSubMesh(Ogre::Mesh *mesh, const Nif::NiTriShape *shape)
-void NIFMeshLoader::createSubMesh(Ogre::Mesh *mesh, const Nif::Record *record)
+void NIFMeshLoader::createSubMesh(Ogre::Mesh *mesh, const Nif::NiGeometry *geom)
 {
-    const Nif::ShapeData *data = NULL;
-    const Nif::NiSkinInstance *skin = NULL;
+    const Nif::ShapeData *data = geom->data.getPtr(); // ShapeData is NiGeometryData
+    const Nif::NiSkinInstance *skin = (geom->skin.empty() ? NULL : geom->skin.getPtr());
 
-    const Nif::NiTriShape *shape = static_cast<const Nif::NiTriShape*>(record);
-    const Nif::NiTriStrips *strips = static_cast<const Nif::NiTriStrips*>(record);
-    if (!mStrips && shape)
-    {
-        data = shape->data.getPtr();
-        skin = (shape->skin.empty() ? NULL : shape->skin.getPtr());
-    }
-    else
-    {
-        if (strips)
-        {
-            data = strips->data.getPtr();
-            skin = (strips->skin.empty() ? NULL : strips->skin.getPtr());
-        }
-    }
-
-
-
-
-
-#if 0
-    const Nif::NiTriShapeData *data = shape->data.getPtr();
-    const Nif::NiSkinInstance *skin = (shape->skin.empty() ? NULL : shape->skin.getPtr());
-#endif
     std::vector<Ogre::Vector3> srcVerts = data->vertices;
     std::vector<Ogre::Vector3> srcNorms = data->normals;
     Ogre::HardwareBuffer::Usage vertUsage = Ogre::HardwareBuffer::HBU_STATIC;
@@ -155,6 +130,7 @@ void NIFMeshLoader::createSubMesh(Ogre::Mesh *mesh, const Nif::Record *record)
         // Only set a skeleton when skinning. Unskinned meshes with a skeleton will be
         // explicitly attached later.
         mesh->setSkeletonName(mName);
+        std::cout << "submesh " << mName << std::endl; // FIXME
 
         // Convert vertices and normals to bone space from bind position. It would be
         // better to transform the bones into bind position, but there doesn't seem to
@@ -197,11 +173,7 @@ void NIFMeshLoader::createSubMesh(Ogre::Mesh *mesh, const Nif::Record *record)
         {
             // No skinning and no skeleton, so just transform the vertices and
             // normals into position.
-            Ogre::Matrix4 mat4;
-            if (shape)
-                mat4 = shape->getWorldTransform();
-            else
-                mat4 = strips->getWorldTransform();
+            Ogre::Matrix4 mat4 = geom->getWorldTransform();
 
             for(size_t i = 0;i < srcVerts.size();i++)
             {
@@ -312,14 +284,12 @@ void NIFMeshLoader::createSubMesh(Ogre::Mesh *mesh, const Nif::Record *record)
         bind->setBinding(nextBuf++, vbuf);
     }
 
-    // ------------------------ shape/strips are different from here
-
     // Triangle faces
     const std::vector<short> *srcIdx;
     if (!mStrips)
-        srcIdx = &static_cast<const Nif::NiTriShapeData*>(shape->data.getPtr())->triangles;
+        srcIdx = &static_cast<const Nif::NiTriShapeData*>(geom->data.getPtr())->triangles;
     else
-        srcIdx = &static_cast<const Nif::NiTriStripsData*>(strips->data.getPtr())->triangles;
+        srcIdx = &static_cast<const Nif::NiTriStripsData*>(geom->data.getPtr())->triangles;
     if(srcIdx->size())
     {
         ibuf = hwBufMgr->createIndexBuffer(Ogre::HardwareIndexBuffer::IT_16BIT, srcIdx->size(),
@@ -365,22 +335,18 @@ void NIFMeshLoader::createSubMesh(Ogre::Mesh *mesh, const Nif::Record *record)
     const Nif::BSWaterShaderProperty *waterprop = NULL;
     bool needTangents = false;
 
-    const Nif::Node *node = static_cast<const Nif::Node*>(record);
+    const Nif::Node *node = static_cast<const Nif::Node*>(geom);
     node->getProperties(texprop, matprop, alphaprop, vertprop, zprop, specprop, wireprop, stencilprop);
 
     if (node->nifVer >= 0x14020007 && node->userVer == 12)
     {
-        const Nif::NiGeometry *geom = static_cast<const Nif::NiGeometry*>(node);
-        if (geom)
-        {
-            bool hasAlphaprop = alphaprop != 0;
-            alphaprop = NULL;
-            geom->getBSProperties(bsprop, alphaprop, effectprop, waterprop);
+        bool hasAlphaprop = alphaprop != 0;
+        alphaprop = NULL;
+        geom->getBSProperties(bsprop, alphaprop, effectprop, waterprop);
 
-            // FIXME: what happens if both have alphaprop?
-            if (hasAlphaprop && alphaprop)
-                std::cout << "alphaprop over written" << std::endl;
-        }
+        // FIXME: what happens if both have alphaprop?
+        if (hasAlphaprop && alphaprop)
+            std::cout << "alphaprop over written" << std::endl;
     }
 
     std::string matname = NIFMaterialLoader::getMaterial(data, mesh->getName(), mGroup,
@@ -393,6 +359,7 @@ void NIFMeshLoader::createSubMesh(Ogre::Mesh *mesh, const Nif::Record *record)
         sub->setMaterialName(matname);
 
     // build tangents if the material needs them
+    // FIXME: is it possible to use the ones in the NIF files?
     if (needTangents)
     {
         unsigned short src,dest;
@@ -408,10 +375,10 @@ void NIFMeshLoader::createSubMesh(Ogre::Mesh *mesh, const Nif::Record *record)
             // Load GeomMorpherController into an Ogre::Pose and Animation
             if(ctrl->recType == Nif::RC_NiGeomMorpherController && ctrl->flags & Nif::NiNode::ControllerFlag_Active)
             {
-                const Nif::NiGeomMorpherController *geom =
+                const Nif::NiGeomMorpherController *geomCtlr =
                         static_cast<const Nif::NiGeomMorpherController*>(ctrl.getPtr());
 
-                const std::vector<Nif::NiMorphData::MorphData>& morphs = geom->data.getPtr()->mMorphs;
+                const std::vector<Nif::NiMorphData::MorphData>& morphs = geomCtlr->data.getPtr()->mMorphs;
                 // Note we are not interested in morph 0, which just contains the original vertices
                 for (unsigned int i = 1; i < morphs.size(); ++i)
                 {
@@ -431,16 +398,11 @@ void NIFMeshLoader::createSubMesh(Ogre::Mesh *mesh, const Nif::Record *record)
 
                 break;
             }
+            else
+                std::cout << "createSubMesh: unsupported ctlr " << node->recName << std::endl;
         } while(!(ctrl=ctrl->next).empty());
     }
 }
-
-#if 0
-void NIFMeshLoader::createStripsSubMesh(Ogre::Mesh *mesh, const Nif::NiTriStrips *strips)
-{
-    std::cout << "FIXME" << std::endl;
-}
-#endif
 
 NIFMeshLoader::NIFMeshLoader(const std::string &name, const std::string &group, size_t idx, bool strips)
   : mName(name), mGroup(group), mShapeIndex(idx), mStrips(strips)
@@ -453,7 +415,7 @@ void NIFMeshLoader::loadResource(Ogre::Resource *resource)
     OgreAssert(mesh, "Attempting to load a mesh into a non-mesh resource!");
 
     Nif::NIFFilePtr nif = Nif::Cache::getInstance().load(mName);
-    if(mShapeIndex >= nif->numRecords())
+    if(mShapeIndex >= nif->numRecords()) // FIXME what does this line check?
     {
         Ogre::SkeletonManager *skelMgr = Ogre::SkeletonManager::getSingletonPtr();
         if(!skelMgr->getByName(mName).isNull())
@@ -461,19 +423,9 @@ void NIFMeshLoader::loadResource(Ogre::Resource *resource)
         return;
     }
 
-    const Nif::Record *record = nif->getRecord(mShapeIndex);
-    createSubMesh(mesh, record);
-#if 0
-    const Nif::NiTriShape *shape = static_cast<const Nif::NiTriShape*>(record);
-    if (shape)
-        createSubMesh(mesh, shape);
-    else
-    {
-        const Nif::NiTriStrips *strips = static_cast<const Nif::NiTriStrips*>(record);
-        if (strips)
-            createStripsSubMesh(mesh, strips);
-    }
-#endif
+    const Nif::NiGeometry *geom
+            = static_cast<const Nif::NiGeometry*>(nif->getRecord(mShapeIndex));
+    createSubMesh(mesh, geom);
 }
 
 

@@ -577,6 +577,8 @@ void Nif::NiFloatExtraDataController::post(NIFFile *nif)
 
 void Nif::NiBoolInterpolator::read(NIFStream *nif)
 {
+    //NiInterpolator::read(nif);
+
     value = nif->getBool(nifVer);
     boolData.read(nif);
 }
@@ -588,6 +590,8 @@ void Nif::NiBoolInterpolator::post(NIFFile *nif)
 
 void Nif::NiBlendBoolInterpolator::read(NIFStream *nif)
 {
+    //NiInterpolator::read(nif);
+
     nif->getUShort();
     nif->getUInt();
 
@@ -596,6 +600,8 @@ void Nif::NiBlendBoolInterpolator::read(NIFStream *nif)
 
 void Nif::NiFloatInterpolator::read(NIFStream *nif)
 {
+    //NiInterpolator::read(nif);
+
     value = nif->getFloat();
     floatData.read(nif);
 }
@@ -607,6 +613,8 @@ void Nif::NiFloatInterpolator::post(NIFFile *nif)
 
 void Nif::NiBlendFloatInterpolator::read(NIFStream *nif)
 {
+    //NiInterpolator::read(nif);
+
     nif->getUShort();
     nif->getUInt();
 
@@ -615,12 +623,16 @@ void Nif::NiBlendFloatInterpolator::read(NIFStream *nif)
 
 void Nif::NiBlendTransformInterpolator::read(NIFStream *nif)
 {
+    //NiInterpolator::read(nif);
+
     unknown1 = nif->getUShort();
     unknown2 = nif->getUInt();
 }
 
 void Nif::NiPathInterpolator::read(NIFStream *nif)
 {
+    //NiInterpolator::read(nif);
+
     nif->getUShort();
     nif->getUInt();
     nif->getFloat();
@@ -639,6 +651,8 @@ void Nif::NiPathInterpolator::post(NIFFile *nif)
 
 void Nif::NiPoint3Interpolator::read(NIFStream *nif)
 {
+    //NiInterpolator::read(nif);
+
     value = nif->getVector3();
 
     posData.read(nif);
@@ -651,6 +665,8 @@ void Nif::NiPoint3Interpolator::post(NIFFile *nif)
 
 void Nif::NiBlendPoint3Interpolator::read(NIFStream *nif)
 {
+    //NiInterpolator::read(nif);
+
     nif->getUShort();
     nif->getInt();
 
@@ -659,15 +675,24 @@ void Nif::NiBlendPoint3Interpolator::read(NIFStream *nif)
 
 void Nif::NiTransformInterpolator::read(NIFStream *nif)
 {
+    //NiInterpolator::read(nif);
+
     translation = nif->getVector3();
     rotation = nif->getQuaternion();
     scale = nif->getFloat();
 
-    transform.read(nif);
+    transformData.read(nif);
+}
+
+void Nif::NiTransformInterpolator::post(NIFFile *nif)
+{
+    transformData.post(nif);
 }
 
 void Nif::NiLookAtInterpolator::read(NIFStream *nif)
 {
+    //NiInterpolator::read(nif);
+
     unknown = nif->getUShort();
     lookAt.read(nif);
     target = nif->getSkyrimString(nifVer, Record::strings);

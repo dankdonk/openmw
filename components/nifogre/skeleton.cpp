@@ -126,8 +126,8 @@ void NIFSkeletonLoader::buildBones (Ogre::Skeleton *skel, const Nif::Node *node,
             warn("Unhandled "+ctrl->recName+" from node "+node->name+" in "+skel->getName());
         ctrl = ctrl->next;
     }
-    // about to add a bone
-    //std::cout << "added bone " << node->name << std::endl;
+    // FIXME about to add a bone
+    //std::cout << "added bone " << node->name << " " << skel->getName() << std::endl;
 //#endif
     // FIXME: sometimes a bone is created under BSFadeNode but none of the children have bones...
     //        currently resolved by ignoring BSFadeNode in NifOgre::NIFSkeletonLoader::needSkeleton()
@@ -153,7 +153,7 @@ void NIFSkeletonLoader::buildBones (Ogre::Skeleton *skel, const Nif::Node *node,
     if (parent)
         parent->addChild(bone);
 
-    mNifToOgreHandleMap[node->recIndex] = bone->getHandle();
+    mNifToOgreHandleMap[(int)node->recIndex] = bone->getHandle();
 
     bone->setOrientation(node->trafo.rotation);
     bone->setPosition(node->trafo.pos);

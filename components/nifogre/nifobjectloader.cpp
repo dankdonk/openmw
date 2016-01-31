@@ -141,7 +141,7 @@ void NifOgre::NIFObjectLoader::createEntity (const std::string &name, const std:
             entity->shareSkeletonInstanceWith(scene->mSkelBase);
         else
         {
-            int trgtid = NIFSkeletonLoader::lookupOgreBoneHandle(name, recIndex);
+            int trgtid = NIFSkeletonLoader::lookupOgreBoneHandle(name, (int)recIndex);
             if (trgtid != -1)
             {
                 Ogre::Bone *trgtbone = scene->mSkelBase->getSkeleton()->getBone(trgtid);
@@ -435,7 +435,7 @@ void NifOgre::NIFObjectLoader::createParticleSystem (const std::string &name,
     partsys->setParticleQuota(particledata->numParticles);
     partsys->setKeepParticlesInLocalSpace((partflags & Nif::NiNode::ParticleFlag_LocalSpace) != 0);
 
-    int trgtid = NIFSkeletonLoader::lookupOgreBoneHandle(name, partnode->recIndex);
+    int trgtid = NIFSkeletonLoader::lookupOgreBoneHandle(name, (int)partnode->recIndex);
     if (trgtid != -1)
     {
         Ogre::Bone *trgtbone = scene->mSkelBase->getSkeleton()->getBone(trgtid);
@@ -460,7 +460,7 @@ void NifOgre::NIFObjectLoader::createParticleSystem (const std::string &name,
 
             if (!partctrl->emitter.empty())
             {
-                int trgtid = NIFSkeletonLoader::lookupOgreBoneHandle(name, partctrl->emitter->recIndex);
+                int trgtid = NIFSkeletonLoader::lookupOgreBoneHandle(name, (int)partctrl->emitter->recIndex);
                 if (trgtid != -1)
                 {
                     Ogre::Bone *trgtbone = scene->mSkelBase->getSkeleton()->getBone(trgtid);
@@ -477,7 +477,7 @@ void NifOgre::NIFObjectLoader::createParticleSystem (const std::string &name,
                         {
                             // FIXME: check handle != -1
                             bones.push_back(scene->mSkelBase->getSkeleton()->getBone(
-                                                NIFSkeletonLoader::lookupOgreBoneHandle(name, nodes[i]->recIndex)));
+                                                NIFSkeletonLoader::lookupOgreBoneHandle(name, (int)nodes[i]->recIndex)));
                         }
                     }
                     else
@@ -588,7 +588,7 @@ void NifOgre::NIFObjectLoader::createNodeControllers (const Nif::NIFFilePtr& nif
         {
             const Nif::NiVisController *vis = static_cast<const Nif::NiVisController*>(ctrl.getPtr());
 
-            int trgtid = NIFSkeletonLoader::lookupOgreBoneHandle(name, ctrl->target->recIndex);
+            int trgtid = NIFSkeletonLoader::lookupOgreBoneHandle(name, (int)ctrl->target->recIndex);
             if (trgtid != -1)
             {
                 Ogre::Bone *trgtbone = scene->mSkelBase->getSkeleton()->getBone(trgtid);
@@ -647,7 +647,7 @@ void NifOgre::NIFObjectLoader::createNodeControllers (const Nif::NIFFilePtr& nif
         {
             // NiTransformController replaces NiKeyframeController
             const Nif::NiKeyframeController *key = static_cast<const Nif::NiKeyframeController*>(ctrl.getPtr());
-            int trgtid = NIFSkeletonLoader::lookupOgreBoneHandle(name, ctrl->target->recIndex);
+            int trgtid = NIFSkeletonLoader::lookupOgreBoneHandle(name, (int)ctrl->target->recIndex);
             if (trgtid != -1)
             {
                 Ogre::Bone *trgtbone = scene->mSkelBase->getSkeleton()->getBone(trgtid);
@@ -664,11 +664,29 @@ void NifOgre::NIFObjectLoader::createNodeControllers (const Nif::NIFFilePtr& nif
                     {
                         const Nif::NiBlendTransformInterpolator *bt
                             = static_cast<const Nif::NiBlendTransformInterpolator*>(interpolator);
-                        std::cout << "unknown1 short " << bt->unknown1 << std::endl;
-                        std::cout << "unknown2 int " << bt->unknown2 << std::endl;
+                        std::cout << "NiBlendTransformInterpolator::unknown1 short " << bt->unknown1 << std::endl;
+                        std::cout << "NiBlendTransformInterpolator::unknown2 int " << bt->unknown2 << std::endl;
+                    }
+                    else if (interpolator->recType == Nif::RC_NiTransformInterpolator)
+                    {
+                        // has traslation, rotation, scale and NiTransformData (same as NiKeyframeData)
+                        //
+                        // FIXME: code duplication with below, not sure what they do, simply copied
+                        const Nif::NiTransformData *data
+                            = static_cast<const Nif::NiTransformInterpolator*>(interpolator)->transformData.getPtr();
+                        Ogre::ControllerValueRealPtr dstval(
+                                OGRE_NEW KeyframeController::Value(trgtbone, nif, data));
+
+                        KeyframeController::Function* function
+                            = OGRE_NEW KeyframeController::Function(key, isAnimationAutoPlay);
+
+                        scene->mMaxControllerLength = std::max(function->mStopTime, scene->mMaxControllerLength);
+                        Ogre::ControllerFunctionRealPtr func(function);
+
+                        scene->mControllers.push_back(Ogre::Controller<Ogre::Real>(srcval, dstval, func));
                     }
                     else
-                        std::cout << "interpolator not supported" << interpolator->recName << std::endl;
+                        std::cout << "interpolator not supported " << interpolator->recName << std::endl;
 #if 0
 #endif
                     ctrl = ctrl->next;
@@ -709,6 +727,22 @@ void NifOgre::NIFObjectLoader::createNodeControllers (const Nif::NIFFilePtr& nif
         }
         else if (ctrl->recType == Nif::RC_NiPSysUpdateCtlr) // FIXME
         {
+            ctrl = ctrl->next;
+            continue;
+        }
+        else if (ctrl->recType == Nif::RC_NiBSBoneLODController) // FIXME used for animations
+        {
+            // has node (and skin shape groups in some versions) as well as some unknown ints
+            // not sure what the node groups are used for?
+            ctrl = ctrl->next;
+            continue;
+        }
+        else if (ctrl->recType == Nif::RC_bhkBlendController) // FIXME prob used for animations
+        {
+            // same Nif::Controller except another unknown int which is usually 0
+            const Nif::bhkBlendController *bc = static_cast<const Nif::bhkBlendController*>(ctrl.getPtr());
+            if (bc->unknown)
+                std::cout << "bhkBlendController::unknown int " << bc->unknown << std::endl;
             ctrl = ctrl->next;
             continue;
         }
@@ -778,7 +812,7 @@ void NifOgre::NIFObjectLoader::createObjects (const Nif::NIFFilePtr& nif, const 
         // TODO: figure out what the flags mean.
         // NifSkope has names for them, but doesn't implement them.
         // Change mBillboardNodes to map <Bone, billboard type>
-        int trgtid = NIFSkeletonLoader::lookupOgreBoneHandle(name, node->recIndex);
+        int trgtid = NIFSkeletonLoader::lookupOgreBoneHandle(name, (int)node->recIndex);
         if (trgtid != -1)
         {
             Ogre::Bone* bone = scene->mSkelBase->getSkeleton()->getBone(trgtid);

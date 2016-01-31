@@ -98,6 +98,10 @@ namespace CSVRender
             std::string getReferenceId() const;
 
             std::string getReferenceableId() const;
+
+            NifOgre::ObjectScenePtr getObject() const;
+
+            Ogre::SceneNode *getSceneNode() const;
     };
 }
 

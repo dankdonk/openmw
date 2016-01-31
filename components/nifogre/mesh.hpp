@@ -10,9 +10,7 @@
 
 namespace Nif
 {
-    struct Record;
-    //struct NiTriShape;
-    //struct NiTriStrips;
+    class NiGeometry;
 }
 
 namespace NifOgre
@@ -39,10 +37,8 @@ class NIFMeshLoader : Ogre::ManualResourceLoader
     size_t mShapeIndex;
     bool mStrips;
 
-    // Convert NiTriShape to Ogre::SubMesh
-    //void createSubMesh(Ogre::Mesh *mesh, const Nif::NiTriShape *shape);
-    void createSubMesh(Ogre::Mesh *mesh, const Nif::Record *record);
-    //void createStripsSubMesh(Ogre::Mesh *mesh, const Nif::NiTriStrips *strips);
+    // Convert NiTriShape or NiTriStrips to Ogre::SubMesh
+    void createSubMesh(Ogre::Mesh *mesh, const Nif::NiGeometry *geom);
 
     typedef std::map<std::string,NIFMeshLoader> LoaderMap;
     static LoaderMap sLoaders;

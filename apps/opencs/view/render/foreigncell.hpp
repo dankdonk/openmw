@@ -10,6 +10,7 @@
 
 #include <OgreVector3.h>
 
+#include <components/nifogre/objectscene.hpp> // FIXME
 //#ifndef Q_MOC_RUN
 #include <components/esm4terrain/terraingrid.hpp>
 //#endif
@@ -82,6 +83,8 @@ namespace CSVRender
             ///
             /// \return Have any objects been added?
             bool addObjects (const std::vector<ESM4::FormId>& objects);
+
+            std::vector<NifOgre::ObjectScenePtr> mObjectParts; // FIXME: experiment
 
         public:
 

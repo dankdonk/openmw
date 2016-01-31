@@ -447,9 +447,10 @@ public:
     Ogre::Vector3 translation;
     Ogre::Quaternion rotation;
     float scale;
-    NiTransformDataPtr transform;
+    NiTransformDataPtr transformData;
 
     void read(NIFStream *nif);
+    void post(NIFFile *nif);
 };
 
 class NiLookAtInterpolator : public NiInterpolator

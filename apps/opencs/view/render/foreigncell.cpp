@@ -5,9 +5,15 @@
 #include <OgreManualObject.h>
 #include <OgreMaterialManager.h>
 #include <OgreTechnique.h>
+#include <OgreEntity.h> // FIXME temp
+#include <OgreMesh.h> // FIXME temp
+#include <OgreSkeleton.h> // FIXME temp
+#include <OgreSkeletonInstance.h> // FIXME temp
+#include <OgreBone.h> // FIXME temp
 
 #include <components/misc/stringops.hpp>
 #include <components/esm/loadland.hpp>
+#include <components/nifogre/objectscene.hpp> // FIXME temp
 
 #include "../../model/doc/document.hpp"
 #include "../../model/world/idtable.hpp"
@@ -116,6 +122,12 @@ bool CSVRender::ForeignCell::addObjects (const std::vector<ESM4::FormId>& object
             modified = true;
 
             // FIXME: temporarily add body parts here
+            //
+            // default NPC parts(?) for TES4
+            //   femalefoot.nif       |   foot.nif
+            //   femalehand.nif       |   hand.nif
+            //   femalelowerbody.nif  |   lowerbody.nif
+            //   femaleupperbody.nif  |   upperbody.nif
             const CSMForeign::IdCollection<CSMForeign::Npc>& npc
                                                  = mDocument.getData().getForeignNpcs();
             const CSMForeign::IdCollection<CSMForeign::Creature>& crea
@@ -148,16 +160,51 @@ bool CSVRender::ForeignCell::addObjects (const std::vector<ESM4::FormId>& object
             const CSMForeign::IdCollection<CSMForeign::Eyes>& eyes
                                                  = mDocument.getData().getForeignEyesSet();
 
-            const CSMForeign::RefCollection& refs = mDocument.getData().getForeignReferences();
+            // For TES3, MWRender::NpcAnimation::updateNpcBase()
+            //
+            //   - decides on head and hair bodypart model mesh (nif file) based on
+            //     ESM::NPC::mHead and ESM::NPC::mHair, beast, vampire, etc
+            //     --> TES4 needs to work with hair/eye formid's as well as facegen
+            //
+            //   - calls MWRender::Animation::setObjectRoot() with the (skin?) model nif as
+            //     'base only' (e.g. base_anim.nif)
+            //     --> TES4 uses skeleton.nif which does not have any skin...
+            //
+            //   - calls MWRender::Animation::addAnimSource() e.g. xbase_anim_female.nif
+            //     note addAnimSource then adds xbase_anim_female.kf, etc
+            //     --> TES4 specifies the kf files differently, possibly hard coded base ones
+            //         plus additional ones through KFFZ subrecords
+            //
+            //   - removes existing parts by calling NpcAnimation::removeIndividualPart() for
+            //     each ESM::PartReferenceType (i.e. 27 of them, see loadarmo.hpp)
+            //
+            //   - adds new parts by calling NpcAnimation::updateParts()
+            //
+            // For TES3, MWRender::NpcAnimation::updateParts()
+            //
+            //   - adjusts for gender race, etc before calling NpcAnimation::addOrReplaceIndividualPart()
+            //     for each part (i.e. 27)
+            //
+            // For TES3, MWRender::NpcAnimation::addOrReplaceIndividualPart()
+            //
+            // For TES3, MWRender::NpcAnimation::insertBoundedPart()
+            //
+            //   - calls NifOgre::Loader::createObjects()
+            //
+            // It seems like MWRender::Animation::updateSkeletonInstance() updates the skinned
+            // body parts' bones (e.g. robe)
+            //
+            // See MWRender::NpcAnimation::runAnimation(float timepassed) and
+            // MWRender::CreatureWeaponAnimation::updatePart()
             ESM4::FormId baseObj = refs.getRecord(refs.searchId(id)).get().mBaseObj;
             if (lvlc.searchId (ESM4::formIdToString(baseObj)) != -1)
             {
                 const CSMForeign::LeveledCreature& lcreature
                                                   = lvlc.getRecord(ESM4::formIdToString(baseObj)).get();
                 ESM4::FormId templ = 0;
-                for (unsigned int i = 0; i < lcreature.mLvlObject.size(); ++i)
+                for (unsigned int j = 0; j < lcreature.mLvlObject.size(); ++j)
                 {
-                    templ = lcreature.mLvlObject[i].item;
+                    templ = lcreature.mLvlObject[j].item;
                     int extraIndex = -1;
                     extraIndex = crea.searchId(ESM4::formIdToString(templ));
                     if (extraIndex != -1)
@@ -167,9 +214,9 @@ bool CSVRender::ForeignCell::addObjects (const std::vector<ESM4::FormId>& object
                 }
 
                 int extraIndex = -1;
-                for (unsigned int i = 0; i < lcreature.mLvlObject.size(); ++i)
+                for (unsigned int j = 0; j < lcreature.mLvlObject.size(); ++j)
                 {
-                    templ = lcreature.mLvlObject[i].item;
+                    templ = lcreature.mLvlObject[j].item;
                     extraIndex = npc.searchId(ESM4::formIdToString(templ));
                     if (extraIndex != -1)
                     {
@@ -179,17 +226,143 @@ bool CSVRender::ForeignCell::addObjects (const std::vector<ESM4::FormId>& object
 
                 if (extraIndex != -1)
                 {
+#if 0
+                    // check what skeleton bones we have
+                    Ogre::SkeletonInstance *skelinst = mObjects[id]->getObject()->mSkelBase->getSkeleton();
+                    Ogre::Skeleton::BoneIterator boneiter = skelinst->getBoneIterator();
+                    while(boneiter.hasMoreElements())
+                        std::cout << "bone name " << boneiter.getNext()->getName() << std::endl;
+#endif
                     CSMForeign::Npc npcRec = npc.getRecord(extraIndex).get();
-                    for (unsigned int i = 0; i < npcRec.mInventory.size(); ++i)
+
+                    // head
+                    NifOgre::ObjectScenePtr objectH
+                        = NifOgre::Loader::createObjects(mObjects[id]->getObject()->mSkelBase,
+                                                         "Bip01", // not used for skinned
+                                                         /*"Bip01"*/"", // ??
+                                                         mObjects[id]->getSceneNode(),
+                                                         "meshes\\characters\\imperial\\headhuman.nif");
+                    objectH->setVisibilityFlags (Element_Reference);
+                    mObjectParts.push_back(objectH); // FIXME put every npc's parts into this for now
+
+                    // hair
+                    Ogre::SceneNode *node = mObjects[id]->getSceneNode()->createChildSceneNode();
+                    NifOgre::ObjectScenePtr objectHR
+                        = NifOgre::Loader::createObjects(node,
+                                                         "meshes\\characters\\hair\\bretonmaletonsure.nif");
+                                                         //"meshes\\characters\\imperial\\male\\hair01.nif");
+                                                         //"meshes\\characters\\Ren\\Hair\\Ren_Hair01F.nif");
+                    objectHR->setVisibilityFlags (Element_Reference);
+                    //node->roll(Ogre::Degree(-90));
+                    mObjectParts.push_back(objectHR); // FIXME put every npc's parts into this for now
+
+                    // hand
+                    Ogre::SceneNode *nodeHand = mObjects[id]->getSceneNode()->createChildSceneNode();
+                    NifOgre::ObjectScenePtr objectHand
+                        = NifOgre::Loader::createObjects(nodeHand,
+                                                         "meshes\\characters\\_male\\hand.nif");
+                    objectHand->setVisibilityFlags (Element_Reference);
+                    //nodeL->roll(Ogre::Degree(-90));
+                    mObjectParts.push_back(objectHand); // FIXME put every npc's parts into this for now
+                    // left eye
+                    NifOgre::ObjectScenePtr objectL
+                        = NifOgre::Loader::createObjects(mObjects[id]->getObject()->mSkelBase,
+                                                         "Bip01 Head", // not used for skinned
+                                                         /*"Bip01"*/"", // ??
+                                                         mObjects[id]->getSceneNode(),
+                                                         "meshes\\characters\\imperial\\eyelefthuman.nif");
+                    objectL->setVisibilityFlags (Element_Reference);
+                    mObjectParts.push_back(objectL); // FIXME put every npc's parts into this for now
+
+                    // right eye
+                    NifOgre::ObjectScenePtr objectR
+                        = NifOgre::Loader::createObjects(mObjects[id]->getObject()->mSkelBase,
+                                                         "Bip01 Head", // not used for skinned
+                                                         /*"Bip01"*/"", // ??
+                                                         mObjects[id]->getSceneNode(),
+                                                         "meshes\\characters\\imperial\\eyerighthuman.nif");
+                    objectR->setVisibilityFlags (Element_Reference);
+                    mObjectParts.push_back(objectR); // FIXME put every npc's parts into this for now
+
+#if 0
+                    // hair
+                    NifOgre::ObjectScenePtr objectHR
+                        = NifOgre::Loader::createObjects(mObjects[id]->getObject()->mSkelBase,
+                                                         "", // not used for skinned
+                                                         /*"Bip01"*/"", // ??
+                                                         mObjects[id]->getSceneNode(),
+                                                         "meshes\\characters\\imperial\\male\\hair01.nif");
+                    objectHR->setVisibilityFlags (Element_Reference);
+                    mObjectParts.push_back(objectHR); // FIXME put every npc's parts into this for now
+#endif
+                    for (unsigned int j = 0; j < npcRec.mInventory.size(); ++j)
                     {
-                        int invIndex = cloth.searchId(ESM4::formIdToString(npcRec.mInventory[i].item));
+                        int invIndex = cloth.searchId(ESM4::formIdToString(npcRec.mInventory[j].item));
                         if (invIndex != -1)
                         {
                             const CSMForeign::Clothing& clothRec = cloth.getRecord(invIndex).get();
-                            std::cout << clothRec.mEditorId << std::endl;
+                            //std::cout << clothRec.mEditorId << std::endl; // FIXME
+
+// NifOgre::ObjectScenePtr objects = NifOgre::Loader::createObjects(mSkelBase, bonename, bonefilter, mInsert, model);
+//ObjectScenePtr Loader::createObjects (Ogre::Entity *parent, const std::string &bonename,
+                                      //const std::string& bonefilter,
+                                      //Ogre::SceneNode *parentNode,
+                                      //std::string name, const std::string &group)
+
+
+                            // need Entity
+                            // which bone to attach a robe?
+                            // bonefilter - guess, use the same as bone
+                            // SceneNode is prob. ok to use mCellNode
+                            // model - ok
+                            // group - use defaut
+                            NifOgre::ObjectScenePtr object
+                                = NifOgre::Loader::createObjects(mObjects[id]->getObject()->mSkelBase,
+                                                                 "Bip01", // not used for skinned
+                                                                 /*"Bip01"*/"", // ??
+                                                                 mObjects[id]->getSceneNode(),
+                                                                 "meshes\\"+clothRec.mModel);
+                            object->setVisibilityFlags (Element_Reference);
+                            mObjectParts.push_back(object); // FIXME put every npc's parts into this for now
+//#if 0
+                            // check what entities we got
+                            for (unsigned int k = 0; k < object->mEntities.size(); ++k)
+                                std::cout << "cloth entities " << object->mEntities[k]->getName() << std::endl;
+//#endif
+// FIXME: just a test
+#if 0
+                            Ogre::SceneNode *tmp = mCellNode->createChildSceneNode();
+                            NifOgre::ObjectScenePtr dummy
+                                = NifOgre::Loader::createObjects (//mObjects[id]->getSceneNode(),
+                                                                 tmp,
+                                                                 "meshes\\"+clothRec.mModel);
+
+                            if (!dummy.isNull())
+                                dummy->setVisibilityFlags (Element_Reference);
+                            tmp->setPosition (Ogre::Vector3 (
+                                record.get().mPos.pos[0], record.get().mPos.pos[1], record.get().mPos.pos[2]));
+                            //tmp->setOrientation (zr*yr*xr);
+                            tmp->setScale (record.get().mScale, record.get().mScale, record.get().mScale);
+                            std::cout << "record " << record.get().mPos.pos[0] << ", "
+                                << record.get().mPos.pos[1] << ", " << record.get().mPos.pos[2] << std::endl;
+                            Ogre::Vector3 c = tmp->getPosition();
+                            std::cout << "dummy pos " << c.x << ", " << c.y << ", " << c.z << std::endl;
+
+
+                            //mObjects[id]->getObject()->mSkelBase->attachObjectToBone("Bip01", dummy->mSkelBase);
+#endif
+                            //Ogre::Entity* entity
+                            //    = mObjects[id]->getSceneNode()->getCreator()->createEntity(
+                            //                                                     Ogre::SceneManager::PT_CUBE);
+                            //entity->setMaterialName("BaseWhite");
+                            //entity->setVisibilityFlags (Element_Reference);
+                            //mObjects[id]->getObject()->mSkelBase->attachObjectToBone("Bip01", entity);
+
                         }
+#if 0
                         else
                             std::cout << "not cloth" << std::endl;
+#endif
                         //std::cout << "inventory " << ESM4::formIdToString(npcRec.mInventory[i].item)
                         //<< ", " << npcRec.mInventory[i].count << std::endl;
                         // FIXME: attach to bones and add to mObjects
@@ -280,6 +453,43 @@ CSVRender::ForeignCell::ForeignCell (CSMDoc::Document& document, Ogre::SceneMana
     addObjects(cell.mRefTemporary); // FIXME: ignore visible distant and persistent children for now
     addObjects(cell.mRefPersistent); // FIXME: ignore visible distant children for now
     addObjects(cell.mRefVisibleDistant);
+
+// FIXME: debugging
+#if 0
+    Ogre::SceneNode::ChildNodeIterator it2 = mCellNode->getChildIterator();
+    while (it2.hasMoreElements())
+    {
+        Ogre::SceneNode* node = static_cast<Ogre::SceneNode*>(it2.getNext());
+        if (node)
+        {
+            std::cout << "scenenode " << node->getName() << std::endl;
+
+            Ogre::SceneNode::ObjectIterator it = node->getAttachedObjectIterator();
+            while (it.hasMoreElements())
+            {
+                Ogre::Entity* entity = static_cast<Ogre::Entity*>(it.getNext());
+                if (entity)
+                {
+                    std::cout << "obj " << entity->getMesh()->getName()
+                        << ", " << (entity->getVisible()? "visible" : "not visible")
+                        << ", " << (entity->isVisible()? "is visible" : "not is visible")
+                        << std::endl;
+
+                    Ogre::Entity::ChildObjectListIterator it3 = entity->getAttachedObjectIterator();
+                    while (it3.hasMoreElements())
+                    {
+                        Ogre::MovableObject* entity3 = static_cast<Ogre::MovableObject*>(it3.getNext());
+                        if (entity3)
+                            std::cout << "child obj " << entity3->getName()
+                                << ", " << (entity3->getVisible()? "visible" : "not visible")
+                                << ", " << (entity3->isVisible()? "is visible" : "not is visible")
+                                << std::endl;
+                    }
+                }
+            }
+        }
+    }
+#endif
 
     createGridMaterials();
 

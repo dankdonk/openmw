@@ -54,6 +54,8 @@ ObjectScenePtr Loader::createObjects (Ogre::SceneNode *parentNode, std::string n
     return scene;
 }
 
+// called by MWRender::NpcAnimation::insertBoundedPart()
+// NifOgre::ObjectScenePtr objects = NifOgre::Loader::createObjects(mSkelBase, bonename, bonefilter, mInsert, model);
 ObjectScenePtr Loader::createObjects (Ogre::Entity *parent, const std::string &bonename,
                                       const std::string& bonefilter,
                                       Ogre::SceneNode *parentNode,
@@ -81,6 +83,12 @@ ObjectScenePtr Loader::createObjects (Ogre::Entity *parent, const std::string &b
 
     if(isskinned)
     {
+// FIXME: testing only
+#if 0
+        if (name == "meshes\\clothes\\robenecromancer\\m\\robenecromancerm.nif")
+            std::cout << "entities size " << scene->mEntities.size() << std::endl;
+        // See NifOgre::NIFObjectLoader::createEntity() for the filtering
+#endif
         // accepts anything named "filter*" or "tri filter*"
         std::string filter = "@shape=tri "+bonefilter;
         std::string filter2 = "@shape="+bonefilter;
@@ -94,7 +102,19 @@ ObjectScenePtr Loader::createObjects (Ogre::Entity *parent, const std::string &b
                 if(entity == scene->mSkelBase ||
                    entity->getMesh()->getName().find(filter) != std::string::npos
                    || entity->getMesh()->getName().find(filter2) != std::string::npos)
+                {
                     parentNode->attachObject(entity);
+                    // FIXME: testing only
+                    if (name == "meshes\\clothes\\robenecromancer\\m\\robenecromancerm.nif")
+                    {
+                        //std::cout << "added mesh " << entity->getMesh()->getName() << std::endl;
+                        std::cout << "parentnode " << parentNode->getName() << std::endl;
+                        std::cout << "attachedobj " << entity->getMesh()->getName() << std::endl;
+                        //parentNode->showBoundingBox(true);
+                    }
+                }
+                //else if (name == "meshes\\clothes\\robenecromancer\\m\\robenecromancerm.nif")
+                    //std::cout << "Not added mesh " << entity->getMesh()->getName() << std::endl;
             }
             else
             {
@@ -113,6 +133,10 @@ ObjectScenePtr Loader::createObjects (Ogre::Entity *parent, const std::string &b
             {
                 Ogre::TagPoint *tag = parent->attachObjectToBone(bonename, entity);
                 tag->setScale(scale);
+                // FIXME: horrible hack
+                if (name == "meshes\\characters\\imperial\\eyelefthuman.nif" ||
+                    name == "meshes\\characters\\imperial\\eyerighthuman.nif")
+                    tag->yaw(Ogre::Degree(90)); // anti-clockwise
             }
         }
     }

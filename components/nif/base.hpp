@@ -39,7 +39,7 @@ public:
     void post(NIFFile *nif);
 };
 
-// same as Name
+// same as Named
 class NiObjectNET : public Record
 {
 public:
