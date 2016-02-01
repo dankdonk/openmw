@@ -152,7 +152,7 @@ void CSVRender::ForeignObject::update()
         {
             const CSMForeign::LeveledCreature& lcreature = lvlc.getRecord(ESM4::formIdToString(baseObj)).get();
             ESM4::FormId templ = 0;
-            for (unsigned int i = 0; i < lcreature.mLvlObject.size(); ++i)
+            for (unsigned int i = lcreature.mLvlObject.size(); i-- > 0;)
             {
                 templ = lcreature.mLvlObject[i].item;
                 //ESM4::FormId templ = lcreature.mTemplate;
@@ -160,14 +160,59 @@ void CSVRender::ForeignObject::update()
                 extraIndex = crea.searchId(ESM4::formIdToString(templ));
                 if (extraIndex != -1)
                 {
+                    CSMForeign::Creature creaRec = crea.getRecord(extraIndex).get();
+
                     model = crea.getData (extraIndex,
                        crea.findColumnIndex (CSMWorld::Columns::ColumnId_Model)).toString().toUtf8().constData();
-                    //std::cout << "obj is an leveled creature " << ESM4::formIdToString(templ) << ", " << model << std::endl;
-                    break;
+                    std::cout << "obj is an leveled creature " << i /*ESM4::formIdToString(templ)*/ << ", " << model << std::endl;
+                    //std::cout << "creature inventory " << creaRec.mInventory.size() << std::endl;
+                    for (unsigned int j = 0; j < creaRec.mInventory.size(); ++j)
+                    {
+                        int invIndex = cloth.searchId(ESM4::formIdToString(creaRec.mInventory[j].item));
+                        if (invIndex != -1)
+                        {
+                            const CSMForeign::Clothing& clothRec = cloth.getRecord(invIndex).get();
+                            std::cout << clothRec.mEditorId << std::endl;
+#if 0
+                            NifOgre::ObjectScenePtr object
+                                = NifOgre::Loader::createObjects(mObjects[id]->getObject()->mSkelBase,
+                                                                 "Bip01", // not used for skinned
+                                                                 /*"Bip01"*/"", // ??
+                                                                 mObjects[id]->getSceneNode(),
+                                                                 "meshes\\"+clothRec.mModel);
+                            object->setVisibilityFlags (Element_Reference);
+#endif
+                        }
+
+                        invIndex = armor.searchId(ESM4::formIdToString(creaRec.mInventory[j].item));
+                        if (invIndex != -1)
+                        {
+                            const CSMForeign::Armor& armorRec = armor.getRecord(invIndex).get();
+                            std::cout << armorRec.mEditorId << std::endl;
+                        }
+
+                        invIndex = weap.searchId(ESM4::formIdToString(creaRec.mInventory[j].item));
+                        if (invIndex != -1)
+                        {
+                            const CSMForeign::Weapon& weapRec = weap.getRecord(invIndex).get();
+                            std::cout << weapRec.mEditorId << std::endl;
+                        }
+                    }
+                    for (unsigned int j = 0; j < creaRec.mNif.size(); ++j)
+                    {
+                        std::cout << "Nif " << creaRec.mNif[j] << std::endl;
+                    }
+
+                    //break;
                 }
+                else if (lvlc.searchId(ESM4::formIdToString(templ)) != -1)
+                    std::cout << "obj is a lvl creature " << i << ", " << ESM4::formIdToString(templ) << ", " << model << std::endl;
+                else
+                    std::cout << "obj is not a creature " << i << ", " << ESM4::formIdToString(templ) << ", " << model << std::endl;
+
             }
 
-            if (model.empty())
+            if (model.empty()) // not a creature
             {
                 error = 2;
 
@@ -206,7 +251,7 @@ void CSVRender::ForeignObject::update()
             }
             else
             {
-                std::cout << "obj is an leveled creature " << ESM4::formIdToString(templ) << ", " << model << std::endl;
+                //std::cout << "obj is an leveled creature " << ESM4::formIdToString(templ) << ", " << model << std::endl;
                 error = 0;
             }
         }

@@ -46,9 +46,6 @@ ESM4::Creature::Creature() : mFormId(0), mFlags(0), mDeathItem(0), mSpell(0), mS
     mBloodSpray.clear();
     mBloodDecal.clear();
 
-    mInventory.item = 0;
-    mInventory.count = 0;
-
     mAIData.aggression = 0;
     mAIData.confidence = 0;
     mAIData.energyLevel = 0;
@@ -92,7 +89,13 @@ void ESM4::Creature::load(ESM4::Reader& reader)
             case ESM4::SUB_MODL: reader.getZString(mModel); break;
             case ESM4::SUB_INAM: reader.get(mDeathItem);    break;
             case ESM4::SUB_SPLO: reader.get(mSpell);        break;
-            case ESM4::SUB_CNTO: reader.get(mInventory);    break;
+            case ESM4::SUB_CNTO:
+            {
+                static InventoryItem item; // FIXME: unique_ptr here?
+                reader.get(item);
+                mInventory.push_back(item);
+                break;
+            }
             case ESM4::SUB_SCRI: reader.get(mScript);       break;
             case ESM4::SUB_AIDT: reader.get(mAIData);       break;
             case ESM4::SUB_PKID: reader.get(mAIPackages);   break;

@@ -36,13 +36,13 @@ namespace ESM4
     struct Creature
     {
 #pragma pack(push, 1)
-        struct Inventory
+        struct InventoryItem // FIXME: common with npc_
         {
             FormId        item;
             std::uint32_t count;
         };
 
-        struct AIData
+        struct AIData // FIXME: common with npc_
         {
             std::uint8_t  aggression;
             std::uint8_t  confidence;
@@ -85,7 +85,7 @@ namespace ESM4
         FormId mDeathItem;
         FormId mSpell;
         FormId mScript;
-        Inventory mInventory;
+
         AIData mAIData;
         FormId mAIPackages;
         Data   mData;
@@ -102,6 +102,8 @@ namespace ESM4
         float mBoundRadius;
         std::vector<std::string> mNif; // NIF filenames, get directory from mModel
         std::vector<std::string> mKf;
+
+        std::vector<InventoryItem> mInventory;
 
         Creature();
         ~Creature();
