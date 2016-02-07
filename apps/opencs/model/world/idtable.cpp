@@ -1,30 +1,11 @@
 #include "idtable.hpp"
 
 #include <stdexcept>
-#include <stdlib.h>
+
+#include <extern/esm4/common.hpp> // isFormId
 
 #include "collectionbase.hpp"
 #include "columnbase.hpp"
-
-namespace
-{
-    bool isFormId(const std::string& str)
-    {
-        if (str.size() != 8)
-            return false;
-
-        char *temp;
-        bool res = true;
-        errno = 0;
-        unsigned long val = strtol(str.c_str(), &temp, 16);
-
-        if (temp == str.c_str() || *temp != '\0' ||
-                ((val == LONG_MIN || val == LONG_MAX) && errno == ERANGE))
-            res = false;
-
-        return res;
-    }
-}
 
 CSMWorld::IdTable::IdTable (CollectionBase *idCollection, unsigned int features)
 : IdTableBase (features), mIdCollection (idCollection)
@@ -319,7 +300,7 @@ std::pair<CSMWorld::UniversalId, std::string> CSMWorld::IdTable::view (int row) 
     // determine if this is internal or external (but only for non-foreign cells)
     if (id[0] == '#')
         id = "sys::default";
-    else if (isFormId(id))
+    else if (ESM4::isFormId(id))
     {
         int column = mIdCollection->searchColumnIndex (Columns::ColumnId_CellId);
 

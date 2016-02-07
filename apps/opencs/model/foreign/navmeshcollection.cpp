@@ -51,6 +51,8 @@ CSMForeign::NavMeshCollection::~NavMeshCollection ()
 int CSMForeign::NavMeshCollection::load (ESM4::Reader& reader, bool base)
 {
     CSMForeign::NavMesh record;
+    ESM4::FormId formId = reader.hdr().record.id;
+    reader.adjustFormId(formId);
     //std::cout << "new NavMesh " << std::hex << &record << std::endl; // FIXME
 
     std::string id;
@@ -74,9 +76,9 @@ int CSMForeign::NavMeshCollection::load (ESM4::Reader& reader, bool base)
         //std::cout << "loading Cell " << id << std::endl; // FIXME
     }
 #endif
-    id = std::to_string(reader.hdr().record.id); // use formId instead
+    id = std::to_string(formId); // use formId instead
 
-    int index = searchId(reader.hdr().record.id);
+    int index = searchId(formId);
 
     if (index == -1)
         CSMWorld::IdAccessor<CSMForeign::NavMesh>().getId(record) = id;

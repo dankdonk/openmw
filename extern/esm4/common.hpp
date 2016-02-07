@@ -38,9 +38,10 @@ namespace ESM4
 {
     enum ESMVersions
     {
-        VER_080 = 0x3f800000,
-        VER_094 = 0x3f70a3d7,
-        VER_170 = 0x3fd9999a
+        VER_080 = 0x3f4ccccd, // TES4
+        VER_100 = 0x3f800000, // TES4
+        VER_094 = 0x3f70a3d7, // TES5
+        VER_170 = 0x3fd9999a  // TES5
     };
 
     // Based on http://www.uesp.net/wiki/Tes5Mod:Mod_File_Format
@@ -535,6 +536,148 @@ namespace ESM4
         SUB_QUAL = MKTAG('Q','U','A','L')
     };
 
+    enum MagicEffectID
+    {
+        // Alteration
+        EFI_BRDN = MKTAG('B','R','D','N'),
+        EFI_FTHR = MKTAG('F','T','H','R'),
+        EFI_FISH = MKTAG('F','I','S','H'),
+        EFI_FRSH = MKTAG('F','R','S','H'),
+        EFI_OPEN = MKTAG('O','P','N','N'),
+        EFI_SHLD = MKTAG('S','H','L','D'),
+        EFI_LISH = MKTAG('L','I','S','H'),
+        EFI_WABR = MKTAG('W','A','B','R'),
+        EFI_WAWA = MKTAG('W','A','W','A'),
+
+        // Conjuration
+        EFI_BABO = MKTAG('B','A','B','O'), // Bound Boots
+        EFI_BACU = MKTAG('B','A','C','U'), // Bound Cuirass
+        EFI_BAGA = MKTAG('B','A','G','A'), // Bound Gauntlets
+        EFI_BAGR = MKTAG('B','A','G','R'), // Bound Greaves
+        EFI_BAHE = MKTAG('B','A','H','E'), // Bound Helmet
+        EFI_BASH = MKTAG('B','A','S','H'), // Bound Shield
+        EFI_BWAX = MKTAG('B','W','A','X'), // Bound Axe
+        EFI_BWBO = MKTAG('B','W','B','O'), // Bound Bow
+        EFI_BWDA = MKTAG('B','W','D','A'), // Bound Dagger
+        EFI_BWMA = MKTAG('B','W','M','A'), // Bound Mace
+        EFI_BWSW = MKTAG('B','W','S','W'), // Bound Sword
+        EFI_Z001 = MKTAG('Z','0','0','1'), // Summon Rufio's Ghost
+        EFI_Z002 = MKTAG('Z','0','0','2'), // Summon Ancestor Guardian
+        EFI_Z003 = MKTAG('Z','0','0','3'), // Summon Spiderling
+        EFI_Z005 = MKTAG('Z','0','0','5'), // Summon Bear
+        EFI_ZCLA = MKTAG('Z','C','L','A'), // Summon Clannfear
+        EFI_ZDAE = MKTAG('Z','D','A','E'), // Summon Daedroth
+        EFI_ZDRE = MKTAG('Z','D','R','E'), // Summon Dremora
+        EFI_ZDRL = MKTAG('Z','D','R','L'), // Summon Dremora Lord
+        EFI_ZFIA = MKTAG('Z','F','I','A'), // Summon Flame Atronach
+        EFI_ZFRA = MKTAG('Z','F','R','A'), // Summon Frost Atronach
+        EFI_ZGHO = MKTAG('Z','G','H','O'), // Summon Ghost
+        EFI_ZHDZ = MKTAG('Z','H','D','Z'), // Summon Headless Zombie
+        EFI_ZLIC = MKTAG('Z','L','I','C'), // Summon Lich
+        EFI_ZSCA = MKTAG('Z','S','C','A'), // Summon Scamp
+        EFI_ZSKE = MKTAG('Z','S','K','E'), // Summon Skeleton
+        EFI_ZSKA = MKTAG('Z','S','K','A'), // Summon Skeleton Guardian
+        EFI_ZSKH = MKTAG('Z','S','K','H'), // Summon Skeleton Hero
+        EFI_ZSKC = MKTAG('Z','S','K','C'), // Summon Skeleton Champion
+        EFI_ZSPD = MKTAG('Z','S','P','D'), // Summon Spider Daedra
+        EFI_ZSTA = MKTAG('Z','S','T','A'), // Summon Storm Atronach
+        EFI_ZWRA = MKTAG('Z','W','R','A'), // Summon Faded Wraith
+        EFI_ZWRL = MKTAG('Z','W','R','L'), // Summon Gloom Wraith
+        EFI_ZXIV = MKTAG('Z','X','I','V'), // Summon Xivilai
+        EFI_ZZOM = MKTAG('Z','Z','O','M'), // Summon Zombie
+        EFI_TURN = MKTAG('T','U','R','N'), // Turn Undead
+
+        // Destruction
+        EFI_DGAT = MKTAG('D','G','A','T'), // Damage Attribute
+        EFI_DGFA = MKTAG('D','G','F','A'), // Damage Fatigue
+        EFI_DGHE = MKTAG('D','G','H','E'), // Damage Health
+        EFI_DGSP = MKTAG('D','G','S','P'), // Damage Magicka
+        EFI_DIAR = MKTAG('D','I','A','R'), // Disintegrate Armor
+        EFI_DIWE = MKTAG('D','I','W','E'), // Disintegrate Weapon
+        EFI_DRAT = MKTAG('D','R','A','T'), // Drain Attribute
+        EFI_DRFA = MKTAG('D','R','F','A'), // Drain Fatigue
+        EFI_DRHE = MKTAG('D','R','H','E'), // Drain Health
+        EFI_DRSP = MKTAG('D','R','S','P'), // Drain Magicka
+        EFI_DRSK = MKTAG('D','R','S','K'), // Drain Skill
+        EFI_FIDG = MKTAG('F','I','D','G'), // Fire Damage
+        EFI_FRDG = MKTAG('F','R','D','G'), // Frost Damage
+        EFI_SHDG = MKTAG('S','H','D','G'), // Shock Damage
+        EFI_WKDI = MKTAG('W','K','D','I'), // Weakness to Disease
+        EFI_WKFI = MKTAG('W','K','F','I'), // Weakness to Fire
+        EFI_WKFR = MKTAG('W','K','F','R'), // Weakness to Frost
+        EFI_WKMA = MKTAG('W','K','M','A'), // Weakness to Magic
+        EFI_WKNW = MKTAG('W','K','N','W'), // Weakness to Normal Weapons
+        EFI_WKPO = MKTAG('W','K','P','O'), // Weakness to Poison
+        EFI_WKSH = MKTAG('W','K','S','H'), // Weakness to Shock
+
+        // Illusion
+        EFI_CALM = MKTAG('C','A','L','M'), // Calm
+        EFI_CHML = MKTAG('C','H','M','L'), // Chameleon
+        EFI_CHRM = MKTAG('C','H','R','M'), // Charm
+        EFI_COCR = MKTAG('C','O','C','R'), // Command Creature
+        EFI_COHU = MKTAG('C','O','H','U'), // Command Humanoid
+        EFI_DEMO = MKTAG('D','E','M','O'), // Demoralize
+        EFI_FRNZ = MKTAG('F','R','N','Z'), // Frenzy
+        EFI_INVI = MKTAG('I','N','V','I'), // Invisibility
+        EFI_LGHT = MKTAG('L','G','H','T'), // Light
+        EFI_NEYE = MKTAG('N','E','Y','E'), // Night-Eye
+        EFI_PARA = MKTAG('P','A','R','A'), // Paralyze
+        EFI_RALY = MKTAG('R','A','L','Y'), // Rally
+        EFI_SLNC = MKTAG('S','L','N','C'), // Silence
+
+        // Mysticism
+        EFI_DTCT = MKTAG('D','T','C','T'), // Detect Life
+        EFI_DSPL = MKTAG('D','S','P','L'), // Dispel
+        EFI_REDG = MKTAG('R','E','D','G'), // Reflect Damage
+        EFI_RFLC = MKTAG('R','F','L','C'), // Reflect Spell
+        EFI_STRP = MKTAG('S','T','R','P'), // Soul Trap
+        EFI_SABS = MKTAG('S','A','B','S'), // Spell Absorption
+        EFI_TELE = MKTAG('T','E','L','E'), // Telekinesis
+
+        // Restoration
+        EFI_ABAT = MKTAG('A','B','A','T'), // Absorb Attribute
+        EFI_ABFA = MKTAG('A','B','F','A'), // Absorb Fatigue
+        EFI_ABHe = MKTAG('A','B','H','e'), // Absorb Health
+        EFI_ABSP = MKTAG('A','B','S','P'), // Absorb Magicka
+        EFI_ABSK = MKTAG('A','B','S','K'), // Absorb Skill
+        EFI_1400 = MKTAG('1','4','0','0'), // Cure Disease
+        EFI_CUPA = MKTAG('C','U','P','A'), // Cure Paralysis
+        EFI_CUPO = MKTAG('C','U','P','O'), // Cure Poison
+        EFI_FOAT = MKTAG('F','O','A','T'), // Fortify Attribute
+        EFI_FOFA = MKTAG('F','O','F','A'), // Fortify Fatigue
+        EFI_FOHE = MKTAG('F','O','H','E'), // Fortify Health
+        EFI_FOSP = MKTAG('F','O','S','P'), // Fortify Magicka
+        EFI_FOSK = MKTAG('F','O','S','K'), // Fortify Skill
+        EFI_RSDI = MKTAG('R','S','D','I'), // Resist Disease
+        EFI_RSFI = MKTAG('R','S','F','I'), // Resist Fire
+        EFI_RSFR = MKTAG('R','S','F','R'), // Resist Frost
+        EFI_RSMA = MKTAG('R','S','M','A'), // Resist Magic
+        EFI_RSNW = MKTAG('R','S','N','W'), // Resist Normal Weapons
+        EFI_RSPA = MKTAG('R','S','P','A'), // Resist Paralysis
+        EFI_RSPO = MKTAG('R','S','P','O'), // Resist Poison
+        EFI_RSSH = MKTAG('R','S','S','H'), // Resist Shock
+        EFI_REAT = MKTAG('R','E','A','T'), // Restore Attribute
+        EFI_REFA = MKTAG('R','E','F','A'), // Restore Fatigue
+        EFI_REHE = MKTAG('R','E','H','E'), // Restore Health
+        EFI_RESP = MKTAG('R','E','S','P'), // Restore Magicka
+
+        // Effects
+        EFI_LOCK = MKTAG('L','O','C','K'), // Lock Lock
+        EFI_SEFF = MKTAG('S','E','F','F'), // Script Effect
+        EFI_Z020 = MKTAG('Z','0','2','0'), // Summon 20 Extra
+        EFI_MYHL = MKTAG('M','Y','H','L'), // Summon Mythic Dawn Helmet
+        EFI_MYTH = MKTAG('M','Y','T','H'), // Summon Mythic Dawn Armor
+        EFI_REAN = MKTAG('R','E','A','N'), // Reanimate
+        EFI_DISE = MKTAG('D','I','S','E'), // Disease Info
+        EFI_POSN = MKTAG('P','O','S','N'), // Poison Info
+        EFI_DUMY = MKTAG('D','U','M','Y'), // Mehrunes Dagon Custom Effect
+        EFI_STMA = MKTAG('S','T','M','A'), // Stunted Magicka
+        EFI_SUDG = MKTAG('S','U','D','G'), // Sun Damage
+        EFI_VAMP = MKTAG('V','A','M','P'), // Vampirism
+        EFI_DARK = MKTAG('D','A','R','K'), // Darkness
+        EFI_RSWD = MKTAG('R','S','W','D')  // Resist Water Damage
+    };
+
     // Based on http://www.uesp.net/wiki/Tes5Mod:Mod_File_Format#Groups
     enum GroupType
     {
@@ -689,6 +832,103 @@ namespace ESM4
         std::int16_t  count;
         std::uint16_t unknown2; // sometimes missing
     };
+
+    struct InventoryItem // NPC_, CREA, CONT
+    {
+        FormId        item;
+        std::uint32_t count;
+    };
+
+    struct AIData        // NPC_, CREA
+    {
+        std::uint8_t  aggression;
+        std::uint8_t  confidence;
+        std::uint8_t  energyLevel;
+        std::uint8_t  responsibility;
+        std::uint32_t aiFlags;
+        std::uint8_t  trainSkill;
+        std::uint8_t  trainLevel;
+        std::uint16_t unknown;
+    };
+
+    struct AttributeValues
+    {
+        std::uint8_t  strength;
+        std::uint8_t  intelligence;
+        std::uint8_t  willpower;
+        std::uint8_t  agility;
+        std::uint8_t  speed;
+        std::uint8_t  endurance;
+        std::uint8_t  personality;
+        std::uint8_t  luck;
+    };
+
+    struct ActorBaseConfig
+    {
+#if 0
+        enum ACBS_NPC
+        {
+            ACBS_Female               = 0x000001,
+            ACBS_Essential            = 0x000002,
+            ACBS_Respawn              = 0x000008,
+            ACBS_Autocalcstats        = 0x000010,
+            ACBS_PCLevelOffset        = 0x000080,
+            ACBS_NoLowLevelProcessing = 0x000200,
+            ACBS_NoRumors             = 0x002000,
+            ACBS_Summonable           = 0x004000,
+            ACBS_NoPersuasion         = 0x008000, // different meaning to crea
+            ACBS_CanCorpseCheck       = 0x100000  // opposite of crea
+        };
+
+        enum ACBS_CREA
+        {
+            ACBS_Essential            = 0x000002,
+            ACBS_WeapAndShield        = 0x000004,
+            ACBS_Respawn              = 0x000008,
+            ACBS_PCLevelOffset        = 0x000080,
+            ACBS_NoLowLevelProcessing = 0x000200,
+            ACBS_NoHead               = 0x008000, // different meaning to npc_
+            ACBS_NoRightArm           = 0x010000,
+            ACBS_NoLeftArm            = 0x020000,
+            ACBS_NoCombatWater        = 0x040000,
+            ACBS_NoShadow             = 0x080000,
+            ACBS_NoCorpseCheck        = 0x100000  // opposite of npc_
+        };
+#endif
+        std::uint32_t flags;
+        std::uint16_t baseSpell;  // Base spell points
+        std::uint16_t fatigue;    // Fatigue
+        std::uint16_t barterGold; // Barter gold
+        std::int16_t  level;      // Level/Offset level
+        std::uint16_t calcMin;    // Calc Min
+        std::uint16_t calcMax;    // Calc Max
+    };
+
+    struct ActorFaction
+    {
+        FormId       faction;
+        std::int8_t  rank;
+        std::uint8_t unknown1;
+        std::uint8_t unknown2;
+        std::uint8_t unknown3;
+    };
+
+    union EFI_Label
+    {
+        std::uint32_t value;
+        char effect[4];
+    };
+
+    struct ScriptEffect
+    {
+        FormId       formId;    // Script effect (Magic effect must be SEFF)
+        std::int32_t school;    // Magic school. See Magic schools for more information.
+        EFI_Label visualEffect; // Visual effect name or 0x00000000 if None
+        std::uint8_t flags;     // 0x01 = Hostile
+        std::uint8_t unknown1;
+        std::uint8_t unknown2;
+        std::uint8_t unknown3;
+    };
 #pragma pack(pop)
 
     // For pretty printing GroupHeader labels
@@ -700,6 +940,10 @@ namespace ESM4
     std::string formIdToString(FormId formId);
 
     void gridToString(std::int16_t x, std::int16_t y, std::string& str);
+
+    bool isFormId(const std::string& str, FormId *id = nullptr);
+
+    FormId stringToFormId(const std::string& str);
 }
 
 #endif // ESM4_COMMON_H

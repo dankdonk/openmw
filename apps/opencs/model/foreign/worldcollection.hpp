@@ -1,9 +1,7 @@
 #ifndef CSM_FOREIGN_WORLDCOLLECTION_H
 #define CSM_FOREIGN_WORLDCOLLECTION_H
 
-#include "../world/collection.hpp"
-//#include "../world/record.hpp"
-
+#include "idcollection.hpp"
 #include "world.hpp"
 
 namespace ESM4
@@ -13,19 +11,11 @@ namespace ESM4
 
 namespace CSMForeign
 {
-    class WorldCollection : public CSMWorld::Collection<World, CSMWorld::IdAccessor<World> >
+    class WorldCollection : public IdCollection<World>
     {
     public:
         WorldCollection ();
         ~WorldCollection ();
-
-        // similar to IdCollection but with ESM4::Reader
-        int load(ESM4::Reader& reader, bool base);
-
-        // similar to IdCollection but with ESM4::Reader
-        int load (const World& record, bool base, int index = -2);
-
-        virtual void loadRecord (World& record, ESM4::Reader& reader);
 
         std::string getIdString(std::uint32_t formId) const;
 

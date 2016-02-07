@@ -42,6 +42,8 @@ ESM4::SigilStone::SigilStone() : mFormId(0), mFlags(0), mBoundRadius(0.f), mScri
     mData.uses = 0;
     mData.value = 0;
     mData.weight = 0.f;
+
+    std::memset(&mEffect, 0, sizeof(ScriptEffect));
 }
 
 ESM4::SigilStone::~SigilStone()
@@ -51,6 +53,7 @@ ESM4::SigilStone::~SigilStone()
 void ESM4::SigilStone::load(ESM4::Reader& reader)
 {
     mFormId = reader.hdr().record.id;
+    reader.adjustFormId(mFormId);
     mFlags  = reader.hdr().record.flags;
 
     while (reader.getSubRecordHeader())
@@ -84,13 +87,18 @@ void ESM4::SigilStone::load(ESM4::Reader& reader)
                 break;
             }
             case ESM4::SUB_MODL: reader.getZString(mModel); break;
-            case ESM4::SUB_ICON: reader.getZString(mIcon); break;
-            case ESM4::SUB_SCRI: reader.get(mScript);      break;
-            case ESM4::SUB_MODB: reader.get(mBoundRadius); break;
+            case ESM4::SUB_ICON: reader.getZString(mIcon);  break;
+            case ESM4::SUB_SCRI: reader.getFormId(mScript); break;
+            case ESM4::SUB_MODB: reader.get(mBoundRadius);  break;
+            case ESM4::SUB_SCIT:
+            {
+                reader.get(mEffect);
+                reader.adjustFormId(mEffect.formId);
+                break;
+            }
             case ESM4::SUB_MODT:
             case ESM4::SUB_EFID:
             case ESM4::SUB_EFIT:
-            case ESM4::SUB_SCIT:
             {
                 //std::cout << "SGST " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
                 reader.skipSubRecordData();

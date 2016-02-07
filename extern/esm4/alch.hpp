@@ -23,8 +23,9 @@
 #ifndef ESM4_ALCH_H
 #define ESM4_ALCH_H
 
-#include <string>
 #include <cstdint>
+
+#include "common.hpp"
 
 namespace ESM4
 {
@@ -49,9 +50,10 @@ namespace ESM4
         std::string mModel;
         std::string mIcon; // inventory
 
-        float mBoundRadius;
-
         FormId mScript;
+        ScriptEffect mEffect;
+
+        float mBoundRadius;
 
         Data mData;
 

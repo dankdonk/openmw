@@ -49,6 +49,7 @@ ESM4::Region::~Region()
 void ESM4::Region::load(ESM4::Reader& reader)
 {
     mFormId = reader.hdr().record.id;
+    reader.adjustFormId(mFormId);
     mFlags  = reader.hdr().record.flags;
 
     RDAT_Types next = RDAT_None;
@@ -60,7 +61,7 @@ void ESM4::Region::load(ESM4::Reader& reader)
         {
             case ESM4::SUB_EDID: reader.getZString(mEditorId); break;
             case ESM4::SUB_RCLR: reader.get(mColour);        break;
-            case ESM4::SUB_WNAM: reader.get(mWorldId);       break;
+            case ESM4::SUB_WNAM: reader.getFormId(mWorldId); break;
             case ESM4::SUB_ICON: reader.getZString(mShader); break;
             case ESM4::SUB_RPLI: reader.get(mEdgeFalloff);   break;
             case ESM4::SUB_RPLD:
@@ -113,12 +114,12 @@ void ESM4::Region::load(ESM4::Reader& reader)
                 break;
             }
             case ESM4::SUB_RDMD: // Only in Oblivion?
-            case ESM4::SUB_RDSD: // Only in Oblivion?  Possibly the same as RDSA
-            case ESM4::SUB_RDGS: // Only in Oblivion? (ToddTestRegion1)
+            case ESM4::SUB_RDSD: // Only in Oblivion?  Possibly the same as RDSA // formId
+            case ESM4::SUB_RDGS: // Only in Oblivion? (ToddTestRegion1) // formId
             case ESM4::SUB_RDMO:
             case ESM4::SUB_RDSA:
-            case ESM4::SUB_RDWT:
-            case ESM4::SUB_RDOT:
+            case ESM4::SUB_RDWT: // formId
+            case ESM4::SUB_RDOT: // formId
             {
                 //RDAT skipping... following is a map
                 //RDMP skipping... map name

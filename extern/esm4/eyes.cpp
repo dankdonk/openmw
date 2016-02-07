@@ -48,6 +48,7 @@ ESM4::Eyes::~Eyes()
 void ESM4::Eyes::load(ESM4::Reader& reader)
 {
     mFormId = reader.hdr().record.id;
+    reader.adjustFormId(mFormId);
     mFlags  = reader.hdr().record.flags;
 
     while (reader.getSubRecordHeader())

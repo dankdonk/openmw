@@ -23,14 +23,14 @@
 #ifndef ESM4_CONT_H
 #define ESM4_CONT_H
 
-#include <string>
-#include <cstdint>
+#include <vector>
+
+#include "common.hpp" // InventoryItem
 
 namespace ESM4
 {
     class Reader;
     class Writer;
-    typedef std::uint32_t FormId;
 
     struct Container
     {
@@ -48,8 +48,8 @@ namespace ESM4
         FormId mOpenSound;
         FormId mCloseSound;
         FormId mScript; // TES4 only
-        FormId mItem;
-        std::uint32_t mItemCount;
+
+        std::vector<InventoryItem> mInventory;
 
         Container();
         ~Container();

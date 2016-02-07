@@ -47,6 +47,7 @@ ESM4::LandTexture::~LandTexture()
 void ESM4::LandTexture::load(ESM4::Reader& reader)
 {
     mFormId = reader.hdr().record.id;
+    reader.adjustFormId(mFormId);
     mFlags  = reader.hdr().record.flags;
 
     while (reader.getSubRecordHeader())
@@ -74,9 +75,9 @@ void ESM4::LandTexture::load(ESM4::Reader& reader)
             }
             case ESM4::SUB_ICON: reader.getZString(mTextureFile); break; // Oblivion only?
             case ESM4::SUB_SNAM: reader.get(mTextureSpecular); break;
-            case ESM4::SUB_GNAM: reader.get(mGrass);           break;
-            case ESM4::SUB_TNAM: reader.get(mTexture);         break; // TES5 only
-            case ESM4::SUB_MNAM: reader.get(mMaterial);        break; // TES5 only
+            case ESM4::SUB_GNAM: reader.getFormId(mGrass);     break;
+            case ESM4::SUB_TNAM: reader.getFormId(mTexture);   break; // TES5 only
+            case ESM4::SUB_MNAM: reader.getFormId(mMaterial);  break; // TES5 only
             default:
                 throw std::runtime_error("ESM4::LTEX::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
         }

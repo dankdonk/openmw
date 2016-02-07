@@ -115,7 +115,7 @@ namespace ESM4
         signed char   mVertColr[VERTS_PER_SIDE * VERTS_PER_SIDE * 3]; // from VCLR subrecord
         VHGT          mHeightMap;
         Texture       mTextures[4]; // 0 = bottom left. 1 = bottom right. 2 = upper-left. 3 = upper-right
-        std::vector<FormId> mIds;  // land texture (LTEX) formids
+        std::vector<FormId> mIds;   // land texture (LTEX) formids
 
         Land();
         ~Land();

@@ -23,25 +23,48 @@
 #ifndef ESM4_NPC__H
 #define ESM4_NPC__H
 
-#include <string>
-#include <cstdint>
 #include <vector>
+
+#include "common.hpp"
 
 namespace ESM4
 {
     class Reader;
     class Writer;
-    typedef std::uint32_t FormId;
 
     struct Npc
     {
-#pragma pack(push, 1)
-        struct InventoryItem
+        struct SkillValues
         {
-            FormId        item;
-            std::uint32_t count;
+            std::uint8_t  armorer;
+            std::uint8_t  athletics;
+            std::uint8_t  blade;
+            std::uint8_t  block;
+            std::uint8_t  blunt;
+            std::uint8_t  handToHand;
+            std::uint8_t  heavyArmor;
+            std::uint8_t  alchemy;
+            std::uint8_t  alteration;
+            std::uint8_t  conjuration;
+            std::uint8_t  destruction;
+            std::uint8_t  illusion;
+            std::uint8_t  mysticism;
+            std::uint8_t  restoration;
+            std::uint8_t  acrobatics;
+            std::uint8_t  lightArmor;
+            std::uint8_t  marksman;
+            std::uint8_t  mercantile;
+            std::uint8_t  security;
+            std::uint8_t  sneak;
+            std::uint8_t  speechcraft;
         };
-#pragma pack(pop)
+
+        struct Data
+        {
+            SkillValues   skills;
+            std::uint32_t health;
+            AttributeValues attribs;
+        };
 
         FormId mFormId;       // from the header
         std::uint32_t mFlags; // from the header, see enum type RecordFlag for details
@@ -49,6 +72,26 @@ namespace ESM4
         std::string mEditorId;
         std::string mFullName;
         std::string mModel;
+
+        FormId mRace;
+        FormId mClass;
+        FormId mHair;
+        FormId mEyes;
+
+        FormId mDeathItem;
+        std::vector<FormId> mSpell;
+        FormId mScript;
+
+        AIData mAIData;
+        std::vector<FormId> mAIPackages;
+        ActorBaseConfig mBaseConfig;
+        ActorFaction mFaction;
+        Data   mData;
+        FormId mCombatStyle;
+        FormId mSoundBase;
+        FormId mSound;
+        std::uint8_t mSoundChance;
+        float mFootWeight;
 
         float mBoundRadius;
         std::vector<std::string> mKf; // filenames only, get directory path from mModel

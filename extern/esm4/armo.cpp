@@ -53,6 +53,7 @@ ESM4::Armor::~Armor()
 void ESM4::Armor::load(ESM4::Reader& reader)
 {
     mFormId = reader.hdr().record.id;
+    reader.adjustFormId(mFormId);
     mFlags  = reader.hdr().record.flags;
 
     while (reader.getSubRecordHeader())
@@ -107,11 +108,11 @@ void ESM4::Armor::load(ESM4::Reader& reader)
             }
             case ESM4::SUB_ICON: reader.getZString(mIconMale);   break;
             case ESM4::SUB_ICO2: reader.getZString(mIconFemale); break;
-            case ESM4::SUB_BMDT: reader.get(mArmorFlags);   break;
-            case ESM4::SUB_SCRI: reader.get(mScript);       break;
+            case ESM4::SUB_BMDT: reader.get(mArmorFlags);        break;
+            case ESM4::SUB_SCRI: reader.getFormId(mScript);      break;
             case ESM4::SUB_ANAM: reader.get(mEnchantmentPoints); break;
-            case ESM4::SUB_ENAM: reader.get(mEnchantment);  break;
-            case ESM4::SUB_MODB: reader.get(mBoundRadius);  break;
+            case ESM4::SUB_ENAM: reader.getFormId(mEnchantment); break;
+            case ESM4::SUB_MODB: reader.get(mBoundRadius);       break;
             case ESM4::SUB_MODT:
             case ESM4::SUB_MOD2:
             case ESM4::SUB_MOD3:

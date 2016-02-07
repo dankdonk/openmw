@@ -82,7 +82,7 @@ void CSVRender::ForeignObject::update()
     const CSMForeign::IdCollection<CSMForeign::Eyes>& eyes = mData.getForeignEyesSet();
     const CSMForeign::IdCollection<CSMForeign::Creature>& crea = mData.getForeignCreatures();
     const CSMForeign::IdCollection<CSMForeign::LeveledCreature>& lvlc = mData.getForeignLvlCreatures();
-    const CSMForeign::StaticCollection& referenceables = mData.getForeignStatics(); // FIXME: use statics only for now
+    const CSMForeign::IdCollection<CSMForeign::Static>& referenceables = mData.getForeignStatics(); // FIXME: use statics only for now
 
     //int index = referenceables.searchId (mReferenceableId);
     // get the formId of the base object

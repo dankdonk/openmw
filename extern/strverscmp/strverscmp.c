@@ -18,6 +18,7 @@
    Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.  */
 
 /* Modified to recognise negative numbers. Copyright (c) 2015 cc9cii */
+/* Modified to recognise hex numbers. Copyright (c) 2016 cc9cii */
 
 #ifdef HAVE_CONFIG_H
 # include <config.h>
@@ -47,6 +48,13 @@
    of `digit' even when the host does not conform to POSIX.  */
 #define ISDIGIT(c) ((unsigned int) (c) - '0' <= 9)
 
+/* ASCII
+   0 -> 48
+   9 -> 57
+   A -> 65, a -> 97  (A = a-32)
+   F -> 70, f -> 102 (F = f-32)
+   for now, just use isxdigit() */
+
 #undef __strverscmp
 #undef strverscmp
 
@@ -60,7 +68,7 @@
 */
 
 int
-__strverscmp (const char *s1, const char *s2)
+__strverscmp (const char *s1, const char *s2, int hex)
 {
   const unsigned char *p1 = (const unsigned char *) s1;
   const unsigned char *p2 = (const unsigned char *) s2;
@@ -103,38 +111,38 @@ __strverscmp (const char *s1, const char *s2)
   if (c1 == '-')
     negative = -1;
   /* Hint: '0' is a digit too.  */
-  state = S_N | ((c1 == '0') + (ISDIGIT (c1) != 0));
+  state = S_N | ((c1 == '0') + (hex ? (isxdigit(c1) != 0) : (ISDIGIT (c1) != 0)));
 
   while ((diff = c1 - c2) == 0 && c1 != '\0')
     {
       state = next_state[state];
       c1 = *p1++;
       c2 = *p2++;
-      state |= (c1 == '0') + (ISDIGIT (c1) != 0);
+      state |= (c1 == '0') + (hex ? (isxdigit(c1) != 0) : (ISDIGIT (c1) != 0));
       if (negative == -1 && (state & 0x3) == 0)
         negative = 1; /* non-digit turns negative off */
       if (c1 == '-')
         negative = -1;
     }
 
-  state = result_type[state << 2 | ((c2 == '0') + (ISDIGIT (c2) != 0))];
+  state = result_type[state << 2 | ((c2 == '0') + (hex ? (isxdigit(c2) != 0) : (ISDIGIT (c2) != 0)))];
 
   switch (state)
     {
     case CMP:
-      if (c1 == '-' && (ISDIGIT (c2) != 0))
+      if (c1 == '-' && (hex ? (isxdigit(c2) != 0) : (ISDIGIT (c2) != 0)))
         return -1;
-      else if (c2 == '-' && (ISDIGIT (c1) != 0))
+      else if (c2 == '-' && (hex ? (isxdigit(c1) != 0) : (ISDIGIT (c1) != 0)))
         return 1;
 
       return negative * diff;
 
     case LEN:
-      while (ISDIGIT (*p1++))
-        if (!ISDIGIT (*p2++))
+      while (hex ? isxdigit(*p1++) : ISDIGIT (*p1++))
+        if (!(hex ? isxdigit(*p2++) : ISDIGIT (*p2++)))
           return negative; /* longer negatives numbers are smaller */
 
-      return negative * (ISDIGIT (*p2) ? -1 : diff);
+      return negative * ((hex ? isxdigit(*p2) : ISDIGIT (*p2)) ? -1 : diff);
 
     default:
       return state;

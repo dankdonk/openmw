@@ -47,6 +47,7 @@ ESM4::Door::~Door()
 void ESM4::Door::load(ESM4::Reader& reader)
 {
     mFormId = reader.hdr().record.id;
+    reader.adjustFormId(mFormId);
     mFlags  = reader.hdr().record.flags;
 
     while (reader.getSubRecordHeader())
@@ -73,14 +74,14 @@ void ESM4::Door::load(ESM4::Reader& reader)
                     throw std::runtime_error ("DOOR FULL data read error");
                 break;
             }
-            case ESM4::SUB_MODL: reader.getZString(mModel); break;
-            case ESM4::SUB_SCRI: reader.get(mScript);       break;
-            case ESM4::SUB_SNAM: reader.get(mOpenSound);    break;
-            case ESM4::SUB_ANAM: reader.get(mCloseSound);   break;
-            case ESM4::SUB_BNAM: reader.get(mLoopSound);    break;
-            case ESM4::SUB_FNAM: reader.get(mDoorFlags);    break;
-            case ESM4::SUB_TNAM: reader.get(mRandomTeleport); break;
-            case ESM4::SUB_MODB: reader.get(mBoundRadius);  break;
+            case ESM4::SUB_MODL: reader.getZString(mModel);     break;
+            case ESM4::SUB_SCRI: reader.getFormId(mScript);     break;
+            case ESM4::SUB_SNAM: reader.getFormId(mOpenSound);  break;
+            case ESM4::SUB_ANAM: reader.getFormId(mCloseSound); break;
+            case ESM4::SUB_BNAM: reader.getFormId(mLoopSound);  break;
+            case ESM4::SUB_FNAM: reader.get(mDoorFlags);        break;
+            case ESM4::SUB_TNAM: reader.getFormId(mRandomTeleport); break;
+            case ESM4::SUB_MODB: reader.get(mBoundRadius);      break;
             case ESM4::SUB_MODT:
             case ESM4::SUB_MODS:
             case ESM4::SUB_OBND:

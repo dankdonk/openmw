@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015 cc9cii
+  Copyright (C) 2015, 2016 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -23,14 +23,15 @@
 #ifndef ESM4_TES4_H
 #define ESM4_TES4_H
 
+#include <string>
 #include <cstdint>
 #include <vector>
-#include <string>
 
 namespace ESM4
 {
     class Reader;
     class Writer;
+    typedef std::uint32_t FormId;
 
     struct Header
     {
@@ -57,15 +58,20 @@ namespace ESM4
             std::uint64_t size;
         };
 
+        std::uint32_t mFlags; // 0x01 esm, 0x80 localised strings
+
         Data mData;
-        int mFormat;
         std::string mAuthor; // Author's name
         std::string mDesc;   // File description
         std::vector<MasterData> mMaster;
 
-        unsigned int mFlags; // 0x01 esm, 0x80 localised strings
+        std::vector<FormId> mOverrides; // Skyrim Only, cell children (ACHR, LAND, NAVM, PGRE, PHZD, REFR)
 
-        void load (Reader& reader, const std::uint32_t size);
+        // position in the vector = mod index of master files above
+        // value = adjusted mod index based on all the files loaded so far
+        std::vector<std::uint32_t> mModIndicies;
+
+        void load (Reader& reader);
         //void save (Writer& writer);
 
         //void blank();

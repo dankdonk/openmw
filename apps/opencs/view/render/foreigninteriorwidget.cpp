@@ -196,11 +196,11 @@ bool CSVRender::ForeignInteriorWidget::handleDrop (const std::vector<CSMWorld::U
 
     mCellId = dropData.begin()->getId();
     ESM4::FormId formId = static_cast<ESM4::FormId>(std::stoi(mCellId, nullptr, 16));
-    int index = cells.searchId(formId);
+    int index = cells.searchFormId(formId);
     if (index == -1)
         return false;
 
-    const CSMForeign::Cell& cellrec = cells.getRecord(cells.searchId(formId)).get();
+    const CSMForeign::Cell& cellrec = cells.getRecord(cells.searchFormId(formId)).get();
     if (!cellrec.isInterior)
         return false;
 

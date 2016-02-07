@@ -57,6 +57,7 @@ ESM4::Cell::~Cell()
 void ESM4::Cell::load(ESM4::Reader& reader)
 {
     mFormId = reader.hdr().record.id;
+    reader.adjustFormId(mFormId);
     mFlags  = reader.hdr().record.flags;
     mParent = reader.currWorld();
 
@@ -181,7 +182,7 @@ void ESM4::Cell::load(ESM4::Reader& reader)
                 mRegions.resize(subHdr.dataSize/sizeof(FormId));
                 for (std::vector<FormId>::iterator it = mRegions.begin(); it != mRegions.end(); ++it)
                 {
-                    reader.get(*it);
+                    reader.getFormId(*it);
 #if 0
                     std::string padding = "";
                     padding.insert(0, reader.stackSize()*2, ' ');
@@ -190,11 +191,11 @@ void ESM4::Cell::load(ESM4::Reader& reader)
                 }
                 break;
             }
-            case ESM4::SUB_XOWN: reader.get(mOwner);   break;
-            case ESM4::SUB_XGLB: reader.get(mGlobal);  break; // Oblivion only?
-            case ESM4::SUB_XCCM: reader.get(mClimate); break;
-            case ESM4::SUB_XCWT: reader.get(mWater);   break;
-            case ESM4::SUB_XCLW: reader.get(mWaterHeight); break;
+            case ESM4::SUB_XOWN: reader.getFormId(mOwner);   break;
+            case ESM4::SUB_XGLB: reader.getFormId(mGlobal);  break; // Oblivion only?
+            case ESM4::SUB_XCCM: reader.getFormId(mClimate); break;
+            case ESM4::SUB_XCWT: reader.getFormId(mWater);   break;
+            case ESM4::SUB_XCLW: reader.get(mWaterHeight);   break;
             case ESM4::SUB_XCLL:
             {
                 if (reader.esmVersion() == ESM4::VER_094 || reader.esmVersion() == ESM4::VER_170)
@@ -235,6 +236,58 @@ void ESM4::Cell::load(ESM4::Reader& reader)
     }
 }
 
+// http://www.uesp.net/wiki/Tes4Mod:Mod_File_Format#Hierarchical_Top_Groups
+//
+//  Type | Info                                 |
+// ------+--------------------------------------+-------------------
+//   2   | Interior Cell Block                  |
+//   3   |   Interior Cell Sub-Block            |
+//     R |     CELL                             |
+//   6   |     Cell Childen                     |
+//   8   |       Persistent children            |
+//     R |         REFR, ACHR, ACRE             | mRefPersistent
+//  10   |       Visible distant children       |
+//     R |         REFR, ACHR, ACRE             | mRefVisibleDistant
+//   9   |       Temp Children                  |
+//     R |         PGRD                         | FIXME
+//     R |         REFR, ACHR, ACRE             | mRefTemporary
+//       |                                      |
+//   0   | Top (Type)                           |
+//     R |   WRLD                               |
+//   1   |   World Children                     |
+//     R |     ROAD                             |
+//     R |     CELL                             |
+//   6   |     Cell Childen                     |
+//   8   |       Persistent children            |
+//     R |         REFR, ACHR, ACRE             | mRefPersistent
+//  10   |       Visible distant children       |
+//     R |         REFR, ACHR, ACRE             | mRefVisibleDistant
+//   9   |       Temp Children                  |
+//     R |         PGRD                         | FIXME
+//     R |         REFR, ACHR, ACRE             | mRefTemporary
+//   4   |       Exterior World Block           |
+//   5   |         Exterior World Sub-block     |
+//     R |           CELL                       |
+//   6   |           Cell Childen               |
+//   8   |             Persistent children      |
+//     R |               REFR, ACHR, ACRE       | mRefPersistent
+//  10   |             Visible distant children |
+//     R |               REFR, ACHR, ACRE       | mRefVisibleDistant
+//   9   |             Temp Children            |
+//     R |               LAND                   | mLandTemporary
+//     R |               PGRD                   | FIXME
+//     R |               REFR, ACHR, ACRE       | mRefTemporary
+//
+// http://www.uesp.net/wiki/Tes4Mod:Mod_File_Format/CELL
+//
+// The block and subblock groups for an interior cell are determined by the last two decimal
+// digits of the lower 3 bytes of the cell form ID (the modindex is not included in the
+// calculation). For example, for form ID 0x000CF2=3314, the block is 4 and the subblock is 1.
+//
+// The block and subblock groups for an exterior cell are determined by the X-Y coordinates of
+// the cell. Each block contains 16 subblocks (4x4) and each subblock contains 64 cells (8x8).
+// So each block contains 1024 cells (32x32).
+//
 //void ESM4::Cell::save(ESM4::Writer& writer) const
 //{
 //}

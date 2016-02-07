@@ -23,37 +23,18 @@
 #ifndef ESM4_CREA_H
 #define ESM4_CREA_H
 
-#include <string>
-#include <cstdint>
 #include <vector>
+
+#include "common.hpp"
 
 namespace ESM4
 {
     class Reader;
     class Writer;
-    typedef std::uint32_t FormId;
 
     struct Creature
     {
 #pragma pack(push, 1)
-        struct InventoryItem // FIXME: common with npc_
-        {
-            FormId        item;
-            std::uint32_t count;
-        };
-
-        struct AIData // FIXME: common with npc_
-        {
-            std::uint8_t  aggression;
-            std::uint8_t  confidence;
-            std::uint8_t  energyLevel;
-            std::uint8_t  responsibility;
-            std::uint32_t aiFlags;
-            std::uint8_t  trainSkill;
-            std::uint8_t  trainLevel;
-            std::uint16_t unknown;
-        };
-
         struct Data
         {
             std::uint8_t  unknown;
@@ -64,14 +45,7 @@ namespace ESM4
             std::uint16_t health;
             std::uint16_t unknown2;
             std::uint16_t damage;
-            std::uint8_t  strength;
-            std::uint8_t  intelligence;
-            std::uint8_t  willpower;
-            std::uint8_t  agility;
-            std::uint8_t  speed;
-            std::uint8_t  endurance;
-            std::uint8_t  personality;
-            std::uint8_t  luck;
+            AttributeValues attribs;
         };
 #pragma pack(pop)
 
@@ -83,11 +57,13 @@ namespace ESM4
         std::string mModel;
 
         FormId mDeathItem;
-        FormId mSpell;
+        std::vector<FormId> mSpell;
         FormId mScript;
 
         AIData mAIData;
-        FormId mAIPackages;
+        std::vector<FormId> mAIPackages;
+        ActorBaseConfig mBaseConfig;
+        ActorFaction mFaction;
         Data   mData;
         FormId mCombatStyle;
         FormId mSoundBase;

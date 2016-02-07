@@ -33,7 +33,7 @@
 //#include "writer.hpp"
 
 ESM4::Container::Container() : mFormId(0), mFlags(0), mBoundRadius(0.f), mDataFlags(0), mWeight(0.f),
-                               mOpenSound(0), mCloseSound(0), mScript(0), mItem(0), mItemCount(0)
+                               mOpenSound(0), mCloseSound(0), mScript(0)
 {
     mEditorId.clear();
     mFullName.clear();
@@ -47,6 +47,7 @@ ESM4::Container::~Container()
 void ESM4::Container::load(ESM4::Reader& reader)
 {
     mFormId = reader.hdr().record.id;
+    reader.adjustFormId(mFormId);
     mFlags  = reader.hdr().record.flags;
 
     while (reader.getSubRecordHeader())
@@ -81,15 +82,17 @@ void ESM4::Container::load(ESM4::Reader& reader)
             }
             case ESM4::SUB_CNTO:
             {
-                reader.get(mItem);
-                reader.get(mItemCount);
+                static InventoryItem inv; // FIXME: use unique_ptr here?
+                reader.get(inv);
+                reader.adjustFormId(inv.item);
+                mInventory.push_back(inv);
                 break;
             }
-            case ESM4::SUB_MODL: reader.getZString(mModel); break;
-            case ESM4::SUB_SNAM: reader.get(mOpenSound);    break;
-            case ESM4::SUB_QNAM: reader.get(mCloseSound);   break;
-            case ESM4::SUB_SCRI: reader.get(mScript);       break;
-            case ESM4::SUB_MODB: reader.get(mBoundRadius);  break;
+            case ESM4::SUB_MODL: reader.getZString(mModel);     break;
+            case ESM4::SUB_SNAM: reader.getFormId(mOpenSound);  break;
+            case ESM4::SUB_QNAM: reader.getFormId(mCloseSound); break;
+            case ESM4::SUB_SCRI: reader.getFormId(mScript);     break;
+            case ESM4::SUB_MODB: reader.get(mBoundRadius);      break;
             case ESM4::SUB_MODT:
             case ESM4::SUB_MODS: // TES5 only
             case ESM4::SUB_VMAD: // TES5 only

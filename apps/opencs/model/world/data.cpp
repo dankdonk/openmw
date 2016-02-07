@@ -1200,12 +1200,12 @@ CSMForeign::CellCollection& CSMWorld::Data::getForeignCells()
     return mForeignCells;
 }
 
-const CSMForeign::LandTextureCollection& CSMWorld::Data::getForeignLandTextures() const
+const CSMForeign::IdCollection<CSMForeign::LandTexture>& CSMWorld::Data::getForeignLandTextures() const
 {
     return mForeignLandTextures;
 }
 
-CSMForeign::LandTextureCollection& CSMWorld::Data::getForeignLandTextures()
+CSMForeign::IdCollection<CSMForeign::LandTexture>& CSMWorld::Data::getForeignLandTextures()
 {
     return mForeignLandTextures;
 }
@@ -1240,12 +1240,12 @@ CSMForeign::CharCollection& CSMWorld::Data::getForeignChars()
     return mForeignChars;
 }
 
-const CSMForeign::StaticCollection& CSMWorld::Data::getForeignStatics() const
+const CSMForeign::IdCollection<CSMForeign::Static>& CSMWorld::Data::getForeignStatics() const
 {
     return mForeignStatics;
 }
 
-CSMForeign::StaticCollection& CSMWorld::Data::getForeignStatics()
+CSMForeign::IdCollection<CSMForeign::Static>& CSMWorld::Data::getForeignStatics()
 {
     return mForeignStatics;
 }
@@ -1593,14 +1593,16 @@ int CSMWorld::Data::startLoading (const boost::filesystem::path& path, bool base
     mReader->setEncoder (&mEncoder);
     mReader->setIndex(mReaderIndex++);
     mReader->open (path.string());
-    if (mReader->getVer() == ESM::VER_080 // TES4
+    if (mReader->getVer() == ESM::VER_080 || mReader->getVer() == ESM::VER_100 // TES4
         || mReader->getVer() == ESM::VER_094 || mReader->getVer() == ESM::VER_17) // TES5
     {
         delete mReader;
-        mReader = new ESM::ESM4Reader(mReader->getVer() == ESM::VER_080);
+        mReader = new ESM::ESM4Reader(mReader->getVer() == ESM::VER_080 || mReader->getVer() == ESM::VER_100);
         mReader->setEncoder(&mEncoder);
-        mReader->setIndex(mReaderIndex); // use the same index
+        mReader->setIndex(mReaderIndex-1); // use the same index
+        static_cast<ESM::ESM4Reader*>(mReader)->reader().setModIndex(mReaderIndex-1);
         static_cast<ESM::ESM4Reader*>(mReader)->openTes4File(path.string());
+        static_cast<ESM::ESM4Reader*>(mReader)->reader().updateModIndicies(mLoadedFiles);
     }
     mLoadedFiles.push_back(path.filename().string());
 
@@ -1655,7 +1657,7 @@ bool CSMWorld::Data::continueLoading (CSMDoc::Messages& messages)
     // Check if previous record/group was the final one in this group.  Must be done before
     // calling mReader->hasMoreRecs() below, because all records may have been processed when
     // the previous group is popped off the stack.
-    if (mReader->getVer() == ESM::VER_080 // TES4
+    if (mReader->getVer() == ESM::VER_080 || mReader->getVer() == ESM::VER_100 // TES4
             || mReader->getVer() == ESM::VER_094 || mReader->getVer() == ESM::VER_17) // TES5
         static_cast<ESM::ESM4Reader*>(mReader)->reader().checkGroupStatus();
 
@@ -1683,7 +1685,7 @@ bool CSMWorld::Data::continueLoading (CSMDoc::Messages& messages)
         return true;
     }
 
-    if (mReader->getVer() == ESM::VER_080 // TES4
+    if (mReader->getVer() == ESM::VER_080 || mReader->getVer() == ESM::VER_100 // TES4
             || mReader->getVer() == ESM::VER_094 || mReader->getVer() == ESM::VER_17) // TES5
         return loadTes4Group(messages);
 
@@ -2003,9 +2005,29 @@ bool CSMWorld::Data::loadTes4Group (CSMDoc::Messages& messages)
                 // NOTE: The label field of a group is not reliable.  See:
                 // http://www.uesp.net/wiki/Tes4Mod:Mod_File_Format
                 //
+                // ASCII Q 0x51 0101 0001
+                //       A 0x41 0100 0001
+                //
+                // Ignore flag  0000 1000 (i.e. probably unrelated)
+                //
                 // Workaround by getting the record header and checking its typeId
                 reader.saveGroupStatus(hdr);
                 // CELL group with record type may have sub-groups
+                // FIXME: code duplication
+                if (!mReader->hasMoreRecs())
+                {
+                    if (mBase)
+                    {
+                        boost::shared_ptr<ESM::ESMReader> ptr(mReader);
+                        mReaders.push_back(ptr);
+                    }
+                    else
+                        delete mReader;
+
+                    mReader = 0;
+                    mDialogue = 0;
+                    return true;
+                }
                 loadTes4Group(messages);
                 //reader.getRecordHeader(); // NOTE: header re-read
                 //return loadTes4Record(reader.hdr(), messages);
@@ -2020,17 +2042,54 @@ bool CSMWorld::Data::loadTes4Group (CSMDoc::Messages& messages)
             break;
         }
         case ESM4::Grp_WorldChild:
-        case ESM4::Grp_ExteriorCell:
-        case ESM4::Grp_ExteriorSubCell:
-        case ESM4::Grp_InteriorCell:
-        case ESM4::Grp_InteriorSubCell:
         case ESM4::Grp_CellChild:
         case ESM4::Grp_TopicChild:
         case ESM4::Grp_CellPersistentChild:
         case ESM4::Grp_CellTemporaryChild:
         case ESM4::Grp_CellVisibleDistChild:
         {
+            reader.adjustGRUPFormId();  // not needed or even shouldn't be done? (only labels anyway)
             reader.saveGroupStatus(hdr);
+            // FIXME: code duplication
+            if (!mReader->hasMoreRecs())
+            {
+                if (mBase)
+                {
+                    boost::shared_ptr<ESM::ESMReader> ptr(mReader);
+                    mReaders.push_back(ptr);
+                }
+                else
+                    delete mReader;
+
+                mReader = 0;
+                mDialogue = 0;
+                return true;
+            }
+            loadTes4Group(messages);
+
+            break;
+        }
+        case ESM4::Grp_ExteriorCell:
+        case ESM4::Grp_ExteriorSubCell:
+        case ESM4::Grp_InteriorCell:
+        case ESM4::Grp_InteriorSubCell:
+        {
+            reader.saveGroupStatus(hdr);
+            // FIXME: code duplication
+            if (!mReader->hasMoreRecs())
+            {
+                if (mBase)
+                {
+                    boost::shared_ptr<ESM::ESMReader> ptr(mReader);
+                    mReaders.push_back(ptr);
+                }
+                else
+                    delete mReader;
+
+                mReader = 0;
+                mDialogue = 0;
+                return true;
+            }
             loadTes4Group(messages);
 
             break;
@@ -2110,6 +2169,7 @@ bool CSMWorld::Data::loadTes4Record (const ESM4::RecordHeader& hdr, CSMDoc::Mess
         // WATR, EFSH
         case ESM4::REC_ACHR: reader.getRecordData(); mForeignChars.load(reader, mBase); break;
         case ESM4::REC_REFR: reader.getRecordData(); mForeignRefs.load(reader, mBase); break;
+        // TODO: verify LTEX formIds exist
         case ESM4::REC_LAND: reader.getRecordData(); mForeignLands.load(reader, mBase); break;
         case ESM4::REC_NAVI: reader.getRecordData(); mNavigation.load(reader, mBase); break;
         case ESM4::REC_NAVM:

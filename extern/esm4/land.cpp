@@ -61,6 +61,7 @@ ESM4::Land::~Land()
 void ESM4::Land::load(ESM4::Reader& reader)
 {
     mFormId = reader.hdr().record.id;
+    reader.adjustFormId(mFormId);
     mFlags  = reader.hdr().record.flags;
 
     TxtLayer layer;
@@ -107,6 +108,7 @@ void ESM4::Land::load(ESM4::Reader& reader)
                 {
                     assert(base.quadrant < 4 && base.quadrant >= 0 && "base texture quadrant index error");
 
+                    reader.adjustFormId(base.formId);
                     mTextures[base.quadrant].base = base;  // FIXME: any way to avoid double-copying?
 #if 0
                     std::cout << "Base Texture formid: 0x"
@@ -125,6 +127,7 @@ void ESM4::Land::load(ESM4::Reader& reader)
                     mTextures[currentAddQuad].layers.push_back(layer);
                 }
                 reader.get(layer.additional);
+                reader.adjustFormId(layer.additional.formId);
                 assert(layer.additional.quadrant < 4 && layer.additional.quadrant >= 0
                        && "additional texture quadrant index error");
 #if 0
@@ -159,8 +162,9 @@ void ESM4::Land::load(ESM4::Reader& reader)
                 mTextures[currentAddQuad].layers.push_back(layer);
 
                 // Assumed that the layers are added in the correct sequence
-                assert(layer.additional.layer == mTextures[currentAddQuad].layers.size()-1
-                        && "additional texture layer index error");
+                // FIXME: Knights.esp doesn't seem to observe this - investigate more
+                //assert(layer.additional.layer == mTextures[currentAddQuad].layers.size()-1
+                        //&& "additional texture layer index error");
 
                 currentAddQuad = -1;
                 // FIXME: debug only
@@ -169,16 +173,16 @@ void ESM4::Land::load(ESM4::Reader& reader)
             }
             case ESM4::SUB_VTEX: // only in Oblivion?
             {
-                int count = (int)reader.subRecordHeader().dataSize / sizeof(std::uint32_t);
-                int remainder = reader.subRecordHeader().dataSize % sizeof(std::uint32_t);
+                int count = (int)reader.subRecordHeader().dataSize / sizeof(FormId);
+                int remainder = reader.subRecordHeader().dataSize % sizeof(FormId);
                 assert(remainder == 0 && "ESM4::LAND VTEX data size error");
 
                 if (count)
                 {
                     mIds.resize(count);
-                    for (std::vector<std::uint32_t>::iterator it = mIds.begin(); it != mIds.end(); ++it)
+                    for (std::vector<FormId>::iterator it = mIds.begin(); it != mIds.end(); ++it)
                     {
-                        reader.get(*it);
+                        reader.getFormId(*it);
                         // FIXME: debug only
                         //std::cout << "VTEX: " << std::hex << *it << std::endl;
                     }

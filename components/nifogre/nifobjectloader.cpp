@@ -754,6 +754,8 @@ void NifOgre::NIFObjectLoader::createNodeControllers (const Nif::NIFFilePtr& nif
 }
 
 
+// See extra.cpp and extra.hpp
+// both new and old versions of .kf files have NiTextKeyExtraData
 void NifOgre::NIFObjectLoader::extractTextKeys (const Nif::NiTextKeyExtraData *tk, TextKeyMap &textkeys)
 {
     for (size_t i = 0;i < tk->list.size();i++)
@@ -967,22 +969,54 @@ void NifOgre::NIFObjectLoader::load (Ogre::SceneNode *sceneNode,
 // textKeys and ctrls are extracted from the nif file (which is derived from 'name') and 'skeleton'
 // is used to confirm/match the bone name in the string extra data
 //
-// This method assumes that 'name' has a corresponding '.kf' file. (e.g. abc.nif <-> abc.kf)
-// For TES4/5 the nif file tends to be 'skeleton.nif' so we need a different algorithm.
-// addAnimSource() may need to pass additional info (e.g. from KFFZ subrecord for additional
-// special animations).  FIXME: need to find out what are the 'hard coded' animations are
+// Each .kf file starts with a NiSequenceStreamHelper block with NiTextKeyExtraData
+// following it.  These are then followed by the blocks NiStringExtraData (to get bone name)
+// and NiKeyframeController (and the keyframe data).
+//
+// Newer .kf files are different.  It starts with NiControllerSequence which points to
+// NiTextKeyExtraData and  has a number of Controlled Blocks.  Each Controlled Block has a node
+// name string, and points to a NiTransformInterpolator which in turn points to
+// NiTransformData.
+//
+// Comparison of old and new kf files.
+//
+//    NiSequenceStreamHelper                 NiControllerSequence
+//                                            ControlledBocks
+//                                             controllerLink
+//                                            frequency
+//                                            starttime
+//                                            stoptime
+//                                            target
+//
+//     NiStringExtraData (linked list)        NiStringPalette (one)
+//      stringData       (string)              palette        (null separated strings)
+//
+//     NiKeyframeController                   NiTransformInterpolator
+//      frequency                              translation
+//      phase                                  rotation
+//      starttime                              scale
+//      stoptime
+//      target
+//      data (NiKeyframeData)                  data (NiKeyframeData)
+//       nRotations                             nRotations
+//       rotationType                           rotationType
+//       quaternionkeys                         quaternionkeys
+//       xyzRotations                           xyzRotations
+//       translations                           translations
+//       scales                                 scales
 //
 // MWRender::Animation::addAnimSource() /* add animation to a model (a nif file in MW/OpenMW) */
 //   --> NifOgre::Loader::createKfControllers()   /* just an interface, doesn't do anything */
 //         --> NifOgre::NIFObjectLoader::loadKf() /* this method */
 //
-// Each .kf file is started with a NiSequenceStreamHelper block with NiTextKeyExtraData
-// following it.  These are then followed by NiStringExtraData and NiKeyframeController blocks.
+// addAnimSource() assumes that 'name' has a corresponding '.kf' file. (e.g. abc.nif <-> abc.kf)
+// For TES4/5 the nif file tends to be 'skeleton.nif' so we need a different algorithm.
 //
-// Newer .kf files are different.  It is started with NiControllerSequence which points to
-// NiTextKeyExtraData and  has a number of Controlled Blocks.  Each Controlled Block has a node
-// name string, and points to a NiTransformInterpolator which in turn points to
-// NiTransformData.
+// addAnimSource() may need to pass additional info (e.g. from KFFZ subrecord for additional
+// special animations).  FIXME: need to find out what are the 'hard coded' animations are
+//
+// Perhaps best to have another method loadKf2 or something else
+// alternatively use nif version to determine
 void NifOgre::NIFObjectLoader::loadKf (Ogre::Skeleton *skel, const std::string &name,
             TextKeyMap &textKeys, std::vector<Ogre::Controller<Ogre::Real> > &ctrls)
 {
@@ -996,6 +1030,8 @@ void NifOgre::NIFObjectLoader::loadKf (Ogre::Skeleton *skel, const std::string &
     const Nif::Record *r = nif->getRoot(0);
     assert(r != NULL);
 
+
+    // FIXME allow NiControllerSequence on newer .kf files
     if (r->recType != Nif::RC_NiSequenceStreamHelper)
     {
         nif->warn("First root was not a NiSequenceStreamHelper, but a "+
@@ -1018,6 +1054,7 @@ void NifOgre::NIFObjectLoader::loadKf (Ogre::Skeleton *skel, const std::string &
         return;
     }
 
+    // for NiControllerSequence, NiTextKeyExtraData* is seq->textkeys2
     extractTextKeys(static_cast<const Nif::NiTextKeyExtraData*>(extra.getPtr()), textKeys);
 
     if (seq->hasExtras)
@@ -1049,8 +1086,15 @@ void NifOgre::NIFObjectLoader::loadKf (Ogre::Skeleton *skel, const std::string &
             continue;
 
         Ogre::Bone *trgtbone = skel->getBone(strdata->stringData);
+        // srcval is set in Animation::addAnimSource()
+        //   ctrls[i].setSource(mAnimationTimePtr[grp]);
         Ogre::ControllerValueRealPtr srcval;
+        // 'nif' doesn't seem to be used
         Ogre::ControllerValueRealPtr dstval(OGRE_NEW KeyframeController::Value(trgtbone, nif, key->data.getPtr()));
+        // when deltainput is false, DefaultFunction calculates:
+        //   value = std::min(mStopTime, std::max(mStartTime, value+mPhase));
+        // where mStopTime = key->timestop, mStartTime = key->timestart, mPhase = key->phase
+        // (all floats, also see Nif::Controller (base.hpp))
         Ogre::ControllerFunctionRealPtr func(OGRE_NEW KeyframeController::Function(key, false));
 
         ctrls.push_back(Ogre::Controller<Ogre::Real>(srcval, dstval, func));

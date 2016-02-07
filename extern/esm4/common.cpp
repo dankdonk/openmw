@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015 cc9cii
+  Copyright (C) 2015, 2016 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -25,6 +25,7 @@
 #include <sstream>
 #include <algorithm>
 #include <stdexcept>
+#include <cstdlib> // strtol
 
 #include <libs/platform/strings.h>
 
@@ -118,5 +119,31 @@ namespace ESM4
             str.assign(buf);
         else
             throw std::runtime_error("possible buffer overflow while converting grid");
+    }
+
+    bool isFormId(const std::string& str, FormId *id)
+    {
+        if (str.size() != 8)
+            return false;
+
+        char *tmp;
+        errno = 0;
+        unsigned long val = strtol(str.c_str(), &tmp, 16);
+
+        if (tmp == str.c_str() || *tmp != '\0' || ((val == LONG_MIN || val == LONG_MAX) && errno == ERANGE))
+            return false;
+
+        if (id != nullptr)
+            *id = static_cast<FormId>(val);
+
+        return true;
+    }
+
+    FormId stringToFormId(const std::string& str)
+    {
+        if (str.size() != 8)
+            throw std::out_of_range("StringToFormId: incorrect string size");
+
+        return static_cast<FormId>(std::stoul(str, nullptr, 16));
     }
 }

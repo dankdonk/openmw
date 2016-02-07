@@ -30,6 +30,7 @@ int CSMForeign::LandCollection::load (ESM4::Reader& reader, bool base)
 
     std::string id;
     ESM4::FormId formId = reader.hdr().record.id;
+    reader.adjustFormId(formId);
     ESM4::formIdToString(formId, id);
 
     // cache the ref's formId to its parent cell
@@ -60,7 +61,10 @@ int CSMForeign::LandCollection::load (ESM4::Reader& reader, bool base)
             std::pair<CoordinateIndex::iterator, bool> res = lb->second.insert(
                 { std::pair<int, int>(reader.currCellGrid().grid.x, reader.currCellGrid().grid.y), id });
 
-            assert(res.second && "existing LAND record found for the given coordinates");
+            // this can happen if a mod updates the record, just overwrite it for now // FIXME
+            //assert(res.second && "existing LAND record found for the given coordinates");
+            if (!res.second)
+                lb->second[std::pair<int, int>(reader.currCellGrid().grid.x, reader.currCellGrid().grid.y)] = id;
         }
         else
             mPositionIndex.insert(lb, std::map<ESM4::FormId, CoordinateIndex>::value_type(worldId,

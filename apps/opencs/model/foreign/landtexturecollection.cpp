@@ -21,6 +21,8 @@ CSMForeign::LandTextureCollection::~LandTextureCollection ()
 int CSMForeign::LandTextureCollection::load (ESM4::Reader& reader, bool base)
 {
     LandTexture record;
+    ESM4::FormId formId = reader.hdr().record.id;
+    reader.adjustFormId(formId);
 
     std::string id;
 #if 0
@@ -32,25 +34,16 @@ int CSMForeign::LandTextureCollection::load (ESM4::Reader& reader, bool base)
 
         std::string padding = "";
         padding.insert(0, reader.stackSize()*2, ' ');
-        std::cout << padding << "LAND: formId " << std::hex << reader.hdr().record.id << std::endl; // FIXME
+        std::cout << padding << "LAND: formId " << std::hex << formId << std::endl; // FIXME
         std::cout << padding << "LAND X " << std::dec << reader.currCellGrid().grid.x << ", Y " << reader.currCellGrid().grid.y << std::endl;
     }
     else
-        id = std::to_string(reader.hdr().record.id); // use formId instead
+        id = std::to_string(formId); // use formId instead
 #endif
 
     record.mName = id; // FIXME: temporary, note id overwritten below
 
-    //id = std::to_string(reader.hdr().record.id); // use formId converted to string instead
-    char buf[8+1];
-    int res = snprintf(buf, 8+1, "%08x", reader.hdr().record.id);
-    if (res > 0 && res < 100)
-        id.assign(buf);
-    else
-        throw std::runtime_error("Landscape Texture Collection possible buffer overflow on formId");
-
-    // FIXME; should be using the formId as the lookup key
-    int index = this->searchId(id);
+    int index = this->searchFormId(formId);
 
     if (index == -1)
         CSMWorld::IdAccessor<LandTexture>().getId(record) = id;

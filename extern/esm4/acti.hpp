@@ -41,6 +41,9 @@ namespace ESM4
         std::string mFullName;
         std::string mModel;
 
+        FormId mScript;
+        FormId mSound;
+
         float mBoundRadius;
 
         Activator();

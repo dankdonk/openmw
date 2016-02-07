@@ -100,7 +100,7 @@ bool CSMWorld::IdTableProxyModel::lessThan(const QModelIndex &left, const QModel
     if (id == Columns::ColumnId_Id || id == Columns::ColumnId_CellId)
     {
         return strverscmp(sourceModel()->data(left).toString().toStdString().c_str(),
-                          sourceModel()->data(right).toString().toStdString().c_str()) < 0;
+                          sourceModel()->data(right).toString().toStdString().c_str(), /*hex*/1) < 0;
     }
 
     EnumColumnCache::const_iterator valuesIt = mEnumColumnCache.find(id);

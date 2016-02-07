@@ -57,7 +57,7 @@ int CSMForeign::RefCollection::load (ESM4::Reader& reader, bool base)
     CSMForeign::CellRef record;
 
     std::string id;
-    ESM4::FormId formId = reader.hdr().record.id;
+    ESM4::FormId formId = reader.adjustFormId(reader.hdr().record.id); // FIXME: use master adjusted?
     ESM4::formIdToString(formId, id);
 
     // cache the ref's formId to its parent cell

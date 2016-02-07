@@ -404,7 +404,7 @@ CSVRender::ForeignCell::ForeignCell (CSMDoc::Document& document, Ogre::SceneMana
     mCellNode->setPosition (origin);
 
     const CSMForeign::CellCollection& cells = mDocument.getData().getForeignCells();
-    const CSMForeign::Cell& cell = cells.getRecord(cells.searchId(id)).get();
+    const CSMForeign::Cell& cell = cells.getRecord(cells.searchFormId(id)).get();
 
     const CSMForeign::LandCollection& lands = mDocument.getData().getForeignLands();
     int landIndex = lands.searchId(cell.mLandTemporary);
@@ -578,7 +578,7 @@ bool CSVRender::ForeignCell::referenceDataChanged (const QModelIndex& topLeft,
         int y = 0;
         stream >> ignore >> x >> y;
 
-        std::uint32_t formId = cells.searchFormId (x, y, mWorld);
+        std::uint32_t formId = cells.searchCoord (x, y, mWorld);
 
         // check if the cell matches for this foreign reference
         if (formId == mFormId)

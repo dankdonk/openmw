@@ -60,8 +60,6 @@ namespace CSMWorld
 
         protected:
 
-            Record<ESXRecordT>& getModifiableRecord (int index); // FIXME
-
             const std::vector<std::unique_ptr<Record<ESXRecordT> > >& getRecords() const;
 
             bool reorderRowsImp (int baseIndex, const std::vector<int>& newOrder);
@@ -431,12 +429,6 @@ namespace CSMWorld
 
     template<typename ESXRecordT, typename IdAccessorT>
     const Record<ESXRecordT>& Collection<ESXRecordT, IdAccessorT>::getRecord (int index) const
-    {
-        return *mRecords.at (index);
-    }
-
-    template<typename ESXRecordT, typename IdAccessorT>
-    Record<ESXRecordT>& Collection<ESXRecordT, IdAccessorT>::getModifiableRecord (int index)
     {
         return *mRecords.at (index);
     }

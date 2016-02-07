@@ -47,6 +47,7 @@ ESM4::Furniture::~Furniture()
 void ESM4::Furniture::load(ESM4::Reader& reader)
 {
     mFormId = reader.hdr().record.id;
+    reader.adjustFormId(mFormId);
     mFlags  = reader.hdr().record.flags;
 
     while (reader.getSubRecordHeader())
@@ -74,7 +75,7 @@ void ESM4::Furniture::load(ESM4::Reader& reader)
                 break;
             }
             case ESM4::SUB_MODL: reader.getZString(mModel); break;
-            case ESM4::SUB_SCRI: reader.get(mScript);       break;
+            case ESM4::SUB_SCRI: reader.getFormId(mScript); break;
             case ESM4::SUB_MNAM: reader.get(mActiveMarkerFlags); break;
             case ESM4::SUB_MODB: reader.get(mBoundRadius);  break;
             case ESM4::SUB_MODT:

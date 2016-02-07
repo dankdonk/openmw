@@ -23,9 +23,9 @@
 #ifndef ESM4_SGST_H
 #define ESM4_SGST_H
 
-#include <string>
-#include <cstdint>
 #include <vector>
+
+#include "common.hpp"
 
 namespace ESM4
 {
@@ -54,6 +54,7 @@ namespace ESM4
 
         std::vector<std::string> mScriptEffect; // FIXME: prob. should be in a struct
         FormId mScript;
+        ScriptEffect mEffect;
 
         Data mData;
 

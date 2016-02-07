@@ -48,7 +48,7 @@ ESM4::ActorCharacter::~ActorCharacter()
 
 void ESM4::ActorCharacter::load(ESM4::Reader& reader)
 {
-    mFormId = reader.hdr().record.id;
+    mFormId = reader.adjustFormId(reader.hdr().record.id); // FIXME: maybe use master adjusted?
     mFlags  = reader.hdr().record.flags;
 
     while (reader.getSubRecordHeader())
@@ -58,14 +58,19 @@ void ESM4::ActorCharacter::load(ESM4::Reader& reader)
         {
             case ESM4::SUB_EDID: reader.getZString(mEditorId); break;
             case ESM4::SUB_FULL: reader.getZString(mFullName); break;
-            case ESM4::SUB_NAME: reader.get(mBaseObj);  break;
-            case ESM4::SUB_DATA: reader.get(mPosition); break;
-            case ESM4::SUB_XSCL: reader.get(mScale);    break;
-            case ESM4::SUB_XOWN: reader.get(mOwner);    break;
-            case ESM4::SUB_XESP: reader.get(mEsp);      break;
+            case ESM4::SUB_NAME: reader.getFormId(mBaseObj);   break;
+            case ESM4::SUB_DATA: reader.get(mPosition);  break;
+            case ESM4::SUB_XSCL: reader.get(mScale);     break;
+            case ESM4::SUB_XOWN: reader.get(mOwner);     break;
+            case ESM4::SUB_XESP:
+            {
+                reader.get(mEsp);
+                reader.adjustFormId(mEsp.parent);
+                break;
+            }
             case ESM4::SUB_XRGD: // ragdoll
-            case ESM4::SUB_XHRS: // horse
-            case ESM4::SUB_XMRC: // merchant container
+            case ESM4::SUB_XHRS: // horse formId
+            case ESM4::SUB_XMRC: // merchant container formId
             // TES5
             case ESM4::SUB_XAPD: // activation parent
             case ESM4::SUB_XAPR: // active parent
@@ -83,7 +88,7 @@ void ESM4::ActorCharacter::load(ESM4::Reader& reader)
             //
             case ESM4::SUB_XRGB:
             case ESM4::SUB_XIS2:
-            case ESM4::SUB_XPCI:
+            case ESM4::SUB_XPCI: // formId
             case ESM4::SUB_XLOD:
             case ESM4::SUB_VMAD:
             {

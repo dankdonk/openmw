@@ -9,8 +9,14 @@
 #include <QAbstractTableModel>
 
 #include "../world/record.hpp"
-#include "cell.hpp"
 #include "../world/cellcoordinates.hpp"
+
+#include "cell.hpp"
+
+namespace ESM4
+{
+    typedef std::uint32_t FormId;
+}
 
 namespace CSMWorld
 {
@@ -48,7 +54,7 @@ namespace CSMForeign
             };
 
             CSMWorld::Data& mData;
-            std::string mWorld; // FIXME: should be ESM4::FormId
+            ESM4::FormId mWorld;
             std::map<CSMWorld::CellCoordinates, CellDescription> mMap;
             CSMWorld::CellCoordinates mMin; ///< inclusive
             CSMWorld::CellCoordinates mMax; ///< exclusive

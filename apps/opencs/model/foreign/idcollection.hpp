@@ -1,7 +1,7 @@
 #ifndef CSM_FOREIGN_IDCOLLECTION_H
 #define CSM_FOREIGN_IDCOLLECTION_H
 
-#include "../world/collection.hpp"
+#include "collection.hpp"
 
 namespace ESM4
 {
@@ -10,38 +10,38 @@ namespace ESM4
 
 namespace CSMForeign
 {
-    template<typename ESXRecordT, typename IdAccessorT = CSMWorld::IdAccessor<ESXRecordT> >
-    class IdCollection : public CSMWorld::Collection<ESXRecordT, IdAccessorT>
+    template<typename RecordT>
+    class IdCollection : public Collection<RecordT>
     {
-        virtual void loadRecord (ESXRecordT& record, ESM4::Reader& reader, bool& isDeleted);
+    protected:
+        void loadRecord (RecordT& record, ESM4::Reader& reader);
 
     public:
-        int load(ESM4::Reader& reader, bool base);
+        virtual int load(ESM4::Reader& reader, bool base);
 
-        int load (const ESXRecordT& record, bool base, int index = -2);
+        int load (const RecordT& record, bool base, int index = -2);
     };
 
-    template<typename ESXRecordT, typename IdAccessorT>
-    void IdCollection<ESXRecordT, IdAccessorT>::loadRecord (ESXRecordT& record,
-                                                            ESM4::Reader& reader, bool& isDeleted)
+    template<typename RecordT>
+    void IdCollection<RecordT>::loadRecord (RecordT& record, ESM4::Reader& reader)
     {
-        record.load (reader/*, isDeleted*/);
+        record.load(reader);
     }
 
-    template<typename ESXRecordT, typename IdAccessorT>
-    int IdCollection<ESXRecordT, IdAccessorT>::load (ESM4::Reader& reader, bool base)
+    template<typename RecordT>
+    int IdCollection<RecordT>::load (ESM4::Reader& reader, bool base)
     {
-        ESXRecordT record;
-        bool isDeleted = false;
+        using CSMWorld::Record;
 
-        loadRecord (record, reader, isDeleted);
+        RecordT record;
 
-        std::string id = ESM4::formIdToString(reader.hdr().record.id);
-        int index = this->searchId (id);
+        loadRecord(record, reader);
 
-        if (isDeleted)
+        int index = this->searchFormId(record.mFormId);
+
+        if ((record.mFlags & ESM4::Rec_Deleted) != 0)
         {
-            if (index==-1)
+            if (index == -1)
             {
                 // deleting a record that does not exist
                 // ignore it for now
@@ -51,30 +51,36 @@ namespace CSMForeign
 
             if (base)
             {
-                this->removeRows (index, 1);
+                this->removeRows(index, 1);
                 return -1;
             }
 
-            std::unique_ptr<CSMWorld::Record<ESXRecordT> > baseRecord(
-                    new CSMWorld::Record<ESXRecordT>(this->getRecord(index)));
+            // for TES4/5 there shouldn't be any existing records with the same formid
+            // (maybe for references only?)
+            throw std::runtime_error("IdCollection::load deleted formId already exists");
+#if 0
+            std::unique_ptr<Record<RecordT> > baseRecord(new Record<RecordT>(this->getRecord(index)));
             baseRecord->mState = CSMWorld::RecordBase::State_Deleted;
             this->setRecord(index, std::move(baseRecord));
             return index;
+#endif
         }
 
         return load (record, base, index);
     }
 
-    template<typename ESXRecordT, typename IdAccessorT>
-    int IdCollection<ESXRecordT, IdAccessorT>::load (const ESXRecordT& record, bool base, int index)
+    template<typename RecordT>
+    int IdCollection<RecordT>::load (const RecordT& record, bool base, int index)
     {
-        if (index==-2) // index unknown
-            index = this->searchId (IdAccessorT().getId (record));
+        using CSMWorld::Record;
 
-        if (index==-1)
+        if (index == -2) // index unknown
+            index = this->searchFormId(record.mFormId);
+
+        if (index == -1)
         {
             // new record
-            std::unique_ptr<CSMWorld::Record<ESXRecordT> > record2(new CSMWorld::Record<ESXRecordT>);
+            std::unique_ptr<Record<RecordT> > record2(new Record<RecordT>);
             record2->mState = base ? CSMWorld::RecordBase::State_BaseOnly
                                    : CSMWorld::RecordBase::State_ModifiedOnly;
             (base ? record2->mBase : record2->mModified) = record;
@@ -85,8 +91,7 @@ namespace CSMForeign
         else
         {
             // old record
-            std::unique_ptr<CSMWorld::Record<ESXRecordT> > record2(
-                    new CSMWorld::Record<ESXRecordT>(this->getRecord(index)));
+            std::unique_ptr<Record<RecordT> > record2(new Record<RecordT>(this->getRecord(index)));
 
             if (base)
                 record2->mBase = record;

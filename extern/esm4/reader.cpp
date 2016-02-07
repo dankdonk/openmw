@@ -24,6 +24,7 @@
 
 #include <cassert>
 #include <stdexcept>
+#include <unordered_map>
 
 #include <iostream> // FIXME: debugging only
 #ifdef NDEBUG // FIXME: debugging only
@@ -32,10 +33,12 @@
 
 #include <zlib.h>
 
+#include <components/misc/stringops.hpp>
+
 #include <components/esm/esm4reader.hpp>
 
-ESM4::Reader::Reader()
-: mObserver(nullptr), mEndOfRecord(0), mCellGridValid(false), mRecHeaderSize(sizeof(ESM4::RecordHeader))
+ESM4::Reader::Reader() : mModIndex(0), mObserver(nullptr), mEndOfRecord(0), mCellGridValid(false),
+                         mRecHeaderSize(sizeof(ESM4::RecordHeader))
 {
     mInBuf.reset();
     mDataBuf.reset();
@@ -84,6 +87,36 @@ bool ESM4::Reader::getSubRecordHeader()
     return (mStream->tell() < mEndOfRecord) && get(mSubRecordHeader);
 }
 
+void ESM4::Reader::updateModIndicies(const std::vector<std::string>& files)
+{
+    if (files.size() >= 0xff)
+        throw std::runtime_error("ESM4::Reader::updateModIndicies too many files"); // 0xff is reserved
+
+    // build a lookup map
+    std::unordered_map<std::string, size_t> fileIndex;
+    for (size_t i = 0; i < files.size(); ++i) // ATTENTION: assumes current file is not included
+        fileIndex[Misc::StringUtils::lowerCase(files[i])] = i;
+
+    mHeader.mModIndicies.resize(mHeader.mMaster.size());
+    for (unsigned int i = 0; i < mHeader.mMaster.size(); ++i)
+    {
+        // locate the position of the dependency in already loaded files
+        std::unordered_map<std::string, size_t>::const_iterator it
+            = fileIndex.find(Misc::StringUtils::lowerCase(mHeader.mMaster[i].name));
+
+        if (it != fileIndex.end())
+            mHeader.mModIndicies[i] = (std::uint32_t)((it->second << 24) & 0xff000000);
+        else
+            throw std::runtime_error("ESM4::Reader::updateModIndicies required dependency file not loaded");
+//#if 0
+        std::cout << mHeader.mMaster[i].name << ", " << ESM4::formIdToString(mHeader.mModIndicies[i]) << std::endl;
+//#endif
+    }
+
+    if (!mHeader.mModIndicies.empty() &&  mHeader.mModIndicies[0] != 0)
+        throw std::runtime_error("ESM4::Reader::updateModIndicies base modIndex is not zero");
+}
+
 void ESM4::Reader::saveGroupStatus(const ESM4::RecordHeader& hdr)
 {
 #if 0
@@ -103,7 +136,7 @@ void ESM4::Reader::saveGroupStatus(const ESM4::RecordHeader& hdr)
             mGroupStack.back().second -= hdr.group.groupSize;
             checkGroupStatus();
         }
-        return;
+        return; // DLCMehrunesRazor - Unofficial Patch.esp is at EOF after one of these empty groups...
     }
 
     // push group

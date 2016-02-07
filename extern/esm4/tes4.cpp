@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015 cc9cii
+  Copyright (C) 2015, 2016 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -34,7 +34,7 @@
 #include "reader.hpp"
 //#include "writer.hpp"
 
-void ESM4::Header::load(ESM4::Reader& reader, const std::uint32_t size)
+void ESM4::Header::load(ESM4::Reader& reader)
 {
     while (reader.getSubRecordHeader())
     {
@@ -44,7 +44,7 @@ void ESM4::Header::load(ESM4::Reader& reader, const std::uint32_t size)
             case ESM4::SUB_HEDR:
             {
                 if (!reader.get(mData.version) || !reader.get(mData.records) || !reader.get(mData.nextObjectId))
-                    throw std::runtime_error ("TES4 HEDR data read error");
+                    throw std::runtime_error("TES4 HEDR data read error");
 
                 assert((size_t)subHdr.dataSize == sizeof(mData.version)+sizeof(mData.records)+sizeof(mData.nextObjectId)
                         && "TES4 HEDR data size mismatch");
@@ -53,31 +53,45 @@ void ESM4::Header::load(ESM4::Reader& reader, const std::uint32_t size)
             case ESM4::SUB_CNAM:
             {
                 if (!reader.getZString(mAuthor))
-                    throw std::runtime_error ("TES4 CNAM data read error");
+                    throw std::runtime_error("TES4 CNAM data read error");
                 break;
             }
             case ESM4::SUB_SNAM:
             {
                 if (!reader.getZString(mDesc))
-                    throw std::runtime_error ("TES4 SNAM data read error");
+                    throw std::runtime_error("TES4 SNAM data read error");
                 break;
             }
             case ESM4::SUB_MAST: // multiple
             {
                 MasterData m;
                 if (!reader.getZString(m.name) || !reader.getSubRecord(ESM4::SUB_DATA, m.size))
-                    throw std::runtime_error ("TES4 MAST data read error");
+                    throw std::runtime_error("TES4 MAST data read error");
                 mMaster.push_back (m);
                 break;
             }
             case ESM4::SUB_ONAM:
+            {
+                mOverrides.resize(subHdr.dataSize/sizeof(FormId));
+                for (std::vector<FormId>::iterator it = mOverrides.begin(); it != mOverrides.end(); ++it)
+                {
+                    if (!reader.get(*it))
+                        throw std::runtime_error("TES4 ONAM data read error");
+//#if 0
+                    std::string padding = "";
+                    padding.insert(0, reader.stackSize()*2, ' ');
+                    std::cout << padding  << "overrides: " << formIdToString(*it) << std::endl;
+//#endif
+                }
+                break;
+            }
             case ESM4::SUB_INTV:
             case ESM4::SUB_INCC:
             case ESM4::SUB_OFST: // Oblivion only?
             case ESM4::SUB_DELE: // Oblivion only?
             {
                 //std::cout << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
-                reader.skipSubRecordData(); // FIXME: load/decode these
+                reader.skipSubRecordData();
                 break;
             }
             default:

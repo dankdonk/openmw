@@ -47,7 +47,7 @@ ESM4::ActorCreature::~ActorCreature()
 
 void ESM4::ActorCreature::load(ESM4::Reader& reader)
 {
-    mFormId = reader.hdr().record.id;
+    mFormId = reader.adjustFormId(reader.hdr().record.id); // FIXME: use master adjusted?
     mFlags  = reader.hdr().record.flags;
 
     while (reader.getSubRecordHeader())
@@ -56,13 +56,18 @@ void ESM4::ActorCreature::load(ESM4::Reader& reader)
         switch (subHdr.typeId)
         {
             case ESM4::SUB_EDID: reader.getZString(mEditorId); break;
-            case ESM4::SUB_NAME: reader.get(mBaseObj);     break;
-            case ESM4::SUB_DATA: reader.get(mPosition);    break;
-            case ESM4::SUB_XSCL: reader.get(mScale);       break;
-            case ESM4::SUB_XESP: reader.get(mEsp);         break;
-            case ESM4::SUB_XOWN: reader.get(mOwner);       break;
-            case ESM4::SUB_XGLB: reader.get(mGlobal);      break;
-            case ESM4::SUB_XRNK: reader.get(mFactionRank); break;
+            case ESM4::SUB_NAME: reader.getFormId(mBaseObj);   break;
+            case ESM4::SUB_DATA: reader.get(mPosition);        break;
+            case ESM4::SUB_XSCL: reader.get(mScale);           break;
+            case ESM4::SUB_XESP:
+            {
+                reader.get(mEsp);
+                reader.adjustFormId(mEsp.parent);
+                break;
+            }
+            case ESM4::SUB_XOWN: reader.getFormId(mOwner);     break;
+            case ESM4::SUB_XGLB: reader.get(mGlobal);          break; // FIXME: formId?
+            case ESM4::SUB_XRNK: reader.get(mFactionRank);     break;
             case ESM4::SUB_XRGD: // ragdoll
             {
                 //std::cout << "ACRE " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;

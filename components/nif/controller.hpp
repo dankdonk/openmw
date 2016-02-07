@@ -536,7 +536,7 @@ class NiControllerSequence : public NiSequence
 {
 public:
     float weight;
-    NiTextKeyExtraDataPtr textKeys2;
+    NiTextKeyExtraDataPtr textKeys;
     unsigned int cycleType;
     unsigned int unknown0;
     float frequency;

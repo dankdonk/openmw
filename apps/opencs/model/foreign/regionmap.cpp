@@ -20,9 +20,6 @@ CSMForeign::RegionMap::CellDescription::CellDescription (const CSMWorld::Record<
 {
     const Cell& cell2 = cell.get();
 
-    //if (cell2.mWorld != "Tamriel") // FIXME: make this configurable
-        //throw std::logic_error ("Interior cell in region map");
-
     mDeleted = cell.isDeleted();
 
     mRegion = cell2.mRegion;
@@ -72,7 +69,7 @@ void CSMForeign::RegionMap::buildRegions()
 void CSMForeign::RegionMap::buildMap()
 {
     const WorldCollection& worlds = mData.getForeignWorlds();
-    const World& world = worlds.getRecord(worlds.searchId(mWorld)).get();
+    const World& world = worlds.getForeignRecord(mWorld).get();
 
     const CellCollection& cells = mData.getForeignCells();
     const RegionCollection& regions = mData.getForeignRegions();
@@ -87,14 +84,13 @@ void CSMForeign::RegionMap::buildMap()
 
         const Cell& cell2 = cell.get();
 
-        if (ESM4::formIdToString(cell2.mParent) == mWorld)
+        if (cell2.mParent == mWorld)
 #if 0
                 && (world.mMinX == 0 ? true : cell2.mX >= world.mMinX)
                 && (world.mMaxX == 0 ? true : cell2.mX <= world.mMaxX)
                 && (world.mMinY == 0 ? true : cell2.mY >= world.mMinY)
                 && (world.mMaxY == 0 ? true : cell2.mY <= world.mMaxY))
 #endif
-        //if (cell2.mWorld == "Tamriel") // FIXME: make this configurable
         {
             CellDescription description (cell);
 
@@ -110,7 +106,6 @@ void CSMForeign::RegionMap::buildMap()
                     description.mRegion = ESM4::formIdToString(cell2.mRegions.back());
                 else
                 {
-                    std::string regionString;
                     std::string mapRegionString;
                     //int priority = 0;
                     //int mapPriority = -1;
@@ -119,9 +114,7 @@ void CSMForeign::RegionMap::buildMap()
                     {
                         std::uint32_t regionId = cell2.mRegions[j];
                         // does this one have a map name?
-                        regionString = ESM4::formIdToString(regionId);
-
-                        const Region& region = regions.getRecord(regionString).get();
+                        const Region& region = regions.getForeignRecord(regionId).get();
                         if (!region.mMapName.empty())
                         {
 //#if 0
@@ -139,7 +132,7 @@ void CSMForeign::RegionMap::buildMap()
                                      test.contains(QRegExp("valus mountains", Qt::CaseInsensitive))    ||
                                      test.contains(QRegExp("west weald", Qt::CaseInsensitive)))
                             {
-                                mapRegionString = regionString;
+                                mapRegionString = ESM4::formIdToString(regionId);
                                 break;
                             }
 //#endif
@@ -149,19 +142,19 @@ void CSMForeign::RegionMap::buildMap()
                                 continue;
                             else if (test.contains(QRegExp("weather", Qt::CaseInsensitive)))
                             {
-                                mapRegionString = regionString;
+                                mapRegionString = ESM4::formIdToString(regionId);
                                 break;
                             }
 #endif
 #if 0
                             if (mapPriority == -1)
                             {
-                                mapRegionString = regionString;
+                                mapRegionString = ESM4::formIdToString(regionId);
                                 mapPriority = region.mData[0x04].priority;
                             }
                             else if (region.mData[0x04].priority > mapPriority)
                             {
-                                mapRegionString = regionString;
+                                mapRegionString = ESM4::formIdToString(regionId);
                             }
 #endif
                         }
@@ -215,8 +208,7 @@ void CSMForeign::RegionMap::addCells (int start, int end)
 
         const Cell& cell2 = cell.get();
 
-        if (ESM4::formIdToString(cell2.mParent) == mWorld)
-        //if (cell2.mWorld == "Tamriel") // FIXME: make this configurable
+        if (cell2.mParent == mWorld)
         {
             CSMWorld::CellCoordinates index = getIndex (cell2);
 
@@ -338,8 +330,7 @@ std::pair<CSMWorld::CellCoordinates, CSMWorld::CellCoordinates> CSMForeign::Regi
 
         const Cell& cell2 = cell.get();
 
-        if (ESM4::formIdToString(cell2.mParent) == mWorld)
-        //if (cell2.mWorld == "Tamriel") // FIXME: make this configurable
+        if (cell2.mParent == mWorld)
         {
             CSMWorld::CellCoordinates index = getIndex (cell2);
 
@@ -366,7 +357,8 @@ std::pair<CSMWorld::CellCoordinates, CSMWorld::CellCoordinates> CSMForeign::Regi
     return std::make_pair (min, max);
 }
 
-CSMForeign::RegionMap::RegionMap (CSMWorld::Data& data, const std::string& world) : mData (data), mWorld(world)
+CSMForeign::RegionMap::RegionMap (CSMWorld::Data& data, const std::string& world)
+: mData (data), mWorld(ESM4::stringToFormId(world))
 {
     buildRegions();
     buildMap();
@@ -512,7 +504,7 @@ QVariant CSMForeign::RegionMap::data (const QModelIndex& index, int role) const
 
     if (role==CSMWorld::RegionMap::Role_WorldId)
     {
-        return QString::fromUtf8 (mWorld.c_str());
+        return QString::fromUtf8 ((ESM4::formIdToString(mWorld)).c_str());
     }
 
     return QVariant();
@@ -529,7 +521,7 @@ void CSMForeign::RegionMap::regionsAboutToBeRemoved (const QModelIndex& parent, 
 
     const RegionCollection& regions = mData.getForeignRegions();
 
-    for (int i=start; i<=end; ++i)
+    for (int i = start; i <= end; ++i)
     {
         const CSMWorld::Record<Region>& region = regions.getRecord (i);
 
@@ -547,7 +539,7 @@ void CSMForeign::RegionMap::regionsInserted (const QModelIndex& parent, int star
 
     const RegionCollection& regions = mData.getForeignRegions();
 
-    for (int i=start; i<=end; ++i)
+    for (int i = start; i <= end; ++i)
     {
         const CSMWorld::Record<Region>& region = regions.getRecord (i);
 
@@ -571,7 +563,7 @@ void CSMForeign::RegionMap::regionsChanged (const QModelIndex& topLeft, const QM
 
     const RegionCollection& regions = mData.getForeignRegions();
 
-    for (int i=topLeft.row(); i<=bottomRight.column(); ++i)
+    for (int i = topLeft.row(); i <= bottomRight.column(); ++i)
     {
         const CSMWorld::Record<Region>& region = regions.getRecord (i);
 
@@ -596,8 +588,7 @@ void CSMForeign::RegionMap::cellsAboutToBeRemoved (const QModelIndex& parent, in
 
         const Cell& cell2 = cell.get();
 
-        if (ESM4::formIdToString(cell2.mParent) == mWorld)
-        //if (cell2.mWorld == "Tamriel") // FIXME: make this configurable
+        if (cell2.mParent == mWorld)
             removeCell (getIndex (cell2));
     }
 }

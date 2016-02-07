@@ -71,6 +71,7 @@
 #include "../foreign/eyes.hpp"
 #include "../foreign/creature.hpp"
 #include "../foreign/leveledcreature.hpp"
+#include "../foreign/landtexture.hpp"
 
 #include "idcollection.hpp"
 #include "nestedidcollection.hpp"
@@ -139,9 +140,9 @@ namespace CSMWorld
             CSMForeign::WorldCollection mForeignWorlds;
             CSMForeign::RegionCollection mForeignRegions;
             CSMForeign::CellCollection mForeignCells;
-            CSMForeign::LandTextureCollection mForeignLandTextures;
             CSMForeign::LandCollection mForeignLands;
-            CSMForeign::StaticCollection mForeignStatics; // FIXME: delete
+            CSMForeign::IdCollection<CSMForeign::LandTexture> mForeignLandTextures;
+            CSMForeign::IdCollection<CSMForeign::Static> mForeignStatics;
             CSMForeign::IdCollection<CSMForeign::AnimObject> mForeignAnimObjs;
             CSMForeign::IdCollection<CSMForeign::Container> mForeignContainers;
             CSMForeign::IdCollection<CSMForeign::MiscItem> mForeignMiscItems;
@@ -334,9 +335,9 @@ namespace CSMWorld
 
             CSMForeign::CellCollection& getForeignCells();
 
-            const CSMForeign::LandTextureCollection& getForeignLandTextures() const;
+            const CSMForeign::IdCollection<CSMForeign::LandTexture>& getForeignLandTextures() const;
 
-            CSMForeign::LandTextureCollection& getForeignLandTextures();
+            CSMForeign::IdCollection<CSMForeign::LandTexture>& getForeignLandTextures();
 
             const CSMForeign::LandCollection& getForeignLands() const;
 
@@ -354,9 +355,9 @@ namespace CSMWorld
 
             CSMForeign::CharCollection& getForeignChars();
 
-            const CSMForeign::StaticCollection& getForeignStatics() const;
+            const CSMForeign::IdCollection<CSMForeign::Static>& getForeignStatics() const;
 
-            CSMForeign::StaticCollection& getForeignStatics();
+            CSMForeign::IdCollection<CSMForeign::Static>& getForeignStatics();
 
             const CSMForeign::IdCollection<CSMForeign::AnimObject>& getForeignAnimObjs() const;
 

@@ -898,7 +898,7 @@ void Nif::NiControllerSequence::read(NIFStream *nif)
     if (nifVer >= 0x0a01006a) // from 10.1.0.106
     {
         weight = nif->getFloat();
-        textKeys2.read(nif);
+        NiControllerSequence::textKeys.read(nif);
         cycleType = nif->getUInt();
 
         if (nifVer == 0x0a01006a) // 10.1.0.106
@@ -945,7 +945,7 @@ void Nif::NiControllerSequence::post(NIFFile *nif)
 
     if (nifVer >= 0x0a01006a) // from 10.1.0.106
     {
-        textKeys2.post(nif);
+        NiControllerSequence::textKeys.post(nif);
         manager.post(nif);
         if (nifVer >= 0x0a020000 && nifVer <= 0x14000005)
             stringPalette.post(nif);

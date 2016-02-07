@@ -48,6 +48,7 @@ ESM4::World::~World()
 void ESM4::World::load(ESM4::Reader& reader)
 {
     mFormId = reader.hdr().record.id;
+    reader.adjustFormId(mFormId);
     mFlags  = reader.hdr().record.flags;
 
     reader.setCurrWorld(mFormId); // save for CELL later
@@ -78,12 +79,12 @@ void ESM4::World::load(ESM4::Reader& reader)
                     throw std::runtime_error ("WRLD FULL data read error");
                 break;
             }
-            case ESM4::SUB_WCTR: reader.get(mCenterCell); break; // Center cell, TES5 only
-            case ESM4::SUB_WNAM: reader.get(mParent);     break;
-            case ESM4::SUB_SNAM: reader.get(mSound);      break; // sound, Oblivion only?
+            case ESM4::SUB_WCTR: reader.get(mCenterCell);   break; // Center cell, TES5 only
+            case ESM4::SUB_WNAM: reader.getFormId(mParent); break;
+            case ESM4::SUB_SNAM: reader.get(mSound);        break; // sound, Oblivion only?
             case ESM4::SUB_ICON: reader.getZString(mMapFile); break; // map filename, Oblivion only?
-            case ESM4::SUB_CNAM: reader.get(mClimate);    break;
-            case ESM4::SUB_NAM2: reader.get(mWater);      break;
+            case ESM4::SUB_CNAM: reader.get(mClimate);      break;
+            case ESM4::SUB_NAM2: reader.getFormId(mWater);  break;
             case ESM4::SUB_NAM0:
             {
                 reader.get(mMinX);

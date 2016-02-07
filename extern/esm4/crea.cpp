@@ -35,8 +35,8 @@
 #include "reader.hpp"
 //#include "writer.hpp"
 
-ESM4::Creature::Creature() : mFormId(0), mFlags(0), mDeathItem(0), mSpell(0), mScript(0), mAIPackages(0),
-                             mCombatStyle(0), mSoundBase(0), mSound(0), mSoundChance(0), mBaseScale(0.f),
+ESM4::Creature::Creature() : mFormId(0), mFlags(0), mDeathItem(0), mScript(0), mCombatStyle(0),
+                             mSoundBase(0), mSound(0), mSoundChance(0), mBaseScale(0.f),
                              mTurningSpeed(0.f), mFootWeight(0.f), mBoundRadius(0.f)
 {
     mEditorId.clear();
@@ -54,20 +54,7 @@ ESM4::Creature::Creature() : mFormId(0), mFlags(0), mDeathItem(0), mSpell(0), mS
     mAIData.trainSkill = 0;
     mAIData.trainLevel = 0;
 
-    mData.combat = 0;
-    mData.magic = 0;
-    mData.stealth = 0;
-    mData.soul = 0;
-    mData.health = 0;
-    mData.damage = 0;
-    mData.strength = 0;
-    mData.intelligence = 0;
-    mData.willpower = 0;
-    mData.agility = 0;
-    mData.speed = 0;
-    mData.endurance = 0;
-    mData.personality = 0;
-    mData.luck = 0;
+    std::memset(&mData, 0, sizeof(Data));
 }
 
 ESM4::Creature::~Creature()
@@ -77,6 +64,7 @@ ESM4::Creature::~Creature()
 void ESM4::Creature::load(ESM4::Reader& reader)
 {
     mFormId = reader.hdr().record.id;
+    reader.adjustFormId(mFormId);
     mFlags  = reader.hdr().record.flags;
 
     while (reader.getSubRecordHeader())
@@ -86,23 +74,43 @@ void ESM4::Creature::load(ESM4::Reader& reader)
         {
             case ESM4::SUB_EDID: reader.getZString(mEditorId); break;
             case ESM4::SUB_FULL: reader.getZString(mFullName); break;
-            case ESM4::SUB_MODL: reader.getZString(mModel); break;
-            case ESM4::SUB_INAM: reader.get(mDeathItem);    break;
-            case ESM4::SUB_SPLO: reader.get(mSpell);        break;
+            case ESM4::SUB_MODL: reader.getZString(mModel);    break;
             case ESM4::SUB_CNTO:
             {
-                static InventoryItem item; // FIXME: unique_ptr here?
-                reader.get(item);
-                mInventory.push_back(item);
+                static InventoryItem inv; // FIXME: use unique_ptr here?
+                reader.get(inv);
+                reader.adjustFormId(inv.item);
+                mInventory.push_back(inv);
                 break;
             }
-            case ESM4::SUB_SCRI: reader.get(mScript);       break;
+            case ESM4::SUB_SPLO:
+            {
+                FormId id;
+                reader.getFormId(id);
+                mSpell.push_back(id);
+                break;
+            }
+            case ESM4::SUB_PKID:
+            {
+                FormId id;
+                reader.getFormId(id);
+                mAIPackages.push_back(id);
+                break;
+            }
+            case ESM4::SUB_SNAM:
+            {
+                reader.get(mFaction);
+                reader.adjustFormId(mFaction.faction);
+                break;
+            }
+            case ESM4::SUB_INAM: reader.getFormId(mDeathItem);   break;
+            case ESM4::SUB_SCRI: reader.getFormId(mScript);      break;
             case ESM4::SUB_AIDT: reader.get(mAIData);       break;
-            case ESM4::SUB_PKID: reader.get(mAIPackages);   break;
+            case ESM4::SUB_ACBS: reader.get(mBaseConfig);   break;
             case ESM4::SUB_DATA: reader.get(mData);         break;
-            case ESM4::SUB_ZNAM: reader.get(mCombatStyle);  break;
-            case ESM4::SUB_CSCR: reader.get(mSoundBase);    break;
-            case ESM4::SUB_CSDI: reader.get(mSound);        break;
+            case ESM4::SUB_ZNAM: reader.getFormId(mCombatStyle); break;
+            case ESM4::SUB_CSCR: reader.getFormId(mSoundBase);   break;
+            case ESM4::SUB_CSDI: reader.getFormId(mSound);       break;
             case ESM4::SUB_CSDC: reader.get(mSoundChance);  break;
             case ESM4::SUB_BNAM: reader.get(mBaseScale);    break;
             case ESM4::SUB_TNAM: reader.get(mTurningSpeed); break;
@@ -146,8 +154,6 @@ void ESM4::Creature::load(ESM4::Reader& reader)
                 break;
             }
             case ESM4::SUB_MODT:
-            case ESM4::SUB_ACBS:
-            case ESM4::SUB_SNAM:
             case ESM4::SUB_RNAM:
             case ESM4::SUB_CSDT:
             {

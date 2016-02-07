@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015 cc9cii
+  Copyright (C) 2015, 2016 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -50,16 +50,19 @@ namespace ESM4
     {
         ReaderObserver *mObserver;        // observer for tracking bytes read
 
+        std::uint32_t   mModIndex;        // 0x00 reserved, 0xFF in-game
         Header          mHeader;          // ESM header // FIXME
         RecordHeader    mRecordHeader;    // header of the current record or group being processed
         SubRecordHeader mSubRecordHeader; // header of the current sub record being processed
         GroupStack      mGroupStack;      // keep track of bytes left to find when a group is done
         std::size_t     mEndOfRecord;     // number of bytes read by sub records
+
         CellGrid        mCurrCellGrid;    // TODO: should keep keep a map of cell formids // FIXME
         bool            mCellGridValid;
         FormId          mCurrWorld;       // formId of current world - for grouping CELL records
         FormId          mCurrCell;        // formId of current cell
-        std::size_t     mRecHeaderSize;
+
+        std::size_t     mRecHeaderSize;   // default = TES5 size, reduced by setRecHeaderSize()
 
         // TODO: try fixed size buffers on the stack for both below (may be faster)
         boost::scoped_array<unsigned char> mInBuf;
@@ -78,8 +81,9 @@ namespace ESM4
         // NOTE: must be set to the correct size before calling getRecordHeader()
         void setRecHeaderSize(const std::size_t size);
 
-        void setEsmVersion(unsigned int version) { mHeader.mData.version.ui = version; }
+        void loadHeader() { mHeader.load(*this); }
         unsigned int esmVersion() const { return mHeader.mData.version.ui; }
+        unsigned int numRecords() const { return mHeader.mData.records; }
 
         // Read 24 bytes of header. The caller can then decide whether to process or skip the data.
         bool getRecordHeader();
@@ -87,6 +91,10 @@ namespace ESM4
         inline const RecordHeader& hdr() const { return mRecordHeader; }
 
         const GroupTypeHeader& grp(std::size_t pos = 0) const;
+
+        // FIXME; should this be in the header, or even the back of the vector?
+        void setModIndex(int index) { mModIndex = (index << 24) & 0xff000000; }
+        void updateModIndicies(const std::vector<std::string>& files);
 
         // Maybe should throw an exception if called when not valid?
         const CellGrid& currCellGrid() const;
@@ -158,6 +166,33 @@ namespace ESM4
         // for arrays
         inline bool get(void* p, std::size_t size) {
             return mStream->read(p, size) == size;
+        }
+
+        // Modindex adjusted formId for REFR, ACHR, ACRE // FIXME: maybe use below instead?
+        // (see http://www.uesp.net/wiki/Tes4Mod:FormID_Fixup)
+        inline FormId adjustFormId(const FormId& id) const {
+            return  mModIndex | (id & 0xffffff);
+        }
+
+        // ModIndex adjusted formId according to master file dependencies
+        inline void adjustFormId(FormId& id) {
+            if (!mHeader.mModIndicies.empty())
+                id = mHeader.mModIndicies[(id >> 24) & 0xff] | (id & 0x00ffffff);
+        }
+
+        inline void adjustGRUPFormId() {
+            if (!mHeader.mModIndicies.empty())
+                mRecordHeader.group.label.value
+                    = mHeader.mModIndicies[(mRecordHeader.group.label.value >> 24) & 0xff]
+                      | (mRecordHeader.group.label.value & 0x00ffffff);
+        }
+
+        bool getFormId(FormId& id) {
+            if (!get(id))
+                return false;
+
+            adjustFormId(id);
+            return true;
         }
 
         // Note: does not convert to UTF8

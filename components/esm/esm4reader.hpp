@@ -11,7 +11,6 @@ namespace ESM
     // Wrapper class for integrating into OpenCS
     class ESM4Reader : public ESMReader, public ESM4::ReaderObserver
     {
-        ESM4::Header mESM4Header;
         ESM4::Reader mReader;
 
     public:

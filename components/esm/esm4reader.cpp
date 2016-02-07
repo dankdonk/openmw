@@ -20,13 +20,12 @@ void ESM::ESM4Reader::openTes4File(const std::string &name)
     mReader.getRecordHeader();
     if (mReader.hdr().record.typeId == ESM4::REC_TES4)
     {
-        mESM4Header.load(mReader, mReader.hdr().record.dataSize);
-        mReader.setEsmVersion(mESM4Header.mData.version.ui); // FIXME
+        mReader.loadHeader();
         mCtx.leftFile -= mReader.hdr().record.dataSize;
 
         // Hack: copy over values to TES3 header for getVer() and getRecordCount() to work
-        mHeader.mData.version = mESM4Header.mData.version.ui;
-        mHeader.mData.records = mESM4Header.mData.records;
+        mHeader.mData.version = mReader.esmVersion();
+        mHeader.mData.records = mReader.numRecords();
     }
     else
         fail("Unknown file format");

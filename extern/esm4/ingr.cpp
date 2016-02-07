@@ -43,6 +43,8 @@ ESM4::Ingredient::Ingredient() : mFormId(0), mFlags(0), mBoundRadius(0.f), mScri
     mData.weight = 0.f;
     mEnchantment.value = 0;
     mEnchantment.flags = 0;
+
+    std::memset(&mEffect, 0, sizeof(ScriptEffect));
 }
 
 ESM4::Ingredient::~Ingredient()
@@ -52,6 +54,7 @@ ESM4::Ingredient::~Ingredient()
 void ESM4::Ingredient::load(ESM4::Reader& reader)
 {
     mFormId = reader.hdr().record.id;
+    reader.adjustFormId(mFormId);
     mFlags  = reader.hdr().record.flags;
 
     while (reader.getSubRecordHeader())
@@ -98,16 +101,21 @@ void ESM4::Ingredient::load(ESM4::Reader& reader)
 
                 break;
             }
-            case ESM4::SUB_ICON: reader.getZString(mIcon); break;
+            case ESM4::SUB_ICON: reader.getZString(mIcon);  break;
             case ESM4::SUB_MODL: reader.getZString(mModel); break;
-            case ESM4::SUB_SCRI: reader.get(mScript);      break;
-            case ESM4::SUB_ENIT: reader.get(mEnchantment); break;
-            case ESM4::SUB_MODB: reader.get(mBoundRadius); break;
+            case ESM4::SUB_SCRI: reader.getFormId(mScript); break;
+            case ESM4::SUB_ENIT: reader.get(mEnchantment);  break;
+            case ESM4::SUB_MODB: reader.get(mBoundRadius);  break;
+            case ESM4::SUB_SCIT:
+            {
+                reader.get(mEffect);
+                reader.adjustFormId(mEffect.formId);
+                break;
+            }
             case ESM4::SUB_MODT:
             case ESM4::SUB_MODS: // Dragonborn only?
             case ESM4::SUB_EFID:
             case ESM4::SUB_EFIT:
-            case ESM4::SUB_SCIT:
             case ESM4::SUB_OBND:
             case ESM4::SUB_KSIZ:
             case ESM4::SUB_KWDA:

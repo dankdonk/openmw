@@ -15,6 +15,8 @@ CSMForeign::Static::~Static()
 void CSMForeign::Static::load(ESM4::Reader& reader)
 {
     ESM4::Static::load(reader);
+
+    ESM4::formIdToString(mFormId, mId);
 }
 
 void CSMForeign::Static::blank()

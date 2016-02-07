@@ -408,6 +408,7 @@ void NifOgre::TransformController::Value::setValue (Ogre::Real time)
         mNode->setScale(Ogre::Vector3(interpKey(mScales->mKeys, time)));
 }
 
+// from NifOgre::ValueInterpolator
 Ogre::Quaternion NifOgre::KeyframeController::Value::interpKey (const Nif::QuaternionKeyMap::MapType &keys, float time)
 {
     if(time <= keys.begin()->first)
@@ -455,6 +456,7 @@ NifOgre::KeyframeController::Value::Value (Ogre::Node *target,
   , mNif(nif)
 { }
 
+// from NifOgre::NodeTargetValue<T>
 Ogre::Quaternion NifOgre::KeyframeController::Value::getRotation (float time) const
 {
     if(mRotations->mKeys.size() > 0)
@@ -464,6 +466,7 @@ Ogre::Quaternion NifOgre::KeyframeController::Value::getRotation (float time) co
     return mNode->getOrientation();
 }
 
+// from NifOgre::NodeTargetValue<T>
 Ogre::Vector3 NifOgre::KeyframeController::Value::getTranslation (float time) const
 {
     if(mTranslations->mKeys.size() > 0)
@@ -471,6 +474,7 @@ Ogre::Vector3 NifOgre::KeyframeController::Value::getTranslation (float time) co
     return mNode->getPosition();
 }
 
+// from NifOgre::NodeTargetValue<T>
 Ogre::Vector3 NifOgre::KeyframeController::Value::getScale (float time) const
 {
     if(mScales->mKeys.size() > 0)

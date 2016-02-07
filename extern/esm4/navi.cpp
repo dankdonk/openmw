@@ -241,6 +241,9 @@ void ESM4::Navigation::NavMeshInfo::load(ESM4::Reader& reader)
 //
 void ESM4::Navigation::load(ESM4::Reader& reader)
 {
+    //mFormId = reader.hdr().record.id;
+    //mFlags  = reader.hdr().record.flags;
+
     while (reader.getSubRecordHeader())
     {
         const ESM4::SubRecordHeader& subHdr = reader.subRecordHeader();
@@ -314,8 +317,8 @@ void ESM4::Navigation::load(ESM4::Reader& reader)
                     std::pair<std::map<FormId, std::uint32_t>::iterator, bool> res =
                         mPathIndexMap.insert(std::make_pair(node, index));
                     // FIXME: this throws if more than one file is being loaded
-                    if (!res.second)
-                        throw std::runtime_error ("node already exists in the preferred path index map");
+                    //if (!res.second)
+                        //throw std::runtime_error ("node already exists in the preferred path index map");
                 }
                 break;
             }

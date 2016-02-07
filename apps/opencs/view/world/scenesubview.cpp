@@ -8,6 +8,8 @@
 #include <QLabel>
 #include <cassert>
 
+#include <extern/esm4/common.hpp> // isFormId
+
 #include "../../model/doc/document.hpp"
 
 #include "../../model/world/cellselection.hpp"
@@ -27,27 +29,6 @@
 
 #include "tablebottombox.hpp"
 #include "creator.hpp"
-
-namespace
-{
-    // FIXME: duplicate, move to ESM4
-    bool isFormId(const std::string& str)
-    {
-        if (str.size() != 8)
-            return false;
-
-        char *temp;
-        bool res = true;
-        errno = 0;
-        unsigned long val = strtol(str.c_str(), &temp, 16);
-
-        if (temp == str.c_str() || *temp != '\0' ||
-                ((val == LONG_MIN || val == LONG_MAX) && errno == ERANGE))
-            res = false;
-
-        return res;
-    }
-}
 
 CSVWorld::SceneSubView::SceneSubView (const CSMWorld::UniversalId& id, CSMDoc::Document& document)
 : SubView (id), mScene(NULL), mLayout(new QHBoxLayout), mDocument(document), mToolbar(NULL)
@@ -74,7 +55,7 @@ CSVWorld::SceneSubView::SceneSubView (const CSMWorld::UniversalId& id, CSMDoc::D
 #if 0
     else if (id.getId() == "sys::foreignInterior")
 #endif
-    else if (isFormId(id.getId()))
+    else if (ESM4::isFormId(id.getId()))
     {
         // searchId() is not available from CSVRender, so we can't use it to determine whether to
         // create a normal cell widget or a foreign cell widget.  That approach is a little

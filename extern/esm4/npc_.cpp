@@ -32,11 +32,18 @@
 #include "reader.hpp"
 //#include "writer.hpp"
 
-ESM4::Npc::Npc() : mFormId(0), mFlags(0), mBoundRadius(0.f)
+ESM4::Npc::Npc() : mFormId(0), mFlags(0), mRace(0), mClass(0), mHair(0), mEyes(0), mDeathItem(0),
+                   mScript(0), mCombatStyle(0), mSoundBase(0), mSound(0), mSoundChance(0),
+                   mFootWeight(0.f), mBoundRadius(0.f)
 {
     mEditorId.clear();
     mFullName.clear();
     mModel.clear();
+
+    std::memset(&mAIData, 0, sizeof(AIData));
+    std::memset(&mData, 0, sizeof(Data));
+    std::memset(&mBaseConfig, 0, sizeof(ActorBaseConfig));
+    std::memset(&mFaction, 0, sizeof(ActorFaction));
 }
 
 ESM4::Npc::~Npc()
@@ -46,6 +53,7 @@ ESM4::Npc::~Npc()
 void ESM4::Npc::load(ESM4::Reader& reader)
 {
     mFormId = reader.hdr().record.id;
+    reader.adjustFormId(mFormId);
     mFlags  = reader.hdr().record.flags;
 
     while (reader.getSubRecordHeader())
@@ -54,6 +62,7 @@ void ESM4::Npc::load(ESM4::Reader& reader)
         switch (subHdr.typeId)
         {
             case ESM4::SUB_EDID: reader.getZString(mEditorId); break;
+            case ESM4::SUB_MODL: reader.getZString(mModel);    break;
             case ESM4::SUB_FULL:
             {
                 // NOTE: checking flags does not work, Skyrim.esm does not set the localized flag
@@ -72,8 +81,79 @@ void ESM4::Npc::load(ESM4::Reader& reader)
                     throw std::runtime_error ("NPC_ FULL data read error");
                 break;
             }
-            case ESM4::SUB_MODL: reader.getZString(mModel); break;
-            case ESM4::SUB_MODB: reader.get(mBoundRadius);  break;
+            case ESM4::SUB_CNTO:
+            {
+                static InventoryItem inv; // FIXME: use unique_ptr here?
+                reader.get(inv);
+                reader.adjustFormId(inv.item);
+                mInventory.push_back(inv);
+                break;
+            }
+            case ESM4::SUB_SPLO:
+            {
+                FormId id;
+                reader.getFormId(id);
+                mSpell.push_back(id);
+                break;
+            }
+            case ESM4::SUB_PKID:
+            {
+                FormId id;
+                reader.getFormId(id);
+                mAIPackages.push_back(id);
+                break;
+            }
+            case ESM4::SUB_SNAM:
+            {
+                reader.get(mFaction);
+                reader.adjustFormId(mFaction.faction);
+                break;
+            }
+            case ESM4::SUB_RNAM: reader.getFormId(mRace);      break;
+            case ESM4::SUB_CNAM: reader.getFormId(mClass);     break;
+            case ESM4::SUB_HNAM: reader.getFormId(mHair);      break;
+            case ESM4::SUB_ENAM: reader.getFormId(mEyes);      break;
+            //
+            case ESM4::SUB_INAM: reader.getFormId(mDeathItem); break;
+            case ESM4::SUB_SCRI: reader.getFormId(mScript);    break;
+            //
+            case ESM4::SUB_AIDT:
+            {
+                if (reader.esmVersion() == ESM4::VER_094 || reader.esmVersion() == ESM4::VER_170)
+                {
+                    reader.skipSubRecordData(); // FIXME: process the subrecord rather than skip
+                    break;
+                }
+
+                reader.get(mAIData);
+                break;
+            }
+            case ESM4::SUB_ACBS:
+            {
+                if (reader.esmVersion() == ESM4::VER_094 || reader.esmVersion() == ESM4::VER_170)
+                {
+                    reader.skipSubRecordData(); // FIXME: process the subrecord rather than skip
+                    break;
+                }
+
+                reader.get(mBaseConfig);
+                break;
+            }
+            case ESM4::SUB_DATA:
+            {
+                if (reader.esmVersion() == ESM4::VER_094 || reader.esmVersion() == ESM4::VER_170)
+                    break; // zero length
+
+                reader.get(&mData, 33); // FIXME: check packing
+                break;
+            }
+            case ESM4::SUB_ZNAM: reader.getFormId(mCombatStyle); break;
+            case ESM4::SUB_CSCR: reader.getFormId(mSoundBase);   break;
+            case ESM4::SUB_CSDI: reader.getFormId(mSound);       break;
+            case ESM4::SUB_CSDC: reader.get(mSoundChance); break;
+            case ESM4::SUB_WNAM: reader.get(mFootWeight);  break;
+            //
+            case ESM4::SUB_MODB: reader.get(mBoundRadius); break;
             case ESM4::SUB_KFFZ:
             {
                 std::string str;
@@ -87,33 +167,8 @@ void ESM4::Npc::load(ESM4::Reader& reader)
 
                 break;
             }
-            case ESM4::SUB_CNTO:
-            {
-                static InventoryItem item; // FIXME: unique_ptr here?
-                reader.get(item);
-                mInventory.push_back(item);
-                //if (mFormId == 0x0004b939) //FIXME Necromancer Wellspring cave
-                    //std::cout << formIdToString(item.item) << " " << count << std::endl;
-                //if (mFormId == 0x0000bfdf) //FIXME Anvil Guard
-                    //std::cout << formIdToString(item.item) << " " << count << std::endl;
-
-                break;
-            }
-            case ESM4::SUB_ACBS:
-            case ESM4::SUB_SNAM:
-            case ESM4::SUB_INAM:
-            case ESM4::SUB_RNAM:
-            case ESM4::SUB_SPLO:
-            case ESM4::SUB_SCRI:
-            case ESM4::SUB_AIDT:
-            case ESM4::SUB_PKID:
-            case ESM4::SUB_CNAM:
-            case ESM4::SUB_DATA:
-            case ESM4::SUB_HNAM:
             case ESM4::SUB_LNAM:
-            case ESM4::SUB_ENAM:
             case ESM4::SUB_HCLR:
-            case ESM4::SUB_ZNAM:
             case ESM4::SUB_FGGS:
             case ESM4::SUB_FGGA:
             case ESM4::SUB_FGTS:
@@ -121,9 +176,6 @@ void ESM4::Npc::load(ESM4::Reader& reader)
             case ESM4::SUB_ATKR:
             case ESM4::SUB_COCT:
             case ESM4::SUB_CRIF:
-            case ESM4::SUB_CSCR:
-            case ESM4::SUB_CSDC:
-            case ESM4::SUB_CSDI:
             case ESM4::SUB_CSDT:
             case ESM4::SUB_DNAM:
             case ESM4::SUB_DOFT:
@@ -159,7 +211,6 @@ void ESM4::Npc::load(ESM4::Reader& reader)
             case ESM4::SUB_TPLT:
             case ESM4::SUB_VMAD:
             case ESM4::SUB_VTCK:
-            case ESM4::SUB_WNAM:
             case ESM4::SUB_GNAM:
             case ESM4::SUB_SHRT:
             case ESM4::SUB_SPOR:

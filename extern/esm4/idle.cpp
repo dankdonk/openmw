@@ -46,6 +46,7 @@ ESM4::IdleAnimation::~IdleAnimation()
 void ESM4::IdleAnimation::load(ESM4::Reader& reader)
 {
     mFormId = reader.hdr().record.id;
+    reader.adjustFormId(mFormId);
     mFlags  = reader.hdr().record.flags;
 
     while (reader.getSubRecordHeader())
@@ -62,8 +63,8 @@ void ESM4::IdleAnimation::load(ESM4::Reader& reader)
                 reader.get(mPrevious);
                 break;
             }
-            case ESM4::SUB_CTDA:
-            case ESM4::SUB_DATA:
+            case ESM4::SUB_CTDA: // formId
+            case ESM4::SUB_DATA: // formId
             {
                 //std::cout << "IDLE " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
                 reader.skipSubRecordData();

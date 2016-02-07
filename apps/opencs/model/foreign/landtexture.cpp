@@ -15,6 +15,8 @@ CSMForeign::LandTexture::~LandTexture()
 void CSMForeign::LandTexture::load(ESM4::Reader& reader)
 {
     ESM4::LandTexture::load(reader);
+
+    ESM4::formIdToString(mFormId, mId);
 }
 
 void CSMForeign::LandTexture::blank()

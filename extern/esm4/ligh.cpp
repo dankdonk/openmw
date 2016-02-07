@@ -32,7 +32,8 @@
 #include "reader.hpp"
 //#include "writer.hpp"
 
-ESM4::Light::Light() : mFormId(0), mFlags(0), mBoundRadius(0.f), mScript(0)
+ESM4::Light::Light() : mFormId(0), mFlags(0), mBoundRadius(0.f), mScript(0), mSound(0),
+                       mFade(0.f)
 {
     mEditorId.clear();
     mFullName.clear();
@@ -47,6 +48,7 @@ ESM4::Light::~Light()
 void ESM4::Light::load(ESM4::Reader& reader)
 {
     mFormId = reader.hdr().record.id;
+    reader.adjustFormId(mFormId);
     mFlags  = reader.hdr().record.flags;
 
     while (reader.getSubRecordHeader())
@@ -98,12 +100,12 @@ void ESM4::Light::load(ESM4::Reader& reader)
                 break;
             }
             case ESM4::SUB_MODL: reader.getZString(mModel); break;
-            case ESM4::SUB_ICON: reader.getZString(mIcon); break;
-            case ESM4::SUB_SCRI: reader.get(mScript);      break;
-            case ESM4::SUB_MODB: reader.get(mBoundRadius); break;
+            case ESM4::SUB_ICON: reader.getZString(mIcon);  break;
+            case ESM4::SUB_SCRI: reader.getFormId(mScript); break;
+            case ESM4::SUB_SNAM: reader.getFormId(mSound);  break;
+            case ESM4::SUB_MODB: reader.get(mBoundRadius);  break;
+            case ESM4::SUB_FNAM: reader.get(mFade);         break;
             case ESM4::SUB_MODT:
-            case ESM4::SUB_FNAM:
-            case ESM4::SUB_SNAM:
             case ESM4::SUB_OBND:
             case ESM4::SUB_VMAD: // Dragonborn only?
             {

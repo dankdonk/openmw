@@ -55,8 +55,8 @@ bool CSVRender::ForeignWorldspaceWidget::adjustCells()
             int y = 0;
             stream >> ignore >> x >> y;
 
-            std::uint32_t formId = cells.searchFormId (x, y, mWorld);
-            int index = cells.searchId (formId);
+            std::uint32_t formId = cells.searchCoord (x, y, mWorld);
+            int index = cells.searchFormId (formId);
 
 
             if (!mSelection.has (iter->first) || index == -1 ||
@@ -146,9 +146,9 @@ bool CSVRender::ForeignWorldspaceWidget::adjustCells()
         int y = 0;
         stream >> ignore >> x >> y;
 
-        std::uint32_t formId = cells.searchFormId (x, y, mWorld);
-        int index = cells.searchId (formId);
-        const CSMForeign::Cell& cellRec = cells.getRecord(cells.searchId(formId)).get();
+        std::uint32_t formId = cells.searchCoord (x, y, mWorld);
+        int index = cells.searchFormId (formId);
+        const CSMForeign::Cell& cellRec = cells.getRecord(cells.searchFormId(formId)).get();
 
         if (index > 0 && cells.getRecord (index).mState != CSMWorld::RecordBase::State_Deleted &&
             mCells.find (*iter)==mCells.end())
@@ -698,11 +698,11 @@ bool CSVRender::ForeignWorldspaceWidget::handleDrop (
     for (unsigned i = 0; i < dropData.size(); ++i)
     {
         ESM4::FormId formId = static_cast<ESM4::FormId>(std::stoi(dropData[i].getId(), nullptr, 16));
-        int index = cells.searchId(formId);
+        int index = cells.searchFormId(formId);
         if (index == -1)
             return false;
 
-        const CSMForeign::Cell& cell = cells.getRecord(cells.searchId(formId)).get();
+        const CSMForeign::Cell& cell = cells.getRecord(cells.searchFormId(formId)).get();
 
         if (cell.isInterior)
             continue; // if any of the drops are interior just ignore it

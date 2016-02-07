@@ -49,7 +49,7 @@ ESM4::Reference::~Reference()
 
 void ESM4::Reference::load(ESM4::Reader& reader)
 {
-    mFormId = reader.hdr().record.id;
+    mFormId = reader.adjustFormId(reader.hdr().record.id); // FIXME: maybe use master adjusted?
     mFlags  = reader.hdr().record.flags;
     // TODO: Let the engine apply this? Saved games?
     //mDisabled = ((mFlags & ESM4::Rec_Disabled) != 0) ? true : false;
@@ -85,7 +85,7 @@ void ESM4::Reference::load(ESM4::Reader& reader)
             }
             case ESM4::SUB_NAME:
             {
-                reader.get(mBaseObj);
+                reader.getFormId(mBaseObj);
 #if 0
                 if (mFlags & ESM4::Rec_Disabled)
                     std::cout << "REFR disable at start " << formIdToString(mFormId) <<
@@ -94,14 +94,19 @@ void ESM4::Reference::load(ESM4::Reader& reader)
 #endif
                 break;
             }
-            case ESM4::SUB_DATA: reader.get(mPosition);    break;
-            case ESM4::SUB_XSCL: reader.get(mScale);       break;
-            case ESM4::SUB_XOWN: reader.get(mOwner);       break;
-            case ESM4::SUB_XGLB: reader.get(mGlobal);      break;
+            case ESM4::SUB_DATA: reader.get(mPosition); break;
+            case ESM4::SUB_XSCL: reader.get(mScale);    break;
+            case ESM4::SUB_XOWN: reader.getFormId(mOwner);    break;
+            case ESM4::SUB_XGLB: reader.getFormId(mGlobal);   break;
             case ESM4::SUB_XRNK: reader.get(mFactionRank); break;
-            case ESM4::SUB_XESP: reader.get(mEsp);         break;
+            case ESM4::SUB_XESP:
+            {
+                reader.get(mEsp);
+                reader.adjustFormId(mEsp.parent);
+                break;
                 //std::cout << "REFR  parent: " << formIdToString(mEsp.parent) << " ref " << formIdToString(mFormId)
-                    //<< ", 0x" << std::hex << (mEsp.flags & 0xff) << std::endl; break;// FIXME
+                    //<< ", 0x" << std::hex << (mEsp.flags & 0xff) << std::endl;// FIXME
+            }
             // lighting
             case ESM4::SUB_LNAM: // lighting template formId
             case ESM4::SUB_XLIG: // struct, FOV, fade, etc
@@ -111,17 +116,17 @@ void ESM4::Reference::load(ESM4::Reader& reader)
             case ESM4::SUB_XRGD: // tangent data?
             case ESM4::SUB_XALP: // alpha cutoff
             //
-            case ESM4::SUB_XTEL:
-            case ESM4::SUB_XLOC:
+            case ESM4::SUB_XTEL: // formId
+            case ESM4::SUB_XLOC: // formId
             case ESM4::SUB_XACT:
             case ESM4::SUB_XMRK:
             case ESM4::SUB_FNAM:
-            case ESM4::SUB_XTRG:
+            case ESM4::SUB_XTRG: // formId
             case ESM4::SUB_XSED:
             case ESM4::SUB_XLOD:
-            case ESM4::SUB_XPCI:
+            case ESM4::SUB_XPCI: // formId
             case ESM4::SUB_XLCM:
-            case ESM4::SUB_XRTM:
+            case ESM4::SUB_XRTM: // formId
             case ESM4::SUB_XCNT:
             case ESM4::SUB_TNAM:
             case ESM4::SUB_ONAM:

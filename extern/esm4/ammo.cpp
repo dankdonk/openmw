@@ -47,6 +47,7 @@ ESM4::Ammo::~Ammo()
 void ESM4::Ammo::load(ESM4::Reader& reader)
 {
     mFormId = reader.hdr().record.id;
+    reader.adjustFormId(mFormId);
     mFlags  = reader.hdr().record.flags;
 
     while (reader.getSubRecordHeader())
@@ -97,7 +98,7 @@ void ESM4::Ammo::load(ESM4::Reader& reader)
             case ESM4::SUB_ICON: reader.getZString(mIcon);  break;
             case ESM4::SUB_MODL: reader.getZString(mModel); break;
             case ESM4::SUB_ANAM: reader.get(mEnchantmentPoints); break;
-            case ESM4::SUB_ENAM: reader.get(mEnchantment);  break;
+            case ESM4::SUB_ENAM: reader.getFormId(mEnchantment); break;
             case ESM4::SUB_MODB: reader.get(mBoundRadius);  break;
             case ESM4::SUB_MODT:
             case ESM4::SUB_OBND:

@@ -17,6 +17,8 @@ CSMForeign::Land::~Land()
 void CSMForeign::Land::load(ESM4::Reader& reader, const CellCollection& cells)
 {
     ESM4Terrain::Land::load(reader);
+
+    ESM4::formIdToString(mFormId, mId);
 }
 
 void CSMForeign::Land::blank()

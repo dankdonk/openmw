@@ -41,7 +41,7 @@ opencs_units (model/foreign
 
 opencs_units_noqt (model/foreign
     world worldcollection region regioncollection cell cellcollection cellref refcollection
-    landtexture landtexturecollection land landcollection static staticcollection
+    landtexture land landcollection static
     animobject container miscitem activator armor npc flora grass tree light cellchar charcollection
     book furniture sound weapon potion door ammo clothing apparatus ingredient sigilstone
     soulgem key hair eyes creature leveledcreature
@@ -49,7 +49,7 @@ opencs_units_noqt (model/foreign
     )
 
 opencs_hdrs_noqt (model/foreign
-    idcollection
+    idcollection collection
     )
 
 

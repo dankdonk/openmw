@@ -64,7 +64,10 @@ namespace ESM4
 
         float mBoundRadius;
 
-        FormId      mScript;
+        FormId mScript;
+        FormId mSound;
+
+        float mFade;
 
         Data mData;
 

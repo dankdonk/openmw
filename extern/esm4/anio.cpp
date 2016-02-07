@@ -46,6 +46,7 @@ ESM4::AnimObject::~AnimObject()
 void ESM4::AnimObject::load(ESM4::Reader& reader)
 {
     mFormId = reader.hdr().record.id;
+    reader.adjustFormId(mFormId);
     mFlags  = reader.hdr().record.flags;
 
     while (reader.getSubRecordHeader())
@@ -54,10 +55,10 @@ void ESM4::AnimObject::load(ESM4::Reader& reader)
         switch (subHdr.typeId)
         {
             case ESM4::SUB_EDID: reader.getZString(mEditorId); break;
-            case ESM4::SUB_MODL: reader.getZString(mModel); break;
+            case ESM4::SUB_MODL: reader.getZString(mModel);    break;
             case ESM4::SUB_BNAM: reader.getZString(mUnloadEvent); break;
-            case ESM4::SUB_DATA: reader.get(mIdleAnim);     break;
-            case ESM4::SUB_MODB: reader.get(mBoundRadius);  break;
+            case ESM4::SUB_DATA: reader.getFormId(mIdleAnim);  break;
+            case ESM4::SUB_MODB: reader.get(mBoundRadius);     break;
             case ESM4::SUB_MODT: // TES5 only
             case ESM4::SUB_MODS: // TES5 only
             {
