@@ -28,7 +28,7 @@ void CSVRender::ForeignInteriorWidget::update()
         dynamic_cast<const CSMWorld::Record<CSMForeign::Cell>&> (mCellsModel->getRecord (mCellId));
 #if 0
 
-    ESM4::FormId formId = static_cast<ESM4::FormId>(std::stoi(mCellId, nullptr, 16));
+    ESM4::FormId formId = ESM4::stringToFormId(mCellId);
 
     ForeignCell *cell
                 = new ForeignCell (mDocument, getSceneManager(), formId, 0, mDocument.getPhysics());
@@ -135,7 +135,7 @@ CSVRender::ForeignInteriorWidget::ForeignInteriorWidget (const std::string& cell
 
     update();
 
-    ESM4::FormId formId = static_cast<ESM4::FormId>(std::stoi(mCellId, nullptr, 16));
+    ESM4::FormId formId = ESM4::stringToFormId(mCellId);
 
     ForeignCell *cell
                 = new ForeignCell (mDocument, getSceneManager(), formId, 0, mDocument.getPhysics());
@@ -195,7 +195,7 @@ bool CSVRender::ForeignInteriorWidget::handleDrop (const std::vector<CSMWorld::U
     const CSMForeign::CellCollection& cells = mDocument.getData().getForeignCells();
 
     mCellId = dropData.begin()->getId();
-    ESM4::FormId formId = static_cast<ESM4::FormId>(std::stoi(mCellId, nullptr, 16));
+    ESM4::FormId formId = ESM4::stringToFormId(mCellId);
     int index = cells.searchFormId(formId);
     if (index == -1)
         return false;

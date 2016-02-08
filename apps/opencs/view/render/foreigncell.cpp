@@ -197,7 +197,7 @@ bool CSVRender::ForeignCell::addObjects (const std::vector<ESM4::FormId>& object
             // See MWRender::NpcAnimation::runAnimation(float timepassed) and
             // MWRender::CreatureWeaponAnimation::updatePart()
             ESM4::FormId baseObj = refs.getRecord(refs.searchId(id)).get().mBaseObj;
-            if (lvlc.searchId (ESM4::formIdToString(baseObj)) != -1)
+            if (lvlc.searchFormId(baseObj) != -1)
             {
                 const CSMForeign::LeveledCreature& lcreature
                                                   = lvlc.getRecord(ESM4::formIdToString(baseObj)).get();
@@ -206,7 +206,7 @@ bool CSVRender::ForeignCell::addObjects (const std::vector<ESM4::FormId>& object
                 {
                     templ = lcreature.mLvlObject[j].item;
                     int extraIndex = -1;
-                    extraIndex = crea.searchId(ESM4::formIdToString(templ));
+                    extraIndex = crea.searchFormId(templ);
                     if (extraIndex != -1)
                     {
                         continue; // do nothing for now
@@ -217,7 +217,7 @@ bool CSVRender::ForeignCell::addObjects (const std::vector<ESM4::FormId>& object
                 for (unsigned int j = 0; j < lcreature.mLvlObject.size(); ++j)
                 {
                     templ = lcreature.mLvlObject[j].item;
-                    extraIndex = npc.searchId(ESM4::formIdToString(templ));
+                    extraIndex = npc.searchFormId(templ);
                     if (extraIndex != -1)
                     {
                         break;
@@ -297,7 +297,7 @@ bool CSVRender::ForeignCell::addObjects (const std::vector<ESM4::FormId>& object
 #endif
                     for (unsigned int j = 0; j < npcRec.mInventory.size(); ++j)
                     {
-                        int invIndex = cloth.searchId(ESM4::formIdToString(npcRec.mInventory[j].item));
+                        int invIndex = cloth.searchFormId(npcRec.mInventory[j].item);
                         if (invIndex != -1)
                         {
                             const CSMForeign::Clothing& clothRec = cloth.getRecord(invIndex).get();
@@ -395,7 +395,7 @@ CSVRender::ForeignCell::ForeignCell (CSMDoc::Document& document, Ogre::SceneMana
     {
         const CSMForeign::WorldCollection& worlds = mDocument.getData().getForeignWorlds();
         const CSMForeign::World& world
-            = worlds.getRecord(worlds.searchId(ESM4::formIdToString(worldId))).get();
+            = worlds.getRecord(worlds.searchFormId(worldId)).get();
         if (world.mParent != 0)
             mWorld = world.mParent; // yes, really (but needs more testing - maybe have both or merge?)
     }
@@ -404,7 +404,7 @@ CSVRender::ForeignCell::ForeignCell (CSMDoc::Document& document, Ogre::SceneMana
     mCellNode->setPosition (origin);
 
     const CSMForeign::CellCollection& cells = mDocument.getData().getForeignCells();
-    const CSMForeign::Cell& cell = cells.getRecord(cells.searchFormId(id)).get();
+    const CSMForeign::Cell& cell = cells.getForeignRecord(id).get();
 
     const CSMForeign::LandCollection& lands = mDocument.getData().getForeignLands();
     int landIndex = lands.searchId(cell.mLandTemporary);
@@ -584,8 +584,8 @@ bool CSVRender::ForeignCell::referenceDataChanged (const QModelIndex& topLeft,
         if (formId == mFormId)
         {
             // get the foreign ref's formid
-            ESM4::FormId refId = static_cast<ESM4::FormId>(std::stoi(
-                    references.data(references.index(row, idColumn)).toString().toUtf8().constData(), nullptr, 16));
+            ESM4::FormId refId = ESM4::stringToFormId(
+                    references.data(references.index(row, idColumn)).toString().toUtf8().constData());
 
             // check its state
             int state = references.data (references.index (row, stateColumn)).toInt();
@@ -647,8 +647,8 @@ bool CSVRender::ForeignCell::referenceAboutToBeRemoved (const QModelIndex& paren
     for (int row = start; row <= end; ++row)
     {
         // FIXME: this assumes formid as string will be returned
-        if (removeObject (static_cast<ESM4::FormId>(std::stoi(
-                    references.data(references.index(row, idColumn)).toString().toUtf8().constData(), nullptr, 16))))
+        if (removeObject(ESM4::stringToFormId(
+                    references.data(references.index(row, idColumn)).toString().toUtf8().constData())))
         {
             modified = true;
         }
@@ -672,8 +672,8 @@ bool CSVRender::ForeignCell::referenceAdded (const QModelIndex& parent, int star
     for (int row = start; row <= end; ++row)
     {
         // FIXME: this assumes formid as string will be returned
-        objects.push_back(static_cast<ESM4::FormId>(std::stoi(
-                references.data(references.index(row, idColumn)).toString().toUtf8().constData(), nullptr, 16)));
+        objects.push_back(ESM4::stringToFormId(
+                references.data(references.index(row, idColumn)).toString().toUtf8().constData()));
     }
 
     return addObjects(objects);

@@ -647,7 +647,7 @@ void CSVRender::ForeignWorldspaceWidget::useViewHint (const std::string& hint)
             //           |       |
             //         0123456789
             // FIXME: check length of the string first
-            mWorld = static_cast<ESM4::FormId>(std::stoi(hint.substr(2, 8), nullptr, 16));
+            mWorld = ESM4::stringToFormId(hint.substr(2, 8));
             char ignore;
 
             std::istringstream stream (hint.substr(9).c_str());
@@ -697,7 +697,7 @@ bool CSVRender::ForeignWorldspaceWidget::handleDrop (
     bool selectionChanged = false;
     for (unsigned i = 0; i < dropData.size(); ++i)
     {
-        ESM4::FormId formId = static_cast<ESM4::FormId>(std::stoi(dropData[i].getId(), nullptr, 16));
+        ESM4::FormId formId = ESM4::stringToFormId(dropData[i].getId());
         int index = cells.searchFormId(formId);
         if (index == -1)
             return false;
