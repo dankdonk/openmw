@@ -522,13 +522,13 @@ CSMWorld::Data::Data (ToUTF8::FromType encoding, const ResourcesManager& resourc
     mLand.addColumn (new RecordStateColumn<Land>);
     mLand.addColumn (new FixedRecordTypeColumn<Land> (UniversalId::Type_Land));
 
-    mForeignWorlds.addColumn (new StringIdColumn<CSMForeign::World>);
+    mForeignWorlds.addColumn (new ForeignIdColumn<CSMForeign::World>);
     mForeignWorlds.addColumn (new RecordStateColumn<CSMForeign::World>);
     mForeignWorlds.addColumn (new FixedRecordTypeColumn<CSMForeign::World> (UniversalId::Type_ForeignWorld));
     mForeignWorlds.addColumn (new NameColumn<CSMForeign::World>);
     mForeignWorlds.addColumn (new EditorIdColumn<CSMForeign::World>);
 
-    mForeignRegions.addColumn (new StringIdColumn<CSMForeign::Region>);
+    mForeignRegions.addColumn (new ForeignIdColumn<CSMForeign::Region>);
     mForeignRegions.addColumn (new RecordStateColumn<CSMForeign::Region>);
     mForeignRegions.addColumn (new FixedRecordTypeColumn<CSMForeign::Region> (UniversalId::Type_ForeignRegion));
     mForeignRegions.addColumn (new EditorIdColumn<CSMForeign::Region>);
@@ -537,7 +537,7 @@ CSMWorld::Data::Data (ToUTF8::FromType encoding, const ResourcesManager& resourc
     mForeignRegions.addColumn (new ShaderColumn<CSMForeign::Region>);
     mForeignRegions.addColumn (new MapColourColumn<CSMForeign::Region>);
 
-    mForeignCells.addColumn (new StringIdColumn<CSMForeign::Cell>/*(true)*/);
+    mForeignCells.addColumn (new ForeignIdColumn<CSMForeign::Cell>/*(true)*/);
     mForeignCells.addColumn (new RecordStateColumn<CSMForeign::Cell>);
     mForeignCells.addColumn (new FixedRecordTypeColumn<CSMForeign::Cell> (UniversalId::Type_ForeignCell));
     mForeignCells.addColumn (new EditorIdColumn<CSMForeign::Cell>);
@@ -552,171 +552,171 @@ CSMWorld::Data::Data (ToUTF8::FromType encoding, const ResourcesManager& resourc
         ColumnBase::Flag_Table | ColumnBase::Flag_Dialogue | ColumnBase::Flag_Dialogue_Refresh));
 #endif
 
-    mForeignLandTextures.addColumn (new StringIdColumn<CSMForeign::LandTexture>);
+    mForeignLandTextures.addColumn (new ForeignIdColumn<CSMForeign::LandTexture>);
     mForeignLandTextures.addColumn (new RecordStateColumn<CSMForeign::LandTexture>);
     mForeignLandTextures.addColumn (
              new FixedRecordTypeColumn<CSMForeign::LandTexture> (UniversalId::Type_ForeignLandTexture));
     mForeignLandTextures.addColumn (new EditorIdColumn<CSMForeign::LandTexture>);
     mForeignLandTextures.addColumn (new TextureFileColumn<CSMForeign::LandTexture>);
 
-    mForeignLands.addColumn (new StringIdColumn<CSMForeign::Land>);
+    mForeignLands.addColumn (new ForeignIdColumn<CSMForeign::Land>);
     mForeignLands.addColumn (new RecordStateColumn<CSMForeign::Land>);
     mForeignLands.addColumn (new FixedRecordTypeColumn<CSMForeign::Land> (UniversalId::Type_ForeignLand));
     mForeignLands.addColumn (new CellIdColumn<CSMForeign::Land>);
 
     // FIXME: delete once refidcollection is available
-    mForeignStatics.addColumn (new StringIdColumn<CSMForeign::Static>);
+    mForeignStatics.addColumn (new ForeignIdColumn<CSMForeign::Static>);
     mForeignStatics.addColumn (new RecordStateColumn<CSMForeign::Static>);
     mForeignStatics.addColumn (new FixedRecordTypeColumn<CSMForeign::Static> (UniversalId::Type_ForeignStatic));
     mForeignStatics.addColumn (new ModelColumn<CSMForeign::Static>);
 
-    mForeignAnimObjs.addColumn (new StringIdColumn<CSMForeign::AnimObject>);
+    mForeignAnimObjs.addColumn (new ForeignIdColumn<CSMForeign::AnimObject>);
     mForeignAnimObjs.addColumn (new RecordStateColumn<CSMForeign::AnimObject>);
     mForeignAnimObjs.addColumn (new FixedRecordTypeColumn<CSMForeign::AnimObject> (UniversalId::Type_ForeignAnimObj));
     mForeignAnimObjs.addColumn (new ModelColumn<CSMForeign::AnimObject>);
 
-    mForeignContainers.addColumn (new StringIdColumn<CSMForeign::Container>);
+    mForeignContainers.addColumn (new ForeignIdColumn<CSMForeign::Container>);
     mForeignContainers.addColumn (new RecordStateColumn<CSMForeign::Container>);
     mForeignContainers.addColumn (new FixedRecordTypeColumn<CSMForeign::Container> (UniversalId::Type_ForeignContainer));
     mForeignContainers.addColumn (new FullNameColumn<CSMForeign::Container>);
     mForeignContainers.addColumn (new ModelColumn<CSMForeign::Container>);
 
-    mForeignMiscItems.addColumn (new StringIdColumn<CSMForeign::MiscItem>);
+    mForeignMiscItems.addColumn (new ForeignIdColumn<CSMForeign::MiscItem>);
     mForeignMiscItems.addColumn (new RecordStateColumn<CSMForeign::MiscItem>);
     mForeignMiscItems.addColumn (new FixedRecordTypeColumn<CSMForeign::MiscItem> (UniversalId::Type_ForeignMiscItem));
     mForeignMiscItems.addColumn (new FullNameColumn<CSMForeign::MiscItem>);
     mForeignMiscItems.addColumn (new ModelColumn<CSMForeign::MiscItem>);
 
-    mForeignActivators.addColumn (new StringIdColumn<CSMForeign::Activator>);
+    mForeignActivators.addColumn (new ForeignIdColumn<CSMForeign::Activator>);
     mForeignActivators.addColumn (new RecordStateColumn<CSMForeign::Activator>);
     mForeignActivators.addColumn (new FixedRecordTypeColumn<CSMForeign::Activator> (UniversalId::Type_ForeignActivator));
     mForeignActivators.addColumn (new FullNameColumn<CSMForeign::Activator>);
     mForeignActivators.addColumn (new ModelColumn<CSMForeign::Activator>);
 
-    mForeignArmors.addColumn (new StringIdColumn<CSMForeign::Armor>);
+    mForeignArmors.addColumn (new ForeignIdColumn<CSMForeign::Armor>);
     mForeignArmors.addColumn (new RecordStateColumn<CSMForeign::Armor>);
     mForeignArmors.addColumn (new FixedRecordTypeColumn<CSMForeign::Armor> (UniversalId::Type_ForeignArmor));
     mForeignArmors.addColumn (new FullNameColumn<CSMForeign::Armor>);
     mForeignArmors.addColumn (new ModelColumn<CSMForeign::Armor>);
 
-    mForeignNpcs.addColumn (new StringIdColumn<CSMForeign::Npc>);
+    mForeignNpcs.addColumn (new ForeignIdColumn<CSMForeign::Npc>);
     mForeignNpcs.addColumn (new RecordStateColumn<CSMForeign::Npc>);
     mForeignNpcs.addColumn (new FixedRecordTypeColumn<CSMForeign::Npc> (UniversalId::Type_ForeignNpc));
     mForeignNpcs.addColumn (new FullNameColumn<CSMForeign::Npc>);
     mForeignNpcs.addColumn (new ModelColumn<CSMForeign::Npc>);
 
-    mForeignFloras.addColumn (new StringIdColumn<CSMForeign::Flora>);
+    mForeignFloras.addColumn (new ForeignIdColumn<CSMForeign::Flora>);
     mForeignFloras.addColumn (new RecordStateColumn<CSMForeign::Flora>);
     mForeignFloras.addColumn (new FixedRecordTypeColumn<CSMForeign::Flora> (UniversalId::Type_ForeignFloras));
     mForeignFloras.addColumn (new FullNameColumn<CSMForeign::Flora>);
     mForeignFloras.addColumn (new ModelColumn<CSMForeign::Flora>);
 
-    mForeignGrasses.addColumn (new StringIdColumn<CSMForeign::Grass>);
+    mForeignGrasses.addColumn (new ForeignIdColumn<CSMForeign::Grass>);
     mForeignGrasses.addColumn (new RecordStateColumn<CSMForeign::Grass>);
     mForeignGrasses.addColumn (new FixedRecordTypeColumn<CSMForeign::Grass> (UniversalId::Type_ForeignGrasses));
     mForeignGrasses.addColumn (new ModelColumn<CSMForeign::Grass>);
 
-    mForeignTrees.addColumn (new StringIdColumn<CSMForeign::Tree>);
+    mForeignTrees.addColumn (new ForeignIdColumn<CSMForeign::Tree>);
     mForeignTrees.addColumn (new RecordStateColumn<CSMForeign::Tree>);
     mForeignTrees.addColumn (new FixedRecordTypeColumn<CSMForeign::Tree> (UniversalId::Type_ForeignTrees));
     mForeignTrees.addColumn (new ModelColumn<CSMForeign::Tree>);
 
-    mForeignLights.addColumn (new StringIdColumn<CSMForeign::Light>);
+    mForeignLights.addColumn (new ForeignIdColumn<CSMForeign::Light>);
     mForeignLights.addColumn (new RecordStateColumn<CSMForeign::Light>);
     mForeignLights.addColumn (new FixedRecordTypeColumn<CSMForeign::Light> (UniversalId::Type_ForeignLights));
     mForeignLights.addColumn (new ModelColumn<CSMForeign::Light>);
 
-    mForeignBooks.addColumn (new StringIdColumn<CSMForeign::Book>);
+    mForeignBooks.addColumn (new ForeignIdColumn<CSMForeign::Book>);
     mForeignBooks.addColumn (new RecordStateColumn<CSMForeign::Book>);
     mForeignBooks.addColumn (new FixedRecordTypeColumn<CSMForeign::Book> (UniversalId::Type_ForeignBooks));
     mForeignBooks.addColumn (new ModelColumn<CSMForeign::Book>);
 
-    mForeignFurnitures.addColumn (new StringIdColumn<CSMForeign::Furniture>);
+    mForeignFurnitures.addColumn (new ForeignIdColumn<CSMForeign::Furniture>);
     mForeignFurnitures.addColumn (new RecordStateColumn<CSMForeign::Furniture>);
     mForeignFurnitures.addColumn (new FixedRecordTypeColumn<CSMForeign::Furniture> (UniversalId::Type_ForeignFurnitures));
     mForeignFurnitures.addColumn (new ModelColumn<CSMForeign::Furniture>);
 
-    mForeignSounds.addColumn (new StringIdColumn<CSMForeign::Sound>);
+    mForeignSounds.addColumn (new ForeignIdColumn<CSMForeign::Sound>);
     mForeignSounds.addColumn (new RecordStateColumn<CSMForeign::Sound>);
     mForeignSounds.addColumn (new FixedRecordTypeColumn<CSMForeign::Sound> (UniversalId::Type_ForeignSounds));
 
-    mForeignWeapons.addColumn (new StringIdColumn<CSMForeign::Weapon>);
+    mForeignWeapons.addColumn (new ForeignIdColumn<CSMForeign::Weapon>);
     mForeignWeapons.addColumn (new RecordStateColumn<CSMForeign::Weapon>);
     mForeignWeapons.addColumn (new FixedRecordTypeColumn<CSMForeign::Weapon> (UniversalId::Type_ForeignWeapons));
     mForeignWeapons.addColumn (new ModelColumn<CSMForeign::Weapon>);
 
-    mForeignDoors.addColumn (new StringIdColumn<CSMForeign::Door>);
+    mForeignDoors.addColumn (new ForeignIdColumn<CSMForeign::Door>);
     mForeignDoors.addColumn (new RecordStateColumn<CSMForeign::Door>);
     mForeignDoors.addColumn (new FixedRecordTypeColumn<CSMForeign::Door> (UniversalId::Type_ForeignDoors));
     mForeignDoors.addColumn (new ModelColumn<CSMForeign::Door>);
 
-    mForeignAmmos.addColumn (new StringIdColumn<CSMForeign::Ammo>);
+    mForeignAmmos.addColumn (new ForeignIdColumn<CSMForeign::Ammo>);
     mForeignAmmos.addColumn (new RecordStateColumn<CSMForeign::Ammo>);
     mForeignAmmos.addColumn (new FixedRecordTypeColumn<CSMForeign::Ammo> (UniversalId::Type_ForeignAmmos));
     mForeignAmmos.addColumn (new ModelColumn<CSMForeign::Ammo>);
 
-    mForeignClothings.addColumn (new StringIdColumn<CSMForeign::Clothing>);
+    mForeignClothings.addColumn (new ForeignIdColumn<CSMForeign::Clothing>);
     mForeignClothings.addColumn (new RecordStateColumn<CSMForeign::Clothing>);
     mForeignClothings.addColumn (new FixedRecordTypeColumn<CSMForeign::Clothing> (UniversalId::Type_ForeignClothings));
     mForeignClothings.addColumn (new ModelColumn<CSMForeign::Clothing>);
 
-    mForeignPotions.addColumn (new StringIdColumn<CSMForeign::Potion>);
+    mForeignPotions.addColumn (new ForeignIdColumn<CSMForeign::Potion>);
     mForeignPotions.addColumn (new RecordStateColumn<CSMForeign::Potion>);
     mForeignPotions.addColumn (new FixedRecordTypeColumn<CSMForeign::Potion> (UniversalId::Type_ForeignPotions));
     mForeignPotions.addColumn (new ModelColumn<CSMForeign::Potion>);
 
-    mForeignApparatuses.addColumn (new StringIdColumn<CSMForeign::Apparatus>);
+    mForeignApparatuses.addColumn (new ForeignIdColumn<CSMForeign::Apparatus>);
     mForeignApparatuses.addColumn (new RecordStateColumn<CSMForeign::Apparatus>);
     mForeignApparatuses.addColumn (new FixedRecordTypeColumn<CSMForeign::Apparatus> (UniversalId::Type_ForeignApparatuses));
     mForeignApparatuses.addColumn (new ModelColumn<CSMForeign::Apparatus>);
 
-    mForeignIngredients.addColumn (new StringIdColumn<CSMForeign::Ingredient>);
+    mForeignIngredients.addColumn (new ForeignIdColumn<CSMForeign::Ingredient>);
     mForeignIngredients.addColumn (new RecordStateColumn<CSMForeign::Ingredient>);
     mForeignIngredients.addColumn (new FixedRecordTypeColumn<CSMForeign::Ingredient> (UniversalId::Type_ForeignIngredients));
     mForeignIngredients.addColumn (new ModelColumn<CSMForeign::Ingredient>);
 
-    mForeignSigilStones.addColumn (new StringIdColumn<CSMForeign::SigilStone>);
+    mForeignSigilStones.addColumn (new ForeignIdColumn<CSMForeign::SigilStone>);
     mForeignSigilStones.addColumn (new RecordStateColumn<CSMForeign::SigilStone>);
     mForeignSigilStones.addColumn (new FixedRecordTypeColumn<CSMForeign::SigilStone> (UniversalId::Type_ForeignSigilStones));
     mForeignSigilStones.addColumn (new ModelColumn<CSMForeign::SigilStone>);
 
-    mForeignSoulGems.addColumn (new StringIdColumn<CSMForeign::SoulGem>);
+    mForeignSoulGems.addColumn (new ForeignIdColumn<CSMForeign::SoulGem>);
     mForeignSoulGems.addColumn (new RecordStateColumn<CSMForeign::SoulGem>);
     mForeignSoulGems.addColumn (new FixedRecordTypeColumn<CSMForeign::SoulGem> (UniversalId::Type_ForeignSoulGems));
     mForeignSoulGems.addColumn (new ModelColumn<CSMForeign::SoulGem>);
 
-    mForeignKeys.addColumn (new StringIdColumn<CSMForeign::Key>);
+    mForeignKeys.addColumn (new ForeignIdColumn<CSMForeign::Key>);
     mForeignKeys.addColumn (new RecordStateColumn<CSMForeign::Key>);
     mForeignKeys.addColumn (new FixedRecordTypeColumn<CSMForeign::Key> (UniversalId::Type_ForeignKeys));
     mForeignKeys.addColumn (new ModelColumn<CSMForeign::Key>);
 
-    mForeignHairs.addColumn (new StringIdColumn<CSMForeign::Hair>);
+    mForeignHairs.addColumn (new ForeignIdColumn<CSMForeign::Hair>);
     mForeignHairs.addColumn (new RecordStateColumn<CSMForeign::Hair>);
     mForeignHairs.addColumn (new FixedRecordTypeColumn<CSMForeign::Hair> (UniversalId::Type_ForeignHairs));
     mForeignHairs.addColumn (new ModelColumn<CSMForeign::Hair>);
 
-    mForeignEyesSet.addColumn (new StringIdColumn<CSMForeign::Eyes>);
+    mForeignEyesSet.addColumn (new ForeignIdColumn<CSMForeign::Eyes>);
     mForeignEyesSet.addColumn (new RecordStateColumn<CSMForeign::Eyes>);
     mForeignEyesSet.addColumn (new FixedRecordTypeColumn<CSMForeign::Eyes> (UniversalId::Type_ForeignEyesSet));
     //mForeignEyesSet.addColumn (new ModelColumn<CSMForeign::Eyes>);
 
-    mForeignCreatures.addColumn (new StringIdColumn<CSMForeign::Creature>);
+    mForeignCreatures.addColumn (new ForeignIdColumn<CSMForeign::Creature>);
     mForeignCreatures.addColumn (new RecordStateColumn<CSMForeign::Creature>);
     mForeignCreatures.addColumn (new FixedRecordTypeColumn<CSMForeign::Creature> (UniversalId::Type_ForeignCreatures));
     mForeignCreatures.addColumn (new ModelColumn<CSMForeign::Creature>);
 
-    mForeignLvlCreatures.addColumn (new StringIdColumn<CSMForeign::LeveledCreature>);
+    mForeignLvlCreatures.addColumn (new ForeignIdColumn<CSMForeign::LeveledCreature>);
     mForeignLvlCreatures.addColumn (new RecordStateColumn<CSMForeign::LeveledCreature>);
     mForeignLvlCreatures.addColumn (new FixedRecordTypeColumn<CSMForeign::LeveledCreature> (UniversalId::Type_ForeignLvlCreatures));
 
-    mForeignRefs.addColumn (new StringIdColumn<CSMForeign::CellRef>/*(true)*/);
+    mForeignRefs.addColumn (new ForeignIdColumn<CSMForeign::CellRef>/*(true)*/);
     mForeignRefs.addColumn (new RecordStateColumn<CSMForeign::CellRef>);
     mForeignRefs.addColumn (new FixedRecordTypeColumn<CSMForeign::CellRef> (UniversalId::Type_ForeignReference));
     mForeignRefs.addColumn (new EditorIdColumn<CSMForeign::CellRef>);
     mForeignRefs.addColumn (new FullNameColumn<CSMForeign::CellRef>);
     mForeignRefs.addColumn (new CellColumn<CSMForeign::CellRef> (true));
     //mForeignRefs.addColumn (new OriginalCellColumn<CSMForeign::CellRef>);
-    mForeignRefs.addColumn (new IdColumn<CSMForeign::CellRef>); // mRefID
+    mForeignRefs.addColumn (new IdColumn<CSMForeign::CellRef>(/*monoFont*/true)); // mRefID
     mForeignRefs.addColumn (new PosColumn<CSMForeign::CellRef> (&CSMForeign::CellRef::mPos, 0, false));
     mForeignRefs.addColumn (new PosColumn<CSMForeign::CellRef> (&CSMForeign::CellRef::mPos, 1, false));
     mForeignRefs.addColumn (new PosColumn<CSMForeign::CellRef> (&CSMForeign::CellRef::mPos, 2, false));
@@ -726,7 +726,7 @@ CSMWorld::Data::Data (ToUTF8::FromType encoding, const ResourcesManager& resourc
     mForeignRefs.addColumn (new ScaleColumn<CSMForeign::CellRef>);
 
     // FIXME: duplication
-    mForeignChars.addColumn (new StringIdColumn<CSMForeign::CellChar>/*(true)*/);
+    mForeignChars.addColumn (new ForeignIdColumn<CSMForeign::CellChar>/*(true)*/);
     mForeignChars.addColumn (new RecordStateColumn<CSMForeign::CellChar>);
     mForeignChars.addColumn (new FixedRecordTypeColumn<CSMForeign::CellChar> (UniversalId::Type_ForeignReference));
     mForeignChars.addColumn (new EditorIdColumn<CSMForeign::CellChar>);

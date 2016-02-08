@@ -949,8 +949,10 @@ namespace CSMWorld
     template<typename ESXRecordT>
     struct IdColumn : public Column<ESXRecordT>
     {
-        IdColumn() : Column<ESXRecordT> (Columns::ColumnId_ReferenceableId,
-            ColumnBase::Display_Referenceable) {}
+        IdColumn(bool monoFont = false)
+            : Column<ESXRecordT> (Columns::ColumnId_ReferenceableId, ColumnBase::Display_Referenceable,
+            ColumnBase::Flag_Table | ColumnBase::Flag_Dialogue | (monoFont ? ColumnBase::Flag_MonoFont : 0))
+            {}
 
         virtual QVariant get (const Record<ESXRecordT>& record) const
         {
@@ -2452,7 +2454,8 @@ namespace CSMWorld
     struct ParentColumn : public Column<ESXRecordT>
     {
         ParentColumn()
-        : Column<ESXRecordT> (Columns::ColumnId_Parent, ColumnBase::Display_String)
+        : Column<ESXRecordT> (Columns::ColumnId_Parent, ColumnBase::Display_String,
+            ColumnBase::Flag_Table | ColumnBase::Flag_Dialogue | ColumnBase::Flag_MonoFont)
         {}
 
         virtual QVariant get (const Record<ESXRecordT>& record) const
@@ -2504,6 +2507,31 @@ namespace CSMWorld
         virtual QVariant get (const Record<ESXRecordT>& record) const
         {
             return QString::fromUtf8 (record.get().mMapName.c_str());
+        }
+
+        virtual void set (Record<ESXRecordT>& record, const QVariant& data)
+        {
+            return; // FIXME
+        }
+
+        virtual bool isEditable() const
+        {
+            return true;
+        }
+    };
+
+    template<typename ESXRecordT>
+    struct ForeignIdColumn : public Column<ESXRecordT>
+    {
+        ForeignIdColumn()
+        : Column<ESXRecordT> (Columns::ColumnId_Id, ColumnBase::Display_Id,
+            ColumnBase::Flag_Table | ColumnBase::Flag_Dialogue | ColumnBase::Flag_MonoFont)
+        {}
+
+
+        virtual QVariant get (const Record<ESXRecordT>& record) const
+        {
+            return QString::fromUtf8 (record.get().mId.c_str());
         }
 
         virtual void set (Record<ESXRecordT>& record, const QVariant& data)

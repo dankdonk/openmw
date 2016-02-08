@@ -104,7 +104,7 @@ int CSMForeign::RefCollection::load (ESM4::Reader& reader, bool base)
 int CSMForeign::RefCollection::load (const CellRef& record, bool base, int index)
 {
     if (index == -2) // unknown index
-        index = searchId(static_cast<ESM4::FormId>(std::stoi(record.mId, nullptr, 16))); // hex base
+        index = searchId(ESM4::stringToFormId(record.mId));
 
     if (index == -1)
     {
@@ -136,7 +136,7 @@ int CSMForeign::RefCollection::load (const CellRef& record, bool base, int index
 
 int CSMForeign::RefCollection::searchId (const std::string& id) const
 {
-    return searchId(static_cast<ESM4::FormId>(std::stoi(id, nullptr, 16))); // hex base
+    return searchId(ESM4::stringToFormId(id));
 }
 
 int CSMForeign::RefCollection::getIndex (ESM4::FormId formId) const

@@ -97,7 +97,7 @@ namespace ESM4
     void formIdToString(FormId formId, std::string& str)
     {
         char buf[8+1];
-        int res = snprintf(buf, 8+1, "%08x", formId);
+        int res = snprintf(buf, 8+1, "%08X", formId);
         if (res > 0 && res < 8+1)
             str.assign(buf);
         else

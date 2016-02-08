@@ -2,6 +2,8 @@
 
 #include <stdexcept>
 
+#include <QFont>
+
 #include <extern/esm4/common.hpp> // isFormId
 
 #include "collectionbase.hpp"
@@ -34,6 +36,17 @@ QVariant CSMWorld::IdTable::data (const QModelIndex & index, int role) const
 {
     if (index.row() < 0 || index.column() < 0)
         return QVariant();
+
+    if (role==Qt::FontRole && (mIdCollection->getColumn (index.column()).mFlags & ColumnBase::Flag_MonoFont) != 0)
+    {
+#ifdef _MSC_VER
+        QFont font("Lucida Console");
+#else
+        QFont font("Monospace");
+#endif
+        font.setStyleHint(QFont::TypeWriter);
+        return font;
+    }
 
     if (role==ColumnBase::Role_Display)
         return QVariant(mIdCollection->getColumn(index.column()).mDisplayType);
