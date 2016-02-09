@@ -25,7 +25,7 @@ namespace CSMForeign
         std::string mCellId; // for region map (#x y for most exterior cells)
         std::string mCellName; // Cell name
 
-        void load(ESM4::Reader& reader, const CellCollection& cells);
+        void load(ESM4::Reader& reader);
 
         void blank();
     };

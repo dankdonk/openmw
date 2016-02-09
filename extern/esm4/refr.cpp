@@ -167,6 +167,7 @@ void ESM4::Reference::load(ESM4::Reader& reader)
             case ESM4::SUB_XWCN:
             case ESM4::SUB_XWCU:
             case ESM4::SUB_XATR: // Dawnguard only?
+            case MKTAG('X','H','L','T'): // Unofficial Oblivion Patch
             {
                 //std::cout << "REFR " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
                 reader.skipSubRecordData();

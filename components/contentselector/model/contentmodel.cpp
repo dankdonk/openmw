@@ -2,12 +2,21 @@
 #include "esmfile.hpp"
 
 #include <stdexcept>
+#include <algorithm> // stable_sort
 
 #include <QDir>
 #include <QTextCodec>
 #include <QDebug>
 
 #include "components/esm/esmreader.hpp"
+
+namespace
+{
+    bool compareLastModified (const ContentSelectorModel::EsmFile *l, const ContentSelectorModel::EsmFile *r)
+    {
+      return l->modified() < r->modified();
+    }
+}
 
 ContentSelectorModel::ContentModel::ContentModel(QObject *parent, QIcon warningIcon) :
     QAbstractTableModel(parent),
@@ -495,6 +504,8 @@ QStringList ContentSelectorModel::ContentModel::gameFiles() const
 
 void ContentSelectorModel::ContentModel::sortFiles()
 {
+    std::stable_sort(mFiles.begin(), mFiles.end(), compareLastModified);
+#if 0
     //first, sort the model such that all dependencies are ordered upstream (gamefile) first.
     bool movedFiles = true;
     int fileCount = mFiles.size();
@@ -528,6 +539,7 @@ void ContentSelectorModel::ContentModel::sortFiles()
                 break;
         }
     }
+#endif
 }
 
 bool ContentSelectorModel::ContentModel::isChecked(const QString& filepath) const

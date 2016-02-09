@@ -244,6 +244,7 @@ bool Config::GameSettings::writeFileWithComments(QFile &file)
     std::vector<QString> comments;
     std::vector<QString>::iterator commentStart = fileCopy.end();
     std::map<QString, std::vector<QString> > commentsMap;
+    // fileCopy is modified in the for-loop s.t. lines to be deleted are replaced with a null string
     for (std::vector<QString>::iterator iter = fileCopy.begin(); iter != fileCopy.end(); ++iter)
     {
         if (isOrderedLine(*iter))
@@ -260,7 +261,7 @@ bool Config::GameSettings::writeFileWithComments(QFile &file)
                 // else do nothing, malformed line
             }
 
-            *iter = QString(); // "ordered" lines to be removed later
+            *iter = QString(); // "ordered" lines to be replaced from mUserSettings later
         }
         else if ((*iter).isEmpty() || (*iter).contains(QRegExp("^\\s*#")))
         {
@@ -281,7 +282,7 @@ bool Config::GameSettings::writeFileWithComments(QFile &file)
             else
                 comments.push_back(*iter);
 
-            *iter = QString(); // assume to be deleted later
+            *iter = QString(); // null strings are ignored later
         }
         else
         {
@@ -324,7 +325,7 @@ bool Config::GameSettings::writeFileWithComments(QFile &file)
                 QString settingLine = i.key() + "=" + i.value();
                 if (settingRegex.indexIn(settingLine) != -1)
                 {
-                    if ((settingRegex.cap(1)+"="+settingRegex.cap(2)) == keyVal)
+                    if (settingLine == keyVal)
                     {
                         *iter = settingLine;
                         break;

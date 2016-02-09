@@ -164,6 +164,12 @@ void CSVRender::ForeignObject::update()
 
                     model = crea.getData (extraIndex,
                        crea.findColumnIndex (CSMWorld::Columns::ColumnId_Model)).toString().toUtf8().constData();
+
+                    // Need to do something similar to ctor of MWRender::CreatureAnimation, i.e.
+                    // create a creature object which is called from MWRender::Actors::insertCreature()
+                    // or do something more complicated like MWRender::NpcAnimation::updateNpcBase()
+                    // which is called when constructed by MWRender::Actors::insertNpc()
+
                     std::cout << "obj is an leveled creature " << i /*ESM4::formIdToString(templ)*/ << ", " << model << std::endl;
                     //std::cout << "creature inventory " << creaRec.mInventory.size() << std::endl;
                     for (unsigned int j = 0; j < creaRec.mInventory.size(); ++j)

@@ -244,7 +244,7 @@ bool CSVRender::ForeignCell::addObjects (const std::vector<ESM4::FormId>& object
                                                          "meshes\\characters\\imperial\\headhuman.nif");
                     objectH->setVisibilityFlags (Element_Reference);
                     mObjectParts.push_back(objectH); // FIXME put every npc's parts into this for now
-
+#if 0
                     // hair
                     Ogre::SceneNode *node = mObjects[id]->getSceneNode()->createChildSceneNode();
                     NifOgre::ObjectScenePtr objectHR
@@ -255,7 +255,7 @@ bool CSVRender::ForeignCell::addObjects (const std::vector<ESM4::FormId>& object
                     objectHR->setVisibilityFlags (Element_Reference);
                     //node->roll(Ogre::Degree(-90));
                     mObjectParts.push_back(objectHR); // FIXME put every npc's parts into this for now
-
+#endif
                     // hand
                     Ogre::SceneNode *nodeHand = mObjects[id]->getSceneNode()->createChildSceneNode();
                     NifOgre::ObjectScenePtr objectHand
@@ -264,6 +264,11 @@ bool CSVRender::ForeignCell::addObjects (const std::vector<ESM4::FormId>& object
                     objectHand->setVisibilityFlags (Element_Reference);
                     //nodeL->roll(Ogre::Degree(-90));
                     mObjectParts.push_back(objectHand); // FIXME put every npc's parts into this for now
+
+
+                    // FIXME: the eyes are rotated 90 degrees, possibly an issue with the
+                    // "Bip01 Head" bone?
+
                     // left eye
                     NifOgre::ObjectScenePtr objectL
                         = NifOgre::Loader::createObjects(mObjects[id]->getObject()->mSkelBase,
@@ -284,17 +289,18 @@ bool CSVRender::ForeignCell::addObjects (const std::vector<ESM4::FormId>& object
                     objectR->setVisibilityFlags (Element_Reference);
                     mObjectParts.push_back(objectR); // FIXME put every npc's parts into this for now
 
-#if 0
+//#if 0
                     // hair
                     NifOgre::ObjectScenePtr objectHR
                         = NifOgre::Loader::createObjects(mObjects[id]->getObject()->mSkelBase,
-                                                         "", // not used for skinned
+                                                         "Bip01 Head", // not used for skinned
                                                          /*"Bip01"*/"", // ??
                                                          mObjects[id]->getSceneNode(),
-                                                         "meshes\\characters\\imperial\\male\\hair01.nif");
+                                                         //"meshes\\characters\\imperial\\male\\hair01.nif");
+                                                         "meshes\\characters\\hair\\bretonmaletonsure.nif");
                     objectHR->setVisibilityFlags (Element_Reference);
                     mObjectParts.push_back(objectHR); // FIXME put every npc's parts into this for now
-#endif
+//#endif
                     for (unsigned int j = 0; j < npcRec.mInventory.size(); ++j)
                     {
                         int invIndex = cloth.searchFormId(npcRec.mInventory[j].item);

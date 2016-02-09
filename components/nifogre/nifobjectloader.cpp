@@ -657,7 +657,20 @@ void NifOgre::NIFObjectLoader::createNodeControllers (const Nif::NIFFilePtr& nif
                                         Ogre::ControllerManager::getSingleton().getFrameTimeSource() :
                                         Ogre::ControllerValueRealPtr());
 
-                if (ctrl->nifVer >= 0x0a020000&& !key->interpolator.empty()) // from 10.2.0.0
+                if (ctrl->nifVer <= 0x0a010000 && !key->data.empty()) // up to 10.1.0.0 (TES3/4)
+                {
+                    Ogre::ControllerValueRealPtr dstval(
+                            OGRE_NEW KeyframeController::Value(trgtbone, nif, key->data.getPtr()));
+
+                    KeyframeController::Function* function
+                        = OGRE_NEW KeyframeController::Function(key, isAnimationAutoPlay);
+
+                    scene->mMaxControllerLength = std::max(function->mStopTime, scene->mMaxControllerLength);
+                    Ogre::ControllerFunctionRealPtr func(function);
+
+                    scene->mControllers.push_back(Ogre::Controller<Ogre::Real>(srcval, dstval, func));
+                }
+                else if (ctrl->nifVer >= 0x0a020000 && !key->interpolator.empty()) // from 10.2.0.0 (TES4/5)
                 {
                     const Nif::NiInterpolator *interpolator = key->interpolator.getPtr();
                     if (interpolator->recType == Nif::RC_NiBlendTransformInterpolator)
@@ -671,7 +684,7 @@ void NifOgre::NIFObjectLoader::createNodeControllers (const Nif::NIFFilePtr& nif
                     {
                         // has traslation, rotation, scale and NiTransformData (same as NiKeyframeData)
                         //
-                        // FIXME: code duplication with below, not sure what they do, simply copied
+                        // FIXME: code duplication with above, not sure what they do, simply copied
                         const Nif::NiTransformData *data
                             = static_cast<const Nif::NiTransformInterpolator*>(interpolator)->transformData.getPtr();
                         Ogre::ControllerValueRealPtr dstval(
@@ -692,21 +705,9 @@ void NifOgre::NIFObjectLoader::createNodeControllers (const Nif::NIFFilePtr& nif
                     ctrl = ctrl->next;
                     continue;
                 }
-                else if (ctrl->nifVer <= 0x0a010000 && !key->data.empty()) // up to 10.1.0.0
-                {
-                    Ogre::ControllerValueRealPtr dstval(
-                            OGRE_NEW KeyframeController::Value(trgtbone, nif, key->data.getPtr()));
-
-                    KeyframeController::Function* function
-                        = OGRE_NEW KeyframeController::Function(key, isAnimationAutoPlay);
-
-                    scene->mMaxControllerLength = std::max(function->mStopTime, scene->mMaxControllerLength);
-                    Ogre::ControllerFunctionRealPtr func(function);
-
-                    scene->mControllers.push_back(Ogre::Controller<Ogre::Real>(srcval, dstval, func));
                 }
-            }
             else
+                // FIXME: why would there be no bones?
                 std::cout << "createNodeControllers: KeyFrame : no bone "
                           << ctrl->recIndex << ", " << name << std::endl;
         }
@@ -821,8 +822,11 @@ void NifOgre::NIFObjectLoader::createObjects (const Nif::NIFFilePtr& nif, const 
             bone->setManuallyControlled(true);
             scene->mBillboardNodes.push_back(bone);
         }
-        else
-            std::cout << "createObjects: no bone " << node->recIndex << ", " << name << std::endl;
+        // Maybe only NiBillboardNode's that are fires have bones?  (possibly for attaching lights)
+        // meshes\dungeons\misc\fx\fxcloudsmall01.nif does not have any bones, for example
+        // (meshes\dungeons\misc\fx\fxcloudthick01.nif should not have any bones either, but has 5)
+        //else
+            //std::cout << "createObjects: no bone " << node->recIndex << ", " << name << std::endl;
     }
 
     // FIXME: should be able to handle this using nifVer, rather than boolean hasExtras
@@ -1017,6 +1021,13 @@ void NifOgre::NIFObjectLoader::load (Ogre::SceneNode *sceneNode,
 //
 // Perhaps best to have another method loadKf2 or something else
 // alternatively use nif version to determine
+//
+// Maybe for new .kf always use skeleton.nif? That means either the caller needs to use the
+// correct 'name' and/or we need to check version info.
+//
+// Can't always assume 'name' will be ending skeleton.nif to detect the new version, since
+// meshes\r\skeleton.nif is a valid old version.
+//
 void NifOgre::NIFObjectLoader::loadKf (Ogre::Skeleton *skel, const std::string &name,
             TextKeyMap &textKeys, std::vector<Ogre::Controller<Ogre::Real> > &ctrls)
 {
