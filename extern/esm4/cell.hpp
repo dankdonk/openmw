@@ -31,6 +31,7 @@ namespace ESM4
 {
     class Reader;
     class Writer;
+    struct CellGroup;
     typedef std::uint32_t FormId;
 
     enum CellFlags               // TES4                     TES5
@@ -85,18 +86,9 @@ namespace ESM4
         float  mWaterHeight;
 
         std::vector<FormId> mRegions;
-
-        // cache formId's of children
-        std::vector<FormId> mRefPersistent;
-        std::vector<FormId> mRefVisibleDistant;
-        std::vector<FormId> mRefTemporary;
-        FormId mLandTemporary; // assume only one LAND per CELL
         Lighting mLighting;
 
-        // TODO consider caching otheer FormID's
-        // Persistent      ACHR, ACRE
-        // Visible Distant ACHR, ACRE
-        // Temporary       PGRD, ACHR, ACRE
+        CellGroup *mCellGroup;
 
         Cell();
         ~Cell();
