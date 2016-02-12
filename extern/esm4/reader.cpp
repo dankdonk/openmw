@@ -117,30 +117,33 @@ void ESM4::Reader::updateModIndicies(const std::vector<std::string>& files)
         throw std::runtime_error("ESM4::Reader::updateModIndicies base modIndex is not zero");
 }
 
-void ESM4::Reader::saveGroupStatus(const ESM4::RecordHeader& hdr)
+void ESM4::Reader::saveGroupStatus()
 {
 #if 0
     std::string padding = ""; // FIXME: debugging only
     padding.insert(0, mGroupStack.size()*2, ' ');
-    std::cout << padding << "Starting record group " << ESM4::printLabel(hdr.group.label, hdr.group.type) << std::endl;
+    std::cout << padding << "Starting record group "
+              << ESM4::printLabel(mRecordHeader.group.label, mRecordHeader.group.type) << std::endl;
 #endif
-    if (hdr.group.groupSize == (std::uint32_t)mRecHeaderSize)
+    if (mRecordHeader.group.groupSize == (std::uint32_t)mRecHeaderSize)
     {
 #if 0
         std::cout << padding << "Igorning record group " // FIXME: debugging only
-            << ESM4::printLabel(hdr.group.label, hdr.group.type) << " (empty)" << std::endl;
+            << ESM4::printLabel(mRecordHeader.group.label, mRecordHeader.group.type)
+            << " (empty)" << std::endl;
 #endif
         if (!mGroupStack.empty()) // top group may be empty (e.g. HAIR in Skyrim)
         {
             // don't put on the stack, checkGroupStatus() may not get called before recursing into this method
-            mGroupStack.back().second -= hdr.group.groupSize;
+            mGroupStack.back().second -= mRecordHeader.group.groupSize;
             checkGroupStatus();
         }
         return; // DLCMehrunesRazor - Unofficial Patch.esp is at EOF after one of these empty groups...
     }
 
     // push group
-    mGroupStack.push_back(std::make_pair(hdr.group, hdr.group.groupSize - (std::uint32_t)mRecHeaderSize));
+    mGroupStack.push_back(std::make_pair(mRecordHeader.group,
+                mRecordHeader.group.groupSize - (std::uint32_t)mRecHeaderSize));
 }
 
 const ESM4::CellGrid& ESM4::Reader::currCellGrid() const

@@ -201,7 +201,7 @@ namespace ESM4
 
         void checkGroupStatus();
 
-        void saveGroupStatus(const ESM4::RecordHeader& hdr);
+        void saveGroupStatus();
 
         void registerForUpdates(ReaderObserver *observer);
 

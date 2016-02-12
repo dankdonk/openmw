@@ -80,7 +80,7 @@ namespace ESM4
         // the reader's context
         FormId mRoad;
 
-        std::vector<FormId> mCells;
+        std::vector<FormId> mCells; // FIXME should this be CellGroup* instead?
 
         WorldGroup() : mWorld(0), mRoad(0) {}
     };
@@ -98,10 +98,25 @@ namespace ESM4
     // NOTE: There may be many CELL records in one subblock
     struct CellGroup
     {
-        FormId mCell; // CELL record for this group
+        FormId mCell;      // CELL record for this cell group
+        int mCellModIndex; // from which file to get the CELL record (e.g. may have been updated)
 
-        // for retrieving parent group size (for lazy loading or skipping) and sub-block number / grid
-        GroupTypeHeader mHeader;
+        // For retrieving parent group size (for lazy loading or skipping) and sub-block number / grid
+        // NOTE: There can be more than one file that adds/modifies records to this cell group
+        //
+        // Use Case 1: To quickly get only the visble when distant records:
+        //
+        //   - Find the FormId of the CELL (maybe WRLD/X/Y grid lookup or from XTEL of a REFR)
+        //   - search a map of CELL FormId to CellGroup
+        //   - load CELL and its child groups (or load the visible distant only, or whatever)
+        //
+        // Use Case 2: Scan the files but don't load CELL or cell group
+        //
+        //   - Load referenceables and other records up front, updating them as required
+        //   - Don't load CELL, LAND, PGRD or ROAD (keep FormId's and file index, and file
+        //     context then skip the rest of the group)
+        //
+        std::vector<GroupTypeHeader> mHeaders; // FIXME: is this needed?
 
         // FIXME: should these be pairs?  i.e. <FormId, modindex> so that we know from which file
         //        the formid came (it may have been updated by a mod)
@@ -111,12 +126,15 @@ namespace ESM4
         //        or vector for storage with a corresponding map of index?
 
         // cache (modindex adjusted) formId's of children
+        // FIXME: also need file index + file context of all those that has type 8 GRUP
         GroupTypeHeader mHdrPersist;
         std::vector<FormId> mPersistent;     // REFR, ACHR, ACRE
 
+        // FIXME: also need file index + file context of all those that has type 10 GRUP
         GroupTypeHeader mHdrVisDist;
         std::vector<FormId> mVisibleDistant; // REFR, ACHR, ACRE
 
+        // FIXME: also need file index + file context of all those that has type 9 GRUP
         GroupTypeHeader mHdrTemp;
         FormId mLand; // if present, assume only one LAND per exterior CELL
         FormId mPgrd; // if present, seems to be the first record after LAND in Temp Cell Child GRUP
@@ -125,7 +143,7 @@ namespace ESM4
         // need to keep modindex and context for lazy loading (of all the files that contribute
         // to this group)
 
-        CellGroup() : mCell(0), mLabel.value(0), mLand(0) {}
+        CellGroup() : mCell(0), mLand(0), mPgrd(0) {}
     };
 }
 

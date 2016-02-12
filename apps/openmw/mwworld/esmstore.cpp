@@ -181,7 +181,7 @@ void ESMStore::loadTes4Group (ESM4::Reader& reader)
                 // http://www.uesp.net/wiki/Tes4Mod:Mod_File_Format
                 //
                 // Workaround by getting the record header and checking its typeId
-                reader.saveGroupStatus(hdr);
+                reader.saveGroupStatus();
                 loadTes4Group(reader);
             }
             else
@@ -208,7 +208,7 @@ void ESMStore::loadTes4Group (ESM4::Reader& reader)
         case ESM4::Grp_CellVisibleDistChild:
         {
             reader.skipGroup();
-            //reader.saveGroupStatus(hdr);
+            //reader.saveGroupStatus();
             //loadTes4Group(reader);
 
             break;

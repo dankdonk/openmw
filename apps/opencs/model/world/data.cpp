@@ -2011,26 +2011,9 @@ bool CSMWorld::Data::loadTes4Group (CSMDoc::Messages& messages)
                 // Ignore flag  0000 1000 (i.e. probably unrelated)
                 //
                 // Workaround by getting the record header and checking its typeId
-                reader.saveGroupStatus(hdr);
-                // CELL group with record type may have sub-groups
-                // FIXME: code duplication
-                if (!mReader->hasMoreRecs())
-                {
-                    if (mBase)
-                    {
-                        boost::shared_ptr<ESM::ESMReader> ptr(mReader);
-                        mReaders.push_back(ptr);
-                    }
-                    else
-                        delete mReader;
-
-                    mReader = 0;
-                    mDialogue = 0;
-                    return true;
-                }
-                loadTes4Group(messages);
-                //reader.getRecordHeader(); // NOTE: header re-read
-                //return loadTes4Record(reader.hdr(), messages);
+                reader.saveGroupStatus();
+                // FIXME: comment may no longer be releavant
+                loadTes4Group(messages); // CELL group with record type may have sub-groups
             }
             else
             {
@@ -2041,30 +2024,35 @@ bool CSMWorld::Data::loadTes4Group (CSMDoc::Messages& messages)
 
             break;
         }
-        case ESM4::Grp_WorldChild:
         case ESM4::Grp_CellChild:
+        {
+            reader.adjustGRUPFormId();  // not needed or even shouldn't be done? (only labels anyway)
+            reader.saveGroupStatus();
+            if (!mReader->hasMoreRecs())
+                return false; // may have been an empty group followed by EOF
+
+            if (1) // FIXME: testing only
+            {
+            }
+            else
+            {
+            }
+
+            loadTes4Group(messages);
+
+            break;
+        }
+        case ESM4::Grp_WorldChild:
         case ESM4::Grp_TopicChild:
         case ESM4::Grp_CellPersistentChild:
         case ESM4::Grp_CellTemporaryChild:
         case ESM4::Grp_CellVisibleDistChild:
         {
             reader.adjustGRUPFormId();  // not needed or even shouldn't be done? (only labels anyway)
-            reader.saveGroupStatus(hdr);
-            // FIXME: code duplication
+            reader.saveGroupStatus();
             if (!mReader->hasMoreRecs())
-            {
-                if (mBase)
-                {
-                    boost::shared_ptr<ESM::ESMReader> ptr(mReader);
-                    mReaders.push_back(ptr);
-                }
-                else
-                    delete mReader;
+                return false; // may have been an empty group followed by EOF
 
-                mReader = 0;
-                mDialogue = 0;
-                return true;
-            }
             loadTes4Group(messages);
 
             break;
@@ -2074,22 +2062,7 @@ bool CSMWorld::Data::loadTes4Group (CSMDoc::Messages& messages)
         case ESM4::Grp_InteriorCell:
         case ESM4::Grp_InteriorSubCell:
         {
-            reader.saveGroupStatus(hdr);
-            // FIXME: code duplication
-            if (!mReader->hasMoreRecs())
-            {
-                if (mBase)
-                {
-                    boost::shared_ptr<ESM::ESMReader> ptr(mReader);
-                    mReaders.push_back(ptr);
-                }
-                else
-                    delete mReader;
-
-                mReader = 0;
-                mDialogue = 0;
-                return true;
-            }
+            reader.saveGroupStatus();
             loadTes4Group(messages);
 
             break;
@@ -2149,6 +2122,82 @@ bool CSMWorld::Data::loadTes4Record (const ESM4::RecordHeader& hdr, CSMDoc::Mess
         case ESM4::REC_REGN: reader.getRecordData(); mForeignRegions.load(reader, mBase); break;
         case ESM4::REC_CELL:
         {
+            // At this point we should be in one of these groups:
+            //
+            //    ESM4::Grp_WorldChild      (type 1)
+            //    ESM4::Grp_InteriorSubCell (type 3)
+            //    ESM4::Grp_ExteriorSubCell (type 5)
+            //
+            // This "CellGroup" has a CELL record and may also have a ESM4::Grp_CellChild (type 6)
+            // The cell child group may be empty.  It may have it's own child groups:
+            //
+            //    ESM4::Grp_CellPersistentChild   (type 8)
+            //    ESM4::Grp_CellTemporaryChild    (type 9)
+            //    ESM4::Grp_CellVisibleDistChild  (type 10)
+            //
+            // For OpenCS we probably want to load these records whereas in OpenMW we probably
+            // would wish to delay loading them until they are needed.
+            //
+            // A record may have been updated by a mod, so the context of each mod file that
+            // add/modify/deletes CELL record or its child groups should be saved.
+            //
+            // Opt 1: scan cell but do not load them
+            // Opt 2: load everything
+            //
+            // State Transitions:
+            //
+            //            S:WorldChild
+            //            S:Interior SubCell
+            //            s:Exterior SbuCell     empty cell?
+            //                     |                  ^             ^   ^
+            //                     v                  |             |   |
+            //                (E:CELL record)         |             |   |
+            //                     |                  |             |   |
+            //               [load or skip CELL]      |             |   |
+            //                     |                  |             |   |
+            //                     |       (E:not Cell child GRUP)  |   |
+            //                     |                  ^             |   |
+            //                     v                  |             |   |
+            //               S:Loading Cell Group ----+             |   |
+            //                     |                                |   |
+            //                     v                                |   |
+            //               (E:Cell Child GRUP)          (E:some other group/record)
+            //                     |                                ^   ^
+            //                     v                                |   |
+            //         +---> S:Loading Cell Child ------------------+   |
+            //         |           |                                    |
+            //   [skip group]      |                                    |
+            //         |           v                                    |
+            //         +-- (E:persist/temp/dist GRUP)                   |
+            //                     |           ^                        |
+            //               [load group]      |                        |
+            //                     |           |                        |
+            //                     v           |                        |
+            //               S:Loading Cell Child Records --------------+
+            //                     |                 ^
+            //                     v                 |
+            //              (E:REFR/ACHR/ACRE/PGRD)  |
+            //                     |                 |
+            //                [load record] ---------+
+            //
+            //
+            // State                        | mGroupStack.back()
+            // -----------------------------+---------------------------------------------
+            // S:Loading Cell Group         | ExteriorSubCell, InteriorSubCell, WorldChild
+            // S:Loading Cell Child         | CellChild
+            // S:Loading Cell Child Records | CellPersistentChild, CellTemporaryChild,
+            //                              | CellVisibleDistChild
+            if (1) // FIXME: testing only
+            {
+                reader.getRecordData();
+                mForeignCells.load(reader, mBase);
+            }
+            else
+            {
+                // take the adjusted CELL FormId from the header
+                mForeignCells.saveContext(reader);
+                reader.skipRecordData();
+            }
 //FIXME: debug only
 #if 0
             std::string padding = "";
@@ -2157,18 +2206,72 @@ bool CSMWorld::Data::loadTes4Record (const ESM4::RecordHeader& hdr, CSMDoc::Mess
             std::cout << padding << "CELL id 0x" << std::hex << hdr.record.id << std::endl;
             std::cout << padding << "CELL group " << ESM4::printLabel(reader.grp().label, reader.grp().type) << std::endl;
 #endif
-            reader.getRecordData();
-            mForeignCells.load(reader, mBase);
             break;
         }
-        case ESM4::REC_WRLD: reader.getRecordData(); mForeignWorlds.load(reader, mBase); break;
-        // DIAL, QUST, IDLE, PACK, CSTY, LSCR, LVSP
+        case ESM4::REC_WRLD:
+        {
+            // Opt 1: skip world (probably not so useful?)
+            // Opt 2: scan world for cells but do not load them
+            // Opt 3: load everything
+            //
+            // State Transitions:
+            //
+            //                                  empty world?
+            //                     |                  ^             ^   ^
+            //                     v                  |             |   |
+            //                (E:WRLD record)         |             |   |
+            //                     |                  |             |   |
+            //               [load or skip WRLD]      |             |   |
+            //                     |                  |             |   |
+            //                     |       (E:not World child GRUP) |   |
+            //                     |                  ^             |   |
+            //                     v                  |             |   |
+            //               S:Loading World Group ---+             |   |
+            //                     |                                |   |
+            //                     v                                |   |
+            //               (E:World Child GRUP)         (E:some other group/record)
+            //                     |                                ^   ^
+            //                     v                                |   |
+            //        +-------- S:Loading World Child --------------+   |
+            //        |            |       ^    ^  |                    |
+            //        |            v       |    |  |                    |
+            //        |   (E:ROAD record)  |    |  |                    |
+            //        |            |       |    |  |                    |
+            //        |   [load or skip ROAD]   |  |                    |
+            //        |                         |  |                    |
+            //        |                         |  |                    |
+            //        +--- > (E:CELL record)    |  |                    |
+            //                     |            |  |                    |
+            //            [load or skip] -------+  |                    |
+            //            [CELL Group  ]           |                    |
+            //                                     |                    |
+            //                                     v                    |
+            //                           (E:Exterior Cell GRUP) // can be empty (*)
+            //                                     |
+            //                                     v
+            //                          (E:Exterior Sub-Cell GRUP)
+            //                                     |
+            //                                     v
+            //
+            //  (*) grid 0, -12 containing empty external sub-cell grid 3, -48 (Tamriel, Oblivion)
+            //
+            reader.getRecordData();
+            mForeignWorlds.load(reader, mBase);
+            break;
+        }
+        // DIAL, QUST
         // IDLE
         // PACK, CSTY, LSCR, LVSP
         case ESM4::REC_ANIO: reader.getRecordData(); mForeignAnimObjs.load(reader, mBase); break;
         // WATR, EFSH
-        case ESM4::REC_ACHR: reader.getRecordData(); mForeignChars.load(reader, mBase); break;
-        case ESM4::REC_REFR: reader.getRecordData(); mForeignRefs.load(reader, mBase); break;
+        case ESM4::REC_ACHR:
+        case ESM4::REC_REFR:
+        case ESM4::REC_ACRE: // Oblivion only?
+        case ESM4::REC_PGRD: // Oblivion only?
+        {
+            //reader.getRecordData(); mForeignChars.load(reader, mBase); break;
+            reader.getRecordData(); mForeignRefs.load(reader, mBase); break;
+        }
         // TODO: verify LTEX formIds exist
         case ESM4::REC_LAND: reader.getRecordData(); mForeignLands.load(reader, mBase); break;
         case ESM4::REC_NAVI: reader.getRecordData(); mNavigation.load(reader, mBase); break;
@@ -2193,14 +2296,12 @@ bool CSMWorld::Data::loadTes4Record (const ESM4::RecordHeader& hdr, CSMDoc::Mess
             break;
         }
 		//
-        case ESM4::REC_ACRE: // Oblivion only?
         case ESM4::REC_LVLI:
         case ESM4::REC_IDLE:
         case ESM4::REC_MATO:
 		//
         case ESM4::REC_PHZD:
         case ESM4::REC_PGRE:
-        case ESM4::REC_PGRD: // Oblivion only?
         case ESM4::REC_ROAD: // Oblivion only?
         {
             //std::cout << ESM4::printName(hdr.record.typeId) << " skipping..." << std::endl;
