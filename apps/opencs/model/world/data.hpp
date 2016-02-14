@@ -9,6 +9,36 @@
 #include <QObject>
 #include <QModelIndex>
 
+#include <extern/esm4/stat.hpp>
+#include <extern/esm4/anio.hpp>
+#include <extern/esm4/cont.hpp>
+#include <extern/esm4/acti.hpp>
+#include <extern/esm4/misc.hpp>
+#include <extern/esm4/Armo.hpp>
+#include <extern/esm4/npc_.hpp>
+#include <extern/esm4/flor.hpp>
+#include <extern/esm4/gras.hpp>
+#include <extern/esm4/tree.hpp>
+#include <extern/esm4/ligh.hpp>
+#include <extern/esm4/book.hpp>
+#include <extern/esm4/furn.hpp>
+#include <extern/esm4/soun.hpp>
+#include <extern/esm4/weap.hpp>
+#include <extern/esm4/door.hpp>
+#include <extern/esm4/ammo.hpp>
+#include <extern/esm4/clot.hpp>
+#include <extern/esm4/alch.hpp>
+#include <extern/esm4/appa.hpp>
+#include <extern/esm4/ingr.hpp>
+#include <extern/esm4/sgst.hpp>
+#include <extern/esm4/slgm.hpp>
+#include <extern/esm4/keym.hpp>
+#include <extern/esm4/hair.hpp>
+#include <extern/esm4/eyes.hpp>
+#include <extern/esm4/crea.hpp>
+#include <extern/esm4/lvlc.hpp>
+#include <extern/esm4/ltex.hpp>
+
 #include <components/esm/loadglob.hpp>
 #include <components/esm/loadgmst.hpp>
 #include <components/esm/loadskil.hpp>
@@ -33,45 +63,18 @@
 
 #include "../doc/stage.hpp"
 
+#include "../foreign/idrecord.hpp"
+#include "../foreign/idcollection.hpp"
 #include "../foreign/navigationcollection.hpp"
 #include "../foreign/navmeshcollection.hpp"
 #include "../foreign/landcollection.hpp"
 #include "../foreign/cellcollection.hpp"
-#include "../foreign/landtexturecollection.hpp"
 #include "../foreign/worldcollection.hpp"
 #include "../foreign/regioncollection.hpp"
-#include "../foreign/staticcollection.hpp"
-#include "../foreign/refcollection.hpp"
-#include "../foreign/charcollection.hpp"
-#include "../foreign/idcollection.hpp"
-#include "../foreign/animobject.hpp"
-#include "../foreign/container.hpp"
-#include "../foreign/activator.hpp"
-#include "../foreign/miscitem.hpp"
-#include "../foreign/Armor.hpp"
-#include "../foreign/npc.hpp"
-#include "../foreign/flora.hpp"
-#include "../foreign/grass.hpp"
-#include "../foreign/tree.hpp"
-#include "../foreign/light.hpp"
-#include "../foreign/book.hpp"
-#include "../foreign/furniture.hpp"
-#include "../foreign/sound.hpp"
-#include "../foreign/weapon.hpp"
-#include "../foreign/door.hpp"
-#include "../foreign/ammo.hpp"
-#include "../foreign/clothing.hpp"
-#include "../foreign/potion.hpp"
-#include "../foreign/apparatus.hpp"
-#include "../foreign/ingredient.hpp"
-#include "../foreign/sigilstone.hpp"
-#include "../foreign/soulgem.hpp"
-#include "../foreign/key.hpp"
-#include "../foreign/hair.hpp"
-#include "../foreign/eyes.hpp"
-#include "../foreign/creature.hpp"
-#include "../foreign/leveledcreature.hpp"
-#include "../foreign/landtexture.hpp"
+#include "../foreign/cellgroupcollection.hpp"
+#include "../foreign/cellrefcollection.hpp"
+#include "../foreign/cellref.hpp"
+#include "../foreign/cellchar.hpp"
 
 #include "idcollection.hpp"
 #include "nestedidcollection.hpp"
@@ -140,39 +143,40 @@ namespace CSMWorld
             CSMForeign::WorldCollection mForeignWorlds;
             CSMForeign::RegionCollection mForeignRegions;
             CSMForeign::CellCollection mForeignCells;
+            CSMForeign::CellGroupCollection mForeignCellGroups;
             CSMForeign::LandCollection mForeignLands;
-            CSMForeign::IdCollection<CSMForeign::LandTexture> mForeignLandTextures;
-            CSMForeign::IdCollection<CSMForeign::Static> mForeignStatics;
-            CSMForeign::IdCollection<CSMForeign::AnimObject> mForeignAnimObjs;
-            CSMForeign::IdCollection<CSMForeign::Container> mForeignContainers;
-            CSMForeign::IdCollection<CSMForeign::MiscItem> mForeignMiscItems;
-            CSMForeign::IdCollection<CSMForeign::Activator> mForeignActivators;
-            CSMForeign::IdCollection<CSMForeign::Armor> mForeignArmors;
-            CSMForeign::IdCollection<CSMForeign::Npc> mForeignNpcs;
-            CSMForeign::IdCollection<CSMForeign::Flora> mForeignFloras;
-            CSMForeign::IdCollection<CSMForeign::Grass> mForeignGrasses;
-            CSMForeign::IdCollection<CSMForeign::Tree> mForeignTrees;
-            CSMForeign::IdCollection<CSMForeign::Light> mForeignLights;
-            CSMForeign::IdCollection<CSMForeign::Book> mForeignBooks;
-            CSMForeign::IdCollection<CSMForeign::Furniture> mForeignFurnitures;
-            CSMForeign::IdCollection<CSMForeign::Sound> mForeignSounds;
-            CSMForeign::IdCollection<CSMForeign::Weapon> mForeignWeapons;
-            CSMForeign::IdCollection<CSMForeign::Door> mForeignDoors;
-            CSMForeign::IdCollection<CSMForeign::Ammo> mForeignAmmos;
-            CSMForeign::IdCollection<CSMForeign::Clothing> mForeignClothings;
-            CSMForeign::IdCollection<CSMForeign::Potion> mForeignPotions;
-            CSMForeign::IdCollection<CSMForeign::Apparatus> mForeignApparatuses;
-            CSMForeign::IdCollection<CSMForeign::Ingredient> mForeignIngredients;
-            CSMForeign::IdCollection<CSMForeign::SigilStone> mForeignSigilStones;
-            CSMForeign::IdCollection<CSMForeign::SoulGem> mForeignSoulGems;
-            CSMForeign::IdCollection<CSMForeign::Key> mForeignKeys;
-            CSMForeign::IdCollection<CSMForeign::Hair> mForeignHairs;
-            CSMForeign::IdCollection<CSMForeign::Eyes> mForeignEyesSet;
-            CSMForeign::IdCollection<CSMForeign::Creature> mForeignCreatures;
-            CSMForeign::IdCollection<CSMForeign::LeveledCreature> mForeignLvlCreatures;
+            CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::LandTexture> > mForeignLandTextures;
+            CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Static> > mForeignStatics;
+            CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::AnimObject> > mForeignAnimObjs;
+            CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Container> > mForeignContainers;
+            CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::MiscItem> > mForeignMiscItems;
+            CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Activator> > mForeignActivators;
+            CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Armor> > mForeignArmors;
+            CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Npc> > mForeignNpcs;
+            CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Flora> > mForeignFloras;
+            CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Grass> > mForeignGrasses;
+            CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Tree> > mForeignTrees;
+            CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Light> > mForeignLights;
+            CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Book> > mForeignBooks;
+            CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Furniture> > mForeignFurnitures;
+            CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Sound> > mForeignSounds;
+            CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Weapon> > mForeignWeapons;
+            CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Door> > mForeignDoors;
+            CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Ammo> > mForeignAmmos;
+            CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Clothing> > mForeignClothings;
+            CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Potion> > mForeignPotions;
+            CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Apparatus> > mForeignApparatuses;
+            CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Ingredient> > mForeignIngredients;
+            CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::SigilStone> > mForeignSigilStones;
+            CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::SoulGem> > mForeignSoulGems;
+            CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Key> > mForeignKeys;
+            CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Hair> > mForeignHairs;
+            CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Eyes> > mForeignEyesSet;
+            CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Creature> > mForeignCreatures;
+            CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::LeveledCreature> > mForeignLvlCreatures;
             //CSMForeign::RefIdCollection mForeignReferenceables;
-            CSMForeign::RefCollection mForeignRefs;
-            CSMForeign::CharCollection mForeignChars;
+            CSMForeign::CellRefCollection<CSMForeign::CellRef> mForeignRefs;
+            CSMForeign::CellRefCollection<CSMForeign::CellChar> mForeignChars;
             CSMForeign::NavigationCollection mNavigation;
             CSMForeign::NavMeshCollection mNavMesh;
             const ResourcesManager& mResourcesManager;
@@ -335,9 +339,9 @@ namespace CSMWorld
 
             CSMForeign::CellCollection& getForeignCells();
 
-            const CSMForeign::IdCollection<CSMForeign::LandTexture>& getForeignLandTextures() const;
+            const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::LandTexture> >& getForeignLandTextures() const;
 
-            CSMForeign::IdCollection<CSMForeign::LandTexture>& getForeignLandTextures();
+            CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::LandTexture> >& getForeignLandTextures();
 
             const CSMForeign::LandCollection& getForeignLands() const;
 
@@ -347,125 +351,129 @@ namespace CSMWorld
 
             //CSMForeign::RefIdCollection& getForeignReferenceables();
 
-            const CSMForeign::RefCollection& getForeignReferences() const;
+            const CSMForeign::CellGroupCollection& getForeignCellGroups() const;
 
-            CSMForeign::RefCollection& getForeignReferences();
+            CSMForeign::CellGroupCollection& getForeignCellGroups();
 
-            const CSMForeign::CharCollection& getForeignChars() const;
+            const CSMForeign::CellRefCollection<CSMForeign::CellRef>& getForeignReferences() const;
 
-            CSMForeign::CharCollection& getForeignChars();
+            CSMForeign::CellRefCollection<CSMForeign::CellRef>& getForeignReferences();
 
-            const CSMForeign::IdCollection<CSMForeign::Static>& getForeignStatics() const;
+            const CSMForeign::CellRefCollection<CSMForeign::CellChar>& getForeignChars() const;
 
-            CSMForeign::IdCollection<CSMForeign::Static>& getForeignStatics();
+            CSMForeign::CellRefCollection<CSMForeign::CellChar>& getForeignChars();
 
-            const CSMForeign::IdCollection<CSMForeign::AnimObject>& getForeignAnimObjs() const;
+            const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Static> >& getForeignStatics() const;
 
-            CSMForeign::IdCollection<CSMForeign::AnimObject>& getForeignAnimObjs();
+            CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Static> >& getForeignStatics();
 
-            const CSMForeign::IdCollection<CSMForeign::Container>& getForeignContainers() const;
+            const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::AnimObject> >& getForeignAnimObjs() const;
 
-            CSMForeign::IdCollection<CSMForeign::Container>& getForeignContainers();
+            CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::AnimObject> >& getForeignAnimObjs();
 
-            const CSMForeign::IdCollection<CSMForeign::MiscItem>& getForeignMiscItems() const;
+            const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Container> >& getForeignContainers() const;
 
-            CSMForeign::IdCollection<CSMForeign::MiscItem>& getForeignMiscItems();
+            CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Container> >& getForeignContainers();
 
-            const CSMForeign::IdCollection<CSMForeign::Activator>& getForeignActivators() const;
+            const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::MiscItem> >& getForeignMiscItems() const;
 
-            CSMForeign::IdCollection<CSMForeign::Activator>& getForeignActivators();
+            CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::MiscItem> >& getForeignMiscItems();
 
-            const CSMForeign::IdCollection<CSMForeign::Armor>& getForeignArmors() const;
+            const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Activator> >& getForeignActivators() const;
 
-            CSMForeign::IdCollection<CSMForeign::Armor>& getForeignArmors();
+            CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Activator> >& getForeignActivators();
 
-            const CSMForeign::IdCollection<CSMForeign::Npc>& getForeignNpcs() const;
+            const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Armor> >& getForeignArmors() const;
 
-            CSMForeign::IdCollection<CSMForeign::Npc>& getForeignNpcs();
+            CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Armor> >& getForeignArmors();
 
-            const CSMForeign::IdCollection<CSMForeign::Flora>& getForeignFloras() const;
+            const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Npc> >& getForeignNpcs() const;
 
-            CSMForeign::IdCollection<CSMForeign::Flora>& getForeignFloras();
+            CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Npc> >& getForeignNpcs();
 
-            const CSMForeign::IdCollection<CSMForeign::Grass>& getForeignGrasses() const;
+            const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Flora> >& getForeignFloras() const;
 
-            CSMForeign::IdCollection<CSMForeign::Grass>& getForeignGrasses();
+            CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Flora> >& getForeignFloras();
 
-            const CSMForeign::IdCollection<CSMForeign::Tree>& getForeignTrees() const;
+            const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Grass> >& getForeignGrasses() const;
 
-            CSMForeign::IdCollection<CSMForeign::Tree>& getForeignTrees();
+            CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Grass> >& getForeignGrasses();
 
-            const CSMForeign::IdCollection<CSMForeign::Light>& getForeignLights() const;
+            const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Tree> >& getForeignTrees() const;
 
-            CSMForeign::IdCollection<CSMForeign::Light>& getForeignLights();
+            CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Tree> >& getForeignTrees();
 
-            const CSMForeign::IdCollection<CSMForeign::Book>& getForeignBooks() const;
+            const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Light> >& getForeignLights() const;
 
-            CSMForeign::IdCollection<CSMForeign::Book>& getForeignBooks();
+            CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Light> >& getForeignLights();
 
-            const CSMForeign::IdCollection<CSMForeign::Furniture>& getForeignFurnitures() const;
+            const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Book> >& getForeignBooks() const;
 
-            CSMForeign::IdCollection<CSMForeign::Furniture>& getForeignFurnitures();
+            CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Book> >& getForeignBooks();
 
-            const CSMForeign::IdCollection<CSMForeign::Sound>& getForeignSounds() const;
+            const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Furniture> >& getForeignFurnitures() const;
 
-            CSMForeign::IdCollection<CSMForeign::Sound>& getForeignSounds();
+            CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Furniture> >& getForeignFurnitures();
 
-            const CSMForeign::IdCollection<CSMForeign::Weapon>& getForeignWeapons() const;
+            const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Sound> >& getForeignSounds() const;
 
-            CSMForeign::IdCollection<CSMForeign::Weapon>& getForeignWeapons();
+            CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Sound> >& getForeignSounds();
 
-            const CSMForeign::IdCollection<CSMForeign::Door>& getForeignDoors() const;
+            const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Weapon> >& getForeignWeapons() const;
 
-            CSMForeign::IdCollection<CSMForeign::Door>& getForeignDoors();
+            CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Weapon> >& getForeignWeapons();
 
-            const CSMForeign::IdCollection<CSMForeign::Ammo>& getForeignAmmos() const;
+            const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Door> >& getForeignDoors() const;
 
-            CSMForeign::IdCollection<CSMForeign::Ammo>& getForeignAmmos();
+            CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Door> >& getForeignDoors();
 
-            const CSMForeign::IdCollection<CSMForeign::Clothing>& getForeignClothings() const;
+            const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Ammo> >& getForeignAmmos() const;
 
-            CSMForeign::IdCollection<CSMForeign::Clothing>& getForeignClothings();
+            CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Ammo> >& getForeignAmmos();
 
-            const CSMForeign::IdCollection<CSMForeign::Potion>& getForeignPotions() const;
+            const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Clothing> >& getForeignClothings() const;
 
-            CSMForeign::IdCollection<CSMForeign::Potion>& getForeignPotions();
+            CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Clothing> >& getForeignClothings();
 
-            const CSMForeign::IdCollection<CSMForeign::Apparatus>& getForeignApparatuses() const;
+            const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Potion> >& getForeignPotions() const;
 
-            CSMForeign::IdCollection<CSMForeign::Apparatus>& getForeignApparatuses();
+            CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Potion> >& getForeignPotions();
 
-            const CSMForeign::IdCollection<CSMForeign::Ingredient>& getForeignIngredients() const;
+            const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Apparatus> >& getForeignApparatuses() const;
 
-            CSMForeign::IdCollection<CSMForeign::Ingredient>& getForeignIngredients();
+            CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Apparatus> >& getForeignApparatuses();
 
-            const CSMForeign::IdCollection<CSMForeign::SigilStone>& getForeignSigilStones() const;
+            const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Ingredient> >& getForeignIngredients() const;
 
-            CSMForeign::IdCollection<CSMForeign::SigilStone>& getForeignSigilStones();
+            CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Ingredient> >& getForeignIngredients();
 
-            const CSMForeign::IdCollection<CSMForeign::SoulGem>& getForeignSoulGems() const;
+            const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::SigilStone> >& getForeignSigilStones() const;
 
-            CSMForeign::IdCollection<CSMForeign::SoulGem>& getForeignSoulGems();
+            CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::SigilStone> >& getForeignSigilStones();
 
-            const CSMForeign::IdCollection<CSMForeign::Key>& getForeignKeys() const;
+            const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::SoulGem> >& getForeignSoulGems() const;
 
-            CSMForeign::IdCollection<CSMForeign::Key>& getForeignKeys();
+            CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::SoulGem> >& getForeignSoulGems();
 
-            const CSMForeign::IdCollection<CSMForeign::Hair>& getForeignHairs() const;
+            const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Key> >& getForeignKeys() const;
 
-            CSMForeign::IdCollection<CSMForeign::Hair>& getForeignHairs();
+            CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Key> >& getForeignKeys();
 
-            const CSMForeign::IdCollection<CSMForeign::Eyes>& getForeignEyesSet() const;
+            const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Hair> >& getForeignHairs() const;
 
-            CSMForeign::IdCollection<CSMForeign::Eyes>& getForeignEyesSet();
+            CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Hair> >& getForeignHairs();
 
-            const CSMForeign::IdCollection<CSMForeign::Creature>& getForeignCreatures() const;
+            const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Eyes> >& getForeignEyesSet() const;
 
-            CSMForeign::IdCollection<CSMForeign::Creature>& getForeignCreatures();
+            CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Eyes> >& getForeignEyesSet();
 
-            const CSMForeign::IdCollection<CSMForeign::LeveledCreature>& getForeignLvlCreatures() const;
+            const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Creature> >& getForeignCreatures() const;
 
-            CSMForeign::IdCollection<CSMForeign::LeveledCreature>& getForeignLvlCreatures();
+            CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Creature> >& getForeignCreatures();
+
+            const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::LeveledCreature> >& getForeignLvlCreatures() const;
+
+            CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::LeveledCreature> >& getForeignLvlCreatures();
 
             const CSMForeign::NavigationCollection& getNavigation() const;
 

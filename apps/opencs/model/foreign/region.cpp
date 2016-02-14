@@ -1,5 +1,6 @@
 #include "region.hpp"
 
+#include <extern/esm4/formid.hpp>
 #include <extern/esm4/reader.hpp>
 
 unsigned int CSMForeign::Region::sRecordId = ESM4::REC_REGN;

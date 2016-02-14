@@ -363,7 +363,7 @@ CSMForeign::RegionMap::RegionMap (CSMWorld::Data& data, const std::string& world
     buildRegions();
     buildMap();
 
-    QAbstractItemModel *regions = data.getTableModel (CSMWorld::UniversalId (CSMWorld::UniversalId::Type_Regions));
+    QAbstractItemModel *regions = data.getTableModel (CSMWorld::UniversalId (CSMWorld::UniversalId::Type_ForeignRegions));
 
     connect (regions, SIGNAL (rowsAboutToBeRemoved (const QModelIndex&, int, int)),
         this, SLOT (regionsAboutToBeRemoved (const QModelIndex&, int, int)));
@@ -372,7 +372,7 @@ CSMForeign::RegionMap::RegionMap (CSMWorld::Data& data, const std::string& world
     connect (regions, SIGNAL (dataChanged (const QModelIndex&, const QModelIndex&)),
         this, SLOT (regionsChanged (const QModelIndex&, const QModelIndex&)));
 
-    QAbstractItemModel *cells = data.getTableModel (CSMWorld::UniversalId (CSMWorld::UniversalId::Type_Cells));
+    QAbstractItemModel *cells = data.getTableModel (CSMWorld::UniversalId (CSMWorld::UniversalId::Type_ForeignCells));
 
     connect (cells, SIGNAL (rowsAboutToBeRemoved (const QModelIndex&, int, int)),
         this, SLOT (cellsAboutToBeRemoved (const QModelIndex&, int, int)));
@@ -500,6 +500,15 @@ QVariant CSMForeign::RegionMap::data (const QModelIndex& index, int role) const
         stream << "#" << cellIndex.getX() << " " << cellIndex.getY();
 
         return QString::fromUtf8 (stream.str().c_str());
+    }
+
+    if (role==CSMWorld::RegionMap::Role_CellFormId)
+    {
+        CSMWorld::CellCoordinates cellIndex = getIndex (index);
+        const CellCollection& cells = mData.getForeignCells();
+
+        // FIXME: maybe add cell's mFormId to CellDescription instead?
+        return QString::fromUtf8 (ESM4::formIdToString(cells.searchCoord(cellIndex.getX(), cellIndex.getY(), mWorld)).c_str());
     }
 
     if (role==CSMWorld::RegionMap::Role_WorldId)

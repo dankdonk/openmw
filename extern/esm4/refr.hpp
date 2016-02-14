@@ -53,10 +53,10 @@ namespace ESM4
         std::uint32_t mCount; // only if > 1 (default 1)
 
         Reference();
-        ~Reference();
+        virtual ~Reference();
 
-        void load(ESM4::Reader& reader);
-        //void save(ESM4::Writer& writer) const;
+        virtual void load(ESM4::Reader& reader);
+        //virtual void save(ESM4::Writer& writer) const;
 
         void blank();
     };

@@ -25,9 +25,10 @@
 #include <sstream>
 #include <algorithm>
 #include <stdexcept>
-#include <cstdlib> // strtol
 
 #include <libs/platform/strings.h>
+
+#include "formid.hpp"
 
 namespace ESM4
 {
@@ -73,7 +74,7 @@ namespace ESM4
             case ESM4::Grp_CellTemporaryChild:
             case ESM4::Grp_CellVisibleDistChild:
             {
-                ss << ": FormId 0x" << std::hex << label.value;
+                ss << ": FormId 0x" << formIdToString(label.value);
                 break;
             }
             default:
@@ -94,23 +95,6 @@ namespace ESM4
         return std::string((char*)typeName, 4);
     }
 
-    void formIdToString(FormId formId, std::string& str)
-    {
-        char buf[8+1];
-        int res = snprintf(buf, 8+1, "%08X", formId);
-        if (res > 0 && res < 8+1)
-            str.assign(buf);
-        else
-            throw std::runtime_error("Possible buffer overflow while converting formId");
-    }
-
-    std::string formIdToString(FormId formId)
-    {
-        std::string str;
-        formIdToString(formId, str);
-        return str;
-    }
-
     void gridToString(std::int16_t x, std::int16_t y, std::string& str)
     {
         char buf[6+6+2+1]; // longest signed 16 bit number is 6 characters (-32768)
@@ -119,31 +103,5 @@ namespace ESM4
             str.assign(buf);
         else
             throw std::runtime_error("possible buffer overflow while converting grid");
-    }
-
-    bool isFormId(const std::string& str, FormId *id)
-    {
-        if (str.size() != 8)
-            return false;
-
-        char *tmp;
-        errno = 0;
-        unsigned long val = strtol(str.c_str(), &tmp, 16);
-
-        if (tmp == str.c_str() || *tmp != '\0' || ((val == LONG_MIN || val == LONG_MAX) && errno == ERANGE))
-            return false;
-
-        if (id != nullptr)
-            *id = static_cast<FormId>(val);
-
-        return true;
-    }
-
-    FormId stringToFormId(const std::string& str)
-    {
-        if (str.size() != 8)
-            throw std::out_of_range("StringToFormId: incorrect string size");
-
-        return static_cast<FormId>(std::stoul(str, nullptr, 16));
     }
 }

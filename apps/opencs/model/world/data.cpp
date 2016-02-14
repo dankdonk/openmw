@@ -69,8 +69,8 @@ int CSMWorld::Data::count (RecordBase::State state, const CollectionBase& collec
 
 CSMWorld::Data::Data (ToUTF8::FromType encoding, const ResourcesManager& resourcesManager)
 : mEncoder (encoding), mPathgrids (mCells), mReferenceables(self()), mRefs (mCells),
-  mForeignCells(mForeignWorlds), mForeignLands(mForeignCells), mForeignRefs(mForeignCells),
-  mForeignChars(mForeignCells),
+  mForeignCells(mForeignWorlds, mForeignCellGroups), mForeignLands(mForeignCellGroups),
+  mForeignRefs(mForeignCellGroups), mForeignChars(mForeignCellGroups),
   mNavigation(mCells), mNavMesh(mCells),
   mResourcesManager (resourcesManager), mReader (0), mDialogue (0), mReaderIndex(0), mNpcAutoCalc (0)
 {
@@ -552,12 +552,12 @@ CSMWorld::Data::Data (ToUTF8::FromType encoding, const ResourcesManager& resourc
         ColumnBase::Flag_Table | ColumnBase::Flag_Dialogue | ColumnBase::Flag_Dialogue_Refresh));
 #endif
 
-    mForeignLandTextures.addColumn (new ForeignIdColumn<CSMForeign::LandTexture>);
-    mForeignLandTextures.addColumn (new RecordStateColumn<CSMForeign::LandTexture>);
+    mForeignLandTextures.addColumn (new ForeignIdColumn<CSMForeign::IdRecord<ESM4::LandTexture> >);
+    mForeignLandTextures.addColumn (new RecordStateColumn<CSMForeign::IdRecord<ESM4::LandTexture> >);
     mForeignLandTextures.addColumn (
-             new FixedRecordTypeColumn<CSMForeign::LandTexture> (UniversalId::Type_ForeignLandTexture));
-    mForeignLandTextures.addColumn (new EditorIdColumn<CSMForeign::LandTexture>);
-    mForeignLandTextures.addColumn (new TextureFileColumn<CSMForeign::LandTexture>);
+             new FixedRecordTypeColumn<CSMForeign::IdRecord<ESM4::LandTexture> >(UniversalId::Type_ForeignLandTexture));
+    mForeignLandTextures.addColumn (new EditorIdColumn<CSMForeign::IdRecord<ESM4::LandTexture> >);
+    mForeignLandTextures.addColumn (new TextureFileColumn<CSMForeign::IdRecord<ESM4::LandTexture> >);
 
     mForeignLands.addColumn (new ForeignIdColumn<CSMForeign::Land>);
     mForeignLands.addColumn (new RecordStateColumn<CSMForeign::Land>);
@@ -565,149 +565,149 @@ CSMWorld::Data::Data (ToUTF8::FromType encoding, const ResourcesManager& resourc
     mForeignLands.addColumn (new CellIdColumn<CSMForeign::Land>);
 
     // FIXME: delete once refidcollection is available
-    mForeignStatics.addColumn (new ForeignIdColumn<CSMForeign::Static>);
-    mForeignStatics.addColumn (new RecordStateColumn<CSMForeign::Static>);
-    mForeignStatics.addColumn (new FixedRecordTypeColumn<CSMForeign::Static> (UniversalId::Type_ForeignStatic));
-    mForeignStatics.addColumn (new ModelColumn<CSMForeign::Static>);
+    mForeignStatics.addColumn (new ForeignIdColumn<CSMForeign::IdRecord<ESM4::Static> >);
+    mForeignStatics.addColumn (new RecordStateColumn<CSMForeign::IdRecord<ESM4::Static> >);
+    mForeignStatics.addColumn (new FixedRecordTypeColumn<CSMForeign::IdRecord<ESM4::Static> >(UniversalId::Type_ForeignStatic));
+    mForeignStatics.addColumn (new ModelColumn<CSMForeign::IdRecord<ESM4::Static> >);
 
-    mForeignAnimObjs.addColumn (new ForeignIdColumn<CSMForeign::AnimObject>);
-    mForeignAnimObjs.addColumn (new RecordStateColumn<CSMForeign::AnimObject>);
-    mForeignAnimObjs.addColumn (new FixedRecordTypeColumn<CSMForeign::AnimObject> (UniversalId::Type_ForeignAnimObj));
-    mForeignAnimObjs.addColumn (new ModelColumn<CSMForeign::AnimObject>);
+    mForeignAnimObjs.addColumn (new ForeignIdColumn<CSMForeign::IdRecord<ESM4::AnimObject> >);
+    mForeignAnimObjs.addColumn (new RecordStateColumn<CSMForeign::IdRecord<ESM4::AnimObject> >);
+    mForeignAnimObjs.addColumn (new FixedRecordTypeColumn<CSMForeign::IdRecord<ESM4::AnimObject> >(UniversalId::Type_ForeignAnimObj));
+    mForeignAnimObjs.addColumn (new ModelColumn<CSMForeign::IdRecord<ESM4::AnimObject> >);
 
-    mForeignContainers.addColumn (new ForeignIdColumn<CSMForeign::Container>);
-    mForeignContainers.addColumn (new RecordStateColumn<CSMForeign::Container>);
-    mForeignContainers.addColumn (new FixedRecordTypeColumn<CSMForeign::Container> (UniversalId::Type_ForeignContainer));
-    mForeignContainers.addColumn (new FullNameColumn<CSMForeign::Container>);
-    mForeignContainers.addColumn (new ModelColumn<CSMForeign::Container>);
+    mForeignContainers.addColumn (new ForeignIdColumn<CSMForeign::IdRecord<ESM4::Container> >);
+    mForeignContainers.addColumn (new RecordStateColumn<CSMForeign::IdRecord<ESM4::Container> >);
+    mForeignContainers.addColumn (new FixedRecordTypeColumn<CSMForeign::IdRecord<ESM4::Container> >(UniversalId::Type_ForeignContainer));
+    mForeignContainers.addColumn (new FullNameColumn<CSMForeign::IdRecord<ESM4::Container> >);
+    mForeignContainers.addColumn (new ModelColumn<CSMForeign::IdRecord<ESM4::Container> >);
 
-    mForeignMiscItems.addColumn (new ForeignIdColumn<CSMForeign::MiscItem>);
-    mForeignMiscItems.addColumn (new RecordStateColumn<CSMForeign::MiscItem>);
-    mForeignMiscItems.addColumn (new FixedRecordTypeColumn<CSMForeign::MiscItem> (UniversalId::Type_ForeignMiscItem));
-    mForeignMiscItems.addColumn (new FullNameColumn<CSMForeign::MiscItem>);
-    mForeignMiscItems.addColumn (new ModelColumn<CSMForeign::MiscItem>);
+    mForeignMiscItems.addColumn (new ForeignIdColumn<CSMForeign::IdRecord<ESM4::MiscItem> >);
+    mForeignMiscItems.addColumn (new RecordStateColumn<CSMForeign::IdRecord<ESM4::MiscItem> >);
+    mForeignMiscItems.addColumn (new FixedRecordTypeColumn<CSMForeign::IdRecord<ESM4::MiscItem> >(UniversalId::Type_ForeignMiscItem));
+    mForeignMiscItems.addColumn (new FullNameColumn<CSMForeign::IdRecord<ESM4::MiscItem> >);
+    mForeignMiscItems.addColumn (new ModelColumn<CSMForeign::IdRecord<ESM4::MiscItem> >);
 
-    mForeignActivators.addColumn (new ForeignIdColumn<CSMForeign::Activator>);
-    mForeignActivators.addColumn (new RecordStateColumn<CSMForeign::Activator>);
-    mForeignActivators.addColumn (new FixedRecordTypeColumn<CSMForeign::Activator> (UniversalId::Type_ForeignActivator));
-    mForeignActivators.addColumn (new FullNameColumn<CSMForeign::Activator>);
-    mForeignActivators.addColumn (new ModelColumn<CSMForeign::Activator>);
+    mForeignActivators.addColumn (new ForeignIdColumn<CSMForeign::IdRecord<ESM4::Activator> >);
+    mForeignActivators.addColumn (new RecordStateColumn<CSMForeign::IdRecord<ESM4::Activator> >);
+    mForeignActivators.addColumn (new FixedRecordTypeColumn<CSMForeign::IdRecord<ESM4::Activator> >(UniversalId::Type_ForeignActivator));
+    mForeignActivators.addColumn (new FullNameColumn<CSMForeign::IdRecord<ESM4::Activator> >);
+    mForeignActivators.addColumn (new ModelColumn<CSMForeign::IdRecord<ESM4::Activator> >);
 
-    mForeignArmors.addColumn (new ForeignIdColumn<CSMForeign::Armor>);
-    mForeignArmors.addColumn (new RecordStateColumn<CSMForeign::Armor>);
-    mForeignArmors.addColumn (new FixedRecordTypeColumn<CSMForeign::Armor> (UniversalId::Type_ForeignArmor));
-    mForeignArmors.addColumn (new FullNameColumn<CSMForeign::Armor>);
-    mForeignArmors.addColumn (new ModelColumn<CSMForeign::Armor>);
+    mForeignArmors.addColumn (new ForeignIdColumn<CSMForeign::IdRecord<ESM4::Armor> >);
+    mForeignArmors.addColumn (new RecordStateColumn<CSMForeign::IdRecord<ESM4::Armor> >);
+    mForeignArmors.addColumn (new FixedRecordTypeColumn<CSMForeign::IdRecord<ESM4::Armor> >(UniversalId::Type_ForeignArmor));
+    mForeignArmors.addColumn (new FullNameColumn<CSMForeign::IdRecord<ESM4::Armor> >);
+    mForeignArmors.addColumn (new ModelColumn<CSMForeign::IdRecord<ESM4::Armor> >);
 
-    mForeignNpcs.addColumn (new ForeignIdColumn<CSMForeign::Npc>);
-    mForeignNpcs.addColumn (new RecordStateColumn<CSMForeign::Npc>);
-    mForeignNpcs.addColumn (new FixedRecordTypeColumn<CSMForeign::Npc> (UniversalId::Type_ForeignNpc));
-    mForeignNpcs.addColumn (new FullNameColumn<CSMForeign::Npc>);
-    mForeignNpcs.addColumn (new ModelColumn<CSMForeign::Npc>);
+    mForeignNpcs.addColumn (new ForeignIdColumn<CSMForeign::IdRecord<ESM4::Npc> >);
+    mForeignNpcs.addColumn (new RecordStateColumn<CSMForeign::IdRecord<ESM4::Npc> >);
+    mForeignNpcs.addColumn (new FixedRecordTypeColumn<CSMForeign::IdRecord<ESM4::Npc> >(UniversalId::Type_ForeignNpc));
+    mForeignNpcs.addColumn (new FullNameColumn<CSMForeign::IdRecord<ESM4::Npc> >);
+    mForeignNpcs.addColumn (new ModelColumn<CSMForeign::IdRecord<ESM4::Npc> >);
 
-    mForeignFloras.addColumn (new ForeignIdColumn<CSMForeign::Flora>);
-    mForeignFloras.addColumn (new RecordStateColumn<CSMForeign::Flora>);
-    mForeignFloras.addColumn (new FixedRecordTypeColumn<CSMForeign::Flora> (UniversalId::Type_ForeignFloras));
-    mForeignFloras.addColumn (new FullNameColumn<CSMForeign::Flora>);
-    mForeignFloras.addColumn (new ModelColumn<CSMForeign::Flora>);
+    mForeignFloras.addColumn (new ForeignIdColumn<CSMForeign::IdRecord<ESM4::Flora> >);
+    mForeignFloras.addColumn (new RecordStateColumn<CSMForeign::IdRecord<ESM4::Flora> >);
+    mForeignFloras.addColumn (new FixedRecordTypeColumn<CSMForeign::IdRecord<ESM4::Flora> >(UniversalId::Type_ForeignFloras));
+    mForeignFloras.addColumn (new FullNameColumn<CSMForeign::IdRecord<ESM4::Flora> >);
+    mForeignFloras.addColumn (new ModelColumn<CSMForeign::IdRecord<ESM4::Flora> >);
 
-    mForeignGrasses.addColumn (new ForeignIdColumn<CSMForeign::Grass>);
-    mForeignGrasses.addColumn (new RecordStateColumn<CSMForeign::Grass>);
-    mForeignGrasses.addColumn (new FixedRecordTypeColumn<CSMForeign::Grass> (UniversalId::Type_ForeignGrasses));
-    mForeignGrasses.addColumn (new ModelColumn<CSMForeign::Grass>);
+    mForeignGrasses.addColumn (new ForeignIdColumn<CSMForeign::IdRecord<ESM4::Grass> >);
+    mForeignGrasses.addColumn (new RecordStateColumn<CSMForeign::IdRecord<ESM4::Grass> >);
+    mForeignGrasses.addColumn (new FixedRecordTypeColumn<CSMForeign::IdRecord<ESM4::Grass> >(UniversalId::Type_ForeignGrasses));
+    mForeignGrasses.addColumn (new ModelColumn<CSMForeign::IdRecord<ESM4::Grass> >);
 
-    mForeignTrees.addColumn (new ForeignIdColumn<CSMForeign::Tree>);
-    mForeignTrees.addColumn (new RecordStateColumn<CSMForeign::Tree>);
-    mForeignTrees.addColumn (new FixedRecordTypeColumn<CSMForeign::Tree> (UniversalId::Type_ForeignTrees));
-    mForeignTrees.addColumn (new ModelColumn<CSMForeign::Tree>);
+    mForeignTrees.addColumn (new ForeignIdColumn<CSMForeign::IdRecord<ESM4::Tree> >);
+    mForeignTrees.addColumn (new RecordStateColumn<CSMForeign::IdRecord<ESM4::Tree> >);
+    mForeignTrees.addColumn (new FixedRecordTypeColumn<CSMForeign::IdRecord<ESM4::Tree> >(UniversalId::Type_ForeignTrees));
+    mForeignTrees.addColumn (new ModelColumn<CSMForeign::IdRecord<ESM4::Tree> >);
 
-    mForeignLights.addColumn (new ForeignIdColumn<CSMForeign::Light>);
-    mForeignLights.addColumn (new RecordStateColumn<CSMForeign::Light>);
-    mForeignLights.addColumn (new FixedRecordTypeColumn<CSMForeign::Light> (UniversalId::Type_ForeignLights));
-    mForeignLights.addColumn (new ModelColumn<CSMForeign::Light>);
+    mForeignLights.addColumn (new ForeignIdColumn<CSMForeign::IdRecord<ESM4::Light> >);
+    mForeignLights.addColumn (new RecordStateColumn<CSMForeign::IdRecord<ESM4::Light> >);
+    mForeignLights.addColumn (new FixedRecordTypeColumn<CSMForeign::IdRecord<ESM4::Light> >(UniversalId::Type_ForeignLights));
+    mForeignLights.addColumn (new ModelColumn<CSMForeign::IdRecord<ESM4::Light> >);
 
-    mForeignBooks.addColumn (new ForeignIdColumn<CSMForeign::Book>);
-    mForeignBooks.addColumn (new RecordStateColumn<CSMForeign::Book>);
-    mForeignBooks.addColumn (new FixedRecordTypeColumn<CSMForeign::Book> (UniversalId::Type_ForeignBooks));
-    mForeignBooks.addColumn (new ModelColumn<CSMForeign::Book>);
+    mForeignBooks.addColumn (new ForeignIdColumn<CSMForeign::IdRecord<ESM4::Book> >);
+    mForeignBooks.addColumn (new RecordStateColumn<CSMForeign::IdRecord<ESM4::Book> >);
+    mForeignBooks.addColumn (new FixedRecordTypeColumn<CSMForeign::IdRecord<ESM4::Book> >(UniversalId::Type_ForeignBooks));
+    mForeignBooks.addColumn (new ModelColumn<CSMForeign::IdRecord<ESM4::Book> >);
 
-    mForeignFurnitures.addColumn (new ForeignIdColumn<CSMForeign::Furniture>);
-    mForeignFurnitures.addColumn (new RecordStateColumn<CSMForeign::Furniture>);
-    mForeignFurnitures.addColumn (new FixedRecordTypeColumn<CSMForeign::Furniture> (UniversalId::Type_ForeignFurnitures));
-    mForeignFurnitures.addColumn (new ModelColumn<CSMForeign::Furniture>);
+    mForeignFurnitures.addColumn (new ForeignIdColumn<CSMForeign::IdRecord<ESM4::Furniture> >);
+    mForeignFurnitures.addColumn (new RecordStateColumn<CSMForeign::IdRecord<ESM4::Furniture> >);
+    mForeignFurnitures.addColumn (new FixedRecordTypeColumn<CSMForeign::IdRecord<ESM4::Furniture> >(UniversalId::Type_ForeignFurnitures));
+    mForeignFurnitures.addColumn (new ModelColumn<CSMForeign::IdRecord<ESM4::Furniture> >);
 
-    mForeignSounds.addColumn (new ForeignIdColumn<CSMForeign::Sound>);
-    mForeignSounds.addColumn (new RecordStateColumn<CSMForeign::Sound>);
-    mForeignSounds.addColumn (new FixedRecordTypeColumn<CSMForeign::Sound> (UniversalId::Type_ForeignSounds));
+    mForeignSounds.addColumn (new ForeignIdColumn<CSMForeign::IdRecord<ESM4::Sound> >);
+    mForeignSounds.addColumn (new RecordStateColumn<CSMForeign::IdRecord<ESM4::Sound> >);
+    mForeignSounds.addColumn (new FixedRecordTypeColumn<CSMForeign::IdRecord<ESM4::Sound> >(UniversalId::Type_ForeignSounds));
 
-    mForeignWeapons.addColumn (new ForeignIdColumn<CSMForeign::Weapon>);
-    mForeignWeapons.addColumn (new RecordStateColumn<CSMForeign::Weapon>);
-    mForeignWeapons.addColumn (new FixedRecordTypeColumn<CSMForeign::Weapon> (UniversalId::Type_ForeignWeapons));
-    mForeignWeapons.addColumn (new ModelColumn<CSMForeign::Weapon>);
+    mForeignWeapons.addColumn (new ForeignIdColumn<CSMForeign::IdRecord<ESM4::Weapon> >);
+    mForeignWeapons.addColumn (new RecordStateColumn<CSMForeign::IdRecord<ESM4::Weapon> >);
+    mForeignWeapons.addColumn (new FixedRecordTypeColumn<CSMForeign::IdRecord<ESM4::Weapon> >(UniversalId::Type_ForeignWeapons));
+    mForeignWeapons.addColumn (new ModelColumn<CSMForeign::IdRecord<ESM4::Weapon> >);
 
-    mForeignDoors.addColumn (new ForeignIdColumn<CSMForeign::Door>);
-    mForeignDoors.addColumn (new RecordStateColumn<CSMForeign::Door>);
-    mForeignDoors.addColumn (new FixedRecordTypeColumn<CSMForeign::Door> (UniversalId::Type_ForeignDoors));
-    mForeignDoors.addColumn (new ModelColumn<CSMForeign::Door>);
+    mForeignDoors.addColumn (new ForeignIdColumn<CSMForeign::IdRecord<ESM4::Door> >);
+    mForeignDoors.addColumn (new RecordStateColumn<CSMForeign::IdRecord<ESM4::Door> >);
+    mForeignDoors.addColumn (new FixedRecordTypeColumn<CSMForeign::IdRecord<ESM4::Door> >(UniversalId::Type_ForeignDoors));
+    mForeignDoors.addColumn (new ModelColumn<CSMForeign::IdRecord<ESM4::Door> >);
 
-    mForeignAmmos.addColumn (new ForeignIdColumn<CSMForeign::Ammo>);
-    mForeignAmmos.addColumn (new RecordStateColumn<CSMForeign::Ammo>);
-    mForeignAmmos.addColumn (new FixedRecordTypeColumn<CSMForeign::Ammo> (UniversalId::Type_ForeignAmmos));
-    mForeignAmmos.addColumn (new ModelColumn<CSMForeign::Ammo>);
+    mForeignAmmos.addColumn (new ForeignIdColumn<CSMForeign::IdRecord<ESM4::Ammo> >);
+    mForeignAmmos.addColumn (new RecordStateColumn<CSMForeign::IdRecord<ESM4::Ammo> >);
+    mForeignAmmos.addColumn (new FixedRecordTypeColumn<CSMForeign::IdRecord<ESM4::Ammo> >(UniversalId::Type_ForeignAmmos));
+    mForeignAmmos.addColumn (new ModelColumn<CSMForeign::IdRecord<ESM4::Ammo> >);
 
-    mForeignClothings.addColumn (new ForeignIdColumn<CSMForeign::Clothing>);
-    mForeignClothings.addColumn (new RecordStateColumn<CSMForeign::Clothing>);
-    mForeignClothings.addColumn (new FixedRecordTypeColumn<CSMForeign::Clothing> (UniversalId::Type_ForeignClothings));
-    mForeignClothings.addColumn (new ModelColumn<CSMForeign::Clothing>);
+    mForeignClothings.addColumn (new ForeignIdColumn<CSMForeign::IdRecord<ESM4::Clothing> >);
+    mForeignClothings.addColumn (new RecordStateColumn<CSMForeign::IdRecord<ESM4::Clothing> >);
+    mForeignClothings.addColumn (new FixedRecordTypeColumn<CSMForeign::IdRecord<ESM4::Clothing> >(UniversalId::Type_ForeignClothings));
+    mForeignClothings.addColumn (new ModelColumn<CSMForeign::IdRecord<ESM4::Clothing> >);
 
-    mForeignPotions.addColumn (new ForeignIdColumn<CSMForeign::Potion>);
-    mForeignPotions.addColumn (new RecordStateColumn<CSMForeign::Potion>);
-    mForeignPotions.addColumn (new FixedRecordTypeColumn<CSMForeign::Potion> (UniversalId::Type_ForeignPotions));
-    mForeignPotions.addColumn (new ModelColumn<CSMForeign::Potion>);
+    mForeignPotions.addColumn (new ForeignIdColumn<CSMForeign::IdRecord<ESM4::Potion> >);
+    mForeignPotions.addColumn (new RecordStateColumn<CSMForeign::IdRecord<ESM4::Potion> >);
+    mForeignPotions.addColumn (new FixedRecordTypeColumn<CSMForeign::IdRecord<ESM4::Potion> >(UniversalId::Type_ForeignPotions));
+    mForeignPotions.addColumn (new ModelColumn<CSMForeign::IdRecord<ESM4::Potion> >);
 
-    mForeignApparatuses.addColumn (new ForeignIdColumn<CSMForeign::Apparatus>);
-    mForeignApparatuses.addColumn (new RecordStateColumn<CSMForeign::Apparatus>);
-    mForeignApparatuses.addColumn (new FixedRecordTypeColumn<CSMForeign::Apparatus> (UniversalId::Type_ForeignApparatuses));
-    mForeignApparatuses.addColumn (new ModelColumn<CSMForeign::Apparatus>);
+    mForeignApparatuses.addColumn (new ForeignIdColumn<CSMForeign::IdRecord<ESM4::Apparatus> >);
+    mForeignApparatuses.addColumn (new RecordStateColumn<CSMForeign::IdRecord<ESM4::Apparatus> >);
+    mForeignApparatuses.addColumn (new FixedRecordTypeColumn<CSMForeign::IdRecord<ESM4::Apparatus> >(UniversalId::Type_ForeignApparatuses));
+    mForeignApparatuses.addColumn (new ModelColumn<CSMForeign::IdRecord<ESM4::Apparatus> >);
 
-    mForeignIngredients.addColumn (new ForeignIdColumn<CSMForeign::Ingredient>);
-    mForeignIngredients.addColumn (new RecordStateColumn<CSMForeign::Ingredient>);
-    mForeignIngredients.addColumn (new FixedRecordTypeColumn<CSMForeign::Ingredient> (UniversalId::Type_ForeignIngredients));
-    mForeignIngredients.addColumn (new ModelColumn<CSMForeign::Ingredient>);
+    mForeignIngredients.addColumn (new ForeignIdColumn<CSMForeign::IdRecord<ESM4::Ingredient> >);
+    mForeignIngredients.addColumn (new RecordStateColumn<CSMForeign::IdRecord<ESM4::Ingredient> >);
+    mForeignIngredients.addColumn (new FixedRecordTypeColumn<CSMForeign::IdRecord<ESM4::Ingredient> >(UniversalId::Type_ForeignIngredients));
+    mForeignIngredients.addColumn (new ModelColumn<CSMForeign::IdRecord<ESM4::Ingredient> >);
 
-    mForeignSigilStones.addColumn (new ForeignIdColumn<CSMForeign::SigilStone>);
-    mForeignSigilStones.addColumn (new RecordStateColumn<CSMForeign::SigilStone>);
-    mForeignSigilStones.addColumn (new FixedRecordTypeColumn<CSMForeign::SigilStone> (UniversalId::Type_ForeignSigilStones));
-    mForeignSigilStones.addColumn (new ModelColumn<CSMForeign::SigilStone>);
+    mForeignSigilStones.addColumn (new ForeignIdColumn<CSMForeign::IdRecord<ESM4::SigilStone> >);
+    mForeignSigilStones.addColumn (new RecordStateColumn<CSMForeign::IdRecord<ESM4::SigilStone> >);
+    mForeignSigilStones.addColumn (new FixedRecordTypeColumn<CSMForeign::IdRecord<ESM4::SigilStone> >(UniversalId::Type_ForeignSigilStones));
+    mForeignSigilStones.addColumn (new ModelColumn<CSMForeign::IdRecord<ESM4::SigilStone> >);
 
-    mForeignSoulGems.addColumn (new ForeignIdColumn<CSMForeign::SoulGem>);
-    mForeignSoulGems.addColumn (new RecordStateColumn<CSMForeign::SoulGem>);
-    mForeignSoulGems.addColumn (new FixedRecordTypeColumn<CSMForeign::SoulGem> (UniversalId::Type_ForeignSoulGems));
-    mForeignSoulGems.addColumn (new ModelColumn<CSMForeign::SoulGem>);
+    mForeignSoulGems.addColumn (new ForeignIdColumn<CSMForeign::IdRecord<ESM4::SoulGem> >);
+    mForeignSoulGems.addColumn (new RecordStateColumn<CSMForeign::IdRecord<ESM4::SoulGem> >);
+    mForeignSoulGems.addColumn (new FixedRecordTypeColumn<CSMForeign::IdRecord<ESM4::SoulGem> >(UniversalId::Type_ForeignSoulGems));
+    mForeignSoulGems.addColumn (new ModelColumn<CSMForeign::IdRecord<ESM4::SoulGem> >);
 
-    mForeignKeys.addColumn (new ForeignIdColumn<CSMForeign::Key>);
-    mForeignKeys.addColumn (new RecordStateColumn<CSMForeign::Key>);
-    mForeignKeys.addColumn (new FixedRecordTypeColumn<CSMForeign::Key> (UniversalId::Type_ForeignKeys));
-    mForeignKeys.addColumn (new ModelColumn<CSMForeign::Key>);
+    mForeignKeys.addColumn (new ForeignIdColumn<CSMForeign::IdRecord<ESM4::Key> >);
+    mForeignKeys.addColumn (new RecordStateColumn<CSMForeign::IdRecord<ESM4::Key> >);
+    mForeignKeys.addColumn (new FixedRecordTypeColumn<CSMForeign::IdRecord<ESM4::Key> >(UniversalId::Type_ForeignKeys));
+    mForeignKeys.addColumn (new ModelColumn<CSMForeign::IdRecord<ESM4::Key> >);
 
-    mForeignHairs.addColumn (new ForeignIdColumn<CSMForeign::Hair>);
-    mForeignHairs.addColumn (new RecordStateColumn<CSMForeign::Hair>);
-    mForeignHairs.addColumn (new FixedRecordTypeColumn<CSMForeign::Hair> (UniversalId::Type_ForeignHairs));
-    mForeignHairs.addColumn (new ModelColumn<CSMForeign::Hair>);
+    mForeignHairs.addColumn (new ForeignIdColumn<CSMForeign::IdRecord<ESM4::Hair> >);
+    mForeignHairs.addColumn (new RecordStateColumn<CSMForeign::IdRecord<ESM4::Hair> >);
+    mForeignHairs.addColumn (new FixedRecordTypeColumn<CSMForeign::IdRecord<ESM4::Hair> >(UniversalId::Type_ForeignHairs));
+    mForeignHairs.addColumn (new ModelColumn<CSMForeign::IdRecord<ESM4::Hair> >);
 
-    mForeignEyesSet.addColumn (new ForeignIdColumn<CSMForeign::Eyes>);
-    mForeignEyesSet.addColumn (new RecordStateColumn<CSMForeign::Eyes>);
-    mForeignEyesSet.addColumn (new FixedRecordTypeColumn<CSMForeign::Eyes> (UniversalId::Type_ForeignEyesSet));
-    //mForeignEyesSet.addColumn (new ModelColumn<CSMForeign::Eyes>);
+    mForeignEyesSet.addColumn (new ForeignIdColumn<CSMForeign::IdRecord<ESM4::Eyes> >);
+    mForeignEyesSet.addColumn (new RecordStateColumn<CSMForeign::IdRecord<ESM4::Eyes> >);
+    mForeignEyesSet.addColumn (new FixedRecordTypeColumn<CSMForeign::IdRecord<ESM4::Eyes> >(UniversalId::Type_ForeignEyesSet));
+    //mForeignEyesSet.addColumn (new ModelColumn<CSMForeign::IdRecord<ESM4::Eyes> >);
 
-    mForeignCreatures.addColumn (new ForeignIdColumn<CSMForeign::Creature>);
-    mForeignCreatures.addColumn (new RecordStateColumn<CSMForeign::Creature>);
-    mForeignCreatures.addColumn (new FixedRecordTypeColumn<CSMForeign::Creature> (UniversalId::Type_ForeignCreatures));
-    mForeignCreatures.addColumn (new ModelColumn<CSMForeign::Creature>);
+    mForeignCreatures.addColumn (new ForeignIdColumn<CSMForeign::IdRecord<ESM4::Creature> >);
+    mForeignCreatures.addColumn (new RecordStateColumn<CSMForeign::IdRecord<ESM4::Creature> >);
+    mForeignCreatures.addColumn (new FixedRecordTypeColumn<CSMForeign::IdRecord<ESM4::Creature> >(UniversalId::Type_ForeignCreatures));
+    mForeignCreatures.addColumn (new ModelColumn<CSMForeign::IdRecord<ESM4::Creature> >);
 
-    mForeignLvlCreatures.addColumn (new ForeignIdColumn<CSMForeign::LeveledCreature>);
-    mForeignLvlCreatures.addColumn (new RecordStateColumn<CSMForeign::LeveledCreature>);
-    mForeignLvlCreatures.addColumn (new FixedRecordTypeColumn<CSMForeign::LeveledCreature> (UniversalId::Type_ForeignLvlCreatures));
+    mForeignLvlCreatures.addColumn (new ForeignIdColumn<CSMForeign::IdRecord<ESM4::LeveledCreature> >);
+    mForeignLvlCreatures.addColumn (new RecordStateColumn<CSMForeign::IdRecord<ESM4::LeveledCreature> >);
+    mForeignLvlCreatures.addColumn (new FixedRecordTypeColumn<CSMForeign::IdRecord<ESM4::LeveledCreature> >(UniversalId::Type_ForeignLvlCreatures));
 
     mForeignRefs.addColumn (new ForeignIdColumn<CSMForeign::CellRef>/*(true)*/);
     mForeignRefs.addColumn (new RecordStateColumn<CSMForeign::CellRef>);
@@ -1200,12 +1200,12 @@ CSMForeign::CellCollection& CSMWorld::Data::getForeignCells()
     return mForeignCells;
 }
 
-const CSMForeign::IdCollection<CSMForeign::LandTexture>& CSMWorld::Data::getForeignLandTextures() const
+const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::LandTexture> >& CSMWorld::Data::getForeignLandTextures() const
 {
     return mForeignLandTextures;
 }
 
-CSMForeign::IdCollection<CSMForeign::LandTexture>& CSMWorld::Data::getForeignLandTextures()
+CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::LandTexture> >& CSMWorld::Data::getForeignLandTextures()
 {
     return mForeignLandTextures;
 }
@@ -1220,302 +1220,312 @@ CSMForeign::LandCollection& CSMWorld::Data::getForeignLands()
     return mForeignLands;
 }
 
-const CSMForeign::RefCollection& CSMWorld::Data::getForeignReferences() const
+const CSMForeign::CellGroupCollection& CSMWorld::Data::getForeignCellGroups() const
+{
+    return mForeignCellGroups;
+}
+
+CSMForeign::CellGroupCollection& CSMWorld::Data::getForeignCellGroups()
+{
+    return mForeignCellGroups;
+}
+
+const CSMForeign::CellRefCollection<CSMForeign::CellRef>& CSMWorld::Data::getForeignReferences() const
 {
     return mForeignRefs;
 }
 
-CSMForeign::RefCollection& CSMWorld::Data::getForeignReferences()
+CSMForeign::CellRefCollection<CSMForeign::CellRef>& CSMWorld::Data::getForeignReferences()
 {
     return mForeignRefs;
 }
 
-const CSMForeign::CharCollection& CSMWorld::Data::getForeignChars() const
+const CSMForeign::CellRefCollection<CSMForeign::CellChar>& CSMWorld::Data::getForeignChars() const
 {
     return mForeignChars;
 }
 
-CSMForeign::CharCollection& CSMWorld::Data::getForeignChars()
+CSMForeign::CellRefCollection<CSMForeign::CellChar>& CSMWorld::Data::getForeignChars()
 {
     return mForeignChars;
 }
 
-const CSMForeign::IdCollection<CSMForeign::Static>& CSMWorld::Data::getForeignStatics() const
+const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Static> >& CSMWorld::Data::getForeignStatics() const
 {
     return mForeignStatics;
 }
 
-CSMForeign::IdCollection<CSMForeign::Static>& CSMWorld::Data::getForeignStatics()
+CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Static> >& CSMWorld::Data::getForeignStatics()
 {
     return mForeignStatics;
 }
 
-const CSMForeign::IdCollection<CSMForeign::AnimObject>& CSMWorld::Data::getForeignAnimObjs() const
+const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::AnimObject> >& CSMWorld::Data::getForeignAnimObjs() const
 {
     return mForeignAnimObjs;
 }
 
-CSMForeign::IdCollection<CSMForeign::AnimObject>& CSMWorld::Data::getForeignAnimObjs()
+CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::AnimObject> >& CSMWorld::Data::getForeignAnimObjs()
 {
     return mForeignAnimObjs;
 }
 
-const CSMForeign::IdCollection<CSMForeign::Container>& CSMWorld::Data::getForeignContainers() const
+const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Container> >& CSMWorld::Data::getForeignContainers() const
 {
     return mForeignContainers;
 }
 
-CSMForeign::IdCollection<CSMForeign::Container>& CSMWorld::Data::getForeignContainers()
+CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Container> >& CSMWorld::Data::getForeignContainers()
 {
     return mForeignContainers;
 }
 
-const CSMForeign::IdCollection<CSMForeign::MiscItem>& CSMWorld::Data::getForeignMiscItems() const
+const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::MiscItem> >& CSMWorld::Data::getForeignMiscItems() const
 {
     return mForeignMiscItems;
 }
 
-CSMForeign::IdCollection<CSMForeign::MiscItem>& CSMWorld::Data::getForeignMiscItems()
+CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::MiscItem> >& CSMWorld::Data::getForeignMiscItems()
 {
     return mForeignMiscItems;
 }
 
-const CSMForeign::IdCollection<CSMForeign::Activator>& CSMWorld::Data::getForeignActivators() const
+const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Activator> >& CSMWorld::Data::getForeignActivators() const
 {
     return mForeignActivators;
 }
 
-CSMForeign::IdCollection<CSMForeign::Activator>& CSMWorld::Data::getForeignActivators()
+CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Activator> >& CSMWorld::Data::getForeignActivators()
 {
     return mForeignActivators;
 }
 
-const CSMForeign::IdCollection<CSMForeign::Armor>& CSMWorld::Data::getForeignArmors() const
+const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Armor> >& CSMWorld::Data::getForeignArmors() const
 {
     return mForeignArmors;
 }
 
-CSMForeign::IdCollection<CSMForeign::Armor>& CSMWorld::Data::getForeignArmors()
+CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Armor> >& CSMWorld::Data::getForeignArmors()
 {
     return mForeignArmors;
 }
 
-const CSMForeign::IdCollection<CSMForeign::Npc>& CSMWorld::Data::getForeignNpcs() const
+const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Npc> >& CSMWorld::Data::getForeignNpcs() const
 {
     return mForeignNpcs;
 }
 
-CSMForeign::IdCollection<CSMForeign::Npc>& CSMWorld::Data::getForeignNpcs()
+CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Npc> >& CSMWorld::Data::getForeignNpcs()
 {
     return mForeignNpcs;
 }
 
-const CSMForeign::IdCollection<CSMForeign::Flora>& CSMWorld::Data::getForeignFloras() const
+const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Flora> >& CSMWorld::Data::getForeignFloras() const
 {
     return mForeignFloras;
 }
 
-CSMForeign::IdCollection<CSMForeign::Flora>& CSMWorld::Data::getForeignFloras()
+CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Flora> >& CSMWorld::Data::getForeignFloras()
 {
     return mForeignFloras;
 }
 
-const CSMForeign::IdCollection<CSMForeign::Grass>& CSMWorld::Data::getForeignGrasses() const
+const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Grass> >& CSMWorld::Data::getForeignGrasses() const
 {
     return mForeignGrasses;
 }
 
-CSMForeign::IdCollection<CSMForeign::Grass>& CSMWorld::Data::getForeignGrasses()
+CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Grass> >& CSMWorld::Data::getForeignGrasses()
 {
     return mForeignGrasses;
 }
 
-const CSMForeign::IdCollection<CSMForeign::Tree>& CSMWorld::Data::getForeignTrees() const
+const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Tree> >& CSMWorld::Data::getForeignTrees() const
 {
     return mForeignTrees;
 }
 
-CSMForeign::IdCollection<CSMForeign::Tree>& CSMWorld::Data::getForeignTrees()
+CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Tree> >& CSMWorld::Data::getForeignTrees()
 {
     return mForeignTrees;
 }
 
-const CSMForeign::IdCollection<CSMForeign::Light>& CSMWorld::Data::getForeignLights() const
+const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Light> >& CSMWorld::Data::getForeignLights() const
 {
     return mForeignLights;
 }
 
-CSMForeign::IdCollection<CSMForeign::Light>& CSMWorld::Data::getForeignLights()
+CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Light> >& CSMWorld::Data::getForeignLights()
 {
     return mForeignLights;
 }
 
-const CSMForeign::IdCollection<CSMForeign::Book>& CSMWorld::Data::getForeignBooks() const
+const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Book> >& CSMWorld::Data::getForeignBooks() const
 {
     return mForeignBooks;
 }
 
-CSMForeign::IdCollection<CSMForeign::Book>& CSMWorld::Data::getForeignBooks()
+CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Book> >& CSMWorld::Data::getForeignBooks()
 {
     return mForeignBooks;
 }
 
-const CSMForeign::IdCollection<CSMForeign::Furniture>& CSMWorld::Data::getForeignFurnitures() const
+const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Furniture> >& CSMWorld::Data::getForeignFurnitures() const
 {
     return mForeignFurnitures;
 }
 
-CSMForeign::IdCollection<CSMForeign::Furniture>& CSMWorld::Data::getForeignFurnitures()
+CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Furniture> >& CSMWorld::Data::getForeignFurnitures()
 {
     return mForeignFurnitures;
 }
 
-const CSMForeign::IdCollection<CSMForeign::Sound>& CSMWorld::Data::getForeignSounds() const
+const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Sound> >& CSMWorld::Data::getForeignSounds() const
 {
     return mForeignSounds;
 }
 
-CSMForeign::IdCollection<CSMForeign::Sound>& CSMWorld::Data::getForeignSounds()
+CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Sound> >& CSMWorld::Data::getForeignSounds()
 {
     return mForeignSounds;
 }
 
-const CSMForeign::IdCollection<CSMForeign::Weapon>& CSMWorld::Data::getForeignWeapons() const
+const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Weapon> >& CSMWorld::Data::getForeignWeapons() const
 {
     return mForeignWeapons;
 }
 
-CSMForeign::IdCollection<CSMForeign::Weapon>& CSMWorld::Data::getForeignWeapons()
+CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Weapon> >& CSMWorld::Data::getForeignWeapons()
 {
     return mForeignWeapons;
 }
 
-const CSMForeign::IdCollection<CSMForeign::Door>& CSMWorld::Data::getForeignDoors() const
+const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Door> >& CSMWorld::Data::getForeignDoors() const
 {
     return mForeignDoors;
 }
 
-CSMForeign::IdCollection<CSMForeign::Door>& CSMWorld::Data::getForeignDoors()
+CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Door> >& CSMWorld::Data::getForeignDoors()
 {
     return mForeignDoors;
 }
 
-const CSMForeign::IdCollection<CSMForeign::Ammo>& CSMWorld::Data::getForeignAmmos() const
+const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Ammo> >& CSMWorld::Data::getForeignAmmos() const
 {
     return mForeignAmmos;
 }
 
-CSMForeign::IdCollection<CSMForeign::Ammo>& CSMWorld::Data::getForeignAmmos()
+CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Ammo> >& CSMWorld::Data::getForeignAmmos()
 {
     return mForeignAmmos;
 }
 
-const CSMForeign::IdCollection<CSMForeign::Clothing>& CSMWorld::Data::getForeignClothings() const
+const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Clothing> >& CSMWorld::Data::getForeignClothings() const
 {
     return mForeignClothings;
 }
 
-CSMForeign::IdCollection<CSMForeign::Clothing>& CSMWorld::Data::getForeignClothings()
+CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Clothing> >& CSMWorld::Data::getForeignClothings()
 {
     return mForeignClothings;
 }
 
-const CSMForeign::IdCollection<CSMForeign::Potion>& CSMWorld::Data::getForeignPotions() const
+const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Potion> >& CSMWorld::Data::getForeignPotions() const
 {
     return mForeignPotions;
 }
 
-CSMForeign::IdCollection<CSMForeign::Potion>& CSMWorld::Data::getForeignPotions()
+CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Potion> >& CSMWorld::Data::getForeignPotions()
 {
     return mForeignPotions;
 }
 
-const CSMForeign::IdCollection<CSMForeign::Apparatus>& CSMWorld::Data::getForeignApparatuses() const
+const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Apparatus> >& CSMWorld::Data::getForeignApparatuses() const
 {
     return mForeignApparatuses;
 }
 
-CSMForeign::IdCollection<CSMForeign::Apparatus>& CSMWorld::Data::getForeignApparatuses()
+CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Apparatus> >& CSMWorld::Data::getForeignApparatuses()
 {
     return mForeignApparatuses;
 }
 
-const CSMForeign::IdCollection<CSMForeign::Ingredient>& CSMWorld::Data::getForeignIngredients() const
+const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Ingredient> >& CSMWorld::Data::getForeignIngredients() const
 {
     return mForeignIngredients;
 }
 
-CSMForeign::IdCollection<CSMForeign::Ingredient>& CSMWorld::Data::getForeignIngredients()
+CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Ingredient> >& CSMWorld::Data::getForeignIngredients()
 {
     return mForeignIngredients;
 }
 
-const CSMForeign::IdCollection<CSMForeign::SigilStone>& CSMWorld::Data::getForeignSigilStones() const
+const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::SigilStone> >& CSMWorld::Data::getForeignSigilStones() const
 {
     return mForeignSigilStones;
 }
 
-CSMForeign::IdCollection<CSMForeign::SigilStone>& CSMWorld::Data::getForeignSigilStones()
+CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::SigilStone> >& CSMWorld::Data::getForeignSigilStones()
 {
     return mForeignSigilStones;
 }
 
-const CSMForeign::IdCollection<CSMForeign::SoulGem>& CSMWorld::Data::getForeignSoulGems() const
+const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::SoulGem> >& CSMWorld::Data::getForeignSoulGems() const
 {
     return mForeignSoulGems;
 }
 
-CSMForeign::IdCollection<CSMForeign::SoulGem>& CSMWorld::Data::getForeignSoulGems()
+CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::SoulGem> >& CSMWorld::Data::getForeignSoulGems()
 {
     return mForeignSoulGems;
 }
 
-const CSMForeign::IdCollection<CSMForeign::Key>& CSMWorld::Data::getForeignKeys() const
+const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Key> >& CSMWorld::Data::getForeignKeys() const
 {
     return mForeignKeys;
 }
 
-CSMForeign::IdCollection<CSMForeign::Key>& CSMWorld::Data::getForeignKeys()
+CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Key> >& CSMWorld::Data::getForeignKeys()
 {
     return mForeignKeys;
 }
 
-const CSMForeign::IdCollection<CSMForeign::Hair>& CSMWorld::Data::getForeignHairs() const
+const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Hair> >& CSMWorld::Data::getForeignHairs() const
 {
     return mForeignHairs;
 }
 
-CSMForeign::IdCollection<CSMForeign::Hair>& CSMWorld::Data::getForeignHairs()
+CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Hair> >& CSMWorld::Data::getForeignHairs()
 {
     return mForeignHairs;
 }
 
-const CSMForeign::IdCollection<CSMForeign::Eyes>& CSMWorld::Data::getForeignEyesSet() const
+const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Eyes> >& CSMWorld::Data::getForeignEyesSet() const
 {
     return mForeignEyesSet;
 }
 
-CSMForeign::IdCollection<CSMForeign::Eyes>& CSMWorld::Data::getForeignEyesSet()
+CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Eyes> >& CSMWorld::Data::getForeignEyesSet()
 {
     return mForeignEyesSet;
 }
 
-const CSMForeign::IdCollection<CSMForeign::Creature>& CSMWorld::Data::getForeignCreatures() const
+const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Creature> >& CSMWorld::Data::getForeignCreatures() const
 {
     return mForeignCreatures;
 }
 
-CSMForeign::IdCollection<CSMForeign::Creature>& CSMWorld::Data::getForeignCreatures()
+CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Creature> >& CSMWorld::Data::getForeignCreatures()
 {
     return mForeignCreatures;
 }
 
-const CSMForeign::IdCollection<CSMForeign::LeveledCreature>& CSMWorld::Data::getForeignLvlCreatures() const
+const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::LeveledCreature> >& CSMWorld::Data::getForeignLvlCreatures() const
 {
     return mForeignLvlCreatures;
 }
 
-CSMForeign::IdCollection<CSMForeign::LeveledCreature>& CSMWorld::Data::getForeignLvlCreatures()
+CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::LeveledCreature> >& CSMWorld::Data::getForeignLvlCreatures()
 {
     return mForeignLvlCreatures;
 }
@@ -2044,6 +2054,7 @@ bool CSMWorld::Data::loadTes4Group (CSMDoc::Messages& messages)
         }
         case ESM4::Grp_WorldChild:
         case ESM4::Grp_TopicChild:
+        // FIXME: need to save context if skipping
         case ESM4::Grp_CellPersistentChild:
         case ESM4::Grp_CellTemporaryChild:
         case ESM4::Grp_CellVisibleDistChild:
@@ -2181,13 +2192,15 @@ bool CSMWorld::Data::loadTes4Record (const ESM4::RecordHeader& hdr, CSMDoc::Mess
             //                [load record] ---------+
             //
             //
-            // State                        | mGroupStack.back()
-            // -----------------------------+---------------------------------------------
-            // S:Loading Cell Group         | ExteriorSubCell, InteriorSubCell, WorldChild
-            // S:Loading Cell Child         | CellChild
-            // S:Loading Cell Child Records | CellPersistentChild, CellTemporaryChild,
-            //                              | CellVisibleDistChild
-            if (1) // FIXME: testing only
+            // mGroupStack.back()                           | State                        |
+            // ---------------------------------------------+------------------------------+
+            // ExteriorSubCell, InteriorSubCell, WorldChild | S:Loading Cell Group         |
+            // CellChild                                    | S:Loading Cell Child         |
+            // CellPersistentChild, CellTemporaryChild,     | S:Loading Cell Child Records |
+            // CellVisibleDistChild                         |                              |
+            //
+            bool loadCell = true;
+            if (loadCell) // FIXME: testing only
             {
                 reader.getRecordData();
                 mForeignCells.load(reader, mBase);
@@ -2195,7 +2208,7 @@ bool CSMWorld::Data::loadTes4Record (const ESM4::RecordHeader& hdr, CSMDoc::Mess
             else
             {
                 // take the adjusted CELL FormId from the header
-                mForeignCells.saveContext(reader);
+                mForeignCellGroups.saveContext(reader);
                 reader.skipRecordData();
             }
 //FIXME: debug only
@@ -2217,46 +2230,59 @@ bool CSMWorld::Data::loadTes4Record (const ESM4::RecordHeader& hdr, CSMDoc::Mess
             // State Transitions:
             //
             //                                  empty world?
-            //                     |                  ^             ^   ^
-            //                     v                  |             |   |
-            //                (E:WRLD record)         |             |   |
-            //                     |                  |             |   |
-            //               [load or skip WRLD]      |             |   |
-            //                     |                  |             |   |
-            //                     |       (E:not World child GRUP) |   |
-            //                     |                  ^             |   |
-            //                     v                  |             |   |
-            //               S:Loading World Group ---+             |   |
-            //                     |                                |   |
-            //                     v                                |   |
+            //                     |                  ^             ^
+            //                     v                  |             |
+            //                (E:WRLD record)         |             |
+            //                     |                  |             |
+            //               [load or skip WRLD]      |             |
+            //                     |                  |             |
+            //                     |       (E:not World child GRUP) |
+            //                     |                  ^             |
+            //                     v                  |             |
+            //               S:Loading World Group ---+             |
+            //                     |                                |
+            //                     v                                |
             //               (E:World Child GRUP)         (E:some other group/record)
-            //                     |                                ^   ^
-            //                     v                                |   |
-            //        +-------- S:Loading World Child --------------+   |
-            //        |            |       ^    ^  |                    |
-            //        |            v       |    |  |                    |
-            //        |   (E:ROAD record)  |    |  |                    |
-            //        |            |       |    |  |                    |
-            //        |   [load or skip ROAD]   |  |                    |
-            //        |                         |  |                    |
-            //        |                         |  |                    |
-            //        +--- > (E:CELL record)    |  |                    |
-            //                     |            |  |                    |
-            //            [load or skip] -------+  |                    |
-            //            [CELL Group  ]           |                    |
-            //                                     |                    |
-            //                                     v                    |
-            //                           (E:Exterior Cell GRUP) // can be empty (*)
-            //                                     |
-            //                                     v
-            //                          (E:Exterior Sub-Cell GRUP)
-            //                                     |
-            //                                     v
+            //                     |                                ^
+            //                     v                                |
+            //        +---------- S:Loading World Child ------------+
+            //        |            |      ^   ^  |  ^
+            //        |            v      |   :  |  :
+            //        |   (E:ROAD record) |   :  |  :
+            //        |            |      |   :  |  :
+            //        |  [load or skip ROAD]  :  |  +...............+
+            //        |                       :  |                  :
+            //        |                       :  |                  :
+            //        +--- > (E:CELL record)  :  |                  :
+            //                     :          :  |                  :
+            //                     :          :  |                  :
+            //            [load or skip] .....+  |                  :
+            //            [ CELL Group ]         |                  :
+            //                                   v                  :
+            //                           (E:Exterior Cell GRUP)     :    // can be empty (*)
+            //                                   |   ^              :
+            //                                   v   |              :
+            //                          (E:Exterior Sub-Cell GRUP)  :
+            //                                   |            ^     :
+            //                                   v            :     :
+            //                              (E:CELL record)   :     :
+            //                                   :            :     :
+            //                                   :            :     :
+            //                              [load or skip] ...+     :
+            //                              [ CELL Group ] .........+
             //
             //  (*) grid 0, -12 containing empty external sub-cell grid 3, -48 (Tamriel, Oblivion)
             //
+            // mGroupStack.back()                           | State                        |
+            // ---------------------------------------------+------------------------------+
+            // World Record Group (0)                       | S:Loading World Group        |
+            // WorldChild (1)                               | S:Loading World Child        |
+            // Exterior Cell (4)                            | N/A                          |
+            // Exterior SubCell (5)                         | N/A                          |
+            //
             reader.getRecordData();
             mForeignWorlds.load(reader, mBase);
+            // will be followed by another CELL or a Cell Child GRUP
             break;
         }
         // DIAL, QUST
@@ -2264,13 +2290,35 @@ bool CSMWorld::Data::loadTes4Record (const ESM4::RecordHeader& hdr, CSMDoc::Mess
         // PACK, CSTY, LSCR, LVSP
         case ESM4::REC_ANIO: reader.getRecordData(); mForeignAnimObjs.load(reader, mBase); break;
         // WATR, EFSH
-        case ESM4::REC_ACHR:
         case ESM4::REC_REFR:
-        case ESM4::REC_ACRE: // Oblivion only?
-        case ESM4::REC_PGRD: // Oblivion only?
         {
-            //reader.getRecordData(); mForeignChars.load(reader, mBase); break;
-            reader.getRecordData(); mForeignRefs.load(reader, mBase); break;
+            bool loadCell = true;
+            if (loadCell) // FIXME: testing only
+            {
+                reader.getRecordData();
+                mForeignRefs.load(reader, mBase);
+            }
+            else
+            {
+                reader.skipRecordData();
+                std::cout << "unexpected ACHR/ACRE/REFR/PGRD" << std::endl;
+            }
+            break;
+        }
+        case ESM4::REC_ACHR:
+        {
+            bool loadCell = true;
+            if (loadCell) // FIXME: testing only
+            {
+                reader.getRecordData();
+                mForeignChars.load(reader, mBase);
+            }
+            else
+            {
+                reader.skipRecordData();
+                std::cout << "unexpected ACHR/ACRE/REFR/PGRD" << std::endl;
+            }
+            break;
         }
         // TODO: verify LTEX formIds exist
         case ESM4::REC_LAND: reader.getRecordData(); mForeignLands.load(reader, mBase); break;
@@ -2295,6 +2343,9 @@ bool CSMWorld::Data::loadTes4Record (const ESM4::RecordHeader& hdr, CSMDoc::Mess
             mNavMesh.load(reader, mBase);
             break;
         }
+		//
+        case ESM4::REC_PGRD: // Oblivion only?
+        case ESM4::REC_ACRE: // Oblivion only?
 		//
         case ESM4::REC_LVLI:
         case ESM4::REC_IDLE:

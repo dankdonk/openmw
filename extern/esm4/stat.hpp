@@ -47,10 +47,10 @@ namespace ESM4
         std::vector<std::uint8_t> mMODT; // FIXME texture hash
 
         Static();
-        ~Static();
+        virtual ~Static();
 
-        void load(ESM4::Reader& reader);
-        //void save(ESM4::Writer& writer) const;
+        virtual void load(ESM4::Reader& reader);
+        //virtual void save(ESM4::Writer& writer) const;
 
         void blank();
     };

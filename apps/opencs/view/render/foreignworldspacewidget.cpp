@@ -25,6 +25,8 @@
 #include "../../model/world/idtable.hpp"
 #include "../../model/world/pathgridcommands.hpp"
 
+#include "../../model/foreign/cellgroupcollection.hpp"
+
 #include "../widget/scenetooltoggle.hpp"
 #include "../widget/scenetoolmode.hpp"
 #include "../widget/scenetooltoggle2.hpp"
@@ -122,7 +124,7 @@ bool CSVRender::ForeignWorldspaceWidget::adjustCells()
         }
     }
 
-    if (mCells.begin()==mCells.end())
+    if (mCells.begin() == mCells.end())
         setCamera = true;
 
     // for camera position
@@ -148,7 +150,7 @@ bool CSVRender::ForeignWorldspaceWidget::adjustCells()
 
         std::uint32_t formId = cells.searchCoord (x, y, mWorld);
         int index = cells.searchFormId (formId);
-        const CSMForeign::Cell& cellRec = cells.getRecord(cells.searchFormId(formId)).get();
+        //const CSMForeign::Cell& cellRec = cells.getRecord(cells.searchFormId(formId)).get();
 
         if (index > 0 && cells.getRecord (index).mState != CSMWorld::RecordBase::State_Deleted &&
             mCells.find (*iter)==mCells.end())
@@ -160,8 +162,11 @@ bool CSVRender::ForeignWorldspaceWidget::adjustCells()
             //connect (cell->getSignalHandler(), SIGNAL(flagAsModified()), this, SLOT(flagAsModSlot()));
             mCells.insert (std::make_pair (*iter, cell));
 
+            const CSMForeign::CellGroupCollection& cellGroups = mDocument.getData().getForeignCellGroups();
+            const CSMForeign::CellGroup& cellGroup = cellGroups.getForeignRecord(formId).get();
+
             float height = 0.f;
-            int landIndex = lands.searchId(cellRec.mLandTemporary); // assume only one
+            int landIndex = lands.searchFormId(cellGroup.mLand); // assume only one
             if (landIndex != -1)
             {
                 // height at the center of the cell
@@ -689,6 +694,7 @@ bool CSVRender::ForeignWorldspaceWidget::handleDrop (
     if (WorldspaceWidget::handleDrop (dropData, type))
         return true;
 
+    // FIXME: how to distinguish
     if (type != Type_CellsForeign)
         return false;
 
@@ -738,7 +744,7 @@ CSVRender::WorldspaceWidget::dropRequirments CSVRender::ForeignWorldspaceWidget:
             return canHandle;
 
         case Type_CellsExterior:
-            return needPaged;
+            return needPaged; // FIXME: how to distinguish non-foreign cells?
 
         case Type_CellsInterior:
             return needUnpaged;

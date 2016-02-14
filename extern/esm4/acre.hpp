@@ -48,10 +48,10 @@ namespace ESM4
         EnableParent mEsp;    // TODO may need to check mFlags & 0x800 (initially disabled)
 
         ActorCreature();
-        ~ActorCreature();
+        virtual ~ActorCreature();
 
-        void load(ESM4::Reader& reader);
-        //void save(ESM4::Writer& reader) const;
+        virtual void load(ESM4::Reader& reader);
+        //virtual void save(ESM4::Writer& writer) const;
 
         //void blank();
     };

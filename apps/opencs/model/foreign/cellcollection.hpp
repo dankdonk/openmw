@@ -15,10 +15,12 @@ namespace ESM4
 namespace CSMForeign
 {
     class WorldCollection;
+    class CellGroupCollection;
 
     class CellCollection : public IdCollection<Cell>//, public NestedCollection
     {
         WorldCollection& mWorlds; // for looking up World name strings (FULL or EDID) and to register
+        CellGroupCollection& mCellGroups;
 
         // key - x/y coordinates, value - cell formid
         typedef std::map<std::pair<int, int>, ESM4::FormId> CoordinateIndex;
@@ -27,7 +29,7 @@ namespace CSMForeign
         std::map<ESM4::FormId, CoordinateIndex> mPositionIndex;
 
     public:
-        CellCollection (WorldCollection& worlds);
+        CellCollection (WorldCollection& worlds, CellGroupCollection& cellGroups);
         ~CellCollection ();
 
         virtual int load (ESM4::Reader& reader, bool base);

@@ -21,7 +21,7 @@
 #include <components/terrain/quadtreenode.hpp>
 #include <components/misc/resourcehelpers.hpp>
 
-#include "../../apps/opencs/model/foreign/land.hpp" // FIXME: a bit ugly including it here...
+//#include "../../apps/opencs/model/foreign/land.hpp" // FIXME: a bit ugly including it here...
 
 namespace ESM4Terrain
 {

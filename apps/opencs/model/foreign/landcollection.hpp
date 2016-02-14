@@ -3,45 +3,37 @@
 
 #include <map>
 
-#include "../world/collection.hpp"
+#include <extern/esm4/land.hpp>
 
 #include "land.hpp"
+#include "idcollection.hpp"
 
 namespace ESM4
 {
     class Reader;
-    typedef std::uint32_t FormId;
 }
 
 namespace CSMForeign
 {
-    class CellCollection;
+    class CellGroupCollection;
 
-    class LandCollection : public CSMWorld::Collection<Land, CSMWorld::IdAccessor<Land> >
+    class LandCollection : public IdCollection<Land>
     {
-        CSMForeign::CellCollection& mCells;
+        CellGroupCollection& mCellGroups;
 
-        // key - x/y coordinates, value - land formid (string)
-        typedef std::map<std::pair<int, int>, std::string> CoordinateIndex;
+        // key - x/y coordinates, value - land formId
+        typedef std::map<std::pair<int, int>, ESM4::FormId> CoordinateIndex;
 
         // key - world formId, value - map of lands
         std::map<ESM4::FormId, CoordinateIndex> mPositionIndex;
 
     public:
-        LandCollection (CellCollection& cells);
+        LandCollection (CellGroupCollection& cellGroups);
         ~LandCollection ();
 
-        // similar to IdCollection but with ESM4::Reader
-        int load(ESM4::Reader& reader, bool base);
-
-        // similar to IdCollection but with ESM4::Reader
-        int load (const Land& record, bool base, int index = -2);
-
-        virtual void loadRecord (Land& record, ESM4::Reader& reader);
+        virtual int load(ESM4::Reader& reader, bool base);
 
         int searchId (std::int16_t x, std::int16_t y, ESM4::FormId world = 0x3c) const; // default is Tamriel
-
-        int searchId (ESM4::FormId formId) const;
 
     private:
         LandCollection ();

@@ -100,10 +100,10 @@ namespace ESM4
         std::map<FormId, std::uint32_t> mPathIndexMap;
 
         Navigation();
-        ~Navigation();
+        virtual ~Navigation();
 
-        void load(ESM4::Reader& reader);
-        //void save(ESM4::Writer& writer) const;
+        virtual void load(ESM4::Reader& reader);
+        //virtual void save(ESM4::Writer& writer) const;
 
         //void blank();
     };

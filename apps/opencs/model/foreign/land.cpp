@@ -1,5 +1,6 @@
 #include "land.hpp"
 
+#include <extern/esm4/formid.hpp>
 #include <extern/esm4/reader.hpp>
 
 unsigned int CSMForeign::Land::sRecordId = ESM4::REC_LAND;

@@ -1,5 +1,6 @@
 #include "cellchar.hpp"
 
+#include <extern/esm4/formid.hpp>
 #include <extern/esm4/reader.hpp>
 
 unsigned int CSMForeign::CellChar::sRecordId = ESM4::REC_ACHR;

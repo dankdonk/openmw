@@ -31,7 +31,6 @@ namespace ESM4
 {
     class Reader;
     class Writer;
-    typedef std::uint32_t FormId;
 
     struct LeveledItem
     {
@@ -46,10 +45,10 @@ namespace ESM4
         std::vector<LVLO> mLvlObject;
 
         LeveledItem();
-        ~LeveledItem();
+        virtual ~LeveledItem();
 
-        void load(ESM4::Reader& reader);
-        //void save(ESM4::Writer& reader) const;
+        virtual void load(ESM4::Reader& reader);
+        //virtual void save(ESM4::Writer& writer) const;
 
         //void blank();
     };

@@ -55,42 +55,42 @@ void CSVRender::ForeignObject::update()
     int error = 0; // 1 referenceable does not exist, 2 referenceable does not specify a mesh
 
     //const CSMForeign::RefIdCollection& referenceables = mData.getReferenceables();
-    const CSMForeign::IdCollection<CSMForeign::Container>& container = mData.getForeignContainers();
-    const CSMForeign::IdCollection<CSMForeign::AnimObject>& anio = mData.getForeignAnimObjs();
-    const CSMForeign::IdCollection<CSMForeign::MiscItem>& misc = mData.getForeignMiscItems();
-    const CSMForeign::IdCollection<CSMForeign::Activator>& acti = mData.getForeignActivators();
-    const CSMForeign::IdCollection<CSMForeign::Npc>& npc = mData.getForeignNpcs();
-    const CSMForeign::IdCollection<CSMForeign::Armor>& armor = mData.getForeignArmors();
-    const CSMForeign::IdCollection<CSMForeign::Flora>& flora = mData.getForeignFloras();
-    const CSMForeign::IdCollection<CSMForeign::Grass>& grass = mData.getForeignGrasses();
-    const CSMForeign::IdCollection<CSMForeign::Tree>& trees = mData.getForeignTrees();
-    const CSMForeign::IdCollection<CSMForeign::Light>& lights = mData.getForeignLights();
-    const CSMForeign::IdCollection<CSMForeign::Book>& book = mData.getForeignBooks();
-    const CSMForeign::IdCollection<CSMForeign::Furniture>& furn = mData.getForeignFurnitures();
-    const CSMForeign::IdCollection<CSMForeign::Sound>& sound = mData.getForeignSounds();
-    const CSMForeign::IdCollection<CSMForeign::Weapon>& weap = mData.getForeignWeapons();
-    const CSMForeign::IdCollection<CSMForeign::Door>& door = mData.getForeignDoors();
-    const CSMForeign::IdCollection<CSMForeign::Ammo>& ammo = mData.getForeignAmmos();
-    const CSMForeign::IdCollection<CSMForeign::Clothing>& cloth = mData.getForeignClothings();
-    const CSMForeign::IdCollection<CSMForeign::Potion>& potion = mData.getForeignPotions();
-    const CSMForeign::IdCollection<CSMForeign::Apparatus>& appa = mData.getForeignApparatuses();
-    const CSMForeign::IdCollection<CSMForeign::Ingredient>& ingr = mData.getForeignIngredients();
-    const CSMForeign::IdCollection<CSMForeign::SigilStone>& sigil = mData.getForeignSigilStones();
-    const CSMForeign::IdCollection<CSMForeign::SoulGem>& soul = mData.getForeignSoulGems();
-    const CSMForeign::IdCollection<CSMForeign::Key>& keys = mData.getForeignKeys();
-    const CSMForeign::IdCollection<CSMForeign::Hair>& hair = mData.getForeignHairs();
-    const CSMForeign::IdCollection<CSMForeign::Eyes>& eyes = mData.getForeignEyesSet();
-    const CSMForeign::IdCollection<CSMForeign::Creature>& crea = mData.getForeignCreatures();
-    const CSMForeign::IdCollection<CSMForeign::LeveledCreature>& lvlc = mData.getForeignLvlCreatures();
-    const CSMForeign::IdCollection<CSMForeign::Static>& referenceables = mData.getForeignStatics(); // FIXME: use statics only for now
+    const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Container> >& container = mData.getForeignContainers();
+    const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::AnimObject> >& anio = mData.getForeignAnimObjs();
+    const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::MiscItem> >& misc = mData.getForeignMiscItems();
+    const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Activator> >& acti = mData.getForeignActivators();
+    const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Npc> >& npc = mData.getForeignNpcs();
+    const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Armor> >& armor = mData.getForeignArmors();
+    const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Flora> >& flora = mData.getForeignFloras();
+    const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Grass> >& grass = mData.getForeignGrasses();
+    const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Tree> >& trees = mData.getForeignTrees();
+    const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Light> >& lights = mData.getForeignLights();
+    const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Book> >& book = mData.getForeignBooks();
+    const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Furniture> >& furn = mData.getForeignFurnitures();
+    const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Sound> >& sound = mData.getForeignSounds();
+    const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Weapon> >& weap = mData.getForeignWeapons();
+    const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Door> >& door = mData.getForeignDoors();
+    const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Ammo> >& ammo = mData.getForeignAmmos();
+    const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Clothing> >& cloth = mData.getForeignClothings();
+    const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Potion> >& potion = mData.getForeignPotions();
+    const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Apparatus> >& appa = mData.getForeignApparatuses();
+    const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Ingredient> >& ingr = mData.getForeignIngredients();
+    const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::SigilStone> >& sigil = mData.getForeignSigilStones();
+    const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::SoulGem> >& soul = mData.getForeignSoulGems();
+    const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Key> >& keys = mData.getForeignKeys();
+    const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Hair> >& hair = mData.getForeignHairs();
+    const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Eyes> >& eyes = mData.getForeignEyesSet();
+    const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Creature> >& crea = mData.getForeignCreatures();
+    const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::LeveledCreature> >& lvlc = mData.getForeignLvlCreatures();
+    const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Static> >& referenceables = mData.getForeignStatics(); // FIXME: use statics only for now
 
-    //int index = referenceables.searchId (mReferenceableId);
+    //int index = referenceables.searcFormhId (mReferenceableId);
     // get the formId of the base object
-    const CSMForeign::RefCollection& refs = mData.getForeignReferences();
-    ESM4::FormId baseObj = refs.getRecord(refs.searchId(mReferenceId)).get().mBaseObj;
-    int index = referenceables.searchId (ESM4::formIdToString(baseObj)); // FIXME: double conversion to string
+    const CSMForeign::CellRefCollection<CSMForeign::CellRef>& refs = mData.getForeignReferences();
+    ESM4::FormId baseObj = refs.getRecord(refs.searchFormId(mReferenceId)).get().mBaseObj;
+    int index = referenceables.searchFormId(baseObj);
 
-    ESM4::FormId parent = refs.getRecord(refs.searchId(mReferenceId)).get().mEsp.parent;
+    ESM4::FormId parent = refs.getRecord(refs.searchFormId(mReferenceId)).get().mEsp.parent;
     if (parent == 0x000e4ee3 || // FIXME testing WhiterunPlayerHouseKitchenStart
         parent == 0x000e4ef9 ||               // WhiterunPlayerHouseAlchemyLaboratoryStart
         parent == 0x000e4f0a ||               // WhiterunPlayerHousePackageHouseCarlStart
@@ -111,7 +111,7 @@ void CSVRender::ForeignObject::update()
     {
         error = 1;
 
-        int contIndex = container.searchId(ESM4::formIdToString(baseObj));
+        int contIndex = container.searchFormId(baseObj);
         if (contIndex != -1)
         {
             error = 0;
@@ -122,10 +122,10 @@ void CSVRender::ForeignObject::update()
             if (model.empty())
                 error = 2;
         }
-        else if (npc.searchId(ESM4::formIdToString(baseObj)) != -1)
+        else if (npc.searchFormId(baseObj) != -1)
         {
             int extraIndex = -1;
-            extraIndex = npc.searchId(ESM4::formIdToString(baseObj));
+            extraIndex = npc.searchFormId(baseObj);
             model = npc.getData (extraIndex,
                    npc.findColumnIndex (CSMWorld::Columns::ColumnId_Model)).toString().toUtf8().constData();
             std::cout << "obj is an npc " << ESM4::formIdToString(baseObj) << ", " << model << std::endl;
@@ -135,10 +135,10 @@ void CSVRender::ForeignObject::update()
             else
                 error = 0;
         }
-        else if (crea.searchId(ESM4::formIdToString(baseObj)) != -1)
+        else if (crea.searchFormId(baseObj) != -1)
         {
             int extraIndex = -1;
-            extraIndex = crea.searchId(ESM4::formIdToString(baseObj));
+            extraIndex = crea.searchFormId(baseObj);
             model = crea.getData (extraIndex,
                    crea.findColumnIndex (CSMWorld::Columns::ColumnId_Model)).toString().toUtf8().constData();
             std::cout << "obj is an creature " << ESM4::formIdToString(baseObj) << ", " << model << std::endl;
@@ -148,19 +148,19 @@ void CSVRender::ForeignObject::update()
             else
                 error = 0;
         }
-        else if (lvlc.searchId(ESM4::formIdToString(baseObj)) != -1)
+        else if (lvlc.searchFormId(baseObj) != -1)
         {
-            const CSMForeign::LeveledCreature& lcreature = lvlc.getRecord(ESM4::formIdToString(baseObj)).get();
+            const CSMForeign::IdRecord<ESM4::LeveledCreature>& lcreature = lvlc.getRecord(ESM4::formIdToString(baseObj)).get();
             ESM4::FormId templ = 0;
             for (unsigned int i = lcreature.mLvlObject.size(); i-- > 0;)
             {
                 templ = lcreature.mLvlObject[i].item;
                 //ESM4::FormId templ = lcreature.mTemplate;
                 int extraIndex = -1;
-                extraIndex = crea.searchId(ESM4::formIdToString(templ));
+                extraIndex = crea.searchFormId(templ);
                 if (extraIndex != -1)
                 {
-                    CSMForeign::Creature creaRec = crea.getRecord(extraIndex).get();
+                    CSMForeign::IdRecord<ESM4::Creature> creaRec = crea.getRecord(extraIndex).get();
 
                     model = crea.getData (extraIndex,
                        crea.findColumnIndex (CSMWorld::Columns::ColumnId_Model)).toString().toUtf8().constData();
@@ -174,10 +174,10 @@ void CSVRender::ForeignObject::update()
                     //std::cout << "creature inventory " << creaRec.mInventory.size() << std::endl;
                     for (unsigned int j = 0; j < creaRec.mInventory.size(); ++j)
                     {
-                        int invIndex = cloth.searchId(ESM4::formIdToString(creaRec.mInventory[j].item));
+                        int invIndex = cloth.searchFormId(creaRec.mInventory[j].item);
                         if (invIndex != -1)
                         {
-                            const CSMForeign::Clothing& clothRec = cloth.getRecord(invIndex).get();
+                            const CSMForeign::IdRecord<ESM4::Clothing>& clothRec = cloth.getRecord(invIndex).get();
                             std::cout << clothRec.mEditorId << std::endl;
 #if 0
                             NifOgre::ObjectScenePtr object
@@ -190,17 +190,17 @@ void CSVRender::ForeignObject::update()
 #endif
                         }
 
-                        invIndex = armor.searchId(ESM4::formIdToString(creaRec.mInventory[j].item));
+                        invIndex = armor.searchFormId(creaRec.mInventory[j].item);
                         if (invIndex != -1)
                         {
-                            const CSMForeign::Armor& armorRec = armor.getRecord(invIndex).get();
+                            const CSMForeign::IdRecord<ESM4::Armor>& armorRec = armor.getRecord(invIndex).get();
                             std::cout << armorRec.mEditorId << std::endl;
                         }
 
-                        invIndex = weap.searchId(ESM4::formIdToString(creaRec.mInventory[j].item));
+                        invIndex = weap.searchFormId(creaRec.mInventory[j].item);
                         if (invIndex != -1)
                         {
-                            const CSMForeign::Weapon& weapRec = weap.getRecord(invIndex).get();
+                            const CSMForeign::IdRecord<ESM4::Weapon>& weapRec = weap.getRecord(invIndex).get();
                             std::cout << weapRec.mEditorId << std::endl;
                         }
                     }
@@ -211,7 +211,7 @@ void CSVRender::ForeignObject::update()
 
                     //break;
                 }
-                else if (lvlc.searchId(ESM4::formIdToString(templ)) != -1)
+                else if (lvlc.searchFormId(templ) != -1)
                     std::cout << "obj is a lvl creature " << i << ", " << ESM4::formIdToString(templ) << ", " << model << std::endl;
                 else
                     std::cout << "obj is not a creature " << i << ", " << ESM4::formIdToString(templ) << ", " << model << std::endl;
@@ -227,20 +227,20 @@ void CSVRender::ForeignObject::update()
                     templ = lcreature.mLvlObject[i].item;
                     //ESM4::FormId templ = lcreature.mTemplate;
                     int extraIndex = -1;
-                    extraIndex = npc.searchId(ESM4::formIdToString(templ));
+                    extraIndex = npc.searchFormId(templ);
                     if (extraIndex != -1)
                     {
                         model = npc.getData (extraIndex,
                            npc.findColumnIndex (CSMWorld::Columns::ColumnId_Model)).toString().toUtf8().constData();
 #if 0
                         // FIXME temp testing
-                        CSMForeign::Npc npcRec = npc.getRecord(extraIndex).get();
+                        CSMForeign::IdRecord<ESM4::Npc npcRec> = npc.getRecord(extraIndex).get();
                         for (unsigned int j = 0; j < npcRec.mInventory.size(); ++j)
                         {
-                            int invIndex = cloth.searchId(ESM4::formIdToString(npcRec.mInventory[j].item));
+                            int invIndex = cloth.searchFormId(npcRec.mInventory[j].item);
                             if (invIndex != -1)
                             {
-                                const CSMForeign::Clothing& clothRec = cloth.getRecord(invIndex).get();
+                                const CSMForeign::IdRecord<ESM4::Clothing>& clothRec = cloth.getRecord(invIndex).get();
                                 model = clothRec.mModel;
                                 //std::cout << clothRec.mEditorId << std::endl;
                                 break;
@@ -261,10 +261,10 @@ void CSVRender::ForeignObject::update()
                 error = 0;
             }
         }
-        else if (eyes.searchId(ESM4::formIdToString(baseObj)) != -1)
+        else if (eyes.searchFormId(baseObj) != -1)
         {
             int extraIndex = -1;
-            extraIndex = eyes.searchId(ESM4::formIdToString(baseObj));
+            extraIndex = eyes.searchFormId(baseObj);
             model = eyes.getData (extraIndex,
                    eyes.findColumnIndex (CSMWorld::Columns::ColumnId_Model)).toString().toUtf8().constData();
             std::cout << "obj is an eye " << ESM4::formIdToString(baseObj) << ", " << model << std::endl;
@@ -274,10 +274,10 @@ void CSVRender::ForeignObject::update()
             else
                 error = 0;
         }
-        else if (hair.searchId(ESM4::formIdToString(baseObj)) != -1)
+        else if (hair.searchFormId(baseObj) != -1)
         {
             int extraIndex = -1;
-            extraIndex = hair.searchId(ESM4::formIdToString(baseObj));
+            extraIndex = hair.searchFormId(baseObj);
             model = hair.getData (extraIndex,
                    hair.findColumnIndex (CSMWorld::Columns::ColumnId_Model)).toString().toUtf8().constData();
             std::cout << "obj is hair " << ESM4::formIdToString(baseObj) << ", " << model << std::endl;
@@ -287,10 +287,10 @@ void CSVRender::ForeignObject::update()
             else
                 error = 0;
         }
-        else if (armor.searchId(ESM4::formIdToString(baseObj)) != -1)
+        else if (armor.searchFormId(baseObj) != -1)
         {
             int extraIndex = -1;
-            extraIndex = armor.searchId(ESM4::formIdToString(baseObj));
+            extraIndex = armor.searchFormId(baseObj);
             model = armor.getData (extraIndex,
                    armor.findColumnIndex (CSMWorld::Columns::ColumnId_Model)).toString().toUtf8().constData();
             //std::cout << "obj is a armor obj " << ESM4::formIdToString(baseObj) << ", " << model << std::endl;
@@ -300,10 +300,10 @@ void CSVRender::ForeignObject::update()
             else
                 error = 0;
         }
-        else if (anio.searchId(ESM4::formIdToString(baseObj)) != -1)
+        else if (anio.searchFormId(baseObj) != -1)
         {
             int extraIndex = -1;
-            extraIndex = anio.searchId(ESM4::formIdToString(baseObj));
+            extraIndex = anio.searchFormId(baseObj);
             model = anio.getData (extraIndex,
                    anio.findColumnIndex (CSMWorld::Columns::ColumnId_Model)).toString().toUtf8().constData();
             std::cout << "obj is a anim obj " << ESM4::formIdToString(baseObj) << ", " << model << std::endl;
@@ -313,10 +313,10 @@ void CSVRender::ForeignObject::update()
             else
                 error = 0;
         }
-        else if (misc.searchId(ESM4::formIdToString(baseObj)) != -1)
+        else if (misc.searchFormId(baseObj) != -1)
         {
             int extraIndex = -1;
-            extraIndex = misc.searchId(ESM4::formIdToString(baseObj));
+            extraIndex = misc.searchFormId(baseObj);
             model = misc.getData (extraIndex,
                    misc.findColumnIndex (CSMWorld::Columns::ColumnId_Model)).toString().toUtf8().constData();
             //std::cout << "obj is a misc obj " << ESM4::formIdToString(baseObj) << ", " << model << std::endl;
@@ -326,10 +326,10 @@ void CSVRender::ForeignObject::update()
             else
                 error = 0;
         }
-        else if (sound.searchId(ESM4::formIdToString(baseObj)) != -1)
+        else if (sound.searchFormId(baseObj) != -1)
         {
             int extraIndex = -1;
-            extraIndex = sound.searchId(ESM4::formIdToString(baseObj));
+            extraIndex = sound.searchFormId(baseObj);
             //std::cout << "obj is a sound obj " << ESM4::formIdToString(baseObj) << std::endl;
             model = "marker_sound.nif";
 
@@ -338,10 +338,10 @@ void CSVRender::ForeignObject::update()
             else
                 error = 0;
         }
-        else if (weap.searchId(ESM4::formIdToString(baseObj)) != -1)
+        else if (weap.searchFormId(baseObj) != -1)
         {
             int extraIndex = -1;
-            extraIndex = weap.searchId(ESM4::formIdToString(baseObj));
+            extraIndex = weap.searchFormId(baseObj);
             model = weap.getData (extraIndex,
                    weap.findColumnIndex (CSMWorld::Columns::ColumnId_Model)).toString().toUtf8().constData();
             //std::cout << "obj is a weapon obj " << ESM4::formIdToString(baseObj) << ", " << model << std::endl;
@@ -351,10 +351,10 @@ void CSVRender::ForeignObject::update()
             else
                 error = 0;
         }
-        else if (door.searchId(ESM4::formIdToString(baseObj)) != -1)
+        else if (door.searchFormId(baseObj) != -1)
         {
             int extraIndex = -1;
-            extraIndex = door.searchId(ESM4::formIdToString(baseObj));
+            extraIndex = door.searchFormId(baseObj);
             model = door.getData (extraIndex,
                    door.findColumnIndex (CSMWorld::Columns::ColumnId_Model)).toString().toUtf8().constData();
             //std::cout << "obj is a door obj " << ESM4::formIdToString(baseObj) << ", " << model << std::endl;
@@ -364,10 +364,10 @@ void CSVRender::ForeignObject::update()
             else
                 error = 0;
         }
-        else if (ammo.searchId(ESM4::formIdToString(baseObj)) != -1)
+        else if (ammo.searchFormId(baseObj) != -1)
         {
             int extraIndex = -1;
-            extraIndex = ammo.searchId(ESM4::formIdToString(baseObj));
+            extraIndex = ammo.searchFormId(baseObj);
             model = ammo.getData (extraIndex,
                    ammo.findColumnIndex (CSMWorld::Columns::ColumnId_Model)).toString().toUtf8().constData();
             //std::cout << "obj is a ammo obj " << ESM4::formIdToString(baseObj) << ", " << model << std::endl;
@@ -377,10 +377,10 @@ void CSVRender::ForeignObject::update()
             else
                 error = 0;
         }
-        else if (cloth.searchId(ESM4::formIdToString(baseObj)) != -1)
+        else if (cloth.searchFormId(baseObj) != -1)
         {
             int extraIndex = -1;
-            extraIndex = cloth.searchId(ESM4::formIdToString(baseObj));
+            extraIndex = cloth.searchFormId(baseObj);
             model = cloth.getData (extraIndex,
                    cloth.findColumnIndex (CSMWorld::Columns::ColumnId_Model)).toString().toUtf8().constData();
             //std::cout << "obj is a cloth obj " << ESM4::formIdToString(baseObj) << ", " << model << std::endl;
@@ -390,10 +390,10 @@ void CSVRender::ForeignObject::update()
             else
                 error = 0;
         }
-        else if (potion.searchId(ESM4::formIdToString(baseObj)) != -1)
+        else if (potion.searchFormId(baseObj) != -1)
         {
             int extraIndex = -1;
-            extraIndex = potion.searchId(ESM4::formIdToString(baseObj));
+            extraIndex = potion.searchFormId(baseObj);
             model = potion.getData (extraIndex,
                    potion.findColumnIndex (CSMWorld::Columns::ColumnId_Model)).toString().toUtf8().constData();
             //std::cout << "obj is a potion obj " << ESM4::formIdToString(baseObj) << ", " << model << std::endl;
@@ -403,10 +403,10 @@ void CSVRender::ForeignObject::update()
             else
                 error = 0;
         }
-        else if (appa.searchId(ESM4::formIdToString(baseObj)) != -1)
+        else if (appa.searchFormId(baseObj) != -1)
         {
             int extraIndex = -1;
-            extraIndex = appa.searchId(ESM4::formIdToString(baseObj));
+            extraIndex = appa.searchFormId(baseObj);
             model = appa.getData (extraIndex,
                    appa.findColumnIndex (CSMWorld::Columns::ColumnId_Model)).toString().toUtf8().constData();
             //std::cout << "obj is a appa obj " << ESM4::formIdToString(baseObj) << ", " << model << std::endl;
@@ -416,10 +416,10 @@ void CSVRender::ForeignObject::update()
             else
                 error = 0;
         }
-        else if (ingr.searchId(ESM4::formIdToString(baseObj)) != -1)
+        else if (ingr.searchFormId(baseObj) != -1)
         {
             int extraIndex = -1;
-            extraIndex = ingr.searchId(ESM4::formIdToString(baseObj));
+            extraIndex = ingr.searchFormId(baseObj);
             model = ingr.getData (extraIndex,
                    ingr.findColumnIndex (CSMWorld::Columns::ColumnId_Model)).toString().toUtf8().constData();
             //std::cout << "obj is a ingr obj " << ESM4::formIdToString(baseObj) << ", " << model << std::endl;
@@ -429,10 +429,10 @@ void CSVRender::ForeignObject::update()
             else
                 error = 0;
         }
-        else if (sigil.searchId(ESM4::formIdToString(baseObj)) != -1)
+        else if (sigil.searchFormId(baseObj) != -1)
         {
             int extraIndex = -1;
-            extraIndex = sigil.searchId(ESM4::formIdToString(baseObj));
+            extraIndex = sigil.searchFormId(baseObj);
             model = sigil.getData (extraIndex,
                    sigil.findColumnIndex (CSMWorld::Columns::ColumnId_Model)).toString().toUtf8().constData();
             std::cout << "obj is a sigil stone " << ESM4::formIdToString(baseObj) << ", " << model << std::endl;
@@ -442,10 +442,10 @@ void CSVRender::ForeignObject::update()
             else
                 error = 0;
         }
-        else if (soul.searchId(ESM4::formIdToString(baseObj)) != -1)
+        else if (soul.searchFormId(baseObj) != -1)
         {
             int extraIndex = -1;
-            extraIndex = soul.searchId(ESM4::formIdToString(baseObj));
+            extraIndex = soul.searchFormId(baseObj);
             model = soul.getData (extraIndex,
                    soul.findColumnIndex (CSMWorld::Columns::ColumnId_Model)).toString().toUtf8().constData();
             //std::cout << "obj is a soul gem " << ESM4::formIdToString(baseObj) << ", " << model << std::endl;
@@ -455,10 +455,10 @@ void CSVRender::ForeignObject::update()
             else
                 error = 0;
         }
-        else if (keys.searchId(ESM4::formIdToString(baseObj)) != -1)
+        else if (keys.searchFormId(baseObj) != -1)
         {
             int extraIndex = -1;
-            extraIndex = keys.searchId(ESM4::formIdToString(baseObj));
+            extraIndex = keys.searchFormId(baseObj);
             model = keys.getData (extraIndex,
                    keys.findColumnIndex (CSMWorld::Columns::ColumnId_Model)).toString().toUtf8().constData();
             std::cout << "obj is a key " << ESM4::formIdToString(baseObj) << ", " << model << std::endl;
@@ -468,10 +468,10 @@ void CSVRender::ForeignObject::update()
             else
                 error = 0;
         }
-        else if (book.searchId(ESM4::formIdToString(baseObj)) != -1)
+        else if (book.searchFormId(baseObj) != -1)
         {
             int extraIndex = -1;
-            extraIndex = book.searchId(ESM4::formIdToString(baseObj));
+            extraIndex = book.searchFormId(baseObj);
             model = book.getData (extraIndex,
                    book.findColumnIndex (CSMWorld::Columns::ColumnId_Model)).toString().toUtf8().constData();
             //std::cout << "obj is a book obj " << ESM4::formIdToString(baseObj) << ", " << model << std::endl;
@@ -481,10 +481,10 @@ void CSVRender::ForeignObject::update()
             else
                 error = 0;
         }
-        else if (furn.searchId(ESM4::formIdToString(baseObj)) != -1)
+        else if (furn.searchFormId(baseObj) != -1)
         {
             int extraIndex = -1;
-            extraIndex = furn.searchId(ESM4::formIdToString(baseObj));
+            extraIndex = furn.searchFormId(baseObj);
             model = furn.getData (extraIndex,
                    furn.findColumnIndex (CSMWorld::Columns::ColumnId_Model)).toString().toUtf8().constData();
             //std::cout << "obj is a furniture obj " << ESM4::formIdToString(baseObj) << ", " << model << std::endl;
@@ -494,10 +494,10 @@ void CSVRender::ForeignObject::update()
             else
                 error = 0;
         }
-        else if (grass.searchId(ESM4::formIdToString(baseObj)) != -1)
+        else if (grass.searchFormId(baseObj) != -1)
         {
             int extraIndex = -1;
-            extraIndex = grass.searchId(ESM4::formIdToString(baseObj));
+            extraIndex = grass.searchFormId(baseObj);
             model = grass.getData (extraIndex,
                    grass.findColumnIndex (CSMWorld::Columns::ColumnId_Model)).toString().toUtf8().constData();
             std::cout << "obj is a grass " << ESM4::formIdToString(baseObj) << ", " << model << std::endl;
@@ -509,7 +509,7 @@ void CSVRender::ForeignObject::update()
         }
         else
         {
-            int florIndex = flora.searchId(ESM4::formIdToString(baseObj));
+            int florIndex = flora.searchFormId(baseObj);
             if (florIndex != -1)
             {
                 model = flora.getData (florIndex,
@@ -522,7 +522,7 @@ void CSVRender::ForeignObject::update()
             }
             else
             {
-                int actiIndex = acti.searchId(ESM4::formIdToString(baseObj));
+                int actiIndex = acti.searchFormId(baseObj);
                 if (actiIndex != -1)
                 {
                     model = acti.getData (actiIndex,
@@ -536,7 +536,7 @@ void CSVRender::ForeignObject::update()
                 }
                 else
                 {
-                    int treeIndex = trees.searchId(ESM4::formIdToString(baseObj));
+                    int treeIndex = trees.searchFormId(baseObj);
                     if (treeIndex != -1)
                     {
                         std::string realModel = trees.getData (treeIndex,
@@ -563,7 +563,7 @@ void CSVRender::ForeignObject::update()
                     }
                     else
                     {
-                        int lightIndex = lights.searchId(ESM4::formIdToString(baseObj));
+                        int lightIndex = lights.searchFormId(baseObj);
                         if (lightIndex != -1)
                         {
                             model = lights.getData (lightIndex,
@@ -580,8 +580,8 @@ void CSVRender::ForeignObject::update()
                             std::cout << "obj not static/anio/misc/acti/container/whatever "
                                       << ESM4::formIdToString(baseObj) << std::endl;
     //const CSMForeign::RefCollection& refs = mData.getForeignReferences();
-    //ESM4::FormId baseObj = refs.getRecord(refs.searchId(mReferenceId)).get().mBaseObj;
-    //int index = referenceables.searchId (ESM4::formIdToString(baseObj)); // FIXME: double conversion to string
+    //ESM4::FormId baseObj = refs.getRecord(refs.searchFormId(mReferenceId)).get().mBaseObj;
+    //int index = referenceables.searchFormId(baseObj);
                         }
                     }
                 }
@@ -727,8 +727,8 @@ const CSMForeign::CellRef& CSVRender::ForeignObject::getReference() const
     if (mReferenceId == 0)
         throw std::logic_error ("object does not represent a reference");
 
-    const CSMForeign::RefCollection& refs = mData.getForeignReferences();
-    return refs.getRecord (refs.searchId(mReferenceId)).get();
+    const CSMForeign::CellRefCollection<CSMForeign::CellRef>& refs = mData.getForeignReferences();
+    return refs.getRecord (refs.searchFormId(mReferenceId)).get();
 }
 
 CSVRender::ForeignObject::ForeignObject (const CSMWorld::Data& data, Ogre::SceneNode *cellNode,
@@ -812,9 +812,9 @@ bool CSVRender::ForeignObject::referenceDataChanged (const QModelIndex& topLeft,
     if (mReferenceId == 0)
         return false;
 
-    const CSMForeign::RefCollection& references = mData.getForeignReferences();
+    const CSMForeign::CellRefCollection<CSMForeign::CellRef>& references = mData.getForeignReferences();
 
-    int index = references.searchId(mReferenceId);
+    int index = references.searchFormId(mReferenceId);
 
     if (index!=-1 && index>=topLeft.row() && index<=bottomRight.row())
     {

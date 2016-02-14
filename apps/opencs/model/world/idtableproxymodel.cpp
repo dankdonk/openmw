@@ -97,10 +97,16 @@ bool CSMWorld::IdTableProxyModel::lessThan(const QModelIndex &left, const QModel
 {
     Columns::ColumnId id = static_cast<Columns::ColumnId>(left.data(ColumnBase::Role_ColumnId).toInt());
 
-    if (id == Columns::ColumnId_Id || id == Columns::ColumnId_CellId)
+    if (id == Columns::ColumnId_Id || id == Columns::ColumnId_Parent)
     {
         return strverscmp(sourceModel()->data(left).toString().toStdString().c_str(),
                           sourceModel()->data(right).toString().toStdString().c_str(), /*hex*/1) < 0;
+    }
+
+    if (id == Columns::ColumnId_CellId)
+    {
+        return strverscmp(sourceModel()->data(left).toString().toStdString().c_str(),
+                          sourceModel()->data(right).toString().toStdString().c_str(), 0) < 0;
     }
 
     EnumColumnCache::const_iterator valuesIt = mEnumColumnCache.find(id);

@@ -10,7 +10,7 @@
 
 #include <QVariant>
 
-#include <extern/esm4/common.hpp> // FormId, formIdToString, stringToFormId
+#include <extern/esm4/formid.hpp>
 
 #include "../world/columnbase.hpp"
 #include "../world/collectionbase.hpp"

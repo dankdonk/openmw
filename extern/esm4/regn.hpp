@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015 cc9cii
+  Copyright (C) 2015, 2016 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -25,12 +25,11 @@
 
 #include <vector>
 
-#include "common.hpp"
-
 namespace ESM4
 {
     class Reader;
     class Writer;
+    typedef std::uint32_t FormId;
 
     struct Region
     {
@@ -67,10 +66,10 @@ namespace ESM4
         std::vector<RDAT> mData; // indexed by the type value
 
         Region();
-        ~Region();
+        virtual ~Region();
 
-        void load(ESM4::Reader& reader);
-        //void save(ESM4::Writer& writer) const;
+        virtual void load(ESM4::Reader& reader);
+        //virtual void save(ESM4::Writer& writer) const;
 
         void blank();
     };

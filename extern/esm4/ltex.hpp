@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015 cc9cii
+  Copyright (C) 2015, 2016 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -58,10 +58,10 @@ namespace ESM4
         // ----------------------
 
         LandTexture();
-        ~LandTexture();
+        virtual ~LandTexture();
 
-        void load(ESM4::Reader& reader);
-        //void save(ESM4::Writer& reader) const;
+        virtual void load(ESM4::Reader& reader);
+        //virtual void save(ESM4::Writer& writer) const;
 
         //void blank();
     };

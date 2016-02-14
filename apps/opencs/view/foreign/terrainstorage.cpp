@@ -30,7 +30,7 @@ namespace CSVForeign
 
         for (int i = 0; i < numRecords; ++i)
         {
-            const CSMForeign::LandTexture* ltex = &mData.getForeignLandTextures().getRecord(i).get();
+            const CSMForeign::IdRecord<ESM4::LandTexture>* ltex = &mData.getForeignLandTextures().getRecord(i).get();
             if (ltex->mFormId == formId/* && ltex->mPluginIndex == plugin*/)
                 return ltex;
         }

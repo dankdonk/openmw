@@ -46,10 +46,10 @@ namespace ESM4
         std::string mUnloadEvent; // only in TES5
 
         AnimObject();
-        ~AnimObject();
+        virtual ~AnimObject();
 
-        void load(ESM4::Reader& reader);
-        //void save(ESM4::Writer& reader) const;
+        virtual void load(ESM4::Reader& reader);
+        //virtual void save(ESM4::Writer& writer) const;
 
         //void blank();
     };

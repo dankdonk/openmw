@@ -28,7 +28,8 @@ namespace CSMWorld
             {
                 Role_Region = Qt::UserRole,
                 Role_CellId = Qt::UserRole+1,
-                Role_WorldId = Qt::UserRole+2
+                Role_WorldId = Qt::UserRole+2,
+                Role_CellFormId = Qt::UserRole+3
             };
 
         private:

@@ -4,7 +4,7 @@
 
 #include <QFont>
 
-#include <extern/esm4/common.hpp> // isFormId
+#include <extern/esm4/formid.hpp>
 
 #include "collectionbase.hpp"
 #include "columnbase.hpp"
@@ -41,6 +41,7 @@ QVariant CSMWorld::IdTable::data (const QModelIndex & index, int role) const
     {
 #ifdef _MSC_VER
         QFont font("Lucida Console");
+        font.setPointSize(10);
 #else
         QFont font("Monospace");
 #endif

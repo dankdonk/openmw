@@ -1,4 +1,4 @@
-#include "cellcollection.hpp"
+#include "cellgroupcollection.hpp"
 
 #include <stdexcept>
 #include <cassert>
@@ -12,33 +12,33 @@
 
 #include <extern/esm4/reader.hpp>
 
-#include "../world/record.hpp"
-#include "../world/universalid.hpp"
+//#include "../world/record.hpp"
+//#include "../world/universalid.hpp"
 
-#include "worldcollection.hpp"
-#include "cellgroupcollection.hpp"
+//#include "worldcollection.hpp"
 
-CSMForeign::CellCollection::CellCollection (WorldCollection& worlds, CellGroupCollection& cellGroups)
- : mWorlds(worlds), mCellGroups(cellGroups)
+CSMForeign::CellGroupCollection::CellGroupCollection () //WorldCollection& worlds) :mWorlds(worlds)
 {
 }
 
-CSMForeign::CellCollection::~CellCollection ()
+CSMForeign::CellGroupCollection::~CellGroupCollection ()
 {
 }
 
-// http://www.uesp.net/wiki/Tes4Mod:Mod_File_Format/CELL
-//
-// The block and subblock groups for an interior cell are determined by the last two decimal
-// digits of the lower 3 bytes of the cell form ID (the modindex is not included in the
-// calculation). For example, for form ID 0x000CF2=3314, the block is 4 and the subblock is 1.
-//
-// The block and subblock groups for an exterior cell are determined by the X-Y coordinates of
-// the cell. Each block contains 16 subblocks (4x4) and each subblock contains 64 cells (8x8).
-// So each block contains 1024 cells (32x32).
-
-int CSMForeign::CellCollection::load (ESM4::Reader& reader, bool base)
+#if 0
+int CSMForeign::CellGroupCollection::load (ESM4::Reader& reader, bool base)
 {
+    switch (reader.hdr().record.typeId)
+    {
+        case ESM4::REC_CELL:
+        case ESM4::REC_REFR:
+        case ESM4::REC_ACHR:
+        case ESM4::REC_ACRE:
+        case ESM4::REC_PGRD:
+        default:
+            break;
+    }
+
     // load the record from file
     CSMForeign::Cell record;
     IdCollection<Cell>::loadRecord(record, reader);
@@ -157,47 +157,20 @@ int CSMForeign::CellCollection::load (ESM4::Reader& reader, bool base)
     if (!record.mRegions.empty())
         ESM4::formIdToString(record.mRegions.back(), record.mRegion);
 
-    // cache the record's formId to its cell group
-    int cellIndex = mCellGroups.searchFormId(record.mFormId);
-    if (cellIndex == -1)
-    {
-        using CSMWorld::Record;
-
-        // new cell group
-        CellGroup cellGroup;
-        cellGroup.mFormId = record.mFormId; // same as CellGroup's CELL
-        cellGroup.mId = ESM4::formIdToString(record.mFormId);
-
-        std::unique_ptr<Record<CellGroup> > record2(new Record<CellGroup>);
-        record2->mState = CSMWorld::RecordBase::State_BaseOnly;
-        record2->mBase = cellGroup;
-
-        mCellGroups.insertRecord(std::move(record2), mCellGroups.getSize());
-    }
-    // FIXME: below only needed if we're modifyng something
-    else
-    {
-#if 0
-        // existing cell group
-        std::unique_ptr<Record<CellGroup> > record2(new Record<CellGroup>(mCellGroups.getRecord(cellIndex)));
-        record2->mState = CSMWorld::RecordBase::State_ModifiedOnly;
-        CellGroup &cellGroup = record2->get();
-
-        mCellGroups.setRecord(cellIndex, std::move(record2));
-#endif
-    }
-
-    if (recrod.mFormId == 0x00007be6)
-        std::cout << "#-1 14" << std::endl;
-
     // load the record to the collection
     // FIXME: trouble here is that a cell is not a single record but a collection of things
     // e.g. Knights.esp adds a XCLR subrecord (not replace) to cell 00006599 (WenyandawikExterior)
     // and it has child GRUP's to replaces REFR 00188ec0 (ARRingOuterWall03)
     return IdCollection<Cell>::load(record, base, index);
 }
+#endif
 
-ESM4::FormId CSMForeign::CellCollection::searchCoord (std::int16_t x, std::int16_t y, ESM4::FormId world) const
+void CSMForeign::CellGroupCollection::saveContext (ESM4::Reader& reader)
+{
+}
+
+#if 0
+ESM4::FormId CSMForeign::CellGroupCollection::searchCoord (std::int16_t x, std::int16_t y, ESM4::FormId world) const
 {
     std::map<ESM4::FormId, CoordinateIndex>::const_iterator iter = mPositionIndex.find(world);
     if (iter == mPositionIndex.end())
@@ -210,7 +183,7 @@ ESM4::FormId CSMForeign::CellCollection::searchCoord (std::int16_t x, std::int16
     return it->second;
 }
 
-CSMForeign::Cell *CSMForeign::CellCollection::getCell(ESM4::FormId formId)
+CSMForeign::Cell *CSMForeign::CellGroupCollection::getCell(ESM4::FormId formId)
 {
     int index = searchFormId(formId);
     if (index == -1)
@@ -218,3 +191,4 @@ CSMForeign::Cell *CSMForeign::CellCollection::getCell(ESM4::FormId formId)
 
     return &getModifiableRecord(index).get();
 }
+#endif

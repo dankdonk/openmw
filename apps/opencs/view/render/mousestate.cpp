@@ -268,7 +268,8 @@ namespace CSVRender
 //#if 0
                         // FIXME
                         // start quick hack for temporary testing
-                        const CSMForeign::RefCollection& references = mParent->mDocument.getData().getForeignReferences();
+                        const CSMForeign::CellRefCollection<CSMForeign::CellRef>& references
+                            = mParent->mDocument.getData().getForeignReferences();
 
                         mColIndexPosX = references.findColumnIndex(CSMWorld::Columns::ColumnId_PositionXPos);
                         mColIndexPosY = references.findColumnIndex(CSMWorld::Columns::ColumnId_PositionYPos);

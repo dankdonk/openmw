@@ -118,10 +118,10 @@ namespace ESM4
         std::vector<FormId> mIds;   // land texture (LTEX) formids
 
         Land();
-        ~Land();
+        virtual ~Land();
 
-        void load(Reader& reader);
-        //void save(Writer& writer) const;
+        virtual void load(Reader& reader);
+        //virtual void save(Writer& writer) const;
 
         //void blank();
     };

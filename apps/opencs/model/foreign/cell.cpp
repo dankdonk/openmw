@@ -1,5 +1,6 @@
 #include "cell.hpp"
 
+#include <extern/esm4/formid.hpp>
 #include <extern/esm4/reader.hpp>
 
 void CSMForeign::Cell::load (ESM4::Reader& reader)

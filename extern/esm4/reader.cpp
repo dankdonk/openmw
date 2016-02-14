@@ -37,6 +37,8 @@
 
 #include <components/esm/esm4reader.hpp>
 
+#include "formid.hpp"
+
 ESM4::Reader::Reader() : mModIndex(0), mObserver(nullptr), mEndOfRecord(0), mCellGridValid(false),
                          mRecHeaderSize(sizeof(ESM4::RecordHeader))
 {

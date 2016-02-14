@@ -59,10 +59,10 @@ namespace ESM4
         FormId mRandomTeleport;
 
         Door();
-        ~Door();
+        virtual ~Door();
 
-        void load(ESM4::Reader& reader);
-        //void save(ESM4::Writer& reader) const;
+        virtual void load(ESM4::Reader& reader);
+        //virtual void save(ESM4::Writer& writer) const;
 
         //void blank();
     };

@@ -5,16 +5,12 @@
 #undef NDEBUG
 #endif
 
-#include <libs/platform/strings.h>
-
 #include <extern/esm4/reader.hpp>
 
-#include "../world/record.hpp"
+#include "cellgroupcollection.hpp"
 
-#include "cellcollection.hpp"
-
-CSMForeign::LandCollection::LandCollection (CellCollection& cells)
-  : mCells (cells)
+CSMForeign::LandCollection::LandCollection (CellGroupCollection& cellGroups)
+  : mCellGroups (cellGroups)
 {
 }
 
@@ -26,22 +22,24 @@ CSMForeign::LandCollection::~LandCollection ()
 // have an XCLC sub-record. e.g. OblivionMQKvatchBridge, TheFrostFireGlade and CheydinhalOblivion
 int CSMForeign::LandCollection::load (ESM4::Reader& reader, bool base)
 {
-    CSMForeign::Land record;
+    assert(reader.grp().type == ESM4::Grp_CellTemporaryChild && "Unexpected Group type for LAND");
 
-    std::string id;
-    ESM4::FormId formId = reader.hdr().record.id;
-    reader.adjustFormId(formId);
-    ESM4::formIdToString(formId, id);
+    // load the record
+    Land record;
+    IdCollection<Land>::loadRecord(record, reader);
 
     // cache the ref's formId to its parent cell
-    Cell *cell = mCells.getCell(reader.currCell()); // FIXME: const issue with Collection
+    int cellIndex = mCellGroups.searchFormId(reader.currCell());
+    if (cellIndex == -1)
+        throw std::runtime_error("no CELL for LAND");
 
-    assert(reader.grp().type == ESM4::Grp_CellTemporaryChild && "Unexpected Group type for LAND");
-    if (cell)
-    {
-        assert(cell->mLandTemporary == 0 && "CELL already has a LAND child");
-        cell->mLandTemporary = formId;
-    }
+    std::unique_ptr<CSMWorld::Record<CellGroup> > record2(
+            new CSMWorld::Record<CellGroup>(mCellGroups.getRecord(cellIndex)));
+    record2->mState = CSMWorld::RecordBase::State_BaseOnly; // FIXME: set Modified for new modindex?
+    CellGroup &cellGroup = record2->get();
+    //assert(cellGroup.mLandTemporary == 0 && "CELL already has a LAND child");
+    cellGroup.mLand = record.mFormId;
+    mCellGroups.setRecord(cellIndex, std::move(record2));
 
     // check if parent cell left some bread crumbs
     if (reader.hasCellGrid())
@@ -59,77 +57,29 @@ int CSMForeign::LandCollection::load (ESM4::Reader& reader, bool base)
         if (lb != mPositionIndex.end() && !(mPositionIndex.key_comp()(worldId, lb->first)))
         {
             std::pair<CoordinateIndex::iterator, bool> res = lb->second.insert(
-                { std::pair<int, int>(reader.currCellGrid().grid.x, reader.currCellGrid().grid.y), id });
+                { std::pair<int, int>(reader.currCellGrid().grid.x, reader.currCellGrid().grid.y), record.mFormId });
 
             // this can happen if a mod updates the record, just overwrite it for now // FIXME
             //assert(res.second && "existing LAND record found for the given coordinates");
             if (!res.second)
-                lb->second[std::pair<int, int>(reader.currCellGrid().grid.x, reader.currCellGrid().grid.y)] = id;
+                lb->second[std::pair<int, int>(reader.currCellGrid().grid.x, reader.currCellGrid().grid.y)] = record.mFormId;
         }
         else
             mPositionIndex.insert(lb, std::map<ESM4::FormId, CoordinateIndex>::value_type(worldId,
-                { {std::pair<int, int>(reader.currCellGrid().grid.x, reader.currCellGrid().grid.y), id } }));
+                { {std::pair<int, int>(reader.currCellGrid().grid.x, reader.currCellGrid().grid.y), record.mFormId } }));
 
         ESM4::gridToString(reader.currCellGrid().grid.x, reader.currCellGrid().grid.y, record.mCellId);
     }
     else
-        record.mCellId = id; // use formId string instead
+        record.mCellId = ESM4::formIdToString(record.mFormId);
 
-    // FIXME; should be using the formId as the lookup key rather than its string form
-    int index = CSMWorld::Collection<Land, CSMWorld::IdAccessor<Land> >::searchId(id);
+    // continue with the rest of the loading
+    int index = this->searchFormId(record.mFormId);
 
-    if (index == -1)
-        record.mId = id; // new record
-    else
-        record = this->getRecord(index).get();
+    // FIXME: how to deal with deleted records?
+    //if ((record.mFlags & ESM4::Rec_Deleted) != 0)
 
-    loadRecord(record, reader);
-
-    return load(record, base, index);
-}
-
-void CSMForeign::LandCollection::loadRecord (Land& record, ESM4::Reader& reader)
-{
-    record.load(reader, mCells);
-}
-
-int CSMForeign::LandCollection::load (const Land& record, bool base, int index)
-{
-    if (index == -2)
-        index = CSMWorld::Collection<Land, CSMWorld::IdAccessor<Land> >::searchId(
-            CSMWorld::IdAccessor<Land>().getId(record));
-
-    if (index == -1)
-    {
-        // new record
-        std::unique_ptr<CSMWorld::Record<Land> > record2(new CSMWorld::Record<Land>);
-
-        record2->mState = base ? CSMWorld::RecordBase::State_BaseOnly : CSMWorld::RecordBase::State_ModifiedOnly;
-        (base ? record2->mBase : record2->mModified) = record;
-
-        index = this->getSize();
-        this->appendRecord(std::move(record2));
-    }
-    else
-    {
-        // old record
-        std::unique_ptr<CSMWorld::Record<Land> > record2(new CSMWorld::Record<Land>(
-                CSMWorld::Collection<Land, CSMWorld::IdAccessor<Land> >::getRecord(index)));
-
-        if (base)
-            record2->mBase = record;
-        else
-            record2->setModified(record);
-
-        this->setRecord(index, std::move(record2));
-    }
-
-    return index;
-}
-
-int CSMForeign::LandCollection::searchId(ESM4::FormId formId) const
-{
-    return CSMWorld::Collection<Land, CSMWorld::IdAccessor<Land> >::searchId(ESM4::formIdToString(formId));
+    return IdCollection<Land>::load(record, base, index);
 }
 
 // returns record index
@@ -143,5 +93,5 @@ int CSMForeign::LandCollection::searchId(std::int16_t x, std::int16_t y, ESM4::F
     if (it == iter->second.end())
         return -1; // cann't find coordinate
 
-    return CSMWorld::Collection<Land, CSMWorld::IdAccessor<Land> >::searchId(it->second);
+    return this->searchFormId(it->second);
 }

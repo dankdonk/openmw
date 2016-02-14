@@ -31,7 +31,6 @@ namespace ESM4
 {
     class Reader;
     class Writer;
-    typedef std::uint32_t FormId;
 
     struct LeveledCreature
     {
@@ -47,10 +46,10 @@ namespace ESM4
         std::vector<LVLO> mLvlObject;
 
         LeveledCreature();
-        ~LeveledCreature();
+        virtual ~LeveledCreature();
 
-        void load(ESM4::Reader& reader);
-        //void save(ESM4::Writer& reader) const;
+        virtual void load(ESM4::Reader& reader);
+        //virtual void save(ESM4::Writer& writer) const;
 
         //void blank();
     };

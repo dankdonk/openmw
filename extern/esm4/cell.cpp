@@ -34,7 +34,7 @@
 //#include "writer.hpp"
 
 ESM4::Cell::Cell() : mFormId(0), mFlags(0), mCellFlags(0), mX(0), mY(0), mOwner(0), mGlobal(0),
-                     mClimate(0), mWater(0), mWaterHeight(0.f), mLandTemporary(0)
+                     mClimate(0), mWater(0), mWaterHeight(0.f)
 {
     mEditorId.clear();
     mFullName.clear();

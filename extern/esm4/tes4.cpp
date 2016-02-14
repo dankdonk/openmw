@@ -31,6 +31,7 @@
 #endif
 
 #include "common.hpp"
+#include "formid.hpp"
 #include "reader.hpp"
 //#include "writer.hpp"
 

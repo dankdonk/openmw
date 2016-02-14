@@ -26,10 +26,14 @@
 #include "../../model/world/pathgridcommands.hpp"
 #include "../../model/world/pathgridpointswrap.hpp"
 #include "../../model/world/nestedtableproxymodel.hpp"
+
+#include "../../model/foreign/cellgroupcollection.hpp"
+
 #include "../world/physicssystem.hpp"
 
-#include "elements.hpp"
 #include "../foreign/terrainstorage.hpp"
+
+#include "elements.hpp"
 #include "pathgridpoint.hpp"
 
 namespace CSVRender
@@ -104,11 +108,11 @@ bool CSVRender::ForeignCell::addObjects (const std::vector<ESM4::FormId>& object
 {
     bool modified = false;
 
-    const CSMForeign::RefCollection& refs = mDocument.getData().getForeignReferences();
+    const CSMForeign::CellRefCollection<CSMForeign::CellRef>& refs = mDocument.getData().getForeignReferences();
 
     for (unsigned int i = 0; i < objects.size(); ++i)
     {
-        int index = refs.searchId(objects[i]);
+        int index = refs.searchFormId(objects[i]);
         if (index == -1)
             continue; // FIXME: maybe not a ref but something else?
 
@@ -128,36 +132,36 @@ bool CSVRender::ForeignCell::addObjects (const std::vector<ESM4::FormId>& object
             //   femalehand.nif       |   hand.nif
             //   femalelowerbody.nif  |   lowerbody.nif
             //   femaleupperbody.nif  |   upperbody.nif
-            const CSMForeign::IdCollection<CSMForeign::Npc>& npc
+            const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Npc> >& npc
                                                  = mDocument.getData().getForeignNpcs();
-            const CSMForeign::IdCollection<CSMForeign::Creature>& crea
+            const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Creature> >& crea
                                                  = mDocument.getData().getForeignCreatures();
-            const CSMForeign::IdCollection<CSMForeign::LeveledCreature>& lvlc
+            const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::LeveledCreature> >& lvlc
                                                  = mDocument.getData().getForeignLvlCreatures();
             //
-            const CSMForeign::IdCollection<CSMForeign::Armor>& armor
+            const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Armor> >& armor
                                                  = mDocument.getData().getForeignArmors();
-            const CSMForeign::IdCollection<CSMForeign::Weapon>& weap
+            const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Weapon> >& weap
                                                  = mDocument.getData().getForeignWeapons();
-            const CSMForeign::IdCollection<CSMForeign::Ammo>& ammo
+            const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Ammo> >& ammo
                                                  = mDocument.getData().getForeignAmmos();
-            const CSMForeign::IdCollection<CSMForeign::Clothing>& cloth
+            const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Clothing> >& cloth
                                                  = mDocument.getData().getForeignClothings();
-            const CSMForeign::IdCollection<CSMForeign::Potion>& potion
+            const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Potion> >& potion
                                                  = mDocument.getData().getForeignPotions();
-            const CSMForeign::IdCollection<CSMForeign::Apparatus>& appa
+            const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Apparatus> >& appa
                                                  = mDocument.getData().getForeignApparatuses();
-            const CSMForeign::IdCollection<CSMForeign::Ingredient>& ingr
+            const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Ingredient> >& ingr
                                                  = mDocument.getData().getForeignIngredients();
-            const CSMForeign::IdCollection<CSMForeign::SigilStone>& sigil
+            const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::SigilStone> >& sigil
                                                  = mDocument.getData().getForeignSigilStones();
-            const CSMForeign::IdCollection<CSMForeign::SoulGem>& soul
+            const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::SoulGem> >& soul
                                                  = mDocument.getData().getForeignSoulGems();
-            const CSMForeign::IdCollection<CSMForeign::Key>& keys
+            const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Key> >& keys
                                                  = mDocument.getData().getForeignKeys();
-            const CSMForeign::IdCollection<CSMForeign::Hair>& hair
+            const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Hair> >& hair
                                                  = mDocument.getData().getForeignHairs();
-            const CSMForeign::IdCollection<CSMForeign::Eyes>& eyes
+            const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Eyes> >& eyes
                                                  = mDocument.getData().getForeignEyesSet();
 
             // For TES3, MWRender::NpcAnimation::updateNpcBase()
@@ -196,10 +200,10 @@ bool CSVRender::ForeignCell::addObjects (const std::vector<ESM4::FormId>& object
             //
             // See MWRender::NpcAnimation::runAnimation(float timepassed) and
             // MWRender::CreatureWeaponAnimation::updatePart()
-            ESM4::FormId baseObj = refs.getRecord(refs.searchId(id)).get().mBaseObj;
+            ESM4::FormId baseObj = refs.getRecord(refs.searchFormId(id)).get().mBaseObj;
             if (lvlc.searchFormId(baseObj) != -1)
             {
-                const CSMForeign::LeveledCreature& lcreature
+                const CSMForeign::IdRecord<ESM4::LeveledCreature>& lcreature
                                                   = lvlc.getRecord(ESM4::formIdToString(baseObj)).get();
                 ESM4::FormId templ = 0;
                 for (unsigned int j = 0; j < lcreature.mLvlObject.size(); ++j)
@@ -233,7 +237,7 @@ bool CSVRender::ForeignCell::addObjects (const std::vector<ESM4::FormId>& object
                     while(boneiter.hasMoreElements())
                         std::cout << "bone name " << boneiter.getNext()->getName() << std::endl;
 #endif
-                    CSMForeign::Npc npcRec = npc.getRecord(extraIndex).get();
+                    CSMForeign::IdRecord<ESM4::Npc> npcRec = npc.getRecord(extraIndex).get();
 
                     // head
                     NifOgre::ObjectScenePtr objectH
@@ -306,7 +310,7 @@ bool CSVRender::ForeignCell::addObjects (const std::vector<ESM4::FormId>& object
                         int invIndex = cloth.searchFormId(npcRec.mInventory[j].item);
                         if (invIndex != -1)
                         {
-                            const CSMForeign::Clothing& clothRec = cloth.getRecord(invIndex).get();
+                            const CSMForeign::IdRecord<ESM4::Clothing>& clothRec = cloth.getRecord(invIndex).get();
                             //std::cout << clothRec.mEditorId << std::endl; // FIXME
 
 // NifOgre::ObjectScenePtr objects = NifOgre::Loader::createObjects(mSkelBase, bonename, bonefilter, mInsert, model);
@@ -412,8 +416,11 @@ CSVRender::ForeignCell::ForeignCell (CSMDoc::Document& document, Ogre::SceneMana
     const CSMForeign::CellCollection& cells = mDocument.getData().getForeignCells();
     const CSMForeign::Cell& cell = cells.getForeignRecord(id).get();
 
+    const CSMForeign::CellGroupCollection& cellGroups = mDocument.getData().getForeignCellGroups();
+    const CSMForeign::CellGroup& cellGroup = cellGroups.getForeignRecord(id).get();
+
     const CSMForeign::LandCollection& lands = mDocument.getData().getForeignLands();
-    int landIndex = lands.searchId(cell.mLandTemporary);
+    int landIndex = lands.searchFormId(cellGroup.mLand);
 
     std::istringstream stream (cell.mCellId.c_str());
     char ignore; // '#'
@@ -451,14 +458,14 @@ CSVRender::ForeignCell::ForeignCell (CSMDoc::Document& document, Ogre::SceneMana
     }
     else if (mWorld != 0) // FIXME need a better check for interiors
         std::cerr << "Land record for " << cell.mCellId << " not found, land formId " <<
-            ESM4::formIdToString(cell.mLandTemporary) << " cell formId " <<
+            ESM4::formIdToString(cellGroup.mLand) << " cell formId " <<
             ESM4::formIdToString(cell.mFormId)
             << std::endl;
 
     // Moved from before terrain to after to get terrain heights for z position sanity check
-    addObjects(cell.mRefTemporary); // FIXME: ignore visible distant and persistent children for now
-    addObjects(cell.mRefPersistent); // FIXME: ignore visible distant children for now
-    addObjects(cell.mRefVisibleDistant);
+    addObjects(cellGroup.mTemporary); // FIXME: ignore visible distant and persistent children for now
+    addObjects(cellGroup.mPersistent); // FIXME: ignore visible distant children for now
+    addObjects(cellGroup.mVisibleDistant);
 
 // FIXME: debugging
 #if 0

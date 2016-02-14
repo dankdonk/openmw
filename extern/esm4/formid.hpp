@@ -20,40 +20,23 @@
   cc9cii cc9c@iinet.net.au
 
 */
-#ifndef ESM4_SBSP_H
-#define ESM4_SBSP_H
+#ifndef ESM4_FORMID_H
+#define ESM4_FORMID_H
 
-#include <string>
 #include <cstdint>
+#include <string>
 
 namespace ESM4
 {
-    class Reader;
     typedef std::uint32_t FormId;
 
-    struct Subspace
-    {
-        struct Dimension
-        {
-            float x;
-            float y;
-            float z;
-        };
+    void formIdToString(FormId formId, std::string& str);
 
-        FormId mFormId;       // from the header
-        std::uint32_t mFlags; // from the header, see enum type RecordFlag for details
+    std::string formIdToString(FormId formId);
 
-        std::string mEditorId;
-        Dimension mDimension;
+    bool isFormId(const std::string& str, FormId *id = nullptr);
 
-        Subspace();
-        virtual ~Subspace();
-
-        virtual void load(Reader& reader);
-        //virtual void save(Writer& writer) const;
-
-        //void blank();
-    };
+    FormId stringToFormId(const std::string& str);
 }
 
-#endif // ESM4_SBSP_H
+#endif // ESM4_FORMID_H
