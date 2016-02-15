@@ -137,12 +137,12 @@ __strverscmp (const char *s1, const char *s2, int hex)
 
       return negative * diff;
 
-    case LEN:
-      while (hex ? isxdigit(*p1++) : ISDIGIT (*p1++))
-        if (!(hex ? isxdigit(*p2++) : ISDIGIT (*p2++)))
+    case LEN: /* hex ignored for this case */
+      while (ISDIGIT (*p1++))
+        if (!ISDIGIT (*p2++))
           return negative; /* longer negatives numbers are smaller */
 
-      return negative * ((hex ? isxdigit(*p2) : ISDIGIT (*p2)) ? -1 : diff);
+      return negative * (ISDIGIT (*p2) ? -1 : diff);
 
     default:
       return state;
