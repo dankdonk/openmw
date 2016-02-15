@@ -177,14 +177,19 @@ namespace ESM4
         // ModIndex adjusted formId according to master file dependencies
         inline void adjustFormId(FormId& id) {
             if (!mHeader.mModIndicies.empty())
-                id = mHeader.mModIndicies[(id >> 24) & 0xff] | (id & 0x00ffffff);
+            {
+                int index = (id >> 24) & 0xff;
+                id = mHeader.mModIndicies[index] | (id & 0x00ffffff);
+            }
         }
 
         inline void adjustGRUPFormId() {
             if (!mHeader.mModIndicies.empty())
+            {
+                int index = (mRecordHeader.group.label.value >> 24) & 0xff;
                 mRecordHeader.group.label.value
-                    = mHeader.mModIndicies[(mRecordHeader.group.label.value >> 24) & 0xff]
-                      | (mRecordHeader.group.label.value & 0x00ffffff);
+                    = mHeader.mModIndicies[index] | (mRecordHeader.group.label.value & 0x00ffffff);
+            }
         }
 
         bool getFormId(FormId& id) {
