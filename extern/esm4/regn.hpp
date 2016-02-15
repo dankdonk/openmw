@@ -24,6 +24,8 @@
 #define ESM4_REGN_H
 
 #include <vector>
+#include <string>
+#include <cstdint>
 
 namespace ESM4
 {

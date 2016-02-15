@@ -49,7 +49,9 @@ ESM4::Reference::~Reference()
 
 void ESM4::Reference::load(ESM4::Reader& reader)
 {
-    mFormId = reader.adjustFormId(reader.hdr().record.id); // FIXME: maybe use master adjusted?
+    //mFormId = reader.adjustFormId(reader.hdr().record.id); // FIXME: maybe use master adjusted?
+    mFormId = reader.hdr().record.id;
+    reader.adjustFormId(mFormId);
     mFlags  = reader.hdr().record.flags;
     // TODO: Let the engine apply this? Saved games?
     //mDisabled = ((mFlags & ESM4::Rec_Disabled) != 0) ? true : false;
@@ -168,6 +170,7 @@ void ESM4::Reference::load(ESM4::Reader& reader)
             case ESM4::SUB_XWCU:
             case ESM4::SUB_XATR: // Dawnguard only?
             case MKTAG('X','H','L','T'): // Unofficial Oblivion Patch
+            case MKTAG('X','C','H','G'): // thievery.exp
             {
                 //std::cout << "REFR " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
                 reader.skipSubRecordData();

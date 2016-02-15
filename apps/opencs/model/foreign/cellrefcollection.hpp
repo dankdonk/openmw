@@ -85,7 +85,8 @@ namespace CSMForeign
         else
         {
             // existing cell group
-            std::unique_ptr<Record<CellGroup> > record2(new Record<CellGroup>(mCellGroups.getRecord(cellIndex)));
+            std::unique_ptr<Record<CellGroup> > record2(new Record<CellGroup>);
+            record2->mBase = mCellGroups.getRecord(cellIndex).get();
             record2->mState = CSMWorld::RecordBase::State_BaseOnly; // FIXME: State_Modified if new modindex?
             CellGroup &cellGroup = record2->get();
 
@@ -133,8 +134,8 @@ namespace CSMForeign
                 this->removeRows(index, 1);
                 return -1;
             }
-
-            std::unique_ptr<Record<RecordT> > baseRecord(new Record<RecordT>(this->getRecord(index)));
+            std::unique_ptr<Record<RecordT> > baseRecord(new Record<RecordT>);
+            baseRecord->mBase = this->getRecord(index).get();
             baseRecord->mState = CSMWorld::RecordBase::State_Deleted;
             this->setRecord(index, std::move(baseRecord));
             return index;

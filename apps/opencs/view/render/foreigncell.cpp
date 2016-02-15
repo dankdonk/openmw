@@ -91,10 +91,10 @@ Ogre::ManualObject *CSVRender::ForeignCell::createPathgridEdge(const std::string
     return result;
 }
 
-bool CSVRender::ForeignCell::removeObject (ESM4::FormId id)
+bool CSVRender::ForeignCell::removeObject (ESM4::FormId formId)
 {
     std::map<ESM4::FormId, ForeignObject *>::iterator iter =
-        mObjects.find (id);
+        mObjects.find (formId);
 
     if (iter == mObjects.end())
         return false;
@@ -395,17 +395,16 @@ bool CSVRender::ForeignCell::addObjects (const std::vector<ESM4::FormId>& object
 }
 
 CSVRender::ForeignCell::ForeignCell (CSMDoc::Document& document, Ogre::SceneManager *sceneManager,
-    ESM4::FormId id, ESM4::FormId worldId, boost::shared_ptr<CSVWorld::PhysicsSystem> physics,
+    ESM4::FormId formId, ESM4::FormId worldId, boost::shared_ptr<CSVWorld::PhysicsSystem> physics,
     const Ogre::Vector3& origin)
-: mDocument (document), mFormId (id), mWorld(worldId)
+: mDocument (document), mFormId (formId), mWorld(worldId)
 , mProxyModel(0), mModel(0), mPgIndex(-1)//, mHandler(new CSMWorld::SignalHandler(this))
 , mPhysics(physics), mSceneMgr(sceneManager), mX(0), mY(0)
 {
     if (worldId) // no worldId for internal cells
     {
         const CSMForeign::WorldCollection& worlds = mDocument.getData().getForeignWorlds();
-        const CSMForeign::World& world
-            = worlds.getRecord(worlds.searchFormId(worldId)).get();
+        const CSMForeign::World& world = worlds.getForeignRecord(worldId).get();
         if (world.mParent != 0)
             mWorld = world.mParent; // yes, really (but needs more testing - maybe have both or merge?)
     }
@@ -414,10 +413,10 @@ CSVRender::ForeignCell::ForeignCell (CSMDoc::Document& document, Ogre::SceneMana
     mCellNode->setPosition (origin);
 
     const CSMForeign::CellCollection& cells = mDocument.getData().getForeignCells();
-    const CSMForeign::Cell& cell = cells.getForeignRecord(id).get();
+    const CSMForeign::Cell& cell = cells.getForeignRecord(formId).get();
 
     const CSMForeign::CellGroupCollection& cellGroups = mDocument.getData().getForeignCellGroups();
-    const CSMForeign::CellGroup& cellGroup = cellGroups.getForeignRecord(id).get();
+    const CSMForeign::CellGroup& cellGroup = cellGroups.getForeignRecord(formId).get();
 
     const CSMForeign::LandCollection& lands = mDocument.getData().getForeignLands();
     int landIndex = lands.searchFormId(cellGroup.mLand);

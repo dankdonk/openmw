@@ -527,6 +527,7 @@ CSMWorld::Data::Data (ToUTF8::FromType encoding, const ResourcesManager& resourc
     mForeignWorlds.addColumn (new FixedRecordTypeColumn<CSMForeign::World> (UniversalId::Type_ForeignWorld));
     mForeignWorlds.addColumn (new NameColumn<CSMForeign::World>);
     mForeignWorlds.addColumn (new EditorIdColumn<CSMForeign::World>);
+    mForeignWorlds.addColumn (new ParentColumn<CSMForeign::World>);
 
     mForeignRegions.addColumn (new ForeignIdColumn<CSMForeign::Region>);
     mForeignRegions.addColumn (new RecordStateColumn<CSMForeign::Region>);

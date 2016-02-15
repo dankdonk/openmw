@@ -47,6 +47,7 @@ int CSMForeign::CellCollection::load (ESM4::Reader& reader, bool base)
     int index = searchFormId(record.mFormId);
     if ((record.mFlags & ESM4::Rec_Deleted) != 0)
     {
+        std::cout << "cell deleted " << record.mId << std::endl; // FIXME
         if (index == -1)
         {
             // deleting a record that does not exist
@@ -187,7 +188,7 @@ int CSMForeign::CellCollection::load (ESM4::Reader& reader, bool base)
 #endif
     }
 
-    if (recrod.mFormId == 0x00007be6)
+    if (record.mFormId == 0x00007be6)
         std::cout << "#-1 14" << std::endl;
 
     // load the record to the collection

@@ -18,6 +18,7 @@ void CSMForeign::World::load(ESM4::Reader& reader)
     ESM4::World::load(reader);
 
     ESM4::formIdToString(mFormId, mId);
+    ESM4::formIdToString(mParent, mWorldFormId);
 
     mName = mFullName;
 }

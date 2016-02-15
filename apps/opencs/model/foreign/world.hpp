@@ -22,6 +22,8 @@ namespace CSMForeign
         std::string mId;
         std::string mName;
 
+        std::string mWorldFormId; // keeping a string allows columnimp.hpp free of formId conversions
+
         void load(ESM4::Reader& esm);
 
         void blank();

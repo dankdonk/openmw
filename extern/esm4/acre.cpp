@@ -47,7 +47,9 @@ ESM4::ActorCreature::~ActorCreature()
 
 void ESM4::ActorCreature::load(ESM4::Reader& reader)
 {
-    mFormId = reader.adjustFormId(reader.hdr().record.id); // FIXME: use master adjusted?
+    //mFormId = reader.adjustFormId(reader.hdr().record.id); // FIXME: use master adjusted?
+    mFormId = reader.hdr().record.id;
+    reader.adjustFormId(mFormId);
     mFlags  = reader.hdr().record.flags;
 
     while (reader.getSubRecordHeader())

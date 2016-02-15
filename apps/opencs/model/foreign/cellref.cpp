@@ -17,6 +17,7 @@ void CSMForeign::CellRef::load(ESM4::Reader& reader)
 {
     ESM4::Reference::load(reader);
 
+    mId = ESM4::formIdToString(mFormId);
     mRefID = ESM4::formIdToString(mBaseObj);
 
     mPos.pos[0] = mPosition.pos.x;
