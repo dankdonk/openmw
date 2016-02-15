@@ -1,6 +1,8 @@
 #ifndef CSM_FOREIGN_CELLREFCOLLECTION_H
 #define CSM_FOREIGN_CELLREFCOLLECTION_H
 
+#include <algorithm>
+
 #include <extern/esm4/reader.hpp>
 
 #include "idcollection.hpp"
@@ -28,6 +30,8 @@ namespace CSMForeign
         CellRefCollection ();
         CellRefCollection (const CellRefCollection& other);
         CellRefCollection& operator= (const CellRefCollection& other);
+
+        update (const RecordT& record, std::vector<ESM4::FormId>& cellRefs);
     };
 
     template<typename RecordT>
@@ -40,6 +44,24 @@ namespace CSMForeign
     {}
 
     template<typename RecordT>
+    CellRefCollection<RecordT>::update (const RecordT& record, std::vector<ESM4::FormId>& cellRefs)
+    {
+        if ((record.mFlags & ESM4::Rec_Deleted) != 0)
+        {
+            std::vector<ESM4::FormId>::iterator it =
+                std::find(cellRefs.begin(), cellRefs.end(), record.mFormId);
+
+            if (it != cellRefs.end())
+            {
+                std::cout << "deleted " << record.mId << std::endl;
+                cellRefs.erase(it);
+            }
+        }
+        else
+            cellRefs.push_back(record.mFormId);
+    }
+
+    template<typename RecordT>
     int CellRefCollection<RecordT>::load (ESM4::Reader& reader, bool base)
     {
         using CSMWorld::Record;
@@ -47,6 +69,12 @@ namespace CSMForeign
         // load the record
         RecordT record; // REFR, ACHR or ACRE
         IdCollection<RecordT>::loadRecord(record, reader);
+
+        // update mCell to make it easier to locate the ref
+        if (reader.hasCellGrid())
+            ESM4::gridToString(reader.currCellGrid().grid.x, reader.currCellGrid().grid.y, record.mCell);
+        else
+            record.mCell = record.mId; // use formId string instead
 
         // first cache the record's formId to its parent cell group
         int cellIndex = mCellGroups.searchFormId(reader.currCell());
@@ -57,21 +85,9 @@ namespace CSMForeign
 
             switch (reader.grp().type)
             {
-                case ESM4::Grp_CellPersistentChild:
-                {
-                    cellGroup.mPersistent.push_back(record.mFormId);
-                    break;
-                }
-                case ESM4::Grp_CellVisibleDistChild:
-                {
-                    cellGroup.mVisibleDistant.push_back(record.mFormId);
-                    break;
-                }
-                case ESM4::Grp_CellTemporaryChild:
-                {
-                    cellGroup.mTemporary.push_back(record.mFormId);
-                    break;
-                }
+                case ESM4::Grp_CellPersistentChild:  update(record, cellGroup.mPersistent);     break;
+                case ESM4::Grp_CellVisibleDistChild: update(record, cellGroup.mVisibleDistant); break;
+                case ESM4::Grp_CellTemporaryChild:   update(record, cellGroup.mTemporary);      break;
                 default:
                     throw std::runtime_error("unexpected group while loading cellref");
             }
@@ -90,24 +106,11 @@ namespace CSMForeign
             record2->mState = CSMWorld::RecordBase::State_BaseOnly; // FIXME: State_Modified if new modindex?
             CellGroup &cellGroup = record2->get();
 
-            // FIXME: how to deal with deleted or modified formId's?
             switch (reader.grp().type)
             {
-                case ESM4::Grp_CellPersistentChild:
-                {
-                    cellGroup.mPersistent.push_back(record.mFormId);
-                    break;
-                }
-                case ESM4::Grp_CellVisibleDistChild:
-                {
-                    cellGroup.mVisibleDistant.push_back(record.mFormId);
-                    break;
-                }
-                case ESM4::Grp_CellTemporaryChild:
-                {
-                    cellGroup.mTemporary.push_back(record.mFormId);
-                    break;
-                }
+                case ESM4::Grp_CellPersistentChild:  update(record, cellGroup.mPersistent);     break;
+                case ESM4::Grp_CellVisibleDistChild: update(record, cellGroup.mVisibleDistant); break;
+                case ESM4::Grp_CellTemporaryChild:   update(record, cellGroup.mTemporary);      break;
                 default:
                     throw std::runtime_error("unexpected group while loading cellref");
             }
@@ -123,17 +126,18 @@ namespace CSMForeign
         {
             if (index == -1)
             {
-                // deleting a record that does not exist
-                // ignore it for now
-                /// \todo report the problem to the user
+                // cannot delete a non-existent record - may have been deleted by base?
                 return -1;
             }
 
             if (base)
             {
+                std::cout << "deleting base " << record.mId << std::endl; // FIXME
                 this->removeRows(index, 1);
                 return -1;
             }
+
+            std::cout << "deleting added " << record.mId << std::endl; // FIXME
             std::unique_ptr<Record<RecordT> > baseRecord(new Record<RecordT>);
             baseRecord->mBase = this->getRecord(index).get();
             baseRecord->mState = CSMWorld::RecordBase::State_Deleted;

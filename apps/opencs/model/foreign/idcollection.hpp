@@ -55,15 +55,10 @@ namespace CSMForeign
                 return -1;
             }
 
-            // for TES4/5 there shouldn't be any existing records with the same formid
-            // (maybe for references only?)
-            throw std::runtime_error("IdCollection::load deleted formId already exists");
-#if 0
-            std::unique_ptr<Record<RecordT> > baseRecord(new Record<RecordT>(this->getRecord(index)));
+            std::unique_ptr<Record<RecordT> > baseRecord(new Record<RecordT>);
+            baseRecord->mBase = this->getRecord(index).get();
             baseRecord->mState = CSMWorld::RecordBase::State_Deleted;
             this->setRecord(index, std::move(baseRecord));
-            return index;
-#endif
         }
 
         return load (record, base, index);
@@ -94,7 +89,7 @@ namespace CSMForeign
             std::unique_ptr<Record<RecordT> > record2(new Record<RecordT>(this->getRecord(index)));
 
             if (base)
-                record2->mBase = record;
+                record2->mBase = record; // FIXME: should never happen?
             else
                 record2->setModified(record);
 

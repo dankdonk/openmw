@@ -168,37 +168,12 @@ namespace ESM4
             return mStream->read(p, size) == size;
         }
 
-        // Modindex adjusted formId for REFR, ACHR, ACRE // FIXME: maybe use below instead?
-        // (see http://www.uesp.net/wiki/Tes4Mod:FormID_Fixup)
-        inline FormId adjustFormId(const FormId& id) const {
-            return  mModIndex | (id & 0xffffff);
-        }
-
         // ModIndex adjusted formId according to master file dependencies
-        inline void adjustFormId(FormId& id) {
-            if (!mHeader.mModIndicies.empty())
-            {
-                int index = (id >> 24) & 0xff;
-                id = mHeader.mModIndicies[index] | (id & 0x00ffffff);
-            }
-        }
+        void adjustFormId(FormId& id);
 
-        inline void adjustGRUPFormId() {
-            if (!mHeader.mModIndicies.empty())
-            {
-                int index = (mRecordHeader.group.label.value >> 24) & 0xff;
-                mRecordHeader.group.label.value
-                    = mHeader.mModIndicies[index] | (mRecordHeader.group.label.value & 0x00ffffff);
-            }
-        }
+        bool getFormId(FormId& id);
 
-        bool getFormId(FormId& id) {
-            if (!get(id))
-                return false;
-
-            adjustFormId(id);
-            return true;
-        }
+        void adjustGRUPFormId();
 
         // Note: does not convert to UTF8
         // Note: assumes string size from the subrecord header

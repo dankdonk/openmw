@@ -317,3 +317,33 @@ void ESM4::Reader::skipSubRecordData(std::uint32_t size)
 {
     mStream->skip(size);
 }
+
+// ModIndex adjusted formId according to master file dependencies
+// (see http://www.uesp.net/wiki/Tes4Mod:FormID_Fixup)
+// NOTE: need to update modindex to mModIndicies.size() before saving
+void ESM4::Reader::adjustFormId(FormId& id)
+{
+    if (mHeader.mModIndicies.empty())
+        return;
+
+    unsigned int index = (id >> 24) & 0xff;
+
+    if (index < mHeader.mModIndicies.size())
+        id = mHeader.mModIndicies[index] | (id & 0x00ffffff);
+    else
+        id =  mModIndex | (id & 0x00ffffff);
+}
+
+bool ESM4::Reader::getFormId(FormId& id)
+{
+    if (!get(id))
+        return false;
+
+    adjustFormId(id);
+    return true;
+}
+
+void ESM4::Reader::adjustGRUPFormId()
+{
+    adjustFormId(mRecordHeader.group.label.value);
+}
