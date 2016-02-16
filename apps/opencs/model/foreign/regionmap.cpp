@@ -76,15 +76,23 @@ void CSMForeign::RegionMap::buildMap()
 
     int size = cells.getSize();
 
+    std::cout << "min x " << world.mMap.NWcellX << ", y " << world.mMap.SEcellY << std::endl;
+    std::cout << "max x " << world.mMap.SEcellX << ", y " << world.mMap.NWcellY << std::endl;
+#if 0
     std::cout << "min x " << world.mMinX/4096 << ", y " << world.mMinY/4096 << std::endl;
     std::cout << "max x " << world.mMaxX/4096 << ", y " << world.mMaxY/4096 << std::endl;
+#endif
     for (int i=0; i < size; ++i)
     {
         const CSMWorld::Record<Cell>& cell = cells.getRecord (i);
 
         const Cell& cell2 = cell.get();
 
-        if (cell2.mParent == mWorld)
+        if (cell2.mParent == mWorld
+                && (world.mMap.NWcellX == 0 ? true : cell2.mX >= world.mMap.NWcellX)
+                && (world.mMap.NWcellY == 0 ? true : cell2.mY <= world.mMap.NWcellY)
+                && (world.mMap.SEcellX == 0 ? true : cell2.mY <= world.mMap.SEcellX)
+                && (world.mMap.SEcellY == 0 ? true : cell2.mY >= world.mMap.SEcellY))
 #if 0
                 && (world.mMinX == 0 ? true : cell2.mX >= world.mMinX)
                 && (world.mMaxX == 0 ? true : cell2.mX <= world.mMaxX)

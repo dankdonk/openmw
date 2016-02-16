@@ -604,7 +604,7 @@ CSVRender::ForeignWorldspaceWidget::ForeignWorldspaceWidget (QWidget* parent, CS
     Ogre::Quaternion r(Ogre::Degree(90), Ogre::Vector3::UNIT_X);
     getSceneManager()->setSkyDome(true, "SkyMaterial", 10, 8, 4000, true, r);
     mWater = new Water(getCamera(), getSceneManager()->getRootSceneNode());
-    mWater->setActive(false);
+    mWater->setActive(true);
 }
 
 CSVRender::ForeignWorldspaceWidget::~ForeignWorldspaceWidget()

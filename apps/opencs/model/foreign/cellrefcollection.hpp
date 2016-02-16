@@ -2,6 +2,7 @@
 #define CSM_FOREIGN_CELLREFCOLLECTION_H
 
 #include <algorithm>
+#include <stdexcept>
 
 #include <extern/esm4/reader.hpp>
 
@@ -31,7 +32,10 @@ namespace CSMForeign
         CellRefCollection (const CellRefCollection& other);
         CellRefCollection& operator= (const CellRefCollection& other);
 
-        void update (const RecordT& record, std::vector<ESM4::FormId>& cellRefs);
+        void update (const RecordT& record,
+                std::vector<ESM4::FormId>& cellRefs, std::vector<ESM4::FormId>& delRefs);
+
+        void update (std::int32_t type, CellGroup& cellGroup);
     };
 
     template<typename RecordT>
@@ -44,7 +48,8 @@ namespace CSMForeign
     {}
 
     template<typename RecordT>
-    void CellRefCollection<RecordT>::update (const RecordT& record, std::vector<ESM4::FormId>& cellRefs)
+    void CellRefCollection<RecordT>::update (const RecordT& record,
+            std::vector<ESM4::FormId>& cellRefs, std::vector<ESM4::FormId>& delRefs)
     {
         if ((record.mFlags & ESM4::Rec_Deleted) != 0)
         {
@@ -53,12 +58,31 @@ namespace CSMForeign
 
             if (it != cellRefs.end())
             {
-                std::cout << "deleted " << record.mId << std::endl;
                 cellRefs.erase(it);
+                delRefs.push_back(record.mFormId);
             }
         }
         else
             cellRefs.push_back(record.mFormId);
+    }
+
+    template<typename RecordT>
+    void CellRefCollection<RecordT>::update (std::int32_t type, CellGroup& cellGroup)
+    {
+        switch (type)
+        {
+            case ESM4::Grp_CellPersistentChild:
+                update(record, cellGroup.mPersistent, cellGroup.mdelPersistent);
+                break;
+            case ESM4::Grp_CellVisibleDistChild:
+                update(record, cellGroup.mVisibleDist, cellGroup.mdelVisibleDist);
+                break;
+            case ESM4::Grp_CellTemporaryChild:
+                update(record, cellGroup.mTemporary, cellGroup.mdelTemporary);
+                break;
+            default:
+                throw std::runtime_error("Unexpected group found while loading a cell ref");
+        }
     }
 
     template<typename RecordT>
@@ -82,15 +106,7 @@ namespace CSMForeign
         {
             // new cell group
             CellGroup cellGroup;
-
-            switch (reader.grp().type)
-            {
-                case ESM4::Grp_CellPersistentChild:  update(record, cellGroup.mPersistent);     break;
-                case ESM4::Grp_CellVisibleDistChild: update(record, cellGroup.mVisibleDistant); break;
-                case ESM4::Grp_CellTemporaryChild:   update(record, cellGroup.mTemporary);      break;
-                default:
-                    throw std::runtime_error("unexpected group while loading cellref");
-            }
+            update(reader.grp().type, cellGroup);
 
             std::unique_ptr<Record<CellGroup> > record2(new Record<CellGroup>);
             record2->mState = CSMWorld::RecordBase::State_BaseOnly;
@@ -104,16 +120,9 @@ namespace CSMForeign
             std::unique_ptr<Record<CellGroup> > record2(new Record<CellGroup>);
             record2->mBase = mCellGroups.getRecord(cellIndex).get();
             record2->mState = CSMWorld::RecordBase::State_BaseOnly; // FIXME: State_Modified if new modindex?
-            CellGroup &cellGroup = record2->get();
 
-            switch (reader.grp().type)
-            {
-                case ESM4::Grp_CellPersistentChild:  update(record, cellGroup.mPersistent);     break;
-                case ESM4::Grp_CellVisibleDistChild: update(record, cellGroup.mVisibleDistant); break;
-                case ESM4::Grp_CellTemporaryChild:   update(record, cellGroup.mTemporary);      break;
-                default:
-                    throw std::runtime_error("unexpected group while loading cellref");
-            }
+            CellGroup &cellGroup = record2->get();
+            update(reader.grp().type, cellGroup);
 
             mCellGroups.setRecord(cellIndex, std::move(record2));
         }
@@ -122,56 +131,36 @@ namespace CSMForeign
         int index = this->searchFormId(record.mFormId);
 
         // deal with deleted records
+        // NOTE: keep the status of the content file's deleted records in cell group
+        // TODO: when saving remember that the deleted record size is usually zero
         if ((record.mFlags & ESM4::Rec_Deleted) != 0)
         {
-            std::cout << "deleting " << record.mId << std::endl; // FIXME
+            if (index == -1)
+            {
+                // cannot delete a non-existent record - may have been deleted by one of
+                // the (master) dependencies or another file loaded before this file
+                //
+                // NOTE: a dummy record may need to be created when saving the content file
+                return -1;
+            }
+
             if (base)
             {
-                if (index == -1)
-                {
-                    // cannot delete a non-existent record - may have been deleted by one of
-                    // the (master) dependencies or another file loaded before this file
-                    return -1;
-                }
-                else
-                {
-                    // being deleted by one of the (master) dependencies or another file loaded
-                    // before the content file
-                    this->removeRows(index, 1);
-                    return -1;
-// FIXME below can't work since mFormId must match...
-#if 0
-                    // the removeRows() operation can be slow - just mark it deleted for now
-                    std::unique_ptr<Record<RecordT> > baseRecord(new Record<RecordT>);
-                    baseRecord->mBase = this->getRecord(index).get();
-                    baseRecord->mBase.mFormId |= 0xff000000; // hack to indicate erased
-                    baseRecord->mState = CSMWorld::RecordBase::State_Deleted;
-                    this->setRecord(index, std::move(baseRecord));
-                    return index;
-#endif
-                }
+                // being deleted by one of the (master) dependencies or another file loaded
+                // before the content file
+                //
+                // the removeRows() operation can be slow but can't just mark it deleted
+                // for base because it can be confusing while editing as the deletion
+                // can't be reverted
+                this->removeRows(index, 1);
+                return -1;
             }
-            else
-            {
-                std::unique_ptr<Record<RecordT> > baseRecord(new Record<RecordT>);
 
-                if (index == -1)
-                {
-                    // need to keep a deleted marker when saving
-                    baseRecord->mBase = record;
-                    baseRecord->mState = CSMWorld::RecordBase::State_Deleted;
-                    index = this->getSize();
-                    this->insertRecord(std::move(baseRecord), index);
-                }
-                else
-                {
-                    // TODO: when saving remember that the deleted record size is usually zero
-                    baseRecord->mBase = this->getRecord(index).get();
-                    baseRecord->mState = CSMWorld::RecordBase::State_Deleted;
-                    this->setRecord(index, std::move(baseRecord));
-                }
-                return index;
-            }
+            std::unique_ptr<Record<RecordT> > baseRecord(new Record<RecordT>);
+            baseRecord->mBase = this->getRecord(index).get();
+            baseRecord->mState = CSMWorld::RecordBase::State_Deleted;
+            this->setRecord(index, std::move(baseRecord));
+            return index;
         }
 
         return IdCollection<RecordT>::load(record, base, index);

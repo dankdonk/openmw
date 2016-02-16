@@ -51,14 +51,28 @@ namespace ESM4
             FormId       formId;
             std::int16_t unknown1;
             std::int16_t unknown2;
-       };
+        };
 
         struct RNAMstruct
         {
             std::int16_t unknown1;
             std::int16_t unknown2;
             std::vector<REFRcoord> refrs;
-       };
+        };
+
+        //Map size	struct	16 or 28 byte structure
+        struct Map
+        {
+            std::uint32_t width;  // usable width of the map
+            std::uint32_t height; // usable height of the map
+            std::int16_t  NWcellX;
+            std::int16_t  NWcellY;
+            std::int16_t  SEcellX;
+            std::int16_t  SEcellY;
+            float minHeight; // Camera Data (default 50000), new as of Skyrim 1.8, purpose is not yet known.
+            float maxHeight; // Camera Data (default 80000)
+            float initialPitch;
+        };
 
         FormId mFormId;       // from the header
         std::uint32_t mFlags; // from the header, see enum type RecordFlag for details
@@ -69,6 +83,8 @@ namespace ESM4
         std::uint8_t mWorldFlags;
         FormId       mClimate;
         FormId       mWater;
+
+        Map mMap;
 
         std::int32_t mMinX;
         std::int32_t mMinY;

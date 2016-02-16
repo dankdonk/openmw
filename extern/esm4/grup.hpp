@@ -128,17 +128,20 @@ namespace ESM4
         // cache (modindex adjusted) formId's of children
         // FIXME: also need file index + file context of all those that has type 8 GRUP
         GroupTypeHeader mHdrPersist;
-        std::vector<FormId> mPersistent;     // REFR, ACHR, ACRE
+        std::vector<FormId> mPersistent;  // REFR, ACHR, ACRE
+        std::vector<FormId> mdelPersistent;
 
         // FIXME: also need file index + file context of all those that has type 10 GRUP
         GroupTypeHeader mHdrVisDist;
-        std::vector<FormId> mVisibleDistant; // REFR, ACHR, ACRE
+        std::vector<FormId> mVisibleDist; // REFR, ACHR, ACRE
+        std::vector<FormId> mdelVisibleDist;
 
         // FIXME: also need file index + file context of all those that has type 9 GRUP
         GroupTypeHeader mHdrTemp;
         FormId mLand; // if present, assume only one LAND per exterior CELL
         FormId mPgrd; // if present, seems to be the first record after LAND in Temp Cell Child GRUP
-        std::vector<FormId> mTemporary;      // REFR, ACHR, ACRE
+        std::vector<FormId> mTemporary;   // REFR, ACHR, ACRE
+        std::vector<FormId> mdelTemporary;
 
         // need to keep modindex and context for lazy loading (of all the files that contribute
         // to this group)

@@ -39,6 +39,16 @@ ESM4::World::World() : mFormId(0), mFlags(0), mParent(0), mWorldFlags(0), mClima
     mEditorId.clear();
     mFullName.clear();
     mMapFile.clear();
+
+    mMap.width = 0;
+    mMap.height = 0;
+    mMap.NWcellX = 0;
+    mMap.NWcellY = 0;
+    mMap.SEcellX = 0;
+    mMap.SEcellY = 0;
+    mMap.minHeight = 0.f;
+    mMap.maxHeight = 0.f;
+    mMap.initialPitch = 0.f;
 }
 
 ESM4::World::~World()
@@ -97,6 +107,25 @@ void ESM4::World::load(ESM4::Reader& reader)
                 reader.get(mMaxY);
                 break;
             }
+            case ESM4::SUB_DATA: reader.get(mWorldFlags);   break;
+            case ESM4::SUB_MNAM:
+            {
+                reader.get(mMap.width);
+                reader.get(mMap.height);
+                reader.get(mMap.NWcellX);
+                reader.get(mMap.NWcellY);
+                reader.get(mMap.SEcellX);
+                reader.get(mMap.SEcellY);
+
+                if (subHdr.dataSize == 28) // Skyrim?
+                {
+                    reader.get(mMap.minHeight);
+                    reader.get(mMap.maxHeight);
+                    reader.get(mMap.initialPitch);
+                }
+
+                break;
+            }
             case ESM4::SUB_RNAM: // multiple
             case ESM4::SUB_MHDT:
             case ESM4::SUB_LTMP:
@@ -106,9 +135,7 @@ void ESM4::World::load(ESM4::Reader& reader)
             case ESM4::SUB_NAM4:
             case ESM4::SUB_DNAM:
             case ESM4::SUB_MODL:
-            case ESM4::SUB_MNAM:
             case ESM4::SUB_NAMA:
-            case ESM4::SUB_DATA:
             case ESM4::SUB_PNAM:
             case ESM4::SUB_ONAM:
             case ESM4::SUB_TNAM:
