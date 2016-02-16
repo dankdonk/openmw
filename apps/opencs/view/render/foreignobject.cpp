@@ -645,8 +645,11 @@ void CSVRender::ForeignObject::update()
         std::string trimmedModel = model.substr(0, separator+1) + filename.substr(start);
 
         // FIXME: quick hack to continue testing
-        if (!Ogre::ResourceGroupManager::getSingleton().resourceExistsInAnyGroup("Meshes\\"+trimmedModel))
+        if (!Ogre::ResourceGroupManager::getSingleton().resourceExistsInAnyGroup("Meshes\\" + trimmedModel))
+        {
+            std::cout << "Giving up rendering obj, missing Meshes\\" << trimmedModel << std::endl;
             return;
+        }
 
         //std::cout << "Using model: " << model << std::endl;
         mObject = NifOgre::Loader::createObjects (mBase, "Meshes\\" + trimmedModel);

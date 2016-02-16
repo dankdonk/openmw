@@ -31,7 +31,7 @@ namespace CSMForeign
         CellRefCollection (const CellRefCollection& other);
         CellRefCollection& operator= (const CellRefCollection& other);
 
-        update (const RecordT& record, std::vector<ESM4::FormId>& cellRefs);
+        void update (const RecordT& record, std::vector<ESM4::FormId>& cellRefs);
     };
 
     template<typename RecordT>
@@ -44,7 +44,7 @@ namespace CSMForeign
     {}
 
     template<typename RecordT>
-    CellRefCollection<RecordT>::update (const RecordT& record, std::vector<ESM4::FormId>& cellRefs)
+    void CellRefCollection<RecordT>::update (const RecordT& record, std::vector<ESM4::FormId>& cellRefs)
     {
         if ((record.mFlags & ESM4::Rec_Deleted) != 0)
         {
@@ -121,28 +121,57 @@ namespace CSMForeign
         // continue with the rest of the loading
         int index = this->searchFormId(record.mFormId);
 
-        // FIXME: how to deal with deleted records?
+        // deal with deleted records
         if ((record.mFlags & ESM4::Rec_Deleted) != 0)
         {
-            if (index == -1)
-            {
-                // cannot delete a non-existent record - may have been deleted by base?
-                return -1;
-            }
-
+            std::cout << "deleting " << record.mId << std::endl; // FIXME
             if (base)
             {
-                std::cout << "deleting base " << record.mId << std::endl; // FIXME
-                this->removeRows(index, 1);
-                return -1;
+                if (index == -1)
+                {
+                    // cannot delete a non-existent record - may have been deleted by one of
+                    // the (master) dependencies or another file loaded before this file
+                    return -1;
+                }
+                else
+                {
+                    // being deleted by one of the (master) dependencies or another file loaded
+                    // before the content file
+                    this->removeRows(index, 1);
+                    return -1;
+// FIXME below can't work since mFormId must match...
+#if 0
+                    // the removeRows() operation can be slow - just mark it deleted for now
+                    std::unique_ptr<Record<RecordT> > baseRecord(new Record<RecordT>);
+                    baseRecord->mBase = this->getRecord(index).get();
+                    baseRecord->mBase.mFormId |= 0xff000000; // hack to indicate erased
+                    baseRecord->mState = CSMWorld::RecordBase::State_Deleted;
+                    this->setRecord(index, std::move(baseRecord));
+                    return index;
+#endif
+                }
             }
+            else
+            {
+                std::unique_ptr<Record<RecordT> > baseRecord(new Record<RecordT>);
 
-            std::cout << "deleting added " << record.mId << std::endl; // FIXME
-            std::unique_ptr<Record<RecordT> > baseRecord(new Record<RecordT>);
-            baseRecord->mBase = this->getRecord(index).get();
-            baseRecord->mState = CSMWorld::RecordBase::State_Deleted;
-            this->setRecord(index, std::move(baseRecord));
-            return index;
+                if (index == -1)
+                {
+                    // need to keep a deleted marker when saving
+                    baseRecord->mBase = record;
+                    baseRecord->mState = CSMWorld::RecordBase::State_Deleted;
+                    index = this->getSize();
+                    this->insertRecord(std::move(baseRecord), index);
+                }
+                else
+                {
+                    // TODO: when saving remember that the deleted record size is usually zero
+                    baseRecord->mBase = this->getRecord(index).get();
+                    baseRecord->mState = CSMWorld::RecordBase::State_Deleted;
+                    this->setRecord(index, std::move(baseRecord));
+                }
+                return index;
+            }
         }
 
         return IdCollection<RecordT>::load(record, base, index);

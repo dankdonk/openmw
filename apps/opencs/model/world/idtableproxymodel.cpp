@@ -2,6 +2,7 @@
 
 #include <vector>
 
+#include <extern/esm4/formid.hpp>
 #include <extern/strverscmp/strverscmp.h>
 
 #include "idtablebase.hpp"
@@ -99,14 +100,24 @@ bool CSMWorld::IdTableProxyModel::lessThan(const QModelIndex &left, const QModel
 
     if (id == Columns::ColumnId_Id || id == Columns::ColumnId_Parent)
     {
-        return strverscmp(sourceModel()->data(left).toString().toStdString().c_str(),
-                          sourceModel()->data(right).toString().toStdString().c_str(), /*hex*/1) < 0;
+        return ESM4::stringToFormId(sourceModel()->data(left).toString().toStdString())
+               < ESM4::stringToFormId(sourceModel()->data(right).toString().toStdString());
     }
+
+#if 0
+    // massive hack - if mono font assume formid
+    if (id == Columns::ColumnId_ReferenceableId &&
+        ((left.headerData(ColumnBase::Role_Flags).toInt() & ColumnBase::Flag_MonoFont) != 0))
+    {
+        return ESM4::stringToFormId(sourceModel()->data(left).toString().toStdString())
+               < ESM4::stringToFormId(sourceModel()->data(right).toString().toStdString());
+    }
+#endif
 
     if (id == Columns::ColumnId_CellId)
     {
         return strverscmp(sourceModel()->data(left).toString().toStdString().c_str(),
-                          sourceModel()->data(right).toString().toStdString().c_str(), 0) < 0;
+                          sourceModel()->data(right).toString().toStdString().c_str()) < 0;
     }
 
     EnumColumnCache::const_iterator valuesIt = mEnumColumnCache.find(id);

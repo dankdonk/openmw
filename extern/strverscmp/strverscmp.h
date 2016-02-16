@@ -19,6 +19,6 @@
 #ifndef STRVERSCMP_H_
 # define STRVERSCMP_H_
 
-extern "C" int strverscmp (const char *, const char *, int hex);
+extern "C" int strverscmp (const char *, const char *);
 
 #endif /* not STRVERSCMP_H_ */
