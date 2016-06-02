@@ -46,7 +46,16 @@ namespace NifOgre
         float mStopTime;
 
     public:
-        DefaultFunction (const Nif::Controller *ctrl, bool deltaInput);
+        DefaultFunction (const Nif::Controller *ctrl, bool deltaInput)
+        : Ogre::ControllerFunction<Ogre::Real>(deltaInput)
+        , mFrequency(ctrl->frequency)
+        , mPhase(ctrl->phase)
+        , mStartTime(ctrl->timeStart)
+        , mStopTime(ctrl->timeStop)
+        {
+            if(mDeltaInput)
+                mDeltaCount = mPhase;
+        }
 
         virtual Ogre::Real calculate(Ogre::Real value);
     };

@@ -67,17 +67,6 @@ Ogre::Vector3 NifOgre::ValueInterpolator::interpKey (const Nif::Vector3KeyMap::M
         return keys.rbegin()->second.mValue;
 }
 
-NifOgre::DefaultFunction::DefaultFunction (const Nif::Controller *ctrl, bool deltaInput)
-: Ogre::ControllerFunction<Ogre::Real>(deltaInput)
-, mFrequency(ctrl->frequency)
-, mPhase(ctrl->phase)
-, mStartTime(ctrl->timeStart)
-, mStopTime(ctrl->timeStop)
-{
-if(mDeltaInput)
-    mDeltaCount = mPhase;
-}
-
 Ogre::Real NifOgre::DefaultFunction::calculate (Ogre::Real value)
 {
     if(mDeltaInput)
