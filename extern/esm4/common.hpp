@@ -754,7 +754,7 @@ namespace ESM4
     struct GroupTypeHeader
     {
         std::uint32_t typeId;
-        std::uint32_t groupSize; // includes the 24 bytes of header (i.e. this struct)
+        std::uint32_t groupSize; // includes the 24 bytes (20 for TES4) of header (i.e. this struct)
         GroupLabel    label;     // format based on type
         std::int32_t  type;
         std::uint16_t stamp;     // & 0xff for day, & 0xff00 for months since Dec 2002 (i.e. 1 = Jan 2003)
@@ -766,7 +766,7 @@ namespace ESM4
     struct RecordTypeHeader
     {
         std::uint32_t typeId;
-        std::uint32_t dataSize;  // does *not* include 24 bytes of header
+        std::uint32_t dataSize;  // does *not* include 24 bytes (20 for TES4) of header
         std::uint32_t flags;
         FormId        id;
         std::uint32_t revision;

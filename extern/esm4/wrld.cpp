@@ -61,6 +61,13 @@ void ESM4::World::load(ESM4::Reader& reader)
     reader.adjustFormId(mFormId);
     mFlags  = reader.hdr().record.flags;
 
+    // It should be possible to save the current world formId automatically while reading in
+    // the record header rather than doing it manually here but possibly less efficient (may
+    // need to check each record?).
+    //
+    // Alternatively it may be possible to figure it out by examining the group headers, but
+    // apparently the label field is not reliable so the parent world formid may have been
+    // corrupted by the use of ignore flag (TODO: should check to verify).
     reader.setCurrWorld(mFormId); // save for CELL later
 
     std::uint32_t subSize = 0; // for XXXX sub record
