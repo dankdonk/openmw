@@ -246,6 +246,8 @@ namespace CSVDoc
 
             void addForeignStaticSubView();
 
+            void addForeignDoorSubView();
+
             void addForeignAnimObjSubView();
 
             void addForeignContainerSubView();

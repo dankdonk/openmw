@@ -362,6 +362,10 @@ void CSVDoc::View::setupForeignMenu()
     connect (stat, SIGNAL (triggered()), this, SLOT (addForeignStaticSubView()));
     foreign->addAction (stat);
 
+    QAction *door = new QAction (tr ("Doors"), this);
+    connect (door, SIGNAL (triggered()), this, SLOT (addForeignDoorSubView()));
+    foreign->addAction (door);
+
     QAction *anio = new QAction (tr ("AnimObjects"), this);
     connect (anio, SIGNAL (triggered()), this, SLOT (addForeignAnimObjSubView()));
     foreign->addAction (anio);
@@ -1009,6 +1013,11 @@ void CSVDoc::View::addForeignLandSubView()
 void CSVDoc::View::addForeignStaticSubView()
 {
     addSubView (CSMWorld::UniversalId::Type_ForeignStatics);
+}
+
+void CSVDoc::View::addForeignDoorSubView()
+{
+    addSubView (CSMWorld::UniversalId::Type_ForeignDoors);
 }
 
 void CSVDoc::View::addForeignAnimObjSubView()
