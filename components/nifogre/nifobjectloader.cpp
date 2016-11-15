@@ -599,7 +599,8 @@ void NifOgre::NIFObjectLoader::createNodeControllers (const Nif::NIFFilePtr& nif
                 if (ctrl->nifVer >= 0x0a020000) // from 10.2.0.0
                 {
                     const Nif::NiInterpolator *interpolator = vis->interpolator.getPtr();
-                    std::cout << "interpolator not supported" << interpolator->recName << std::endl;
+                    if (interpolator)
+                        std::cout << "interpolator not supported" << interpolator->recName << std::endl;
 #if 0
                     if (ctrl->interpolator.getPtr()->recType == Nif::RC_NiFloatInterpolator)
                     {
