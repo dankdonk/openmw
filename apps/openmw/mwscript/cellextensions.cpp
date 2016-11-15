@@ -64,6 +64,36 @@ namespace MWScript
                 }
         };
 
+        class OpCOW : public Interpreter::Opcode0
+        {
+            public:
+
+                virtual void execute (Interpreter::Runtime& runtime)
+                {
+                    std::string worldspace = runtime.getStringLiteral (runtime[0].mInteger);
+                    runtime.pop();
+
+                    Interpreter::Type_Integer x = runtime[0].mInteger;
+                    runtime.pop();
+
+                    Interpreter::Type_Integer y = runtime[0].mInteger;
+                    runtime.pop();
+
+                    ESM::Position pos;
+                    MWBase::World *world = MWBase::Environment::get().getWorld();
+                    world->getPlayer().setTeleported(true);
+                    //world->indexToPosition (x, y, pos.pos[0], pos.pos[1], true);
+                    pos.pos[2] = 0;
+
+                    pos.rot[0] = pos.rot[1] = pos.rot[2] = 0;
+
+                    std::cout << worldspace << ", x: " << std::dec << x << ", y: " << y << std::endl; // FIXME
+
+                    world->changeToForeignExteriorCell (worldspace, pos);
+                    //world->fixPosition(world->getPlayerPtr());
+                }
+        };
+
         class OpCOE : public Interpreter::Opcode0
         {
             public:
@@ -204,6 +234,7 @@ namespace MWScript
         {
             interpreter.installSegment5 (Compiler::Cell::opcodeCellChanged, new OpCellChanged);
             interpreter.installSegment5 (Compiler::Cell::opcodeCOC, new OpCOC);
+            interpreter.installSegment5 (Compiler::Cell::opcodeCOW, new OpCOW);
             interpreter.installSegment5 (Compiler::Cell::opcodeCOE, new OpCOE);
             interpreter.installSegment5 (Compiler::Cell::opcodeGetInterior, new OpGetInterior);
             interpreter.installSegment5 (Compiler::Cell::opcodeGetPCCell, new OpGetPCCell);
