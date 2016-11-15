@@ -47,7 +47,7 @@ int CSMForeign::CellCollection::load (ESM4::Reader& reader, bool base)
     int index = searchFormId(record.mFormId);
     if ((record.mFlags & ESM4::Rec_Deleted) != 0)
     {
-        std::cout << "cell deleted " << record.mId << std::endl; // FIXME
+        std::cout << "cell deleted " << record.mId << std::endl; // FIXME: debug only
         if (index == -1)
         {
             // deleting a record that does not exist
@@ -70,6 +70,27 @@ int CSMForeign::CellCollection::load (ESM4::Reader& reader, bool base)
     }
 
     // cache the cell's formId to its parent world
+    // FIXME: Is this the right place to cache the formId?  Is there an alternative where a map
+    // is maintained (in CellCollection) so that all the cells (or cell groups) for a given
+    // world can be retrieved? e.g.:
+    //
+    // std::unordered_map<ESM4::FormId, std::vector<ESM4::FormId> > mCellsInWorldMap;
+    //
+    // std::vector<ESM4::FormId> getCells(ESM4::FormId world) const
+    // {
+    //     const std::unordered_map<ESM4::FormId, std::vector<ESM4::FormId> >::iterator it
+    //         = mCellsInWorldMap.find(world);
+    //
+    //     if (it != mCellsinWorldMap.end())
+    //         return *it;
+    //     else
+    //         return 0;
+    // }
+    //
+    // Returing a copy of a vector may not be so efficient, but then this isn't a frequent
+    // operation (hopefully only when changing a world space). Also the compiler may use move
+    // semantics automatically (if using C++11).
+    //
     World *world = mWorlds.getWorld(reader.currWorld()); // FIXME: const issue with Collection
     if (world)
         world->mCells.push_back(record.mFormId);
@@ -151,6 +172,32 @@ int CSMForeign::CellCollection::load (ESM4::Reader& reader, bool base)
 
         // FIXME: use the loading sequence to then validate using the existance of cell grid
         record.isInterior = true;
+
+// FIXME: for testing internal cell block and sub-block numbers
+//
+// There doesn't seem to be any logical grouping of the cells within the block or sub-block.  e.g.
+//
+//  Starting record group Interior Cell: block 0x0
+//  Starting record group Interior Sub Cell: block 0x0
+//
+//  EditorId: XPAichan01
+//  EditorId: XPSwampgasHole03
+//  EditorId: SageGlenHollow
+//  EditorId: Elenglynn
+//  EditorId: TestCheydinhalUpper
+//  EditorId: ChorrolMarkTest
+//  EditorId: KvatchChapelUndercroft
+//  EditorId: ICArcaneUniversitySpellmaker
+//  EditorId: GoblinJimsCave
+//  EditorId: ICTempleDistrictSeridursHouseUpstairs
+//  EditorId: ICImperialLegionWatchTowerNECaptainsQuarters
+//  EditorId: HackdirtMoslinsDryGoodsBasement
+#if 0
+        int block = record.mFormId % 100; // FIXME: for debugging only
+        std::cout << "CELL block: " << block % 10 << ", sub block: " << block / 10 << ", EditorId: "
+            << (record.mEditorId.empty() ? "" : record.mEditorId) << std::endl; // FIXME: debug
+        //std::cout << "CELL formId in decimal: " << std::dec << record.mFormId << std::endl; // FIXME: debug
+#endif
     }
 
     record.mWorld = mWorlds.getIdString(record.mParent); // FIXME: assumes our world is already loaded
@@ -176,6 +223,7 @@ int CSMForeign::CellCollection::load (ESM4::Reader& reader, bool base)
         mCellGroups.insertRecord(std::move(record2), mCellGroups.getSize());
     }
     // FIXME: below only needed if we're modifyng something
+    // Maybe we can't replace but have to merge?
     else
     {
 #if 0

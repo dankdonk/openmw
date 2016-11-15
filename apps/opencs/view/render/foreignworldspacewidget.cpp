@@ -37,6 +37,15 @@
 #include "water.hpp"
 #include "elements.hpp"
 
+// http://www.uesp.net/wiki/Tes4Mod:Mod_File_Format/CELL
+//
+// For an exterior cell, the persistent references are defined in a dummy cell in the
+// worldspace group. The visible when distant and temporary references are then defined within
+// exterior block/subblock groups. The 'visible distant' subgroup must occur before the
+// 'temporary children' subgroup for a cell, otherwise the distant objects will not be rendered
+// by the game engine.
+
+// FIXME: So, for a given worldspace, we need a way to always add this dummy cell for rendering.
 bool CSVRender::ForeignWorldspaceWidget::adjustCells()
 {
     bool modified = false;
