@@ -44,14 +44,38 @@ namespace MWScript
                     MWBase::World *world = MWBase::Environment::get().getWorld();
 
                     world->getPlayer().setTeleported(true);
-                    if (world->findExteriorPosition(cell, pos))
+                    // If there are identical exterior cell names then MW takes precedence
+                    // To get around this situation, allow a prefix to distinguish
+                    if (cell.substr(0, 9) == "foreign::") // Hack for testing
+                    {
+                        // FIXME: need to be able to specify a worldspace name (EditorID), see:
+                        // http://www.uesp.net/wiki/Oblivion:ConsoleLocationCodes
+                        //
+                        // TODO: Not sure what the behaviour is if COC whilst in another world
+                        // such as ICMarketDistrict
+                        //
+                        // findExteriorPosition() calls World::getExterior() which in turn
+                        // checks MWWorld::ESMStore
+                        //
+                        if (world->findForeignExteriorPosition(cell.substr(9), pos))
+                        {
+                            world->changeToForeignExteriorCell(cell.substr(9), pos);
+                            world->fixPosition(world->getPlayerPtr());
+                        }
+                    }
+                    else if (world->findExteriorPosition(cell, pos))
                     {
                         world->changeToExteriorCell(pos);
                         world->fixPosition(world->getPlayerPtr());
                     }
-                    else if (cell.substr(0, 9) == "foreign::")  // FIXME test only, always go to an interior cell
+                    else if (world->findForeignExteriorPosition(cell, pos))
                     {
-                        world->findForeignInteriorPosition(cell, pos);
+                        world->changeToForeignExteriorCell(cell, pos);
+                        world->fixPosition(world->getPlayerPtr());
+                    }
+                    // FIXME: for interior foreign cells take the precedence!!!
+                    else if (world->findForeignInteriorPosition(cell, pos))
+                    {
                         world->changeToForeignInteriorCell(cell, pos);
                     }
                     else
@@ -114,7 +138,7 @@ namespace MWScript
 
                     pos.rot[0] = pos.rot[1] = pos.rot[2] = 0;
 
-                    world->changeToExteriorCell (pos);
+                    //world->changeToForeignWorld (pos); // FIXME: TODO
                     world->fixPosition(world->getPlayerPtr());
                 }
         };

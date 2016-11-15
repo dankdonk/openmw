@@ -44,29 +44,46 @@ namespace ESM4
         virtual void update(std::size_t size) = 0;
     };
 
-    typedef std::vector<std::pair<const ESM4::GroupTypeHeader, std::uint32_t> > GroupStack;
+    typedef std::vector<std::pair<ESM4::GroupTypeHeader, std::uint32_t> > GroupStack;
+
+    struct ReaderContext
+    {
+        std::string     filename;         // from openTes4File()
+        std::uint32_t   modIndex;         // the sequential position of this file in the load order:
+                                          //  0x00 reserved, 0xFF in-game (see notes below)
+
+        GroupStack      groupStack;       // keep track of bytes left to find when a group is done
+
+        FormId          currWorld;        // formId of current world - for grouping CELL records
+        FormId          currCell;         // formId of current cell
+
+        std::size_t     recHeaderSize;    // normally should be already set correctly, but just in
+                                          //  case the file was re-opened.  default = TES5 size,
+                                          //  can be reduced for TES4 by setRecHeaderSize()
+
+        std::size_t     filePos;          // assume that the record header will be re-read once
+                                          //  the context is restored.
+    };
 
     class Reader
     {
         ReaderObserver *mObserver;        // observer for tracking bytes read
 
-        std::uint32_t   mModIndex;        // 0x00 reserved, 0xFF in-game
         Header          mHeader;          // ESM header // FIXME
         RecordHeader    mRecordHeader;    // header of the current record or group being processed
         SubRecordHeader mSubRecordHeader; // header of the current sub record being processed
-        GroupStack      mGroupStack;      // keep track of bytes left to find when a group is done
         std::size_t     mEndOfRecord;     // number of bytes read by sub records
 
-        CellGrid        mCurrCellGrid;    // TODO: should keep keep a map of cell formids // FIXME
+        // FIXME: try to get rid of these two members, seem like massive hacks
+        CellGrid        mCurrCellGrid;    // TODO: should keep a map of cell formids
         bool            mCellGridValid;
-        FormId          mCurrWorld;       // formId of current world - for grouping CELL records
-        FormId          mCurrCell;        // formId of current cell
 
-        std::size_t     mRecHeaderSize;   // default = TES5 size, reduced by setRecHeaderSize()
+        ReaderContext   mCtx;
 
+        // Use scoped arrays to avoid memory leak due to exceptions, etc.
         // TODO: try fixed size buffers on the stack for both below (may be faster)
         boost::scoped_array<unsigned char> mInBuf;
-        boost::scoped_array<unsigned char> mDataBuf; // avoid memory leak due to exceptions, etc
+        boost::scoped_array<unsigned char> mDataBuf;
 
         Ogre::DataStreamPtr mStream;
         Ogre::DataStreamPtr mSavedStream;
@@ -76,9 +93,18 @@ namespace ESM4
         Reader();
         ~Reader();
 
+        // Methods added for updating loading progress bars
+        std::size_t getFileSize() const { return mStream->size(); }
+        std::size_t getFileOffset() const { return mStream->tell(); }
+
+        // Methods added for saving/restoring context
+        ReaderContext getContext();
+        bool restoreContext(const ReaderContext& ctx); // returns the result of re-reading the header
+        bool skipNextGroupCellChild(ReaderContext& ctx); // returns true if skipped
+
         std::size_t openTes4File(Ogre::DataStreamPtr stream, const std::string& name);
 
-        // NOTE: must be set to the correct size before calling getRecordHeader()
+        // NOTE: must be called before calling getRecordHeader()
         void setRecHeaderSize(const std::size_t size);
 
         void loadHeader() { mHeader.load(*this); }
@@ -92,8 +118,9 @@ namespace ESM4
 
         const GroupTypeHeader& grp(std::size_t pos = 0) const;
 
-        // FIXME; should this be in the header, or even the back of the vector?
-        void setModIndex(int index) { mModIndex = (index << 24) & 0xff000000; }
+        // The object setting up this reader needs to supply the file's load order index
+        // so that the formId's in this file can be adjusted with the file (i.e. mod) index.
+        void setModIndex(int index) { mCtx.modIndex = (index << 24) & 0xff000000; }
         void updateModIndicies(const std::vector<std::string>& files);
 
         // Maybe should throw an exception if called when not valid?
@@ -114,14 +141,15 @@ namespace ESM4
         // Cell 2c143 is loaded immedicatly after 1bdb1 and can mistakely appear to have grid 0, 1.
         inline void clearCellGrid() { mCellGridValid = false; }
 
-        // set at the beginning of a CELL load
-        inline void setCurrCell(FormId formId) { mCurrCell = formId; }
+        // Should be set at the beginning of a CELL load
+        inline void setCurrCell(FormId formId) { mCtx.currCell = formId; }
 
-        inline const FormId currCell() { return mCurrCell; }
+        inline FormId currCell() const { return mCtx.currCell; }
 
-        inline void setCurrWorld(FormId formId) { mCurrWorld = formId; }
+        // Should be set at the beginning of a WRLD load
+        inline void setCurrWorld(FormId formId) { mCtx.currWorld = formId; }
 
-        inline const FormId currWorld() { return mCurrWorld; }
+        inline FormId currWorld() const { return mCtx.currWorld; }
 
         // Get the data part of a record
         // Note: assumes the header was read correctly and nothing else was read
@@ -186,8 +214,34 @@ namespace ESM4
         void registerForUpdates(ReaderObserver *observer);
 
         // for debugging only
-        size_t stackSize() const { return mGroupStack.size(); }
+        size_t stackSize() const { return mCtx.groupStack.size(); }
     };
+
+    // An idea on extending the 254 mods limit
+    // ---------------------------------------
+    //
+    // By using a 64bit formid internally it should be possible to extend the limit.  However
+    // saved games won't be compatible.
+    //
+    // One or two digits can be used, which will allow 4096-2=4094 or 65535-2=65533 mods.
+    // With the remaining digits one can be used as a game index (e.g. TES3=0, TES4=1, etc).
+    //
+    // The remaining bits might still be useful for indicating something else about the object.
+    //
+    //       game index
+    //         |
+    //         | mod index extend to 4 digits (or 3 digits?)
+    //         | +---+
+    //         | |   |
+    //         v v   v
+    // 0xfffff f ff ff ffffff
+    //              ^^ ^    ^
+    //              || |    |
+    //              || +----+
+    //              || 6 digit obj index
+    //              ++
+    //            2 digit mod index
+    //
 }
 
 #endif // ESM4_READER_H

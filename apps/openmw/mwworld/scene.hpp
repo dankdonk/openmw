@@ -94,7 +94,7 @@ namespace MWWorld
 
             void changeToExteriorCell (const ESM::Position& position, bool adjustPlayerPos);
             ///< Move to exterior cell.
-            void changeToForeignExteriorCell (const ESM::Position& position, bool adjustPlayerPos);
+            void changeToForeignExteriorCell (const std::string& worldspace, const ESM::Position& position, bool adjustPlayerPos);
 
             void changeToVoid();
             ///< Change into a void

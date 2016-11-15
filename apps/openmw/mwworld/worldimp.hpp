@@ -67,7 +67,7 @@ namespace MWWorld
             MWWorld::Scene *mWorldScene;
             MWWorld::Player *mPlayer;
             // Need ESM::ESM4Reader here, unless it can be made to load both types of records
-            std::vector<ESM::ESMReader*> mEsm; // FIXME: Foreign:
+            std::vector<std::vector<ESM::ESMReader*> > mEsm; // FIXME: Foreign:
             MWWorld::ESMStore mStore;
             LocalScripts mLocalScripts;
             MWWorld::Globals mGlobalVariables;
@@ -329,7 +329,7 @@ namespace MWWorld
 
             virtual void changeToExteriorCell (const ESM::Position& position);
             ///< Move to exterior cell.
-            virtual void changeToForeignExteriorCell (const ESM::Position& position);
+            virtual void changeToForeignExteriorCell (const std::string& worldspace, const ESM::Position& position);
 
             virtual void changeToCell (const ESM::CellId& cellId, const ESM::Position& position, bool detectWorldSpaceChange=true);
             ///< @param detectWorldSpaceChange if true, clean up worldspace-specific data when the world space changes

@@ -75,9 +75,9 @@ public:
   void openRaw(const std::string &file);
 
   /// Get the file size. Make sure that the file has been opened!
-  size_t getFileSize() { return mEsm->size(); }
+  virtual size_t getFileSize() { return mEsm->size(); }
   /// Get the current position in the file. Make sure that the file has been opened!
-  size_t getFileOffset() { return mEsm->tell(); }
+  virtual size_t getFileOffset() { return mEsm->tell(); }
 
   // This is a quick hack for multiple esm/esp files. Each plugin introduces its own
   //  terrain palette, but ESMReader does not pass a reference to the correct plugin

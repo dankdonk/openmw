@@ -23,14 +23,16 @@ namespace Loading
 namespace MWWorld
 {
     class ESMStore;
+    class ForeignWorld;
 
     /// \brief Cell container
     class Cells
     {
             const MWWorld::ESMStore& mStore;
-            std::vector<ESM::ESMReader*>& mReader;
+            std::vector<std::vector<ESM::ESMReader*> >& mReader;
             mutable std::map<std::string, CellStore> mInteriors;
             mutable std::map<std::pair<int, int>, CellStore> mExteriors;
+            //std::map<ESM4::FormId, ForeignWorld*> mWorlds;
             std::vector<std::pair<std::string, CellStore *> > mIdCache;
             std::size_t mIdCacheIndex;
 
@@ -47,13 +49,17 @@ namespace MWWorld
 
             void clear();
 
-            Cells (const MWWorld::ESMStore& store, std::vector<ESM::ESMReader*>& reader);
+            Cells (const MWWorld::ESMStore& store, std::vector<std::vector<ESM::ESMReader*> >& reader);
 
             CellStore *getExterior (int x, int y);
 
             CellStore *getInterior (const std::string& name);
 
             CellStore *getCell (const ESM::CellId& id);
+
+            CellStore *getForeignInterior (const std::string& name);
+
+            CellStore *getForeignExterior (const std::string& world, int x, int y);
 
             Ptr getPtr (const std::string& name, CellStore& cellStore, bool searchInContainers = false);
             ///< \param searchInContainers Only affect loaded cells.

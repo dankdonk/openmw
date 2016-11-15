@@ -70,21 +70,25 @@ namespace MWWorld
         // Special entry which is hardcoded and not loaded from an ESM
         Store<ESM::Attribute>   mAttributes;
 
+        // Lists that are foreign
+        Store<MWWorld::ForeignWorld>      mForeignWorlds;
+        Store<MWWorld::ForeignCell>       mForeignCells;
+
         // Lookup of all IDs. Makes looking up references faster. Just
         // maps the id name to the record type.
         std::map<std::string, int> mIds;
-        std::map<int, StoreBase *> mStores;
+        std::map<int64_t, StoreBase *> mStores;
 
         ESM::NPC mPlayerTemplate;
 
         unsigned int mDynamicCount;
 
-        void loadTes4Group (ESM4::Reader &reader);
-        void loadTes4Record (ESM4::Reader &reader, const ESM4::RecordHeader& hdr);
+        void loadTes4Group (ESM::ESMReader& esm);
+        void loadTes4Record (ESM::ESMReader& esm, const ESM4::RecordHeader& hdr);
 
     public:
         /// \todo replace with SharedIterator<StoreBase>
-        typedef std::map<int, StoreBase *>::const_iterator iterator;
+        typedef std::map<int64_t, StoreBase *>::const_iterator iterator;
 
         iterator begin() const {
             return mStores.begin();
@@ -147,13 +151,15 @@ namespace MWWorld
             mStores[ESM::REC_SSCR] = &mStartScripts;
             mStores[ESM::REC_STAT] = &mStatics;
             mStores[ESM::REC_WEAP] = &mWeapons;
+            mStores[0x0100000000 | ESM4::REC_WRLD] = &mForeignWorlds;
+            mStores[0x0100000000 | ESM4::REC_CELL] = &mForeignCells;
 
             mPathgrids.setCells(mCells);
         }
 
         void clearDynamic ()
         {
-            for (std::map<int, StoreBase *>::iterator it = mStores.begin(); it != mStores.end(); ++it)
+            for (std::map<int64_t, StoreBase *>::iterator it = mStores.begin(); it != mStores.end(); ++it)
                 it->second->clearDynamic();
 
             mNpcs.insert(mPlayerTemplate);
@@ -435,6 +441,16 @@ namespace MWWorld
     template <>
     inline const Store<ESM::Weapon> &ESMStore::get<ESM::Weapon>() const {
         return mWeapons;
+    }
+
+    template <>
+    inline const Store<ForeignWorld> &ESMStore::get<ForeignWorld>() const {
+        return mForeignWorlds;
+    }
+
+    template <>
+    inline const Store<ForeignCell> &ESMStore::get<ForeignCell>() const {
+        return mForeignCells;
     }
 
     template <>

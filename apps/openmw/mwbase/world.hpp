@@ -61,6 +61,7 @@ namespace MWWorld
     class TimeStamp;
     class ESMStore;
     class RefData;
+    class ForeignWorld;
 
     typedef std::vector<std::pair<MWWorld::Ptr,MWMechanics::Movement> > PtrMovementList;
 }
@@ -255,7 +256,7 @@ namespace MWBase
                 const ESM::Position& position) = 0; // FIXME
 
             virtual void changeToExteriorCell (const ESM::Position& position) = 0;
-            virtual void changeToForeignExteriorCell (const ESM::Position& position) = 0; // FIXME
+            virtual void changeToForeignExteriorCell (const std::string& worldspace, const ESM::Position& position) = 0; // FIXME
             ///< Move to exterior cell.
 
             virtual void changeToCell (const ESM::CellId& cellId, const ESM::Position& position, bool detectWorldSpaceChange=true) = 0;

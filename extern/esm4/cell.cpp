@@ -33,8 +33,8 @@
 #include "reader.hpp"
 //#include "writer.hpp"
 
-ESM4::Cell::Cell() : mFormId(0), mFlags(0), mCellFlags(0), mX(0), mY(0), mOwner(0), mGlobal(0),
-                     mClimate(0), mWater(0), mWaterHeight(0.f)
+ESM4::Cell::Cell() : mParent(0), mFormId(0), mFlags(0), mCellFlags(0), mX(0), mY(0), mOwner(0),
+                     mGlobal(0), mClimate(0), mWater(0), mWaterHeight(0.f), mPreloaded(false)
 {
     mEditorId.clear();
     mFullName.clear();
@@ -54,16 +54,35 @@ ESM4::Cell::~Cell()
 {
 }
 
-void ESM4::Cell::load(ESM4::Reader& reader)
+void ESM4::Cell::init(ESM4::Reader& reader)
 {
     mFormId = reader.hdr().record.id;
     reader.adjustFormId(mFormId);
     mFlags  = reader.hdr().record.flags;
     mParent = reader.currWorld();
 
-    reader.setCurrCell(mFormId); // save for LAND (and other children) to access later
     reader.clearCellGrid(); // clear until XCLC FIXME: somehow do this automatically?
 
+    // Sometimes cell 0,0 does not have an XCLC sub record (e.g. ToddLand 000009BF)
+    // To workaround this issue put a default value if group is "exterior sub cell" and its
+    // grid is "0 0".  Note the reversed X/Y order (no matter since they're both 0 anyway).
+    if (reader.grp().type == ESM4::Grp_ExteriorSubCell
+            && reader.grp().label.grid[1] == 0 && reader.grp().label.grid[0] == 0)
+    {
+        ESM4::CellGrid currCell;
+        currCell.grid.x = 0;
+        currCell.grid.y = 0;
+        reader.setCurrCell(currCell);  // side effect: sets mCellGridValid  true
+    }
+}
+
+// Only load EDID and XCLC (along with mFormId, mFlags and mParent)
+bool ESM4::Cell::preload(ESM4::Reader& reader, ESM4::ReaderContext& ctx)
+{
+    init(reader);
+
+    // TODO: optimise by skipping the rest of the CELL record once both EDID and XCLC are read
+    // (assuming they occur early).  Also skip XCLC if internal cell.
     while (reader.getSubRecordHeader())
     {
         const ESM4::SubRecordHeader& subHdr = reader.subRecordHeader();
@@ -82,25 +101,86 @@ void ESM4::Cell::load(ESM4::Reader& reader)
             }
             case ESM4::SUB_XCLC:
             {
-                // group grid   cell grid range
+                //(X, Y) grid location of the cell followed by flags. Always in exterior cells
+                //and never in interior cells.
                 //
-                //        -7       -56 :-49
-                //        -6       -48 :-41
-                //        -5       -40 :-33
-                //        -4       -32 :-25
-                //        -3       -24 :-17
-                //        -2       -16 : -9
-                //        -1        -8 : -1
-                //         0         0 :  7
-                //         1         8 : 15
-                //         2        16 : 23
-                //         3        24 : 31
-                //         4        32 : 39
-                //         5        40 : 47
-                //         6        48 : 55
-                //         7        56 : 63
-                //         8        64 : 71
+                //    int32 - X
+                //    int32 - Y
+                //    uint32 - flags (high bits look random)
+                //
+                //        0x1 - Force Hide Land Quad 1
+                //        0x2 - Force Hide Land Quad 2
+                //        0x4 - Force Hide Land Quad 3
+                //        0x8 - Force Hide Land Quad 4
+                uint32_t flags;
+                reader.get(mX);
+                reader.get(mY);
+#if 0
+                std::string padding = "";
+                padding.insert(0, reader.stackSize()*2, ' ');
+                std::cout << padding << "CELL group " << ESM4::printLabel(reader.grp().label, reader.grp().type) << std::endl;
+                std::cout << padding << "CELL formId " << std::hex << reader.hdr().record.id << std::endl;
+                std::cout << padding << "CELL X " << std::dec << mX << ", Y " << mY << std::endl;
+#endif
+                if (reader.esmVersion() == ESM4::VER_094 || reader.esmVersion() == ESM4::VER_170)
+                    reader.get(flags); // not in Obvlivion
 
+                // Remember cell grid for later (loading LAND, NAVM which should be CELL temporary children)
+                // Note that grids only apply for external cells.  For interior cells use the cell's formid.
+                ESM4::CellGrid currCell;
+                currCell.grid.x = (int16_t)mX;
+                currCell.grid.y = (int16_t)mY;
+                reader.setCurrCell(currCell);
+                break;
+            }
+            default:
+            {
+                reader.skipSubRecordData();
+                break;
+            }
+        }
+    }
+
+    mPreloaded = true;
+    return reader.skipNextGroupCellChild(ctx);
+}
+
+void ESM4::Cell::load(ESM4::Reader& reader)
+{
+    if (!mPreloaded)
+        init(reader);
+    else
+        reader.setCurrCell(mFormId); // save for LAND (and other children) to access later
+
+    while (reader.getSubRecordHeader())
+    {
+        const ESM4::SubRecordHeader& subHdr = reader.subRecordHeader();
+        switch (subHdr.typeId)
+        {
+            case ESM4::SUB_EDID:
+            {
+                if (mPreloaded)
+                {
+                    reader.skipSubRecordData();
+                    break;
+                }
+
+                if (!reader.getZString(mEditorId))
+                    throw std::runtime_error ("CELL EDID data read error");
+#if 0
+                std::string padding = "";
+                padding.insert(0, reader.stackSize()*2, ' ');
+                std::cout << padding << "CELL Editor ID: " << mEditorId << std::endl;
+#endif
+                break;
+            }
+            case ESM4::SUB_XCLC:
+            {
+                if (mPreloaded)
+                {
+                    reader.skipSubRecordData();
+                    break;
+                }
                 //(X, Y) grid location of the cell followed by flags. Always in
                 //exterior cells and never in interior cells.
                 //

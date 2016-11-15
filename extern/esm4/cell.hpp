@@ -31,6 +31,7 @@ namespace ESM4
 {
     class Reader;
     class Writer;
+    struct ReaderContext;
     struct CellGroup;
     typedef std::uint32_t FormId;
 
@@ -92,6 +93,11 @@ namespace ESM4
 
         Cell();
         virtual ~Cell();
+
+        void init(ESM4::Reader& reader); // common setup for both preload() and load()
+
+        bool mPreloaded;
+        bool preload(ESM4::Reader& reader, ESM4::ReaderContext& ctx); // ctx is for loading refs
 
         virtual void load(ESM4::Reader& reader);
         //virtual void save(ESM4::Writer& writer) const;

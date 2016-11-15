@@ -12,6 +12,9 @@
 
 #include <components/loadinglistener/loadinglistener.hpp>
 
+#include "foreigncell.hpp"
+#include "foreignworld.hpp"
+
 #include "recordcmp.hpp"
 
 namespace MWWorld
@@ -504,6 +507,74 @@ namespace MWWorld
         }
     }
 #endif
+
+    // FIXME: only one of either TES4 or TES5 allowed (else FormId's may clash)
+    //
+    // One option might be to use a 64bit version of formid to identify which game,
+    // which can also allow more than 255 mods (will need to use some hack such as detecting
+    // the base game from the header dependency/master lists)
+
+    template <>
+    class Store<ForeignWorld> : public StoreBase
+    {
+    private:
+
+        std::map<ESM4::FormId, ForeignWorld*> mWorlds;
+
+    public:
+        //typedef SharedIterator<ForeignWorld> iterator; // FIXME: is this needed?
+
+        virtual ~Store();
+
+        // probably need some search functions here
+        // also utilities e.g. get formId based on EditorId/FullName
+        ForeignWorld *find(ESM4::FormId worldId);
+        const ForeignWorld *find(const std::string &id) const;
+
+        size_t getSize() const;
+        //iterator begin() const; // FIXME: is this needed?
+        //iterator end() const; // FIXME: is this needed?
+
+        // FIXME: need to overload eraseStatic()?
+
+        RecordId load(ESM::ESMReader& esm);
+        void setUp(); // FIXME: is this needed?
+    };
+
+    template <>
+    class Store<ForeignCell> : public StoreBase
+    {
+    private:
+
+        std::map<ESM4::FormId, ForeignCell*> mCells;
+
+        std::map<std::string, ESM4::FormId> mEditorIdMap;
+
+        ESM4::FormId mLastPreloadedCell;       // FIXME for testing only
+
+    public:
+
+        virtual ~Store();
+
+        // probably need some search functions here
+        // also utilities e.g. get formId based on EditorId/FullName
+
+        // Used by World::findForeignExteriorPosition for teleporting the player, e.g. from
+        // console command COC (center on cell)
+        const ForeignCell *searchExtByName(const std::string &name) const;
+
+        size_t getSize() const;
+
+        void preload(ESM::ESMReader& esm, Store<ForeignWorld>& worlds);
+
+        RecordId load(ESM::ESMReader& esm) { return RecordId("", false); } // noop
+        RecordId load(ESM::ESMReader& esm, Store<ForeignWorld>& worlds);
+        void setUp(); // FIXME: is this needed?
+
+        const ESM::Cell *find(int x, int y) const; // FIXME: returns wrong cell type
+
+        void testPreload(ESM::ESMReader& esm); // FIXME for testing only
+    };
 
 } //end namespace
 

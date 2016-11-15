@@ -39,9 +39,13 @@
 
 #include "formid.hpp"
 
-ESM4::Reader::Reader() : mModIndex(0), mObserver(nullptr), mEndOfRecord(0), mCellGridValid(false),
-                         mRecHeaderSize(sizeof(ESM4::RecordHeader))
+ESM4::Reader::Reader() : mObserver(nullptr), mEndOfRecord(0), mCellGridValid(false)
 {
+    mCtx.modIndex = 0;
+    mCtx.currWorld = 0;
+    mCtx.currCell = 0;
+    mCtx.recHeaderSize = sizeof(ESM4::RecordHeader);
+
     mInBuf.reset();
     mDataBuf.reset();
     mStream.setNull();
@@ -52,15 +56,59 @@ ESM4::Reader::~Reader()
 {
 }
 
+// Since the record data may have been compressed, it is not always possible to use seek() to
+// go to a position of a sub record.  Also, either the record header needs to be saved in the
+// context or the header needs to be re-loaded after restoring the context.
+ESM4::ReaderContext ESM4::Reader::getContext()
+{
+    mCtx.filePos = mStream->tell() - mCtx.recHeaderSize; // update file position
+    return mCtx;
+}
+
+// NOTE: Assumes that the caller has reopened the file if necessary
+bool ESM4::Reader::restoreContext(const ESM4::ReaderContext& ctx)
+{
+    mCtx.groupStack.clear(); // probably not necessary?
+    mCtx = ctx;
+    mStream->seek(ctx.filePos); // update file position
+
+    return getRecordHeader();
+}
+
+bool ESM4::Reader::skipNextGroupCellChild(ESM4::ReaderContext& ctx)
+{
+    if (mStream->eof())
+        return false;
+
+    std::size_t pos = mStream->tell(); // save
+    ESM4::RecordHeader hdr;
+    if (!mStream->read(&hdr, mCtx.recHeaderSize))
+        throw std::runtime_error("ESM4::Reader::could not peek header"); // 0xff is reserved
+
+    if (hdr.group.type != ESM4::Grp_CellChild)
+    {
+        mStream->seek(pos); // go back to saved
+        return false;
+    }
+
+    mCtx.groupStack.back().second -= hdr.group.groupSize;
+    mStream->skip(hdr.group.groupSize - (std::uint32_t)mCtx.recHeaderSize); // already read the header
+    mObserver->update(hdr.group.groupSize);
+
+    return true;
+}
+
 std::size_t ESM4::Reader::openTes4File(Ogre::DataStreamPtr stream, const std::string& name)
 {
+    mCtx.filename = name;
+
     mStream = stream;
     return mStream->size();
 }
 
 void ESM4::Reader::setRecHeaderSize(const std::size_t size)
 {
-    mRecHeaderSize = size;
+    mCtx.recHeaderSize = size;
 }
 
 void ESM4::Reader::registerForUpdates(ESM4::ReaderObserver *observer)
@@ -70,7 +118,7 @@ void ESM4::Reader::registerForUpdates(ESM4::ReaderObserver *observer)
 
 bool ESM4::Reader::getRecordHeader()
 {
-    // FIXME: this seems hacky
+    // FIXME: this seems very hacky
     if (/*mStream->eof() && */!mSavedStream.isNull())
     {
         mStream = mSavedStream;
@@ -78,10 +126,13 @@ bool ESM4::Reader::getRecordHeader()
     }
 
     // keep track of data left to read from the file
-    mObserver->update(mRecHeaderSize);
+    mObserver->update(mCtx.recHeaderSize);
 
-    return (mStream->read(&mRecordHeader, mRecHeaderSize) == mRecHeaderSize
+    return (mStream->read(&mRecordHeader, mCtx.recHeaderSize) == mCtx.recHeaderSize
             && (mEndOfRecord = mStream->tell() + mRecordHeader.record.dataSize)); // for keeping track of sub records
+
+    // After reading the record header we can cache a WRLD or CELL formId for convenient access later.
+    // (currently currWorld and currCell are set manually when loading the WRLD and CELL records)
 }
 
 bool ESM4::Reader::getSubRecordHeader()
@@ -89,13 +140,19 @@ bool ESM4::Reader::getSubRecordHeader()
     return (mStream->tell() < mEndOfRecord) && get(mSubRecordHeader);
 }
 
+// NOTE: the parameter files must have the file names in the loaded order
 void ESM4::Reader::updateModIndicies(const std::vector<std::string>& files)
 {
     if (files.size() >= 0xff)
         throw std::runtime_error("ESM4::Reader::updateModIndicies too many files"); // 0xff is reserved
 
+    // NOTE: this map is rebuilt each time this method is called (i.e. each time a file is loaded)
+    // Perhaps there is an opportunity to optimize this by saving the result somewhere.
+    // But then, the number of files is at most around 250 so perhaps keeping it simple might be better.
+
     // build a lookup map
     std::unordered_map<std::string, size_t> fileIndex;
+
     for (size_t i = 0; i < files.size(); ++i) // ATTENTION: assumes current file is not included
         fileIndex[Misc::StringUtils::lowerCase(files[i])] = i;
 
@@ -123,29 +180,29 @@ void ESM4::Reader::saveGroupStatus()
 {
 #if 0
     std::string padding = ""; // FIXME: debugging only
-    padding.insert(0, mGroupStack.size()*2, ' ');
+    padding.insert(0, mCtx.groupStack.size()*2, ' ');
     std::cout << padding << "Starting record group "
               << ESM4::printLabel(mRecordHeader.group.label, mRecordHeader.group.type) << std::endl;
 #endif
-    if (mRecordHeader.group.groupSize == (std::uint32_t)mRecHeaderSize)
+    if (mRecordHeader.group.groupSize == (std::uint32_t)mCtx.recHeaderSize)
     {
 #if 0
         std::cout << padding << "Igorning record group " // FIXME: debugging only
             << ESM4::printLabel(mRecordHeader.group.label, mRecordHeader.group.type)
             << " (empty)" << std::endl;
 #endif
-        if (!mGroupStack.empty()) // top group may be empty (e.g. HAIR in Skyrim)
+        if (!mCtx.groupStack.empty()) // top group may be empty (e.g. HAIR in Skyrim)
         {
             // don't put on the stack, checkGroupStatus() may not get called before recursing into this method
-            mGroupStack.back().second -= mRecordHeader.group.groupSize;
+            mCtx.groupStack.back().second -= mRecordHeader.group.groupSize;
             checkGroupStatus();
         }
         return; // DLCMehrunesRazor - Unofficial Patch.esp is at EOF after one of these empty groups...
     }
 
     // push group
-    mGroupStack.push_back(std::make_pair(mRecordHeader.group,
-                mRecordHeader.group.groupSize - (std::uint32_t)mRecHeaderSize));
+    mCtx.groupStack.push_back(std::make_pair(mRecordHeader.group,
+                mRecordHeader.group.groupSize - (std::uint32_t)mCtx.recHeaderSize));
 }
 
 const ESM4::CellGrid& ESM4::Reader::currCellGrid() const
@@ -159,35 +216,37 @@ const ESM4::CellGrid& ESM4::Reader::currCellGrid() const
 void ESM4::Reader::checkGroupStatus()
 {
     // pop finished groups
-    while (!mGroupStack.empty() && mGroupStack.back().second == 0)
+    while (!mCtx.groupStack.empty() && mCtx.groupStack.back().second == 0)
     {
-        ESM4::GroupTypeHeader grp = mGroupStack.back().first; // FIXME: debugging only
-        uint32_t groupSize = mGroupStack.back().first.groupSize;
-        mGroupStack.pop_back();
+        ESM4::GroupTypeHeader grp = mCtx.groupStack.back().first; // FIXME: debugging only
+        uint32_t groupSize = mCtx.groupStack.back().first.groupSize;
+        mCtx.groupStack.pop_back();
 #if 0
         std::string padding = ""; // FIXME: debugging only
-        padding.insert(0, mGroupStack.size()*2, ' ');
+        padding.insert(0, mCtx.groupStack.size()*2, ' ');
         std::cout << padding << "Finished record group " << ESM4::printLabel(grp.label, grp.type) << std::endl;
 #endif
         // Check if the previous group was the final one
-        if (mGroupStack.empty())
+        if (mCtx.groupStack.empty())
             return;
 
-        assert (mGroupStack.back().second >= groupSize && "Read more records than available");
+        //assert (mCtx.groupStack.back().second >= groupSize && "Read more records than available");
 //#if 0
-        if (mGroupStack.back().second < groupSize) // FIXME: debugging only
-            std::cerr << ESM4::printLabel(mGroupStack.back().first.label, mGroupStack.back().first.type)
+        if (mCtx.groupStack.back().second < groupSize) // FIXME: debugging only
+            std::cerr << ESM4::printLabel(mCtx.groupStack.back().first.label,
+                                          mCtx.groupStack.back().first.type)
                       << " read more records than available" << std::endl;
 //#endif
-        mGroupStack.back().second -= groupSize;
+        mCtx.groupStack.back().second -= groupSize;
     }
 }
 
+// WARNING: this method should be used after first calling saveGroupStatus()
 const ESM4::GroupTypeHeader& ESM4::Reader::grp(std::size_t pos) const
 {
-    assert(pos <= mGroupStack.size()-1 && "ESM4::Reader::grp - exceeded stack depth");
+    assert(pos <= mCtx.groupStack.size()-1 && "ESM4::Reader::grp - exceeded stack depth");
 
-    return (*(mGroupStack.end()-pos-1)).first;
+    return (*(mCtx.groupStack.end()-pos-1)).first;
 }
 
 void ESM4::Reader::getRecordData()
@@ -250,8 +309,8 @@ void ESM4::Reader::getRecordData()
     }
 
     // keep track of data left to read from the current group
-    assert (!mGroupStack.empty() && "Read data for a record without a group");
-    mGroupStack.back().second -= (std::uint32_t)mRecHeaderSize + mRecordHeader.record.dataSize;
+    assert (!mCtx.groupStack.empty() && "Read data for a record without a group");
+    mCtx.groupStack.back().second -= (std::uint32_t)mCtx.recHeaderSize + mRecordHeader.record.dataSize;
 
     // keep track of data left to read from the file
     mObserver->update(mRecordHeader.record.dataSize);
@@ -281,19 +340,20 @@ bool ESM4::Reader::getZString(std::string& str)
     }
 }
 
+// Assumes that saveGroupStatus() is not called before this (hence we don't update mCtx.groupStack)
 void ESM4::Reader::skipGroup()
 {
 #if 0
     std::string padding = ""; // FIXME: debugging only
-    padding.insert(0, mGroupStack.size()*2, ' ');
+    padding.insert(0, mCtx.groupStack.size()*2, ' ');
     std::cout << padding << "Skipping record group "
               << ESM4::printLabel(mRecordHeader.group.label, mRecordHeader.group.type) << std::endl;
 #endif
     // Note: subtract the size of header already read before skipping
-    mStream->skip(mRecordHeader.group.groupSize - (std::uint32_t)mRecHeaderSize);
+    mStream->skip(mRecordHeader.group.groupSize - (std::uint32_t)mCtx.recHeaderSize);
 
     // keep track of data left to read from the file
-    mObserver->update((std::size_t)mRecordHeader.group.groupSize - mRecHeaderSize);
+    mObserver->update((std::size_t)mRecordHeader.group.groupSize - mCtx.recHeaderSize);
 }
 
 void ESM4::Reader::skipRecordData()
@@ -301,8 +361,8 @@ void ESM4::Reader::skipRecordData()
     mStream->skip(mRecordHeader.record.dataSize);
 
     // keep track of data left to read from the current group
-    assert (!mGroupStack.empty() && "Skipping a record without a group");
-    mGroupStack.back().second -= (std::uint32_t)mRecHeaderSize + mRecordHeader.record.dataSize;
+    assert (!mCtx.groupStack.empty() && "Skipping a record without a group");
+    mCtx.groupStack.back().second -= (std::uint32_t)mCtx.recHeaderSize + mRecordHeader.record.dataSize;
 
     // keep track of data left to read from the file
     mObserver->update(mRecordHeader.record.dataSize);
@@ -331,7 +391,7 @@ void ESM4::Reader::adjustFormId(FormId& id)
     if (index < mHeader.mModIndicies.size())
         id = mHeader.mModIndicies[index] | (id & 0x00ffffff);
     else
-        id =  mModIndex | (id & 0x00ffffff);
+        id = mCtx.modIndex | (id & 0x00ffffff);
 }
 
 bool ESM4::Reader::getFormId(FormId& id)

@@ -32,70 +32,77 @@ static bool isCacheableRecord(int id)
 
 // FIXME: Foreign:
 // This section is similar to 2nd half of CSMWorld::Data::startLoading() and CSMWorld::Data::continueLoading()
-void ESMStore::load(ESM::ESMReader &esm, Loading::Listener* listener)
+void ESMStore::load(ESM::ESMReader& esm, Loading::Listener* listener)
 {
     listener->setProgressRange(1000);
 
     ESM::Dialogue *dialogue = 0;
 
-    if (esm.getVer() != ESM::VER_080 // TES4
-            && esm.getVer() != ESM::VER_094 && esm.getVer() != ESM::VER_17) // TES5
+    int esmVer = esm.getVer();
+    bool isTes4 = esmVer == ESM::VER_080 || esmVer == ESM::VER_100;
+    bool isTes5 = esmVer == ESM::VER_094 || esmVer == ESM::VER_17;
+
+    // FIXME: temporary workaround
+    if (!(isTes4 || isTes5)) // MW only
     {
         // Land texture loading needs to use a separate internal store for each plugin.
         // We set the number of plugins here to avoid continual resizes during loading,
         // and so we can properly verify if valid plugin indices are being passed to the
         // LandTexture Store retrieval methods.
-        mLandTextures.resize(esm.getGlobalReaderList()->size());
+        mLandTextures.resize(esm.getGlobalReaderList()->size()); // FIXME: size should be for MW only
     }
 
-    /// \todo Move this to somewhere else. ESMReader?
-    // Cache parent esX files by tracking their indices in the global list of
-    //  all files/readers used by the engine. This will greaty accelerate
-    //  refnumber mangling, as required for handling moved references.
-    const std::vector<ESM::Header::MasterData> &masters = esm.getGameFiles();
-    std::vector<ESM::ESMReader*> *allPlugins = esm.getGlobalReaderList();
-    for (size_t j = 0; j < masters.size(); j++) {
-        ESM::Header::MasterData &mast = const_cast<ESM::Header::MasterData&>(masters[j]);
-        std::string fname = mast.name;
-        int index = ~0;
-        for (int i = 0; i < esm.getIndex(); i++) {
-            const std::string &candidate = allPlugins->at(i)->getContext().filename;
-            std::string fnamecandidate = boost::filesystem::path(candidate).filename().string();
-            if (Misc::StringUtils::ciEqual(fname, fnamecandidate)) {
-                index = i;
-                break;
+    // FIXME: for TES4/TES5 whether a dependent file is loaded is already checked in
+    // ESM4::Reader::updateModIndicies() which is called in EsmLoader::load() before this
+    if (!(isTes4 || isTes5)) // MW only
+    {
+        /// \todo Move this to somewhere else. ESMReader?
+        // Cache parent esX files by tracking their indices in the global list of
+        //  all files/readers used by the engine. This will greaty accelerate
+        //  refnumber mangling, as required for handling moved references.
+        const std::vector<ESM::Header::MasterData> &masters = esm.getGameFiles();
+        std::vector<ESM::ESMReader*> *allPlugins = esm.getGlobalReaderList();
+        for (size_t j = 0; j < masters.size(); j++) {
+            ESM::Header::MasterData &mast = const_cast<ESM::Header::MasterData&>(masters[j]);
+            std::string fname = mast.name;
+            int index = ~0;
+            for (int i = 0; i < esm.getIndex(); i++) {
+                const std::string &candidate = allPlugins->at(i)->getContext().filename;
+                std::string fnamecandidate = boost::filesystem::path(candidate).filename().string();
+                if (Misc::StringUtils::ciEqual(fname, fnamecandidate)) {
+                    index = i;
+                    break;
+                }
             }
+            if (index == (int)~0) {
+                // Tried to load a parent file that has not been loaded yet. This is bad,
+                //  the launcher should have taken care of this.
+                std::string fstring = "File " + esm.getName() + " asks for parent file " + masters[j].name
+                    + ", but it has not been loaded yet. Please check your load order.";
+                esm.fail(fstring);
+            }
+            mast.index = index;
         }
-        if (index == (int)~0) {
-            // Tried to load a parent file that has not been loaded yet. This is bad,
-            //  the launcher should have taken care of this.
-            std::string fstring = "File " + esm.getName() + " asks for parent file " + masters[j].name
-                + ", but it has not been loaded yet. Please check your load order.";
-            esm.fail(fstring);
-        }
-        mast.index = index;
     }
-
-    if (esm.getVer() == ESM::VER_080 // TES4
-            || esm.getVer() == ESM::VER_094 || esm.getVer() == ESM::VER_17) // TES5
-        static_cast<ESM::ESM4Reader*>(&esm)->reader().checkGroupStatus();
 
     // Loop through all records
     while(esm.hasMoreRecs())
     {
-        if (esm.getVer() == ESM::VER_080 // TES4
-                || esm.getVer() == ESM::VER_094 || esm.getVer() == ESM::VER_17) // TES5
+        if (isTes4 || isTes5)
         {
             ESM4::Reader& reader = static_cast<ESM::ESM4Reader*>(&esm)->reader();
-            loadTes4Group(reader);
-            continue; // FIXME: skip progress bar for now
+            reader.checkGroupStatus();
+
+            loadTes4Group(esm);
+            listener->setProgress(static_cast<size_t>(esm.getFileOffset() / (float)esm.getFileSize() * 1000));
+            continue;
         }
 
         ESM::NAME n = esm.getRecName();
         esm.getRecHeader();
 
         // Look up the record type.
-        std::map<int, StoreBase *>::iterator it = mStores.find(n.val);
+        std::map<int64_t, StoreBase *>::iterator it = mStores.find(n.val);
 
         if (it == mStores.end()) {
             if (n.val == ESM::REC_INFO) {
@@ -141,90 +148,354 @@ void ESMStore::load(ESM::ESMReader &esm, Loading::Listener* listener)
     }
 }
 
-void ESMStore::loadTes4Group (ESM4::Reader& reader)
+// Can't use ESM4::Reader& as the parameter here because we need esm.hasMoreRecs() for
+// checking an empty group followed by EOF
+void ESMStore::loadTes4Group (ESM::ESMReader &esm)
 {
+    ESM4::Reader& reader = static_cast<ESM::ESM4Reader*>(&esm)->reader();
+
     reader.getRecordHeader();
     const ESM4::RecordHeader& hdr = reader.hdr();
 
     if (hdr.record.typeId != ESM4::REC_GRUP)
-        return loadTes4Record(reader, hdr);
+        return loadTes4Record(esm, hdr);
 
+    // http://www.uesp.net/wiki/Tes4Mod:Mod_File_Format#Hierarchical_Top_Groups
+    //
+    //  Type | Info                                 |
+    // ------+--------------------------------------+-------------------
+    //   2   | Interior Cell Block                  |
+    //   3   |   Interior Cell Sub-Block            |
+    //     R |     CELL                             |
+    //   6   |     Cell Childen                     |
+    //   8   |       Persistent children            |
+    //     R |         REFR, ACHR, ACRE             |
+    //  10   |       Visible distant children       |
+    //     R |         REFR, ACHR, ACRE             |
+    //   9   |       Temp Children                  |
+    //     R |         PGRD                         |
+    //     R |         REFR, ACHR, ACRE             |
+    //       |                                      |
+    //   0   | Top (Type)                           |
+    //     R |   WRLD                               |
+    //   1   |   World Children                     |
+    //     R |     ROAD                             |
+    //     R |     CELL                             |
+    //   6   |     Cell Childen                     |
+    //   8   |       Persistent children            |
+    //     R |         REFR, ACHR, ACRE             |
+    //  10   |       Visible distant children       |
+    //     R |         REFR, ACHR, ACRE             |
+    //   9   |       Temp Children                  |
+    //     R |         PGRD                         |
+    //     R |         REFR, ACHR, ACRE             |
+    //   4   |       Exterior World Block           |
+    //   5   |         Exterior World Sub-block     |
+    //     R |           CELL                       |
+    //   6   |           Cell Childen               |
+    //   8   |             Persistent children      |
+    //     R |               REFR, ACHR, ACRE       |
+    //  10   |             Visible distant children |
+    //     R |               REFR, ACHR, ACRE       |
+    //   9   |             Temp Children            |
+    //     R |               LAND                   |
+    //     R |               PGRD                   |
+    //     R |               REFR, ACHR, ACRE       |
     switch (hdr.group.type)
     {
         case ESM4::Grp_RecordType:
         {
             // FIXME: rewrite to workaround reliability issue
-            if (
-                //hdr.group.label.value == ESM4::REC_HAIR || hdr.group.label.value == ESM4::REC_EYES ||
-                //hdr.group.label.value == ESM4::REC_SOUN || hdr.group.label.value == ESM4::REC_LTEX ||
-
-                //hdr.group.label.value == ESM4::REC_ACTI || hdr.group.label.value == ESM4::REC_APPA ||
-                //hdr.group.label.value == ESM4::REC_ARMO || hdr.group.label.value == ESM4::REC_BOOK ||
-                //hdr.group.label.value == ESM4::REC_CLOT || hdr.group.label.value == ESM4::REC_CONT ||
-                //hdr.group.label.value == ESM4::REC_DOOR || hdr.group.label.value == ESM4::REC_INGR ||
-                //hdr.group.label.value == ESM4::REC_LIGH || hdr.group.label.value == ESM4::REC_MISC ||
-                //hdr.group.label.value == ESM4::REC_STAT || hdr.group.label.value == ESM4::REC_GRAS ||
-                //hdr.group.label.value == ESM4::REC_TREE || hdr.group.label.value == ESM4::REC_FLOR ||
-                //hdr.group.label.value == ESM4::REC_FURN || hdr.group.label.value == ESM4::REC_WEAP ||
-                //hdr.group.label.value == ESM4::REC_AMMO || hdr.group.label.value == ESM4::REC_NPC_ ||
-                //hdr.group.label.value == ESM4::REC_CREA || hdr.group.label.value == ESM4::REC_LVLC ||
-                //hdr.group.label.value == ESM4::REC_SLGM || hdr.group.label.value == ESM4::REC_KEYM ||
-                //hdr.group.label.value == ESM4::REC_ALCH || hdr.group.label.value == ESM4::REC_SGST ||
-
-                //hdr.group.label.value == ESM4::REC_REGN || hdr.group.label.value == ESM4::REC_CELL ||
-                hdr.group.label.value == ESM4::REC_WRLD //|| hdr.group.label.value == ESM4::REC_ANIO ||
-
-                //hdr.group.label.value == ESM4::REC_NAVI
-            )
+            if (hdr.group.label.value == ESM4::REC_NAVI || hdr.group.label.value == ESM4::REC_WRLD ||
+                hdr.group.label.value == ESM4::REC_REGN || hdr.group.label.value == ESM4::REC_STAT ||
+                hdr.group.label.value == ESM4::REC_ANIO || hdr.group.label.value == ESM4::REC_CONT ||
+                hdr.group.label.value == ESM4::REC_MISC || hdr.group.label.value == ESM4::REC_ACTI ||
+                hdr.group.label.value == ESM4::REC_ARMO || hdr.group.label.value == ESM4::REC_NPC_ ||
+                hdr.group.label.value == ESM4::REC_FLOR || hdr.group.label.value == ESM4::REC_GRAS ||
+                hdr.group.label.value == ESM4::REC_TREE || hdr.group.label.value == ESM4::REC_LIGH ||
+                hdr.group.label.value == ESM4::REC_BOOK || hdr.group.label.value == ESM4::REC_FURN ||
+                hdr.group.label.value == ESM4::REC_SOUN || hdr.group.label.value == ESM4::REC_WEAP ||
+                hdr.group.label.value == ESM4::REC_DOOR || hdr.group.label.value == ESM4::REC_AMMO ||
+                hdr.group.label.value == ESM4::REC_CLOT || hdr.group.label.value == ESM4::REC_ALCH ||
+                hdr.group.label.value == ESM4::REC_APPA || hdr.group.label.value == ESM4::REC_INGR ||
+                hdr.group.label.value == ESM4::REC_SGST || hdr.group.label.value == ESM4::REC_SLGM ||
+                hdr.group.label.value == ESM4::REC_KEYM || hdr.group.label.value == ESM4::REC_HAIR ||
+                hdr.group.label.value == ESM4::REC_EYES || hdr.group.label.value == ESM4::REC_CELL ||
+                hdr.group.label.value == ESM4::REC_CREA || hdr.group.label.value == ESM4::REC_LVLC ||
+                hdr.group.label.value == ESM4::REC_LVLI || hdr.group.label.value == ESM4::REC_MATO ||
+                hdr.group.label.value == ESM4::REC_IDLE || hdr.group.label.value == ESM4::REC_LTEX
+                )
             {
                 // NOTE: The label field of a group is not reliable.  See:
                 // http://www.uesp.net/wiki/Tes4Mod:Mod_File_Format
                 //
+                // ASCII Q 0x51 0101 0001
+                //       A 0x41 0100 0001
+                //
+                // Ignore flag  0000 1000 (i.e. probably unrelated)
+                //
                 // Workaround by getting the record header and checking its typeId
                 reader.saveGroupStatus();
-                loadTes4Group(reader);
+                loadTes4Group(esm);
             }
             else
             {
-                // Skip groups that are of no interest.
-                // FIXME: The label field of a group is not reliable, so we will need to check
-                // here as well
-                //std::cout << "skipping group..." << std::endl; // FIXME
+                // Skip groups that are of no interest (for now).
+                // Record Type: GMST
+                // Record Type: GLOB
+                // Record Type: CLAS
+                // Record Type: FACT
+                // Record Type: RACE
+                // Record Type: SKIL
+                // Record Type: MGEF
+                // Record Type: SCPT
+                // Record Type: ENCH
+                // Record Type: SPEL
+                // Record Type: BSGN
+                // Record Type: SBSP
+                // Record Type: WTHR
+                // Record Type: CLMT
+                // Record Type: DIAL
+                // Record Type: QUST
+                // Record Type: PACK
+                // Record Type: CSTY
+                // Record Type: LSCR
+                // Record Type: LVSP
+                // Record Type: WATR
+                // Record Type: EFSH
+
+                // FIXME: The label field of a group is not reliable, so we will need to check here as well
+                //std::cout << "skipping group... " << ESM4::printLabel(hdr.group.label, hdr.group.type) << std::endl;
                 reader.skipGroup();
                 return;
             }
 
             break;
         }
+        case ESM4::Grp_CellChild: // FIXME: temporarily commented out for testing preload
         case ESM4::Grp_WorldChild:
-        case ESM4::Grp_ExteriorCell:
-        case ESM4::Grp_ExteriorSubCell:
-        case ESM4::Grp_InteriorCell:
-        case ESM4::Grp_InteriorSubCell:
-        case ESM4::Grp_CellChild:
         case ESM4::Grp_TopicChild:
+        // FIXME: need to save context if skipping
         case ESM4::Grp_CellPersistentChild:
         case ESM4::Grp_CellTemporaryChild:
         case ESM4::Grp_CellVisibleDistChild:
         {
-            reader.skipGroup();
-            //reader.saveGroupStatus();
-            //loadTes4Group(reader);
+            reader.adjustGRUPFormId();  // not needed or even shouldn't be done? (only labels anyway)
+            reader.saveGroupStatus();
+            if (!esm.hasMoreRecs())
+                return; // may have been an empty group followed by EOF
+
+            loadTes4Group(esm);
+
+            break;
+        }
+        case ESM4::Grp_ExteriorCell:
+        case ESM4::Grp_ExteriorSubCell:
+        case ESM4::Grp_InteriorCell:
+        case ESM4::Grp_InteriorSubCell:
+        {
+            reader.saveGroupStatus();
+            loadTes4Group(esm);
 
             break;
         }
         default:
-            //std::cout << "unknown group..." << std::endl; // FIXME
+            std::cout << "unknown group..." << std::endl; // FIXME
             break;
     }
 
     return;
 }
 
-void ESMStore::loadTes4Record (ESM4::Reader& reader, const ESM4::RecordHeader& hdr)
+// FIXME: Can't distinguish the record types, e.g. ESM::REC_ACTI is the same as ESM4::REC_ACTI
+void ESMStore::loadTes4Record (ESM::ESMReader& esm, const ESM4::RecordHeader& hdr)
 {
+    ESM4::Reader& reader = static_cast<ESM::ESM4Reader*>(&esm)->reader();
+
     switch (hdr.record.typeId)
     {
+#if 0
+        // GMST, GLOB, CLAS, FACT
+        case ESM4::REC_HAIR: reader.getRecordData(); mForeignHairs.load(reader, mBase); break;
+        case ESM4::REC_EYES: reader.getRecordData(); mForeignEyesSet.load(reader, mBase); break;
+		// RACE
+        case ESM4::REC_SOUN: reader.getRecordData(); mForeignSounds.load(reader, mBase); break;
+		// SKIL, MGEF, SCPT
+        case ESM4::REC_LTEX: reader.getRecordData(); mForeignLandTextures.load(reader, mBase); break;
+		// ENCH, SPEL, BSGN
+#endif
+#if 0
+        // ---- referenceables start
+        case ESM4::REC_ACTI: reader.getRecordData(); mForeignActivators.load(reader, mBase); break;
+        case ESM4::REC_APPA: reader.getRecordData(); mForeignApparatuses.load(reader, mBase); break;
+        case ESM4::REC_ARMO: reader.getRecordData(); mForeignArmors.load(reader, mBase); break;
+        case ESM4::REC_BOOK: reader.getRecordData(); mForeignBooks.load(reader, mBase); break;
+        case ESM4::REC_CLOT: reader.getRecordData(); mForeignClothings.load(reader, mBase); break;
+        case ESM4::REC_CONT: reader.getRecordData(); mForeignContainers.load(reader, mBase); break;
+        case ESM4::REC_DOOR: reader.getRecordData(); mForeignDoors.load(reader, mBase); break;
+        case ESM4::REC_INGR: reader.getRecordData(); mForeignIngredients.load(reader, mBase); break;
+        case ESM4::REC_LIGH: reader.getRecordData(); mForeignLights.load(reader, mBase); break;
+        case ESM4::REC_MISC: reader.getRecordData(); mForeignMiscItems.load(reader, mBase); break;
+        case ESM4::REC_STAT: reader.getRecordData(); mForeignStatics.load(reader, mBase); break;
+        case ESM4::REC_GRAS: reader.getRecordData(); mForeignGrasses.load(reader, mBase); break;
+        case ESM4::REC_TREE: reader.getRecordData(); mForeignTrees.load(reader, mBase); break;
+        case ESM4::REC_FLOR: reader.getRecordData(); mForeignFloras.load(reader, mBase); break;
+        case ESM4::REC_FURN: reader.getRecordData(); mForeignFurnitures.load(reader, mBase); break;
+        case ESM4::REC_WEAP: reader.getRecordData(); mForeignWeapons.load(reader, mBase); break;
+        case ESM4::REC_AMMO: reader.getRecordData(); mForeignAmmos.load(reader, mBase); break;
+        case ESM4::REC_NPC_: reader.getRecordData(); mForeignNpcs.load(reader, mBase); break;
+        case ESM4::REC_CREA: reader.getRecordData(); mForeignCreatures.load(reader, mBase); break;
+        case ESM4::REC_LVLC: reader.getRecordData(); mForeignLvlCreatures.load(reader, mBase); break;
+        case ESM4::REC_SLGM: reader.getRecordData(); mForeignSoulGems.load(reader, mBase); break;
+        case ESM4::REC_KEYM: reader.getRecordData(); mForeignKeys.load(reader, mBase); break;
+        case ESM4::REC_ALCH: reader.getRecordData(); mForeignPotions.load(reader, mBase); break;
+        // SBSP (not a referenceable?)
+        case ESM4::REC_SGST: reader.getRecordData(); mForeignSigilStones.load(reader, mBase); break;
+        // LVLI
+        // ---- referenceables end
+#endif
+#if 0
+        // WTHR, CLMT
+        case ESM4::REC_REGN: reader.getRecordData(); mForeignRegions.load(reader, mBase); break;
+#endif
+        case ESM4::REC_CELL:
+        {
+//FIXME: debug only
+#if 0
+            std::map<int64_t, StoreBase *>::iterator it = mStores.find(0x0100000000 | ESM4::REC_CELL);
+            if (it != mStores.end())
+            {
+                RecordId id = it->second->load(esm);
+                if (id.mIsDeleted)
+                    it->second->eraseStatic(id.mId);
+            }
+            else
+            {
+                std::cout << "Internal Error: Cell store not found" << std::endl;
+                reader.skipRecordData();
+            }
+#endif
+#if 0
+            //RecordId id = mStores[0x0100000000 | ESM4::REC_CELL]->load(esm, mForeignWorlds);
+            RecordId id = mForeignCells.load(esm, mForeignWorlds);
+            if (id.mIsDeleted)
+                mStores[0x0100000000 | ESM4::REC_CELL]->eraseStatic(id.mId);
+#endif
+            // do not load and just save context
+            mForeignCells.preload(esm, mForeignWorlds);
+
+            // FIXME testing only - uncomment below call to testPreload() to test
+            // saving/restoring file contexts
+            // also see ForeignCell::testPreload() and Store<MWWorld::ForeignCell>::testPreload()
+            //mForeignCells.testPreload(esm);
+            break;
+        }
+        case ESM4::REC_WRLD:
+        {
+//FIXME: debug only
+#if 0
+            std::map<int64_t, StoreBase *>::iterator it = mStores.find(0x0100000000 | ESM4::REC_WRLD);
+            if (it != mStores.end())
+            {
+                RecordId id = it->second->load(esm);
+                if (id.mIsDeleted)
+                    it->second->eraseStatic(id.mId);
+            }
+            else
+            {
+                std::cout << "Internal Error: World store not found" << std::endl;
+                reader.skipRecordData();
+            }
+#endif
+            RecordId id = mStores[0x0100000000 | ESM4::REC_WRLD]->load(esm);
+            if (id.mIsDeleted)
+                mStores[0x0100000000 | ESM4::REC_WRLD]->eraseStatic(id.mId);
+
+            // will be followed by another CELL or a Cell Child GRUP
+            break;
+        }
+#if 0
+        // DIAL, QUST
+        // IDLE
+        // PACK, CSTY, LSCR, LVSP
+        case ESM4::REC_ANIO: reader.getRecordData(); mForeignAnimObjs.load(reader, mBase); break;
+        // WATR, EFSH
+        case ESM4::REC_REFR:
+        {
+            bool loadCell = true;
+            if (loadCell) // FIXME: testing only
+            {
+                reader.getRecordData();
+                mForeignRefs.load(reader, mBase);
+            }
+            else
+            {
+                reader.skipRecordData();
+                std::cout << "unexpected ACHR/ACRE/REFR/PGRD" << std::endl;
+            }
+            break;
+        }
+        case ESM4::REC_ACHR:
+        {
+            bool loadCell = true;
+            if (loadCell) // FIXME: testing only
+            {
+                reader.getRecordData();
+                mForeignChars.load(reader, mBase);
+            }
+            else
+            {
+                reader.skipRecordData();
+                std::cout << "unexpected ACHR/ACRE/REFR/PGRD" << std::endl;
+            }
+            break;
+        }
+        // TODO: verify LTEX formIds exist
+        case ESM4::REC_LAND: reader.getRecordData(); mForeignLands.load(reader, mBase); break;
+        case ESM4::REC_NAVI: reader.getRecordData(); mNavigation.load(reader, mBase); break;
+        case ESM4::REC_NAVM:
+        {
+            // FIXME: should update mNavMesh to indicate this record was deleted
+            if ((hdr.record.flags & ESM4::Rec_Deleted) != 0)
+            {
+//FIXME: debug only
+#if 0
+                std::string padding = "";
+                padding.insert(0, reader.stackSize()*2, ' ');
+                std::cout << padding << "NAVM: deleted record id "
+                          << std::hex << hdr.record.id << std::endl;
+#endif
+                reader.skipRecordData();
+                break;
+            }
+
+            reader.getRecordData();
+            mNavMesh.load(reader, mBase);
+            break;
+        }
+		//
+        case ESM4::REC_PGRD: // Oblivion only?
+        case ESM4::REC_ACRE: // Oblivion only?
+		//
+        case ESM4::REC_LVLI:
+        case ESM4::REC_IDLE:
+        case ESM4::REC_MATO:
+		//
+        case ESM4::REC_PHZD:
+        case ESM4::REC_PGRE:
+        case ESM4::REC_ROAD: // Oblivion only?
+        {
+            //std::cout << ESM4::printName(hdr.record.typeId) << " skipping..." << std::endl;
+            reader.skipRecordData();
+            break;
+        }
+#endif
+
+
+
+
+
+
         case ESM4::REC_HAIR: case ESM4::REC_EYES: case ESM4::REC_SOUN: case ESM4::REC_LTEX:
 
         case ESM4::REC_ACTI: case ESM4::REC_APPA: case ESM4::REC_ARMO: case ESM4::REC_BOOK:
@@ -234,11 +505,12 @@ void ESMStore::loadTes4Record (ESM4::Reader& reader, const ESM4::RecordHeader& h
         case ESM4::REC_AMMO: case ESM4::REC_NPC_: case ESM4::REC_CREA: case ESM4::REC_LVLC:
         case ESM4::REC_SLGM: case ESM4::REC_KEYM: case ESM4::REC_ALCH: case ESM4::REC_SGST:
 
-        case ESM4::REC_REGN: case ESM4::REC_CELL: case ESM4::REC_WRLD: case ESM4::REC_ANIO:
+        case ESM4::REC_REGN: case ESM4::REC_ANIO:
 
         case ESM4::REC_REFR: case ESM4::REC_ACHR: case ESM4::REC_ACRE: case ESM4::REC_PGRD:
         case ESM4::REC_PHZD: case ESM4::REC_PGRE:
         case ESM4::REC_ROAD: case ESM4::REC_LAND: case ESM4::REC_NAVM: case ESM4::REC_NAVI:
+        case ESM4::REC_LVLI: case ESM4::REC_IDLE:
         {
             //std::cout << ESM4::printName(hdr.record.typeId) << " skipping..." << std::endl;
             reader.skipRecordData();
@@ -258,7 +530,7 @@ void ESMStore::setUp()
 {
     mIds.clear();
 
-    std::map<int, StoreBase *>::iterator storeIt = mStores.begin();
+    std::map<int64_t, StoreBase *>::iterator storeIt = mStores.begin();
     for (; storeIt != mStores.end(); ++storeIt) {
         storeIt->second->setUp();
 

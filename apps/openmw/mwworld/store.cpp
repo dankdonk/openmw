@@ -2,6 +2,9 @@
 #include "esmstore.hpp"
 
 #include <components/esm/esmreader.hpp>
+#include <components/esm/esm4reader.hpp>
+
+#include <extern/esm4/formid.hpp>
 
 #include <components/misc/rng.hpp>
 #include <stdexcept>
@@ -1134,6 +1137,311 @@ namespace MWWorld
         return RecordId(script.mId);
     }
 #endif
+
+    Store<MWWorld::ForeignWorld>::~Store()
+    {
+        std::map<ESM4::FormId, MWWorld::ForeignWorld*>::iterator it = mWorlds.begin();
+        for (; it != mWorlds.end(); ++it)
+            delete it->second;
+    }
+
+    size_t Store<MWWorld::ForeignWorld>::getSize() const
+    {
+        return 0;
+    }
+
+    void Store<MWWorld::ForeignWorld>::setUp()
+    {
+    }
+
+    ForeignWorld *Store<MWWorld::ForeignWorld>::find(ESM4::FormId worldId)
+    {
+        std::map<ESM4::FormId, MWWorld::ForeignWorld*>::iterator it = mWorlds.find(worldId);
+        if (it != mWorlds.end())
+            return it->second;
+
+        return NULL;
+    }
+
+    // world is assumed to be in lower case
+    const ForeignWorld *Store<MWWorld::ForeignWorld>::find(const std::string& world) const
+    {
+        std::map<ESM4::FormId, MWWorld::ForeignWorld*>::const_iterator it = mWorlds.begin();
+        for (;it != mWorlds.end(); ++it)
+        {
+            std::string lowerEditorId = Misc::StringUtils::lowerCase(it->second->mEditorId);
+            if (lowerEditorId == world)
+                return it->second;
+        }
+
+        return 0;
+    }
+
+    // Need to load ForeignWorld as well as update ESM4::WorldGroup (or alternatively
+    // incorporate some aspects of WorldGroup into ForeignWorld which is the current
+    // implementation).
+    //
+    // Similarly, ForeignCell and ForeignRoad need to update ESM4::WorldGroup (or
+    // ForiegnWorld).
+    //
+    // FIXME: try move semantics similar to OpenCS
+    RecordId Store<MWWorld::ForeignWorld>::load(ESM::ESMReader &esm)
+    {
+        ESM4::Reader& reader = static_cast<ESM::ESM4Reader*>(&esm)->reader();
+
+        reader.getRecordData();
+
+        MWWorld::ForeignWorld *record = new MWWorld::ForeignWorld();
+        bool isDeleted = false;
+
+        record->load(esm, isDeleted);
+
+        std::pair<std::map<ESM4::FormId, MWWorld::ForeignWorld*>::iterator, bool> ret
+            = mWorlds.insert(std::make_pair(record->mFormId, record));
+        // Try to overwrite existing record
+        // FIXME: should this be merged instead?
+        if (!ret.second)
+            ret.first->second = record;
+
+        //std::cout << "World: " << ESM4::formIdToString(record->mFormId) << std::endl; // FIXME: debug
+
+        return RecordId(ESM4::formIdToString(record->mFormId), ((record->mFlags & ESM4::Rec_Deleted) != 0));
+    }
+
+    Store<MWWorld::ForeignCell>::~Store()
+    {
+        std::map<ESM4::FormId, MWWorld::ForeignCell*>::iterator it = mCells.begin();
+        for (; it != mCells.end(); ++it)
+            delete it->second;
+    }
+
+    size_t Store<MWWorld::ForeignCell>::getSize() const
+    {
+        return 0;
+    }
+
+    void Store<MWWorld::ForeignCell>::setUp()
+    {
+    }
+
+    // In order to save the file contexts from each of the mods for a given cell, either the cell
+    // object needs to be constructed or special maps of the context lists need to be
+    // maintained.  Since we need to partially load the cell anyway (to get the Editor Id and
+    // grid) we go ahead and create the cell objects depite the memory usage.
+    // (TODO: check actual usage)
+    //
+    // Unfortunately it is not possible to use the group header labels to get the cell's formId
+    // or grid. The labels may not be reliable even if they could be used.  (see
+    // http://www.uesp.net/wiki/Tes4Mod:Mod_File_Format)
+    //
+    // All the cells (even external cells from any of the worldspaces) are indexed by the
+    // cell's formId.  We maintain another map so that a cell can be retrieved by its editorId
+    // without having to loop through all the cells.
+    //
+    // A map of cell grid to formId is maintained in the world objects (i.e. there can be
+    // multiple cells with the same grid)
+    //
+    // FIXME: some old comments below - check if still correct
+    // Need to load ForeignCell as well as update ESM4::WorldGroup and ESM4::CellGroup
+    // (or alternatively incorporate some aspects of WorldGroup and CellGroup into ForeignWorld
+    // and ForeignCell).
+    //
+    // Similarly, loading ForeignLand, foreignPathgrid and various references need to update
+    // ESM4::CellGroup (or ForeignCell).
+    //
+    void Store<MWWorld::ForeignCell>::preload(ESM::ESMReader &esm, Store<ForeignWorld>& worlds)
+    {
+        ESM4::Reader& reader = static_cast<ESM::ESM4Reader*>(&esm)->reader();
+
+        // save the context first
+        ESM4::ReaderContext ctx = reader.getContext();
+        // Need to save these because cell->preload() may read into cell child group (where the ref's are)
+        const ESM4::GroupTypeHeader& grp = reader.grp();
+        int32_t groupType = grp.type;
+        ESM4::GroupLabel groupLabel = grp.label;
+
+        // partially load cell record
+        MWWorld::ForeignCell *cell = new MWWorld::ForeignCell();
+        reader.getRecordData();
+        cell->preload(reader);
+
+        std::pair<std::map<ESM4::FormId, MWWorld::ForeignCell*>::iterator, bool> res
+            = mCells.insert(std::make_pair(cell->mFormId, cell));
+        res.first->second->addFileContext(ctx);
+
+        if (!res.second) // cell exists
+            std::cout << "Cell updated, formId " << ESM4::formIdToString(cell->mFormId) << std::endl; // FIXME
+
+        // FIXME: cleanup the mess of logic below, may need to refactor using a function or two
+
+        // verify group label and update maps
+        if (groupType == ESM4::Grp_ExteriorSubCell) // exterior cell, has grid
+        {
+            ESM4::FormId worldId = reader.currWorld();
+            ForeignWorld *world = worlds.find(worldId);
+            if (!world)
+            {
+                std::ostringstream msg;
+                msg << "Cell's parent world formId " << ESM4::formIdToString(worldId) << " not found";
+                throw std::runtime_error(msg.str());
+            }
+
+            // group grid   cell grid range
+            //
+            //        -7       -56 :-49
+            //        -6       -48 :-41
+            //        -5       -40 :-33
+            //        -4       -32 :-25
+            //        -3       -24 :-17
+            //        -2       -16 : -9
+            //        -1        -8 : -1
+            //         0         0 :  7
+            //         1         8 : 15
+            //         2        16 : 23
+            //         3        24 : 31
+            //         4        32 : 39
+            //         5        40 : 47
+            //         6        48 : 55
+            //         7        56 : 63
+            //         8        64 : 71
+            //
+            // group label is sub block grid
+            if ((int)((cell->mX < 0) ? (cell->mX-7)/8 : cell->mX/8) != groupLabel.grid[1] ||
+                (int)((cell->mY < 0) ? (cell->mY-7)/8 : cell->mY/8) != groupLabel.grid[0])
+                std::cout << "Cell grid mismatch, x " << std::dec << cell->mX << ", y " << cell->mY
+                          << " label x " << groupLabel.grid[1] << ", y " << groupLabel.grid[0]
+                          << std::endl; // FIXME: debug only
+
+            world->insertCellGridMap(cell->mX, cell->mY, cell->mFormId);
+            // FIXME: what to do if one already exists?
+        }
+        else if (groupType == ESM4::Grp_WorldChild) // exterior dummy cell
+        {
+            ESM4::FormId worldId = reader.currWorld();
+            ForeignWorld *world = worlds.find(worldId);
+            if (!world)
+            {
+                std::ostringstream msg;
+                msg << "Cell's parent world formId " << ESM4::formIdToString(worldId) << " not found";
+                throw std::runtime_error(msg.str());
+            }
+
+            // group label is parent world's formId
+            if (worldId != groupLabel.value)
+                std::cout << "Cell parent formid mismatch, " << std::hex << worldId
+                          << " label " << groupLabel.value << std::endl;
+
+            world->insertDummyCell(cell->mFormId);
+            // FIXME: what to do if one already exists?
+        }
+        else if (groupType == ESM4::Grp_InteriorSubCell) // interior cell
+        {
+            // group label is sub block number (not sure of its purpose?)
+        }
+        else
+            throw std::runtime_error("Cell record found in an unexpected group");
+
+        if (!cell->mEditorId.empty())
+        {
+            std::pair<std::map<std::string, ESM4::FormId>::iterator, bool> res
+                = mEditorIdMap.insert(std::make_pair(cell->mEditorId, cell->mFormId));
+            // FIXME: what to do if one already exists?  throw?
+        }
+
+        mLastPreloadedCell = cell->mFormId; // FIXME for testing only, delete later
+    }
+
+    void Store<MWWorld::ForeignCell>::testPreload(ESM::ESMReader &esm)
+    {
+        //FIXME below is for testing only
+        std::map<ESM4::FormId, MWWorld::ForeignCell*>::iterator it = mCells.find(mLastPreloadedCell);
+        if (it != mCells.end())
+            it->second->testPreload(esm);
+        else
+            std::cout << "preload cell not found" << std::endl;
+    }
+
+    // FIXME: Is there a more efficient way than calling Store<ForeignWorld>::find() each time?
+    RecordId Store<MWWorld::ForeignCell>::load(ESM::ESMReader &esm, Store<ForeignWorld>& worlds)
+    {
+        ESM4::Reader& reader = static_cast<ESM::ESM4Reader*>(&esm)->reader();
+
+// FIXME: below was before preload was implemented
+#if 0
+        // FIXME: testing context save/restore only
+        //ESM4::ReaderContext ctx = static_cast<ESM::ESM4Reader*>(&esm)->getESM4Context();
+        //static_cast<ESM::ESM4Reader*>(&esm)->restoreESM4Context(ctx);
+
+        reader.getRecordData();
+
+        MWWorld::ForeignCell *record = new MWWorld::ForeignCell();
+        bool isDeleted = false;
+
+        record->load(esm, isDeleted);
+
+        std::pair<std::map<ESM4::FormId, MWWorld::ForeignCell*>::iterator, bool> ret
+            = mCells.insert(std::make_pair(record->mFormId, record));
+        // Try to overwrite existing record
+        // FIXME: should this be merged instead?
+        if (!ret.second)
+            ret.first->second = record;
+
+        //std::cout << "Cell: " << ESM4::formIdToString(record->mFormId) << std::endl; // FIXME: debug
+
+        if (record->mHasGrid)
+        {
+            ForeignWorld *world = worlds.find(record->mParent);
+
+            if (world)
+                world->insertCellGridMap(record->mX, record->mY, record->mFormId);
+
+// FIXME: debug
+            std::cout << "Exterior Cell, world: " << ESM4::formIdToString(record->mParent)
+                      << ", x: " << record->mX << ", y: " << record->mY << std::endl;
+        }
+// FIXME: debug
+        if (record->mIsInterior)
+            std::cout << "Interior Cell, parent world: " << ESM4::formIdToString(record->mParent)
+                      << ", editor id: " << record->mEditorId << std::endl;
+
+        return RecordId(ESM4::formIdToString(record->mFormId), ((record->mFlags & ESM4::Rec_Deleted) != 0));
+#endif
+        return RecordId("", false);
+    }
+
+    const ForeignCell *Store<MWWorld::ForeignCell>::searchExtByName(const std::string &name) const
+    {
+        ForeignCell *cell = 0;
+
+        std::map<ESM4::FormId, MWWorld::ForeignCell*>::const_iterator it = mCells.begin();
+        for (;it != mCells.end(); ++it)
+        {
+            if (!it->second->mIsInterior && Misc::StringUtils::ciEqual(it->second->mEditorId, name))
+            {
+                // if there are more than one external cell with the same editor id, get the
+                // cell that is the upper most and furtherst to the right
+                if ( cell == 0 ||                                                 // the first match
+                    ( it->second->mX > cell->mX ) ||                              // keep going right
+                    ( it->second->mX == cell->mX && it->second->mY > cell->mY ) ) // keep going up
+                {
+                    cell = it->second;
+                }
+            }
+        }
+
+        // FIXME: debug only
+        if (cell)
+            std::cout << "cell: " << name << ", x: " << std::dec << cell->mX << ", y " << cell->mY << std::endl;
+
+        return cell;
+    }
+
+    const ESM::Cell *Store<MWWorld::ForeignCell>::find(int x, int y) const
+    {
+        // FIXME: some dummy for now
+        const ESM::Cell *ptr = 0;
+        return ptr;
+    }
 }
 
 template class MWWorld::Store<ESM::Activator>;
@@ -1178,3 +1486,6 @@ template class MWWorld::Store<ESM::Spell>;
 template class MWWorld::Store<ESM::StartScript>;
 template class MWWorld::Store<ESM::Static>;
 template class MWWorld::Store<ESM::Weapon>;
+
+//template class MWWorld::Store<MWWorld::ForeignWorld>;
+//template class MWWorld::Store<MWWorld::ForeignCell>;

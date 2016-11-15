@@ -1,5 +1,8 @@
 #include "cells.hpp"
 
+#include <extern/esm4/common.hpp>
+#include <extern/esm4/formid.hpp>
+
 #include <components/esm/esmreader.hpp>
 #include <components/esm/esmwriter.hpp>
 #include <components/esm/defs.hpp>
@@ -83,7 +86,7 @@ void MWWorld::Cells::writeCell (ESM::ESMWriter& writer, CellStore& cell) const
     writer.endRecord (ESM::REC_CSTA);
 }
 
-MWWorld::Cells::Cells (const MWWorld::ESMStore& store, std::vector<ESM::ESMReader*>& reader)
+MWWorld::Cells::Cells (const MWWorld::ESMStore& store, std::vector<std::vector<ESM::ESMReader*> >& reader)
 : mStore (store), mReader (reader),
   mIdCache (40, std::pair<std::string, CellStore *> ("", (CellStore*)0)), /// \todo make cache size configurable
   mIdCacheIndex (0)
@@ -151,6 +154,45 @@ MWWorld::CellStore *MWWorld::Cells::getCell (const ESM::CellId& id)
         return getExterior (id.mIndex.mX, id.mIndex.mY);
 
     return getInterior (id.mWorldspace);
+}
+
+// If one does not exist insert in mForeignInteriors. Load as required.
+// FIXME: TODO
+MWWorld::CellStore *MWWorld::Cells::getForeignInterior (const std::string& name)
+{
+    std::string lowerName = Misc::StringUtils::lowerCase(name);
+    std::map<std::string, CellStore>::iterator result = mInteriors.find (lowerName);
+
+    if (result==mInteriors.end())
+    {
+        const ESM::Cell *cell = mStore.get<ESM::Cell>().find(lowerName);
+
+        result = mInteriors.insert (std::make_pair (lowerName, CellStore (cell))).first;
+    }
+
+    if (result->second.getState()!=CellStore::State_Loaded)
+    {
+        result->second.load (mStore, mReader);
+    }
+
+    return &result->second;
+}
+
+// FIXME: possibly need to be replaced with getForeignWorld, i.e. in line with COE to COW
+MWWorld::CellStore *MWWorld::Cells::getForeignExterior (const std::string& world, int x, int y)
+{
+    std::string lowerWorld = Misc::StringUtils::lowerCase(world);
+    const MWWorld::ForeignWorld *foreignWorld = mStore.get<MWWorld::ForeignWorld>().find(lowerWorld);
+    if (!foreignWorld)
+        return 0; // FIXME
+
+    std::map<std::pair<int, int>, ESM4::FormId>::const_iterator it = foreignWorld->mCells.begin();
+    for (; it != foreignWorld->mCells.end(); ++it)
+        std::cout << "cell: " << ESM4::formIdToString(it->second)
+            << std::dec << ", x: " << it->first.first << ", y: " << it->first.second
+            << std::endl; // FIXME: debug
+
+    return 0;
 }
 
 MWWorld::Ptr MWWorld::Cells::getPtr (const std::string& name, CellStore& cell,

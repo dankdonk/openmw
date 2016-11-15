@@ -90,12 +90,12 @@ namespace MWWorld
             return mLoaders.insert(std::make_pair(extension, loader)).second;
         }
 
-        void load(const boost::filesystem::path& filepath, int& index)
+        void load(const boost::filesystem::path& filepath, std::vector<std::vector<std::string> >& contentFiles)
         {
             LoadersContainer::iterator it(mLoaders.find(Misc::StringUtils::lowerCase(filepath.extension().string())));
             if (it != mLoaders.end())
             {
-                it->second->load(filepath, index);
+                it->second->load(filepath, contentFiles);
             }
             else
             {
@@ -169,13 +169,22 @@ namespace MWWorld
 
         mWeatherManager = new MWWorld::WeatherManager(mRendering,&mFallback);
 
-        mEsm.resize(contentFiles.size());
+        //mEsm.resize(contentFiles.size()); // FIXME: how to do this?
+        mEsm.resize(3);
         Loading::Listener* listener = MWBase::Environment::get().getWindowManager()->getLoadingScreen();
         listener->loadingOn();
 
         GameContentLoader gameContentLoader(*listener);
         EsmLoader esmLoader(mStore, mEsm, encoder, *listener);
 
+        // NOTE: How to distinguish different types of files with the same extensions such as
+        // .esm and .esp (TES3 and TES4 both use the same extensions)
+        //
+        // Rather than creating a new loader type, e.g. ESM4Loader, maybe add some logic to
+        // EsmLoader to handle different games? (this is the current approach, see EsmLoader::load)
+        //
+        // Alternatively, add more logic when .esm and .esp extensions are detected, with
+        // optional pointer to ESM4Loader to addLoader() method.
         gameContentLoader.addLoader(".esm", &esmLoader);
         gameContentLoader.addLoader(".esp", &esmLoader);
         gameContentLoader.addLoader(".omwgame", &esmLoader);
@@ -187,7 +196,7 @@ namespace MWWorld
         listener->loadingOff();
 
         // insert records that may not be present in all versions of MW
-        if (mEsm[0]->getFormat() == 0)
+        if (mEsm[0][0]->getFormat() == 0) // FIXME: first file may not be for MW
             ensureNeededRecords();
 
         mStore.setUp();
@@ -476,7 +485,8 @@ namespace MWWorld
         delete mPlayer;
 
         for (unsigned int i = 0; i < mEsm.size(); ++i)
-            delete mEsm[i];
+            for (unsigned int j = 0; j < mEsm[i].size(); ++j)
+                delete mEsm[i][j];
     }
 
     const ESM::Cell *World::getExterior (const std::string& cellName) const
@@ -547,7 +557,7 @@ namespace MWWorld
 
     std::vector<ESM::ESMReader*>& World::getEsmReader()
     {
-        return mEsm;
+        return mEsm[0]; // FIXME: only MW for now
     }
 
     LocalScripts& World::getLocalScripts()
@@ -1014,14 +1024,14 @@ namespace MWWorld
         addContainerScripts(getPlayerPtr(), getPlayerPtr().getCell());
     }
 
-    void World::changeToForeignExteriorCell (const ESM::Position& position)
+    void World::changeToForeignExteriorCell (const std::string& worldspace, const ESM::Position& position)
     {
         mPhysics->clearQueuedMovement();
 
         mRendering->notifyWorldSpaceChanged();
 
         removeContainerScripts(getPlayerPtr());
-        mWorldScene->changeToForeignExteriorCell(position, true);
+        mWorldScene->changeToForeignExteriorCell(worldspace, position, true);
         addContainerScripts(getPlayerPtr(), getPlayerPtr().getCell());
     }
 
@@ -2487,9 +2497,20 @@ namespace MWWorld
         return false;
     }
 
-    bool World::findForeignExteriorPosition(const std::string &name, ESM::Position &pos)
+    // 1. check if it is a named cell (Editor ID)
+    // 2. check worldspace formId and update position within that worldspace
+    bool World::findForeignExteriorPosition(const std::string& name, ESM::Position& pos)
     {
-        pos.rot[0] = pos.rot[1] = pos.rot[2] = 0;
+        const ForeignCell *cell = mStore.get<ForeignCell>().searchExtByName(name);
+        // NOTE: currently not checking region names
+        if (cell != 0)
+        {
+            // FIXME: should check if the worldspace has changed from the current (normally
+            // Tamriel for most external cells)
+            pos.rot[0] = pos.rot[1] = pos.rot[2] = 0; // FIXME: fixed at zero for now
+            return true;
+        }
+
         return false;
     }
 
@@ -2646,18 +2667,39 @@ namespace MWWorld
         return mScriptsEnabled;
     }
 
+    // The aim is to allow loading various types of TES files in any combination, as long as
+    // the dependent files are loaded first.  To achieve this, separate indicies for each TES
+    // versions are required.
+    //
+    // The trouble is that until the file is opened by an ESM reader to check the version from
+    // the header we don't know which index to increment.
+    //
+    // One option is to allow the content loader to manage.
+
+    // FIXME: Appears to be loading all the files named in 'content' located in fileCollections
+    // based on the extension string (e.g. .esm).  This probably means that the contents are in
+    // the correct load order.
+    //
+    // 'contentLoader' has a number of loaders that can deal with various extension types.
     void World::loadContentFiles(const Files::Collections& fileCollections,
         const std::vector<std::string>& content, ContentLoader& contentLoader)
     {
+        // FIXME: should this be a member?  Also, use enums?
+        std::vector<std::vector<std::string> > contentFiles;
+        contentFiles.resize(3);
+        //indicies[0] = 0; // MW
+        //indicies[1] = 0; // TES4
+        //indicies[2] = 0; // TES5
+
         std::vector<std::string>::const_iterator it(content.begin());
         std::vector<std::string>::const_iterator end(content.end());
-        for (int idx = 0; it != end; ++it, ++idx)
+        for (; it != end; ++it)
         {
             boost::filesystem::path filename(*it);
             const Files::MultiDirCollection& col = fileCollections.getCollection(filename.extension().string());
             if (col.doesExist(*it))
             {
-                contentLoader.load(col.getPath(*it), idx);
+                contentLoader.load(col.getPath(*it), contentFiles);
             }
             else
             {

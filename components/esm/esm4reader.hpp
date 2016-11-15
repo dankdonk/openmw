@@ -20,6 +20,14 @@ namespace ESM
 
         ESM4::Reader& reader() { return mReader; }
 
+        // Added for use with OpenMW (loading progress bar)
+        size_t getFileSize() { return mReader.getFileSize(); }
+        size_t getFileOffset() { return mReader.getFileOffset(); }
+
+        // Added for loading Cell/Land
+        ESM4::ReaderContext getESM4Context();
+        void restoreESM4Context(const ESM4::ReaderContext& ctx);
+
         void openTes4File(const std::string &name);
 
         virtual void update(std::size_t size);
