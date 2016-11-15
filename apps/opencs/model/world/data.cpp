@@ -2161,11 +2161,11 @@ bool CSMWorld::Data::loadTes4Record (const ESM4::RecordHeader& hdr, CSMDoc::Mess
             // Opt 1: scan cell but do not load them
             // Opt 2: load everything
             //
-            // State Transitions:
+            // State Transitions ('E' denotes an event, and '[]' indicates an action):
             //
             //            S:WorldChild
             //            S:Interior SubCell
-            //            s:Exterior SbuCell     empty cell?
+            //            S:Exterior SbuCell     empty cell?
             //                     |                  ^             ^   ^
             //                     v                  |             |   |
             //                (E:CELL record)         |             |   |
@@ -2224,6 +2224,8 @@ bool CSMWorld::Data::loadTes4Record (const ESM4::RecordHeader& hdr, CSMDoc::Mess
             std::cout << padding << "CELL flags 0x" << std::hex << hdr.record.flags << std::endl;
             std::cout << padding << "CELL id 0x" << std::hex << hdr.record.id << std::endl;
             std::cout << padding << "CELL group " << ESM4::printLabel(reader.grp().label, reader.grp().type) << std::endl;
+            if ((hdr.record.flags & ESM4::Rec_Compressed) != 0)
+                std::cout << padding << "CELL compressed" << std::endl;
 #endif
             break;
         }
@@ -2233,7 +2235,7 @@ bool CSMWorld::Data::loadTes4Record (const ESM4::RecordHeader& hdr, CSMDoc::Mess
             // Opt 2: scan world for cells but do not load them
             // Opt 3: load everything
             //
-            // State Transitions:
+            // State Transitions ('E' denotes an event, and '[]' indicates an action):
             //
             //                                  empty world?
             //                     |                  ^             ^
@@ -2286,6 +2288,8 @@ bool CSMWorld::Data::loadTes4Record (const ESM4::RecordHeader& hdr, CSMDoc::Mess
             // Exterior Cell (4)                            | N/A                          |
             // Exterior SubCell (5)                         | N/A                          |
             //
+            // Exterior SubCell seems to be 8x8, (0,0) includes cells (0,0) to (7,7)
+            //                                   (0,1)                (0,8) to (7,15)
             reader.getRecordData();
             mForeignWorlds.load(reader, mBase);
             // will be followed by another CELL or a Cell Child GRUP
@@ -2298,6 +2302,10 @@ bool CSMWorld::Data::loadTes4Record (const ESM4::RecordHeader& hdr, CSMDoc::Mess
         // WATR, EFSH
         case ESM4::REC_REFR:
         {
+            // FIXME: testing only
+            //if (reader.grp().type == ESM4::Grp_CellPersistentChild)
+                //std::cout << "persistent ref: " << reader.hdr().record.id << std::endl;
+
             bool loadCell = true;
             if (loadCell) // FIXME: testing only
             {
