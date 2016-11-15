@@ -1602,13 +1602,17 @@ int CSMWorld::Data::startLoading (const boost::filesystem::path& path, bool base
 
     mReader = new ESM::ESMReader;
     mReader->setEncoder (&mEncoder);
-    mReader->setIndex(mReaderIndex++);
+    mReader->setIndex(mReaderIndex++);  // NOTE: auto increment
     mReader->open (path.string());
-    if (mReader->getVer() == ESM::VER_080 || mReader->getVer() == ESM::VER_100 // TES4
-        || mReader->getVer() == ESM::VER_094 || mReader->getVer() == ESM::VER_17) // TES5
+
+    int esmVer = mReader->getVer();
+    bool isTes4 = esmVer == ESM::VER_080 || esmVer == ESM::VER_100;
+    bool isTes5 = esmVer == ESM::VER_094 || esmVer == ESM::VER_17;
+    if (isTes4 || isTes5)
     {
+        mReader->close();
         delete mReader;
-        mReader = new ESM::ESM4Reader(mReader->getVer() == ESM::VER_080 || mReader->getVer() == ESM::VER_100);
+        mReader = new ESM::ESM4Reader(isTes4); // TES4 headers are 4 bytes shorter
         mReader->setEncoder(&mEncoder);
         mReader->setIndex(mReaderIndex-1); // use the same index
         static_cast<ESM::ESM4Reader*>(mReader)->reader().setModIndex(mReaderIndex-1);
@@ -1665,11 +1669,13 @@ bool CSMWorld::Data::continueLoading (CSMDoc::Messages& messages)
     if (!mReader)
         throw std::logic_error ("can't continue loading, because no load has been started");
 
+    int esmVer = mReader->getVer();
+    bool isTes4 = esmVer == ESM::VER_080 || esmVer == ESM::VER_100;
+    bool isTes5 = esmVer == ESM::VER_094 || esmVer == ESM::VER_17;
     // Check if previous record/group was the final one in this group.  Must be done before
     // calling mReader->hasMoreRecs() below, because all records may have been processed when
     // the previous group is popped off the stack.
-    if (mReader->getVer() == ESM::VER_080 || mReader->getVer() == ESM::VER_100 // TES4
-            || mReader->getVer() == ESM::VER_094 || mReader->getVer() == ESM::VER_17) // TES5
+    if (isTes4 || isTes5)
         static_cast<ESM::ESM4Reader*>(mReader)->reader().checkGroupStatus();
 
     if (!mReader->hasMoreRecs())
@@ -1696,8 +1702,7 @@ bool CSMWorld::Data::continueLoading (CSMDoc::Messages& messages)
         return true;
     }
 
-    if (mReader->getVer() == ESM::VER_080 || mReader->getVer() == ESM::VER_100 // TES4
-            || mReader->getVer() == ESM::VER_094 || mReader->getVer() == ESM::VER_17) // TES5
+    if (isTes4 || isTes5)
         return loadTes4Group(messages);
 
     ESM::NAME n = mReader->getRecName();
