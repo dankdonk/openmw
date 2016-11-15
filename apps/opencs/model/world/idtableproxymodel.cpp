@@ -98,7 +98,8 @@ bool CSMWorld::IdTableProxyModel::lessThan(const QModelIndex &left, const QModel
 {
     Columns::ColumnId id = static_cast<Columns::ColumnId>(left.data(ColumnBase::Role_ColumnId).toInt());
 
-    if (id == Columns::ColumnId_Id || id == Columns::ColumnId_Parent)
+    // FIXME: FormId doesn't apply to Morrowind
+    if (0)// (id == Columns::ColumnId_Id || id == Columns::ColumnId_Parent)
     {
         return ESM4::stringToFormId(sourceModel()->data(left).toString().toStdString())
                < ESM4::stringToFormId(sourceModel()->data(right).toString().toStdString());
