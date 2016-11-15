@@ -464,7 +464,7 @@ CSVRender::ForeignCell::ForeignCell (CSMDoc::Document& document, Ogre::SceneMana
     // Moved from before terrain to after to get terrain heights for z position sanity check
     addObjects(cellGroup.mTemporary); // FIXME: ignore visible distant and persistent children for now
     addObjects(cellGroup.mPersistent); // FIXME: ignore visible distant children for now
-    addObjects(cellGroup.mVisibleDistant);
+    addObjects(cellGroup.mVisibleDist);
 
 // FIXME: debugging
 #if 0

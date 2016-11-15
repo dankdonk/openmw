@@ -35,7 +35,7 @@ namespace CSMForeign
         void update (const RecordT& record,
                 std::vector<ESM4::FormId>& cellRefs, std::vector<ESM4::FormId>& delRefs);
 
-        void update (std::int32_t type, CellGroup& cellGroup);
+        void update(const RecordT& record, std::int32_t type, CellGroup& cellGroup);
     };
 
     template<typename RecordT>
@@ -53,21 +53,20 @@ namespace CSMForeign
     {
         if ((record.mFlags & ESM4::Rec_Deleted) != 0)
         {
+            delRefs.push_back(record.mFormId); // mark for deletion during saving
+
             std::vector<ESM4::FormId>::iterator it =
                 std::find(cellRefs.begin(), cellRefs.end(), record.mFormId);
 
             if (it != cellRefs.end())
-            {
                 cellRefs.erase(it);
-                delRefs.push_back(record.mFormId);
-            }
         }
         else
             cellRefs.push_back(record.mFormId);
     }
 
     template<typename RecordT>
-    void CellRefCollection<RecordT>::update (std::int32_t type, CellGroup& cellGroup)
+    void CellRefCollection<RecordT>::update(const RecordT& record, std::int32_t type, CellGroup& cellGroup)
     {
         switch (type)
         {
@@ -98,7 +97,7 @@ namespace CSMForeign
         if (reader.hasCellGrid())
             ESM4::gridToString(reader.currCellGrid().grid.x, reader.currCellGrid().grid.y, record.mCell);
         else
-            record.mCell = record.mId; // use formId string instead
+            record.mCell = ESM4::formIdToString(reader.currCell()); // use formId string instead
 
         // first cache the record's formId to its parent cell group
         int cellIndex = mCellGroups.searchFormId(reader.currCell());
@@ -106,7 +105,7 @@ namespace CSMForeign
         {
             // new cell group
             CellGroup cellGroup;
-            update(reader.grp().type, cellGroup);
+            update(record, reader.grp().type, cellGroup);
 
             std::unique_ptr<Record<CellGroup> > record2(new Record<CellGroup>);
             record2->mState = CSMWorld::RecordBase::State_BaseOnly;
@@ -122,7 +121,7 @@ namespace CSMForeign
             record2->mState = CSMWorld::RecordBase::State_BaseOnly; // FIXME: State_Modified if new modindex?
 
             CellGroup &cellGroup = record2->get();
-            update(reader.grp().type, cellGroup);
+            update(record, reader.grp().type, cellGroup);
 
             mCellGroups.setRecord(cellIndex, std::move(record2));
         }
@@ -137,10 +136,10 @@ namespace CSMForeign
         {
             if (index == -1)
             {
-                // cannot delete a non-existent record - may have been deleted by one of
-                // the (master) dependencies or another file loaded before this file
+                // cannot delete a non-existent record - it may have been deleted by one of the
+                // (master) dependencies or another file loaded before this file
                 //
-                // NOTE: a dummy record may need to be created when saving the content file
+                // NOTE: a dummy record needs to be created when saving the content file
                 return -1;
             }
 
@@ -149,9 +148,9 @@ namespace CSMForeign
                 // being deleted by one of the (master) dependencies or another file loaded
                 // before the content file
                 //
-                // the removeRows() operation can be slow but can't just mark it deleted
-                // for base because it can be confusing while editing as the deletion
-                // can't be reverted
+                // the removeRows() operation can be very slow but unfortunately it isn't a
+                // good idea to keep the record (as State_Deleted) for 'base' because it can be
+                // confusing while editing (e.g. the delete status of the record can't be reverted)
                 this->removeRows(index, 1);
                 return -1;
             }
