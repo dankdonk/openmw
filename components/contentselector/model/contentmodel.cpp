@@ -504,8 +504,12 @@ QStringList ContentSelectorModel::ContentModel::gameFiles() const
 
 void ContentSelectorModel::ContentModel::sortFiles()
 {
+//#if 0
+    // It seems we are not able to sort based on last modified date only.  Need to study the
+    // code below to see if it has any position dependent logic.
     std::stable_sort(mFiles.begin(), mFiles.end(), compareLastModified);
-#if 0
+//#endif
+
     //first, sort the model such that all dependencies are ordered upstream (gamefile) first.
     bool movedFiles = true;
     int fileCount = mFiles.size();
@@ -539,7 +543,6 @@ void ContentSelectorModel::ContentModel::sortFiles()
                 break;
         }
     }
-#endif
 }
 
 bool ContentSelectorModel::ContentModel::isChecked(const QString& filepath) const
