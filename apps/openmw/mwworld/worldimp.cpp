@@ -557,7 +557,7 @@ namespace MWWorld
 
     std::vector<ESM::ESMReader*>& World::getEsmReader()
     {
-        return mEsm[0]; // FIXME: only MW for now
+        return mEsm[0]; // FIXME: only MW for now (but doesn't seem to be used anywhere?)
     }
 
     LocalScripts& World::getLocalScripts()

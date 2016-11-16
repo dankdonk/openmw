@@ -20,6 +20,9 @@ CSMForeign::LandCollection::~LandCollection ()
 
 // Can't reliably use cell grid as the id for LAND, since some cells can be "empty" or do not
 // have an XCLC sub-record. e.g. OblivionMQKvatchBridge, TheFrostFireGlade and CheydinhalOblivion
+//
+// NOTE: the lack of XCLC for some cells was worked-around, but should't the id for land be the
+// cell formId, anyway?
 int CSMForeign::LandCollection::load (ESM4::Reader& reader, bool base)
 {
     assert(reader.grp().type == ESM4::Grp_CellTemporaryChild && "Unexpected Group type for LAND");

@@ -23,7 +23,8 @@ void MWWorld::ForeignCell::testPreload(ESM::ESMReader& esm)
 
     ESM4::ReaderContext ctx = static_cast<ESM::ESM4Reader*>(&esm)->getESM4Context();
     reader.restoreContext(mModList.back()); // should ensure that mModList is not empty
-    ESM4::Cell::load(reader);
+    // need a method for merging cell sub records
+    ESM4::Cell::load(reader); // FIXME: with the new loading scheme this won't do anything
     static_cast<ESM::ESM4Reader*>(&esm)->restoreESM4Context(ctx);
 }
 
