@@ -30,8 +30,6 @@ static bool isCacheableRecord(int id)
     return false;
 }
 
-// FIXME: Foreign:
-// This section is similar to 2nd half of CSMWorld::Data::startLoading() and CSMWorld::Data::continueLoading()
 void ESMStore::load(ESM::ESMReader& esm, Loading::Listener* listener)
 {
     listener->setProgressRange(1000);
@@ -160,47 +158,6 @@ void ESMStore::loadTes4Group (ESM::ESMReader &esm)
     if (hdr.record.typeId != ESM4::REC_GRUP)
         return loadTes4Record(esm, hdr);
 
-    // http://www.uesp.net/wiki/Tes4Mod:Mod_File_Format#Hierarchical_Top_Groups
-    //
-    //  Type | Info                                 |
-    // ------+--------------------------------------+-------------------
-    //   2   | Interior Cell Block                  |
-    //   3   |   Interior Cell Sub-Block            |
-    //     R |     CELL                             |
-    //   6   |     Cell Childen                     |
-    //   8   |       Persistent children            |
-    //     R |         REFR, ACHR, ACRE             |
-    //  10   |       Visible distant children       |
-    //     R |         REFR, ACHR, ACRE             |
-    //   9   |       Temp Children                  |
-    //     R |         PGRD                         |
-    //     R |         REFR, ACHR, ACRE             |
-    //       |                                      |
-    //   0   | Top (Type)                           |
-    //     R |   WRLD                               |
-    //   1   |   World Children                     |
-    //     R |     ROAD                             |
-    //     R |     CELL                             |
-    //   6   |     Cell Childen                     |
-    //   8   |       Persistent children            |
-    //     R |         REFR, ACHR, ACRE             |
-    //  10   |       Visible distant children       |
-    //     R |         REFR, ACHR, ACRE             |
-    //   9   |       Temp Children                  |
-    //     R |         PGRD                         |
-    //     R |         REFR, ACHR, ACRE             |
-    //   4   |       Exterior World Block           |
-    //   5   |         Exterior World Sub-block     |
-    //     R |           CELL                       |
-    //   6   |           Cell Childen               |
-    //   8   |             Persistent children      |
-    //     R |               REFR, ACHR, ACRE       |
-    //  10   |             Visible distant children |
-    //     R |               REFR, ACHR, ACRE       |
-    //   9   |             Temp Children            |
-    //     R |               LAND                   |
-    //     R |               PGRD                   |
-    //     R |               REFR, ACHR, ACRE       |
     switch (hdr.group.type)
     {
         case ESM4::Grp_RecordType:
@@ -226,43 +183,14 @@ void ESMStore::loadTes4Group (ESM::ESMReader &esm)
                 hdr.group.label.value == ESM4::REC_IDLE || hdr.group.label.value == ESM4::REC_LTEX
                 )
             {
-                // NOTE: The label field of a group is not reliable.  See:
-                // http://www.uesp.net/wiki/Tes4Mod:Mod_File_Format
-                //
-                // ASCII Q 0x51 0101 0001
-                //       A 0x41 0100 0001
-                //
-                // Ignore flag  0000 1000 (i.e. probably unrelated)
-                //
-                // Workaround by getting the record header and checking its typeId
                 reader.saveGroupStatus();
                 loadTes4Group(esm);
             }
             else
             {
                 // Skip groups that are of no interest (for now).
-                // Record Type: GMST
-                // Record Type: GLOB
-                // Record Type: CLAS
-                // Record Type: FACT
-                // Record Type: RACE
-                // Record Type: SKIL
-                // Record Type: MGEF
-                // Record Type: SCPT
-                // Record Type: ENCH
-                // Record Type: SPEL
-                // Record Type: BSGN
-                // Record Type: SBSP
-                // Record Type: WTHR
-                // Record Type: CLMT
-                // Record Type: DIAL
-                // Record Type: QUST
-                // Record Type: PACK
-                // Record Type: CSTY
-                // Record Type: LSCR
-                // Record Type: LVSP
-                // Record Type: WATR
-                // Record Type: EFSH
+                //  GMST GLOB CLAS FACT RACE SKIL MGEF SCPT ENCH SPEL BSGN SBSP WTHR CLMT DIAL
+                //  QUST PACK CSTY LSCR LVSP WATR EFSH
 
                 // FIXME: The label field of a group is not reliable, so we will need to check here as well
                 //std::cout << "skipping group... " << ESM4::printLabel(hdr.group.label, hdr.group.type) << std::endl;
@@ -272,10 +200,9 @@ void ESMStore::loadTes4Group (ESM::ESMReader &esm)
 
             break;
         }
-        case ESM4::Grp_CellChild: // FIXME: temporarily commented out for testing preload
+        case ESM4::Grp_CellChild:
         case ESM4::Grp_WorldChild:
         case ESM4::Grp_TopicChild:
-        // FIXME: need to save context if skipping
         case ESM4::Grp_CellPersistentChild:
         case ESM4::Grp_CellTemporaryChild:
         case ESM4::Grp_CellVisibleDistChild:
@@ -301,6 +228,7 @@ void ESMStore::loadTes4Group (ESM::ESMReader &esm)
         }
         default:
             std::cout << "unknown group..." << std::endl; // FIXME
+            reader.skipGroup();
             break;
     }
 
@@ -387,7 +315,7 @@ void ESMStore::loadTes4Record (ESM::ESMReader& esm, const ESM4::RecordHeader& hd
             // FIXME testing only - uncomment below call to testPreload() to test
             // saving/restoring file contexts
             // also see ForeignCell::testPreload() and Store<MWWorld::ForeignCell>::testPreload()
-            //mForeignCells.testPreload(esm);
+            mForeignCells.testPreload(esm);
             break;
         }
         case ESM4::REC_WRLD:

@@ -130,7 +130,7 @@ namespace ESM4
 
         // This is set while loading a CELL record (XCLC sub record) and invalidated
         // each time loading a CELL (see clearCellGrid())
-        inline void setCurrCell(const CellGrid& currCell) {
+        inline void setCurrCellGrid(const CellGrid& currCell) {
             mCellGridValid = true;
             mCurrCellGrid = currCell;
         }

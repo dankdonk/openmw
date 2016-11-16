@@ -72,85 +72,32 @@ void ESM4::Cell::init(ESM4::Reader& reader)
         ESM4::CellGrid currCell;
         currCell.grid.x = 0;
         currCell.grid.y = 0;
-        reader.setCurrCell(currCell);  // side effect: sets mCellGridValid  true
+        reader.setCurrCellGrid(currCell);  // side effect: sets mCellGridValid  true
     }
 }
 
-// Only load EDID and XCLC (along with mFormId, mFlags and mParent)
+// TODO: Try loading only EDID and XCLC (along with mFormId, mFlags and mParent)
+//
+// But, for external cells we may be scanning the whole record since we don't know if there is
+// going to be an EDID subrecord. And the vast majority of cells are these kinds.
+//
+// So perhaps some testing needs to be done to see if scanning and skipping takes
+// longer/shorter/same as loading the subrecords.
 bool ESM4::Cell::preload(ESM4::Reader& reader, ESM4::ReaderContext& ctx)
 {
-    init(reader);
-
-    // TODO: optimise by skipping the rest of the CELL record once both EDID and XCLC are read
-    // (assuming they occur early).  Also skip XCLC if internal cell.
-    while (reader.getSubRecordHeader())
-    {
-        const ESM4::SubRecordHeader& subHdr = reader.subRecordHeader();
-        switch (subHdr.typeId)
-        {
-            case ESM4::SUB_EDID:
-            {
-                if (!reader.getZString(mEditorId))
-                    throw std::runtime_error ("CELL EDID data read error");
-#if 0
-                std::string padding = "";
-                padding.insert(0, reader.stackSize()*2, ' ');
-                std::cout << padding << "CELL Editor ID: " << mEditorId << std::endl;
-#endif
-                break;
-            }
-            case ESM4::SUB_XCLC:
-            {
-                //(X, Y) grid location of the cell followed by flags. Always in exterior cells
-                //and never in interior cells.
-                //
-                //    int32 - X
-                //    int32 - Y
-                //    uint32 - flags (high bits look random)
-                //
-                //        0x1 - Force Hide Land Quad 1
-                //        0x2 - Force Hide Land Quad 2
-                //        0x4 - Force Hide Land Quad 3
-                //        0x8 - Force Hide Land Quad 4
-                uint32_t flags;
-                reader.get(mX);
-                reader.get(mY);
-#if 0
-                std::string padding = "";
-                padding.insert(0, reader.stackSize()*2, ' ');
-                std::cout << padding << "CELL group " << ESM4::printLabel(reader.grp().label, reader.grp().type) << std::endl;
-                std::cout << padding << "CELL formId " << std::hex << reader.hdr().record.id << std::endl;
-                std::cout << padding << "CELL X " << std::dec << mX << ", Y " << mY << std::endl;
-#endif
-                if (reader.esmVersion() == ESM4::VER_094 || reader.esmVersion() == ESM4::VER_170)
-                    reader.get(flags); // not in Obvlivion
-
-                // Remember cell grid for later (loading LAND, NAVM which should be CELL temporary children)
-                // Note that grids only apply for external cells.  For interior cells use the cell's formid.
-                ESM4::CellGrid currCell;
-                currCell.grid.x = (int16_t)mX;
-                currCell.grid.y = (int16_t)mY;
-                reader.setCurrCell(currCell);
-                break;
-            }
-            default:
-            {
-                reader.skipSubRecordData();
-                break;
-            }
-        }
-    }
+    if (!mPreloaded)
+        load(reader);
 
     mPreloaded = true;
-    return reader.skipNextGroupCellChild(ctx);
+    return reader.skipNextGroupCellChild(ctx); // true if found cell child group and skipped
 }
 
 void ESM4::Cell::load(ESM4::Reader& reader)
 {
-    if (!mPreloaded)
-        init(reader);
-    else
-        reader.setCurrCell(mFormId); // save for LAND (and other children) to access later
+    // FIXME: we may need to call setCurrCell (and maybe setCurrCellGrid?) again before loading
+    // cell child groups if we are loading them after restoring the context
+    init(reader);
+    reader.setCurrCell(mFormId); // save for LAND (and other children) to access later
 
     while (reader.getSubRecordHeader())
     {
@@ -177,40 +124,41 @@ void ESM4::Cell::load(ESM4::Reader& reader)
             case ESM4::SUB_XCLC:
             {
                 if (mPreloaded)
-                {
                     reader.skipSubRecordData();
-                    break;
-                }
-                //(X, Y) grid location of the cell followed by flags. Always in
-                //exterior cells and never in interior cells.
-                //
-                //    int32 - X
-                //    int32 - Y
-                //    uint32 - flags (high bits look random)
-                //
-                //        0x1 - Force Hide Land Quad 1
-                //        0x2 - Force Hide Land Quad 2
-                //        0x4 - Force Hide Land Quad 3
-                //        0x8 - Force Hide Land Quad 4
-                uint32_t flags;
-                reader.get(mX);
-                reader.get(mY);
+                else
+                {
+                    //(X, Y) grid location of the cell followed by flags. Always in
+                    //exterior cells and never in interior cells.
+                    //
+                    //    int32 - X
+                    //    int32 - Y
+                    //    uint32 - flags (high bits look random)
+                    //
+                    //        0x1 - Force Hide Land Quad 1
+                    //        0x2 - Force Hide Land Quad 2
+                    //        0x4 - Force Hide Land Quad 3
+                    //        0x8 - Force Hide Land Quad 4
+                    uint32_t flags;
+                    reader.get(mX);
+                    reader.get(mY);
 #if 0
-                std::string padding = "";
-                padding.insert(0, reader.stackSize()*2, ' ');
-                std::cout << padding << "CELL group " << ESM4::printLabel(reader.grp().label, reader.grp().type) << std::endl;
-                std::cout << padding << "CELL formId " << std::hex << reader.hdr().record.id << std::endl;
-                std::cout << padding << "CELL X " << std::dec << mX << ", Y " << mY << std::endl;
+                    std::string padding = "";
+                    padding.insert(0, reader.stackSize()*2, ' ');
+                    std::cout << padding << "CELL group " << ESM4::printLabel(reader.grp().label, reader.grp().type) << std::endl;
+                    std::cout << padding << "CELL formId " << std::hex << reader.hdr().record.id << std::endl;
+                    std::cout << padding << "CELL X " << std::dec << mX << ", Y " << mY << std::endl;
 #endif
-                if (reader.esmVersion() == ESM4::VER_094 || reader.esmVersion() == ESM4::VER_170)
-                    reader.get(flags); // not in Obvlivion
+                    if (reader.esmVersion() == ESM4::VER_094 || reader.esmVersion() == ESM4::VER_170)
+                        reader.get(flags); // not in Obvlivion
+                }
 
                 // Remember cell grid for later (loading LAND, NAVM which should be CELL temporary children)
                 // Note that grids only apply for external cells.  For interior cells use the cell's formid.
                 ESM4::CellGrid currCell;
                 currCell.grid.x = (int16_t)mX;
                 currCell.grid.y = (int16_t)mY;
-                reader.setCurrCell(currCell);
+                reader.setCurrCellGrid(currCell);
+
                 break;
             }
             case ESM4::SUB_FULL:
