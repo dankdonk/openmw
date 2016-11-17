@@ -534,6 +534,16 @@ namespace MWWorld
             return getInterior (id.mWorldspace);
     }
 
+    CellStore *World::getForeignWorld (const std::string& world, int x, int y)
+    {
+        return mCells.getForeignWorld (world, x, y);
+    }
+
+    CellStore *World::getForeignInterior (const std::string& name)
+    {
+        return mCells.getForeignInterior (name);
+    }
+
     void World::useDeathCamera()
     {
         if(mRendering->getCamera()->isVanityOrPreviewModeEnabled() )
@@ -1024,14 +1034,14 @@ namespace MWWorld
         addContainerScripts(getPlayerPtr(), getPlayerPtr().getCell());
     }
 
-    void World::changeToForeignExteriorCell (const std::string& worldspace, const ESM::Position& position)
+    void World::changeToForeignWorldCell (const std::string& worldspace, const ESM::Position& position)
     {
         mPhysics->clearQueuedMovement();
 
         mRendering->notifyWorldSpaceChanged();
 
         removeContainerScripts(getPlayerPtr());
-        mWorldScene->changeToForeignExteriorCell(worldspace, position, true);
+        mWorldScene->changeToForeignWorldCell(worldspace, position, true);
         addContainerScripts(getPlayerPtr(), getPlayerPtr().getCell());
     }
 
@@ -1402,6 +1412,22 @@ namespace MWWorld
     void World::indexToPosition (int cellX, int cellY, float &x, float &y, bool centre) const
     {
         const int cellSize = 8192;
+
+        x = static_cast<float>(cellSize * cellX);
+        y = static_cast<float>(cellSize * cellY);
+
+        if (centre)
+        {
+            x += cellSize/2;
+            y += cellSize/2;
+        }
+    }
+
+    // FIXME: this is probably not needed?  it seem the only difference is the cell size
+    void World::indexToWorldPosition (const std::string& world, int cellX, int cellY,
+            float &x, float &y, bool centre) const
+    {
+        const int cellSize = 4096;
 
         x = static_cast<float>(cellSize * cellX);
         y = static_cast<float>(cellSize * cellY);
@@ -2499,9 +2525,9 @@ namespace MWWorld
 
     // 1. check if it is a named cell (Editor ID)
     // 2. check worldspace formId and update position within that worldspace
-    bool World::findForeignExteriorPosition(const std::string& name, ESM::Position& pos)
+    bool World::findForeignWorldPosition(const std::string& world, ESM::Position& pos)
     {
-        const ForeignCell *cell = mStore.get<ForeignCell>().searchExtByName(name);
+        const ForeignCell *cell = mStore.get<ForeignCell>().searchExtByName(world);
         // NOTE: currently not checking region names
         if (cell != 0)
         {

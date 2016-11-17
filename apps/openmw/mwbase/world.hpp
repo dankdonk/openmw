@@ -117,6 +117,10 @@ namespace MWBase
 
             virtual MWWorld::CellStore *getCell (const ESM::CellId& id) = 0;
 
+            virtual MWWorld::CellStore *getForeignInterior (const std::string& name) = 0;
+
+            virtual MWWorld::CellStore *getForeignWorld (const std::string& world, int x, int y) = 0;
+
             virtual void useDeathCamera() = 0;
 
             virtual void setWaterHeight(const float height) = 0;
@@ -256,7 +260,7 @@ namespace MWBase
                 const ESM::Position& position) = 0; // FIXME
 
             virtual void changeToExteriorCell (const ESM::Position& position) = 0;
-            virtual void changeToForeignExteriorCell (const std::string& worldspace, const ESM::Position& position) = 0; // FIXME
+            virtual void changeToForeignWorldCell (const std::string& worldspace, const ESM::Position& position) = 0; // FIXME
             ///< Move to exterior cell.
 
             virtual void changeToCell (const ESM::CellId& cellId, const ESM::Position& position, bool detectWorldSpaceChange=true) = 0;
@@ -305,6 +309,8 @@ namespace MWBase
             virtual void indexToPosition (int cellX, int cellY, float &x, float &y, bool centre = false)
                 const = 0;
             ///< Convert cell numbers to position.
+            virtual void indexToWorldPosition (const std::string& world, int cellX, int cellY,
+                    float &x, float &y, bool centre = false) const = 0;
 
             virtual void positionToIndex (float x, float y, int &cellX, int &cellY) const = 0;
             ///< Convert position to cell numbers
@@ -465,7 +471,7 @@ namespace MWBase
             /// Find default position inside exterior cell specified by name
             /// \return false if exterior with given name not exists, true otherwise
             virtual bool findExteriorPosition(const std::string &name, ESM::Position &pos) = 0;
-            virtual bool findForeignExteriorPosition(const std::string &name, ESM::Position &pos) = 0; // FIXME
+            virtual bool findForeignWorldPosition(const std::string &world, ESM::Position &pos) = 0; // FIXME
 
             /// Find default position inside interior cell specified by name
             /// \return false if interior with given name not exists, true otherwise

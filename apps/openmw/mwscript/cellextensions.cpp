@@ -57,9 +57,9 @@ namespace MWScript
                         // findExteriorPosition() calls World::getExterior() which in turn
                         // checks MWWorld::ESMStore
                         //
-                        if (world->findForeignExteriorPosition(cell.substr(9), pos))
+                        if (world->findForeignWorldPosition(cell.substr(9), pos))
                         {
-                            world->changeToForeignExteriorCell(cell.substr(9), pos);
+                            world->changeToForeignWorldCell(cell.substr(9), pos);
                             world->fixPosition(world->getPlayerPtr());
                         }
                     }
@@ -68,9 +68,10 @@ namespace MWScript
                         world->changeToExteriorCell(pos);
                         world->fixPosition(world->getPlayerPtr());
                     }
-                    else if (world->findForeignExteriorPosition(cell, pos))
+#if 0
+                    else if (world->findForeignWorldPosition(cell, pos))
                     {
-                        world->changeToForeignExteriorCell(cell, pos);
+                        world->changeToForeignWorldCell(cell, pos);
                         world->fixPosition(world->getPlayerPtr());
                     }
                     // FIXME: for interior foreign cells take the precedence!!!
@@ -85,6 +86,7 @@ namespace MWScript
                         world->findInteriorPosition(cell, pos);
                         world->changeToInteriorCell(cell, pos);
                     }
+#endif
                 }
         };
 
@@ -106,14 +108,14 @@ namespace MWScript
                     ESM::Position pos;
                     MWBase::World *world = MWBase::Environment::get().getWorld();
                     world->getPlayer().setTeleported(true);
-                    //world->indexToPosition (x, y, pos.pos[0], pos.pos[1], true);
+                    world->indexToWorldPosition (worldspace, x, y, pos.pos[0], pos.pos[1], true);
                     pos.pos[2] = 0;
 
                     pos.rot[0] = pos.rot[1] = pos.rot[2] = 0;
 
                     std::cout << worldspace << ", x: " << std::dec << x << ", y: " << y << std::endl; // FIXME
 
-                    world->changeToForeignExteriorCell (worldspace, pos);
+                    world->changeToForeignWorldCell (worldspace, pos);
                     //world->fixPosition(world->getPlayerPtr());
                 }
         };
@@ -138,7 +140,7 @@ namespace MWScript
 
                     pos.rot[0] = pos.rot[1] = pos.rot[2] = 0;
 
-                    //world->changeToForeignWorld (pos); // FIXME: TODO
+                    world->changeToExteriorCell (pos);
                     world->fixPosition(world->getPlayerPtr());
                 }
         };

@@ -532,10 +532,11 @@ namespace MWWorld
         mRendering.updateTerrain();
     }
 
-    void Scene::changeToForeignExteriorCell (const std::string& worldspace, const ESM::Position& position, bool adjustPlayerPos)
+    void Scene::changeToForeignWorldCell (const std::string& worldspace, const ESM::Position& position, bool adjustPlayerPos)
     {
         // FIXME: CellStore needs to support TES4 and worldspace
         // FIXME: How to handle TES4 style terrain?  Add updateTES4Terrain() method to RenderingManager?
+        CellStore* current = MWBase::Environment::get().getWorld()->getForeignWorld(worldspace, 0, 0); // FIXME
     }
 
     CellStore* Scene::getCurrentCell ()

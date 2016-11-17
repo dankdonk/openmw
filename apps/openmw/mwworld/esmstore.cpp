@@ -315,7 +315,7 @@ void ESMStore::loadTes4Record (ESM::ESMReader& esm, const ESM4::RecordHeader& hd
             // FIXME testing only - uncomment below call to testPreload() to test
             // saving/restoring file contexts
             // also see ForeignCell::testPreload() and Store<MWWorld::ForeignCell>::testPreload()
-            mForeignCells.testPreload(esm);
+            //mForeignCells.testPreload(esm);
             break;
         }
         case ESM4::REC_WRLD:

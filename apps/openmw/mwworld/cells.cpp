@@ -156,6 +156,23 @@ MWWorld::CellStore *MWWorld::Cells::getCell (const ESM::CellId& id)
     return getInterior (id.mWorldspace);
 }
 
+// in line with COE to COW
+MWWorld::CellStore *MWWorld::Cells::getForeignWorld (const std::string& world, int x, int y)
+{
+    std::string lowerWorld = Misc::StringUtils::lowerCase(world);
+    const MWWorld::ForeignWorld *foreignWorld = mStore.get<MWWorld::ForeignWorld>().find(lowerWorld);
+    if (!foreignWorld)
+        return 0; // FIXME: print an error? maybe it should have been tested before this method was called and we should throw instead
+
+    std::map<std::pair<int, int>, ESM4::FormId>::const_iterator it = foreignWorld->mCells.begin();
+    for (; it != foreignWorld->mCells.end(); ++it)
+        std::cout << "cell: " << ESM4::formIdToString(it->second)
+            << std::dec << ", x: " << it->first.first << ", y: " << it->first.second
+            << std::endl; // FIXME: debug
+
+    return 0; // FIXME: modify CellStore to have foreign items
+}
+
 // If one does not exist insert in mForeignInteriors. Load as required.
 // FIXME: TODO
 MWWorld::CellStore *MWWorld::Cells::getForeignInterior (const std::string& name)
@@ -176,23 +193,6 @@ MWWorld::CellStore *MWWorld::Cells::getForeignInterior (const std::string& name)
     }
 
     return &result->second;
-}
-
-// FIXME: possibly need to be replaced with getForeignWorld, i.e. in line with COE to COW
-MWWorld::CellStore *MWWorld::Cells::getForeignExterior (const std::string& world, int x, int y)
-{
-    std::string lowerWorld = Misc::StringUtils::lowerCase(world);
-    const MWWorld::ForeignWorld *foreignWorld = mStore.get<MWWorld::ForeignWorld>().find(lowerWorld);
-    if (!foreignWorld)
-        return 0; // FIXME
-
-    std::map<std::pair<int, int>, ESM4::FormId>::const_iterator it = foreignWorld->mCells.begin();
-    for (; it != foreignWorld->mCells.end(); ++it)
-        std::cout << "cell: " << ESM4::formIdToString(it->second)
-            << std::dec << ", x: " << it->first.first << ", y: " << it->first.second
-            << std::endl; // FIXME: debug
-
-    return 0;
 }
 
 MWWorld::Ptr MWWorld::Cells::getPtr (const std::string& name, CellStore& cell,

@@ -181,6 +181,10 @@ namespace MWWorld
 
             virtual CellStore *getCell (const ESM::CellId& id);
 
+            virtual CellStore *getForeignWorld (const std::string& world, int x, int y);
+
+            virtual CellStore *getForeignInterior (const std::string& name);
+
             //switch to POV before showing player's death animation
             virtual void useDeathCamera();
 
@@ -329,7 +333,7 @@ namespace MWWorld
 
             virtual void changeToExteriorCell (const ESM::Position& position);
             ///< Move to exterior cell.
-            virtual void changeToForeignExteriorCell (const std::string& worldspace, const ESM::Position& position);
+            virtual void changeToForeignWorldCell (const std::string& worldspace, const ESM::Position& position);
 
             virtual void changeToCell (const ESM::CellId& cellId, const ESM::Position& position, bool detectWorldSpaceChange=true);
             ///< @param detectWorldSpaceChange if true, clean up worldspace-specific data when the world space changes
@@ -373,6 +377,9 @@ namespace MWWorld
             virtual void indexToPosition (int cellX, int cellY, float &x, float &y, bool centre = false)
                 const;
             ///< Convert cell numbers to position.
+
+            virtual void indexToWorldPosition (const std::string& world, int cellX, int cellY, float &x,
+                    float &y, bool centre = false) const;
 
             virtual void positionToIndex (float x, float y, int &cellX, int &cellY) const;
             ///< Convert position to cell numbers
@@ -555,7 +562,7 @@ namespace MWWorld
             /// Find center of exterior cell above land surface
             /// \return false if exterior with given name not exists, true otherwise
             virtual bool findExteriorPosition(const std::string &name, ESM::Position &pos);
-            virtual bool findForeignExteriorPosition(const std::string &name, ESM::Position &pos);
+            virtual bool findForeignWorldPosition(const std::string &world, ESM::Position &pos);
 
             /// Find position in interior cell near door entrance
             /// \return false if interior with given name not exists, true otherwise

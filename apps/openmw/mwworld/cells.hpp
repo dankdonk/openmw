@@ -7,6 +7,11 @@
 
 #include "ptr.hpp"
 
+namespace ESM4
+{
+    typedef uint32_t FormId;
+}
+
 namespace ESM
 {
     class ESMReader;
@@ -23,7 +28,6 @@ namespace Loading
 namespace MWWorld
 {
     class ESMStore;
-    class ForeignWorld;
 
     /// \brief Cell container
     class Cells
@@ -32,8 +36,9 @@ namespace MWWorld
             std::vector<std::vector<ESM::ESMReader*> >& mReader;
             mutable std::map<std::string, CellStore> mInteriors;
             mutable std::map<std::pair<int, int>, CellStore> mExteriors;
-            //std::map<ESM4::FormId, ForeignWorld*> mWorlds;
             std::vector<std::pair<std::string, CellStore *> > mIdCache;
+            std::map<std::string, CellStore> mForeignInteriors;
+            std::map<ESM4::FormId, std::map<std::pair<int, int>, CellStore> > mForeignWorlds;
             std::size_t mIdCacheIndex;
 
             Cells (const Cells&);
@@ -57,9 +62,9 @@ namespace MWWorld
 
             CellStore *getCell (const ESM::CellId& id);
 
-            CellStore *getForeignInterior (const std::string& name);
+            CellStore *getForeignWorld (const std::string& world, int x, int y);
 
-            CellStore *getForeignExterior (const std::string& world, int x, int y);
+            CellStore *getForeignInterior (const std::string& name);
 
             Ptr getPtr (const std::string& name, CellStore& cellStore, bool searchInContainers = false);
             ///< \param searchInContainers Only affect loaded cells.

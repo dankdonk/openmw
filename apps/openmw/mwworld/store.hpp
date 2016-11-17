@@ -559,7 +559,7 @@ namespace MWWorld
         // probably need some search functions here
         // also utilities e.g. get formId based on EditorId/FullName
 
-        // Used by World::findForeignExteriorPosition for teleporting the player, e.g. from
+        // Used by World::findForeignWorldPosition for teleporting the player, e.g. from
         // console command COC (center on cell)
         const ForeignCell *searchExtByName(const std::string &name) const;
 
