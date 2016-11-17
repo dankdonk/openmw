@@ -91,7 +91,7 @@ namespace Compiler
             extensions.registerFunction ("cellchanged", 'l', "", opcodeCellChanged);
             extensions.registerInstruction ("coc", "S", opcodeCOC);
             extensions.registerInstruction ("centeroncell", "S", opcodeCOC);
-            extensions.registerInstruction ("cow", "Sll", opcodeCOE);
+            extensions.registerInstruction ("cow", "Sll", opcodeCOW);
             extensions.registerInstruction ("centeronworld", "Sll", opcodeCOW);
             extensions.registerInstruction ("coe", "ll", opcodeCOE);
             extensions.registerInstruction ("centeronexterior", "ll", opcodeCOE);
