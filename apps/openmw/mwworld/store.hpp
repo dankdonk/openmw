@@ -10,50 +10,19 @@
 #include <components/esm/esmwriter.hpp>
 #include <components/esm/util.hpp>
 
-#include <components/loadinglistener/loadinglistener.hpp>
-
 #include "foreigncell.hpp"
 #include "foreignworld.hpp"
 
 #include "recordcmp.hpp"
+#include "storebase.hpp"
+
+namespace Loading
+{
+    class Listener;
+}
 
 namespace MWWorld
 {
-    struct RecordId
-    {
-        std::string mId;
-        bool mIsDeleted;
-
-        RecordId(const std::string &id = "", bool isDeleted = false);
-    };
-
-    class StoreBase
-    {
-    public:
-        virtual ~StoreBase() {}
-
-        virtual void setUp() {}
-
-        /// List identifiers of records contained in this Store (case-smashed). No-op for Stores that don't use string IDs.
-        virtual void listIdentifier(std::vector<std::string> &list) const {}
-
-        virtual size_t getSize() const = 0;
-        virtual int getDynamicSize() const { return 0; }
-        virtual RecordId load(ESM::ESMReader &esm) = 0;
-
-        virtual bool eraseStatic(const std::string &id) {return false;}
-        virtual void clearDynamic() {}
-
-        virtual void write (ESM::ESMWriter& writer, Loading::Listener& progress) const {}
-
-        virtual RecordId read (ESM::ESMReader& reader) { return RecordId(); }
-        ///< Read into dynamic storage
-
-        virtual std::string getLastAddedRecordId() const { return ""; }
-        ///< Returns the last loaded/read ID or empty string if a loaded record has no ID
-        virtual bool isLastAddedRecordDeleted() const { return false; }
-    };
-
     template <class T>
     class IndexedStore
     {
@@ -76,65 +45,6 @@ namespace MWWorld
 
         const T *search(int index) const;
         const T *find(int index) const;
-    };
-
-    template <class T>
-    class SharedIterator
-    {
-        typedef typename std::vector<T *>::const_iterator Iter;
-
-        Iter mIter;
-
-    public:
-        SharedIterator() {}
-
-        SharedIterator(const SharedIterator &orig)
-          : mIter(orig.mIter)
-        {}
-
-        SharedIterator(const Iter &iter)
-          : mIter(iter)
-        {}
-
-        SharedIterator &operator++() {
-            ++mIter;
-            return *this;
-        }
-
-        SharedIterator operator++(int) {
-            SharedIterator iter = *this;
-            ++mIter;
-
-            return iter;
-        }
-
-        SharedIterator &operator--() {
-            --mIter;
-            return *this;
-        }
-
-        SharedIterator operator--(int) {
-            SharedIterator iter = *this;
-            --mIter;
-
-            return iter;
-        }
-
-        bool operator==(const SharedIterator &x) const {
-            return mIter == x.mIter;
-        }
-
-        bool operator!=(const SharedIterator &x) const {
-            return !(*this == x);
-        }
-
-        const T &operator*() const {
-            return **mIter;
-        }
-
-        const T *operator->() const {
-            return &(**mIter);
-        }
     };
 
     class ESMStore;
@@ -515,7 +425,7 @@ namespace MWWorld
     // the base game from the header dependency/master lists)
 
     template <>
-    class Store<ForeignWorld> : public StoreBase
+    class Store<MWWorld::ForeignWorld> : public StoreBase
     {
     private:
 
@@ -528,8 +438,8 @@ namespace MWWorld
 
         // probably need some search functions here
         // also utilities e.g. get formId based on EditorId/FullName
-        ForeignWorld *find(ESM4::FormId worldId);
-        const ForeignWorld *find(const std::string &id) const;
+        MWWorld::ForeignWorld *find(ESM4::FormId worldId);
+        const MWWorld::ForeignWorld *find(const std::string &id) const;
 
         size_t getSize() const;
         //iterator begin() const; // FIXME: is this needed?
@@ -542,7 +452,7 @@ namespace MWWorld
     };
 
     template <>
-    class Store<ForeignCell> : public StoreBase
+    class Store<MWWorld::ForeignCell> : public StoreBase
     {
     private:
 
@@ -561,11 +471,11 @@ namespace MWWorld
 
         // Used by World::findForeignWorldPosition for teleporting the player, e.g. from
         // console command COC (center on cell)
-        const ForeignCell *searchExtByName(const std::string &name) const;
+        const MWWorld::ForeignCell *searchExtByName(const std::string &name) const;
 
         size_t getSize() const;
 
-        void preload(ESM::ESMReader& esm, Store<ForeignWorld>& worlds);
+        void preload(ESM::ESMReader& esm, Store<MWWorld::ForeignWorld>& worlds);
 
         RecordId load(ESM::ESMReader& esm) { return RecordId("", false); } // noop
         RecordId load(ESM::ESMReader& esm, Store<ForeignWorld>& worlds);

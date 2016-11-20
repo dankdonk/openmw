@@ -100,7 +100,7 @@ void ESMStore::load(ESM::ESMReader& esm, Loading::Listener* listener)
         esm.getRecHeader();
 
         // Look up the record type.
-        std::map<int64_t, StoreBase *>::iterator it = mStores.find(n.val);
+        std::map<int, StoreBase *>::iterator it = mStores.find(n.val);
 
         if (it == mStores.end()) {
             if (n.val == ESM::REC_INFO) {
@@ -335,9 +335,12 @@ void ESMStore::loadTes4Record (ESM::ESMReader& esm, const ESM4::RecordHeader& hd
                 reader.skipRecordData();
             }
 #endif
-            RecordId id = mStores[0x0100000000 | ESM4::REC_WRLD]->load(esm);
+            //RecordId id = mStores[0x0100000000 | ESM4::REC_WRLD]->load(esm);
+            //if (id.mIsDeleted)
+                //mStores[0x0100000000 | ESM4::REC_WRLD]->eraseStatic(id.mId);
+            RecordId id = mForeignWorlds.load(esm);
             if (id.mIsDeleted)
-                mStores[0x0100000000 | ESM4::REC_WRLD]->eraseStatic(id.mId);
+                mForeignWorlds.eraseStatic(id.mId);
 
             // will be followed by another CELL or a Cell Child GRUP
             break;
@@ -458,7 +461,7 @@ void ESMStore::setUp()
 {
     mIds.clear();
 
-    std::map<int64_t, StoreBase *>::iterator storeIt = mStores.begin();
+    std::map<int, StoreBase *>::iterator storeIt = mStores.begin();
     for (; storeIt != mStores.end(); ++storeIt) {
         storeIt->second->setUp();
 

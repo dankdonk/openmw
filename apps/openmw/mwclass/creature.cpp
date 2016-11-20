@@ -680,7 +680,7 @@ namespace MWClass
                 ++sound;
             }
             if(!sounds.empty())
-                return sounds[OEngine::Misc::Rng::rollDice(sounds.size())]->mSound;
+                return sounds[OEngine::Misc::Rng::rollDice(static_cast<int>(sounds.size()))]->mSound;
         }
 
         if (type == ESM::SoundGenerator::Land)

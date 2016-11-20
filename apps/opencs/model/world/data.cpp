@@ -569,41 +569,48 @@ CSMWorld::Data::Data (ToUTF8::FromType encoding, const ResourcesManager& resourc
     mForeignStatics.addColumn (new ForeignIdColumn<CSMForeign::IdRecord<ESM4::Static> >);
     mForeignStatics.addColumn (new RecordStateColumn<CSMForeign::IdRecord<ESM4::Static> >);
     mForeignStatics.addColumn (new FixedRecordTypeColumn<CSMForeign::IdRecord<ESM4::Static> >(UniversalId::Type_ForeignStatic));
+    mForeignStatics.addColumn (new EditorIdColumn<CSMForeign::IdRecord<ESM4::Static> >);
     mForeignStatics.addColumn (new ModelColumn<CSMForeign::IdRecord<ESM4::Static> >);
 
     mForeignAnimObjs.addColumn (new ForeignIdColumn<CSMForeign::IdRecord<ESM4::AnimObject> >);
     mForeignAnimObjs.addColumn (new RecordStateColumn<CSMForeign::IdRecord<ESM4::AnimObject> >);
     mForeignAnimObjs.addColumn (new FixedRecordTypeColumn<CSMForeign::IdRecord<ESM4::AnimObject> >(UniversalId::Type_ForeignAnimObj));
+    mForeignAnimObjs.addColumn (new EditorIdColumn<CSMForeign::IdRecord<ESM4::AnimObject> >);
     mForeignAnimObjs.addColumn (new ModelColumn<CSMForeign::IdRecord<ESM4::AnimObject> >);
 
     mForeignContainers.addColumn (new ForeignIdColumn<CSMForeign::IdRecord<ESM4::Container> >);
     mForeignContainers.addColumn (new RecordStateColumn<CSMForeign::IdRecord<ESM4::Container> >);
     mForeignContainers.addColumn (new FixedRecordTypeColumn<CSMForeign::IdRecord<ESM4::Container> >(UniversalId::Type_ForeignContainer));
     mForeignContainers.addColumn (new FullNameColumn<CSMForeign::IdRecord<ESM4::Container> >);
+    mForeignContainers.addColumn (new EditorIdColumn<CSMForeign::IdRecord<ESM4::Container> >);
     mForeignContainers.addColumn (new ModelColumn<CSMForeign::IdRecord<ESM4::Container> >);
 
     mForeignMiscItems.addColumn (new ForeignIdColumn<CSMForeign::IdRecord<ESM4::MiscItem> >);
     mForeignMiscItems.addColumn (new RecordStateColumn<CSMForeign::IdRecord<ESM4::MiscItem> >);
     mForeignMiscItems.addColumn (new FixedRecordTypeColumn<CSMForeign::IdRecord<ESM4::MiscItem> >(UniversalId::Type_ForeignMiscItem));
     mForeignMiscItems.addColumn (new FullNameColumn<CSMForeign::IdRecord<ESM4::MiscItem> >);
+    mForeignMiscItems.addColumn (new EditorIdColumn<CSMForeign::IdRecord<ESM4::MiscItem> >);
     mForeignMiscItems.addColumn (new ModelColumn<CSMForeign::IdRecord<ESM4::MiscItem> >);
 
     mForeignActivators.addColumn (new ForeignIdColumn<CSMForeign::IdRecord<ESM4::Activator> >);
     mForeignActivators.addColumn (new RecordStateColumn<CSMForeign::IdRecord<ESM4::Activator> >);
     mForeignActivators.addColumn (new FixedRecordTypeColumn<CSMForeign::IdRecord<ESM4::Activator> >(UniversalId::Type_ForeignActivator));
     mForeignActivators.addColumn (new FullNameColumn<CSMForeign::IdRecord<ESM4::Activator> >);
+    mForeignActivators.addColumn (new EditorIdColumn<CSMForeign::IdRecord<ESM4::Activator> >);
     mForeignActivators.addColumn (new ModelColumn<CSMForeign::IdRecord<ESM4::Activator> >);
 
     mForeignArmors.addColumn (new ForeignIdColumn<CSMForeign::IdRecord<ESM4::Armor> >);
     mForeignArmors.addColumn (new RecordStateColumn<CSMForeign::IdRecord<ESM4::Armor> >);
     mForeignArmors.addColumn (new FixedRecordTypeColumn<CSMForeign::IdRecord<ESM4::Armor> >(UniversalId::Type_ForeignArmor));
     mForeignArmors.addColumn (new FullNameColumn<CSMForeign::IdRecord<ESM4::Armor> >);
+    mForeignArmors.addColumn (new EditorIdColumn<CSMForeign::IdRecord<ESM4::Armor> >);
     mForeignArmors.addColumn (new ModelColumn<CSMForeign::IdRecord<ESM4::Armor> >);
 
     mForeignNpcs.addColumn (new ForeignIdColumn<CSMForeign::IdRecord<ESM4::Npc> >);
     mForeignNpcs.addColumn (new RecordStateColumn<CSMForeign::IdRecord<ESM4::Npc> >);
     mForeignNpcs.addColumn (new FixedRecordTypeColumn<CSMForeign::IdRecord<ESM4::Npc> >(UniversalId::Type_ForeignNpc));
     mForeignNpcs.addColumn (new FullNameColumn<CSMForeign::IdRecord<ESM4::Npc> >);
+    mForeignNpcs.addColumn (new EditorIdColumn<CSMForeign::IdRecord<ESM4::Npc> >);
     mForeignNpcs.addColumn (new ModelColumn<CSMForeign::IdRecord<ESM4::Npc> >);
 
     mForeignFloras.addColumn (new ForeignIdColumn<CSMForeign::IdRecord<ESM4::Flora> >);
@@ -644,6 +651,7 @@ CSMWorld::Data::Data (ToUTF8::FromType encoding, const ResourcesManager& resourc
     mForeignWeapons.addColumn (new ForeignIdColumn<CSMForeign::IdRecord<ESM4::Weapon> >);
     mForeignWeapons.addColumn (new RecordStateColumn<CSMForeign::IdRecord<ESM4::Weapon> >);
     mForeignWeapons.addColumn (new FixedRecordTypeColumn<CSMForeign::IdRecord<ESM4::Weapon> >(UniversalId::Type_ForeignWeapons));
+    mForeignWeapons.addColumn (new EditorIdColumn<CSMForeign::IdRecord<ESM4::Weapon> >);
     mForeignWeapons.addColumn (new ModelColumn<CSMForeign::IdRecord<ESM4::Weapon> >);
 
     mForeignDoors.addColumn (new ForeignIdColumn<CSMForeign::IdRecord<ESM4::Door> >);
@@ -659,6 +667,7 @@ CSMWorld::Data::Data (ToUTF8::FromType encoding, const ResourcesManager& resourc
     mForeignClothings.addColumn (new ForeignIdColumn<CSMForeign::IdRecord<ESM4::Clothing> >);
     mForeignClothings.addColumn (new RecordStateColumn<CSMForeign::IdRecord<ESM4::Clothing> >);
     mForeignClothings.addColumn (new FixedRecordTypeColumn<CSMForeign::IdRecord<ESM4::Clothing> >(UniversalId::Type_ForeignClothings));
+    mForeignClothings.addColumn (new EditorIdColumn<CSMForeign::IdRecord<ESM4::Clothing> >);
     mForeignClothings.addColumn (new ModelColumn<CSMForeign::IdRecord<ESM4::Clothing> >);
 
     mForeignPotions.addColumn (new ForeignIdColumn<CSMForeign::IdRecord<ESM4::Potion> >);

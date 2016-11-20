@@ -3,6 +3,7 @@
 #include <iterator>
 #include <algorithm>
 
+#include <openengine/misc/rng.hpp>
 #include <components/esm/loadench.hpp>
 #include <components/esm/inventorystate.hpp>
 

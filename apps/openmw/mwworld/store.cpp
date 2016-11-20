@@ -4,6 +4,8 @@
 #include <components/esm/esmreader.hpp>
 #include <components/esm/esm4reader.hpp>
 
+#include <components/loadinglistener/loadinglistener.hpp>
+
 #include <extern/esm4/formid.hpp>
 
 #include <components/misc/rng.hpp>
@@ -43,10 +45,6 @@ namespace
 
 namespace MWWorld
 {
-    RecordId::RecordId(const std::string &id, bool isDeleted)
-        : mId(id), mIsDeleted(isDeleted)
-    {}
-
     template<typename T>
     IndexedStore<T>::IndexedStore()
     {

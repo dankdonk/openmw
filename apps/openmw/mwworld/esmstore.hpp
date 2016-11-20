@@ -3,8 +3,40 @@
 
 #include <stdexcept>
 
+#include <extern/esm4/stat.hpp>
+#include <extern/esm4/anio.hpp>
+#include <extern/esm4/cont.hpp>
+#include <extern/esm4/acti.hpp>
+#include <extern/esm4/misc.hpp>
+#include <extern/esm4/Armo.hpp>
+#include <extern/esm4/npc_.hpp>
+#include <extern/esm4/flor.hpp>
+#include <extern/esm4/gras.hpp>
+#include <extern/esm4/tree.hpp>
+#include <extern/esm4/ligh.hpp>
+#include <extern/esm4/book.hpp>
+#include <extern/esm4/furn.hpp>
+#include <extern/esm4/soun.hpp>
+#include <extern/esm4/weap.hpp>
+#include <extern/esm4/door.hpp>
+#include <extern/esm4/ammo.hpp>
+#include <extern/esm4/clot.hpp>
+#include <extern/esm4/alch.hpp>
+#include <extern/esm4/appa.hpp>
+#include <extern/esm4/ingr.hpp>
+#include <extern/esm4/sgst.hpp>
+#include <extern/esm4/slgm.hpp>
+#include <extern/esm4/keym.hpp>
+#include <extern/esm4/hair.hpp>
+#include <extern/esm4/eyes.hpp>
+#include <extern/esm4/crea.hpp>
+#include <extern/esm4/lvlc.hpp>
+#include <extern/esm4/ltex.hpp>
+#include <extern/esm4/land.hpp>
+
 #include <components/esm/records.hpp>
 #include "store.hpp"
+#include "foreignstore.hpp"
 
 namespace ESM4
 {
@@ -19,6 +51,8 @@ namespace Loading
 
 namespace MWWorld
 {
+    template class MWWorld::ForeignStore<ESM4::Static>;
+
     class ESMStore
     {
         Store<ESM::Activator>       mActivators;
@@ -73,11 +107,17 @@ namespace MWWorld
         // Lists that are foreign
         Store<MWWorld::ForeignWorld>      mForeignWorlds;
         Store<MWWorld::ForeignCell>       mForeignCells;
+        //
+        //ForeignStore<ESM4::Activator> mForeignActivators;
+        //ForeignStore<ESM4::Container> mForeignContainers;
+        //ForeignStore<ESM4::Door>      mForeignDoors;
+        //ForeignStore<ESM4::MiscItem>  mForeignMiscItems;
+        ForeignStore<ESM4::Static>    mForeignStatics;
 
         // Lookup of all IDs. Makes looking up references faster. Just
         // maps the id name to the record type.
         std::map<std::string, int> mIds;
-        std::map<int64_t, StoreBase *> mStores;
+        std::map<int, StoreBase *> mStores;
 
         ESM::NPC mPlayerTemplate;
 
@@ -88,7 +128,7 @@ namespace MWWorld
 
     public:
         /// \todo replace with SharedIterator<StoreBase>
-        typedef std::map<int64_t, StoreBase *>::const_iterator iterator;
+        typedef std::map<int, StoreBase *>::const_iterator iterator;
 
         iterator begin() const {
             return mStores.begin();
@@ -151,15 +191,24 @@ namespace MWWorld
             mStores[ESM::REC_SSCR] = &mStartScripts;
             mStores[ESM::REC_STAT] = &mStatics;
             mStores[ESM::REC_WEAP] = &mWeapons;
-            mStores[0x0100000000 | ESM4::REC_WRLD] = &mForeignWorlds;
-            mStores[0x0100000000 | ESM4::REC_CELL] = &mForeignCells;
+            //mStores[0x0100000000 | ESM4::REC_ACTI] = &mForeignActivators;
+            //mStores[0x0100000000 | ESM4::REC_CONT] = &mForeignContainers;
+            //mStores[0x0100000000 | ESM4::REC_DOOR] = &mForeignDoors;
+            //mStores[0x0100000000 | ESM4::REC_MISC] = &mForeignMiscItems;
+            //mStores[0x0100000000 | ESM4::REC_STAT] = &mForeignStatics;
+            //mStores[0x0100000000 | ESM4::REC_WRLD] = &mForeignWorlds;
+            //mStores[0x0100000000 | ESM4::REC_CELL] = &mForeignCells;
+            mStores[MKTAG('T','S','T','A')] = &mForeignStatics;
+            //mStores[MKTAG('T','C','O','N')] = &mForeignContainers;
+            mStores[MKTAG('R','L','D','W')] = &mForeignWorlds;
+            mStores[MKTAG('E','L','L','C')] = &mForeignCells;
 
             mPathgrids.setCells(mCells);
         }
 
         void clearDynamic ()
         {
-            for (std::map<int64_t, StoreBase *>::iterator it = mStores.begin(); it != mStores.end(); ++it)
+            for (std::map<int, StoreBase *>::iterator it = mStores.begin(); it != mStores.end(); ++it)
                 it->second->clearDynamic();
 
             mNpcs.insert(mPlayerTemplate);

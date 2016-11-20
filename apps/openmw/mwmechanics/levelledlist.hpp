@@ -53,7 +53,7 @@ namespace MWMechanics
         }
         if (candidates.empty())
             return std::string();
-        std::string item = candidates[OEngine::Misc::Rng::rollDice(candidates.size())];
+        std::string item = candidates[OEngine::Misc::Rng::rollDice(static_cast<int>(candidates.size()))];
 
         // Vanilla doesn't fail on nonexistent items in levelled lists
         if (!MWBase::Environment::get().getWorld()->getStore().find(Misc::StringUtils::lowerCase(item)))

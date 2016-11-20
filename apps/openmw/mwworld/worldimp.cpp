@@ -486,7 +486,10 @@ namespace MWWorld
 
         for (unsigned int i = 0; i < mEsm.size(); ++i)
             for (unsigned int j = 0; j < mEsm[i].size(); ++j)
+            {
+                mEsm[i][j]->close();
                 delete mEsm[i][j];
+            }
     }
 
     const ESM::Cell *World::getExterior (const std::string& cellName) const
