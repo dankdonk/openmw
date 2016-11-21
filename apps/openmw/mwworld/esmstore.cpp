@@ -242,50 +242,44 @@ void ESMStore::loadTes4Record (ESM::ESMReader& esm, const ESM4::RecordHeader& hd
 
     switch (hdr.record.typeId)
     {
-#if 0
         // GMST, GLOB, CLAS, FACT
-        case ESM4::REC_HAIR: reader.getRecordData(); mForeignHairs.load(reader, mBase); break;
-        case ESM4::REC_EYES: reader.getRecordData(); mForeignEyesSet.load(reader, mBase); break;
+        case ESM4::REC_HAIR: reader.getRecordData(); mForeignHairs.load(esm); break;
+        case ESM4::REC_EYES: reader.getRecordData(); mForeignEyesSet.load(esm); break;
 		// RACE
-        case ESM4::REC_SOUN: reader.getRecordData(); mForeignSounds.load(reader, mBase); break;
+        case ESM4::REC_SOUN: reader.getRecordData(); mForeignSounds.load(esm); break;
 		// SKIL, MGEF, SCPT
-        case ESM4::REC_LTEX: reader.getRecordData(); mForeignLandTextures.load(reader, mBase); break;
+        case ESM4::REC_LTEX: reader.getRecordData(); mForeignLandTextures.load(esm); break;
 		// ENCH, SPEL, BSGN
-#endif
-#if 0
         // ---- referenceables start
-        case ESM4::REC_ACTI: reader.getRecordData(); mForeignActivators.load(reader, mBase); break;
-        case ESM4::REC_APPA: reader.getRecordData(); mForeignApparatuses.load(reader, mBase); break;
-        case ESM4::REC_ARMO: reader.getRecordData(); mForeignArmors.load(reader, mBase); break;
-        case ESM4::REC_BOOK: reader.getRecordData(); mForeignBooks.load(reader, mBase); break;
-        case ESM4::REC_CLOT: reader.getRecordData(); mForeignClothings.load(reader, mBase); break;
-        case ESM4::REC_CONT: reader.getRecordData(); mForeignContainers.load(reader, mBase); break;
-        case ESM4::REC_DOOR: reader.getRecordData(); mForeignDoors.load(reader, mBase); break;
-        case ESM4::REC_INGR: reader.getRecordData(); mForeignIngredients.load(reader, mBase); break;
-        case ESM4::REC_LIGH: reader.getRecordData(); mForeignLights.load(reader, mBase); break;
-        case ESM4::REC_MISC: reader.getRecordData(); mForeignMiscItems.load(reader, mBase); break;
-        case ESM4::REC_STAT: reader.getRecordData(); mForeignStatics.load(reader, mBase); break;
-        case ESM4::REC_GRAS: reader.getRecordData(); mForeignGrasses.load(reader, mBase); break;
-        case ESM4::REC_TREE: reader.getRecordData(); mForeignTrees.load(reader, mBase); break;
-        case ESM4::REC_FLOR: reader.getRecordData(); mForeignFloras.load(reader, mBase); break;
-        case ESM4::REC_FURN: reader.getRecordData(); mForeignFurnitures.load(reader, mBase); break;
-        case ESM4::REC_WEAP: reader.getRecordData(); mForeignWeapons.load(reader, mBase); break;
-        case ESM4::REC_AMMO: reader.getRecordData(); mForeignAmmos.load(reader, mBase); break;
-        case ESM4::REC_NPC_: reader.getRecordData(); mForeignNpcs.load(reader, mBase); break;
-        case ESM4::REC_CREA: reader.getRecordData(); mForeignCreatures.load(reader, mBase); break;
-        case ESM4::REC_LVLC: reader.getRecordData(); mForeignLvlCreatures.load(reader, mBase); break;
-        case ESM4::REC_SLGM: reader.getRecordData(); mForeignSoulGems.load(reader, mBase); break;
-        case ESM4::REC_KEYM: reader.getRecordData(); mForeignKeys.load(reader, mBase); break;
-        case ESM4::REC_ALCH: reader.getRecordData(); mForeignPotions.load(reader, mBase); break;
+        case ESM4::REC_ACTI: reader.getRecordData(); mForeignActivators.load(esm); break;
+        case ESM4::REC_APPA: reader.getRecordData(); mForeignApparatuses.load(esm); break;
+        case ESM4::REC_ARMO: reader.getRecordData(); mForeignArmors.load(esm); break;
+        case ESM4::REC_BOOK: reader.getRecordData(); mForeignBooks.load(esm); break;
+        case ESM4::REC_CLOT: reader.getRecordData(); mForeignClothings.load(esm); break;
+        case ESM4::REC_CONT: reader.getRecordData(); mForeignContainers.load(esm); break;
+        case ESM4::REC_DOOR: reader.getRecordData(); mForeignDoors.load(esm); break;
+        case ESM4::REC_INGR: reader.getRecordData(); mForeignIngredients.load(esm); break;
+        case ESM4::REC_LIGH: reader.getRecordData(); mForeignLights.load(esm); break;
+        case ESM4::REC_MISC: reader.getRecordData(); mForeignMiscItems.load(esm); break;
+        case ESM4::REC_STAT: reader.getRecordData(); mForeignStatics.load(esm); break;
+        case ESM4::REC_GRAS: reader.getRecordData(); mForeignGrasses.load(esm); break;
+        case ESM4::REC_TREE: reader.getRecordData(); mForeignTrees.load(esm); break;
+        case ESM4::REC_FLOR: reader.getRecordData(); mForeignFloras.load(esm); break;
+        case ESM4::REC_FURN: reader.getRecordData(); mForeignFurnitures.load(esm); break;
+        case ESM4::REC_WEAP: reader.getRecordData(); mForeignWeapons.load(esm); break;
+        case ESM4::REC_AMMO: reader.getRecordData(); mForeignAmmos.load(esm); break;
+        case ESM4::REC_NPC_: reader.getRecordData(); mForeignNpcs.load(esm); break;
+        case ESM4::REC_CREA: reader.getRecordData(); mForeignCreatures.load(esm); break;
+        case ESM4::REC_LVLC: reader.getRecordData(); mForeignLvlCreatures.load(esm); break;
+        case ESM4::REC_SLGM: reader.getRecordData(); mForeignSoulGems.load(esm); break;
+        case ESM4::REC_KEYM: reader.getRecordData(); mForeignKeys.load(esm); break;
+        case ESM4::REC_ALCH: reader.getRecordData(); mForeignPotions.load(esm); break;
         // SBSP (not a referenceable?)
-        case ESM4::REC_SGST: reader.getRecordData(); mForeignSigilStones.load(reader, mBase); break;
+        case ESM4::REC_SGST: reader.getRecordData(); mForeignSigilStones.load(esm); break;
         // LVLI
         // ---- referenceables end
-#endif
-#if 0
         // WTHR, CLMT
-        case ESM4::REC_REGN: reader.getRecordData(); mForeignRegions.load(reader, mBase); break;
-#endif
+        //case ESM4::REC_REGN: reader.getRecordData(); mForeignRegions.load(esm); break;
         case ESM4::REC_CELL:
         {
 //FIXME: debug only
@@ -345,19 +339,19 @@ void ESMStore::loadTes4Record (ESM::ESMReader& esm, const ESM4::RecordHeader& hd
             // will be followed by another CELL or a Cell Child GRUP
             break;
         }
-#if 0
         // DIAL, QUST
         // IDLE
         // PACK, CSTY, LSCR, LVSP
-        case ESM4::REC_ANIO: reader.getRecordData(); mForeignAnimObjs.load(reader, mBase); break;
+        case ESM4::REC_ANIO: reader.getRecordData(); mForeignAnimObjs.load(esm); break;
         // WATR, EFSH
+#if 0
         case ESM4::REC_REFR:
         {
             bool loadCell = true;
             if (loadCell) // FIXME: testing only
             {
                 reader.getRecordData();
-                mForeignRefs.load(reader, mBase);
+                mForeignRefs.load(esm, mForeignCells);
             }
             else
             {
@@ -372,7 +366,7 @@ void ESMStore::loadTes4Record (ESM::ESMReader& esm, const ESM4::RecordHeader& hd
             if (loadCell) // FIXME: testing only
             {
                 reader.getRecordData();
-                mForeignChars.load(reader, mBase);
+                mForeignChars.load(esm, mForeignCells);
             }
             else
             {
@@ -382,8 +376,8 @@ void ESMStore::loadTes4Record (ESM::ESMReader& esm, const ESM4::RecordHeader& hd
             break;
         }
         // TODO: verify LTEX formIds exist
-        case ESM4::REC_LAND: reader.getRecordData(); mForeignLands.load(reader, mBase); break;
-        case ESM4::REC_NAVI: reader.getRecordData(); mNavigation.load(reader, mBase); break;
+        case ESM4::REC_LAND: reader.getRecordData(); mForeignLands.load(esm, mForeignCells); break;
+        case ESM4::REC_NAVI: reader.getRecordData(); mNavigation.load(esm); break;
         case ESM4::REC_NAVM:
         {
             // FIXME: should update mNavMesh to indicate this record was deleted
@@ -401,7 +395,7 @@ void ESMStore::loadTes4Record (ESM::ESMReader& esm, const ESM4::RecordHeader& hd
             }
 
             reader.getRecordData();
-            mNavMesh.load(reader, mBase);
+            mNavMesh.load(esm);
             break;
         }
 		//
@@ -421,23 +415,7 @@ void ESMStore::loadTes4Record (ESM::ESMReader& esm, const ESM4::RecordHeader& hd
             break;
         }
 #endif
-
-
-
-
-
-
-        case ESM4::REC_HAIR: case ESM4::REC_EYES: case ESM4::REC_SOUN: case ESM4::REC_LTEX:
-
-        case ESM4::REC_ACTI: case ESM4::REC_APPA: case ESM4::REC_ARMO: case ESM4::REC_BOOK:
-        case ESM4::REC_CLOT: case ESM4::REC_CONT: case ESM4::REC_DOOR: case ESM4::REC_INGR:
-        case ESM4::REC_LIGH: case ESM4::REC_MISC: case ESM4::REC_STAT: case ESM4::REC_GRAS:
-        case ESM4::REC_TREE: case ESM4::REC_FLOR: case ESM4::REC_FURN: case ESM4::REC_WEAP:
-        case ESM4::REC_AMMO: case ESM4::REC_NPC_: case ESM4::REC_CREA: case ESM4::REC_LVLC:
-        case ESM4::REC_SLGM: case ESM4::REC_KEYM: case ESM4::REC_ALCH: case ESM4::REC_SGST:
-
-        case ESM4::REC_REGN: case ESM4::REC_ANIO:
-
+        case ESM4::REC_REGN:
         case ESM4::REC_REFR: case ESM4::REC_ACHR: case ESM4::REC_ACRE: case ESM4::REC_PGRD:
         case ESM4::REC_PHZD: case ESM4::REC_PGRE:
         case ESM4::REC_ROAD: case ESM4::REC_LAND: case ESM4::REC_NAVM: case ESM4::REC_NAVI:

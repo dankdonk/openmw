@@ -166,9 +166,19 @@ MWWorld::CellStore *MWWorld::Cells::getForeignWorld (const std::string& world, i
 
     std::map<std::pair<int, int>, ESM4::FormId>::const_iterator it = foreignWorld->mCells.begin();
     for (; it != foreignWorld->mCells.end(); ++it)
+    {
         std::cout << "cell: " << ESM4::formIdToString(it->second)
             << std::dec << ", x: " << it->first.first << ", y: " << it->first.second
             << std::endl; // FIXME: debug
+        if (it->first.first == x && it->first.second == y)
+        {
+            const MWWorld::ForeignCell *foreignCell = mStore.get<MWWorld::ForeignCell>().find(it->second);
+            if (!foreignCell)
+                return 0; // FIXME: print an error? maybe it should have been tested before this method was called and we should throw instead
+
+            std::cout << "cell found: " << ESM4::formIdToString(it->second) << std::endl;
+        }
+    }
 
     return 0; // FIXME: modify CellStore to have foreign items
 }

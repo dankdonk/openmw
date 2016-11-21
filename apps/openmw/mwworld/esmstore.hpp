@@ -51,8 +51,6 @@ namespace Loading
 
 namespace MWWorld
 {
-    template class MWWorld::ForeignStore<ESM4::Static>;
-
     class ESMStore
     {
         Store<ESM::Activator>       mActivators;
@@ -105,14 +103,41 @@ namespace MWWorld
         Store<ESM::Attribute>   mAttributes;
 
         // Lists that are foreign
-        Store<MWWorld::ForeignWorld>      mForeignWorlds;
-        Store<MWWorld::ForeignCell>       mForeignCells;
+        Store<MWWorld::ForeignWorld>   mForeignWorlds;
+        Store<MWWorld::ForeignCell>    mForeignCells;
+        //Store<MWWorld::ForeignLand>    mForeignLands;
         //
-        //ForeignStore<ESM4::Activator> mForeignActivators;
-        //ForeignStore<ESM4::Container> mForeignContainers;
-        //ForeignStore<ESM4::Door>      mForeignDoors;
-        //ForeignStore<ESM4::MiscItem>  mForeignMiscItems;
-        ForeignStore<ESM4::Static>    mForeignStatics;
+        ForeignStore<ESM4::Hair>       mForeignHairs;
+        ForeignStore<ESM4::Eyes>       mForeignEyesSet;
+        ForeignStore<ESM4::Sound>      mForeignSounds;
+        ForeignStore<ESM4::LandTexture> mForeignLandTextures;
+        // Foreign referenceables
+        ForeignStore<ESM4::Activator>  mForeignActivators;
+        ForeignStore<ESM4::Apparatus>  mForeignApparatuses;
+        ForeignStore<ESM4::Armor>      mForeignArmors;
+        ForeignStore<ESM4::Book>       mForeignBooks;
+        ForeignStore<ESM4::Clothing>   mForeignClothings;
+        ForeignStore<ESM4::Container>  mForeignContainers;
+        ForeignStore<ESM4::Door>       mForeignDoors;
+        ForeignStore<ESM4::Ingredient> mForeignIngredients;
+        ForeignStore<ESM4::Light>      mForeignLights;
+        ForeignStore<ESM4::MiscItem>   mForeignMiscItems;
+        ForeignStore<ESM4::Static>     mForeignStatics;
+        ForeignStore<ESM4::Grass>      mForeignGrasses;
+        ForeignStore<ESM4::Tree>       mForeignTrees;
+        ForeignStore<ESM4::Flora>      mForeignFloras;
+        ForeignStore<ESM4::Furniture>  mForeignFurnitures;
+        ForeignStore<ESM4::Weapon>     mForeignWeapons;
+        ForeignStore<ESM4::Ammo>       mForeignAmmos;
+        ForeignStore<ESM4::Npc>        mForeignNpcs;
+        ForeignStore<ESM4::Creature>   mForeignCreatures;
+        ForeignStore<ESM4::LeveledCreature> mForeignLvlCreatures;
+        ForeignStore<ESM4::SoulGem>    mForeignSoulGems;
+        ForeignStore<ESM4::Key>        mForeignKeys;
+        ForeignStore<ESM4::Potion>     mForeignPotions;
+        ForeignStore<ESM4::SigilStone> mForeignSigilStones;
+        //
+        ForeignStore<ESM4::AnimObject> mForeignAnimObjs;
 
         // Lookup of all IDs. Makes looking up references faster. Just
         // maps the id name to the record type.
@@ -191,17 +216,42 @@ namespace MWWorld
             mStores[ESM::REC_SSCR] = &mStartScripts;
             mStores[ESM::REC_STAT] = &mStatics;
             mStores[ESM::REC_WEAP] = &mWeapons;
-            //mStores[0x0100000000 | ESM4::REC_ACTI] = &mForeignActivators;
-            //mStores[0x0100000000 | ESM4::REC_CONT] = &mForeignContainers;
-            //mStores[0x0100000000 | ESM4::REC_DOOR] = &mForeignDoors;
-            //mStores[0x0100000000 | ESM4::REC_MISC] = &mForeignMiscItems;
-            //mStores[0x0100000000 | ESM4::REC_STAT] = &mForeignStatics;
-            //mStores[0x0100000000 | ESM4::REC_WRLD] = &mForeignWorlds;
-            //mStores[0x0100000000 | ESM4::REC_CELL] = &mForeignCells;
+
+            // NOTE: to avoid clash with TES3, these are rotated by one
+            mStores[MKTAG('R','H','A','I')] = &mForeignHairs;
+            mStores[MKTAG('S','E','Y','E')] = &mForeignEyesSet;
+            mStores[MKTAG('N','S','O','U')] = &mForeignSounds;
+            mStores[MKTAG('X','L','T','E')] = &mForeignLandTextures;
+
+            mStores[MKTAG('I','A','C','T')] = &mForeignActivators;
+            mStores[MKTAG('A','A','P','P')] = &mForeignApparatuses;
+            mStores[MKTAG('O','A','R','M')] = &mForeignArmors;
+            mStores[MKTAG('K','B','O','O')] = &mForeignBooks;
+            mStores[MKTAG('T','C','L','O')] = &mForeignClothings;
+            mStores[MKTAG('T','C','O','N')] = &mForeignContainers;
+            mStores[MKTAG('R','D','O','O')] = &mForeignDoors;
+            mStores[MKTAG('R','I','N','G')] = &mForeignIngredients;
+            mStores[MKTAG('H','L','I','G')] = &mForeignLights;
+            mStores[MKTAG('C','M','I','S')] = &mForeignMiscItems;
             mStores[MKTAG('T','S','T','A')] = &mForeignStatics;
-            //mStores[MKTAG('T','C','O','N')] = &mForeignContainers;
-            mStores[MKTAG('R','L','D','W')] = &mForeignWorlds;
-            mStores[MKTAG('E','L','L','C')] = &mForeignCells;
+            mStores[MKTAG('S','G','R','A')] = &mForeignGrasses;
+            mStores[MKTAG('E','T','R','E')] = &mForeignTrees;
+            mStores[MKTAG('R','F','L','O')] = &mForeignFloras;
+            mStores[MKTAG('N','F','U','R')] = &mForeignFurnitures;
+            mStores[MKTAG('P','W','E','A')] = &mForeignWeapons;
+            mStores[MKTAG('O','A','M','M')] = &mForeignAmmos;
+            mStores[MKTAG('_','N','P','C')] = &mForeignNpcs;
+            mStores[MKTAG('A','C','R','E')] = &mForeignCreatures;
+            mStores[MKTAG('C','L','V','L')] = &mForeignLvlCreatures;
+            mStores[MKTAG('M','S','L','G')] = &mForeignSoulGems;
+            mStores[MKTAG('M','K','E','Y')] = &mForeignKeys;
+            mStores[MKTAG('H','A','L','C')] = &mForeignPotions;
+            mStores[MKTAG('T','S','G','S')] = &mForeignSigilStones;
+            mStores[MKTAG('O','A','N','I')] = &mForeignAnimObjs;
+
+            mStores[MKTAG('D','W','R','L')] = &mForeignWorlds;
+            mStores[MKTAG('L','C','E','L')] = &mForeignCells;
+            //mStores[MKTAG('D','L','A','N')] = &mForeignLands;
 
             mPathgrids.setCells(mCells);
         }

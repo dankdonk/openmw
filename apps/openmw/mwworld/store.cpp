@@ -1440,7 +1440,18 @@ namespace MWWorld
         const ESM::Cell *ptr = 0;
         return ptr;
     }
+
+    const MWWorld::ForeignCell *Store<MWWorld::ForeignCell>::find(ESM4::FormId formId) const
+    {
+        std::map<ESM4::FormId, MWWorld::ForeignCell*>::const_iterator it = mCells.find(formId);
+        if (it != mCells.end())
+            return it->second;
+
+        return 0;
+    }
 }
+
+//CSMForeign::LandCollection mForeignLands;
 
 template class MWWorld::Store<ESM::Activator>;
 template class MWWorld::Store<ESM::Apparatus>;

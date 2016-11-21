@@ -250,24 +250,51 @@ namespace MWWorld
     }
 
     template<typename T>
-    RecordId ForeignStore<T>::read(ESM::ESMReader& reader)
+    RecordId ForeignStore<T>::read(ESM::ESMReader& esm)
     {
-            // FIXME
-#if 0
         T record;
         bool isDeleted = false;
+        std::string id;
 
-        record.load (reader, isDeleted);
-        insert (record);
+        ESM4::Reader& reader = static_cast<ESM::ESM4Reader*>(&esm)->reader();
+        record.load(reader);
 
-        return RecordId(record.mId, isDeleted);
-#endif
-        return RecordId("", false); // FIXME
+        ESM4::formIdToString(record.mFormId, id);
+        Misc::StringUtils::lowerCaseInPlace(id); // not sure if case folding is needed here
+        isDeleted = (record.mFlags & ESM4::Rec_Deleted) != 0;
+
+        return RecordId(id, isDeleted);
     }
 }
 
-template class MWWorld::ForeignStore<ESM4::Door>;
-template class MWWorld::ForeignStore<ESM4::Container>;
+template class MWWorld::ForeignStore<ESM4::Hair>;
+template class MWWorld::ForeignStore<ESM4::Eyes>;
+template class MWWorld::ForeignStore<ESM4::Sound>;
+template class MWWorld::ForeignStore<ESM4::LandTexture>;
+// Foreign Referenceables
 template class MWWorld::ForeignStore<ESM4::Activator>;
+template class MWWorld::ForeignStore<ESM4::Apparatus>;
+template class MWWorld::ForeignStore<ESM4::Armor>;
+template class MWWorld::ForeignStore<ESM4::Book>;
+template class MWWorld::ForeignStore<ESM4::Clothing>;
+template class MWWorld::ForeignStore<ESM4::Container>;
+template class MWWorld::ForeignStore<ESM4::Door>;
+template class MWWorld::ForeignStore<ESM4::Ingredient>;
+template class MWWorld::ForeignStore<ESM4::Light>;
 template class MWWorld::ForeignStore<ESM4::MiscItem>;
 template class MWWorld::ForeignStore<ESM4::Static>;
+template class MWWorld::ForeignStore<ESM4::Grass>;
+template class MWWorld::ForeignStore<ESM4::Tree>;
+template class MWWorld::ForeignStore<ESM4::Flora>;
+template class MWWorld::ForeignStore<ESM4::Furniture>;
+template class MWWorld::ForeignStore<ESM4::Weapon>;
+template class MWWorld::ForeignStore<ESM4::Ammo>;
+template class MWWorld::ForeignStore<ESM4::Npc>;
+template class MWWorld::ForeignStore<ESM4::Creature>;
+template class MWWorld::ForeignStore<ESM4::LeveledCreature>;
+template class MWWorld::ForeignStore<ESM4::SoulGem>;
+template class MWWorld::ForeignStore<ESM4::Key>;
+template class MWWorld::ForeignStore<ESM4::Potion>;
+template class MWWorld::ForeignStore<ESM4::SigilStone>;
+//
+template class MWWorld::ForeignStore<ESM4::AnimObject>;
