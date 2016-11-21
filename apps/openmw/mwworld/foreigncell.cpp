@@ -51,7 +51,7 @@ void MWWorld::ForeignCell::load(ESM::ESMReader& esm, bool isDeleted)
 
 void MWWorld::ForeignCell::preload (ESM4::Reader& reader)
 {
-    mHasChildren = ESM4::Cell::preload(reader, mCellChildContext);
+    mHasChildren = ESM4::Cell::preload(reader, mCellChildContext); // FIXME: need to push to a vector
 }
 
 void MWWorld::ForeignCell::addFileContext(const ESM4::ReaderContext& ctx)

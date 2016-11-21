@@ -27,7 +27,7 @@ namespace MWWorld
         static unsigned int sRecordId;
 
         bool mHasChildren;
-        ESM4::ReaderContext mCellChildContext;
+        ESM4::ReaderContext mCellChildContext; // FIXME: shoudn't this be a vector?
 
         ForeignCell();
         ~ForeignCell();

@@ -36,9 +36,15 @@ namespace MWWorld
             std::vector<std::vector<ESM::ESMReader*> >& mReader;
             mutable std::map<std::string, CellStore> mInteriors;
             mutable std::map<std::pair<int, int>, CellStore> mExteriors;
-            std::vector<std::pair<std::string, CellStore *> > mIdCache;
+            //
             std::map<std::string, CellStore> mForeignInteriors;
-            std::map<ESM4::FormId, std::map<std::pair<int, int>, CellStore> > mForeignWorlds;
+            // FIXME: string or formId?
+            // Fortunately, all of TES4 worlds have EditorIds but that might not be the case
+            // for others.
+            mutable std::map<std::string, std::map<std::pair<int, int>, CellStore> > mForeignWorlds;
+           // std::map<ESM4::FormId, std::map<std::pair<int, int>, CellStore> > mForeignWorlds;
+
+            std::vector<std::pair<std::string, CellStore *> > mIdCache;
             std::size_t mIdCacheIndex;
 
             Cells (const Cells&);

@@ -41,6 +41,7 @@ bool MWWorld::ForeignWorld::insertDummyCell(ESM4::FormId id)
         return false;
 
     mDummyCell = id;
+    return true;
 }
 
 void MWWorld::ForeignWorld::blank()

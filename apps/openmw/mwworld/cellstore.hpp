@@ -27,6 +27,7 @@ namespace MWWorld
 {
     class Ptr;
     class ESMStore;
+    struct ForeignCell;
 
 
     /// \brief Mutable state of a cell
@@ -47,6 +48,7 @@ namespace MWWorld
             boost::shared_ptr<ESM::FogState> mFogState;
 
             const ESM::Cell *mCell;
+            const ForeignCell *mForeignCell;
             State mState;
             bool mHasState;
             std::vector<std::string> mIds;
@@ -78,6 +80,7 @@ namespace MWWorld
         public:
 
             CellStore (const ESM::Cell *cell_);
+            CellStore (const ForeignCell *cell_);
 
             const ESM::Cell *getCell() const;
 
