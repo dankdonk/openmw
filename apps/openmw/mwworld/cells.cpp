@@ -159,6 +159,7 @@ MWWorld::CellStore *MWWorld::Cells::getCell (const ESM::CellId& id)
 // in line with COE to COW
 MWWorld::CellStore *MWWorld::Cells::getForeignWorld (const std::string& world, int x, int y)
 {
+
     // -- start of tests
     {
     std::string lowerWorld = Misc::StringUtils::lowerCase(world);
@@ -169,9 +170,11 @@ MWWorld::CellStore *MWWorld::Cells::getForeignWorld (const std::string& world, i
     std::map<std::pair<int, int>, ESM4::FormId>::const_iterator it = foreignWorld->mCells.begin();
     for (; it != foreignWorld->mCells.end(); ++it)
     {
-        //std::cout << "cell: " << ESM4::formIdToString(it->second)
-            //<< std::dec << ", x: " << it->first.first << ", y: " << it->first.second
-            //<< std::endl; // FIXME: debug
+#if 0
+        std::cout << "cell: " << ESM4::formIdToString(it->second)
+            << std::dec << ", x: " << it->first.first << ", y: " << it->first.second
+            << std::endl; // FIXME: debug
+#endif
         if (it->first.first == x && it->first.second == y)
         {
             const MWWorld::ForeignCell *foreignCell = mStore.get<MWWorld::ForeignCell>().find(it->second);
@@ -181,30 +184,12 @@ MWWorld::CellStore *MWWorld::Cells::getForeignWorld (const std::string& world, i
             std::cout << "cell found: " << ESM4::formIdToString(it->second) << std::endl;
         }
 
-    //return 0; // FIXME: modify CellStore to have foreign items
+    //return 0;
     }
     }
     // -- end of tests
-#if 0
-    std::map<std::string, std::map<std::pair<int, int>, CellStore> >::iterator worldCellStore
-        = mForeignWorlds.find(world);
-    if (worldCellStore != mForeignWorlds.end())
-    {
-        // find the cellstore for the given x, y
-        std::map<std::pair<int, int>, CellStore>::iterator result = worldCellStore->second.find(std::make_pair(x, y));
-        if (result == worldCellStore->second.end()) // add the cellstore if it doesn't exist
-        {
-            return 0; // for now // FIXME
-        }
-        else // found the cellstore
-        {
-            return 0; // for now // FIXME
-        }
-    }
-    else // world does not exit yet
-    {
-    }
-#endif
+
+
     typedef std::map<std::pair<int, int>, CellStore> CellStoreIndex;
 
     // find the world for the given editor id
@@ -234,22 +219,23 @@ MWWorld::CellStore *MWWorld::Cells::getForeignWorld (const std::string& world, i
 
         // There may be a CellStore already at that location!
         // This can happen if a mod updates the record, just overwrite it for now // FIXME
-        // FIXME: CellStore constructed twice...
-        //if (!res.second)
-            //lb->second[std::pair<int, int>(x, y)] = CellStore(cell); // FIXME [] needs a default constructor
+        // FIXME: Is CellStore constructed twice here?
+        if (!res.second)
+            res.first->second = CellStore(cell); // can't use [] as it needs a default constructor
     }
     else // insert a new world
         mForeignWorlds.insert(lb, std::map<std::string, CellStoreIndex>::value_type(world,
             { {std::pair<int, int>(x, y), CellStore(cell) } }));
 
-    CellStoreIndex::iterator iter = mForeignWorlds[world].find(std::pair<int, int>(x, y));
-    if (iter->second.getState() != CellStore::State_Loaded)
+    // FIXME: do we have an iterator already to avoid calling find() again?
+    CellStoreIndex::iterator result = mForeignWorlds[world].find(std::pair<int, int>(x, y));
+    if (result->second.getState() != CellStore::State_Loaded)
     {
         // Multiple plugin support for landscape data is much easier than for references. The last plugin wins.
-        iter->second.load(mStore, mReader);
+        result->second.load(mStore, mReader);
     }
 
-    return 0;// &result.first->second;
+    return &result->second;
 }
 
 // If one does not exist insert in mForeignInteriors. Load as required.
