@@ -30,6 +30,8 @@
 #undef NDEBUG
 #endif
 
+#include "formid.hpp" // FIXME: debug only
+
 #include "reader.hpp"
 //#include "writer.hpp"
 
@@ -78,11 +80,11 @@ void ESM4::Reference::load(ESM4::Reader& reader)
 
                 if (!reader.getZString(mFullName))
                     throw std::runtime_error ("REFR FULL data read error");
-#if 0
+//#if 0
                 std::string padding = "";
                 padding.insert(0, reader.stackSize()*2, ' ');
                 std::cout << padding << "REFR Full Name: " << mFullName << std::endl;
-#endif
+//#endif
                 break;
             }
             case ESM4::SUB_NAME:
@@ -106,8 +108,8 @@ void ESM4::Reference::load(ESM4::Reader& reader)
                 reader.get(mEsp);
                 reader.adjustFormId(mEsp.parent);
                 break;
-                //std::cout << "REFR  parent: " << formIdToString(mEsp.parent) << " ref " << formIdToString(mFormId)
-                    //<< ", 0x" << std::hex << (mEsp.flags & 0xff) << std::endl;// FIXME
+                std::cout << "REFR  parent: " << formIdToString(mEsp.parent) << " ref " << formIdToString(mFormId)
+                    << ", 0x" << std::hex << (mEsp.flags & 0xff) << std::endl;// FIXME
             }
             // lighting
             case ESM4::SUB_LNAM: // lighting template formId
@@ -172,7 +174,7 @@ void ESM4::Reference::load(ESM4::Reader& reader)
             case MKTAG('X','H','L','T'): // Unofficial Oblivion Patch
             case MKTAG('X','C','H','G'): // thievery.exp
             {
-                //std::cout << "REFR " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
+                std::cout << "REFR " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
                 reader.skipSubRecordData();
                 break;
             }

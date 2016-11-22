@@ -78,6 +78,7 @@ namespace MWWorld
 
         /// @note The record identifiers are listed in the order that the records were defined by the content files.
         void listIdentifier(std::vector<std::string> &list) const;
+        void listForeignIdentifier(std::vector<ESM4::FormId> &list) const;
 
         T *insert(const T &item);
         T *insertStatic(const T &item);

@@ -19,6 +19,7 @@
 
 namespace ESM4
 {
+    typedef uint32_t FormId;
     union RecordHeader;
 }
 
@@ -57,6 +58,7 @@ namespace MWWorld
             State mState;
             bool mHasState;
             std::vector<std::string> mIds;
+            std::vector<ESM4::FormId> mForeignIds;
             float mWaterLevel;
 
             MWWorld::TimeStamp mLastRespawn;
@@ -227,6 +229,7 @@ namespace MWWorld
             void listRefs(const MWWorld::ESMStore &store, std::vector<std::vector<ESM::ESMReader*> > &esm);
 
             void loadRefs(const MWWorld::ESMStore &store, std::vector<std::vector<ESM::ESMReader*> > &esm);
+            void loadForeignRefs(const MWWorld::ESMStore &store, std::vector<std::vector<ESM::ESMReader*> > &esm);
 
             void loadRef (ESM::CellRef& ref, bool deleted, const ESMStore& store);
             ///< Make case-adjustments to \a ref and insert it into the respective container.

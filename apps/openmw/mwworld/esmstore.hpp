@@ -142,6 +142,7 @@ namespace MWWorld
         // Lookup of all IDs. Makes looking up references faster. Just
         // maps the id name to the record type.
         std::map<std::string, int> mIds;
+        std::map<ESM4::FormId, int> mForeignIds;
         std::map<int, StoreBase *> mStores;
 
         ESM::NPC mPlayerTemplate;
@@ -172,6 +173,15 @@ namespace MWWorld
                 return 0;
             }
             return it->second;
+        }
+
+        int find(ESM4::FormId formId) const
+        {
+            std::map<ESM4::FormId, int>::const_iterator it = mForeignIds.find(formId);
+            if (it == mForeignIds.end())
+                return 0;
+            else
+                return it->second;
         }
 
         ESMStore()

@@ -3,6 +3,8 @@
 #include <iostream>
 #include <algorithm>
 
+#include <extern/esm4/refr.hpp>
+
 #include <components/esm/cellstate.hpp>
 #include <components/esm/cellid.hpp>
 #include <components/esm/esmwriter.hpp>
@@ -430,10 +432,9 @@ namespace MWWorld
             if (mState!=State_Loaded)
             {
                 if (mState == State_Preloaded)
-                    mIds.clear(); // FIXME: mIds not used for foreign?
+                    mForeignIds.clear();
 
-                //loadForeignRefs(store, esm); // FIXME
-                loadRefs(store, esm); // FIXME
+                loadForeignRefs(store, esm);
 
                 mState = State_Loaded;
             }
@@ -500,70 +501,70 @@ namespace MWWorld
 
     void CellStore::loadRefs(const MWWorld::ESMStore &store, std::vector<std::vector<ESM::ESMReader*> > &esm)
     {
-        if (mCell)
+        assert (mCell);
+
+        if (mCell->mContextList.empty())
+            return; // this is a dynamically generated cell -> skipping.
+
+        // Load references from all plugins that do something with this cell.
+        for (size_t i = 0; i < mCell->mContextList.size(); i++)
         {
-            assert (mCell);
+            // Reopen the ESM reader and seek to the right position.
+            int index = mCell->mContextList.at(i).index;
+            mCell->restore (*esm[0][index], i); // FIXME: 0 means TES3
 
-            if (mCell->mContextList.empty())
-                return; // this is a dynamically generated cell -> skipping.
+            ESM::CellRef ref;
+            ref.mRefNum.mContentFile = ESM::RefNum::RefNum_NoContentFile;
 
-            // Load references from all plugins that do something with this cell.
-            for (size_t i = 0; i < mCell->mContextList.size(); i++)
+            // Get each reference in turn
+            bool deleted = false;
+            while(mCell->getNextRef(*esm[0][index], ref, deleted)) // FIXME: 0 means TES3
             {
-                // Reopen the ESM reader and seek to the right position.
-                int index = mCell->mContextList.at(i).index;
-                mCell->restore (*esm[0][index], i); // FIXME: 0 means TES3
-
-                ESM::CellRef ref;
-                ref.mRefNum.mContentFile = ESM::RefNum::RefNum_NoContentFile;
-
-                // Get each reference in turn
-                bool deleted = false;
-                while(mCell->getNextRef(*esm[0][index], ref, deleted)) // FIXME: 0 means TES3
-                {
-                    // Don't load reference if it was moved to a different cell.
-                    ESM::MovedCellRefTracker::const_iterator iter =
-                        std::find(mCell->mMovedRefs.begin(), mCell->mMovedRefs.end(), ref.mRefNum);
-                    if (iter != mCell->mMovedRefs.end()) {
-                        continue;
-                    }
-
-                    loadRef (ref, deleted, store);
+                // Don't load reference if it was moved to a different cell.
+                ESM::MovedCellRefTracker::const_iterator iter =
+                    std::find(mCell->mMovedRefs.begin(), mCell->mMovedRefs.end(), ref.mRefNum);
+                if (iter != mCell->mMovedRefs.end()) {
+                    continue;
                 }
-            }
 
-            // Load moved references, from separately tracked list.
-            for (ESM::CellRefTracker::const_iterator it = mCell->mLeasedRefs.begin();
-                    it != mCell->mLeasedRefs.end(); ++it)
-            {
-                ESM::CellRef &ref = const_cast<ESM::CellRef&>(*it);
-
-                loadRef (ref, false, store);
+                loadRef (ref, deleted, store);
             }
         }
-        else // FIXME: split out to loadForeignRefs()?
+
+        // Load moved references, from separately tracked list.
+        for (ESM::CellRefTracker::const_iterator it = mCell->mLeasedRefs.begin();
+                it != mCell->mLeasedRefs.end(); ++it)
         {
-            // Load references from all plugins that do something with this cell.
-            for (size_t i = 0; i < mForeignCell->mModList.size(); i++)
+            ESM::CellRef &ref = const_cast<ESM::CellRef&>(*it);
+
+            loadRef (ref, false, store);
+        }
+    }
+
+    void CellStore::loadForeignRefs(const MWWorld::ESMStore &store, std::vector<std::vector<ESM::ESMReader*> > &esm)
+    {
+        assert(mForeignCell);
+
+        // Load references from all plugins that do something with this cell.
+        for (size_t i = 0; i < mForeignCell->mModList.size(); i++)
+        {
+            // Reopen the ESM reader and seek to the right position.
+            int modIndex = mForeignCell->mModList.at(i).modIndex;
+            ESM::ESM4Reader *esm4 = static_cast<ESM::ESM4Reader*>(esm[1][modIndex]);
+            esm4->restoreCellChildrenContext(mForeignCell->mModList.at(i));
+            // FIXME: need a way to load the cell children (just the refs?)
+            //
+            // 1. skip cell itself (should have been preloaded)
+            // 2. load cell child group
+            std::cout << "file " << mForeignCell->mModList.at(i).filename << std::endl;
+
+            // hasMoreRecs() here depends on the hack in restoreCellChildrenContext()
+            while(esm[1][modIndex]->hasMoreRecs())
             {
-                // Reopen the ESM reader and seek to the right position.
-                int modIndex = mForeignCell->mModList.at(i).modIndex;
-                ESM::ESM4Reader *esm4 = static_cast<ESM::ESM4Reader*>(esm[1][modIndex]);
-                esm4->restoreCellChildrenContext(mForeignCell->mModList.at(i));
-                // FIXME: need a way to load the cell children (just the refs?)
-                //
-                // 1. skip cell itself (should have been preloaded)
-                // 2. load cell child group
-                std::cout << "file " << mForeignCell->mModList.at(i).filename << std::endl;
+                ESM4::Reader& reader = esm4->reader();
+                reader.checkGroupStatus();
 
-                // hasMoreRecs() here depends on the hack in restoreCellChildrenContext()
-                while(esm[1][modIndex]->hasMoreRecs())
-                {
-                    ESM4::Reader& reader = esm4->reader();
-                    reader.checkGroupStatus();
-
-                    loadTes4Group(*esm[1][modIndex]);
-                }
+                loadTes4Group(*esm[1][modIndex]);
             }
         }
     }
@@ -617,36 +618,18 @@ namespace MWWorld
         switch (hdr.record.typeId)
         {
             case ESM4::REC_REFR:
-#if 0
             {
-                bool loadCell = true;
-                if (loadCell) // FIXME: testing only
-                {
-                    reader.getRecordData();
-                    mForeignRefs.load(esm, mForeignCells);
-                }
-                else
-                {
-                    reader.skipRecordData();
-                    std::cout << "unexpected ACHR/ACRE/REFR/PGRD" << std::endl;
-                }
+                reader.getRecordData();
+                ESM4::Reference record;
+                record.load(reader);
                 break;
             }
-#endif
             case ESM4::REC_ACHR:
 #if 0
             {
-                bool loadCell = true;
-                if (loadCell) // FIXME: testing only
-                {
-                    reader.getRecordData();
-                    mForeignChars.load(esm, mForeignCells);
-                }
-                else
-                {
-                    reader.skipRecordData();
-                    std::cout << "unexpected ACHR/ACRE/REFR/PGRD" << std::endl;
-                }
+                reader.getRecordData();
+                ESM4::ActorCharacter record;
+                record.load(reader);
                 break;
             }
 #endif

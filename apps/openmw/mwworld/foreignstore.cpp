@@ -148,6 +148,17 @@ namespace MWWorld
         return mDynamic.size();
     }
     template<typename T>
+    void ForeignStore<T>::listForeignIdentifier(std::vector<ESM4::FormId> &list) const
+    {
+        list.reserve(list.size() + getSize());
+        typename std::vector<T *>::const_iterator it = mShared.begin();
+        for (; it != mShared.end(); ++it) {
+            list.push_back((*it)->mFormId);
+        }
+    }
+    // Used by ESMStore::setUp() to map references to stores (of referenceable object types)
+    // Basically pulls all the EditorId strings out of the records and puts them in the list.
+    template<typename T>
     void ForeignStore<T>::listIdentifier(std::vector<std::string> &list) const
     {
         list.reserve(list.size() + getSize());

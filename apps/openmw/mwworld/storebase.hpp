@@ -4,6 +4,11 @@
 #include <string>
 #include <vector>
 
+namespace ESM4
+{
+    typedef uint32_t FormId;
+}
+
 namespace ESM
 {
     class ESMReader;
@@ -93,6 +98,7 @@ namespace MWWorld
 
         /// List identifiers of records contained in this Store (case-smashed). No-op for Stores that don't use string IDs.
         virtual void listIdentifier(std::vector<std::string> &list) const {}
+        virtual void listForeignIdentifier(std::vector<ESM4::FormId> &list) const {}
 
         virtual size_t getSize() const = 0;
         virtual int getDynamicSize() const { return 0; }

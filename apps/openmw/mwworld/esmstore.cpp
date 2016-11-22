@@ -30,6 +30,37 @@ static bool isCacheableRecord(int id)
     return false;
 }
 
+// FIXME: not sure what records qualify as 'cacheable'
+static bool isCacheableForeignRecord(int id)
+{
+    if (id == MKTAG('R','H','A','I') || /* hair */
+        id == MKTAG('S','E','Y','E') || /* eyes */
+        id == MKTAG('N','S','O','U') || /* sound */
+        id == MKTAG('I','A','C','T') || /* activator */
+        id == MKTAG('A','A','P','P') || /* apparatus */
+        id == MKTAG('O','A','R','M') || /* armor */
+        id == MKTAG('K','B','O','O') || /* book */
+        id == MKTAG('T','C','L','O') || /* clothing */
+        id == MKTAG('T','C','O','N') || /* container */
+        id == MKTAG('R','D','O','O') || /* door */
+        id == MKTAG('R','I','N','G') || /* ingredient */
+        id == MKTAG('H','L','I','G') || /* light */
+        id == MKTAG('C','M','I','S') || /* miscitem */
+        id == MKTAG('T','S','T','A') || /* static */
+        id == MKTAG('P','W','E','A') || /* weapon */
+        id == MKTAG('_','N','P','C') || /* npc */
+        id == MKTAG('A','C','R','E') || /* creature */
+        id == MKTAG('C','L','V','L') || /* lvlcreature */
+        id == MKTAG('M','S','L','G') || /* soulgem */
+        id == MKTAG('H','A','L','C') || /* potion */
+        id == MKTAG('T','S','G','S')    /* sigilstone */
+        )
+    {
+        return true;
+    }
+    return false;
+}
+
 void ESMStore::load(ESM::ESMReader& esm, Loading::Listener* listener)
 {
     listener->setProgressRange(1000);
@@ -438,9 +469,11 @@ void ESMStore::loadTes4Record (ESM::ESMReader& esm, const ESM4::RecordHeader& hd
 void ESMStore::setUp()
 {
     mIds.clear();
+    mForeignIds.clear();
 
     std::map<int, StoreBase *>::iterator storeIt = mStores.begin();
-    for (; storeIt != mStores.end(); ++storeIt) {
+    for (; storeIt != mStores.end(); ++storeIt)
+    {
         storeIt->second->setUp();
 
         if (isCacheableRecord(storeIt->first))
@@ -449,7 +482,15 @@ void ESMStore::setUp()
             storeIt->second->listIdentifier(identifiers);
 
             for (std::vector<std::string>::const_iterator record = identifiers.begin(); record != identifiers.end(); ++record)
-                mIds[*record] = storeIt->first;
+                mIds[*record] = storeIt->first; // FIXME: log duplicates?
+        }
+        else if (isCacheableForeignRecord(storeIt->first))
+        {
+            std::vector<ESM4::FormId> identifiers;
+            storeIt->second->listForeignIdentifier(identifiers);
+
+            for (std::vector<ESM4::FormId>::const_iterator record = identifiers.begin(); record != identifiers.end(); ++record)
+                mForeignIds[*record] = storeIt->first; // FIXME: log duplicates?
         }
     }
     mSkills.setUp();
