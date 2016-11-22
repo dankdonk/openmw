@@ -35,7 +35,6 @@ void ESM::ESM4Reader::openTes4File(const std::string &name)
 
 ESM4::ReaderContext ESM::ESM4Reader::getESM4Context()
 {
-    //std::cout << "context leftFile: " << mCtx.leftFile << std::endl; // FIXME: debug
     return mReader.getContext();
 }
 
@@ -45,14 +44,30 @@ void ESM::ESM4Reader::restoreESM4Context(const ESM4::ReaderContext& ctx)
     if (mCtx.filename != ctx.filename)
         openTes4File(ctx.filename);
 
-    // restore group stack, etc.
-    mReader.restoreContext(ctx); // FIXME: what to do with the result?
-
     // mCtx.leftFile is the only thing used in the old context.  Strictly speaking, updating it
     // with the correct value is not really necessary since we're not going to load the rest of
     // the file (most likely to load a CELL or LAND then be done with it).
     mCtx.leftFile = mReader.getFileSize() - mReader.getFileOffset();
-    //std::cout << "restore leftFile: " << mCtx.leftFile << std::endl; // FIXME: debug
+
+    // restore group stack, load the header, etc.
+    mReader.restoreContext(ctx);
+}
+
+void ESM::ESM4Reader::restoreCellChildrenContext(const ESM4::ReaderContext& ctx)
+{
+    // Reopen the file if necessary
+    if (mCtx.filename != ctx.filename)
+        openTes4File(ctx.filename);
+
+    mReader.restoreContext(ctx); // restore group stack, load the CELL header, etc.
+    mReader.skipRecordData();    // skip the CELL record
+
+    mReader.getRecordHeader();   // load the header for cell child group
+    if (mReader.hdr().group.typeId != ESM4::REC_GRUP || mReader.hdr().group.type != ESM4::Grp_CellChild)
+        std::cout << "wrong group context" << std::endl; // FIXME: use assert here?
+
+    // this is a hack to load only the cell child group...
+    mCtx.leftFile = mReader.hdr().group.groupSize - ctx.recHeaderSize;
 }
 
 // callback from mReader to ensure hasMoreRecs() can reliably track to EOF

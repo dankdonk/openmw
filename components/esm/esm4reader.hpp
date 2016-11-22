@@ -27,6 +27,7 @@ namespace ESM
         // Added for loading Cell/Land
         ESM4::ReaderContext getESM4Context();
         void restoreESM4Context(const ESM4::ReaderContext& ctx);
+        void restoreCellChildrenContext(const ESM4::ReaderContext& ctx);
 
         void openTes4File(const std::string &name);
 

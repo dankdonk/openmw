@@ -512,14 +512,14 @@ namespace MWWorld
             {
                 // Reopen the ESM reader and seek to the right position.
                 int index = mCell->mContextList.at(i).index;
-                mCell->restore (*esm[0][index], i); // FIXME
+                mCell->restore (*esm[0][index], i); // FIXME: 0 means TES3
 
                 ESM::CellRef ref;
                 ref.mRefNum.mContentFile = ESM::RefNum::RefNum_NoContentFile;
 
                 // Get each reference in turn
                 bool deleted = false;
-                while(mCell->getNextRef(*esm[0][index], ref, deleted)) // FIXME
+                while(mCell->getNextRef(*esm[0][index], ref, deleted)) // FIXME: 0 means TES3
                 {
                     // Don't load reference if it was moved to a different cell.
                     ESM::MovedCellRefTracker::const_iterator iter =
@@ -541,21 +541,132 @@ namespace MWWorld
                 loadRef (ref, false, store);
             }
         }
-        else // FIXME: split out to loadForeignRefs()
+        else // FIXME: split out to loadForeignRefs()?
         {
             // Load references from all plugins that do something with this cell.
             for (size_t i = 0; i < mForeignCell->mModList.size(); i++)
             {
                 // Reopen the ESM reader and seek to the right position.
                 int modIndex = mForeignCell->mModList.at(i).modIndex;
-                static_cast<ESM::ESM4Reader*>(esm[1][modIndex])->restoreESM4Context(mForeignCell->mModList.at(i));
+                ESM::ESM4Reader *esm4 = static_cast<ESM::ESM4Reader*>(esm[1][modIndex]);
+                esm4->restoreCellChildrenContext(mForeignCell->mModList.at(i));
                 // FIXME: need a way to load the cell children (just the refs?)
                 //
                 // 1. skip cell itself (should have been preloaded)
                 // 2. load cell child group
                 std::cout << "file " << mForeignCell->mModList.at(i).filename << std::endl;
+
+                // hasMoreRecs() here depends on the hack in restoreCellChildrenContext()
+                while(esm[1][modIndex]->hasMoreRecs())
+                {
+                    ESM4::Reader& reader = esm4->reader();
+                    reader.checkGroupStatus();
+
+                    loadTes4Group(*esm[1][modIndex]);
+                }
             }
         }
+    }
+
+    void CellStore::loadTes4Group (ESM::ESMReader &esm)
+    {
+        ESM4::Reader& reader = static_cast<ESM::ESM4Reader*>(&esm)->reader();
+
+        reader.getRecordHeader();
+        const ESM4::RecordHeader& hdr = reader.hdr();
+
+        if (hdr.record.typeId != ESM4::REC_GRUP)
+            return loadTes4Record(esm, hdr);
+
+        switch (hdr.group.type)
+        {
+            case ESM4::Grp_CellChild:
+            case ESM4::Grp_CellPersistentChild:
+            case ESM4::Grp_CellTemporaryChild:
+            case ESM4::Grp_CellVisibleDistChild:
+            {
+                reader.adjustGRUPFormId();  // not needed or even shouldn't be done? (only labels anyway)
+                reader.saveGroupStatus();
+                if (!esm.hasMoreRecs())
+                    return; // may have been an empty group followed by EOF
+
+                loadTes4Group(esm);
+
+                break;
+            }
+            case ESM4::Grp_RecordType:
+            case ESM4::Grp_WorldChild:
+            case ESM4::Grp_TopicChild:
+            case ESM4::Grp_ExteriorCell:
+            case ESM4::Grp_ExteriorSubCell:
+            case ESM4::Grp_InteriorCell:
+            case ESM4::Grp_InteriorSubCell:
+            default:
+                std::cout << "unknown group..." << std::endl; // FIXME
+                reader.skipGroup();
+                break;
+        }
+
+        return;
+    }
+
+    void CellStore::loadTes4Record (ESM::ESMReader& esm, const ESM4::RecordHeader& hdr)
+    {
+        ESM4::Reader& reader = static_cast<ESM::ESM4Reader*>(&esm)->reader();
+
+        switch (hdr.record.typeId)
+        {
+            case ESM4::REC_REFR:
+#if 0
+            {
+                bool loadCell = true;
+                if (loadCell) // FIXME: testing only
+                {
+                    reader.getRecordData();
+                    mForeignRefs.load(esm, mForeignCells);
+                }
+                else
+                {
+                    reader.skipRecordData();
+                    std::cout << "unexpected ACHR/ACRE/REFR/PGRD" << std::endl;
+                }
+                break;
+            }
+#endif
+            case ESM4::REC_ACHR:
+#if 0
+            {
+                bool loadCell = true;
+                if (loadCell) // FIXME: testing only
+                {
+                    reader.getRecordData();
+                    mForeignChars.load(esm, mForeignCells);
+                }
+                else
+                {
+                    reader.skipRecordData();
+                    std::cout << "unexpected ACHR/ACRE/REFR/PGRD" << std::endl;
+                }
+                break;
+            }
+#endif
+            case ESM4::REC_LAND: //reader.getRecordData(); mForeignLands.load(esm, mForeignCells); break;
+            case ESM4::REC_PGRD: // Oblivion only?
+            case ESM4::REC_ACRE: // Oblivion only?
+            case ESM4::REC_ROAD: // Oblivion only?
+            {
+                std::cout << ESM4::printName(hdr.record.typeId) << " skipping..." << std::endl;
+                reader.skipRecordData();
+                break;
+            }
+            default:
+            {
+                std::cout << "Unsupported TES4 record type: " + ESM4::printName(hdr.record.typeId) << std::endl;
+                reader.skipRecordData();
+            }
+        }
+
+        return;
     }
 
     bool CellStore::isExterior() const

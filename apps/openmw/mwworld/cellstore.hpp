@@ -17,6 +17,11 @@
 
 #include "timestamp.hpp"
 
+namespace ESM4
+{
+    union RecordHeader;
+}
+
 namespace ESM
 {
     struct CellState;
@@ -76,6 +81,9 @@ namespace MWWorld
             CellRefList<ESM::Repair>            mRepairs;
             CellRefList<ESM::Static>            mStatics;
             CellRefList<ESM::Weapon>            mWeapons;
+
+            void loadTes4Group (ESM::ESMReader& esm);
+            void loadTes4Record (ESM::ESMReader& esm, const ESM4::RecordHeader& hdr);
 
         public:
 
