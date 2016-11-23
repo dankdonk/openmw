@@ -84,8 +84,8 @@ namespace MWWorld
             CellRefList<ESM::Static>            mStatics;
             CellRefList<ESM::Weapon>            mWeapons;
 
-            void loadTes4Group (ESM::ESMReader& esm);
-            void loadTes4Record (ESM::ESMReader& esm, const ESM4::RecordHeader& hdr);
+            void loadTes4Group (const MWWorld::ESMStore &store, ESM::ESMReader& esm);
+            void loadTes4Record (const MWWorld::ESMStore &store, ESM::ESMReader& esm, const ESM4::RecordHeader& hdr);
 
         public:
 

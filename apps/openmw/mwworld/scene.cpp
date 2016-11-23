@@ -536,7 +536,14 @@ namespace MWWorld
     {
         // FIXME: CellStore needs to support TES4 and worldspace
         // FIXME: How to handle TES4 style terrain?  Add updateTES4Terrain() method to RenderingManager?
-        CellStore* current = MWBase::Environment::get().getWorld()->getForeignWorld(worldspace, 0, 0); // FIXME
+        int x = 0;
+        int y = 0;
+        const int cellSize = 4096;
+
+        x = static_cast<int>(std::floor(position.pos[0] / cellSize));
+        y = static_cast<int>(std::floor(position.pos[1] / cellSize));
+
+        CellStore* current = MWBase::Environment::get().getWorld()->getForeignWorld(worldspace, x, y); // FIXME
     }
 
     CellStore* Scene::getCurrentCell ()

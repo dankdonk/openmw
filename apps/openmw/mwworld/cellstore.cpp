@@ -4,6 +4,7 @@
 #include <algorithm>
 
 #include <extern/esm4/refr.hpp>
+#include <extern/esm4/formid.hpp>
 
 #include <components/esm/cellstate.hpp>
 #include <components/esm/cellid.hpp>
@@ -564,12 +565,12 @@ namespace MWWorld
                 ESM4::Reader& reader = esm4->reader();
                 reader.checkGroupStatus();
 
-                loadTes4Group(*esm[1][modIndex]);
+                loadTes4Group(store, *esm[1][modIndex]);
             }
         }
     }
 
-    void CellStore::loadTes4Group (ESM::ESMReader &esm)
+    void CellStore::loadTes4Group (const MWWorld::ESMStore &store, ESM::ESMReader &esm)
     {
         ESM4::Reader& reader = static_cast<ESM::ESM4Reader*>(&esm)->reader();
 
@@ -577,7 +578,7 @@ namespace MWWorld
         const ESM4::RecordHeader& hdr = reader.hdr();
 
         if (hdr.record.typeId != ESM4::REC_GRUP)
-            return loadTes4Record(esm, hdr);
+            return loadTes4Record(store, esm, hdr);
 
         switch (hdr.group.type)
         {
@@ -591,7 +592,7 @@ namespace MWWorld
                 if (!esm.hasMoreRecs())
                     return; // may have been an empty group followed by EOF
 
-                loadTes4Group(esm);
+                loadTes4Group(store, esm);
 
                 break;
             }
@@ -611,7 +612,7 @@ namespace MWWorld
         return;
     }
 
-    void CellStore::loadTes4Record (ESM::ESMReader& esm, const ESM4::RecordHeader& hdr)
+    void CellStore::loadTes4Record (const MWWorld::ESMStore &store, ESM::ESMReader& esm, const ESM4::RecordHeader& hdr)
     {
         ESM4::Reader& reader = static_cast<ESM::ESM4Reader*>(&esm)->reader();
 
@@ -622,6 +623,46 @@ namespace MWWorld
                 reader.getRecordData();
                 ESM4::Reference record;
                 record.load(reader);
+                if (!record.mEditorId.empty())
+                    std::cout << "REFR: " << record.mEditorId << std::endl;
+
+
+
+
+                switch (store.find(record.mBaseObj))
+                {
+                    case MKTAG('R','H','A','I'): std::cout << " hair " << std::endl; break;
+                    case MKTAG('S','E','Y','E'): std::cout << " eyes " << std::endl; break;
+                    case MKTAG('N','S','O','U'): std::cout << " sound " << std::endl; break;
+                    case MKTAG('I','A','C','T'): std::cout << " activator " << std::endl; break;
+                    case MKTAG('A','A','P','P'): std::cout << " apparatus " << std::endl; break;
+                    case MKTAG('O','A','R','M'): std::cout << " armor " << std::endl; break;
+                    case MKTAG('K','B','O','O'): std::cout << " book " << std::endl; break;
+                    case MKTAG('T','C','L','O'): std::cout << " clothing " << std::endl; break;
+                    case MKTAG('T','C','O','N'): std::cout << " container " << std::endl; break;
+                    case MKTAG('R','D','O','O'): std::cout << " door " << std::endl; break;
+                    case MKTAG('R','I','N','G'): std::cout << " ingredient " << std::endl; break;
+                    case MKTAG('H','L','I','G'): std::cout << " light " << std::endl; break;
+                    case MKTAG('C','M','I','S'): std::cout << " miscitem " << std::endl; break;
+                    case MKTAG('T','S','T','A'): std::cout << " static " << std::endl; break;
+                    case MKTAG('P','W','E','A'): std::cout << " weapon " << std::endl; break;
+                    case MKTAG('_','N','P','C'): std::cout << " npc " << std::endl; break;
+                    case MKTAG('A','C','R','E'): std::cout << " creature " << std::endl; break;
+                    case MKTAG('C','L','V','L'): std::cout << " lvlcreature " << std::endl; break;
+                    case MKTAG('M','S','L','G'): std::cout << " soulgem " << std::endl; break;
+                    case MKTAG('H','A','L','C'): std::cout << " potion " << std::endl; break;
+                    case MKTAG('T','S','G','S'): std::cout << " sigilstone " << std::endl; break;
+
+                    case 0: std::cerr << "Cell reference " + ESM4::formIdToString(record.mBaseObj) + " not found!\n"; break;
+
+                    default:
+                        std::cerr
+                            << "WARNING: Ignoring reference '" << ESM4::formIdToString(record.mBaseObj) << "' of unhandled type\n";
+                }
+
+
+
+
                 break;
             }
             case ESM4::REC_ACHR:

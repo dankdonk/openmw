@@ -61,8 +61,16 @@ void ESM::ESM4Reader::restoreCellChildrenContext(const ESM4::ReaderContext& ctx)
 
     mReader.restoreContext(ctx); // restore group stack, load the CELL header, etc.
     mReader.skipRecordData();    // skip the CELL record
-
     mReader.getRecordHeader();   // load the header for cell child group
+
+    if (mReader.hdr().group.typeId != ESM4::REC_GRUP && mReader.hdr().record.typeId == ESM4::REC_CELL)
+    {
+        // some cells may have no child groups
+        // FIXME: check "ICMarketDistrict" 7 18 to verify
+        mCtx.leftFile = 0;
+        return;
+    }
+
     if (mReader.hdr().group.typeId != ESM4::REC_GRUP || mReader.hdr().group.type != ESM4::Grp_CellChild)
         std::cout << "wrong group context" << std::endl; // FIXME: use assert here?
 
