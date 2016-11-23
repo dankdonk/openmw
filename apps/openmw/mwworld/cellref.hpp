@@ -3,6 +3,12 @@
 
 #include <components/esm/cellref.hpp>
 
+namespace ESM4
+{
+    typedef uint32_t FormId;
+    struct Reference;
+}
+
 namespace ESM
 {
     struct ObjectState;
@@ -17,13 +23,17 @@ namespace MWWorld
     public:
 
         CellRef (const ESM::CellRef& ref)
-            : mCellRef(ref)
+            : mCellRef(ref), mFormId(0)
         {
             mChanged = false;
         }
 
+        CellRef (const ESM4::Reference& ref);
+
         // Note: Currently unused for items in containers
         const ESM::RefNum& getRefNum() const;
+
+        ESM4::FormId getFormId() const;
 
         // Set RefNum to its default state.
         void unsetRefNum();
@@ -113,6 +123,7 @@ namespace MWWorld
     private:
         bool mChanged;
         ESM::CellRef mCellRef;
+        ESM4::FormId mFormId;
     };
 
 }

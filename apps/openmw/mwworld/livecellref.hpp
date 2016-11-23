@@ -3,6 +3,8 @@
 
 #include <typeinfo>
 
+#include <extern/esm4/refr.hpp>
+
 #include "cellref.hpp"
 
 #include "refdata.hpp"
@@ -32,6 +34,9 @@ namespace MWWorld
         RefData mData;
 
         LiveCellRefBase(std::string type, const ESM::CellRef &cref=ESM::CellRef());
+
+        LiveCellRefBase(std::string type, const ESM4::Reference& cref);
+
         /* Need this for the class to be recognized as polymorphic */
         virtual ~LiveCellRefBase() { }
 
@@ -67,6 +72,12 @@ namespace MWWorld
         return cellRef.mRef.getRefNum()==refNum;
     }
 
+    // Can't use ESM4::FormId as the second parameter because the compiler gets confused.
+    inline bool operator== (const LiveCellRefBase& cellRef, const ESM4::Reference& ref)
+    {
+        return cellRef.mRef.getFormId() == ref.mFormId;
+    }
+
     /// A reference to one object (of any type) in a cell.
     ///
     /// Constructing this with a CellRef instance in the constructor means that
@@ -82,6 +93,10 @@ namespace MWWorld
 
         LiveCellRef(const X* b = NULL)
             : LiveCellRefBase(typeid(X).name()), mBase(b)
+        {}
+
+        LiveCellRef(const ESM4::Reference& cref, const X* b = NULL)
+            : LiveCellRefBase(typeid(X).name(), cref), mBase(b)
         {}
 
         // The object that this instance is based on.

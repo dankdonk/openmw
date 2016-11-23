@@ -10,6 +10,11 @@ namespace Ogre
     class SceneNode;
 }
 
+namespace ESM4
+{
+    struct Reference;
+}
+
 namespace ESM
 {
     class Script;
@@ -59,6 +64,8 @@ namespace MWWorld
             /// be altered without affecting the original data. This makes it possible
             /// to reset the position as the orignal data is still held in the CellRef
             RefData (const ESM::CellRef& cellRef);
+
+            RefData (const ESM4::Reference& cellRef);
 
             RefData (const ESM::ObjectState& objectState);
             ///< Ignores local variables and custom data (not enough context available here to

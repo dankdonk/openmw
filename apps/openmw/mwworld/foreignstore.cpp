@@ -53,6 +53,39 @@ namespace MWWorld
 
         return 0;
     }
+
+    template<typename T>
+    const T *ForeignStore<T>::search(ESM4::FormId id) const
+    {
+        T item;
+        // FIXME: just loop through for now, will need to maintain two maps (complex)
+        typename Dynamic::const_iterator dit = mDynamic.begin();
+        for (; dit != mDynamic.end(); ++dit)
+        {
+            if (dit->second.mFormId == id)
+                return &dit->second;
+        }
+
+        typename std::map<std::string, T>::const_iterator it = mStatic.begin();
+        for (; it != mStatic.end(); ++it)
+        {
+            if (it->second.mFormId == id)
+                return &it->second;
+        }
+#if 0
+        typename Dynamic::const_iterator dit = mDynamic.find(item.mFormId);
+        if (dit != mDynamic.end())
+            return &dit->second;
+
+        typename std::map<ESM4::FormId, T>::const_iterator it = mStatic.find(item.mFormId);
+
+        if (it != mStatic.end() && it->second.mFormId, id)
+            return &(it->second);
+#endif
+
+        return 0;
+    }
+
     template<typename T>
     bool ForeignStore<T>::isDynamic(const std::string &id) const
     {

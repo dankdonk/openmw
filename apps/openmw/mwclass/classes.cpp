@@ -20,6 +20,7 @@
 #include "probe.hpp"
 #include "repair.hpp"
 #include "static.hpp"
+#include "foreignstatic.hpp"
 
 namespace MWClass
 {
@@ -45,5 +46,6 @@ namespace MWClass
         Probe::registerSelf();
         Repair::registerSelf();
         Static::registerSelf();
+        ForeignStatic::registerSelf();
     }
 }

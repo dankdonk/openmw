@@ -12,6 +12,7 @@
 
 #include <components/esm/fogstate.hpp>
 #include <components/esm/records.hpp>
+#include <extern/esm4/stat.hpp>
 
 #include "../mwmechanics/pathgrid.hpp"  // TODO: maybe belongs in mwworld
 
@@ -83,6 +84,7 @@ namespace MWWorld
             CellRefList<ESM::Repair>            mRepairs;
             CellRefList<ESM::Static>            mStatics;
             CellRefList<ESM::Weapon>            mWeapons;
+            CellRefList<ESM4::Static>           mForeignStatics;
 
             void loadTes4Group (const MWWorld::ESMStore &store, ESM::ESMReader& esm);
             void loadTes4Record (const MWWorld::ESMStore &store, ESM::ESMReader& esm, const ESM4::RecordHeader& hdr);
@@ -162,7 +164,8 @@ namespace MWWorld
                     forEachImp (functor, mWeapons) &&
                     forEachImp (functor, mCreatures) &&
                     forEachImp (functor, mNpcs) &&
-                    forEachImp (functor, mCreatureLists);
+                    forEachImp (functor, mCreatureLists) &&
+                    forEachImp (functor, mForeignStatics);
             }
 
             template<class Functor>

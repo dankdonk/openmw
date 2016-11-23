@@ -1,5 +1,10 @@
 #include "cellref.hpp"
 
+//#include <iostream> // FIXME: for debugging only
+
+#include <extern/esm4/formid.hpp>
+#include <extern/esm4/refr.hpp>
+
 #include <components/esm/objectstate.hpp>
 
 namespace MWWorld
@@ -232,6 +237,39 @@ namespace MWWorld
     bool CellRef::hasChanged() const
     {
         return mChanged;
+    }
+
+    // This may not be required?  see LiveCellRef constructor
+    CellRef::CellRef (const ESM4::Reference& ref)
+    {
+#if 0
+        if (ref.mEditorId.empty())
+        {
+            mCellRef.mRefID = ESM4::formIdToString(ref.mFormId);
+            std::cout << "CellRef:: empty editor id, using " << mCellRef.mRefID << std::endl;
+        }
+        else
+            mCellRef.mRefID = ref.mEditorId; // almost all references have this
+#endif
+        mFormId = ref.mFormId;
+
+        mCellRef.mRefID = ESM4::formIdToString(ref.mBaseObj);
+
+        mCellRef.mPos.pos[0] = ref.mPosition.pos.x;
+        mCellRef.mPos.pos[1] = ref.mPosition.pos.y;
+        mCellRef.mPos.pos[2] = ref.mPosition.pos.z;
+        mCellRef.mPos.rot[0] = ref.mPosition.rot.x;
+        mCellRef.mPos.rot[1] = ref.mPosition.rot.y;
+        mCellRef.mPos.rot[2] = ref.mPosition.rot.z;
+
+        mCellRef.mScale = ref.mScale;
+
+        mChanged = false;
+    }
+
+    ESM4::FormId CellRef::getFormId () const
+    {
+        return mFormId;
     }
 
 }

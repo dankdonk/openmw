@@ -148,7 +148,6 @@ namespace
 
 namespace MWWorld
 {
-
     template <typename X>
     void CellRefList<X>::load(ESM::CellRef &ref, bool deleted, const MWWorld::ESMStore &esmStore)
     {
@@ -173,6 +172,35 @@ namespace MWWorld
         {
             std::cerr
                 << "Error: could not resolve cell reference " << ref.mRefID
+                << " (dropping reference)" << std::endl;
+        }
+    }
+
+    template <typename X>
+    void CellRefList<X>::load(ESM4::Reference &ref, bool deleted, const MWWorld::ESMStore &esmStore)
+    {
+        const MWWorld::ForeignStore<X> &store = esmStore.getForeign<X>();
+
+        if (const X *ptr = store.search (ref.mBaseObj))
+        {
+            // see operator== in livecellref.hpp, check for matching formId
+            typename std::list<LiveRef>::iterator iter =
+                std::find(mList.begin(), mList.end(), ref);
+
+            LiveRef liveCellRef (ref, ptr); // ref is the reference, ptr is the base object
+
+            if (deleted)
+                liveCellRef.mData.setDeleted(true);
+
+            if (iter != mList.end())
+                *iter = liveCellRef;
+            else
+                mList.push_back (liveCellRef);
+        }
+        else
+        {
+            std::cerr
+                << "Error: could not resolve foreign cell reference " << ref.mEditorId
                 << " (dropping reference)" << std::endl;
         }
     }
@@ -620,6 +648,7 @@ namespace MWWorld
         {
             case ESM4::REC_REFR:
             {
+                bool deleted = (reader.hdr().record.flags & ESM4::Rec_Deleted) != 0;
                 reader.getRecordData();
                 ESM4::Reference record;
                 record.load(reader);
@@ -644,7 +673,12 @@ namespace MWWorld
                     case MKTAG('R','I','N','G'): std::cout << " ingredient " << std::endl; break;
                     case MKTAG('H','L','I','G'): std::cout << " light " << std::endl; break;
                     case MKTAG('C','M','I','S'): std::cout << " miscitem " << std::endl; break;
-                    case MKTAG('T','S','T','A'): std::cout << " static " << std::endl; break;
+                    case MKTAG('T','S','T','A'):
+                    {
+                        std::cout << " static " << std::endl;
+                        mForeignStatics.load(record, deleted, store);
+                        break;
+                    }
                     case MKTAG('P','W','E','A'): std::cout << " weapon " << std::endl; break;
                     case MKTAG('_','N','P','C'): std::cout << " npc " << std::endl; break;
                     case MKTAG('A','C','R','E'): std::cout << " creature " << std::endl; break;

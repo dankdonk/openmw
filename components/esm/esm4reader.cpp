@@ -61,12 +61,12 @@ void ESM::ESM4Reader::restoreCellChildrenContext(const ESM4::ReaderContext& ctx)
 
     mReader.restoreContext(ctx); // restore group stack, load the CELL header, etc.
     mReader.skipRecordData();    // skip the CELL record
-    mReader.getRecordHeader();   // load the header for cell child group
+    mReader.getRecordHeader();   // load the header for cell child group (hopefully)
 
+    // But some cells may have no child groups...
+    // Suspect "ICMarketDistrict" 7 18 is one, followed by cell record 00165F2C "ICMarketDistrict" 6 17
     if (mReader.hdr().group.typeId != ESM4::REC_GRUP && mReader.hdr().record.typeId == ESM4::REC_CELL)
     {
-        // some cells may have no child groups
-        // FIXME: check "ICMarketDistrict" 7 18 to verify
         mCtx.leftFile = 0;
         return;
     }

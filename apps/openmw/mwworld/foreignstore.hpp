@@ -15,6 +15,11 @@
 //#include "recordcmp.hpp"
 #include "storebase.hpp"
 
+namespace ESM4
+{
+    typedef uint32_t FormId;
+}
+
 namespace ESM
 {
     class ESMReader;
@@ -54,7 +59,9 @@ namespace MWWorld
         virtual void clearDynamic();
         void setUp();
 
-        const T *search(const std::string &id) const;
+        const T *search(const std::string &id) const; // search EditorId
+
+        const T *search(ESM4::FormId id) const; // search BaseObj
 
         /**
          * Does the record with this ID come from the dynamic store?

@@ -313,10 +313,11 @@ namespace MWWorld
         std::string loadingExteriorText = "#{sLoadingMessage3}";
         loadingListener->setLabel(loadingExteriorText);
 
+        // FIXME: for TES4/5 we should double this value (cells are smaller)
         const int halfGridSize = Settings::Manager::getInt("exterior grid size", "Cells")/2;
 
         // FIXME: Check if worldspace chagned?
-        //        Or, unload active cells before calling changeCellGrid?
+
         CellStoreCollection::iterator active = mActiveCells.begin();
         while (active!=mActiveCells.end())
         {
@@ -330,7 +331,7 @@ namespace MWWorld
                     continue;
                 }
             }
-            unloadCell (active++);
+            unloadCell (active++); // discard cells thare are no longer in the grid (or internal)
         }
 
         int refsToLoad = 0;
@@ -367,6 +368,7 @@ namespace MWWorld
             {
                 CellStoreCollection::iterator iter = mActiveCells.begin();
 
+                // loop through all active cells until x,y matches
                 while (iter!=mActiveCells.end())
                 {
                     assert ((*iter)->getCell()->isExterior());
@@ -378,10 +380,13 @@ namespace MWWorld
                     ++iter;
                 }
 
-                if (iter==mActiveCells.end())
+                if (iter==mActiveCells.end()) // only load cells that are not already active
                 {
                     CellStore *cell = MWBase::Environment::get().getWorld()->getExterior(x, y);
 
+                    // FIXME: should call loadForeignCell for TES4
+
+                    // FIXME: loadCell inserts into active - might be clearer if inserted here?
                     loadCell (cell, loadingListener);
                 }
             }

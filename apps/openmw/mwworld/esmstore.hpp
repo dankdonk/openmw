@@ -288,6 +288,11 @@ namespace MWWorld
             throw std::runtime_error("Storage for this type not exist");
         }
 
+        template <class T>
+        const ForeignStore<T> &getForeign() const {
+            throw std::runtime_error("Storage for this type not exist");
+        }
+
         /// Insert a custom record (i.e. with a generated ID that will not clash will pre-existing records)
         template <class T>
         const T *insert(const T &x) {
@@ -605,6 +610,11 @@ namespace MWWorld
     template <>
     inline const Store<ESM::Attribute> &ESMStore::get<ESM::Attribute>() const {
         return mAttributes;
+    }
+
+    template <>
+    inline const ForeignStore<ESM4::Static>& ESMStore::getForeign<ESM4::Static>() const {
+        return mForeignStatics;
     }
 }
 
