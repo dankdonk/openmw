@@ -71,8 +71,19 @@ void ESM::ESM4Reader::restoreCellChildrenContext(const ESM4::ReaderContext& ctx)
         return;
     }
 
+    // Or maybe the group is completed
+    // See "ICMarketDistrict" 9 15 which is followed by a exterior sub-cell block
     if (mReader.hdr().group.typeId != ESM4::REC_GRUP || mReader.hdr().group.type != ESM4::Grp_CellChild)
-        std::cout << "wrong group context" << std::endl; // FIXME: use assert here?
+    {
+        ESM4::ReaderContext ctx = mReader.getContext();
+        if (!ctx.groupStack.empty() && ctx.groupStack.back().second == 0)
+        {
+            mCtx.leftFile = 0;
+            return;
+        }
+        else // FIXME: else should throw an exception here
+            fail("Restore Cell Children failed");
+    }
 
     // this is a hack to load only the cell child group...
     mCtx.leftFile = mReader.hdr().group.groupSize - ctx.recHeaderSize;
