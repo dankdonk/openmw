@@ -214,16 +214,10 @@ namespace MWWorld
         return (ref.mRef.mRefnum == pRefnum);
     }
 
-    CellStore::CellStore (const ESM::Cell *cell)
-      : mCell (cell), mForeignCell(0), mState (State_Unloaded), mHasState (false), mLastRespawn(0,0)
+    CellStore::CellStore (const ESM::Cell *cell, bool isForeignCell)
+      : mCell (cell), mState (State_Unloaded), mHasState (false), mLastRespawn(0,0), mIsForeignCell(isForeignCell)
     {
         mWaterLevel = cell->mWater;
-    }
-
-    CellStore::CellStore (const ForeignCell *cell)
-      : mCell (0), mForeignCell(cell), mState (State_Unloaded), mHasState (false), mLastRespawn(0,0)
-    {
-        mWaterLevel = 0;
     }
 
     const ESM::Cell *CellStore::getCell() const
@@ -576,28 +570,29 @@ namespace MWWorld
 
     void CellStore::loadForeignRefs(const MWWorld::ESMStore &store, std::vector<std::vector<ESM::ESMReader*> > &esm)
     {
-        assert(mForeignCell);
+        assert(mCell->isForeignCell());
+        const ForeignCell *cell = static_cast<const ForeignCell*>(mCell);
 
         // Load references from all plugins that do something with this cell.
-        for (size_t i = 0; i < mForeignCell->mModList.size(); i++)
+        for (size_t i = 0; i < cell->mModList.size(); i++)
         {
             // Reopen the ESM reader and seek to the right position.
-            int modIndex = mForeignCell->mModList.at(i).modIndex;
-            ESM::ESM4Reader *esm4 = static_cast<ESM::ESM4Reader*>(esm[1][modIndex]);
-            esm4->restoreCellChildrenContext(mForeignCell->mModList.at(i));
+            int modIndex = cell->mModList.at(i).modIndex;
+            ESM::ESM4Reader *esm4 = static_cast<ESM::ESM4Reader*>(esm[1][modIndex]); // FIXME: hard coded '1'
+            esm4->restoreCellChildrenContext(cell->mModList.at(i));
             // FIXME: need a way to load the cell children (just the refs?)
             //
             // 1. skip cell itself (should have been preloaded)
             // 2. load cell child group
-            std::cout << "file " << mForeignCell->mModList.at(i).filename << std::endl;
+            std::cout << "file " << cell->mModList.at(i).filename << std::endl;
 
             // hasMoreRecs() here depends on the hack in restoreCellChildrenContext()
-            while(esm[1][modIndex]->hasMoreRecs())
+            while(esm[1][modIndex]->hasMoreRecs()) // FIXME: hard coded '1'
             {
                 ESM4::Reader& reader = esm4->reader();
                 reader.checkGroupStatus();
 
-                loadTes4Group(store, *esm[1][modIndex]);
+                loadTes4Group(store, *esm[1][modIndex]); // FIXME: hard coded '1'
             }
         }
     }

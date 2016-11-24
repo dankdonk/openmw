@@ -62,12 +62,12 @@ namespace MWWorld
             boost::shared_ptr<ESM::FogState> mFogState;
 
             const ESM::Cell *mCell;
-            const ForeignCell *mForeignCell;
             State mState;
             bool mHasState;
             std::vector<std::string> mIds;
             std::vector<ESM4::FormId> mForeignIds;
             float mWaterLevel;
+            bool mIsForeignCell;
 
             MWWorld::TimeStamp mLastRespawn;
 
@@ -105,12 +105,10 @@ namespace MWWorld
 
         public:
 
-            CellStore (const ESM::Cell *cell_);
-            CellStore (const ForeignCell *cell_);
+            CellStore (const ESM::Cell *cell_, bool isForeignCell = false);
 
             const ESM::Cell *getCell() const;
-            //const ForeignCell *getForeignCell() const;
-            //inline const bool isForeignCell() const { return mForeignCell && !mCell; }
+            inline const bool isForeignCell() const { return mIsForeignCell; }
 
             State getState() const;
 
