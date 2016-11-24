@@ -613,6 +613,16 @@ namespace MWWorld
     }
 
     template <>
+    inline const ForeignStore<ESM4::Activator>& ESMStore::getForeign<ESM4::Activator>() const {
+        return mForeignActivators;
+    }
+
+    template <>
+    inline const ForeignStore<ESM4::Container>& ESMStore::getForeign<ESM4::Container>() const {
+        return mForeignContainers;
+    }
+
+    template <>
     inline const ForeignStore<ESM4::Static>& ESMStore::getForeign<ESM4::Static>() const {
         return mForeignStatics;
     }
