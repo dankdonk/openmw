@@ -1,19 +1,23 @@
 #include "foreigncell.hpp"
 
-#include <components/esm/esm4reader.hpp>
-
 #include <extern/esm4/formid.hpp>
 #include <extern/esm4/reader.hpp>
+#include <extern/esm4/cell.hpp>
 
-unsigned int MWWorld::ForeignCell::sRecordId = ESM4::REC_CELL;
+#include <components/esm/esm4reader.hpp>
 
-MWWorld::ForeignCell::ForeignCell() : mHasChildren(false), mIsInterior(false), mHasGrid(false)
+unsigned int MWWorld::ForeignCell::sRecordId = MKTAG('L','C','E','L');
+
+MWWorld::ForeignCell::ForeignCell() : mCell(0), mHasChildren(false), mIsInterior(false), mHasGrid(false)
 {
 }
 
 MWWorld::ForeignCell::~ForeignCell()
 {
+    if (mCell)
+        delete mCell;
 }
+
 
 // FIXME: code for testing
 // also see ESMStore::loadTes4Record() and Store<MWWorld::ForeignCell>::testPreload()
@@ -24,7 +28,7 @@ void MWWorld::ForeignCell::testPreload(ESM::ESMReader& esm)
     ESM4::ReaderContext ctx = static_cast<ESM::ESM4Reader*>(&esm)->getESM4Context();
     reader.restoreContext(mModList.back()); // should ensure that mModList is not empty
     // need a method for merging cell sub records
-    ESM4::Cell::load(reader); // FIXME: with the new loading scheme this won't do anything
+    mCell->load(reader); // FIXME: with the new loading scheme this won't do anything
     static_cast<ESM::ESM4Reader*>(&esm)->restoreESM4Context(ctx);
 }
 
@@ -51,7 +55,12 @@ void MWWorld::ForeignCell::load(ESM::ESMReader& esm, bool isDeleted)
 
 void MWWorld::ForeignCell::preload (ESM4::Reader& reader)
 {
-    mHasChildren = ESM4::Cell::preload(reader, mCellChildContext); // FIXME: need to push to a vector
+    //assert(!mCell && "ForeignCell: ESM4::Cell already exists");
+    mCell = new ESM4::Cell;
+
+    ESM4::ReaderContext ctx; // FIXME: temporary workaround
+    mHasChildren = mCell->preload(reader, ctx); // FIXME: need to push ctx to a vector
+
 }
 
 void MWWorld::ForeignCell::addFileContext(const ESM4::ReaderContext& ctx)

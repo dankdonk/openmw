@@ -7,6 +7,7 @@
 #include <components/loadinglistener/loadinglistener.hpp>
 
 #include <extern/esm4/formid.hpp>
+#include <extern/esm4/cell.hpp>
 
 #include <components/misc/rng.hpp>
 #include <stdexcept>
@@ -1289,11 +1290,11 @@ namespace MWWorld
         cell->preload(reader);
 
         std::pair<std::map<ESM4::FormId, MWWorld::ForeignCell*>::iterator, bool> res
-            = mCells.insert(std::make_pair(cell->mFormId, cell));
+            = mCells.insert(std::make_pair(cell->mCell->mFormId, cell));
         res.first->second->addFileContext(ctx);
 
         if (!res.second) // cell exists
-            std::cout << "Cell updated, formId " << ESM4::formIdToString(cell->mFormId) << std::endl; // FIXME
+            std::cout << "Cell updated, formId " << ESM4::formIdToString(cell->mCell->mFormId) << std::endl; // FIXME
 
         // FIXME: cleanup the mess of logic below, may need to refactor using a function or two
 
@@ -1329,13 +1330,13 @@ namespace MWWorld
             //         8        64 : 71
             //
             // group label is sub block grid
-            if ((int)((cell->mX < 0) ? (cell->mX-7)/8 : cell->mX/8) != groupLabel.grid[1] ||
-                (int)((cell->mY < 0) ? (cell->mY-7)/8 : cell->mY/8) != groupLabel.grid[0])
-                std::cout << "Cell grid mismatch, x " << std::dec << cell->mX << ", y " << cell->mY
+            if ((int)((cell->mCell->mX < 0) ? (cell->mCell->mX-7)/8 : cell->mCell->mX/8) != groupLabel.grid[1] ||
+                (int)((cell->mCell->mY < 0) ? (cell->mCell->mY-7)/8 : cell->mCell->mY/8) != groupLabel.grid[0])
+                std::cout << "Cell grid mismatch, x " << std::dec << cell->mCell->mX << ", y " << cell->mCell->mY
                           << " label x " << groupLabel.grid[1] << ", y " << groupLabel.grid[0]
                           << std::endl; // FIXME: debug only
 
-            world->insertCellGridMap(cell->mX, cell->mY, cell->mFormId);
+            world->insertCellGridMap(cell->mCell->mX, cell->mCell->mY, cell->mCell->mFormId);
             // FIXME: what to do if one already exists?
         }
         else if (groupType == ESM4::Grp_WorldChild) // exterior dummy cell
@@ -1354,7 +1355,7 @@ namespace MWWorld
                 std::cout << "Cell parent formid mismatch, " << std::hex << worldId
                           << " label " << groupLabel.value << std::endl;
 
-            world->insertDummyCell(cell->mFormId);
+            world->insertDummyCell(cell->mCell->mFormId);
             // FIXME: what to do if one already exists?
         }
         else if (groupType == ESM4::Grp_InteriorSubCell) // interior cell
@@ -1364,14 +1365,14 @@ namespace MWWorld
         else
             throw std::runtime_error("Cell record found in an unexpected group");
 
-        if (!cell->mEditorId.empty())
+        if (!cell->mCell->mEditorId.empty())
         {
             std::pair<std::map<std::string, ESM4::FormId>::iterator, bool> res
-                = mEditorIdMap.insert(std::make_pair(cell->mEditorId, cell->mFormId));
+                = mEditorIdMap.insert(std::make_pair(cell->mCell->mEditorId, cell->mCell->mFormId));
             // FIXME: what to do if one already exists?  throw?
         }
 
-        mLastPreloadedCell = cell->mFormId; // FIXME for testing only, delete later
+        mLastPreloadedCell = cell->mCell->mFormId; // FIXME for testing only, delete later
     }
 
     void Store<MWWorld::ForeignCell>::testPreload(ESM::ESMReader &esm)
@@ -1439,13 +1440,13 @@ namespace MWWorld
         std::map<ESM4::FormId, MWWorld::ForeignCell*>::const_iterator it = mCells.begin();
         for (;it != mCells.end(); ++it)
         {
-            if (!it->second->mIsInterior && Misc::StringUtils::ciEqual(it->second->mEditorId, name))
+            if (!it->second->mIsInterior && Misc::StringUtils::ciEqual(it->second->mCell->mEditorId, name))
             {
                 // if there are more than one external cell with the same editor id, get the
                 // cell that is the upper most and furtherst to the right
                 if ( cell == 0 ||                                                 // the first match
-                    ( it->second->mX > cell->mX ) ||                              // keep going right
-                    ( it->second->mX == cell->mX && it->second->mY > cell->mY ) ) // keep going up
+                    ( it->second->mCell->mX > cell->mCell->mX ) ||                              // keep going right
+                    ( it->second->mCell->mX == cell->mCell->mX && it->second->mCell->mY > cell->mCell->mY ) ) // keep going up
                 {
                     cell = it->second;
                 }
@@ -1454,7 +1455,7 @@ namespace MWWorld
 
         // FIXME: debug only
         if (cell)
-            std::cout << "cell: " << name << ", x: " << std::dec << cell->mX << ", y " << cell->mY << std::endl;
+            std::cout << "cell: " << name << ", x: " << std::dec << cell->mCell->mX << ", y " << cell->mCell->mY << std::endl;
 
         return cell;
     }

@@ -3,14 +3,19 @@
 
 #include <string>
 
-#include <extern/esm4/cell.hpp>
 #include <extern/esm4/reader.hpp>
+
+#include <components/esm/loadcell.hpp>
+
+namespace ESM4
+{
+    struct Cell;
+}
 
 namespace ESM
 {
     class ESMReader;
     class ESMWriter;
-    struct Cell;
 }
 
 namespace MWWorld
@@ -22,17 +27,40 @@ namespace MWWorld
     //
     // Later, when a cell is actually required, the cell and its contents (i.e. references) are
     // loaded.
-    struct ForeignCell : public ESM4::Cell
+
+    // We are masquerading as a TES3 cell, i.e.:
+    //
+    //         ESM::Cell
+    //             ^
+    //             |
+    //          (is a)
+    //             |
+    //        ForeignCell
+    //             o
+    //             |
+    //             +--(has a)-- ESM4::Cell
+    //
+    // Used to have separate methods (ctor's, getCell vs getForeignCell, etc)
+    //
+    //         ESM4::Cell      ESM:::Cell
+    //             ^
+    //             |
+    //          (is a)
+    //             |
+    //        ForeignCell
+    //
+    struct ForeignCell : public ESM::Cell
     {
         static unsigned int sRecordId;
 
+        ESM4::Cell *mCell; // created in preload() and destroyed in dtor
         bool mHasChildren;
-        ESM4::ReaderContext mCellChildContext; // FIXME: shoudn't this be a vector?
+        //std::vector<ESM4::ReaderContext> mCellChildContext;
 
         ForeignCell();
         ~ForeignCell();
 
-        //std::string mId;          // cache converted string
+        std::string mId;          // cache converted string
         //std::string mWorldFormId; // cache converted string (parent worldspace)
         //std::string mName;        // full name
 

@@ -274,8 +274,7 @@ namespace MWWorld
 
     void Scene::loadForeignCell (CellStore *cell, Loading::Listener* loadingListener)
     {
-        // FIXME: need to add getForignCell()
-        //std::cout << "loading cell " << cell->getCell()->getDescription() << std::endl;
+        std::cout << "loading cell " << cell->getCell()->getDescription() << std::endl;
 
         float verts = ESM4::Land::VERTS_PER_SIDE; // number of vertices per side
         float worldsize = ESM4::Land::REAL_SIZE;  // cell terrain size in world coords

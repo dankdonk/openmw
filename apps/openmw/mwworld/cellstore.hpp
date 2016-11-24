@@ -109,6 +109,8 @@ namespace MWWorld
             CellStore (const ForeignCell *cell_);
 
             const ESM::Cell *getCell() const;
+            //const ForeignCell *getForeignCell() const;
+            //inline const bool isForeignCell() const { return mForeignCell && !mCell; }
 
             State getState() const;
 
