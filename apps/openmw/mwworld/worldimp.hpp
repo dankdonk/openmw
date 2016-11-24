@@ -182,6 +182,7 @@ namespace MWWorld
             virtual CellStore *getCell (const ESM::CellId& id);
 
             virtual CellStore *getForeignWorld (const std::string& world, int x, int y);
+            virtual CellStore *getForeignWorld (ESM4::FormId worldId, int x, int y);
 
             virtual CellStore *getForeignInterior (const std::string& name);
 

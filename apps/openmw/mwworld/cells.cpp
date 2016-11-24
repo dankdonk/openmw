@@ -159,7 +159,7 @@ MWWorld::CellStore *MWWorld::Cells::getCell (const ESM::CellId& id)
 // in line with COE to COW
 MWWorld::CellStore *MWWorld::Cells::getForeignWorld (const std::string& world, int x, int y)
 {
-
+#if 0
     // -- start of tests
     {
     std::string lowerWorld = Misc::StringUtils::lowerCase(world);
@@ -170,11 +170,10 @@ MWWorld::CellStore *MWWorld::Cells::getForeignWorld (const std::string& world, i
     std::map<std::pair<int, int>, ESM4::FormId>::const_iterator it = foreignWorld->mCells.begin();
     for (; it != foreignWorld->mCells.end(); ++it)
     {
-#if 0
         std::cout << "cell: " << ESM4::formIdToString(it->second)
             << std::dec << ", x: " << it->first.first << ", y: " << it->first.second
             << std::endl; // FIXME: debug
-#endif
+
         if (it->first.first == x && it->first.second == y)
         {
             const MWWorld::ForeignCell *foreignCell = mStore.get<MWWorld::ForeignCell>().find(it->second);
@@ -188,30 +187,34 @@ MWWorld::CellStore *MWWorld::Cells::getForeignWorld (const std::string& world, i
     }
     }
     // -- end of tests
+#endif
+    ESM4::FormId formId = mStore.get<ForeignWorld>().getFormId(world);
+    return getForeignWorld(formId, x, y);
+}
 
-
+MWWorld::CellStore *MWWorld::Cells::getForeignWorld (ESM4::FormId worldId, int x, int y)
+{
     typedef std::map<std::pair<int, int>, CellStore> CellStoreIndex;
 
     // find the world for the given editor id
-    std::string lowerWorld = Misc::StringUtils::lowerCase(world);
-    const ForeignWorld *foreignWorld = mStore.get<ForeignWorld>().find(lowerWorld);
-    if (!foreignWorld)
-        return 0;// FIXME
+    const ForeignWorld *world = mStore.get<ForeignWorld>().find(worldId);
+    if (!world)
+        return 0;// FIXME: maybe exception?
 
     // now find the cell's formid for the given x, y
-    std::map<std::pair<int, int>, ESM4::FormId>::const_iterator it = foreignWorld->mCells.find(std::make_pair(x, y));
-    if (it == foreignWorld->mCells.end())
-        return 0; // FIXME
+    std::map<std::pair<int, int>, ESM4::FormId>::const_iterator it = world->mCells.find(std::make_pair(x, y));
+    if (it == world->mCells.end())
+        return 0; // FIXME: maybe exception?
 
     // get the cell given the formid
     const ForeignCell *cell = mStore.get<ForeignCell>().find(it->second);
     if (!cell)
-        return 0; // FIXME
+        return 0; // FIXME: maybe exception?
 
     // insert into the map
-    std::map<std::string, CellStoreIndex>::iterator lb = mForeignWorlds.lower_bound(world);
+    std::map<ESM4::FormId, CellStoreIndex>::iterator lb = mForeignWorlds.lower_bound(worldId);
 
-    if (lb != mForeignWorlds.end() && !(mForeignWorlds.key_comp()(world, lb->first)))
+    if (lb != mForeignWorlds.end() && !(mForeignWorlds.key_comp()(worldId, lb->first)))
     {
         // found world
         std::pair<CellStoreIndex::iterator, bool> res
@@ -224,11 +227,11 @@ MWWorld::CellStore *MWWorld::Cells::getForeignWorld (const std::string& world, i
             res.first->second = CellStore(cell); // can't use [] as it needs a default constructor
     }
     else // insert a new world
-        mForeignWorlds.insert(lb, std::map<std::string, CellStoreIndex>::value_type(world,
+        mForeignWorlds.insert(lb, std::map<ESM4::FormId, CellStoreIndex>::value_type(worldId,
             { {std::pair<int, int>(x, y), CellStore(cell) } }));
 
     // FIXME: do we have an iterator already to avoid calling find() again?
-    CellStoreIndex::iterator result = mForeignWorlds[world].find(std::pair<int, int>(x, y));
+    CellStoreIndex::iterator result = mForeignWorlds[worldId].find(std::pair<int, int>(x, y));
     if (result->second.getState() != CellStore::State_Loaded)
     {
         // Multiple plugin support for landscape data is much easier than for references. The last plugin wins.

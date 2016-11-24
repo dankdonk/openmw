@@ -1152,24 +1152,49 @@ namespace MWWorld
     {
     }
 
-    ForeignWorld *Store<MWWorld::ForeignWorld>::find(ESM4::FormId worldId)
+    ForeignWorld *Store<ForeignWorld>::getWorld(ESM4::FormId worldId)
     {
-        std::map<ESM4::FormId, MWWorld::ForeignWorld*>::iterator it = mWorlds.find(worldId);
+        std::map<ESM4::FormId, ForeignWorld*>::iterator it = mWorlds.find(worldId);
         if (it != mWorlds.end())
             return it->second;
 
         return NULL;
     }
 
-    // world is assumed to be in lower case
-    const ForeignWorld *Store<MWWorld::ForeignWorld>::find(const std::string& world) const
+    const ForeignWorld *Store<ForeignWorld>::find(ESM4::FormId worldId) const
     {
-        std::map<ESM4::FormId, MWWorld::ForeignWorld*>::const_iterator it = mWorlds.begin();
+        std::map<ESM4::FormId, ForeignWorld*>::const_iterator it = mWorlds.find(worldId);
+        if (it != mWorlds.end())
+            return it->second;
+
+        return NULL;
+    }
+
+    // editorId parameter is assumed to be in lower case
+    const ForeignWorld *Store<ForeignWorld>::find(const std::string& editorId) const
+    {
+        std::map<ESM4::FormId, ForeignWorld*>::const_iterator it = mWorlds.begin();
         for (;it != mWorlds.end(); ++it)
         {
             std::string lowerEditorId = Misc::StringUtils::lowerCase(it->second->mEditorId);
-            if (lowerEditorId == world)
+            if (lowerEditorId == editorId)
                 return it->second;
+        }
+
+        return 0;
+    }
+
+    // FIXME: should maintain a map for a faster lookup?
+    ESM4::FormId Store<ForeignWorld>::getFormId(const std::string& editorId) const
+    {
+        std::string id = Misc::StringUtils::lowerCase(editorId);
+
+        std::map<ESM4::FormId, ForeignWorld*>::const_iterator it = mWorlds.begin();
+        for (;it != mWorlds.end(); ++it)
+        {
+            std::string lowerEditorId = Misc::StringUtils::lowerCase(it->second->mEditorId);
+            if (lowerEditorId == id)
+                return it->first;
         }
 
         return 0;
@@ -1276,7 +1301,7 @@ namespace MWWorld
         if (groupType == ESM4::Grp_ExteriorSubCell) // exterior cell, has grid
         {
             ESM4::FormId worldId = reader.currWorld();
-            ForeignWorld *world = worlds.find(worldId);
+            ForeignWorld *world = worlds.getWorld(worldId);
             if (!world)
             {
                 std::ostringstream msg;
@@ -1316,7 +1341,7 @@ namespace MWWorld
         else if (groupType == ESM4::Grp_WorldChild) // exterior dummy cell
         {
             ESM4::FormId worldId = reader.currWorld();
-            ForeignWorld *world = worlds.find(worldId);
+            ForeignWorld *world = worlds.getWorld(worldId);
             if (!world)
             {
                 std::ostringstream msg;

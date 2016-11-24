@@ -539,7 +539,13 @@ namespace MWWorld
 
     CellStore *World::getForeignWorld (const std::string& world, int x, int y)
     {
-        return mCells.getForeignWorld (world, x, y);
+        ESM4::FormId worldId = mStore.get<ForeignWorld>().getFormId(world);
+        return mCells.getForeignWorld (worldId, x, y);
+    }
+
+    CellStore *World::getForeignWorld (ESM4::FormId worldId, int x, int y)
+    {
+        return mCells.getForeignWorld (worldId, x, y);
     }
 
     CellStore *World::getForeignInterior (const std::string& name)
@@ -1037,14 +1043,18 @@ namespace MWWorld
         addContainerScripts(getPlayerPtr(), getPlayerPtr().getCell());
     }
 
-    void World::changeToForeignWorldCell (const std::string& worldspace, const ESM::Position& position)
+    void World::changeToForeignWorldCell (const std::string& world, const ESM::Position& position)
     {
         mPhysics->clearQueuedMovement();
 
+        // FIXME: should check if actually changed (need to store current worldspace formid?
         mRendering->notifyWorldSpaceChanged();
 
         removeContainerScripts(getPlayerPtr());
-        mWorldScene->changeToForeignWorldCell(worldspace, position, true);
+
+        ESM4::FormId worldId = mStore.get<ForeignWorld>().getFormId(world);
+        mWorldScene->changeToForeignWorldCell(worldId, position, true);
+
         addContainerScripts(getPlayerPtr(), getPlayerPtr().getCell());
     }
 

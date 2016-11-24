@@ -22,6 +22,11 @@ namespace Loading
     class Listener;
 }
 
+namespace ESM4
+{
+    typedef uint32_t FormId;
+}
+
 namespace ESM
 {
     class ESMReader;
@@ -120,6 +125,7 @@ namespace MWBase
             virtual MWWorld::CellStore *getForeignInterior (const std::string& name) = 0;
 
             virtual MWWorld::CellStore *getForeignWorld (const std::string& world, int x, int y) = 0;
+            virtual MWWorld::CellStore *getForeignWorld (ESM4::FormId worldId, int x, int y) = 0;
 
             virtual void useDeathCamera() = 0;
 

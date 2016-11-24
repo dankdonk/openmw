@@ -425,7 +425,7 @@ namespace MWWorld
     // the base game from the header dependency/master lists)
 
     template <>
-    class Store<MWWorld::ForeignWorld> : public StoreBase
+    class Store<ForeignWorld> : public StoreBase
     {
     private:
 
@@ -436,10 +436,16 @@ namespace MWWorld
 
         virtual ~Store();
 
-        // probably need some search functions here
-        // also utilities e.g. get formId based on EditorId/FullName
-        MWWorld::ForeignWorld *find(ESM4::FormId worldId);
-        const MWWorld::ForeignWorld *find(const std::string &id) const;
+        // Would like to make it const, but Store<ForeignCell> needs to update
+        ForeignWorld *getWorld(ESM4::FormId worldId);
+
+        const ForeignWorld *find(ESM4::FormId worldId) const;
+
+        // Assumes editorId to be lower case.
+        const ForeignWorld *find(const std::string& editorId) const; // FIXME: deprecated
+
+        // Returns 0 if not found. Does not assume editorId to be lower case.
+        ESM4::FormId getFormId(const std::string& editorId) const;
 
         size_t getSize() const;
         //iterator begin() const; // FIXME: is this needed?

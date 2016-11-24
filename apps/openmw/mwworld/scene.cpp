@@ -2,6 +2,8 @@
 
 #include <OgreSceneNode.h>
 
+#include <extern/esm4/land.hpp>
+
 #include <components/nif/niffile.hpp>
 #include <components/misc/resourcehelpers.hpp>
 
@@ -270,6 +272,59 @@ namespace MWWorld
         MWBase::Environment::get().getWorld()->getLocalScripts().addCell (cell);
     }
 
+    void Scene::loadForeignCell (CellStore *cell, Loading::Listener* loadingListener)
+    {
+        // FIXME: need to add getForignCell()
+        //std::cout << "loading cell " << cell->getCell()->getDescription() << std::endl;
+
+        float verts = ESM4::Land::VERTS_PER_SIDE; // number of vertices per side
+        float worldsize = ESM4::Land::REAL_SIZE;  // cell terrain size in world coords
+#if 0
+        // Load terrain physics first...
+        if (cell->getCell()->isExterior())
+        {
+            // FIXME: this needs to be foreign land...
+            ESM4::Land* land =
+                MWBase::Environment::get().getWorld()->getStore().get<ESM4::Land>().search(
+                    cell->getCell()->getGridX(),
+                    cell->getCell()->getGridY()
+                );
+            if (land && land->mDataTypes&ESM::Land::DATA_VHGT) {
+                // Actually only VHGT is needed here, but we'll need the rest for rendering anyway.
+                // Load everything now to reduce IO overhead.
+                const int flags = ESM::Land::DATA_VCLR|ESM::Land::DATA_VHGT|ESM::Land::DATA_VNML|ESM::Land::DATA_VTEX;
+
+                const ESM::Land::LandData *data = land->getLandData (flags);
+                mPhysics->addHeightField (data->mHeights, cell->getCell()->getGridX(), cell->getCell()->getGridY(),
+                    0, worldsize / (verts-1), verts);
+            }
+        }
+
+        cell->respawn();
+#endif
+        // ... then references. This is important for adjustPosition to work correctly.
+        /// \todo rescale depending on the state of a new GMST
+        insertCell (*cell, true, loadingListener);
+
+        mRendering.cellAdded (cell);
+
+        bool waterEnabled = cell->getCell()->hasWater() || cell->isExterior();
+        mRendering.setWaterEnabled(waterEnabled);
+        float waterLevel = cell->isExterior() ? -1.f : cell->getWaterLevel();
+        if (waterEnabled)
+        {
+            mPhysics->enableWater(waterLevel);
+            mRendering.setWaterHeight(waterLevel);
+        }
+        else
+            mPhysics->disableWater();
+
+        //mRendering.configureAmbient(*cell); // FIXME
+
+        // register local scripts
+        //MWBase::Environment::get().getWorld()->getLocalScripts().addCell (cell); // FIXME
+    }
+
     void Scene::changeToVoid()
     {
         CellStoreCollection::iterator active = mActiveCells.begin();
@@ -301,8 +356,6 @@ namespace MWWorld
         }
     }
 
-    // loads cells and associated references to mActiveCells as required, based on exterior
-    // grid size and player position (cellstore contains cell pointer and refs)
     void Scene::changeCellGrid (int X, int Y)
     {
         Loading::Listener* loadingListener = MWBase::Environment::get().getWindowManager()->getLoadingScreen();
@@ -313,10 +366,7 @@ namespace MWWorld
         std::string loadingExteriorText = "#{sLoadingMessage3}";
         loadingListener->setLabel(loadingExteriorText);
 
-        // FIXME: for TES4/5 we should double this value (cells are smaller)
         const int halfGridSize = Settings::Manager::getInt("exterior grid size", "Cells")/2;
-
-        // FIXME: Check if worldspace chagned?
 
         CellStoreCollection::iterator active = mActiveCells.begin();
         while (active!=mActiveCells.end())
@@ -353,7 +403,6 @@ namespace MWWorld
                     ++iter;
                 }
 
-                // FIXME: add a worldspace param to getExterior?
                 if (iter==mActiveCells.end())
                     refsToLoad += MWBase::Environment::get().getWorld()->getExterior(x, y)->count();
             }
@@ -384,9 +433,6 @@ namespace MWWorld
                 {
                     CellStore *cell = MWBase::Environment::get().getWorld()->getExterior(x, y);
 
-                    // FIXME: should call loadForeignCell for TES4
-
-                    // FIXME: loadCell inserts into active - might be clearer if inserted here?
                     loadCell (cell, loadingListener);
                 }
             }
@@ -404,7 +450,7 @@ namespace MWWorld
 
     void Scene::changePlayerCell(CellStore *cell, const ESM::Position &pos, bool adjustPlayerPos)
     {
-        mCurrentCell = cell;
+        mCurrentCell = cell; // FIXME: maybe CellStore can keep the worldspace formId?
 
         MWBase::World *world = MWBase::Environment::get().getWorld();
         MWWorld::Ptr old = world->getPlayerPtr();
@@ -431,6 +477,110 @@ namespace MWWorld
         mechMgr->watchActor(player);
 
         MWBase::Environment::get().getWorld()->adjustSky();
+    }
+
+    // loads cells and associated references to mActiveCells as required, based on exterior
+    // grid size and player position (cellstore contains cell pointer and refs)
+    void Scene::changeWorldCellGrid (ESM4::FormId worldId, int X, int Y)
+    {
+        Loading::Listener* loadingListener = MWBase::Environment::get().getWindowManager()->getLoadingScreen();
+        Loading::ScopedLoad load(loadingListener);
+
+        //mRendering.enableTerrain(true); // FIXME
+
+        std::string loadingExteriorText = "#{sLoadingMessage3}";
+        loadingListener->setLabel(loadingExteriorText);
+
+        // For TES4/5 we should double this value (cells are smaller)
+        const int halfGridSize = Settings::Manager::getInt("exterior grid size", "Cells");
+
+        // FIXME: Check if worldspace chagned?
+
+        CellStoreCollection::iterator active = mActiveCells.begin();
+        while (active != mActiveCells.end())
+        {
+            if ((*active)->getCell()->isExterior()) // FIXME: should this be an assert instead?
+            {
+                if (std::abs (X-(*active)->getCell()->getGridX()) <= halfGridSize &&
+                    std::abs (Y-(*active)->getCell()->getGridY()) <= halfGridSize)
+                {
+                    // keep cells within the new grid
+                    ++active;
+                    continue;
+                }
+            }
+            unloadCell (active++); // discard cells thare are no longer in the grid (or internal)
+        }
+
+        int refsToLoad = 0;
+        // get the number of refs to load (for loading bar progress display)
+        for (int x = X-halfGridSize; x <= X+halfGridSize; ++x)
+        {
+            for (int y = Y-halfGridSize; y <= Y+halfGridSize; ++y)
+            {
+                CellStoreCollection::iterator iter = mActiveCells.begin();
+
+                while (iter != mActiveCells.end())
+                {
+                    assert ((*iter)->getCell()->isExterior());
+
+                    if (x == (*iter)->getCell()->getGridX() &&
+                        y == (*iter)->getCell()->getGridY())
+                        break;
+
+                    ++iter;
+                }
+
+                // FIXME: add a worldspace param to getExterior?
+                if (iter == mActiveCells.end())
+                    refsToLoad += MWBase::Environment::get().getWorld()->getExterior(x, y)->count();
+            }
+        }
+
+        loadingListener->setProgressRange(refsToLoad);
+
+        // Load cells
+        for (int x = X-halfGridSize; x <= X+halfGridSize; ++x)
+        {
+            for (int y = Y-halfGridSize; y <= Y+halfGridSize; ++y)
+            {
+                CellStoreCollection::iterator iter = mActiveCells.begin();
+
+                // loop through all active cells until x,y matches
+                while (iter != mActiveCells.end())
+                {
+                    assert ((*iter)->getCell()->isExterior());
+
+                    if (x == (*iter)->getCell()->getGridX() &&
+                        y == (*iter)->getCell()->getGridY())
+                        break;
+
+                    ++iter;
+                }
+
+                if (iter == mActiveCells.end()) // only load cells that are not already active
+                {
+                    CellStore* cell = MWBase::Environment::get().getWorld()->getForeignWorld(worldId, x, y);
+
+                    if (cell) // FIXME: create dynamic cells instead?  See getForeignWorld in cells.c
+                    {
+                        std::pair<CellStoreCollection::iterator, bool> result = mActiveCells.insert(cell);
+
+                        if (result.second)
+                            loadForeignCell(cell, loadingListener);
+                    }
+                }
+            }
+        }
+
+        CellStore* current = MWBase::Environment::get().getWorld()->getExterior(X,Y);
+        MWBase::Environment::get().getWindowManager()->changeCell(current);
+
+        mCellChanged = true;
+
+        // Delay the map update until scripts have been given a chance to run.
+        // If we don't do this, objects that should be disabled will still appear on the map.
+        mNeedMapUpdate = true;
     }
 
     //We need the ogre renderer and a scene node.
@@ -537,7 +687,7 @@ namespace MWWorld
         mRendering.updateTerrain();
     }
 
-    void Scene::changeToForeignWorldCell (const std::string& worldspace, const ESM::Position& position, bool adjustPlayerPos)
+    void Scene::changeToForeignWorldCell (ESM4::FormId worldId, const ESM::Position& position, bool adjustPlayerPos)
     {
         // FIXME: CellStore needs to support TES4 and worldspace
         // FIXME: How to handle TES4 style terrain?  Add updateTES4Terrain() method to RenderingManager?
@@ -548,7 +698,9 @@ namespace MWWorld
         x = static_cast<int>(std::floor(position.pos[0] / cellSize));
         y = static_cast<int>(std::floor(position.pos[1] / cellSize));
 
-        CellStore* current = MWBase::Environment::get().getWorld()->getForeignWorld(worldspace, x, y); // FIXME
+        changeWorldCellGrid(worldId, x, y);
+
+        CellStore* current = MWBase::Environment::get().getWorld()->getForeignWorld(worldId, x, y); // FIXME
     }
 
     CellStore* Scene::getCurrentCell ()
