@@ -23,7 +23,10 @@
 #include "foreignactivator.hpp"
 #include "foreigncontainer.hpp"
 #include "foreignbook.hpp"
+#include "foreigndoor.hpp"
 #include "foreignlight.hpp"
+#include "foreignmiscitem.hpp"
+#include "foreignsound.hpp"
 #include "foreignstatic.hpp"
 
 namespace MWClass
@@ -53,7 +56,10 @@ namespace MWClass
         ForeignActivator::registerSelf();
         ForeignContainer::registerSelf();
         ForeignBook::registerSelf();
+        ForeignDoor::registerSelf();
         ForeignLight::registerSelf();
+        ForeignMiscItem::registerSelf();
+        ForeignSound::registerSelf();
         ForeignStatic::registerSelf();
     }
 }

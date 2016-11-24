@@ -628,8 +628,23 @@ namespace MWWorld
     }
 
     template <>
+    inline const ForeignStore<ESM4::Door>& ESMStore::getForeign<ESM4::Door>() const {
+        return mForeignDoors;
+    }
+
+    template <>
     inline const ForeignStore<ESM4::Light>& ESMStore::getForeign<ESM4::Light>() const {
         return mForeignLights;
+    }
+
+    template <>
+    inline const ForeignStore<ESM4::MiscItem>& ESMStore::getForeign<ESM4::MiscItem>() const {
+        return mForeignMiscItems;
+    }
+
+    template <>
+    inline const ForeignStore<ESM4::Sound>& ESMStore::getForeign<ESM4::Sound>() const {
+        return mForeignSounds;
     }
 
     template <>

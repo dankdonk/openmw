@@ -666,7 +666,11 @@ namespace MWWorld
                 {
                     case MKTAG('R','H','A','I'): std::cout << " hair " << std::endl; break;
                     case MKTAG('S','E','Y','E'): std::cout << " eyes " << std::endl; break;
-                    case MKTAG('N','S','O','U'): std::cout << " sound " << std::endl; break;
+                    case MKTAG('N','S','O','U'):
+                    {
+                        std::cout << " sound " << std::endl;
+                        mForeignSounds.load(record, deleted, store); break;
+                    }
                     case MKTAG('I','A','C','T'):
                     {
                         mForeignActivators.load(record, deleted, store); break;
@@ -675,7 +679,6 @@ namespace MWWorld
                     case MKTAG('O','A','R','M'): std::cout << " armor " << std::endl; break;
                     case MKTAG('K','B','O','O'):
                     {
-                        std::cout << " book " << std::endl;
                         mForeignBooks.load(record, deleted, store); break;
                     }
                     case MKTAG('T','C','L','O'): std::cout << " clothing " << std::endl; break;
@@ -683,14 +686,21 @@ namespace MWWorld
                     {
                         mForeignContainers.load(record, deleted, store); break;
                     }
-                    case MKTAG('R','D','O','O'): std::cout << " door " << std::endl; break;
+                    case MKTAG('R','D','O','O'):
+                    {
+                        std::cout << " door " << std::endl;
+                        mForeignDoors.load(record, deleted, store); break;
+                    }
                     case MKTAG('R','I','N','G'): std::cout << " ingredient " << std::endl; break;
                     case MKTAG('H','L','I','G'):
                     {
-                        std::cout << " light " << std::endl;
                         mForeignLights.load(record, deleted, store); break;
                     }
-                    case MKTAG('C','M','I','S'): std::cout << " miscitem " << std::endl; break;
+                    case MKTAG('C','M','I','S'):
+                    {
+                        std::cout << " misc " << std::endl;
+                        mForeignMiscItems.load(record, deleted, store); break;
+                    }
                     case MKTAG('T','S','T','A'):
                     {
                         mForeignStatics.load(record, deleted, store); break;
@@ -735,7 +745,7 @@ namespace MWWorld
             }
             default:
             {
-                std::cout << "Unsupported TES4 record type: " + ESM4::printName(hdr.record.typeId) << std::endl;
+                std::cout << "CellStore unsupported TES4 record type: " + ESM4::printName(hdr.record.typeId) << std::endl;
                 reader.skipRecordData();
             }
         }
