@@ -197,8 +197,8 @@ namespace MWWorld
             else
             {
                 mList.push_back (liveCellRef);
-                std::cout << "CellRefList::load "
-                    << ESM4::formIdToString(mList.back().mBase->mFormId) << std::endl; // FIXME: debug only
+                //std::cout << "CellRefList::load "
+                    //<< ESM4::formIdToString(mList.back().mBase->mFormId) << std::endl; // FIXME: debug only
             }
         }
         else
@@ -669,29 +669,31 @@ namespace MWWorld
                     case MKTAG('N','S','O','U'): std::cout << " sound " << std::endl; break;
                     case MKTAG('I','A','C','T'):
                     {
-                        std::cout << " activator " << std::endl;
-                        mForeignActivators.load(record, deleted, store);
-                        break;
+                        mForeignActivators.load(record, deleted, store); break;
                     }
                     case MKTAG('A','A','P','P'): std::cout << " apparatus " << std::endl; break;
                     case MKTAG('O','A','R','M'): std::cout << " armor " << std::endl; break;
-                    case MKTAG('K','B','O','O'): std::cout << " book " << std::endl; break;
+                    case MKTAG('K','B','O','O'):
+                    {
+                        std::cout << " book " << std::endl;
+                        mForeignBooks.load(record, deleted, store); break;
+                    }
                     case MKTAG('T','C','L','O'): std::cout << " clothing " << std::endl; break;
                     case MKTAG('T','C','O','N'):
                     {
-                        std::cout << " container " << std::endl;
-                        mForeignContainers.load(record, deleted, store);
-                        break;
+                        mForeignContainers.load(record, deleted, store); break;
                     }
                     case MKTAG('R','D','O','O'): std::cout << " door " << std::endl; break;
                     case MKTAG('R','I','N','G'): std::cout << " ingredient " << std::endl; break;
-                    case MKTAG('H','L','I','G'): std::cout << " light " << std::endl; break;
+                    case MKTAG('H','L','I','G'):
+                    {
+                        std::cout << " light " << std::endl;
+                        mForeignLights.load(record, deleted, store); break;
+                    }
                     case MKTAG('C','M','I','S'): std::cout << " miscitem " << std::endl; break;
                     case MKTAG('T','S','T','A'):
                     {
-                        std::cout << " static " << std::endl;
-                        mForeignStatics.load(record, deleted, store);
-                        break;
+                        mForeignStatics.load(record, deleted, store); break;
                     }
                     case MKTAG('P','W','E','A'): std::cout << " weapon " << std::endl; break;
                     case MKTAG('_','N','P','C'): std::cout << " npc " << std::endl; break;

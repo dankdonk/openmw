@@ -22,6 +22,8 @@
 #include "static.hpp"
 #include "foreignactivator.hpp"
 #include "foreigncontainer.hpp"
+#include "foreignbook.hpp"
+#include "foreignlight.hpp"
 #include "foreignstatic.hpp"
 
 namespace MWClass
@@ -50,6 +52,8 @@ namespace MWClass
         Static::registerSelf();
         ForeignActivator::registerSelf();
         ForeignContainer::registerSelf();
+        ForeignBook::registerSelf();
+        ForeignLight::registerSelf();
         ForeignStatic::registerSelf();
     }
 }

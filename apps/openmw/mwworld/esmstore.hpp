@@ -623,6 +623,16 @@ namespace MWWorld
     }
 
     template <>
+    inline const ForeignStore<ESM4::Book>& ESMStore::getForeign<ESM4::Book>() const {
+        return mForeignBooks;
+    }
+
+    template <>
+    inline const ForeignStore<ESM4::Light>& ESMStore::getForeign<ESM4::Light>() const {
+        return mForeignLights;
+    }
+
+    template <>
     inline const ForeignStore<ESM4::Static>& ESMStore::getForeign<ESM4::Static>() const {
         return mForeignStatics;
     }
