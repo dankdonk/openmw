@@ -56,6 +56,10 @@ void MWWorld::ForeignCell::load(ESM::ESMReader& esm, bool isDeleted)
 void MWWorld::ForeignCell::preload (ESM4::Reader& reader)
 {
     //assert(!mCell && "ForeignCell: ESM4::Cell already exists");
+
+    if (reader.grp().type == ESM4::Grp_InteriorSubCell) // FIXME: needs a better way
+        mIsInterior = true;
+
     mCell = new ESM4::Cell;
 
     ESM4::ReaderContext ctx; // FIXME: temporary workaround
@@ -66,6 +70,18 @@ void MWWorld::ForeignCell::preload (ESM4::Reader& reader)
 void MWWorld::ForeignCell::addFileContext(const ESM4::ReaderContext& ctx)
 {
     mModList.push_back(ctx);
+}
+
+std::string MWWorld::ForeignCell::getDescription() const
+{
+    if (mIsInterior)
+        return mCell->mEditorId;
+    else
+    {
+        std::ostringstream stream;
+        stream << mCell->mX << ", " << mCell->mY;
+        return stream.str();
+    }
 }
 
 void MWWorld::ForeignCell::blank()

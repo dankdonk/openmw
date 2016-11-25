@@ -88,6 +88,8 @@ struct Cell
            mRefNumCounter(0)
   {}
 
+  virtual ~Cell() {}
+
   // Interior cells are indexed by this (it's the 'id'), for exterior
   // cells it is optional.
   std::string mName;
@@ -122,7 +124,7 @@ struct Cell
 
   void save(ESMWriter &esm, bool isDeleted = false) const;
 
-  bool isExterior() const
+  virtual bool isExterior() const
   {
       return !(mData.mFlags & Interior);
   }
@@ -149,7 +151,7 @@ struct Cell
   // exactly.
   void restore(ESMReader &esm, int iCtx) const;
 
-  std::string getDescription() const;
+  virtual std::string getDescription() const;
   ///< Return a short string describing the cell (mostly used for debugging/logging purpose)
 
   /* Get the next reference in this cell, if any. Returns false when
@@ -159,10 +161,10 @@ struct Cell
      reuse one memory location without blanking it between calls.
   */
   /// \param ignoreMoves ignore MVRF record and read reference like a regular CellRef.
-  static bool getNextRef(ESMReader &esm, 
-                         CellRef &ref, 
-                         bool &isDeleted, 
-                         bool ignoreMoves = false, 
+  static bool getNextRef(ESMReader &esm,
+                         CellRef &ref,
+                         bool &isDeleted,
+                         bool ignoreMoves = false,
                          MovedCellRef *mref = 0);
 
   /* This fetches an MVRF record, which is used to track moved references.

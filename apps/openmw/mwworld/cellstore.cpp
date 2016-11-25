@@ -438,7 +438,7 @@ namespace MWWorld
 
     void CellStore::load (const MWWorld::ESMStore &store, std::vector<std::vector<ESM::ESMReader*> > &esm)
     {
-        if (mCell)
+        if (!mIsForeignCell)
         {
             if (mState!=State_Loaded)
             {
@@ -470,7 +470,7 @@ namespace MWWorld
 
     void CellStore::preload (const MWWorld::ESMStore &store, std::vector<std::vector<ESM::ESMReader*> > &esm)
     {
-        if (mCell)
+        if (mCell && !mIsForeignCell)
         {
             if (mState==State_Unloaded)
             {
@@ -568,6 +568,7 @@ namespace MWWorld
         }
     }
 
+    // FIXME: this can be optimised by checking if a cell has any refs - see ForeignCell::mHasChildren
     void CellStore::loadForeignRefs(const MWWorld::ESMStore &store, std::vector<std::vector<ESM::ESMReader*> > &esm)
     {
         assert(mCell->isForeignCell());

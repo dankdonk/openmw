@@ -20,14 +20,6 @@ namespace ESM
 
 namespace MWWorld
 {
-    // Current strategy (see esmstore.cpp and store.cpp):
-    //
-    // Initially only the cell headers are loaded (for the formId) and stored in ForeignWorld
-    // and the context saved in mModList.
-    //
-    // Later, when a cell is actually required, the cell and its contents (i.e. references) are
-    // loaded.
-
     // We are masquerading as a TES3 cell, i.e.:
     //
     //         ESM::Cell
@@ -71,17 +63,22 @@ namespace MWWorld
         // have the mod index so the file load position can be worked out anyway?
         std::vector<ESM4::ReaderContext> mModList; // contexts of all the files that modify this cell
 
-        bool mIsInterior; // FIXME: needs a better way
+        bool mIsInterior;
         bool mHasGrid;    // some external cells do not have grid info
 
         void preload (ESM4::Reader& reader);
         void addFileContext (const ESM4::ReaderContext& ctx);
 
+        // methods to behave like an ESM::Cell
         void load (ESM::ESMReader& esm, bool isDeleted = false);
         void save (ESM::ESMWriter& esm, bool isDeleted = false) const {} // FIXME: TODO
 
+        std::string getDescription() const;
+        bool isExterior() const { return !mIsInterior; }
+
         void blank(); // FIXME: is this needed?
 
+        // for testing
         void testPreload (ESM::ESMReader& esm); // FIXME: testing only
     };
 }
