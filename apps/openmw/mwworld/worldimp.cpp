@@ -20,6 +20,8 @@
 
 #include <openengine/misc/rng.hpp>
 
+#include <extern/esm4/cell.hpp>
+
 #include <components/bsa/bsa_archive.hpp>
 #include <components/files/collections.hpp>
 #include <components/compiler/locals.hpp>
@@ -56,6 +58,7 @@
 #include "inventorystore.hpp"
 #include "actionteleport.hpp"
 #include "projectilemanager.hpp"
+//#include "foreigncell.hpp"
 
 #include "contentloader.hpp"
 #include "esmloader.hpp"
@@ -1270,11 +1273,26 @@ namespace MWWorld
     {
         CellStore *cell = ptr.getCell();
 
-        if (cell->isExterior()) {
+        if (cell->isExterior())
+        {
             int cellX, cellY;
-            positionToIndex(x, y, cellX, cellY);
 
-            cell = getExterior(cellX, cellY);
+            if (!cell->isForeignCell())
+            {
+                positionToIndex(x, y, cellX, cellY);
+
+                cell = getExterior(cellX, cellY);
+            }
+            else // ForeignCell
+            {
+                const int cellSize = 4096;
+
+                cellX = static_cast<int>(std::floor(x / cellSize));
+                cellY = static_cast<int>(std::floor(y / cellSize));
+
+                ESM4::FormId worldId = static_cast<const MWWorld::ForeignCell*>(cell->getCell())->mCell->mParent;
+                cell = getForeignWorld (worldId, cellX, cellY);
+            }
         }
 
         return moveObject(ptr, cell, x, y, z);

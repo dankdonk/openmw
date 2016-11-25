@@ -223,8 +223,9 @@ MWWorld::CellStore *MWWorld::Cells::getForeignWorld (ESM4::FormId worldId, int x
         // There may be a CellStore already at that location!
         // This can happen if a mod updates the record, just overwrite it for now // FIXME
         // FIXME: Is CellStore constructed twice here?
-        if (!res.second)
-            res.first->second = CellStore(cell, true); // can't use [] as it needs a default constructor
+        // FIXME: always loading!!!
+        //if (!res.second)
+            //res.first->second = CellStore(cell, true); // can't use [] as it needs a default constructor
     }
     else // insert a new world
         mForeignWorlds.insert(lb, std::map<ESM4::FormId, CellStoreIndex>::value_type(worldId,

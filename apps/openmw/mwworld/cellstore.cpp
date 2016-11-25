@@ -313,6 +313,32 @@ namespace MWWorld
         if (LiveCellRef<ESM::Weapon> *ref = mWeapons.find (id))
             return Ptr (ref, this);
 
+        //
+
+        if (LiveCellRef<ESM4::Activator> *ref = mForeignActivators.find (id))
+            return Ptr (ref, this);
+
+        if (LiveCellRef<ESM4::Container> *ref = mForeignContainers.find (id))
+            return Ptr (ref, this);
+
+        if (LiveCellRef<ESM4::Book>      *ref = mForeignBooks.find (id))
+            return Ptr (ref, this);
+
+        if (LiveCellRef<ESM4::Door>      *ref = mForeignDoors.find (id))
+            return Ptr (ref, this);
+
+        if (LiveCellRef<ESM4::Light>     *ref = mForeignLights.find (id))
+            return Ptr (ref, this);
+
+        if (LiveCellRef<ESM4::MiscItem>  *ref = mForeignMiscItems.find (id))
+            return Ptr (ref, this);
+
+        if (LiveCellRef<ESM4::Sound>     *ref = mForeignSounds.find (id))
+            return Ptr (ref, this);
+
+        if (LiveCellRef<ESM4::Static>    *ref = mForeignStatics.find (id))
+            return Ptr (ref, this);
+
         mHasState = oldState;
 
         return Ptr();
@@ -382,6 +408,32 @@ namespace MWWorld
             return Ptr (ref, this);
 
         if (LiveCellRef<ESM::Weapon> *ref = mWeapons.searchViaHandle (handle))
+            return Ptr (ref, this);
+
+        //
+
+        if (LiveCellRef<ESM4::Activator> *ref = mForeignActivators.searchViaHandle (handle))
+            return Ptr (ref, this);
+
+        if (LiveCellRef<ESM4::Container> *ref = mForeignContainers.searchViaHandle (handle))
+            return Ptr (ref, this);
+
+        if (LiveCellRef<ESM4::Book>      *ref = mForeignBooks.searchViaHandle (handle))
+            return Ptr (ref, this);
+
+        if (LiveCellRef<ESM4::Door>      *ref = mForeignDoors.searchViaHandle (handle))
+            return Ptr (ref, this);
+
+        if (LiveCellRef<ESM4::Light>     *ref = mForeignLights.searchViaHandle (handle))
+            return Ptr (ref, this);
+
+        if (LiveCellRef<ESM4::MiscItem>  *ref = mForeignMiscItems.searchViaHandle (handle))
+            return Ptr (ref, this);
+
+        if (LiveCellRef<ESM4::Sound>     *ref = mForeignSounds.searchViaHandle (handle))
+            return Ptr (ref, this);
+
+        if (LiveCellRef<ESM4::Static>    *ref = mForeignStatics.searchViaHandle (handle))
             return Ptr (ref, this);
 
         mHasState = oldState;

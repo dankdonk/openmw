@@ -75,6 +75,8 @@ namespace MWWorld
 
         std::string getDescription() const;
         bool isExterior() const { return !mIsInterior; }
+        int getGridX() const;
+        int getGridY() const;
 
         void blank(); // FIXME: is this needed?
 

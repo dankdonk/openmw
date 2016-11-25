@@ -129,12 +129,12 @@ struct Cell
       return !(mData.mFlags & Interior);
   }
 
-  int getGridX() const
+  virtual int getGridX() const
   {
       return mData.mX;
   }
 
-  int getGridY() const
+  virtual int getGridY() const
   {
       return mData.mY;
   }

@@ -84,6 +84,16 @@ std::string MWWorld::ForeignCell::getDescription() const
     }
 }
 
+int MWWorld::ForeignCell::getGridX() const
+{
+    return mCell->mX;
+}
+
+int MWWorld::ForeignCell::getGridY() const
+{
+    return mCell->mY;
+}
+
 void MWWorld::ForeignCell::blank()
 {
     // FIXME: TODO

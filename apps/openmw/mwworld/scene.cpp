@@ -3,6 +3,7 @@
 #include <OgreSceneNode.h>
 
 #include <extern/esm4/land.hpp>
+#include <extern/esm4/cell.hpp>
 
 #include <components/nif/niffile.hpp>
 #include <components/misc/resourcehelpers.hpp>
@@ -20,6 +21,7 @@
 #include "class.hpp"
 #include "cellfunctors.hpp"
 #include "cellstore.hpp"
+//#include "foreigncell.hpp"
 
 namespace
 {
@@ -318,10 +320,10 @@ namespace MWWorld
         else
             mPhysics->disableWater();
 
-        //mRendering.configureAmbient(*cell); // FIXME
+        mRendering.configureAmbient(*cell); // FIXME
 
         // register local scripts
-        //MWBase::Environment::get().getWorld()->getLocalScripts().addCell (cell); // FIXME
+        MWBase::Environment::get().getWorld()->getLocalScripts().addCell (cell); // FIXME
     }
 
     void Scene::changeToVoid()
@@ -342,16 +344,41 @@ namespace MWWorld
         int cellX, cellY;
         getGridCenter(cellX, cellY);
         float centerX, centerY;
-        // FIXME: indexToPosition needs to be worldspace-aware
-        MWBase::Environment::get().getWorld()->indexToPosition(cellX, cellY, centerX, centerY, true);
-        const float maxDistance = 8192/2 + 1024; // 1/2 cell size + threshold
-        float distance = std::max(std::abs(centerX-pos.x), std::abs(centerY-pos.y));
-        if (distance > maxDistance)
+        if (!mCurrentCell->isForeignCell())
         {
-            int newX, newY;
-            MWBase::Environment::get().getWorld()->positionToIndex(pos.x, pos.y, newX, newY);
-            changeCellGrid(newX, newY);
-            mRendering.updateTerrain();
+            // FIXME: indexToPosition needs to be worldspace-aware
+            MWBase::Environment::get().getWorld()->indexToPosition(cellX, cellY, centerX, centerY, true);
+            const float maxDistance = 8192/2 + 1024; // 1/2 cell size + threshold
+            float distance = std::max(std::abs(centerX-pos.x), std::abs(centerY-pos.y));
+            if (distance > maxDistance)
+            {
+                int newX, newY;
+                MWBase::Environment::get().getWorld()->positionToIndex(pos.x, pos.y, newX, newY);
+                changeCellGrid(newX, newY);
+                mRendering.updateTerrain();
+            }
+        }
+        else
+        {
+            // FIXME: indexToPosition needs to be worldspace-aware
+            MWBase::Environment::get().getWorld()->indexToWorldPosition("", cellX, cellY, centerX, centerY, true);
+            const float maxDistance = (8192/2 + 1024)/2; // 1/2 cell size + threshold
+            float distance = std::max(std::abs(centerX-pos.x), std::abs(centerY-pos.y));
+            if (distance > maxDistance)
+            {
+                int newX, newY;
+                //MWBase::Environment::get().getWorld()->positionToIndex(pos.x, pos.y, newX, newY);
+                {
+                    const int cellSize = 4096;
+
+                    newX = static_cast<int>(std::floor(pos.x / cellSize));
+                    newY = static_cast<int>(std::floor(pos.y / cellSize));
+                }
+                ESM4::FormId worldId
+                    = static_cast<const MWWorld::ForeignCell*>(mCurrentCell->getCell())->mCell->mParent;
+                changeWorldCellGrid(worldId, newX, newY);
+                mRendering.updateTerrain();
+            }
         }
     }
 
@@ -572,7 +599,7 @@ namespace MWWorld
             }
         }
 
-        CellStore* current = MWBase::Environment::get().getWorld()->getExterior(X,Y);
+        CellStore* current = MWBase::Environment::get().getWorld()->getForeignWorld(worldId, X, Y);
         MWBase::Environment::get().getWindowManager()->changeCell(current);
 
         mCellChanged = true;
@@ -700,6 +727,9 @@ namespace MWWorld
         changeWorldCellGrid(worldId, x, y);
 
         CellStore* current = MWBase::Environment::get().getWorld()->getForeignWorld(worldId, x, y); // FIXME
+        changePlayerCell(current, position, adjustPlayerPos);
+
+        //mRendering.updateTerrain();
     }
 
     CellStore* Scene::getCurrentCell ()
