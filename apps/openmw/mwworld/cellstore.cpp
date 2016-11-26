@@ -215,7 +215,8 @@ namespace MWWorld
     }
 
     CellStore::CellStore (const ESM::Cell *cell, bool isForeignCell)
-      : mCell (cell), mState (State_Unloaded), mHasState (false), mLastRespawn(0,0), mIsForeignCell(isForeignCell)
+      : mCell (cell), mState (State_Unloaded), mHasState (false), mLastRespawn(0,0),
+        mIsForeignCell(isForeignCell), mForeignLand(0)
     {
         mWaterLevel = cell->mWater;
     }
@@ -658,7 +659,7 @@ namespace MWWorld
         const ESM4::RecordHeader& hdr = reader.hdr();
 
         if (hdr.record.typeId != ESM4::REC_GRUP)
-            return loadTes4Record(store, esm, hdr);
+            return loadTes4Record(store, esm);
 
         switch (hdr.group.type)
         {
@@ -684,7 +685,7 @@ namespace MWWorld
             case ESM4::Grp_InteriorCell:
             case ESM4::Grp_InteriorSubCell:
             default:
-                std::cout << "unknown group..." << std::endl; // FIXME
+                std::cout << "unexpected group..." << std::endl; // FIXME
                 reader.skipGroup();
                 break;
         }
@@ -692,9 +693,11 @@ namespace MWWorld
         return;
     }
 
-    void CellStore::loadTes4Record (const MWWorld::ESMStore &store, ESM::ESMReader& esm, const ESM4::RecordHeader& hdr)
+    void CellStore::loadTes4Record (const MWWorld::ESMStore &store, ESM::ESMReader& esm)
     {
+        // Assumes that the reader has just read the record header only.
         ESM4::Reader& reader = static_cast<ESM::ESM4Reader*>(&esm)->reader();
+        const ESM4::RecordHeader& hdr = reader.hdr();
 
         switch (hdr.record.typeId)
         {
@@ -704,11 +707,8 @@ namespace MWWorld
                 reader.getRecordData();
                 ESM4::Reference record;
                 record.load(reader);
-                if (!record.mEditorId.empty())
-                    std::cout << "REFR: " << record.mEditorId << std::endl;
-
-
-
+                //if (!record.mEditorId.empty())
+                    //std::cout << "REFR: " << record.mEditorId << std::endl; // FIXME
 
                 switch (store.find(record.mBaseObj))
                 {
@@ -716,7 +716,6 @@ namespace MWWorld
                     case MKTAG('S','E','Y','E'): std::cout << " eyes " << std::endl; break;
                     case MKTAG('N','S','O','U'):
                     {
-                        std::cout << " sound " << std::endl;
                         mForeignSounds.load(record, deleted, store); break;
                     }
                     case MKTAG('I','A','C','T'):
@@ -736,7 +735,6 @@ namespace MWWorld
                     }
                     case MKTAG('R','D','O','O'):
                     {
-                        std::cout << " door " << std::endl;
                         mForeignDoors.load(record, deleted, store); break;
                     }
                     case MKTAG('R','I','N','G'): std::cout << " ingredient " << std::endl; break;
@@ -746,7 +744,6 @@ namespace MWWorld
                     }
                     case MKTAG('C','M','I','S'):
                     {
-                        std::cout << " misc " << std::endl;
                         mForeignMiscItems.load(record, deleted, store); break;
                     }
                     case MKTAG('T','S','T','A'):
@@ -767,10 +764,6 @@ namespace MWWorld
                         std::cerr
                             << "WARNING: Ignoring reference '" << ESM4::formIdToString(record.mBaseObj) << "' of unhandled type\n";
                 }
-
-
-
-
                 break;
             }
             case ESM4::REC_ACHR:
@@ -782,7 +775,26 @@ namespace MWWorld
                 break;
             }
 #endif
-            case ESM4::REC_LAND: //reader.getRecordData(); mForeignLands.load(esm, mForeignCells); break;
+            case ESM4::REC_LAND:
+            {
+                // Can't store land record in CellStore if we want to keep it around rather
+                // than loading it each time like references.  But then, how do we keep it
+                // growing too large?  Need some way of keeping track of "recently accessed"
+                // cells.
+                //
+                // The other issue is that of const correctness. We only get access to a const
+                // pointer or reference to the ESMStore...
+                //
+                // HACK: Workaround by going through a method in World
+                //
+                //ESM4::FormId worldId = mCell->mCell->mParent;
+                //ESM4::FormId cellId  = mCell->mCell->mFormId;
+                mForeignLand = MWBase::Environment::get().getWorld()->loadForeignLand(esm);
+
+                //reader.getRecordData();
+                //mForeignLands.load(esm, mForeignCells);
+                break;
+            }
             case ESM4::REC_PGRD: // Oblivion only?
             case ESM4::REC_ACRE: // Oblivion only?
             case ESM4::REC_ROAD: // Oblivion only?

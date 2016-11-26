@@ -21,6 +21,7 @@
 #include <openengine/misc/rng.hpp>
 
 #include <extern/esm4/cell.hpp>
+#include <extern/esm4/formid.hpp>
 
 #include <components/bsa/bsa_archive.hpp>
 #include <components/files/collections.hpp>
@@ -549,6 +550,12 @@ namespace MWWorld
     CellStore *World::getForeignWorld (ESM4::FormId worldId, int x, int y)
     {
         return mCells.getForeignWorld (worldId, x, y);
+    }
+
+    ESM4::FormId World::loadForeignLand (ESM::ESMReader& esm)
+    {
+        RecordId id = mStore.getModifiable<ForeignLand>().load(esm);
+        return ESM4::stringToFormId(id.mId);
     }
 
     CellStore *World::getForeignInterior (const std::string& name)

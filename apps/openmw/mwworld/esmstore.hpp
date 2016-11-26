@@ -105,7 +105,7 @@ namespace MWWorld
         // Lists that are foreign
         Store<MWWorld::ForeignWorld>   mForeignWorlds;
         Store<MWWorld::ForeignCell>    mForeignCells;
-        //Store<MWWorld::ForeignLand>    mForeignLands;
+        Store<MWWorld::ForeignLand>    mForeignLands;
         //
         ForeignStore<ESM4::Hair>       mForeignHairs;
         ForeignStore<ESM4::Eyes>       mForeignEyesSet;
@@ -150,7 +150,7 @@ namespace MWWorld
         unsigned int mDynamicCount;
 
         void loadTes4Group (ESM::ESMReader& esm);
-        void loadTes4Record (ESM::ESMReader& esm, const ESM4::RecordHeader& hdr);
+        void loadTes4Record (ESM::ESMReader& esm);
 
     public:
         /// \todo replace with SharedIterator<StoreBase>
@@ -261,7 +261,7 @@ namespace MWWorld
 
             mStores[MKTAG('D','W','R','L')] = &mForeignWorlds;
             mStores[MKTAG('L','C','E','L')] = &mForeignCells;
-            //mStores[MKTAG('D','L','A','N')] = &mForeignLands;
+            mStores[MKTAG('D','L','A','N')] = &mForeignLands;
 
             mPathgrids.setCells(mCells);
         }
@@ -285,6 +285,11 @@ namespace MWWorld
 
         template <class T>
         const Store<T> &get() const {
+            throw std::runtime_error("Storage for this type not exist");
+        }
+
+        template <class T>
+        Store<T> &getModifiable() {
             throw std::runtime_error("Storage for this type not exist");
         }
 
@@ -565,6 +570,16 @@ namespace MWWorld
     template <>
     inline const Store<ForeignCell> &ESMStore::get<ForeignCell>() const {
         return mForeignCells;
+    }
+
+    template <>
+    inline Store<ForeignLand> &ESMStore::getModifiable<ForeignLand>() {
+        return mForeignLands;
+    }
+
+    template <>
+    inline const Store<ForeignLand> &ESMStore::get<ForeignLand>() const {
+        return mForeignLands;
     }
 
     template <>

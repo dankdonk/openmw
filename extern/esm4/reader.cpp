@@ -75,7 +75,7 @@ bool ESM4::Reader::restoreContext(const ESM4::ReaderContext& ctx)
     return getRecordHeader();
 }
 
-bool ESM4::Reader::skipNextGroupCellChild(ESM4::ReaderContext& ctx)
+bool ESM4::Reader::skipNextGroupCellChild()
 {
     if (mStream->eof())
         return false;

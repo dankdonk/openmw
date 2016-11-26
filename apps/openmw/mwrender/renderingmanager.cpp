@@ -244,6 +244,7 @@ bool RenderingManager::toggleWorld()
     return mRenderWorld;
 }
 
+// FIXME: need mTerrain->loadForeignCell() here?
 void RenderingManager::cellAdded (MWWorld::CellStore *store)
 {
     if (store->isExterior())

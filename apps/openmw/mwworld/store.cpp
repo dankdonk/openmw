@@ -1475,6 +1475,64 @@ namespace MWWorld
 
         return 0;
     }
+
+    Store<MWWorld::ForeignLand>::~Store()
+    {
+        std::map<ESM4::FormId, MWWorld::ForeignLand*>::iterator it = mLands.begin();
+        for (; it != mLands.end(); ++it)
+            delete it->second;
+    }
+
+    size_t Store<MWWorld::ForeignLand>::getSize() const
+    {
+        return 0;
+    }
+
+    void Store<MWWorld::ForeignLand>::setUp()
+    {
+    }
+
+    RecordId Store<MWWorld::ForeignLand>::load(ESM::ESMReader& esm)
+    {
+        ESM4::Reader& reader = static_cast<ESM::ESM4Reader*>(&esm)->reader();
+
+        reader.getRecordData();
+
+        MWWorld::ForeignLand *record = new MWWorld::ForeignLand();
+        bool isDeleted = false; // not used
+
+        record->load(esm, isDeleted);
+
+        std::pair<std::map<ESM4::FormId, MWWorld::ForeignLand*>::iterator, bool> ret
+            = mLands.insert(std::make_pair(record->mFormId, record));
+        // Try to overwrite existing record
+        // FIXME: should this be merged instead?
+        if (!ret.second)
+            ret.first->second = record;
+
+        std::cout << "Land: " << ESM4::formIdToString(record->mFormId) << std::endl; // FIXME: debug
+
+        return RecordId(ESM4::formIdToString(record->mFormId), ((record->mFlags & ESM4::Rec_Deleted) != 0));
+    }
+
+    const ForeignLand *Store<MWWorld::ForeignLand>::find(ESM4::FormId formId) const
+    {
+        std::map<ESM4::FormId, ForeignLand*>::const_iterator it = mLands.find(formId);
+        if (it != mLands.end())
+            return it->second;
+
+        return NULL;
+    }
+
+    ForeignLand *Store<MWWorld::ForeignLand>::search(ESM4::FormId worldId, int x, int y) const
+    {
+        return 0; // FIXME
+    }
+
+    ForeignLand *Store<MWWorld::ForeignLand>::find(ESM4::FormId worldId, int x, int y) const
+    {
+        return 0; // FIXME
+    }
 }
 
 //CSMForeign::LandCollection mForeignLands;

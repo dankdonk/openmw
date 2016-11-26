@@ -184,6 +184,8 @@ namespace MWWorld
             virtual CellStore *getForeignWorld (const std::string& world, int x, int y);
             virtual CellStore *getForeignWorld (ESM4::FormId worldId, int x, int y);
 
+            virtual ESM4::FormId loadForeignLand (ESM::ESMReader& esm);
+
             virtual CellStore *getForeignInterior (const std::string& name);
 
             //switch to POV before showing player's death animation

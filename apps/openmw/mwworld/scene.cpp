@@ -280,10 +280,11 @@ namespace MWWorld
 
         float verts = ESM4::Land::VERTS_PER_SIDE; // number of vertices per side
         float worldsize = ESM4::Land::REAL_SIZE;  // cell terrain size in world coords
-#if 0
+
         // Load terrain physics first...
         if (cell->getCell()->isExterior())
         {
+#if 0
             // FIXME: this needs to be foreign land...
             ESM4::Land* land =
                 MWBase::Environment::get().getWorld()->getStore().get<ESM4::Land>().search(
@@ -299,15 +300,56 @@ namespace MWWorld
                 mPhysics->addHeightField (data->mHeights, cell->getCell()->getGridX(), cell->getCell()->getGridY(),
                     0, worldsize / (verts-1), verts);
             }
+#endif
+
+
+
+
+            // FIXME: need to check that this cell has land data at all
+
+            const ForeignLand *land =
+                    MWBase::Environment::get().getWorld()->getStore().get<ForeignLand>().find(cell->getForeignLandId());
+
+            if (land && land->getLandData (ESM4::Land::LAND_VHGT))
+            {
+#if 0
+                // This bit is done by mRendering.enableTerrain(true);
+                mTerrain.reset(new ESM4Terrain::TerrainGrid(sceneManager,
+                                                        new CSVForeign::TerrainStorage(mDocument.getData(), mWorld),
+                                                        Element_Terrain,
+                                                        true,
+                                                        Terrain::Align_XY,
+                                                        mWorld));
+                // This bit is done by mRendering.cellAdded (cell);
+                mTerrain->loadCell(/*esmLand.mX*/x,
+                                   /*esmLand.mY*/y);
+#endif
+                float verts = ESM4::Land::VERTS_PER_SIDE;
+                float worldsize = ESM4::Land::REAL_SIZE;
+                //mX = esmLand.mX;
+                //mY = esmLand.mY;
+
+                const ESM4Terrain::LandData *data = land->getLandData (ESM4::Land::LAND_VHGT);
+                mPhysics->addHeightField(data->mHeights,
+                        cell->getCell()->getGridX(), cell->getCell()->getGridY(), 0, worldsize / (verts-1), verts);
+            }
+            else
+                std::cerr << "Heightmap for " << cell->getCell()->getDescription() << " not found" << std::endl;
+
+
+
+
+
+
         }
 
         cell->respawn();
-#endif
+
         // ... then references. This is important for adjustPosition to work correctly.
         /// \todo rescale depending on the state of a new GMST
         insertCell (*cell, true, loadingListener);
 
-        mRendering.cellAdded (cell);
+        mRendering.cellAdded (cell); // calls mTerrain->loadCell()
 
         bool waterEnabled = cell->getCell()->hasWater() || cell->isExterior();
         mRendering.setWaterEnabled(waterEnabled);
@@ -346,7 +388,6 @@ namespace MWWorld
         float centerX, centerY;
         if (!mCurrentCell->isForeignCell())
         {
-            // FIXME: indexToPosition needs to be worldspace-aware
             MWBase::Environment::get().getWorld()->indexToPosition(cellX, cellY, centerX, centerY, true);
             const float maxDistance = 8192/2 + 1024; // 1/2 cell size + threshold
             float distance = std::max(std::abs(centerX-pos.x), std::abs(centerY-pos.y));
@@ -358,7 +399,7 @@ namespace MWWorld
                 mRendering.updateTerrain();
             }
         }
-        else
+        else // ForeignCell
         {
             // FIXME: indexToPosition needs to be worldspace-aware
             MWBase::Environment::get().getWorld()->indexToWorldPosition("", cellX, cellY, centerX, centerY, true);
@@ -374,8 +415,14 @@ namespace MWWorld
                     newX = static_cast<int>(std::floor(pos.x / cellSize));
                     newY = static_cast<int>(std::floor(pos.y / cellSize));
                 }
+
+                // If we're still in the same cell, don't change even if gone past max distance?
+                //if (mCurrentCell->getCell()->getGridX() == newX && mCurrentCell->getCell()->getGridY() == newY)
+                    //return;
+
                 ESM4::FormId worldId
                     = static_cast<const MWWorld::ForeignCell*>(mCurrentCell->getCell())->mCell->mParent;
+
                 changeWorldCellGrid(worldId, newX, newY);
                 mRendering.updateTerrain();
             }
@@ -384,6 +431,10 @@ namespace MWWorld
 
     void Scene::changeCellGrid (int X, int Y)
     {
+        // FIXME: testing only
+        if(mCurrentCell && mCurrentCell->isForeignCell())
+            std::cout << "Error: changeCellGrid called from a foreign cell" << std::endl;
+
         Loading::Listener* loadingListener = MWBase::Environment::get().getWindowManager()->getLoadingScreen();
         Loading::ScopedLoad load(loadingListener);
 
@@ -512,7 +563,7 @@ namespace MWWorld
         Loading::Listener* loadingListener = MWBase::Environment::get().getWindowManager()->getLoadingScreen();
         Loading::ScopedLoad load(loadingListener);
 
-        //mRendering.enableTerrain(true); // FIXME
+        mRendering.enableTerrain(true); // FIXME: most likely needs mForeignTerrain
 
         std::string loadingExteriorText = "#{sLoadingMessage3}";
         loadingListener->setLabel(loadingExteriorText);
@@ -729,7 +780,7 @@ namespace MWWorld
         CellStore* current = MWBase::Environment::get().getWorld()->getForeignWorld(worldId, x, y); // FIXME
         changePlayerCell(current, position, adjustPlayerPos);
 
-        //mRendering.updateTerrain();
+        mRendering.updateTerrain();
     }
 
     CellStore* Scene::getCurrentCell ()

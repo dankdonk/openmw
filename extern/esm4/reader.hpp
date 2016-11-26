@@ -100,7 +100,7 @@ namespace ESM4
         // Methods added for saving/restoring context
         ReaderContext getContext();
         bool restoreContext(const ReaderContext& ctx); // returns the result of re-reading the header
-        bool skipNextGroupCellChild(ReaderContext& ctx); // returns true if skipped
+        bool skipNextGroupCellChild(); // returns true if skipped
 
         std::size_t openTes4File(Ogre::DataStreamPtr stream, const std::string& name);
 

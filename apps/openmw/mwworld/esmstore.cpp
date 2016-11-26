@@ -187,7 +187,7 @@ void ESMStore::loadTes4Group (ESM::ESMReader &esm)
     const ESM4::RecordHeader& hdr = reader.hdr();
 
     if (hdr.record.typeId != ESM4::REC_GRUP)
-        return loadTes4Record(esm, hdr);
+        return loadTes4Record(esm);
 
     switch (hdr.group.type)
     {
@@ -266,10 +266,11 @@ void ESMStore::loadTes4Group (ESM::ESMReader &esm)
     return;
 }
 
-// FIXME: Can't distinguish the record types, e.g. ESM::REC_ACTI is the same as ESM4::REC_ACTI
-void ESMStore::loadTes4Record (ESM::ESMReader& esm, const ESM4::RecordHeader& hdr)
+void ESMStore::loadTes4Record (ESM::ESMReader& esm)
 {
+    // Assumes that the reader has just read the record header only.
     ESM4::Reader& reader = static_cast<ESM::ESM4Reader*>(&esm)->reader();
+    const ESM4::RecordHeader& hdr = reader.hdr();
 
     switch (hdr.record.typeId)
     {

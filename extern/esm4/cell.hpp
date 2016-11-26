@@ -97,7 +97,7 @@ namespace ESM4
         void init(ESM4::Reader& reader); // common setup for both preload() and load()
 
         bool mPreloaded;
-        bool preload(ESM4::Reader& reader, ESM4::ReaderContext& ctx); // ctx is for loading refs
+        bool preload(ESM4::Reader& reader);
 
         virtual void load(ESM4::Reader& reader);
         //virtual void save(ESM4::Writer& writer) const;

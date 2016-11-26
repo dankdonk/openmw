@@ -127,6 +127,11 @@ namespace MWBase
             virtual MWWorld::CellStore *getForeignWorld (const std::string& world, int x, int y) = 0;
             virtual MWWorld::CellStore *getForeignWorld (ESM4::FormId worldId, int x, int y) = 0;
 
+            // TES4 LAND records are found in a CELL child group, which is loaded later along
+            // with the references.  The reference stores (i.e. CellStore) only have const
+            // references to ESMStore and therefore we need a workaround.
+            virtual ESM4::FormId loadForeignLand (ESM::ESMReader& reader) = 0;
+
             virtual void useDeathCamera() = 0;
 
             virtual void setWaterHeight(const float height) = 0;

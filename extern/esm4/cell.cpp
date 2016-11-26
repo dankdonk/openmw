@@ -84,13 +84,13 @@ void ESM4::Cell::init(ESM4::Reader& reader)
 //
 // So perhaps some testing needs to be done to see if scanning and skipping takes
 // longer/shorter/same as loading the subrecords.
-bool ESM4::Cell::preload(ESM4::Reader& reader, ESM4::ReaderContext& ctx)
+bool ESM4::Cell::preload(ESM4::Reader& reader)
 {
     if (!mPreloaded)
         load(reader);
 
     mPreloaded = true;
-    return reader.skipNextGroupCellChild(ctx); // true if found cell child group and skipped
+    return reader.skipNextGroupCellChild(); // true if found cell child group and skipped
 }
 
 void ESM4::Cell::load(ESM4::Reader& reader)

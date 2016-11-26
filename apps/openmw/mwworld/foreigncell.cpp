@@ -8,7 +8,8 @@
 
 unsigned int MWWorld::ForeignCell::sRecordId = MKTAG('L','C','E','L');
 
-MWWorld::ForeignCell::ForeignCell() : mCell(0), mHasChildren(false), mIsInterior(false), mHasGrid(false)
+MWWorld::ForeignCell::ForeignCell() : mCell(0), mHasChildren(false),
+                                      mIsInterior(false), mHasGrid(false)
 {
 }
 
@@ -57,13 +58,12 @@ void MWWorld::ForeignCell::preload (ESM4::Reader& reader)
 {
     //assert(!mCell && "ForeignCell: ESM4::Cell already exists");
 
-    if (reader.grp().type == ESM4::Grp_InteriorSubCell) // FIXME: needs a better way
+    if (reader.grp().type == ESM4::Grp_InteriorSubCell)
         mIsInterior = true;
 
     mCell = new ESM4::Cell;
 
-    ESM4::ReaderContext ctx; // FIXME: temporary workaround
-    mHasChildren = mCell->preload(reader, ctx); // FIXME: need to push ctx to a vector
+    mHasChildren = mCell->preload(reader);
 
 }
 

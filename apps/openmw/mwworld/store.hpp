@@ -10,8 +10,9 @@
 #include <components/esm/esmwriter.hpp>
 #include <components/esm/util.hpp>
 
-#include "foreigncell.hpp"
 #include "foreignworld.hpp"
+#include "foreigncell.hpp"
+#include "foreignland.hpp"
 
 #include "recordcmp.hpp"
 #include "storebase.hpp"
@@ -491,6 +492,28 @@ namespace MWWorld
         const ForeignCell *find(ESM4::FormId formId) const;
 
         void testPreload(ESM::ESMReader& esm); // FIXME for testing only
+    };
+
+    template <>
+    class Store<MWWorld::ForeignLand> : public StoreBase
+    {
+    private:
+
+        std::map<ESM4::FormId, ForeignLand*> mLands;
+
+    public:
+
+        virtual ~Store();
+
+        size_t getSize() const;
+
+        RecordId load(ESM::ESMReader& esm);
+        void setUp(); // FIXME: is this needed?
+
+        const ForeignLand *find(ESM4::FormId formId) const;
+
+        ForeignLand *search(ESM4::FormId worldId, int x, int y) const;
+        ForeignLand *find(ESM4::FormId worldId, int x, int y) const;
     };
 
 } //end namespace

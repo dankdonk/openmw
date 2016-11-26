@@ -47,7 +47,6 @@ namespace MWWorld
 
         ESM4::Cell *mCell; // created in preload() and destroyed in dtor
         bool mHasChildren;
-        //std::vector<ESM4::ReaderContext> mCellChildContext;
 
         ForeignCell();
         ~ForeignCell();

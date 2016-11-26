@@ -67,7 +67,9 @@ namespace MWWorld
             std::vector<std::string> mIds;
             std::vector<ESM4::FormId> mForeignIds;
             float mWaterLevel;
+            //
             bool mIsForeignCell;
+            ESM4::FormId mForeignLand; // ForeignCell only, can't store in mCell due to const ptr
 
             MWWorld::TimeStamp mLastRespawn;
 
@@ -101,7 +103,7 @@ namespace MWWorld
             CellRefList<ESM4::Static>           mForeignStatics;
 
             void loadTes4Group (const MWWorld::ESMStore &store, ESM::ESMReader& esm);
-            void loadTes4Record (const MWWorld::ESMStore &store, ESM::ESMReader& esm, const ESM4::RecordHeader& hdr);
+            void loadTes4Record (const MWWorld::ESMStore &store, ESM::ESMReader& esm);
 
         public:
 
@@ -109,6 +111,8 @@ namespace MWWorld
 
             const ESM::Cell *getCell() const;
             inline const bool isForeignCell() const { return mIsForeignCell; }
+
+            inline ESM4::FormId getForeignLandId() const { return mForeignLand; }
 
             State getState() const;
 
