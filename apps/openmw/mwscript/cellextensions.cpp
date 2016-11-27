@@ -62,22 +62,16 @@ namespace MWScript
                             world->changeToForeignWorldCell(cell.substr(9), pos);
                             world->fixPosition(world->getPlayerPtr());
                         }
+                        else if (world->findForeignInteriorPosition(cell.substr(9), pos))
+                        {
+                            //world->findForeignInteriorPosition(cell.substr(9), pos);
+                            world->changeToForeignInteriorCell(cell.substr(9), pos);
+                        }
                     }
                     else if (world->findExteriorPosition(cell, pos))
                     {
                         world->changeToExteriorCell(pos);
                         world->fixPosition(world->getPlayerPtr());
-                    }
-#if 0
-                    else if (world->findForeignWorldPosition(cell, pos))
-                    {
-                        world->changeToForeignWorldCell(cell, pos);
-                        world->fixPosition(world->getPlayerPtr());
-                    }
-                    // FIXME: for interior foreign cells take the precedence!!!
-                    else if (world->findForeignInteriorPosition(cell, pos))
-                    {
-                        world->changeToForeignInteriorCell(cell, pos);
                     }
                     else
                     {
@@ -86,7 +80,6 @@ namespace MWScript
                         world->findInteriorPosition(cell, pos);
                         world->changeToInteriorCell(cell, pos);
                     }
-#endif
                 }
         };
 

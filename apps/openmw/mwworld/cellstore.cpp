@@ -632,7 +632,9 @@ namespace MWWorld
         {
             // Reopen the ESM reader and seek to the right position.
             int modIndex = cell->mModList.at(i).modIndex;
-            ESM::ESM4Reader *esm4 = static_cast<ESM::ESM4Reader*>(esm[1][modIndex]); // FIXME: hard coded '1'
+            // HACK: Should find another way...  Anyway, TES4 has 20 byte header, TES5 24.
+            int modType = (cell->mModList.at(i).recHeaderSize == 20) ? 1 : 2; // FIXME: hard coded 1 and 2
+            ESM::ESM4Reader *esm4 = static_cast<ESM::ESM4Reader*>(esm[modType][modIndex]);
             esm4->restoreCellChildrenContext(cell->mModList.at(i));
             // FIXME: need a way to load the cell children (just the refs?)
             //
@@ -641,12 +643,12 @@ namespace MWWorld
             std::cout << "file " << cell->mModList.at(i).filename << std::endl;
 
             // hasMoreRecs() here depends on the hack in restoreCellChildrenContext()
-            while(esm[1][modIndex]->hasMoreRecs()) // FIXME: hard coded '1'
+            while(esm[modType][modIndex]->hasMoreRecs())
             {
                 ESM4::Reader& reader = esm4->reader();
                 reader.checkGroupStatus();
 
-                loadTes4Group(store, *esm[1][modIndex]); // FIXME: hard coded '1'
+                loadTes4Group(store, *esm[modType][modIndex]);
             }
         }
     }
@@ -775,6 +777,11 @@ namespace MWWorld
                 break;
             }
 #endif
+            {
+                std::cout << ESM4::printName(hdr.record.typeId) << " skipping..." << std::endl;
+                reader.skipRecordData();
+                break;
+            }
             case ESM4::REC_LAND:
             {
                 // Can't store land record in CellStore if we want to keep it around rather

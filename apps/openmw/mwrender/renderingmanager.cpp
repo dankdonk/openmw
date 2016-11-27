@@ -395,7 +395,7 @@ void RenderingManager::update (float duration, bool paused)
 
     Ogre::SceneNode *node = data.getBaseNode();
     Ogre::Quaternion orient = node->_getDerivedOrientation();
-    mLocalMap->updatePlayer(playerPos, orient);
+    //mLocalMap->updatePlayer(playerPos, orient);  // FIXME: temporarily disable for debugging
 
     if(paused)
         return;

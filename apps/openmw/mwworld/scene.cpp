@@ -231,7 +231,6 @@ namespace MWWorld
             // Load terrain physics first...
             if (cell->getCell()->isExterior())
             {
-                // FIXME: this needs to be foreign land...
                 ESM::Land* land =
                     MWBase::Environment::get().getWorld()->getStore().get<ESM::Land>().search(
                         cell->getCell()->getGridX(),
@@ -747,6 +746,72 @@ namespace MWWorld
 
     void Scene::changeToForeignInteriorCell (const std::string& cellName, const ESM::Position& position)
     {
+        CellStore *cell = MWBase::Environment::get().getWorld()->getForeignInterior(cellName);
+        if (!cell) // FIXME: why null?
+            return;
+
+        bool loadcell = (mCurrentCell == NULL);
+        if(!loadcell)
+            loadcell = *mCurrentCell != *cell;
+
+        MWBase::Environment::get().getWindowManager()->fadeScreenOut(0.5);
+
+        Loading::Listener* loadingListener = MWBase::Environment::get().getWindowManager()->getLoadingScreen();
+        std::string loadingInteriorText = "#{sLoadingMessage2}";
+        loadingListener->setLabel(loadingInteriorText);
+        Loading::ScopedLoad load(loadingListener);
+
+        mRendering.enableTerrain(false);
+
+        if(!loadcell)
+        {
+            MWBase::World *world = MWBase::Environment::get().getWorld();
+            world->moveObject(world->getPlayerPtr(), position.pos[0], position.pos[1], position.pos[2]);
+
+            float x = Ogre::Radian(position.rot[0]).valueDegrees();
+            float y = Ogre::Radian(position.rot[1]).valueDegrees();
+            float z = Ogre::Radian(position.rot[2]).valueDegrees();
+            world->rotateObject(world->getPlayerPtr(), x, y, z);
+
+            world->getPlayerPtr().getClass().adjustPosition(world->getPlayerPtr(), true);
+            MWBase::Environment::get().getWindowManager()->fadeScreenIn(0.5);
+            return;
+        }
+
+        std::cout << "Changing to interior\n";
+
+        // unload
+        int current = 0;
+        CellStoreCollection::iterator active = mActiveCells.begin();
+        while (active!=mActiveCells.end())
+        {
+            unloadCell (active++);
+            ++current;
+        }
+
+        int refsToLoad = cell->count();
+        loadingListener->setProgressRange(refsToLoad);
+
+        // Load cell.
+        std::pair<CellStoreCollection::iterator, bool> result = mActiveCells.insert(cell);
+        if (result.second)
+            loadForeignCell (cell, loadingListener);
+
+        changePlayerCell(cell, position, true);
+
+        // adjust fog
+        mRendering.configureFog(*mCurrentCell);
+
+        // Sky system
+        MWBase::Environment::get().getWorld()->adjustSky();
+
+        mCellChanged = true; MWBase::Environment::get().getWindowManager()->fadeScreenIn(0.5);
+
+        MWBase::Environment::get().getWindowManager()->changeCell(mCurrentCell);
+
+        // Delay the map update until scripts have been given a chance to run.
+        // If we don't do this, objects that should be disabled will still appear on the map.
+        mNeedMapUpdate = true;
     }
 
     void Scene::changeToExteriorCell (const ESM::Position& position, bool adjustPlayerPos)

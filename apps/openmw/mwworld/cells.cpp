@@ -135,7 +135,11 @@ MWWorld::CellStore *MWWorld::Cells::getInterior (const std::string& name)
 
     if (result==mInteriors.end())
     {
-        const ESM::Cell *cell = mStore.get<ESM::Cell>().find(lowerName);
+        const ESM::Cell *cell = mStore.get<ESM::Cell>().search(lowerName);
+        if (!cell) // might be a foreign cell
+            return getForeignInterior(name);
+
+        //const ESM::Cell *cell = mStore.get<ESM::Cell>().find(lowerName);
 
         result = mInteriors.insert (std::make_pair (lowerName, CellStore (cell))).first;
     }
@@ -243,22 +247,24 @@ MWWorld::CellStore *MWWorld::Cells::getForeignWorld (ESM4::FormId worldId, int x
 }
 
 // If one does not exist insert in mForeignInteriors. Load as required.
-// FIXME: TODO
 MWWorld::CellStore *MWWorld::Cells::getForeignInterior (const std::string& name)
 {
     std::string lowerName = Misc::StringUtils::lowerCase(name);
-    std::map<std::string, CellStore>::iterator result = mInteriors.find (lowerName);
+    std::map<std::string, CellStore>::iterator result = mForeignInteriors.find(lowerName);
 
-    if (result==mInteriors.end())
+    if (result == mForeignInteriors.end())
     {
-        const ESM::Cell *cell = mStore.get<ESM::Cell>().find(lowerName);
+        const ForeignCell *cell = mStore.get<ForeignCell>().find(lowerName);
 
-        result = mInteriors.insert (std::make_pair (lowerName, CellStore (cell))).first;
+        //if (cell) // FIXME: why null?
+            result = mForeignInteriors.insert(std::make_pair(lowerName, CellStore(cell, true))).first;
+        //else
+            //return 0;
     }
 
-    if (result->second.getState()!=CellStore::State_Loaded)
+    if (result->second.getState() != CellStore::State_Loaded)
     {
-        result->second.load (mStore, mReader);
+        result->second.load(mStore, mReader);
     }
 
     return &result->second;

@@ -2541,7 +2541,68 @@ namespace MWWorld
     bool World::findForeignInteriorPosition(const std::string &name, ESM::Position &pos)
     {
         pos.rot[0] = pos.rot[1] = pos.rot[2] = 0;
+        return true;
+#if 0
+        typedef MWWorld::CellRefList<ESM4::Door>::List DoorList;
+        typedef MWWorld::CellRefList<ESM4::Static>::List StaticList;
+
+        pos.rot[0] = pos.rot[1] = pos.rot[2] = 0;
+        pos.pos[0] = pos.pos[1] = pos.pos[2] = 0;
+
+        MWWorld::CellStore *cellStore = getForeignInterior(name);
+
+        if (!cellStore)
+            return false;
+
+        const DoorList &doors = cellStore->get<ESM4::Door>().mList;
+        for (DoorList::const_iterator it = doors.begin(); it != doors.end(); ++it)
+        {
+            if (!it->mRef.getTeleport()) // FIXME
+                continue;
+
+            MWWorld::CellStore *source = 0;
+
+            // door to exterior
+            if (it->mRef.getDestCell().empty()) // FIXME
+            {
+                int x, y;
+                ESM::Position doorDest = it->mRef.getDoorDest(); // FIXME
+                positionToIndex(doorDest.pos[0], doorDest.pos[1], x, y);
+                source = getForeignWorld(xxx, x, y); // FIXME
+            }
+            else // door to interior
+            {
+                source = getForeignInterior(it->mRef.getDestCell()); // FIXME
+            }
+
+            if (source)
+            {
+                // Find door leading to our current teleport door
+                // and use it destination to position inside cell.
+                const DoorList &doors = source->get<ESM4::Door>().mList;
+                for (DoorList::const_iterator jt = doors.begin(); jt != doors.end(); ++jt)
+                {
+                    if (it->mRef.getTeleport() && // FIXME
+                        Misc::StringUtils::ciEqual(name, jt->mRef.getDestCell())) // FIXME
+                    {
+                        /// \note Using _any_ door pointed to the interior,
+                        /// not the one pointed to current door.
+                        pos = jt->mRef.getDoorDest(); // FIXME
+                        return true;
+                    }
+                }
+            }
+        }
+        // Fall back to the first static location.
+        const StaticList &statics = cellStore->get<ESM4::Static>().mList;
+        if ( statics.begin() != statics.end() )
+        {
+            pos = statics.begin()->mRef.getPosition(); // FIXME
+            return true;
+        }
+
         return false;
+#endif
     }
 
     bool World::findExteriorPosition(const std::string &name, ESM::Position &pos)

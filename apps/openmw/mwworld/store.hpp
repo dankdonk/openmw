@@ -490,6 +490,7 @@ namespace MWWorld
 
         const ESM::Cell *find(int x, int y) const; // FIXME: returns wrong cell type
         const ForeignCell *find(ESM4::FormId formId) const;
+        const ForeignCell *find(const std::string& name) const;
 
         void testPreload(ESM::ESMReader& esm); // FIXME for testing only
     };

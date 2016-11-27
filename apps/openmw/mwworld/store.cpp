@@ -1368,7 +1368,10 @@ namespace MWWorld
         if (!cell->mCell->mEditorId.empty())
         {
             std::pair<std::map<std::string, ESM4::FormId>::iterator, bool> res
-                = mEditorIdMap.insert(std::make_pair(cell->mCell->mEditorId, cell->mCell->mFormId));
+                = mEditorIdMap.insert(
+                        std::make_pair(Misc::StringUtils::lowerCase(cell->mCell->mEditorId),
+                                       cell->mCell->mFormId)
+                        );
             // FIXME: what to do if one already exists?  throw?
         }
 
@@ -1465,6 +1468,16 @@ namespace MWWorld
         // FIXME: some dummy for now
         const ESM::Cell *ptr = 0;
         return ptr;
+    }
+
+    const MWWorld::ForeignCell *Store<MWWorld::ForeignCell>::find(const std::string& name) const
+    {
+        std::map<std::string, ESM4::FormId>::const_iterator it = mEditorIdMap.find(name);
+
+        if (it != mEditorIdMap.end())
+            return find(it->second);
+
+        return 0;
     }
 
     const MWWorld::ForeignCell *Store<MWWorld::ForeignCell>::find(ESM4::FormId formId) const

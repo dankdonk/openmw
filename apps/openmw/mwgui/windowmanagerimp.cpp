@@ -935,6 +935,10 @@ namespace MWGui
 
             mMap->cellExplored (cell->getCell()->getGridX(), cell->getCell()->getGridY());
         }
+        else if (cell->isForeignCell())
+        {
+            // FIXME
+        }
         else
         {
             mMap->setCellPrefix (cell->getCell()->mName );
