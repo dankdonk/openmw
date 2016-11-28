@@ -25,6 +25,8 @@
 #include <components/terrain/defaultworld.hpp>
 #include <components/terrain/terraingrid.hpp>
 
+#include <components/esm4terrain/terraingrid.hpp>
+
 #include "../mwworld/esmstore.hpp"
 #include "../mwworld/class.hpp"
 #include "../mwworld/cellstore.hpp"
@@ -39,6 +41,8 @@
 #include "../mwmechanics/npcstats.hpp"
 
 #include "../mwworld/ptr.hpp"
+
+#include "../foreign/terrainstorage.hpp"
 
 #include "shadows.hpp"
 #include "localmap.hpp"
@@ -1032,26 +1036,56 @@ float RenderingManager::getTerrainHeightAt(Ogre::Vector3 worldPos)
     return mTerrain->getHeightAt(worldPos);
 }
 
-void RenderingManager::enableTerrain(bool enable)
+void RenderingManager::enableTerrain(bool enable, ESM4::FormId worldId)
 {
     if (enable)
     {
         if (!mTerrain)
         {
-            if (Settings::Manager::getBool("distant land", "Terrain"))
+            if (Settings::Manager::getBool("distant land", "Terrain") && !worldId)
                 mTerrain = new Terrain::DefaultWorld(mRendering.getScene(), new MWRender::TerrainStorage(true), RV_Terrain,
                                                 Settings::Manager::getBool("shader", "Terrain"), Terrain::Align_XY, 1, 64);
-            else
+            else if (!worldId)
                 mTerrain = new Terrain::TerrainGrid(mRendering.getScene(), new MWRender::TerrainStorage(false), RV_Terrain,
                                                 Settings::Manager::getBool("shader", "Terrain"), Terrain::Align_XY);
+            else // foreignLand
+                mTerrain = new Terrain::DefaultWorld(mRendering.getScene(), new Foreign::TerrainStorage(true), RV_Terrain,
+                                                Settings::Manager::getBool("shader", "Terrain"), Terrain::Align_XY, 1, 64);
             mTerrain->applyMaterials(Settings::Manager::getBool("enabled", "Shadows"),
                                      Settings::Manager::getBool("split", "Shadows"));
             mTerrain->update(mRendering.getCamera()->getRealPosition());
         }
+        else if (worldId != 0 && !dynamic_cast<ESM4Terrain::TerrainGrid*>(mTerrain)) // must be coming from MW
+        {
+            delete mTerrain;
+
+#if 0
+            mTerrain = new Terrain::DefaultWorld(mRendering.getScene(),
+                                                 new Foreign::TerrainStorage(worldId),
+                                                 RV_Terrain,
+                                                 Settings::Manager::getBool("shader", "Terrain"),
+                                                 Terrain::Align_XY,
+                                                 1,
+                                                 64);
+#endif
+//#if 0
+            mTerrain = new ESM4Terrain::TerrainGrid(mRendering.getScene(),
+                                                    new Foreign::TerrainStorage(worldId),
+                                                    RV_Terrain,
+                                                    Settings::Manager::getBool("shader", "Terrain"),
+                                                    Terrain::Align_XY,
+                                                    worldId);
+//#endif
+
+            mTerrain->applyMaterials(Settings::Manager::getBool("enabled", "Shadows"),
+                                     Settings::Manager::getBool("split", "Shadows"));
+            mTerrain->update(mRendering.getCamera()->getRealPosition());
+        }
+
         mTerrain->setVisible(true);
     }
     else if (mTerrain)
-            mTerrain->setVisible(false);
+        mTerrain->setVisible(false);
 }
 
 float RenderingManager::getCameraDistance() const

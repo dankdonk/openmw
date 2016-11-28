@@ -1278,23 +1278,25 @@ namespace MWWorld
         ESM4::Reader& reader = static_cast<ESM::ESM4Reader*>(&esm)->reader();
 
         // save the context first
-        ESM4::ReaderContext ctx = reader.getContext();
+        ESM4::ReaderContext ctx = static_cast<ESM::ESM4Reader*>(&esm)->getESM4Context();
         // Need to save these because cell->preload() may read into cell child group (where the ref's are)
         const ESM4::GroupTypeHeader& grp = reader.grp();
         int32_t groupType = grp.type;
         ESM4::GroupLabel groupLabel = grp.label;
 
         // partially load cell record
+        // FIXME: the logic here is badly broken, since a new foreign cell is created each time
+        // Should check if it exists already
         MWWorld::ForeignCell *cell = new MWWorld::ForeignCell();
         reader.getRecordData();
         cell->preload(reader);
 
         std::pair<std::map<ESM4::FormId, MWWorld::ForeignCell*>::iterator, bool> res
             = mCells.insert(std::make_pair(cell->mCell->mFormId, cell));
-        res.first->second->addFileContext(ctx);
-
         if (!res.second) // cell exists
             std::cout << "Cell updated, formId " << ESM4::formIdToString(cell->mCell->mFormId) << std::endl; // FIXME
+        if (cell->mHasChildren)
+            res.first->second->addFileContext(ctx);
 
         // FIXME: cleanup the mess of logic below, may need to refactor using a function or two
 
@@ -1523,7 +1525,7 @@ namespace MWWorld
         if (!ret.second)
             ret.first->second = record;
 
-        std::cout << "Land: " << ESM4::formIdToString(record->mFormId) << std::endl; // FIXME: debug
+        //std::cout << "Land: " << ESM4::formIdToString(record->mFormId) << std::endl; // FIXME: debug
 
         return RecordId(ESM4::formIdToString(record->mFormId), ((record->mFlags & ESM4::Rec_Deleted) != 0));
     }

@@ -60,8 +60,17 @@ void ESM::ESM4Reader::restoreCellChildrenContext(const ESM4::ReaderContext& ctx)
         openTes4File(ctx.filename);
 
     mReader.restoreContext(ctx); // restore group stack, load the CELL header, etc.
+    if (mReader.hdr().record.typeId != ESM4::REC_CELL) // FIXME: testing only
+        fail("Restore Cell Children failed");
     mReader.skipRecordData();    // skip the CELL record
+
     mReader.getRecordHeader();   // load the header for cell child group (hopefully)
+    // this is a hack to load only the cell child group...
+    if (mReader.hdr().group.typeId == ESM4::REC_GRUP && mReader.hdr().group.type == ESM4::Grp_CellChild)
+    {
+        mCtx.leftFile = mReader.hdr().group.groupSize - ctx.recHeaderSize;
+        return;
+    }
 
     // But some cells may have no child groups...
     // Suspect "ICMarketDistrict" 7 18 is one, followed by cell record 00165F2C "ICMarketDistrict" 6 17
@@ -71,22 +80,17 @@ void ESM::ESM4Reader::restoreCellChildrenContext(const ESM4::ReaderContext& ctx)
         return;
     }
 
-    // Or maybe the group is completed
+    // Maybe the group is completed
     // See "ICMarketDistrict" 9 15 which is followed by a exterior sub-cell block
-    if (mReader.hdr().group.typeId != ESM4::REC_GRUP || mReader.hdr().group.type != ESM4::Grp_CellChild)
+    ESM4::ReaderContext tempCtx = mReader.getContext();
+    if (!tempCtx.groupStack.empty() && tempCtx.groupStack.back().second == 0)
     {
-        ESM4::ReaderContext ctx = mReader.getContext();
-        if (!ctx.groupStack.empty() && ctx.groupStack.back().second == 0)
-        {
-            mCtx.leftFile = 0;
-            return;
-        }
-        else // FIXME: else should throw an exception here
-            fail("Restore Cell Children failed");
+        mCtx.leftFile = 0;
+        return;
     }
+    else
+        fail("Restore Cell Children failed");
 
-    // this is a hack to load only the cell child group...
-    mCtx.leftFile = mReader.hdr().group.groupSize - ctx.recHeaderSize;
 }
 
 // callback from mReader to ensure hasMoreRecs() can reliably track to EOF

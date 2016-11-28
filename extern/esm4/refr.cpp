@@ -174,7 +174,7 @@ void ESM4::Reference::load(ESM4::Reader& reader)
             case MKTAG('X','H','L','T'): // Unofficial Oblivion Patch
             case MKTAG('X','C','H','G'): // thievery.exp
             {
-                std::cout << "REFR " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
+                //std::cout << "REFR " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
                 reader.skipSubRecordData();
                 break;
             }

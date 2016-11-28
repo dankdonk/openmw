@@ -562,7 +562,7 @@ namespace MWWorld
         Loading::Listener* loadingListener = MWBase::Environment::get().getWindowManager()->getLoadingScreen();
         Loading::ScopedLoad load(loadingListener);
 
-        mRendering.enableTerrain(true); // FIXME: most likely needs mForeignTerrain
+        mRendering.enableTerrain(true, worldId);
 
         std::string loadingExteriorText = "#{sLoadingMessage3}";
         loadingListener->setLabel(loadingExteriorText);
@@ -638,13 +638,15 @@ namespace MWWorld
                 {
                     CellStore* cell = MWBase::Environment::get().getWorld()->getForeignWorld(worldId, x, y);
 
-                    if (cell) // FIXME: create dynamic cells instead?  See getForeignWorld in cells.c
+                    if (cell)
                     {
                         std::pair<CellStoreCollection::iterator, bool> result = mActiveCells.insert(cell);
 
                         if (result.second)
                             loadForeignCell(cell, loadingListener);
                     }
+                    else
+                        return; // FIXME: create dynamic cells instead?  See getForeignWorld in cells.c
                 }
             }
         }
@@ -843,6 +845,9 @@ namespace MWWorld
         changeWorldCellGrid(worldId, x, y);
 
         CellStore* current = MWBase::Environment::get().getWorld()->getForeignWorld(worldId, x, y); // FIXME
+        if (!current)
+            return; // FIXME
+
         changePlayerCell(current, position, adjustPlayerPos);
 
         mRendering.updateTerrain();

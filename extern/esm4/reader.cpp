@@ -68,11 +68,22 @@ ESM4::ReaderContext ESM4::Reader::getContext()
 // NOTE: Assumes that the caller has reopened the file if necessary
 bool ESM4::Reader::restoreContext(const ESM4::ReaderContext& ctx)
 {
+    if (/*mStream->eof() && */!mSavedStream.isNull())
+    {
+        mStream = mSavedStream;
+        mSavedStream.setNull();
+    }
+
     mCtx.groupStack.clear(); // probably not necessary?
     mCtx = ctx;
     mStream->seek(ctx.filePos); // update file position
 
-    return getRecordHeader();
+    //return getRecordHeader(); // can't use it because mStream may have been switched
+
+    mObserver->update(mCtx.recHeaderSize);
+
+    return (mStream->read(&mRecordHeader, mCtx.recHeaderSize) == mCtx.recHeaderSize
+            && (mEndOfRecord = mStream->tell() + mRecordHeader.record.dataSize)); // for keeping track of sub records
 }
 
 bool ESM4::Reader::skipNextGroupCellChild()
@@ -83,7 +94,7 @@ bool ESM4::Reader::skipNextGroupCellChild()
     std::size_t pos = mStream->tell(); // save
     ESM4::RecordHeader hdr;
     if (!mStream->read(&hdr, mCtx.recHeaderSize))
-        throw std::runtime_error("ESM4::Reader::could not peek header"); // 0xff is reserved
+        throw std::runtime_error("ESM4::Reader::could not peek header");
 
     if (hdr.group.type != ESM4::Grp_CellChild)
     {
@@ -118,7 +129,7 @@ void ESM4::Reader::registerForUpdates(ESM4::ReaderObserver *observer)
 
 bool ESM4::Reader::getRecordHeader()
 {
-    // FIXME: this seems very hacky
+    // FIXME: this seems very hacky but we may have skipped subrecords from within an inflated data block
     if (/*mStream->eof() && */!mSavedStream.isNull())
     {
         mStream = mSavedStream;

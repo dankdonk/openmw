@@ -26,6 +26,10 @@ add_openmw_dir (mwrender
     terrainstorage renderconst effectmanager weaponanimation
     )
 
+add_openmw_dir (foreign
+    terrainstorage
+    )
+
 add_openmw_dir (mwinput
     inputmanagerimp
     )

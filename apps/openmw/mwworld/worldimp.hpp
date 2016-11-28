@@ -66,8 +66,7 @@ namespace MWWorld
 
             MWWorld::Scene *mWorldScene;
             MWWorld::Player *mPlayer;
-            // Need ESM::ESM4Reader here, unless it can be made to load both types of records
-            std::vector<std::vector<ESM::ESMReader*> > mEsm; // FIXME: Foreign:
+            std::vector<std::vector<ESM::ESMReader*> > mEsm;
             MWWorld::ESMStore mStore;
             LocalScripts mLocalScripts;
             MWWorld::Globals mGlobalVariables;

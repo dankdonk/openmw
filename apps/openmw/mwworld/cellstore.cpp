@@ -5,6 +5,7 @@
 
 #include <extern/esm4/refr.hpp>
 #include <extern/esm4/formid.hpp>
+#include <extern/esm4/cell.hpp>
 
 #include <components/esm/cellstate.hpp>
 #include <components/esm/cellid.hpp>
@@ -640,7 +641,7 @@ namespace MWWorld
             //
             // 1. skip cell itself (should have been preloaded)
             // 2. load cell child group
-            std::cout << "file " << cell->mModList.at(i).filename << std::endl;
+            //std::cout << "file " << cell->mModList.at(i).filename << std::endl;
 
             // hasMoreRecs() here depends on the hack in restoreCellChildrenContext()
             while(esm[modType][modIndex]->hasMoreRecs())
@@ -796,7 +797,36 @@ namespace MWWorld
                 //
                 //ESM4::FormId worldId = mCell->mCell->mParent;
                 //ESM4::FormId cellId  = mCell->mCell->mFormId;
+
+                // Save context just in case
+                //ESM4::ReaderContext ctx = static_cast<ESM::ESM4Reader*>(&esm)->getESM4Context();
+
+                // Load land, note may not be used
                 mForeignLand = MWBase::Environment::get().getWorld()->loadForeignLand(esm);
+                break; // FIXME
+
+                const ForeignWorld *world
+                    = MWBase::Environment::get().getWorld()->getStore().get<ForeignWorld>().find(static_cast<const ForeignCell*>(mCell)->mCell->mParent);
+                if (!world)
+                    break;// FIXME: maybe exception?
+
+                if (world->mParent != 0)
+                {
+                    CellStore * parentCell
+                        = MWBase::Environment::get().getWorld()->getForeignWorld(world->mParent,
+                            mCell->getGridX(),
+                            mCell->getGridY());
+                    if (parentCell)
+                        mForeignLand = parentCell->getForeignLandId();
+
+                    //static_cast<ESM::ESM4Reader*>(&esm)->restoreCellChildrenContext(ctx);
+                    //reader.skipRecordData();
+                }
+
+
+
+
+
 
                 //reader.getRecordData();
                 //mForeignLands.load(esm, mForeignCells);

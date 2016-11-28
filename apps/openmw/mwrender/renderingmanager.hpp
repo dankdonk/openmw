@@ -17,6 +17,11 @@
 #include "camera.hpp"
 #include "occlusionquery.hpp"
 
+namespace ESM4
+{
+    typedef uint32_t FormId;
+}
+
 namespace Ogre
 {
     class SceneNode;
@@ -104,7 +109,7 @@ public:
     /// Clear all savegame-specific data (i.e. fog of war textures)
     void clear();
 
-    void enableTerrain(bool enable);
+    void enableTerrain(bool enable, ESM4::FormId = 0);
 
     void removeWater();
 

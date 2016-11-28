@@ -200,7 +200,7 @@ MWWorld::CellStore *MWWorld::Cells::getForeignWorld (ESM4::FormId worldId, int x
 {
     typedef std::map<std::pair<int, int>, CellStore> CellStoreIndex;
 
-    // find the world for the given editor id
+    // find the world for the given form id
     const ForeignWorld *world = mStore.get<ForeignWorld>().find(worldId);
     if (!world)
         return 0;// FIXME: maybe exception?
