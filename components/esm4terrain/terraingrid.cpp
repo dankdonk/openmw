@@ -34,7 +34,7 @@ namespace ESM4Terrain
 
 TerrainGrid::TerrainGrid(Ogre::SceneManager *sceneMgr,
     Terrain::Storage *storage, int visibilityFlags, bool shaders, Terrain::Alignment align, ESM4::FormId world)
-    : Terrain::TerrainGrid(sceneMgr, storage, visibilityFlags, shaders, align)//, mWorld(world)
+    : Terrain::TerrainGrid(sceneMgr, storage, visibilityFlags, shaders, align), mWorld(world)
 {
 }
 

@@ -1055,7 +1055,9 @@ void RenderingManager::enableTerrain(bool enable, ESM4::FormId worldId)
                                      Settings::Manager::getBool("split", "Shadows"));
             mTerrain->update(mRendering.getCamera()->getRealPosition());
         }
-        else if (worldId != 0 && !dynamic_cast<ESM4Terrain::TerrainGrid*>(mTerrain)) // must be coming from MW
+        else if ((worldId != 0 && !dynamic_cast<ESM4Terrain::TerrainGrid*>(mTerrain)) // must be coming from MW
+                 ||
+                 (worldId != 0 && dynamic_cast<ESM4Terrain::TerrainGrid*>(mTerrain) && dynamic_cast<ESM4Terrain::TerrainGrid*>(mTerrain)->getWorld() != worldId)) // changed world
         {
             delete mTerrain;
 

@@ -241,6 +241,15 @@ MWWorld::CellStore *MWWorld::Cells::getForeignWorld (ESM4::FormId worldId, int x
     {
         // Multiple plugin support for landscape data is much easier than for references. The last plugin wins.
         result->second.load(mStore, mReader);
+
+        // inherit parent world's land?
+        // save context
+        //ESM4::ReaderContext ctx = mReader
+
+        // restore context
+
+        //if (lb->first->mParent != 0)
+        // FIXME: TODO weather, etc
     }
 
     return &result->second;

@@ -651,6 +651,23 @@ namespace MWWorld
 
                 loadTes4Group(store, *esm[modType][modIndex]);
             }
+//#if 0
+            const ForeignWorld *world
+                = MWBase::Environment::get().getWorld()->getStore().get<ForeignWorld>().find(static_cast<const ForeignCell*>(mCell)->mCell->mParent);
+            if (!world)
+                continue;// FIXME: maybe exception?
+
+            if (world->mParent != 0)
+            {
+                CellStore * parentCell
+                    = MWBase::Environment::get().getWorld()->getForeignWorld(world->mParent,
+                        mCell->getGridX(),
+                        mCell->getGridY());
+                // FIXME
+                if (parentCell)
+                    mForeignLand = parentCell->getForeignLandId();
+            }
+//#endif
         }
     }
 
@@ -803,33 +820,6 @@ namespace MWWorld
 
                 // Load land, note may not be used
                 mForeignLand = MWBase::Environment::get().getWorld()->loadForeignLand(esm);
-                break; // FIXME
-
-                const ForeignWorld *world
-                    = MWBase::Environment::get().getWorld()->getStore().get<ForeignWorld>().find(static_cast<const ForeignCell*>(mCell)->mCell->mParent);
-                if (!world)
-                    break;// FIXME: maybe exception?
-
-                if (world->mParent != 0)
-                {
-                    CellStore * parentCell
-                        = MWBase::Environment::get().getWorld()->getForeignWorld(world->mParent,
-                            mCell->getGridX(),
-                            mCell->getGridY());
-                    if (parentCell)
-                        mForeignLand = parentCell->getForeignLandId();
-
-                    //static_cast<ESM::ESM4Reader*>(&esm)->restoreCellChildrenContext(ctx);
-                    //reader.skipRecordData();
-                }
-
-
-
-
-
-
-                //reader.getRecordData();
-                //mForeignLands.load(esm, mForeignCells);
                 break;
             }
             case ESM4::REC_PGRD: // Oblivion only?

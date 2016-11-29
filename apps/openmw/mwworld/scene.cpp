@@ -283,50 +283,14 @@ namespace MWWorld
         // Load terrain physics first...
         if (cell->getCell()->isExterior())
         {
-#if 0
-            // FIXME: this needs to be foreign land...
-            ESM4::Land* land =
-                MWBase::Environment::get().getWorld()->getStore().get<ESM4::Land>().search(
-                    cell->getCell()->getGridX(),
-                    cell->getCell()->getGridY()
-                );
-            if (land && land->mDataTypes&ESM::Land::DATA_VHGT) {
-                // Actually only VHGT is needed here, but we'll need the rest for rendering anyway.
-                // Load everything now to reduce IO overhead.
-                const int flags = ESM::Land::DATA_VCLR|ESM::Land::DATA_VHGT|ESM::Land::DATA_VNML|ESM::Land::DATA_VTEX;
-
-                const ESM::Land::LandData *data = land->getLandData (flags);
-                mPhysics->addHeightField (data->mHeights, cell->getCell()->getGridX(), cell->getCell()->getGridY(),
-                    0, worldsize / (verts-1), verts);
-            }
-#endif
-
-
-
-
-            // FIXME: need to check that this cell has land data at all
-
             const ForeignLand *land =
                     MWBase::Environment::get().getWorld()->getStore().get<ForeignLand>().find(cell->getForeignLandId());
 
+            // check that this cell has land data at all
             if (land && land->getLandData (ESM4::Land::LAND_VHGT))
             {
-#if 0
-                // This bit is done by mRendering.enableTerrain(true);
-                mTerrain.reset(new ESM4Terrain::TerrainGrid(sceneManager,
-                                                        new CSVForeign::TerrainStorage(mDocument.getData(), mWorld),
-                                                        Element_Terrain,
-                                                        true,
-                                                        Terrain::Align_XY,
-                                                        mWorld));
-                // This bit is done by mRendering.cellAdded (cell);
-                mTerrain->loadCell(/*esmLand.mX*/x,
-                                   /*esmLand.mY*/y);
-#endif
                 float verts = ESM4::Land::VERTS_PER_SIDE;
                 float worldsize = ESM4::Land::REAL_SIZE;
-                //mX = esmLand.mX;
-                //mY = esmLand.mY;
 
                 const ESM4Terrain::LandData *data = land->getLandData (ESM4::Land::LAND_VHGT);
                 mPhysics->addHeightField(data->mHeights,
@@ -334,12 +298,6 @@ namespace MWWorld
             }
             else
                 std::cerr << "Heightmap for " << cell->getCell()->getDescription() << " not found" << std::endl;
-
-
-
-
-
-
         }
 
         cell->respawn();
@@ -562,6 +520,11 @@ namespace MWWorld
         Loading::Listener* loadingListener = MWBase::Environment::get().getWindowManager()->getLoadingScreen();
         Loading::ScopedLoad load(loadingListener);
 
+        // It seems that ICMarketDistrict needs its parent world's LAND
+        //const ForeignCell *cell
+                //ESM4::FormId worldId
+                    //= static_cast<const MWWorld::ForeignCell*>(mCurrentCell->getCell())->mCell->mParent;
+
         mRendering.enableTerrain(true, worldId);
 
         std::string loadingExteriorText = "#{sLoadingMessage3}";
@@ -575,7 +538,8 @@ namespace MWWorld
         CellStoreCollection::iterator active = mActiveCells.begin();
         while (active != mActiveCells.end())
         {
-            if ((*active)->getCell()->isExterior()) // FIXME: should this be an assert instead?
+            if ((*active)->getCell()->isExterior() && // FIXME: should this be an assert instead?
+                (*active)->isForeignCell())
             {
                 if (std::abs (X-(*active)->getCell()->getGridX()) <= halfGridSize &&
                     std::abs (Y-(*active)->getCell()->getGridY()) <= halfGridSize)
@@ -646,7 +610,10 @@ namespace MWWorld
                             loadForeignCell(cell, loadingListener);
                     }
                     else
-                        return; // FIXME: create dynamic cells instead?  See getForeignWorld in cells.c
+                    {
+                       // FIXME: create dynamic cells instead?  See getForeignWorld in cells.c
+                        std::cout << "no cell at " << x << ", " << y << std::endl;
+                    }
                 }
             }
         }

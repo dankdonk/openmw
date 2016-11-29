@@ -53,8 +53,10 @@ namespace ESM4Terrain
         /// @param align The align of the terrain, see Alignment enum
         TerrainGrid(Ogre::SceneManager* sceneMgr,
                 Terrain::Storage* storage, int visibilityFlags, bool shaders, Terrain::Alignment align,
-                ESM4::FormId world = 0x3c); // default Tamriel
+                ESM4::FormId world);
         ~TerrainGrid();
+
+        ESM4::FormId getWorld() const { return mWorld; }
 
 #if 0
         /// Update chunk LODs according to this camera position

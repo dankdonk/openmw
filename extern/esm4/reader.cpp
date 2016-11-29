@@ -68,7 +68,7 @@ ESM4::ReaderContext ESM4::Reader::getContext()
 // NOTE: Assumes that the caller has reopened the file if necessary
 bool ESM4::Reader::restoreContext(const ESM4::ReaderContext& ctx)
 {
-    if (/*mStream->eof() && */!mSavedStream.isNull())
+    if (!mSavedStream.isNull())
     {
         mStream = mSavedStream;
         mSavedStream.setNull();
