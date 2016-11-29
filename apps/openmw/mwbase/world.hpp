@@ -126,6 +126,7 @@ namespace MWBase
 
             virtual MWWorld::CellStore *getForeignWorld (const std::string& world, int x, int y) = 0;
             virtual MWWorld::CellStore *getForeignWorld (ESM4::FormId worldId, int x, int y) = 0;
+            virtual MWWorld::CellStore *getForeignWorldDummy (ESM4::FormId worldId) = 0;
 
             // TES4 LAND records are found in a CELL child group, which is loaded later along
             // with the references.  The reference stores (i.e. CellStore) only have const

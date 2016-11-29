@@ -30,6 +30,13 @@ namespace ESM4
     class Reader;
     class Writer;
 
+    struct TeleportDest
+    {
+        FormId   destDoor;
+        Position destPos;
+        std::uint32_t flags; // 0x01 no alarm (only in TES5)
+    };
+
     // Unlike TES3, multiple cells can have the same exterior co-ordinates.
     // The cells need to be organised under world spaces.
     struct Reference
@@ -51,6 +58,8 @@ namespace ESM4
         EnableParent mEsp;    // TODO may need to check mFlags & 0x800 (initially disabled)
 
         std::uint32_t mCount; // only if > 1 (default 1)
+
+        TeleportDest mDoor;
 
         Reference();
         virtual ~Reference();

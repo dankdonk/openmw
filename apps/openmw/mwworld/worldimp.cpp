@@ -552,6 +552,11 @@ namespace MWWorld
         return mCells.getForeignWorld (worldId, x, y);
     }
 
+    CellStore *World::getForeignWorldDummy (ESM4::FormId worldId)
+    {
+        return mCells.getForeignWorldDummy (worldId);
+    }
+
     ESM4::FormId World::loadForeignLand (ESM::ESMReader& esm)
     {
         RecordId id = mStore.getModifiable<ForeignLand>().load(esm);

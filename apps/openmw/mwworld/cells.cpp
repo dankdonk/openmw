@@ -232,8 +232,21 @@ MWWorld::CellStore *MWWorld::Cells::getForeignWorld (ESM4::FormId worldId, int x
             //res.first->second = CellStore(cell, true); // can't use [] as it needs a default constructor
     }
     else // insert a new world
+    {
         mForeignWorlds.insert(lb, std::map<ESM4::FormId, CellStoreIndex>::value_type(worldId,
             { {std::pair<int, int>(x, y), CellStore(cell, true) } }));
+
+        // check if a dummy cell exists
+        const ForeignCell *dummyCell = mStore.get<ForeignCell>().find(world->mDummyCell);
+        if (dummyCell)
+        {
+            std::pair<std::map<ESM4::FormId, CellStore>::iterator, bool> res =
+                mForeignDummys.insert({ worldId, CellStore(dummyCell, true, true) });
+
+            if (res.second)
+                res.first->second.load(mStore, mReader);
+        }
+    }
 
     // FIXME: do we have an iterator already to avoid calling find() again?
     CellStoreIndex::iterator result = mForeignWorlds[worldId].find(std::pair<int, int>(x, y));
@@ -253,6 +266,15 @@ MWWorld::CellStore *MWWorld::Cells::getForeignWorld (ESM4::FormId worldId, int x
     }
 
     return &result->second;
+}
+
+MWWorld::CellStore *MWWorld::Cells::getForeignWorldDummy (ESM4::FormId worldId)
+{
+    std::map<ESM4::FormId, CellStore>::iterator it = mForeignDummys.find(worldId);
+    if (it != mForeignDummys.end())
+        return &it->second;
+
+    return 0;
 }
 
 // If one does not exist insert in mForeignInteriors. Load as required.

@@ -43,6 +43,8 @@ ESM4::Reference::Reference() : mFormId(0), mFlags(0), mDisabled(false), mBaseObj
 
     mEsp.parent = 0;
     mEsp.flags = 0;
+
+    mDoor.destDoor = 0;
 }
 
 ESM4::Reference::~Reference()
@@ -107,9 +109,73 @@ void ESM4::Reference::load(ESM4::Reader& reader)
             {
                 reader.get(mEsp);
                 reader.adjustFormId(mEsp.parent);
-                break;
                 //std::cout << "REFR  parent: " << formIdToString(mEsp.parent) << " ref " << formIdToString(mFormId)
                     //<< ", 0x" << std::hex << (mEsp.flags & 0xff) << std::endl;// FIXME
+                break;
+            }
+            case ESM4::SUB_XTEL:
+            {
+                reader.get(mDoor.destDoor);
+                reader.get(mDoor.destPos);
+                if (reader.esmVersion() == ESM4::VER_094 || reader.esmVersion() == ESM4::VER_170)
+                    reader.get(mDoor.flags); // not in Obvlivion
+                std::cout << "REFR  door: " << formIdToString(mDoor.destDoor) << std::endl;// FIXME
+                break;
+            }
+            case ESM4::SUB_XSED:
+            {
+                // 1 or 4 bytes
+                if (subHdr.dataSize == 1)
+                {
+                    uint8_t data = reader.get(data);
+                    std::cout << "REFR XSED " << std::hex << (int)data << std::endl;
+                    break;
+                }
+                else if (subHdr.dataSize == 4)
+                {
+                    uint32_t data = reader.get(data);
+                    std::cout << "REFR XSED " << std::hex << (int)data << std::endl;
+                    break;
+                }
+
+                std::cout << "REFR XSED dataSize: " << subHdr.dataSize << std::endl;// FIXME
+                reader.skipSubRecordData();
+                break;
+            }
+            case ESM4::SUB_XLOD:
+            {
+                // 12 bytes
+                if (subHdr.dataSize == 12)
+                {
+                    uint32_t data = reader.get(data);
+                    uint32_t data2 = reader.get(data);
+                    uint32_t data3 = reader.get(data);
+                    std::cout << "REFR XLOD " << std::hex << (int)data << " " << (int)data2 << " " << (int)data3 << std::endl;
+                    break;
+                }
+                std::cout << "REFR XLOD dataSize: " << subHdr.dataSize << std::endl;// FIXME
+                reader.skipSubRecordData();
+                break;
+            }
+            case ESM4::SUB_XACT:
+            {
+                if (subHdr.dataSize == 4)
+                {
+                    uint32_t data = reader.get(data);
+                    std::cout << "REFR XACT " << std::hex << (int)data << std::endl;
+                    break;
+                }
+
+                std::cout << "REFR XACT dataSize: " << subHdr.dataSize << std::endl;// FIXME
+                reader.skipSubRecordData();
+                break;
+            }
+            case ESM4::SUB_XRTM: // formId
+            {
+                FormId id;
+                reader.get(id);
+                std::cout << "REFR XRTM : " << formIdToString(id) << std::endl;// FIXME
+                break;
             }
             // lighting
             case ESM4::SUB_LNAM: // lighting template formId
@@ -120,17 +186,12 @@ void ESM4::Reference::load(ESM4::Reader& reader)
             case ESM4::SUB_XRGD: // tangent data?
             case ESM4::SUB_XALP: // alpha cutoff
             //
-            case ESM4::SUB_XTEL: // formId
             case ESM4::SUB_XLOC: // formId
-            case ESM4::SUB_XACT:
             case ESM4::SUB_XMRK:
             case ESM4::SUB_FNAM:
             case ESM4::SUB_XTRG: // formId
-            case ESM4::SUB_XSED:
-            case ESM4::SUB_XLOD:
             case ESM4::SUB_XPCI: // formId
             case ESM4::SUB_XLCM:
-            case ESM4::SUB_XRTM: // formId
             case ESM4::SUB_XCNT:
             case ESM4::SUB_TNAM:
             case ESM4::SUB_ONAM:
@@ -174,7 +235,7 @@ void ESM4::Reference::load(ESM4::Reader& reader)
             case MKTAG('X','H','L','T'): // Unofficial Oblivion Patch
             case MKTAG('X','C','H','G'): // thievery.exp
             {
-                //std::cout << "REFR " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
+                std::cout << "REFR " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
                 reader.skipSubRecordData();
                 break;
             }

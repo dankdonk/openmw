@@ -69,6 +69,7 @@ namespace MWWorld
             float mWaterLevel;
             //
             bool mIsForeignCell;
+            bool mIsDummyCell;
             ESM4::FormId mForeignLand; // ForeignCell only, can't store in mCell due to const ptr
 
             MWWorld::TimeStamp mLastRespawn;
@@ -107,10 +108,11 @@ namespace MWWorld
 
         public:
 
-            CellStore (const ESM::Cell *cell_, bool isForeignCell = false);
+            CellStore (const ESM::Cell *cell_, bool isForeignCell = false, bool isDummyCell = false);
 
             const ESM::Cell *getCell() const;
             inline const bool isForeignCell() const { return mIsForeignCell; }
+            inline const bool isDummyCell() const { return mIsDummyCell; }
 
             inline ESM4::FormId getForeignLandId() const { return mForeignLand; }
 

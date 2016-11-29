@@ -1357,8 +1357,9 @@ namespace MWWorld
                 std::cout << "Cell parent formid mismatch, " << std::hex << worldId
                           << " label " << groupLabel.value << std::endl;
 
-            world->insertDummyCell(cell->mCell->mFormId);
             // FIXME: what to do if one already exists?
+            world->insertDummyCell(cell->mCell->mFormId);
+            //std::cout << "dummy cell " << ESM4::formIdToString(cell->mCell->mFormId) << std::endl;
         }
         else if (groupType == ESM4::Grp_InteriorSubCell) // interior cell
         {

@@ -541,6 +541,12 @@ namespace MWWorld
             if ((*active)->getCell()->isExterior() && // FIXME: should this be an assert instead?
                 (*active)->isForeignCell())
             {
+                if ((*active)->isDummyCell())
+                {
+                    ++active;
+                    continue;
+                }
+
                 if (std::abs (X-(*active)->getCell()->getGridX()) <= halfGridSize &&
                     std::abs (Y-(*active)->getCell()->getGridY()) <= halfGridSize)
                 {
@@ -612,13 +618,31 @@ namespace MWWorld
                     else
                     {
                        // FIXME: create dynamic cells instead?  See getForeignWorld in cells.c
-                        std::cout << "no cell at " << x << ", " << y << std::endl;
+                        //std::cout << "no cell at " << x << ", " << y << std::endl;
                     }
                 }
             }
         }
 
+        // check for dummy cell
+        if (!mActiveCells.empty())
+        {
+            CellStore *dummy = MWBase::Environment::get().getWorld()->getForeignWorldDummy(worldId);
+            if (dummy)
+            {
+                std::pair<CellStoreCollection::iterator, bool> result = mActiveCells.insert(dummy);
+                if (result.second)
+                {
+                    std::cout << "dummy " << std::endl;
+                    loadForeignCell(dummy, loadingListener);
+                }
+            }
+        }
+
         CellStore* current = MWBase::Environment::get().getWorld()->getForeignWorld(worldId, X, Y);
+        if (!current) // FIXME
+            return;
+
         MWBase::Environment::get().getWindowManager()->changeCell(current);
 
         mCellChanged = true;

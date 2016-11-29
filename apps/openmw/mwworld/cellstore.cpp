@@ -215,9 +215,9 @@ namespace MWWorld
         return (ref.mRef.mRefnum == pRefnum);
     }
 
-    CellStore::CellStore (const ESM::Cell *cell, bool isForeignCell)
+    CellStore::CellStore (const ESM::Cell *cell, bool isForeignCell, bool isDummyCell)
       : mCell (cell), mState (State_Unloaded), mHasState (false), mLastRespawn(0,0),
-        mIsForeignCell(isForeignCell), mForeignLand(0)
+        mIsForeignCell(isForeignCell), mIsDummyCell(isDummyCell), mForeignLand(0)
     {
         mWaterLevel = cell->mWater;
     }
@@ -755,7 +755,9 @@ namespace MWWorld
                     }
                     case MKTAG('R','D','O','O'):
                     {
-                        mForeignDoors.load(record, deleted, store); break;
+                        mForeignDoors.load(record, deleted, store);
+                        std::cout << " door" << ESM4::formIdToString(record.mFormId) << std::endl;
+                        break;
                     }
                     case MKTAG('R','I','N','G'): std::cout << " ingredient " << std::endl; break;
                     case MKTAG('H','L','I','G'):
