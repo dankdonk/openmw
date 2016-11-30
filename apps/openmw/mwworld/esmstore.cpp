@@ -6,6 +6,8 @@
 #include <boost/filesystem/operations.hpp>
 
 #include <extern/esm4/common.hpp>
+#include <extern/esm4/formid.hpp>
+#include <extern/esm4/refr.hpp>
 
 #include <components/loadinglistener/loadinglistener.hpp>
 
@@ -235,16 +237,41 @@ void ESMStore::loadTes4Group (ESM::ESMReader &esm)
         case ESM4::Grp_WorldChild:
         case ESM4::Grp_TopicChild:
         case ESM4::Grp_CellPersistentChild:
-        case ESM4::Grp_CellTemporaryChild:
-        case ESM4::Grp_CellVisibleDistChild:
         {
             reader.adjustGRUPFormId();  // not needed or even shouldn't be done? (only labels anyway)
             reader.saveGroupStatus();
+//#if 0
+            // Below test shows that Oblivion.esm does not have any persistent cell child
+            // groups under exterior world sub-block group.  Haven't checked other files yet.
+             if (reader.grp(0).type == ESM4::Grp_CellPersistentChild &&
+                 reader.grp(1).type == ESM4::Grp_CellChild &&
+                 !(reader.grp(2).type == ESM4::Grp_WorldChild || reader.grp(2).type == ESM4::Grp_InteriorSubCell))
+                 std::cout << "Unexpected persistent child group in exterior subcell" << std::endl;
+//#endif
             if (!esm.hasMoreRecs())
                 return; // may have been an empty group followed by EOF
 
             loadTes4Group(esm);
 
+            break;
+        }
+        case ESM4::Grp_CellTemporaryChild:
+        case ESM4::Grp_CellVisibleDistChild:
+        {
+            // NOTE: preload strategy and persistent records
+            //
+            // Current strategy defers loading of "temporary" or "visible when distant"
+            // references and other records (land and pathgrid) until they are needed.
+            //
+            // The "persistent" records need to be loaded up front, however.  This is to allow,
+            // for example, doors to work.  A door reference will have a FormId of the
+            // destination door FormId.  But we have no way of knowing to which cell the
+            // destination FormId belongs until that cell and that reference is loaded.
+            //
+            // For worldspaces the persistent records are usully (always?) stored in a dummy
+            // cell under a "world child" group.  It may be possible to skip the whole "cell
+            // child" group without scanning for persistent records.  See above short test.
+            reader.skipGroup();
             break;
         }
         case ESM4::Grp_ExteriorCell:
@@ -448,13 +475,30 @@ void ESMStore::loadTes4Record (ESM::ESMReader& esm)
         }
 #endif
         case ESM4::REC_REGN:
-        case ESM4::REC_REFR: case ESM4::REC_ACHR: case ESM4::REC_ACRE: case ESM4::REC_PGRD:
+        /*case ESM4::REC_REFR:*/ case ESM4::REC_ACHR: case ESM4::REC_ACRE: case ESM4::REC_PGRD:
         case ESM4::REC_PHZD: case ESM4::REC_PGRE:
         case ESM4::REC_ROAD: case ESM4::REC_LAND: case ESM4::REC_NAVM: case ESM4::REC_NAVI:
         case ESM4::REC_LVLI: case ESM4::REC_IDLE:
         {
             //std::cout << ESM4::printName(hdr.record.typeId) << " skipping..." << std::endl;
             reader.skipRecordData();
+            break;
+        }
+        case ESM4::REC_REFR:
+        {
+            ESM4::Reference record;
+
+            reader.getRecordData();
+            record.load(reader);
+
+            if (record.mDoor.destDoor != 0)
+            {
+                std::pair<std::map<ESM4::FormId, ESM4::FormId>::iterator, bool> result
+                    = mDoorDestCell.insert({ record.mFormId, reader.currCell() });
+
+                // FIXME: detect duplicates?
+            }
+
             break;
         }
         default:

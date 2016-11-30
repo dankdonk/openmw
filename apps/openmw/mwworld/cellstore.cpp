@@ -756,7 +756,6 @@ namespace MWWorld
                     case MKTAG('R','D','O','O'):
                     {
                         mForeignDoors.load(record, deleted, store);
-                        std::cout << " door" << ESM4::formIdToString(record.mFormId) << std::endl;
                         break;
                     }
                     case MKTAG('R','I','N','G'): std::cout << " ingredient " << std::endl; break;
@@ -798,7 +797,7 @@ namespace MWWorld
             }
 #endif
             {
-                std::cout << ESM4::printName(hdr.record.typeId) << " skipping..." << std::endl;
+                //std::cout << ESM4::printName(hdr.record.typeId) << " skipping..." << std::endl;
                 reader.skipRecordData();
                 break;
             }
@@ -828,7 +827,7 @@ namespace MWWorld
             case ESM4::REC_ACRE: // Oblivion only?
             case ESM4::REC_ROAD: // Oblivion only?
             {
-                std::cout << ESM4::printName(hdr.record.typeId) << " skipping..." << std::endl;
+                //std::cout << ESM4::printName(hdr.record.typeId) << " skipping..." << std::endl;
                 reader.skipRecordData();
                 break;
             }

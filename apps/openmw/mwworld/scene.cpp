@@ -625,6 +625,8 @@ namespace MWWorld
         }
 
         // check for dummy cell
+        // FIXME: having the dummy cell results in *all* the doors being rendered!  Need to be
+        // able to limit rendering based on the ref's position
         if (!mActiveCells.empty())
         {
             CellStore *dummy = MWBase::Environment::get().getWorld()->getForeignWorldDummy(worldId);
@@ -636,6 +638,9 @@ namespace MWWorld
                     std::cout << "dummy " << std::endl;
                     loadForeignCell(dummy, loadingListener);
                 }
+            }
+            else // create a new one
+            {
             }
         }
 

@@ -94,6 +94,20 @@ int MWWorld::ForeignCell::getGridY() const
     return mCell->mY;
 }
 
+// This is needed for CellStore operator== and operator!= to work
+ESM::CellId MWWorld::ForeignCell::getCellId() const
+{
+    ESM::CellId id;
+
+    id.mIndex.mX = mCell->mX;
+    id.mIndex.mY = mCell->mY;
+
+    id.mWorldspace = ESM4::formIdToString(mCell->mFormId);
+    id.mPaged = !mIsInterior;
+
+    return id;
+}
+
 void MWWorld::ForeignCell::blank()
 {
     // FIXME: TODO

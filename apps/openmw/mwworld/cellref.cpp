@@ -4,8 +4,15 @@
 
 #include <extern/esm4/formid.hpp>
 #include <extern/esm4/refr.hpp>
+#include <extern/esm4/cell.hpp>
 
 #include <components/esm/objectstate.hpp>
+
+#include "../mwbase/environment.hpp"
+#include "../mwbase/world.hpp"
+//#include "../mwbase/windowmanager.hpp"
+
+#include "../mwworld/esmstore.hpp"
 
 namespace MWWorld
 {
@@ -252,6 +259,7 @@ namespace MWWorld
             mCellRef.mRefID = ref.mEditorId; // almost all references have this
 #endif
         mFormId = ref.mFormId;
+        mDestDoorId = 0;
 
         mCellRef.mRefID = ESM4::formIdToString(ref.mBaseObj);
 
@@ -264,12 +272,42 @@ namespace MWWorld
 
         mCellRef.mScale = ref.mScale;
 
+        if (ref.mDoor.destDoor != 0)
+        {
+            mCellRef.mTeleport = true;
+            mCellRef.mDoorDest.pos[0] = ref.mDoor.destPos.pos.x;
+            mCellRef.mDoorDest.pos[1] = ref.mDoor.destPos.pos.y;
+            mCellRef.mDoorDest.pos[2] = ref.mDoor.destPos.pos.z;
+            mCellRef.mDoorDest.rot[0] = ref.mDoor.destPos.rot.x;
+            mCellRef.mDoorDest.rot[1] = ref.mDoor.destPos.rot.y;
+            mCellRef.mDoorDest.rot[2] = ref.mDoor.destPos.rot.z;
+
+            mDestDoorId = ref.mDoor.destDoor;
+
+            const MWWorld::ESMStore& store = MWBase::Environment::get().getWorld()->getStore();
+            const ESM4::FormId cellId = store.getDoorCell(ref.mDoor.destDoor);
+            const MWWorld::ForeignCell *cell = store.get<MWWorld::ForeignCell>().find(cellId);
+            if (cell && !cell->mCell->mFullName.empty())
+                mCellRef.mDestCell = cell->mCell->mFullName;
+            else if (cell && !cell->mCell->mEditorId.empty())
+                mCellRef.mDestCell = cell->mCell->mEditorId;
+            else
+                mCellRef.mDestCell = "";
+        }
+        else
+            mCellRef.mDestCell = "";
+
         mChanged = false;
     }
 
     ESM4::FormId CellRef::getFormId () const
     {
         return mFormId;
+    }
+
+    ESM4::FormId CellRef::getDestDoor () const
+    {
+        return mDestDoorId;
     }
 
 }

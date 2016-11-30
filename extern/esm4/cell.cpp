@@ -90,7 +90,8 @@ bool ESM4::Cell::preload(ESM4::Reader& reader)
         load(reader);
 
     mPreloaded = true;
-    return reader.skipNextGroupCellChild(); // true if found cell child group and skipped
+    //return reader.skipNextGroupCellChild(); // true if found cell child group and skipped
+    return true; // FIXME
 }
 
 void ESM4::Cell::load(ESM4::Reader& reader)

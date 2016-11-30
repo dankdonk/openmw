@@ -8,6 +8,7 @@
 #include <components/esm/player.hpp>
 #include <components/esm/defs.hpp>
 #include <components/esm/loadbsgn.hpp>
+#include <components/esm/loadcell.hpp>
 
 #include "../mwworld/esmstore.hpp"
 

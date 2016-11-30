@@ -6,6 +6,7 @@
 #include <extern/esm4/reader.hpp>
 
 #include <components/esm/loadcell.hpp>
+#include <components/esm/cellid.hpp>
 
 namespace ESM4
 {
@@ -76,6 +77,7 @@ namespace MWWorld
         bool isExterior() const { return !mIsInterior; }
         int getGridX() const;
         int getGridY() const;
+        ESM::CellId getCellId() const;
 
         void blank(); // FIXME: is this needed?
 

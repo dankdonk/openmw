@@ -352,6 +352,7 @@ bool ESM4::Reader::getZString(std::string& str)
 }
 
 // Assumes that saveGroupStatus() is not called before this (hence we don't update mCtx.groupStack)
+// FIXME: is above comment still relevant?
 void ESM4::Reader::skipGroup()
 {
 #if 0
@@ -365,6 +366,9 @@ void ESM4::Reader::skipGroup()
 
     // keep track of data left to read from the file
     mObserver->update((std::size_t)mRecordHeader.group.groupSize - mCtx.recHeaderSize);
+
+    if (!mCtx.groupStack.empty())
+        mCtx.groupStack.back().second -= mRecordHeader.group.groupSize;
 }
 
 void ESM4::Reader::skipRecordData()

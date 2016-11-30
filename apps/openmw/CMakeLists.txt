@@ -71,7 +71,7 @@ add_openmw_dir (mwworld
     actionequip timestamp actionalchemy cellstore actionapply actioneat
     esmstore store recordcmp fallback actionrepair actionsoulgem livecellref actiondoor
     contentloader esmloader actiontrap cellreflist projectilemanager cellref mwstore
-    foreignworld foreigncell foreignland foreignstore storebase
+    foreignworld foreigncell foreignland foreignstore storebase actionteleportforeign
     )
 
 add_openmw_dir (mwclass

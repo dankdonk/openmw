@@ -175,7 +175,7 @@ struct Cell
     void blank();
     ///< Set record to default state (does not touch the ID/index).
 
-    CellId getCellId() const;
+    virtual CellId getCellId() const;
 };
 }
 #endif

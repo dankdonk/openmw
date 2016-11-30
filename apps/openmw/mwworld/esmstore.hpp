@@ -145,6 +145,10 @@ namespace MWWorld
         std::map<ESM4::FormId, int> mForeignIds;
         std::map<int, StoreBase *> mStores;
 
+        // Unlike TES3, the destination cell is not specified in the reference record.
+        // Need a lookup map to work around this issue.
+        std::map<ESM4::FormId, ESM4::FormId> mDoorDestCell;
+
         ESM::NPC mPlayerTemplate;
 
         unsigned int mDynamicCount;
@@ -182,6 +186,17 @@ namespace MWWorld
                 return 0;
             else
                 return it->second;
+        }
+
+        ESM4::FormId getDoorCell(ESM4::FormId doorId) const
+        {
+            std::map<ESM4::FormId, ESM4::FormId>::const_iterator it
+                = mDoorDestCell.find(doorId);
+
+            if (it != mDoorDestCell.end())
+                return it->second;
+
+            return 0;
         }
 
         ESMStore()

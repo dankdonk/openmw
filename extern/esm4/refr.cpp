@@ -119,7 +119,7 @@ void ESM4::Reference::load(ESM4::Reader& reader)
                 reader.get(mDoor.destPos);
                 if (reader.esmVersion() == ESM4::VER_094 || reader.esmVersion() == ESM4::VER_170)
                     reader.get(mDoor.flags); // not in Obvlivion
-                std::cout << "REFR  door: " << formIdToString(mDoor.destDoor) << std::endl;// FIXME
+                //std::cout << "REFR  dest door: " << formIdToString(mDoor.destDoor) << std::endl;// FIXME
                 break;
             }
             case ESM4::SUB_XSED:
@@ -128,17 +128,17 @@ void ESM4::Reference::load(ESM4::Reader& reader)
                 if (subHdr.dataSize == 1)
                 {
                     uint8_t data = reader.get(data);
-                    std::cout << "REFR XSED " << std::hex << (int)data << std::endl;
+                    //std::cout << "REFR XSED " << std::hex << (int)data << std::endl;
                     break;
                 }
                 else if (subHdr.dataSize == 4)
                 {
                     uint32_t data = reader.get(data);
-                    std::cout << "REFR XSED " << std::hex << (int)data << std::endl;
+                    //std::cout << "REFR XSED " << std::hex << (int)data << std::endl;
                     break;
                 }
 
-                std::cout << "REFR XSED dataSize: " << subHdr.dataSize << std::endl;// FIXME
+                //std::cout << "REFR XSED dataSize: " << subHdr.dataSize << std::endl;// FIXME
                 reader.skipSubRecordData();
                 break;
             }
@@ -150,10 +150,10 @@ void ESM4::Reference::load(ESM4::Reader& reader)
                     uint32_t data = reader.get(data);
                     uint32_t data2 = reader.get(data);
                     uint32_t data3 = reader.get(data);
-                    std::cout << "REFR XLOD " << std::hex << (int)data << " " << (int)data2 << " " << (int)data3 << std::endl;
+                    //std::cout << "REFR XLOD " << std::hex << (int)data << " " << (int)data2 << " " << (int)data3 << std::endl;
                     break;
                 }
-                std::cout << "REFR XLOD dataSize: " << subHdr.dataSize << std::endl;// FIXME
+                //std::cout << "REFR XLOD dataSize: " << subHdr.dataSize << std::endl;// FIXME
                 reader.skipSubRecordData();
                 break;
             }
@@ -162,14 +162,15 @@ void ESM4::Reference::load(ESM4::Reader& reader)
                 if (subHdr.dataSize == 4)
                 {
                     uint32_t data = reader.get(data);
-                    std::cout << "REFR XACT " << std::hex << (int)data << std::endl;
+                    //std::cout << "REFR XACT " << std::hex << (int)data << std::endl;
                     break;
                 }
 
-                std::cout << "REFR XACT dataSize: " << subHdr.dataSize << std::endl;// FIXME
+                //std::cout << "REFR XACT dataSize: " << subHdr.dataSize << std::endl;// FIXME
                 reader.skipSubRecordData();
                 break;
             }
+            // seems like another ref, e.g. 00064583 has base object 00000034 which is "XMarkerHeading"
             case ESM4::SUB_XRTM: // formId
             {
                 FormId id;
@@ -235,7 +236,7 @@ void ESM4::Reference::load(ESM4::Reader& reader)
             case MKTAG('X','H','L','T'): // Unofficial Oblivion Patch
             case MKTAG('X','C','H','G'): // thievery.exp
             {
-                std::cout << "REFR " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
+                //std::cout << "REFR " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
                 reader.skipSubRecordData();
                 break;
             }

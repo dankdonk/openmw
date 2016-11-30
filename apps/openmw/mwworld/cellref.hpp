@@ -35,6 +35,9 @@ namespace MWWorld
 
         ESM4::FormId getFormId() const;
 
+        // teleport destination door
+        ESM4::FormId getDestDoor() const;
+
         // Set RefNum to its default state.
         void unsetRefNum();
 
@@ -124,6 +127,7 @@ namespace MWWorld
         bool mChanged;
         ESM::CellRef mCellRef;
         ESM4::FormId mFormId;
+        ESM4::FormId mDestDoorId;
     };
 
 }
