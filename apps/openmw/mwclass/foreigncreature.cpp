@@ -2,11 +2,15 @@
 
 #include <extern/esm4/crea.hpp>
 
+#include "../mwbase/environment.hpp"
+#include "../mwbase/world.hpp"
+#include "../mwbase/mechanicsmanager.hpp"
+
 #include "../mwworld/ptr.hpp"
 #include "../mwworld/physicssystem.hpp"
 #include "../mwworld/cellstore.hpp"
 
-#include "../mwrender/objects.hpp"
+#include "../mwrender/actors.hpp"
 #include "../mwrender/renderinginterface.hpp"
 
 namespace MWClass
@@ -20,19 +24,43 @@ namespace MWClass
     {
         MWWorld::LiveCellRef<ESM4::Creature> *ref = ptr.get<ESM4::Creature>();
 
+        MWRender::Actors& actors = renderingInterface.getActors();
+        actors.insertCreature(ptr, model, false/*(ref->mBase->mFlags & ESM::Creature::Weapon) != 0*/);
+#if 0
+        MWWorld::LiveCellRef<ESM4::Creature> *ref = ptr.get<ESM4::Creature>();
+
         if (!model.empty()) {
             renderingInterface.getObjects().insertModel(ptr, model/*, !ref->mBase->mPersistent*/); // FIXME
         }
+#endif
     }
 
     void ForeignCreature::insertObject(const MWWorld::Ptr& ptr, const std::string& model, MWWorld::PhysicsSystem& physics) const
     {
         if(!model.empty())
+        {
+            physics.addActor(ptr, model);
+            //if (getCreatureStats(ptr).isDead())
+                //MWBase::Environment::get().getWorld()->enableActorCollision(ptr, false);
+        }
+        MWBase::Environment::get().getMechanicsManager()->add(ptr);
+#if 0
+        if(!model.empty())
             physics.addObject(ptr, model);
+#endif
     }
 
     std::string ForeignCreature::getModel(const MWWorld::Ptr &ptr) const
     {
+        MWWorld::LiveCellRef<ESM4::Creature> *ref = ptr.get<ESM4::Creature>();
+        assert (ref->mBase != NULL);
+
+        const std::string &model = ref->mBase->mModel;
+        if (!model.empty()) {
+            return "meshes\\" + model;
+        }
+        return "";
+#if 0
         MWWorld::LiveCellRef<ESM4::Creature> *ref = ptr.get<ESM4::Creature>();
         assert(ref->mBase != NULL);
 
@@ -41,6 +69,7 @@ namespace MWClass
             return "meshes\\" + model;
         }
         return "";
+#endif
     }
 
     std::string ForeignCreature::getName (const MWWorld::Ptr& ptr) const

@@ -10,7 +10,6 @@
 #include "../mwworld/physicssystem.hpp"
 #include "../mwworld/cellstore.hpp"
 
-//#include "../mwrender/objects.hpp"
 #include "../mwrender/actors.hpp"
 #include "../mwrender/renderinginterface.hpp"
 
@@ -58,7 +57,7 @@ namespace MWClass
 
         const std::string &model = ref->mBase->mModel;
         if (!model.empty()) {
-            std::cout << "ForeignNpc: " << model << std::endl;
+            //std::cout << "ForeignNpc: " << model << std::endl;
             return "meshes\\" + model;
         }
         return "";

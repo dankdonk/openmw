@@ -175,7 +175,7 @@ void ESM4::Reference::load(ESM4::Reader& reader)
             {
                 FormId id;
                 reader.get(id);
-                std::cout << "REFR XRTM : " << formIdToString(id) << std::endl;// FIXME
+                //std::cout << "REFR XRTM : " << formIdToString(id) << std::endl;// FIXME
                 break;
             }
             // lighting

@@ -820,8 +820,6 @@ namespace MWWorld
                     case MKTAG('N','F','U','R'): mForeignFurnitures.load(record, deleted, store); break;
                     case MKTAG('P','W','E','A'): mForeignWeapons.load(record, deleted, store); break;
                     case MKTAG('O','A','M','M'): mForeignAmmos.load(record, deleted, store); break;
-                    //case MKTAG('_','N','P','C'): mForeignNpcs.load(record, deleted, store); std::cout << " npc_ " << std::endl; break;
-                    //case MKTAG('A','C','R','E'): mForeignCreatures.load(record, deleted, store); std::cout << " crea " << std::endl; break;
                     case MKTAG('C','L','V','L'): mForeignLvlCreatures.load(record, deleted, store); break;
                     case MKTAG('M','S','L','G'): mForeignSoulGems.load(record, deleted, store); break;
                     case MKTAG('M','K','E','Y'): mForeignKeys.load(record, deleted, store); break;
@@ -839,28 +837,50 @@ namespace MWWorld
                 break;
             }
             case ESM4::REC_ACHR:
-            case ESM4::REC_ACRE: // Oblivion only?
             {
 
                 bool deleted = (reader.hdr().record.flags & ESM4::Rec_Deleted) != 0;
                 reader.getRecordData();
                 ESM4::ActorCharacter record;
                 record.load(reader);
-                if (!record.mEditorId.empty())
-                    std::cout << ESM4::printName(hdr.record.typeId) << ": " << record.mEditorId << std::endl; // FIXME
+                //if (!record.mEditorId.empty())
+                    //std::cout << ESM4::printName(hdr.record.typeId) << ": " << record.mEditorId << std::endl; // FIXME
 
                 switch (store.find(record.mBaseObj))
                 {
-                    case MKTAG('R','H','A','I'): std::cout << " hair " << std::endl; break;
-                    case MKTAG('S','E','Y','E'): std::cout << " eyes " << std::endl; break;
-                    case MKTAG('_','N','P','C'): mForeignNpcs.load(record, deleted, store); std::cout << " npc_ " << std::endl; break;
-                    case MKTAG('A','C','R','E'): mForeignCreatures.load(record, deleted, store); std::cout << " crea " << std::endl; break;
+                    case MKTAG('R','H','A','I'): std::cout << " achr hair " << std::endl; break;
+                    case MKTAG('S','E','Y','E'): std::cout << " achr eyes " << std::endl; break;
+                    case MKTAG('_','N','P','C'): mForeignNpcs.load(record, deleted, store); break;
 
-                    case 0: std::cerr << "Cell achr/acre " + ESM4::formIdToString(record.mBaseObj) + " not found!\n"; break;
+                    case 0: std::cerr << "Cell achr " + ESM4::formIdToString(record.mBaseObj) + " not found!\n"; break;
 
                     default:
                         std::cerr
-                            << "WARNING: Ignoring achr/acre '" << ESM4::formIdToString(record.mBaseObj) << "' of unhandled type\n";
+                            << "WARNING: Ignoring achr '" << ESM4::formIdToString(record.mBaseObj) << "' of unhandled type\n";
+                }
+                break;
+            }
+            case ESM4::REC_ACRE: // Oblivion only?
+            {
+
+                bool deleted = (reader.hdr().record.flags & ESM4::Rec_Deleted) != 0;
+                reader.getRecordData();
+                ESM4::ActorCreature record;
+                record.load(reader);
+                //if (!record.mEditorId.empty())
+                    //std::cout << ESM4::printName(hdr.record.typeId) << ": " << record.mEditorId << std::endl; // FIXME
+
+                switch (store.find(record.mBaseObj))
+                {
+                    case MKTAG('R','H','A','I'): std::cout << " crea hair " << std::endl; break;
+                    case MKTAG('S','E','Y','E'): std::cout << " crea eyes " << std::endl; break;
+                    case MKTAG('A','C','R','E'): mForeignCreatures.load(record, deleted, store); break;
+
+                    case 0: std::cerr << "Cell acre " + ESM4::formIdToString(record.mBaseObj) + " not found!\n"; break;
+
+                    default:
+                        std::cerr
+                            << "WARNING: Ignoring acre '" << ESM4::formIdToString(record.mBaseObj) << "' of unhandled type\n";
                 }
                 break;
             }
