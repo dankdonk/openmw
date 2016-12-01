@@ -32,11 +32,11 @@ static bool isCacheableRecord(int id)
     return false;
 }
 
-// FIXME: not sure what records qualify as 'cacheable'
+// FIXME: not sure what records qualify as 'cacheable' - guess is that they are referenceable records
 static bool isCacheableForeignRecord(int id)
 {
-    if (id == MKTAG('R','H','A','I') || /* hair */
-        id == MKTAG('S','E','Y','E') || /* eyes */
+    if (//id == MKTAG('R','H','A','I') || /* hair */
+        //id == MKTAG('S','E','Y','E') || /* eyes */
         id == MKTAG('N','S','O','U') || /* sound */
         id == MKTAG('I','A','C','T') || /* activator */
         id == MKTAG('A','A','P','P') || /* apparatus */
@@ -47,15 +47,22 @@ static bool isCacheableForeignRecord(int id)
         id == MKTAG('R','D','O','O') || /* door */
         id == MKTAG('R','I','N','G') || /* ingredient */
         id == MKTAG('H','L','I','G') || /* light */
-        id == MKTAG('C','M','I','S') || /* miscitem */
+        id == MKTAG('C','M','I','S') || /* misc item */
         id == MKTAG('T','S','T','A') || /* static */
+        id == MKTAG('S','G','R','A') || /* grass */
+        id == MKTAG('E','T','R','E') || /* tree */
+        id == MKTAG('R','F','L','O') || /* flora */
+        id == MKTAG('N','F','U','R') || /* furniture */
         id == MKTAG('P','W','E','A') || /* weapon */
+        id == MKTAG('O','A','M','M') || /* ammo */
         id == MKTAG('_','N','P','C') || /* npc */
         id == MKTAG('A','C','R','E') || /* creature */
         id == MKTAG('C','L','V','L') || /* lvlcreature */
         id == MKTAG('M','S','L','G') || /* soulgem */
+        id == MKTAG('M','K','E','Y') || /* key */
         id == MKTAG('H','A','L','C') || /* potion */
-        id == MKTAG('T','S','G','S')    /* sigilstone */
+        id == MKTAG('T','S','G','S') || /* sigilstone */
+        id == MKTAG('I','L','V','L')    /* leveled item */
         )
     {
         return true;
@@ -314,7 +321,7 @@ void ESMStore::loadTes4Record (ESM::ESMReader& esm)
         case ESM4::REC_APPA: reader.getRecordData(); mForeignApparatuses.load(esm); break;
         case ESM4::REC_ARMO: reader.getRecordData(); mForeignArmors.load(esm); break;
         case ESM4::REC_BOOK: reader.getRecordData(); mForeignBooks.load(esm); break;
-        case ESM4::REC_CLOT: reader.getRecordData(); mForeignClothings.load(esm); break;
+        case ESM4::REC_CLOT: reader.getRecordData(); mForeignClothes.load(esm); break;
         case ESM4::REC_CONT: reader.getRecordData(); mForeignContainers.load(esm); break;
         case ESM4::REC_DOOR: reader.getRecordData(); mForeignDoors.load(esm); break;
         case ESM4::REC_INGR: reader.getRecordData(); mForeignIngredients.load(esm); break;
@@ -335,35 +342,15 @@ void ESMStore::loadTes4Record (ESM::ESMReader& esm)
         case ESM4::REC_ALCH: reader.getRecordData(); mForeignPotions.load(esm); break;
         // SBSP (not a referenceable?)
         case ESM4::REC_SGST: reader.getRecordData(); mForeignSigilStones.load(esm); break;
-        // LVLI
+        case ESM4::REC_LVLI: reader.getRecordData(); mForeignLvlItems.load(esm); break;
         // ---- referenceables end
         // WTHR, CLMT
         //case ESM4::REC_REGN: reader.getRecordData(); mForeignRegions.load(esm); break;
         case ESM4::REC_CELL:
         {
-//FIXME: debug only
-#if 0
-            std::map<int64_t, StoreBase *>::iterator it = mStores.find(0x0100000000 | ESM4::REC_CELL);
-            if (it != mStores.end())
-            {
-                RecordId id = it->second->load(esm);
-                if (id.mIsDeleted)
-                    it->second->eraseStatic(id.mId);
-            }
-            else
-            {
-                std::cout << "Internal Error: Cell store not found" << std::endl;
-                reader.skipRecordData();
-            }
-#endif
-#if 0
-            //RecordId id = mStores[0x0100000000 | ESM4::REC_CELL]->load(esm, mForeignWorlds);
-            RecordId id = mForeignCells.load(esm, mForeignWorlds);
-            if (id.mIsDeleted)
-                mStores[0x0100000000 | ESM4::REC_CELL]->eraseStatic(id.mId);
-#endif
             // do not load and just save context
             mForeignCells.preload(esm, mForeignWorlds);
+            // FIXME: deal with deleted recods
 
             // FIXME testing only - uncomment below call to testPreload() to test
             // saving/restoring file contexts
@@ -373,24 +360,6 @@ void ESMStore::loadTes4Record (ESM::ESMReader& esm)
         }
         case ESM4::REC_WRLD:
         {
-//FIXME: debug only
-#if 0
-            std::map<int64_t, StoreBase *>::iterator it = mStores.find(0x0100000000 | ESM4::REC_WRLD);
-            if (it != mStores.end())
-            {
-                RecordId id = it->second->load(esm);
-                if (id.mIsDeleted)
-                    it->second->eraseStatic(id.mId);
-            }
-            else
-            {
-                std::cout << "Internal Error: World store not found" << std::endl;
-                reader.skipRecordData();
-            }
-#endif
-            //RecordId id = mStores[0x0100000000 | ESM4::REC_WRLD]->load(esm);
-            //if (id.mIsDeleted)
-                //mStores[0x0100000000 | ESM4::REC_WRLD]->eraseStatic(id.mId);
             RecordId id = mForeignWorlds.load(esm);
             if (id.mIsDeleted)
                 mForeignWorlds.eraseStatic(id.mId);
@@ -403,37 +372,33 @@ void ESMStore::loadTes4Record (ESM::ESMReader& esm)
         // PACK, CSTY, LSCR, LVSP
         case ESM4::REC_ANIO: reader.getRecordData(); mForeignAnimObjs.load(esm); break;
         // WATR, EFSH
-#if 0
         case ESM4::REC_REFR:
         {
-            bool loadCell = true;
-            if (loadCell) // FIXME: testing only
+            ESM4::Reference record;
+
+            reader.getRecordData();
+            record.load(reader);
+
+            // FIXME: loading *all* references just to check for doors is highly inefficient
+            if (record.mDoor.destDoor != 0)
             {
-                reader.getRecordData();
-                mForeignRefs.load(esm, mForeignCells);
+                std::pair<std::map<ESM4::FormId, ESM4::FormId>::iterator, bool> result
+                    = mDoorDestCell.insert({ record.mFormId, reader.currCell() });
+
+                // FIXME: detect duplicates?
             }
-            else
-            {
-                reader.skipRecordData();
-                std::cout << "unexpected ACHR/ACRE/REFR/PGRD" << std::endl;
-            }
+
             break;
         }
         case ESM4::REC_ACHR:
+        case ESM4::REC_ACRE: // Oblivion only?
         {
-            bool loadCell = true;
-            if (loadCell) // FIXME: testing only
-            {
-                reader.getRecordData();
-                mForeignChars.load(esm, mForeignCells);
-            }
-            else
-            {
-                reader.skipRecordData();
-                std::cout << "unexpected ACHR/ACRE/REFR/PGRD" << std::endl;
-            }
+            reader.skipRecordData();
+            //std::cout << "unexpected ACHR/ACRE in persistent child" << std::endl;
             break;
         }
+        // NOTE: LAND records are loaded later (for now) - see CellStore
+#if 0
         // TODO: verify LTEX formIds exist
         case ESM4::REC_LAND: reader.getRecordData(); mForeignLands.load(esm, mForeignCells); break;
         case ESM4::REC_NAVI: reader.getRecordData(); mNavigation.load(esm); break;
@@ -459,9 +424,7 @@ void ESMStore::loadTes4Record (ESM::ESMReader& esm)
         }
 		//
         case ESM4::REC_PGRD: // Oblivion only?
-        case ESM4::REC_ACRE: // Oblivion only?
 		//
-        case ESM4::REC_LVLI:
         case ESM4::REC_IDLE:
         case ESM4::REC_MATO:
 		//
@@ -475,30 +438,13 @@ void ESMStore::loadTes4Record (ESM::ESMReader& esm)
         }
 #endif
         case ESM4::REC_REGN:
-        /*case ESM4::REC_REFR:*/ case ESM4::REC_ACHR: case ESM4::REC_ACRE: case ESM4::REC_PGRD:
-        case ESM4::REC_PHZD: case ESM4::REC_PGRE:
+        case ESM4::REC_PGRD:
+        case ESM4::REC_PHZD: case ESM4::REC_PGRE: // Skyrim only?
         case ESM4::REC_ROAD: case ESM4::REC_LAND: case ESM4::REC_NAVM: case ESM4::REC_NAVI:
-        case ESM4::REC_LVLI: case ESM4::REC_IDLE:
+        case ESM4::REC_IDLE:
         {
             //std::cout << ESM4::printName(hdr.record.typeId) << " skipping..." << std::endl;
             reader.skipRecordData();
-            break;
-        }
-        case ESM4::REC_REFR:
-        {
-            ESM4::Reference record;
-
-            reader.getRecordData();
-            record.load(reader);
-
-            if (record.mDoor.destDoor != 0)
-            {
-                std::pair<std::map<ESM4::FormId, ESM4::FormId>::iterator, bool> result
-                    = mDoorDestCell.insert({ record.mFormId, reader.currCell() });
-
-                // FIXME: detect duplicates?
-            }
-
             break;
         }
         default:

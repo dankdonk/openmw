@@ -13,6 +13,8 @@ namespace Ogre
 namespace ESM4
 {
     struct Reference;
+    struct ActorCreature;
+    struct ActorCharacter;
 }
 
 namespace ESM
@@ -66,6 +68,8 @@ namespace MWWorld
             RefData (const ESM::CellRef& cellRef);
 
             RefData (const ESM4::Reference& cellRef);
+            RefData (const ESM4::ActorCreature& cellRef);
+            RefData (const ESM4::ActorCharacter& cellRef);
 
             RefData (const ESM::ObjectState& objectState);
             ///< Ignores local variables and custom data (not enough context available here to

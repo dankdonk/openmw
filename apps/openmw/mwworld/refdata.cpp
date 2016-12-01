@@ -75,6 +75,42 @@ namespace MWWorld
         mLocalRotation.rot[2]=0;
     }
 
+    RefData::RefData (const ESM4::ActorCreature& cellRef)
+    : mBaseNode(0), mDeleted(false),  mHasLocals (false), mEnabled (true),
+      mCount (1),
+      mCustomData (0),
+      mChanged(false) // Loading from ESM/ESP files -> assume unchanged
+    {
+        mPosition.pos[0] = cellRef.mPosition.pos.x;
+        mPosition.pos[1] = cellRef.mPosition.pos.y;
+        mPosition.pos[2] = cellRef.mPosition.pos.z;
+        mPosition.rot[0] = cellRef.mPosition.rot.x;
+        mPosition.rot[1] = cellRef.mPosition.rot.y;
+        mPosition.rot[2] = cellRef.mPosition.rot.z;
+
+        mLocalRotation.rot[0]=0;
+        mLocalRotation.rot[1]=0;
+        mLocalRotation.rot[2]=0;
+    }
+
+    RefData::RefData (const ESM4::ActorCharacter& cellRef)
+    : mBaseNode(0), mDeleted(false),  mHasLocals (false), mEnabled (true),
+      mCount (1),
+      mCustomData (0),
+      mChanged(false) // Loading from ESM/ESP files -> assume unchanged
+    {
+        mPosition.pos[0] = cellRef.mPosition.pos.x;
+        mPosition.pos[1] = cellRef.mPosition.pos.y;
+        mPosition.pos[2] = cellRef.mPosition.pos.z;
+        mPosition.rot[0] = cellRef.mPosition.rot.x;
+        mPosition.rot[1] = cellRef.mPosition.rot.y;
+        mPosition.rot[2] = cellRef.mPosition.rot.z;
+
+        mLocalRotation.rot[0]=0;
+        mLocalRotation.rot[1]=0;
+        mLocalRotation.rot[2]=0;
+    }
+
     RefData::RefData (const ESM::ObjectState& objectState)
     : mBaseNode (0), mDeleted(false), mHasLocals (false),
       mEnabled (objectState.mEnabled != 0),

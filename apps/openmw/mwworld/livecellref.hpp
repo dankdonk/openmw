@@ -4,6 +4,8 @@
 #include <typeinfo>
 
 #include <extern/esm4/refr.hpp>
+#include <extern/esm4/acre.hpp>
+#include <extern/esm4/achr.hpp>
 
 #include "cellref.hpp"
 
@@ -35,7 +37,10 @@ namespace MWWorld
 
         LiveCellRefBase(std::string type, const ESM::CellRef &cref=ESM::CellRef());
 
+        // FIXME: having 3 separate constructor is rather poor form...
         LiveCellRefBase(std::string type, const ESM4::Reference& cref);
+        LiveCellRefBase(std::string type, const ESM4::ActorCreature& cref);
+        LiveCellRefBase(std::string type, const ESM4::ActorCharacter& cref);
 
         /* Need this for the class to be recognized as polymorphic */
         virtual ~LiveCellRefBase() { }
@@ -78,6 +83,16 @@ namespace MWWorld
         return cellRef.mRef.getFormId() == ref.mFormId;
     }
 
+    inline bool operator== (const LiveCellRefBase& cellRef, const ESM4::ActorCreature& ref)
+    {
+        return cellRef.mRef.getFormId() == ref.mFormId;
+    }
+
+    inline bool operator== (const LiveCellRefBase& cellRef, const ESM4::ActorCharacter& ref)
+    {
+        return cellRef.mRef.getFormId() == ref.mFormId;
+    }
+
     /// A reference to one object (of any type) in a cell.
     ///
     /// Constructing this with a CellRef instance in the constructor means that
@@ -96,6 +111,14 @@ namespace MWWorld
         {}
 
         LiveCellRef(const ESM4::Reference& cref, const X* b = NULL)
+            : LiveCellRefBase(typeid(X).name(), cref), mBase(b)
+        {}
+
+        LiveCellRef(const ESM4::ActorCreature& cref, const X* b = NULL)
+            : LiveCellRefBase(typeid(X).name(), cref), mBase(b)
+        {}
+
+        LiveCellRef(const ESM4::ActorCharacter& cref, const X* b = NULL)
             : LiveCellRefBase(typeid(X).name(), cref), mBase(b)
         {}
 

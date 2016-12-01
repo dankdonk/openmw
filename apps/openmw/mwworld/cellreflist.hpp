@@ -24,6 +24,8 @@ namespace MWWorld
         /// all methods are known.
         void load (ESM::CellRef &ref, bool deleted, const MWWorld::ESMStore &esmStore);
         void load (ESM4::Reference &ref, bool deleted, const MWWorld::ESMStore &esmStore);
+        void load (ESM4::ActorCreature &ref, bool deleted, const MWWorld::ESMStore &esmStore);
+        void load (ESM4::ActorCharacter &ref, bool deleted, const MWWorld::ESMStore &esmStore);
 
         LiveRef *find (const std::string& name)
         {

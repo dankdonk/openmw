@@ -77,8 +77,11 @@ add_openmw_dir (mwworld
 add_openmw_dir (mwclass
     classes activator creature npc weapon armor potion apparatus book clothing container door
     ingredient creaturelevlist itemlevlist light lockpick misc probe repair static
-    foreignactivator foreigncontainer foreignbook foreigndoor foreignlight foreignmiscitem
-    foreignsound foreignstatic
+    foreignsound
+    foreignactivator foreignapparatus foreignarmor foreignbook foreignclothing foreigncontainer
+    foreigndoor foreigningredient foreignlight foreignmiscitem foreignstatic foreigngrass
+    foreigntree foreignflora foreignfurniture foreignweapon foreignammo foreignnpc foreigncreature
+    foreignleveledcreature foreignsoulgem foreignkey foreignpotion foreignsigilstone foreignleveleditem
     )
 
 add_openmw_dir (mwmechanics

@@ -3,36 +3,38 @@
 
 #include <stdexcept>
 
-#include <extern/esm4/stat.hpp>
-#include <extern/esm4/anio.hpp>
-#include <extern/esm4/cont.hpp>
-#include <extern/esm4/acti.hpp>
-#include <extern/esm4/misc.hpp>
-#include <extern/esm4/Armo.hpp>
-#include <extern/esm4/npc_.hpp>
-#include <extern/esm4/flor.hpp>
-#include <extern/esm4/gras.hpp>
-#include <extern/esm4/tree.hpp>
-#include <extern/esm4/ligh.hpp>
-#include <extern/esm4/book.hpp>
-#include <extern/esm4/furn.hpp>
-#include <extern/esm4/soun.hpp>
-#include <extern/esm4/weap.hpp>
-#include <extern/esm4/door.hpp>
-#include <extern/esm4/ammo.hpp>
-#include <extern/esm4/clot.hpp>
-#include <extern/esm4/alch.hpp>
-#include <extern/esm4/appa.hpp>
-#include <extern/esm4/ingr.hpp>
-#include <extern/esm4/sgst.hpp>
-#include <extern/esm4/slgm.hpp>
-#include <extern/esm4/keym.hpp>
 #include <extern/esm4/hair.hpp>
 #include <extern/esm4/eyes.hpp>
+#include <extern/esm4/soun.hpp>
+#include <extern/esm4/ltex.hpp>
+#include <extern/esm4/acti.hpp>
+#include <extern/esm4/appa.hpp>
+#include <extern/esm4/armo.hpp>
+#include <extern/esm4/book.hpp>
+#include <extern/esm4/clot.hpp>
+#include <extern/esm4/cont.hpp>
+#include <extern/esm4/door.hpp>
+#include <extern/esm4/ingr.hpp>
+#include <extern/esm4/ligh.hpp>
+#include <extern/esm4/misc.hpp>
+#include <extern/esm4/stat.hpp>
+#include <extern/esm4/gras.hpp>
+#include <extern/esm4/tree.hpp>
+#include <extern/esm4/flor.hpp>
+#include <extern/esm4/furn.hpp>
+#include <extern/esm4/weap.hpp>
+#include <extern/esm4/ammo.hpp>
+#include <extern/esm4/npc_.hpp>
 #include <extern/esm4/crea.hpp>
 #include <extern/esm4/lvlc.hpp>
-#include <extern/esm4/ltex.hpp>
+#include <extern/esm4/slgm.hpp>
+#include <extern/esm4/keym.hpp>
+#include <extern/esm4/alch.hpp>
+#include <extern/esm4/sgst.hpp>
+#include <extern/esm4/lvli.hpp>
+#include <extern/esm4/regn.hpp>
 #include <extern/esm4/land.hpp>
+#include <extern/esm4/anio.hpp>
 
 #include <components/esm/records.hpp>
 #include "store.hpp"
@@ -116,7 +118,7 @@ namespace MWWorld
         ForeignStore<ESM4::Apparatus>  mForeignApparatuses;
         ForeignStore<ESM4::Armor>      mForeignArmors;
         ForeignStore<ESM4::Book>       mForeignBooks;
-        ForeignStore<ESM4::Clothing>   mForeignClothings;
+        ForeignStore<ESM4::Clothing>   mForeignClothes;
         ForeignStore<ESM4::Container>  mForeignContainers;
         ForeignStore<ESM4::Door>       mForeignDoors;
         ForeignStore<ESM4::Ingredient> mForeignIngredients;
@@ -136,6 +138,7 @@ namespace MWWorld
         ForeignStore<ESM4::Key>        mForeignKeys;
         ForeignStore<ESM4::Potion>     mForeignPotions;
         ForeignStore<ESM4::SigilStone> mForeignSigilStones;
+        ForeignStore<ESM4::LeveledItem> mForeignLvlItems;
         //
         ForeignStore<ESM4::AnimObject> mForeignAnimObjs;
 
@@ -252,7 +255,7 @@ namespace MWWorld
             mStores[MKTAG('A','A','P','P')] = &mForeignApparatuses;
             mStores[MKTAG('O','A','R','M')] = &mForeignArmors;
             mStores[MKTAG('K','B','O','O')] = &mForeignBooks;
-            mStores[MKTAG('T','C','L','O')] = &mForeignClothings;
+            mStores[MKTAG('T','C','L','O')] = &mForeignClothes;
             mStores[MKTAG('T','C','O','N')] = &mForeignContainers;
             mStores[MKTAG('R','D','O','O')] = &mForeignDoors;
             mStores[MKTAG('R','I','N','G')] = &mForeignIngredients;
@@ -272,6 +275,8 @@ namespace MWWorld
             mStores[MKTAG('M','K','E','Y')] = &mForeignKeys;
             mStores[MKTAG('H','A','L','C')] = &mForeignPotions;
             mStores[MKTAG('T','S','G','S')] = &mForeignSigilStones;
+            mStores[MKTAG('I','L','V','L')] = &mForeignLvlItems;
+
             mStores[MKTAG('O','A','N','I')] = &mForeignAnimObjs;
 
             mStores[MKTAG('D','W','R','L')] = &mForeignWorlds;
@@ -643,13 +648,23 @@ namespace MWWorld
     }
 
     template <>
+    inline const ForeignStore<ESM4::Sound>& ESMStore::getForeign<ESM4::Sound>() const {
+        return mForeignSounds;
+    }
+
+    template <>
     inline const ForeignStore<ESM4::Activator>& ESMStore::getForeign<ESM4::Activator>() const {
         return mForeignActivators;
     }
 
     template <>
-    inline const ForeignStore<ESM4::Container>& ESMStore::getForeign<ESM4::Container>() const {
-        return mForeignContainers;
+    inline const ForeignStore<ESM4::Apparatus>& ESMStore::getForeign<ESM4::Apparatus>() const {
+        return mForeignApparatuses;
+    }
+
+    template <>
+    inline const ForeignStore<ESM4::Armor>& ESMStore::getForeign<ESM4::Armor>() const {
+        return mForeignArmors;
     }
 
     template <>
@@ -658,8 +673,23 @@ namespace MWWorld
     }
 
     template <>
+    inline const ForeignStore<ESM4::Clothing>& ESMStore::getForeign<ESM4::Clothing>() const {
+        return mForeignClothes;
+    }
+
+    template <>
+    inline const ForeignStore<ESM4::Container>& ESMStore::getForeign<ESM4::Container>() const {
+        return mForeignContainers;
+    }
+
+    template <>
     inline const ForeignStore<ESM4::Door>& ESMStore::getForeign<ESM4::Door>() const {
         return mForeignDoors;
+    }
+
+    template <>
+    inline const ForeignStore<ESM4::Ingredient>& ESMStore::getForeign<ESM4::Ingredient>() const {
+        return mForeignIngredients;
     }
 
     template <>
@@ -673,13 +703,78 @@ namespace MWWorld
     }
 
     template <>
-    inline const ForeignStore<ESM4::Sound>& ESMStore::getForeign<ESM4::Sound>() const {
-        return mForeignSounds;
+    inline const ForeignStore<ESM4::Static>& ESMStore::getForeign<ESM4::Static>() const {
+        return mForeignStatics;
     }
 
     template <>
-    inline const ForeignStore<ESM4::Static>& ESMStore::getForeign<ESM4::Static>() const {
-        return mForeignStatics;
+    inline const ForeignStore<ESM4::Grass>& ESMStore::getForeign<ESM4::Grass>() const {
+        return mForeignGrasses;
+    }
+
+    template <>
+    inline const ForeignStore<ESM4::Tree>& ESMStore::getForeign<ESM4::Tree>() const {
+        return mForeignTrees;
+    }
+
+    template <>
+    inline const ForeignStore<ESM4::Flora>& ESMStore::getForeign<ESM4::Flora>() const {
+        return mForeignFloras;
+    }
+
+    template <>
+    inline const ForeignStore<ESM4::Furniture>& ESMStore::getForeign<ESM4::Furniture>() const {
+        return mForeignFurnitures;
+    }
+
+    template <>
+    inline const ForeignStore<ESM4::Weapon>& ESMStore::getForeign<ESM4::Weapon>() const {
+        return mForeignWeapons;
+    }
+
+    template <>
+    inline const ForeignStore<ESM4::Ammo>& ESMStore::getForeign<ESM4::Ammo>() const {
+        return mForeignAmmos;
+    }
+
+    template <>
+    inline const ForeignStore<ESM4::Npc>& ESMStore::getForeign<ESM4::Npc>() const {
+        return mForeignNpcs;
+    }
+
+    template <>
+    inline const ForeignStore<ESM4::Creature>& ESMStore::getForeign<ESM4::Creature>() const {
+        return mForeignCreatures;
+    }
+
+    template <>
+    inline const ForeignStore<ESM4::LeveledCreature>& ESMStore::getForeign<ESM4::LeveledCreature>() const {
+        return mForeignLvlCreatures;
+    }
+
+    template <>
+    inline const ForeignStore<ESM4::SoulGem>& ESMStore::getForeign<ESM4::SoulGem>() const {
+        return mForeignSoulGems;
+    }
+
+    template <>
+    inline const ForeignStore<ESM4::Key>& ESMStore::getForeign<ESM4::Key>() const {
+        return mForeignKeys;
+    }
+
+    template <>
+    inline const ForeignStore<ESM4::Potion>& ESMStore::getForeign<ESM4::Potion>() const {
+        return mForeignPotions;
+    }
+
+    template <>
+    inline const ForeignStore<ESM4::SigilStone>& ESMStore::getForeign<ESM4::SigilStone>() const {
+        return mForeignSigilStones;
+    }
+
+    template <>
+    inline const ForeignStore<ESM4::LeveledItem>& ESMStore::getForeign<ESM4::LeveledItem>() const {
+        return mForeignLvlItems;
     }
 }
 

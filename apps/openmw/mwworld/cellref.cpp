@@ -4,6 +4,8 @@
 
 #include <extern/esm4/formid.hpp>
 #include <extern/esm4/refr.hpp>
+#include <extern/esm4/acre.hpp>
+#include <extern/esm4/achr.hpp>
 #include <extern/esm4/cell.hpp>
 
 #include <components/esm/objectstate.hpp>
@@ -296,6 +298,42 @@ namespace MWWorld
         }
         else
             mCellRef.mDestCell = "";
+
+        mChanged = false;
+    }
+
+    CellRef::CellRef (const ESM4::ActorCreature& ref)
+    {
+        mFormId = ref.mFormId;
+
+        mCellRef.mRefID = ESM4::formIdToString(ref.mBaseObj);
+
+        mCellRef.mPos.pos[0] = ref.mPosition.pos.x;
+        mCellRef.mPos.pos[1] = ref.mPosition.pos.y;
+        mCellRef.mPos.pos[2] = ref.mPosition.pos.z;
+        mCellRef.mPos.rot[0] = ref.mPosition.rot.x;
+        mCellRef.mPos.rot[1] = ref.mPosition.rot.y;
+        mCellRef.mPos.rot[2] = ref.mPosition.rot.z;
+
+        mCellRef.mScale = ref.mScale;
+
+        mChanged = false;
+    }
+
+    CellRef::CellRef (const ESM4::ActorCharacter& ref)
+    {
+        mFormId = ref.mFormId;
+
+        mCellRef.mRefID = ESM4::formIdToString(ref.mBaseObj);
+
+        mCellRef.mPos.pos[0] = ref.mPosition.pos.x;
+        mCellRef.mPos.pos[1] = ref.mPosition.pos.y;
+        mCellRef.mPos.pos[2] = ref.mPosition.pos.z;
+        mCellRef.mPos.rot[0] = ref.mPosition.rot.x;
+        mCellRef.mPos.rot[1] = ref.mPosition.rot.y;
+        mCellRef.mPos.rot[2] = ref.mPosition.rot.z;
+
+        mCellRef.mScale = ref.mScale;
 
         mChanged = false;
     }

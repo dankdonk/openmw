@@ -340,5 +340,6 @@ template class MWWorld::ForeignStore<ESM4::SoulGem>;
 template class MWWorld::ForeignStore<ESM4::Key>;
 template class MWWorld::ForeignStore<ESM4::Potion>;
 template class MWWorld::ForeignStore<ESM4::SigilStone>;
+template class MWWorld::ForeignStore<ESM4::LeveledItem>;
 //
 template class MWWorld::ForeignStore<ESM4::AnimObject>;

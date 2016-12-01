@@ -7,6 +7,8 @@ namespace ESM4
 {
     typedef uint32_t FormId;
     struct Reference;
+    struct ActorCreature;
+    struct ActorCharacter;
 }
 
 namespace ESM
@@ -29,6 +31,8 @@ namespace MWWorld
         }
 
         CellRef (const ESM4::Reference& ref);
+        CellRef (const ESM4::ActorCreature& ref);
+        CellRef (const ESM4::ActorCharacter& ref);
 
         // Note: Currently unused for items in containers
         const ESM::RefNum& getRefNum() const;

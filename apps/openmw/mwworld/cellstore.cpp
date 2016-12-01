@@ -3,9 +3,11 @@
 #include <iostream>
 #include <algorithm>
 
-#include <extern/esm4/refr.hpp>
 #include <extern/esm4/formid.hpp>
 #include <extern/esm4/cell.hpp>
+#include <extern/esm4/refr.hpp>
+#include <extern/esm4/achr.hpp>
+#include <extern/esm4/acre.hpp>
 
 #include <components/esm/cellstate.hpp>
 #include <components/esm/cellid.hpp>
@@ -179,6 +181,72 @@ namespace MWWorld
 
     template <typename X>
     void CellRefList<X>::load(ESM4::Reference &ref, bool deleted, const MWWorld::ESMStore &esmStore)
+    {
+        const MWWorld::ForeignStore<X> &store = esmStore.getForeign<X>();
+
+        if (const X *ptr = store.search (ref.mBaseObj))
+        {
+            // see operator== in livecellref.hpp, check for matching formId
+            typename std::list<LiveRef>::iterator iter =
+                std::find(mList.begin(), mList.end(), ref);
+
+            LiveRef liveCellRef (ref, ptr); // ref is the reference, ptr is the base object
+
+            if (deleted)
+                liveCellRef.mData.setDeleted(true);
+
+            if (iter != mList.end())
+                *iter = liveCellRef;
+            else
+            {
+                mList.push_back (liveCellRef);
+                //std::cout << "CellRefList::load "
+                    //<< ESM4::formIdToString(mList.back().mBase->mFormId) << std::endl; // FIXME: debug only
+            }
+        }
+        else
+        {
+            std::cerr
+                << "Error: could not resolve foreign cell reference " << ref.mEditorId
+                << " (dropping reference)" << std::endl;
+        }
+    }
+
+    template <typename X>
+    void CellRefList<X>::load(ESM4::ActorCreature &ref, bool deleted, const MWWorld::ESMStore &esmStore)
+    {
+        const MWWorld::ForeignStore<X> &store = esmStore.getForeign<X>();
+
+        if (const X *ptr = store.search (ref.mBaseObj))
+        {
+            // see operator== in livecellref.hpp, check for matching formId
+            typename std::list<LiveRef>::iterator iter =
+                std::find(mList.begin(), mList.end(), ref);
+
+            LiveRef liveCellRef (ref, ptr); // ref is the reference, ptr is the base object
+
+            if (deleted)
+                liveCellRef.mData.setDeleted(true);
+
+            if (iter != mList.end())
+                *iter = liveCellRef;
+            else
+            {
+                mList.push_back (liveCellRef);
+                //std::cout << "CellRefList::load "
+                    //<< ESM4::formIdToString(mList.back().mBase->mFormId) << std::endl; // FIXME: debug only
+            }
+        }
+        else
+        {
+            std::cerr
+                << "Error: could not resolve foreign cell reference " << ref.mEditorId
+                << " (dropping reference)" << std::endl;
+        }
+    }
+
+    template <typename X>
+    void CellRefList<X>::load(ESM4::ActorCharacter &ref, bool deleted, const MWWorld::ESMStore &esmStore)
     {
         const MWWorld::ForeignStore<X> &store = esmStore.getForeign<X>();
 
@@ -734,50 +802,32 @@ namespace MWWorld
                 {
                     case MKTAG('R','H','A','I'): std::cout << " hair " << std::endl; break;
                     case MKTAG('S','E','Y','E'): std::cout << " eyes " << std::endl; break;
-                    case MKTAG('N','S','O','U'):
-                    {
-                        mForeignSounds.load(record, deleted, store); break;
-                    }
-                    case MKTAG('I','A','C','T'):
-                    {
-                        mForeignActivators.load(record, deleted, store); break;
-                    }
-                    case MKTAG('A','A','P','P'): std::cout << " apparatus " << std::endl; break;
-                    case MKTAG('O','A','R','M'): std::cout << " armor " << std::endl; break;
-                    case MKTAG('K','B','O','O'):
-                    {
-                        mForeignBooks.load(record, deleted, store); break;
-                    }
-                    case MKTAG('T','C','L','O'): std::cout << " clothing " << std::endl; break;
-                    case MKTAG('T','C','O','N'):
-                    {
-                        mForeignContainers.load(record, deleted, store); break;
-                    }
-                    case MKTAG('R','D','O','O'):
-                    {
-                        mForeignDoors.load(record, deleted, store);
-                        break;
-                    }
-                    case MKTAG('R','I','N','G'): std::cout << " ingredient " << std::endl; break;
-                    case MKTAG('H','L','I','G'):
-                    {
-                        mForeignLights.load(record, deleted, store); break;
-                    }
-                    case MKTAG('C','M','I','S'):
-                    {
-                        mForeignMiscItems.load(record, deleted, store); break;
-                    }
-                    case MKTAG('T','S','T','A'):
-                    {
-                        mForeignStatics.load(record, deleted, store); break;
-                    }
-                    case MKTAG('P','W','E','A'): std::cout << " weapon " << std::endl; break;
-                    case MKTAG('_','N','P','C'): std::cout << " npc " << std::endl; break;
-                    case MKTAG('A','C','R','E'): std::cout << " creature " << std::endl; break;
-                    case MKTAG('C','L','V','L'): std::cout << " lvlcreature " << std::endl; break;
-                    case MKTAG('M','S','L','G'): std::cout << " soulgem " << std::endl; break;
-                    case MKTAG('H','A','L','C'): std::cout << " potion " << std::endl; break;
-                    case MKTAG('T','S','G','S'): std::cout << " sigilstone " << std::endl; break;
+                    case MKTAG('N','S','O','U'): mForeignSounds.load(record, deleted, store); break;
+                    case MKTAG('I','A','C','T'): mForeignActivators.load(record, deleted, store); break;
+                    case MKTAG('A','A','P','P'): mForeignApparatus.load(record, deleted, store); break;
+                    case MKTAG('O','A','R','M'): mForeignArmors.load(record, deleted, store); break;
+                    case MKTAG('K','B','O','O'): mForeignBooks.load(record, deleted, store); break;
+                    case MKTAG('T','C','L','O'): mForeignClothes.load(record, deleted, store); break;
+                    case MKTAG('T','C','O','N'): mForeignContainers.load(record, deleted, store); break;
+                    case MKTAG('R','D','O','O'): mForeignDoors.load(record, deleted, store); break;
+                    case MKTAG('R','I','N','G'): mForeignIngredients.load(record, deleted, store); break;
+                    case MKTAG('H','L','I','G'): mForeignLights.load(record, deleted, store); break;
+                    case MKTAG('C','M','I','S'): mForeignMiscItems.load(record, deleted, store); break;
+                    case MKTAG('T','S','T','A'): mForeignStatics.load(record, deleted, store); break;
+                    case MKTAG('S','G','R','A'): mForeignGrasses.load(record, deleted, store); break;
+                    case MKTAG('E','T','R','E'): mForeignTrees.load(record, deleted, store); break;
+                    case MKTAG('R','F','L','O'): mForeignFloras.load(record, deleted, store); break;
+                    case MKTAG('N','F','U','R'): mForeignFurnitures.load(record, deleted, store); break;
+                    case MKTAG('P','W','E','A'): mForeignWeapons.load(record, deleted, store); break;
+                    case MKTAG('O','A','M','M'): mForeignAmmos.load(record, deleted, store); break;
+                    //case MKTAG('_','N','P','C'): mForeignNpcs.load(record, deleted, store); std::cout << " npc_ " << std::endl; break;
+                    //case MKTAG('A','C','R','E'): mForeignCreatures.load(record, deleted, store); std::cout << " crea " << std::endl; break;
+                    case MKTAG('C','L','V','L'): mForeignLvlCreatures.load(record, deleted, store); break;
+                    case MKTAG('M','S','L','G'): mForeignSoulGems.load(record, deleted, store); break;
+                    case MKTAG('M','K','E','Y'): mForeignKeys.load(record, deleted, store); break;
+                    case MKTAG('H','A','L','C'): mForeignPotions.load(record, deleted, store); break;
+                    case MKTAG('T','S','G','S'): mForeignSigilStones.load(record, deleted, store); break;
+                    case MKTAG('I','L','V','L'): mForeignLvlItems.load(record, deleted, store); break;
 
                     case 0: std::cerr << "Cell reference " + ESM4::formIdToString(record.mBaseObj) + " not found!\n"; break;
 
@@ -788,17 +838,29 @@ namespace MWWorld
                 break;
             }
             case ESM4::REC_ACHR:
-#if 0
+            case ESM4::REC_ACRE: // Oblivion only?
             {
+
+                bool deleted = (reader.hdr().record.flags & ESM4::Rec_Deleted) != 0;
                 reader.getRecordData();
                 ESM4::ActorCharacter record;
                 record.load(reader);
-                break;
-            }
-#endif
-            {
-                //std::cout << ESM4::printName(hdr.record.typeId) << " skipping..." << std::endl;
-                reader.skipRecordData();
+                if (!record.mEditorId.empty())
+                    std::cout << ESM4::printName(hdr.record.typeId) << ": " << record.mEditorId << std::endl; // FIXME
+
+                switch (store.find(record.mBaseObj))
+                {
+                    case MKTAG('R','H','A','I'): std::cout << " hair " << std::endl; break;
+                    case MKTAG('S','E','Y','E'): std::cout << " eyes " << std::endl; break;
+                    case MKTAG('_','N','P','C'): mForeignNpcs.load(record, deleted, store); std::cout << " npc_ " << std::endl; break;
+                    case MKTAG('A','C','R','E'): mForeignCreatures.load(record, deleted, store); std::cout << " crea " << std::endl; break;
+
+                    case 0: std::cerr << "Cell achr/acre " + ESM4::formIdToString(record.mBaseObj) + " not found!\n"; break;
+
+                    default:
+                        std::cerr
+                            << "WARNING: Ignoring achr/acre '" << ESM4::formIdToString(record.mBaseObj) << "' of unhandled type\n";
+                }
                 break;
             }
             case ESM4::REC_LAND:
@@ -824,7 +886,6 @@ namespace MWWorld
                 break;
             }
             case ESM4::REC_PGRD: // Oblivion only?
-            case ESM4::REC_ACRE: // Oblivion only?
             case ESM4::REC_ROAD: // Oblivion only?
             {
                 //std::cout << ESM4::printName(hdr.record.typeId) << " skipping..." << std::endl;

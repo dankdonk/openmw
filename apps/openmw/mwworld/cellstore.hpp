@@ -7,19 +7,44 @@
 #include <typeinfo>
 #include <boost/shared_ptr.hpp>
 
+#include <extern/esm4/hair.hpp>
+#include <extern/esm4/eyes.hpp>
+#include <extern/esm4/soun.hpp>
+#include <extern/esm4/ltex.hpp>
+#include <extern/esm4/acti.hpp>
+#include <extern/esm4/appa.hpp>
+#include <extern/esm4/armo.hpp>
+#include <extern/esm4/book.hpp>
+#include <extern/esm4/clot.hpp>
+#include <extern/esm4/cont.hpp>
+#include <extern/esm4/door.hpp>
+#include <extern/esm4/ingr.hpp>
+#include <extern/esm4/ligh.hpp>
+#include <extern/esm4/misc.hpp>
+#include <extern/esm4/stat.hpp>
+#include <extern/esm4/gras.hpp>
+#include <extern/esm4/tree.hpp>
+#include <extern/esm4/flor.hpp>
+#include <extern/esm4/furn.hpp>
+#include <extern/esm4/weap.hpp>
+#include <extern/esm4/ammo.hpp>
+#include <extern/esm4/npc_.hpp>
+#include <extern/esm4/crea.hpp>
+#include <extern/esm4/lvlc.hpp>
+#include <extern/esm4/slgm.hpp>
+#include <extern/esm4/keym.hpp>
+#include <extern/esm4/alch.hpp>
+#include <extern/esm4/sgst.hpp>
+#include <extern/esm4/lvli.hpp>
+#include <extern/esm4/regn.hpp>
+#include <extern/esm4/land.hpp>
+#include <extern/esm4/anio.hpp>
+
 #include "livecellref.hpp"
 #include "cellreflist.hpp"
 
 #include <components/esm/fogstate.hpp>
 #include <components/esm/records.hpp>
-#include <extern/esm4/acti.hpp>
-#include <extern/esm4/cont.hpp>
-#include <extern/esm4/book.hpp>
-#include <extern/esm4/door.hpp>
-#include <extern/esm4/ligh.hpp>
-#include <extern/esm4/misc.hpp>
-#include <extern/esm4/soun.hpp>
-#include <extern/esm4/stat.hpp>
 
 #include "../mwmechanics/pathgrid.hpp"  // TODO: maybe belongs in mwworld
 
@@ -94,14 +119,32 @@ namespace MWWorld
             CellRefList<ESM::Repair>            mRepairs;
             CellRefList<ESM::Static>            mStatics;
             CellRefList<ESM::Weapon>            mWeapons;
+            CellRefList<ESM4::Sound>            mForeignSounds;
             CellRefList<ESM4::Activator>        mForeignActivators;
-            CellRefList<ESM4::Container>        mForeignContainers;
+            CellRefList<ESM4::Apparatus>        mForeignApparatus;
+            CellRefList<ESM4::Armor>            mForeignArmors;
             CellRefList<ESM4::Book>             mForeignBooks;
+            CellRefList<ESM4::Clothing>         mForeignClothes;
+            CellRefList<ESM4::Container>        mForeignContainers;
             CellRefList<ESM4::Door>             mForeignDoors;
+            CellRefList<ESM4::Ingredient>       mForeignIngredients;
             CellRefList<ESM4::Light>            mForeignLights;
             CellRefList<ESM4::MiscItem>         mForeignMiscItems;
-            CellRefList<ESM4::Sound>            mForeignSounds;
             CellRefList<ESM4::Static>           mForeignStatics;
+            CellRefList<ESM4::Grass>            mForeignGrasses;
+            CellRefList<ESM4::Tree>             mForeignTrees;
+            CellRefList<ESM4::Flora>            mForeignFloras;
+            CellRefList<ESM4::Furniture>        mForeignFurnitures;
+            CellRefList<ESM4::Weapon>           mForeignWeapons;
+            CellRefList<ESM4::Ammo>             mForeignAmmos;
+            CellRefList<ESM4::Npc>              mForeignNpcs;
+            CellRefList<ESM4::Creature>         mForeignCreatures;
+            CellRefList<ESM4::LeveledCreature>  mForeignLvlCreatures;
+            CellRefList<ESM4::SoulGem>          mForeignSoulGems;
+            CellRefList<ESM4::Key>              mForeignKeys;
+            CellRefList<ESM4::Potion>           mForeignPotions;
+            CellRefList<ESM4::SigilStone>       mForeignSigilStones;
+            CellRefList<ESM4::LeveledItem>      mForeignLvlItems;
 
             void loadTes4Group (const MWWorld::ESMStore &store, ESM::ESMReader& esm);
             void loadTes4Record (const MWWorld::ESMStore &store, ESM::ESMReader& esm);
@@ -185,14 +228,33 @@ namespace MWWorld
                     forEachImp (functor, mCreatures) &&
                     forEachImp (functor, mNpcs) &&
                     forEachImp (functor, mCreatureLists) &&
+                    //
+                    forEachImp (functor, mForeignSounds) &&
                     forEachImp (functor, mForeignActivators) &&
-                    forEachImp (functor, mForeignContainers) &&
+                    forEachImp (functor, mForeignApparatus) &&
+                    forEachImp (functor, mForeignArmors) &&
                     forEachImp (functor, mForeignBooks) &&
+                    forEachImp (functor, mForeignClothes) &&
+                    forEachImp (functor, mForeignContainers) &&
                     forEachImp (functor, mForeignDoors) &&
+                    forEachImp (functor, mForeignIngredients) &&
                     forEachImp (functor, mForeignLights) &&
                     forEachImp (functor, mForeignMiscItems) &&
-                    forEachImp (functor, mForeignSounds) &&
-                    forEachImp (functor, mForeignStatics);
+                    forEachImp (functor, mForeignStatics) &&
+                    forEachImp (functor, mForeignGrasses) &&
+                    forEachImp (functor, mForeignTrees) &&
+                    forEachImp (functor, mForeignFloras) &&
+                    forEachImp (functor, mForeignFurnitures) &&
+                    forEachImp (functor, mForeignWeapons) &&
+                    forEachImp (functor, mForeignAmmos) &&
+                    forEachImp (functor, mForeignNpcs) &&
+                    forEachImp (functor, mForeignCreatures) &&
+                    forEachImp (functor, mForeignLvlCreatures) &&
+                    forEachImp (functor, mForeignSoulGems) &&
+                    forEachImp (functor, mForeignKeys) &&
+                    forEachImp (functor, mForeignPotions) &&
+                    forEachImp (functor, mForeignSigilStones) &&
+                    forEachImp (functor, mForeignLvlItems);
             }
 
             template<class Functor>

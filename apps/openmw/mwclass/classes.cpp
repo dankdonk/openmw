@@ -20,14 +20,33 @@
 #include "probe.hpp"
 #include "repair.hpp"
 #include "static.hpp"
+
+#include "foreignsound.hpp"
 #include "foreignactivator.hpp"
-#include "foreigncontainer.hpp"
+#include "foreignapparatus.hpp"
+#include "foreignarmor.hpp"
 #include "foreignbook.hpp"
+#include "foreignclothing.hpp"
+#include "foreigncontainer.hpp"
 #include "foreigndoor.hpp"
+#include "foreigningredient.hpp"
 #include "foreignlight.hpp"
 #include "foreignmiscitem.hpp"
-#include "foreignsound.hpp"
 #include "foreignstatic.hpp"
+#include "foreigngrass.hpp"
+#include "foreigntree.hpp"
+#include "foreignflora.hpp"
+#include "foreignfurniture.hpp"
+#include "foreignweapon.hpp"
+#include "foreignammo.hpp"
+#include "foreignnpc.hpp"
+#include "foreigncreature.hpp"
+#include "foreignleveledcreature.hpp"
+#include "foreignsoulgem.hpp"
+#include "foreignkey.hpp"
+#include "foreignpotion.hpp"
+#include "foreignsigilstone.hpp"
+#include "foreignleveleditem.hpp"
 
 namespace MWClass
 {
@@ -53,13 +72,32 @@ namespace MWClass
         Probe::registerSelf();
         Repair::registerSelf();
         Static::registerSelf();
+
+        ForeignSound::registerSelf();
         ForeignActivator::registerSelf();
-        ForeignContainer::registerSelf();
+        ForeignApparatus::registerSelf();
+        ForeignArmor::registerSelf();
         ForeignBook::registerSelf();
+        ForeignClothing::registerSelf();
+        ForeignContainer::registerSelf();
         ForeignDoor::registerSelf();
+        ForeignIngredient::registerSelf();
         ForeignLight::registerSelf();
         ForeignMiscItem::registerSelf();
-        ForeignSound::registerSelf();
         ForeignStatic::registerSelf();
+        ForeignGrass::registerSelf();
+        ForeignTree::registerSelf();
+        ForeignFlora::registerSelf();
+        ForeignFurniture::registerSelf();
+        ForeignWeapon::registerSelf();
+        ForeignAmmo::registerSelf();
+        ForeignNpc::registerSelf();
+        ForeignCreature::registerSelf();
+        ForeignLeveledCreature::registerSelf();
+        ForeignSoulGem::registerSelf();
+        ForeignKey::registerSelf();
+        ForeignPotion::registerSelf();
+        ForeignSigilStone::registerSelf();
+        ForeignLeveledItem::registerSelf();
     }
 }
