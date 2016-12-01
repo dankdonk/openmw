@@ -81,7 +81,8 @@ add_openmw_dir (mwclass
     foreignactivator foreignapparatus foreignarmor foreignbook foreignclothing foreigncontainer
     foreigndoor foreigningredient foreignlight foreignmiscitem foreignstatic foreigngrass
     foreigntree foreignflora foreignfurniture foreignweapon foreignammo foreignnpc foreigncreature
-    foreignleveledcreature foreignsoulgem foreignkey foreignpotion foreignsigilstone foreignleveleditem
+    foreignleveledcreature foreignsoulgem foreignkey foreignpotion foreignsubspace foreignsigilstone
+    foreignleveleditem
     )
 
 add_openmw_dir (mwmechanics

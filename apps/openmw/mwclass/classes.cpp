@@ -45,6 +45,7 @@
 #include "foreignsoulgem.hpp"
 #include "foreignkey.hpp"
 #include "foreignpotion.hpp"
+#include "foreignsubspace.hpp"
 #include "foreignsigilstone.hpp"
 #include "foreignleveleditem.hpp"
 
@@ -97,6 +98,7 @@ namespace MWClass
         ForeignSoulGem::registerSelf();
         ForeignKey::registerSelf();
         ForeignPotion::registerSelf();
+        ForeignSubspace::registerSelf();
         ForeignSigilStone::registerSelf();
         ForeignLeveledItem::registerSelf();
     }

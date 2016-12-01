@@ -34,6 +34,7 @@
 #include <extern/esm4/slgm.hpp>
 #include <extern/esm4/keym.hpp>
 #include <extern/esm4/alch.hpp>
+#include <extern/esm4/sbsp.hpp>
 #include <extern/esm4/sgst.hpp>
 #include <extern/esm4/lvli.hpp>
 #include <extern/esm4/regn.hpp>
@@ -143,6 +144,7 @@ namespace MWWorld
             CellRefList<ESM4::SoulGem>          mForeignSoulGems;
             CellRefList<ESM4::Key>              mForeignKeys;
             CellRefList<ESM4::Potion>           mForeignPotions;
+            CellRefList<ESM4::Subspace>         mForeignSubspaces;
             CellRefList<ESM4::SigilStone>       mForeignSigilStones;
             CellRefList<ESM4::LeveledItem>      mForeignLvlItems;
 
@@ -253,6 +255,7 @@ namespace MWWorld
                     forEachImp (functor, mForeignSoulGems) &&
                     forEachImp (functor, mForeignKeys) &&
                     forEachImp (functor, mForeignPotions) &&
+                    forEachImp (functor, mForeignSubspaces) &&
                     forEachImp (functor, mForeignSigilStones) &&
                     forEachImp (functor, mForeignLvlItems);
             }

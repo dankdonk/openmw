@@ -30,6 +30,7 @@
 #include <extern/esm4/slgm.hpp>
 #include <extern/esm4/keym.hpp>
 #include <extern/esm4/alch.hpp>
+#include <extern/esm4/sbsp.hpp>
 #include <extern/esm4/sgst.hpp>
 #include <extern/esm4/lvli.hpp>
 #include <extern/esm4/regn.hpp>
@@ -137,6 +138,7 @@ namespace MWWorld
         ForeignStore<ESM4::SoulGem>    mForeignSoulGems;
         ForeignStore<ESM4::Key>        mForeignKeys;
         ForeignStore<ESM4::Potion>     mForeignPotions;
+        ForeignStore<ESM4::Subspace>   mForeignSubspaces;
         ForeignStore<ESM4::SigilStone> mForeignSigilStones;
         ForeignStore<ESM4::LeveledItem> mForeignLvlItems;
         //
@@ -274,6 +276,7 @@ namespace MWWorld
             mStores[MKTAG('M','S','L','G')] = &mForeignSoulGems;
             mStores[MKTAG('M','K','E','Y')] = &mForeignKeys;
             mStores[MKTAG('H','A','L','C')] = &mForeignPotions;
+            mStores[MKTAG('P','S','B','S')] = &mForeignSubspaces;
             mStores[MKTAG('T','S','G','S')] = &mForeignSigilStones;
             mStores[MKTAG('I','L','V','L')] = &mForeignLvlItems;
 
@@ -765,6 +768,11 @@ namespace MWWorld
     template <>
     inline const ForeignStore<ESM4::Potion>& ESMStore::getForeign<ESM4::Potion>() const {
         return mForeignPotions;
+    }
+
+    template <>
+    inline const ForeignStore<ESM4::Subspace>& ESMStore::getForeign<ESM4::Subspace>() const {
+        return mForeignSubspaces;
     }
 
     template <>

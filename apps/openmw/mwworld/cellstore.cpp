@@ -826,6 +826,7 @@ namespace MWWorld
                     case MKTAG('M','S','L','G'): mForeignSoulGems.load(record, deleted, store); break;
                     case MKTAG('M','K','E','Y'): mForeignKeys.load(record, deleted, store); break;
                     case MKTAG('H','A','L','C'): mForeignPotions.load(record, deleted, store); break;
+                    case MKTAG('P','S','B','S'): mForeignSubspaces.load(record, deleted, store); break;
                     case MKTAG('T','S','G','S'): mForeignSigilStones.load(record, deleted, store); break;
                     case MKTAG('I','L','V','L'): mForeignLvlItems.load(record, deleted, store); break;
 

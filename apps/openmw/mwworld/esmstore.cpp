@@ -61,6 +61,7 @@ static bool isCacheableForeignRecord(int id)
         id == MKTAG('M','S','L','G') || /* soulgem */
         id == MKTAG('M','K','E','Y') || /* key */
         id == MKTAG('H','A','L','C') || /* potion */
+        id == MKTAG('P','S','B','S') || /* subspace */
         id == MKTAG('T','S','G','S') || /* sigilstone */
         id == MKTAG('I','L','V','L')    /* leveled item */
         )
@@ -220,7 +221,8 @@ void ESMStore::loadTes4Group (ESM::ESMReader &esm)
                 hdr.group.label.value == ESM4::REC_EYES || hdr.group.label.value == ESM4::REC_CELL ||
                 hdr.group.label.value == ESM4::REC_CREA || hdr.group.label.value == ESM4::REC_LVLC ||
                 hdr.group.label.value == ESM4::REC_LVLI || hdr.group.label.value == ESM4::REC_MATO ||
-                hdr.group.label.value == ESM4::REC_IDLE || hdr.group.label.value == ESM4::REC_LTEX
+                hdr.group.label.value == ESM4::REC_IDLE || hdr.group.label.value == ESM4::REC_LTEX ||
+                hdr.group.label.value == MKTAG('S','B','S','P')
                 )
             {
                 reader.saveGroupStatus();
@@ -229,7 +231,7 @@ void ESMStore::loadTes4Group (ESM::ESMReader &esm)
             else
             {
                 // Skip groups that are of no interest (for now).
-                //  GMST GLOB CLAS FACT RACE SKIL MGEF SCPT ENCH SPEL BSGN SBSP WTHR CLMT DIAL
+                //  GMST GLOB CLAS FACT RACE SKIL MGEF SCPT ENCH SPEL BSGN WTHR CLMT DIAL
                 //  QUST PACK CSTY LSCR LVSP WATR EFSH
 
                 // FIXME: The label field of a group is not reliable, so we will need to check here as well
@@ -340,7 +342,7 @@ void ESMStore::loadTes4Record (ESM::ESMReader& esm)
         case ESM4::REC_SLGM: reader.getRecordData(); mForeignSoulGems.load(esm); break;
         case ESM4::REC_KEYM: reader.getRecordData(); mForeignKeys.load(esm); break;
         case ESM4::REC_ALCH: reader.getRecordData(); mForeignPotions.load(esm); break;
-        // SBSP (not a referenceable?)
+        case MKTAG('S','B','S','P'): reader.getRecordData(); mForeignSubspaces.load(esm); break;
         case ESM4::REC_SGST: reader.getRecordData(); mForeignSigilStones.load(esm); break;
         case ESM4::REC_LVLI: reader.getRecordData(); mForeignLvlItems.load(esm); break;
         // ---- referenceables end
