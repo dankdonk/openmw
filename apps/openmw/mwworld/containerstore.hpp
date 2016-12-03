@@ -4,6 +4,21 @@
 #include <iterator>
 #include <map>
 
+#include <extern/esm4/alch.hpp>
+#include <extern/esm4/appa.hpp>
+#include <extern/esm4/armo.hpp>
+#include <extern/esm4/book.hpp>
+#include <extern/esm4/clot.hpp>
+#include <extern/esm4/ingr.hpp>
+#include <extern/esm4/ligh.hpp>
+#include <extern/esm4/slgm.hpp>
+#include <extern/esm4/misc.hpp>
+#include <extern/esm4/keym.hpp>
+#include <extern/esm4/sgst.hpp>
+#include <extern/esm4/weap.hpp>
+#include <extern/esm4/ammo.hpp>
+#include <extern/esm4/lvli.hpp>
+
 #include <components/esm/loadalch.hpp>
 #include <components/esm/loadappa.hpp>
 #include <components/esm/loadarmo.hpp>
@@ -47,7 +62,22 @@ namespace MWWorld
             static const int Type_Repair = 0x0400;
             static const int Type_Weapon = 0x0800;
 
-            static const int Type_Last = Type_Weapon;
+            static const int Type_ForeignPotion = 0x8001;
+            static const int Type_ForeignApparatus = 0x8002;
+            static const int Type_ForeignArmor = 0x8004;
+            static const int Type_ForeignBook = 0x8008;
+            static const int Type_ForeignClothing = 0x8010;
+            static const int Type_ForeignIngredient = 0x8020;
+            static const int Type_ForeignLight = 0x8040;
+            static const int Type_ForeignSoulGem = 0x8080;
+            static const int Type_ForeignMiscItem = 0x8100;
+            static const int Type_ForeignKey = 0x8200;
+            static const int Type_ForeignSigilStone = 0x8400;
+            static const int Type_ForeignWeapon = 0x8800;
+            static const int Type_ForeignAmmo = 0x9000;
+            static const int Type_ForeignLeveledItem = 0xa000;
+
+            static const int Type_Last = Type_ForeignLeveledItem;
 
             static const int Type_All = 0xffff;
 
@@ -62,11 +92,26 @@ namespace MWWorld
             MWWorld::CellRefList<ESM::Clothing>          clothes;
             MWWorld::CellRefList<ESM::Ingredient>        ingreds;
             MWWorld::CellRefList<ESM::Light>             lights;
-            MWWorld::CellRefList<ESM::Lockpick>              lockpicks;
+            MWWorld::CellRefList<ESM::Lockpick>          lockpicks;
             MWWorld::CellRefList<ESM::Miscellaneous>     miscItems;
             MWWorld::CellRefList<ESM::Probe>             probes;
             MWWorld::CellRefList<ESM::Repair>            repairs;
             MWWorld::CellRefList<ESM::Weapon>            weapons;
+
+            MWWorld::CellRefList<ESM4::Potion>           foreignPotions;
+            MWWorld::CellRefList<ESM4::Apparatus>        foreignAppas;
+            MWWorld::CellRefList<ESM4::Armor>            foreignArmors;
+            MWWorld::CellRefList<ESM4::Book>             foreignBooks;
+            MWWorld::CellRefList<ESM4::Clothing>         foreignClothes;
+            MWWorld::CellRefList<ESM4::Ingredient>       foreignIngredients;
+            MWWorld::CellRefList<ESM4::Light>            foreignLights;
+            MWWorld::CellRefList<ESM4::SoulGem>          foreignSoulGems;
+            MWWorld::CellRefList<ESM4::MiscItem>         foreignMiscItems;
+            MWWorld::CellRefList<ESM4::Key>              foreignKeys;
+            MWWorld::CellRefList<ESM4::SigilStone>       foreignSigilStones;
+            MWWorld::CellRefList<ESM4::Weapon>           foreignWeapons;
+            MWWorld::CellRefList<ESM4::Ammo>             foreignAmmos;
+            MWWorld::CellRefList<ESM4::LeveledItem>      foreignLvlItems;
 
             std::map<std::string, int> mLevelledItemMap;
             ///< Stores result of levelled item spawns. <refId, count>
@@ -200,6 +245,21 @@ namespace MWWorld
             MWWorld::CellRefList<ESM::Repair>::List::iterator mRepair;
             MWWorld::CellRefList<ESM::Weapon>::List::iterator mWeapon;
 
+            MWWorld::CellRefList<ESM4::Potion>::List::iterator mForeignPotion;
+            MWWorld::CellRefList<ESM4::Apparatus>::List::iterator mForeignApparatus;
+            MWWorld::CellRefList<ESM4::Armor>::List::iterator mForeignArmor;
+            MWWorld::CellRefList<ESM4::Book>::List::iterator mForeignBook;
+            MWWorld::CellRefList<ESM4::Clothing>::List::iterator mForeignClothing;
+            MWWorld::CellRefList<ESM4::Ingredient>::List::iterator mForeignIngredient;
+            MWWorld::CellRefList<ESM4::Light>::List::iterator mForeignLight;
+            MWWorld::CellRefList<ESM4::SoulGem>::List::iterator mForeignSoulGem;
+            MWWorld::CellRefList<ESM4::MiscItem>::List::iterator mForeignMiscItem;
+            MWWorld::CellRefList<ESM4::Key>::List::iterator mForeignKey;
+            MWWorld::CellRefList<ESM4::SigilStone>::List::iterator mForeignSigilStone;
+            MWWorld::CellRefList<ESM4::Weapon>::List::iterator mForeignWeapon;
+            MWWorld::CellRefList<ESM4::Ammo>::List::iterator mForeignAmmo;
+            MWWorld::CellRefList<ESM4::LeveledItem>::List::iterator mForeignLeveledItem;
+
         private:
 
             ContainerStoreIterator (ContainerStore *container);
@@ -221,6 +281,21 @@ namespace MWWorld
             ContainerStoreIterator (ContainerStore *container, MWWorld::CellRefList<ESM::Probe>::List::iterator);
             ContainerStoreIterator (ContainerStore *container, MWWorld::CellRefList<ESM::Repair>::List::iterator);
             ContainerStoreIterator (ContainerStore *container, MWWorld::CellRefList<ESM::Weapon>::List::iterator);
+
+            ContainerStoreIterator (ContainerStore *container, MWWorld::CellRefList<ESM4::Potion>::List::iterator);
+            ContainerStoreIterator (ContainerStore *container, MWWorld::CellRefList<ESM4::Apparatus>::List::iterator);
+            ContainerStoreIterator (ContainerStore *container, MWWorld::CellRefList<ESM4::Armor>::List::iterator);
+            ContainerStoreIterator (ContainerStore *container, MWWorld::CellRefList<ESM4::Book>::List::iterator);
+            ContainerStoreIterator (ContainerStore *container, MWWorld::CellRefList<ESM4::Clothing>::List::iterator);
+            ContainerStoreIterator (ContainerStore *container, MWWorld::CellRefList<ESM4::Ingredient>::List::iterator);
+            ContainerStoreIterator (ContainerStore *container, MWWorld::CellRefList<ESM4::Light>::List::iterator);
+            ContainerStoreIterator (ContainerStore *container, MWWorld::CellRefList<ESM4::SoulGem>::List::iterator);
+            ContainerStoreIterator (ContainerStore *container, MWWorld::CellRefList<ESM4::MiscItem>::List::iterator);
+            ContainerStoreIterator (ContainerStore *container, MWWorld::CellRefList<ESM4::Key>::List::iterator);
+            ContainerStoreIterator (ContainerStore *container, MWWorld::CellRefList<ESM4::SigilStone>::List::iterator);
+            ContainerStoreIterator (ContainerStore *container, MWWorld::CellRefList<ESM4::Weapon>::List::iterator);
+            ContainerStoreIterator (ContainerStore *container, MWWorld::CellRefList<ESM4::Ammo>::List::iterator);
+            ContainerStoreIterator (ContainerStore *container, MWWorld::CellRefList<ESM4::LeveledItem>::List::iterator);
 
             void copy (const ContainerStoreIterator& src);
 

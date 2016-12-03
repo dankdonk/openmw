@@ -1039,6 +1039,9 @@ void NifOgre::NIFObjectLoader::loadKf (Ogre::Skeleton *skel, const std::string &
         return;
     }
 
+    if (nif->getVersion() >= 0x0a000100) // from 10.0.1.0 (TES4)
+        std::cout << "NIF version = 0x" << std::hex << nif->getVersion() << std::endl;
+
     const Nif::Record *r = nif->getRoot(0);
     assert(r != NULL);
 

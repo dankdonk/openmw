@@ -192,7 +192,7 @@ protected:
     /* Adds the keyframe controllers in the specified model as a new animation source. Note that
      * the filename portion of the provided model name will be prepended with 'x', and the .nif
      * extension will be replaced with .kf. */
-    void addAnimSource(const std::string &model);
+    virtual void addAnimSource(const std::string &model);
 
     /** Adds an additional light to the given object list using the specified ESM record. */
     void addExtraLight(Ogre::SceneManager *sceneMgr, NifOgre::ObjectScenePtr objlist, const ESM::Light *light);

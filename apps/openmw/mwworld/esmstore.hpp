@@ -651,6 +651,16 @@ namespace MWWorld
     }
 
     template <>
+    inline const ForeignStore<ESM4::Hair>& ESMStore::getForeign<ESM4::Hair>() const {
+        return mForeignHairs;
+    }
+
+    template <>
+    inline const ForeignStore<ESM4::Eyes>& ESMStore::getForeign<ESM4::Eyes>() const {
+        return mForeignEyesSet;
+    }
+
+    template <>
     inline const ForeignStore<ESM4::Sound>& ESMStore::getForeign<ESM4::Sound>() const {
         return mForeignSounds;
     }

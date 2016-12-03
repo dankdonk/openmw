@@ -1,11 +1,12 @@
 #include "manualref.hpp"
 
+#include <extern/esm4/formid.hpp>
+
 #include "esmstore.hpp"
 #include "cellstore.hpp"
 
 namespace
 {
-
     template<typename T>
     void create(const MWWorld::Store<T>& list, const std::string& name, boost::any& refValue, MWWorld::Ptr& ptrValue)
     {
@@ -28,10 +29,59 @@ namespace
         refValue = ref;
         ptrValue = MWWorld::Ptr(&boost::any_cast<MWWorld::LiveCellRef<T>&>(refValue), 0);
     }
+
+    template<typename T>
+    void create(const MWWorld::ForeignStore<T>& list, ESM4::FormId id, boost::any& refValue, MWWorld::Ptr& ptrValue)
+    {
+        const T* base = list.search(id);
+
+        ESM::CellRef cellRef;
+        cellRef.mRefNum.unset();
+        cellRef.mRefID = ESM4::formIdToString(id); // FIXME
+        cellRef.mScale = 1;
+        cellRef.mFactionRank = 0;
+        cellRef.mChargeInt = -1;
+        cellRef.mGoldValue = 1;
+        cellRef.mEnchantmentCharge = -1;
+        cellRef.mTeleport = false;
+        cellRef.mLockLevel = 0;
+        cellRef.mReferenceBlocked = 0;
+
+        MWWorld::LiveCellRef<T> ref(cellRef, base);
+
+        refValue = ref;
+        ptrValue = MWWorld::Ptr(&boost::any_cast<MWWorld::LiveCellRef<T>&>(refValue), 0);
+    }
 }
 
 MWWorld::ManualRef::ManualRef(const MWWorld::ESMStore& store, const std::string& name, const int count)
 {
+    if (ESM4::isFormId(name))
+    {
+        ESM4::FormId id =ESM4::stringToFormId(name);
+        switch (store.find(id))
+        {
+        case MKTAG('A','A','P','P'): create(store.getForeign<ESM4::Apparatus>(), id, mRef, mPtr); break;
+        case MKTAG('O','A','R','M'): create(store.getForeign<ESM4::Armor>(), id, mRef, mPtr); break;
+        case MKTAG('K','B','O','O'): create(store.getForeign<ESM4::Book>(), id, mRef, mPtr); break;
+        case MKTAG('T','C','L','O'): create(store.getForeign<ESM4::Clothing>(), id, mRef, mPtr); break;
+        case MKTAG('R','I','N','G'): create(store.getForeign<ESM4::Ingredient>(), id, mRef, mPtr); break;
+        case MKTAG('H','L','I','G'): create(store.getForeign<ESM4::Light>(), id, mRef, mPtr); break;
+        case MKTAG('C','M','I','S'): create(store.getForeign<ESM4::MiscItem>(), id, mRef, mPtr); break;
+        case MKTAG('P','W','E','A'): create(store.getForeign<ESM4::Weapon>(), id, mRef, mPtr); break;
+        case MKTAG('O','A','M','M'): create(store.getForeign<ESM4::Ammo>(), id, mRef, mPtr); break;
+        case MKTAG('M','S','L','G'): create(store.getForeign<ESM4::SoulGem>(), id, mRef, mPtr); break;
+        case MKTAG('M','K','E','Y'): create(store.getForeign<ESM4::Key>(), id, mRef, mPtr); break;
+        case MKTAG('H','A','L','C'): create(store.getForeign<ESM4::Potion>(), id, mRef, mPtr); break;
+        case MKTAG('T','S','G','S'): create(store.getForeign<ESM4::SigilStone>(), id, mRef, mPtr); break;
+        case MKTAG('I','L','V','L'): create(store.getForeign<ESM4::LeveledItem>(), id, mRef, mPtr); break;
+        default:
+            throw std::logic_error("failed to create manual cell ref for " + name + " (unknown ID)");
+        }
+        mPtr.getRefData().setCount(count);
+        return;
+    }
+
     std::string lowerName = Misc::StringUtils::lowerCase(name);
     switch (store.find(lowerName))
     {

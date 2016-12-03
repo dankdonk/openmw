@@ -1507,6 +1507,9 @@ namespace MWMechanics
 
     void Actors::updateMagicEffects(const MWWorld::Ptr &ptr)
     {
+        if (ptr.getTypeName()==typeid (ESM4::Npc).name()) // FIXME
+            return;
+
         adjustMagicEffects(ptr);
         calculateCreatureStatModifiers(ptr, 0.f);
         if (ptr.getClass().isNpc())

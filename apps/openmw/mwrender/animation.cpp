@@ -1428,9 +1428,9 @@ void Animation::preRender(Ogre::Camera *camera)
     for (std::vector<EffectParams>::iterator it = mEffects.begin(); it != mEffects.end(); ++it)
     {
         NifOgre::ObjectScenePtr objects = it->mObjects;
-        objects->rotateBillboardNodes(camera);
+        if (!objects.isNull()) objects->rotateBillboardNodes(camera); // FIXME
     }
-    mObjectRoot->rotateBillboardNodes(camera);
+    if (!mObjectRoot.isNull()) mObjectRoot->rotateBillboardNodes(camera); // FIXME
 }
 
 // TODO: Should not be here

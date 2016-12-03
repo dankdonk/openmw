@@ -12,6 +12,7 @@
 #include "activatoranimation.hpp"
 #include "creatureanimation.hpp"
 #include "npcanimation.hpp"
+#include "foreignnpcanimation.hpp"
 
 #include "renderconst.hpp"
 
@@ -66,9 +67,19 @@ void Actors::insertBegin(const MWWorld::Ptr &ptr)
 void Actors::insertNPC(const MWWorld::Ptr& ptr)
 {
     insertBegin(ptr);
-    NpcAnimation* anim = new NpcAnimation(ptr, ptr.getRefData().getBaseNode(), RV_Actors);
-    delete mAllActors[ptr];
-    mAllActors[ptr] = anim;
+    // check if ptr is foreign
+    if(ptr.getTypeName() == typeid(ESM::NPC).name())
+    {
+        NpcAnimation* anim = new NpcAnimation(ptr, ptr.getRefData().getBaseNode(), RV_Actors);
+        delete mAllActors[ptr];
+        mAllActors[ptr] = anim;
+    }
+    else // typeid(ESM4::Npc)
+    {
+        ForeignNpcAnimation* anim = new ForeignNpcAnimation(ptr, ptr.getRefData().getBaseNode(), RV_Actors);
+        delete mAllActors[ptr];
+        mAllActors[ptr] = anim;
+    }
     mRendering->addWaterRippleEmitter (ptr);
 }
 void Actors::insertCreature (const MWWorld::Ptr& ptr, const std::string &model, bool weaponsShields)
@@ -202,14 +213,22 @@ void Actors::enableLights()
 {
     PtrAnimationMap::const_iterator it = mAllActors.begin();
     for(;it != mAllActors.end();++it)
-        it->second->enableLights(true);
+    {
+        // check if ptr is foreign FIXME animation has no mObjectRoot
+        if(it->first.getTypeName() != typeid(ESM4::Npc).name())
+            it->second->enableLights(true);
+    }
 }
 
 void Actors::disableLights()
 {
     PtrAnimationMap::const_iterator it = mAllActors.begin();
     for(;it != mAllActors.end();++it)
-        it->second->enableLights(false);
+    {
+        // check if ptr is foreign FIXME animation has no mObjectRoot
+        if(it->first.getTypeName() != typeid(ESM4::Npc).name())
+            it->second->enableLights(false);
+    }
 }
 
 }

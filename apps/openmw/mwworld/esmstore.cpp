@@ -35,8 +35,8 @@ static bool isCacheableRecord(int id)
 // FIXME: not sure what records qualify as 'cacheable' - guess is that they are referenceable records
 static bool isCacheableForeignRecord(int id)
 {
-    if (//id == MKTAG('R','H','A','I') || /* hair */
-        //id == MKTAG('S','E','Y','E') || /* eyes */
+    if (id == MKTAG('R','H','A','I') || /* hair */
+        id == MKTAG('S','E','Y','E') || /* eyes */
         id == MKTAG('N','S','O','U') || /* sound */
         id == MKTAG('I','A','C','T') || /* activator */
         id == MKTAG('A','A','P','P') || /* apparatus */
