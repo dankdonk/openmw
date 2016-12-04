@@ -265,7 +265,7 @@ public:
      * \param loopFallback Allow looping an animation that has no loop keys, i.e. fall back to use
      *                     the "start" and "stop" keys for looping?
      */
-    void play(const std::string &groupname, int priority, int groups, bool autodisable,
+    virtual void play(const std::string &groupname, int priority, int groups, bool autodisable,
               float speedmult, const std::string &start, const std::string &stop,
               float startpoint, size_t loops, bool loopfallback=false);
 

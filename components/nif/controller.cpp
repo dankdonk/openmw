@@ -712,6 +712,74 @@ void Nif::NiLookAtInterpolator::post(NIFFile *nif)
     lookAt.post(nif);
 }
 
+void Nif::NiBSplineInterpolator::read(NIFStream *nif)
+{
+    //NiInterpolator::read(nif);
+
+    startTime = nif->getFloat();
+    stopTime = nif->getFloat();
+
+    splineData.read(nif);
+    basisData.read(nif);
+}
+
+void Nif::NiBSplineInterpolator::post(NIFFile *nif)
+{
+    splineData.post(nif);
+    basisData.post(nif);
+}
+
+void Nif::NiBSplinePoint3Interpolator::read(NIFStream *nif)
+{
+    NiBSplineInterpolator::read(nif);
+
+    unknown1 = nif->getFloat();
+    unknown2 = nif->getFloat();
+    unknown3 = nif->getFloat();
+    unknown4 = nif->getFloat();
+    unknown5 = nif->getFloat();
+    unknown6 = nif->getFloat();
+}
+
+void Nif::NiBSplinePoint3Interpolator::post(NIFFile *nif)
+{
+    NiBSplineInterpolator::post(nif);
+}
+
+void Nif::NiBSplineTransformInterpolator::read(NIFStream *nif)
+{
+    NiBSplineInterpolator::read(nif);
+
+    translation = nif->getVector3();
+    rotation = nif->getQuaternion();
+    scale = nif->getFloat();
+    translationOffset = nif->getUInt();
+    rotationOffset = nif->getUInt();
+    scaleOffset = nif->getUInt();
+}
+
+void Nif::NiBSplineTransformInterpolator::post(NIFFile *nif)
+{
+    NiBSplineInterpolator::post(nif);
+}
+
+void Nif::NiBSplineCompTransformInterpolator::read(NIFStream *nif)
+{
+    NiBSplineTransformInterpolator::read(nif);
+
+    translationBias = nif->getFloat();
+    translationMultiplier = nif->getFloat();
+    rotationBias = nif->getFloat();
+    rotationMultiplier = nif->getFloat();
+    scaleBias = nif->getFloat();
+    scaleMultiplier = nif->getFloat();
+}
+
+void Nif::NiBSplineCompTransformInterpolator::post(NIFFile *nif)
+{
+    NiBSplineTransformInterpolator::post(nif);
+}
+
 void Nif::BSFrustumFOVController::read(NIFStream *nif)
 {
     Controller::read(nif);

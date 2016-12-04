@@ -354,9 +354,26 @@ public:
     void read(NIFStream *nif);
 };
 
+struct NiBSplineData : public Record
+{
+    std::vector<float> floatControlPoints;
+    std::vector<short> shortControlPoints;
+
+    void read(NIFStream *nif);
+};
+
+struct NiBSplineBasisData : public Record
+{
+    unsigned int numControlPoints;
+
+    void read(NIFStream *nif);
+};
+
 class NiStringPalette : public Record
 {
-    std::vector<std::string> palette;
+public:
+    std::vector<char> buffer;
+    //std::vector<std::string> palette;
 
     void read(NIFStream *nif);
 };

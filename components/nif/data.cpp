@@ -585,16 +585,41 @@ void Nif::NiTriStripsData::read(NIFStream *nif)
     }
 }
 
+void Nif::NiBSplineData::read(NIFStream *nif)
+{
+    unsigned int numPoints = nif->getUInt();
+    floatControlPoints.resize(numPoints);
+    for (unsigned int i = 0; i < numPoints; ++i)
+        floatControlPoints[i] = nif->getFloat();
+
+    numPoints = nif->getUInt();
+    shortControlPoints.resize(numPoints);
+    for (unsigned int i = 0; i < numPoints; ++i)
+        shortControlPoints[i] = nif->getShort();
+};
+
+void Nif::NiBSplineBasisData::read(NIFStream *nif)
+{
+    numControlPoints = nif->getUInt();
+};
+
 void Nif::NiStringPalette::read(NIFStream *nif)
 {
     unsigned int lth = nif->getUInt();
 
-    std::istringstream buf(nif->getString(lth).c_str());
-    std::string s;
-    while (std::getline(buf, s, '\0'))
-        palette.push_back(s);
-
+    buffer.resize(lth+1, 0);
+    nif->getBuffer(lth, &buffer[0]);
+#if 0
+    char* str = &buffer[0];
+    while (str - &buffer[0] < lth)
+    {
+        palette.push_back(std::string(str));
+        str += palette.back().size() + 1;
+    }
+#endif
     unsigned int check = nif->getUInt();
+    if (lth != check)
+        std::cerr << "Error parsing string palette" << std::endl; // FIXME: throw?
 }
 
 void Nif::NiDefaultAVObjectPalette::read(NIFStream *nif)

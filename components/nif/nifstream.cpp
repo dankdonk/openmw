@@ -81,6 +81,17 @@ Transformation NIFStream::getTrafo()
     return t;
 }
 
+void NIFStream::getBuffer(size_t length, char* buf)
+{
+    size_t fileSize = inp->size();
+    if(fileSize != 0 && fileSize < length)
+        file->fail("Attempted to read a string with " + Ogre::StringConverter::toString(length) + " characters , but file is only "+Ogre::StringConverter::toString(fileSize)+ " bytes!");
+
+    if(inp->read(buf, length) != length)
+        throw std::runtime_error (":  String length in NIF file "+ file->getFilename() +" does not match!  Expected length:  "
+            + Ogre::StringConverter::toString(length));
+}
+
 std::string NIFStream::getString(size_t length)
 {
     //Make sure we're not reading in too large of a string

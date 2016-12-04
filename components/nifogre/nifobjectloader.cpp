@@ -70,6 +70,103 @@ namespace
         }
     }
 
+    // assumes starting with 'Scene Root'
+    //
+    // - if the NiNode has a controller, add to the ctrls vector (but skip some controllers)
+    // - search the children recursively
+    //
+    // FIXME: is there a way to optimize by setting up the collisions at the same time, i.e. in
+    // a single pass scan?
+    void findController(Ogre::Skeleton *skeleton, Nif::NIFFilePtr nif,
+            const Nif::Node *node, std::vector<Ogre::Controller<Ogre::Real> > &ctrls)
+    {
+        // TES4 starts witth the NiBSBoneLODController
+        if(!node->controller.empty())
+        {
+            Nif::ControllerPtr ctrl = node->controller;
+            std::string boneName = node->name; // remember the node name
+
+            // follow the controller chain until we hit an active NiTransformController
+            // (i.e. skip NiBSBoneLODController, bhkBlendController, etc)
+            do {
+                if((ctrl->recType == Nif::RC_NiTransformController) &&
+                   ((ctrl->flags & Nif::NiNode::ControllerFlag_Active) != 0)) // 0x1000
+                {
+                    // check that the controller has the correct target node
+                    if (static_cast<Nif::Named*>(ctrl->target.getPtr())->name == boneName)
+                    {
+                        // source value
+                        Ogre::ControllerValueRealPtr srcval;
+
+                        // destination value
+                        const Nif::NiTransformController *c
+                            = static_cast<const Nif::NiTransformController*>(ctrl.getPtr());
+                        const Nif::NiTransformInterpolator *interp
+                            = static_cast<const Nif::NiTransformInterpolator*>(c->interpolator.getPtr());
+                        // FIXME: should create a dummy interpolator rather than skipping?
+                        if (!interp)
+                            break; // Bip01 NonAccum does not have an interpolator
+
+                        Ogre::Bone *targetBone = skeleton->getBone(boneName);
+                        Ogre::ControllerValueRealPtr
+                            dstval(OGRE_NEW NifOgre::KeyframeController::Value(targetBone,
+                                                                               nif, interp->transformData.getPtr()));
+                        // control function
+                        Ogre::ControllerFunctionRealPtr
+                            func(OGRE_NEW NifOgre::KeyframeController::Function(ctrl.getPtr(), false));
+
+                        // store the controller
+                        ctrls.push_back(Ogre::Controller<Ogre::Real>(srcval, dstval, func));
+
+                        break;
+                    }
+                    else
+                        std::cout << "target bone mismatch" << std::endl; // FIXME: throw?
+                }
+            } while(!(ctrl = ctrl->next).empty());
+        }
+
+        const Nif::NiNode *ninode = static_cast<const Nif::NiNode*>(node);
+        const Nif::NodeList &children = ninode->children;
+        for(size_t i = 0;i < children.length();i++)
+        {
+            if(!children[i].empty())
+            {
+                findController(skeleton, nif, children[i].getPtr(), ctrls);
+            }
+        }
+
+
+#if 0
+
+
+
+        // FIXME: Not sure why "AttachLight" implies a skeleton is needed
+        //        Possibley because MWRender::Animation::addExtraLight() uses attachObjectToBone()?
+        if (node->name.find("AttachLight") != std::string::npos || node->name == "ArrowBone")
+            return true;
+
+        if(node->recType == Nif::RC_NiNode ||
+                node->recType == Nif::RC_BSFadeNode ||
+                node->recType == Nif::RC_BSValueNode ||
+                node->recType == Nif::RC_NiSwitchNode || // probably has NiNode children
+                node->recType == Nif::RC_NiBillboardNode || // NiNode that faces the camera
+                node->recType == Nif::RC_RootCollisionNode)
+        {
+            const Nif::NiNode *ninode = static_cast<const Nif::NiNode*>(node);
+            const Nif::NodeList &children = ninode->children;
+            for(size_t i = 0;i < children.length();i++)
+            {
+                if(!children[i].empty())
+                {
+                    if(needSkeleton(children[i].getPtr()))
+                        return true;
+                }
+            }
+            return false;
+        }
+#endif
+    }
 }
 
 void NifOgre::NIFObjectLoader::setShowMarkers (bool show)
@@ -969,7 +1066,83 @@ void NifOgre::NIFObjectLoader::load (Ogre::SceneNode *sceneNode,
     createObjects(nif, name, group, sceneNode, node, scene, flags, 0, 0);
 }
 
-// given 'skeleton' and 'name', populate textKeys and ctrls
+void NifOgre::NIFObjectLoader::loadKf (Ogre::Skeleton *skel, const std::string &name,
+            TextKeyMap &textKeys, std::vector<Ogre::Controller<Ogre::Real> > &ctrls)
+{
+    Nif::NIFFilePtr nif = Nif::Cache::getInstance().load(name);
+    if (nif->numRoots() < 1)
+    {
+        nif->warn("Found no root nodes in "+name+".");
+        return;
+    }
+
+    if (nif->getVersion() >= 0x0a000100) // from 10.0.1.0 (TES4)
+    {
+        //std::cout << "NIF version = 0x" << std::hex << nif->getVersion() << std::endl;
+        NIFObjectLoader::loadTES4Kf(skel, nif, textKeys, ctrls);
+
+        return;
+    }
+
+    const Nif::Record *r = nif->getRoot(0);
+    assert(r != NULL);
+
+
+    if (r->recType != Nif::RC_NiSequenceStreamHelper)
+    {
+        nif->warn("First root was not a NiSequenceStreamHelper, but a "+
+                  r->recName+".");
+        return;
+    }
+    const Nif::NiSequenceStreamHelper *seq = static_cast<const Nif::NiSequenceStreamHelper*>(r);
+
+    Nif::NiExtraDataPtr extra = seq->extra;
+
+    if (extra.empty() || extra->recType != Nif::RC_NiTextKeyExtraData)
+    {
+        nif->warn("First extra data was not a NiTextKeyExtraData, but a "+
+                  (extra.empty() ? std::string("nil") : extra->recName)+".");
+        return;
+    }
+
+    extractTextKeys(static_cast<const Nif::NiTextKeyExtraData*>(extra.getPtr()), textKeys);
+
+    extra = extra->next;
+
+    Nif::ControllerPtr ctrl = seq->controller;
+    for (;!extra.empty() && !ctrl.empty();(extra=extra->next),(ctrl=ctrl->next))
+    {
+        if (extra->recType != Nif::RC_NiStringExtraData || ctrl->recType != Nif::RC_NiKeyframeController)
+        {
+            nif->warn("Unexpected extra data "+extra->recName+" with controller "+ctrl->recName);
+            continue;
+        }
+
+        if (!(ctrl->flags & Nif::NiNode::ControllerFlag_Active))
+            continue;
+
+        const Nif::NiStringExtraData *strdata = static_cast<const Nif::NiStringExtraData*>(extra.getPtr());
+        const Nif::NiKeyframeController *key = static_cast<const Nif::NiKeyframeController*>(ctrl.getPtr());
+
+        if (key->data.empty())
+            continue;
+        if (!skel->hasBone(strdata->stringData))
+            continue;
+
+        Ogre::Bone *trgtbone = skel->getBone(strdata->stringData);
+        Ogre::ControllerValueRealPtr srcval;
+        Ogre::ControllerValueRealPtr dstval(OGRE_NEW KeyframeController::Value(trgtbone, nif, key->data.getPtr()));
+        Ogre::ControllerFunctionRealPtr func(OGRE_NEW KeyframeController::Function(key, false));
+
+        ctrls.push_back(Ogre::Controller<Ogre::Real>(srcval, dstval, func));
+    }
+}
+
+// NifOgre::KeyframeController
+//
+// Given 'skeleton' and 'name', populate textKeys and ctrls
+//
+// For TES3:
 //
 // textKeys and ctrls are extracted from the nif file (which is derived from 'name') and 'skeleton'
 // is used to confirm/match the bone name in the string extra data
@@ -977,6 +1150,8 @@ void NifOgre::NIFObjectLoader::load (Ogre::SceneNode *sceneNode,
 // Each .kf file starts with a NiSequenceStreamHelper block with NiTextKeyExtraData
 // following it.  These are then followed by the blocks NiStringExtraData (to get bone name)
 // and NiKeyframeController (and the keyframe data).
+//
+// For TES4/5:
 //
 // Newer .kf files are different.  It starts with NiControllerSequence which points to
 // NiTextKeyExtraData and  has a number of Controlled Blocks.  Each Controlled Block has a node
@@ -1020,8 +1195,8 @@ void NifOgre::NIFObjectLoader::load (Ogre::SceneNode *sceneNode,
 // addAnimSource() may need to pass additional info (e.g. from KFFZ subrecord for additional
 // special animations).  FIXME: need to find out what are the 'hard coded' animations are
 //
-// Perhaps best to have another method loadKf2 or something else
-// alternatively use nif version to determine
+// Perhaps best to have another method loadTES4Kf or something else
+// (use nif version to determine)
 //
 // Maybe for new .kf always use skeleton.nif? That means either the caller needs to use the
 // correct 'name' and/or we need to check version info.
@@ -1029,83 +1204,220 @@ void NifOgre::NIFObjectLoader::load (Ogre::SceneNode *sceneNode,
 // Can't always assume 'name' will be ending skeleton.nif to detect the new version, since
 // meshes\r\skeleton.nif is a valid old version.
 //
-void NifOgre::NIFObjectLoader::loadKf (Ogre::Skeleton *skel, const std::string &name,
+void NifOgre::NIFObjectLoader::loadTES4Kf (Ogre::Skeleton *skel, Nif::NIFFilePtr nif,
             TextKeyMap &textKeys, std::vector<Ogre::Controller<Ogre::Real> > &ctrls)
 {
-    Nif::NIFFilePtr nif = Nif::Cache::getInstance().load(name);
+    // NOTE: the model (i.e. skeleton.nif) is also used to generate the skeleton in
+    // Animation::setObjectRoot()
+
     if (nif->numRoots() < 1)
     {
-        nif->warn("Found no root nodes in "+name+".");
+        nif->warn("Found no root nodes in "+nif->getFilename()+".");
         return;
     }
 
-    if (nif->getVersion() >= 0x0a000100) // from 10.0.1.0 (TES4)
-        std::cout << "NIF version = 0x" << std::hex << nif->getVersion() << std::endl;
+    const Nif::Named *sk = static_cast<Nif::Named*>(nif->getRoot(0));
+    assert(sk != NULL);
 
-    const Nif::Record *r = nif->getRoot(0);
+    // a simple check of the expected file structure
+    if (sk->recType != Nif::RC_NiNode)
+    {
+        nif->warn("First root was not a NiNode, but a "+sk->recName+".");
+        return;
+    }
+    else if (sk->name != "Scene Root")
+    {
+        nif->warn("First root had an unexpected name "+sk->name+".");
+        return;
+    }
+
+    // FIXME: how to stop scanning the same skeleton.nif each time?
+    // now traverse the children and get controllers for each of the bone nodes
+    findController(skel, nif, static_cast<const Nif::Node*>(sk), ctrls);
+
+
+    // FIXME: the current assumption is that idle.kf and others provide different interpolators
+    // than those in skeleton.nif - how to switch them?
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    // FIXME: hard coded for testing, there's probably some algorithm for selecting an anim file
+    Nif::NIFFilePtr kf = Nif::Cache::getInstance().load("meshes\\characters\\_male\\idle.kf");
+    if (kf->numRoots() < 1)
+    {
+        kf->warn("Found no root nodes in "+kf->getFilename()+".");
+        return;
+    }
+
+    const Nif::Record *r = kf->getRoot(0);
     assert(r != NULL);
 
-
-    // FIXME allow NiControllerSequence on newer .kf files
-    if (r->recType != Nif::RC_NiSequenceStreamHelper)
+    // a simple check of the expected file structure
+    if (r->recType != Nif::RC_NiControllerSequence)
     {
-        nif->warn("First root was not a NiSequenceStreamHelper, but a "+
-                  r->recName+".");
-        return;
-    }
-    const Nif::NiSequenceStreamHelper *seq = static_cast<const Nif::NiSequenceStreamHelper*>(r);
-
-    Nif::NiExtraDataPtr extra;
-    // FIXME: should be handled with nifVer instead
-    if (seq->hasExtras)
-        extra = seq->extras[0];
-    else
-        extra = seq->extra;
-
-    if (extra.empty() || extra->recType != Nif::RC_NiTextKeyExtraData)
-    {
-        nif->warn("First extra data was not a NiTextKeyExtraData, but a "+
-                  (extra.empty() ? std::string("nil") : extra->recName)+".");
+        kf->warn("First root was not a NiControllerSequence, but a "+ r->recName+".");
         return;
     }
 
-    // for NiControllerSequence, NiTextKeyExtraData* is seq->textkeys2
-    extractTextKeys(static_cast<const Nif::NiTextKeyExtraData*>(extra.getPtr()), textKeys);
+    // get the text keys (usually start stop times)
+    const Nif::NiControllerSequence *seq = static_cast<const Nif::NiControllerSequence*>(r);
+    std::cout << "Anim name " << seq->name << std::endl; // FIXME for testing only
+    extractTextKeys(static_cast<const Nif::NiTextKeyExtraData*>(seq->textKeys.getPtr()), textKeys);
 
-    if (seq->hasExtras)
-        if (seq->extras.length() > 1)
-            extra = seq->extras[1];
-        else
-            return;
-    else
-        extra = extra->next;
-
-    Nif::ControllerPtr ctrl = seq->controller;
-    for (;!extra.empty() && !ctrl.empty();(extra=extra->next/*FIXME*/),(ctrl=ctrl->next))
+    for (unsigned int i = 0; i < seq->controlledBlocks.size(); ++i)
     {
-        if (extra->recType != Nif::RC_NiStringExtraData || ctrl->recType != Nif::RC_NiKeyframeController)
+        Nif::ControllerLink ctrl = seq->controlledBlocks[i];
+
+// FIXME for testing string extraction only, note the use of '-1' offset to indicate 'none'
+#if 0
+        char* str = &(ctrl.stringPalette->buffer[0]);
+        std::cout << "controlled block [" << i << "] "
+            << ((ctrl.nodeNameOffset == -1) ? "" : std::string(str+ctrl.nodeNameOffset)) << ", "
+            << ((ctrl.controllerTypeOffset == -1) ? "" : std::string(str+ctrl.controllerTypeOffset)) << std::endl;
+#endif
+        // check if we support the specified controller/interpolator and data
+        // (idle.kf has NiBSplineCompTransformInterpolator, NiFloatInterpolator and NiTransformInterpolator)
+        // FIXME currently not checking data type
+        const Nif::NiInterpolator *key = static_cast<const Nif::NiInterpolator*>(ctrl.interpolator.getPtr());
+
+        if (key->recType != Nif::RC_NiBSplineCompTransformInterpolator &&
+            key->recType != Nif::RC_NiTransformInterpolator &&
+            key->recType != Nif::RC_NiFloatInterpolator)
         {
-            nif->warn("Unexpected extra data "+extra->recName+" with controller "+ctrl->recName);
+            nif->warn("Unexpected controller "+key->recName);
             continue;
         }
 
-        if (!(ctrl->flags & Nif::NiNode::ControllerFlag_Active))
+        //if (!(ctrl->flags & Nif::NiNode::ControllerFlag_Active))
+            //continue;
+
+        if (key->recType == Nif::RC_NiTransformInterpolator)
+        {
+            if (static_cast<const Nif::NiTransformInterpolator*>(key)->transformData.empty())
+                continue;
+        }
+        else if (key->recType == Nif::RC_NiFloatInterpolator)
+        {
+            if (static_cast<const Nif::NiFloatInterpolator*>(key)->floatData.empty())
+                continue;
+        }
+        else if (key->recType == Nif::RC_NiBSplineCompTransformInterpolator)
+        {
+            continue;
+        }
+        else
             continue;
 
-        const Nif::NiStringExtraData *strdata = static_cast<const Nif::NiStringExtraData*>(extra.getPtr());
-        const Nif::NiKeyframeController *key = static_cast<const Nif::NiKeyframeController*>(ctrl.getPtr());
-
-        if (key->data.empty())
+        std::string boneName(std::string(&(ctrl.stringPalette->buffer[0]) + ctrl.nodeNameOffset));
+        if (ctrl.nodeNameOffset == -1 || !skel->hasBone(boneName))
+        {
+            std::cout << seq->name << ": No bone named " << boneName << " found." << std::endl;
             continue;
-        if (!skel->hasBone(strdata->stringData))
-            continue;
+        }
 
-        Ogre::Bone *trgtbone = skel->getBone(strdata->stringData);
+        // Animation is implemented using Ogre controllers.  According to the Ogre manual,
+        // calling the controller's update() method "Tells this controller to map it's input
+        // controller value to it's output controller value, via the controller function."
+        //
+        //   defined in OgreController.h
+        //     Ogre::Controller<T>, Ogre::ControllerValue<T> and Ogre::ControllerFunction<T>
+        //
+        //   defined in OgreControllerManager.h
+        //     typedef SharedPtr<ControllerFunction<Real> > Ogre::ControllerFunctionRealPtr
+        //
+        // So, we apply the values and functions defined in the kf files and apply them to the
+        // matching bones in skeleton.nif (or skeletonbeast.nif, etc).
+        //
+        // Subclasses of the Ogre classes are used for the implementation:
+        //
+        // (for TES3):
+        //
+        //   defined in NifOgre namespace
+        //     class DefaultFunction : public Ogre::ControllerFunction<Ogre::Real>
+        //       and
+        //     template<typename T> class NodeTargetValue : public Ogre::ControllerValue<T>
+        //       and
+        //     class KeyframeController
+        //       and
+        //     class KeyframeController::Value : public Ogre::ControllerValue<Ogre::Real>, public ValueInterpolator
+        //
+        //   NiStringExtraData::String Data is used to identify the bone name.
+        //
+        //   NiKeyframeController and NiKeyframeData are used to define the control function
+        //   and its output value.
+        //
+        //   NiTextKeyExtraData identifies all kinds of different animations and time keys,
+        //   e.g. Idle: Start (0.0000), Torch: Start (97.2000), etc.
+        //
+        //   The input value is probably time value in float (i.e. Ogre::Real).
+        //
+        //   For TES3 there are only 4 groups.  See Animation::detectAnimGroup()
+        //
+        //      "",                 /* Lower body / character root */
+        //      "Bip01 Spine1",     /* Torso */
+        //      "Bip01 L Clavicle", /* Left arm */
+        //      "Bip01 R Clavicle", /* Right arm */
+        //
+        //   Animation::play() accepts animation group as its first parameter (e.g. idle, hit).
+        //
+        // (for TES4):
+        //
+        //   NiKeyframeController is replaced by NiTransformController (I think?) which is a
+        //   NiTimeController and is found in skeleton.nif.
+        //
+        //   Different kinds of animations are found in different kf files, e.g. idle.kf,
+        //   torchidle.kf, etc.
+        //
+        //   Not sure what NiBSBoneLODController does, nor what its node groups are meant to
+        //   do.
+        //
+        //   Each of the bones in skeleton.nif specifies a NiTimeController... maybe these
+        //   should be used to the Ogre functions?
+        //
+        //   A partial trail of the bone links in skeleton.nif, following the children...
+        //
+        //   Bip01
+        //     |
+        //   Bip01 NonAccum
+        //     |
+        //   Bip01 Pelvis
+        //     |
+        //   Bip01 Spine, Bip01 L Thigh, Bip01 R Thigh, SideWeapon, Bip01 TailRoot, Bip01 Tail72,...
+        //     |
+        //   Bip01 Spine1
+        //     |
+        //   Bip01 Spine2, Bip01 Wing 01 R, Bip01 Wing 01 L
+        //     |
+        //   Bip01 Neck, BackWeapon, Quiver, magicNode, ...
+        //      |
+        //   Bip01 Neck1, Bip01 L Clavicle, Bip01 R Clavicle
+        //      |
+        //   Bip01 Head
+        //      |
+        //   Camera01, Bip01 pony5 no motion, Bip01 pony chub, Bip01 pony1
+        //                |
+        //             Bip01 pony6
+        //
+        //
+#if 0
+        Ogre::Bone *trgtbone = skel->getBone(boneName);
         // srcval is set in Animation::addAnimSource()
         //   ctrls[i].setSource(mAnimationTimePtr[grp]);
         Ogre::ControllerValueRealPtr srcval;
-        // 'nif' doesn't seem to be used
-        Ogre::ControllerValueRealPtr dstval(OGRE_NEW KeyframeController::Value(trgtbone, nif, key->data.getPtr()));
+        Ogre::ControllerValueRealPtr
+            dstval(OGRE_NEW KeyframeController::Value(trgtbone, nif, key->data.getPtr()));
         // when deltainput is false, DefaultFunction calculates:
         //   value = std::min(mStopTime, std::max(mStartTime, value+mPhase));
         // where mStopTime = key->timestop, mStartTime = key->timestart, mPhase = key->phase
@@ -1113,5 +1425,7 @@ void NifOgre::NIFObjectLoader::loadKf (Ogre::Skeleton *skel, const std::string &
         Ogre::ControllerFunctionRealPtr func(OGRE_NEW KeyframeController::Function(key, false));
 
         ctrls.push_back(Ogre::Controller<Ogre::Real>(srcval, dstval, func));
+#endif
     }
 }
+

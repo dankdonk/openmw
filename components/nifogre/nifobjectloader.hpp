@@ -101,6 +101,9 @@ namespace NifOgre
 
         static void loadKf (Ogre::Skeleton *skel,
                 const std::string &name, TextKeyMap &textKeys, std::vector<Ogre::Controller<Ogre::Real> > &ctrls);
+
+        static void NifOgre::NIFObjectLoader::loadTES4Kf (Ogre::Skeleton *skel,
+                Nif::NIFFilePtr nif, TextKeyMap &textKeys, std::vector<Ogre::Controller<Ogre::Real> > &ctrls);
     };
 }
 #endif // OPENMW_COMPONENTS_NIFOGRE_NIFOBJECTLOADER_HPP

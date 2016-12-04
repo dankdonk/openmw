@@ -163,6 +163,8 @@ class BSMultiBound;
 class BSMultiBoundData;
 class hkPackedNiTriStripsData;
 class NiFloatInterpolator;
+struct NiBSplineData;
+struct NiBSplineBasisData;
 
 typedef RecordPtrT<Node> NodePtr;
 typedef RecordPtrT<Extra> ExtraPtr;
@@ -215,6 +217,8 @@ typedef RecordPtrT<BSMultiBound> BSMultiBoundPtr;
 typedef RecordPtrT<BSMultiBoundData> BSMultiBoundDataPtr;
 typedef RecordPtrT<hkPackedNiTriStripsData> hkPackedNiTriStripsDataPtr;
 typedef RecordPtrT<NiFloatInterpolator> NiFloatInterpolatorPtr;
+typedef RecordPtrT<NiBSplineData> NiBSplineDataPtr;
+typedef RecordPtrT<NiBSplineBasisData> NiBSplineBasisDataPtr;
 
 typedef RecordListT<Node> NodeList;
 typedef RecordListT<NiExtraData> NiExtraDataList;

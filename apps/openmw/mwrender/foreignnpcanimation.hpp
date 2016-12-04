@@ -106,6 +106,30 @@ public:
     // TES4 kf files are derived differently
     virtual void addAnimSource(const std::string &model);
 
+    /** Plays an animation.
+     * \param groupname Name of the animation group to play.
+     * \param priority Priority of the animation. The animation will play on
+     *                 bone groups that don't have another animation set of a
+     *                 higher priority.
+     * \param groups Bone groups to play the animation on.
+     * \param autodisable Automatically disable the animation when it stops
+     *                    playing.
+     * \param speedmult Speed multiplier for the animation.
+     * \param start Key marker from which to start.
+     * \param stop Key marker to stop at.
+     * \param startpoint How far in between the two markers to start. 0 starts
+     *                   at the start marker, 1 starts at the stop marker.
+     * \param loops How many times to loop the animation. This will use the
+     *              "loop start" and "loop stop" markers if they exist,
+     *              otherwise it may fall back to "start" and "stop", but only if
+     *              the \a loopFallback parameter is true.
+     * \param loopFallback Allow looping an animation that has no loop keys, i.e. fall back to use
+     *                     the "start" and "stop" keys for looping?
+     */
+    virtual void play(const std::string &groupname, int priority, int groups, bool autodisable,
+              float speedmult, const std::string &start, const std::string &stop,
+              float startpoint, size_t loops, bool loopfallback=false);
+
     virtual void enableHeadAnimation(bool enable);
 
     virtual void setWeaponGroup(const std::string& group) { mWeaponAnimationTime->setGroup(group); }

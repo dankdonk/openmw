@@ -467,6 +467,62 @@ public:
     void post(NIFFile *nif);
 };
 
+class NiBSplineInterpolator : public NiInterpolator
+{
+public:
+    float startTime;
+    float stopTime;
+    NiBSplineDataPtr splineData;
+    NiBSplineBasisDataPtr basisData;
+
+    void read(NIFStream *nif);
+    void post(NIFFile *nif);
+};
+
+class NiBSplineFloatInterpolator : public NiBSplineInterpolator {};
+
+class NiBSplinePoint3Interpolator : public NiBSplineInterpolator
+{
+public:
+    float unknown1;
+    float unknown2;
+    float unknown3;
+    float unknown4;
+    float unknown5;
+    float unknown6;
+
+    void read(NIFStream *nif);
+    void post(NIFFile *nif);
+};
+
+class NiBSplineTransformInterpolator : public NiBSplineInterpolator
+{
+public:
+    Ogre::Vector3 translation;
+    Ogre::Quaternion rotation;
+    float scale;
+    unsigned int translationOffset;
+    unsigned int rotationOffset;
+    unsigned int scaleOffset;
+
+    void read(NIFStream *nif);
+    void post(NIFFile *nif);
+};
+
+class NiBSplineCompTransformInterpolator : public NiBSplineTransformInterpolator
+{
+public:
+    float translationBias;
+    float translationMultiplier;
+    float rotationBias;
+    float rotationMultiplier;
+    float scaleBias;
+    float scaleMultiplier;
+
+    void read(NIFStream *nif);
+    void post(NIFFile *nif);
+};
+
 class NiMultiTargetTransformController : public Controller
 {
 public:

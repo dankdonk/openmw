@@ -230,7 +230,14 @@ enum RecordType
   RC_BSFrustumFOVController,
   RC_bhkHingeConstraint,
   RC_BSStripPSysData,
-  RC_BSPSysStripUpdateModifier
+  RC_BSPSysStripUpdateModifier,
+  RC_NiBSplineInterpolator,
+  RC_NiBSplineFloatInterpolator,
+  RC_NiBSplinePoint3Interpolator,
+  RC_NiBSplineTransformInterpolator,
+  RC_NiBSplineCompTransformInterpolator,
+  RC_NiBSplineData,
+  RC_NiBSplineBasisData
 };
 /// Base class for all records
 struct Record

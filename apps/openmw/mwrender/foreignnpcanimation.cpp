@@ -361,7 +361,7 @@ void ForeignNpcAnimation::updateNpcBase()
 #endif
     std::string smodel = "meshes\\" + mNpc->mModel;
     smodel = Misc::ResourceHelpers::correctActorModelPath(smodel);
-    setObjectRoot(smodel, true);
+    setObjectRoot(smodel, true); // this call should also create mSkelBase
 
     if(mViewMode != VM_FirstPerson)
     {
@@ -400,7 +400,7 @@ void ForeignNpcAnimation::updateNpcBase()
 
     for(size_t i = 0;i < ESM::PRT_Count;i++)
         removeIndividualPart((ESM::PartReferenceType)i);
-    updateParts();
+    //updateParts();
 
     mWeaponAnimationTime->updateStartTime();
 }
@@ -413,7 +413,7 @@ void ForeignNpcAnimation::addAnimSource(const std::string &model)
 
     // First find the kf file.  For TES3 the kf file has the same name as the nif file.
     // For TES4, different animations (e.g. idle, block) have different kf files.
-    std::string kfname = model;
+    std::string kfName = model;
 #if 0
     Misc::StringUtils::lowerCaseInPlace(kfname);
 
@@ -422,23 +422,25 @@ void ForeignNpcAnimation::addAnimSource(const std::string &model)
 #endif
 
     // Check whether the kf file exists
-    if(!Ogre::ResourceGroupManager::getSingleton().resourceExistsInAnyGroup(kfname))
+    if(!Ogre::ResourceGroupManager::getSingleton().resourceExistsInAnyGroup(kfName))
         return;
 
     // Animation::AnimSource : public Ogre::AnimationAlloc
-    std::vector<Ogre::Controller<Ogre::Real> > ctrls;
-    Ogre::SharedPtr<AnimSource> animsrc(OGRE_NEW AnimSource);
-    NifOgre::Loader::createKfControllers(mSkelBase, kfname, animsrc->mTextKeys, ctrls);
-    if(animsrc->mTextKeys.empty() || ctrls.empty())
+    //   (has a) std::multimap<float, std::string> mTextKeys
+    //   (also has a vector of 4 Ogre real controllers)  TODO: check if 4 is enough
+    Ogre::SharedPtr<AnimSource> animSource(OGRE_NEW AnimSource);
+    std::vector<Ogre::Controller<Ogre::Real> > controllers;
+    NifOgre::Loader::createKfControllers(mSkelBase, kfName, animSource->mTextKeys, controllers);
+    if(animSource->mTextKeys.empty() || controllers.empty())
         return;
 
-    mAnimSources.push_back(animsrc);
+    mAnimSources.push_back(animSource);
 
-    std::vector<Ogre::Controller<Ogre::Real> > *grpctrls = animsrc->mControllers;
-    for(size_t i = 0;i < ctrls.size();i++)
+    std::vector<Ogre::Controller<Ogre::Real> > *grpctrls = animSource->mControllers;
+    for(size_t i = 0;i < controllers.size();i++)
     {
         NifOgre::NodeTargetValue<Ogre::Real> *dstval;
-        dstval = static_cast<NifOgre::NodeTargetValue<Ogre::Real>*>(ctrls[i].getDestination().getPointer());
+        dstval = static_cast<NifOgre::NodeTargetValue<Ogre::Real>*>(controllers[i].getDestination().getPointer());
 
         size_t grp = detectAnimGroup(dstval->getNode());
 
@@ -464,8 +466,8 @@ void ForeignNpcAnimation::addAnimSource(const std::string &model)
             }
         }
 
-        ctrls[i].setSource(mAnimationTimePtr[grp]);
-        grpctrls[grp].push_back(ctrls[i]);
+        controllers[i].setSource(mAnimationTimePtr[grp]);
+        grpctrls[grp].push_back(controllers[i]);
     }
 
     for (unsigned int i = 0; i < mObjectRoot->mControllers.size(); ++i)
@@ -719,6 +721,24 @@ void ForeignNpcAnimation::updateParts()
 
     if (wasArrowAttached)
         attachArrow();
+}
+
+// TES4 animation is rather different, so a different implementation is required
+//
+// FIXME: Initially groupname is ignored, since only 'idle' is supported.  Not sure how to
+// select which anim groups to load (each one would be a separate kf file).
+//
+// FIXME: The parameter 'groups' is also ignored, since TES4 groups are different. There might
+// be ways to combine both, however.  Something to think about.
+//
+// FIXME: Just to make the initial implementation easier, 'priority', 'autodisable',
+// 'startpoint', 'loops' and 'loopfallback' are also ignored.
+// (always have highest priority for testing?)
+void ForeignNpcAnimation::play(const std::string &groupname, int priority, int groups, bool autodisable,
+              float speedmult, const std::string &start, const std::string &stop,
+              float startpoint, size_t loops, bool loopfallback)
+{
+    std::cout << "anim play" << std::endl;
 }
 
 void ForeignNpcAnimation::addFirstPersonOffset(const Ogre::Vector3 &offset)

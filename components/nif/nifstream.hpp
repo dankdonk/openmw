@@ -58,6 +58,9 @@ public:
     Ogre::Quaternion getQuaternion();
     Transformation getTrafo();
 
+    // NOTE: the caller must ensure that the buffer of sufficient size is allocated
+    void getBuffer(size_t length, char* buf);
+
     ///Read in a string of the given length
     std::string getString(size_t length);
     ///Read in a string of the length specified in the file

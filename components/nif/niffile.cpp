@@ -251,6 +251,13 @@ static std::map<std::string,RecordFactoryEntry> makeFactory()
     newFactory.insert(makeEntry("bhkHingeConstraint",         &construct <bhkHingeConstraint>          , RC_bhkHingeConstraint            ));
     newFactory.insert(makeEntry("BSStripPSysData",            &construct <BSStripPSysData>             , RC_BSStripPSysData               ));
     newFactory.insert(makeEntry("BSPSysStripUpdateModifier",  &construct <BSPSysStripUpdateModifier>   , RC_BSPSysStripUpdateModifier     ));
+    newFactory.insert(makeEntry("NiBSplineInterpolator",      &construct <NiBSplineInterpolator>       , RC_NiBSplineInterpolator         ));
+    newFactory.insert(makeEntry("NiBSplineFloatInterpolator", &construct <NiBSplineFloatInterpolator>  , RC_NiBSplineFloatInterpolator    ));
+    newFactory.insert(makeEntry("NiBSplinePoint3Interpolator", &construct <NiBSplinePoint3Interpolator> , RC_NiBSplinePoint3Interpolator  ));
+    newFactory.insert(makeEntry("NiBSplineTransformInterpolator", &construct <NiBSplineTransformInterpolator> , RC_NiBSplineTransformInterpolator));
+    newFactory.insert(makeEntry("NiBSplineCompTransformInterpolator", &construct <NiBSplineCompTransformInterpolator> , RC_NiBSplineCompTransformInterpolator));
+    newFactory.insert(makeEntry("NiBSplineData",              &construct <NiBSplineData>               , RC_NiBSplineData                 ));
+    newFactory.insert(makeEntry("NiBSplineBasisData",         &construct <NiBSplineBasisData>          , RC_NiBSplineBasisData            ));
     return newFactory;
 }
 
