@@ -2,6 +2,8 @@
 
 #include <extern/esm4/armo.hpp>
 
+#include <components/misc/stringops.hpp>
+
 #include "../mwworld/ptr.hpp"
 #include "../mwworld/physicssystem.hpp"
 #include "../mwworld/cellstore.hpp"
@@ -36,9 +38,13 @@ namespace MWClass
         MWWorld::LiveCellRef<ESM4::Armor> *ref = ptr.get<ESM4::Armor>();
         assert(ref->mBase != NULL);
 
-        const std::string &model = ref->mBase->mModel;
-        if (!model.empty()) {
-            return "meshes\\" + model;
+        // clothing and armor need "ground" models (with physics) unless being worn
+        std::string model = ref->mBase->mModel;
+        if (!model.empty())
+        {
+            size_t pos = Misc::StringUtils::lowerCase(model).find_last_of(".nif"); // pos points at 'f'
+            if (pos != std::string::npos) // mModel does not end in ".nif"
+                return "meshes\\" + model.substr(0, pos-3) + "_gnd.nif";
         }
         return "";
     }
