@@ -222,7 +222,7 @@ void ESMStore::loadTes4Group (ESM::ESMReader &esm)
                 hdr.group.label.value == ESM4::REC_CREA || hdr.group.label.value == ESM4::REC_LVLC ||
                 hdr.group.label.value == ESM4::REC_LVLI || hdr.group.label.value == ESM4::REC_MATO ||
                 hdr.group.label.value == ESM4::REC_IDLE || hdr.group.label.value == ESM4::REC_LTEX ||
-                hdr.group.label.value == MKTAG('S','B','S','P')
+                hdr.group.label.value == ESM4::REC_RACE || hdr.group.label.value == ESM4::REC_SBSP
                 )
             {
                 reader.saveGroupStatus();
@@ -231,7 +231,7 @@ void ESMStore::loadTes4Group (ESM::ESMReader &esm)
             else
             {
                 // Skip groups that are of no interest (for now).
-                //  GMST GLOB CLAS FACT RACE SKIL MGEF SCPT ENCH SPEL BSGN WTHR CLMT DIAL
+                //  GMST GLOB CLAS FACT SKIL MGEF SCPT ENCH SPEL BSGN WTHR CLMT DIAL
                 //  QUST PACK CSTY LSCR LVSP WATR EFSH
 
                 // FIXME: The label field of a group is not reliable, so we will need to check here as well
@@ -313,7 +313,7 @@ void ESMStore::loadTes4Record (ESM::ESMReader& esm)
         // GMST, GLOB, CLAS, FACT
         case ESM4::REC_HAIR: reader.getRecordData(); mForeignHairs.load(esm); break;
         case ESM4::REC_EYES: reader.getRecordData(); mForeignEyesSet.load(esm); break;
-		// RACE
+        case ESM4::REC_RACE: reader.getRecordData(); mForeignRaces.load(esm); break;
         case ESM4::REC_SOUN: reader.getRecordData(); mForeignSounds.load(esm); break;
 		// SKIL, MGEF, SCPT
         case ESM4::REC_LTEX: reader.getRecordData(); mForeignLandTextures.load(esm); break;

@@ -313,6 +313,7 @@ namespace MWWorld
 
 template class MWWorld::ForeignStore<ESM4::Hair>;
 template class MWWorld::ForeignStore<ESM4::Eyes>;
+template class MWWorld::ForeignStore<ESM4::Race>;
 template class MWWorld::ForeignStore<ESM4::Sound>;
 template class MWWorld::ForeignStore<ESM4::LandTexture>;
 // Foreign Referenceables

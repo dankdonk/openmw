@@ -45,6 +45,7 @@ set(ESM4_SOURCE_FILES
     idle.cpp
     mato.cpp
     sbsp.cpp
+    race.cpp
     formid.cpp
     reader.cpp
 )

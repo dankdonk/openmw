@@ -59,7 +59,18 @@ namespace NifOgre
 
         virtual Ogre::Real calculate(Ogre::Real value);
     };
+    // FIXME: not sure whether to replace Default Function
+#if 0
+    class InterpolateFunction : public Ogre::ControllerFunction<Ogre::Real>
+    {
+        const Nif::NiInterpolator* mInterpolator;
 
+    public:
+        InterpolateFunction (const Nif::NiInterpolator *interp, bool deltaInput);
+
+        virtual Ogre::Real calculate(Ogre::Real value);
+    };
+#endif
     class ValueInterpolator
     {
     protected:
@@ -175,8 +186,12 @@ namespace NifOgre
             const Nif::FloatKeyMap* mZRotations;
             const Nif::Vector3KeyMap* mTranslations;
             const Nif::FloatKeyMap* mScales;
-            const Nif::NiInterpolator* mData;
+            const Nif::NiInterpolator* mInterpolator;
             Nif::NIFFilePtr mNif; // Hold a SharedPtr to make sure key lists stay valid
+            // FIXME: are these used?
+            int mLastRotate;
+            int mLastTranslate;
+            int mLastScale;
 
             using ValueInterpolator::interpKey;
 
@@ -185,7 +200,7 @@ namespace NifOgre
             Ogre::Quaternion getXYZRotation(float time) const;
 
         public:
-            Value (Ogre::Node *target, const Nif::NIFFilePtr& nif, const Nif::NiInterpolator *data);
+            Value (Ogre::Node *target, const Nif::NIFFilePtr& nif, const Nif::NiInterpolator *interp);
 
             virtual Ogre::Quaternion getRotation(float time) const;
 

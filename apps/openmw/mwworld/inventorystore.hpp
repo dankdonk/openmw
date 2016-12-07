@@ -61,7 +61,21 @@ namespace MWWorld
             static const int Slot_CarriedLeft = 17;
             static const int Slot_Ammunition = 18;
 
-            static const int Slots = 19;
+            // No separate shirt/pants/skirt/belt/pauldrons slots for TES4
+            static const int Slot_ForeignHelmet = 19;
+            static const int Slot_ForeignUpperBody = 20;
+            static const int Slot_ForeignLowerBody = 21;
+            static const int Slot_ForeignLeftHand = 22;
+            static const int Slot_ForeignRightHand = 23;
+            static const int Slot_ForeignBoots = 24;
+            static const int Slot_ForeignLeftRing = 25;
+            static const int Slot_ForeignRightRing = 26;
+            static const int Slot_ForeignAmulet = 27;
+            static const int Slot_ForeignCarriedRight = 28;
+            static const int Slot_ForeignCarriedLeft = 29;
+            static const int Slot_ForeignAmmunition = 30;
+
+            static const int Slots = 31;
 
             static const int Slot_NoSlot = -1;
 

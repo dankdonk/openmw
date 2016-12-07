@@ -480,6 +480,12 @@ namespace MWWorld
         return mDoors;
     }
 
+    template<>
+    inline CellRefList<ESM4::Npc>& CellStore::get<ESM4::Npc>()
+    {
+        return mForeignNpcs;
+    }
+
     bool operator== (const CellStore& left, const CellStore& right);
     bool operator!= (const CellStore& left, const CellStore& right);
 }

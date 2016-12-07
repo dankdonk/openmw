@@ -147,6 +147,7 @@ namespace ESM4
         REC_RELA = MKTAG('R','E','L','A'), // Relationship
         REC_REVB = MKTAG('R','E','V','B'), // Reverb Parameters
         REC_RFCT = MKTAG('R','F','C','T'), // Visual Effect
+        REC_SBSP = MKTAG('S','B','S','P'), // Subspace (Oblivion only?)
         REC_SCEN = MKTAG('S','C','E','N'), // Scene
         REC_SCRL = MKTAG('S','C','R','L'), // Scroll
         REC_SGST = MKTAG('S','G','S','T'), // Sigil Stone

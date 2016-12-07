@@ -785,16 +785,19 @@ void NifOgre::NIFObjectLoader::createNodeControllers (const Nif::NIFFilePtr& nif
                         // FIXME: code duplication with above, not sure what they do, simply copied
                         const Nif::NiTransformData *data
                             = static_cast<const Nif::NiTransformInterpolator*>(interpolator)->transformData.getPtr();
-                        Ogre::ControllerValueRealPtr dstval(
+                        if (data)
+                        {
+                            Ogre::ControllerValueRealPtr dstval(
                                 OGRE_NEW KeyframeController::Value(trgtbone, nif, data));
 
-                        KeyframeController::Function* function
-                            = OGRE_NEW KeyframeController::Function(key, isAnimationAutoPlay);
+                            KeyframeController::Function* function
+                                = OGRE_NEW KeyframeController::Function(key, isAnimationAutoPlay);
 
-                        scene->mMaxControllerLength = std::max(function->mStopTime, scene->mMaxControllerLength);
-                        Ogre::ControllerFunctionRealPtr func(function);
+                            scene->mMaxControllerLength = std::max(function->mStopTime, scene->mMaxControllerLength);
+                            Ogre::ControllerFunctionRealPtr func(function);
 
-                        scene->mControllers.push_back(Ogre::Controller<Ogre::Real>(srcval, dstval, func));
+                            scene->mControllers.push_back(Ogre::Controller<Ogre::Real>(srcval, dstval, func));
+                        }
                     }
                     else
                         std::cout << "interpolator not supported " << interpolator->recName << std::endl;
@@ -1233,21 +1236,11 @@ void NifOgre::NIFObjectLoader::loadTES4Kf (Ogre::Skeleton *skel, Nif::NIFFilePtr
 
     // FIXME: how to stop scanning the same skeleton.nif each time?
     // now traverse the children and get controllers for each of the bone nodes
-    findController(skel, nif, static_cast<const Nif::Node*>(sk), ctrls);
-
-
     // FIXME: the current assumption is that idle.kf and others provide different interpolators
     // than those in skeleton.nif - how to switch them?
-
-
-
-
-
-
-
-
-
-
+    // FIXME: it appears that skeleton.nif is not the right file for the animations, after all.
+    // Back to scanning idle.kf
+    //findController(skel, nif, static_cast<const Nif::Node*>(sk), ctrls);
 
 
 
@@ -1296,13 +1289,13 @@ void NifOgre::NIFObjectLoader::loadTES4Kf (Ogre::Skeleton *skel, Nif::NIFFilePtr
             key->recType != Nif::RC_NiTransformInterpolator &&
             key->recType != Nif::RC_NiFloatInterpolator)
         {
-            nif->warn("Unexpected controller "+key->recName);
+            nif->warn("Unexpected interpolator "+key->recName);
             continue;
         }
 
         //if (!(ctrl->flags & Nif::NiNode::ControllerFlag_Active))
             //continue;
-
+#if 0
         if (key->recType == Nif::RC_NiTransformInterpolator)
         {
             if (static_cast<const Nif::NiTransformInterpolator*>(key)->transformData.empty())
@@ -1319,6 +1312,7 @@ void NifOgre::NIFObjectLoader::loadTES4Kf (Ogre::Skeleton *skel, Nif::NIFFilePtr
         }
         else
             continue;
+#endif
 
         std::string boneName(std::string(&(ctrl.stringPalette->buffer[0]) + ctrl.nodeNameOffset));
         if (ctrl.nodeNameOffset == -1 || !skel->hasBone(boneName))
@@ -1411,21 +1405,24 @@ void NifOgre::NIFObjectLoader::loadTES4Kf (Ogre::Skeleton *skel, Nif::NIFFilePtr
         //             Bip01 pony6
         //
         //
-#if 0
         Ogre::Bone *trgtbone = skel->getBone(boneName);
         // srcval is set in Animation::addAnimSource()
         //   ctrls[i].setSource(mAnimationTimePtr[grp]);
         Ogre::ControllerValueRealPtr srcval;
         Ogre::ControllerValueRealPtr
-            dstval(OGRE_NEW KeyframeController::Value(trgtbone, nif, key->data.getPtr()));
+            dstval(OGRE_NEW TransformController::Value(trgtbone, kf, key));
         // when deltainput is false, DefaultFunction calculates:
         //   value = std::min(mStopTime, std::max(mStartTime, value+mPhase));
-        // where mStopTime = key->timestop, mStartTime = key->timestart, mPhase = key->phase
+        // where mStopTime = &ctlr->timeStart, mStartTime = &ctlr->timeStop, mPhase = &ctlr->phase
         // (all floats, also see Nif::Controller (base.hpp))
-        Ogre::ControllerFunctionRealPtr func(OGRE_NEW KeyframeController::Function(key, false));
+        Nif::Controller ctlr; // same as NiTimeController
+        ctlr.frequency = seq->frequency;
+        ctlr.phase = 0;
+        ctlr.timeStart = seq->startTime;
+        ctlr.timeStop = seq->stopTime;
+        Ogre::ControllerFunctionRealPtr func(OGRE_NEW TransformController::Function(&ctlr, false));
 
         ctrls.push_back(Ogre::Controller<Ogre::Real>(srcval, dstval, func));
-#endif
     }
 }
 

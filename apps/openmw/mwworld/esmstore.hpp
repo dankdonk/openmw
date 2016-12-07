@@ -5,6 +5,7 @@
 
 #include <extern/esm4/hair.hpp>
 #include <extern/esm4/eyes.hpp>
+#include <extern/esm4/race.hpp>
 #include <extern/esm4/soun.hpp>
 #include <extern/esm4/ltex.hpp>
 #include <extern/esm4/acti.hpp>
@@ -112,6 +113,7 @@ namespace MWWorld
         //
         ForeignStore<ESM4::Hair>       mForeignHairs;
         ForeignStore<ESM4::Eyes>       mForeignEyesSet;
+        ForeignStore<ESM4::Race>       mForeignRaces;
         ForeignStore<ESM4::Sound>      mForeignSounds;
         ForeignStore<ESM4::LandTexture> mForeignLandTextures;
         // Foreign referenceables
@@ -250,6 +252,7 @@ namespace MWWorld
             // NOTE: to avoid clash with TES3, these are rotated by one
             mStores[MKTAG('R','H','A','I')] = &mForeignHairs;
             mStores[MKTAG('S','E','Y','E')] = &mForeignEyesSet;
+            mStores[MKTAG('E','R','A','C')] = &mForeignRaces;
             mStores[MKTAG('N','S','O','U')] = &mForeignSounds;
             mStores[MKTAG('X','L','T','E')] = &mForeignLandTextures;
 
@@ -658,6 +661,11 @@ namespace MWWorld
     template <>
     inline const ForeignStore<ESM4::Eyes>& ESMStore::getForeign<ESM4::Eyes>() const {
         return mForeignEyesSet;
+    }
+
+    template <>
+    inline const ForeignStore<ESM4::Race>& ESMStore::getForeign<ESM4::Race>() const {
+        return mForeignRaces;
     }
 
     template <>

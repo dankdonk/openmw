@@ -310,6 +310,12 @@ namespace MWMechanics
 
     void Actors::engageCombat (const MWWorld::Ptr& actor1, const MWWorld::Ptr& actor2, bool againstPlayer)
     {
+        // FIXME temporarily take no action while testing rendering
+        if(actor1.getTypeName() == typeid(ESM4::Npc).name() || actor2.getTypeName() == typeid(ESM4::Npc).name())
+        {
+            return;
+        }
+
         CreatureStats& creatureStats = actor1.getClass().getCreatureStats(actor1);
 
         if (actor2.getClass().getCreatureStats(actor2).isDead()

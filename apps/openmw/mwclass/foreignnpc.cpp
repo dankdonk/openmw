@@ -6,6 +6,7 @@
 #include "../mwbase/environment.hpp"
 #include "../mwbase/world.hpp"
 #include "../mwbase/mechanicsmanager.hpp"
+#include "../mwbase/windowmanager.hpp"
 
 #include "../mwworld/ptr.hpp"
 #include "../mwworld/physicssystem.hpp"
@@ -18,6 +19,8 @@
 
 #include "../mwrender/actors.hpp"
 #include "../mwrender/renderinginterface.hpp"
+
+#include "../mwgui/tooltips.hpp"
 
 namespace
 {
@@ -105,6 +108,50 @@ namespace MWClass
         return dynamic_cast<ForeignNpcCustomData&> (*ptr.getRefData().getCustomData()).mNpcStats;
     }
 
+    MWWorld::ContainerStore& ForeignNpc::getContainerStore (const MWWorld::Ptr& ptr)
+        const
+    {
+        ensureCustomData (ptr);
+
+        return dynamic_cast<ForeignNpcCustomData&> (*ptr.getRefData().getCustomData()).mInventoryStore;
+    }
+
+    MWWorld::InventoryStore& ForeignNpc::getInventoryStore (const MWWorld::Ptr& ptr)
+        const
+    {
+        ensureCustomData (ptr);
+
+        return dynamic_cast<ForeignNpcCustomData&> (*ptr.getRefData().getCustomData()).mInventoryStore;
+    }
+
+    bool ForeignNpc::hasToolTip (const MWWorld::Ptr& ptr) const
+    {
+        //FIXME
+        //return !ptr.getClass().getCreatureStats(ptr).getAiSequence().isInCombat() || getCreatureStats(ptr).isDead();
+        return true;
+    }
+
+    MWGui::ToolTipInfo ForeignNpc::getToolTipInfo (const MWWorld::Ptr& ptr) const
+    {
+        MWWorld::LiveCellRef<ESM4::Npc> *ref = ptr.get<ESM4::Npc>();
+
+        bool fullHelp = MWBase::Environment::get().getWindowManager()->getFullHelp();
+        MWGui::ToolTipInfo info;
+
+        info.caption = getName(ptr);
+        if(fullHelp && getNpcStats(ptr).isWerewolf())
+        {
+            info.caption += " (";
+            info.caption += ref->mBase->mEditorId;
+            info.caption += ")";
+        }
+
+        //if(fullHelp)
+            //info.text = MWGui::ToolTips::getMiscString(ref->mBase->mScript, "Script");
+
+        return info;
+    }
+
     void ForeignNpc::registerSelf()
     {
         boost::shared_ptr<Class> instance (new ForeignNpc);
@@ -119,11 +166,25 @@ namespace MWClass
         return MWWorld::Ptr(&cell.get<ESM4::Npc>().insert(*ref), &cell);
     }
 
-    MWWorld::InventoryStore& ForeignNpc::getInventoryStore (const MWWorld::Ptr& ptr) const
+    int ForeignNpc::getSkill(const MWWorld::Ptr& ptr, int skill) const
     {
-        ensureCustomData (ptr);
+        // FIXME
+        //return ptr.getClass().getNpcStats(ptr).getSkill(skill).getModified();
+        return 15;
+    }
 
-        return dynamic_cast<ForeignNpcCustomData&> (*ptr.getRefData().getCustomData()).mInventoryStore;
+    int ForeignNpc::getBloodTexture(const MWWorld::Ptr &ptr) const
+    {
+        MWWorld::LiveCellRef<ESM4::Npc> *ref = ptr.get<ESM4::Npc>();
+
+        // FIXME
+#if 0
+        if (ref->mBase->mFlags & ESM::NPC::Skeleton)
+            return 1;
+        if (ref->mBase->mFlags & ESM::NPC::Metal)
+            return 2;
+#endif
+        return 0;
     }
 
     void ForeignNpc::ensureCustomData (const MWWorld::Ptr& ptr) const
@@ -275,5 +336,129 @@ namespace MWClass
 
             getInventoryStore(ptr).autoEquip(ptr);
         }
+    }
+
+    MWMechanics::Movement& ForeignNpc::getMovementSettings (const MWWorld::Ptr& ptr) const
+    {
+        ensureCustomData (ptr);
+
+        return dynamic_cast<ForeignNpcCustomData&> (*ptr.getRefData().getCustomData()).mMovement;
+    }
+
+    Ogre::Vector3 ForeignNpc::getMovementVector (const MWWorld::Ptr& ptr) const
+    {
+        MWMechanics::Movement &movement = getMovementSettings(ptr);
+        Ogre::Vector3 vec(movement.mPosition);
+        movement.mPosition[0] = 0.0f;
+        movement.mPosition[1] = 0.0f;
+        movement.mPosition[2] = 0.0f;
+        return vec;
+    }
+
+    Ogre::Vector3 ForeignNpc::getRotationVector (const MWWorld::Ptr& ptr) const
+    {
+        MWMechanics::Movement &movement = getMovementSettings(ptr);
+        Ogre::Vector3 vec(movement.mRotation);
+        movement.mRotation[0] = 0.0f;
+        movement.mRotation[1] = 0.0f;
+        movement.mRotation[2] = 0.0f;
+        return vec;
+    }
+
+    float ForeignNpc::getCapacity (const MWWorld::Ptr& ptr) const
+    {
+        return 1.f;
+#if 0
+        const MWMechanics::CreatureStats& stats = getCreatureStats (ptr);
+        static const float fEncumbranceStrMult = MWBase::Environment::get().getWorld()->getStore().get<ESM::GameSetting>().find("fEncumbranceStrMult")->getFloat();
+        return stats.getAttribute(0).getModified()*fEncumbranceStrMult;
+#endif
+    }
+
+    float ForeignNpc::getArmorRating (const MWWorld::Ptr& ptr) const
+    {
+        return 1.f;
+#if 0
+        const MWBase::World *world = MWBase::Environment::get().getWorld();
+        const MWWorld::Store<ESM::GameSetting> &store = world->getStore().get<ESM::GameSetting>();
+
+        MWMechanics::NpcStats &stats = getNpcStats(ptr);
+        MWWorld::InventoryStore &invStore = getInventoryStore(ptr);
+
+        float fUnarmoredBase1 = store.find("fUnarmoredBase1")->getFloat();
+        float fUnarmoredBase2 = store.find("fUnarmoredBase2")->getFloat();
+        int unarmoredSkill = stats.getSkill(ESM::Skill::Unarmored).getModified();
+
+        int ratings[MWWorld::InventoryStore::Slots];
+        for(int i = 0;i < MWWorld::InventoryStore::Slots;i++)
+        {
+            MWWorld::ContainerStoreIterator it = invStore.getSlot(i);
+            if (it == invStore.end() || it->getTypeName() != typeid(ESM::Armor).name())
+            {
+                // unarmored
+                ratings[i] = static_cast<int>((fUnarmoredBase1 * unarmoredSkill) * (fUnarmoredBase2 * unarmoredSkill));
+            }
+            else
+            {
+                ratings[i] = it->getClass().getEffectiveArmorRating(*it, ptr);
+            }
+        }
+
+        float shield = stats.getMagicEffects().get(ESM::MagicEffect::Shield).getMagnitude();
+
+        return ratings[MWWorld::InventoryStore::Slot_Cuirass] * 0.3f
+                + (ratings[MWWorld::InventoryStore::Slot_CarriedLeft] + ratings[MWWorld::InventoryStore::Slot_Helmet]
+                    + ratings[MWWorld::InventoryStore::Slot_Greaves] + ratings[MWWorld::InventoryStore::Slot_Boots]
+                    + ratings[MWWorld::InventoryStore::Slot_LeftPauldron] + ratings[MWWorld::InventoryStore::Slot_RightPauldron]
+                    ) * 0.1f
+                + (ratings[MWWorld::InventoryStore::Slot_LeftGauntlet] + ratings[MWWorld::InventoryStore::Slot_RightGauntlet])
+                    * 0.05f
+                + shield;
+#endif
+    }
+
+    float ForeignNpc::getEncumbrance (const MWWorld::Ptr& ptr) const
+    {
+        const MWMechanics::NpcStats &stats = getNpcStats(ptr);
+
+        // According to UESP, inventory weight is ignored in werewolf form. Does that include
+        // feather and burden effects?
+        float weight = 0.0f;
+        if(!stats.isWerewolf())
+        {
+            weight  = getContainerStore(ptr).getWeight();
+            weight -= stats.getMagicEffects().get(ESM::MagicEffect::Feather).getMagnitude();
+            weight += stats.getMagicEffects().get(ESM::MagicEffect::Burden).getMagnitude();
+            if(weight < 0.0f)
+                weight = 0.0f;
+        }
+
+        return weight;
+    }
+
+    int ForeignNpc::getBaseFightRating (const MWWorld::Ptr& ptr) const
+    {
+        MWWorld::LiveCellRef<ESM4::Npc> *ref = ptr.get<ESM4::Npc>();
+        //return ref->mBase->mAiData.mFight;
+        return 5;
+    }
+
+    bool ForeignNpc::isBipedal(const MWWorld::Ptr &ptr) const
+    {
+        return true;
+    }
+
+    std::string ForeignNpc::getPrimaryFaction (const MWWorld::Ptr& ptr) const
+    {
+        MWWorld::LiveCellRef<ESM4::Npc> *ref = ptr.get<ESM4::Npc>();
+        //return ref->mBase->mFaction;
+        return "foreign faction";
+    }
+
+    int ForeignNpc::getPrimaryFactionRank (const MWWorld::Ptr& ptr) const
+    {
+        MWWorld::LiveCellRef<ESM4::Npc> *ref = ptr.get<ESM4::Npc>();
+        //return ref->mBase->getFactionRank();
+        return 10;
     }
 }

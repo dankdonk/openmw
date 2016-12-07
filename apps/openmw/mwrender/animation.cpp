@@ -615,6 +615,38 @@ void Animation::updatePosition(float oldtime, float newtime, Ogre::Vector3 &posi
 
 bool Animation::reset(AnimState &state, const NifOgre::TextKeyMap &keys, const std::string &groupname, const std::string &start, const std::string &stop, float startpoint, bool loopfallback)
 {
+    // FIXME This is a hack
+    if(mPtr.getTypeName() == typeid(ESM4::Npc).name())
+    {
+        NifOgre::TextKeyMap::const_iterator it(keys.begin());
+        while (it != keys.end())
+        {
+            if (it->second == start)
+            {
+                state.mStartTime = it->first;
+                break;
+            }
+            ++it;
+        }
+        if (it == keys.end())
+            return false;
+
+        it = keys.begin();
+        while (it != keys.end())
+        {
+            if (it->second == stop)
+            {
+                state.mStopTime = it->first;
+                break;
+            }
+            ++it;
+        }
+        if (it == keys.end())
+            return false;
+
+        return true;
+    }
+
     // Look for text keys in reverse. This normally wouldn't matter, but for some reason undeadwolf_2.nif has two
     // separate walkforward keys, and the last one is supposed to be used.
     NifOgre::TextKeyMap::const_reverse_iterator groupend(keys.rbegin());
@@ -626,12 +658,19 @@ bool Animation::reset(AnimState &state, const NifOgre::TextKeyMap &keys, const s
     }
 
     std::string starttag = groupname+": "+start;
+    // FIXME: temporary workaround during testing
+    if(mPtr.getTypeName() == typeid(ESM4::Npc).name())
+        starttag = start;
     NifOgre::TextKeyMap::const_reverse_iterator startkey(groupend);
     while(startkey != keys.rend() && startkey->second != starttag)
         ++startkey;
     if(startkey == keys.rend() && start == "loop start")
     {
-        starttag = groupname+": start";
+        // FIXME: temporary workaround during testing
+        if(mPtr.getTypeName() == typeid(ESM4::Npc).name())
+            starttag = "start";
+        else
+            starttag = groupname+": start";
         startkey = groupend;
         while(startkey != keys.rend() && startkey->second != starttag)
             ++startkey;
@@ -704,6 +743,16 @@ void Animation::handleTextKey(AnimState &state, const std::string &groupname, co
 {
     //float time = key->first;
     const std::string &evt = key->second;
+
+    // FIXME: temporary workaround during testing
+    if(mPtr.getTypeName() == typeid(ESM4::Npc).name())
+    {
+        if (evt == "start")
+            state.mStartTime = key->first;
+        else if (evt == "end")
+            state.mStopTime = key->first;
+        return;
+    }
 
     if(evt.compare(0, 7, "sound: ") == 0)
     {

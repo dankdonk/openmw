@@ -93,6 +93,7 @@ bool isSkinned (NifOgre::ObjectScenePtr scene)
 namespace MWRender
 {
 
+    // FIXME: need differnt bone names and parts for TES4
 static ForeignNpcAnimation::PartBoneMap createPartListMap()
 {
     ForeignNpcAnimation::PartBoneMap result;
@@ -157,6 +158,7 @@ ForeignNpcAnimation::ForeignNpcAnimation(const MWWorld::Ptr& ptr, Ogre::SceneNod
     //mHeadAnimationTime = Ogre::SharedPtr<HeadAnimationTime>(new HeadAnimationTime(mPtr));
     mWeaponAnimationTime = Ogre::SharedPtr<WeaponAnimationTime>(new WeaponAnimationTime(this));
 
+    // FIXME for foreign
     for(size_t i = 0;i < ESM::PRT_Count;i++)
     {
         mPartslots[i] = -1;  //each slot is empty
@@ -186,9 +188,15 @@ void ForeignNpcAnimation::rebuild()
     MWBase::Environment::get().getMechanicsManager()->forceStateUpdate(mPtr);
 }
 
+// clearAnimSources() - FIXME may be need to cache them rather than clearing each time?
+// get the npc model based on race, sex, etc
+// setObjectRoot() - use the model to setup:
+//    NifOgre::ObjectScenePtr mObjectRoot and Ogre::Entity *mSkelBase
+// addAnimSource() - FIXME need to figure out how
+// updateParts() - get the correct body parts based on inventory
 void ForeignNpcAnimation::updateNpcBase()
 {
-    clearAnimSources();
+    clearAnimSources(); // clears *all* animations
 
     // FIXME: what to do with head and hand?
 
@@ -312,8 +320,6 @@ void ForeignNpcAnimation::updateNpcBase()
 
 
 
-
-
 #if 0
     const MWWorld::ESMStore &store = MWBase::Environment::get().getWorld()->getStore();
     const ESM::Race *race = store.get<ESM::Race>().find(mNpc->mRace);
@@ -362,6 +368,7 @@ void ForeignNpcAnimation::updateNpcBase()
     std::string smodel = "meshes\\" + mNpc->mModel;
     smodel = Misc::ResourceHelpers::correctActorModelPath(smodel);
     setObjectRoot(smodel, true); // this call should also create mSkelBase
+    mSkelBase->setDisplaySkeleton(true); // FIXME for debugging (doesn't work...)
 
     if(mViewMode != VM_FirstPerson)
     {
@@ -398,9 +405,69 @@ void ForeignNpcAnimation::updateNpcBase()
 #endif
     }
 
+    // Assume that the body parts come from the same directory as the chosen skeleton.  However
+    // some races have their own parts, e.g. khajiit
+    //
+    // meshes/characters/_male/skeleton.nif
+    // meshes/characters/_male/skeletonbeast.nif
+    // meshes/characters/_male/skeletonsesheogorath.nif
+    //
+    // meshes/characters/_male/femalefoot.nif
+    // meshes/characters/_male/femalehand.nif
+    // meshes/characters/_male/femalelowerbody.nif
+    // meshes/characters/_male/femaleupperbody.nif
+    // meshes/characters/_male/femaleupperbodynude.nif
+    // meshes/characters/_male/foot.nif
+    // meshes/characters/_male/hand.nif
+    // meshes/characters/_male/lowerbody.nif
+    // meshes/characters/_male/upperbody.nif
+
+    // Assume foot/hand models share the same slot with boots/shoes/gloves/gauntlets
+    // Similarly upperbody uses the cuirass/shirt slot and lowerbody pants/skirt/greaves slot
+    //
+    // However head, hair and eyes should have permanent slots.
+
+    //MWRender::Animation
+    //Ogre::Entity    *mSkelBase
+    //Ogre::SceneNode *mInsert
+
+    NifOgre::ObjectScenePtr objectH
+        = NifOgre::Loader::createObjects(mSkelBase,
+                                         "Bip01", // not used for skinned
+                                         /*"Bip01"*/"", // bonefilter??
+                                         mInsert,
+                                         "meshes\\characters\\imperial\\headhuman.nif");
+    Ogre::Vector3 glowColor;
+    setRenderProperties(objectH,
+                        (mViewMode == VM_FirstPerson) ? RV_FirstPerson : mVisibilityFlags,
+                        RQG_Main, RQG_Alpha,
+                        0,
+                        false, /*enchantedGlow*/
+                        &glowColor);
+
+    Ogre::SceneNode *nodeHand = mInsert->createChildSceneNode();
+    NifOgre::ObjectScenePtr objectHand
+        = NifOgre::Loader::createObjects(mSkelBase,
+                                         "Bip01", // not used for skinned
+                                         /*"Bip01"*/"", // bonefilter??
+                                         mInsert,
+                                         "meshes\\characters\\_male\\hand.nif");
+
+    setRenderProperties(objectHand,
+                        (mViewMode == VM_FirstPerson) ? RV_FirstPerson : mVisibilityFlags,
+                        RQG_Main, RQG_Alpha,
+                        0,
+                        false, /*enchantedGlow*/
+                        &glowColor);
+
+
     for(size_t i = 0;i < ESM::PRT_Count;i++)
         removeIndividualPart((ESM::PartReferenceType)i);
-    //updateParts();
+    updateParts();
+
+    // ESM::PRT_Count is 27, see loadarmo.hpp
+    // NifOgre::ObjectScenePtr mObjectParts[ESM::PRT_Count];
+    mObjectParts[ESM::PRT_Head] = objectH;
 
     mWeaponAnimationTime->updateStartTime();
 }
@@ -498,6 +565,27 @@ void ForeignNpcAnimation::updateParts()
         return;
     }
 
+    // Equipment Slots
+    //
+    // Morrowind      Oblivion
+    //
+    // Robe           -- takes other slots
+    // Weapon R       Weapon
+    // Weapon L       Shield
+    // Helmet         Helmet/Hood
+    // Cuirass        Cuirass/Shirt        - upper body
+    // Gauntlets      Gauntlets            - hand
+    // Greaves        Greaves/Skirts/Pants - lower body
+    // Boots/Shoes    Boots/Shoes          - feet
+    // Shirt
+    // Skirts/Pants
+    // Pauldron R     -- doesn't exist
+    // Pauldron L     -- doesn't exist
+    // Ring           Ring
+    // Ring           Ring
+    // Amulet         Amulet
+
+
     static const struct {
         int mSlot;
         int mBasePriority;
@@ -516,7 +604,15 @@ void ForeignNpcAnimation::updateParts()
         { MWWorld::InventoryStore::Slot_Shirt,         0 },
         { MWWorld::InventoryStore::Slot_Pants,         0 },
         { MWWorld::InventoryStore::Slot_CarriedLeft,   0 },
-        { MWWorld::InventoryStore::Slot_CarriedRight,  0 }
+        { MWWorld::InventoryStore::Slot_CarriedRight,  0 },
+        { MWWorld::InventoryStore::Slot_ForeignHelmet,      0 },
+        { MWWorld::InventoryStore::Slot_ForeignUpperBody,   0 },
+        { MWWorld::InventoryStore::Slot_ForeignLowerBody,   0 },
+        { MWWorld::InventoryStore::Slot_ForeignLeftHand,    0 },
+        { MWWorld::InventoryStore::Slot_ForeignRightHand,   0 },
+        { MWWorld::InventoryStore::Slot_ForeignBoots,       0 },
+        { MWWorld::InventoryStore::Slot_ForeignCarriedRight,0 },
+        { MWWorld::InventoryStore::Slot_ForeignCarriedLeft, 0 }
     };
     static const size_t slotlistsize = sizeof(slotlist)/sizeof(slotlist[0]);
 
@@ -538,17 +634,17 @@ void ForeignNpcAnimation::updateParts()
         int prio = 1;
         bool enchantedGlow = !store->getClass().getEnchantment(*store).empty();
         Ogre::Vector3 glowColor = getEnchantmentColor(*store);
-        if(store->getTypeName() == typeid(ESM::Clothing).name())
+        if(store->getTypeName() == typeid(ESM4::Clothing).name())
         {
             prio = ((slotlist[i].mBasePriority+1)<<1) + 0;
-            const ESM::Clothing *clothes = store->get<ESM::Clothing>()->mBase;
-            addPartGroup(slotlist[i].mSlot, prio, clothes->mParts.mParts, enchantedGlow, &glowColor);
+            const ESM4::Clothing *clothes = store->get<ESM4::Clothing>()->mBase;
+            //addPartGroup(slotlist[i].mSlot, prio, clothes->mParts.mParts, enchantedGlow, &glowColor);
         }
-        else if(store->getTypeName() == typeid(ESM::Armor).name())
+        else if(store->getTypeName() == typeid(ESM4::Armor).name())
         {
             prio = ((slotlist[i].mBasePriority+1)<<1) + 1;
-            const ESM::Armor *armor = store->get<ESM::Armor>()->mBase;
-            addPartGroup(slotlist[i].mSlot, prio, armor->mParts.mParts, enchantedGlow, &glowColor);
+            const ESM4::Armor *armor = store->get<ESM4::Armor>()->mBase;
+            //addPartGroup(slotlist[i].mSlot, prio, armor->mParts.mParts, enchantedGlow, &glowColor);
         }
 
         if(slotlist[i].mSlot == MWWorld::InventoryStore::Slot_Robe)
@@ -584,7 +680,7 @@ void ForeignNpcAnimation::updateParts()
     {
         MWWorld::ContainerStoreIterator store = inv.getSlot(MWWorld::InventoryStore::Slot_CarriedLeft);
         MWWorld::Ptr part;
-        if(store != inv.end() && (part=*store).getTypeName() == typeid(ESM::Light).name())
+        if(store != inv.end() && (part=*store).getTypeName() == typeid(ESM4::Light).name())
         {
             const ESM::Light *light = part.get<ESM::Light>()->mBase;
             addOrReplaceIndividualPart(ESM::PRT_Shield, MWWorld::InventoryStore::Slot_CarriedLeft,
@@ -739,6 +835,7 @@ void ForeignNpcAnimation::play(const std::string &groupname, int priority, int g
               float startpoint, size_t loops, bool loopfallback)
 {
     std::cout << "anim play" << std::endl;
+    Animation::play(groupname, priority, groups, autodisable, speedmult, start, stop, startpoint, loops, loopfallback);
 }
 
 void ForeignNpcAnimation::addFirstPersonOffset(const Ogre::Vector3 &offset)
@@ -788,9 +885,7 @@ NifOgre::ObjectScenePtr ForeignNpcAnimation::insertBoundedPart(const std::string
 
 Ogre::Vector3 ForeignNpcAnimation::runAnimation(float timepassed)
 {
-    // FIXME
-
-    Ogre::Vector3 ret = Ogre::Vector3();// Animation::runAnimation(timepassed);
+    Ogre::Vector3 ret = Animation::runAnimation(timepassed);
 
     //mHeadAnimationTime->update(timepassed);
 
@@ -871,6 +966,11 @@ void ForeignNpcAnimation::removePartGroup(int group)
     }
 }
 
+// It seems TES5 allows lots of body part slots:
+//   http://wiki.tesnexus.com/index.php/Skyrim_bodyparts_number
+//   https://github.com/amorilia/nifxml/blob/master/nif.xml#L631
+//
+// Not sure how TES4 works.
 bool ForeignNpcAnimation::addOrReplaceIndividualPart(ESM::PartReferenceType type, int group, int priority, const std::string &mesh, bool enchantedGlow, Ogre::Vector3* glowColor)
 {
     if(priority <= mPartPriorities[type])
