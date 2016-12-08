@@ -133,6 +133,7 @@ template <> struct SplineTraits<Ogre::Quaternion>
         return v;
     }
     static int CountOf() { return 4; }
+    // mult is from blend()
     static Ogre::Quaternion & Compute( Ogre::Quaternion & v, const std::vector<short> & c, unsigned int off, float mult )
     {
         v.w = v.w + ( float(c.at(off+0)) / float(SHRT_MAX) ) * mult;
@@ -841,7 +842,7 @@ Ogre::Quaternion NifOgre::TransformController::Value::getRotation (float time) c
             return mNode->getOrientation();
 
         unsigned int nCtrl = bd->numControlPoints;
-        int degree = 3; // FIXME magic number
+        int degree = 3; // degree of the polynomial
         float interval
             = ( ( time - bsi->startTime ) / ( bsi->stopTime - bsi->startTime ) ) * float(nCtrl - degree);
 
@@ -883,7 +884,7 @@ Ogre::Vector3 NifOgre::TransformController::Value::getTranslation (float time) c
             return mNode->getPosition();
 
         unsigned int nCtrl = bd->numControlPoints;
-        int degree = 3; // FIXME magic number
+        int degree = 3; // degree of the polynomial
         float interval
             = ( ( time - bsi->startTime ) / ( bsi->stopTime - bsi->startTime ) ) * float(nCtrl - degree);
 
@@ -925,7 +926,7 @@ Ogre::Vector3 NifOgre::TransformController::Value::getScale (float time) const
             return mNode->getScale();
 
         unsigned int nCtrl = bd->numControlPoints;
-        int degree = 3; // FIXME magic number
+        int degree = 3; // degree of the polynomial
         float interval
             = ((time - bsi->startTime) / (bsi->stopTime - bsi->startTime)) * float(nCtrl - degree);
         float scale;
@@ -969,12 +970,21 @@ void NifOgre::TransformController::Value::setValue (Ogre::Real time)
         else if (!mXRotations->mKeys.empty() || !mYRotations->mKeys.empty() || !mZRotations->mKeys.empty())
             mNode->setOrientation(getXYZRotation(time));
 
+        Ogre::Vector3 old = mNode->getPosition(); // FIXME: debug only
         if(mTranslations->mKeys.size() > 0)
-            mNode->setPosition(interpKey(mTranslations->mKeys, time));
+        {
+            float dist;
+            Ogre::Vector3 pos = interpKey(mTranslations->mKeys, time);
+            if ((dist = old.squaredDistance(pos)) < 10)
+                mNode->setPosition(pos);
+            //else
+                //std::cout << "tr " << mNode->getName() << " dist " << dist << ", time " << time << std::endl;
+        }
 
         if(mScales->mKeys.size() > 0)
             mNode->setScale(Ogre::Vector3(interpKey(mScales->mKeys, time)));
 
+        //std::cout << "ok " << time << std::endl;
         return;
     }
 
@@ -988,33 +998,53 @@ void NifOgre::TransformController::Value::setValue (Ogre::Real time)
             return;
 
         unsigned int nCtrl = bd->numControlPoints;
-        int degree = 3; // FIXME magic number
+        int degree = 3; // degree of the polynomial TODO why is it 3?
+        //if (time >= 6.f) // FIXME temporary testing
+            //std::cout << "time " << time << std::endl;
+        // for "Idle" Bip01 Pelvis:
+        //    interval = ((time - 0) / (6 - 0) * (128 - degree) = time/6 * 125  = time * 20.833
         float interval
             = ((time - bsi->startTime) / (bsi->stopTime - bsi->startTime)) * float(nCtrl - degree);
         float scale;
 
-        //Ogre::Quaternion q = Ogre::Quaternion();
-        Ogre::Quaternion q = mNode->getOrientation(); // FIXME which?
-        //Ogre::Vector3 v = Ogre::Vector3();
-        Ogre::Vector3 v = mNode->getPosition(); // FIXME which?
-        //Ogre::Vector3 s = Ogre::Vector3();
-        Ogre::Vector3 s = mNode->getScale(); // FIXME which?
+        Ogre::Quaternion q = Ogre::Quaternion();
+        Ogre::Vector3 v = Ogre::Vector3();
+        Ogre::Vector3 s = Ogre::Vector3();
 
         scale = s.x; // FIXME: assume uniform scaling
 
-        bsplineinterpolate<Ogre::Quaternion>( q, degree, interval, nCtrl, sd->shortControlPoints,
-                bsi->rotationOffset, bsi->rotationMultiplier, bsi->rotationBias );
+        if (bsi->rotationOffset != USHRT_MAX && bsi->rotationOffset+nCtrl > sd->shortControlPoints.size())
+            std::cout << "rotation overflow" << std::endl; // FIXME: debugging
+        if (bsplineinterpolate<Ogre::Quaternion>( q, degree, interval, nCtrl, sd->shortControlPoints,
+                    bsi->rotationOffset, bsi->rotationMultiplier, bsi->rotationBias ))
+        {
+            mNode->setOrientation(q);
+        }
 
-        bsplineinterpolate<Ogre::Vector3>( v, degree, interval, nCtrl, sd->shortControlPoints,
-                bsi->translationOffset, bsi->translationMultiplier, bsi->translationBias );
+        // FIXME should verify that the size of of short vector is greater than offset + nCtrl
+        if (bsi->translationOffset != USHRT_MAX && bsi->translationOffset+nCtrl > sd->shortControlPoints.size())
+            std::cout << "translation overflow" << std::endl; // FIXME: debugging
+        Ogre::Vector3 old = mNode->getPosition(); // FIXME: debug only
+        if (bsplineinterpolate<Ogre::Vector3>( v, degree, interval, nCtrl, sd->shortControlPoints,
+                    bsi->translationOffset, bsi->translationMultiplier, bsi->translationBias))
+        {
+            float dist;
+            //if ((dist = old.squaredDistance(mNode->getPosition())) < 10) // FIXME: debug only
+            if ((dist = old.squaredDistance(v)) < 10) // FIXME: debug only
+                mNode->setPosition(v); // FIXME horrible hack
+            //else
+                //std::cout << mNode->getName() << " dist " << dist << ", time " << time << std::endl;
+        }
 
-        bsplineinterpolate<float>( scale, degree, interval, nCtrl, sd->shortControlPoints,
-                bsi->scaleOffset, bsi->scaleMultiplier, bsi->scaleBias );
+        if (bsi->scaleOffset != USHRT_MAX && bsi->scaleOffset+nCtrl > sd->shortControlPoints.size())
+            std::cout << "scale overflow" << std::endl; // FIXME: debugging
+        if (bsplineinterpolate<float>( scale, degree, interval, nCtrl, sd->shortControlPoints,
+                    bsi->scaleOffset, bsi->scaleMultiplier, bsi->scaleBias ))
+        {
+            mNode->setScale(Ogre::Vector3(scale, scale, scale)); // assume uniform scaling
+        }
 
-        mNode->setOrientation(q);
-        mNode->setPosition(v);
-        mNode->setScale(Ogre::Vector3(scale, scale, scale)); // assume uniform scaling
-
+        //std::cout << "ok " << time << std::endl;
         return;
     }
 

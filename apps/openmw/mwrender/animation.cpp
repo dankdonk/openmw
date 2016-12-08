@@ -624,6 +624,9 @@ bool Animation::reset(AnimState &state, const NifOgre::TextKeyMap &keys, const s
             if (it->second == start)
             {
                 state.mStartTime = it->first;
+                // FIXME ignore loopfallback and just hard code for now
+                state.mLoopStartTime = it->first;
+                //state.mLoopStopTime = std::numeric_limits<float>::max();
                 break;
             }
             ++it;
@@ -637,6 +640,7 @@ bool Animation::reset(AnimState &state, const NifOgre::TextKeyMap &keys, const s
             if (it->second == stop)
             {
                 state.mStopTime = it->first;
+                state.mLoopStopTime = it->first;
                 break;
             }
             ++it;
@@ -953,6 +957,13 @@ void Animation::play(const std::string &groupname, int priority, int groups, boo
             state.mGroups = groups;
             state.mAutoDisable = autodisable;
             mStates[groupname] = state;
+#if 0
+            if (groupname == "idle")
+            {
+                std::cout << "state.mGroups " << state.mGroups << std::endl;
+                std::cout << "state.mLoopCount " << state.mLoopCount << std::endl;
+            }
+#endif
 
             NifOgre::TextKeyMap::const_iterator textkey(textkeys.lower_bound(state.mTime));
             if (state.mPlaying)
@@ -1217,7 +1228,15 @@ Ogre::Vector3 Animation::runAnimation(float duration)
         {
             const Ogre::SharedPtr<AnimSource> &src = stateiter->second.mSource;
             for(size_t i = 0;i < src->mControllers[grp].size();i++)
+            {
+                // FIXME: testing only
+                //
+                // FIXME: why is this being printed 22 times each?
+                //
+                //if(mPtr.getTypeName() == typeid(ESM4::Npc).name())
+                    //std::cout << "updating " << mPtr.mRef->mRef.getRefId() << ", " << i << std::endl;
                 src->mControllers[grp][i].update();
+            }
         }
     }
 

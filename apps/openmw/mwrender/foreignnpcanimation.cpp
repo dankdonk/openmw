@@ -221,6 +221,160 @@ void ForeignNpcAnimation::updateNpcBase()
     else
         std::cerr << "Eyes " + ESM4::formIdToString(mNpc->mHair) + " not found!\n";
 
+
+
+
+
+#if 0
+    const MWWorld::ESMStore &store = MWBase::Environment::get().getWorld()->getStore();
+    const ESM::Race *race = store.get<ESM::Race>().find(mNpc->mRace);
+    bool isWerewolf = (mNpcType == Type_Werewolf);
+    bool isVampire = (mNpcType == Type_Vampire);
+
+    if (isWerewolf)
+    {
+        mHeadModel = "meshes\\" + store.get<ESM::BodyPart>().find("WerewolfHead")->mModel;
+        mHairModel = "meshes\\" + store.get<ESM::BodyPart>().find("WerewolfHair")->mModel;
+    }
+    else
+    {
+        mHeadModel = "";
+        if (isVampire) // FIXME: fall back to regular head when getVampireHead fails?
+            mHeadModel = getVampireHead(mNpc->mRace, mNpc->mFlags & ESM::NPC::Female);
+        else if (!mNpc->mHead.empty())
+        {
+            const ESM::BodyPart* bp = store.get<ESM::BodyPart>().search(mNpc->mHead);
+            if (bp)
+                mHeadModel = "meshes\\" + bp->mModel;
+            else
+                std::cerr << "Failed to load body part '" << mNpc->mHead << "'" << std::endl;
+        }
+
+        mHairModel = "";
+        if (!mNpc->mHair.empty())
+        {
+            const ESM::BodyPart* bp = store.get<ESM::BodyPart>().search(mNpc->mHair);
+            if (bp)
+                mHairModel = "meshes\\" + bp->mModel;
+            else
+                std::cerr << "Failed to load body part '" << mNpc->mHair << "'" << std::endl;
+        }
+    }
+    bool isBeast = (race->mData.mFlags & ESM::Race::Beast) != 0;
+    std::string smodel = (mViewMode != VM_FirstPerson) ?
+                         (!isWerewolf ? !isBeast ? "meshes\\base_anim.nif"
+                                                 : "meshes\\base_animkna.nif"
+                                      : "meshes\\wolf\\skin.nif") :
+                         (!isWerewolf ? !isBeast ? "meshes\\base_anim.1st.nif"
+                                                 : "meshes\\base_animkna.1st.nif"
+                                      : "meshes\\wolf\\skin.1st.nif");
+    smodel = Misc::ResourceHelpers::correctActorModelPath(smodel);
+#endif
+    std::string smodel = "meshes\\" + mNpc->mModel;
+    smodel = Misc::ResourceHelpers::correctActorModelPath(smodel);
+    setObjectRoot(smodel, true); // this call should also create mSkelBase
+    //mSkelBase->setDisplaySkeleton(true); // FIXME for debugging (doesn't work...)
+    //mSkelBase->setVisible(true); // FIXME for debugging (doesn't work...)
+    mInsert->showBoundingBox(true); // FIXME for debugging (doesn't work...)
+
+    if(mViewMode != VM_FirstPerson)
+    {
+        addAnimSource(smodel);
+#if 0
+        if(!isWerewolf)
+        {
+            if(Misc::StringUtils::lowerCase(mNpc->mRace).find("argonian") != std::string::npos)
+                addAnimSource("meshes\\xargonian_swimkna.nif");
+            else if(!mNpc->isMale() && !isBeast)
+                addAnimSource("meshes\\xbase_anim_female.nif");
+            if(mNpc->mModel.length() > 0)
+                addAnimSource("meshes\\x"+mNpc->mModel);
+        }
+#endif
+    }
+    else
+    {
+        bool isFemale = (mNpc->mBaseConfig.flags & 0x000001) != 0; // 0x1 means female
+#if 0
+        if(isWerewolf)
+            addAnimSource(smodel);
+        else
+        {
+            /* A bit counter-intuitive, but unlike third-person anims, it seems
+             * beast races get both base_anim.1st.nif and base_animkna.1st.nif.
+             */
+            addAnimSource("meshes\\xbase_anim.1st.nif");
+            if(isBeast)
+                addAnimSource("meshes\\xbase_animkna.1st.nif");
+            if(isFemale && !isBeast)
+                addAnimSource("meshes\\xbase_anim_female.1st.nif");
+        }
+#endif
+    }
+
+    // Assume that the body parts come from the same directory as the chosen skeleton.  However
+    // some races have their own parts, e.g. khajiit
+    //
+    // meshes/characters/_male/skeleton.nif
+    // meshes/characters/_male/skeletonbeast.nif
+    // meshes/characters/_male/skeletonsesheogorath.nif
+    //
+    // meshes/characters/_male/femalefoot.nif
+    // meshes/characters/_male/femalehand.nif
+    // meshes/characters/_male/femalelowerbody.nif
+    // meshes/characters/_male/femaleupperbody.nif
+    // meshes/characters/_male/femaleupperbodynude.nif
+    // meshes/characters/_male/foot.nif
+    // meshes/characters/_male/hand.nif
+    // meshes/characters/_male/lowerbody.nif
+    // meshes/characters/_male/upperbody.nif
+
+    // Assume foot/hand models share the same slot with boots/shoes/gloves/gauntlets
+    // Similarly upperbody uses the cuirass/shirt slot and lowerbody pants/skirt/greaves slot
+    //
+    // However head, hair and eyes should have permanent slots.
+
+    //MWRender::Animation
+    //Ogre::Entity    *mSkelBase
+    //Ogre::SceneNode *mInsert
+
+    NifOgre::ObjectScenePtr objectH
+        = NifOgre::Loader::createObjects(mSkelBase,
+                                         "Bip01 Head", // not used for skinned
+                                         "",
+                                         mInsert,
+                                         "meshes\\characters\\imperial\\headhuman.nif");
+
+    Ogre::SceneNode *nodeHand = mInsert->createChildSceneNode();
+    NifOgre::ObjectScenePtr objectHand
+        = NifOgre::Loader::createObjects(mSkelBase,
+                                         "Bip01", // not used for skinned
+                                         "",
+                                         mInsert,
+                                         "meshes\\characters\\_male\\hand.nif");
+
+    Ogre::Vector3 glowColor;
+    setRenderProperties(objectH,
+                        (mViewMode == VM_FirstPerson) ? RV_FirstPerson : mVisibilityFlags,
+                        RQG_Main, RQG_Alpha,
+                        0,
+                        false, /*enchantedGlow*/
+                        &glowColor);
+    setRenderProperties(objectHand,
+                        (mViewMode == VM_FirstPerson) ? RV_FirstPerson : mVisibilityFlags,
+                        RQG_Main, RQG_Alpha,
+                        0,
+                        false, /*enchantedGlow*/
+                        &glowColor);
+
+
+    for(size_t i = 0;i < ESM::PRT_Count;i++)
+        removeIndividualPart((ESM::PartReferenceType)i);
+    updateParts();
+
+    mObjectParts[ESM::PRT_Head] = objectH;
+    mObjectParts[ESM::PRT_RHand] = objectHand;
+
     // check inventory
     for (unsigned int i = 0; i < mNpc->mInventory.size(); ++i)
     {
@@ -234,11 +388,63 @@ void ForeignNpcAnimation::updateNpcBase()
                 if (armor)
                 {
                     std::cout << "Inventory " << armor->mEditorId << std::endl;
+                    std::cout << "Inventory " << armor->mModel << std::endl;
+    //addOrReplaceIndividualPart(ESM::PRT_RHand, -1, 1, "meshes\\characters\\_male\\hand.nif");
+    // LegionBoots
+    // Armor\Legion\M\Boots.NIF
+    if (armor->mEditorId == "LegionBoots")
+        addOrReplaceIndividualPart(ESM::PRT_RFoot, -1, 1, "meshes\\armor\\legion\\m\\boots.nif", false, &glowColor);
+    // LegionCuirass
+    // Armor\Legion\M\Cuirass.NIF
+    if (armor->mEditorId == "LegionCuirass")
+        addOrReplaceIndividualPart(ESM::PRT_Cuirass, -1, 1, "meshes\\armor\\legion\\m\\cuirass.nif", false, &glowColor);
+    // LegionGauntlets
+    // Armor\Legion\M\Gauntlets.NIF
+    if (armor->mEditorId == "LegionGauntlets")
+        addOrReplaceIndividualPart(ESM::PRT_RHand, -1, 1, "meshes\\armor\\legion\\m\\gauntlets.nif", false, &glowColor);
+    // LegionGreaves
+    // Armor\Legion\M\Greaves.NIF
+    if (armor->mEditorId == "LegionGreaves")
+        addOrReplaceIndividualPart(ESM::PRT_Groin, -1, 1, "meshes\\armor\\legion\\m\\greaves.nif", false, &glowColor);
+    // LegionHelmet
+    // Armor\LegionHorsebackGuard\Helmet.NIF
+
+        Ogre::SceneNode *root = mInsert->createChildSceneNode();
+        //root->rotate(offset->getOrientation());
+        //root->pitch(Ogre::Degree(-90.0f));
+        root->roll(Ogre::Degree(90.0f));
+        //root->setInitialState();
+
+    if (armor->mEditorId == "LegionHelmet")
+    {
+        //addOrReplaceIndividualPart(ESM::PRT_Head, -1, 1, "meshes\\armor\\legionhorsebackguard\\helmet.nif", false, &glowColor);
+        //mObjectParts[ESM::PRT_Head] = insertBoundedPart("meshes\\armor\\legionhorsebackguard\\helmet.nif", -1, "Bip01 Head", "", false, &glowColor);
+        NifOgre::ObjectScenePtr objectHelmet
+            = NifOgre::Loader::createObjects(mSkelBase,
+                                         "Bip01 Head",
+                                         "",
+                                         root,
+                                         "meshes\\armor\\legionhorsebackguard\\helmet.nif");
+        mObjectParts[ESM::PRT_Head] = objectHelmet;
+    }
+
+    // LegionShield
+    // Armor\Legion\Shield.NIF
                 }
                 break;
             }
             case MKTAG('K','B','O','O'): std::cout << "Books" << std::endl; break;
             case MKTAG('T','C','L','O'): std::cout << "Clothes" << std::endl; break;
+            {
+                const ESM4::Clothing* cloth
+                    = store.getForeign<ESM4::Clothing>().search(mNpc->mInventory[i].item);
+                if (cloth)
+                {
+                    std::cout << "Inventory " << cloth->mEditorId << std::endl;
+                    std::cout << "Inventory " << cloth->mModel << std::endl;
+                }
+                break;
+            }
             case MKTAG('R','I','N','G'): std::cout << "Ingredients" << std::endl; break;
             case MKTAG('C','M','I','S'): std::cout << "MiscItems" << std::endl; break;
             case MKTAG('P','W','E','A'):
@@ -248,6 +454,7 @@ void ForeignNpcAnimation::updateNpcBase()
                 if (weap)
                 {
                     std::cout << "Inventory " << weap->mEditorId << std::endl;
+                    std::cout << "Inventory " << weap->mModel << std::endl;
                 }
                 break;
             }
@@ -315,159 +522,13 @@ void ForeignNpcAnimation::updateNpcBase()
     }
 
 
-
-
-
-
-
 #if 0
-    const MWWorld::ESMStore &store = MWBase::Environment::get().getWorld()->getStore();
-    const ESM::Race *race = store.get<ESM::Race>().find(mNpc->mRace);
-    bool isWerewolf = (mNpcType == Type_Werewolf);
-    bool isVampire = (mNpcType == Type_Vampire);
-
-    if (isWerewolf)
-    {
-        mHeadModel = "meshes\\" + store.get<ESM::BodyPart>().find("WerewolfHead")->mModel;
-        mHairModel = "meshes\\" + store.get<ESM::BodyPart>().find("WerewolfHair")->mModel;
-    }
-    else
-    {
-        mHeadModel = "";
-        if (isVampire) // FIXME: fall back to regular head when getVampireHead fails?
-            mHeadModel = getVampireHead(mNpc->mRace, mNpc->mFlags & ESM::NPC::Female);
-        else if (!mNpc->mHead.empty())
-        {
-            const ESM::BodyPart* bp = store.get<ESM::BodyPart>().search(mNpc->mHead);
-            if (bp)
-                mHeadModel = "meshes\\" + bp->mModel;
-            else
-                std::cerr << "Failed to load body part '" << mNpc->mHead << "'" << std::endl;
-        }
-
-        mHairModel = "";
-        if (!mNpc->mHair.empty())
-        {
-            const ESM::BodyPart* bp = store.get<ESM::BodyPart>().search(mNpc->mHair);
-            if (bp)
-                mHairModel = "meshes\\" + bp->mModel;
-            else
-                std::cerr << "Failed to load body part '" << mNpc->mHair << "'" << std::endl;
-        }
-    }
-    bool isBeast = (race->mData.mFlags & ESM::Race::Beast) != 0;
-    std::string smodel = (mViewMode != VM_FirstPerson) ?
-                         (!isWerewolf ? !isBeast ? "meshes\\base_anim.nif"
-                                                 : "meshes\\base_animkna.nif"
-                                      : "meshes\\wolf\\skin.nif") :
-                         (!isWerewolf ? !isBeast ? "meshes\\base_anim.1st.nif"
-                                                 : "meshes\\base_animkna.1st.nif"
-                                      : "meshes\\wolf\\skin.1st.nif");
-    smodel = Misc::ResourceHelpers::correctActorModelPath(smodel);
-#endif
-    std::string smodel = "meshes\\" + mNpc->mModel;
-    smodel = Misc::ResourceHelpers::correctActorModelPath(smodel);
-    setObjectRoot(smodel, true); // this call should also create mSkelBase
-    mSkelBase->setDisplaySkeleton(true); // FIXME for debugging (doesn't work...)
-
-    if(mViewMode != VM_FirstPerson)
-    {
-        addAnimSource(smodel);
-#if 0
-        if(!isWerewolf)
-        {
-            if(Misc::StringUtils::lowerCase(mNpc->mRace).find("argonian") != std::string::npos)
-                addAnimSource("meshes\\xargonian_swimkna.nif");
-            else if(!mNpc->isMale() && !isBeast)
-                addAnimSource("meshes\\xbase_anim_female.nif");
-            if(mNpc->mModel.length() > 0)
-                addAnimSource("meshes\\x"+mNpc->mModel);
-        }
-#endif
-    }
-    else
-    {
-        bool isFemale = (mNpc->mBaseConfig.flags & 0x000001) != 0; // 0x1 means female
-#if 0
-        if(isWerewolf)
-            addAnimSource(smodel);
-        else
-        {
-            /* A bit counter-intuitive, but unlike third-person anims, it seems
-             * beast races get both base_anim.1st.nif and base_animkna.1st.nif.
-             */
-            addAnimSource("meshes\\xbase_anim.1st.nif");
-            if(isBeast)
-                addAnimSource("meshes\\xbase_animkna.1st.nif");
-            if(isFemale && !isBeast)
-                addAnimSource("meshes\\xbase_anim_female.1st.nif");
-        }
-#endif
-    }
-
-    // Assume that the body parts come from the same directory as the chosen skeleton.  However
-    // some races have their own parts, e.g. khajiit
-    //
-    // meshes/characters/_male/skeleton.nif
-    // meshes/characters/_male/skeletonbeast.nif
-    // meshes/characters/_male/skeletonsesheogorath.nif
-    //
-    // meshes/characters/_male/femalefoot.nif
-    // meshes/characters/_male/femalehand.nif
-    // meshes/characters/_male/femalelowerbody.nif
-    // meshes/characters/_male/femaleupperbody.nif
-    // meshes/characters/_male/femaleupperbodynude.nif
-    // meshes/characters/_male/foot.nif
-    // meshes/characters/_male/hand.nif
-    // meshes/characters/_male/lowerbody.nif
-    // meshes/characters/_male/upperbody.nif
-
-    // Assume foot/hand models share the same slot with boots/shoes/gloves/gauntlets
-    // Similarly upperbody uses the cuirass/shirt slot and lowerbody pants/skirt/greaves slot
-    //
-    // However head, hair and eyes should have permanent slots.
-
-    //MWRender::Animation
-    //Ogre::Entity    *mSkelBase
-    //Ogre::SceneNode *mInsert
-
-    NifOgre::ObjectScenePtr objectH
-        = NifOgre::Loader::createObjects(mSkelBase,
-                                         "Bip01", // not used for skinned
-                                         /*"Bip01"*/"", // bonefilter??
-                                         mInsert,
-                                         "meshes\\characters\\imperial\\headhuman.nif");
-    Ogre::Vector3 glowColor;
-    setRenderProperties(objectH,
-                        (mViewMode == VM_FirstPerson) ? RV_FirstPerson : mVisibilityFlags,
-                        RQG_Main, RQG_Alpha,
-                        0,
-                        false, /*enchantedGlow*/
-                        &glowColor);
-
-    Ogre::SceneNode *nodeHand = mInsert->createChildSceneNode();
-    NifOgre::ObjectScenePtr objectHand
-        = NifOgre::Loader::createObjects(mSkelBase,
-                                         "Bip01", // not used for skinned
-                                         /*"Bip01"*/"", // bonefilter??
-                                         mInsert,
-                                         "meshes\\characters\\_male\\hand.nif");
-
-    setRenderProperties(objectHand,
-                        (mViewMode == VM_FirstPerson) ? RV_FirstPerson : mVisibilityFlags,
-                        RQG_Main, RQG_Alpha,
-                        0,
-                        false, /*enchantedGlow*/
-                        &glowColor);
-
-
-    for(size_t i = 0;i < ESM::PRT_Count;i++)
-        removeIndividualPart((ESM::PartReferenceType)i);
-    updateParts();
-
     // ESM::PRT_Count is 27, see loadarmo.hpp
     // NifOgre::ObjectScenePtr mObjectParts[ESM::PRT_Count];
-    mObjectParts[ESM::PRT_Head] = objectH;
+    mHeadModel = "meshes\\characters\\imperial\\headhuman.nif";
+    mObjectParts[ESM::PRT_Head] = insertBoundedPart(mHeadModel, -1, "Bip01", "Head", false, 0);
+    addOrReplaceIndividualPart(ESM::PRT_RHand, -1, 1, "meshes\\characters\\_male\\hand.nif");
+#endif
 
     mWeaponAnimationTime->updateStartTime();
 }
@@ -888,7 +949,7 @@ Ogre::Vector3 ForeignNpcAnimation::runAnimation(float timepassed)
     Ogre::Vector3 ret = Animation::runAnimation(timepassed);
 
     //mHeadAnimationTime->update(timepassed);
-
+#if 0
     if (mSkelBase)
     {
         Ogre::SkeletonInstance *baseinst = mSkelBase->getSkeleton();
@@ -912,17 +973,19 @@ Ogre::Vector3 ForeignNpcAnimation::runAnimation(float timepassed)
                 node->rotate(Ogre::Quaternion(mHeadYaw, Ogre::Vector3::UNIT_Z) * Ogre::Quaternion(mHeadPitch, Ogre::Vector3::UNIT_X), Ogre::Node::TS_WORLD);
         }
     }
+#endif
     mFirstPersonOffset = 0.f; // reset the X, Y, Z offset for the next frame.
 
-    for(size_t i = 0;i < ESM::PRT_Count;i++)
+    for(size_t i = 0; i < ESM::PRT_Count; ++i)
     {
         if (mObjectParts[i].isNull())
             continue;
+
         std::vector<Ogre::Controller<Ogre::Real> >::iterator ctrl(mObjectParts[i]->mControllers.begin());
         for(;ctrl != mObjectParts[i]->mControllers.end();++ctrl)
             ctrl->update();
 
-        if (!isSkinned(mObjectParts[i]))
+        if (!isSkinned(mObjectParts[i])) // FIXME: maybe cache the result of isSkinned()?
             continue;
 
         if (mSkelBase)
@@ -981,9 +1044,9 @@ bool ForeignNpcAnimation::addOrReplaceIndividualPart(ESM::PartReferenceType type
     mPartPriorities[type] = priority;
     try
     {
-        const std::string& bonename = sPartList.at(type);
+        const std::string& bonename = "Bip01";//sPartList.at(type); // FIXME
         // PRT_Hair seems to be the only type that breaks consistency and uses a filter that's different from the attachment bone
-        const std::string bonefilter = (type == ESM::PRT_Hair) ? "hair" : bonename;
+        const std::string bonefilter = "";//(type == ESM::PRT_Hair) ? "hair" : bonename; //FIXME
         mObjectParts[type] = insertBoundedPart(mesh, group, bonename, bonefilter, enchantedGlow, glowColor);
     }
     catch (std::exception& e)
@@ -1006,9 +1069,11 @@ bool ForeignNpcAnimation::addOrReplaceIndividualPart(ESM::PartReferenceType type
             }
         }
     }
+
     if(mObjectParts[type]->mSkelBase)
     {
         Ogre::SkeletonInstance *skel = mObjectParts[type]->mSkelBase->getSkeleton();
+
         if(mObjectParts[type]->mSkelBase->isParentTagPoint())
         {
             Ogre::Node *root = mObjectParts[type]->mSkelBase->getParentNode();
