@@ -1247,7 +1247,9 @@ void NifOgre::NIFObjectLoader::loadTES4Kf (Ogre::Skeleton *skel, Nif::NIFFilePtr
 
 
     // FIXME: hard coded for testing, there's probably some algorithm for selecting an anim file
-    Nif::NIFFilePtr kf = Nif::Cache::getInstance().load("meshes\\characters\\_male\\idle.kf");
+    //Nif::NIFFilePtr kf = Nif::Cache::getInstance().load("meshes\\characters\\_male\\idle.kf");
+    Nif::NIFFilePtr kf = Nif::Cache::getInstance().load("meshes\\characters\\_male\\casttarget.kf");
+    //Nif::NIFFilePtr kf = Nif::Cache::getInstance().load("meshes\\characters\\_male\\walkforward.kf");
     if (kf->numRoots() < 1)
     {
         kf->warn("Found no root nodes in "+kf->getFilename()+".");

@@ -1229,12 +1229,25 @@ Ogre::Vector3 Animation::runAnimation(float duration)
             const Ogre::SharedPtr<AnimSource> &src = stateiter->second.mSource;
             for(size_t i = 0;i < src->mControllers[grp].size();i++)
             {
+#if 0
                 // FIXME: testing only
+                if(mPtr.getTypeName() == typeid(ESM4::Npc).name() && (i == 2 || i == 13) &&
+                    static_cast<MWWorld::LiveCellRef<ESM4::Npc>*>(mPtr.mRef)->mBase->mEditorId == "ICMarketGuardPatrolDay01")
+                    std::cout << "updating " << mPtr.mRef->mRef.getRefId() << ", controller " << i
+                        << ", grp " << grp << std::endl; // there should be only 4 groups (for now)
+#endif
+                // FIXME: sometimes Bip01 Spine interpolation is off the scale when i = 2, and
+                // Bip01 Tail01 when i = 13
                 //
-                // FIXME: why is this being printed 22 times each?
+                // src is of type AnimSource*
+                // mControllers is a map of Ogre::TextKeyMap and std::vector<Ogre::Controller<Real> >
+                // (it is setup in addAnimSource() and inserted to mStates in play() )
                 //
-                //if(mPtr.getTypeName() == typeid(ESM4::Npc).name())
-                    //std::cout << "updating " << mPtr.mRef->mRef.getRefId() << ", " << i << std::endl;
+                // ForeignNpcAnimation::addAnimSource() calls NifOgre::Loader::createKfControllers()
+                // which ends up calling NifOgre::NIFObjectLoader::loadTES4Kf() and loops through
+                // the controlled blocks in NiControllerSequence.
+                //
+                // Bip01 Spine is the third controlled block i.e. #2, not sure why Bip01 Tail1 is 13
                 src->mControllers[grp][i].update();
             }
         }

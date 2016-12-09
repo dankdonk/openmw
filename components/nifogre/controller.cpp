@@ -965,9 +965,11 @@ void NifOgre::TransformController::Value::setValue (Ogre::Real time)
         if (!transData)
             return;
 
-        if(mRotations->mKeys.size() > 0)
+        // FIXME: try not to update rotation to Bip01 (but doesn't work...)
+        if(mRotations->mKeys.size() > 0 /*&& mNode->getName() != "Bip01"*/)
             mNode->setOrientation(interpKey(mRotations->mKeys, time));
-        else if (!mXRotations->mKeys.empty() || !mYRotations->mKeys.empty() || !mZRotations->mKeys.empty())
+        else if (/*mNode->getName() != "Bip01" && */
+                (!mXRotations->mKeys.empty() || !mYRotations->mKeys.empty() || !mZRotations->mKeys.empty()))
             mNode->setOrientation(getXYZRotation(time));
 
         Ogre::Vector3 old = mNode->getPosition(); // FIXME: debug only
@@ -1016,7 +1018,8 @@ void NifOgre::TransformController::Value::setValue (Ogre::Real time)
         if (bsi->rotationOffset != USHRT_MAX && bsi->rotationOffset+nCtrl > sd->shortControlPoints.size())
             std::cout << "rotation overflow" << std::endl; // FIXME: debugging
         if (bsplineinterpolate<Ogre::Quaternion>( q, degree, interval, nCtrl, sd->shortControlPoints,
-                    bsi->rotationOffset, bsi->rotationMultiplier, bsi->rotationBias ))
+                bsi->rotationOffset, bsi->rotationMultiplier, bsi->rotationBias )
+                /*&& mNode->getName() != "Bip01"*/) // doesn't work
         {
             mNode->setOrientation(q);
         }
@@ -1030,8 +1033,8 @@ void NifOgre::TransformController::Value::setValue (Ogre::Real time)
         {
             float dist;
             //if ((dist = old.squaredDistance(mNode->getPosition())) < 10) // FIXME: debug only
-            if ((dist = old.squaredDistance(v)) < 10) // FIXME: debug only
-                mNode->setPosition(v); // FIXME horrible hack
+            if ((dist = old.squaredDistance(v)) < 10) // FIXME: debug only, horrible hack
+                mNode->setPosition(v);
             //else
                 //std::cout << mNode->getName() << " dist " << dist << ", time " << time << std::endl;
         }

@@ -270,12 +270,36 @@ void ForeignNpcAnimation::updateNpcBase()
                                       : "meshes\\wolf\\skin.1st.nif");
     smodel = Misc::ResourceHelpers::correctActorModelPath(smodel);
 #endif
+
+
     std::string smodel = "meshes\\" + mNpc->mModel;
     smodel = Misc::ResourceHelpers::correctActorModelPath(smodel);
     setObjectRoot(smodel, true); // this call should also create mSkelBase
     //mSkelBase->setDisplaySkeleton(true); // FIXME for debugging (doesn't work...)
     //mSkelBase->setVisible(true); // FIXME for debugging (doesn't work...)
     mInsert->showBoundingBox(true); // FIXME for debugging (doesn't work...)
+
+    // Animation at 90 deg issue:
+    //
+    // Apparently the TES4 engine does things a little differently to what the NIF fies suggest.  See:
+    // https://forums.nexusmods.com/index.php?/topic/278149-animation-rotates-90-degrees-to-the-right/
+    // http://wiki.tesnexus.com/index.php?title=How_to_fix_your_animation_FAQ
+    // http://wiki.tesnexus.com/index.php/Avoiding_Blender_animation_pitfalls
+    //
+    // A quick workaround might be two swap the rotation values of "Bip01" and "Bip01 NonAccum".
+    // Note that simple swapping causes walk forward animation to walk backwards.
+    //
+    // A better one might be not to apply rotations to "Bip01" (only apply to "Bip01 NonAccum")
+    // but that doesn't seem to work?!
+    Ogre::Bone* b = mObjectRoot->mSkelBase->getSkeleton()->getBone("Bip01");
+    Ogre::Bone* bna = mObjectRoot->mSkelBase->getSkeleton()->getBone("Bip01 NonAccum");
+    if (b && bna)
+    {
+        Ogre::Quaternion qb = b->getOrientation(); // skeleton.nif has -90 roll
+        Ogre::Quaternion qbna = bna->getOrientation(); // has 0 roll
+        b->setOrientation(qbna);
+        bna->setOrientation(qb);
+    }
 
     if(mViewMode != VM_FirstPerson)
     {
@@ -421,7 +445,7 @@ void ForeignNpcAnimation::updateNpcBase()
         //mObjectParts[ESM::PRT_Head] = insertBoundedPart("meshes\\armor\\legionhorsebackguard\\helmet.nif", -1, "Bip01 Head", "", false, &glowColor);
         NifOgre::ObjectScenePtr objectHelmet
             = NifOgre::Loader::createObjects(mSkelBase,
-                                         "Bip01 Head",
+                                         "Bip01 Neck",
                                          "",
                                          root,
                                          "meshes\\armor\\legionhorsebackguard\\helmet.nif");
