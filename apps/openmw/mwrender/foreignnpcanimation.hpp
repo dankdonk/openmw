@@ -14,6 +14,38 @@ namespace ESM4
 
 namespace MWRender
 {
+class ForeignHeadAnimationTime : public Ogre::ControllerValue<Ogre::Real>
+{
+private:
+    MWWorld::Ptr mReference;
+    float mTalkStart;
+    float mTalkStop;
+    float mBlinkStart;
+    float mBlinkStop;
+
+    float mBlinkTimer;
+
+    bool mEnabled;
+
+    float mValue;
+private:
+    void resetBlinkTimer();
+public:
+    ForeignHeadAnimationTime(MWWorld::Ptr reference);
+
+    void update(float dt);
+
+    void setEnabled(bool enabled);
+
+    void setTalkStart(float value);
+    void setTalkStop(float value);
+    void setBlinkStart(float value);
+    void setBlinkStop(float value);
+
+    virtual Ogre::Real getValue() const;
+    virtual void setValue(Ogre::Real value)
+    { }
+};
 
 class ForeignNpcAnimation : public Animation, public WeaponAnimation, public MWWorld::InventoryStoreListener
 {
@@ -61,7 +93,7 @@ private:
 
     Ogre::Vector3 mFirstPersonOffset;
 
-    //Ogre::SharedPtr<HeadAnimationTime> mHeadAnimationTime;
+    Ogre::SharedPtr<ForeignHeadAnimationTime> mHeadAnimationTime;
     Ogre::SharedPtr<WeaponAnimationTime> mWeaponAnimationTime;
 
     float mAlpha;

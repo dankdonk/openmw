@@ -92,6 +92,75 @@ bool isSkinned (NifOgre::ObjectScenePtr scene)
 
 namespace MWRender
 {
+ForeignHeadAnimationTime::ForeignHeadAnimationTime(MWWorld::Ptr reference)
+    : mReference(reference), mTalkStart(0), mTalkStop(0), mBlinkStart(0), mBlinkStop(0), mEnabled(true), mValue(0)
+{
+    resetBlinkTimer();
+}
+
+void ForeignHeadAnimationTime::setEnabled(bool enabled)
+{
+    mEnabled = enabled;
+}
+
+void ForeignHeadAnimationTime::resetBlinkTimer()
+{
+    mBlinkTimer = -(2.0f + OEngine::Misc::Rng::rollDice(6));
+}
+
+void ForeignHeadAnimationTime::update(float dt)
+{
+    if (!mEnabled)
+        return;
+
+    if (MWBase::Environment::get().getSoundManager()->sayDone(mReference))
+    {
+        mBlinkTimer += dt;
+
+        float duration = mBlinkStop - mBlinkStart;
+
+        if (mBlinkTimer >= 0 && mBlinkTimer <= duration)
+        {
+            mValue = mBlinkStart + mBlinkTimer;
+        }
+        else
+            mValue = mBlinkStop;
+
+        if (mBlinkTimer > duration)
+            resetBlinkTimer();
+    }
+    else
+    {
+        mValue = mTalkStart +
+            (mTalkStop - mTalkStart) *
+            std::min(1.f, MWBase::Environment::get().getSoundManager()->getSaySoundLoudness(mReference)*2); // Rescale a bit (most voices are not very loud)
+    }
+}
+
+float ForeignHeadAnimationTime::getValue() const
+{
+    return mValue;
+}
+
+void ForeignHeadAnimationTime::setTalkStart(float value)
+{
+    mTalkStart = value;
+}
+
+void ForeignHeadAnimationTime::setTalkStop(float value)
+{
+    mTalkStop = value;
+}
+
+void ForeignHeadAnimationTime::setBlinkStart(float value)
+{
+    mBlinkStart = value;
+}
+
+void ForeignHeadAnimationTime::setBlinkStop(float value)
+{
+    mBlinkStop = value;
+}
 
     // FIXME: need differnt bone names and parts for TES4
 static ForeignNpcAnimation::PartBoneMap createPartListMap()
@@ -155,7 +224,7 @@ ForeignNpcAnimation::ForeignNpcAnimation(const MWWorld::Ptr& ptr, Ogre::SceneNod
 {
     mNpc = mPtr.get<ESM4::Npc>()->mBase;
 
-    //mHeadAnimationTime = Ogre::SharedPtr<HeadAnimationTime>(new HeadAnimationTime(mPtr));
+    mHeadAnimationTime = Ogre::SharedPtr<ForeignHeadAnimationTime>(new ForeignHeadAnimationTime(mPtr));
     mWeaponAnimationTime = Ogre::SharedPtr<WeaponAnimationTime>(new WeaponAnimationTime(this));
 
     // FIXME for foreign
@@ -277,7 +346,7 @@ void ForeignNpcAnimation::updateNpcBase()
     setObjectRoot(smodel, true); // this call should also create mSkelBase
     //mSkelBase->setDisplaySkeleton(true); // FIXME for debugging (doesn't work...)
     //mSkelBase->setVisible(true); // FIXME for debugging (doesn't work...)
-    mInsert->showBoundingBox(true); // FIXME for debugging (doesn't work...)
+    //mInsert->showBoundingBox(true);
 
     // Animation at 90 deg issue:
     //
@@ -433,23 +502,20 @@ void ForeignNpcAnimation::updateNpcBase()
     // LegionHelmet
     // Armor\LegionHorsebackGuard\Helmet.NIF
 
-        Ogre::SceneNode *root = mInsert->createChildSceneNode();
-        //root->rotate(offset->getOrientation());
-        //root->pitch(Ogre::Degree(-90.0f));
-        root->roll(Ogre::Degree(90.0f));
-        //root->setInitialState();
-
     if (armor->mEditorId == "LegionHelmet")
     {
         //addOrReplaceIndividualPart(ESM::PRT_Head, -1, 1, "meshes\\armor\\legionhorsebackguard\\helmet.nif", false, &glowColor);
         //mObjectParts[ESM::PRT_Head] = insertBoundedPart("meshes\\armor\\legionhorsebackguard\\helmet.nif", -1, "Bip01 Head", "", false, &glowColor);
+        //Ogre::Bone* helmet = mSkelBase->getSkeleton()->createBone("Helmet"); // crashes!
+        // assert(bone);
+        //mSkelBase->getSkeleton()->getBone("Bip01 Head")->addChild(helmet);
         NifOgre::ObjectScenePtr objectHelmet
             = NifOgre::Loader::createObjects(mSkelBase,
-                                         "Bip01 Neck",
+                                         "Bip01 Head",
                                          "",
-                                         root,
+                                         mInsert,
                                          "meshes\\armor\\legionhorsebackguard\\helmet.nif");
-        mObjectParts[ESM::PRT_Head] = objectHelmet;
+        mObjectParts[ESM::PRT_LHand] = objectHelmet; // FIXME
     }
 
     // LegionShield
@@ -972,8 +1038,8 @@ Ogre::Vector3 ForeignNpcAnimation::runAnimation(float timepassed)
 {
     Ogre::Vector3 ret = Animation::runAnimation(timepassed);
 
-    //mHeadAnimationTime->update(timepassed);
-#if 0
+    mHeadAnimationTime->update(timepassed);
+//#if 0
     if (mSkelBase)
     {
         Ogre::SkeletonInstance *baseinst = mSkelBase->getSkeleton();
@@ -990,14 +1056,17 @@ Ogre::Vector3 ForeignNpcAnimation::runAnimation(float timepassed)
         else
         {
             // In third person mode we may still need pitch for ranged weapon targeting
-            pitchSkeleton(mPtr.getRefData().getPosition().rot[0], baseinst);
+            //pitchSkeleton(mPtr.getRefData().getPosition().rot[0], baseinst);  // FIXME: temp disabled
 
             Ogre::Node* node = baseinst->getBone("Bip01 Head");
             if (node)
-                node->rotate(Ogre::Quaternion(mHeadYaw, Ogre::Vector3::UNIT_Z) * Ogre::Quaternion(mHeadPitch, Ogre::Vector3::UNIT_X), Ogre::Node::TS_WORLD);
+                node->rotate(Ogre::Quaternion(mHeadYaw, Ogre::Vector3::UNIT_Z)
+                           * Ogre::Quaternion(mHeadPitch, Ogre::Vector3::UNIT_X)
+                           * Ogre::Quaternion(Ogre::Degree(90), Ogre::Vector3::UNIT_Y), // fix helmet issue
+                             Ogre::Node::TS_WORLD);
         }
     }
-#endif
+//#endif
     mFirstPersonOffset = 0.f; // reset the X, Y, Z offset for the next frame.
 
     for(size_t i = 0; i < ESM::PRT_Count; ++i)
@@ -1126,7 +1195,7 @@ bool ForeignNpcAnimation::addOrReplaceIndividualPart(ESM::PartReferenceType type
         if(ctrl->getSource().isNull())
         {
             ctrl->setSource(mNullAnimationTimePtr);
-#if 0
+//#if 0
             if (type == ESM::PRT_Head)
             {
                 ctrl->setSource(mHeadAnimationTime);
@@ -1145,7 +1214,7 @@ bool ForeignNpcAnimation::addOrReplaceIndividualPart(ESM::PartReferenceType type
             }
             else if (type == ESM::PRT_Weapon)
                 ctrl->setSource(mWeaponAnimationTime);
-#endif
+//#endif
         }
     }
 
@@ -1326,7 +1395,7 @@ void ForeignNpcAnimation::setAlpha(float alpha)
 
 void ForeignNpcAnimation::enableHeadAnimation(bool enable)
 {
-    //mHeadAnimationTime->setEnabled(enable);
+    mHeadAnimationTime->setEnabled(enable);
 }
 
 void ForeignNpcAnimation::preRender(Ogre::Camera *camera)
