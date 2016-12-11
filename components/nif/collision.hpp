@@ -503,7 +503,7 @@ namespace Nif
     {
     public:
         unsigned short flags;
-        NiCollisionObjectPtr body;
+        bhkEntityPtr body; // should really be NiObject
 
         void read(NIFStream *nif);
         void post(NIFFile *nif);

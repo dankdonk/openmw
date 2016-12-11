@@ -665,6 +665,8 @@ void Nif::bhkRigidBody::read(NIFStream *nif)
 
 void Nif::bhkRigidBody::post(NIFFile *nif)
 {
+    bhkEntity::post(nif);
+
     for (unsigned int i = 0; i < constraints.size(); ++i)
         constraints[i].post(nif);
 }

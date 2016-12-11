@@ -111,6 +111,9 @@ private:
     void handleNode(Nif::Node const *node, int flags, bool isCollisionNode,
                     bool raycasting, bool isAnimated=false);
 
+    void handleNode2(Nif::Node const *node, int flags, bool isCollisionNode, // FIXME: name
+                    bool raycasting, bool isAnimated=false);
+
     /**
     *Helper function
     */
