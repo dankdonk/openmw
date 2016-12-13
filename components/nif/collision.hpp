@@ -448,7 +448,8 @@ namespace Nif
         void read(NIFStream *nif);
         void post(NIFFile *nif);
     };
-    typedef bhkRigidBody bhkRigidBodyT;
+    //typedef bhkRigidBody bhkRigidBodyT;
+    class bhkRigidBodyT : public bhkRigidBody {};
 
     struct BoxBV
     {
