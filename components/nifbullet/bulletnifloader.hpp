@@ -41,6 +41,10 @@ namespace Nif
     struct Transformation;
     struct NiTriShape;
     struct NiTriStrips;
+    class bhkCollisionObject;
+    class bhkBoxShape;
+    class bhkConvexVerticesShape;
+    struct bhkPackedNiTriStripsShape;
 }
 
 namespace NifBullet
@@ -114,6 +118,18 @@ private:
     void handleNode2(Nif::Node const *node, int flags, bool isCollisionNode, // FIXME: name
                     bool raycasting, bool isAnimated=false);
 
+    Ogre::Matrix4 getBhkRigidBodyTransform(const Nif::bhkCollisionObject *bhkCollObj);
+
+    //void createBhkBoxShape(const Nif::bhkCollisionObject *bhkCollObj, const Nif::bhkBoxShape *bhkShape);
+    btBoxShape *createBhkBoxShape(const Nif::bhkCollisionObject *bhkCollObj, const Nif::bhkBoxShape *bhkShape,
+                                                Ogre::Vector3& boxTranslation, Ogre::Quaternion& boxRotation);
+
+    void createBhkConvexVerticesShape(const Nif::bhkCollisionObject *bhkCollObj,
+                    const Nif::bhkConvexVerticesShape *bhkShape);
+
+    void createBhkPackedNiTriStripsShape(const Nif::bhkCollisionObject *bhkCollObj,
+                    const Nif::bhkPackedNiTriStripsShape *bhkShape);
+
     /**
     *Helper function
     */
@@ -144,7 +160,6 @@ private:
 bool getBoundingBox(const std::string& nifFile, Ogre::Vector3& halfExtents, Ogre::Vector3& translation, Ogre::Quaternion& orientation);
 
 bool findBoundingBox(const Nif::Node* node, Ogre::Vector3& halfExtents, Ogre::Vector3& translation, Ogre::Quaternion& orientation);
-
 }
 
 #endif

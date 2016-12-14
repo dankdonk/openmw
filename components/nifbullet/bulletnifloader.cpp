@@ -578,103 +578,44 @@ void ManualBulletShapeLoader::handleNode2(const Nif::Node *node, int flags,
                     return;
                 }
 
-                // FIXME: create havok shape
-                const Nif::bhkPackedNiTriStripsShape* triShape
+                const Nif::bhkPackedNiTriStripsShape* bhkShape
                     = static_cast<const Nif::bhkPackedNiTriStripsShape*>(shape);
 
-                const Nif::hkPackedNiTriStripsData* triData
-                    = static_cast<const Nif::hkPackedNiTriStripsData*>(triShape->data.getPtr());
-
-                if (!mStaticMesh)
-                    mStaticMesh = new btTriangleMesh();
-
-                // Havok scale issue, see: http://niftools.sourceforge.net/forum/viewtopic.php?f=24&t=1400
-                Ogre::Matrix4 transform = Ogre::Matrix4(Ogre::Matrix4::IDENTITY);
-                if (bhkCollObj->body.getPtr()->recType == Nif::RC_bhkRigidBodyT)
-                {
-                    Ogre::Matrix4 localTrans = Ogre::Matrix4(Ogre::Matrix4::IDENTITY);
-                    // FIXME: don't know why the translation here is not the same scale as the
-                    // translation in bhkConvexVerticesShape which requires a factor of 7
-                    localTrans.makeTransform(translation, Ogre::Vector3(1.f), rotation); // assume uniform scale
-                    transform = /*node->getWorldTransform() **/ localTrans;
-                }
-
-                for(size_t i = 0; i < triData->triangles.size(); ++i)
-                {
-                    Ogre::Vector3 b1 = transform*triData->vertices[triData->triangles[i].triangle[0]]*7;
-                    Ogre::Vector3 b2 = transform*triData->vertices[triData->triangles[i].triangle[1]]*7;
-                    Ogre::Vector3 b3 = transform*triData->vertices[triData->triangles[i].triangle[2]]*7;
-                    mStaticMesh->addTriangle(btVector3(b1.x,b1.y,b1.z),
-                                             btVector3(b2.x,b2.y,b2.z),
-                                             btVector3(b3.x,b3.y,b3.z));
-                }
+                createBhkPackedNiTriStripsShape(bhkCollObj, bhkShape);
 
                 return;
             }
             else if(shape->recType == Nif::RC_bhkConvexVerticesShape) // e.g. ICSignCopious01.NIF
             {
-                if (!mStaticMesh)
-                    mStaticMesh = new btTriangleMesh();
-
-                const Nif::bhkConvexVerticesShape *data
+                const Nif::bhkConvexVerticesShape *bhkShape
                     = static_cast<const Nif::bhkConvexVerticesShape*>(shape);
 
-                // Havok scale issue, see: http://niftools.sourceforge.net/forum/viewtopic.php?f=24&t=1400
-                Ogre::Matrix4 transform = Ogre::Matrix4(Ogre::Matrix4::IDENTITY);
-                if(bhkCollObj->body.getPtr()->recType == Nif::RC_bhkRigidBodyT)
-                {
-                    Ogre::Matrix4 localTrans = Ogre::Matrix4(Ogre::Matrix4::IDENTITY);
-                    // FIXME: don't know why the translation here is not the same scale as the
-                    // translation in bhkPackedNiTriStripsShape which does *not* require a factor of 7
-                    localTrans.makeTransform(translation*7, Ogre::Vector3(1.f), rotation); // assume uniform scale
-                    transform = /*node->getWorldTransform() **/ localTrans;
-                }
-
-                std::vector<Ogre::Vector3> triangles = generateTris(data->vertices, 7.0f); // 7*10.f for Skyrim?
-
-                // FIXME: create triangles using btVector3 instead?
-                for(size_t i = 0; i < triangles.size(); i += 3)
-                {
-                    Ogre::Vector3 b1 = transform*triangles[i+0];
-                    Ogre::Vector3 b2 = transform*triangles[i+1];
-                    Ogre::Vector3 b3 = transform*triangles[i+2];
-                    mStaticMesh->addTriangle(btVector3(b1.x,b1.y,b1.z),
-                                             btVector3(b2.x,b2.y,b2.z),
-                                             btVector3(b3.x,b3.y,b3.z));
-                }
-
+                createBhkConvexVerticesShape(bhkCollObj, bhkShape);
                 return;
             }
             else if(shape->recType == Nif::RC_bhkBoxShape) // e.g. Clutter\\Books\\WantedPoster02Static.NIF
             {
-                // mBoxTranslation and mBoxRotation are used in PhysicEngine::adjustRigidBody()
-                // FIXME: rather than using them consider creating new method to use bhk
-                // transform instead (maybe less calculations?)
-                mShape->mBoxTranslation = translation*7; // FIXME
-                mShape->mBoxRotation = rotation;
-                mBoundingBox = new btBoxShape(getbtVector(static_cast<const Nif::bhkBoxShape*>(shape)->dimensions*7));
-                mShape->mCollisionShape = mBoundingBox;
+                const Nif::bhkBoxShape* boxShape = static_cast<const Nif::bhkBoxShape*>(shape);
 
-                // FIXME: this cleanup is also done later
-                // cleanup unused if using bounding box
-                delete mStaticMesh;
-                if (mCompoundShape)
-                {
-                    int n = mCompoundShape->getNumChildShapes();
-                    for(int i=0; i <n;i++)
-                        delete (mCompoundShape->getChildShape(i));
-                    delete mCompoundShape;
-                    mShape->mAnimatedShapes.clear();
-                }
+                mBoundingBox = createBhkBoxShape(bhkCollObj, boxShape,
+                                                 mShape->mBoxTranslation, mShape->mBoxRotation);
+                mShape->mCollisionShape = mBoundingBox;
 
                 return;
             }
             else if(shape->recType == Nif::RC_bhkListShape)
             {
                 std::cout << "List Shape: " << node->name << std::endl;
-                // example: ??
-                // "meshes\\Clutter\\MagesGuild\\ApparatusAlembicNovice.NIF"
                 //
+                // List Shape: ApparatusAlembicNovice
+                // List Shape: MiddleBowlRed03
+                // List Shape: upperTable06
+                // List Shape: ClothBolt01
+                // List Shape: ClothBolt02
+                // List Shape: ClothBolt03
+                // List Shape: FoldedCloth05
+                // List Shape: MiddlebarrelHolder01
+                // List Shape: MiddleShelf02
 #if 0
         unsigned int numSubShapes;
         std::vector<bhkShapePtr> subShapes;
@@ -683,76 +624,151 @@ void ManualBulletShapeLoader::handleNode2(const Nif::Node *node, int flags,
         std::vector<float> unknown;
         std::vector<unsigned int> unknownInts;
 #endif
-                //if (!mCompoundShape)
-                    //mCompoundShape = new btCompoundShape();
+                if (!mCompoundShape)
+                    mCompoundShape = new btCompoundShape();
+
+                if (!mShape->mCollisionShape)
+                    mShape->mCollisionShape = mCompoundShape;
 
                 const Nif::bhkListShape *listShape = static_cast<const Nif::bhkListShape*>(shape);
 
                 for (unsigned int i = 0; i < listShape->numSubShapes; ++i)
                 {
-                    btTriangleMesh* childMesh = new btTriangleMesh();
+                    //btTriangleMesh* childMesh = new btTriangleMesh();
                     const Nif::bhkShape *subShape = listShape->subShapes[i].getPtr();
                     if (subShape->recType == Nif::RC_bhkConvexTransformShape)
                     {
+                        const Nif::bhkConvexTransformShape *transShape
+                            = static_cast<const Nif::bhkConvexTransformShape*>(subShape);
+                        // get transform
+                        Ogre::Matrix4 transform(transShape->transform[0][0], transShape->transform[0][1],
+                                                transShape->transform[0][2], transShape->transform[0][3],
+                                                transShape->transform[1][0], transShape->transform[1][1],
+                                                transShape->transform[1][2], transShape->transform[1][3],
+                                                transShape->transform[2][0], transShape->transform[2][1],
+                                                transShape->transform[2][2], transShape->transform[2][3],
+                                                transShape->transform[3][0], transShape->transform[3][1],
+                                                transShape->transform[3][2], transShape->transform[3][3]);
+                        // create shape
+                        if (transShape->shape->recType == Nif::RC_bhkBoxShape)
+                        {
+                            const Nif::bhkBoxShape* boxShape
+                                = static_cast<const Nif::bhkBoxShape*>(transShape->shape.getPtr());
+
+                            // FIXME: the boxes are not translated to the correct place
+                            Ogre::Quaternion q = transform.extractQuaternion();
+                            Ogre::Vector3 v = transform.getTrans();
+                            btTransform trans(btQuaternion(q.x, q.y, q.z, q.w), btVector3(v.x, v.y, v.z));
+
+                            Ogre::Vector3 boxTranslation;
+                            Ogre::Quaternion boxRotation;
+                            mCompoundShape->addChildShape(trans,
+                                        createBhkBoxShape(bhkCollObj, boxShape, boxTranslation, boxRotation));
+                        }
                     }
                     else if (subShape->recType == Nif::RC_bhkConvexVerticesShape)
                     {
+                        const Nif::bhkConvexVerticesShape *bhkShape
+                            = static_cast<const Nif::bhkConvexVerticesShape*>(subShape);
+
+                        createBhkConvexVerticesShape(bhkCollObj, bhkShape);
                     }
                     else if (subShape->recType == Nif::RC_bhkCapsuleShape)
                     {
+                        // e.g. "meshes\\Clutter\\MagesGuild\\ApparatusAlembicNovice.NIF"
+                        const Nif::bhkCapsuleShape *capsuleShape
+                            = static_cast<const Nif::bhkCapsuleShape*>(subShape);
+
+                        // find the direction and length
+                        // FIXME: translation calculation is very messy
+                        Ogre::Vector3 firstPoint = capsuleShape->firstPoint*7; // FIXME
+                        Ogre::Vector3 secondPoint = capsuleShape->secondPoint*7; // FIXME
+                        Ogre::Vector3 axis = secondPoint - firstPoint;
+                        float height = firstPoint.distance(secondPoint);
+                        float radius = capsuleShape->radius1; // FIXME: what is radius2 ?
+                        Ogre::Quaternion q = axis.getRotationTo(Ogre::Vector3::UNIT_Y);
+                        Ogre::Vector3 midPoint = firstPoint.midPoint(secondPoint);
+
+                        btTransform trans(btQuaternion(q.x, q.y, q.z, q.w), btVector3(midPoint.x, midPoint.y, midPoint.z));
+                        mCompoundShape->addChildShape(trans, new btCapsuleShape(radius*7, height)); // FIXME
+
                     }
                     else if (subShape->recType == Nif::RC_bhkMultiSphereShape)
                     {
+                        // e.g. "meshes\\Clutter\\MagesGuild\\ApparatusAlembicNovice.NIF"
+                        const Nif::bhkMultiSphereShape *multiSphereShape
+                            = static_cast<const Nif::bhkMultiSphereShape*>(subShape);
+
+                        unsigned int numSpheres = multiSphereShape->spheres.size();
+                        btVector3 *centers = new btVector3[numSpheres];
+                        btScalar *radii = new btScalar[numSpheres];
+
+                        Ogre::Matrix4 transform = Ogre::Matrix4(Ogre::Matrix4::IDENTITY);
+                        if(bhkCollObj->body.getPtr()->recType == Nif::RC_bhkRigidBodyT)
+                        {
+                            const Nif::bhkRigidBody *rigidBody
+                                = static_cast<const Nif::bhkRigidBody*>(bhkCollObj->body.getPtr());
+
+                            Ogre::Vector3 translation = Ogre::Vector3();
+                            Ogre::Quaternion rotation = Ogre::Quaternion();
+                            translation = Ogre::Vector3(rigidBody->translation.x,
+                                    rigidBody->translation.y, rigidBody->translation.z);
+                            rotation = Ogre::Quaternion(rigidBody->rotation.w,
+                                    rigidBody->rotation.x, rigidBody->rotation.y, rigidBody->rotation.z);
+
+                            Ogre::Matrix4 localTrans = Ogre::Matrix4(Ogre::Matrix4::IDENTITY);
+                            // FIXME: not sure if this requires the scale factor of 7
+                            localTrans.makeTransform(translation*7, Ogre::Vector3(1.f), rotation); // assume uniform scale
+                            transform = /*node->getWorldTransform() **/ localTrans;
+                        }
+
+                        for (unsigned int i = 0; i < numSpheres; ++i)
+                        {
+                            Ogre::Vector3 c = transform*multiSphereShape->spheres[i].center*7;
+                            centers[i] = btVector3(c.x, c.y, c.z);
+                            radii[i] = multiSphereShape->spheres[i].radius*7;
+                        }
+#if 0
+                        float scale = shape->trafo.scale;
+                        const Nif::Node* parent = shape;
+                        while (parent->parent)
+                        {
+                            parent = parent->parent;
+                            scale *= parent->trafo.scale;
+                        }
+                        Ogre::Quaternion q = transform.extractQuaternion();
+                        Ogre::Vector3 v = transform.getTrans();
+                        childShape->setLocalScaling(btVector3(scale, scale, scale));
+
+                        btTransform trans(btQuaternion(q.x, q.y, q.z, q.w), btVector3(v.x, v.y, v.z));
+#endif
+                        btTransform trans;
+                        trans.setIdentity();
+                        mCompoundShape->addChildShape(trans,
+                            new btMultiSphereShape(centers, radii, numSpheres));
+
+                        delete[] radii;
+                        radii = nullptr;
+                        delete[] centers;
+                        centers = nullptr;
                     }
                     else if (subShape->recType == Nif::RC_bhkBoxShape)
                     {
+                        const Nif::bhkBoxShape* boxShape = static_cast<const Nif::bhkBoxShape*>(subShape);
+
+                        // FIXME: use the transform?
+                        Ogre::Vector3 boxTranslation;
+                        Ogre::Quaternion boxRotation;
+
+                        btTransform trans;
+                        trans.setIdentity();
+                        mCompoundShape->addChildShape(trans,
+                                    createBhkBoxShape(bhkCollObj, boxShape, boxTranslation, boxRotation));
                     }
                     else
                         std::cout << "unsupported compound shape " << subShape->recType << std::endl;
-                }
+                } // for loop
 
-#if 0
-
-
-        const Nif::NiTriShapeData *data = static_cast<const Nif::NiTriShapeData*>(shape->data.getPtr());
-
-        childMesh->preallocateVertices(data->vertices.size());
-        childMesh->preallocateIndices(data->triangles.size());
-
-        const std::vector<Ogre::Vector3> &vertices = data->vertices;
-        const std::vector<short> &triangles = data->triangles;
-
-        for(size_t i = 0;i < data->triangles.size();i+=3)
-        {
-            Ogre::Vector3 b1 = vertices[triangles[i+0]];
-            Ogre::Vector3 b2 = vertices[triangles[i+1]];
-            Ogre::Vector3 b3 = vertices[triangles[i+2]];
-            childMesh->addTriangle(btVector3(b1.x,b1.y,b1.z),btVector3(b2.x,b2.y,b2.z),btVector3(b3.x,b3.y,b3.z));
-        }
-
-        TriangleMeshShape* childShape = new TriangleMeshShape(childMesh,true);
-
-        float scale = shape->trafo.scale;
-        const Nif::Node* parent = shape;
-        while (parent->parent)
-        {
-            parent = parent->parent;
-            scale *= parent->trafo.scale;
-        }
-        Ogre::Quaternion q = transform.extractQuaternion();
-        Ogre::Vector3 v = transform.getTrans();
-        childShape->setLocalScaling(btVector3(scale, scale, scale));
-
-        btTransform trans(btQuaternion(q.x, q.y, q.z, q.w), btVector3(v.x, v.y, v.z));
-
-        if (raycasting)
-            mShape->mAnimatedRaycastingShapes.insert(std::make_pair(shape->recIndex, mCompoundShape->getNumChildShapes()));
-        else
-            mShape->mAnimatedShapes.insert(std::make_pair(shape->recIndex, mCompoundShape->getNumChildShapes()));
-
-        mCompoundShape->addChildShape(trans, childShape);
-
-#endif
                 return;
             }
             else
@@ -1121,6 +1137,131 @@ bool getBoundingBox(const std::string& nifFile, Ogre::Vector3& halfExtents, Ogre
     }
 
     return findBoundingBox(node, halfExtents, translation, orientation);
+}
+
+Ogre::Matrix4 ManualBulletShapeLoader::getBhkRigidBodyTransform(const Nif::bhkCollisionObject *bhkCollObj)
+{
+    Ogre::Matrix4 transform = Ogre::Matrix4(Ogre::Matrix4::IDENTITY);
+    if(bhkCollObj->body.getPtr()->recType != Nif::RC_bhkRigidBodyT)
+        return transform;
+
+    const Nif::bhkRigidBody *rigidBody = static_cast<const Nif::bhkRigidBody*>(bhkCollObj->body.getPtr());
+
+    Ogre::Vector3 translation = Ogre::Vector3();
+    Ogre::Quaternion rotation = Ogre::Quaternion();
+    translation = Ogre::Vector3(rigidBody->translation.x, rigidBody->translation.y, rigidBody->translation.z);
+    rotation = Ogre::Quaternion(rigidBody->rotation.w,
+                                rigidBody->rotation.x, rigidBody->rotation.y, rigidBody->rotation.z);
+
+    Ogre::Matrix4 localTrans = Ogre::Matrix4(Ogre::Matrix4::IDENTITY);
+    // FIXME: don't know why the translation here is not the same scale as the
+    // translation in bhkPackedNiTriStripsShape which does *not* require a factor of 7
+    localTrans.makeTransform(translation*7, Ogre::Vector3(1.f), rotation); // assume uniform scale
+
+    return /*node->getWorldTransform() **/ localTrans;
+}
+
+// modifies mShape and mBoundingBox
+btBoxShape *ManualBulletShapeLoader::createBhkBoxShape(const Nif::bhkCollisionObject *bhkCollObj,
+                                                const Nif::bhkBoxShape *bhkShape,
+                                                Ogre::Vector3& boxTranslation,
+                                                Ogre::Quaternion& boxRotation)
+{
+    if(bhkCollObj->body.getPtr()->recType == Nif::RC_bhkRigidBodyT)
+    {
+        const Nif::bhkRigidBody *rigidBody = static_cast<const Nif::bhkRigidBody*>(bhkCollObj->body.getPtr());
+
+        Ogre::Vector3 translation = Ogre::Vector3();
+        Ogre::Quaternion rotation = Ogre::Quaternion();
+        translation = Ogre::Vector3(rigidBody->translation.x, rigidBody->translation.y, rigidBody->translation.z);
+        rotation = Ogre::Quaternion(rigidBody->rotation.w,
+                                    rigidBody->rotation.x, rigidBody->rotation.y, rigidBody->rotation.z);
+
+        // mBoxTranslation and mBoxRotation are used in PhysicEngine::adjustRigidBody()
+        // FIXME: rather than using them consider creating new method to use bhk
+        // transform instead (maybe less calculations?)
+        boxTranslation = translation*7; // FIXME
+        boxRotation = rotation;
+    }
+    return new btBoxShape(getbtVector(bhkShape->dimensions*7));
+}
+
+// modifies mShape and mStaticMesh
+void ManualBulletShapeLoader::createBhkConvexVerticesShape(const Nif::bhkCollisionObject *bhkCollObj,
+                                                           const Nif::bhkConvexVerticesShape *bhkShape)
+{
+    if (!mStaticMesh)
+        mStaticMesh = new btTriangleMesh();
+
+    // Havok scale issue, see: http://niftools.sourceforge.net/forum/viewtopic.php?f=24&t=1400
+    Ogre::Matrix4 transform = Ogre::Matrix4(Ogre::Matrix4::IDENTITY);
+    if(bhkCollObj->body.getPtr()->recType == Nif::RC_bhkRigidBodyT)
+    {
+        const Nif::bhkRigidBody *rigidBody = static_cast<const Nif::bhkRigidBody*>(bhkCollObj->body.getPtr());
+
+        Ogre::Vector3 translation = Ogre::Vector3();
+        Ogre::Quaternion rotation = Ogre::Quaternion();
+        translation = Ogre::Vector3(rigidBody->translation.x, rigidBody->translation.y, rigidBody->translation.z);
+        rotation = Ogre::Quaternion(rigidBody->rotation.w,
+                                    rigidBody->rotation.x, rigidBody->rotation.y, rigidBody->rotation.z);
+
+        Ogre::Matrix4 localTrans = Ogre::Matrix4(Ogre::Matrix4::IDENTITY);
+        // FIXME: don't know why the translation here is not the same scale as the
+        // translation in bhkPackedNiTriStripsShape which does *not* require a factor of 7
+        localTrans.makeTransform(translation*7, Ogre::Vector3(1.f), rotation); // assume uniform scale
+        transform = /*node->getWorldTransform() **/ localTrans;
+    }
+
+    std::vector<Ogre::Vector3> triangles = generateTris(bhkShape->vertices, 7.0f); // 7*10.f for Skyrim?
+
+    // FIXME: create triangles using btVector3 instead?
+    for(size_t i = 0; i < triangles.size(); i += 3)
+    {
+        Ogre::Vector3 b1 = transform*triangles[i+0];
+        Ogre::Vector3 b2 = transform*triangles[i+1];
+        Ogre::Vector3 b3 = transform*triangles[i+2];
+        mStaticMesh->addTriangle(btVector3(b1.x,b1.y,b1.z), btVector3(b2.x,b2.y,b2.z), btVector3(b3.x,b3.y,b3.z));
+    }
+}
+
+// modifies mShape and mStaticMesh
+void ManualBulletShapeLoader::createBhkPackedNiTriStripsShape(const Nif::bhkCollisionObject *bhkCollObj,
+                                                              const Nif::bhkPackedNiTriStripsShape *bhkShape)
+{
+    const Nif::hkPackedNiTriStripsData* triData
+        = static_cast<const Nif::hkPackedNiTriStripsData*>(bhkShape->data.getPtr());
+
+    if (!mStaticMesh)
+        mStaticMesh = new btTriangleMesh();
+
+    // Havok scale issue, see: http://niftools.sourceforge.net/forum/viewtopic.php?f=24&t=1400
+    Ogre::Matrix4 transform = Ogre::Matrix4(Ogre::Matrix4::IDENTITY);
+    if(bhkCollObj->body.getPtr()->recType == Nif::RC_bhkRigidBodyT)
+    {
+        const Nif::bhkRigidBody *rigidBody = static_cast<const Nif::bhkRigidBody*>(bhkCollObj->body.getPtr());
+
+        Ogre::Vector3 translation = Ogre::Vector3();
+        Ogre::Quaternion rotation = Ogre::Quaternion();
+        translation = Ogre::Vector3(rigidBody->translation.x, rigidBody->translation.y, rigidBody->translation.z);
+        rotation = Ogre::Quaternion(rigidBody->rotation.w,
+                                    rigidBody->rotation.x, rigidBody->rotation.y, rigidBody->rotation.z);
+
+        Ogre::Matrix4 localTrans = Ogre::Matrix4(Ogre::Matrix4::IDENTITY);
+        // FIXME: don't know why the translation here is not the same scale as the
+        // translation in bhkConvexVerticesShape which requires a factor of 7
+        localTrans.makeTransform(translation, Ogre::Vector3(1.f), rotation); // assume uniform scale
+        transform = /*node->getWorldTransform() **/ localTrans;
+    }
+
+    for(size_t i = 0; i < triData->triangles.size(); ++i)
+    {
+        Ogre::Vector3 b1 = transform*triData->vertices[triData->triangles[i].triangle[0]]*7;
+        Ogre::Vector3 b2 = transform*triData->vertices[triData->triangles[i].triangle[1]]*7;
+        Ogre::Vector3 b3 = transform*triData->vertices[triData->triangles[i].triangle[2]]*7;
+        mStaticMesh->addTriangle(btVector3(b1.x,b1.y,b1.z),
+                                 btVector3(b2.x,b2.y,b2.z),
+                                 btVector3(b3.x,b3.y,b3.z));
+    }
 }
 
 } // namespace NifBullet

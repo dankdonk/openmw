@@ -485,13 +485,25 @@ namespace MWWorld
         if (LiveCellRef<ESM4::Activator> *ref = mForeignActivators.searchViaHandle (handle))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM4::Container> *ref = mForeignContainers.searchViaHandle (handle))
+        if (LiveCellRef<ESM4::Apparatus> *ref = mForeignApparatus.searchViaHandle (handle))
+            return Ptr (ref, this);
+
+        if (LiveCellRef<ESM4::Armor>     *ref = mForeignArmors.searchViaHandle (handle))
             return Ptr (ref, this);
 
         if (LiveCellRef<ESM4::Book>      *ref = mForeignBooks.searchViaHandle (handle))
             return Ptr (ref, this);
 
+        if (LiveCellRef<ESM4::Clothing>  *ref = mForeignClothes.searchViaHandle (handle))
+            return Ptr (ref, this);
+
+        if (LiveCellRef<ESM4::Container> *ref = mForeignContainers.searchViaHandle (handle))
+            return Ptr (ref, this);
+
         if (LiveCellRef<ESM4::Door>      *ref = mForeignDoors.searchViaHandle (handle))
+            return Ptr (ref, this);
+
+        if (LiveCellRef<ESM4::Ingredient> *ref = mForeignIngredients.searchViaHandle (handle))
             return Ptr (ref, this);
 
         if (LiveCellRef<ESM4::Light>     *ref = mForeignLights.searchViaHandle (handle))
@@ -504,6 +516,51 @@ namespace MWWorld
             return Ptr (ref, this);
 
         if (LiveCellRef<ESM4::Static>    *ref = mForeignStatics.searchViaHandle (handle))
+            return Ptr (ref, this);
+
+        if (LiveCellRef<ESM4::Grass>     *ref = mForeignGrasses.searchViaHandle (handle))
+            return Ptr (ref, this);
+
+        if (LiveCellRef<ESM4::Tree>      *ref = mForeignTrees.searchViaHandle (handle))
+            return Ptr (ref, this);
+
+        if (LiveCellRef<ESM4::Flora>     *ref = mForeignFloras.searchViaHandle (handle))
+            return Ptr (ref, this);
+
+        if (LiveCellRef<ESM4::Furniture> *ref = mForeignFurnitures.searchViaHandle (handle))
+            return Ptr (ref, this);
+
+        if (LiveCellRef<ESM4::Weapon>    *ref = mForeignWeapons.searchViaHandle (handle))
+            return Ptr (ref, this);
+
+        if (LiveCellRef<ESM4::Ammo>      *ref = mForeignAmmos.searchViaHandle (handle))
+            return Ptr (ref, this);
+
+        if (LiveCellRef<ESM4::Npc>       *ref = mForeignNpcs.searchViaHandle (handle))
+            return Ptr (ref, this);
+
+        if (LiveCellRef<ESM4::Creature>  *ref = mForeignCreatures.searchViaHandle (handle))
+            return Ptr (ref, this);
+
+        if (LiveCellRef<ESM4::LeveledCreature> *ref = mForeignLvlCreatures.searchViaHandle (handle))
+            return Ptr (ref, this);
+
+        if (LiveCellRef<ESM4::SoulGem>   *ref = mForeignSoulGems.searchViaHandle (handle))
+            return Ptr (ref, this);
+
+        if (LiveCellRef<ESM4::Key>       *ref = mForeignKeys.searchViaHandle (handle))
+            return Ptr (ref, this);
+
+        if (LiveCellRef<ESM4::Potion>    *ref = mForeignPotions.searchViaHandle (handle))
+            return Ptr (ref, this);
+
+        if (LiveCellRef<ESM4::Subspace>  *ref = mForeignSubspaces.searchViaHandle (handle))
+            return Ptr (ref, this);
+
+        if (LiveCellRef<ESM4::SigilStone> *ref = mForeignSigilStones.searchViaHandle (handle))
+            return Ptr (ref, this);
+
+        if (LiveCellRef<ESM4::LeveledItem>    *ref = mForeignLvlItems.searchViaHandle (handle))
             return Ptr (ref, this);
 
         mHasState = oldState;
