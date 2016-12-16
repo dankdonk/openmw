@@ -16,6 +16,8 @@
 #include <OgreQuaternion.h>
 #include <OgreStringConverter.h>
 
+#include <btBulletDynamicsCommon.h>
+
 #include "niffile.hpp"
 #include "niftypes.hpp"
 
@@ -57,6 +59,10 @@ public:
     Ogre::Matrix3 getMatrix3();
     Ogre::Quaternion getQuaternion();
     Transformation getTrafo();
+
+    btVector3 getBtVector3();
+    btVector4 getBtVector4();
+    btQuaternion getBtQuaternion();
 
     // NOTE: the caller must ensure that the buffer of sufficient size is allocated
     void getBuffer(size_t length, char* buf);

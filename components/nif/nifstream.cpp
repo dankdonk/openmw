@@ -81,6 +81,28 @@ Transformation NIFStream::getTrafo()
     return t;
 }
 
+btVector3 NIFStream::getBtVector3()
+{
+    float a[3];
+    for(size_t i = 0;i < 3;i++)
+        a[i] = getFloat();
+    return btVector3(a[0],a[1],a[2]);
+}
+btVector4 NIFStream::getBtVector4()
+{
+    float a[4];
+    for(size_t i = 0;i < 4;i++)
+        a[i] = getFloat();
+    return btVector4(a[0],a[1],a[2],a[3]);
+}
+btQuaternion NIFStream::getBtQuaternion()
+{
+    float a[4];
+    for(size_t i = 0;i < 4;i++)
+        a[i] = getFloat();
+    return btQuaternion(a[0],a[1],a[2],a[3]);
+}
+
 void NIFStream::getBuffer(size_t length, char* buf)
 {
     size_t fileSize = inp->size();

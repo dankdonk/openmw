@@ -107,7 +107,8 @@ namespace Nif
         unsigned int material; // if userVer >= 12, SkyrimHavokMaterial
         float radius;
         std::vector<unsigned char> unknown;
-        Ogre::Vector3 dimensions;
+        Ogre::Vector3 dimensions_old; // deprecated
+        btVector3 dimensions;
         float minSize;
 
         void read(NIFStream *nif);
@@ -182,7 +183,8 @@ namespace Nif
     {
     public:
         std::vector<float> unknown;
-        std::vector<Ogre::Vector4> vertices;
+        std::vector<Ogre::Vector4> vertices_old; // deprecated
+        std::vector<btVector3> vertices;
         std::vector<Ogre::Vector4> normals;
 
         void read(NIFStream *nif);
@@ -415,8 +417,10 @@ namespace Nif
         unsigned char collisionFilterCopy;
         std::vector<unsigned short> unknown7Shorts;
 
-        Ogre::Vector4 translation;
-        Ogre::Vector4 rotation;
+        Ogre::Vector4 translation_old; // deprecated
+        Ogre::Vector4 rotation_old; // deprecated
+        btVector4 translation;
+        btQuaternion rotation;
         Ogre::Vector4 velocityLinear;
         Ogre::Vector4 velocityAngular;
         Ogre::Real inertia[3][4];
@@ -448,7 +452,6 @@ namespace Nif
         void read(NIFStream *nif);
         void post(NIFFile *nif);
     };
-    //typedef bhkRigidBody bhkRigidBodyT;
     class bhkRigidBodyT : public bhkRigidBody {};
 
     struct BoxBV

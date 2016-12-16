@@ -44,7 +44,10 @@ namespace Nif
     class bhkCollisionObject;
     class bhkBoxShape;
     class bhkConvexVerticesShape;
+    class bhkConvexTransformShape;
     struct bhkPackedNiTriStripsShape;
+    class NiCollisionObject;
+    class bhkShape;
 }
 
 namespace NifBullet
@@ -121,14 +124,20 @@ private:
     Ogre::Matrix4 getBhkRigidBodyTransform(const Nif::bhkCollisionObject *bhkCollObj);
 
     //void createBhkBoxShape(const Nif::bhkCollisionObject *bhkCollObj, const Nif::bhkBoxShape *bhkShape);
-    btBoxShape *createBhkBoxShape(const Nif::bhkCollisionObject *bhkCollObj, const Nif::bhkBoxShape *bhkShape,
-                                                Ogre::Vector3& boxTranslation, Ogre::Quaternion& boxRotation);
+    btBoxShape *createBhkBoxShape(const Nif::bhkCollisionObject *bhkCollObj,
+                    const Nif::bhkBoxShape *bhkShape, Ogre::Vector3& boxTranslation, Ogre::Quaternion& boxRotation);
 
-    void createBhkConvexVerticesShape(const Nif::bhkCollisionObject *bhkCollObj,
-                    const Nif::bhkConvexVerticesShape *bhkShape);
+    btTriangleMesh *createBhkConvexVerticesShape(const Nif::bhkCollisionObject *bhkCollObj,
+                    const Nif::bhkConvexVerticesShape *bhkShape, bool force = false);
 
     void createBhkPackedNiTriStripsShape(const Nif::bhkCollisionObject *bhkCollObj,
                     const Nif::bhkPackedNiTriStripsShape *bhkShape);
+
+    void handleBhkShape(const Nif::Node *node,
+        btTransform& rigidBodyTransform, const Nif::bhkShape *bhkShape);
+    void handleBhkCollisionObject(const Nif::Node *node,
+        const Nif::NiCollisionObject *collObj);
+    void handleNiNode(const Nif::Node *node);
 
     /**
     *Helper function

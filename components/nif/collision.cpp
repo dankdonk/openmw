@@ -140,7 +140,8 @@ void Nif::bhkBoxShape::read(NIFStream *nif)
     for (int i = 0; i < 8; ++i)
         unknown[i] = nif->getChar();
 
-    dimensions = nif->getVector3();
+    dimensions = nif->getBtVector3();
+    dimensions_old = Ogre::Vector3(dimensions.getX(), dimensions.getY(), dimensions.getZ()); // deprecated
     minSize = nif->getFloat();
 }
 
@@ -230,7 +231,12 @@ void Nif::bhkConvexVerticesShape::read(NIFStream *nif)
     for (int i = 0; i < 6; ++i)
         unknown[i] = nif->getFloat();
 
-    nif->getVector4s(vertices, nif->getUInt());
+    nif->getVector4s(vertices_old, nif->getUInt());
+    vertices.resize(vertices_old.size());
+    for (unsigned int i = 0; i < vertices_old.size(); ++i) // FIXME deprecated
+    {
+        vertices[i] = btVector3(vertices_old[i].x, vertices_old[i].y, vertices_old[i].z);
+    }
     nif->getVector4s(normals, nif->getUInt());
 }
 
@@ -617,8 +623,10 @@ void Nif::bhkRigidBody::read(NIFStream *nif)
     for(size_t i = 0; i < 7; i++)
         unknown7Shorts[i] = nif->getUShort();
 
-    translation = nif->getVector4();
-    rotation = nif->getVector4();
+    translation = nif->getBtVector4();
+    rotation = nif->getBtQuaternion();
+    translation_old = Ogre::Vector4(translation.getX(), translation.getY(), translation.getZ(), translation.getW());
+    rotation_old = Ogre::Vector4(rotation.getX(), rotation.getY(), rotation.getZ(), rotation.getW());
     velocityLinear = nif->getVector4();
     velocityAngular = nif->getVector4();
     for(size_t i = 0; i < 3; i++)
@@ -676,6 +684,11 @@ void Nif::NiCollisionObject::read(NIFStream *nif)
     target.read(nif);
 }
 
+void Nif::NiCollisionObject::post(NIFFile *nif)
+{
+    target.post(nif);
+}
+
 void Nif::NiCollisionData::read(NIFStream *nif)
 {
     NiCollisionObject::read(nif);
@@ -716,11 +729,6 @@ void Nif::NiCollisionData::read(NIFStream *nif)
     }
 }
 
-void Nif::NiCollisionObject::post(NIFFile *nif)
-{
-    target.post(nif);
-}
-
 void Nif::bhkNiCollisionObject::read(NIFStream *nif)
 {
     NiCollisionObject::read(nif);
@@ -730,6 +738,7 @@ void Nif::bhkNiCollisionObject::read(NIFStream *nif)
 
 void Nif::bhkNiCollisionObject::post(NIFFile *nif)
 {
+    NiCollisionObject::post(nif);
     body.post(nif);
 }
 
