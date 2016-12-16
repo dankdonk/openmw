@@ -417,10 +417,8 @@ namespace Nif
         unsigned char collisionFilterCopy;
         std::vector<unsigned short> unknown7Shorts;
 
-        Ogre::Vector4 translation_old; // deprecated
-        Ogre::Vector4 rotation_old; // deprecated
-        btVector4 translation;
-        btQuaternion rotation;
+        Ogre::Vector4 translation;
+        Ogre::Vector4 rotation;
         Ogre::Vector4 velocityLinear;
         Ogre::Vector4 velocityAngular;
         Ogre::Real inertia[3][4];

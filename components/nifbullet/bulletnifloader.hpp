@@ -134,9 +134,8 @@ private:
                     const Nif::bhkPackedNiTriStripsShape *bhkShape);
 
     void handleBhkShape(const Nif::Node *node,
-        btTransform& rigidBodyTransform, const Nif::bhkShape *bhkShape);
-    void handleBhkCollisionObject(const Nif::Node *node,
-        const Nif::NiCollisionObject *collObj);
+        const Ogre::Vector3& translation, const Ogre::Quaternion& rotation, const Nif::bhkShape *bhkShape);
+    void handleBhkCollisionObject(const Nif::Node *node, const Nif::NiCollisionObject *collObj);
     void handleNiNode(const Nif::Node *node);
 
     /**

@@ -623,10 +623,8 @@ void Nif::bhkRigidBody::read(NIFStream *nif)
     for(size_t i = 0; i < 7; i++)
         unknown7Shorts[i] = nif->getUShort();
 
-    translation = nif->getBtVector4();
-    rotation = nif->getBtQuaternion();
-    translation_old = Ogre::Vector4(translation.getX(), translation.getY(), translation.getZ(), translation.getW());
-    rotation_old = Ogre::Vector4(rotation.getX(), rotation.getY(), rotation.getZ(), rotation.getW());
+    translation = nif->getVector4();
+    rotation = nif->getVector4();
     velocityLinear = nif->getVector4();
     velocityAngular = nif->getVector4();
     for(size_t i = 0; i < 3; i++)
