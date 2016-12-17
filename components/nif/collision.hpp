@@ -114,20 +114,6 @@ namespace Nif
         void read(NIFStream *nif);
     };
 
-    class bhkConvexTransformShape : public bhkShape
-    {
-    public:
-        bhkShapePtr shape;
-        unsigned int material; // if userVer >= 12, SkyrimHavokMaterial
-        float unknownF1;
-        std::vector<unsigned char> unknown;
-        Ogre::Vector3 dimensions;
-        float transform[4][4];
-
-        void read(NIFStream *nif);
-        void post(NIFFile *nif);
-    };
-
     class bhkSphereShape : public bhkShape
     {
     public:
@@ -160,11 +146,15 @@ namespace Nif
     public:
         bhkShapePtr shape;
         unsigned int material; // if userVer >= 12, SkyrimHavokMaterial
+        float unknownF1;
+        std::vector<unsigned char> unknown;
         Ogre::Matrix4 transform;
 
         void read(NIFStream *nif);
         void post(NIFFile *nif);
     };
+
+    class bhkConvexTransformShape : public bhkTransformShape {};
 
     class bhkCapsuleShape : public bhkShape
     {

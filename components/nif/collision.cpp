@@ -145,25 +145,6 @@ void Nif::bhkBoxShape::read(NIFStream *nif)
     minSize = nif->getFloat();
 }
 
-void Nif::bhkConvexTransformShape::read(NIFStream *nif)
-{
-    shape.read(nif);
-    material = nif->getUInt();
-    unknownF1 = nif->getFloat();
-    unknown.resize(8);
-    for (int i = 0; i < 8; ++i)
-        unknown[i] = nif->getChar();
-
-    for(size_t i = 0; i < 4; i++)
-        for(size_t j = 0; j < 4; j++)
-            transform[i][j] = nif->getFloat();
-}
-
-void Nif::bhkConvexTransformShape::post(NIFFile *nif)
-{
-    shape.post(nif);
-}
-
 void Nif::bhkSphereShape::read(NIFStream *nif)
 {
     material = nif->getUInt();
@@ -189,17 +170,17 @@ void Nif::bhkTransformShape::read(NIFStream *nif)
 {
     shape.read(nif);
     material = nif->getUInt();
-    nif->getFloat(); // unknown
+    unknownF1 = nif->getFloat();
+    unknown.resize(8);
     for (int i = 0; i < 8; ++i)
-        nif->getChar(); // unknown
+        unknown[i] = nif->getChar();
     float floats[16];
     for (int i = 0; i < 16; ++i)
         floats[i] = nif->getFloat();
-    // FIXME: not sure if the sequence is correct
-    transform = Ogre::Matrix4(floats[0],  floats[1],  floats[2],  floats[3],
-                              floats[4],  floats[5],  floats[6],  floats[7],
-                              floats[8],  floats[9],  floats[10], floats[11],
-                              floats[12], floats[13], floats[14], floats[15]);
+    transform = Ogre::Matrix4(floats[0], floats[4], floats[8],  floats[12],
+                              floats[1], floats[5], floats[9],  floats[13],
+                              floats[2], floats[6], floats[10], floats[14],
+                              floats[3], floats[7], floats[11], floats[15]);
 }
 
 void Nif::bhkTransformShape::post(NIFFile *nif)

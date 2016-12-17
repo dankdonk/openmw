@@ -82,6 +82,7 @@ public:
       , mBoundingBox(NULL)
       , mShowMarkers(showMarkers)
     {
+        mFirstTransform.setIdentity();
     }
 
     virtual ~ManualBulletShapeLoader();
@@ -149,6 +150,8 @@ private:
     std::set<std::string> mControlledNodes;
 
     bool mShowMarkers;
+
+    btTransform mFirstTransform;
 };
 
 
