@@ -118,24 +118,11 @@ private:
     void handleNode(Nif::Node const *node, int flags, bool isCollisionNode,
                     bool raycasting, bool isAnimated=false);
 
-    void handleNode2(Nif::Node const *node, int flags, bool isCollisionNode, // FIXME: name
-                    bool raycasting, bool isAnimated=false);
-
-    Ogre::Matrix4 getBhkRigidBodyTransform(const Nif::bhkCollisionObject *bhkCollObj);
-
-    //void createBhkBoxShape(const Nif::bhkCollisionObject *bhkCollObj, const Nif::bhkBoxShape *bhkShape);
-    btBoxShape *createBhkBoxShape(const Nif::bhkCollisionObject *bhkCollObj,
-                    const Nif::bhkBoxShape *bhkShape, Ogre::Vector3& boxTranslation, Ogre::Quaternion& boxRotation);
-
-    btTriangleMesh *createBhkConvexVerticesShape(const Nif::bhkCollisionObject *bhkCollObj,
-                    const Nif::bhkConvexVerticesShape *bhkShape, bool force = false);
-
-    void createBhkPackedNiTriStripsShape(const Nif::bhkCollisionObject *bhkCollObj,
-                    const Nif::bhkPackedNiTriStripsShape *bhkShape);
-
     void handleBhkShape(const Nif::Node *node,
         const Ogre::Vector3& translation, const Ogre::Quaternion& rotation, const Nif::bhkShape *bhkShape);
+
     void handleBhkCollisionObject(const Nif::Node *node, const Nif::NiCollisionObject *collObj);
+
     void handleNiNode(const Nif::Node *node);
 
     /**
