@@ -115,6 +115,7 @@ void extractControlledNodes(Nif::NIFFilePtr kfFile, std::set<std::string>& contr
     }
 }
 
+// FIXME: tested only when called from a list shape
 btTriangleMesh *createBhkNiTriStripsShape(const Nif::Node *node,
         Ogre::Vector3& translation, Ogre::Quaternion& rotation, const Nif::bhkShape *bhkShape)
 {
@@ -125,7 +126,9 @@ btTriangleMesh *createBhkNiTriStripsShape(const Nif::Node *node,
 
     Ogre::Matrix4 t;
     t.makeTransform(translation, Ogre::Vector3(1.f), rotation); // assume uniform scale
-    t = node->getWorldTransform() * t;
+    const Nif::NiTriStrips *triStrips = dynamic_cast<const Nif::NiTriStrips*>(node);
+    if (triStrips)
+        t = triStrips->getWorldTransform() * t;
 
     for (unsigned int s = 0; s < triShape->stripsData.size(); ++s)
     {
@@ -146,8 +149,10 @@ btTriangleMesh *createBhkNiTriStripsShape(const Nif::Node *node,
         }
     }
 
-    translation = Ogre::Vector3::ZERO; // transform was applied here, do not apply again later
-    rotation = Ogre::Quaternion::IDENTITY;
+    // Since this is called from bhkListShape, we need to pass on the transform so that it can
+    // be added to addChildShape()
+    //translation = Ogre::Vector3::ZERO; // transform was applied here, do not apply again later
+    //rotation = Ogre::Quaternion::IDENTITY;
 
     return staticMesh;
 }
@@ -165,12 +170,8 @@ btTriangleMesh *createBhkPackedNiTriStripsShape(const Nif::Node *node,
 
     Ogre::Matrix4 t;
     // note the difference (no factor of 7 on translation)
-
-    //if (node->name == "ICWallDoor01") // FIXME: why this special case?
-        //t.makeTransform(translation, Ogre::Vector3(1.f), Ogre::Quaternion::IDENTITY); // assume uniform scale
-    //else
-        t.makeTransform(translation, Ogre::Vector3(1.f), rotation); // assume uniform scale
-        t = node->getWorldTransform() * t;
+    t.makeTransform(translation, Ogre::Vector3(1.f), rotation); // assume uniform scale
+    t = node->getWorldTransform() * t;
 
     for(size_t i = 0; i < triData->triangles.size(); ++i)
     {
@@ -269,15 +270,11 @@ btCollisionShape *createBhkShape(const Nif::Node *node,
     if (!bhkShape) // assumes node is valid
         return nullptr;
 
-    if (node->name == "yarn01")
-        std::cout << "name " << node->name << std::endl;
-
     switch (bhkShape->recType)
     {
         case Nif::RC_bhkNiTriStripsShape: // meshes\\Furniture\\MiddleClass\\BearSkinRug01.NIF
         {
-            const Nif::bhkNiTriStripsShape* shape
-                = static_cast<const Nif::bhkNiTriStripsShape*>(bhkShape);
+            const Nif::bhkNiTriStripsShape* shape = static_cast<const Nif::bhkNiTriStripsShape*>(bhkShape);
 
             return new NifBullet::TriangleMeshShape(
                 createBhkNiTriStripsShape(node, translation, rotation, shape), true);
@@ -318,12 +315,29 @@ btCollisionShape *createBhkShape(const Nif::Node *node,
 
                 v = translation; // keep a copy in case it gets modified by createBhkShape
                 q = rotation;
+
                 btCollisionShape *collisionShape = createBhkShape(node, v, q, subShape);
                 if (!collisionShape)
                 {
                     std::cerr << "createBhkShape: returned nullptr " << node->name << std::endl;
                     continue;
                 }
+                Ogre::Matrix4 shapeTrans;
+                shapeTrans.makeTransform(v, Ogre::Vector3(1.f), q); // assume uniform scale
+
+                Ogre::Matrix4 t;
+                const Nif::bhkNiTriStripsShape* triShape = dynamic_cast<const Nif::bhkNiTriStripsShape*>(subShape);
+                if (triShape) // FIXME: horrible hack
+                    t = shapeTrans; // already applied rigid body and world transform
+                else
+                {
+                    t.makeTransform(translation*7, Ogre::Vector3(1.f), rotation); // assume uniform scale
+                    t = node->getWorldTransform() * t * shapeTrans;
+                }
+
+                v = t.getTrans();          // NOTE: reusing the variables for a different purpose
+                q = t.extractQuaternion(); // NOTE: reusing the variables for a different purpose
+
                 btTransform transform(btQuaternion(q.x, q.y, q.z, q.w), btVector3(v.x, v.y, v.z));
                 compoundShape->addChildShape(transform, collisionShape);
             }
@@ -336,8 +350,7 @@ btCollisionShape *createBhkShape(const Nif::Node *node,
         case Nif::RC_bhkTransformShape:
         case Nif::RC_bhkConvexTransformShape:
         {
-            const Nif::bhkTransformShape *shape
-                = dynamic_cast<const Nif::bhkTransformShape*>(bhkShape);
+            const Nif::bhkTransformShape *shape = dynamic_cast<const Nif::bhkTransformShape*>(bhkShape);
 
             // first get the shape's transformations (if any), it is done this way because
             // sometimes the shape needs to apply the world transform (i.e. when it is not
@@ -359,12 +372,8 @@ btCollisionShape *createBhkShape(const Nif::Node *node,
             localTrans.makeTransform(localTranslation*7, Ogre::Vector3(1.f), localRotation); // assume uniform scale
             localTrans = localTrans * shapeTrans;
 
-            // finally apply parent's transform
-            Ogre::Matrix4 t;
-            t.makeTransform(translation*7, Ogre::Vector3(1.f), rotation); // assume uniform scale
-            t = t * localTrans;
-            translation = t.getTrans(); // update the caller's transform
-            rotation = t.extractQuaternion();
+            translation = localTrans.getTrans(); // update the caller's transform
+            rotation = localTrans.extractQuaternion();
 
             return colShape;
 
@@ -379,6 +388,29 @@ btCollisionShape *createBhkShape(const Nif::Node *node,
         }
         case Nif::RC_bhkCapsuleShape: // e.g. "meshes\\Clutter\\MagesGuild\\ApparatusAlembicNovice.NIF"
         {
+                std::cout << "name " << node->name << std::endl;
+#if 0
+            // FIXME debug only
+            if (node->name == "yarn01")
+            {
+                //std::cout << "x " << translation.x << ", y " << translation.y << ", z " << translation.z << std::endl;
+                std::cout << "x " << rotation.x << ", y " << rotation.y << ", z " << rotation.z
+                    << ", w " << rotation.w << std::endl;
+            }
+            // Skel node CandleFat01, meshes\lights\candlefat01.nif, num bones 6
+            // name CandleFat01 NonAccum
+            // name CastleLight02
+            // name CastleLight02
+            // name CastleLight02
+            // name UpperScales01
+            // name UpperScales01Cross
+            // Skel node CandleFat02Fake, meshes\lights\candlefat02fake.nif, num bones 5
+            // name CandleFat02Fake NonAccum
+            // name CandleFat02Fake NonAccum
+            // Skel node CandleSkinny01Fake, meshes\lights\candleskinny01fake.nif, num bones 5
+            // name CandleSkinny01Fake NonAccum
+            // name CandleSkinny01Fake NonAccum
+#endif
             // e.g. meshes\clutter\farm\yarn01.nif
             const Nif::bhkCapsuleShape *shape
                 = static_cast<const Nif::bhkCapsuleShape*>(bhkShape);
@@ -395,16 +427,22 @@ btCollisionShape *createBhkShape(const Nif::Node *node,
             Ogre::Quaternion q = axis.getRotationTo(Ogre::Vector3::UNIT_Y);
             Ogre::Vector3 midPoint = firstPoint.midPoint(secondPoint);
 
-            Ogre::Matrix4 capsuleTrans;
-            capsuleTrans.makeTransform(midPoint, Ogre::Vector3(1.f), q); // assume uniform scale
+            // FIXME: horrible hack - upright capsule shapes don't get the rotations right for
+            //        some reason
+            if (firstPoint.x == secondPoint.x && firstPoint.y == secondPoint.y && firstPoint.z != secondPoint.z)
+            {
+                q = axis.getRotationTo(Ogre::Vector3::NEGATIVE_UNIT_Z);
 
-            Ogre::Matrix4 t;
-            t.makeTransform(translation*7, Ogre::Vector3(1.f), rotation); // assume uniform scale
-            t = t * capsuleTrans;
-            translation = t.getTrans(); // update the caller's transform
-            rotation = t.extractQuaternion();
-
-            return new btCapsuleShape(radius*7, height);
+                translation = midPoint; // update the caller's transform
+                rotation = q; //Ogre::Quaternion::ZERO;
+                return new btCapsuleShapeZ(radius*7, height);
+            }
+            else
+            {
+                translation = midPoint; // update the caller's transform
+                rotation = q;
+                return new btCapsuleShape(radius*7, height);
+            }
         }
         default:
             return nullptr;
@@ -691,9 +729,15 @@ void ManualBulletShapeLoader::handleBhkShape(const Nif::Node *node,
         case Nif::RC_bhkPackedNiTriStripsShape:
         case Nif::RC_bhkListShape:
         {
-            if (!mShape->mCollisionShape)
+            if (!mShape->mCollide)
             {
                 mShape->mCollide = true;
+
+                if (mShape->mCollisionShape) // this shouldn't happen...
+                {
+                    std::cerr << "bhkShape: mCollisionShape already exists, skipping " << node->name << std::endl;
+                    break;
+                }
 
                 Ogre::Vector3 translation(trans);
                 Ogre::Quaternion rotation(rot);
@@ -701,8 +745,6 @@ void ManualBulletShapeLoader::handleBhkShape(const Nif::Node *node,
 
                 mShape->mRaycastingShape = mShape->mCollisionShape;
             }
-            else
-                std::cerr << "bhkShape: mCollisionShape already exists, skipping " << node->name << std::endl;
 
             break;
         }
@@ -769,21 +811,28 @@ void ManualBulletShapeLoader::handleBhkShape(const Nif::Node *node,
                     break;
                 }
 
-                Ogre::Vector3 translation(trans); // NOTE: bhkCapsuleShape updates this
-                Ogre::Quaternion rotation(rot);   // NOTE: bhkCapsuleShape updates this
-                mShape->mCollisionShape = createBhkShape(node, translation, rotation, bhkShape);
+                Ogre::Vector3 v = Ogre::Vector3::ZERO;
+                Ogre::Quaternion q = Ogre::Quaternion::IDENTITY;
+                mShape->mCollisionShape = createBhkShape(node, v, q, bhkShape);
 
                 mShape->mRaycastingShape = mShape->mCollisionShape;
 
-                Ogre::Matrix4 t = node->getWorldTransform();
-                mShape->mBoxTranslation = t * translation*7;
-                mShape->mBoxRotation = t.extractQuaternion() * rotation;
+                Ogre::Matrix4 shapeTrans;
+                shapeTrans.makeTransform(v, Ogre::Vector3(1.f), q); // assume uniform scale
+
+                Ogre::Matrix4 t = Ogre::Matrix4::IDENTITY;
+                t.makeTransform(trans*7, Ogre::Vector3(1.f), rot); // assume uniform scale
+                t = node->getWorldTransform() * t * shapeTrans;
+
+                mShape->mBoxTranslation = t.getTrans();
+                mShape->mBoxRotation = t.extractQuaternion();
 
                 // FIXME: hack to keep a copy in case this becomes a compound shape
+                // FIXME: is this hack still needed?
                 const Nif::NiNode *ninode = dynamic_cast<const Nif::NiNode*>(node);
                 if (ninode && ninode->children.length() > 0)
                 {
-                    Ogre::Vector3 v = t * translation;
+                    Ogre::Vector3 v = t.getTrans();
                     mFirstTransform = btTransform(btQuaternion(mShape->mBoxRotation.x,
                                                                mShape->mBoxRotation.y,
                                                                mShape->mBoxRotation.z,
@@ -821,10 +870,6 @@ void ManualBulletShapeLoader::handleBhkShape(const Nif::Node *node,
                 translation = t * translation;
                 rotation = t.extractQuaternion() * rotation;
 
-                // FIXME debug only
-                //std::cout << node->name << std::endl;
-                //std::cout << "x " << translation.x << ", y " << translation.y << ", z " << translation.z << std::endl;
-
                 btTransform transform(btQuaternion(rotation.x, rotation.y, rotation.z, rotation.w),
                                       btVector3(translation.x, translation.y, translation.z));
                 static_cast<btCompoundShape*>(mShape->mCollisionShape)->addChildShape(transform, subShape);
@@ -832,15 +877,6 @@ void ManualBulletShapeLoader::handleBhkShape(const Nif::Node *node,
 
             break;
         }
-#if 0
-        case Nif::RC_bhkCapsuleShape:
-        {
-            const Nif::bhkCapsuleShape *shape
-                = static_cast<const Nif::bhkCapsuleShape*>(bhkShape);
-
-            break;
-        }
-#endif
         default:
             std::cerr << "bhkShape: unsupported shape " << node->name << std::endl;
     }
@@ -856,6 +892,12 @@ void ManualBulletShapeLoader::handleBhkShape(const Nif::Node *node,
 // btBvhTriangleMeshShape).
 //
 // Trasforms are not applied for btBoxShape, btSphereShape and btCapsuleShape.
+//
+// i.e:
+//
+//  - the primitives return its own transform (if any) to the caller
+//  - the caller applies the primitive shapes's transform to its own then return to is caller
+//  - a list shape
 //
 // NOTE: the Havok scale factor of 7 is not applied here - deferred till when the transforms
 // are applied.
@@ -882,43 +924,21 @@ void ManualBulletShapeLoader::handleBhkCollisionObject(const Nif::Node *node,
     else
         handleBhkShape(node, Ogre::Vector3::ZERO, Ogre::Quaternion::IDENTITY, rigidBody->shape.getPtr());
 
-#if 0
     Ogre::Quaternion rotation = Ogre::Quaternion(rigidBody->rotation.w,
             rigidBody->rotation.x, rigidBody->rotation.y, rigidBody->rotation.z);
 
-    // FIXME: it might be that the 'T' type has translation while the other only has rotation
-    //        despite what the documentations say (e.g. "Cylinder02" repair hammer)
-    if(bhkCollObj->body.getPtr()->recType == Nif::RC_bhkRigidBodyT)
-    {
-        Ogre::Vector3 translation = Ogre::Vector3(rigidBody->translation.x,
-                rigidBody->translation.y, rigidBody->translation.z);
-
-        handleBhkShape(node, translation, rotation, rigidBody->shape.getPtr());
-    }
-    else
-        handleBhkShape(node, Ogre::Vector3::ZERO, rotation, rigidBody->shape.getPtr());
-#endif
-
 #if 0
+    // FIXME: it might be that the 'T' type has translation while the other only has rotation
+    //        despite what the documentations say (e.g. meshes\furniture\barset\middlewinerack04.nif)
     if(bhkCollObj->body.getPtr()->recType == Nif::RC_bhkRigidBodyT)
     {
-        Ogre::Quaternion rotation = Ogre::Quaternion(rigidBody->rotation.w,
-                rigidBody->rotation.x, rigidBody->rotation.y, rigidBody->rotation.z);
         Ogre::Vector3 translation = Ogre::Vector3(rigidBody->translation.x,
                 rigidBody->translation.y, rigidBody->translation.z);
 
         handleBhkShape(node, translation, rotation, rigidBody->shape.getPtr());
     }
-    else if (node->name == "Cylinder02")
-    {
-        // FIXME: it might be that the 'T' type has translation while the other only has rotation
-        //        despite what the documentations say (e.g. "Cylinder02" repair hammer)
-        Ogre::Quaternion rotation = Ogre::Quaternion(rigidBody->rotation.w,
-                rigidBody->rotation.x, rigidBody->rotation.y, rigidBody->rotation.z);
-        handleBhkShape(node, Ogre::Vector3::ZERO, rotation, rigidBody->shape.getPtr());
-    }
     else
-        handleBhkShape(node, Ogre::Vector3::ZERO, Ogre::Quaternion::IDENTITY, rigidBody->shape.getPtr());
+        handleBhkShape(node, Ogre::Vector3::ZERO, rotation, rigidBody->shape.getPtr());
 #endif
 
     return;
