@@ -115,6 +115,7 @@ void extractControlledNodes(Nif::NIFFilePtr kfFile, std::set<std::string>& contr
     }
 }
 
+// NOTE: calls new, delete is done elsewhere
 // FIXME: tested only when called from a list shape
 btTriangleMesh *createBhkNiTriStripsShape(const Nif::Node *node,
         Ogre::Vector3& translation, Ogre::Quaternion& rotation, const Nif::bhkShape *bhkShape)
@@ -149,11 +150,8 @@ btTriangleMesh *createBhkNiTriStripsShape(const Nif::Node *node,
         }
     }
 
-    // Since this is called from bhkListShape, we need to pass on the transform so that it can
-    // be added to addChildShape()
-    //translation = Ogre::Vector3::ZERO; // transform was applied here, do not apply again later
-    //rotation = Ogre::Quaternion::IDENTITY;
-
+    // Since this is assumed to be called only from bhkListShape, we need to pass on the
+    // transform so that it can be added to addChildShape()
     return staticMesh;
 }
 
@@ -175,9 +173,9 @@ btTriangleMesh *createBhkPackedNiTriStripsShape(const Nif::Node *node,
 
     for(size_t i = 0; i < triData->triangles.size(); ++i)
     {
-        Ogre::Vector3 b1 = t*triData->vertices[triData->triangles[i].triangle[0]]*7; // FIXME factor 7
-        Ogre::Vector3 b2 = t*triData->vertices[triData->triangles[i].triangle[1]]*7; // FIXME factor 7
-        Ogre::Vector3 b3 = t*triData->vertices[triData->triangles[i].triangle[2]]*7; // FIXME factor 7
+        Ogre::Vector3 b1 = t*triData->vertices[triData->triangles[i].triangle[0]]*7; // NOTE: havok scale
+        Ogre::Vector3 b2 = t*triData->vertices[triData->triangles[i].triangle[1]]*7; // NOTE: havok scale
+        Ogre::Vector3 b3 = t*triData->vertices[triData->triangles[i].triangle[2]]*7; // NOTE: havok scale
         staticMesh->addTriangle((btVector3(b1.x,b1.y,b1.z)),
                                 (btVector3(b2.x,b2.y,b2.z)),
                                 (btVector3(b3.x,b3.y,b3.z)));
@@ -198,13 +196,13 @@ btConvexHullShape *createBhkConvexVerticesShape(const Nif::Node *node,
     btConvexHullShape *convexHull = new btConvexHullShape();
 
     Ogre::Matrix4 n = node->getWorldTransform();
-    Ogre::Matrix4 t;
+    Ogre::Matrix4 t; // NOTE: havok scale of 7
     t.makeTransform(translation*7, Ogre::Vector3(1.f), rotation); // assume uniform scale
     t = n * t;
 
     for (unsigned int i = 0; i < shape->vertices.size(); ++i)
     {
-        btVector3 v = shape->vertices[i]*7;
+        btVector3 v = shape->vertices[i]*7; // NOTE: havok scale
         Ogre::Vector3 point = t * Ogre::Vector3(v.getX(), v.getY(), v.getZ());
         convexHull->addPoint(btVector3(point.x, point.y, point.z));
     }
@@ -225,12 +223,12 @@ btCollisionShape *createBtPrimitive(const Nif::Node *node, const Nif::bhkShape *
         case Nif::RC_bhkBoxShape:
         {
             const Nif::bhkBoxShape* boxShape = static_cast<const Nif::bhkBoxShape*>(bhkShape);
-            return new btBoxShape(boxShape->dimensions*7); // FIXME
+            return new btBoxShape(boxShape->dimensions*7); // NOTE: havok scale
         }
         case Nif::RC_bhkSphereShape:
         {
             const Nif::bhkSphereShape* shape = static_cast<const Nif::bhkSphereShape*>(bhkShape);
-            float radius = shape->radius*7; // FIXME
+            float radius = shape->radius*7; // NOTE: havok scale
             return new btSphereShape(radius);
         }
         case Nif::RC_bhkMultiSphereShape:
@@ -244,9 +242,9 @@ btCollisionShape *createBtPrimitive(const Nif::Node *node, const Nif::bhkShape *
 
             for (unsigned int i = 0; i < numSpheres; ++i)
             {
-                Ogre::Vector3 c = multiSphereShape->spheres[i].center*7;
+                Ogre::Vector3 c = multiSphereShape->spheres[i].center*7; // NOTE: havok scale
                 centers[i] = btVector3(c.x, c.y, c.z);
-                radii[i] = multiSphereShape->spheres[i].radius*7;
+                radii[i] = multiSphereShape->spheres[i].radius*7; // NOTE: havok scale
             }
 
             btMultiSphereShape *res = new btMultiSphereShape(centers, radii, numSpheres);
@@ -331,6 +329,7 @@ btCollisionShape *createBhkShape(const Nif::Node *node,
                     t = shapeTrans; // already applied rigid body and world transform
                 else
                 {
+                    // NOTE: havok scale of 7
                     t.makeTransform(translation*7, Ogre::Vector3(1.f), rotation); // assume uniform scale
                     t = node->getWorldTransform() * t * shapeTrans;
                 }
@@ -368,7 +367,7 @@ btCollisionShape *createBhkShape(const Nif::Node *node,
             Ogre::Vector3 localTranslation = shape->transform.getTrans();
             Ogre::Quaternion localRotation = shape->transform.extractQuaternion();
 
-            Ogre::Matrix4 localTrans;
+            Ogre::Matrix4 localTrans; // NOTE: havok scale of 7
             localTrans.makeTransform(localTranslation*7, Ogre::Vector3(1.f), localRotation); // assume uniform scale
             localTrans = localTrans * shapeTrans;
 
@@ -388,60 +387,34 @@ btCollisionShape *createBhkShape(const Nif::Node *node,
         }
         case Nif::RC_bhkCapsuleShape: // e.g. "meshes\\Clutter\\MagesGuild\\ApparatusAlembicNovice.NIF"
         {
-                std::cout << "name " << node->name << std::endl;
-#if 0
-            // FIXME debug only
-            if (node->name == "yarn01")
-            {
-                //std::cout << "x " << translation.x << ", y " << translation.y << ", z " << translation.z << std::endl;
-                std::cout << "x " << rotation.x << ", y " << rotation.y << ", z " << rotation.z
-                    << ", w " << rotation.w << std::endl;
-            }
-            // Skel node CandleFat01, meshes\lights\candlefat01.nif, num bones 6
-            // name CandleFat01 NonAccum
-            // name CastleLight02
-            // name CastleLight02
-            // name CastleLight02
-            // name UpperScales01
-            // name UpperScales01Cross
-            // Skel node CandleFat02Fake, meshes\lights\candlefat02fake.nif, num bones 5
-            // name CandleFat02Fake NonAccum
-            // name CandleFat02Fake NonAccum
-            // Skel node CandleSkinny01Fake, meshes\lights\candleskinny01fake.nif, num bones 5
-            // name CandleSkinny01Fake NonAccum
-            // name CandleSkinny01Fake NonAccum
-#endif
-            // e.g. meshes\clutter\farm\yarn01.nif
+            // more examples of capsule shape:
+            // meshes\clutter\farm\yarn01.nif,    meshes\lights\candlefat01.nif,
+            // meshes\lights\candlefat02fake.nif, meshes\lights\candleskinny01fake.nif
             const Nif::bhkCapsuleShape *shape
                 = static_cast<const Nif::bhkCapsuleShape*>(bhkShape);
 
             // The btCapsuleShape represents a capsule around the Y axis so it needs to be
             // rotated.  Make use of Ogre's convenient functions to do this.
-            Ogre::Vector3 firstPoint = shape->firstPoint*7; // FIXME scale
-            Ogre::Vector3 secondPoint = shape->secondPoint*7; // FIXME scale
+            Ogre::Vector3 firstPoint = shape->firstPoint*7;   // NOTE: havok scale
+            Ogre::Vector3 secondPoint = shape->secondPoint*7; // NOTE: havok scale
             Ogre::Vector3 axis = secondPoint - firstPoint;
 
             float height = firstPoint.distance(secondPoint);
             float radius = shape->radius; // FIXME: what is radius1 and radius2 ?
 
-            Ogre::Quaternion q = axis.getRotationTo(Ogre::Vector3::UNIT_Y);
-            Ogre::Vector3 midPoint = firstPoint.midPoint(secondPoint);
+            // update the caller's transform
+            translation = firstPoint.midPoint(secondPoint);
 
-            // FIXME: horrible hack - upright capsule shapes don't get the rotations right for
-            //        some reason
+            // FIXME: horrible hack - upright capsule shapes don't get the rotations right for some reason
             if (firstPoint.x == secondPoint.x && firstPoint.y == secondPoint.y && firstPoint.z != secondPoint.z)
             {
-                q = axis.getRotationTo(Ogre::Vector3::NEGATIVE_UNIT_Z);
-
-                translation = midPoint; // update the caller's transform
-                rotation = q; //Ogre::Quaternion::ZERO;
-                return new btCapsuleShapeZ(radius*7, height);
+                rotation = axis.getRotationTo(Ogre::Vector3::NEGATIVE_UNIT_Z);
+                return new btCapsuleShapeZ(radius*7, height); // NOTE: havok scale
             }
             else
             {
-                translation = midPoint; // update the caller's transform
-                rotation = q;
-                return new btCapsuleShape(radius*7, height);
+                rotation = axis.getRotationTo(Ogre::Vector3::UNIT_Y); // should this be NEGATIVE_UNIT_Y?
+                return new btCapsuleShape(radius*7, height); // NOTE: havok scale
             }
         }
         default:
@@ -820,7 +793,7 @@ void ManualBulletShapeLoader::handleBhkShape(const Nif::Node *node,
                 Ogre::Matrix4 shapeTrans;
                 shapeTrans.makeTransform(v, Ogre::Vector3(1.f), q); // assume uniform scale
 
-                Ogre::Matrix4 t = Ogre::Matrix4::IDENTITY;
+                Ogre::Matrix4 t = Ogre::Matrix4::IDENTITY; // NOTE: havok scale of 7
                 t.makeTransform(trans*7, Ogre::Vector3(1.f), rot); // assume uniform scale
                 t = node->getWorldTransform() * t * shapeTrans;
 
@@ -926,20 +899,6 @@ void ManualBulletShapeLoader::handleBhkCollisionObject(const Nif::Node *node,
 
     Ogre::Quaternion rotation = Ogre::Quaternion(rigidBody->rotation.w,
             rigidBody->rotation.x, rigidBody->rotation.y, rigidBody->rotation.z);
-
-#if 0
-    // FIXME: it might be that the 'T' type has translation while the other only has rotation
-    //        despite what the documentations say (e.g. meshes\furniture\barset\middlewinerack04.nif)
-    if(bhkCollObj->body.getPtr()->recType == Nif::RC_bhkRigidBodyT)
-    {
-        Ogre::Vector3 translation = Ogre::Vector3(rigidBody->translation.x,
-                rigidBody->translation.y, rigidBody->translation.z);
-
-        handleBhkShape(node, translation, rotation, rigidBody->shape.getPtr());
-    }
-    else
-        handleBhkShape(node, Ogre::Vector3::ZERO, rotation, rigidBody->shape.getPtr());
-#endif
 
     return;
 }
