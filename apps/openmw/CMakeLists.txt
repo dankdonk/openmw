@@ -24,7 +24,7 @@ add_openmw_dir (mwrender
     actors objects renderinginterface localmap occlusionquery water shadows
     characterpreview globalmap ripplesimulation refraction
     terrainstorage renderconst effectmanager weaponanimation
-    foreignnpcanimation
+    foreignnpcanimation foreigncreatureanimation
     )
 
 add_openmw_dir (foreign

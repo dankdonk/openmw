@@ -146,7 +146,14 @@ ObjectScenePtr Loader::createObjects (Ogre::Entity *parent, const std::string &b
     return scene;
 }
 
-
+// MWClass::ForeignBook::insertObjectRendering
+//   MWRender::Objects::insertModel
+//     Animation::setObjectRoot
+//       NifOgre::Loader::createObjectBase  <--- this method
+//         NifOgre::NIFObjectLoader::load
+//           NifOgre::NIFObjectLoader::createObjects
+//         or
+//       NifOgre::Loader::createObjects
 ObjectScenePtr Loader::createObjectBase (Ogre::SceneNode *parentNode, std::string name, const std::string &group)
 {
     ObjectScenePtr scene = ObjectScenePtr (new ObjectScene(parentNode->getCreator()));

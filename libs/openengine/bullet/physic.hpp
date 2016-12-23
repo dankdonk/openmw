@@ -140,7 +140,8 @@ namespace Physic
         void setWalkingOnWater(bool walkingOnWater);
         bool isWalkingOnWater() const;
 
-    private:
+        //FIXME: temporary compile testing
+    //private:
         /// Removes then re-adds the collision body to the dynamics world
         void updateCollisionMask();
 
@@ -209,9 +210,10 @@ namespace Physic
          * Creates a RigidBody.  It does not add it to the simulation.
          * After created, the body is set to the correct rotation, position, and scale
          */
-        RigidBody* createAndAdjustRigidBody(const std::string &mesh, const std::string &name,
+        RigidBody* createAndAdjustRigidBody(const std::string &mesh, Ogre::SceneNode *node,
             float scale, const Ogre::Vector3 &position, const Ogre::Quaternion &rotation,
             Ogre::Vector3* scaledBoxTranslation = 0, Ogre::Quaternion* boxRotation = 0, bool raycasting=false, bool placeable=false);
+        RigidBody *createRagdoll(BulletShapePtr shape, Ogre::SceneNode *node, float scale);
 
         /**
          * Adjusts a rigid body to the right position and rotation
@@ -255,7 +257,9 @@ namespace Physic
          * Create and add a character to the scene, and add it to the ActorMap.
          */
         void addCharacter(const std::string &name, const std::string &mesh,
-        const Ogre::Vector3 &position, float scale, const Ogre::Quaternion &rotation);
+            const Ogre::Vector3 &position, float scale, const Ogre::Quaternion &rotation);
+        void addForeignCharacter(const std::string &name, const std::string &mesh,
+            const Ogre::Vector3 &position, float scale, const Ogre::Quaternion &rotation);
 
         /**
          * Remove a character from the scene.

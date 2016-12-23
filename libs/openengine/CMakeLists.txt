@@ -21,6 +21,7 @@ set(OENGINE_BULLET
     bullet/BulletShapeLoader.h
     bullet/trace.cpp
     bullet/trace.h
+    bullet/foreignactor.cpp
 )
 
 set(OENGINE_MISC

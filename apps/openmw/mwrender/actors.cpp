@@ -3,6 +3,8 @@
 #include <OgreSceneNode.h>
 #include <OgreSceneManager.h>
 
+#include <components/esm/loadcrea.hpp>
+
 #include "../mwworld/ptr.hpp"
 #include "../mwworld/class.hpp"
 
@@ -13,6 +15,7 @@
 #include "creatureanimation.hpp"
 #include "npcanimation.hpp"
 #include "foreignnpcanimation.hpp"
+#include "foreigncreatureanimation.hpp"
 
 #include "renderconst.hpp"
 
@@ -86,10 +89,21 @@ void Actors::insertCreature (const MWWorld::Ptr& ptr, const std::string &model, 
 {
     insertBegin(ptr);
     Animation* anim = NULL;
-    if (weaponsShields)
-        anim = new CreatureWeaponAnimation(ptr, model);
-    else
-        anim = new CreatureAnimation(ptr, model);
+    // check if ptr is foreign
+    if(ptr.getTypeName() == typeid(ESM::Creature).name())
+    {
+        if (weaponsShields)
+            anim = new CreatureWeaponAnimation(ptr, model);
+        else
+            anim = new CreatureAnimation(ptr, model);
+    }
+    else // typeid(ESM4::Creature)
+    {
+        if (weaponsShields)
+            anim = new ForeignCreatureWeaponAnimation(ptr, model);
+        else
+            anim = new ForeignCreatureAnimation(ptr, model);
+    }
     delete mAllActors[ptr];
     mAllActors[ptr] = anim;
     mRendering->addWaterRippleEmitter (ptr);

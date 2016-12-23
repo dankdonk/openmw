@@ -896,6 +896,41 @@ void NifOgre::NIFObjectLoader::extractTextKeys (const Nif::NiTextKeyExtraData *t
     }
 }
 
+// Call Path
+// =========
+//
+// MWClass::ForeignBook::insertObjectRendering
+//   MWRender::Objects::insertModel
+//     Animation::setObjectRoot
+//       NifOgre::Loader::createObjects
+//         NifOgre::NIFObjectLoader::load
+//           NifOgre::NIFObjectLoader::createObjects  <--- this method
+//         or
+//       NifOgre::Loader::createObjectBase
+//
+// More detail
+// ===========
+//
+//   MWRender::Objects::insertModel:
+//     create Ogre::SceneNode as a child to the cell scene node (update Ptr with details)
+//     create ObjectAnimation (whose ctor calls setObjectRoot)
+//     ... (other stuff)
+//
+//   Animation::setObjectRoot:
+//     create mObjectRoot which is a NifOgre::ObjectScene that has the Ogre entities, controllers, etc
+//     by calling either NifOgre::Loader::createObjectBase or NifOgre::Loader::createObjects
+//     ... (other stuff)
+//
+//   NifOgre::NIFObjectLoader::load:
+//     either get a copy from the cache or load the NIF file, then call this method to create the
+//     NIF objects in Ogre
+//
+// TODO:
+//
+// Find out if it is feasible to create both Ogre and Bullet objects at the same time.
+// Does it make sence to serialise the created objects to save loading time in subsequent
+// executions?
+//
 void NifOgre::NIFObjectLoader::createObjects (const Nif::NIFFilePtr& nif, const std::string &name,
             const std::string &group, Ogre::SceneNode *sceneNode, const Nif::Node *node,
             ObjectScenePtr scene, int flags, int animflags, int partflags, bool isRootCollisionNode)
@@ -930,9 +965,8 @@ void NifOgre::NIFObjectLoader::createObjects (const Nif::NIFFilePtr& nif, const 
             //std::cout << "createObjects: no bone " << node->recIndex << ", " << name << std::endl;
     }
 
-    // FIXME: should be able to handle this using nifVer, rather than boolean hasExtras
     // FIXME: duplicated code
-    if (node->hasExtras)
+    if (node->nifVer >= 0x0a000100) // TES4 style, i.e. from 10.0.1.0
     {
         for (unsigned int i = 0; i < node->extras.length(); ++i)
         {

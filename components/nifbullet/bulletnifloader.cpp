@@ -115,6 +115,19 @@ void extractControlledNodes(Nif::NIFFilePtr kfFile, std::set<std::string>& contr
     }
 }
 
+// Meshes\Architecture\ImperialCity\ICDoor04.NIF has 0xa, i.e. animated and collision
+// whereas Meshes\Architecture\Cathedral\Crypt\CathedralCryptLight02.NIF has 0xb i.e. havok also
+//
+// TES5 0x1: animated, 0x2: havok
+// TES4 0x1: havok, 0x2: collision, 0x4: skeleton, 0x8: animated
+bool isRagdoll(const Nif::Node *node, unsigned int bsxFlags)
+{
+    if (node->nifVer >= 0x14020007) // TES5
+        return (bsxFlags & 0x2) != 0 && (bsxFlags & 0x1) != 0;
+    else                            // TES4
+        return (bsxFlags & 0x8) != 0 && (bsxFlags & 0x1) != 0;
+}
+
 // NOTE: calls new, delete is done elsewhere
 // FIXME: tested only when called from a list shape
 btTriangleMesh *createBhkNiTriStripsShape(const Nif::Node *node,
@@ -422,7 +435,55 @@ btCollisionShape *createBhkShape(const Nif::Node *node,
     }
 }
 
+btCollisionShape *createConstraint(const Nif::Node *node, const Nif::bhkShape *bhkShape)
+{
+    if (!bhkShape) // assumes node is valid
+        return nullptr;
+
+    switch (bhkShape->recType)
+    {
+        case Nif::RC_bhkBoxShape:
+        {
+            const Nif::bhkBoxShape* boxShape = static_cast<const Nif::bhkBoxShape*>(bhkShape);
+            return new btBoxShape(boxShape->dimensions*7); // NOTE: havok scale
+        }
+        case Nif::RC_bhkSphereShape:
+        {
+            const Nif::bhkSphereShape* shape = static_cast<const Nif::bhkSphereShape*>(bhkShape);
+            float radius = shape->radius*7; // NOTE: havok scale
+            return new btSphereShape(radius);
+        }
+        case Nif::RC_bhkMultiSphereShape:
+        {
+            const Nif::bhkMultiSphereShape *multiSphereShape
+                = static_cast<const Nif::bhkMultiSphereShape*>(bhkShape);
+
+            unsigned int numSpheres = multiSphereShape->spheres.size();
+            btVector3 *centers = new btVector3[numSpheres];
+            btScalar *radii = new btScalar[numSpheres];
+
+            for (unsigned int i = 0; i < numSpheres; ++i)
+            {
+                Ogre::Vector3 c = multiSphereShape->spheres[i].center*7; // NOTE: havok scale
+                centers[i] = btVector3(c.x, c.y, c.z);
+                radii[i] = multiSphereShape->spheres[i].radius*7; // NOTE: havok scale
+            }
+
+            btMultiSphereShape *res = new btMultiSphereShape(centers, radii, numSpheres);
+
+            delete[] radii;
+            radii = nullptr;
+            delete[] centers;
+            centers = nullptr;
+
+            return res;
+        }
+        default:
+            return nullptr;
+    }
 }
+
+} // anon namespace
 
 namespace NifBullet
 {
@@ -440,9 +501,9 @@ btVector3 ManualBulletShapeLoader::getbtVector(Ogre::Vector3 const &v)
 // Notes on collision for newer Nif files:
 // =======================================
 //
-// The root node is a NiNode.  If the Nif file has collision, it should have a pointer to a
-// NiCollisionObject.  The NiStringsExtraData should indicate the number of collision groups.
-// Extra Data List BSX also has informtion about collision.  From niflib:
+// The root node is a NiNode.  If the Nif file has collision, one of its nodes should have a
+// pointer to a NiCollisionObject.  The NiStringsExtraData should indicate the number of
+// collision groups.  Extra Data List BSX also has informtion about collision.  From niflib:
 //
 //         Bit 0 : enable havok,       bAnimated(Skyrim)
 //         Bit 1 : enable collision,   bHavok(Skyrim)
@@ -456,20 +517,67 @@ btVector3 ManualBulletShapeLoader::getbtVector(Ogre::Vector3 const &v)
 //         Bit 9 :                     Unknown(Skyrim)
 //
 // The collision object has a flag and couple of pointers, to the target and to the body which
-// is usually a bhkRigidBodyT.
+// is usually a bhkRigidBodyT or bhkRigidBody.
 //
 // The body points to a collision shape:
+//
 //   bhkConvexVerticesShape (e.g. shield/bow)
 //   bhkListShape with sub shapes (swords/waraxe/warhammer)
 //   bhkMoppBvTreeShape which in turn points to the shape itself e.g. bhkPackedNiTriStripsShape (architecture)
 //   (TODO: figure out the decision tree logic)
 //
-// Note: NiTriStrips block may also specify a collision object (but don't have an example yet)
+// Note: NiTriStrips block may also specify a collision object
+// (e.g. Meshes\Furniture\MiddleClass\BearSkinRug01.NIF)
 //
 // Notes on this method:
 // =====================
 //
-// This method is a callback function, etc, etc TODO
+// This method is a callback function.  Basic call path is:
+//
+// MWClass::ForeignStatic::insertObject
+//   MWWorld::PhysicsSystem::addObject
+//     OEngine::Physic::PhysicEngine::createAndAdjustRigidBody
+//       NifBullet::ManualBulletShapeLoader::load
+//         OEngine::Physic::BulletShapeManager::create
+//           Ogre::ResourceManager::createResource
+//                           :
+//                           : (callback)
+//                           v
+//                 NifBullet::ManualBulletShapeLoader::loadResource
+//
+//
+// As a comparison, NPCs and Creatures are handled this way:
+//
+// MWClass::ForeignNpc::insertObject
+//   MWWorld::PhysicsSystem::addActor
+//     OEngine::Physic::PhysicEngine::addCharacter
+//       OEngine::Physic::PhysicActor::PhysicActor
+//         (TES3 actors only get a bounding box/cylinder in the ctor)
+//
+//
+// TODO: Need to figure out how to handle TES4 actors differently.  Probably best to modify
+// PhysicsSystem::addActor so that based on the Ptr type call a different method in PhysicEngine
+// i.e. using:
+//
+//   if(ptr.getTypeName() == typeid(ESM::Creature).name())
+//
+//
+// Classes:
+// --------
+//
+//       Ogre::Resource                      Ogre::ResourceManager
+//              ^                                      ^
+//              |                                      |
+//  OEngine::Physic::BulletShape          OEngine::Physic::BulletShapeManager
+//
+//
+//                    Ogre::ManualResourceLoader
+//                               ^
+//                               |
+//                 OEngine::Physic::BulletShapeLoader
+//                               ^
+//                               |
+//                 NifBullet::ManualBulletShapeLoader
 //
 void ManualBulletShapeLoader::loadResource(Ogre::Resource *resource)
 {
@@ -504,20 +612,12 @@ void ManualBulletShapeLoader::loadResource(Ogre::Resource *resource)
     mControlledNodes.clear();
 
     if (r->nifVer >= 0x0a000100)
-    {
         mShape->mAutogenerated = false; // should not autogenerate collision, use bhk* shapes instead
-#if 0
-        // TODO: should also check BSX flags and NiStringsExtraData
-        if (ninode->collision.empty())
-            mShape->mAutogenerated = true;
-        else
-            mShape->mAutogenerated = false;
-#endif
-    }
     else // check controlled nodes only for older style TES3 Nif's
     {
         // Have to load controlled nodes from the .kf
-        // FIXME: the .kf has to be loaded both for rendering and physics, ideally it should be opened once and then reused
+        // FIXME: the .kf has to be loaded both for rendering and physics,
+        // ideally it should be opened once and then reused
         std::string kfname = mResourceName.substr(0, mResourceName.length()-7);
         Misc::StringUtils::lowerCaseInPlace(kfname);
         if(kfname.size() > 4 && kfname.compare(kfname.size()-4, 4, ".nif") == 0)
@@ -533,42 +633,7 @@ void ManualBulletShapeLoader::loadResource(Ogre::Resource *resource)
 
     //do a first pass
     if (r->nifVer >= 0x0a000100) // TES4 style, i.e. from 10.0.1.0
-    {
-        // for newer Nif's we should know the flags up front without going through all the nodes
-        // except collision which may be indicated in each of NiNode or NiTriStrips?
-        bool isAnimated = false;
-        int flags = 0;
-        Nif::Extra const *e = dynamic_cast<Nif::Extra*>(r);
-        if (e && e->hasExtras)
-        {
-            Nif::NiExtraDataPtr extra;
-            for (unsigned int i = 0; i < node->extras.length(); ++i)
-            {
-                extra = node->extras[i]; // get the next extra data in the list
-                assert(extra.getPtr() != NULL);
-
-                if (!extra.empty() && extra->name == "BSX")
-                {
-                    if (r->nifVer >= 0x14020007) // TES5
-                    {
-                        isAnimated = (static_cast<Nif::BSXFlags*>(extra.getPtr())->integerData & 0x1) != 0;
-                        // FIXME: which bits indicate collision?
-                    }
-                    else
-                    {
-                        isAnimated = (static_cast<Nif::BSXFlags*>(extra.getPtr())->integerData & 0x8) != 0;
-                        //if ((extra->data & 0x11) == 0) // 0x1 is havok, 0x10 is collision
-                            //flags |= 0x800; // no collision
-                    }
-
-                    break;
-                }
-            }
-            // FIXME what if there are no extras or BSX?
-        }
-
-        handleNiNode(node);
-    }
+        handleNode(node, 0); // start with 0 bsxFlag
     else
         handleNode(node, 0/*flags*/, false/*isCollsionNode*/, false/*raycasting*/); // isAnimated=false by default
 
@@ -612,43 +677,9 @@ void ManualBulletShapeLoader::loadResource(Ogre::Resource *resource)
     mBoundingBox = NULL;
     mStaticMesh = NULL;
     mCompoundShape = NULL;
+
     if (r->nifVer >= 0x0a000100) // TES4 style, i.e. from 10.0.1.0
-    {
-        // for newer Nif's we should know the flags up front without going through all the nodes
-        // except collision which may be indicated in each of NiNode or NiTriStrips?
-        bool isAnimated = false;
-        int flags = 0;
-        Nif::Extra const *e = dynamic_cast<Nif::Extra*>(r);
-        if (e && e->hasExtras)
-        {
-            Nif::NiExtraDataPtr extra;
-            for (unsigned int i = 0; i < node->extras.length(); ++i)
-            {
-                extra = node->extras[i]; // get the next extra data in the list
-                assert(extra.getPtr() != NULL);
-
-                if (!extra.empty() && extra->name == "BSX")
-                {
-                    if (r->nifVer >= 0x14020007) // TES5
-                    {
-                        isAnimated = (static_cast<Nif::BSXFlags*>(extra.getPtr())->integerData & 0x1) != 0;
-                        // FIXME: which bits indicate collision?
-                    }
-                    else
-                    {
-                        isAnimated = (static_cast<Nif::BSXFlags*>(extra.getPtr())->integerData & 0x8) != 0;
-                        //if ((extra->data & 0x11) == 0) // 0x1 is havok, 0x10 is collision
-                            //flags |= 0x800; // no collision
-                    }
-
-                    break;
-                }
-            }
-            // FIXME what if there are no extras or BSX?
-        }
-
-        handleNiNode(node);
-    }
+        handleNode(node, 0); // start with 0 bsxFlag
     else
         handleNode(node,0,true,true,false);
 
@@ -690,7 +721,7 @@ bool ManualBulletShapeLoader::hasAutoGeneratedCollision(Nif::Node const * rootNo
 // and PhysicEngine::createAndAdjustRigidBody()
 //
 // FIXME: createBhkShape may return a nullptr
-void ManualBulletShapeLoader::handleBhkShape(const Nif::Node *node,
+void ManualBulletShapeLoader::handleBhkShape(const Nif::Node *node, unsigned int bsxFlags,
         const Ogre::Vector3& trans, const Ogre::Quaternion& rot, const Nif::bhkShape *bhkShape)
 {
     if (!bhkShape) // node is already checked upstream
@@ -698,10 +729,16 @@ void ManualBulletShapeLoader::handleBhkShape(const Nif::Node *node,
 
     switch (bhkShape->recType)
     {
-        case Nif::RC_bhkMoppBvTreeShape:
-        case Nif::RC_bhkPackedNiTriStripsShape:
         case Nif::RC_bhkListShape:
         {
+#if 0
+            // an example that contains a bhkListShape: meshes\Clutter\UpperClass\UpperScales01.NIF
+            if (isRagdoll(node, bsxFlags))
+            {
+                std::cerr << "bhkShape: bhkListShape should not be an animated shape" << node->name << std::endl;
+                return;
+            }
+#endif
             if (!mShape->mCollide)
             {
                 mShape->mCollide = true;
@@ -716,14 +753,28 @@ void ManualBulletShapeLoader::handleBhkShape(const Nif::Node *node,
                 Ogre::Quaternion rotation(rot);
                 mShape->mCollisionShape = createBhkShape(node, translation, rotation, bhkShape);
 
-                mShape->mRaycastingShape = mShape->mCollisionShape;
+                mShape->mRaycastingShape = mShape->mCollisionShape; // FIXME
+
+                mShape->mBoxTranslation = translation; // for ragdoll
+                mShape->mBoxRotation = rotation; // for ragdoll
             }
 
             break;
         }
+        case Nif::RC_bhkMoppBvTreeShape:
+        //case Nif::RC_bhkPackedNiTriStripsShape:
         case Nif::RC_bhkConvexVerticesShape:
         {
-            if (!mShape->mCollide) // we're the first one
+            if (mShape->mCollide)
+                break; // FIXME: log an error here?
+#if 0
+            if (isRagdoll(node, bsxFlags))
+            {
+                std::cout << "bhkShape: animated " << node->name << std::endl;
+
+            }
+            else
+#endif
             {
                 mShape->mCollide = true;
 
@@ -737,35 +788,10 @@ void ManualBulletShapeLoader::handleBhkShape(const Nif::Node *node,
                 Ogre::Quaternion rotation(rot);
                 mShape->mCollisionShape = createBhkShape(node, translation, rotation, bhkShape);
 
-                mShape->mRaycastingShape = mShape->mCollisionShape;
-            }
-            else
-            {
-                // for this shape the transform was already applied
-                btTransform transform;
-                transform.setIdentity();
+                mShape->mRaycastingShape = mShape->mCollisionShape; // FIXME
 
-                if (!mShape->mCollisionShape->isCompound()) // convert
-                {
-                    if (mShape->mCollisionShape->getShapeType() == TRIANGLE_MESH_SHAPE_PROXYTYPE)
-                    {
-                        std::cerr << "bhkShape: can't convert to a compound shape, skipping "
-                                  << node->name << std::endl;
-                        break;
-                    }
-
-                    btCompoundShape *compoundShape = new btCompoundShape();
-
-                    compoundShape->addChildShape(transform, mShape->mCollisionShape);
-                    mShape->mCollisionShape = compoundShape;
-                }
-
-                // now add
-                Ogre::Vector3 translation(trans);
-                Ogre::Quaternion rotation(rot);
-                btCollisionShape *subShape = createBhkShape(node, translation, rotation, bhkShape);
-
-                static_cast<btCompoundShape*>(mShape->mCollisionShape)->addChildShape(transform, subShape);
+                mShape->mBoxTranslation = translation; // for ragdoll
+                mShape->mBoxRotation = rotation; // for ragdoll
             }
 
             break;
@@ -774,7 +800,16 @@ void ManualBulletShapeLoader::handleBhkShape(const Nif::Node *node,
         case Nif::RC_bhkSphereShape:
         case Nif::RC_bhkCapsuleShape:
         {
-            if (!mShape->mCollide) // we're the first one
+            if (mShape->mCollide)
+                break; // FIXME: log an error here?
+#if 0
+            if (isRagdoll(node, bsxFlags))
+            {
+                std::cout << "bhkShape: animated " << node->name << std::endl;
+
+            }
+            else
+#endif
             {
                 mShape->mCollide = true;
 
@@ -788,7 +823,7 @@ void ManualBulletShapeLoader::handleBhkShape(const Nif::Node *node,
                 Ogre::Quaternion q = Ogre::Quaternion::IDENTITY;
                 mShape->mCollisionShape = createBhkShape(node, v, q, bhkShape);
 
-                mShape->mRaycastingShape = mShape->mCollisionShape;
+                mShape->mRaycastingShape = mShape->mCollisionShape; // FIXME
 
                 Ogre::Matrix4 shapeTrans;
                 shapeTrans.makeTransform(v, Ogre::Vector3(1.f), q); // assume uniform scale
@@ -799,53 +834,6 @@ void ManualBulletShapeLoader::handleBhkShape(const Nif::Node *node,
 
                 mShape->mBoxTranslation = t.getTrans();
                 mShape->mBoxRotation = t.extractQuaternion();
-
-                // FIXME: hack to keep a copy in case this becomes a compound shape
-                // FIXME: is this hack still needed?
-                const Nif::NiNode *ninode = dynamic_cast<const Nif::NiNode*>(node);
-                if (ninode && ninode->children.length() > 0)
-                {
-                    Ogre::Vector3 v = t.getTrans();
-                    mFirstTransform = btTransform(btQuaternion(mShape->mBoxRotation.x,
-                                                               mShape->mBoxRotation.y,
-                                                               mShape->mBoxRotation.z,
-                                                               mShape->mBoxRotation.w),
-                                                  btVector3(v.x, v.y, v.z));
-                }
-            }
-            else
-            {
-                // FIXME: may need to flag as an animated shape?
-                if (!mShape->mCollisionShape->isCompound()) // convert
-                {
-                    if (mShape->mCollisionShape->getShapeType() == TRIANGLE_MESH_SHAPE_PROXYTYPE)
-                    {
-                        std::cerr << "bhkShape: can't convert to a compound shape, skipping "
-                                  << node->name << std::endl;
-                        break;
-                    }
-
-                    btCompoundShape *compoundShape = new btCompoundShape();
-
-                    compoundShape->addChildShape(mFirstTransform, mShape->mCollisionShape);
-                    mShape->mCollisionShape = compoundShape;
-
-                    mShape->mBoxTranslation = Ogre::Vector3::ZERO;
-                    mShape->mBoxRotation = Ogre::Quaternion::IDENTITY;
-                }
-
-                // now add
-                Ogre::Vector3 translation(trans);
-                Ogre::Quaternion rotation(rot);
-                btCollisionShape *subShape = createBhkShape(node, translation, rotation, bhkShape);
-
-                Ogre::Matrix4 t = node->getWorldTransform();
-                translation = t * translation;
-                rotation = t.extractQuaternion() * rotation;
-
-                btTransform transform(btQuaternion(rotation.x, rotation.y, rotation.z, rotation.w),
-                                      btVector3(translation.x, translation.y, translation.z));
-                static_cast<btCompoundShape*>(mShape->mCollisionShape)->addChildShape(transform, subShape);
             }
 
             break;
@@ -876,7 +864,7 @@ void ManualBulletShapeLoader::handleBhkShape(const Nif::Node *node,
 // are applied.
 //
 // NOTE: assumed that this won't be recused i.e. rigidBodyTransform  occurs only once in a branch
-void ManualBulletShapeLoader::handleBhkCollisionObject(const Nif::Node *node,
+void ManualBulletShapeLoader::handleBhkCollisionObject(const Nif::Node *node, unsigned int bsxFlags,
         const Nif::NiCollisionObject *collObj)
 {
     if (!node || !collObj)
@@ -885,20 +873,151 @@ void ManualBulletShapeLoader::handleBhkCollisionObject(const Nif::Node *node,
     const Nif::bhkCollisionObject *bhkCollObj = static_cast<const Nif::bhkCollisionObject*>(collObj);
     const Nif::bhkRigidBody *rigidBody = static_cast<const Nif::bhkRigidBody*>(bhkCollObj->body.getPtr());
 
+    Ogre::Vector3 translation = Ogre::Vector3::ZERO;
+    Ogre::Quaternion rotation = Ogre::Quaternion::IDENTITY;
+
     if(bhkCollObj->body.getPtr()->recType == Nif::RC_bhkRigidBodyT)
     {
-        Ogre::Quaternion rotation = Ogre::Quaternion(rigidBody->rotation.w,
+        rotation = Ogre::Quaternion(rigidBody->rotation.w,
                 rigidBody->rotation.x, rigidBody->rotation.y, rigidBody->rotation.z);
-        Ogre::Vector3 translation = Ogre::Vector3(rigidBody->translation.x,
+        translation = Ogre::Vector3(rigidBody->translation.x,
                 rigidBody->translation.y, rigidBody->translation.z);
-
-        handleBhkShape(node, translation, rotation, rigidBody->shape.getPtr());
     }
-    else
-        handleBhkShape(node, Ogre::Vector3::ZERO, Ogre::Quaternion::IDENTITY, rigidBody->shape.getPtr());
+    handleBhkShape(node, bsxFlags, translation, rotation, rigidBody->shape.getPtr());
 
-    Ogre::Quaternion rotation = Ogre::Quaternion(rigidBody->rotation.w,
-            rigidBody->rotation.x, rigidBody->rotation.y, rigidBody->rotation.z);
+    if (isRagdoll(node, bsxFlags))
+    {
+        //std::cout << "bhkCollisionObject: animated " << node->name << std::endl;
+
+        // the way the current code is structured, OEngine::Physic::BulletShapeManager
+        // expects to see a OEngine::Physic::BulletShape, which provides a challenge to
+        // fit in a ragdoll class as a resource.
+        //
+        // A quick hack might be to subcass (even if a ragdoall is not really 'is a'
+        // BulletShape)
+        //
+        // A better/longer term solution might be to modify BulletShapeManager
+        //
+        // A method similar to PhysicEngine::createAndAdjustRigidBody will be required
+        // for the ragdoll object.
+        //
+        mShape->mIsRagdoll = true;
+        // NOTE: takeing the ownership of mShape->mCollisionShape
+        //
+        // if handleBhkShape was successful, a bullet shape would have been created
+        //
+        // FIXME: check mShape->mCollisionShape is not nullptr (and perhaps mShape->mCollide)
+        // FIXME: should check for insert failures
+        mShape->mShapes.insert(std::make_pair(rigidBody->recIndex, mShape->mCollisionShape));
+
+        std::pair<std::map<int, btRigidBody::btRigidBodyConstructionInfo>::iterator, bool> res
+            = mShape->mRigidBodyCI.insert(std::make_pair(rigidBody->recIndex,
+                    btRigidBody::btRigidBodyConstructionInfo(rigidBody->mass, 0, mShape->mCollisionShape)));
+
+        // FIXME: update CI here
+        // FIXME: what to do if res.second is false, i.e. insert failed?
+        // FIXME: translation and rotation may have been updated by handleBhkShape()
+        //        TODO: current does doesn't do that!
+        // FIXME: m_motionState should be used at a later point when btRigidBody is constructed
+        //        which means m_startWorldTransform will be ignored
+        res.first->second.m_startWorldTransform
+            = btTransform(btQuaternion(mShape->mBoxRotation.x, mShape->mBoxRotation.y, mShape->mBoxRotation.z, mShape->mBoxRotation.w),
+                          btVector3(mShape->mBoxTranslation.x, mShape->mBoxTranslation.y, mShape->mBoxTranslation.z));
+        res.first->second.m_friction       = rigidBody->friction;
+        res.first->second.m_restitution    = rigidBody->restitution;
+        res.first->second.m_linearDamping  = rigidBody->dampingLinear;
+        res.first->second.m_angularDamping = rigidBody->dampingAngular;
+
+        // from btRigidBodyConstructionInfo:
+        //
+        //btVector3  m_localInertia // not sure what this does
+        //btScalar  m_rollingFriction
+        //btScalar  m_linearSleepingThreshold  // seems to be used for deactivation
+        //btScalar  m_angularSleepingThreshold // seems to be used for deactivation
+
+        // from bhkRigidbody: not sure how to map these to bullet
+        //
+        // unsigned char collisionResponse;
+        // unsigned short callbackDelay;
+        // unsigned char layerCopy;
+        // unsigned char collisionFilterCopy;
+        // Ogre::Vector4 velocityLinear;
+        // Ogre::Vector4 velocityAngular;
+        // Ogre::Real inertia[3][4];
+        // Ogre::Vector4 center;
+        // float gravityFactor1;             // UserVersion >= 12
+        // float gravityFactor2;             // UserVersion >= 12
+        // float rollingFrictionMultiplier;  // UserVersion >= 12
+        // float maxVelocityLinear;
+        // float maxVelocityAngular;
+        // float penetrationDepth;
+        // unsigned char motionSystem;       // http://niftools.sourceforge.net/doc/nif/MotionSystem.html
+        // unsigned char deactivatorType;    // http://niftools.sourceforge.net/doc/nif/DeactivatorType.html
+        // unsigned char solverDeactivation; // http://niftools.sourceforge.net/doc/nif/SolverDeactivation.html
+        // unsigned char motionQuality;      // http://niftools.sourceforge.net/doc/nif/MotionQuality.html
+
+        // FIXME: debugging only
+        std::string shapeName = mShape->mCollisionShape->getName();
+
+        // cleanup for the next node's call to handleBhkShape()
+        //delete mShape->mCollisionShape; // FIXME: not sure who owns this and who will clean
+        //it up? Possibly the destructor in Physic
+        mShape->mCollisionShape = nullptr;
+        mShape->mCollide = false;
+
+        // check if constraints exist, possibly need to support:
+        //
+        // bhkBallSocketConstraintChain
+        // bhkConstraint
+        // bhkLiquidAction
+        // bhkOrientHingedBodyAction
+        //
+        // at least for the known ragdoll objects, the contraints refer only to known entities
+        for (unsigned int i = 0; i < rigidBody->constraints.size(); ++i)
+        {
+            for (unsigned int j = 0; j < rigidBody->constraints[i]->entities.size(); ++j)
+            {
+                std::cout << shapeName << std::endl;
+
+                std::cout << "node " << node->name << ", rigidBody " << rigidBody->recIndex
+                    << ", entities " << rigidBody->constraints[i]->entities[j]->recIndex << std::endl;
+
+            }
+            //mShape->mJoints[rigidBody->recIndex].push_back(createConstraint(node, rigidBody->constraints[i]));
+
+            if (rigidBody->constraints[i]->recType == Nif::RC_bhkRagdollConstraint)
+            {
+                //btTypedConstraint *btTypedConstraint*> > mJoints; // one or more joint per bhkRigidBody
+                mShape->mJoints[rigidBody->recIndex].push_back(
+                        std::make_pair(rigidBody->constraints[i]->entities[0]->recIndex,
+                                       rigidBody->constraints[i]->entities[1]->recIndex));
+                //btConeTwistConstraint(btRigidBody& rbA, const btTransform& rbAFrame)
+
+                //btConeTwistConstraint(btRigidBody& rbA, btRigidBody& rbB,
+                            //const btTransform& rbAFrame, const btTransform& rbBFrame)
+
+// void btConeTwistConstraint::setLimit(btScalar _swingSpan1,
+//                                      btScalar _swingSpan2,
+//                                      btScalar _twistSpan,
+//                                      btScalar _softness = 1.f,
+//                                      btScalar _biasFactor = 0.3f,
+//                                      btScalar _relaxationFactor = 1.0f)
+// Spline-Head Joint
+//coneC->setLimit(M_PI_4, M_PI_4, M_PI_2);
+// Hip-Thigh Joint
+//coneC->setLimit(M_PI_4, M_PI_4, 0);
+// Torso-Shoulder Joint
+//coneC->setLimit(M_PI_2, M_PI_2, 0);
+                }
+                else
+                    continue; // FIXME: support other types
+
+
+
+
+
+        }
+    }
 
     return;
 }
@@ -906,15 +1025,19 @@ void ManualBulletShapeLoader::handleBhkCollisionObject(const Nif::Node *node,
 // NOTE: this method gets recursed
 //
 // At the root node we don't know if any of the children will have collision shapes.
-// If there are more than one we will need to use btCompoundShape instead.
+// If there are more than one it is probably an animated shape - check the BSX flags. As far as
+// I know only bhkListShape needs to use btCompoundShape.
 //
-// e.g. Meshes\Architecture\Cathedral\Crypt\CathedralCryptLight02.NIF
+// e.g. bhkListShape: Meshes\Architecture\Cathedral\Crypt\CathedralCryptLight01.NIF
+// e.g. ragdoll shape: Meshes\Architecture\Cathedral\Crypt\CathedralCryptLight02.NIF
 //
-// Note that mShape->mCollide is set to false by loadResource() before calling handleNiNode()
+// Note that mShape->mCollide is set to false by loadResource() before calling handleNode()
 //
 // Strategy: see handleBhkShape()
 //
 // - check if we have a collision object for this node
+//
+// FIXME: below comments are no longer correct since we support ragdolls and constraints
 //
 // - if mShape->mCollide is false, we're the first one with a collision; either create a
 //   compound shape (for bhkListShape) or another collision shape and assign it to
@@ -929,35 +1052,68 @@ void ManualBulletShapeLoader::handleBhkCollisionObject(const Nif::Node *node,
 //
 // - loop though the children (recurse)
 //
-void ManualBulletShapeLoader::handleNiNode(const Nif::Node *node)
+
+// for newer Nif's we should know the flags up front without going through all the nodes
+// to check for collision which may be indicated in each of NiNode or NiTriStrips
+//
+// examples where there are no BSX flags:
+//
+//     meshes\Architecture\ImperialCity\ICPalaceTower01.NIF
+//     meshes\Architecture\Castle\CastleBannerPost03.NIF
+//     meshes\Architecture\Castle\CastleBannerPost04.NIF
+//     meshes\Architecture\Statue\Lilypad01.NIF
+//     meshes\Architecture\ImperialCity\ICArenaPoster01.NIF
+//     meshes\Clutter\MiddleClass\MiddleClassRugSquare01.NIF
+//     meshes\Clutter\FightersGuild\PracticeMat01.NIF
+//     meshes\Clutter\ChandelierHangingRod01.NIF
+//     meshes\Marker_North.nif
+//     meshes\MarkerXHeading.nif
+//     meshes\MarkerX.nif
+//
+// NiExtraData is part of NiObjectNET (which we call 'Extra')
+//
+void ManualBulletShapeLoader::handleNode(const Nif::Node *node, unsigned int bsxFlags)
 {
-    // Check for extra data
-    Nif::Extra const *e = node;
-    if (e->hasExtras) // FIXME: this boolean may change in the Nif class in future cleanups
+    // FIXME: this boolean 'hasExtras' may change in the Nif class in future cleanups
+    if (bsxFlags == 0 && node && node->hasExtras) // don't check bsxFlags if recursing
     {
-        Nif::NiExtraDataPtr extra;
+        Nif::NiExtraDataPtr extraData;
         for (unsigned int i = 0; i < node->extras.length(); ++i)
         {
-            // Get the next extra data in the list
-            extra = node->extras[i];
+            extraData = node->extras[i]; // get the next extra data in the list
             assert(extra.getPtr() != NULL);
 
-            if (!extra.empty() && extra.getPtr()->recType == Nif::RC_NiStringExtraData)
+            if (!extraData.empty() && extraData->name == "BSX")
+            {
+                bsxFlags = static_cast<Nif::BSXFlags*>(extraData.getPtr())->integerData;
+                break; // don't care about other NiExtraData (for now)
+            }
+            else if (!extraData.empty() && extraData.getPtr()->recType == Nif::RC_NiStringExtraData)
             {
                 // String markers may contain important information
                 // affecting the entire subtree of this node
-                Nif::NiStringExtraData *sd = (Nif::NiStringExtraData*)extra.getPtr();
+                Nif::NiStringExtraData *sd = (Nif::NiStringExtraData*)extraData.getPtr();
 
                 // FIXME: what to do here?
 
             }
         }
+
+        if (node->nifVer >= 0x14020007 /*TES5*/ && bsxFlags == 0) // FIXME: not sure which bits apply here
+            return;
+        else if ((bsxFlags & 0xf) == 0) // TES4  0x1: havok, 0x2: collision, 0x4: skeleton, 0x8: animated
+            return;
+    }
+    else if (bsxFlags == 0) // no Extras, which implies no BSX flags
+    {
+        std::cout << "======> No collision: no Exras " << node->name << std::endl;
+        return;
     }
 
     // NOTE: nifVer > 4.2.2.0 do not have hasBounds indicator but may have NiExtraData BBX
     // (e.g. skeleton.nif) // FIXME
 
-    if (!node->collision.empty())
+    if (!node->collision.empty()) // collision is part of an NiAVObject (a.k.a. 'Node')
     {
         // node->collision is a NiCollisionObject and may be NiCollisionData or bhkNiCollisionObject
         // (or its child, bhkCollisionObject)
@@ -967,7 +1123,7 @@ void ManualBulletShapeLoader::handleNiNode(const Nif::Node *node)
         const Nif::NiCollisionObjectPtr collObj = node->collision;
         if (collObj->recType == Nif::RC_bhkCollisionObject)
         {
-            handleBhkCollisionObject(node, collObj.getPtr());
+            handleBhkCollisionObject(node, bsxFlags, collObj.getPtr());
         }
         else if (collObj->recType == Nif::RC_NiCollisionData)
         {
@@ -979,7 +1135,7 @@ void ManualBulletShapeLoader::handleNiNode(const Nif::Node *node)
             std::cout << "NiNode: unhandled NiCollisionObject " << node->name << std::endl;
     }
 
-    // loop through the children
+    // loop through the children, only NiNode has NiAVObject as children
     const Nif::NiNode *ninode = dynamic_cast<const Nif::NiNode*>(node);
     if(ninode)
     {
@@ -987,7 +1143,7 @@ void ManualBulletShapeLoader::handleNiNode(const Nif::Node *node)
         for(size_t i = 0; i < list.length(); i++)
         {
             if(!list[i].empty())
-                handleNiNode(list[i].getPtr());
+                handleNode(list[i].getPtr(), bsxFlags);
         }
     }
 }
@@ -1157,96 +1313,6 @@ void ManualBulletShapeLoader::handleNiTriShape(const Nif::NiTriShape *shape,
 
         // Static shape, just transform all vertices into position
         const Nif::NiTriShapeData *data = static_cast<const Nif::NiTriShapeData*>(shape->data.getPtr());
-        const std::vector<Ogre::Vector3> &vertices = data->vertices;
-        const std::vector<short> &triangles = data->triangles;
-
-        for(size_t i = 0;i < data->triangles.size();i+=3)
-        {
-            Ogre::Vector3 b1 = transform*vertices[triangles[i+0]];
-            Ogre::Vector3 b2 = transform*vertices[triangles[i+1]];
-            Ogre::Vector3 b3 = transform*vertices[triangles[i+2]];
-            mStaticMesh->addTriangle(btVector3(b1.x,b1.y,b1.z),btVector3(b2.x,b2.y,b2.z),btVector3(b3.x,b3.y,b3.z));
-        }
-    }
-}
-
-void ManualBulletShapeLoader::handleNiTriStrips(const Nif::NiTriStrips *shape,
-        int flags, const Ogre::Matrix4 &transform, bool raycasting, bool isAnimated)
-{
-    assert(shape != NULL);
-
-    // Interpret flags
-    bool hidden    = (flags&Nif::NiNode::Flag_Hidden) != 0;
-    bool collide   = (flags&Nif::NiNode::Flag_MeshCollision) != 0;
-    bool bbcollide = (flags&Nif::NiNode::Flag_BBoxCollision) != 0;
-
-    // If the object was marked "NCO" earlier, it shouldn't collide with
-    // anything. So don't do anything.
-    if ((flags & 0x800) && !raycasting)
-    {
-        return;
-    }
-
-    if (!collide && !bbcollide && hidden && !raycasting)
-        // This mesh apparently isn't being used for anything, so don't
-        // bother setting it up.
-        return;
-
-    if (!shape->skin.empty())
-        isAnimated = false;
-
-    if (isAnimated)
-    {
-        if (!mCompoundShape)
-            mCompoundShape = new btCompoundShape();
-
-        btTriangleMesh* childMesh = new btTriangleMesh();
-
-        const Nif::NiTriStripsData *data = static_cast<const Nif::NiTriStripsData*>(shape->data.getPtr());
-
-        childMesh->preallocateVertices(data->vertices.size());
-        childMesh->preallocateIndices(data->triangles.size());
-
-        const std::vector<Ogre::Vector3> &vertices = data->vertices;
-        const std::vector<short> &triangles = data->triangles;
-
-        for(size_t i = 0;i < data->triangles.size();i+=3)
-        {
-            Ogre::Vector3 b1 = vertices[triangles[i+0]];
-            Ogre::Vector3 b2 = vertices[triangles[i+1]];
-            Ogre::Vector3 b3 = vertices[triangles[i+2]];
-            childMesh->addTriangle(btVector3(b1.x,b1.y,b1.z),btVector3(b2.x,b2.y,b2.z),btVector3(b3.x,b3.y,b3.z));
-        }
-
-        TriangleMeshShape* childShape = new TriangleMeshShape(childMesh,true);
-
-        float scale = shape->trafo.scale;
-        const Nif::Node* parent = shape;
-        while (parent->parent)
-        {
-            parent = parent->parent;
-            scale *= parent->trafo.scale;
-        }
-        Ogre::Quaternion q = transform.extractQuaternion();
-        Ogre::Vector3 v = transform.getTrans();
-        childShape->setLocalScaling(btVector3(scale, scale, scale));
-
-        btTransform trans(btQuaternion(q.x, q.y, q.z, q.w), btVector3(v.x, v.y, v.z));
-
-        if (raycasting)
-            mShape->mAnimatedRaycastingShapes.insert(std::make_pair(shape->recIndex, mCompoundShape->getNumChildShapes()));
-        else
-            mShape->mAnimatedShapes.insert(std::make_pair(shape->recIndex, mCompoundShape->getNumChildShapes()));
-
-        mCompoundShape->addChildShape(trans, childShape);
-    }
-    else
-    {
-        if (!mStaticMesh)
-            mStaticMesh = new btTriangleMesh();
-
-        // Static shape, just transform all vertices into position
-        const Nif::NiTriStripsData *data = static_cast<const Nif::NiTriStripsData*>(shape->data.getPtr());
         const std::vector<Ogre::Vector3> &vertices = data->vertices;
         const std::vector<short> &triangles = data->triangles;
 

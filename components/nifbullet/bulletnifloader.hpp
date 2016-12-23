@@ -38,6 +38,7 @@
 namespace Nif
 {
     class Node;
+    class NiAVObject;
     struct Transformation;
     struct NiTriShape;
     struct NiTriStrips;
@@ -119,12 +120,13 @@ private:
     void handleNode(Nif::Node const *node, int flags, bool isCollisionNode,
                     bool raycasting, bool isAnimated=false);
 
-    void handleBhkShape(const Nif::Node *node,
+    void handleNode(const Nif::Node *node, unsigned int bsxFlags);
+
+    void handleBhkCollisionObject(const Nif::Node *node, unsigned int bsxFlags,
+            const Nif::NiCollisionObject *collObj);
+
+    void handleBhkShape(const Nif::Node *node, unsigned int bsxFlags,
         const Ogre::Vector3& translation, const Ogre::Quaternion& rotation, const Nif::bhkShape *bhkShape);
-
-    void handleBhkCollisionObject(const Nif::Node *node, const Nif::NiCollisionObject *collObj);
-
-    void handleNiNode(const Nif::Node *node);
 
     /**
     *Helper function

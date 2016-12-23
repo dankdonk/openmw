@@ -680,16 +680,28 @@ namespace MWWorld
         Ogre::SceneNode* node = ptr.getRefData().getBaseNode();
         handleToMesh[node->getName()] = mesh;
         mEngine->createAndAdjustRigidBody(
-            mesh, node->getName(), ptr.getCellRef().getScale(), node->getPosition(), node->getOrientation(), 0, 0, false, placeable);
+            mesh, node, ptr.getCellRef().getScale(), node->getPosition(), node->getOrientation(), 0, 0, false, placeable);
         mEngine->createAndAdjustRigidBody(
-            mesh, node->getName(), ptr.getCellRef().getScale(), node->getPosition(), node->getOrientation(), 0, 0, true, placeable);
+            mesh, node, ptr.getCellRef().getScale(), node->getPosition(), node->getOrientation(), 0, 0, true, placeable);
     }
 
     void PhysicsSystem::addActor (const Ptr& ptr, const std::string& mesh)
     {
-        Ogre::SceneNode* node = ptr.getRefData().getBaseNode();
-        //TODO:optimize this. Searching the std::map isn't very efficient i think.
-        mEngine->addCharacter(node->getName(), mesh, node->getPosition(), node->getScale().x, node->getOrientation());
+        //if(ptr.getTypeName() == typeid(ESM::Creature).name() || ptr.getTypeName() == typeid(ESM::NPC).name())
+        {
+            Ogre::SceneNode* node = ptr.getRefData().getBaseNode();
+            //TODO:optimize this. Searching the std::map isn't very efficient i think.
+            mEngine->addCharacter(node->getName(),
+                    mesh, node->getPosition(), node->getScale().x, node->getOrientation());
+        }
+#if 0
+        else // ESM4::Creature || ESM4::Npc
+        {
+            Ogre::SceneNode* node = ptr.getRefData().getBaseNode();
+            mEngine->addForeignCharacter(node->getName(),
+                    mesh, node->getPosition(), node->getScale().x, node->getOrientation());
+        }
+#endif
     }
 
     void PhysicsSystem::removeObject (const std::string& handle)

@@ -152,7 +152,7 @@ public:
     void post(NIFFile *nif);
 };
 
-class BSXFlags : public NiExtraData
+class BSXFlags : public NiExtraData // FIXME: should inherit from NiIntegerData
 {
 public:
     unsigned int integerData;

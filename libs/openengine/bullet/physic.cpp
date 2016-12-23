@@ -16,6 +16,8 @@
 #include "BtOgreGP.h"
 #include "BtOgreExtras.h"
 
+#include "foreignactor.hpp"
+
 namespace
 {
 
@@ -451,12 +453,69 @@ namespace Physic
         adjustRigidBody(body, position, rotation, shape->mBoxTranslation * scale, shape->mBoxRotation);
     }
 
-    RigidBody* PhysicEngine::createAndAdjustRigidBody(const std::string &mesh, const std::string &name,
+    // When this method is called, e.g. from  insertObject, the caller does not know whether
+    // the object is a simple bullet shape (either primitives or compound) or a ragdoll
+    // (e.g. Meshes\Architecture\Cathedral\Crypt\CathedralCryptLight02.NIF)
+    //
+    // MWClass::ForeignStatic::insertObject
+    //   MWWorld::PhysicsSystem::addObject
+    //     OEngine::Physic::PhysicEngine::createAndAdjustRigidBody   <------- (we are here)
+    //       NifBullet::ManualBulletShapeLoader::load
+    //         OEngine::Physic::BulletShapeManager::create
+    //           Ogre::ResourceManager::createResource
+    //                           :               :
+    //                           :               :
+    //                           : (callback)    :
+    //                           :               v
+    //                           :            OEngine::Physic::BulletShapeManager::createImpl
+    //                           :               (creates a new BulletShape)
+    //                           v
+    //             NifBullet::ManualBulletShapeLoader::loadResource
+    //                (loads the BulletShape created above)
+    //
+    //
+    // We need a way to detect a ragdoll after these series of calls below:
+    //
+    //   mShapeLoader->load(outputstring,"General");
+    //   BulletShapeManager::getSingletonPtr()->load(outputstring,"General");
+    //   BulletShapePtr shape = BulletShapeManager::getSingleton().getByName(outputstring,"General");
+    //
+    // But before calling:
+    //
+    //   RigidBody* body = new RigidBody(CI,name);
+    //
+    // Because for a ragdoll we'll have a number of rigid bodies and constraints (joints), not
+    // just one.
+    //
+    // A quick hack is to place a flag in the BulletShape returned from the BulletShapeManager
+    // to indicate what type it is.
+    //
+    // [Update]
+    //
+    // Actually the problem of detecting a ragdoll type occurs much earlier, while parsing the
+    // NIF file.  The shapes and constraints specififed in the NIF need to be stored
+    // differently to the "normal" shapes, so either BulletShape needs to be modified to suit
+    // all types or a new class need to be used (maybe a subclass of BulletShape).
+    //
+    // The trouble is, the file has to be at least partially loaded/parsed before we know if it
+    // has to be a ragdoll type.
+    //
+    // Ogre::ResourceManager calls OEngine::physic::BulletShapeManager::createImpl() to create a
+    // new instance of BulletShape. This of course happens before the NIF file is loaded.  We
+    // seem to have a some kind of circular dependency here.
+    //
+    // Because the resource is managed by Ogre, it is probably not a good idea to delete and
+    // assign a new object on the fly.
+    //
+    // For now simply "bloat" BulletShape to include ragdoll related information.
+    //
+    RigidBody* PhysicEngine::createAndAdjustRigidBody(const std::string &mesh, Ogre::SceneNode *node,
         float scale, const Ogre::Vector3 &position, const Ogre::Quaternion &rotation,
         Ogre::Vector3* scaledBoxTranslation, Ogre::Quaternion* boxRotation, bool raycasting, bool placeable)
     {
         std::string sid = (boost::format("%07.3f") % scale).str();
         std::string outputstring = mesh + sid;
+        std::string name = node->getName();
 
         //get the shape from the .nif
         mShapeLoader->load(outputstring,"General");
@@ -464,6 +523,11 @@ namespace Physic
         BulletShapePtr shape = BulletShapeManager::getSingleton().getByName(outputstring,"General");
 
         // TODO: add option somewhere to enable collision for placeable meshes
+
+        // FIXME: maybe another compound shape needs to be created for raycasting?
+        // e.g. to identify and pickup meshes\Clutter\UpperClass\UpperScales01.NIF
+        if (shape->mIsRagdoll) // FIXME: this is an ugly hack
+            return createRagdoll(shape, node, scale);
 
         if (placeable && !raycasting && shape->mCollisionShape)
             return NULL;
@@ -529,6 +593,71 @@ namespace Physic
         return body;
     }
 
+    // FIXME: need to think about creation and destruction of various objects so that memory
+    // leaks do not occur - maybe we need a mRagdollObjectMap
+    // FIXME: how to get a SceneNode for each RigidBody?
+    RigidBody *PhysicEngine::createRagdoll(BulletShapePtr shape, Ogre::SceneNode *node, float scale)
+    {
+#if 0
+        std::map<int, std::vector<btTypedConstraint*> >::iterator it(mJoints.begin());
+        for (; it != mJoints.end(); ++it)
+        {
+            for (unsigned int i = 0; i < it->second.size(); ++i)
+                delete it->second[i];
+        }
+#endif
+        //Ogre::Vector3 nodeV = node->getPosition();
+        //Ogre::Quaternion nodeQ = node->getOrientation();
+
+        std::map<int, btCollisionShape*>::iterator it(shape->mShapes.begin());
+        for (; it != shape->mShapes.end(); ++it)
+        {
+            std::map<int, btRigidBody::btRigidBodyConstructionInfo>::iterator itCI(shape->mRigidBodyCI.find(it->first));
+            if (itCI == shape->mRigidBodyCI.end())
+                continue;
+
+            btVector3 v = itCI->second.m_startWorldTransform.getOrigin();
+            btQuaternion q = itCI->second.m_startWorldTransform.getRotation();
+            std::cout << "shape " << it->second->getName() << ", x " << v.getX() << ", y " << v.getY() << ", z " << v.getZ() << std::endl;
+            //Ogre::SceneNode *childNode = node->createChildSceneNode(Ogre::Vector3(v.getX(), v.getY(), v.getZ()),
+                    //Ogre::Quaternion(q.getW(), q.getX(), q.getY(), q.getZ()));
+            Ogre::SceneNode *childNode = node->createChildSceneNode();
+            childNode->translate(Ogre::Vector3(v.getX(), v.getY(), v.getZ())*-1);
+            childNode->rotate(Ogre::Quaternion(q.getW(), q.getX(), q.getY(), q.getZ()));
+            Ogre::Vector3 cv = childNode->_getDerivedPosition();
+            Ogre::Quaternion cq = childNode->_getDerivedOrientation();
+            btTransform trans(btQuaternion(cq.x, cq.y, cq.z, cq.w), btVector3(cv.x, cv.y, cv.z));
+
+            //BtOgre::RigidBodyState *state = new BtOgre::RigidBodyState(childNode, itCI->second.m_startWorldTransform);
+            BtOgre::RigidBodyState *state = new BtOgre::RigidBodyState(childNode, trans);
+            itCI->second.m_motionState = state; // NOTE: dtor of RigidBody deletes RigidBodyState
+            RigidBody * body = new RigidBody(itCI->second, it->second->getName());
+            //body->applyGravity();
+            shape->mBodies[it->first] = body;
+            //std::cout << "shape " << it->second->getName() << " mass " << body->:w
+
+            mDynamicsWorld->addRigidBody(body, CollisionType_World, CollisionType_Actor|CollisionType_Projectile);
+            // FIXME: we have a memory leak here!!!
+
+            if (shape->mJoints[it->first].empty())
+                continue;
+
+            int secondBody = shape->mJoints[it->first].back().second;
+
+            btPoint2PointConstraint *cons = new btPoint2PointConstraint(*body, *shape->mBodies[secondBody], body->getCenterOfMassPosition(), shape->mBodies[secondBody]->getCenterOfMassPosition());
+            cons->setParam(BT_CONSTRAINT_STOP_ERP,0.8,0);
+            cons->setParam(BT_CONSTRAINT_STOP_ERP,0.8,1);
+            cons->setParam(BT_CONSTRAINT_STOP_ERP,0.8,2);
+            cons->setParam(BT_CONSTRAINT_STOP_CFM,0.5,0);
+            cons->setParam(BT_CONSTRAINT_STOP_CFM,0.5,1);
+            cons->setParam(BT_CONSTRAINT_STOP_CFM,0.2,2);
+            mDynamicsWorld->addConstraint(cons, true);
+            //btGeneric6DofConstraint(&body, &shape->mBodies[secondBody],
+        }
+
+        return nullptr;
+    }
+
     void PhysicEngine::removeRigidBody(const std::string &name)
     {
         RigidBodyContainer::iterator it = mCollisionObjectMap.find(name);
@@ -583,6 +712,12 @@ namespace Physic
             }
             mRaycastingObjectMap.erase(it);
         }
+        // FIXME
+        //
+        //it = mRagdollObjectMap.find(name);
+        //if (it != mRagdollObjectMap.end() )
+        //{
+        //}
     }
 
     RigidBody* PhysicEngine::getRigidBody(const std::string &name, bool raycasting)
@@ -733,6 +868,18 @@ namespace Physic
         removeCharacter(name);
 
         PhysicActor* newActor = new PhysicActor(name, mesh, this, position, rotation, scale);
+
+        mActorMap[name] = newActor;
+    }
+
+    void PhysicEngine::addForeignCharacter(const std::string &name, const std::string &mesh,
+        const Ogre::Vector3 &position, float scale, const Ogre::Quaternion &rotation)
+    {
+        // Remove character with given name, so we don't make memory
+        // leak when character would be added twice
+        removeCharacter(name);
+
+        PhysicActor* newActor = new ForeignActor(name, mesh, this, position, rotation, scale);
 
         mActorMap[name] = newActor;
     }

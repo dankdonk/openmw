@@ -167,6 +167,7 @@ struct NiBSplineData;
 struct NiBSplineBasisData;
 
 typedef RecordPtrT<Node> NodePtr;
+typedef RecordPtrT<Node> NiAVObjectPtr;
 typedef RecordPtrT<Extra> ExtraPtr;
 typedef RecordPtrT<NiUVData> NiUVDataPtr;
 typedef RecordPtrT<NiPosData> NiPosDataPtr;
