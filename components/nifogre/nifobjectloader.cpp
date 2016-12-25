@@ -912,7 +912,7 @@ void NifOgre::NIFObjectLoader::extractTextKeys (const Nif::NiTextKeyExtraData *t
 // ===========
 //
 //   MWRender::Objects::insertModel:
-//     create Ogre::SceneNode as a child to the cell scene node (update Ptr with details)
+//     create Ogre::SceneNode as a child to the cell scene node (update Ptr with the results)
 //     create ObjectAnimation (whose ctor calls setObjectRoot)
 //     ... (other stuff)
 //
@@ -928,8 +928,107 @@ void NifOgre::NIFObjectLoader::extractTextKeys (const Nif::NiTextKeyExtraData *t
 // TODO:
 //
 // Find out if it is feasible to create both Ogre and Bullet objects at the same time.
+//
 // Does it make sence to serialise the created objects to save loading time in subsequent
 // executions?
+//
+// In terms of objects:
+//
+//   ESM defines object ref, its template (incl. NIF's if appropriate), its world
+//   position/scale/rotation, etc.
+//
+//   NIF files defines how to put together the objects - they define any skeletons, rendering
+//   meshes, collision meshes, constraints and other object properties.
+//
+//   Ogre provides the rendering (all the visible stuff) as well as resource management
+//   (including physics objects and animation controllers).
+//
+//   Bullet provides the physics.
+//
+//   In the OpenMW engine, a Ptr represents the object reference (i.e. an instance of the
+//   object).  It is put together from the ESM/ESP files, the BSA and NIF files using Ogre and
+//   Bullet classes.
+//
+//   Ideally, the engine should be able to handle more than one object format (i.e. not NIF).
+//   The current attempt at supporting two NIF versions shows that it is not a trivial task.
+//
+// Loading process (at a high, conceptual level):
+//
+//    cell     object (Ptr)    ESM/P      NIF loader   NIF file resource mgr   NIF file loader
+//      |            |           |            |                 |                  |
+//      |----------->|           |            |                 |                  |
+//      |            |---------->|            |                 |                  |
+//      |            |    ...    |            |                 |                  |
+//      |            |<----------|            |                 |                  |
+//      |            |           |            |                 |                  |
+//      |            |----------------------->|                 |                  |
+//      |            |           |            |---------------->|                  |
+//      |            |           |            |                 |----------------->|  (only if not
+//      |            |           |            |                 |<-----------------|   in cache)
+//      |            |           |            |<----------------|                  |
+//      |            |<-----------------------|                 |                  |
+//      |<-----------|           |            |                 |                  |
+//      |            |           |            |                 |                  |
+//                                        should NIF loader
+//                                     create object templates
+//                                     and store them in resource
+//                                     manager(s)?
+//
+//
+//   Rather than having a resource manager for NIF files, perhaps the NIF file loader should
+//   create Ogre and Bullet objects directly.
+//
+//   Currently the NIF file is read and its contents interpreted as "Nif" namespace classes
+//   (e.g.  Nif::NiNode) These are then cached key'ed on the file's path string.
+//
+//   Another loader then interprets the "Nif" classes and produces Ogre usable classes.
+//   (see NifOgre::NIFObjectLoader)
+//
+//   Yet another loader interprets the same "Nif" classes (twice, once for collision and another
+//   for raycasting) and produces Bullet classes (see NifBullet::ManualBulletShapeLoader)
+//   The "templates" or BulletShapePtr are stored in BulletShapeManager.  The physics engine then
+//   creates the RigidBody's using the BulletShape's. [NOTE: the same NIF path with different
+//   scales are treated as distinct shapes]
+//
+//   It may be that there are negligible performance concerns (unfortunately we won't know until
+//   an alternative has been coded and compared, which may well be quite a wasted effort) and
+//   perhaps even necessary (e.g. maybe ESM/ESP specified scale can affect the created object?)
+//
+// Requirements:
+//
+//   What are the things expected by Ptr, Ogre and Bullet?
+//
+// Bullet:
+//
+//   btDiscreteDynamicsWorld needs btRigidBody's and btTypedConstraint's configured and registered.
+//
+//   Some btRigidBody's need access to the Ogre::SceneNode of the objects so that the dynamic
+//   movements such as ragdolls can be simulated (via btMotionState).
+//
+//   MWWorld::PhysicsSystem::stepSimulation updates the physics objects during animation. To
+//   enable this pointers to the btRigidBody's are stored in OEngine::Physic::PhysicEngine.
+//
+//   MWWorld::PhysicsSystem::moveObject and MWWorld::PhysicsSystem::rotateObject also updates
+//   btRigidBody's.  To do so it calls OEngine::Physic::PhysicEngine:getRigidBody - i.e. the
+//   engine keeps the pointers to btRigidBody's keyed by its unique name (i.e. Ogre::SceneNode
+//   string handles).
+//   (TODO: Why doesn't the Ptr keep a copy of the pointer directly instead of searching a map
+//   each time? Perhaps the searching can be limited to when the Ptr is first created?)
+//
+//   TODO: We want to be able to load and unload bullet objects independently to the Ptr's
+//   which may need to be kept around for the game logic.
+//
+//   TODO: Not sure why raycast objects and collision objects are created separately. In some
+//   cases raycast needs to be done on an object without collision, but that might be better
+//   handled as exceptional cases rather than creating two objects each for every Ptr.
+//
+// Ogre:
+//
+//   Animation requires controllers
+//
+//   Mesh
+//
+//   Bone
 //
 void NifOgre::NIFObjectLoader::createObjects (const Nif::NIFFilePtr& nif, const std::string &name,
             const std::string &group, Ogre::SceneNode *sceneNode, const Nif::Node *node,

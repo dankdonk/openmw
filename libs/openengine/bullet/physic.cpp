@@ -18,6 +18,10 @@
 
 #include "foreignactor.hpp"
 
+#ifndef M_PI_2
+#define M_PI_2     btScalar(1.57079632679489661923)
+#endif
+
 namespace
 {
 
@@ -596,6 +600,50 @@ namespace Physic
     // FIXME: need to think about creation and destruction of various objects so that memory
     // leaks do not occur - maybe we need a mRagdollObjectMap
     // FIXME: how to get a SceneNode for each RigidBody?
+    //
+    // FIXME: need to scale correctly for Bullet to work properly (e.g. not move as if in slow
+    // motion).  Since Bullet considers 1 unit to be 1 meter, TES game units need to be divided
+    // by 70.  Havok scale is already down by 7, so they need to be divided by 10.
+    //
+    // One of the smallest moving object would be a link in the chain for
+    // CathedralCryptLight02. It has a radius of 0.27 Havok units and total length of
+    // 2*0.27+2*0.0154=0.5708.  Dividing by 10, it would end up with a diameter of 0.054 m and
+    // length of 0.057 m (or 5.4cm x 5.7cm).  This would be on the borderline of Havok's
+    // accuracy and accoriding to this post, reduces performance:
+    //
+    // http://bulletphysics.org/Bullet/phpBB3/viewtopic.php?f=9&t=5037&p=18424&hilit=scale#p18424
+    //
+    // Using Havok's scale may be a reasonable compromise between realistic physics and system
+    // performance.  TODO: verify by profiling
+    //
+    // With regards to scaling strategy, the wiki recommends:
+    //
+    // . Scale collision shapes about origin by X
+    // . Scale all positions by X
+    // . Scale all linear (but not angular) velocities by X
+    // . Scale linear [Sleep Threshold] by X
+    // . Scale gravity by X
+    // . Scale all impulses you supply by X
+    // . Scale all torques by X^2
+    // . Scale all inertias by X if not computed by Bullet
+    // . Damping is a ratio so this does not need to be changed.
+    // . Angular velocity should not need to be changed either.
+    //
+    // Experiments with BenchmarkDemmo's RagDoll class modified to use the data from
+    // CathedralCryptLight02, it appears that for Bullet:
+    //
+    //  . btCollisionShape's are created without transforms in the examples.  In relation to
+    //    NIF, bhkTransformShape or bhkConvexTransformShape provide local transforms (e.g.
+    //    rotating a box shape).
+    //
+    //  . btRigdBody's are created with btMotionState using the world transform which means
+    //    when setWorldTransform is called the world transform needs to be translated to the
+    //    child scene node's (i.e. somehow the parent scene node's transfrom needs to be taken
+    //    away before calling Node::setPosition and Node::setOrientation)
+    //
+    //  . btConeTwistConstraint can be mapped to bhkRagdollConstraint, but it is unclear how
+    //    planeA can be mapped to one of the swingSpans (or how to use planeB/twistB/maxFriction)
+    //
     RigidBody *PhysicEngine::createRagdoll(BulletShapePtr shape, Ogre::SceneNode *node, float scale)
     {
 #if 0
@@ -616,43 +664,140 @@ namespace Physic
             if (itCI == shape->mRigidBodyCI.end())
                 continue;
 
+            // m_startWorldTransform includes the world transfrom of NiNode (i.e. incl. its
+            // parents up to the root node), any from bhkRigidBodyT and any local transform of the shape.
+            //
+            // Rather than following the parent/child structure of the NIF file, each of these
+            // shapes are all relative from the root.  i.e. they all share the same parent
+            // scene node
             btVector3 v = itCI->second.m_startWorldTransform.getOrigin();
             btQuaternion q = itCI->second.m_startWorldTransform.getRotation();
-            std::cout << "shape " << it->second->getName() << ", x " << v.getX() << ", y " << v.getY() << ", z " << v.getZ() << std::endl;
-            //Ogre::SceneNode *childNode = node->createChildSceneNode(Ogre::Vector3(v.getX(), v.getY(), v.getZ()),
-                    //Ogre::Quaternion(q.getW(), q.getX(), q.getY(), q.getZ()));
-            Ogre::SceneNode *childNode = node->createChildSceneNode();
-            childNode->translate(Ogre::Vector3(v.getX(), v.getY(), v.getZ())*-1);
-            childNode->rotate(Ogre::Quaternion(q.getW(), q.getX(), q.getY(), q.getZ()));
+            //std::cout << "shape " << it->second->getName() << ", x " << v.x() << ", y " << v.y() << ", z " << v.z() << std::endl;
+
+            Ogre::SceneNode *childNode = node->createChildSceneNode(Ogre::Vector3(v.x(), v.y(), v.z()),
+                    Ogre::Quaternion(q.w(), q.x(), q.y(), q.z()));
+
+            // below are not needed if the child scene nodes are created with the position &
+            // rotation
+            //Ogre::SceneNode *childNode = node->createChildSceneNode();
+            //childNode->translate(Ogre::Vector3(v.x(), v.y(), v.z()), Ogre::SceneNode::TS_PARENT);
+            //childNode->rotate(Ogre::Quaternion(q.w(), q.x(), q.y(), q.z()), Ogre::SceneNode::TS_PARENT);
+            // alternative experiment
+            //childNode->setPosition(Ogre::Vector3(v.x(), v.y(), v.z()));
+            //childNode->setOrientation(Ogre::Quaternion(q.w(), q.x(), q.y(), q.z()));
+
             Ogre::Vector3 cv = childNode->_getDerivedPosition();
+            //std::cout << "derived shape " << /*it->second->getName()*/childNode->getName() << ", x " << cv.x << ", y " << cv.y << ", z " << cv.z << std::endl;
             Ogre::Quaternion cq = childNode->_getDerivedOrientation();
             btTransform trans(btQuaternion(cq.x, cq.y, cq.z, cq.w), btVector3(cv.x, cv.y, cv.z));
 
             //BtOgre::RigidBodyState *state = new BtOgre::RigidBodyState(childNode, itCI->second.m_startWorldTransform);
+            // FIXME: the starting transforms seem to require the derived positions?
             BtOgre::RigidBodyState *state = new BtOgre::RigidBodyState(childNode, trans);
             itCI->second.m_motionState = state; // NOTE: dtor of RigidBody deletes RigidBodyState
+
+
+            bool isDynamic = (itCI->second.m_mass != 0.f);
+            //isDynamic = false;
+
+            itCI->second.m_localInertia.setZero();
+            if (isDynamic)
+                itCI->second.m_collisionShape->calculateLocalInertia(itCI->second.m_mass, itCI->second.m_localInertia);
+#if 0
+            std::cout << "inertia x " << itCI->second.m_localInertia.x()
+                << " y " << itCI->second.m_localInertia.y()
+                << " z " << itCI->second.m_localInertia.z() << std::endl;
+            btCapsuleShape* cs = dynamic_cast<btCapsuleShape*>(itCI->second.m_collisionShape);
+            if (cs)
+            {
+                std::cout << "half height " << cs->getHalfHeight() << std::endl;
+                std::cout << "up axis " << cs->getUpAxis() << std::endl;
+                std::cout << "radius " << cs->getRadius() << std::endl;
+            }
+#endif
+
+
             RigidBody * body = new RigidBody(itCI->second, it->second->getName());
+
+            body->setDamping(btScalar(0.05), btScalar(0.85));
+            body->setDeactivationTime(btScalar(0.8));
+            body->setSleepingThresholds(btScalar(1.6), btScalar(2.5));
+            body->setActivationState(DISABLE_DEACTIVATION);
+
+
+            //body->setGravity(btVector3(0, 0, -10));
+            //btVector3 gravity = body->getGravity();
+            //std::cout << "gravity " << it->second->getName() << ", x " << gravity.x() << ", y " << gravity.y() << ", z " << gravity.z() << std::endl;
             //body->applyGravity();
             shape->mBodies[it->first] = body;
             //std::cout << "shape " << it->second->getName() << " mass " << body->:w
 
-            mDynamicsWorld->addRigidBody(body, CollisionType_World, CollisionType_Actor|CollisionType_Projectile);
+            mDynamicsWorld->addRigidBody(body, CollisionType_World, /*CollisionType_World|*/CollisionType_Actor|CollisionType_Projectile);
             // FIXME: we have a memory leak here!!!
 
             if (shape->mJoints[it->first].empty())
                 continue;
 
+            btTransform localA, localB;
+            Ogre::Vector4 pivot;
+
+            localA.setIdentity();
+            pivot = shape->mNifRagdollDesc[it->first].pivotA;
+            localA.setOrigin(/*scale**/7*btVector3(btScalar(pivot.x), btScalar(pivot.y), btScalar(pivot.z)));
+            localA.getBasis().setEulerZYX(0, 0, M_PI_2); // http://stackoverflow.com/questions/28485134/what-is-the-purpose-of-seteulerzyx-in-bullet-physics
+            std::cout << "A pivot " << /*it->second->getName()*/childNode->getName() << ", x " << pivot.x << ", y " << pivot.y << ", z " << pivot.z << std::endl;
+
             int secondBody = shape->mJoints[it->first].back().second;
 
+            std::map<int, btRigidBody::btRigidBodyConstructionInfo>::iterator itCI2(shape->mRigidBodyCI.find(secondBody));
+            if (itCI2 == shape->mRigidBodyCI.end())
+                continue; // FIXME: probably should log an error
+
+            localB.setIdentity();
+            pivot = shape->mNifRagdollDesc[it->first].pivotB;
+            localB.setOrigin(/*scale**/7*btVector3(btScalar(pivot.x), btScalar(pivot.y), btScalar(pivot.z)));
+            localB.getBasis().setEulerZYX(0, 0, M_PI_2); // rotate X axis 90 deg
+            std::cout << "B pivot " << /*it->second->getName()*/childNode->getName() << ", x " << pivot.x << ", y " << pivot.y << ", z " << pivot.z << std::endl;
+
+            btConeTwistConstraint *cons
+                = new btConeTwistConstraint(*body, *shape->mBodies[secondBody], localA, localB);
+
+            // FIXME: hack
+            if (shape->mNifRagdollDesc[it->first].planeA.x == 0)
+                cons->setLimit(shape->mNifRagdollDesc[it->first].coneMaxAngle*2,
+                           shape->mNifRagdollDesc[it->first].planeMaxAngle*2,
+                           shape->mNifRagdollDesc[it->first].twistMaxAngle*2);
+            else
+                cons->setLimit(shape->mNifRagdollDesc[it->first].planeMaxAngle*2,
+                           shape->mNifRagdollDesc[it->first].coneMaxAngle*2,
+                           shape->mNifRagdollDesc[it->first].twistMaxAngle*2);
+            //std::cout << "cone angle " << shape->mNifRagdollDesc[it->first].coneMaxAngle*2 << std::endl;
+            //m_joints[bhkRagdollConstraint49] = coneC;
+
+#if 0
+            btGeneric6DofConstraint *cons = new btGeneric6DofConstraint(*body, *shape->mBodies[secondBody],
+                                         itCI->second.m_startWorldTransform,
+                                         itCI2->second.m_startWorldTransform,
+                                         true /*useLinearReferenceFrameA*/);
+
+            //void setLinearLowerLimit(const btVector3& linearLower)
+            //void setLinearUpperLimit(const btVector3& linearUpper)
+            //void setAngularLowerLimit(const btVector3& angularLower)
+            //void setAngularUpperLimit(const btVector3& angularUpper)
+
+#endif
+#if 0
             btPoint2PointConstraint *cons = new btPoint2PointConstraint(*body, *shape->mBodies[secondBody], body->getCenterOfMassPosition(), shape->mBodies[secondBody]->getCenterOfMassPosition());
+#endif
             cons->setParam(BT_CONSTRAINT_STOP_ERP,0.8,0);
             cons->setParam(BT_CONSTRAINT_STOP_ERP,0.8,1);
             cons->setParam(BT_CONSTRAINT_STOP_ERP,0.8,2);
             cons->setParam(BT_CONSTRAINT_STOP_CFM,0.5,0);
             cons->setParam(BT_CONSTRAINT_STOP_CFM,0.5,1);
-            cons->setParam(BT_CONSTRAINT_STOP_CFM,0.2,2);
-            mDynamicsWorld->addConstraint(cons, true);
-            //btGeneric6DofConstraint(&body, &shape->mBodies[secondBody],
+            cons->setParam(BT_CONSTRAINT_STOP_CFM,0.5,2);
+
+
+            mDynamicsWorld->addConstraint(cons, /*disable collision between linke bodies*/true);
         }
 
         return nullptr;
@@ -853,7 +998,10 @@ namespace Physic
     void PhysicEngine::stepSimulation(double deltaT)
     {
         // This seems to be needed for character controller objects
-        mDynamicsWorld->stepSimulation(static_cast<btScalar>(deltaT), 10, 1 / 60.0f);
+        int subStep = mDynamicsWorld->stepSimulation(static_cast<btScalar>(deltaT), 10, 1 / 60.0f);
+        if (subStep == 0)
+            mDynamicsWorld->applyGravity();
+            //std::cout << "no gravity" << std::endl;
         if(isDebugCreated)
         {
             mDebugDrawer->step();

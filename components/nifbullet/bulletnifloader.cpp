@@ -24,6 +24,7 @@ http://www.gnu.org/licenses/ .
 #include "bulletnifloader.hpp"
 
 #include <cstdio>
+#include <cmath> // abs
 #include <iostream> // FIXME
 
 #include <components/misc/stringops.hpp>
@@ -412,7 +413,6 @@ btCollisionShape *createBhkShape(const Nif::Node *node,
             Ogre::Vector3 secondPoint = shape->secondPoint*7; // NOTE: havok scale
             Ogre::Vector3 axis = secondPoint - firstPoint;
 
-            float height = firstPoint.distance(secondPoint);
             float radius = shape->radius; // FIXME: what is radius1 and radius2 ?
 
             // update the caller's transform
@@ -421,11 +421,13 @@ btCollisionShape *createBhkShape(const Nif::Node *node,
             // FIXME: horrible hack - upright capsule shapes don't get the rotations right for some reason
             if (firstPoint.x == secondPoint.x && firstPoint.y == secondPoint.y && firstPoint.z != secondPoint.z)
             {
-                rotation = axis.getRotationTo(Ogre::Vector3::NEGATIVE_UNIT_Z);
+                float height = std::abs(firstPoint.z - secondPoint.z); // NOTE: havok scale already factored in
+                rotation = Ogre::Quaternion::IDENTITY;
                 return new btCapsuleShapeZ(radius*7, height); // NOTE: havok scale
             }
             else
             {
+                float height = firstPoint.distance(secondPoint);
                 rotation = axis.getRotationTo(Ogre::Vector3::UNIT_Y); // should this be NEGATIVE_UNIT_Y?
                 return new btCapsuleShape(radius*7, height); // NOTE: havok scale
             }
@@ -1008,6 +1010,24 @@ void ManualBulletShapeLoader::handleBhkCollisionObject(const Nif::Node *node, un
 //coneC->setLimit(M_PI_4, M_PI_4, 0);
 // Torso-Shoulder Joint
 //coneC->setLimit(M_PI_2, M_PI_2, 0);
+
+                    Nif::RagdollDescriptor ragdollDesc;
+                    const Nif::bhkRagdollConstraint *ragdoll
+                        = static_cast<const Nif::bhkRagdollConstraint*>(rigidBody->constraints[i].getPtr());
+                    ragdollDesc.pivotA = ragdoll->ragdoll.pivotA;
+                    ragdollDesc.planeA = ragdoll->ragdoll.planeA;
+                    ragdollDesc.twistA = ragdoll->ragdoll.twistA;
+                    ragdollDesc.pivotB = ragdoll->ragdoll.pivotB;
+                    ragdollDesc.planeB = ragdoll->ragdoll.planeB;
+                    ragdollDesc.twistB = ragdoll->ragdoll.twistB;
+                    ragdollDesc.coneMaxAngle = ragdoll->ragdoll.coneMaxAngle;
+                    ragdollDesc.planeMinAngle = ragdoll->ragdoll.planeMinAngle;
+                    ragdollDesc.planeMaxAngle = ragdoll->ragdoll.planeMaxAngle;
+                    ragdollDesc.twistMinAngle = ragdoll->ragdoll.twistMinAngle;
+                    ragdollDesc.twistMaxAngle = ragdoll->ragdoll.twistMaxAngle;
+                    ragdollDesc.maxFriction = ragdoll->ragdoll.maxFriction;
+
+                    mShape->mNifRagdollDesc[rigidBody->recIndex] = ragdollDesc;
                 }
                 else
                     continue; // FIXME: support other types

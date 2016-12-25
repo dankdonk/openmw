@@ -681,6 +681,7 @@ namespace MWWorld
         handleToMesh[node->getName()] = mesh;
         mEngine->createAndAdjustRigidBody(
             mesh, node, ptr.getCellRef().getScale(), node->getPosition(), node->getOrientation(), 0, 0, false, placeable);
+    if(ptr.getTypeName() != typeid(ESM4::Light).name()) // FIXME: temporary hack to stop duplicates
         mEngine->createAndAdjustRigidBody(
             mesh, node, ptr.getCellRef().getScale(), node->getPosition(), node->getOrientation(), 0, 0, true, placeable);
     }

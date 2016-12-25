@@ -302,8 +302,8 @@ void Nif::RagdollDescriptor::read(NIFStream *nif, unsigned int nifVer)
         pivotA = nif->getVector4();
         planeA = nif->getVector4();
         twistA = nif->getVector4();
-        planeB = nif->getVector4();
         pivotB = nif->getVector4();
+        planeB = nif->getVector4();
         twistB = nif->getVector4();
     }
 
