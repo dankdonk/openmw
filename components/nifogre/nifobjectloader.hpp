@@ -90,6 +90,10 @@ namespace NifOgre
                 const std::string &name, const std::string &group, Ogre::SceneNode *sceneNode, const Nif::Node *node,
                 ObjectScenePtr scene, int flags, int animflags, int partflags, bool isRootCollisionNode = false);
 
+        static void handleNode (const Nif::NIFFilePtr& nif,
+                const std::string &name, const std::string &group, Ogre::SceneNode *sceneNode, const Nif::Node *node,
+                ObjectScenePtr scene, int flags, int animflags, int partflags, bool isRootCollisionNode = false);
+
         static void createSkelBase (const std::string &name,
                 const std::string &group, Ogre::SceneManager *sceneMgr, const Nif::Node *node, ObjectScenePtr scene);
 

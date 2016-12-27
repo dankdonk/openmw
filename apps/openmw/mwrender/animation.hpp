@@ -346,6 +346,10 @@ public:
     // valid until the next setObjectRoot call.
     Ogre::TagPoint *attachObjectToBone(const Ogre::String &bonename, Ogre::MovableObject *obj);
     void detachObjectFromBone(Ogre::MovableObject *obj);
+
+    const std::unordered_multimap<int, Ogre::Entity*>& getRagdollEntitiesMap() {
+        return mObjectRoot->mRagdollEntities;
+    }
 };
 
 class ObjectAnimation : public Animation {

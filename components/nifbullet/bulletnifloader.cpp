@@ -31,13 +31,14 @@ http://www.gnu.org/licenses/ .
 
 #include <components/nifcache/nifcache.hpp>
 
-#include "../nif/niffile.hpp"
-#include "../nif/node.hpp"
-#include "../nif/data.hpp"
-#include "../nif/property.hpp"
-#include "../nif/controller.hpp"
-#include "../nif/extra.hpp"
-#include "../nif/collision.hpp"
+#include <components/nif/niffile.hpp>
+#include <components/nif/node.hpp>
+#include <components/nif/data.hpp>
+#include <components/nif/property.hpp>
+#include <components/nif/controller.hpp>
+#include <components/nif/extra.hpp>
+#include <components/nif/collision.hpp>
+
 #include <libs/platform/strings.h>
 
 #include <vector>
@@ -1159,11 +1160,11 @@ void ManualBulletShapeLoader::handleNode(const Nif::Node *node, unsigned int bsx
     const Nif::NiNode *ninode = dynamic_cast<const Nif::NiNode*>(node);
     if(ninode)
     {
-        const Nif::NodeList &list = ninode->children;
-        for(size_t i = 0; i < list.length(); i++)
+        const Nif::NodeList& children = ninode->children;
+        for(size_t i = 0; i < children.length(); i++)
         {
-            if(!list[i].empty())
-                handleNode(list[i].getPtr(), bsxFlags);
+            if(!children[i].empty())
+                handleNode(children[i].getPtr(), bsxFlags);
         }
     }
 }

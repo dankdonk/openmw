@@ -43,6 +43,7 @@
 #include <components/nif/controlled.hpp>
 #include <components/nif/extra.hpp>
 #include <components/nif/data.hpp>
+#include <components/nif/collision.hpp>
 #include <components/nif/property.hpp>
 
 #include <components/nifcache/nifcache.hpp>
@@ -167,6 +168,15 @@ namespace
         }
 #endif
     }
+
+    // FIXME: this is a duplicate copy of the same in bulletnifloader.cpp
+    bool isRagdoll(const Nif::Node *node, unsigned int bsxFlags)
+    {
+        if (node->nifVer >= 0x14020007) // TES5
+            return (bsxFlags & 0x2) != 0 && (bsxFlags & 0x1) != 0;
+        else                            // TES4
+            return (bsxFlags & 0x8) != 0 && (bsxFlags & 0x1) != 0;
+    }
 }
 
 void NifOgre::NIFObjectLoader::setShowMarkers (bool show)
@@ -179,6 +189,15 @@ void NifOgre::NIFObjectLoader::warn (const std::string &msg)
     std::cerr << "NIFObjectLoader: Warn: " << msg << std::endl;
 }
 
+// Flag_Hidden        = 0x0001,
+// Flag_MeshCollision = 0x0002,
+// Flag_BBoxCollision = 0x0004
+//
+// both CathedralCryptLight02 and wizard\shirt_gnd have 0x0E (0000 1110), i.e. makes no sense
+// arrow marker has 0000 1010
+// sound marker has 0000 1110
+// looks like the flags only apply to older NIF files?
+//
 // 1. NIFMeshLoader::createMesh() - see mesh.cpp
 // 2. Ogre::SceneManager::createEntity()
 // 3. Make the entity visible and add to the scene
@@ -1030,6 +1049,246 @@ void NifOgre::NIFObjectLoader::extractTextKeys (const Nif::NiTextKeyExtraData *t
 //
 //   Bone
 //
+//   In order to be able to identify the complete ragdoll object as a single entity, it is
+//   probably best to have ... TODO
+//
+//     NifOgre::NIFObjectLoader::createEntity creates an Ogre::Entity* with a name that includes
+//     the recIndex in the string and adds to the ObjectScene's mEntities. // FIXME: false
+//
+//     i.e. if the recIndex is known and have access to the ObjectScene (i.e. mObjectRoot) then
+//     we can figure get to that entity by searching (inefficient, but will do for now)
+//
+//     Loader::createObjects attaches the entities to the parent SceneNode.  For a ragdoll,
+//     each of the movabe entities need to be detached and re-attached to the child SceneNode
+//     created for the physics object.
+//
+// FIXME: unused parameters
+void NifOgre::NIFObjectLoader::handleNode (const Nif::NIFFilePtr& nif, const std::string &name,
+            const std::string &group, Ogre::SceneNode *sceneNode, const Nif::Node *node,
+            ObjectScenePtr scene, int bsxFlags, int animflags, int partflags, bool isRootCollisionNode)
+{
+    // BSX flags are needed to detect for Ragdolls
+    // FIXME: this boolean 'hasExtras' may change in the Nif class in future cleanups
+    if (bsxFlags == 0 && node && node->hasExtras) // don't check bsxFlags if recursing
+    {
+        Nif::NiExtraDataPtr extraData;
+        for (unsigned int i = 0; i < node->extras.length(); ++i)
+        {
+            extraData = node->extras[i]; // get the next extra data in the list
+            assert(extra.getPtr() != NULL);
+
+            if (!extraData.empty() && extraData->name == "BSX")
+            {
+                bsxFlags = static_cast<Nif::BSXFlags*>(extraData.getPtr())->integerData;
+                break; // don't care about other NiExtraData (for now)
+            }
+            else if (!extraData.empty() && extraData.getPtr()->recType == Nif::RC_NiStringExtraData)
+            {
+                // String markers may contain important information
+                // affecting the entire subtree of this node
+                Nif::NiStringExtraData *sd = (Nif::NiStringExtraData*)extraData.getPtr();
+
+                // FIXME: what to do here?
+
+            }
+        }
+
+#if 0
+        if (node->nifVer >= 0x14020007 /*TES5*/ && bsxFlags == 0) // FIXME: not sure which bits apply here
+            return;
+        else if ((bsxFlags & 0xf) == 0) // TES4  0x1: havok, 0x2: collision, 0x4: skeleton, 0x8: animated
+            return;
+#endif
+    }
+
+    if (node->recType == Nif::RC_NiTriStrips || node->recType == Nif::RC_NiTriShape)
+    {
+        //handleNiTriStrips(name, group, sceneNode, scene, node, bsxFlags);
+        //createEntity(name, group, sceneNode->getCreator(), scene, node, flags, animflags);
+
+
+
+
+
+    size_t recIndex = node->recIndex;
+    std::string fullname;
+
+    fullname = name+"@index="+Ogre::StringConverter::toString(recIndex);
+    if (node->name.length() > 0)
+        fullname += "@shape="+node->name;
+
+    Misc::StringUtils::lowerCaseInPlace(fullname);
+
+    Ogre::MeshManager &meshMgr = Ogre::MeshManager::getSingleton();
+    if (meshMgr.getByName(fullname).isNull())
+        NIFMeshLoader::createMesh(name, fullname, group, recIndex, (node->recType == Nif::RC_NiTriStrips));
+
+    Ogre::Entity *entity = sceneNode->getCreator()->createEntity(fullname);
+
+    // A NiTriStips node name may be something like CathedralCryptChain09:36
+    // It is related to a NiNode that contains the bhkCollisionObject, and its name is CathedralCryptChain09
+    //
+    // There may be more than one NiTriStrips per physics object (e.g. the lamp CathedralCryptLight:35
+    // and CathedralCryptLight:36 which is the chain link)
+    //
+    // There may be no physics object for the NiTriStrips (e.g. CathedralCryptLight02:35 and
+    // CathedralCryptLight02:36 which are associated with the root NiNode CathedralCryptLight02)
+    //
+    // There may be no NiTriStrips for a physics object (e.g. CathedralCryptChain, recIndex 14)
+    //
+    // So we probably need a multi map with the node names (excluding :35, etc) as the key to
+    // store the entity pointers.
+    //
+    // Alternatively, it seems that a NiTriStrips node is a sibling of the collision object -
+    // maybe this can be used.
+    //
+    if (isRagdoll(node, bsxFlags))
+    {
+        // FIXME hack
+        // find the recIndex of the matching bhkRigidBody
+        const Nif::NiCollisionObjectPtr collObj = node->parent->collision;
+        if (!collObj.empty() && collObj->recType == Nif::RC_bhkCollisionObject)
+        {
+            const Nif::bhkCollisionObject *bhkCollObj = static_cast<const Nif::bhkCollisionObject*>(collObj.getPtr());
+            const Nif::bhkRigidBody *rigidBody = static_cast<const Nif::bhkRigidBody*>(bhkCollObj->body.getPtr());
+            int recIndex = rigidBody->recIndex;
+            scene->mRagdollEntities.insert(std::make_pair(recIndex, entity));
+        }
+    }
+
+#if OGRE_VERSION >= (1 << 16 | 10 << 8 | 0)
+    // Enable skeleton-based bounding boxes. With the static bounding box,
+    // the animation may cause parts to go outside the box and cause culling problems.
+    if (entity->hasSkeleton() || (bsxFlags & 0xc) != 0) // BSX 0x4: skeleton, 0x8: animated
+        entity->setUpdateBoundingBoxFromSkeleton(true);
+#endif
+
+    entity->setVisible(true /*!(flags&Nif::NiNode::Flag_Hidden)*/); // FIXME not for newer NIF
+
+    scene->mEntities.push_back(entity);
+
+    if (scene->mSkelBase)
+    {
+        if (entity->hasSkeleton())
+            entity->shareSkeletonInstanceWith(scene->mSkelBase);
+        else
+        {
+            int trgtid = NIFSkeletonLoader::lookupOgreBoneHandle(name, (int)recIndex);
+            if (trgtid != -1)
+            {
+                Ogre::Bone *trgtbone = scene->mSkelBase->getSkeleton()->getBone(trgtid);
+                trgtbone->getUserObjectBindings().setUserAny(Ogre::Any(static_cast<Ogre::MovableObject*>(entity)));
+
+                scene->mSkelBase->attachObjectToBone(trgtbone->getName(), entity);
+            }
+        }
+    }
+
+    Nif::ControllerPtr ctrl = node->controller;
+    while (!ctrl.empty())
+    {
+        if (ctrl->flags & Nif::NiNode::ControllerFlag_Active)
+        {
+            bool isAnimationAutoPlay = (animflags & Nif::NiNode::AnimFlag_AutoPlay) != 0;
+            if (ctrl->recType == Nif::RC_NiUVController)
+            {
+                const Nif::NiUVController *uv = static_cast<const Nif::NiUVController*>(ctrl.getPtr());
+
+                Ogre::ControllerValueRealPtr srcval(isAnimationAutoPlay ?
+                                                    Ogre::ControllerManager::getSingleton().getFrameTimeSource() :
+                                                    Ogre::ControllerValueRealPtr());
+                Ogre::ControllerValueRealPtr dstval(
+                        OGRE_NEW UVController::Value(entity, uv->data.getPtr(), &scene->mMaterialControllerMgr));
+
+                UVController::Function* function = OGRE_NEW UVController::Function(uv, isAnimationAutoPlay);
+                scene->mMaxControllerLength = std::max(function->mStopTime, scene->mMaxControllerLength);
+                Ogre::ControllerFunctionRealPtr func(function);
+
+                scene->mControllers.push_back(Ogre::Controller<Ogre::Real>(srcval, dstval, func));
+            }
+            else if (ctrl->recType == Nif::RC_NiGeomMorpherController)
+            {
+                const Nif::NiGeomMorpherController *geom
+                    = static_cast<const Nif::NiGeomMorpherController*>(ctrl.getPtr());
+
+                Ogre::ControllerValueRealPtr srcval(isAnimationAutoPlay ?
+                                                    Ogre::ControllerManager::getSingleton().getFrameTimeSource() :
+                                                    Ogre::ControllerValueRealPtr());
+                Ogre::ControllerValueRealPtr dstval(OGRE_NEW GeomMorpherController::Value(
+                        entity, geom->data.getPtr(), geom->recIndex));
+
+                GeomMorpherController::Function* function
+                    = OGRE_NEW GeomMorpherController::Function(geom, isAnimationAutoPlay);
+
+                scene->mMaxControllerLength = std::max(function->mStopTime, scene->mMaxControllerLength);
+                Ogre::ControllerFunctionRealPtr func(function);
+
+                scene->mControllers.push_back(Ogre::Controller<Ogre::Real>(srcval, dstval, func));
+            }
+        }
+        ctrl = ctrl->next;
+    }
+
+    if (node->recType == Nif::RC_NiTriStrips)
+        createMaterialControllers(static_cast<const Nif::NiTriStrips*>(node), entity, animflags, scene);
+    else
+        createMaterialControllers(static_cast<const Nif::NiTriShape*>(node), entity, animflags, scene);
+
+
+
+
+
+    }
+     else if (node->recType != Nif::RC_NiNode)
+        std::cout << "NIFObjectLoader::handleNode: unhandled record type " << node->name << std::endl;
+
+
+
+
+
+     // FIXME: this block does not belong here
+    if (node->name == "AttachLight")
+    {
+        scene->mLights.push_back(sceneNode->getCreator()->createLight());
+        Ogre::Light *light = scene->mLights.back();
+        light->setType(Ogre::Light::LT_POINT);
+        light->setDiffuseColour(0.9, 0.8, 0.0);
+        //http://www.ogre3d.org/tikiwiki/tiki-index.php?page=-Point%20Light%20Attenuation
+        light->setSpecularColour(1.0, 1.0, 0.0);
+        //light->setCastShadows(true);
+
+        float radius = 512;
+
+        // copied from MWRender::Animation
+        float threshold = 0.03f;
+        float linearAttenuation = /*linearValue*/3.0 / radius;
+        float quadraticAttenuation = /*quadraticValue*/16.0 / std::pow(radius, 2);
+        float activationRange = std::max(activationRange, 1.0f / (threshold * linearAttenuation));
+        //float activationRange = std::sqrt(1.0f / (threshold * quadraticAttenuation));
+        light->setAttenuation(activationRange, 0.5, linearAttenuation, quadraticAttenuation);
+
+        sceneNode->attachObject(light);
+    }
+
+
+
+
+
+
+    // loop through the children, only NiNode has NiAVObject as children
+    const Nif::NiNode *ninode = dynamic_cast<const Nif::NiNode*>(node);
+    if(ninode)
+    {
+        const Nif::NodeList& children = ninode->children;
+        for(size_t i = 0; i < children.length(); i++)
+        {
+            if(!children[i].empty())
+                handleNode(nif, name, group, sceneNode, children[i].getPtr(),
+                              scene, bsxFlags, animflags, partflags, isRootCollisionNode);
+        }
+    }
+}
+
 void NifOgre::NIFObjectLoader::createObjects (const Nif::NIFFilePtr& nif, const std::string &name,
             const std::string &group, Ogre::SceneNode *sceneNode, const Nif::Node *node,
             ObjectScenePtr scene, int flags, int animflags, int partflags, bool isRootCollisionNode)
@@ -1199,7 +1458,10 @@ void NifOgre::NIFObjectLoader::load (Ogre::SceneNode *sceneNode,
         createSkelBase(name, group, sceneNode->getCreator(), node, scene);
     }
     //std::cout << "creating object "<< name << ", root " << node->name << std::endl; // FIXME
-    createObjects(nif, name, group, sceneNode, node, scene, flags, 0, 0);
+    if (r->nifVer >= 0x0a000100) // TES4 style, i.e. from 10.0.1.0
+        handleNode(nif, name, group, sceneNode, node, scene, flags, 0, 0); // flags is 0 by default
+    else
+        createObjects(nif, name, group, sceneNode, node, scene, flags, 0, 0);
 }
 
 void NifOgre::NIFObjectLoader::loadKf (Ogre::Skeleton *skel, const std::string &name,

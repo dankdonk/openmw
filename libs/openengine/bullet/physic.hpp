@@ -213,7 +213,12 @@ namespace Physic
         RigidBody* createAndAdjustRigidBody(const std::string &mesh, Ogre::SceneNode *node,
             float scale, const Ogre::Vector3 &position, const Ogre::Quaternion &rotation,
             Ogre::Vector3* scaledBoxTranslation = 0, Ogre::Quaternion* boxRotation = 0, bool raycasting=false, bool placeable=false);
-        RigidBody *createRagdoll(BulletShapePtr shape, Ogre::SceneNode *node, float scale);
+        RigidBody* createAndAdjustRagdollBody(const std::string &mesh, Ogre::SceneNode *node,
+            const std::unordered_multimap<int, Ogre::Entity*>& ragdollEntitiesMap,
+            float scale, const Ogre::Vector3 &position, const Ogre::Quaternion &rotation,
+            Ogre::Vector3* scaledBoxTranslation = 0, Ogre::Quaternion* boxRotation = 0, bool raycasting=false, bool placeable=false);
+        RigidBody *createRagdoll(const std::string& name, BulletShapePtr shape, Ogre::SceneNode *node,
+            const std::unordered_multimap<int, Ogre::Entity*>& ragdollEntitiesMap, float scale);
 
         /**
          * Adjusts a rigid body to the right position and rotation
