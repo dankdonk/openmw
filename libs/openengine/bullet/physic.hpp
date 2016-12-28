@@ -17,6 +17,7 @@ class btSequentialImpulseConstraintSolver;
 class btCollisionDispatcher;
 class btDiscreteDynamicsWorld;
 class btHeightfieldTerrainShape;
+class btTypedConstraint;
 
 namespace BtOgre
 {
@@ -140,7 +141,7 @@ namespace Physic
         void setWalkingOnWater(bool walkingOnWater);
         bool isWalkingOnWater() const;
 
-        //FIXME: temporary compile testing
+        //FIXME: temporary compile testing ForeignActor
     //private:
         /// Removes then re-adds the collision body to the dynamics world
         void updateCollisionMask();
@@ -210,14 +211,14 @@ namespace Physic
          * Creates a RigidBody.  It does not add it to the simulation.
          * After created, the body is set to the correct rotation, position, and scale
          */
-        RigidBody* createAndAdjustRigidBody(const std::string &mesh, Ogre::SceneNode *node,
+        RigidBody* createAndAdjustRigidBody(const std::string &mesh, const std::string &name,
             float scale, const Ogre::Vector3 &position, const Ogre::Quaternion &rotation,
             Ogre::Vector3* scaledBoxTranslation = 0, Ogre::Quaternion* boxRotation = 0, bool raycasting=false, bool placeable=false);
         RigidBody* createAndAdjustRagdollBody(const std::string &mesh, Ogre::SceneNode *node,
             const std::unordered_multimap<int, Ogre::Entity*>& ragdollEntitiesMap,
             float scale, const Ogre::Vector3 &position, const Ogre::Quaternion &rotation,
             Ogre::Vector3* scaledBoxTranslation = 0, Ogre::Quaternion* boxRotation = 0, bool raycasting=false, bool placeable=false);
-        RigidBody *createRagdoll(const std::string& name, BulletShapePtr shape, Ogre::SceneNode *node,
+        RigidBody *createRagdoll(BulletShapePtr shape, Ogre::SceneNode *node,
             const std::unordered_multimap<int, Ogre::Entity*>& ragdollEntitiesMap, float scale);
 
         /**
@@ -348,6 +349,9 @@ namespace Physic
 
         typedef std::map<std::string, PhysicActor*>  PhysicActorContainer;
         PhysicActorContainer mActorMap;
+
+        // a RigidBody may have more than one constraint
+        std::unordered_multimap<RigidBody*, btTypedConstraint*> mRagdollConstraintMap;
 
         Ogre::SceneManager* mSceneMgr;
 

@@ -122,12 +122,15 @@ void extractControlledNodes(Nif::NIFFilePtr kfFile, std::set<std::string>& contr
 //
 // TES5 0x1: animated, 0x2: havok
 // TES4 0x1: havok, 0x2: collision, 0x4: skeleton, 0x8: animated
+//
+// FIXME: this test fails with meshes\clutter\minotaurhead01.nif (same flags but it is not a
+// ragdoll)
 bool isRagdoll(const Nif::Node *node, unsigned int bsxFlags)
 {
     if (node->nifVer >= 0x14020007) // TES5
-        return (bsxFlags & 0x2) != 0 && (bsxFlags & 0x1) != 0;
+        return (bsxFlags & 0x2) != 0 && (bsxFlags & 0x1) != 0 && node->controller.empty();
     else                            // TES4
-        return (bsxFlags & 0x8) != 0 && (bsxFlags & 0x1) != 0;
+        return (bsxFlags & 0x8) != 0 && (bsxFlags & 0x1) != 0 && node->controller.empty();
 }
 
 // NOTE: calls new, delete is done elsewhere
@@ -672,6 +675,7 @@ void ManualBulletShapeLoader::loadResource(Ogre::Resource *resource)
     }
 
     if (r->nifVer >= 0x0a000100) // TES4 style, i.e. from 10.0.1.0
+        //std::cout << node->name << std::endl;
         return; // FIXME: skip second pass for now
 
     //second pass which create a shape for raycasting.
@@ -872,6 +876,9 @@ void ManualBulletShapeLoader::handleBhkCollisionObject(const Nif::Node *node, un
 {
     if (!node || !collObj)
         return;
+    //if (node->name == "HeavyTargetStructure01")
+    if (node->name == "TargetchainLeft01")
+        std::cout << "break" << std::endl;
 
     const Nif::bhkCollisionObject *bhkCollObj = static_cast<const Nif::bhkCollisionObject*>(collObj);
     const Nif::bhkRigidBody *rigidBody = static_cast<const Nif::bhkRigidBody*>(bhkCollObj->body.getPtr());
@@ -890,7 +897,7 @@ void ManualBulletShapeLoader::handleBhkCollisionObject(const Nif::Node *node, un
 
     if (isRagdoll(node, bsxFlags))
     {
-        //std::cout << "bhkCollisionObject: animated " << node->name << std::endl;
+        std::cout << "bhkCollisionObject: ragdoll " << node->name << std::endl;
 
         // the way the current code is structured, OEngine::Physic::BulletShapeManager
         // expects to see a OEngine::Physic::BulletShape, which provides a challenge to
@@ -959,12 +966,8 @@ void ManualBulletShapeLoader::handleBhkCollisionObject(const Nif::Node *node, un
         // unsigned char solverDeactivation; // http://niftools.sourceforge.net/doc/nif/SolverDeactivation.html
         // unsigned char motionQuality;      // http://niftools.sourceforge.net/doc/nif/MotionQuality.html
 
-        // FIXME: debugging only
-        std::string shapeName = mShape->mCollisionShape->getName();
-
         // cleanup for the next node's call to handleBhkShape()
-        //delete mShape->mCollisionShape; // FIXME: not sure who owns this and who will clean
-        //it up? Possibly the destructor in Physic
+        // NOTE: ragdoll shapes are deleted in the dtor of the BulletShape object
         mShape->mCollisionShape = nullptr;
         mShape->mCollide = false;
 
@@ -978,39 +981,24 @@ void ManualBulletShapeLoader::handleBhkCollisionObject(const Nif::Node *node, un
         // at least for the known ragdoll objects, the contraints refer only to known entities
         for (unsigned int i = 0; i < rigidBody->constraints.size(); ++i)
         {
+#if 0
             for (unsigned int j = 0; j < rigidBody->constraints[i]->entities.size(); ++j)
             {
                 std::cout << shapeName << std::endl;
 
                 std::cout << "node " << node->name << ", rigidBody " << rigidBody->recIndex
                     << ", entities " << rigidBody->constraints[i]->entities[j]->recIndex << std::endl;
-
             }
-            //mShape->mJoints[rigidBody->recIndex].push_back(createConstraint(node, rigidBody->constraints[i]));
-
+#endif
+            // FIXME: the first entry seems to be always the current RigidBody, so probably
+            // don't need to store as a pair
+            //
+            // At least check if rigidBody->recIndex == rigidBody->constraints[i]->entities[0]->recIndex
             if (rigidBody->constraints[i]->recType == Nif::RC_bhkRagdollConstraint)
             {
-                //btTypedConstraint *btTypedConstraint*> > mJoints; // one or more joint per bhkRigidBody
                 mShape->mJoints[rigidBody->recIndex].push_back(
                         std::make_pair(rigidBody->constraints[i]->entities[0]->recIndex,
                                        rigidBody->constraints[i]->entities[1]->recIndex));
-                //btConeTwistConstraint(btRigidBody& rbA, const btTransform& rbAFrame)
-
-                //btConeTwistConstraint(btRigidBody& rbA, btRigidBody& rbB,
-                            //const btTransform& rbAFrame, const btTransform& rbBFrame)
-
-// void btConeTwistConstraint::setLimit(btScalar _swingSpan1,
-//                                      btScalar _swingSpan2,
-//                                      btScalar _twistSpan,
-//                                      btScalar _softness = 1.f,
-//                                      btScalar _biasFactor = 0.3f,
-//                                      btScalar _relaxationFactor = 1.0f)
-// Spline-Head Joint
-//coneC->setLimit(M_PI_4, M_PI_4, M_PI_2);
-// Hip-Thigh Joint
-//coneC->setLimit(M_PI_4, M_PI_4, 0);
-// Torso-Shoulder Joint
-//coneC->setLimit(M_PI_2, M_PI_2, 0);
 
                     Nif::RagdollDescriptor ragdollDesc;
                     const Nif::bhkRagdollConstraint *ragdoll
@@ -1032,11 +1020,6 @@ void ManualBulletShapeLoader::handleBhkCollisionObject(const Nif::Node *node, un
                 }
                 else
                     continue; // FIXME: support other types
-
-
-
-
-
         }
     }
 

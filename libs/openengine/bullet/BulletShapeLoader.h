@@ -14,8 +14,6 @@
 namespace OEngine {
 namespace Physic
 {
-class btTypedConstraint;
-
 /**
 *Define a new resource which describe a Shape usable by bullet.See BulletShapeManager for how to get/use them.
 */
@@ -49,10 +47,7 @@ public:
 
     // FIXME: bloating of BulletShape
     bool mIsRagdoll;
-    std::map<int, btCollisionShape*>  mShapes;               // key is recIndex of the bhkRigidBody
-    // FIXME: pair<int, int> is for testing only, first is the current obj recIndex and second
-    // is the other obj recIndex
-    std::map<int, btRigidBody*>  mBodies; // FIXME: this does not belong here
+    std::map<int, btCollisionShape*>  mShapes;                 // key is recIndex of the bhkRigidBody
     std::map<int, std::vector<std::pair<int, int> > > mJoints; // one or more joint per bhkRigidBody
     std::map<int, btRigidBody::btRigidBodyConstructionInfo> mRigidBodyCI;
     std::map<int, Nif::RagdollDescriptor> mNifRagdollDesc;

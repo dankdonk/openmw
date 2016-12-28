@@ -2,6 +2,7 @@
 
 #include <btBulletDynamicsCommon.h>
 #include <btBulletCollisionCommon.h>
+#include <BulletDynamics/ConstraintSolver/btTypedConstraint.h>
 #include <BulletCollision/CollisionShapes/btHeightfieldTerrainShape.h>
 
 #include <boost/lexical_cast.hpp>
@@ -20,7 +21,7 @@
 #include "foreignactor.hpp"
 
 #ifndef M_PI_2
-#define M_PI_2     btScalar(1.57079632679489661923)
+#define M_PI_2     btScalar(1.57079632679489661923) // FIXME: temp while testing ragdoll
 #endif
 
 namespace
@@ -514,6 +515,8 @@ namespace Physic
     //
     // For now simply "bloat" BulletShape to include ragdoll related information.
     //
+    // FIXME: maybe another compound shape needs to be created for raycasting?
+    // e.g. to identify and pickup meshes\Clutter\UpperClass\UpperScales01.NIF
     RigidBody* PhysicEngine::createAndAdjustRagdollBody(const std::string &mesh, Ogre::SceneNode *node,
         const std::unordered_multimap<int, Ogre::Entity*>& ragdollEntitiesMap,
         float scale, const Ogre::Vector3 &position, const Ogre::Quaternion &rotation,
@@ -521,7 +524,6 @@ namespace Physic
     {
         std::string sid = (boost::format("%07.3f") % scale).str();
         std::string outputstring = mesh + sid;
-        std::string name = node->getName();
 
         //get the shape from the .nif
         mShapeLoader->load(outputstring,"General");
@@ -533,16 +535,15 @@ namespace Physic
         // FIXME: maybe another compound shape needs to be created for raycasting?
         // e.g. to identify and pickup meshes\Clutter\UpperClass\UpperScales01.NIF
         //if (shape->mIsRagdoll) // FIXME: this is an ugly hack
-            return createRagdoll(name, shape, node, ragdollEntitiesMap, scale);
+            return createRagdoll(shape, node, ragdollEntitiesMap, scale);
     }
 
-    RigidBody* PhysicEngine::createAndAdjustRigidBody(const std::string &mesh, Ogre::SceneNode *node,
+    RigidBody* PhysicEngine::createAndAdjustRigidBody(const std::string &mesh, const std::string &name,
         float scale, const Ogre::Vector3 &position, const Ogre::Quaternion &rotation,
         Ogre::Vector3* scaledBoxTranslation, Ogre::Quaternion* boxRotation, bool raycasting, bool placeable)
     {
         std::string sid = (boost::format("%07.3f") % scale).str();
         std::string outputstring = mesh + sid;
-        std::string name = node->getName();
 
         //get the shape from the .nif
         mShapeLoader->load(outputstring,"General");
@@ -550,11 +551,6 @@ namespace Physic
         BulletShapePtr shape = BulletShapeManager::getSingleton().getByName(outputstring,"General");
 
         // TODO: add option somewhere to enable collision for placeable meshes
-
-        // FIXME: maybe another compound shape needs to be created for raycasting?
-        // e.g. to identify and pickup meshes\Clutter\UpperClass\UpperScales01.NIF
-        //if (shape->mIsRagdoll) // FIXME: this is an ugly hack
-            //return createRagdoll(shape, node, scale);
 
         if (placeable && !raycasting && shape->mCollisionShape)
             return NULL;
@@ -622,7 +618,6 @@ namespace Physic
 
     // FIXME: need to think about creation and destruction of various objects so that memory
     // leaks do not occur - maybe we need a mRagdollObjectMap
-    // FIXME: how to get a SceneNode for each RigidBody?
     //
     // FIXME: need to scale correctly for Bullet to work properly (e.g. not move as if in slow
     // motion).  Since Bullet considers 1 unit to be 1 meter, TES game units need to be divided
@@ -667,212 +662,169 @@ namespace Physic
     //  . btConeTwistConstraint can be mapped to bhkRagdollConstraint, but it is unclear how
     //    planeA can be mapped to one of the swingSpans (or how to use planeB/twistB/maxFriction)
     //
-    RigidBody *PhysicEngine::createRagdoll(const std::string& name, BulletShapePtr shape, Ogre::SceneNode *node,
+    RigidBody *PhysicEngine::createRagdoll(BulletShapePtr shape, Ogre::SceneNode *node,
             const std::unordered_multimap<int, Ogre::Entity*>& ragdollEntitiesMap, float scale)
     {
-#if 0
-        std::map<int, std::vector<btTypedConstraint*> >::iterator it(mJoints.begin());
-        for (; it != mJoints.end(); ++it)
-        {
-            for (unsigned int i = 0; i < it->second.size(); ++i)
-                delete it->second[i];
-        }
-#endif
-        //Ogre::Vector3 nodeV = node->getPosition();
-        //Ogre::Quaternion nodeQ = node->getOrientation();
+        bool isDynamic = false;
+        std::map<int, btRigidBody*>  rigidBodies; // keep track of bodies for setting up constraints
 
+        // for each of the collision shapes in the ragdoll object
         std::map<int, btCollisionShape*>::iterator it(shape->mShapes.begin());
         for (; it != shape->mShapes.end(); ++it)
         {
-            std::map<int, btRigidBody::btRigidBodyConstructionInfo>::iterator itCI(shape->mRigidBodyCI.find(it->first));
+            // find the corresponding btRigidBodyConstructionInfo
+            // ----------------------------------------------------------------
+            const int recIndex = it->first; // bhkRegidBody's recIndex
+            typedef std::map<int, btRigidBody::btRigidBodyConstructionInfo>::iterator ConstructionInfoIter;
+            ConstructionInfoIter itCI(shape->mRigidBodyCI.find(recIndex));
             if (itCI == shape->mRigidBodyCI.end())
                 continue;
 
-            // m_startWorldTransform includes the world transfrom of NiNode (i.e. incl. its
-            // parents up to the root node), any from bhkRigidBodyT and any local transform of the shape.
+            // create a child SceneNode so that each shape can be moved in relation to the base
+            // ----------------------------------------------------------------
+            // NOTE: m_startWorldTransform includes the world transfrom of NiNode (i.e. incl. its
+            // parents up to the root node), any transform from bhkRigidBodyT and any local
+            // transform of the shape.
             //
-            // Rather than following the parent/child structure of the NIF file, each of these
+            // NOTE: Rather than following the parent/child structure of the NIF file, each of these
             // shapes are all relative from the root.  i.e. they all share the same parent
-            // scene node
+            // SceneNode (this is also how Bullet's btRigidBodyState works, I think)
             btVector3 v = itCI->second.m_startWorldTransform.getOrigin();
             btQuaternion q = itCI->second.m_startWorldTransform.getRotation();
-            //std::cout << "shape " << it->second->getName() << ", x " << v.x() << ", y " << v.y() << ", z " << v.z() << std::endl;
 
             Ogre::SceneNode *childNode = node->createChildSceneNode(Ogre::Vector3(v.x(), v.y(), v.z()),
                     Ogre::Quaternion(q.w(), q.x(), q.y(), q.z()));
-            const int recIndex = it->first; // bhkRegidBody recIndex
 
-
-            //std::map<int, Ogre::Entity*>::const_iterator itEnt = ragdollEntitiesMap.find(recIndex);
-            //if (itEnt == ragdollEntitiesMap.end())
-                //continue; // FIXME should log an error here
-
-
-
-            std::pair<std::unordered_multimap<int, Ogre::Entity*>::const_iterator,
-                std::unordered_multimap<int, Ogre::Entity*>::const_iterator> range = ragdollEntitiesMap.equal_range(recIndex);
-            for (std::unordered_multimap<int, Ogre::Entity*>::const_iterator itR = range.first; itR != range.second; ++itR)
-
-
-                        {
-                            Ogre::MovableObject *ent = static_cast<Ogre::MovableObject*>(itR->second/*itEnt->second*/);
-                            node->detachObject(ent);
-                            childNode->attachObject(ent);
-                        }
-
-
-
-
-
-#if 0
-            // FIXME: inefficient looping each time
-            Ogre::SceneNode::ObjectIterator itObj = node->getAttachedObjectIterator();
-            //Ogre::SceneManager::MovableObjectIterator itObj = node->getCreator()->getMovableObjectIterator("Entity");
-            while (itObj.hasMoreElements())
+            // move each Ogre::Entity associated with a bhkRigidBody to the child SceneNode
+            // which will be controlled by Bullet via RigidBodyState
+            // ----------------------------------------------------------------
+            isDynamic = (itCI->second.m_mass != 0.f);
+            if (isDynamic) // do only for moving bkhRigidBody
             {
-                Ogre::Mesh *mesh = static_cast<Ogre::Entity*>(itObj.current()->second)->getMesh().getPointer();
-                if (dynamic_cast<Ogre::Entity*>(itObj.current()->second)->getMesh()->getName().find("@index="+Ogre::StringConverter::toString(it->first)) != std::string::npos)
+                typedef std::unordered_multimap<int, Ogre::Entity*>::const_iterator BodyIndexMapIter;
+                std::pair<BodyIndexMapIter, BodyIndexMapIter> range = ragdollEntitiesMap.equal_range(recIndex);
+                for (BodyIndexMapIter itBody = range.first; itBody != range.second; ++itBody)
                 {
-                    Ogre::MovableObject* obj = node->detachObject(itObj.current()->first);
-                    childNode->attachObject(obj);
-                    std::cout << "found " << itObj.current()->first << std::endl;
-                    break;
-                }
-                else {
-                    //std::cout << mesh->getName() << std::endl;
-                    itObj.getNext();
+                    Ogre::MovableObject *ent = static_cast<Ogre::MovableObject*>(itBody->second);
+                    ent->getParentSceneNode()->detachObject(ent);
+                    childNode->attachObject(ent);
                 }
             }
-#endif
 
-            // below are not needed if the child scene nodes are created with the position &
-            // rotation
-            //Ogre::SceneNode *childNode = node->createChildSceneNode();
-            //childNode->translate(Ogre::Vector3(v.x(), v.y(), v.z()), Ogre::SceneNode::TS_PARENT);
-            //childNode->rotate(Ogre::Quaternion(q.w(), q.x(), q.y(), q.z()), Ogre::SceneNode::TS_PARENT);
-            // alternative experiment
-            //childNode->setPosition(Ogre::Vector3(v.x(), v.y(), v.z()));
-            //childNode->setOrientation(Ogre::Quaternion(q.w(), q.x(), q.y(), q.z()));
-
+            // create a controller for the child SceneNode (i.e. RigidBodyState)
+            // ----------------------------------------------------------------
             Ogre::Vector3 cv = childNode->_getDerivedPosition();
-            //std::cout << "derived shape " << /*it->second->getName()*/childNode->getName() << ", x " << cv.x << ", y " << cv.y << ", z " << cv.z << std::endl;
             Ogre::Quaternion cq = childNode->_getDerivedOrientation();
             btTransform trans(btQuaternion(cq.x, cq.y, cq.z, cq.w), btVector3(cv.x, cv.y, cv.z));
 
-            //BtOgre::RigidBodyState *state = new BtOgre::RigidBodyState(childNode, itCI->second.m_startWorldTransform);
-            // FIXME: the starting transforms seem to require the derived positions?
             BtOgre::RigidBodyState *state = new BtOgre::RigidBodyState(childNode, trans);
             itCI->second.m_motionState = state; // NOTE: dtor of RigidBody deletes RigidBodyState
 
-
-            bool isDynamic = (itCI->second.m_mass != 0.f);
-            //isDynamic = false;
+            // setup the rest of the construction info
+            // ----------------------------------------------------------------
+            // TargetHeavy01.NIF in AFightingChanceBasement needs reduced scale from the node
+            Ogre::Vector3 ps = node->getScale(); // FIXME: experiment
+            itCI->second.m_collisionShape->setLocalScaling(btVector3(ps.x, ps.y, ps.z));
 
             // FIXME: use the inertia matrix in bhkRigidBody instead?
             itCI->second.m_localInertia.setZero();
             if (isDynamic)
-                itCI->second.m_collisionShape->calculateLocalInertia(itCI->second.m_mass, itCI->second.m_localInertia);
-#if 0
-            std::cout << "inertia x " << itCI->second.m_localInertia.x()
-                << " y " << itCI->second.m_localInertia.y()
-                << " z " << itCI->second.m_localInertia.z() << std::endl;
-            btCapsuleShape* cs = dynamic_cast<btCapsuleShape*>(itCI->second.m_collisionShape);
-            if (cs)
-            {
-                std::cout << "half height " << cs->getHalfHeight() << std::endl;
-                std::cout << "up axis " << cs->getUpAxis() << std::endl;
-                std::cout << "radius " << cs->getRadius() << std::endl;
-            }
-#endif
+                itCI->second.m_collisionShape->calculateLocalInertia(itCI->second.m_mass,
+                                                                     itCI->second.m_localInertia);
 
-
+            // finally create the rigid body
+            // ----------------------------------------------------------------
             RigidBody * body = new RigidBody(itCI->second, it->second->getName());
 
             // FIXME: use the damping values in bhkRigidBody instead?  (how do they relate to
-            // Bullet, anyway?)
+            // Bullet's values, anyway?)
             body->setDamping(btScalar(0.05), btScalar(0.85));
             body->setDeactivationTime(btScalar(0.8));
             body->setSleepingThresholds(btScalar(1.6), btScalar(2.5));
             body->setActivationState(DISABLE_DEACTIVATION);
 
+            // NOTE: NIF files (fortunately) refer to bhkRigidBody's already specified
+            // a pointer to this RigdBody may be needed later for setting up constraints
+            rigidBodies[recIndex] = body;
 
-            //body->setGravity(btVector3(0, 0, -10));
-            //btVector3 gravity = body->getGravity();
-            //std::cout << "gravity " << it->second->getName() << ", x " << gravity.x() << ", y " << gravity.y() << ", z " << gravity.z() << std::endl;
-            //body->applyGravity();
-            shape->mBodies[it->first] = body;
-            //std::cout << "shape " << it->second->getName() << " mass " << body->:w
+            // check if the child SceneNode already has a RigidBody (shouldn't happen)
+            std::string name = childNode->getName();
+            if (mCollisionObjectMap.find(name) != mCollisionObjectMap.end())
+                std::cout << "break" << std::endl; // FIXME needs better error handlin
 
-            assert (mCollisionObjectMap.find(name) == mCollisionObjectMap.end());
-            mCollisionObjectMap[name] = body;
-            mDynamicsWorld->addRigidBody(body, CollisionType_World, CollisionType_HeightMap|CollisionType_Actor|CollisionType_Projectile);
-            // FIXME: we have a memory leak here!!!
+            // Each of the RigidBody's pointers are kept in mCollisionObjectMap
+            //
+            // MWWorld::Scene::unloadCell
+            //   PhysicsSystem::removeObject      (for ptr.getRefData().getBaseNode() and its children)
+            //     OEngine::Physic::PhysicEngine::removeCharacter
+            //     OEngine::Physic::PhysicEngine::removeRigidBody
+            //       mDynamicsWorld->removeRigidBody
+            //     OEngine::Physic::PhysicEngine::deleteRigidBody
+            //       mAnimatedShapes.erase(body);
+            //       delete body;                <======== RigidBody and RigidBodyState are ok,
+            //                                             delete the constraints here as well
+            //                                           (shapes are deleted in BulletShape dtor)
+            //
+            mCollisionObjectMap[name] = body; // keep a pointer for deleting RigidBody later
 
-            if (shape->mJoints[it->first].empty())
-                continue;
+            mDynamicsWorld->addRigidBody(body,
+                    CollisionType_World, CollisionType_HeightMap|CollisionType_Actor|CollisionType_Projectile);
+
+            // create the constraints
+            // ----------------------------------------------------------------
+            std::map<int, std::vector<std::pair<int, int> > >::const_iterator itJoint = shape->mJoints.find(recIndex);
+            if (itJoint == shape->mJoints.end() || itJoint->second.empty())
+                continue; // FIXME: probably should log an error
 
             btTransform localA, localB;
             Ogre::Vector4 pivot;
+            std::map<int, Nif::RagdollDescriptor>::const_iterator itJointDesc = shape->mNifRagdollDesc.find(recIndex);
+            if (itJointDesc == shape->mNifRagdollDesc.end())
+                continue; // FIXME: probably should log an error
 
             localA.setIdentity();
-            pivot = shape->mNifRagdollDesc[it->first].pivotA;
-            localA.setOrigin(/*scale**/7*btVector3(btScalar(pivot.x), btScalar(pivot.y), btScalar(pivot.z)));
+            pivot = itJointDesc->second.pivotA*7;
+            localA.setOrigin(/*scale**/btVector3(btScalar(pivot.x), btScalar(pivot.y), btScalar(pivot.z)));
             // http://stackoverflow.com/questions/28485134/what-is-the-purpose-of-seteulerzyx-in-bullet-physics
             // Don't really understand why this is needed, especilly why the Y axis?
             localA.getBasis().setEulerZYX(0, M_PI_2, 0); // rotate Y axis 90 deg
-            //std::cout << "A pivot " << /*it->second->getName()*/childNode->getName() << ", x " << pivot.x << ", y " << pivot.y << ", z " << pivot.z << std::endl;
 
-            int secondBody = shape->mJoints[it->first].back().second;
+            int secondBody = -1;
+            for (unsigned int i = 0; i < itJoint->second.size(); ++i)
+            {
+                // FIXME: assumed the first one of the pair is always the current RigidBody
+                // should at least check itJoint->second.at(i).first == recIndex
+                secondBody = itJoint->second.at(i).second;
 
-            std::map<int, btRigidBody::btRigidBodyConstructionInfo>::iterator itCI2(shape->mRigidBodyCI.find(secondBody));
-            if (itCI2 == shape->mRigidBodyCI.end())
-                continue; // FIXME: probably should log an error
+                localB.setIdentity();
+                pivot = itJointDesc->second.pivotB*7;
+                localB.setOrigin(/*scale**/btVector3(btScalar(pivot.x), btScalar(pivot.y), btScalar(pivot.z)));
+                localB.getBasis().setEulerZYX(0, M_PI_2, 0);
 
-            localB.setIdentity();
-            pivot = shape->mNifRagdollDesc[it->first].pivotB;
-            localB.setOrigin(/*scale**/7*btVector3(btScalar(pivot.x), btScalar(pivot.y), btScalar(pivot.z)));
-            localB.getBasis().setEulerZYX(0, M_PI_2, 0);
-            //std::cout << "B pivot " << /*it->second->getName()*/childNode->getName() << ", x " << pivot.x << ", y " << pivot.y << ", z " << pivot.z << std::endl;
+                btConeTwistConstraint *cons
+                    = new btConeTwistConstraint(*body, *rigidBodies[secondBody], localA, localB);
+                mRagdollConstraintMap.insert(std::make_pair(body, cons));
 
-            btConeTwistConstraint *cons
-                = new btConeTwistConstraint(*body, *shape->mBodies[secondBody], localA, localB);
+                // FIXME: hack (don't know how to apply the plane concept to btConeTwistConstraint)
+                if (itJointDesc->second.planeA.x == 0)
+                    cons->setLimit(itJointDesc->second.coneMaxAngle*2,
+                                   itJointDesc->second.planeMaxAngle*2,
+                                   itJointDesc->second.twistMaxAngle*2);
+                else
+                    cons->setLimit(itJointDesc->second.planeMaxAngle*2,
+                                   itJointDesc->second.coneMaxAngle*2,
+                                   itJointDesc->second.twistMaxAngle*2);
 
-            // FIXME: hack
-            if (shape->mNifRagdollDesc[it->first].planeA.x == 0)
-                cons->setLimit(shape->mNifRagdollDesc[it->first].coneMaxAngle*2,
-                           shape->mNifRagdollDesc[it->first].planeMaxAngle*2,
-                           shape->mNifRagdollDesc[it->first].twistMaxAngle*2);
-            else
-                cons->setLimit(shape->mNifRagdollDesc[it->first].planeMaxAngle*2,
-                           shape->mNifRagdollDesc[it->first].coneMaxAngle*2,
-                           shape->mNifRagdollDesc[it->first].twistMaxAngle*2);
-            //std::cout << "cone angle " << shape->mNifRagdollDesc[it->first].coneMaxAngle*2 << std::endl;
-            //m_joints[bhkRagdollConstraint49] = coneC;
+                // FIXME: need to tune these values
+                cons->setParam(BT_CONSTRAINT_STOP_ERP,0.8f,0);
+                cons->setParam(BT_CONSTRAINT_STOP_ERP,0.8f,1);
+                cons->setParam(BT_CONSTRAINT_STOP_ERP,0.8f,2);
+                cons->setParam(BT_CONSTRAINT_STOP_CFM,0.f,0);
+                cons->setParam(BT_CONSTRAINT_STOP_CFM,0.f,1);
+                cons->setParam(BT_CONSTRAINT_STOP_CFM,0.f,2);
 
-#if 0
-            btGeneric6DofConstraint *cons = new btGeneric6DofConstraint(*body, *shape->mBodies[secondBody],
-                                         itCI->second.m_startWorldTransform,
-                                         itCI2->second.m_startWorldTransform,
-                                         true /*useLinearReferenceFrameA*/);
-
-            //void setLinearLowerLimit(const btVector3& linearLower)
-            //void setLinearUpperLimit(const btVector3& linearUpper)
-            //void setAngularLowerLimit(const btVector3& angularLower)
-            //void setAngularUpperLimit(const btVector3& angularUpper)
-
-#endif
-#if 0
-            btPoint2PointConstraint *cons = new btPoint2PointConstraint(*body, *shape->mBodies[secondBody], body->getCenterOfMassPosition(), shape->mBodies[secondBody]->getCenterOfMassPosition());
-#endif
-            cons->setParam(BT_CONSTRAINT_STOP_ERP,0.8f,0);
-            cons->setParam(BT_CONSTRAINT_STOP_ERP,0.8f,1);
-            cons->setParam(BT_CONSTRAINT_STOP_ERP,0.8f,2);
-            cons->setParam(BT_CONSTRAINT_STOP_CFM,0.5f,0);
-            cons->setParam(BT_CONSTRAINT_STOP_CFM,0.5f,1);
-            cons->setParam(BT_CONSTRAINT_STOP_CFM,0.5f,2);
-
-
-            mDynamicsWorld->addConstraint(cons, /*disable collision between linked bodies*/true);
+                mDynamicsWorld->addConstraint(cons, /*disable collision between linked bodies*/true);
+            }
         }
 
         return nullptr;
@@ -886,6 +838,13 @@ namespace Physic
             RigidBody* body = it->second;
             if(body != NULL)
             {
+                // remove all constraints associated with the RigidBody
+                typedef std::unordered_multimap<RigidBody*, btTypedConstraint*>::const_iterator ConstraintMapIter;
+                std::pair<ConstraintMapIter, ConstraintMapIter> range = mRagdollConstraintMap.equal_range(body);
+                for (ConstraintMapIter itConst = range.first; itConst != range.second; ++itConst)
+                    mDynamicsWorld->removeConstraint(itConst->second);
+
+                // remove the RigidBody
                 mDynamicsWorld->removeRigidBody(body);
             }
         }
@@ -913,7 +872,18 @@ namespace Physic
                     deleteShape(mAnimatedShapes[body].mCompound);
                 mAnimatedShapes.erase(body);
 
+                // delete the constraints first
+                typedef std::unordered_multimap<RigidBody*, btTypedConstraint*>::const_iterator ConstraintMapIter;
+                std::pair<ConstraintMapIter, ConstraintMapIter> range = mRagdollConstraintMap.equal_range(body);
+                for (ConstraintMapIter itConst = range.first; itConst != range.second; ++itConst)
+                {
+                    delete itConst->second;
+                    mRagdollConstraintMap.erase(body);
+                }
+
                 delete body;
+
+                // NOTE: OEngine::Physic::BulletShape::~BulletShape deletes the ragdoll shapes
             }
             mCollisionObjectMap.erase(it);
         }
@@ -932,12 +902,6 @@ namespace Physic
             }
             mRaycastingObjectMap.erase(it);
         }
-        // FIXME
-        //
-        //it = mRagdollObjectMap.find(name);
-        //if (it != mRagdollObjectMap.end() )
-        //{
-        //}
     }
 
     RigidBody* PhysicEngine::getRigidBody(const std::string &name, bool raycasting)

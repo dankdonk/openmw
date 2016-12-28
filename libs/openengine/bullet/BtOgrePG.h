@@ -40,7 +40,7 @@ class RigidBodyState : public btMotionState
               mSceneNode(node)
         {
         }
-#if 0
+
         RigidBodyState(Ogre::SceneNode *node)
             : mTransform(((node != NULL) ? BtOgre::Convert::toBullet(node->getOrientation()) : btQuaternion(0,0,0,1)),
                          ((node != NULL) ? BtOgre::Convert::toBullet(node->getPosition())    : btVector3(0,0,0))),
@@ -48,7 +48,7 @@ class RigidBodyState : public btMotionState
               mSceneNode(node)
         {
         }
-#endif
+
         // called by btRigidBody::setupRigidBody during construction to set its m_worldTransform,
         // ignoring btRigidBodyConstructionInfo::m_startWorldTransform
         //
@@ -57,12 +57,6 @@ class RigidBodyState : public btMotionState
         {
             // return the previously transform saved from setWorldTransform
             ret = mCenterOfMassOffset.inverse() * mTransform;
-#if 0
-            Ogre::Vector3 v = mSceneNode->_getDerivedPosition();
-            Ogre::Quaternion q = mSceneNode->_getDerivedOrientation();
-            ret.setOrigin(btVector3(v.x, v.y, v.z));
-            ret.setRotation(btQuaternion(q.x, q.y, q.z, q.w));
-#endif
         }
 
         // called by btDiscreteDynamicsWorld::synchronizeSingleMotionState
@@ -73,29 +67,21 @@ class RigidBodyState : public btMotionState
 
             mTransform = in;
             btTransform transform = in * mCenterOfMassOffset;
-//#if 0
+
+            // find the parent SceneNode's transform
             Ogre::SceneNode *parent = mSceneNode->getParentSceneNode();
             Ogre::Vector3 pv = parent->getPosition();
             Ogre::Quaternion pq = parent->getOrientation();
             btTransform parentTrans(btQuaternion(pq.x, pq.y, pq.z, pq.w), btVector3(pv.x, pv.y, pv.z));
 
+            // take away parent's transform from the input
             transform = parentTrans.inverse() * transform;
-//#endif
+
+            // apply the input to the SceneNode
             btQuaternion rot = transform.getRotation();
             btVector3 pos = transform.getOrigin();
-            //std::cout << "in " << mSceneNode->getName() << ", x " << pos.x() << ", y " << pos.y() << ", z " << pos.z() << std::endl;
             mSceneNode->setOrientation(rot.w(), rot.x(), rot.y(), rot.z());
             mSceneNode->setPosition(pos.x(), pos.y(), pos.z());
-            //Ogre::Vector3 cv = mSceneNode->_getDerivedPosition();
-            //std::cout << "derived " << mSceneNode->getName() << ", x " << cv.x << ", y " << cv.y << ", z " << cv.z << std::endl;
-
-            //mSceneNode->rotate(Ogre::Quaternion(rot.w(), rot.x(), rot.y(), rot.z()), Ogre::SceneNode::TS_LOCAL);
-            //mSceneNode->translate(Ogre::Vector3(pos.x(), pos.y(), pos.z()), Ogre::SceneNode::TS_LOCAL);
-            //std::cout << "in " << mSceneNode->getName() << ", x " << pos.x() << ", y " << pos.y() << ", z " << pos.z() << std::endl;
-            //Ogre::Vector3 v = mSceneNode->getPosition();
-            //std::cout << "x delta " << pos.x() - v.x << " y delta " << pos.y() - v.y << " z delta " << pos.z() - v.z << std::endl;
-            //Ogre::Vector3 cv = mSceneNode->_getDerivedPosition();
-            //std::cout << "derived " << mSceneNode->getName() << ", x " << cv.x << ", y " << cv.y << ", z " << cv.z << std::endl;
         }
 
         void setNode(Ogre::SceneNode *node)

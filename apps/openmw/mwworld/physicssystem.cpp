@@ -708,10 +708,10 @@ namespace MWWorld
 
         // collision object
         mEngine->createAndAdjustRigidBody(
-            mesh, node, ptr.getCellRef().getScale(), node->getPosition(), node->getOrientation(), 0, 0, false, placeable);
+            mesh, node->getName(), ptr.getCellRef().getScale(), node->getPosition(), node->getOrientation(), 0, 0, false, placeable);
         // raycast object FIXME why are these needed?
         mEngine->createAndAdjustRigidBody(
-            mesh, node, ptr.getCellRef().getScale(), node->getPosition(), node->getOrientation(), 0, 0, true, placeable);
+            mesh, node->getName(), ptr.getCellRef().getScale(), node->getPosition(), node->getOrientation(), 0, 0, true, placeable);
     }
 
     void PhysicsSystem::addActor (const Ptr& ptr, const std::string& mesh)
