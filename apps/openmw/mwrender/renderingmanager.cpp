@@ -879,8 +879,8 @@ void RenderingManager::windowResized(int x, int y)
 
 void RenderingManager::getTriangleBatchCount(unsigned int &triangles, unsigned int &batches)
 {
-    batches = mRendering.getWindow()->getBatchCount();
-    triangles = mRendering.getWindow()->getTriangleCount();
+    batches = (unsigned int)mRendering.getWindow()->getBatchCount();
+    triangles = (unsigned int)mRendering.getWindow()->getTriangleCount();
 }
 
 void RenderingManager::setupPlayer(const MWWorld::Ptr &ptr)

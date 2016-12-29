@@ -56,13 +56,13 @@ void animateCollisionShapes (std::map<OEngine::Physic::RigidBody*, OEngine::Phys
 
         OEngine::Physic::AnimatedShapeInstance& instance = it->second;
 
-        std::map<int, int>& shapes = instance.mAnimatedShapes;
-        for (std::map<int, int>::iterator shapeIt = shapes.begin();
+        std::map<size_t, size_t>& shapes = instance.mAnimatedShapes;
+        for (std::map<size_t, size_t>::iterator shapeIt = shapes.begin();
              shapeIt != shapes.end(); ++shapeIt)
         {
 
             const std::string& mesh = animation->getObjectRootName();
-            int boneHandle = NifOgre::NIFSkeletonLoader::lookupOgreBoneHandle(mesh, shapeIt->first);
+            int boneHandle = NifOgre::NIFSkeletonLoader::lookupOgreBoneHandle(mesh, (int)shapeIt->first);
             if (boneHandle == -1)
                 continue;
 
@@ -77,10 +77,10 @@ void animateCollisionShapes (std::map<OEngine::Physic::RigidBody*, OEngine::Phys
             trans.setOrigin(BtOgre::Convert::toBullet(bone->_getDerivedPosition()) * compound->getLocalScaling());
             trans.setRotation(BtOgre::Convert::toBullet(bone->_getDerivedOrientation()));
 
-            compound->getChildShape(shapeIt->second)->setLocalScaling(
+            compound->getChildShape((int)shapeIt->second)->setLocalScaling(
                         compound->getLocalScaling() *
                         BtOgre::Convert::toBullet(bone->_getDerivedScale()));
-            compound->updateChildTransform(shapeIt->second, trans);
+            compound->updateChildTransform((int)shapeIt->second, trans);
         }
 
         // needed because we used btDynamicsWorld::setForceUpdateAllAabbs(false)

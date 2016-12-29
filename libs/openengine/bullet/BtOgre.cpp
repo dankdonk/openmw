@@ -1048,7 +1048,7 @@ namespace BtOgre {
     //------------------------------------------------------------------------------------------------
     void DynamicLines::fillHardwareBuffers()
     {
-        int size = mPoints.size();
+        size_t size = mPoints.size();
 
         prepareHardwareBuffers(size,0);
 

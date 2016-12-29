@@ -518,7 +518,7 @@ namespace Physic
     // FIXME: maybe another compound shape needs to be created for raycasting?
     // e.g. to identify and pickup meshes\Clutter\UpperClass\UpperScales01.NIF
     RigidBody* PhysicEngine::createAndAdjustRagdollBody(const std::string &mesh, Ogre::SceneNode *node,
-        const std::unordered_multimap<int, Ogre::Entity*>& ragdollEntitiesMap,
+        const std::unordered_multimap<size_t, Ogre::Entity*>& ragdollEntitiesMap,
         float scale, const Ogre::Vector3 &position, const Ogre::Quaternion &rotation,
         Ogre::Vector3* scaledBoxTranslation, Ogre::Quaternion* boxRotation, bool raycasting, bool placeable)
     {
@@ -663,19 +663,21 @@ namespace Physic
     //    planeA can be mapped to one of the swingSpans (or how to use planeB/twistB/maxFriction)
     //
     RigidBody *PhysicEngine::createRagdoll(BulletShapePtr shape, Ogre::SceneNode *node,
-            const std::unordered_multimap<int, Ogre::Entity*>& ragdollEntitiesMap, float scale)
+            const std::unordered_multimap<size_t, Ogre::Entity*>& ragdollEntitiesMap, float scale)
     {
+        //std::cout << "scene node " << node->getName() << std::endl;
+
         bool isDynamic = false;
-        std::map<int, btRigidBody*>  rigidBodies; // keep track of bodies for setting up constraints
+        std::map<size_t, btRigidBody*>  rigidBodies; // keep track of bodies for setting up constraints
 
         // for each of the collision shapes in the ragdoll object
-        std::map<int, btCollisionShape*>::iterator it(shape->mShapes.begin());
+        std::map<size_t, btCollisionShape*>::iterator it(shape->mShapes.begin());
         for (; it != shape->mShapes.end(); ++it)
         {
             // find the corresponding btRigidBodyConstructionInfo
             // ----------------------------------------------------------------
-            const int recIndex = it->first; // bhkRegidBody's recIndex
-            typedef std::map<int, btRigidBody::btRigidBodyConstructionInfo>::iterator ConstructionInfoIter;
+            size_t recIndex = it->first; // bhkRegidBody's recIndex
+            typedef std::map<size_t, btRigidBody::btRigidBodyConstructionInfo>::iterator ConstructionInfoIter;
             ConstructionInfoIter itCI(shape->mRigidBodyCI.find(recIndex));
             if (itCI == shape->mRigidBodyCI.end())
                 continue;
@@ -701,7 +703,7 @@ namespace Physic
             isDynamic = (itCI->second.m_mass != 0.f);
             if (isDynamic) // do only for moving bkhRigidBody
             {
-                typedef std::unordered_multimap<int, Ogre::Entity*>::const_iterator BodyIndexMapIter;
+                typedef std::unordered_multimap<size_t, Ogre::Entity*>::const_iterator BodyIndexMapIter;
                 std::pair<BodyIndexMapIter, BodyIndexMapIter> range = ragdollEntitiesMap.equal_range(recIndex);
                 for (BodyIndexMapIter itBody = range.first; itBody != range.second; ++itBody)
                 {
@@ -772,13 +774,15 @@ namespace Physic
 
             // create the constraints
             // ----------------------------------------------------------------
-            std::map<int, std::vector<std::pair<int, int> > >::const_iterator itJoint = shape->mJoints.find(recIndex);
+            std::map<size_t, std::vector<std::pair<size_t, size_t> > >::const_iterator itJoint
+                = shape->mJoints.find(recIndex);
             if (itJoint == shape->mJoints.end() || itJoint->second.empty())
                 continue; // FIXME: probably should log an error
 
             btTransform localA, localB;
             Ogre::Vector4 pivot;
-            std::map<int, Nif::RagdollDescriptor>::const_iterator itJointDesc = shape->mNifRagdollDesc.find(recIndex);
+            std::map<size_t, Nif::RagdollDescriptor>::const_iterator itJointDesc
+                = shape->mNifRagdollDesc.find(recIndex);
             if (itJointDesc == shape->mNifRagdollDesc.end())
                 continue; // FIXME: probably should log an error
 
@@ -789,7 +793,7 @@ namespace Physic
             // Don't really understand why this is needed, especilly why the Y axis?
             localA.getBasis().setEulerZYX(0, M_PI_2, 0); // rotate Y axis 90 deg
 
-            int secondBody = -1;
+            size_t secondBody = 0;
             for (unsigned int i = 0; i < itJoint->second.size(); ++i)
             {
                 // FIXME: assumed the first one of the pair is always the current RigidBody
@@ -1040,7 +1044,7 @@ namespace Physic
         int subStep = mDynamicsWorld->stepSimulation(static_cast<btScalar>(deltaT), 10, 1 / 60.0f);
         if (subStep == 0)
             mDynamicsWorld->applyGravity();
-            //std::cout << "no gravity" << std::endl;
+
         if(isDebugCreated)
         {
             mDebugDrawer->step();

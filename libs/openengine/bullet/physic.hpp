@@ -185,7 +185,7 @@ namespace Physic
         btCollisionShape* mCompound;
 
         // Maps node record index to child index in the compound shape
-        std::map<int, int> mAnimatedShapes;
+        std::map<size_t, size_t> mAnimatedShapes;
     };
 
     /**
@@ -215,11 +215,11 @@ namespace Physic
             float scale, const Ogre::Vector3 &position, const Ogre::Quaternion &rotation,
             Ogre::Vector3* scaledBoxTranslation = 0, Ogre::Quaternion* boxRotation = 0, bool raycasting=false, bool placeable=false);
         RigidBody* createAndAdjustRagdollBody(const std::string &mesh, Ogre::SceneNode *node,
-            const std::unordered_multimap<int, Ogre::Entity*>& ragdollEntitiesMap,
+            const std::unordered_multimap<size_t, Ogre::Entity*>& ragdollEntitiesMap,
             float scale, const Ogre::Vector3 &position, const Ogre::Quaternion &rotation,
             Ogre::Vector3* scaledBoxTranslation = 0, Ogre::Quaternion* boxRotation = 0, bool raycasting=false, bool placeable=false);
         RigidBody *createRagdoll(BulletShapePtr shape, Ogre::SceneNode *node,
-            const std::unordered_multimap<int, Ogre::Entity*>& ragdollEntitiesMap, float scale);
+            const std::unordered_multimap<size_t, Ogre::Entity*>& ragdollEntitiesMap, float scale);
 
         /**
          * Adjusts a rigid body to the right position and rotation

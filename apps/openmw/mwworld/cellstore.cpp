@@ -672,13 +672,13 @@ namespace MWWorld
         {
             // Reopen the ESM reader and seek to the right position.
             int index = mCell->mContextList.at(i).index;
-            mCell->restore (*esm[0][index], i); // FIXME
+            mCell->restore (*esm[0][index], (int)i); // FIXME: hardcoded 0 means TES3
 
             ESM::CellRef ref;
 
             // Get each reference in turn
             bool deleted = false;
-            while (mCell->getNextRef (*esm[0][index], ref, deleted)) // FIXME
+            while (mCell->getNextRef (*esm[0][index], ref, deleted)) // FIXME hardcoded 0 means TES3
             {
                 if (deleted)
                     continue;
@@ -717,7 +717,7 @@ namespace MWWorld
         {
             // Reopen the ESM reader and seek to the right position.
             int index = mCell->mContextList.at(i).index;
-            mCell->restore (*esm[0][index], i); // FIXME: 0 means TES3
+            mCell->restore (*esm[0][index], (int)i); // FIXME: hardcoded 0 means TES3
 
             ESM::CellRef ref;
             ref.mRefNum.mContentFile = ESM::RefNum::RefNum_NoContentFile;

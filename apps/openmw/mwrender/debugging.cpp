@@ -33,7 +33,7 @@ namespace MWRender
 static const std::string PATHGRID_POINT_MATERIAL = "pathgridPointMaterial";
 static const std::string PATHGRID_LINE_MATERIAL = "pathgridLineMaterial";
 static const std::string DEBUGGING_GROUP = "debugging";
-static const int POINT_MESH_BASE = 35;
+static const float POINT_MESH_BASE = 35.f;
 
 void Debugging::createGridMaterials()
 {
@@ -85,7 +85,7 @@ ManualObject *Debugging::createPathgridLines(const ESM::Pathgrid *pathgrid)
         Vector3 direction = (MWMechanics::PathFinder::MakeOgreVector3(p2) - MWMechanics::PathFinder::MakeOgreVector3(p1));
         Vector3 lineDisplacement = direction.crossProduct(Vector3::UNIT_Z).normalisedCopy();
         lineDisplacement = lineDisplacement * POINT_MESH_BASE +
-                                Vector3(0, 0, 10); // move lines up a little, so they will be less covered by meshes/landscape
+                                Vector3(0.f, 0.f, 10.f); // move lines up a little, so they will be less covered by meshes/landscape
         result->position(MWMechanics::PathFinder::MakeOgreVector3(p1) + lineDisplacement);
         result->position(MWMechanics::PathFinder::MakeOgreVector3(p2) + lineDisplacement);
     }

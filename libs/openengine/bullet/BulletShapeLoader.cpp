@@ -29,7 +29,7 @@ Ogre::Resource(creator, name, handle, group, isManual, loader)
 
 BulletShape::~BulletShape()
 {
-    std::map<int, btCollisionShape*>::iterator it2(mShapes.begin());
+    std::map<size_t, btCollisionShape*>::iterator it2(mShapes.begin());
     for (; it2 != mShapes.end(); ++it2)
         delete it2->second;
     deleteShape(mCollisionShape);

@@ -170,12 +170,13 @@ namespace
     }
 
     // FIXME: this is a duplicate copy of the same in bulletnifloader.cpp
+    // NOTE: the check for controller only works at the root node
     bool isRagdoll(const Nif::Node *node, unsigned int bsxFlags)
     {
         if (node->nifVer >= 0x14020007) // TES5
-            return (bsxFlags & 0x2) != 0 && (bsxFlags & 0x1) != 0;
+            return (bsxFlags & 0x2) != 0 && (bsxFlags & 0x1) != 0 && node->controller.empty();
         else                            // TES4
-            return (bsxFlags & 0x8) != 0 && (bsxFlags & 0x1) != 0;
+            return (bsxFlags & 0x8) != 0 && (bsxFlags & 0x1) != 0 && node->controller.empty();
     }
 }
 
@@ -1065,7 +1066,7 @@ void NifOgre::NIFObjectLoader::extractTextKeys (const Nif::NiTextKeyExtraData *t
 // FIXME: unused parameters
 void NifOgre::NIFObjectLoader::handleNode (const Nif::NIFFilePtr& nif, const std::string &name,
             const std::string &group, Ogre::SceneNode *sceneNode, const Nif::Node *node,
-            ObjectScenePtr scene, int bsxFlags, int animflags, int partflags, bool isRootCollisionNode)
+            ObjectScenePtr scene, int bsxFlags, int animflags, int partflags, bool isRagdollFlag)
 {
     // BSX flags are needed to detect for Ragdolls
     // FIXME: this boolean 'hasExtras' may change in the Nif class in future cleanups
@@ -1100,6 +1101,9 @@ void NifOgre::NIFObjectLoader::handleNode (const Nif::NIFFilePtr& nif, const std
             return;
 #endif
     }
+
+    if (!node->parent) // check only at the root node
+        isRagdollFlag = isRagdoll(node, bsxFlags);
 
     if (node->recType == Nif::RC_NiTriStrips || node->recType == Nif::RC_NiTriShape)
     {
@@ -1142,7 +1146,7 @@ void NifOgre::NIFObjectLoader::handleNode (const Nif::NIFFilePtr& nif, const std
     // Alternatively, it seems that a NiTriStrips node is a sibling of the collision object -
     // maybe this can be used.
     //
-    if (isRagdoll(node, bsxFlags))
+    if (isRagdollFlag)
     {
         // FIXME hack
         // find the recIndex of the matching bhkRigidBody
@@ -1151,7 +1155,7 @@ void NifOgre::NIFObjectLoader::handleNode (const Nif::NIFFilePtr& nif, const std
         {
             const Nif::bhkCollisionObject *bhkCollObj = static_cast<const Nif::bhkCollisionObject*>(collObj.getPtr());
             const Nif::bhkRigidBody *rigidBody = static_cast<const Nif::bhkRigidBody*>(bhkCollObj->body.getPtr());
-            int recIndex = rigidBody->recIndex;
+            size_t recIndex = rigidBody->recIndex;
             scene->mRagdollEntities.insert(std::make_pair(recIndex, entity));
         }
     }
@@ -1252,7 +1256,7 @@ void NifOgre::NIFObjectLoader::handleNode (const Nif::NIFFilePtr& nif, const std
         scene->mLights.push_back(sceneNode->getCreator()->createLight());
         Ogre::Light *light = scene->mLights.back();
         light->setType(Ogre::Light::LT_POINT);
-        light->setDiffuseColour(0.9, 0.8, 0.0);
+        light->setDiffuseColour(0.9f, 0.8f, 0.f);
         //http://www.ogre3d.org/tikiwiki/tiki-index.php?page=-Point%20Light%20Attenuation
         light->setSpecularColour(1.0, 1.0, 0.0);
         //light->setCastShadows(true);
@@ -1261,8 +1265,8 @@ void NifOgre::NIFObjectLoader::handleNode (const Nif::NIFFilePtr& nif, const std
 
         // copied from MWRender::Animation
         float threshold = 0.03f;
-        float linearAttenuation = /*linearValue*/3.0 / radius;
-        float quadraticAttenuation = /*quadraticValue*/16.0 / std::pow(radius, 2);
+        float linearAttenuation = /*linearValue*/3.0f / radius;
+        float quadraticAttenuation = /*quadraticValue*/16.0f / std::pow(radius, 2);
         float activationRange = std::max(activationRange, 1.0f / (threshold * linearAttenuation));
         //float activationRange = std::sqrt(1.0f / (threshold * quadraticAttenuation));
         light->setAttenuation(activationRange, 0.5, linearAttenuation, quadraticAttenuation);
@@ -1284,7 +1288,7 @@ void NifOgre::NIFObjectLoader::handleNode (const Nif::NIFFilePtr& nif, const std
         {
             if(!children[i].empty())
                 handleNode(nif, name, group, sceneNode, children[i].getPtr(),
-                              scene, bsxFlags, animflags, partflags, isRootCollisionNode);
+                              scene, bsxFlags, animflags, partflags, isRagdollFlag);
         }
     }
 }

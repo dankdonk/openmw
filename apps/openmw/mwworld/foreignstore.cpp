@@ -178,7 +178,7 @@ namespace MWWorld
     template<typename T>
     int ForeignStore<T>::getDynamicSize() const
     {
-        return mDynamic.size();
+        return (int) mDynamic.size(); // FIXME: consider making it return size_t
     }
     template<typename T>
     void ForeignStore<T>::listForeignIdentifier(std::vector<ESM4::FormId> &list) const

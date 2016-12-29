@@ -123,8 +123,11 @@ void extractControlledNodes(Nif::NIFFilePtr kfFile, std::set<std::string>& contr
 // TES5 0x1: animated, 0x2: havok
 // TES4 0x1: havok, 0x2: collision, 0x4: skeleton, 0x8: animated
 //
-// FIXME: this test fails with meshes\clutter\minotaurhead01.nif (same flags but it is not a
-// ragdoll)
+// NOTE: above test fails with meshes\clutter\minotaurhead01.nif (same flags but it is not a ragdoll)
+// so an additional check needs to be made to see if it is animated (i.e. has a controller)
+// NOTE: the check for controller only works at the root node
+//
+// FIXME: this is duplicated in nifobjectloader.cpp
 bool isRagdoll(const Nif::Node *node, unsigned int bsxFlags)
 {
     if (node->nifVer >= 0x14020007) // TES5
@@ -254,18 +257,18 @@ btCollisionShape *createBtPrimitive(const Nif::Node *node, const Nif::bhkShape *
             const Nif::bhkMultiSphereShape *multiSphereShape
                 = static_cast<const Nif::bhkMultiSphereShape*>(bhkShape);
 
-            unsigned int numSpheres = multiSphereShape->spheres.size();
+            size_t numSpheres = multiSphereShape->spheres.size();
             btVector3 *centers = new btVector3[numSpheres];
             btScalar *radii = new btScalar[numSpheres];
 
-            for (unsigned int i = 0; i < numSpheres; ++i)
+            for (size_t i = 0; i < numSpheres; ++i)
             {
                 Ogre::Vector3 c = multiSphereShape->spheres[i].center*7; // NOTE: havok scale
                 centers[i] = btVector3(c.x, c.y, c.z);
                 radii[i] = multiSphereShape->spheres[i].radius*7; // NOTE: havok scale
             }
 
-            btMultiSphereShape *res = new btMultiSphereShape(centers, radii, numSpheres);
+            btMultiSphereShape *res = new btMultiSphereShape(centers, radii, (int)numSpheres);
 
             delete[] radii;
             radii = nullptr;
@@ -464,18 +467,18 @@ btCollisionShape *createConstraint(const Nif::Node *node, const Nif::bhkShape *b
             const Nif::bhkMultiSphereShape *multiSphereShape
                 = static_cast<const Nif::bhkMultiSphereShape*>(bhkShape);
 
-            unsigned int numSpheres = multiSphereShape->spheres.size();
+            size_t numSpheres = multiSphereShape->spheres.size();
             btVector3 *centers = new btVector3[numSpheres];
             btScalar *radii = new btScalar[numSpheres];
 
-            for (unsigned int i = 0; i < numSpheres; ++i)
+            for (size_t i = 0; i < numSpheres; ++i)
             {
                 Ogre::Vector3 c = multiSphereShape->spheres[i].center*7; // NOTE: havok scale
                 centers[i] = btVector3(c.x, c.y, c.z);
                 radii[i] = multiSphereShape->spheres[i].radius*7; // NOTE: havok scale
             }
 
-            btMultiSphereShape *res = new btMultiSphereShape(centers, radii, numSpheres);
+            btMultiSphereShape *res = new btMultiSphereShape(centers, radii, (int)numSpheres);
 
             delete[] radii;
             radii = nullptr;
@@ -895,9 +898,9 @@ void ManualBulletShapeLoader::handleBhkCollisionObject(const Nif::Node *node, un
     }
     handleBhkShape(node, bsxFlags, translation, rotation, rigidBody->shape.getPtr());
 
-    if (isRagdoll(node, bsxFlags))
+    if (mShape->mIsRagdoll)
     {
-        std::cout << "bhkCollisionObject: ragdoll " << node->name << std::endl;
+        //std::cout << "bhkCollisionObject: ragdoll " << node->name << std::endl;
 
         // the way the current code is structured, OEngine::Physic::BulletShapeManager
         // expects to see a OEngine::Physic::BulletShape, which provides a challenge to
@@ -911,7 +914,7 @@ void ManualBulletShapeLoader::handleBhkCollisionObject(const Nif::Node *node, un
         // A method similar to PhysicEngine::createAndAdjustRigidBody will be required
         // for the ragdoll object.
         //
-        mShape->mIsRagdoll = true;
+
         // NOTE: takeing the ownership of mShape->mCollisionShape
         //
         // if handleBhkShape was successful, a bullet shape would have been created
@@ -920,7 +923,7 @@ void ManualBulletShapeLoader::handleBhkCollisionObject(const Nif::Node *node, un
         // FIXME: should check for insert failures
         mShape->mShapes.insert(std::make_pair(rigidBody->recIndex, mShape->mCollisionShape));
 
-        std::pair<std::map<int, btRigidBody::btRigidBodyConstructionInfo>::iterator, bool> res
+        std::pair<std::map<size_t, btRigidBody::btRigidBodyConstructionInfo>::iterator, bool> res
             = mShape->mRigidBodyCI.insert(std::make_pair(rigidBody->recIndex,
                     btRigidBody::btRigidBodyConstructionInfo(rigidBody->mass, 0, mShape->mCollisionShape)));
 
@@ -1016,7 +1019,7 @@ void ManualBulletShapeLoader::handleBhkCollisionObject(const Nif::Node *node, un
                     ragdollDesc.twistMaxAngle = ragdoll->ragdoll.twistMaxAngle;
                     ragdollDesc.maxFriction = ragdoll->ragdoll.maxFriction;
 
-                    mShape->mNifRagdollDesc[rigidBody->recIndex] = ragdollDesc;
+                    mShape->mNifRagdollDesc[rigidBody->recIndex] = ragdollDesc; // cast away compiler warning
                 }
                 else
                     continue; // FIXME: support other types
@@ -1113,6 +1116,9 @@ void ManualBulletShapeLoader::handleNode(const Nif::Node *node, unsigned int bsx
         std::cout << "======> No collision: no Exras " << node->name << std::endl;
         return;
     }
+
+    if (!node->parent && isRagdoll(node, bsxFlags)) // check only at the root node
+        mShape->mIsRagdoll = true;
 
     // NOTE: nifVer > 4.2.2.0 do not have hasBounds indicator but may have NiExtraData BBX
     // (e.g. skeleton.nif) // FIXME
@@ -1274,8 +1280,8 @@ void ManualBulletShapeLoader::handleNiTriShape(const Nif::NiTriShape *shape,
 
         const Nif::NiTriShapeData *data = static_cast<const Nif::NiTriShapeData*>(shape->data.getPtr());
 
-        childMesh->preallocateVertices(data->vertices.size());
-        childMesh->preallocateIndices(data->triangles.size());
+        childMesh->preallocateVertices((int)data->vertices.size());
+        childMesh->preallocateIndices((int)data->triangles.size());
 
         const std::vector<Ogre::Vector3> &vertices = data->vertices;
         const std::vector<short> &triangles = data->triangles;

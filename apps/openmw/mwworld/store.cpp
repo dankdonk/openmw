@@ -76,7 +76,7 @@ namespace MWWorld
     template<typename T>
     int IndexedStore<T>::getSize() const
     {
-        return mStatic.size();
+        return (int)mStatic.size();
     }
     template<typename T>
     void IndexedStore<T>::setUp()
@@ -157,7 +157,7 @@ namespace MWWorld
         std::vector<const T*> results;
         std::for_each(mShared.begin(), mShared.end(), GetRecords(id, &results));
         if(!results.empty())
-            return results[Misc::Rng::rollDice(results.size())];
+            return results[Misc::Rng::rollDice((int)results.size())];
         return NULL;
     }
     template<typename T>
@@ -225,7 +225,7 @@ namespace MWWorld
     template<typename T>
     int Store<T>::getDynamicSize() const
     {
-        return mDynamic.size();
+        return (int)mDynamic.size();
     }
     template<typename T>
     void Store<T>::listIdentifier(std::vector<std::string> &list) const

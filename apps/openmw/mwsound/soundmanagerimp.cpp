@@ -12,6 +12,9 @@
 
 #include "../mwworld/esmstore.hpp"
 #include "../mwworld/cellstore.hpp"
+#ifdef MKTAG /* ESM4 dragged in by esmstore.hpp and cellstore.hpp */
+#undef MKTAG
+#endif
 
 #include "sound_output.hpp"
 #include "sound_decoder.hpp"
@@ -226,7 +229,7 @@ namespace MWSound
         if(!filelist.size())
             return;
 
-        int i = OEngine::Misc::Rng::rollDice(filelist.size());
+        int i = OEngine::Misc::Rng::rollDice((int)filelist.size());
 
         // Don't play the same music track twice in a row
         if (filelist[i] == mLastPlayedMusic)

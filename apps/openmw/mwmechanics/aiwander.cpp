@@ -504,7 +504,7 @@ namespace MWMechanics
             if(!storage.mPathFinder.isPathConstructed())
             {
                 assert(mAllowedNodes.size());
-                unsigned int randNode = OEngine::Misc::Rng::rollDice(mAllowedNodes.size());
+                int randNode = OEngine::Misc::Rng::rollDice((int)mAllowedNodes.size());
                 // NOTE: initially constructed with local (i.e. cell) co-ordinates
                 Ogre::Vector3 destNodePos(PathFinder::MakeOgreVector3(mAllowedNodes[randNode]));
 
@@ -653,7 +653,7 @@ namespace MWMechanics
 
         state.moveIn(new AiWanderStorage());
 
-        int index = OEngine::Misc::Rng::rollDice(mAllowedNodes.size());
+        int index = OEngine::Misc::Rng::rollDice((int)mAllowedNodes.size());
         ESM::Pathgrid::Point dest = mAllowedNodes[index];
 
         // apply a slight offset to prevent overcrowding

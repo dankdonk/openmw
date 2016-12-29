@@ -171,7 +171,7 @@ namespace MWMechanics
         std::vector<ESM::ENAMstruct> mEffects = mEffectList.mList;
 
         float enchantmentCost = 0;
-        int effectsLeftCnt = mEffects.size();
+        int effectsLeftCnt = (int)mEffects.size();
         for (std::vector<ESM::ENAMstruct>::const_iterator it = mEffects.begin(); it != mEffects.end(); ++it)
         {
             float baseCost = (store.get<ESM::MagicEffect>().find(it->mEffectID))->mData.mBaseCost;

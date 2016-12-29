@@ -347,7 +347,7 @@ public:
     Ogre::TagPoint *attachObjectToBone(const Ogre::String &bonename, Ogre::MovableObject *obj);
     void detachObjectFromBone(Ogre::MovableObject *obj);
 
-    const std::unordered_multimap<int, Ogre::Entity*>& getRagdollEntitiesMap() {
+    const std::unordered_multimap<size_t, Ogre::Entity*>& getRagdollEntitiesMap() {
         return mObjectRoot->mRagdollEntities;
     }
 };

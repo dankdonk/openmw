@@ -67,7 +67,9 @@ namespace NifOgre
         std::vector<Ogre::ParticleSystem*> mParticles;
         std::vector<Ogre::Light*> mLights;
 
-        std::unordered_multimap<int, Ogre::Entity*> mRagdollEntities;
+        // FIXME: this doesn't really belong here but since we create Ogre::Entities separately
+        // to physics objects we need some way of tying those together for ragdoll movements
+        std::unordered_multimap<size_t, Ogre::Entity*> mRagdollEntities;
 
         // Nodes that should always face the camera when rendering
         std::vector<Ogre::Node*> mBillboardNodes;
