@@ -25,6 +25,197 @@ using namespace Ogre;
 
 namespace BtOgre {
 
+// Bullet calls this method following this call sequence:
+//
+//   btDiscreteDynamicsWorld::stepSimulation
+//       ...
+//     btDiscreteDynamicsWorld::applyGravity
+//       ...
+//     btDiscreteDynamicsWorld::synchronizeMotionStates
+//         ...
+//       btDiscreteDynamicsWorld::synchronizeSingleMotionState
+//
+// Now, synchronizeSingleMotionState calls btTransformUtil::integrateTransform using
+// btCollisionObject::getInterpolationWorldTransform. That transform is initially setup by
+// btRigidBody::setupRigidBody from btMotionState::getWorldTransform.
+//
+// So, in summary, the original world transform in btMotionState is interpolated using linear
+// and angular velocities affecting the rigid body. Then the resulting transform is used when
+// calling setWorldTransform.
+//
+// If we are seeing unexpected values in the transform input, then it could be that the original
+// starting transform was incorrect somehow.  Since we only seem to see this issue with scaled
+// and rotated objects, especilly capsule shapes, we're possibly missing some step somewhere.
+//
+// See this discussion: https://github.com/libgdx/libgdx/issues/2241 (and
+// http://stackoverflow.com/questions/21827302/scaling-a-modelinstance-in-libgdx-3d-and-bullet-engine)
+//
+// It seems that physics models should not be scaled at all.  Also, the scale needs to be
+// re-applied after applying the btMotionState's transform (ref. the comments in the second URL)
+//
+// -----------------------------------------------------------------------------
+//
+// For the troublesome TargetHeavy01.NIF in ICMarketDistrictAFightingChanceBasement,
+// Scene::insertCell calls InsertFunctor for the Ptr to adjust the scale.
+//
+// For the rendering object RenderingManager::scaleObject is called.
+//
+// For the physics object PhysicEngine::createRagdoll calls setLocalScaling on the collision
+// shape before creating the btRigidBody.
+//
+// So, the scaling both objects seem ok, as indicated by play testing.  But what about the
+// transforms?
+//
+// The original world transforms are created from the derived position/rotations of the
+// SceneNodes which is created from the parent SceneNode + the collision shape's starting
+// transform (i.e. from the NIF model).  Based on some experimentation and stepping through the
+// code, the starting transforms look ok.
+//
+// -----------------------------------------------------------------------------
+//
+// So the current suspicion is on the constraints.  Or maybe how Bullet applies the transforms.
+// First, apply a temporary workaround on pivot point value of zero (probably means something
+// special in NIF but that value doesn't work with Bullet).
+//
+// Next test is to remove a couple of constraints.  First try all the ones attached to
+// TargetHeavyTarget.  Now we can see that the physics shapes (the capsules, anyway) are kinda
+// in the right places but the corresponding rendered objects are not.  They seem to be in an
+// offset from the physics shape, same up direction but located somewhere else.
+//
+// Next test is to remove the constraints on TargetchainRight01 and TargetchainRight02.
+// This time we can see that TargetHeavyTarget shapes for rendered and physics objects align,
+// but the chains/capsule shapes do not.  Is there something significant about capsules vs
+// boxes?
+//
+// As an experiement, tried using box shapes instead of capsules.  That made no difference (see
+// the screenshot TargetHeavy01-box-for-capsule.png).
+//
+// Another experiment to reduce the mass of the chains.  Seems to make no difference.
+
+// currently two observable issues:
+// (1) the chain rendered meshes are offset from the physics ones
+// (2) one of the right chain constraint seems to be pointing to left
+// FIXME: split out from the header file for testing only
+void RigidBodyState::setWorldTransform(const btTransform &in)
+{
+    if (mSceneNode == nullptr)
+        return; // silently return before we set a node
+
+    btTransform old = mTransform;
+    mTransform = in;
+    // mTransform at this point should be the new world transform for the physics shape
+    // However the visible mesh's node needs to be transformed, so we take away the position of
+    // the mesh relative to the node
+
+#if 0
+
+
+    btQuaternion iq = in.getRotation();
+    btVector3 iv = in.getOrigin();
+
+    btQuaternion q = mCenterOfMassOffset.inverse().getRotation();
+    btVector3 v = mCenterOfMassOffset.inverse().getOrigin();
+
+    // first, take away parent node's position
+    Ogre::SceneNode *parent = mSceneNode->getParentSceneNode();
+    Ogre::Vector3 pv = parent->getPosition();
+    Ogre::Quaternion pq = parent->getOrientation();
+    Ogre::Vector3 ps = parent->getScale();
+
+    Ogre::Vector3 pos = Ogre::Vector3(iv.x(), iv.y(), iv.z()) - pv;
+    // at this point, pos is as if moved based on parent node's orientation and scale
+    // pos = pq * (ps * val)
+    // now, how to find val?
+
+
+
+
+
+    Ogre::Quaternion dq = Ogre::Quaternion(iq.w(), iq.x(), iq.y(), iq.z()) * Ogre::Quaternion(q.w(), q.x(), q.y(), q.z());
+    //const Ogre::Vector3& parentScale = mSceneNode->_getDerivedScale();
+
+    Ogre::Vector3 dv = Ogre::Quaternion(iq.w(), iq.x(), iq.y(), iq.z()) * (/*scale **/Ogre::Vector3(v.x(), v.y(), v.z()));
+    dv += Ogre::Vector3(iv.x(), iv.y(), iv.z());
+
+
+
+
+
+
+    mSceneNode->setOrientation(dq);
+    mSceneNode->setPosition(dv);
+
+#endif
+//#if 0
+    //btTransform transform = in * mCenterOfMassOffset;
+    btTransform transform = mCenterOfMassOffset.inverse() * in;
+
+    // find the parent SceneNode's transform
+    Ogre::SceneNode *parent = mSceneNode->getParentSceneNode();
+
+    Ogre::Vector3 pv = parent->getPosition();
+    Ogre::Quaternion pq = parent->getOrientation();
+    Ogre::Vector3 ps = parent->getScale();
+
+    Ogre::Matrix4 parentTransform;
+    parentTransform.makeTransform(pv, /*ps*/Ogre::Vector3(1.f), pq);
+
+    btQuaternion iq = transform.getRotation();
+    btVector3 iv = transform.getOrigin();
+    Ogre::Matrix4 inputTransform;
+    inputTransform.makeTransform(Ogre::Vector3(iv.x(), iv.y(), iv.z()), /*ps*/ Ogre::Vector3(1.f),
+                                 Ogre::Quaternion(iq.w(), iq.x(), iq.y(), iq.z()));
+
+    // take away parent's transform from the input
+    inputTransform = parentTransform.inverse() * inputTransform;
+//#endif
+#if 0
+    // some debugging
+    btVector3 vold = old.getOrigin();
+    btVector3 vin = in.getOrigin();
+
+    Ogre::Vector3 pos = inputTransform.getTrans();
+    if ((vin.x() - vold.x()) > 3.f || (vin.y() - vold.y()) > 3.f || (vin.z() - vold.z()) > 3.f)
+    {
+        std::cout << "saved " << vold.x() << " " << vold.y() << " " << vold.z() << std::endl;
+        std::cout << "input " << vin.x() << " " << vin.y() << " " << vin.z() << std::endl;
+    }
+
+    Ogre::Vector3 vcurr = mSceneNode->getPosition();
+    if ((pos.x - vcurr.x) > 3.f || (pos.y - vcurr.y) > 3.f || (pos.z - vcurr.z) > 3.f)
+    {
+        std::cout << "current " << vcurr.x << " " << vcurr.y << " " << vcurr.z << std::endl;
+        std::cout << "new pos " << pos.x << " " << pos.y << " " << pos.z << std::endl;
+    }
+#endif
+#if 0
+    //btQuaternion rot = transform.getRotation();
+    //btVector3 pos = transform.getOrigin();
+
+    btVector3 vin = in.getOrigin();
+    btVector3 vold = old.getOrigin();
+    if ((vin.x() - vold.x()) > 5.f || (vin.y() - vold.y()) > 5.f || (vin.z() - vold.z()) > 5.f)
+        std::cout << "wild " << std::endl;
+
+    Ogre::Vector3 vcurr = mSceneNode->getPosition();
+    if ((pos.x() - vcurr.x) > 5.f || (pos.y() - vcurr.y) > 5.f || (pos.z() - vcurr.z) > 5.f)
+        std::cout << "wild 2 " << std::endl;
+
+    mSceneNode->setOrientation(rot.w(), rot.x(), rot.y(), rot.z());
+    mSceneNode->setPosition(pos.x(), pos.y(), pos.z());
+    //Ogre::Vector3 ps = parent->getScale();
+    //mSceneNode->setPosition(pos.x()*ps.x, pos.y()*ps.y, pos.z()*ps.z);
+#endif
+    // apply the input to the SceneNode
+    mSceneNode->setOrientation(inputTransform.extractQuaternion());
+    mSceneNode->setPosition(inputTransform.getTrans());
+
+    //btVector3 v = transform.getOrigin();
+    //btQuaternion q = transform.getRotation();
+    //mSceneNode->setOrientation(Ogre::Quaternion(q.w(), q.x(), q.y(), q.z()));
+    //mSceneNode->setPosition(Ogre::Vector3(v.x(), v.y(), v.z()));
+}
+
 /*
  * =============================================================================================
  * BtOgre::VertexIndexToShape

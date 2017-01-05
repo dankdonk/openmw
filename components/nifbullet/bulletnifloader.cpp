@@ -429,6 +429,22 @@ btCollisionShape *createBhkShape(const Nif::Node *node,
             if (firstPoint.x == secondPoint.x && firstPoint.y == secondPoint.y && firstPoint.z != secondPoint.z)
             {
                 float height = std::abs(firstPoint.z - secondPoint.z); // NOTE: havok scale already factored in
+
+
+
+// FIXME: testing if capsule shape has some special effect on bullet transforms
+#if 0
+                if (node->name == "TargetchainLeft01" || node->name == "TargetchainLeft02")
+                {
+                    btVector3 dimensions(radius*7, radius*7, height/2+radius*7);
+                    return new btBoxShape(dimensions);
+                }
+#endif
+
+
+
+
+
                 rotation = Ogre::Quaternion::IDENTITY;
                 return new btCapsuleShapeZ(radius*7, height); // NOTE: havok scale
             }
@@ -821,6 +837,13 @@ void ManualBulletShapeLoader::handleBhkShape(const Nif::Node *node, unsigned int
             else
 #endif
             {
+                //if (node->name == "HeavyTargetStructure01")
+                //if (node->name == "TargetchainLeft01")
+                    //std::cout << "break" << std::endl;
+
+
+
+
                 mShape->mCollide = true;
 
                 if (mShape->mCollisionShape) // this shouldn't happen...
@@ -880,8 +903,8 @@ void ManualBulletShapeLoader::handleBhkCollisionObject(const Nif::Node *node, un
     if (!node || !collObj)
         return;
     //if (node->name == "HeavyTargetStructure01")
-    if (node->name == "TargetchainLeft01")
-        std::cout << "break" << std::endl;
+    //if (node->name == "TargetchainLeft01")
+        //std::cout << "break" << std::endl;
 
     const Nif::bhkCollisionObject *bhkCollObj = static_cast<const Nif::bhkCollisionObject*>(collObj);
     const Nif::bhkRigidBody *rigidBody = static_cast<const Nif::bhkRigidBody*>(bhkCollObj->body.getPtr());
@@ -927,6 +950,10 @@ void ManualBulletShapeLoader::handleBhkCollisionObject(const Nif::Node *node, un
             = mShape->mRigidBodyCI.insert(std::make_pair(rigidBody->recIndex,
                     btRigidBody::btRigidBodyConstructionInfo(rigidBody->mass, 0, mShape->mCollisionShape)));
 
+        // FIXME: experiment
+        //if (node->name == "TargetchainLeft01" || node->name == "TargetchainLeft02")
+            //res.first->second.m_mass = 1.f;
+
         // FIXME: update CI here
         // FIXME: what to do if res.second is false, i.e. insert failed?
         // FIXME: translation and rotation may have been updated by handleBhkShape()
@@ -940,6 +967,8 @@ void ManualBulletShapeLoader::handleBhkCollisionObject(const Nif::Node *node, un
         res.first->second.m_restitution    = rigidBody->restitution;
         res.first->second.m_linearDamping  = rigidBody->dampingLinear;
         res.first->second.m_angularDamping = rigidBody->dampingAngular;
+
+        res.first->second.m_collisionShape->setUserIndex(static_cast<int>(rigidBody->recIndex));
 
         // from btRigidBodyConstructionInfo:
         //
@@ -999,6 +1028,9 @@ void ManualBulletShapeLoader::handleBhkCollisionObject(const Nif::Node *node, un
             // At least check if rigidBody->recIndex == rigidBody->constraints[i]->entities[0]->recIndex
             if (rigidBody->constraints[i]->recType == Nif::RC_bhkRagdollConstraint)
             {
+    if (/*node->name == "TargetchainRight01" || */node->name == "TargetchainRight02")
+    //if (node->name == "TargetHeavyTarget")
+        continue;
                 mShape->mJoints[rigidBody->recIndex].push_back(
                         std::make_pair(rigidBody->constraints[i]->entities[0]->recIndex,
                                        rigidBody->constraints[i]->entities[1]->recIndex));

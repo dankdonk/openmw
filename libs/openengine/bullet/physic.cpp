@@ -680,7 +680,7 @@ namespace Physic
             typedef std::map<size_t, btRigidBody::btRigidBodyConstructionInfo>::iterator ConstructionInfoIter;
             ConstructionInfoIter itCI(shape->mRigidBodyCI.find(recIndex));
             if (itCI == shape->mRigidBodyCI.end())
-                continue;
+                continue; // FIXME: shouldn't happen, so probably best to throw here
 
             // create a child SceneNode so that each shape can be moved in relation to the base
             // ----------------------------------------------------------------
@@ -689,13 +689,23 @@ namespace Physic
             // transform of the shape.
             //
             // NOTE: Rather than following the parent/child structure of the NIF file, each of these
-            // shapes are all relative from the root.  i.e. they all share the same parent
-            // SceneNode (this is also how Bullet's btRigidBodyState works, I think)
+            // shapes are all relative from the same 'root'.  i.e. they all share the same parent
+            // SceneNode (this is also how Bullet's btMotionState works, I think)
+            //
+            // FIXME: the Entities have the mesh built with their verticies already including
+            // the NiNode transforms (unlike the collision shapes).  But somehow detaching and
+            // re-attaching makes them 'lose' this?
             btVector3 v = itCI->second.m_startWorldTransform.getOrigin();
             btQuaternion q = itCI->second.m_startWorldTransform.getRotation();
 
+            Ogre::SceneNode *childNode = node->createChildSceneNode(Ogre::Vector3::ZERO, Ogre::Quaternion::IDENTITY);
+            //node->requestUpdate(childNode); // FIXME: is this needed?
+#if 0
             Ogre::SceneNode *childNode = node->createChildSceneNode(Ogre::Vector3(v.x(), v.y(), v.z()),
                     Ogre::Quaternion(q.w(), q.x(), q.y(), q.z()));
+#endif
+
+            std::string meshName; // FIXME: temp testing
 
             // move each Ogre::Entity associated with a bhkRigidBody to the child SceneNode
             // which will be controlled by Bullet via RigidBodyState
@@ -708,24 +718,176 @@ namespace Physic
                 for (BodyIndexMapIter itBody = range.first; itBody != range.second; ++itBody)
                 {
                     Ogre::MovableObject *ent = static_cast<Ogre::MovableObject*>(itBody->second);
+
+                    //meshName = itBody->second->getMesh()->getName(); // FIXME: temp testing
+
+                    //if (itBody->second->getMesh()->getName() ==
+                        //"meshes\\clutter\\fightersguild\\targetheavy01.nif@index=25@shape=targetchainright01:1")
+                    //if (itCI->second.m_mass == 50.f && itCI->second.m_collisionShape->getName() == "Box")
+                    {
+                        // node 89
+                        // X 0.3670 Y -0.3900 Z -0.5653
+                        // Y -90.00 P 0.00 R -90.00
+                        //
+                        // bhkRigidBodyT recIndex 92 (= 0x5c)
+                        // X 0.0161 Y -0.0532 Z 0.0449 W 0.0000
+                        // Y -0.00 P 0.00 R -0.00
+                        //
+                        // transform shape->mRigidBodyCI[0x5c]
+                        // -0.452738285  -0.00545939803  -0.0754421949
+                        std::cout << itBody->second->getMesh()->getName() << std::endl;
+                        //"meshes\\clutter\\fightersguild\\targetheavy01.nif@index=123@shape=targetheavytarget:0"
+                        //"meshes\\clutter\\fightersguild\\targetheavy01.nif@index=123@shape=targetheavytarget:1"
+                        //"meshes\\clutter\\fightersguild\\targetheavy01.nif@index=123@shape=targetheavytarget:2"
+                        //"meshes\\clutter\\fightersguild\\targetheavy01.nif@index=123@shape=targetheavytarget:3"
+                        //"meshes\\clutter\\fightersguild\\targetheavy01.nif@index=123@shape=targetheavytarget:4"
+                        Ogre::Vector3 cv = childNode->_getDerivedPosition();
+                        std::cout << "cv x " << cv.x << ", y " << cv.y << ", z " << cv.z << std::endl;
+                        cv = node->getPosition();
+                        std::cout << "parent x " << cv.x << ", y " << cv.y << ", z " << cv.z << std::endl;
+                        //    cv x 1554.67, y 2494.1,  z 7527.72
+                        //parent x 1554.68, y 2493.82, z 7527.77
+                    }
+
+                    // If below two lines are commented out, the chains of TargetHeavy01.NIF
+                    // are rendered in the correct place. That suggests incorrect
+                    // itCI->second.m_startWorldTransform, possibly calculation issue with the
+                    // capsule shapes.
+                    //
+                    // After creating the shape:
+                    //                       (q).w 1.00000000
+                    // (v).x -0.0658496469   (q).x 0.000000000
+                    // (v).y -0.108871818    (q).y 0.000000000
+                    // (v).z -5.77761507     (q).z 0.000000000
+                    //
+                    // But then, with itCI->second.m_mass set at zero , all the physics objects
+                    // are in the right place.  (see ManualBulletShapeLoader::handleBhkCollisionObject)
+                    //
+                    // Maybe Bullet is having an impact?
                     ent->getParentSceneNode()->detachObject(ent);
-                    childNode->attachObject(ent);
+                    childNode->attachObject(ent); // Ogre calls _notifyAttached() and needUpdate() internally
+                    std::cout << "entity name " << ent->getName() << std::endl;
                 }
             }
+            // ((*((MWWorld::LiveCellRef<ESM4::Static>*)((ptr).mRef))).mBase)->mModel = "Clutter\\FightersGuild\\TargetHeavy01.NIF"
+            // ((*((MWWorld::LiveCellRef<ESM4::Static>*)((ptr).mRef))).mBase)->mEditorId = "TargetHeavy01"
+            // ((((ptr).mRef)->mRef).mCellRef).mRefID = "00000CED"
+            // ptr.mRef->mRef.mCellRef.mPos.pos[0] = 1554.67578
+            // ptr.mRef->mRef.mCellRef.mPos.pos[1] = 2493.81860
+            // ptr.mRef->mRef.mCellRef.mPos.pos[2] = 7527.77197
+            // ptr.mRef->mRef.mCellRef.mPos.rot[0] = 0.000000000
+            // ptr.mRef->mRef.mCellRef.mPos.rot[1] = -0.000000000
+            // ptr.mRef->mRef.mCellRef.mPos.rot[2] = 1.57079637
+            // ptr.mRef->mRef.mCellRef.mScale      = 0.629999995
+#if 0
+            else
+            {
+                std::unordered_multimap<size_t, Ogre::Entity*>::const_iterator itEnt = ragdollEntitiesMap.find(recIndex);
+
+                if (itEnt != ragdollEntitiesMap.end() && itEnt->second && !itEnt->second->getMesh().isNull() && itEnt->second->getMesh()->getName() == "HeavyTargetStructure02:2")
+                {
+                    Ogre::Vector3 cv = childNode->_getDerivedPosition();
+                    std::cout << "cv x " << cv.x << ", y " << cv.y << ", z " << cv.z << std::endl;
+                }
+            }
+#endif
+
+
+            Ogre::Vector3 pps = node->getScale(); // FIXME: experiment
+
+
 
             // create a controller for the child SceneNode (i.e. RigidBodyState)
             // ----------------------------------------------------------------
             Ogre::Vector3 cv = childNode->_getDerivedPosition();
             Ogre::Quaternion cq = childNode->_getDerivedOrientation();
-            btTransform trans(btQuaternion(cq.x, cq.y, cq.z, cq.w), btVector3(cv.x, cv.y, cv.z));
 
+#if 0
+
+            // world transform of child node
+            Ogre::Matrix4 childTrans;
+            childTrans.makeTransform(cv, pps, cq);
+
+            // local transform of the object
+            btVector3 stv = itCI->second.m_startWorldTransform.getOrigin();
+            btQuaternion stq = itCI->second.m_startWorldTransform.getRotation();
+            Ogre::Matrix4 originalTrans;
+            originalTrans.makeTransform(Ogre::Vector3(stv.x(), stv.y(), stv.z()), pps, Ogre::Quaternion(stq.w(), stq.x(), stq.y(), stq.z()));
+
+
+            Ogre::Vector3 ov = originalTrans.getTrans();
+            Ogre::Quaternion oq = originalTrans.extractQuaternion();
+
+
+            //childTrans = childTrans * originalTrans;
+            //trans = trans * itCI->second.m_startWorldTransform;
+
+            cv = childTrans.getTrans();
+            cq = childTrans.extractQuaternion();
+
+            btTransform originalTransform(btQuaternion(oq.x, oq.y, oq.z, oq.w), btVector3(ov.x, ov.y, ov.z));
+
+#endif
+
+
+
+
+            // local transform of the object
+            btQuaternion stq = itCI->second.m_startWorldTransform.getRotation();
+            btVector3 stv = itCI->second.m_startWorldTransform.getOrigin();
+
+            // derived rotation
+            Ogre::Quaternion dq = cq * Ogre::Quaternion(stq.w(), stq.x(), stq.y(), stq.z());
+            // derived position
+            Ogre::Vector3 dv =  cq * (pps * Ogre::Vector3(stv.x(), stv.y(), stv.z()));
+
+            btTransform originalTransform(stq, btVector3(dv.x, dv.y, dv.z));
+
+            dv += cv;
+
+            // make transform
+            btTransform trans(btQuaternion(dq.x, dq.y, dq.z, dq.w), btVector3(dv.x, dv.y, dv.z));
+
+
+
+
+
+
+            //btTransform trans(btQuaternion(cq.x, cq.y, cq.z, cq.w), btVector3(cv.x, cv.y, cv.z));
+
+            BtOgre::RigidBodyState *state = new BtOgre::RigidBodyState(childNode, trans, /*itCI->second.m_startWorldTransform*/originalTransform);
+#if 0
             BtOgre::RigidBodyState *state = new BtOgre::RigidBodyState(childNode, trans);
+#endif
             itCI->second.m_motionState = state; // NOTE: dtor of RigidBody deletes RigidBodyState
-
+            //itCI->second.m_startWorldTransform = trans;
             // setup the rest of the construction info
             // ----------------------------------------------------------------
-            // TargetHeavy01.NIF in AFightingChanceBasement needs reduced scale from the node
+            // TargetHeavy01.NIF in ICMarketDistrictAFightingChanceBasement needs reduced scale from the node
+            //
+            // (called from scene.cpp InsertFunctor)
+            //
+            // FIXME: Should ForeignStatic reimplement:
+            //
+            // void Class::adjustScale(const MWWorld::Ptr& ptr,float& scale) const
+            // {
+            // }
+            //
+            // In comparison:
+            //
+            // void RenderingManager::scaleObject (const MWWorld::Ptr& ptr, const Ogre::Vector3& scale)
+            // {
+            //     ptr.getRefData().getBaseNode()->setScale(scale);
+            // }
+            //
+            // But how will Ptr have access to the physics objects to scale them, anyway?
             Ogre::Vector3 ps = node->getScale(); // FIXME: experiment
+            if (ps == Ogre::Vector3::ZERO) // FIXME: doesn't work if only one of them is zero
+                ps = Ogre::Vector3(1.f, 1.f, 1.f);
+            if (ps.x == 0 || ps.y == 0 || ps.z == 0)
+                throw std::logic_error(std::string("zero scale "));
+            //if (itCI->second.m_collisionShape->getName() == "CapsuleZ" /*&& itCI->second.m_mass == 50.f*/)
+                //std::cout << "break" << std::endl;
             itCI->second.m_collisionShape->setLocalScaling(btVector3(ps.x, ps.y, ps.z));
 
             // FIXME: use the inertia matrix in bhkRigidBody instead?
@@ -736,14 +898,20 @@ namespace Physic
 
             // finally create the rigid body
             // ----------------------------------------------------------------
-            RigidBody * body = new RigidBody(itCI->second, it->second->getName());
+            RigidBody * body = new RigidBody(itCI->second, /*it->second->getName()*/meshName);
+            //"meshes\\clutter\\fightersguild\\targetheavy01.nif@index=25@shape=targetchainright01:1")
+            //(((((state)->mTransform).m_origin).mVec128).m128_f32)[0x00000000] 1586.31482
+            //(((((state)->mTransform).m_origin).mVec128).m128_f32)[0x00000001] 2493.89404
+            //(((((state)->mTransform).m_origin).mVec128).m128_f32)[0x00000002] 7564.13623
 
             // FIXME: use the damping values in bhkRigidBody instead?  (how do they relate to
             // Bullet's values, anyway?)
-            body->setDamping(btScalar(0.05), btScalar(0.85));
+            body->setDamping(btScalar(0.05), btScalar(0.85)); // FIXME Was 0.05/0.85
             body->setDeactivationTime(btScalar(0.8));
             body->setSleepingThresholds(btScalar(1.6), btScalar(2.5));
             body->setActivationState(DISABLE_DEACTIVATION);
+            body->setLinearFactor(btVector3(0.1,0.1,0.1)); // FIXME: temp testing
+            body->setAngularFactor(btVector3(0.1,0.1,0.1)); // FIXME: temp testing
 
             // NOTE: NIF files (fortunately) refer to bhkRigidBody's already specified
             // a pointer to this RigdBody may be needed later for setting up constraints
@@ -786,12 +954,29 @@ namespace Physic
             if (itJointDesc == shape->mNifRagdollDesc.end())
                 continue; // FIXME: probably should log an error
 
+            // NOTE: the sizes below are from the NIF files before any scaling (Havok or node) are applied.
+            //
+            // CathedralCryptLight02 chains have the pivot points spcified from the center of
+            // the cylinder shapes.  e.g. bhkRagdollConstraint (refIndex 94) has pivotA Z value
+            // of 0.420 and pivotB Z value of -0.420.  With the capsule's total height
+            // 0.2700*2+0.0153*2=0.5706 or half height of 0.2853. The pivot points are
+            // 0.420-0.2853=0.1347 outside the capsule shapes.
+            //
+            // However, TargetHeavy01 chains have the pivoit points at the center of the
+            // capsule shapes. e.g. bhkRagdollConstraint (refIndex 38) pivotA has x=y=z=0. The
+            // capsule size is 2*0.2858+(0.9542-0.4935)=1.0323 or half height of 0.51615. With
+            // these values Bullet physics seems to go bezerk.
+            //
+            // pivotA is usually (always?) the lower one, so we can try to add
             localA.setIdentity();
             pivot = itJointDesc->second.pivotA*7;
-            localA.setOrigin(/*scale**/btVector3(btScalar(pivot.x), btScalar(pivot.y), btScalar(pivot.z)));
+            if (pivot.x == 0 && pivot.y == 0 && pivot.z == 0)
+                pivot.z = 3; // FIXME
+            localA.setOrigin(/*scale**/btVector3(btScalar(pivot.x*ps.x), btScalar(pivot.y*ps.y), btScalar(pivot.z*ps.z)));
+            //localA.setOrigin(/*scale**/btVector3(btScalar(pivot.x), btScalar(pivot.y), btScalar(pivot.z)));
             // http://stackoverflow.com/questions/28485134/what-is-the-purpose-of-seteulerzyx-in-bullet-physics
             // Don't really understand why this is needed, especilly why the Y axis?
-            localA.getBasis().setEulerZYX(0, M_PI_2, 0); // rotate Y axis 90 deg
+            //localA.getBasis().setEulerZYX(0, M_PI_2, 0); // rotate Y axis 90 deg
 
             size_t secondBody = 0;
             for (unsigned int i = 0; i < itJoint->second.size(); ++i)
@@ -802,9 +987,11 @@ namespace Physic
 
                 localB.setIdentity();
                 pivot = itJointDesc->second.pivotB*7;
-                localB.setOrigin(/*scale**/btVector3(btScalar(pivot.x), btScalar(pivot.y), btScalar(pivot.z)));
-                localB.getBasis().setEulerZYX(0, M_PI_2, 0);
+                localB.setOrigin(/*scale**/btVector3(btScalar(pivot.x*ps.x), btScalar(pivot.y*ps.y), btScalar(pivot.z*ps.z)));
+                //localB.setOrigin(/*scale**/btVector3(btScalar(pivot.x), btScalar(pivot.y), btScalar(pivot.z)));
+                //localB.getBasis().setEulerZYX(0, M_PI_2, 0);
 
+#if 0
                 btConeTwistConstraint *cons
                     = new btConeTwistConstraint(*body, *rigidBodies[secondBody], localA, localB);
                 mRagdollConstraintMap.insert(std::make_pair(body, cons));
@@ -819,6 +1006,26 @@ namespace Physic
                                    itJointDesc->second.coneMaxAngle*2,
                                    itJointDesc->second.twistMaxAngle*2);
 
+#endif
+                btGeneric6DofConstraint *cons
+                    = new btGeneric6DofConstraint(*body, *rigidBodies[secondBody], localA, localB, false);
+                mRagdollConstraintMap.insert(std::make_pair(body, cons));
+
+                Ogre::Vector4 v = itJointDesc->second.planeB;
+                btVector3 plane(v.x, v.y, v.z);
+                v = itJointDesc->second.twistB;
+                btVector3 twist(v.x, v.y, v.z);
+
+                btVector3 cone = twist.cross(plane);
+
+                cons->setAngularLowerLimit(-itJointDesc->second.coneMaxAngle*cone+
+                                           itJointDesc->second.planeMinAngle*plane+
+                                           itJointDesc->second.twistMinAngle*twist);
+                cons->setAngularUpperLimit(itJointDesc->second.coneMaxAngle*cone+
+                                           itJointDesc->second.planeMaxAngle*plane+
+                                           itJointDesc->second.twistMaxAngle*twist);
+
+#if 0
                 // FIXME: need to tune these values
                 cons->setParam(BT_CONSTRAINT_STOP_ERP,0.8f,0);
                 cons->setParam(BT_CONSTRAINT_STOP_ERP,0.8f,1);
@@ -826,6 +1033,7 @@ namespace Physic
                 cons->setParam(BT_CONSTRAINT_STOP_CFM,0.f,0);
                 cons->setParam(BT_CONSTRAINT_STOP_CFM,0.f,1);
                 cons->setParam(BT_CONSTRAINT_STOP_CFM,0.f,2);
+#endif
 
                 mDynamicsWorld->addConstraint(cons, /*disable collision between linked bodies*/true);
             }

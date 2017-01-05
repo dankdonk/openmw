@@ -40,7 +40,7 @@ class RigidBodyState : public btMotionState
               mSceneNode(node)
         {
         }
-
+#if 0
         RigidBodyState(Ogre::SceneNode *node)
             : mTransform(((node != NULL) ? BtOgre::Convert::toBullet(node->getOrientation()) : btQuaternion(0,0,0,1)),
                          ((node != NULL) ? BtOgre::Convert::toBullet(node->getPosition())    : btVector3(0,0,0))),
@@ -48,7 +48,7 @@ class RigidBodyState : public btMotionState
               mSceneNode(node)
         {
         }
-
+#endif
         // called by btRigidBody::setupRigidBody during construction to set its m_worldTransform,
         // ignoring btRigidBodyConstructionInfo::m_startWorldTransform
         //
@@ -56,11 +56,13 @@ class RigidBodyState : public btMotionState
         virtual void getWorldTransform(btTransform &ret) const
         {
             // return the previously transform saved from setWorldTransform
-            ret = mCenterOfMassOffset.inverse() * mTransform;
+            //ret = mCenterOfMassOffset.inverse() * mTransform;
+            ret = mTransform;  // FIXME: temp testing
         }
 
         // called by btDiscreteDynamicsWorld::synchronizeSingleMotionState
-        virtual void setWorldTransform(const btTransform &in)
+        virtual void setWorldTransform(const btTransform &in);
+#if 0
         {
             if (mSceneNode == nullptr)
 				return; // silently return before we set a node
@@ -72,6 +74,10 @@ class RigidBodyState : public btMotionState
             Ogre::SceneNode *parent = mSceneNode->getParentSceneNode();
             Ogre::Vector3 pv = parent->getPosition();
             Ogre::Quaternion pq = parent->getOrientation();
+            //Ogre::Vector3 pv = parent->_getDerivedPosition();
+            //Ogre::Quaternion pq = parent->_getDerivedOrientation();
+            //Ogre::Vector3 ps = parent->getScale();
+            //btTransform parentTrans(btQuaternion(pq.x, pq.y, pq.z, pq.w), btVector3(pv.x*ps.x, pv.y*ps.y, pv.z*ps.z));
             btTransform parentTrans(btQuaternion(pq.x, pq.y, pq.z, pq.w), btVector3(pv.x, pv.y, pv.z));
 
             // take away parent's transform from the input
@@ -82,7 +88,10 @@ class RigidBodyState : public btMotionState
             btVector3 pos = transform.getOrigin();
             mSceneNode->setOrientation(rot.w(), rot.x(), rot.y(), rot.z());
             mSceneNode->setPosition(pos.x(), pos.y(), pos.z());
+            //Ogre::Vector3 ps = parent->getScale();
+            //mSceneNode->setPosition(pos.x()*ps.x, pos.y()*ps.y, pos.z()*ps.z);
         }
+#endif
 
         void setNode(Ogre::SceneNode *node)
         {
