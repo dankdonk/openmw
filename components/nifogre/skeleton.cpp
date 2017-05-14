@@ -71,6 +71,19 @@ namespace NifOgre
 //  - look for name "Bip01" (possibly slow?)
 //  - nodes in node groups of NiBSBoneLODController
 //  - all children of NiBSBoneLODController target (prob. Bip01)
+//
+// FIXME:
+// For ragdolls the bones should correspond to NiNodes containing bhkRigidBody or bhkRigidBodyT.
+// A btRigidBody with btCollisionShape will then control the bone using btMotionState.
+
+// Build a bone tree given an Ogre::Skeleton and a root node by recursively calling itself
+//
+// 1. create a bone (use node's name, FIXME not sure what happens if it exists already)
+// 2. add the bone to parent if recursing (otherwise it is the root bone)
+// 3. add bone handle to mNifToOgreHandleMap (node->recIndex is the key)
+// 4. set orientation/position/scale based on the node and set as 'binding pose'
+// 5. check node and controllers types (FIXME: not sure what this is meant to achieve)
+// 6. recurse into children if 'node' is a NiNode
 void NIFSkeletonLoader::buildBones (Ogre::Skeleton *skel, const Nif::Node *node, Ogre::Bone *parent)
 {
     const Nif::NiNode *ninode = dynamic_cast<const Nif::NiNode*>(node);
@@ -181,6 +194,7 @@ void NIFSkeletonLoader::loadResource(Ogre::Resource *resource)
     Ogre::Skeleton *skel = dynamic_cast<Ogre::Skeleton*>(resource);
     OgreAssert(skel, "Attempting to load a skeleton into a non-skeleton resource!");
 
+    // should have been loaded already by NifOgre::NIFObjectLoader::load
     Nif::NIFFilePtr nif(Nif::Cache::getInstance().load(skel->getName()));
     const Nif::Node *node = static_cast<const Nif::Node*>(nif->getRoot(0));
 
@@ -277,6 +291,34 @@ bool NIFSkeletonLoader::needSkeleton(const Nif::Node *node)
     return true;
 }
 
+// New strategy for ragdoll: Jan 2017
+//
+// All ragdolls are to be implemented using skeletons.  Now, there isn't a strong
+// justifications for this, but the gut feeling says that the majority of the ragdolls have
+// skeletons anyway (npc's and creatures).
+//
+// This will allow tag points to be created based on node offset rather than the vertices
+// having them baked in.
+//
+// It is not clear at this point if there will be any performance impact.  If it turns out to
+// be the case, we can revisit this decision at that time.
+//
+// The benefit, I hope, will be a simpler implementation (i.e. no special cases).  Having said
+// that, some ragdolls only "activate" when the creature/npc is dead - otherwise they are
+// driven by animation.  Others are always under physics control (e.g. scale, lamp, practice
+// target).
+//
+// Another (minor) benefit is to be able to keep the existing implementation of attaching
+// lights to bones.
+//
+// Having decided to use skeleton/bones, we have to worry about scaling.  Not necessarily
+// non-uniform scaling, but it may be a good opportunity to get that going at the same time.
+// The only trouble is that I don't really understand how that's meant to work.  Also, it is
+// unclear if Ogre 1.10 should be abandoned in favour of 2.0 (or even 2.1) implementation of
+// skeleton.
+
+// 1. check if a sekeleton should be built
+// 2. if so create a skeleton and return its pointer (or a nullptr if not built)
 Ogre::SkeletonPtr NIFSkeletonLoader::createSkeleton(const std::string &name,
                                                     const std::string &group, const Nif::Node *node)
 {

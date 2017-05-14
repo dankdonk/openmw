@@ -195,11 +195,11 @@ namespace MWWorld
 
                 // ragdoll objects have physics objects attached to child SceneNodes
                 Ogre::Node::ChildNodeIterator childIter = node->getChildIterator();
-				while (childIter.hasMoreElements())
-				{
-					mPhysics->removeObject (childIter.current()->first);
-					childIter.getNext();
-				}
+                while (childIter.hasMoreElements())
+                {
+                    mPhysics->removeObject (childIter.current()->first);
+                    childIter.getNext();
+                }
 
                 mPhysics->removeObject (node->getName());
             }

@@ -35,6 +35,7 @@
 namespace NifOgre
 {
 // entry point from either CSVRender::Object or MWRender::Animation or others
+// 'name' is model (i.e. a NIF file)
 ObjectScenePtr Loader::createObjects (Ogre::SceneNode *parentNode, std::string name, const std::string &group)
 {
     ObjectScenePtr scene = ObjectScenePtr (new ObjectScene(parentNode->getCreator()));

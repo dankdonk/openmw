@@ -919,14 +919,16 @@ void NifOgre::NIFObjectLoader::extractTextKeys (const Nif::NiTextKeyExtraData *t
 // Call Path
 // =========
 //
-// MWClass::ForeignBook::insertObjectRendering
-//   MWRender::Objects::insertModel
-//     Animation::setObjectRoot
-//       NifOgre::Loader::createObjects
-//         NifOgre::NIFObjectLoader::load
-//           NifOgre::NIFObjectLoader::createObjects  <--- this method
-//         or
-//       NifOgre::Loader::createObjectBase
+// Scene::insertCell                                              | scene.cpp
+//   ::InsertFunctor::operator()                                  | scene.cpp
+//     ::addObject                                                | scene.cpp
+//       MWRender::RenderingManager::addObject                    | renderingmanager.cpp
+//         MWClass::ForeignBook::insertObjectRendering            | foreignbook.cpp
+//           MWRender::Objects::insertModel                       | objects.cpp
+//             MWRender::Animation::setObjectRoot                 | animation.cpp
+//               NifOgre::Loader::createObjects                   | ogrenifloader.cpp
+//                 NifOgre::NIFObjectLoader::load                 | nifobjectloader.cpp
+//                   NifOgre::NIFObjectLoader::handleNode  <--- this method
 //
 // More detail
 // ===========
@@ -946,19 +948,22 @@ void NifOgre::NIFObjectLoader::extractTextKeys (const Nif::NiTextKeyExtraData *t
 //     NIF objects in Ogre
 //
 // TODO:
-//
 // Find out if it is feasible to create both Ogre and Bullet objects at the same time.
 //
+// TODO:
 // Does it make sence to serialise the created objects to save loading time in subsequent
 // executions?
 //
-// In terms of objects:
 //
-//   ESM defines object ref, its template (incl. NIF's if appropriate), its world
+// About objects
+// =============
+//
+//   ESM defines object ref, its template (incl. NIF files if appropriate), its world
 //   position/scale/rotation, etc.
 //
 //   NIF files defines how to put together the objects - they define any skeletons, rendering
-//   meshes, collision meshes, constraints and other object properties.
+//   meshes, collision meshes, constraints and other object properties. (KF files define
+//   animations)
 //
 //   Ogre provides the rendering (all the visible stuff) as well as resource management
 //   (including physics objects and animation controllers).
@@ -970,7 +975,7 @@ void NifOgre::NIFObjectLoader::extractTextKeys (const Nif::NiTextKeyExtraData *t
 //   Bullet classes.
 //
 //   Ideally, the engine should be able to handle more than one object format (i.e. not NIF).
-//   The current attempt at supporting two NIF versions shows that it is not a trivial task.
+//   However the current attempt at supporting two NIF versions shows that it is not a trivial task.
 //
 // Loading process (at a high, conceptual level):
 //
@@ -1293,6 +1298,13 @@ void NifOgre::NIFObjectLoader::handleNode (const Nif::NIFFilePtr& nif, const std
     }
 }
 
+// Recursively traverse NIF tree to:
+// - Handle animation/particle/billboard nodes
+// - Extract tex keys (for animation) to scene->mTextKeys
+// - Check for markers
+// - Create node controllers
+// - Create entity (incl. mesh)
+// - Create particle systems
 void NifOgre::NIFObjectLoader::createObjects (const Nif::NIFFilePtr& nif, const std::string &name,
             const std::string &group, Ogre::SceneNode *sceneNode, const Nif::Node *node,
             ObjectScenePtr scene, int flags, int animflags, int partflags, bool isRootCollisionNode)
@@ -1434,6 +1446,30 @@ void NifOgre::NIFObjectLoader::createSkelBase (const std::string &name, const st
     scene->mEntities.push_back(scene->mSkelBase);
 }
 
+// Call Path
+// =========
+//
+// Scene::insertCell                                              | scene.cpp
+//   ::InsertFunctor::operator()                                  | scene.cpp
+//     ::addObject                                                | scene.cpp
+//       MWRender::RenderingManager::addObject                    | renderingmanager.cpp
+//         MWClass::ForeignBook::insertObjectRendering            | foreignbook.cpp
+//           MWRender::Objects::insertModel                       | objects.cpp
+//             MWRender::Animation::setObjectRoot                 | animation.cpp
+//               NifOgre::Loader::createObjects                   | ogrenifloader.cpp
+//                 NifOgre::NIFObjectLoader::load           <- this method
+//                   NifOgre::NIFSkeletonLoader::createSkeleton   | skeleton.cpp
+//                     Ogre::SkeletonManager::create
+//                                :
+//                            (callback)
+//                                :
+//                     NifOgre::NIFSkeletonLoader::loadResource   | skeleton.cpp
+//                       NifOgre::NIFSkeletonLoader::buildBones   | skeleton.cpp
+
+// 1. Load the NIF file where 'name' is model (i.e. a NIF file) specified in the ESM.
+// 2. Check that the NIF has a root node.
+// 3. Create a skeleton if required (e.g. for animation)
+// 4. Create objects by traversing the NIF tree TODO: better explanation
 void NifOgre::NIFObjectLoader::load (Ogre::SceneNode *sceneNode,
             ObjectScenePtr scene, const std::string &name, const std::string &group, int flags)
 {
