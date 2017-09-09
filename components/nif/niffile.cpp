@@ -174,7 +174,6 @@ static std::map<std::string,RecordFactoryEntry> makeFactory()
     newFactory.insert(makeEntry("NiPSysGravityStrengthCtlr",  &construct <NiPSysGravityStrengthCtlr>   , RC_NiPSysGravityStrengthCtlr     ));
     newFactory.insert(makeEntry("NiBoolTimelineInterpolator", &construct <NiBoolTimelineInterpolator>  , RC_NiBoolTimelineInterpolator    ));
     newFactory.insert(makeEntry("BSParentVelocityModifier",   &construct <BSParentVelocityModifier>    , RC_BSParentVelocityModifier      ));
-    newFactory.insert(makeEntry("NiPSysDragModifier",         &construct <NiPSysDragModifier>          , RC_NiPSysDragModifier            ));
     newFactory.insert(makeEntry("NiPSysEmitter",              &construct <NiPSysEmitter>               , RC_NiPSysEmitter                 ));
     newFactory.insert(makeEntry("NiPSysMeshEmitter",          &construct <NiPSysMeshEmitter>           , RC_NiPSysMeshEmitter             ));
     newFactory.insert(makeEntry("NiPSysEmitterSpeedCtlr",     &construct <NiPSysEmitterSpeedCtlr>      , RC_NiPSysEmitterSpeedCtlr        ));

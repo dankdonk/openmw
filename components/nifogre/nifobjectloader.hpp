@@ -94,6 +94,10 @@ namespace NifOgre
                 const std::string &name, const std::string &group, Ogre::SceneNode *sceneNode, const Nif::Node *node,
                 ObjectScenePtr scene, int flags, int animflags, int partflags, bool isRagdollFlag = false);
 
+        static void handleNode2 (const Nif::NIFFilePtr& nif,
+                const std::string &name, const std::string &group, Ogre::SceneNode *sceneNode, const Nif::Node *node,
+                ObjectScenePtr scene);
+
         static void createSkelBase (const std::string &name,
                 const std::string &group, Ogre::SceneManager *sceneMgr, const Nif::Node *node, ObjectScenePtr scene);
 

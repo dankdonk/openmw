@@ -45,9 +45,9 @@ namespace NifOgre
 //   BSOrderedNode                            <- TBD
 //   BSTreeNode                               <- TBD
 //   BSValueNode                              <- TBD
-//     FxWidget
+//   FxWidget
 //     FxButton
-//   FxRadioButton           <-- not suppported
+//     FxRadioButton         <-- not suppported
 //   NiBSAnimationNode       <-- ok*
 //   NiBSParticleNode                        <-- TBD
 //   NiBillboardNode         <-- ok*

@@ -264,7 +264,7 @@ namespace Physic
         // Should a "static" object ever be moved, we have to update its AABB manually using DynamicsWorld::updateSingleAabb.
         mDynamicsWorld->setForceUpdateAllAabbs(false);
 
-        mDynamicsWorld->setGravity(btVector3(0,0,-10));
+        mDynamicsWorld->setGravity(btVector3(0,0,-72));
 
         if(BulletShapeManager::getSingletonPtr() == NULL)
         {
@@ -616,8 +616,15 @@ namespace Physic
         return body;
     }
 
+    // Memory Leak
+    // ===========
+    //
     // FIXME: need to think about creation and destruction of various objects so that memory
     // leaks do not occur - maybe we need a mRagdollObjectMap
+    //
+    //
+    // Scaling
+    // =======
     //
     // FIXME: need to scale correctly for Bullet to work properly (e.g. not move as if in slow
     // motion).  Since Bullet considers 1 unit to be 1 meter, TES game units need to be divided
@@ -630,6 +637,16 @@ namespace Physic
     // accuracy and accoriding to this post, reduces performance:
     //
     // http://bulletphysics.org/Bullet/phpBB3/viewtopic.php?f=9&t=5037&p=18424&hilit=scale#p18424
+    //
+    //  "...discovered that the performance of the collision was largely affected by the scale
+    //  (measuring units). Basically: if I simulated 20'000 spheres each with 0.005 diameter,
+    //  the RAM requirement was very high, whereas the same exact problem with rescaled sizing,
+    //  say 0.5 diameter for spheres, was optimal.
+    //
+    //  This was not related to dynamics, it was related only to the broadphase collision: the
+    //  broadphase created way too many manifolds.
+    //
+    //  ...in the btPersistentManifold.cpp there is an hardcoded threshold of 0.02"
     //
     // Using Havok's scale may be a reasonable compromise between realistic physics and system
     // performance.  TODO: verify by profiling
@@ -646,6 +663,10 @@ namespace Physic
     // . Scale all inertias by X if not computed by Bullet
     // . Damping is a ratio so this does not need to be changed.
     // . Angular velocity should not need to be changed either.
+    //
+    //
+    // Transforms
+    // ==========
     //
     // Experiments with BenchmarkDemmo's RagDoll class modified to use the data from
     // CathedralCryptLight02, it appears that for Bullet:
@@ -713,6 +734,7 @@ namespace Physic
             isDynamic = (itCI->second.m_mass != 0.f);
             if (isDynamic) // do only for moving bkhRigidBody
             {
+                // for each of the entities for a recindex (node)
                 typedef std::unordered_multimap<size_t, Ogre::Entity*>::const_iterator BodyIndexMapIter;
                 std::pair<BodyIndexMapIter, BodyIndexMapIter> range = ragdollEntitiesMap.equal_range(recIndex);
                 for (BodyIndexMapIter itBody = range.first; itBody != range.second; ++itBody)
@@ -764,8 +786,8 @@ namespace Physic
                     // are in the right place.  (see ManualBulletShapeLoader::handleBhkCollisionObject)
                     //
                     // Maybe Bullet is having an impact?
-                    ent->getParentSceneNode()->detachObject(ent);
-                    childNode->attachObject(ent); // Ogre calls _notifyAttached() and needUpdate() internally
+                    //ent->getParentSceneNode()->detachObject(ent);
+                    //childNode->attachObject(ent); // Ogre calls _notifyAttached() and needUpdate() internally
                     std::cout << "entity name " << ent->getName() << std::endl;
                 }
             }
@@ -836,6 +858,9 @@ namespace Physic
             btQuaternion stq = itCI->second.m_startWorldTransform.getRotation();
             btVector3 stv = itCI->second.m_startWorldTransform.getOrigin();
 
+                    std::cout << "recIndex " << recIndex << " startWorldTransform x "
+                              << stv.x() << ", y " << stv.y() << ", z " << stv.z() << std::endl;
+
             // derived rotation
             Ogre::Quaternion dq = cq * Ogre::Quaternion(stq.w(), stq.x(), stq.y(), stq.z());
             // derived position
@@ -855,10 +880,12 @@ namespace Physic
 
             //btTransform trans(btQuaternion(cq.x, cq.y, cq.z, cq.w), btVector3(cv.x, cv.y, cv.z));
 
-            BtOgre::RigidBodyState *state = new BtOgre::RigidBodyState(childNode, trans, /*itCI->second.m_startWorldTransform*/originalTransform);
-#if 0
+            // node, start transform, offset transform
+            //BtOgre::RigidBodyState *state = new BtOgre::RigidBodyState(childNode, itCI->second.m_startWorldTransform, originalTransform);
+            //BtOgre::RigidBodyState *state = new BtOgre::RigidBodyState(childNode, trans, /*itCI->second.m_startWorldTransform*/originalTransform);
+//#if 0
             BtOgre::RigidBodyState *state = new BtOgre::RigidBodyState(childNode, trans);
-#endif
+//#endif
             itCI->second.m_motionState = state; // NOTE: dtor of RigidBody deletes RigidBodyState
             //itCI->second.m_startWorldTransform = trans;
             // setup the rest of the construction info
@@ -942,41 +969,17 @@ namespace Physic
 
             // create the constraints
             // ----------------------------------------------------------------
+            // itJoint->first               : recIndex of the RigidBody that has the Constraint
+            // itJoint->second.at(i).first  : recIndex of self (should be the same as above)
+            // itJoint->second.at(i).second : recIndex of the other RigidBody
+            //
+            // If a RigidBody has multiple Constraints, how to identify which one is which?
+            // Or does that matter?
+            //
             std::map<size_t, std::vector<std::pair<size_t, size_t> > >::const_iterator itJoint
                 = shape->mJoints.find(recIndex);
             if (itJoint == shape->mJoints.end() || itJoint->second.empty())
                 continue; // FIXME: probably should log an error
-
-            btTransform localA, localB;
-            Ogre::Vector4 pivot;
-            std::map<size_t, Nif::RagdollDescriptor>::const_iterator itJointDesc
-                = shape->mNifRagdollDesc.find(recIndex);
-            if (itJointDesc == shape->mNifRagdollDesc.end())
-                continue; // FIXME: probably should log an error
-
-            // NOTE: the sizes below are from the NIF files before any scaling (Havok or node) are applied.
-            //
-            // CathedralCryptLight02 chains have the pivot points spcified from the center of
-            // the cylinder shapes.  e.g. bhkRagdollConstraint (refIndex 94) has pivotA Z value
-            // of 0.420 and pivotB Z value of -0.420.  With the capsule's total height
-            // 0.2700*2+0.0153*2=0.5706 or half height of 0.2853. The pivot points are
-            // 0.420-0.2853=0.1347 outside the capsule shapes.
-            //
-            // However, TargetHeavy01 chains have the pivoit points at the center of the
-            // capsule shapes. e.g. bhkRagdollConstraint (refIndex 38) pivotA has x=y=z=0. The
-            // capsule size is 2*0.2858+(0.9542-0.4935)=1.0323 or half height of 0.51615. With
-            // these values Bullet physics seems to go bezerk.
-            //
-            // pivotA is usually (always?) the lower one, so we can try to add
-            localA.setIdentity();
-            pivot = itJointDesc->second.pivotA*7;
-            if (pivot.x == 0 && pivot.y == 0 && pivot.z == 0)
-                pivot.z = 3; // FIXME
-            localA.setOrigin(/*scale**/btVector3(btScalar(pivot.x*ps.x), btScalar(pivot.y*ps.y), btScalar(pivot.z*ps.z)));
-            //localA.setOrigin(/*scale**/btVector3(btScalar(pivot.x), btScalar(pivot.y), btScalar(pivot.z)));
-            // http://stackoverflow.com/questions/28485134/what-is-the-purpose-of-seteulerzyx-in-bullet-physics
-            // Don't really understand why this is needed, especilly why the Y axis?
-            //localA.getBasis().setEulerZYX(0, M_PI_2, 0); // rotate Y axis 90 deg
 
             size_t secondBody = 0;
             for (unsigned int i = 0; i < itJoint->second.size(); ++i)
@@ -985,12 +988,53 @@ namespace Physic
                 // should at least check itJoint->second.at(i).first == recIndex
                 secondBody = itJoint->second.at(i).second;
 
+                btTransform localA, localB;
+                Ogre::Vector4 pivot;
+                std::map<std::pair<size_t, size_t>, Nif::RagdollDescriptor>::const_iterator itJointDesc
+                    = shape->mNifRagdollDesc.find(std::make_pair(recIndex, secondBody));
+                if (itJointDesc == shape->mNifRagdollDesc.end())
+                    continue; // FIXME: probably should log an error
+
+                // NOTE: the sizes below are from the NIF files before any scaling (Havok or node) are applied.
+                //
+                // CathedralCryptLight02 chains have the pivot points spcified from the center of
+                // the cylinder shapes.  e.g. bhkRagdollConstraint (refIndex 94) has pivotA Z value
+                // of 0.420 and pivotB Z value of -0.420.  With the capsule's total height
+                // 0.2700*2+0.0153*2=0.5706 or half height of 0.2853. The pivot points are
+                // 0.420-0.2853=0.1347 outside the capsule shapes.
+                //
+                // However, TargetHeavy01 chains have the pivoit points at the center of the
+                // capsule shapes. e.g. bhkRagdollConstraint (refIndex 38) pivotA has x=y=z=0. The
+                // capsule size is 2*0.2858+(0.9542-0.4935)=1.0323 or half height of 0.51615. With
+                // these values Bullet physics seems to go bezerk.
+                //
+                // pivotA is usually (always?) the lower one, so we can try to add
+                localA.setIdentity();
+                pivot = itJointDesc->second.pivotA;
+                //if (pivot.x == 0 && pivot.y == 0 && pivot.z == 0)
+                    //pivot.z = 3; // FIXME
+                localA.setOrigin(/*scale**/btVector3(btScalar(pivot.x*ps.x), btScalar(pivot.y*ps.y), btScalar(pivot.z*ps.z)));
+                //localA.setOrigin(/*scale**/btVector3(btScalar(pivot.x), btScalar(pivot.y), btScalar(pivot.z)));
+                // http://stackoverflow.com/questions/28485134/what-is-the-purpose-of-seteulerzyx-in-bullet-physics
+                // Don't really understand why this is needed, especilly why the Y axis?
+                //localA.getBasis().setEulerZYX(0, M_PI_2, 0); // rotate Y axis 90 deg
+
+                //if (recIndex == 9 || recIndex == 15 || recIndex == 31 || recIndex == 37 || recIndex == 92)
+                    std::cout << "recIndex " << recIndex << " pivot A x "
+                              << pivot.x << ", y " << pivot.y << ", z " << pivot.z << std::endl;
+
+
+
                 localB.setIdentity();
-                pivot = itJointDesc->second.pivotB*7;
+                pivot = itJointDesc->second.pivotB;
                 localB.setOrigin(/*scale**/btVector3(btScalar(pivot.x*ps.x), btScalar(pivot.y*ps.y), btScalar(pivot.z*ps.z)));
                 //localB.setOrigin(/*scale**/btVector3(btScalar(pivot.x), btScalar(pivot.y), btScalar(pivot.z)));
                 //localB.getBasis().setEulerZYX(0, M_PI_2, 0);
+                //if (recIndex == 9 || recIndex == 15 || recIndex == 31 || recIndex == 37 || recIndex == 92)
+                    std::cout << "recIndex " << recIndex << " pivot B x "
+                              << pivot.x << ", y " << pivot.y << ", z " << pivot.z << std::endl;
 
+            //BtOgre::RigidBodyState *state = new BtOgre::RigidBodyState(childNode, itCI->second.m_startWorldTransform, originalTransform);
 #if 0
                 btConeTwistConstraint *cons
                     = new btConeTwistConstraint(*body, *rigidBodies[secondBody], localA, localB);
@@ -1011,6 +1055,7 @@ namespace Physic
                     = new btGeneric6DofConstraint(*body, *rigidBodies[secondBody], localA, localB, false);
                 mRagdollConstraintMap.insert(std::make_pair(body, cons));
 
+#if 0
                 Ogre::Vector4 v = itJointDesc->second.planeB;
                 btVector3 plane(v.x, v.y, v.z);
                 v = itJointDesc->second.twistB;
@@ -1025,7 +1070,8 @@ namespace Physic
                                            itJointDesc->second.planeMaxAngle*plane+
                                            itJointDesc->second.twistMaxAngle*twist);
 
-#if 0
+#endif
+//#if 0
                 // FIXME: need to tune these values
                 cons->setParam(BT_CONSTRAINT_STOP_ERP,0.8f,0);
                 cons->setParam(BT_CONSTRAINT_STOP_ERP,0.8f,1);
@@ -1033,7 +1079,7 @@ namespace Physic
                 cons->setParam(BT_CONSTRAINT_STOP_CFM,0.f,0);
                 cons->setParam(BT_CONSTRAINT_STOP_CFM,0.f,1);
                 cons->setParam(BT_CONSTRAINT_STOP_CFM,0.f,2);
-#endif
+//#endif
 
                 mDynamicsWorld->addConstraint(cons, /*disable collision between linked bodies*/true);
             }

@@ -240,7 +240,7 @@ void NifOgre::NIFObjectLoader::createEntity (const std::string &name, const std:
     if (meshMgr.getByName(fullname).isNull())
         NIFMeshLoader::createMesh(name, fullname, group, recIndex, isStrips);
 
-    Ogre::Entity *entity = sceneMgr->createEntity(fullname);
+    Ogre::Entity *entity = sceneMgr->createEntity(fullname); // using the mesh "fullname" created above
 
 #if OGRE_VERSION >= (1 << 16 | 10 << 8 | 0)
     // Enable skeleton-based bounding boxes. With the static bounding box,
@@ -965,10 +965,10 @@ void NifOgre::NIFObjectLoader::extractTextKeys (const Nif::NiTextKeyExtraData *t
 //   meshes, collision meshes, constraints and other object properties. (KF files define
 //   animations)
 //
-//   Ogre provides the rendering (all the visible stuff) as well as resource management
+//   Ogre provides the rendering functionality (all the visible stuff) as well as resource management
 //   (including physics objects and animation controllers).
 //
-//   Bullet provides the physics.
+//   Bullet provides the physics functionality.
 //
 //   In the OpenMW engine, a Ptr represents the object reference (i.e. an instance of the
 //   object).  It is put together from the ESM/ESP files, the BSA and NIF files using Ogre and
@@ -1004,12 +1004,12 @@ void NifOgre::NIFObjectLoader::extractTextKeys (const Nif::NiTextKeyExtraData *t
 //   create Ogre and Bullet objects directly.
 //
 //   Currently the NIF file is read and its contents interpreted as "Nif" namespace classes
-//   (e.g.  Nif::NiNode) These are then cached key'ed on the file's path string.
+//   (e.g.  Nif::NiNode) These are then cached, key'ed on the file's path string.
 //
 //   Another loader then interprets the "Nif" classes and produces Ogre usable classes.
 //   (see NifOgre::NIFObjectLoader)
 //
-//   Yet another loader interprets the same "Nif" classes (twice, once for collision and another
+//   Yet another loader interprets the same "Nif" classes (twice more - once for collision and another
 //   for raycasting) and produces Bullet classes (see NifBullet::ManualBulletShapeLoader)
 //   The "templates" or BulletShapePtr are stored in BulletShapeManager.  The physics engine then
 //   creates the RigidBody's using the BulletShape's. [NOTE: the same NIF path with different
@@ -1081,7 +1081,7 @@ void NifOgre::NIFObjectLoader::handleNode (const Nif::NIFFilePtr& nif, const std
         for (unsigned int i = 0; i < node->extras.length(); ++i)
         {
             extraData = node->extras[i]; // get the next extra data in the list
-            assert(extra.getPtr() != NULL);
+            assert(extraData.getPtr() != NULL);
 
             if (!extraData.empty() && extraData->name == "BSX")
             {
@@ -1298,6 +1298,136 @@ void NifOgre::NIFObjectLoader::handleNode (const Nif::NIFFilePtr& nif, const std
     }
 }
 
+void NifOgre::NIFObjectLoader::handleNode2 (const Nif::NIFFilePtr& nif, const std::string &name,
+            const std::string &group, Ogre::SceneNode *sceneNode, const Nif::Node *node,
+            ObjectScenePtr scene)
+{
+    // local variables for this node
+    int bsxFlags = 0; // usually only at the root record?
+
+    // first get any flags and extra data
+    if (node && node->hasExtras)
+    {
+        Nif::NiExtraDataPtr extraData;
+        for (unsigned int i = 0; i < node->extras.length(); ++i)
+        {
+            extraData = node->extras[i];
+            assert(extraData.getPtr() != NULL);
+
+            if (!extraData.empty() && extraData->name == "BSX")
+            {
+                bsxFlags = static_cast<Nif::BSXFlags*>(extraData.getPtr())->integerData;
+                break; // FIXME: don't care about other NiExtraData (for now)
+            }
+            else if (!extraData.empty() && extraData.getPtr()->recType == Nif::RC_NiStringExtraData)
+            {
+                // String markers may contain important information affecting the entire
+                // subtree of this node
+                Nif::NiStringExtraData *sd = (Nif::NiStringExtraData*)extraData.getPtr();
+
+                // FIXME: what to do here?
+
+            }
+        }
+    }
+
+    // next process the node
+    // AvoidNode              /* Morrowind only? */
+    // NiBSAnimationNode      /* Morrowind only? */
+    // NiBSParticleNode       /* Morrowind only? */
+    // NiBillboardNode
+    // BSBlastNode            /* Skyrim only */
+    // BSDamageStage          /* Skyrim only */
+    // BSFadeNode             /* Skyrim only */
+    // BSLeafAnimNode         /* Skyrim only */
+    // BSMasterParticleSystem /* Skyrim only */
+    // BSMultiBoundNode       /* Skyrim only */
+    // BSOrderedNode          /* Skyrim only */
+    // BSTreeNode             /* Skyrim only */
+    // BSValueNode            /* Skyrim only */
+    // NiSwitchNode           /* Skyrim only */
+    // FxWidget               /* not used in TES? */
+    //   FxButton             /* not used in TES? */
+    //   FxRadioButton        /* not used in TES? */
+    // BSDebrisNode           /* not used in TES? */
+    // NiBone                 /* not used in TES? */
+    // NiRoom                 /* not used in TES? */
+    // NiRoomGroup            /* not used in TES? */
+    // NiSortAdjustNode       /* not used in TES? */
+
+    // IDEA: use c++ inheritance here?
+    // e.g. maybe the Nif classes should generate the Ogre code relevant for itself?
+    // - pass ObjectScenePtr and setup whatever is required there
+    // - pass the current accumulated transform in case the object needs it
+    if (node->recType == Nif::RC_AvoidNode) // TES3 only
+    {
+        // TODO
+    }
+    else if (node->recType == Nif::RC_NiBSAnimationNode) // TES3 only
+    {
+        // TODO
+    }
+    else if (node->recType == Nif::RC_NiBSParticleNode)  // TES3 only
+    {
+        // TODO
+    }
+    else if (node->recType == Nif::RC_RootCollisionNode) // TES3 only
+    {
+        // TODO: e.g. NoM/NoM_ac_pool00.nif
+    }
+    else if (node->recType == Nif::RC_NiBillboardNode)
+    {
+        // TODO
+    }
+    else if (node->recType == Nif::RC_NiBillboardNode)
+    {
+        // TODO: TES5 only
+    }
+    // loop through the children, only NiNode has NiAVObject as children
+    const Nif::NiNode *ninode = dynamic_cast<const Nif::NiNode*>(node);
+    if(ninode)
+    {
+        const Nif::NodeList& children = ninode->children;
+        for(size_t i = 0; i < children.length(); i++)
+        {
+            if(!children[i].empty())
+                handleNode(nif, name, group, sceneNode, children[i].getPtr(),
+                              scene, bsxFlags, animflags, partflags, isRagdollFlag);
+        }
+    }
+
+    if (node->recType == Nif::RC_NiTriStrips || node->recType == Nif::RC_NiTriShape)
+    {
+        // create an Ogre Entity
+    }
+    else if (node->recType == BSSegmentedTriShape) // TES5 only
+    {
+    }
+    else if (node->recType == BSLODTriShape) // TES5 only
+    {
+    }
+    else if (node->recType == NiCamera)
+    {
+        // how to implement? (e.g. magiceffects/illusion.nif)
+    }
+    else if (node->recType == NiAutoNormalParticles || node->recType == NiRotatingParticles
+          || node->recType == NiParticleSystem || node->recType == BSStripParticleSystem)
+    {
+          //NiParticleSystem      e.g. architecture/anvil/lorgrenskeleton01.nif
+          //BSStripParticleSystem  in Skyrim only? e.g. actors/wisp/testwisp.nif
+    }
+    else if (node->recType == NiNode)
+    {
+        // recurse into it
+    }
+    else
+    {
+        //if the child is an NiPSParticleSystem, NiPortal, NiBezierMesh and NiRenderObject
+        // - ignore, not used in TES?
+    }
+           if the child is an NiDynamic Effect - same node also listed under effects
+}
+
 // Recursively traverse NIF tree to:
 // - Handle animation/particle/billboard nodes
 // - Extract tex keys (for animation) to scene->mTextKeys
@@ -1474,7 +1604,7 @@ void NifOgre::NIFObjectLoader::load (Ogre::SceneNode *sceneNode,
             ObjectScenePtr scene, const std::string &name, const std::string &group, int flags)
 {
     Nif::NIFFilePtr nif = Nif::Cache::getInstance().load(name);
-    if (nif->numRoots() < 1)
+    if (nif->numRoots() < 1) // the roots are specified in the NIF footer
     {
         nif->warn("Found no root nodes in "+name+".");
         return;
@@ -1483,6 +1613,8 @@ void NifOgre::NIFObjectLoader::load (Ogre::SceneNode *sceneNode,
     const Nif::Record *r = nif->getRoot(0);
     assert(r != NULL);
 
+    // Nif::Node is like an NiAVObject but actually a root node can be an NiObject
+    // TODO: check for real examples
     const Nif::Node *node = dynamic_cast<const Nif::Node*>(r);
     if (node == NULL)
     {
@@ -1491,6 +1623,7 @@ void NifOgre::NIFObjectLoader::load (Ogre::SceneNode *sceneNode,
         return;
     }
 
+    // TODO: maybe we skip creating skelbase for TES4/TES5 till later?
     if (Ogre::SkeletonManager::getSingleton().resourceExists(name) ||
        !NIFSkeletonLoader::createSkeleton(name, group, node).isNull())
     {
@@ -1806,7 +1939,7 @@ void NifOgre::NIFObjectLoader::loadTES4Kf (Ogre::Skeleton *skel, Nif::NIFFilePtr
         // (for TES4):
         //
         //   NiKeyframeController is replaced by NiTransformController (I think?) which is a
-        //   NiTimeController and is found in skeleton.nif.
+        //   subclass of NiTimeController and is found in skeleton.nif.
         //
         //   Different kinds of animations are found in different kf files, e.g. idle.kf,
         //   torchidle.kf, etc.

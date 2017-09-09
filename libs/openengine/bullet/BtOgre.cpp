@@ -146,7 +146,8 @@ void RigidBodyState::setWorldTransform(const btTransform &in)
     mSceneNode->setPosition(dv);
 
 #endif
-//#if 0
+    btTransform transform = mTransform *mCenterOfMassOffset;
+#if 0
     //btTransform transform = in * mCenterOfMassOffset;
     btTransform transform = mCenterOfMassOffset.inverse() * in;
 
@@ -168,7 +169,7 @@ void RigidBodyState::setWorldTransform(const btTransform &in)
 
     // take away parent's transform from the input
     inputTransform = parentTransform.inverse() * inputTransform;
-//#endif
+#endif
 #if 0
     // some debugging
     btVector3 vold = old.getOrigin();
@@ -207,13 +208,13 @@ void RigidBodyState::setWorldTransform(const btTransform &in)
     //mSceneNode->setPosition(pos.x()*ps.x, pos.y()*ps.y, pos.z()*ps.z);
 #endif
     // apply the input to the SceneNode
-    mSceneNode->setOrientation(inputTransform.extractQuaternion());
-    mSceneNode->setPosition(inputTransform.getTrans());
+    //mSceneNode->setOrientation(inputTransform.extractQuaternion());
+    //mSceneNode->setPosition(inputTransform.getTrans());
 
-    //btVector3 v = transform.getOrigin();
-    //btQuaternion q = transform.getRotation();
-    //mSceneNode->setOrientation(Ogre::Quaternion(q.w(), q.x(), q.y(), q.z()));
-    //mSceneNode->setPosition(Ogre::Vector3(v.x(), v.y(), v.z()));
+    btQuaternion q = transform.getRotation();
+    btVector3 v = transform.getOrigin();
+    //mSceneNode->_setDerivedOrientation(Ogre::Quaternion(q.w(), q.x(), q.y(), q.z()));
+    //mSceneNode->_setDerivedPosition(Ogre::Vector3(v.x(), v.y(), v.z()));
 }
 
 /*

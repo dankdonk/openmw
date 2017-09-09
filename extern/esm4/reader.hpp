@@ -188,12 +188,12 @@ namespace ESM4
 
         template<typename T>
         inline bool get(T& t) {
-            return mStream->read(&t, sizeof(T)) == sizeof(T);
+            return mStream->read(&t, sizeof(T)) == sizeof(T); // FIXME: try/catch block needed?
         }
 
         // for arrays
         inline bool get(void* p, std::size_t size) {
-            return mStream->read(p, size) == size;
+            return mStream->read(p, size) == size;            // FIXME: try/catch block needed?
         }
 
         // ModIndex adjusted formId according to master file dependencies

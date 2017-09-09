@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015, 2016 cc9cii
+  Copyright (C) 2015-2017 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -80,7 +80,8 @@ bool ESM4::Reader::restoreContext(const ESM4::ReaderContext& ctx)
 
     //return getRecordHeader(); // can't use it because mStream may have been switched
 
-    mObserver->update(mCtx.recHeaderSize);
+    if (mObserver)
+        mObserver->update(mCtx.recHeaderSize);
 
     return (mStream->read(&mRecordHeader, mCtx.recHeaderSize) == mCtx.recHeaderSize
             && (mEndOfRecord = mStream->tell() + mRecordHeader.record.dataSize)); // for keeping track of sub records
@@ -104,7 +105,8 @@ bool ESM4::Reader::skipNextGroupCellChild()
 
     mCtx.groupStack.back().second -= hdr.group.groupSize;
     mStream->skip(hdr.group.groupSize - (std::uint32_t)mCtx.recHeaderSize); // already read the header
-    mObserver->update(hdr.group.groupSize);
+    if (mObserver)
+        mObserver->update(hdr.group.groupSize);
 
     return true;
 }
@@ -137,7 +139,9 @@ bool ESM4::Reader::getRecordHeader()
     }
 
     // keep track of data left to read from the file
-    mObserver->update(mCtx.recHeaderSize);
+    // FIXME: having a default instance of mObserver might be faster than checking for null all the time?
+    if (mObserver)
+        mObserver->update(mCtx.recHeaderSize);
 
     return (mStream->read(&mRecordHeader, mCtx.recHeaderSize) == mCtx.recHeaderSize
             && (mEndOfRecord = mStream->tell() + mRecordHeader.record.dataSize)); // for keeping track of sub records
@@ -324,7 +328,8 @@ void ESM4::Reader::getRecordData()
     mCtx.groupStack.back().second -= (std::uint32_t)mCtx.recHeaderSize + mRecordHeader.record.dataSize;
 
     // keep track of data left to read from the file
-    mObserver->update(mRecordHeader.record.dataSize);
+    if (mObserver)
+        mObserver->update(mRecordHeader.record.dataSize);
 
     //std::cout << "data size 0x" << std::hex << mRecordHeader.record.dataSize << std::endl; // FIXME
 }
@@ -365,7 +370,8 @@ void ESM4::Reader::skipGroup()
     mStream->skip(mRecordHeader.group.groupSize - (std::uint32_t)mCtx.recHeaderSize);
 
     // keep track of data left to read from the file
-    mObserver->update((std::size_t)mRecordHeader.group.groupSize - mCtx.recHeaderSize);
+    if (mObserver)
+        mObserver->update((std::size_t)mRecordHeader.group.groupSize - mCtx.recHeaderSize);
 
     if (!mCtx.groupStack.empty())
         mCtx.groupStack.back().second -= mRecordHeader.group.groupSize;
@@ -380,7 +386,8 @@ void ESM4::Reader::skipRecordData()
     mCtx.groupStack.back().second -= (std::uint32_t)mCtx.recHeaderSize + mRecordHeader.record.dataSize;
 
     // keep track of data left to read from the file
-    mObserver->update(mRecordHeader.record.dataSize);
+    if (mObserver)
+        mObserver->update(mRecordHeader.record.dataSize);
 }
 
 void ESM4::Reader::skipSubRecordData()

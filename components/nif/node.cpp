@@ -209,7 +209,7 @@ void Nif::NiNode::post(NIFFile *nif)
 
     for(size_t i = 0;i < children.length();i++)
     {
-        // Why would a unique list of children contain empty refs?
+        // Sometimes a unique list of children can contain empty refs e.g. NoM/NoM_ac_pool00.nif
         if(!children[i].empty())
             children[i]->parent = this;
     }

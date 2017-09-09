@@ -123,7 +123,7 @@ void extractControlledNodes(Nif::NIFFilePtr kfFile, std::set<std::string>& contr
 // TES5 0x1: animated, 0x2: havok
 // TES4 0x1: havok, 0x2: collision, 0x4: skeleton, 0x8: animated
 //
-// NOTE: above test fails with meshes\clutter\minotaurhead01.nif (same flags but it is not a ragdoll)
+// NOTE: above test fails with meshes\clutter\minotaurhead01.nif (0xb but it is not a ragdoll)
 // so an additional check needs to be made to see if it is animated (i.e. has a controller)
 // NOTE: the check for controller only works at the root node
 //
@@ -209,6 +209,8 @@ btTriangleMesh *createBhkPackedNiTriStripsShape(const Nif::Node *node,
 }
 
 // NOTE: calls new, delete is done elsewhere
+// FIXME: for TargetWeight in TargetHeavy01.NIF, we don't want to bake in the transform here
+//        not sure how to fix
 btConvexHullShape *createBhkConvexVerticesShape(const Nif::Node *node,
         Ogre::Vector3& translation, Ogre::Quaternion& rotation, const Nif::bhkShape *bhkShape)
 {
@@ -460,6 +462,7 @@ btCollisionShape *createBhkShape(const Nif::Node *node,
     }
 }
 
+// FIXME: not used anywhere
 btCollisionShape *createConstraint(const Nif::Node *node, const Nif::bhkShape *bhkShape)
 {
     if (!bhkShape) // assumes node is valid
@@ -660,7 +663,7 @@ void ManualBulletShapeLoader::loadResource(Ogre::Resource *resource)
     if (r->nifVer >= 0x0a000100) // TES4 style, i.e. from 10.0.1.0
         handleNode(node, 0); // start with 0 bsxFlag
     else
-        handleNode(node, 0/*flags*/, false/*isCollsionNode*/, false/*raycasting*/); // isAnimated=false by default
+        handleNode(node, /*flags*/0, /*isCollsionNode*/false, /*raycasting*/false); // isAnimated=false by default
 
     // FIXME: TES4 skeleton.nif has a bounding box as well as havok collision shapes
     // We need a way to deal with having both (one for fast check and another for detailed check)
@@ -812,6 +815,15 @@ void ManualBulletShapeLoader::handleBhkShape(const Nif::Node *node, unsigned int
 
                 Ogre::Vector3 translation(trans);
                 Ogre::Quaternion rotation(rot);
+#if 0
+                Ogre::Vector3 translation = Ogre::Vector3::ZERO;
+                Ogre::Quaternion rotation = Ogre::Quaternion::IDENTITY;
+                //if (!isRagdoll(node, bsxFlags))
+                {
+                    translation = trans;
+                    rotation = rot;
+                }
+#endif
                 mShape->mCollisionShape = createBhkShape(node, translation, rotation, bhkShape);
 
                 mShape->mRaycastingShape = mShape->mCollisionShape; // FIXME
@@ -838,7 +850,7 @@ void ManualBulletShapeLoader::handleBhkShape(const Nif::Node *node, unsigned int
 #endif
             {
                 //if (node->name == "HeavyTargetStructure01")
-                //if (node->name == "TargetchainLeft01")
+                //if (node->name == "TargetchainRight01")
                     //std::cout << "break" << std::endl;
 
 
@@ -855,6 +867,7 @@ void ManualBulletShapeLoader::handleBhkShape(const Nif::Node *node, unsigned int
                 Ogre::Vector3 v = Ogre::Vector3::ZERO;
                 Ogre::Quaternion q = Ogre::Quaternion::IDENTITY;
                 mShape->mCollisionShape = createBhkShape(node, v, q, bhkShape);
+                // for a capsule shape v is the midpoint vector (in Havok scale) at this point
 
                 mShape->mRaycastingShape = mShape->mCollisionShape; // FIXME
 
@@ -865,7 +878,15 @@ void ManualBulletShapeLoader::handleBhkShape(const Nif::Node *node, unsigned int
                 t.makeTransform(trans*7, Ogre::Vector3(1.f), rot); // assume uniform scale
                 t = node->getWorldTransform() * t * shapeTrans;
 
-                mShape->mBoxTranslation = t.getTrans();
+                // FIXME: HACK
+                // check if constraints exist and if so fix pivotA and pivotB here?
+                // createBhkShape will have v and q modified in case of RC_bhkCapsuleShape
+                // and hence shapeTrans will be non-zero/identity (?better description?)
+                //mShape->mShapeTrans.makeTransform(v, Ogre::Vector3(1.f), q); // assume uniform scale
+                mShape->mShapeTrans = v;
+                //mShape->mShapeTrans = t;
+
+                mShape->mBoxTranslation = t.getTrans(); // FIXME: gets overwritten the next time!!
                 mShape->mBoxRotation = t.extractQuaternion();
             }
 
@@ -912,6 +933,7 @@ void ManualBulletShapeLoader::handleBhkCollisionObject(const Nif::Node *node, un
     Ogre::Vector3 translation = Ogre::Vector3::ZERO;
     Ogre::Quaternion rotation = Ogre::Quaternion::IDENTITY;
 
+    // apply rotation and translation only if the collision object's body is a bhkRigidBodyT type
     if(bhkCollObj->body.getPtr()->recType == Nif::RC_bhkRigidBodyT)
     {
         rotation = Ogre::Quaternion(rigidBody->rotation.w,
@@ -919,8 +941,11 @@ void ManualBulletShapeLoader::handleBhkCollisionObject(const Nif::Node *node, un
         translation = Ogre::Vector3(rigidBody->translation.x,
                 rigidBody->translation.y, rigidBody->translation.z);
     }
+    // aftr this call mShape->mBoxTranslation and mShape->mBoxRotation are updated for the shape
     handleBhkShape(node, bsxFlags, translation, rotation, rigidBody->shape.getPtr());
 
+    // FIXME: the logic seems to be broken here, mShape is a global one for the
+    //        ManualBulletShapeLoader, not local for this bhkCollisionObject
     if (mShape->mIsRagdoll)
     {
         //std::cout << "bhkCollisionObject: ragdoll " << node->name << std::endl;
@@ -998,6 +1023,10 @@ void ManualBulletShapeLoader::handleBhkCollisionObject(const Nif::Node *node, un
         // unsigned char solverDeactivation; // http://niftools.sourceforge.net/doc/nif/SolverDeactivation.html
         // unsigned char motionQuality;      // http://niftools.sourceforge.net/doc/nif/MotionQuality.html
 
+        // FIXME: store temporary mShapeTrans keyed by recIndex for later retreival
+        // FIXME: ignored insert failures...
+        mShape->mShapeTransMap.insert(std::make_pair(rigidBody->recIndex, mShape->mShapeTrans));
+
         // cleanup for the next node's call to handleBhkShape()
         // NOTE: ragdoll shapes are deleted in the dtor of the BulletShape object
         mShape->mCollisionShape = nullptr;
@@ -1028,9 +1057,11 @@ void ManualBulletShapeLoader::handleBhkCollisionObject(const Nif::Node *node, un
             // At least check if rigidBody->recIndex == rigidBody->constraints[i]->entities[0]->recIndex
             if (rigidBody->constraints[i]->recType == Nif::RC_bhkRagdollConstraint)
             {
-    if (/*node->name == "TargetchainRight01" || */node->name == "TargetchainRight02")
+#if 0
+    if (node->name == "TargetchainRight02" /*|| node->name == "TargetchainRight02"*/)
     //if (node->name == "TargetHeavyTarget")
         continue;
+#endif
                 mShape->mJoints[rigidBody->recIndex].push_back(
                         std::make_pair(rigidBody->constraints[i]->entities[0]->recIndex,
                                        rigidBody->constraints[i]->entities[1]->recIndex));
@@ -1038,12 +1069,108 @@ void ManualBulletShapeLoader::handleBhkCollisionObject(const Nif::Node *node, un
                     Nif::RagdollDescriptor ragdollDesc;
                     const Nif::bhkRagdollConstraint *ragdoll
                         = static_cast<const Nif::bhkRagdollConstraint*>(rigidBody->constraints[i].getPtr());
-                    ragdollDesc.pivotA = ragdoll->ragdoll.pivotA;
-                    ragdollDesc.planeA = ragdoll->ragdoll.planeA;
-                    ragdollDesc.twistA = ragdoll->ragdoll.twistA;
-                    ragdollDesc.pivotB = ragdoll->ragdoll.pivotB;
-                    ragdollDesc.planeB = ragdoll->ragdoll.planeB;
-                    ragdollDesc.twistB = ragdoll->ragdoll.twistB;
+
+                    // FIXME: try to get the NIF frame of reference so that pivotA and pivotB
+                    // can be "fixed" with correct frames of references
+                    const Nif::bhkConstraint *constraint = rigidBody->constraints[i].getPtr();
+                    // rbA is not needed since this we already have node, translation and rotation
+                    //const Nif::bhkRigidBody *rbA
+                        //= static_cast<const Nif::bhkRigidBody*>(constraint->entities[0].getPtr()); // 0 HACK
+                    // however it doesn't seem possible to get the node info from the rigid body
+                    // maybe the shape's mbox translation needs to be used? (but how to get the
+                    // second shape from the entity?)
+                    const Nif::bhkRigidBody *rbB
+                        = static_cast<const Nif::bhkRigidBody*>(constraint->entities[1].getPtr()); // 1 HACK
+
+                Ogre::Matrix4 rbT = Ogre::Matrix4::IDENTITY;
+                typedef std::map<size_t, btRigidBody::btRigidBodyConstructionInfo>::iterator ConstructionInfoIter;
+                ConstructionInfoIter itCIA(mShape->mRigidBodyCI.find(rigidBody->recIndex));
+                if (itCIA == mShape->mRigidBodyCI.end())
+                    continue; // FIXME: shouldn't happen, so probably best to throw here
+                btQuaternion qa = itCIA->second.m_startWorldTransform.getRotation();
+
+    if (rigidBody->recType == Nif::RC_bhkRigidBodyT)
+    {
+                rbT.makeTransform(translation*7, Ogre::Vector3(1.f), rotation);
+    }
+
+    if (rigidBody->shape->recType == Nif::RC_bhkCapsuleShape)
+    {
+                    //ragdollDesc.pivotA = mShape->mShapeTrans * ragdoll->ragdoll.pivotA *7; // FIXME
+                    Ogre::Vector3 t = mShape->mShapeTrans; // t is the midpoint vector
+                    Ogre::Vector4 p = ragdoll->ragdoll.pivotA * 7;
+                    ragdollDesc.pivotA = Ogre::Vector4(p.x-t.x, p.y-t.y, p.z-t.z, p.w);
+                    ragdollDesc.planeA = ragdoll->ragdoll.planeA * 7;
+                    ragdollDesc.twistA = ragdoll->ragdoll.twistA * 7;
+    }
+    else
+    {
+#if 0
+                    Ogre::Vector4 p = ragdoll->ragdoll.pivotA * 7;
+                    Ogre::Vector3 v(p.x, p.y, p.z);
+                v = Ogre::Quaternion(qa.w(), qa.x(), qa.y(), qa.z()) * v; // rotate as per m_startWorldTransform
+                    ragdollDesc.pivotA = Ogre::Vector4(v.x, v.y, v.z, p.w);
+#endif
+
+
+                    //ragdollDesc.pivotA = rbT.inverse() * ragdoll->ragdoll.pivotA * 7;
+                    ragdollDesc.pivotA = ragdoll->ragdoll.pivotA * 7;
+                    ragdollDesc.planeA = ragdoll->ragdoll.planeA * 7;
+                    ragdollDesc.twistA = ragdoll->ragdoll.twistA * 7;
+    }
+
+
+
+                Ogre::Matrix4 rbTB = Ogre::Matrix4::IDENTITY;
+                typedef std::map<size_t, btRigidBody::btRigidBodyConstructionInfo>::iterator ConstructionInfoIter;
+                ConstructionInfoIter itCI(mShape->mRigidBodyCI.find(rbB->recIndex));
+                if (itCI == mShape->mRigidBodyCI.end())
+                    continue; // FIXME: shouldn't happen, so probably best to throw here
+                btQuaternion q = itCI->second.m_startWorldTransform.getRotation();
+                //btTransform qt(q, btVector3(0.f, 0.f, 0.f)); // rotate only
+
+
+
+
+    if (rbB->recType == Nif::RC_bhkRigidBodyT)
+    {
+                Ogre::Vector3 rbBtrans = Ogre::Vector3::ZERO;
+                Ogre::Quaternion rbBrot = Ogre::Quaternion::IDENTITY;
+
+                    rbBrot = Ogre::Quaternion(rbB->rotation.w,
+                            rbB->rotation.x, rbB->rotation.y, rbB->rotation.z);
+                    rbBtrans = Ogre::Vector3(rbB->translation.x,
+                            rbB->translation.y, rbB->translation.z);
+                rbTB.makeTransform(rbBtrans*7, Ogre::Vector3(1.f), rbBrot);
+    }
+    if (rbB->shape->recType == Nif::RC_bhkCapsuleShape)
+    {
+                    Ogre::Vector3 trans = mShape->mShapeTransMap[rbB->recIndex]; // FIXME: just assume one exists!
+                    //ragdollDesc.pivotB = trans * ragdoll->ragdoll.pivotB *7; // FIXME
+                    Ogre::Vector3 t = trans;
+                    Ogre::Vector4 p = ragdoll->ragdoll.pivotB * 7;
+                    Ogre::Vector3 v(p.x, p.y, p.z);
+                v = Ogre::Quaternion(q.w(), q.x(), q.y(), q.z()) * v; // rotate as per m_startWorldTransform
+                    ragdollDesc.pivotB = Ogre::Vector4(v.x-t.x, v.y-t.y, v.z-t.z, p.w);
+                    ragdollDesc.planeB = ragdoll->ragdoll.planeB * 7;
+                    ragdollDesc.twistB = ragdoll->ragdoll.twistB * 7;
+    }
+    else
+    {
+#if 0
+                    Ogre::Vector4 p = ragdoll->ragdoll.pivotB * 7;
+                    Ogre::Vector3 v(p.x, p.y, p.z);
+                v = Ogre::Quaternion(q.w(), q.x(), q.y(), q.z()) * v; // rotate as per m_startWorldTransform
+                    ragdollDesc.pivotB = Ogre::Vector4(v.x, v.y, v.z, p.w);
+
+#endif
+
+
+                    //ragdollDesc.pivotB = rbTB.inverse() * ragdoll->ragdoll.pivotB * 7;
+                    ragdollDesc.pivotB = ragdoll->ragdoll.pivotB * 7;
+                    ragdollDesc.planeB = ragdoll->ragdoll.planeB * 7;
+                    ragdollDesc.twistB = ragdoll->ragdoll.twistB * 7;
+    }
                     ragdollDesc.coneMaxAngle = ragdoll->ragdoll.coneMaxAngle;
                     ragdollDesc.planeMinAngle = ragdoll->ragdoll.planeMinAngle;
                     ragdollDesc.planeMaxAngle = ragdoll->ragdoll.planeMaxAngle;
@@ -1051,7 +1178,7 @@ void ManualBulletShapeLoader::handleBhkCollisionObject(const Nif::Node *node, un
                     ragdollDesc.twistMaxAngle = ragdoll->ragdoll.twistMaxAngle;
                     ragdollDesc.maxFriction = ragdoll->ragdoll.maxFriction;
 
-                    mShape->mNifRagdollDesc[rigidBody->recIndex] = ragdollDesc; // cast away compiler warning
+                    mShape->mNifRagdollDesc[std::make_pair(rigidBody->recIndex, rbB->recIndex)] = ragdollDesc; // cast away compiler warning
                 }
                 else
                     continue; // FIXME: support other types
@@ -1120,7 +1247,7 @@ void ManualBulletShapeLoader::handleNode(const Nif::Node *node, unsigned int bsx
         for (unsigned int i = 0; i < node->extras.length(); ++i)
         {
             extraData = node->extras[i]; // get the next extra data in the list
-            assert(extra.getPtr() != NULL);
+            assert(extraData.getPtr() != NULL);
 
             if (!extraData.empty() && extraData->name == "BSX")
             {

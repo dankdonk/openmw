@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015, 2016 cc9cii
+  Copyright (C) 2015-2017 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -147,7 +147,7 @@ namespace ESM4
         REC_RELA = MKTAG('R','E','L','A'), // Relationship
         REC_REVB = MKTAG('R','E','V','B'), // Reverb Parameters
         REC_RFCT = MKTAG('R','F','C','T'), // Visual Effect
-        REC_SBSP = MKTAG('S','B','S','P'), // Subspace (Oblivion only?)
+        REC_SBSP = MKTAG('S','B','S','P'), // Subspace (TES4 only?)
         REC_SCEN = MKTAG('S','C','E','N'), // Scene
         REC_SCRL = MKTAG('S','C','R','L'), // Scroll
         REC_SGST = MKTAG('S','G','S','T'), // Sigil Stone
@@ -173,29 +173,24 @@ namespace ESM4
         REC_WOOP = MKTAG('W','O','O','P'), // Word Of Power
         REC_WRLD = MKTAG('W','R','L','D'), // World Space
         REC_WTHR = MKTAG('W','T','H','R'), // Weather
-        REC_ACRE = MKTAG('A','C','R','E'), // Placed Creature (Oblivion only?)
-        REC_PGRD = MKTAG('P','G','R','D'), // Pathgrid (Oblivion only?)
-        REC_ROAD = MKTAG('R','O','A','D')  // Road (Oblivion only?)
+        REC_ACRE = MKTAG('A','C','R','E'), // Placed Creature (TES4 only?)
+        REC_PGRD = MKTAG('P','G','R','D'), // Pathgrid (TES4 only?)
+        REC_ROAD = MKTAG('R','O','A','D')  // Road (TES4 only?)
     };
 
     enum SubRecordTypes
     {
-        // below appear in TES4 record
         SUB_HEDR = MKTAG('H','E','D','R'),
         SUB_CNAM = MKTAG('C','N','A','M'),
-        SUB_SNAM = MKTAG('S','N','A','M'),
+        SUB_SNAM = MKTAG('S','N','A','M'), // TES4 only?
         SUB_MAST = MKTAG('M','A','S','T'),
         SUB_DATA = MKTAG('D','A','T','A'),
         SUB_ONAM = MKTAG('O','N','A','M'),
         SUB_INTV = MKTAG('I','N','T','V'),
         SUB_INCC = MKTAG('I','N','C','C'),
-        SUB_OFST = MKTAG('O','F','S','T'), // Oblivion only?
-        SUB_DELE = MKTAG('D','E','L','E'), // Oblivion only?
+        SUB_OFST = MKTAG('O','F','S','T'), // TES4 only?
+        SUB_DELE = MKTAG('D','E','L','E'), // TES4 only?
 
-
-        // below appear in WRLD records
-      //SUB_CNAM = MKTAG('C','N','A','M'),
-      //SUB_DATA = MKTAG('D','A','T','A'),
         SUB_DNAM = MKTAG('D','N','A','M'),
         SUB_EDID = MKTAG('E','D','I','D'),
         SUB_FULL = MKTAG('F','U','L','L'),
@@ -209,8 +204,6 @@ namespace ESM4
         SUB_NAM4 = MKTAG('N','A','M','4'),
         SUB_NAM9 = MKTAG('N','A','M','9'),
         SUB_NAMA = MKTAG('N','A','M','A'),
-      //SUB_OFST = MKTAG('O','F','S','T'),
-      //SUB_ONAM = MKTAG('O','N','A','M'),
         SUB_PNAM = MKTAG('P','N','A','M'),
         SUB_RNAM = MKTAG('R','N','A','M'),
         SUB_TNAM = MKTAG('T','N','A','M'),
@@ -219,42 +212,27 @@ namespace ESM4
         SUB_WNAM = MKTAG('W','N','A','M'),
         SUB_XEZN = MKTAG('X','E','Z','N'),
         SUB_XLCN = MKTAG('X','L','C','N'),
-      //SUB_XWEM = MKTAG('X','W','E','M'),
         SUB_XXXX = MKTAG('X','X','X','X'),
         SUB_ZNAM = MKTAG('Z','N','A','M'),
         SUB_MODT = MKTAG('M','O','D','T'),
-      //SUB_SNAM = MKTAG('S','N','A','M'), // Oblivion only?
-        SUB_ICON = MKTAG('I','C','O','N'), // Oblivion only?
+        SUB_ICON = MKTAG('I','C','O','N'), // TES4 only?
 
-
-        // below appear in NAVI records
-      //SUB_EDID = MKTAG('E','D','I','D'),
         SUB_NVER = MKTAG('N','V','E','R'),
         SUB_NVMI = MKTAG('N','V','M','I'),
         SUB_NVPP = MKTAG('N','V','P','P'),
         SUB_NVSI = MKTAG('N','V','S','I'),
 
-        // below appear in NAVM records
         SUB_NVNM = MKTAG('N','V','N','M'),
-      //SUB_ONAM = MKTAG('O','N','A','M'),
-      //SUB_PNAM = MKTAG('P','N','A','M'),
         SUB_NNAM = MKTAG('N','N','A','M'),
 
-        // below appear in CELL records
-      //SUB_EDID = MKTAG('E','D','I','D'),
-      //SUB_FULL = MKTAG('F','U','L','L'),
-      //SUB_DATA = MKTAG('D','A','T','A'),
         SUB_XCLC = MKTAG('X','C','L','C'),
         SUB_XCLL = MKTAG('X','C','L','L'),
         SUB_TVDT = MKTAG('T','V','D','T'),
-      //SUB_MHDT = MKTAG('M','H','D','T'),
         SUB_XCGD = MKTAG('X','C','G','D'),
-      //SUB_LTMP = MKTAG('L','T','M','P'),
         SUB_LNAM = MKTAG('L','N','A','M'),
         SUB_XCLW = MKTAG('X','C','L','W'),
         SUB_XNAM = MKTAG('X','N','A','M'),
         SUB_XCLR = MKTAG('X','C','L','R'),
-      //SUB_XLCN = MKTAG('X','L','C','N'),
         SUB_XWCS = MKTAG('X','W','C','S'),
         SUB_XWCN = MKTAG('X','W','C','N'),
         SUB_XWCU = MKTAG('X','W','C','U'),
@@ -264,15 +242,12 @@ namespace ESM4
         SUB_XWEM = MKTAG('X','W','E','M'),
         SUB_XCCM = MKTAG('X','C','C','M'),
         SUB_XCAS = MKTAG('X','C','A','S'),
-      //SUB_XEZN = MKTAG('X','E','Z','N'),
         SUB_XCMO = MKTAG('X','C','M','O'),
         SUB_XCIM = MKTAG('X','C','I','M'),
-        SUB_XCMT = MKTAG('X','C','M','T'), // Oblivion only?
-        SUB_XRNK = MKTAG('X','R','N','K'), // Oblivion only?
-        SUB_XGLB = MKTAG('X','G','L','B'), // Oblivion only?
+        SUB_XCMT = MKTAG('X','C','M','T'), // TES4 only?
+        SUB_XRNK = MKTAG('X','R','N','K'), // TES4 only?
+        SUB_XGLB = MKTAG('X','G','L','B'), // TES4 only?
 
-        // below appear in LAND records
-      //SUB_DATA = MKTAG('D','A','T','A'),
         SUB_VNML = MKTAG('V','N','M','L'),
         SUB_VHGT = MKTAG('V','H','G','T'),
         SUB_VCLR = MKTAG('V','C','L','R'),
@@ -281,52 +256,29 @@ namespace ESM4
         SUB_VTXT = MKTAG('V','T','X','T'),
         SUB_VTEX = MKTAG('V','T','E','X'),
 
-        // below appear in LTEX records
-      //SUB_EDID = MKTAG('E','D','I','D'),
-      //SUB_ICON = MKTAG('I','C','O','N'), // Oblivion only?
-      //SUB_SNAM = MKTAG('S','N','A','M'), // Oblivion only?
-      //SUB_TNAM = MKTAG('T','N','A','M'),
-      //SUB_MNAM = MKTAG('M','N','A','M'),
         SUB_HNAM = MKTAG('H','N','A','M'),
         SUB_GNAM = MKTAG('G','N','A','M'),
 
-        // below appear in REGN records
-      //SUB_EDID = MKTAG('E','D','I','D'),
-      //SUB_ICON = MKTAG('I','C','O','N'),
-      //SUB_WNAM = MKTAG('W','N','A','M'),
         SUB_RCLR = MKTAG('R','C','L','R'),
         SUB_RPLI = MKTAG('R','P','L','I'),
         SUB_RPLD = MKTAG('R','P','L','D'),
         SUB_RDAT = MKTAG('R','D','A','T'),
-        SUB_RDMD = MKTAG('R','D','M','D'), // Oblivion only?
-        SUB_RDSD = MKTAG('R','D','S','D'), // Oblivion only?
-        SUB_RDGS = MKTAG('R','D','G','S'), // Oblivion only?
+        SUB_RDMD = MKTAG('R','D','M','D'), // TES4 only?
+        SUB_RDSD = MKTAG('R','D','S','D'), // TES4 only?
+        SUB_RDGS = MKTAG('R','D','G','S'), // TES4 only?
         SUB_RDMO = MKTAG('R','D','M','O'),
         SUB_RDSA = MKTAG('R','D','S','A'),
         SUB_RDWT = MKTAG('R','D','W','T'),
         SUB_RDOT = MKTAG('R','D','O','T'),
         SUB_RDMP = MKTAG('R','D','M','P'),
 
-        // below appear in STAT records
-      //SUB_EDID = MKTAG('E','D','I','D'),
-      //SUB_MODL = MKTAG('M','O','D','L'),
         SUB_MODB = MKTAG('M','O','D','B'),
         SUB_OBND = MKTAG('O','B','N','D'),
-      //SUB_MODT = MKTAG('M','O','D','T'),
-      //SUB_MNAM = MKTAG('M','N','A','M'),
-      //SUB_DNAM = MKTAG('D','N','A','M'),
         SUB_MODS = MKTAG('M','O','D','S'),
 
-        // below appear in REFR records
-      //SUB_EDID = MKTAG('E','D','I','D'),
-      //SUB_FULL = MKTAG('F','U','L','L'),
-      //SUB_DATA = MKTAG('D','A','T','A'),
         SUB_NAME = MKTAG('N','A','M','E'),
         SUB_XMRK = MKTAG('X','M','R','K'),
         SUB_FNAM = MKTAG('F','N','A','M'),
-      //SUB_XOWN = MKTAG('X','O','W','N'),
-      //SUB_XRNK = MKTAG('X','R','N','K'),
-      //SUB_XGLB = MKTAG('X','G','L','B'),
         SUB_XSCL = MKTAG('X','S','C','L'),
         SUB_XTEL = MKTAG('X','T','E','L'),
         SUB_XTRG = MKTAG('X','T','R','G'),
@@ -339,14 +291,11 @@ namespace ESM4
         SUB_XRTM = MKTAG('X','R','T','M'),
         SUB_XACT = MKTAG('X','A','C','T'),
         SUB_XCNT = MKTAG('X','C','N','T'),
-      //SUB_TNAM = MKTAG('T','N','A','M'),
-      //SUB_ONAM = MKTAG('O','N','A','M'),
         SUB_VMAD = MKTAG('V','M','A','D'),
         SUB_XPRM = MKTAG('X','P','R','M'),
         SUB_XMBO = MKTAG('X','M','B','O'),
         SUB_XPOD = MKTAG('X','P','O','D'),
         SUB_XRMR = MKTAG('X','R','M','R'),
-      //SUB_LNAM = MKTAG('L','N','A','M'),
         SUB_INAM = MKTAG('I','N','A','M'),
         SUB_SCHR = MKTAG('S','C','H','R'),
         SUB_XLRM = MKTAG('X','L','R','M'),
@@ -365,7 +314,6 @@ namespace ESM4
         SUB_XCVR = MKTAG('X','C','V','R'),
         SUB_XCZA = MKTAG('X','C','Z','A'),
         SUB_XCZC = MKTAG('X','C','Z','C'),
-      //SUB_XEZN = MKTAG('X','E','Z','N'),
         SUB_XFVC = MKTAG('X','F','V','C'),
         SUB_XHTW = MKTAG('X','H','T','W'),
         SUB_XIS2 = MKTAG('X','I','S','2'),
@@ -374,38 +322,26 @@ namespace ESM4
         SUB_XPWR = MKTAG('X','P','W','R'),
         SUB_XTRI = MKTAG('X','T','R','I'),
         SUB_XATR = MKTAG('X','A','T','R'),
-      //SUB_XWCN = MKTAG('X','W','C','N'),
-      //SUB_XWCU = MKTAG('X','W','C','U'),
         SUB_XPRD = MKTAG('X','P','R','D'),
         SUB_XPPA = MKTAG('X','P','P','A'),
         SUB_PDTO = MKTAG('P','D','T','O'),
         SUB_XLRL = MKTAG('X','L','R','L'),
 
-        // below appear in CONT records
-      //SUB_MODB = MKTAG('M','O','D','B'),
-      //SUB_MODT = MKTAG('M','O','D','T'),
-      //SUB_MODS = MKTAG('M','O','D','S'),
         SUB_QNAM = MKTAG('Q','N','A','M'),
-      //SUB_VMAD = MKTAG('V','M','A','D'),
         SUB_COCT = MKTAG('C','O','C','T'),
         SUB_COED = MKTAG('C','O','E','D'),
         SUB_CNTO = MKTAG('C','N','T','O'),
         SUB_SCRI = MKTAG('S','C','R','I'),
 
-        // below appear in ANIO records
         SUB_BNAM = MKTAG('B','N','A','M'),
 
-        // below appear in ARMO records
         SUB_BMDT = MKTAG('B','M','D','T'),
-      //SUB_SCRI = MKTAG('S','C','R','I'),
         SUB_MOD2 = MKTAG('M','O','D','2'),
         SUB_MOD3 = MKTAG('M','O','D','3'),
         SUB_MOD4 = MKTAG('M','O','D','4'),
-      //SUB_MODB = MKTAG('M','O','D','B'),
         SUB_MO2B = MKTAG('M','O','2','B'),
         SUB_MO3B = MKTAG('M','O','3','B'),
         SUB_MO4B = MKTAG('M','O','4','B'),
-      //SUB_MODT = MKTAG('M','O','D','T'),
         SUB_MO2T = MKTAG('M','O','2','T'),
         SUB_MO3T = MKTAG('M','O','3','T'),
         SUB_MO4T = MKTAG('M','O','4','T'),
@@ -413,38 +349,22 @@ namespace ESM4
         SUB_ENAM = MKTAG('E','N','A','M'),
         SUB_ICO2 = MKTAG('I','C','O','2'),
 
-        // below appear in NPC_ records
-      //SUB_MODB = MKTAG('M','O','D','B'),
         SUB_ACBS = MKTAG('A','C','B','S'),
-      //SUB_SNAM = MKTAG('S','N','A','M'),
-      //SUB_INAM = MKTAG('I','N','A','M'),
-      //SUB_RNAM = MKTAG('R','N','A','M'),
         SUB_SPLO = MKTAG('S','P','L','O'),
-      //SUB_SCRI = MKTAG('S','C','R','I'),
-      //SUB_CNTO = MKTAG('C','N','T','O'),
         SUB_AIDT = MKTAG('A','I','D','T'),
         SUB_PKID = MKTAG('P','K','I','D'),
-      //SUB_CNAM = MKTAG('C','N','A','M'),
-      //SUB_HNAM = MKTAG('H','N','A','M'),
-      //SUB_LNAM = MKTAG('L','N','A','M'),
-      //SUB_ENAM = MKTAG('E','N','A','M'),
         SUB_HCLR = MKTAG('H','C','L','R'),
-      //SUB_ZNAM = MKTAG('Z','N','A','M'),
         SUB_FGGS = MKTAG('F','G','G','S'),
         SUB_FGGA = MKTAG('F','G','G','A'),
-      //SUB_FNAM = MKTAG('F','N','A','M'),
         SUB_FGTS = MKTAG('F','G','T','S'),
         SUB_KFFZ = MKTAG('K','F','F','Z'),
 
-        // below appear in FLOR records
         SUB_PFIG = MKTAG('P','F','I','G'),
         SUB_PFPC = MKTAG('P','F','P','C'),
 
-        // below appear in ACHR records
         SUB_XHRS = MKTAG('X','H','R','S'),
         SUB_XMRC = MKTAG('X','M','R','C'),
 
-        // below appear in SOUN records
         SUB_SNDD = MKTAG('S','N','D','D'),
         SUB_SNDX = MKTAG('S','N','D','X'),
 
@@ -455,7 +375,6 @@ namespace ESM4
         SUB_EFIT = MKTAG('E','F','I','T'),
         SUB_SCIT = MKTAG('S','C','I','T'),
 
-        // below appear in SLGM records
         SUB_SOUL = MKTAG('S','O','U','L'),
         SUB_SLCP = MKTAG('S','L','C','P'),
 
@@ -760,8 +679,8 @@ namespace ESM4
         std::int32_t  type;
         std::uint16_t stamp;     // & 0xff for day, & 0xff00 for months since Dec 2002 (i.e. 1 = Jan 2003)
         std::uint16_t unknown;
-        std::uint16_t version;   // not in Oblivion
-        std::uint16_t unknown2;  // not in Oblivion
+        std::uint16_t version;   // not in TES4
+        std::uint16_t unknown2;  // not in TES4
     };
 
     struct RecordTypeHeader
@@ -771,8 +690,8 @@ namespace ESM4
         std::uint32_t flags;
         FormId        id;
         std::uint32_t revision;
-        std::uint16_t version;  // not in Oblivion
-        std::uint16_t unknown;  // not in Oblivion
+        std::uint16_t version;  // not in TES4
+        std::uint16_t unknown;  // not in TES4
     };
 
     union RecordHeader
@@ -922,10 +841,10 @@ namespace ESM4
 
     struct ScriptEffect
     {
-        FormId       formId;    // Script effect (Magic effect must be SEFF)
-        std::int32_t school;    // Magic school. See Magic schools for more information.
-        EFI_Label visualEffect; // Visual effect name or 0x00000000 if None
-        std::uint8_t flags;     // 0x01 = Hostile
+        FormId       formId;       // Script effect (Magic effect must be SEFF)
+        std::int32_t school;       // Magic school. See Magic schools for more information.
+        EFI_Label    visualEffect; // Visual effect name or 0x00000000 if None
+        std::uint8_t flags;        // 0x01 = Hostile
         std::uint8_t unknown1;
         std::uint8_t unknown2;
         std::uint8_t unknown3;

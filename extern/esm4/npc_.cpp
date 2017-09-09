@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2016 cc9cii
+  Copyright (C) 2016, 2017 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -160,6 +160,10 @@ void ESM4::Npc::load(ESM4::Reader& reader)
                 if (!reader.getZString(str))
                     throw std::runtime_error ("NPC_ KFFZ data read error");
 
+                // Seems to be only below 3, and only happens 3 times while loading TES4:
+                //   Forward_SheogorathWithCane.kf
+                //   TurnLeft_SheogorathWithCane.kf
+                //   TurnRight_SheogorathWithCane.kf
                 std::stringstream ss(str);
                 std::string file;
                 while (std::getline(ss, file, '\0')) // split the strings
