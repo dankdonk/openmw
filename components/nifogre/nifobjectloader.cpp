@@ -1298,6 +1298,7 @@ void NifOgre::NIFObjectLoader::handleNode (const Nif::NIFFilePtr& nif, const std
     }
 }
 
+#if 0
 void NifOgre::NIFObjectLoader::handleNode2 (const Nif::NIFFilePtr& nif, const std::string &name,
             const std::string &group, Ogre::SceneNode *sceneNode, const Nif::Node *node,
             ObjectScenePtr scene)
@@ -1427,6 +1428,7 @@ void NifOgre::NIFObjectLoader::handleNode2 (const Nif::NIFFilePtr& nif, const st
     }
            if the child is an NiDynamic Effect - same node also listed under effects
 }
+#endif
 
 // Recursively traverse NIF tree to:
 // - Handle animation/particle/billboard nodes
