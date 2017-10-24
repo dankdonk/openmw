@@ -399,7 +399,7 @@ void NIFFile::parse()
         Record *r = NULL;
 
         std::string rec;
-        if (mVer >= 0x0a010000) // 10.1.0.0
+        if (mVer >= 0x0a000100) // 10.0.1.0
             rec = blockTypes[blockTypeIndex[i]];
         else                   // 4.0.0.2 (for example)
             rec = nif.getString();

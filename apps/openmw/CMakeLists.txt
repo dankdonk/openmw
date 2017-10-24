@@ -131,6 +131,7 @@ target_link_libraries(openmw
     ${SHINY_LIBRARIES}
     ${ESM4_LIBRARIES}
     ${ZLIB_LIBRARY}
+    ${NIBTOGRE_LIBRARIES}
     ${OPENAL_LIBRARY}
     ${SOUND_INPUT_LIBRARY}
     ${BULLET_LIBRARIES}

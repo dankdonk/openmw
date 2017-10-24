@@ -50,6 +50,8 @@
 
 #include <components/misc/stringops.hpp>
 
+#include <extern/nibtogre/nimodel.hpp>
+
 #include "mesh.hpp"
 #include "skeleton.hpp"
 #include "controller.hpp"
@@ -1605,6 +1607,9 @@ void NifOgre::NIFObjectLoader::createSkelBase (const std::string &name, const st
 void NifOgre::NIFObjectLoader::load (Ogre::SceneNode *sceneNode,
             ObjectScenePtr scene, const std::string &name, const std::string &group, int flags)
 {
+    // FIXME: how to bridge the use of NIFFilePtr?  Maybe return null to indicate a new file
+    // format?  Or convert all to the new code?
+
     Nif::NIFFilePtr nif = Nif::Cache::getInstance().load(name);
     if (nif->numRoots() < 1) // the roots are specified in the NIF footer
     {
@@ -1634,7 +1639,28 @@ void NifOgre::NIFObjectLoader::load (Ogre::SceneNode *sceneNode,
     }
     //std::cout << "creating object "<< name << ", root " << node->name << std::endl; // FIXME
     if (r->nifVer >= 0x0a000100) // TES4 style, i.e. from 10.0.1.0
+    {
         handleNode(nif, name, group, sceneNode, node, scene, flags, 0, 0); // flags is 0 by default
+//#if 0
+        // FIXME: temporary, trying out new code
+        // probably an auto pointer to be returned by NiModel constructor
+        // it can then be cached somewhere
+        try
+        {
+            std::auto_ptr<NiBtOgre::NiModel> nif(new NiBtOgre::NiModel(name));
+        }
+        catch (std::exception& e) // FIXME
+        {
+            nif->warn("exception while parsing NIF file"); // just a simple message for now
+            return;
+        }
+//#endif
+        // sceneNode has the ref's position - see MWRender::Objects::insertBegin() which is
+        // called from MWRender::Objects::insertModel()
+        Ogre::SceneNode *sceneNode2 = sceneNode->getCreator()->createSceneNode();         // temp dummy
+        ObjectScenePtr scene2 = ObjectScenePtr(new ObjectScene(sceneNode->getCreator())); // temp dummy
+        // nif->build(sceneNode2, scene2));
+    }
     else
         createObjects(nif, name, group, sceneNode, node, scene, flags, 0, 0);
 }
