@@ -37,17 +37,14 @@
 NiBtOgre::NiTimeController::NiTimeController(NiStream& stream, const NiModel& model)
     : NiObject(stream, model)
 {
-        stream.read(mNextControllerIndex);
-        stream.read(mFlags);
-        stream.read(mFrequency);
-        stream.read(mPhase);
-        stream.read(mStartTime);
-        stream.read(mStopTime);
+    stream.read(mNextControllerIndex);
+    stream.read(mFlags);
+    stream.read(mFrequency);
+    stream.read(mPhase);
+    stream.read(mStartTime);
+    stream.read(mStopTime);
 
-        //stream.getPtr<NiObjectNET>(mTarget, model.objects());
-        std::int32_t index = -1;
-        stream.read(index);
-        mTarget = model.getRef<NiObjectNET>(index);
+    stream.read(mTargetIndex);
 }
 
 // Seen in NIF version 20.2.0.7
@@ -64,6 +61,31 @@ NiBtOgre::BSLagBoneController::BSLagBoneController(NiStream& stream, const NiMod
     stream.read(mLinearVelocity);
     stream.read(mLinearRotation);
     stream.read(mMaximumDistance);
+}
+
+void NiBtOgre::NiBSBoneLODController::NodeGroup::read(NiStream& stream, const NiModel& model)
+{
+    stream.read(numNodes);
+
+    nodes.resize(numNodes);
+    for (unsigned int i = 0; i < numNodes; ++i)
+        stream.read(nodes.at(i));
+}
+
+void NiBtOgre::NiBSBoneLODController::SkinShapeGroup::read(NiStream& stream, const NiModel& model)
+{
+    std::int32_t index = -1;
+    stream.read(numLinkPairs);
+
+    linkPairs.resize(numLinkPairs);
+    for (unsigned int i = 0; i < numLinkPairs; ++i)
+    {
+        //stream.getPtr<NiGeometry>(linkPairs.at(i).shape, model.objects());
+        index = -1;
+        stream.read(index);
+        linkPairs.at(i).shape = model.getRef<NiGeometry>(index);
+        stream.read(linkPairs.at(i).skinInstanceIndex);
+    }
 }
 
 // Seen in NIF ver 20.0.0.4, 20.0.0.5
@@ -166,12 +188,7 @@ NiBtOgre::NiMultiTargetTransformController::NiMultiTargetTransformController(NiS
     stream.read(mNumExtraTargets);
     mExtraTargets.resize(mNumExtraTargets);
     for (unsigned int i = 0; i < mNumExtraTargets; ++i)
-    {
-        //stream.getPtr<NiAVObject>(mExtraTargets.at(i), model.objects());
-        index = -1;
-        stream.read(index);
-        mExtraTargets[i] = model.getRef<NiAVObject>(index);
-    }
+        stream.read(mExtraTargets.at(i));
 }
 
 NiBtOgre::NiSingleInterpController::NiSingleInterpController(NiStream& stream, const NiModel& model)
@@ -305,14 +322,18 @@ NiBtOgre::NiPSysModifierActiveCtlr::NiPSysModifierActiveCtlr(NiStream& stream, c
 NiBtOgre::NiPSysModifierFloatCtlr::NiPSysModifierFloatCtlr(NiStream& stream, const NiModel& model)
     : NiPSysModifierCtlr(stream, model)
 {
-    stream.read(mDataIndex);
+    if (stream.nifVer() <= 0x0a010000) // up to 10.1.0.0
+        stream.read(mDataIndex);
 }
 
 NiBtOgre::NiPoint3InterpController::NiPoint3InterpController(NiStream& stream, const NiModel& model)
     : NiSingleInterpController(stream, model)
 {
-    stream.read(mTargetColor);
-    stream.read(mDataIndex);
+    if (stream.nifVer() >= 0x0a010000) // from 10.1.0.0
+        stream.read(mTargetColor);
+
+    if (stream.nifVer() <= 0x0a010000) // up to 10.1.0.0
+        stream.read(mDataIndex);
 }
 
 NiBtOgre::NiParticleSystemController::NiParticleSystemController(NiStream& stream, const NiModel& model)

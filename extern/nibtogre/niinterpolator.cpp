@@ -129,6 +129,12 @@ NiBtOgre::NiFloatInterpolator::NiFloatInterpolator(NiStream& stream, const NiMod
 NiBtOgre::NiPathInterpolator::NiPathInterpolator(NiStream& stream, const NiModel& model)
     : NiInterpolator(stream, model)
 {
+    stream.skip(sizeof(std::uint16_t));
+    stream.skip(sizeof(std::uint32_t));
+    stream.skip(sizeof(float));
+    stream.skip(sizeof(float));
+    stream.skip(sizeof(std::uint16_t));
+
     stream.read(mPosDataIndex);
     stream.read(mFloatDataIndex);
 }

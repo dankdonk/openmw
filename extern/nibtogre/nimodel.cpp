@@ -34,7 +34,7 @@
 
 // "name" is the full path to the mesh from the resource directory/BSA added to Ogre::ResourceGroupManager.
 // The file is opened by mNiStream::mStream.
-NiBtOgre::NiModel::NiModel(const std::string &name) : mNiStream(name), mHeader(mNiStream)
+NiBtOgre::NiModel::NiModel(const std::string& name) : mNiStream(name), mHeader(mNiStream)
 {
     mObjects.resize(mHeader.numBlocks());
     if (mNiStream.nifVer() >= 0x0a000100) // from 10.0.1.0
@@ -42,11 +42,12 @@ NiBtOgre::NiModel::NiModel(const std::string &name) : mNiStream(name), mHeader(m
 
         for (uint32_t i = 0; i < mHeader.numBlocks(); ++i)
         {
+            std::cout << "Block " << mHeader.blockType(i) << std::endl;
+
             // From ver 10.0.1.0 (i.e. TES4) we already know the object types from the header.
-            //mObjects[i] = NiObject::create(mHeader.blockType(i)/*, mNiStream*/);
-            ////mObjects[i] = NiObject::create(mHeader.blockType(i), mNiStream, mObjects);
             mObjects[i] = NiObject::create(mHeader.blockType(i), mNiStream, *this);
             //mObjects[i]->create(mNiStream);
+            mCurrIndex = i;
         }
     }
     else
@@ -54,8 +55,6 @@ NiBtOgre::NiModel::NiModel(const std::string &name) : mNiStream(name), mHeader(m
         for (uint32_t i = 0; i < mHeader.numBlocks(); ++i)
         {
             // For TES3, the object type string is read first to determine the type.
-            //mObjects[i] = NiObject::create(mNiStream.getString()/*, mNiStream*/);
-            ////mObjects[i] = NiObject::create(mNiStream.getString(), mNiStream, mObjects);
             mObjects[i] = NiObject::create(mNiStream.readString(), mNiStream, *this);
             //mObjects[i]->create(mNiStream);
         }

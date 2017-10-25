@@ -111,10 +111,7 @@ NiBtOgre::NiDefaultAVObjectPalette::NiDefaultAVObjectPalette(NiStream& stream, c
     for (unsigned int i = 0; i < numObjs; i++)
     {
         stream.readSizedString(mObjs.at(i).name);
-        //stream.getPtr<NiAVObject>(mObjs.at(i).avObject, model.objects());
-        std::int32_t index = -1;
-        stream.read(index);
-        mObjs.at(i).avObject = model.getRef<NiAVObject>(index);
+        stream.read(mObjs.at(i).avObjectIndex);
     }
 }
 
@@ -336,8 +333,8 @@ NiBtOgre::NiFloatData::NiFloatData(NiStream& stream, const NiModel& model)
     mData.read(stream);
 }
 
-NiBtOgre::NiGeometryData::NiGeometryData(NiStream& stream, const NiModel& model)
-    : NiObject(stream, model), mNumVertices(0), mIsNiPSysData(false), mNumUVSets(0), mBSNumUVSets(0)
+NiBtOgre::NiGeometryData::NiGeometryData(NiStream& stream, const NiModel& model, bool isNiPSysData)
+    : NiObject(stream, model), mNumVertices(0), mNumUVSets(0), mBSNumUVSets(0) , mIsNiPSysData(isNiPSysData)
 {
     if (stream.nifVer() >= 0x0a020000) // from 10.2.0.0
     {
@@ -392,7 +389,10 @@ NiBtOgre::NiGeometryData::NiGeometryData(NiStream& stream, const NiModel& model)
 
     std::uint16_t numUVSets = 0;
     if (stream.nifVer() <= 0x04020200) // up to 4.2.2.0
+    {
         stream.read(numUVSets);
+        numUVSets &= 0x3f;
+    }
     if (stream.nifVer() >= 0x0a000100) // from 10.0.1.0
         numUVSets = mNumUVSets & 0x3f;
     if (stream.nifVer() >= 0x14020007 && stream.userVer() >= 11)
@@ -421,8 +421,8 @@ NiBtOgre::NiGeometryData::NiGeometryData(NiStream& stream, const NiModel& model)
             stream.read(mAdditionalDataIndex);
 }
 
-NiBtOgre::NiParticlesData::NiParticlesData(NiStream& stream, const NiModel& model)
-    : NiGeometryData(stream, model)
+NiBtOgre::NiParticlesData::NiParticlesData(NiStream& stream, const NiModel& model, bool isNiPSysData)
+    : NiGeometryData(stream, model, isNiPSysData)
 {
     if (stream.nifVer() <= 0x04020200) // up to 4.2.2.0
         stream.read(mNumParticles);
@@ -479,19 +479,19 @@ NiBtOgre::NiParticlesData::NiParticlesData(NiStream& stream, const NiModel& mode
         stream.skip(sizeof(char)); // unknown byte 2
 }
 
-NiBtOgre::NiRotatingParticlesData::NiRotatingParticlesData(NiStream& stream, const NiModel& model)
-    : NiParticlesData(stream, model)
+NiBtOgre::NiRotatingParticlesData::NiRotatingParticlesData(NiStream& stream, const NiModel& model,
+        bool isNiPSysData)
+    : NiParticlesData(stream, model, isNiPSysData)
 {
-    if (stream.getBool() && stream.nifVer() <= 0x04020200) // up to 4.2.2.0
-        stream.readVector<Ogre::Quaternion>(mRotations, mNumVertices);
+    if (stream.nifVer() <= 0x04020200) // up to 4.2.2.0
+        if (stream.getBool())
+            stream.readVector<Ogre::Quaternion>(mRotations2, mNumVertices);
 }
 
 // Seen in NIF ver 20.0.0.4, 20.0.0.5
 NiBtOgre::NiPSysData::NiPSysData(NiStream& stream, const NiModel& model)
-    : NiRotatingParticlesData(stream, model)
+    : NiRotatingParticlesData(stream, model, true)
 {
-    mIsNiPSysData = true;
-
     if (!(stream.nifVer() >= 0x14020007 && stream.userVer() >= 11))
     {
         mParticleDescriptions.resize(mNumVertices);
@@ -499,7 +499,8 @@ NiBtOgre::NiPSysData::NiPSysData(NiStream& stream, const NiModel& model)
         {
             // ParticleDesc
             stream.read(mParticleDescriptions.at(i).translation);
-            stream.read(mParticleDescriptions.at(i).unknownFloats); // to 10.4.0.1
+            if (stream.nifVer() <= 0x0a040001) // up to 10.4.0.1
+                stream.read(mParticleDescriptions.at(i).unknownFloats);
             stream.read(mParticleDescriptions.at(i).unknown1);
             stream.read(mParticleDescriptions.at(i).unknown2);
             stream.read(mParticleDescriptions.at(i).unknown3);
@@ -644,6 +645,7 @@ NiBtOgre::NiKeyframeData::NiKeyframeData(NiStream& stream, const NiModel& model)
 
     if (mRotationType != 4) // not XYZ_ROTATION_KEY
     {
+        mQuaternionKeys.resize(numRotationKeys);
         for (unsigned int i = 0; i < numRotationKeys; ++i)
         {
             stream.read(mQuaternionKeys.at(i).time);
@@ -702,8 +704,8 @@ NiBtOgre::NiMorphData::NiMorphData(NiStream& stream, const NiModel& model)
 
         if (stream.nifVer() >= 0x0a01006a && stream.nifVer() <= 0x0a020000)
             stream.skip(sizeof(std::uint32_t));
-        // FIXME: need to check UserVersion == 0
-        if (stream.nifVer() >= 0x14000004 && stream.nifVer() <= 0x14000005)
+
+        if (stream.nifVer() >= 0x14000004 && stream.nifVer() <= 0x14000005 && stream.userVer() == 0)
             stream.skip(sizeof(std::uint32_t));
 
         stream.readVector<Ogre::Vector3>(mMorphs.at(i).mVectors, numVertices);
@@ -773,10 +775,7 @@ NiBtOgre::NiSkinInstance::NiSkinInstance(NiStream& stream, const NiModel& model)
     mBones.resize(numBones);
     for (unsigned int i = 0; i < numBones; ++i)
     {
-        //stream.getPtr<NiNode>(mBones[i], model.objects());
-        index = -1;
-        stream.read(index);
-        mBones[i] = model.getRef<NiNode>(index);
+        stream.read(mBones.at(i));
     }
 }
 

@@ -35,9 +35,9 @@
 
 // Based on NifTools/NifSkope/doc/index.html
 //
-// bhkRefObject <------------------------------ /* not implemented */
+// bhkRefObject <------------------------------ /* typedef NiObject */
 //     bhkCompressedMeshShapeData
-//     bhkSerializable <----------------------- /* typedef NiObject */
+//     bhkSerializable <----------------------- /* typedef NiRefObject */
 //         bhkBallSocketConstraintChain
 //         bhkConstraint
 //             bhkBreakableConstraint
@@ -78,7 +78,8 @@ namespace NiBtOgre
     class NiStream;
     class Header;
 
-    typedef NiObject bhkSerializable;
+    typedef NiObject bhkRefObject;
+    typedef bhkRefObject bhkSerializable;
 #if 0
     struct bhkSerializable : public NiObject
     {
@@ -87,7 +88,7 @@ namespace NiBtOgre
 #endif
 
     // Seen in NIF version 20.2.0.7
-    struct bhkCompressedMeshShapeData : public NiObject
+    struct bhkCompressedMeshShapeData : public bhkRefObject
     {
         struct bhkCMSDMaterial
         {
@@ -471,11 +472,13 @@ namespace NiBtOgre
         bhkConvexVerticesShape(NiStream& stream, const NiModel& model);
     };
 
-    // Seen in NIF ver 20.0.0.4, 20.0.0.5
+    typedef bhkSphereRepShape bhkSphereShape; // Seen in NIF ver 20.0.0.4, 20.0.0.5
+#if 0
     struct bhkSphereShape : public bhkSphereRepShape
     {
         bhkSphereShape(NiStream& stream, const NiModel& model);
     };
+#endif
 
     // Seen in NIF ver 20.0.0.4, 20.0.0.5
     struct bhkMultiSphereShape : public bhkSphereRepShape
@@ -540,9 +543,9 @@ namespace NiBtOgre
         float mMass;
         float mLinearDamping;
         float mAngularDamping;
-        float mFriction;
         float mGravityFactor1;
         float mGravityFactor2;
+        float mFriction;
         float mRollingFrictionMultiplier;
         float mRestitution;
         float mMaxLinearVelocity;

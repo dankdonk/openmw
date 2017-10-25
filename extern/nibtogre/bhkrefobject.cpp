@@ -54,7 +54,7 @@ void NiBtOgre::bhkCompressedMeshShapeData::bhkCMSDChunk::read(NiStream& stream)
 
 // Seen in NIF version 20.2.0.7
 NiBtOgre::bhkCompressedMeshShapeData::bhkCompressedMeshShapeData(NiStream& stream, const NiModel& model)
-    : NiObject(stream, model)
+    : bhkRefObject(stream, model)
 {
     stream.read(mBitsPerIndex);
     stream.read(mBitsPerWIndex);
@@ -652,6 +652,7 @@ NiBtOgre::bhkConvexVerticesShape::bhkConvexVerticesShape(NiStream& stream, const
         stream.read(mNormals.at(i));
 }
 
+#if 0
 // Seen in NIF ver 20.0.0.4, 20.0.0.5
 NiBtOgre::bhkSphereShape::bhkSphereShape(NiStream& stream, const NiModel& model)
     : bhkSphereRepShape(stream, model)
@@ -659,6 +660,7 @@ NiBtOgre::bhkSphereShape::bhkSphereShape(NiStream& stream, const NiModel& model)
     stream.read(mMaterial);
     stream.read(mRadius);
 }
+#endif
 
 // Seen in NIF ver 20.0.0.4, 20.0.0.5
 NiBtOgre::bhkMultiSphereShape::bhkMultiSphereShape(NiStream& stream, const NiModel& model)
@@ -715,8 +717,8 @@ NiBtOgre::bhkRigidBody::bhkRigidBody(NiStream& stream, const NiModel& model)
     stream.read(mUnknownInt2);
 
     mUnknown3Ints.resize(3);
-    for (size_t i = 0; i < 3; i++)
-        stream.read(mUnknown3Ints[i]);
+    for (size_t i = 0; i < 3; ++i)
+        stream.read(mUnknown3Ints.at(i));
 
     stream.read(mCollisionResponse);
     stream.read(mUnknownByte);
@@ -730,8 +732,8 @@ NiBtOgre::bhkRigidBody::bhkRigidBody(NiStream& stream, const NiModel& model)
     stream.read(mColFilterCopy);
 
     mUnknown7Shorts.resize(7);
-    for (size_t i = 0; i < 7; i++)
-        stream.read(mUnknown7Shorts[i]);
+    for (size_t i = 0; i < 7; ++i)
+        stream.read(mUnknown7Shorts.at(i));
 
     stream.read(mTranslation);
     stream.readQuaternionXYZW(mRotation);
@@ -739,9 +741,9 @@ NiBtOgre::bhkRigidBody::bhkRigidBody(NiStream& stream, const NiModel& model)
     stream.read(mAngularVelocity);
 
     float value = 0;
-    for (size_t i = 0; i < 3; i++)
+    for (size_t i = 0; i < 3; ++i)
     {
-        for (size_t j = 0; j < 4; j++)
+        for (size_t j = 0; j < 4; ++j)
         {
             stream.read(value);
             mInertia[i][j] = Ogre::Real(value);
@@ -783,7 +785,7 @@ NiBtOgre::bhkRigidBody::bhkRigidBody(NiStream& stream, const NiModel& model)
     std::uint32_t numConstraints;
     stream.read(numConstraints);
     mConstraints.resize(numConstraints);
-    for (size_t i = 0; i < numConstraints; i++)
+    for (size_t i = 0; i < numConstraints; ++i)
         stream.read(mConstraints.at(i));
 
     if (stream.userVer() <= 11)

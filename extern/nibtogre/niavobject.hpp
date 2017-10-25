@@ -44,11 +44,11 @@
 //                 NiDirectionalLight <----- /* typedef NiLight */
 //             NiTextureEffect
 //         NiGeometry
-//             NiParticles <---------------- /* not implemented */
-//                 NiAutoNormalParticles <-- /* typedef NiGeometry */
+//             NiParticles <---------------- /* typedef NiGeometry */
+//                 NiAutoNormalParticles <-- /* typedef NiParticles */
 //                 NiParticleSystem
 //                     BSStripParticleSystem /* typedef NiParticleSystem */
-//                 NiRotatingParticles <---- /* typedef NiGeometry */
+//                 NiRotatingParticles <---- /* typedef NiParticles */
 //             NiTriBasedGeom <------------- /* typedef NiGeometry */
 //                 BSLODTriShape
 //                 NiTriShape <------------- /* typedef NiTriBasedGeom */
@@ -185,10 +185,11 @@ namespace NiBtOgre
         NiGeometry(NiStream& stream, const NiModel& model);
     };
 
-    typedef NiGeometry NiAutoNormalParticles;
+    typedef NiGeometry NiParticles;
+    typedef NiParticles NiAutoNormalParticles;
 
     // Seen in NIF version 20.0.0.4, 20.0.0.5
-    struct NiParticleSystem : public NiGeometry
+    struct NiParticleSystem : public NiParticles
     {
         std::uint16_t mUnknownS2;
         std::uint16_t mUnknownS3;
@@ -200,7 +201,7 @@ namespace NiBtOgre
     };
 
     typedef NiParticleSystem BSStripParticleSystem; // Seen in NIF version 20.2.0.7
-    typedef NiGeometry NiRotatingParticles;
+    typedef NiParticles NiRotatingParticles;
     typedef NiGeometry NiTriBasedGeom;
     typedef NiTriBasedGeom NiTriShape;
     typedef NiTriBasedGeom NiTriStrips; // Seen in NIF version 20.0.0.4, 20.0.0.5

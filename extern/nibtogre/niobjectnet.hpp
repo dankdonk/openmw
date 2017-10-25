@@ -32,8 +32,8 @@
 // Based on NifTools/NifSkope/doc/index.html
 //
 // NiObjectNET
-//     NiSequenceStreamHelper <-- /* NiObjectNET */
-//     NiTexture <--------------- /* not implemented */
+//     NiSequenceStreamHelper <-- /* typedef NiObjectNET */
+//     NiTexture <--------------- /* typedef NiObjectNET */
 //          NiSourceTexture
 namespace NiBtOgre
 {
@@ -66,8 +66,9 @@ namespace NiBtOgre
     };
 
     typedef NiObjectNET NiSequenceStreamHelper;
+    typedef NiObjectNET NiTexture;
 
-    struct NiSourceTexture : public NiObjectNET
+    struct NiSourceTexture : public NiTexture
     {
         char mUseExternal;
 

@@ -74,6 +74,8 @@ namespace NiBtOgre
         std::vector<std::unique_ptr<NiObject> > mObjects;
         std::vector<uint32_t> mRoots;
 
+        int mCurrIndex; // FIXME: for debugging Ptr
+
         // FIXME: not sure if this method is required
         inline const std::string& getLongString(std::int32_t index) const {
             return mHeader.getLongString(index);
@@ -94,6 +96,10 @@ namespace NiBtOgre
 
         template<class T>
         inline T *getRef(std::int32_t index) const {
+
+            if (index >= 0 && (index > mCurrIndex)) // FIXME: for debugging Ptr
+                throw std::runtime_error("Ptr");
+
             return (index < 0) ? nullptr : static_cast<T*>(mObjects[index].get());
         }
 

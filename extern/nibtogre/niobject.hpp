@@ -58,10 +58,8 @@ namespace NiBtOgre
                            Ogre::SceneNode* sceneNode, NifOgre::ObjectScenePtr scene) {} //= 0; // FIXME
 
         typedef NiBtOgre::Factory<NiObject> Factory;
-        //static Factory::Type create(Factory::Key const& name, NiStream& stream, const RecordBlocks& objects)
         static Factory::Type create(Factory::Key const& name, NiStream& stream, const NiModel& model)
         {
-            //return mFactory.create(name, stream, objects);
             return mFactory.create(name, stream, model);
         }
 
@@ -72,7 +70,6 @@ namespace NiBtOgre
                 throw std::logic_error(std::string(BOOST_CURRENT_FUNCTION) + ": name already registered");
         }
 
-        //NiObject(NiStream& stream, const RecordBlocks& objects);
         NiObject(NiStream& stream, const NiModel& model) : mModel(model) {}
 
     protected:
@@ -82,9 +79,6 @@ namespace NiBtOgre
     private:
         static Factory mFactory;
     };
-#if 0
-    template<typename Type> NiObject* create() { return new Type; }
-#endif
 
     // BSEffectShaderProperty
     // BSLightingShaderProperty
@@ -120,6 +114,7 @@ namespace NiBtOgre
     typedef std::int32_t NiKeyframeDataRef;
     typedef std::int32_t NiMorphDataRef;
     typedef std::int32_t NiNodeRef;
+    typedef std::int32_t NiObjectNETRef;
     typedef std::int32_t NiObjectRef;
     typedef std::int32_t NiPSysColliderRef;
     typedef std::int32_t NiPSysModifierRef;

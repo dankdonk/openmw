@@ -42,7 +42,6 @@ namespace NiBtOgre
     public:
         typedef KeyT Key;
         typedef std::unique_ptr<Interface> Type;
-        //typedef Type (*Creator)(NiStream&, const std::vector<std::unique_ptr<Interface> >&);
         typedef Type (*Creator)(NiStream&, const NiModel&);
         typedef std::map<Key, Creator> Registry;
 
@@ -52,7 +51,6 @@ namespace NiBtOgre
             return mRegistry.insert(typename Registry::value_type(key, v)).second;
         }
 
-        //Type create(Key const& key, NiStream& stream, const std::vector<std::unique_ptr<Interface> >& objects)
         Type create(Key const& key, NiStream& stream, const NiModel& model)
         {
             typename Registry::const_iterator iter = mRegistry.find(key);
@@ -60,31 +58,18 @@ namespace NiBtOgre
             if (iter == mRegistry.end())
                 throw std::invalid_argument(std::string(BOOST_CURRENT_FUNCTION) + ": key not registered");
             else
-                //return iter->second(stream, objects);
                 return iter->second(stream, model);
         }
 
         template<class Base, class Derived>
-        //static std::unique_ptr<Base> create_func(NiStream& stream, const std::vector<std::unique_ptr<Base> >& objects)
         static std::unique_ptr<Base> create_func(NiStream& stream, const NiModel& model)
         {
-            //return std::unique_ptr<Base>(new Derived(stream, objects));
             return std::unique_ptr<Base>(new Derived(stream, model));
         }
 
     private:
         Registry mRegistry;
     };
-#if 0
-    class Factory
-    {
-    public:
-        typedef NiObject* (*ComponentFactoryFuncPtr)();
-        typedef std::map<std::string, ComponentFactoryFuncPtr> NiObjectMap;
-
-        NiObjectMap mNiObjectMap;
-    };
-#endif
 }
 
 #endif // NIBTOGRE_FACTORY_H

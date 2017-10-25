@@ -37,12 +37,12 @@
 
 // Based on NifTools/NifSkope/doc/index.html
 //
-//  ATextureRenderData // TODO
-//      NiPixelData    // TODO
+//  ATextureRenderData
+//      NiPixelData
 //  BSMultiBound
-//  BSMultiBoundData <------------------- /* NiObject */
+//  BSMultiBoundData <------------------- /* typedef NiObject */
 //      BSMultiBoundOBB
-//  NiAVObjectPalette <------------------ /* NiObject */
+//  NiAVObjectPalette <------------------ /* typedef NiObject */
 //      NiDefaultAVObjectPalette
 //  BSShaderTextureSet
 //  NiBSplineBasisData
@@ -54,20 +54,20 @@
 //      BSBound
 //      BSDecalPlacementVectorExtraData
 //      BSFurnitureMarker
-//          BSFurnitureMarkerNode <------ /* BSFurnitureMarker */
+//          BSFurnitureMarkerNode <------ /* typedef BSFurnitureMarker */
 //      BSInvMarker
 //      NiBinaryExtraData
 //      NiBooleanExtraData
 //      NiFloatExtraData
 //      NiIntegerExtraData
-//          BSXFlags <------------------- /* NiIntegerExtraData */
+//          BSXFlags <------------------- /* typedef NiIntegerExtraData */
 //      NiStringExtraData
 //      NiTextKeyExtraData
 //      NiVertWeightsExtraData
 //  NiFloatData
 //  NiGeometryData
 //      NiParticlesData
-//          NiAutoNormalParticlesData <-- /* NiParticlesData */
+//          NiAutoNormalParticlesData <-- /* typedef NiParticlesData */
 //          NiRotatingParticlesData
 //              NiPSysData
 //                  BSStripPSysData
@@ -75,7 +75,7 @@
 //          NiTriShapeData
 //          NiTriStripsData
 //  NiKeyframeData
-//      NiTransformData <---------------- /* NiKeyframeData */
+//      NiTransformData <---------------- /* typedef NiKeyframeData */
 //  NiMorphData
 //  NiPosData
 //  NiSkinData
@@ -165,7 +165,10 @@ namespace NiBtOgre
         struct AVObject
         {
             std::string name;
-            NiAVObject *avObject; // Ptr
+            // clutter/minotaurhead01.nif (TES4) shows that some of the Ptr refer to objects not yet
+            // loaded.  Change to Ref instead.
+            //NiAVObject *avObject; // Ptr
+            NiAVObjectRef avObjectIndex;
         };
 
         // unknown int here
@@ -470,7 +473,7 @@ namespace NiBtOgre
         std::uint16_t mConsistencyFlags;        // from 10.0.1.0
         AbstractAdditionalGeometryDataRef mAdditionalDataIndex; // from 20.0.0.4
 
-        NiGeometryData(NiStream& stream, const NiModel& model);
+        NiGeometryData(NiStream& stream, const NiModel& model, bool isNiPSysData = false);
 
     protected:
         bool mIsNiPSysData; // set true by NiPSysData
@@ -500,7 +503,7 @@ namespace NiBtOgre
       //bool hasUVQuads;
         std::vector<Ogre::Vector4> mUVQuadrants;
 
-        NiParticlesData(NiStream& stream, const NiModel& model);
+        NiParticlesData(NiStream& stream, const NiModel& model, bool isNiPSysData = false);
     };
 
     typedef NiParticlesData NiAutoNormalParticlesData;
@@ -509,7 +512,7 @@ namespace NiBtOgre
     {
         std::vector<Ogre::Quaternion> mRotations2; // to 4.2.2.0
 
-        NiRotatingParticlesData(NiStream& stream, const NiModel& model);
+        NiRotatingParticlesData(NiStream& stream, const NiModel& model, bool isNiPSysData = false);
     };
 
     // Seen in NIF version 20.0.0.4, 20.0.0.5
@@ -672,7 +675,10 @@ namespace NiBtOgre
         NiSkinDataRef         mDataIndex;
         NiSkinPartitionRef    mSkinPartitionIndex;
         NiNode               *mSkeletonRoot; // Ptr
-        std::vector<NiNode*>  mBones;        // Ptr
+        // imperial/headhuman.nif (TES4) shows that some of the Ptr refer to objects not yet
+        // loaded.  Change to Ref instead.
+        //std::vector<NiNode*>  mBones;        // Ptr
+        std::vector<NiNodeRef>  mBones;
 
     public:
         NiSkinInstance(NiStream& stream, const NiModel& model);
@@ -695,7 +701,7 @@ namespace NiBtOgre
             std::vector<std::vector<float> > vertexWeights;
             std::vector<std::uint16_t> stripLengths;
             bool hasFaces;
-            std::vector<std::vector<float> > strips;
+            std::vector<std::vector<std::uint16_t> > strips;
             std::vector<Triangle> triangles;
             bool hasBoneIndices;
             std::vector<std::vector<unsigned char> > boneIndices;

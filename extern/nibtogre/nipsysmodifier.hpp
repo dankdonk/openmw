@@ -309,7 +309,10 @@ namespace NiBtOgre
     class NiPSysGravityModifier : public NiPSysModifier
     {
     public:
-        NiNode *mGravityObject; // Ptr
+        // fire/firetorchlargesmoke.nif (TES4) shows that some of the Ptr refer to objects not yet
+        // loaded.  Change to Ref instead.
+        //NiNode *mGravityObject; // Ptr
+        NiNodeRef mGravityObjectIndex;
         Ogre::Vector3 mGravityAxis;
         float mDecay;
         float mStrength;

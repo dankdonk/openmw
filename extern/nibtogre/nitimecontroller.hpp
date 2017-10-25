@@ -59,8 +59,8 @@
 //                 NiTransformController <---------------- /* NiKeyframeController */
 //             NiPSysModifierCtlr
 //                 NiPSysEmitterCtlr
-//                 NiPSysModifierBoolCtlr <--------------- /* NiPSysModfierCtlr */
-//                     NiPSysModifierActiveCtlr
+//                 NiPSysModifierBoolCtlr <--------------- /* not implemented */
+//                     NiPSysModifierActiveCtlr <--------- /* NiPSysModfierCtlr */
 //                 NiPSysModifierFloatCtlr
 //                     NiPSysEmitterInitialRadiusCtlr <--- /* NiPSysModifierFloatCtlr */
 //                     NiPSysEmitterLifeSpanCtlr <-------- /* NiPSysModifierFloatCtlr */
@@ -87,7 +87,10 @@ namespace NiBtOgre
         float mPhase;
         float mStartTime;
         float mStopTime;
-        NiObjectNET *mTarget; // Ptr
+        // lights/candlefat01.nif (TES4) shows that some of the Ptr refer to objects not yet
+        // loaded.  Change to Ref instead.
+        //NiObjectNET *mTarget; // Ptr
+        NiObjectNETRef mTargetIndex;
 
         NiTimeController(NiStream& stream, const NiModel& model);
     };
@@ -121,9 +124,12 @@ namespace NiBtOgre
         struct NodeGroup
         {
             std::uint32_t        numNodes;
-            std::vector<NiNode*> nodes; // Ptr
+            // _male/skeleton.nif (TES4) shows that some of the Ptr refer to objects not yet
+            // loaded.  Change to Ref instead.
+            //std::vector<NiNode*> nodes; // Ptr
+            std::vector<NiNodeRef> nodes;
 
-            void read(NiStream& stream, const NiModel& model) {} // FIXME
+            void read(NiStream& stream, const NiModel& model);
         };
 
         struct SkinShapeGroup
@@ -134,10 +140,10 @@ namespace NiBtOgre
                 NiSkinInstanceRef skinInstanceIndex;
             };
 
-            std::uint32_t          mNumLinkPairs;
-            std::vector<SkinShape> mLinkPairs;
+            std::uint32_t          numLinkPairs;
+            std::vector<SkinShape> linkPairs;
 
-            //void read(NiStream& stream, const NiModel& model);
+            void read(NiStream& stream, const NiModel& model);
         };
 
         std::vector<NodeGroup>         mNodeGroups;
@@ -159,7 +165,9 @@ namespace NiBtOgre
         NiControllerManager(NiStream& stream, const NiModel& model);
     };
 
-    class NiGeomMorpherController : public NiTimeController
+    typedef NiTimeController NiInterpController;
+
+    class NiGeomMorpherController : public NiInterpController
     {
         struct MorphWeight
         {
@@ -181,16 +189,19 @@ namespace NiBtOgre
     class NiAVObject;
 
     // Seen in NIF ver 20.0.0.4, 20.0.0.5
-    class NiMultiTargetTransformController : public NiTimeController
+    class NiMultiTargetTransformController : public NiInterpController
     {
     public:
         std::uint16_t mNumExtraTargets;
-        std::vector<NiAVObject*> mExtraTargets; // Ptr
+        // clutter/minotaurhead01.nif (TES4) shows that some of the Ptr refer to objects not yet
+        // loaded.  Change to Ref instead.
+        //std::vector<NiAVObject*> mExtraTargets; // Ptr
+        std::vector<NiAVObjectRef> mExtraTargets;
 
         NiMultiTargetTransformController(NiStream& stream, const NiModel& model);
     };
 
-    class NiSingleInterpController : public NiTimeController
+    class NiSingleInterpController : public NiInterpController
     {
     public:
         NiInterpolatorRef mInterpolatorIndex;
@@ -295,7 +306,7 @@ namespace NiBtOgre
         NiKeyframeController(NiStream& stream, const NiModel& model);
     };
 
-    typedef NiTimeController NiTransformController; // Seen in NIF ver 20.0.0.4, 20.0.0.5
+    typedef NiKeyframeController NiTransformController; // Seen in NIF ver 20.0.0.4, 20.0.0.5
 
     class NiPSysModifierCtlr : public NiSingleInterpController
     {

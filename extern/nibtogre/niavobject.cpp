@@ -179,7 +179,7 @@ NiBtOgre::NiGeometry::NiGeometry(NiStream& stream, const NiModel& model)
 
 // Seen in NIF ver 20.0.0.4, 20.0.0.5
 NiBtOgre::NiParticleSystem::NiParticleSystem(NiStream& stream, const NiModel& model)
-    : NiGeometry(stream, model), mWorldSpace(false)
+    : NiParticles(stream, model), mWorldSpace(false)
 {
     if (stream.userVer() >= 12)
     {

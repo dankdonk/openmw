@@ -53,7 +53,7 @@ void NiBtOgre::NiObjectNET::build(const RecordBlocks& objects, const Header& hea
 
 
 NiBtOgre::NiSourceTexture::NiSourceTexture(NiStream& stream, const NiModel& model)
-    : NiObjectNET(stream, model), mDirectRender(false), mPersistRenderData(false)
+    : NiTexture(stream, model), mDirectRender(false), mPersistRenderData(false)
 {
     stream.read(mUseExternal);
 

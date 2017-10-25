@@ -251,10 +251,7 @@ NiBtOgre::NiPSysSphereEmitter::NiPSysSphereEmitter(NiStream& stream, const NiMod
 NiBtOgre::NiPSysGravityModifier::NiPSysGravityModifier(NiStream& stream, const NiModel& model)
     : NiPSysModifier(stream, model)
 {
-    //stream.getPtr<NiNode>(mGravityObject, model.objects());
-    std::int32_t index = -1;
-    stream.read(index);
-    mGravityObject = model.getRef<NiNode>(index);
+    stream.read(mGravityObjectIndex);
 
     stream.read(mGravityAxis);
     stream.read(mDecay);
