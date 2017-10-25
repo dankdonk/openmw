@@ -309,7 +309,7 @@ namespace NiBtOgre
 
     struct NiExtraData : public NiObject
     {
-        std::uint32_t  mNameIndex;
+        StringIndex    mName;
         NiExtraDataRef mNextIndex;
 
         NiExtraData(NiStream& stream, const NiModel& model);
@@ -318,7 +318,7 @@ namespace NiBtOgre
     // Seen in NIF version 20.2.0.7
     struct BSBehaviorGraphExtraData : public NiExtraData
     {
-        std::uint32_t mBehaviourGraphFileIndex;
+        StringIndex   mBehaviourGraphFile;
         unsigned char mControlBaseSkeleton;
 
         BSBehaviorGraphExtraData(NiStream& stream, const NiModel& model);
@@ -419,7 +419,7 @@ namespace NiBtOgre
 
     struct NiStringExtraData : public NiExtraData
     {
-        std::uint32_t mStringDataIndex;
+        StringIndex mStringData;
 
         NiStringExtraData(NiStream& stream, const NiModel& model);
     };
@@ -429,7 +429,7 @@ namespace NiBtOgre
         struct TextKey // FIXME: use template instead?
         {
             float time;
-            std::uint32_t textIndex;
+            StringIndex text;
         };
         std::vector<TextKey> mTextKeys;
 
@@ -618,7 +618,7 @@ namespace NiBtOgre
     {
         struct Morph
         {
-            std::uint32_t mFrameNameIndex;
+            StringIndex mFrameName;
             std::uint32_t mInterpolation;
             std::vector<Key<float> > mKeys;
             std::vector<Ogre::Vector3> mVectors;

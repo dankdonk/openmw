@@ -25,7 +25,7 @@
 #include <cassert>
 #include <stdexcept>
 
-#ifdef NDEBUG // FIXME: debuggigng only
+#ifdef NDEBUG // FIXME: debugging only
 #undef NDEBUG
 #endif
 
@@ -36,7 +36,7 @@
 NiBtOgre::NiPSysModifier::NiPSysModifier(NiStream& stream, const NiModel& model)
     : NiObject(stream, model)
 {
-    stream.readLongString(mNameIndex);
+    stream.readLongString(mName);
     stream.read(mOrder);
 
     //stream.getPtr<NiParticleSystem>(mTarget, model.objects());

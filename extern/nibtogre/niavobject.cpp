@@ -163,7 +163,7 @@ NiBtOgre::NiGeometry::NiGeometry(NiStream& stream, const NiModel& model)
     {
         if (mHasShader = stream.getBool())
         {
-            stream.readLongString(mShaderNameIndex);
+            stream.readLongString(mShaderName);
             stream.skip(sizeof(std::int32_t)); // unknown integer
         }
     }

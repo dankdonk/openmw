@@ -51,7 +51,7 @@ namespace NiBtOgre
         std::vector<std::string>   mBlockTypes;
         std::vector<std::int16_t>  mBlockTypeIndex;
         std::vector<std::uint32_t> mBlockSize; // TES5 only, probably for sanity check
-        std::vector<std::string>   mStrings;   // TES5 only
+        std::vector<std::string>   mStrings;   // originally TES5 only but now for all
 
         // default, copy and assignment not allowed
         Header();

@@ -25,7 +25,7 @@
 #include <cassert>
 #include <stdexcept>
 
-#ifdef NDEBUG // FIXME: debuggigng only
+#ifdef NDEBUG // FIXME: debugging only
 #undef NDEBUG
 #endif
 
@@ -168,7 +168,7 @@ NiBtOgre::NiLookAtInterpolator::NiLookAtInterpolator(NiStream& stream, const NiM
     stream.read(index);
     mLookAt = model.getRef<NiNode>(index);
 
-    stream.readLongString(mTargetIndex);
+    stream.readLongString(mTarget);
     if (stream.nifVer() <= 0x14050000) // up to 20.5.0.0
     {
         stream.read(mTranslation);

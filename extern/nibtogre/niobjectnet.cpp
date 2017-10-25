@@ -35,7 +35,7 @@ NiBtOgre::NiObjectNET::NiObjectNET(NiStream& stream, const NiModel& model, bool 
             mSkyrimShaderType = 0;
     }
 
-    stream.readLongString(mNameIndex);
+    stream.readLongString(mName);
 
     if (stream.nifVer() <= 0x04020200) // up to 4.2.2.0
         stream.read(mExtraDataIndex);
@@ -59,7 +59,7 @@ NiBtOgre::NiSourceTexture::NiSourceTexture(NiStream& stream, const NiModel& mode
 
     if (mUseExternal != 0)
     {
-        stream.readLongString(mFileNameIndex); // external filename
+        stream.readLongString(mFileName); // external filename
 
         if (stream.nifVer() >= 0x0a010000) // from 10.1.0.0
             stream.skip(sizeof(NiObjectRef));
@@ -70,7 +70,7 @@ NiBtOgre::NiSourceTexture::NiSourceTexture(NiStream& stream, const NiModel& mode
             stream.skip(sizeof(char));
 
         if (stream.nifVer() >= 0x0a010000) // from 10.1.0.0
-            stream.readLongString(mFileNameIndex); // original filename
+            stream.readLongString(mFileName); // original filename
 
         stream.read(mATextureRenderDataRef);
     }

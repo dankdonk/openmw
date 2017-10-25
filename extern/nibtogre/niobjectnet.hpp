@@ -51,8 +51,8 @@ namespace NiBtOgre
     protected:
         bool                        mIsBSLightingShaderProperty;
         std::uint32_t               mSkyrimShaderType;
-        std::uint32_t               mNameIndex;
-        NiExtraDataRef              mExtraDataIndex;     // first in a chain, to 4.2.2.0
+        StringIndex                 mName;
+        NiExtraDataRef              mExtraDataIndex;     // first in a chain, up to 4.2.2.0
         std::vector<NiExtraDataRef> mExtraDataIndexList; // from 10.0.1.0
         NiTimeControllerRef         mControllerIndex;    // first in a chain
 
@@ -70,14 +70,18 @@ namespace NiBtOgre
 
     struct NiSourceTexture : public NiTexture
     {
+        typedef std::uint32_t PixelLayout;
+        typedef std::uint32_t MipMapFormat;
+        typedef std::uint32_t AlphaFormat;
+
         char mUseExternal;
 
-        std::uint32_t mFileNameIndex;
+        StringIndex   mFileName;
         std::uint32_t mATextureRenderDataRef;
 
-        std::uint32_t mPixelLayout;
-        std::uint32_t mUseMipmaps;
-        std::uint32_t mAlphaFormat;
+        PixelLayout  mPixelLayout;
+        MipMapFormat mUseMipmaps;
+        AlphaFormat  mAlphaFormat;
         char mIsStatic;
         bool mDirectRender;
         bool mPersistRenderData;

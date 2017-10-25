@@ -25,13 +25,12 @@
 #include <cassert>
 #include <stdexcept>
 
-#ifdef NDEBUG // FIXME: debuggigng only
+#ifdef NDEBUG // FIXME: debugging only
 #undef NDEBUG
 #endif
 
 #include "nistream.hpp"
-#include "niobjectnet.hpp" // static_cast NiObjectNET
-#include "niavobject.hpp"  // static_cast NiAVObject, NiNode
+#include "niavobject.hpp"  // static_cast NiGeometry
 #include "nimodel.hpp"
 
 NiBtOgre::NiTimeController::NiTimeController(NiStream& stream, const NiModel& model)
@@ -278,7 +277,8 @@ NiBtOgre::NiTextureTransformController::NiTextureTransformController(NiStream& s
     stream.skip(sizeof(char)); // Unknown2
     stream.read(mTextureSlot);
     stream.read(mOperation);
-#if 0
+
+#if 0 // commented out since this object is not seen in TES3
     if (stream.nifVer() <= 0x0a010000) // up to 10.1.0.0
         stream.read(mDataIndex);
 #endif
@@ -301,7 +301,7 @@ NiBtOgre::NiPSysModifierCtlr::NiPSysModifierCtlr(NiStream& stream, const NiModel
 NiBtOgre::NiPSysEmitterCtlr::NiPSysEmitterCtlr(NiStream& stream, const NiModel& model)
     : NiPSysModifierCtlr(stream, model)
 {
-#if 0
+#if 0 // commented out since this object is not seen in TES3
     if (stream.nifVer() <= 0x0a010000) // up to 10.1.0.0
         stream.read(mDataIndex);
     if (stream.nifVer() >= 0x0a020000) // from 10.2.0.0
@@ -313,7 +313,7 @@ NiBtOgre::NiPSysEmitterCtlr::NiPSysEmitterCtlr(NiStream& stream, const NiModel& 
 NiBtOgre::NiPSysModifierActiveCtlr::NiPSysModifierActiveCtlr(NiStream& stream, const NiModel& model)
     : NiPSysModifierCtlr(stream, model)
 {
-#if 0
+#if 0 // commented out since this object is not seen in TES3
     if (stream.nifVer() <= 0x0a010000) // up to 10.1.0.0
         stream.read(mDataIndex);
 #endif
@@ -363,7 +363,7 @@ NiBtOgre::NiParticleSystemController::NiParticleSystemController(NiStream& strea
     stream.read(index);
     mEmitter = model.getRef<NiObject>(index);
 
-    stream.skip(16); // FIXME
+    stream.skip(16); // FIXME: provide more detail on what's being skipped
 
     stream.read(mNumParticles);
     stream.read(mNumValid);

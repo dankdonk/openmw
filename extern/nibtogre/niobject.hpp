@@ -31,7 +31,7 @@
 
 #include <boost/current_function.hpp>
 
-#include <components/nifogre/objectscene.hpp> // FIXME
+#include <components/nifogre/objectscene.hpp> // FIXME: should create a bridge object instead
 
 #include "factory.hpp"
 
@@ -54,8 +54,10 @@ namespace NiBtOgre
         virtual ~NiObject() {}
 
         typedef std::vector<std::unique_ptr<NiObject> > RecordBlocks;
+
+        // Header needed for the NIF version and strings (TES5)
         virtual void build(const RecordBlocks& objects, const Header& header,
-                           Ogre::SceneNode* sceneNode, NifOgre::ObjectScenePtr scene) {} //= 0; // FIXME
+                           Ogre::SceneNode* sceneNode, NifOgre::ObjectScenePtr scene) {}
 
         typedef NiBtOgre::Factory<NiObject> Factory;
         static Factory::Type create(Factory::Key const& name, NiStream& stream, const NiModel& model)
@@ -73,13 +75,15 @@ namespace NiBtOgre
         NiObject(NiStream& stream, const NiModel& model) : mModel(model) {}
 
     protected:
-        NiObject() = default; // disallow the default constructor in derived classes
+        NiObject() = default;  // disallow the default constructor in derived classes
         const NiModel& mModel; // a little akward, but need a way to access NiObject Ptrs/Refs and TES5 strings
 
     private:
         static Factory mFactory;
     };
 
+    // TexCoord is used by:
+    //
     // BSEffectShaderProperty
     // BSLightingShaderProperty
     // BSSkyShaderProperty
@@ -91,6 +95,9 @@ namespace NiBtOgre
         float u;
         float v;
     };
+
+    // index to the Header::mStrings
+    typedef std::uint32_t StringIndex;
 
     typedef std::int32_t AbstractAdditionalGeometryDataRef;
     typedef std::int32_t BSAnimNotesRef;

@@ -25,7 +25,7 @@
 #include <cassert>
 #include <stdexcept>
 
-#ifdef NDEBUG // FIXME: debuggigng only
+#ifdef NDEBUG // FIXME: debugging only
 #undef NDEBUG
 #endif
 
@@ -49,7 +49,7 @@ NiBtOgre::NiPSysCollider::NiPSysCollider(NiStream& stream, const NiModel& model)
 
     stream.read(mNextColliderIndex);
 
-    //stream.getPtr<NiObject>(mColliderObject, model.objects());
+    //stream.getPtr<NiNode>(mColliderObject, model.objects());
     index = -1; // note: variable reused
     stream.read(index);
     mColliderObject = model.getRef<NiNode>(index);

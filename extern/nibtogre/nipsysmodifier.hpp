@@ -70,7 +70,7 @@ namespace NiBtOgre
     class NiPSysModifier : public NiObject
     {
     public:
-        std::uint32_t     mNameIndex;
+        StringIndex       mName;
         std::uint32_t     mOrder;
         NiParticleSystem *mTarget; // Ptr
         bool              mActive;

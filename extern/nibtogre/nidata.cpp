@@ -25,12 +25,12 @@
 #include <cassert>
 #include <stdexcept>
 
-#ifdef NDEBUG // FIXME: debuggigng only
+#ifdef NDEBUG // FIXME: debugging only
 #undef NDEBUG
 #endif
 
 #include "nistream.hpp"
-#include "niavobject.hpp" // static_cast NiAVObject, NiNode
+#include "niavobject.hpp" // static_cast NiNode
 #include "nimodel.hpp"
 
 NiBtOgre::ATextureRenderData::ATextureRenderData(NiStream& stream, const NiModel& model)
@@ -179,7 +179,7 @@ NiBtOgre::NiExtraData::NiExtraData(NiStream& stream, const NiModel& model)
     : NiObject(stream, model)
 {
     //if (stream.nifVer() >= 0x0a000100) // from 10.0.1.0
-        stream.readLongString(mNameIndex); // FIXME: uninitialized
+        stream.readLongString(mName);
 
     if (stream.nifVer() <= 0x04020200) // up to 4.2.2.0
         stream.read(mNextIndex);
@@ -189,7 +189,7 @@ NiBtOgre::NiExtraData::NiExtraData(NiStream& stream, const NiModel& model)
 NiBtOgre::BSBehaviorGraphExtraData::BSBehaviorGraphExtraData(NiStream& stream, const NiModel& model)
     : NiExtraData(stream, model)
 {
-    stream.readLongString(mBehaviourGraphFileIndex);
+    stream.readLongString(mBehaviourGraphFile);
     stream.read(mControlBaseSkeleton);
 }
 
@@ -296,7 +296,7 @@ NiBtOgre::NiStringExtraData::NiStringExtraData(NiStream& stream, const NiModel& 
     if (stream.nifVer() <= 0x04020200) // up to 4.2.2.0
         stream.skip(sizeof(std::uint32_t));
 
-    stream.readLongString(mStringDataIndex);
+    stream.readLongString(mStringData);
 }
 
 NiBtOgre::NiTextKeyExtraData::NiTextKeyExtraData(NiStream& stream, const NiModel& model)
@@ -311,7 +311,7 @@ NiBtOgre::NiTextKeyExtraData::NiTextKeyExtraData(NiStream& stream, const NiModel
     for (unsigned int i = 0; i < numTextKeys; ++i)
     {
         stream.read(mTextKeys.at(i).time);
-        stream.readLongString(mTextKeys.at(i).textIndex);
+        stream.readLongString(mTextKeys.at(i).text);
     }
 }
 
@@ -685,7 +685,7 @@ NiBtOgre::NiMorphData::NiMorphData(NiStream& stream, const NiModel& model)
     for (unsigned int i = 0; i < numMorphs; ++i)
     {
         if (stream.nifVer() >= 0x0a01006a) // from 10.1.0.106
-            stream.readLongString(mMorphs.at(i).mFrameNameIndex);
+            stream.readLongString(mMorphs.at(i).mFrameName);
 
         if (stream.nifVer() <= 0x0a010000) // up to 10.1.0.0
         {

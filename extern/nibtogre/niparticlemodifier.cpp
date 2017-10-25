@@ -25,7 +25,7 @@
 #include <cassert>
 #include <stdexcept>
 
-#ifdef NDEBUG // FIXME: debuggigng only
+#ifdef NDEBUG // FIXME: debugging only
 #undef NDEBUG
 #endif
 
@@ -38,7 +38,7 @@ NiBtOgre::NiParticleModifier::NiParticleModifier(NiStream& stream, const NiModel
 {
     stream.read(mNextModifier);
 
-    //stream.getPtr<NiNode>(mController, model.objects());
+    //stream.getPtr<NiParticleSystemController>(mController, model.objects());
     std::int32_t index = -1;
     stream.read(index);
     mController = model.getRef<NiParticleSystemController>(index);

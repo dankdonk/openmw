@@ -201,7 +201,7 @@ namespace NiBtOgre
     {
         std::uint16_t    mUnknown;
         NiNode          *mLookAt; // Ptr
-        std::uint32_t    mTargetIndex;
+        StringIndex      mTarget;
         Ogre::Vector3    mTranslation;
         Ogre::Quaternion mRotation;
         float            mScale;

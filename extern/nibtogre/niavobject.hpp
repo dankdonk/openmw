@@ -172,12 +172,12 @@ namespace NiBtOgre
         NiGeometryDataRef mDataIndex; // subclass of NiGeometryData includes NiTriShapeData
         NiSkinInstanceRef mSkinInstanceIndex;
 
-        std::vector<std::uint32_t> mMaterialName; // string indicies
+        std::vector<StringIndex> mMaterialName; // string indicies
         std::vector<std::int32_t> mMaterialExtraData;
         //std::vector<MaterialExtraData> mMaterials;
 
         bool mHasShader;
-        std::uint32_t mShaderNameIndex;
+        StringIndex mShaderName;
 
         bool mDirtyFlag;
         std::vector<NiPropertyRef> mBSProperties;
