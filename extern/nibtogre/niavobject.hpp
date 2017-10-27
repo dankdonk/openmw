@@ -87,6 +87,9 @@ namespace NiBtOgre
         NiAVObject(NiStream& stream, const NiModel& model);
         virtual ~NiAVObject() {}
 
+        virtual void build(const RecordBlocks& objects, const Header& header,
+                           Ogre::SceneNode* sceneNode, NifOgre::ObjectScenePtr scene);
+
     protected:
         std::uint16_t mFlags;
 
@@ -115,8 +118,8 @@ namespace NiBtOgre
         NiCamera(NiStream& stream, const NiModel& model);
         virtual ~NiCamera() {}
 
-        //virtual void build(const RecordBlocks& objects, const Header& header,
-                           //Ogre::SceneNode* sceneNode, NifOgre::ObjectScenePtr scene);
+        virtual void build(const RecordBlocks& objects, const Header& header,
+                           Ogre::SceneNode* sceneNode, NifOgre::ObjectScenePtr scene);
     };
 
     struct NiDynamicEffect : public NiAVObject
@@ -125,6 +128,9 @@ namespace NiBtOgre
         std::vector<NiAVObjectRef> mAffectedNodes;
 
         NiDynamicEffect(NiStream& stream, const NiModel& model);
+
+        //virtual void build(const RecordBlocks& objects, const Header& header,
+                           //Ogre::SceneNode* sceneNode, NifOgre::ObjectScenePtr scene);
     };
 
     struct NiLight : public NiDynamicEffect
@@ -135,6 +141,9 @@ namespace NiBtOgre
         Ogre::Vector3 mSpecularColor;
 
         NiLight(NiStream& stream, const NiModel& model);
+
+        //virtual void build(const RecordBlocks& objects, const Header& header,
+                           //Ogre::SceneNode* sceneNode, NifOgre::ObjectScenePtr scene);
     };
 
     typedef NiLight NiAmbientLight;
@@ -156,6 +165,9 @@ namespace NiBtOgre
         char mClippingPlane;
 
         NiTextureEffect(NiStream& stream, const NiModel& model);
+
+        //virtual void build(const RecordBlocks& objects, const Header& header,
+                           //Ogre::SceneNode* sceneNode, NifOgre::ObjectScenePtr scene);
     };
 
     /* ------------------------------- NiGeometry --------------------------- */
@@ -165,14 +177,14 @@ namespace NiBtOgre
         // FIXME: probably not grouped together, need to check real examples
         struct MaterialExtraData
         {
-            std::string  materialName;
+            StringIndex  materialName;
             std::int32_t materialExtraData;
         };
 
         NiGeometryDataRef mDataIndex; // subclass of NiGeometryData includes NiTriShapeData
         NiSkinInstanceRef mSkinInstanceIndex;
 
-        std::vector<StringIndex> mMaterialName; // string indicies
+        std::vector<StringIndex> mMaterialName;
         std::vector<std::int32_t> mMaterialExtraData;
         //std::vector<MaterialExtraData> mMaterials;
 
@@ -183,6 +195,9 @@ namespace NiBtOgre
         std::vector<NiPropertyRef> mBSProperties;
 
         NiGeometry(NiStream& stream, const NiModel& model);
+
+        virtual void build(const RecordBlocks& objects, const Header& header,
+                           Ogre::SceneNode* sceneNode, NifOgre::ObjectScenePtr scene);
     };
 
     typedef NiGeometry NiParticles;
@@ -198,6 +213,9 @@ namespace NiBtOgre
         std::vector<NiPSysModifierRef> mModifiers; // from 10.1.0.0
 
         NiParticleSystem(NiStream& stream, const NiModel& model);
+
+        virtual void build(const RecordBlocks& objects, const Header& header,
+                           Ogre::SceneNode* sceneNode, NifOgre::ObjectScenePtr scene);
     };
 
     typedef NiParticleSystem BSStripParticleSystem; // Seen in NIF version 20.2.0.7
@@ -215,6 +233,9 @@ namespace NiBtOgre
         std::uint32_t mLevel2Size;
 
         BSLODTriShape(NiStream& stream, const NiModel& model);
+
+        virtual void build(const RecordBlocks& objects, const Header& header,
+                           Ogre::SceneNode* sceneNode, NifOgre::ObjectScenePtr scene);
     };
 
     /* --------------------------------- NiNode ----------------------------- */
@@ -231,8 +252,9 @@ namespace NiBtOgre
         NiNode(NiStream& stream, const NiModel& model);
         virtual ~NiNode() {};
 
-        //virtual void build(const RecordBlocks& objects, const Header& header,
-                           //Ogre::SceneNode* sceneNode, NifOgre::ObjectScenePtr scene);
+        // It seems that for TES4 only NiNodes are root nodes?
+        virtual void build(const RecordBlocks& objects, const Header& header,
+                           Ogre::SceneNode* sceneNode, NifOgre::ObjectScenePtr scene);
     };
 
     typedef NiNode AvoidNode;
@@ -357,6 +379,9 @@ namespace NiBtOgre
 
     public:
         NiSwitchNode(NiStream& stream, const NiModel& model);
+
+        //virtual void build(const RecordBlocks& objects, const Header& header,
+                           //Ogre::SceneNode* sceneNode, NifOgre::ObjectScenePtr scene);
     };
 
     typedef NiNode RootCollisionNode;

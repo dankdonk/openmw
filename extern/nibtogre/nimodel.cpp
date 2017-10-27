@@ -40,23 +40,21 @@ NiBtOgre::NiModel::NiModel(const std::string& name) : mNiStream(name), mHeader(m
     if (mNiStream.nifVer() >= 0x0a000100) // from 10.0.1.0
     {
 
-        for (uint32_t i = 0; i < mHeader.numBlocks(); ++i)
+        for (std::uint32_t i = 0; i < mHeader.numBlocks(); ++i)
         {
-            std::cout << "Block " << mHeader.blockType(i) << std::endl;
+            //std::cout << "Block " << mHeader.blockType(i) << std::endl; // FIXME: for testing only
+            mCurrIndex = i; // FIXME: debugging only
 
             // From ver 10.0.1.0 (i.e. TES4) we already know the object types from the header.
             mObjects[i] = NiObject::create(mHeader.blockType(i), mNiStream, *this);
-            //mObjects[i]->create(mNiStream);
-            mCurrIndex = i;
         }
     }
     else
     {
-        for (uint32_t i = 0; i < mHeader.numBlocks(); ++i)
+        for (std::uint32_t i = 0; i < mHeader.numBlocks(); ++i)
         {
             // For TES3, the object type string is read first to determine the type.
             mObjects[i] = NiObject::create(mNiStream.readString(), mNiStream, *this);
-            //mObjects[i]->create(mNiStream);
         }
     }
 
@@ -64,17 +62,21 @@ NiBtOgre::NiModel::NiModel(const std::string& name) : mNiStream(name), mHeader(m
     //       or BSFadeNode (TES5)
 
     // read the footer to check for root nodes
-    uint32_t numRoots = 0;
+    std::uint32_t numRoots = 0;
     mNiStream.read(numRoots);
 
     mRoots.resize(numRoots);
-    for (uint32_t i = 0; i < numRoots; ++i)
+    for (std::uint32_t i = 0; i < numRoots; ++i)
         mNiStream.read(mRoots.at(i));
 
     if (numRoots == 0)
         throw std::runtime_error(name + " has no roots");
     else if (numRoots > 1) // FIXME: debugging only, to find out which NIF has multiple roots
         std::cout << name << " has numRoots: " << numRoots << std::endl;
+
+    // FIXME: testing only
+    //if (mNiStream.nifVer() >= 0x0a000100)
+        //std::cout << "roots " << mHeader.blockType(mRoots[0]) << std::endl;
 }
 
 NiBtOgre::NiModel::~NiModel()

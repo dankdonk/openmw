@@ -64,6 +64,11 @@ NiBtOgre::NiAVObject::NiAVObject(NiStream& stream, const NiModel& model)
         stream.read(mCollisionObjectIndex);
 }
 
+void NiBtOgre::NiAVObject::build(const RecordBlocks& objects, const Header& header,
+                             Ogre::SceneNode* sceneNode, NifOgre::ObjectScenePtr scene)
+{
+}
+
 NiBtOgre::NiCamera::NiCamera(NiStream& stream, const NiModel& model)
     : NiAVObject(stream, model), mUseOrthographicProjection(false)
 {
@@ -91,6 +96,11 @@ NiBtOgre::NiCamera::NiCamera(NiStream& stream, const NiModel& model)
     stream.skip(sizeof(std::uint32_t)); // Unknown Int
     if (stream.nifVer() >= 0x04020100) // from 4.2.1.0
         stream.skip(sizeof(std::uint32_t)); // Unknown Int2
+}
+
+void NiBtOgre::NiCamera::build(const RecordBlocks& objects, const Header& header,
+                             Ogre::SceneNode* sceneNode, NifOgre::ObjectScenePtr scene)
+{
 }
 
 NiBtOgre::NiDynamicEffect::NiDynamicEffect(NiStream& stream, const NiModel& model)
@@ -177,6 +187,11 @@ NiBtOgre::NiGeometry::NiGeometry(NiStream& stream, const NiModel& model)
     }
 }
 
+void NiBtOgre::NiGeometry::build(const RecordBlocks& objects, const Header& header,
+                             Ogre::SceneNode* sceneNode, NifOgre::ObjectScenePtr scene)
+{
+}
+
 // Seen in NIF ver 20.0.0.4, 20.0.0.5
 NiBtOgre::NiParticleSystem::NiParticleSystem(NiStream& stream, const NiModel& model)
     : NiParticles(stream, model), mWorldSpace(false)
@@ -199,6 +214,11 @@ NiBtOgre::NiParticleSystem::NiParticleSystem(NiStream& stream, const NiModel& mo
     }
 }
 
+void NiBtOgre::NiParticleSystem::build(const RecordBlocks& objects, const Header& header,
+                             Ogre::SceneNode* sceneNode, NifOgre::ObjectScenePtr scene)
+{
+}
+
 // Seen in NIF version 20.2.0.7
 NiBtOgre::BSLODTriShape::BSLODTriShape(NiStream& stream, const NiModel& model)
     : NiGeometry(stream, model)
@@ -208,22 +228,53 @@ NiBtOgre::BSLODTriShape::BSLODTriShape(NiStream& stream, const NiModel& model)
     stream.read(mLevel2Size);
 }
 
+void NiBtOgre::BSLODTriShape::build(const RecordBlocks& objects, const Header& header,
+                             Ogre::SceneNode* sceneNode, NifOgre::ObjectScenePtr scene)
+{
+}
+
 NiBtOgre::NiNode::NiNode(NiStream& stream, const NiModel& model)
     : NiAVObject(stream, model)
 {
     stream.readVector<NiAVObjectRef>(mChildren);
     stream.readVector<NiDynamicEffectRef>(mEffects);
-#if 0
-    // Discard tranformations for the root node, otherwise some meshes
-    // occasionally get wrong orientation. Only for NiNode-s for now, but
-    // can be expanded if needed.
-    if (0 == recIndex && stream.nifVer <= 0x04010000) // FIXME experiment
-    {
-        if (static_cast<Nif::Node*>(this)->trafo.rotation != Nif::Transformation::getIdentity().rotation)
-            std::cout << "Non-identity rotation: " << this->name << ", ver " << std::hex << nifVer << std::endl;
-        static_cast<Nif::Node*>(this)->trafo = Nif::Transformation::getIdentity();
-    }
-#endif
+}
+
+//   name string
+//   extra data (e.g. BSX Flags)
+//   controller(s)
+//   flags
+//   translation, rotation, scale
+//   properties
+//   bounding box (sometimes)
+//   list of child objects
+//   list of objects with dynamic effects
+//
+// With the above information, need figure out what needs to be built.
+//
+// Maybe another parameter is needed to provide a hint? i.e. the caller probably knows what
+// type of object is being built.
+//
+//   e.g. animation, static objects, dynamic objects or a combination
+//
+// BSX Flags for controlling animation and collision (from niflib):
+//
+//           TES4                  TES5
+//           --------------------- ------------
+//   Bit 0 : enable havok          Animated
+//   Bit 1 : enable collision      Havok
+//   Bit 2 : is skeleton nif?      Ragdoll
+//   Bit 3 : enable animation      Complex
+//   Bit 4 : FlameNodes present    Addon
+//   Bit 5 : EditorMarkers present
+//   Bit 6 :                       Dynamic
+//   Bit 7 :                       Articulated
+//   Bit 8 :                       IKTarget
+//   Bit 9 :                       Unknown
+//
+void NiBtOgre::NiNode::build(const RecordBlocks& objects, const Header& header,
+                             Ogre::SceneNode* sceneNode, NifOgre::ObjectScenePtr scene)
+{
 }
 
 // Seen in NIF version 20.2.0.7

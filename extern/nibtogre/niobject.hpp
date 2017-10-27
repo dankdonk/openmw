@@ -55,7 +55,8 @@ namespace NiBtOgre
 
         typedef std::vector<std::unique_ptr<NiObject> > RecordBlocks;
 
-        // Header needed for the NIF version and strings (TES5)
+        // The Header is needed for the NIF version and strings
+        // For some objects build() does not make sense - the default implementation does nothing.
         virtual void build(const RecordBlocks& objects, const Header& header,
                            Ogre::SceneNode* sceneNode, NifOgre::ObjectScenePtr scene) {}
 
@@ -96,9 +97,10 @@ namespace NiBtOgre
         float v;
     };
 
-    // index to the Header::mStrings
+    // index to strings in Header::mStrings
     typedef std::uint32_t StringIndex;
 
+    // index to objects in NiModel::mObjects
     typedef std::int32_t AbstractAdditionalGeometryDataRef;
     typedef std::int32_t BSAnimNotesRef;
     typedef std::int32_t BSMultiBoundDataRef;
