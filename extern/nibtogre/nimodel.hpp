@@ -76,11 +76,6 @@ namespace NiBtOgre
 
         int mCurrIndex; // FIXME: for debugging Ptr
 
-        // FIXME: not sure if this method is required
-        inline const std::string& getLongString(std::int32_t index) const {
-            return mHeader.getLongString(index);
-        }
-
         // default, copy and assignment not allowed
         NiModel();
         NiModel(const NiModel& other);
@@ -104,6 +99,11 @@ namespace NiBtOgre
         }
 
         void build(Ogre::SceneNode *sceneNode, NifOgre::ObjectScenePtr scene);
+
+        // FIXME: not sure if this method is required
+        inline const std::string& getLongString(std::int32_t index) const {
+            return mHeader.getLongString(index);
+        }
     };
 }
 

@@ -178,7 +178,7 @@ NiBtOgre::NiColorData::NiColorData(NiStream& stream, const NiModel& model)
 NiBtOgre::NiExtraData::NiExtraData(NiStream& stream, const NiModel& model)
     : NiObject(stream, model)
 {
-    //if (stream.nifVer() >= 0x0a000100) // from 10.0.1.0
+    if (stream.nifVer() >= 0x0a000100) // from 10.0.1.0
         stream.readLongString(mName);
 
     if (stream.nifVer() <= 0x04020200) // up to 4.2.2.0
@@ -695,7 +695,7 @@ NiBtOgre::NiMorphData::NiMorphData(NiStream& stream, const NiModel& model)
             stream.read(interpolation);
 
             mMorphs.at(i).mKeys.resize(numKeys);
-            for (unsigned int j = 0; j < numMorphs; ++j)
+            for (unsigned int j = 0; j < numKeys; ++j)
             {
                 Key<float> key;
                 key.read(stream, interpolation);

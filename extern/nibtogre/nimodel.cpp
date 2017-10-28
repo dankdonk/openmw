@@ -53,8 +53,17 @@ NiBtOgre::NiModel::NiModel(const std::string& name) : mNiStream(name), mHeader(m
     {
         for (std::uint32_t i = 0; i < mHeader.numBlocks(); ++i)
         {
+            mCurrIndex = i; // FIXME: debugging only
+            std::string blockName = mNiStream.readString();
+            //if (blockName == "RootCollisionNode")
+                //std::cout << name << " : " << "RootCollisionNode" << std::endl;
+            //if (blockName == "AvoidNode")
+                //std::cout << name << " : " << "AvoidNode" << std::endl;
+            //std::cout << "Block " << blockName << std::endl; // FIXME: for testing only
+            mObjects[i] = NiObject::create(blockName, mNiStream, *this);
+
             // For TES3, the object type string is read first to determine the type.
-            mObjects[i] = NiObject::create(mNiStream.readString(), mNiStream, *this);
+            //mObjects[i] = NiObject::create(mNiStream.readString(), mNiStream, *this);
         }
     }
 

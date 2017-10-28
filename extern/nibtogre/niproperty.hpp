@@ -237,7 +237,7 @@ namespace NiBtOgre
             void read(NiStream& stream);
         };
 
-        std::uint32_t mFlags;
+        std::uint16_t mFlags;
         std::uint32_t mApplyMode;
         std::uint32_t mTextureCount;
 

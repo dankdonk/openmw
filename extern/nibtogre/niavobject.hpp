@@ -196,8 +196,9 @@ namespace NiBtOgre
 
         NiGeometry(NiStream& stream, const NiModel& model);
 
-        virtual void build(const RecordBlocks& objects, const Header& header,
-                           Ogre::SceneNode* sceneNode, NifOgre::ObjectScenePtr scene);
+        // FIXME: guessing that only derived classes calls build()
+        //virtual void build(const RecordBlocks& objects, const Header& header,
+                           //Ogre::SceneNode* sceneNode, NifOgre::ObjectScenePtr scene);
     };
 
     typedef NiGeometry NiParticles;

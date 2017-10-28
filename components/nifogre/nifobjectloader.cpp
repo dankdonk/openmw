@@ -1641,6 +1641,9 @@ void NifOgre::NIFObjectLoader::load (Ogre::SceneNode *sceneNode,
     if (r->nifVer >= 0x0a000100) // TES4 style, i.e. from 10.0.1.0
     {
         handleNode(nif, name, group, sceneNode, node, scene, flags, 0, 0); // flags is 0 by default
+    }
+    else
+        createObjects(nif, name, group, sceneNode, node, scene, flags, 0, 0);
 //#if 0
         // FIXME: temporary, trying out new code
         // probably an auto pointer to be returned by NiModel constructor
@@ -1660,9 +1663,6 @@ void NifOgre::NIFObjectLoader::load (Ogre::SceneNode *sceneNode,
         Ogre::SceneNode *sceneNode2 = sceneNode->getCreator()->createSceneNode();         // temp dummy
         ObjectScenePtr scene2 = ObjectScenePtr(new ObjectScene(sceneNode->getCreator())); // temp dummy
         // nif->build(sceneNode2, scene2));
-    }
-    else
-        createObjects(nif, name, group, sceneNode, node, scene, flags, 0, 0);
 }
 
 void NifOgre::NIFObjectLoader::loadKf (Ogre::Skeleton *skel, const std::string &name,

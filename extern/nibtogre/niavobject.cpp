@@ -30,6 +30,7 @@
 #endif
 
 #include "nistream.hpp"
+#include "nimodel.hpp"
 
 NiBtOgre::NiAVObject::NiAVObject(NiStream& stream, const NiModel& model)
     : NiObjectNET(stream, model), mHasBoundingBox(false)
@@ -106,7 +107,9 @@ void NiBtOgre::NiCamera::build(const RecordBlocks& objects, const Header& header
 NiBtOgre::NiDynamicEffect::NiDynamicEffect(NiStream& stream, const NiModel& model)
     : NiAVObject(stream, model), mSwitchState(false)
 {
-    mSwitchState = stream.getBool();
+    if (stream.nifVer() >= 0x0a01006a) // from 10.1.0.106
+        mSwitchState = stream.getBool();
+    // TODO: how to decode the pointer in ver 4.0.0.2
     stream.readVector<NiAVObjectRef>(mAffectedNodes);
 }
 
@@ -187,10 +190,12 @@ NiBtOgre::NiGeometry::NiGeometry(NiStream& stream, const NiModel& model)
     }
 }
 
+#if 0 // see comments in the header
 void NiBtOgre::NiGeometry::build(const RecordBlocks& objects, const Header& header,
                              Ogre::SceneNode* sceneNode, NifOgre::ObjectScenePtr scene)
 {
 }
+#endif
 
 // Seen in NIF ver 20.0.0.4, 20.0.0.5
 NiBtOgre::NiParticleSystem::NiParticleSystem(NiStream& stream, const NiModel& model)

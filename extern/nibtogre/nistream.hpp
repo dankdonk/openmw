@@ -42,7 +42,7 @@ namespace NiBtOgre
     class NiStream
     {
         Ogre::DataStreamPtr mStream;
-        Header       *mHeader;
+        Header *mHeader;
 
         // cache these here for convenient access
         std::uint32_t mVer;
@@ -60,6 +60,7 @@ namespace NiBtOgre
         ~NiStream();
 
         size_t tell() { return mStream->tell(); } // FIXME: debugging only
+        const std::string& getName() { return mStream->getName(); } // FIXMe: debugging only
 
         void setHeader(Header *header);
 
@@ -83,6 +84,7 @@ namespace NiBtOgre
         std::string readString();
         void readSizedString(std::string& str);
         void readShortString(std::string& str);
+        // FIXME: does not check for duplicate strings
         void readLongString(std::uint32_t& index); // store string in header and set index
 
         bool getBool();
