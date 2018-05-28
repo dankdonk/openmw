@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2017 cc9cii
+  Copyright (C) 2017-2018 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -19,6 +19,12 @@
 
   cc9cii cc9c@iinet.net.au
 
+  Much of the information on the NIF file structures are based on the NifSkope
+  documenation.  See http://niftools.sourceforge.net/wiki/NifSkope for details.
+
+  The factory pattern is based on the answer provided by Roger Pate in
+  https://stackoverflow.com/questions/1832003/instantiating-classes-by-name-with-factory-pattern
+
 */
 #ifndef NIBTOGRE_NIOBJECT_H
 #define NIBTOGRE_NIOBJECT_H
@@ -30,8 +36,6 @@
 #include <stdexcept>
 
 #include <boost/current_function.hpp>
-
-#include <components/nifogre/objectscene.hpp> // FIXME: should create a bridge object instead
 
 #include "factory.hpp"
 
@@ -45,25 +49,30 @@ namespace NiBtOgre
     class NiStream;
     class Header;
     class NiModel;
+    struct BtOgreInst;
 
+    enum BuildFlags {
+        Flag_EnableHavok         = 0x0001,
+        Flag_EnableCollision     = 0x0002,
+        Flag_EditorMarkerPresent = 0x0020,
+        Flag_NonRootObject       = 0x1000, // FIXME: no longer used?
+        Flag_None                = 0x0000
+    };
 
-    // based on https://stackoverflow.com/questions/1832003/instantiating-classes-by-name-with-factory-pattern
     class NiObject
     {
     public:
         virtual ~NiObject() {}
 
-        typedef std::vector<std::unique_ptr<NiObject> > RecordBlocks;
+        //typedef std::vector<std::unique_ptr<NiObject> > RecordBlocks; // FIXME: no longer used
 
-        // The Header is needed for the NIF version and strings
         // For some objects build() does not make sense - the default implementation does nothing.
-        virtual void build(const RecordBlocks& objects, const Header& header,
-                           Ogre::SceneNode* sceneNode, NifOgre::ObjectScenePtr scene) {}
+        virtual void build(BtOgreInst *inst, NiObject *parent = nullptr) {}
 
         typedef NiBtOgre::Factory<NiObject> Factory;
-        static Factory::Type create(Factory::Key const& name, NiStream& stream, const NiModel& model)
+        static Factory::Type create(Factory::Key const& name, uint32_t index, NiStream& stream, const NiModel& model)
         {
-            return mFactory.create(name, stream, model);
+            return mFactory.create(name, index, stream, model);
         }
 
         template<class Derived>
@@ -73,11 +82,15 @@ namespace NiBtOgre
                 throw std::logic_error(std::string(BOOST_CURRENT_FUNCTION) + ": name already registered");
         }
 
-        NiObject(NiStream& stream, const NiModel& model) : mModel(model) {}
+        NiObject(uint32_t index, NiStream& stream, const NiModel& model) : mSelfIndex(index), mModel(model)  {}
+
+        uint32_t index() const { return mSelfIndex; }
 
     protected:
         NiObject() = default;  // disallow the default constructor in derived classes
         const NiModel& mModel; // a little akward, but need a way to access NiObject Ptrs/Refs and TES5 strings
+
+        const uint32_t mSelfIndex; // NIF block index of this object
 
     private:
         static Factory mFactory;

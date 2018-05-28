@@ -545,6 +545,14 @@ namespace Physic
         std::string sid = (boost::format("%07.3f") % scale).str();
         std::string outputstring = mesh + sid;
 
+    std::string filetype = mesh;
+    //Misc::StringUtils::lowerCase(filetype);
+    if (Misc::StringUtils::lowerCase(filetype) == "meshes\\architecture\\imperialcity\\icsigncopious01.nif")
+    {
+
+        std::cout << mesh << std::endl;
+    }
+
         //get the shape from the .nif
         mShapeLoader->load(outputstring,"General");
         BulletShapeManager::getSingletonPtr()->load(outputstring,"General");
@@ -592,8 +600,10 @@ namespace Physic
             mAnimatedRaycastingShapes[body] = instance;
         }
 
+        // FIXME: the caller never seem to use the updated values, possibly leftover from old code?
         if(scaledBoxTranslation != 0)
             *scaledBoxTranslation = shape->mBoxTranslation * scale;
+        // FIXME: the caller never seem to use the updated values, possibly leftover from old code?
         if(boxRotation != 0)
             *boxRotation = shape->mBoxRotation;
 
@@ -786,8 +796,8 @@ namespace Physic
                     // are in the right place.  (see ManualBulletShapeLoader::handleBhkCollisionObject)
                     //
                     // Maybe Bullet is having an impact?
-                    //ent->getParentSceneNode()->detachObject(ent);
-                    //childNode->attachObject(ent); // Ogre calls _notifyAttached() and needUpdate() internally
+                  ent->getParentSceneNode()->detachObject(ent);
+                  childNode->attachObject(ent); // Ogre calls _notifyAttached() and needUpdate() internally
                     std::cout << "entity name " << ent->getName() << std::endl;
                 }
             }

@@ -186,22 +186,31 @@ btTriangleMesh *createBhkPackedNiTriStripsShape(const Nif::Node *node,
         = static_cast<const Nif::hkPackedNiTriStripsData*>(triShape->data.getPtr());
 
     btTriangleMesh *staticMesh = new btTriangleMesh();
+                //if (node->name == "ICBasement3Way")
+                if (node->name == "ICBasementCorner01")
+                {
+                    std::cout << "AFightingChanceBasement" << std::endl;
+                }
 
     Ogre::Matrix4 t;
-    // note the difference (no factor of 7 on translation)
-    t.makeTransform(translation, Ogre::Vector3(1.f), rotation); // assume uniform scale
+    // NOTE: havok scale of 7
+    t.makeTransform(translation*7, Ogre::Vector3(1.f), rotation); // assume uniform scale
     t = node->getWorldTransform() * t;
 
     for(size_t i = 0; i < triData->triangles.size(); ++i)
     {
-        Ogre::Vector3 b1 = t*triData->vertices[triData->triangles[i].triangle[0]]*7; // NOTE: havok scale
-        Ogre::Vector3 b2 = t*triData->vertices[triData->triangles[i].triangle[1]]*7; // NOTE: havok scale
-        Ogre::Vector3 b3 = t*triData->vertices[triData->triangles[i].triangle[2]]*7; // NOTE: havok scale
+        Ogre::Vector3 b1 = t*(triData->vertices[triData->triangles[i].triangle[0]]*7); // NOTE: havok scale
+        Ogre::Vector3 b2 = t*(triData->vertices[triData->triangles[i].triangle[1]]*7); // NOTE: havok scale
+        Ogre::Vector3 b3 = t*(triData->vertices[triData->triangles[i].triangle[2]]*7); // NOTE: havok scale
         staticMesh->addTriangle((btVector3(b1.x,b1.y,b1.z)),
                                 (btVector3(b2.x,b2.y,b2.z)),
                                 (btVector3(b3.x,b3.y,b3.z)));
     }
 
+    // FIXME: below3 lines are experiments
+    //Ogre::Matrix4 n = node->getWorldTransform();
+    //translation = n.getTrans();
+    //rotation = n.extractQuaternion();
     translation = Ogre::Vector3::ZERO; // transform was applied here, do not apply again later
     rotation = Ogre::Quaternion::IDENTITY;
 
@@ -211,15 +220,23 @@ btTriangleMesh *createBhkPackedNiTriStripsShape(const Nif::Node *node,
 // NOTE: calls new, delete is done elsewhere
 // FIXME: for TargetWeight in TargetHeavy01.NIF, we don't want to bake in the transform here
 //        not sure how to fix
+//
+// clutter/repairhammer.nif has rotation at the node but none at rigid body
+// architecture/imperialcity/icsigncopious01.nif has transform at rigid body but none at the node
 btConvexHullShape *createBhkConvexVerticesShape(const Nif::Node *node,
         Ogre::Vector3& translation, Ogre::Quaternion& rotation, const Nif::bhkShape *bhkShape)
 {
     const Nif::bhkConvexVerticesShape *shape = static_cast<const Nif::bhkConvexVerticesShape*>(bhkShape);
+                if (node->name == "ICSignCopious01")
+                {
+                    std::cout << "copious" << std::endl;
+                }
 
     btConvexHullShape *convexHull = new btConvexHullShape();
 
     Ogre::Matrix4 n = node->getWorldTransform();
-    Ogre::Matrix4 t; // NOTE: havok scale of 7
+    Ogre::Matrix4 t;
+    // NOTE: havok scale of 7
     t.makeTransform(translation*7, Ogre::Vector3(1.f), rotation); // assume uniform scale
     t = n * t;
 
@@ -229,6 +246,8 @@ btConvexHullShape *createBhkConvexVerticesShape(const Nif::Node *node,
         Ogre::Vector3 point = t * Ogre::Vector3(v.getX(), v.getY(), v.getZ());
         convexHull->addPoint(btVector3(point.x, point.y, point.z));
     }
+    translation = n.getTrans();
+    rotation = n.extractQuaternion();
 
     translation = Ogre::Vector3::ZERO; // transform was applied here, do not apply again later
     rotation = Ogre::Quaternion::IDENTITY;
@@ -530,7 +549,7 @@ btVector3 ManualBulletShapeLoader::getbtVector(Ogre::Vector3 const &v)
 // =======================================
 //
 // The root node is a NiNode.  If the Nif file has collision, one of its nodes should have a
-// pointer to a NiCollisionObject.  The NiStringsExtraData should indicate the number of
+// pointer to a NiCollisionObject.  The NiStringExtraData should indicate the number of
 // collision groups.  Extra Data List BSX also has informtion about collision.  From niflib:
 //
 //         Bit 0 : enable havok,       bAnimated(Skyrim)
@@ -606,6 +625,8 @@ btVector3 ManualBulletShapeLoader::getbtVector(Ogre::Vector3 const &v)
 //                               ^
 //                               |
 //                 NifBullet::ManualBulletShapeLoader
+//
+// FIXME: mResourceName is not normalised, so probably misses the Nif::Cache and loaded again
 //
 void ManualBulletShapeLoader::loadResource(Ogre::Resource *resource)
 {

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015-2017 cc9cii
+  Copyright (C) 2015-2018 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -18,6 +18,9 @@
   3. This notice may not be removed or altered from any source distribution.
 
   cc9cii cc9c@iinet.net.au
+
+  Much of the information on the NIF file structures are based on the NifSkope
+  documenation.  See http://niftools.sourceforge.net/wiki/NifSkope for details.
 
 */
 #ifndef NIBTOGRE_NIPROPERTY_H
@@ -64,7 +67,7 @@ namespace NiBtOgre
         bool mIsBSLightingShaderProperty;
 
     public:
-        NiProperty(NiStream& stream, const NiModel& model);
+        NiProperty(uint32_t index, NiStream& stream, const NiModel& model);
     };
 #endif
     typedef NiObjectNET NiProperty; // Seen in NIF version 20.2.0.7
@@ -88,7 +91,7 @@ namespace NiBtOgre
         float mSoftFalloffDepth;
         std::string mGreyscaleTexture;
 
-        BSEffectShaderProperty(NiStream& stream, const NiModel& model);
+        BSEffectShaderProperty(uint32_t index, NiStream& stream, const NiModel& model);
     };
 
     // Seen in NIF version 20.2.0.7
@@ -125,7 +128,7 @@ namespace NiBtOgre
         Ogre::Vector3 mLeftEyeReflectionCenter;
         Ogre::Vector3 mRightEyeReflectionCenter;
 
-        BSLightingShaderProperty(NiStream& stream, const NiModel& model);
+        BSLightingShaderProperty(uint32_t index, NiStream& stream, const NiModel& model);
     };
 
     // Seen in NIF version 20.2.0.7
@@ -140,7 +143,7 @@ namespace NiBtOgre
         unsigned char mWaterDirection;
         std::uint16_t mUnknownS3;
 
-        BSWaterShaderProperty(NiStream& stream, const NiModel& model);
+        BSWaterShaderProperty(uint32_t index, NiStream& stream, const NiModel& model);
     };
 
     struct NiAlphaProperty : public NiProperty
@@ -148,14 +151,14 @@ namespace NiBtOgre
         std::uint16_t mFlags;
         unsigned char mThreshold;
 
-        NiAlphaProperty(NiStream& stream, const NiModel& model);
+        NiAlphaProperty(uint32_t index, NiStream& stream, const NiModel& model);
     };
 
     struct NiDitherProperty : public NiProperty
     {
         std::uint16_t mFlags;
 
-        NiDitherProperty(NiStream& stream, const NiModel& model);
+        NiDitherProperty(uint32_t index, NiStream& stream, const NiModel& model);
     };
 
     struct NiFogProperty : public NiProperty
@@ -164,7 +167,7 @@ namespace NiBtOgre
         float         mFogDepth;
         Ogre::Vector3 mFogColor;
 
-        NiFogProperty(NiStream& stream, const NiModel& model);
+        NiFogProperty(uint32_t index, NiStream& stream, const NiModel& model);
     };
 
     struct NiMaterialProperty : public NiProperty
@@ -178,21 +181,21 @@ namespace NiBtOgre
         float mGlossiness;
         float mAlpha;
 
-        NiMaterialProperty(NiStream& stream, const NiModel& model);
+        NiMaterialProperty(uint32_t index, NiStream& stream, const NiModel& model);
     };
 
     struct NiShadeProperty : public NiProperty
     {
         std::uint16_t mFlags;
 
-        NiShadeProperty(NiStream& stream, const NiModel& model);
+        NiShadeProperty(uint32_t index, NiStream& stream, const NiModel& model);
     };
 
     struct NiSpecularProperty : public NiProperty
     {
         std::uint16_t mFlags;
 
-        NiSpecularProperty(NiStream& stream, const NiModel& model);
+        NiSpecularProperty(uint32_t index, NiStream& stream, const NiModel& model);
     };
 
     struct NiStencilProperty : public NiProperty
@@ -209,7 +212,7 @@ namespace NiBtOgre
         std::uint32_t mZPassAction;
         std::uint32_t mDrawMode;
 
-        NiStencilProperty(NiStream& stream, const NiModel& model);
+        NiStencilProperty(uint32_t index, NiStream& stream, const NiModel& model);
     };
 
     struct NiTexturingProperty : public NiProperty
@@ -286,7 +289,7 @@ namespace NiBtOgre
 
         std::vector<ShaderTexDesc> mShaderTextures;
 
-        NiTexturingProperty(NiStream& stream, const NiModel& model);
+        NiTexturingProperty(uint32_t index, NiStream& stream, const NiModel& model);
     };
 
     struct NiVertexColorProperty : public NiProperty
@@ -295,14 +298,14 @@ namespace NiBtOgre
         std::uint32_t mVertexMode;
         std::uint32_t mLightingMode;
 
-        NiVertexColorProperty(NiStream& stream, const NiModel& model);
+        NiVertexColorProperty(uint32_t index, NiStream& stream, const NiModel& model);
     };
 
     struct NiWireframeProperty : public NiProperty
     {
         std::uint16_t mFlags;
 
-        NiWireframeProperty(NiStream& stream, const NiModel& model);
+        NiWireframeProperty(uint32_t index, NiStream& stream, const NiModel& model);
     };
 
     struct NiZBufferProperty : public NiProperty
@@ -310,7 +313,7 @@ namespace NiBtOgre
         std::uint16_t mFlags;
         std::uint32_t mFunction;
 
-        NiZBufferProperty(NiStream& stream, const NiModel& model);
+        NiZBufferProperty(uint32_t index, NiStream& stream, const NiModel& model);
     };
 }
 

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015-2017 cc9cii
+  Copyright (C) 2015-2018 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -34,7 +34,10 @@
 
 // "name" is the full path to the mesh from the resource directory/BSA added to Ogre::ResourceGroupManager.
 // The file is opened by mNiStream::mStream.
+//
+// FIXME: there could be duplicates b/w TES3 and TES4/5
 NiBtOgre::NiModel::NiModel(const std::string& name) : mNiStream(name), mHeader(mNiStream)
+                                                      , filename(name) // FIXME: testing only
 {
     mObjects.resize(mHeader.numBlocks());
     if (mNiStream.nifVer() >= 0x0a000100) // from 10.0.1.0
@@ -46,7 +49,7 @@ NiBtOgre::NiModel::NiModel(const std::string& name) : mNiStream(name), mHeader(m
             mCurrIndex = i; // FIXME: debugging only
 
             // From ver 10.0.1.0 (i.e. TES4) we already know the object types from the header.
-            mObjects[i] = NiObject::create(mHeader.blockType(i), mNiStream, *this);
+            mObjects[i] = NiObject::create(mHeader.blockType(i), i, mNiStream, *this);
         }
     }
     else
@@ -54,14 +57,18 @@ NiBtOgre::NiModel::NiModel(const std::string& name) : mNiStream(name), mHeader(m
         for (std::uint32_t i = 0; i < mHeader.numBlocks(); ++i)
         {
             mCurrIndex = i; // FIXME: debugging only
+//#if 0
             std::string blockName = mNiStream.readString();
             //if (blockName == "RootCollisionNode")
                 //std::cout << name << " : " << "RootCollisionNode" << std::endl;
             //if (blockName == "AvoidNode")
                 //std::cout << name << " : " << "AvoidNode" << std::endl;
+            //if (blockName == "NiStringExtraData")
+                //std::cout << name << " : " << "NiStringExtraData" << std::endl;
+            //std::cout << name << " : " << "BoundingBox" << std::endl;
+            mObjects[i] = NiObject::create(blockName, i, mNiStream, *this);
             //std::cout << "Block " << blockName << std::endl; // FIXME: for testing only
-            mObjects[i] = NiObject::create(blockName, mNiStream, *this);
-
+//#endif
             // For TES3, the object type string is read first to determine the type.
             //mObjects[i] = NiObject::create(mNiStream.readString(), mNiStream, *this);
         }
@@ -92,11 +99,10 @@ NiBtOgre::NiModel::~NiModel()
 {
 }
 
-// modifies scenenode and scene
-void NiBtOgre::NiModel::build(Ogre::SceneNode *sceneNode, NifOgre::ObjectScenePtr scene)
+void NiBtOgre::NiModel::build(BtOgreInst *inst)
 {
     // build the first root
-    mObjects[mRoots[0]]->build(mObjects, mHeader, sceneNode, scene);
+    mObjects[mRoots[0]]->build(inst);
 
     // FIXME: what to do with other roots?
 }

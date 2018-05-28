@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015-2017 cc9cii
+  Copyright (C) 2015-2018 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -18,6 +18,9 @@
   3. This notice may not be removed or altered from any source distribution.
 
   cc9cii cc9c@iinet.net.au
+
+  Much of the information on the NIF file structures are based on the NifSkope
+  documenation.  See http://niftools.sourceforge.net/wiki/NifSkope for details.
 
 */
 #ifndef NIBTOGRE_NICOLLISIONOBJECT_H
@@ -49,7 +52,7 @@ namespace NiBtOgre
         NiAVObject *mTarget; // Ptr
 
     public:
-        NiCollisionObject(NiStream& stream, const NiModel& model);
+        NiCollisionObject(uint32_t index, NiStream& stream, const NiModel& model);
         virtual ~NiCollisionObject() {}
     };
 
@@ -98,19 +101,24 @@ namespace NiBtOgre
         BoundingVolume mBoundingVolume;
 
     public:
-        NiCollisionData(NiStream& stream, const NiModel& model);
+        NiCollisionData(uint32_t index, NiStream& stream, const NiModel& model);
         virtual ~NiCollisionData() {}
     };
 
     // Seen in NIF version 20.0.0.4, 20.0.0.5
     class bhkNiCollisionObject : public NiCollisionObject
     {
+        // Notes from NifSkope: Set to 1 for most objects, and to 41 for animated objects (OL_ANIM_STATIC).
+        //                      Bits: 0=Active 2=Notify 3=Set Local 6=Reset.
         std::uint16_t mFlags;
         NiObjectRef   mBodyIndex;
 
     public:
-        bhkNiCollisionObject(NiStream& stream, const NiModel& model);
+        bhkNiCollisionObject(uint32_t index, NiStream& stream, const NiModel& model);
         virtual ~bhkNiCollisionObject() {}
+
+        // parentNiNode is used to calculate the world transform
+        virtual void build(BtOgreInst *inst, NiObject *parentNiNode = nullptr);
     };
 
     typedef bhkNiCollisionObject bhkCollisionObject; // Seen in NIF version 20.0.0.4, 20.0.0.5
@@ -122,7 +130,7 @@ namespace NiBtOgre
         float mUnknown2;
 
     public:
-        bhkBlendCollisionObject(NiStream& stream, const NiModel& model);
+        bhkBlendCollisionObject(uint32_t index, NiStream& stream, const NiModel& model);
         virtual ~bhkBlendCollisionObject() {}
     };
 

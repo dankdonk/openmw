@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015-2017 cc9cii
+  Copyright (C) 2015-2018 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -19,6 +19,9 @@
 
   cc9cii cc9c@iinet.net.au
 
+  Much of the information on the NIF file structures are based on the NifSkope
+  documenation.  See http://niftools.sourceforge.net/wiki/NifSkope for details.
+
 */
 #include "nipsyscollider.hpp"
 
@@ -34,8 +37,8 @@
 #include "nimodel.hpp"
 
 // Seen in NIF ver 20.0.0.4, 20.0.0.5
-NiBtOgre::NiPSysCollider::NiPSysCollider(NiStream& stream, const NiModel& model)
-    : NiObject(stream, model)
+NiBtOgre::NiPSysCollider::NiPSysCollider(uint32_t index, NiStream& stream, const NiModel& model)
+    : NiObject(index, stream, model)
 {
     stream.read(mBounce);
     stream.read(mSpawnOnCollide);
@@ -43,21 +46,21 @@ NiBtOgre::NiPSysCollider::NiPSysCollider(NiStream& stream, const NiModel& model)
     stream.read(mSpawnModifierIndex);
 
     //stream.getPtr<NiObject>(mParent, model.objects());
-    std::int32_t index = -1;
-    stream.read(index);
-    mParent = model.getRef<NiObject>(index);
+    std::int32_t rIndex = -1;
+    stream.read(rIndex);
+    mParent = model.getRef<NiObject>(rIndex);
 
     stream.read(mNextColliderIndex);
 
     //stream.getPtr<NiNode>(mColliderObject, model.objects());
-    index = -1; // note: variable reused
-    stream.read(index);
-    mColliderObject = model.getRef<NiNode>(index);
+    rIndex = -1; // note: variable reused
+    stream.read(rIndex);
+    mColliderObject = model.getRef<NiNode>(rIndex);
 }
 
 // Seen in NIF ver 20.0.0.4, 20.0.0.5
-NiBtOgre::NiPSysPlanarCollider::NiPSysPlanarCollider(NiStream& stream, const NiModel& model)
-    : NiPSysCollider(stream, model)
+NiBtOgre::NiPSysPlanarCollider::NiPSysPlanarCollider(uint32_t index, NiStream& stream, const NiModel& model)
+    : NiPSysCollider(index, stream, model)
 {
     stream.read(mWidth);
     stream.read(mHeight);
@@ -66,8 +69,8 @@ NiBtOgre::NiPSysPlanarCollider::NiPSysPlanarCollider(NiStream& stream, const NiM
 }
 
 // Seen in NIF version 20.2.0.7
-NiBtOgre::NiPSysSphericalCollider::NiPSysSphericalCollider(NiStream& stream, const NiModel& model)
-    : NiPSysCollider(stream, model)
+NiBtOgre::NiPSysSphericalCollider::NiPSysSphericalCollider(uint32_t index, NiStream& stream, const NiModel& model)
+    : NiPSysCollider(index, stream, model)
 {
     stream.read(mRadius);
 }

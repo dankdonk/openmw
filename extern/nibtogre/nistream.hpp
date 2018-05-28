@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015-2017 cc9cii
+  Copyright (C) 2015-2018 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -27,6 +27,8 @@
 #include <cstddef>
 
 #include <OgreDataStream.h>
+
+class btVector3;
 
 namespace Ogre
 {
@@ -60,7 +62,7 @@ namespace NiBtOgre
         ~NiStream();
 
         size_t tell() { return mStream->tell(); } // FIXME: debugging only
-        const std::string& getName() { return mStream->getName(); } // FIXMe: debugging only
+        const std::string& getName() { return mStream->getName(); } // FIXME: debugging only
 
         void setHeader(Header *header);
 
@@ -85,6 +87,7 @@ namespace NiBtOgre
         void readSizedString(std::string& str);
         void readShortString(std::string& str);
         // FIXME: does not check for duplicate strings
+        // - can keep a map of indicies but is it worth the trouble to save some memory?
         void readLongString(std::uint32_t& index); // store string in header and set index
 
         bool getBool();
@@ -125,6 +128,9 @@ namespace NiBtOgre
                 read(data.at(i));
         }
     };
+
+    template<>
+    void NiStream::read<btVector3>(btVector3& value);
 
     template<>
     void NiStream::read<Ogre::Vector3>(Ogre::Vector3& value);

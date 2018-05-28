@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015-2017 cc9cii
+  Copyright (C) 2015-2018 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -27,8 +27,6 @@
 #include <string>
 #include <cstdint>
 
-#include <components/nifogre/objectscene.hpp> // TODO: replace?
-
 #include "nistream.hpp"
 #include "header.hpp"
 
@@ -40,6 +38,7 @@ namespace Ogre
 namespace NiBtOgre
 {
     class NiObject;
+    struct BtOgreInst;
 
     //
     //   +--& NiModel
@@ -75,6 +74,7 @@ namespace NiBtOgre
         std::vector<uint32_t> mRoots;
 
         int mCurrIndex; // FIXME: for debugging Ptr
+        std::string filename; // FIXME: for testing only
 
         // default, copy and assignment not allowed
         NiModel();
@@ -89,6 +89,8 @@ namespace NiBtOgre
         NiModel(const std::string &name);
         ~NiModel();
 
+        const std::string& getName() const { return filename; } // FIXME: for testing only
+
         template<class T>
         inline T *getRef(std::int32_t index) const {
 
@@ -98,9 +100,17 @@ namespace NiBtOgre
             return (index < 0) ? nullptr : static_cast<T*>(mObjects[index].get());
         }
 
-        void build(Ogre::SceneNode *sceneNode, NifOgre::ObjectScenePtr scene);
+        // WARNING: SceneNode in inst should have the scale (assumed uniform)
+        void build(BtOgreInst *inst);
 
-        // FIXME: not sure if this method is required
+        // returns NiObject type name
+        const std::string& blockType(std::uint32_t index) const {
+            return mHeader.blockType(index);
+        }
+
+        // needed for the NIF version and strings (TES5)
+        inline std::uint32_t nifVer() const { return mHeader.nifVer(); }
+
         inline const std::string& getLongString(std::int32_t index) const {
             return mHeader.getLongString(index);
         }

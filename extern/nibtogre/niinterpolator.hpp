@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015-2017 cc9cii
+  Copyright (C) 2015-2018 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -18,6 +18,9 @@
   3. This notice may not be removed or altered from any source distribution.
 
   cc9cii cc9c@iinet.net.au
+
+  Much of the information on the NIF file structures are based on the NifSkope
+  documenation.  See http://niftools.sourceforge.net/wiki/NifSkope for details.
 
 */
 #ifndef NIBTOGRE_NIINTERPOLATOR_H
@@ -67,7 +70,7 @@ namespace NiBtOgre
         NiBSplineDataRef      mSplineDataIndex;
         NiBSplineBasisDataRef mBasisDataIndex;
 
-        NiBSplineInterpolator(NiStream& stream, const NiModel& model);
+        NiBSplineInterpolator(uint32_t index, NiStream& stream, const NiModel& model);
     };
 
     typedef NiBSplineInterpolator NiBSplineFloatInterpolator; // Seen in NIF version 20.2.0.7
@@ -82,7 +85,7 @@ namespace NiBtOgre
         float mUnknown5;
         float mUnknown6;
 
-        NiBSplinePoint3Interpolator(NiStream& stream, const NiModel& model);
+        NiBSplinePoint3Interpolator(uint32_t index, NiStream& stream, const NiModel& model);
     };
 
     // Seen in NIF version 20.0.0.4, 20.0.0.5
@@ -95,7 +98,7 @@ namespace NiBtOgre
         std::uint32_t mRotationOffset;
         std::uint32_t mScaleOffset;
 
-        NiBSplineTransformInterpolator(NiStream& stream, const NiModel& model);
+        NiBSplineTransformInterpolator(uint32_t index, NiStream& stream, const NiModel& model);
     };
 
     // Seen in NIF version 20.0.0.4, 20.0.0.5
@@ -108,7 +111,7 @@ namespace NiBtOgre
         float mScaleBias;
         float mScaleMultiplier;
 
-        NiBSplineCompTransformInterpolator(NiStream& stream, const NiModel& model);
+        NiBSplineCompTransformInterpolator(uint32_t index, NiStream& stream, const NiModel& model);
     };
 
     struct NiBlendInterpolator : public NiInterpolator
@@ -116,7 +119,7 @@ namespace NiBtOgre
         std::uint16_t mUnknownShort;
         std::uint32_t mUnknownInt;
 
-        NiBlendInterpolator(NiStream& stream, const NiModel& model);
+        NiBlendInterpolator(uint32_t index, NiStream& stream, const NiModel& model);
     };
 
     // Seen in NIF version 20.0.0.4, 20.0.0.5
@@ -124,7 +127,7 @@ namespace NiBtOgre
     {
         unsigned char mValue;
 
-        NiBlendBoolInterpolator(NiStream& stream, const NiModel& model);
+        NiBlendBoolInterpolator(uint32_t index, NiStream& stream, const NiModel& model);
     };
 
     // Seen in NIF version 20.0.0.4, 20.0.0.5
@@ -132,7 +135,7 @@ namespace NiBtOgre
     {
         float mValue;
 
-        NiBlendFloatInterpolator(NiStream& stream, const NiModel& model);
+        NiBlendFloatInterpolator(uint32_t index, NiStream& stream, const NiModel& model);
     };
 
     // Seen in NIF version 20.0.0.4, 20.0.0.5
@@ -140,7 +143,7 @@ namespace NiBtOgre
     {
         Ogre::Vector3 mValue;
 
-        NiBlendPoint3Interpolator(NiStream& stream, const NiModel& model);
+        NiBlendPoint3Interpolator(uint32_t index, NiStream& stream, const NiModel& model);
     };
 
     typedef NiBlendInterpolator NiBlendTransformInterpolator; // Seen in NIF version 20.0.0.4, 20.0.0.5
@@ -151,7 +154,7 @@ namespace NiBtOgre
         bool          mBoolalue;
         NiBoolDataRef mDataIndex;
 
-        NiBoolInterpolator(NiStream& stream, const NiModel& model);
+        NiBoolInterpolator(uint32_t index, NiStream& stream, const NiModel& model);
     };
 
     typedef NiBoolInterpolator NiBoolTimelineInterpolator; // Seen in NIF version 20.0.0.4, 20.0.0.5
@@ -162,7 +165,7 @@ namespace NiBtOgre
         float          mFloatValue;
         NiFloatDataRef mDataIndex;
 
-        NiFloatInterpolator(NiStream& stream, const NiModel& model);
+        NiFloatInterpolator(uint32_t index, NiStream& stream, const NiModel& model);
     };
 
     // Seen in NIF version 20.0.0.4, 20.0.0.5
@@ -171,7 +174,7 @@ namespace NiBtOgre
         NiPosDataRef   mPosDataIndex;
         NiFloatDataRef mFloatDataIndex;
 
-        NiPathInterpolator(NiStream& stream, const NiModel& model);
+        NiPathInterpolator(uint32_t index, NiStream& stream, const NiModel& model);
     };
 
     // Seen in NIF version 20.0.0.4, 20.0.0.5
@@ -180,7 +183,7 @@ namespace NiBtOgre
         Ogre::Vector3 mPoint3Value;
         NiPosDataRef  mDataIndex;
 
-        NiPoint3Interpolator(NiStream& stream, const NiModel& model);
+        NiPoint3Interpolator(uint32_t index, NiStream& stream, const NiModel& model);
     };
 
     // Seen in NIF version 20.0.0.4, 20.0.0.5
@@ -191,7 +194,7 @@ namespace NiBtOgre
         float              mScale;
         NiTransformDataRef mDataIndex;
 
-        NiTransformInterpolator(NiStream& stream, const NiModel& model);
+        NiTransformInterpolator(uint32_t index, NiStream& stream, const NiModel& model);
     };
 
     class NiNode;
@@ -209,7 +212,7 @@ namespace NiBtOgre
         NiFloatInterpolatorRef  mUnknownLink2;
         NiFloatInterpolatorRef  mUnknownLink3;
 
-        NiLookAtInterpolator(NiStream& stream, const NiModel& model);
+        NiLookAtInterpolator(uint32_t index, NiStream& stream, const NiModel& model);
     };
 }
 

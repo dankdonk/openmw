@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015-2017 cc9cii
+  Copyright (C) 2015-2018 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -19,6 +19,9 @@
 
   cc9cii cc9c@iinet.net.au
 
+  Much of the information on the NIF file structures are based on the NifSkope
+  documenation.  See http://niftools.sourceforge.net/wiki/NifSkope for details.
+
 */
 #include "nicollisionobject.hpp"
 
@@ -29,22 +32,25 @@
 #undef NDEBUG
 #endif
 
+#include <btBulletDynamicsCommon.h>
+
 #include "nistream.hpp"
 #include "niavobject.hpp" // static_cast NiAVObject
 #include "nimodel.hpp"
+#include "bhkrefobject.hpp"
 
 // Seen in NIF ver 20.0.0.4, 20.0.0.5
-NiBtOgre::NiCollisionObject::NiCollisionObject(NiStream& stream, const NiModel& model)
-    : NiObject(stream, model)
+NiBtOgre::NiCollisionObject::NiCollisionObject(uint32_t index, NiStream& stream, const NiModel& model)
+    : NiObject(index, stream, model)
 {
     //stream.getPtr<NiAVObject>(mTarget, model.objects());
-    std::int32_t index = -1;
-    stream.read(index);
-    mTarget = model.getRef<NiAVObject>(index);
+    std::int32_t rIndex = -1;
+    stream.read(rIndex);
+    mTarget = model.getRef<NiAVObject>(rIndex);
 }
 
-NiBtOgre::NiCollisionData::NiCollisionData(NiStream& stream, const NiModel& model)
-    : NiCollisionObject(stream, model)
+NiBtOgre::NiCollisionData::NiCollisionData(uint32_t index, NiStream& stream, const NiModel& model)
+    : NiCollisionObject(index, stream, model)
 {
     stream.read(mPropagationMode);
     stream.read(mCollisionMode);
@@ -86,16 +92,42 @@ NiBtOgre::NiCollisionData::NiCollisionData(NiStream& stream, const NiModel& mode
 }
 
 // Seen in NIF ver 20.0.0.4, 20.0.0.5
-NiBtOgre::bhkNiCollisionObject::bhkNiCollisionObject(NiStream& stream, const NiModel& model)
-    : NiCollisionObject(stream, model)
+NiBtOgre::bhkNiCollisionObject::bhkNiCollisionObject(uint32_t index, NiStream& stream, const NiModel& model)
+    : NiCollisionObject(index, stream, model)
 {
     stream.read(mFlags);
     stream.read(mBodyIndex);
 }
 
+// build the 'body' to the 'target'
+//
+// Old implementation was at ManualBulletShapeLoader::handleBhkCollisionObject()
+// It is probably intended to be per rigid body, possibly TES3 NIF had no separate
+// collision shapes and hence considered the whole thing as one rigid body?
+void NiBtOgre::bhkNiCollisionObject::build(BtOgreInst *inst, NiObject *parentNiNode)
+{
+    // collision objects have 'target' which should have the parent world transform
+    // FIXME: assert during testing only
+    assert(mTarget->index() == parentNiNode->index() && "CollisionObject: parent is not the target");
+
+#if 0
+    // mBodyIndex refers to either a bhkRigidBody or bhkRigidBodyT
+    // apply rotation and translation only if the collision object's body is a bhkRigidBodyT type
+    if (mModel.blockType(mBodyIndex) == "bhkRigidBodyT")
+    {
+        rotation = Ogre::Quaternion(rigidBody->rotation.w,
+                rigidBody->rotation.x, rigidBody->rotation.y, rigidBody->rotation.z);
+        translation = Ogre::Vector3(rigidBody->translation.x,
+                rigidBody->translation.y, rigidBody->translation.z);
+    }
+#endif
+
+    mModel.getRef<NiObject>(mBodyIndex)->build(inst, parentNiNode); // NOTE: parent passed
+}
+
 // Seen in NIF ver 20.0.0.4, 20.0.0.5
-NiBtOgre::bhkBlendCollisionObject::bhkBlendCollisionObject(NiStream& stream, const NiModel& model)
-    : bhkCollisionObject(stream, model)
+NiBtOgre::bhkBlendCollisionObject::bhkBlendCollisionObject(uint32_t index, NiStream& stream, const NiModel& model)
+    : bhkCollisionObject(index, stream, model)
 {
     stream.read(mUnknown1);
     stream.read(mUnknown2);

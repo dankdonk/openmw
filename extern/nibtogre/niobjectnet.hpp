@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015-2017 cc9cii
+  Copyright (C) 2015-2018 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -18,6 +18,9 @@
   3. This notice may not be removed or altered from any source distribution.
 
   cc9cii cc9c@iinet.net.au
+
+  Much of the information on the NIF file structures are based on the NifSkope
+  documenation.  See http://niftools.sourceforge.net/wiki/NifSkope for details.
 
 */
 #ifndef NIBTOGRE_NIOBJECTNET_H
@@ -57,12 +60,12 @@ namespace NiBtOgre
         NiTimeControllerRef         mControllerIndex;    // first in a chain
 
     public:
-        NiObjectNET(NiStream& stream, const NiModel& model, bool isBSLightingShaderProperty = false);
+        NiObjectNET(uint32_t index, NiStream& stream, const NiModel& model, bool isBSLightingShaderProperty = false);
         virtual ~NiObjectNET() {}
 
-        // Header needed for the NIF version and strings (TES5)
-        virtual void build(const RecordBlocks& objects, const Header& header,
-                           Ogre::SceneNode* sceneNode, NifOgre::ObjectScenePtr scene);
+        inline StringIndex getName() const { return mName; }
+
+        virtual void build(Ogre::SceneNode *sceneNode, BtOgreInst *inst, NiObject *parent = nullptr);
     };
 
     typedef NiObjectNET NiSequenceStreamHelper;
@@ -86,7 +89,7 @@ namespace NiBtOgre
         bool mDirectRender;
         bool mPersistRenderData;
 
-        NiSourceTexture(NiStream& stream, const NiModel& model);
+        NiSourceTexture(uint32_t index, NiStream& stream, const NiModel& model);
     };
 }
 

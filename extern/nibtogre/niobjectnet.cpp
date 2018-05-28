@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015-2017 cc9cii
+  Copyright (C) 2015-2018 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -19,13 +19,17 @@
 
   cc9cii cc9c@iinet.net.au
 
+  Much of the information on the NIF file structures are based on the NifSkope
+  documenation.  See http://niftools.sourceforge.net/wiki/NifSkope for details.
+
 */
 #include "niobjectnet.hpp"
 
 #include "nistream.hpp"
 
-NiBtOgre::NiObjectNET::NiObjectNET(NiStream& stream, const NiModel& model, bool isBSLightingShaderProperty)
-    : NiObject(stream, model), mIsBSLightingShaderProperty(isBSLightingShaderProperty)
+NiBtOgre::NiObjectNET::NiObjectNET(uint32_t index, NiStream& stream, const NiModel& model,
+                                   bool isBSLightingShaderProperty)
+    : NiObject(index, stream, model), mIsBSLightingShaderProperty(isBSLightingShaderProperty)
 {
     if (mIsBSLightingShaderProperty)
     {
@@ -46,14 +50,13 @@ NiBtOgre::NiObjectNET::NiObjectNET(NiStream& stream, const NiModel& model, bool 
     stream.read(mControllerIndex);
 }
 
-void NiBtOgre::NiObjectNET::build(const RecordBlocks& objects, const Header& header,
-                             Ogre::SceneNode* sceneNode, NifOgre::ObjectScenePtr scene)
+void NiBtOgre::NiObjectNET::build(Ogre::SceneNode *sceneNode, BtOgreInst *inst, NiObject *parent)
 {
 }
 
 
-NiBtOgre::NiSourceTexture::NiSourceTexture(NiStream& stream, const NiModel& model)
-    : NiTexture(stream, model), mDirectRender(false), mPersistRenderData(false)
+NiBtOgre::NiSourceTexture::NiSourceTexture(uint32_t index, NiStream& stream, const NiModel& model)
+    : NiTexture(index, stream, model), mDirectRender(false), mPersistRenderData(false)
 {
     stream.read(mUseExternal);
 

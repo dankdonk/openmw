@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015-2017 cc9cii
+  Copyright (C) 2015-2018 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -19,6 +19,9 @@
 
   cc9cii cc9c@iinet.net.au
 
+  Much of the information on the NIF file structures are based on the NifSkope
+  documenation.  See http://niftools.sourceforge.net/wiki/NifSkope for details.
+
 */
 #ifndef NIBTOGRE_NIAVOBJECT_H
 #define NIBTOGRE_NIAVOBJECT_H
@@ -30,6 +33,7 @@
 #include <OgreVector3.h>
 #include <OgreVector4.h>
 #include <OgreMatrix3.h>
+#include <OgreMatrix4.h>
 
 #include "niobjectnet.hpp"
 
@@ -84,11 +88,13 @@ namespace NiBtOgre
             Ogre::Vector3 radius; // per direction
         };
 
-        NiAVObject(NiStream& stream, const NiModel& model);
+        NiAVObject(uint32_t index, NiStream& stream, const NiModel& model);
         virtual ~NiAVObject() {}
 
-        virtual void build(const RecordBlocks& objects, const Header& header,
-                           Ogre::SceneNode* sceneNode, NifOgre::ObjectScenePtr scene);
+        // parentNiNode is used to calculate the world transform
+        virtual void build(BtOgreInst *inst, NiObject *parentNiNode = nullptr);
+
+        inline const Ogre::Matrix4& getWorldTransform() const { return mWorldTransform; }
 
     protected:
         std::uint16_t mFlags;
@@ -96,6 +102,8 @@ namespace NiBtOgre
         Ogre::Vector3 mTranslation;
         Ogre::Matrix3 mRotation;
         float         mScale; // only uniform scaling
+
+        Ogre::Matrix4 mWorldTransform; // includes local translation, rotation and scale
 
         Ogre::Vector3 mVelocity; // unknown, to 4.2.2.0
 
@@ -115,11 +123,10 @@ namespace NiBtOgre
         float mLODAdjust;
 
     public:
-        NiCamera(NiStream& stream, const NiModel& model);
+        NiCamera(uint32_t index, NiStream& stream, const NiModel& model);
         virtual ~NiCamera() {}
 
-        virtual void build(const RecordBlocks& objects, const Header& header,
-                           Ogre::SceneNode* sceneNode, NifOgre::ObjectScenePtr scene);
+        void build(BtOgreInst *inst, NiObject *parentNiNode = nullptr);
     };
 
     struct NiDynamicEffect : public NiAVObject
@@ -127,10 +134,9 @@ namespace NiBtOgre
         bool mSwitchState;
         std::vector<NiAVObjectRef> mAffectedNodes;
 
-        NiDynamicEffect(NiStream& stream, const NiModel& model);
+        NiDynamicEffect(uint32_t index, NiStream& stream, const NiModel& model);
 
-        //virtual void build(const RecordBlocks& objects, const Header& header,
-                           //Ogre::SceneNode* sceneNode, NifOgre::ObjectScenePtr scene);
+        //virtual void build(BtOgreInst *inst, NiObject *parentNiNode = nullptr);
     };
 
     struct NiLight : public NiDynamicEffect
@@ -140,10 +146,9 @@ namespace NiBtOgre
         Ogre::Vector3 mDiffuseColor;
         Ogre::Vector3 mSpecularColor;
 
-        NiLight(NiStream& stream, const NiModel& model);
+        NiLight(uint32_t index, NiStream& stream, const NiModel& model);
 
-        //virtual void build(const RecordBlocks& objects, const Header& header,
-                           //Ogre::SceneNode* sceneNode, NifOgre::ObjectScenePtr scene);
+        //void build(BtOgreInst *inst, NiObject *parentNiNode = nullptr);
     };
 
     typedef NiLight NiAmbientLight;
@@ -164,10 +169,9 @@ namespace NiBtOgre
 
         char mClippingPlane;
 
-        NiTextureEffect(NiStream& stream, const NiModel& model);
+        NiTextureEffect(uint32_t index, NiStream& stream, const NiModel& model);
 
-        //virtual void build(const RecordBlocks& objects, const Header& header,
-                           //Ogre::SceneNode* sceneNode, NifOgre::ObjectScenePtr scene);
+        //void build(BtOgreInst *inst, NiObject *parentNiNode = nullptr);
     };
 
     /* ------------------------------- NiGeometry --------------------------- */
@@ -194,11 +198,12 @@ namespace NiBtOgre
         bool mDirtyFlag;
         std::vector<NiPropertyRef> mBSProperties;
 
-        NiGeometry(NiStream& stream, const NiModel& model);
+        NiGeometry(uint32_t index, NiStream& stream, const NiModel& model);
 
-        // FIXME: guessing that only derived classes calls build()
-        //virtual void build(const RecordBlocks& objects, const Header& header,
-                           //Ogre::SceneNode* sceneNode, NifOgre::ObjectScenePtr scene);
+        virtual void build(BtOgreInst *inst, NiObject *parentNiNode = nullptr);
+
+    private:
+        void buildTES3(Ogre::SceneNode *sceneNode, BtOgreInst *inst, NiObject *parentNiNode = nullptr);
     };
 
     typedef NiGeometry NiParticles;
@@ -213,10 +218,9 @@ namespace NiBtOgre
         bool mWorldSpace;                          // from 10.1.0.0
         std::vector<NiPSysModifierRef> mModifiers; // from 10.1.0.0
 
-        NiParticleSystem(NiStream& stream, const NiModel& model);
+        NiParticleSystem(uint32_t index, NiStream& stream, const NiModel& model);
 
-        virtual void build(const RecordBlocks& objects, const Header& header,
-                           Ogre::SceneNode* sceneNode, NifOgre::ObjectScenePtr scene);
+        virtual void build(BtOgreInst *inst, NiObject *parentNiNode = nullptr);
     };
 
     typedef NiParticleSystem BSStripParticleSystem; // Seen in NIF version 20.2.0.7
@@ -233,10 +237,9 @@ namespace NiBtOgre
         std::uint32_t mLevel1Size;
         std::uint32_t mLevel2Size;
 
-        BSLODTriShape(NiStream& stream, const NiModel& model);
+        BSLODTriShape(uint32_t index, NiStream& stream, const NiModel& model);
 
-        virtual void build(const RecordBlocks& objects, const Header& header,
-                           Ogre::SceneNode* sceneNode, NifOgre::ObjectScenePtr scene);
+        void build(BtOgreInst *inst, NiObject *parentNiNode = nullptr);
     };
 
     /* --------------------------------- NiNode ----------------------------- */
@@ -245,17 +248,17 @@ namespace NiBtOgre
 
     class NiNode : public NiAVObject
     {
+        void buildTES3(Ogre::SceneNode *sceneNode, BtOgreInst *inst, NiObject *parentNiNode = nullptr);
     protected:
         std::vector<NiAVObjectRef>      mChildren;
         std::vector<NiDynamicEffectRef> mEffects;
 
     public:
-        NiNode(NiStream& stream, const NiModel& model);
+        NiNode(uint32_t index, NiStream& stream, const NiModel& model);
         virtual ~NiNode() {};
 
-        // It seems that for TES4 only NiNodes are root nodes?
-        virtual void build(const RecordBlocks& objects, const Header& header,
-                           Ogre::SceneNode* sceneNode, NifOgre::ObjectScenePtr scene);
+        // It seems that for TES4 only NiNodes/NiBillboardNode are root nodes?
+        virtual void build(BtOgreInst *inst, NiObject *parentNiNode = nullptr);
     };
 
     typedef NiNode AvoidNode;
@@ -267,11 +270,10 @@ namespace NiBtOgre
         short mUnknown2;
 
     public:
-        BSBlastNode(NiStream& stream, const NiModel& model);
+        BSBlastNode(uint32_t index, NiStream& stream, const NiModel& model);
         virtual ~BSBlastNode() {};
 
-        //virtual void build(const RecordBlocks& objects, const Header& header,
-                           //Ogre::SceneNode* sceneNode, NifOgre::ObjectScenePtr scene);
+        //void build(BtOgreInst *inst, NiObject *parentNiNode = nullptr);
     };
 
     // Seen in NIF version 20.2.0.7
@@ -281,11 +283,10 @@ namespace NiBtOgre
         std::int16_t mUnknown2;
 
     public:
-        BSDamageStage(NiStream& stream, const NiModel& model);
+        BSDamageStage(uint32_t index, NiStream& stream, const NiModel& model);
         virtual ~BSDamageStage() {};
 
-        //virtual void build(const RecordBlocks& objects, const Header& header,
-                           //Ogre::SceneNode* sceneNode, NifOgre::ObjectScenePtr scene);
+        //void build(BtOgreInst *inst, NiObject *parentNiNode = nullptr);
     };
 
     typedef NiNode BSFadeNode; // Seen in NIF version 20.2.0.7
@@ -299,7 +300,7 @@ namespace NiBtOgre
         std::int32_t  mNumParticleSystems;
         NiAVObjectRef mParticleSystemsIndex;
 
-        BSMasterParticleSystem(NiStream& stream, const NiModel& model);
+        BSMasterParticleSystem(uint32_t index, NiStream& stream, const NiModel& model);
     };
 
     // Seen in NIF version 20.2.0.7
@@ -309,11 +310,10 @@ namespace NiBtOgre
         std::uint32_t mUnknown; // from 20.2.0.7
 
     public:
-        BSMultiBoundNode(NiStream& stream, const NiModel& model);
+        BSMultiBoundNode(uint32_t index, NiStream& stream, const NiModel& model);
         virtual ~BSMultiBoundNode() {};
 
-        //virtual void build(const RecordBlocks& objects, const Header& header,
-                           //Ogre::SceneNode* sceneNode, NifOgre::ObjectScenePtr scene);
+        //void build(BtOgreInst *inst, NiObject *parentNiNode = nullptr);
     };
 
     // Seen in NIF version 20.2.0.7
@@ -323,11 +323,10 @@ namespace NiBtOgre
         unsigned char mIsStaticBound;
 
     public:
-        BSOrderedNode(NiStream& stream, const NiModel& model);
+        BSOrderedNode(uint32_t index, NiStream& stream, const NiModel& model);
         virtual ~BSOrderedNode() {};
 
-        //virtual void build(const RecordBlocks& objects, const Header& header,
-                           //Ogre::SceneNode* sceneNode, NifOgre::ObjectScenePtr scene);
+        //virtual void build(BtOgreInst *inst, NiObject *parentNiNode = nullptr);
     };
 
     // Seen in NIF version 20.2.0.7
@@ -337,11 +336,10 @@ namespace NiBtOgre
         std::vector<NiNodeRef> mBones2;
 
     public:
-        BSTreeNode(NiStream& stream, const NiModel& model);
+        BSTreeNode(uint32_t index, NiStream& stream, const NiModel& model);
         virtual ~BSTreeNode() {};
 
-        //virtual void build(const RecordBlocks& objects, const Header& header,
-                           //Ogre::SceneNode* sceneNode, NifOgre::ObjectScenePtr scene);
+        //void build(BtOgreInst *inst, NiObject *parentNiNode = nullptr);
     };
 
     // Seen in NIF version 20.2.0.7
@@ -350,11 +348,10 @@ namespace NiBtOgre
         std::int32_t mValue;
 
     public:
-        BSValueNode(NiStream& stream, const NiModel& model);
+        BSValueNode(uint32_t index, NiStream& stream, const NiModel& model);
         virtual ~BSValueNode() {};
 
-        //virtual void build(const RecordBlocks& objects, const Header& header,
-                           //Ogre::SceneNode* sceneNode, NifOgre::ObjectScenePtr scene);
+        //void build(BtOgreInst *inst, NiObject *parentNiNode = nullptr);
     };
 
     struct NiBillboardNode : public NiNode
@@ -362,11 +359,10 @@ namespace NiBtOgre
         std::uint16_t mBillboardMode;
 
     public:
-        NiBillboardNode(NiStream& stream, const NiModel& model);
+        NiBillboardNode(uint32_t index, NiStream& stream, const NiModel& model);
         virtual ~NiBillboardNode() {};
 
-        //virtual void build(const RecordBlocks& objects, const Header& header,
-                           //Ogre::SceneNode* sceneNode, NifOgre::ObjectScenePtr scene);
+        //void build(BtOgreInst *inst, NiObject *parentNiNode = nullptr);
     };
 
     typedef NiNode NiBSAnimationNode;
@@ -379,10 +375,9 @@ namespace NiBtOgre
         std::int32_t mUnknownInt;
 
     public:
-        NiSwitchNode(NiStream& stream, const NiModel& model);
+        NiSwitchNode(uint32_t index, NiStream& stream, const NiModel& model);
 
-        //virtual void build(const RecordBlocks& objects, const Header& header,
-                           //Ogre::SceneNode* sceneNode, NifOgre::ObjectScenePtr scene);
+        //void build(BtOgreInst *inst, NiObject *parentNiNode = nullptr);
     };
 
     typedef NiNode RootCollisionNode;

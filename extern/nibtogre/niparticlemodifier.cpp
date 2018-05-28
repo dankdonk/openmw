@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015-2017 cc9cii
+  Copyright (C) 2015-2018 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -19,6 +19,9 @@
 
   cc9cii cc9c@iinet.net.au
 
+  Much of the information on the NIF file structures are based on the NifSkope
+  documenation.  See http://niftools.sourceforge.net/wiki/NifSkope for details.
+
 */
 #include "niparticlemodifier.hpp"
 
@@ -33,19 +36,19 @@
 #include "nitimecontroller.hpp" // static_cast NiParticleSystemController
 #include "nimodel.hpp"
 
-NiBtOgre::NiParticleModifier::NiParticleModifier(NiStream& stream, const NiModel& model)
-    : NiObject(stream, model)
+NiBtOgre::NiParticleModifier::NiParticleModifier(uint32_t index, NiStream& stream, const NiModel& model)
+    : NiObject(index, stream, model)
 {
     stream.read(mNextModifier);
 
     //stream.getPtr<NiParticleSystemController>(mController, model.objects());
-    std::int32_t index = -1;
-    stream.read(index);
-    mController = model.getRef<NiParticleSystemController>(index);
+    std::int32_t rIndex = -1;
+    stream.read(rIndex);
+    mController = model.getRef<NiParticleSystemController>(rIndex);
 }
 
-NiBtOgre::NiGravity::NiGravity(NiStream& stream, const NiModel& model)
-    : NiParticleModifier(stream, model)
+NiBtOgre::NiGravity::NiGravity(uint32_t index, NiStream& stream, const NiModel& model)
+    : NiParticleModifier(index, stream, model)
 {
     stream.skip(sizeof(float));
     stream.read(mForce);
@@ -54,29 +57,29 @@ NiBtOgre::NiGravity::NiGravity(NiStream& stream, const NiModel& model)
     stream.read(mDirection);
 }
 
-NiBtOgre::NiParticleColorModifier::NiParticleColorModifier(NiStream& stream, const NiModel& model)
-    : NiParticleModifier(stream, model)
+NiBtOgre::NiParticleColorModifier::NiParticleColorModifier(uint32_t index, NiStream& stream, const NiModel& model)
+    : NiParticleModifier(index, stream, model)
 {
     stream.read(mColorData);
 }
 
-NiBtOgre::NiParticleGrowFade::NiParticleGrowFade(NiStream& stream, const NiModel& model)
-    : NiParticleModifier(stream, model)
+NiBtOgre::NiParticleGrowFade::NiParticleGrowFade(uint32_t index, NiStream& stream, const NiModel& model)
+    : NiParticleModifier(index, stream, model)
 {
     stream.read(mGrowTime);
     stream.read(mFadeTime);
 }
 
-NiBtOgre::NiParticleRotation::NiParticleRotation(NiStream& stream, const NiModel& model)
-    : NiParticleModifier(stream, model)
+NiBtOgre::NiParticleRotation::NiParticleRotation(uint32_t index, NiStream& stream, const NiModel& model)
+    : NiParticleModifier(index, stream, model)
 {
     stream.skip(sizeof(char));
     stream.skip(sizeof(float)*3);
     stream.skip(sizeof(float));
 }
 
-NiBtOgre::NiPlanarCollider::NiPlanarCollider(NiStream& stream, const NiModel& model)
-    : NiParticleModifier(stream, model)
+NiBtOgre::NiPlanarCollider::NiPlanarCollider(uint32_t index, NiStream& stream, const NiModel& model)
+    : NiParticleModifier(index, stream, model)
 {
     stream.skip(sizeof(std::uint16_t));
     stream.skip(sizeof(float)*2);

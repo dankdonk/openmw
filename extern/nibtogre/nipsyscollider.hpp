@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015-2017 cc9cii
+  Copyright (C) 2015-2018 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -18,6 +18,9 @@
   3. This notice may not be removed or altered from any source distribution.
 
   cc9cii cc9c@iinet.net.au
+
+  Much of the information on the NIF file structures are based on the NifSkope
+  documenation.  See http://niftools.sourceforge.net/wiki/NifSkope for details.
 
 */
 #ifndef NIBTOGRE_NIPSYSCOLLIDER_H
@@ -51,7 +54,7 @@ namespace NiBtOgre
         NiObjectRef mNextColliderIndex;
         NiNode     *mColliderObject; // Ptr
 
-        NiPSysCollider(NiStream& stream, const NiModel& model);
+        NiPSysCollider(uint32_t index, NiStream& stream, const NiModel& model);
     };
 
     // Seen in NIF ver 20.0.0.4, 20.0.0.5
@@ -63,7 +66,7 @@ namespace NiBtOgre
         Ogre::Vector3 mXAxis;
         Ogre::Vector3 mYAxis;
 
-        NiPSysPlanarCollider(NiStream& stream, const NiModel& model);
+        NiPSysPlanarCollider(uint32_t index, NiStream& stream, const NiModel& model);
     };
 
     // Seen in NIF version 20.2.0.7
@@ -72,7 +75,7 @@ namespace NiBtOgre
     public:
         float mRadius;
 
-        NiPSysSphericalCollider(NiStream& stream, const NiModel& model);
+        NiPSysSphericalCollider(uint32_t index, NiStream& stream, const NiModel& model);
     };
 }
 

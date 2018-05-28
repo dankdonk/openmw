@@ -28,7 +28,7 @@
 #include <OgreSceneManager.h>
 #include <OgreParticle.h>
 #include <OgreNode.h>
-#include <OgreMeshManager.h>
+//#include <OgreMeshManager.h>
 #include <OgreMaterialManager.h>
 #include <OgreCamera.h>
 

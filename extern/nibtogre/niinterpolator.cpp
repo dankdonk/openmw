@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015-2017 cc9cii
+  Copyright (C) 2015-2018 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -19,6 +19,9 @@
 
   cc9cii cc9c@iinet.net.au
 
+  Much of the information on the NIF file structures are based on the NifSkope
+  documenation.  See http://niftools.sourceforge.net/wiki/NifSkope for details.
+
 */
 #include "niinterpolator.hpp"
 
@@ -34,8 +37,8 @@
 #include "nimodel.hpp"
 
 // Seen in NIF version 20.2.0.7
-NiBtOgre::NiBSplineInterpolator::NiBSplineInterpolator(NiStream& stream, const NiModel& model)
-    : NiInterpolator(stream, model)
+NiBtOgre::NiBSplineInterpolator::NiBSplineInterpolator(uint32_t index, NiStream& stream, const NiModel& model)
+    : NiInterpolator(index, stream, model)
 {
     stream.read(mStartTime);
     stream.read(mStopTime);
@@ -44,8 +47,8 @@ NiBtOgre::NiBSplineInterpolator::NiBSplineInterpolator(NiStream& stream, const N
 }
 
 // Seen in NIF version 20.2.0.7
-NiBtOgre::NiBSplinePoint3Interpolator::NiBSplinePoint3Interpolator(NiStream& stream, const NiModel& model)
-    : NiBSplineInterpolator(stream, model)
+NiBtOgre::NiBSplinePoint3Interpolator::NiBSplinePoint3Interpolator(uint32_t index, NiStream& stream, const NiModel& model)
+    : NiBSplineInterpolator(index, stream, model)
 {
     stream.read(mUnknown1);
     stream.read(mUnknown2);
@@ -56,8 +59,8 @@ NiBtOgre::NiBSplinePoint3Interpolator::NiBSplinePoint3Interpolator(NiStream& str
 }
 
 // Seen in NIF version 20.0.0.4, 20.0.0.5
-NiBtOgre::NiBSplineTransformInterpolator::NiBSplineTransformInterpolator(NiStream& stream, const NiModel& model)
-    : NiBSplineInterpolator(stream, model)
+NiBtOgre::NiBSplineTransformInterpolator::NiBSplineTransformInterpolator(uint32_t index, NiStream& stream, const NiModel& model)
+    : NiBSplineInterpolator(index, stream, model)
 {
     stream.read(mTranslation);
     stream.read(mRotation);
@@ -68,9 +71,9 @@ NiBtOgre::NiBSplineTransformInterpolator::NiBSplineTransformInterpolator(NiStrea
 }
 
 // Seen in NIF version 20.0.0.4, 20.0.0.5
-NiBtOgre::NiBSplineCompTransformInterpolator::NiBSplineCompTransformInterpolator(NiStream& stream,
+NiBtOgre::NiBSplineCompTransformInterpolator::NiBSplineCompTransformInterpolator(uint32_t index, NiStream& stream,
         const NiModel& model)
-    : NiBSplineTransformInterpolator(stream, model)
+    : NiBSplineTransformInterpolator(index, stream, model)
 {
     stream.read(mTranslationBias);
     stream.read(mTranslationMultiplier);
@@ -81,53 +84,53 @@ NiBtOgre::NiBSplineCompTransformInterpolator::NiBSplineCompTransformInterpolator
 }
 
 // Seen in NIF ver 20.0.0.4, 20.0.0.5 (????)
-NiBtOgre::NiBlendInterpolator::NiBlendInterpolator(NiStream& stream, const NiModel& model)
-    : NiInterpolator(stream, model)
+NiBtOgre::NiBlendInterpolator::NiBlendInterpolator(uint32_t index, NiStream& stream, const NiModel& model)
+    : NiInterpolator(index, stream, model)
 {
     stream.read(mUnknownShort);
     stream.read(mUnknownInt);
 }
 
 // Seen in NIF ver 20.0.0.4, 20.0.0.5
-NiBtOgre::NiBlendBoolInterpolator::NiBlendBoolInterpolator(NiStream& stream, const NiModel& model)
-    : NiBlendInterpolator(stream, model)
+NiBtOgre::NiBlendBoolInterpolator::NiBlendBoolInterpolator(uint32_t index, NiStream& stream, const NiModel& model)
+    : NiBlendInterpolator(index, stream, model)
 {
     stream.read(mValue);
 }
 
 // Seen in NIF ver 20.0.0.4, 20.0.0.5
-NiBtOgre::NiBlendFloatInterpolator::NiBlendFloatInterpolator(NiStream& stream, const NiModel& model)
-    : NiBlendInterpolator(stream, model)
+NiBtOgre::NiBlendFloatInterpolator::NiBlendFloatInterpolator(uint32_t index, NiStream& stream, const NiModel& model)
+    : NiBlendInterpolator(index, stream, model)
 {
     stream.read(mValue);
 }
 
 // Seen in NIF ver 20.0.0.4, 20.0.0.5
-NiBtOgre::NiBlendPoint3Interpolator::NiBlendPoint3Interpolator(NiStream& stream, const NiModel& model)
-    : NiBlendInterpolator(stream, model)
+NiBtOgre::NiBlendPoint3Interpolator::NiBlendPoint3Interpolator(uint32_t index, NiStream& stream, const NiModel& model)
+    : NiBlendInterpolator(index, stream, model)
 {
     stream.read(mValue);
 }
 
 // Seen in NIF ver 20.0.0.4, 20.0.0.5
-NiBtOgre::NiBoolInterpolator::NiBoolInterpolator(NiStream& stream, const NiModel& model)
-    : NiInterpolator(stream, model)
+NiBtOgre::NiBoolInterpolator::NiBoolInterpolator(uint32_t index, NiStream& stream, const NiModel& model)
+    : NiInterpolator(index, stream, model)
 {
     stream.read(mBoolalue);
     stream.read(mDataIndex);
 }
 
 // Seen in NIF ver 20.0.0.4, 20.0.0.5
-NiBtOgre::NiFloatInterpolator::NiFloatInterpolator(NiStream& stream, const NiModel& model)
-    : NiInterpolator(stream, model)
+NiBtOgre::NiFloatInterpolator::NiFloatInterpolator(uint32_t index, NiStream& stream, const NiModel& model)
+    : NiInterpolator(index, stream, model)
 {
     stream.read(mFloatValue);
     stream.read(mDataIndex);
 }
 
 // Seen in NIF ver 20.0.0.4, 20.0.0.5
-NiBtOgre::NiPathInterpolator::NiPathInterpolator(NiStream& stream, const NiModel& model)
-    : NiInterpolator(stream, model)
+NiBtOgre::NiPathInterpolator::NiPathInterpolator(uint32_t index, NiStream& stream, const NiModel& model)
+    : NiInterpolator(index, stream, model)
 {
     stream.skip(sizeof(std::uint16_t));
     stream.skip(sizeof(std::uint32_t));
@@ -140,16 +143,16 @@ NiBtOgre::NiPathInterpolator::NiPathInterpolator(NiStream& stream, const NiModel
 }
 
 // Seen in NIF ver 20.0.0.4, 20.0.0.5
-NiBtOgre::NiPoint3Interpolator::NiPoint3Interpolator(NiStream& stream, const NiModel& model)
-    : NiInterpolator(stream, model)
+NiBtOgre::NiPoint3Interpolator::NiPoint3Interpolator(uint32_t index, NiStream& stream, const NiModel& model)
+    : NiInterpolator(index, stream, model)
 {
     stream.read(mPoint3Value);
     stream.read(mDataIndex);
 }
 
 // Seen in NIF ver 20.0.0.4, 20.0.0.5
-NiBtOgre::NiTransformInterpolator::NiTransformInterpolator(NiStream& stream, const NiModel& model)
-    : NiInterpolator(stream, model)
+NiBtOgre::NiTransformInterpolator::NiTransformInterpolator(uint32_t index, NiStream& stream, const NiModel& model)
+    : NiInterpolator(index, stream, model)
 {
     stream.read(mTranslation);
     stream.read(mRotation);
@@ -158,15 +161,15 @@ NiBtOgre::NiTransformInterpolator::NiTransformInterpolator(NiStream& stream, con
 }
 
 // Seen in NIF version 20.2.0.7
-NiBtOgre::NiLookAtInterpolator::NiLookAtInterpolator(NiStream& stream, const NiModel& model)
-    : NiInterpolator(stream, model)
+NiBtOgre::NiLookAtInterpolator::NiLookAtInterpolator(uint32_t index, NiStream& stream, const NiModel& model)
+    : NiInterpolator(index, stream, model)
 {
     stream.read(mUnknown);
 
     //stream.getPtr<NiNode>(mLookAt, model.objects());
-    std::int32_t index = -1;
-    stream.read(index);
-    mLookAt = model.getRef<NiNode>(index);
+    std::int32_t rIndex = -1;
+    stream.read(rIndex);
+    mLookAt = model.getRef<NiNode>(rIndex);
 
     stream.readLongString(mTarget);
     if (stream.nifVer() <= 0x14050000) // up to 20.5.0.0

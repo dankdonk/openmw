@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015-2017 cc9cii
+  Copyright (C) 2015-2018 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -19,17 +19,24 @@
 
   cc9cii cc9c@iinet.net.au
 
+  Much of the information on the NIF file structures are based on the NifSkope
+  documenation.  See http://niftools.sourceforge.net/wiki/NifSkope for details.
+
 */
 #ifndef NIBTOGRE_BHKREFOBJECT_H
 #define NIBTOGRE_BHKREFOBJECT_H
 
 #include <vector>
 #include <cstdint>
+#include <memory>
 
 #include <OgreVector3.h>
 #include <OgreVector4.h>
 #include <OgreQuaternion.h>
 #include <OgreMatrix4.h>
+
+#include <btBulletDynamicsCommon.h>
+#include <LinearMath/btAlignedObjectArray.h>
 
 #include "niobject.hpp"
 
@@ -37,7 +44,7 @@
 //
 // bhkRefObject <------------------------------ /* typedef NiObject */
 //     bhkCompressedMeshShapeData
-//     bhkSerializable <----------------------- /* typedef NiRefObject */
+//     bhkSerializable <----------------------- /* typedef bhkRefObject */
 //         bhkBallSocketConstraintChain
 //         bhkConstraint
 //             bhkBreakableConstraint
@@ -47,7 +54,7 @@
 //             bhkPrismaticConstraint
 //             bhkRagdollConstraint
 //             bhkStiffSpringConstraint
-//         bhkShape <-------------------------- /* typedef bhkSerializable */
+//         bhkShape
 //             bhkBvTreeShape <---------------- /* not implemented */
 //                 bhkMoppBvTreeShape
 //             bhkCompressedMeshShape
@@ -61,7 +68,7 @@
 //                     bhkBoxShape
 //                     bhkCapsuleShape
 //                     bhkConvexVerticesShape
-//                     bhkSphereShape
+//                     bhkSphereShape <-------- /* typedef bhkSphereRepShape */
 //                 bhkMultiSphereShape
 //             bhkTransformShape
 //                 bhkConvexTransformShape <--- /* typedef bhkTransformShape */
@@ -73,17 +80,21 @@
 //                 bhkShapePhantom <----------- /* not implemented */
 //                     bhkSimpleShapePhantom
 // hkbStateMachineEventPropertyArray <--------- /* TODO */
+
+class btCollisionShape;
+
 namespace NiBtOgre
 {
     class NiStream;
     class Header;
+    struct bhkRigidBody;
 
     typedef NiObject bhkRefObject;
     typedef bhkRefObject bhkSerializable;
 #if 0
     struct bhkSerializable : public NiObject
     {
-        bhkSerializable(NiStream& stream, const NiModel& model);
+        bhkSerializable(uint32_t index, NiStream& stream, const NiModel& model);
     };
 #endif
 
@@ -139,7 +150,7 @@ namespace NiBtOgre
         std::vector<bhkCMSDBigTris>   mBigTris;
         std::vector<bhkCMSDChunk>     mChunks;
 
-        bhkCompressedMeshShapeData(NiStream& stream, const NiModel& model);
+        bhkCompressedMeshShapeData(uint32_t index, NiStream& stream, const NiModel& model);
     };
 
     // Seen in NIF version 20.2.0.7
@@ -154,7 +165,7 @@ namespace NiBtOgre
         std::vector<NiObject*> mLinks2; // Ptr
         std::uint32_t mUnknownInt3;
 
-        bhkBallSocketConstraintChain(NiStream& stream, const NiModel& model);
+        bhkBallSocketConstraintChain(uint32_t index, NiStream& stream, const NiModel& model);
     };
 
     struct bhkEntity;
@@ -164,7 +175,7 @@ namespace NiBtOgre
         std::vector<bhkEntity*> mEntities; // Ptr
         std::uint32_t mPriority;
 
-        bhkConstraint(NiStream& stream, const NiModel& model);
+        bhkConstraint(uint32_t index, NiStream& stream, const NiModel& model);
     };
 
     // Seen in NIF version 20.2.0.7
@@ -181,7 +192,7 @@ namespace NiBtOgre
         float mThreshold;
         float mUnknownFloat1;
 
-        bhkBreakableConstraint(NiStream& stream, const NiModel& model);
+        bhkBreakableConstraint(uint32_t index, NiStream& stream, const NiModel& model);
     };
 
     struct HingeDescriptor
@@ -203,7 +214,7 @@ namespace NiBtOgre
     {
         HingeDescriptor mHinge;
 
-        bhkHingeConstraint(NiStream& stream, const NiModel& model);
+        bhkHingeConstraint(uint32_t index, NiStream& stream, const NiModel& model);
     };
 
     struct LimitedHingeDescriptor
@@ -231,7 +242,7 @@ namespace NiBtOgre
     {
         LimitedHingeDescriptor mLimitedHinge;
 
-        bhkLimitedHingeConstraint(NiStream& stream, const NiModel& model);
+        bhkLimitedHingeConstraint(uint32_t index, NiStream& stream, const NiModel& model);
     };
 
     struct RagdollDescriptor
@@ -270,7 +281,7 @@ namespace NiBtOgre
         float mTau;
         float mDamping;
 
-        bhkMalleableConstraint(NiStream& stream, const NiModel& model);
+        bhkMalleableConstraint(uint32_t index, NiStream& stream, const NiModel& model);
     };
 
     // Seen in NIF ver 20.0.0.4, 20.0.0.5
@@ -289,7 +300,7 @@ namespace NiBtOgre
         float mMaxDistance;
         float mFriction;
 
-        bhkPrismaticConstraint(NiStream& stream, const NiModel& model);
+        bhkPrismaticConstraint(uint32_t index, NiStream& stream, const NiModel& model);
     };
 
     // Seen in NIF ver 20.0.0.4, 20.0.0.5
@@ -297,16 +308,8 @@ namespace NiBtOgre
     {
         RagdollDescriptor mRagdoll;
 
-        bhkRagdollConstraint(NiStream& stream, const NiModel& model);
+        bhkRagdollConstraint(uint32_t index, NiStream& stream, const NiModel& model);
     };
-
-    typedef bhkSerializable bhkShape;
-#if 0
-    struct bhkShape : public bhkSerializable
-    {
-        bhkShape(NiStream& stream, const NiModel& model);
-    };
-#endif
 
     // Seen in NIF ver 20.0.0.4, 20.0.0.5
     struct bhkStiffSpringConstraint : public bhkConstraint
@@ -315,7 +318,14 @@ namespace NiBtOgre
         Ogre::Vector4 mPivotB;
         float         mLength;
 
-        bhkStiffSpringConstraint(NiStream& stream, const NiModel& model);
+        bhkStiffSpringConstraint(uint32_t index, NiStream& stream, const NiModel& model);
+    };
+
+    struct bhkShape : public bhkSerializable
+    {
+        bhkShape(uint32_t index, NiStream& stream, const NiModel& model);
+
+        virtual std::unique_ptr<btCollisionShape> buildShape(const btTransform& transform) const = 0;
     };
 
     // Seen in NIF ver 20.0.0.4, 20.0.0.5
@@ -329,7 +339,9 @@ namespace NiBtOgre
         float mScale;
         std::vector<unsigned char> mMOPPData;
 
-        bhkMoppBvTreeShape(NiStream& stream, const NiModel& model);
+        bhkMoppBvTreeShape(uint32_t index, NiStream& stream, const NiModel& model);
+
+        std::unique_ptr<btCollisionShape> buildShape(const btTransform& transform) const;
     };
 
     class NiAVObject;
@@ -344,7 +356,9 @@ namespace NiBtOgre
         float mScale;
         bhkCompressedMeshShapeDataRef mDataIndex;
 
-        bhkCompressedMeshShape(NiStream& stream, const NiModel& model);
+        bhkCompressedMeshShape(uint32_t index, NiStream& stream, const NiModel& model);
+
+        std::unique_ptr<btCollisionShape> buildShape(const btTransform& transform) const;
     };
 
     // Seen in NIF ver 20.0.0.4, 20.0.0.5
@@ -355,7 +369,9 @@ namespace NiBtOgre
         //std::vector<float> mUnknownFloats;
         std::vector<std::uint32_t> mUnknownInts;
 
-        bhkListShape(NiStream& stream, const NiModel& model);
+        bhkListShape(uint32_t index, NiStream& stream, const NiModel& model);
+
+        std::unique_ptr<btCollisionShape> buildShape(const btTransform& transform) const;
     };
 
     // Seen in NIF ver 20.0.0.4, 20.0.0.5
@@ -368,8 +384,8 @@ namespace NiBtOgre
             std::uint16_t unknownShort;
         };
 
-        // if (userVer < 12) // http://niftools.sourceforge.net/doc/nif/HavokMaterial.html
-        // if (userVer >= 12) // http://niftools.sourceforge.net/doc/nif/SkyrimHavokMaterial.html
+        // if (userVer < 12)  // NifTools/NifSkope/doc/HavokMaterial.html
+        // if (userVer >= 12) // NifTools/NifSkope/doc/SkyrimHavokMaterial.html
         std::uint32_t mMaterial;
         float mUnknownFloat1;
         std::uint32_t mUnknownInt1;
@@ -382,16 +398,18 @@ namespace NiBtOgre
         std::vector<NiTriStripsDataRef> mStripsData;
         std::vector<OblivionColFilter> mDataLayers;
 
-        bhkNiTriStripsShape(NiStream& stream, const NiModel& model);
+        bhkNiTriStripsShape(uint32_t index, NiStream& stream, const NiModel& model);
+
+        std::unique_ptr<btCollisionShape> buildShape(const btTransform& transform) const;
     };
 
     struct OblivionSubShape
     {
-        unsigned char layer; // http://niftools.sourceforge.net/doc/nif/OblivionLayer.html
+        unsigned char layer;    // NifTools/NifSkope/doc/OblivionLayer.html
         unsigned char colFilter;
         std::uint16_t unknownShort;
         std::uint32_t numVertices;
-        std::uint32_t material; // http://niftools.sourceforge.net/doc/nif/HavokMaterial.html
+        std::uint32_t material; // NifTools/NifSkope/doc/HavokMaterial.html
 
         void read(NiStream& stream);
     };
@@ -411,7 +429,9 @@ namespace NiBtOgre
         float         mUnknownFloat4;
         hkPackedNiTriStripsDataRef mDataIndex;
 
-        bhkPackedNiTriStripsShape(NiStream& stream, const NiModel& model);
+        bhkPackedNiTriStripsShape(uint32_t index, NiStream& stream, const NiModel& model);
+
+        std::unique_ptr<btCollisionShape> buildShape(const btTransform& transform) const;
     };
 
 
@@ -429,7 +449,9 @@ namespace NiBtOgre
         std::vector<Ogre::Vector3> mVertices;
         std::vector<OblivionSubShape> mSubShapes;
 
-        hkPackedNiTriStripsData(NiStream& stream, const NiModel& model);
+        hkPackedNiTriStripsData(uint32_t index, NiStream& stream, const NiModel& model);
+
+        std::unique_ptr<btCollisionShape> buildShape(const btTransform& transform) const;
     };
 
     struct bhkSphereRepShape : public bhkShape
@@ -437,48 +459,68 @@ namespace NiBtOgre
         std::uint32_t mMaterial; // if userVer >= 12, SkyrimHavokMaterial
         float mRadius;
 
-        bhkSphereRepShape(NiStream& stream, const NiModel& model);
+        bhkSphereRepShape(uint32_t index, NiStream& stream, const NiModel& model);
+
+        std::unique_ptr<btCollisionShape> buildShape(const btTransform& transform) const;
     };
 
     // Seen in NIF ver 20.0.0.4, 20.0.0.5
     struct bhkBoxShape : public bhkSphereRepShape
     {
         std::vector<unsigned char> mUnknown8Bytes;
-        Ogre::Vector3 mDimensions;
+        //Ogre::Vector3 mDimensions; // old code replaced by Bullet data types
+        btVector3 mDimensions;
         float mMinimumSize;
 
-        bhkBoxShape(NiStream& stream, const NiModel& model);
+        bhkBoxShape(uint32_t index, NiStream& stream, const NiModel& model);
+
+        std::unique_ptr<btCollisionShape> buildShape(const btTransform& transform) const;
+        std::unique_ptr<btBoxShape> buildBoxShape() const;
     };
 
     // Seen in NIF ver 20.0.0.4, 20.0.0.5
     struct bhkCapsuleShape : public bhkSphereRepShape
     {
         std::vector<unsigned char> mUnknown8Bytes;
-        Ogre::Vector3 mFirstPoint;
+        //Ogre::Vector3 mFirstPoint; // old code replaced by Bullet data types
+        btVector3 mFirstPoint;
         float mRadius1;
-        Ogre::Vector3 mSecondPoint;
+        //Ogre::Vector3 mSecondPoint; // old code replaced by Bullet data types
+        btVector3 mSecondPoint;
         float mRadius2;
 
-        bhkCapsuleShape(NiStream& stream, const NiModel& model);
+        btScalar mHeight;
+        btTransform mTransform;
+
+        bhkCapsuleShape(uint32_t index, NiStream& stream, const NiModel& model);
+
+        std::unique_ptr<btCollisionShape> buildShape(const btTransform& transform) const;
+        std::unique_ptr<btCapsuleShape> buildCapsuleShape() const;
+
+        const btTransform& transform() const { return mTransform; } // only used for bhkListShape
     };
 
     // Seen in NIF ver 20.0.0.4, 20.0.0.5
     struct bhkConvexVerticesShape : public bhkSphereRepShape
     {
         std::vector<float> mUnknown6Floats;
-        std::vector<Ogre::Vector4> mVertices;
+        std::uint32_t              mNumVertices;
+        std::vector<btVector3>     mVertices; // old implementation
+        //std::unique_ptr<float[]>   mVertices;
         std::vector<Ogre::Vector4> mNormals;
 
-        bhkConvexVerticesShape(NiStream& stream, const NiModel& model);
+        bhkConvexVerticesShape(uint32_t index, NiStream& stream, const NiModel& model);
+
+        std::unique_ptr<btCollisionShape> buildShape(const btTransform& transform) const;
     };
 
-    typedef bhkSphereRepShape bhkSphereShape; // Seen in NIF ver 20.0.0.4, 20.0.0.5
 #if 0
     struct bhkSphereShape : public bhkSphereRepShape
     {
-        bhkSphereShape(NiStream& stream, const NiModel& model);
+        bhkSphereShape(uint32_t index, NiStream& stream, const NiModel& model);
     };
 #endif
+    typedef bhkSphereRepShape bhkSphereShape; // Seen in NIF ver 20.0.0.4, 20.0.0.5
 
     // Seen in NIF ver 20.0.0.4, 20.0.0.5
     struct bhkMultiSphereShape : public bhkSphereRepShape
@@ -491,9 +533,15 @@ namespace NiBtOgre
 
         float mUnknownFloat1;
         float mUnknownFloat2;
-        std::vector<SphereBV> mSpheres;
+        //std::vector<SphereBV> mSpheres; // old code replaced by Bullet data types
 
-        bhkMultiSphereShape(NiStream& stream, const NiModel& model);
+        std::uint32_t mNumSpheres;
+        std::unique_ptr<btVector3[]> mCenters;
+        std::unique_ptr<btScalar[]>  mRadii;
+
+        bhkMultiSphereShape(uint32_t index, NiStream& stream, const NiModel& model);
+
+        std::unique_ptr<btCollisionShape> buildShape(const btTransform& transform) const;
     };
 
     // Seen in NIF ver 20.0.0.4, 20.0.0.5
@@ -503,21 +551,31 @@ namespace NiBtOgre
         std::uint32_t mMaterial; // if userVer >= 12, SkyrimHavokMaterial
         float mUnknownFloat1;
         std::vector<unsigned char> mUnknown8Bytes;
-        Ogre::Matrix4 mTransform;
+        // NOTE: Ogre and OpenGL are right-to-left ordering while Direct3D and Bullet are
+        // left-to-right
+        Ogre::Matrix4 mTransformOld; // FIXME: remove after testing
+        btTransform mTransform;
 
-        bhkTransformShape(NiStream& stream, const NiModel& model);
+        bhkTransformShape(uint32_t index, NiStream& stream, const NiModel& model);
+
+        std::unique_ptr<btCollisionShape> buildShape(const btTransform& transform) const;
+
+        const btTransform& transform() const { return mTransform; }
+        const bhkShapeRef shapeIndex() const { return mShapeIndex; }
     };
 
     typedef bhkTransformShape bhkConvexTransformShape; // Seen in NIF ver 20.0.0.4, 20.0.0.5
 
     struct bhkEntity : public bhkSerializable // bhkWorldObject
     {
-        bhkShapeRef mShapeIndex;
-        unsigned char mLayer; // http://niftools.sourceforge.net/doc/nif/OblivionLayer.html
+        bhkShapeRef   mShapeIndex;
+        unsigned char mLayer;              // NifTools/NifSkope/doc/OblivionLayer.html
         unsigned char mColFilter;
         std::uint16_t mUnknownShort;
 
-        bhkEntity(NiStream& stream, const NiModel& model);
+        bhkEntity(uint32_t index, NiStream& stream, const NiModel& model);
+
+        //virtual void buildEntity(BtOgreInst *inst, NiAVObject* parent) = 0;
     };
 
     // Seen in NIF ver 20.0.0.4, 20.0.0.5
@@ -552,10 +610,10 @@ namespace NiBtOgre
         float mMaxAngularVelocity;
         float mPenetrationDepth;
 
-        unsigned char mMotionSystem; // http://niftools.sourceforge.net/doc/nif/MotionSystem.html
-        unsigned char mDeactivatorType; // http://niftools.sourceforge.net/doc/nif/DeactivatorType.html
-        unsigned char mSolverDeactivation; // http://niftools.sourceforge.net/doc/nif/SolverDeactivation.html
-        unsigned char mQualityType; // http://niftools.sourceforge.net/doc/nif/MotionQuality.html
+        unsigned char mMotionSystem;       // NifTools/NifSkope/doc/MotionSystem.html
+        unsigned char mDeactivatorType;    // NifTools/NifSkope/doc/DeactivatorType.html
+        unsigned char mSolverDeactivation; // NifTools/NifSkope/doc/SolverDeactivation.html
+        unsigned char mQualityType;        // NifTools/NifSkope/doc/MotionQuality.html
 
         std::uint32_t mUnknownInt6;
         std::uint32_t mUnknownInt7;
@@ -565,22 +623,31 @@ namespace NiBtOgre
         std::uint32_t mUnknownInt9;
         std::uint16_t mUnknownInt91;
 
-        bhkRigidBody(NiStream& stream, const NiModel& model);
+        // based on mTranslation and mRotation for bhkRigidBodyT, else identity
+        // used for btRigidBodyConstructionInfo
+        btTransform mBodyTransform;
+
+        bhkRigidBody(uint32_t index, NiStream& stream, const NiModel& model);
+
+        //void buildEntity(BtOgreInst *inst, NiAVObject* parent);
+        void build(BtOgreInst *inst, NiObject* parent);
     };
 
-    typedef bhkRigidBody bhkRigidBodyT; // Seen in NIF ver 20.0.0.4, 20.0.0.5
+    // NOTE: the rigidbody type can be differentiated by calling NiBtOgre::NiModel::blockType
+    // with the index of the object
+    typedef bhkRigidBody bhkRigidBodyT;    // Seen in NIF ver 20.0.0.4, 20.0.0.5
 
     // Seen in NIF ver 20.0.0.4, 20.0.0.5
     struct bhkSimpleShapePhantom : public bhkSerializable // bhkWorldObject
     {
         bhkShapeRef mShapeIndex;
-        unsigned char mLayer; // http://niftools.sourceforge.net/doc/nif/OblivionLayer.html
+        unsigned char mLayer;              // NifTools/NifSkope/doc/OblivionLayer.html
         unsigned char mColFilter;
         std::uint16_t mUnknownShort;
 
         // FIXME
 
-        bhkSimpleShapePhantom(NiStream& stream, const NiModel& model);
+        bhkSimpleShapePhantom(uint32_t index, NiStream& stream, const NiModel& model);
     };
 }
 

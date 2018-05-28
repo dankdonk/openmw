@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015-2017 cc9cii
+  Copyright (C) 2015-2018 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -18,6 +18,9 @@
   3. This notice may not be removed or altered from any source distribution.
 
   cc9cii cc9c@iinet.net.au
+
+  Much of the information on the NIF file structures are based on the NifSkope
+  documenation.  See http://niftools.sourceforge.net/wiki/NifSkope for details.
 
 */
 #include "nisequence.hpp"
@@ -76,8 +79,8 @@ void NiBtOgre::NiSequence::ControllerLink::read(NiStream& stream)
 }
 
 // Seen in NIF ver 20.0.0.4, 20.0.0.5
-NiBtOgre::NiSequence::NiSequence(NiStream& stream, const NiModel& model)
-    : NiObject(stream, model)
+NiBtOgre::NiSequence::NiSequence(uint32_t index, NiStream& stream, const NiModel& model)
+    : NiObject(index, stream, model)
 {
     stream.readLongString(mNameIndex);
 
@@ -98,8 +101,8 @@ NiBtOgre::NiSequence::NiSequence(NiStream& stream, const NiModel& model)
 }
 
 // Seen in NIF ver 20.0.0.4, 20.0.0.5
-NiBtOgre::NiControllerSequence::NiControllerSequence(NiStream& stream, const NiModel& model)
-    : NiSequence(stream, model)
+NiBtOgre::NiControllerSequence::NiControllerSequence(uint32_t index, NiStream& stream, const NiModel& model)
+    : NiSequence(index, stream, model)
 {
     //if (stream.nifVer() >= 0x0a01006a) // from 10.1.0.106
     //{
@@ -122,9 +125,9 @@ NiBtOgre::NiControllerSequence::NiControllerSequence(NiStream& stream, const NiM
             stream.read(mUnknownByte);
 
         //stream.getPtr<NiControllerManager>(mManager, model.objects());
-        std::int32_t index = -1;
-        stream.read(index);
-        mManager = model.getRef<NiControllerManager>(index);
+        std::int32_t rIndex = -1;
+        stream.read(rIndex);
+        mManager = model.getRef<NiControllerManager>(rIndex);
 
         stream.readLongString(mTargetNameIndex);
 

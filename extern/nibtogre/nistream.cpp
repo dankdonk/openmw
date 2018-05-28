@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015-2017 cc9cii
+  Copyright (C) 2015-2018 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -37,6 +37,8 @@
 #include <OgreVector4.h>
 #include <OgreMatrix3.h>
 #include <OgreQuaternion.h>
+
+#include <btBulletDynamicsCommon.h>
 
 #include "header.hpp"
 
@@ -151,6 +153,15 @@ void NiBtOgre::NiStream::getBool(bool& value)
         mStream->read(&i, sizeof(std::int32_t));
         value = !!i;
     }
+}
+
+template<>
+void NiBtOgre::NiStream::read<btVector3>(btVector3& value)
+{
+    mStream->read(&value.m_floats[0], sizeof(float));
+    mStream->read(&value.m_floats[1], sizeof(float));
+    mStream->read(&value.m_floats[2], sizeof(float));
+    value.m_floats[3] = 0.f;
 }
 
 template<>

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015-2017 cc9cii
+  Copyright (C) 2015-2018 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -18,6 +18,9 @@
   3. This notice may not be removed or altered from any source distribution.
 
   cc9cii cc9c@iinet.net.au
+
+  Much of the information on the NIF file structures are based on the NifSkope
+  documenation.  See http://niftools.sourceforge.net/wiki/NifSkope for details.
 
 */
 #ifndef NIBTOGRE_NIPARTICLEMODIFIER_H
@@ -50,7 +53,7 @@ namespace NiBtOgre
         NiParticleModifierRef mNextModifier;
         NiParticleSystemController *mController; // Ptr
 
-        NiParticleModifier(NiStream& stream, const NiModel& model);
+        NiParticleModifier(uint32_t index, NiStream& stream, const NiModel& model);
     };
 
     class NiGravity : public NiParticleModifier
@@ -61,7 +64,7 @@ namespace NiBtOgre
         Ogre::Vector3 mPosition;
         Ogre::Vector3 mDirection;
 
-        NiGravity(NiStream& stream, const NiModel& model);
+        NiGravity(uint32_t index, NiStream& stream, const NiModel& model);
     };
 
     class NiParticleColorModifier : public NiParticleModifier
@@ -69,7 +72,7 @@ namespace NiBtOgre
     public:
         NiColorDataRef mColorData;
 
-        NiParticleColorModifier(NiStream& stream, const NiModel& model);
+        NiParticleColorModifier(uint32_t index, NiStream& stream, const NiModel& model);
     };
 
     class NiParticleGrowFade : public NiParticleModifier
@@ -78,21 +81,21 @@ namespace NiBtOgre
         float mGrowTime;
         float mFadeTime;
 
-        NiParticleGrowFade(NiStream& stream, const NiModel& model);
+        NiParticleGrowFade(uint32_t index, NiStream& stream, const NiModel& model);
     };
 
     class NiParticleRotation : public NiParticleModifier
     {
         // FIXME: all skipped for now
     public:
-        NiParticleRotation(NiStream& stream, const NiModel& model);
+        NiParticleRotation(uint32_t index, NiStream& stream, const NiModel& model);
     };
 
     class NiPlanarCollider : public NiParticleModifier
     {
         // FIXME: all skipped for now
     public:
-        NiPlanarCollider(NiStream& stream, const NiModel& model);
+        NiPlanarCollider(uint32_t index, NiStream& stream, const NiModel& model);
     };
 }
 

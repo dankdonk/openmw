@@ -51,6 +51,7 @@
 #include <components/misc/stringops.hpp>
 
 #include <extern/nibtogre/nimodel.hpp>
+#include <extern/nibtogre/btogreinst.hpp>
 
 #include "mesh.hpp"
 #include "skeleton.hpp"
@@ -928,7 +929,7 @@ void NifOgre::NIFObjectLoader::extractTextKeys (const Nif::NiTextKeyExtraData *t
 //         MWClass::ForeignBook::insertObjectRendering            | foreignbook.cpp
 //           MWRender::Objects::insertModel                       | objects.cpp
 //             MWRender::Animation::setObjectRoot                 | animation.cpp
-//               NifOgre::Loader::createObjects                   | ogrenifloader.cpp
+//               NifOgre::Loader::createObjects (new ObjectScene) | ogrenifloader.cpp
 //                 NifOgre::NIFObjectLoader::load                 | nifobjectloader.cpp
 //                   NifOgre::NIFObjectLoader::handleNode  <--- this method
 //
@@ -1564,6 +1565,8 @@ void NifOgre::NIFObjectLoader::createObjects (const Nif::NIFFilePtr& nif, const 
     }
 }
 
+// "meshes\\oblivion\\gate\\oblivionarchgate01.nif" causes Ogre exception
+// "Exceeded the maximum number of bones per skeleton."
 void NifOgre::NIFObjectLoader::createSkelBase (const std::string &name, const std::string &group,
                            Ogre::SceneManager *sceneMgr, const Nif::Node *node, ObjectScenePtr scene)
 {
@@ -1590,7 +1593,7 @@ void NifOgre::NIFObjectLoader::createSkelBase (const std::string &name, const st
 //         MWClass::ForeignBook::insertObjectRendering            | foreignbook.cpp
 //           MWRender::Objects::insertModel                       | objects.cpp
 //             MWRender::Animation::setObjectRoot                 | animation.cpp
-//               NifOgre::Loader::createObjects                   | ogrenifloader.cpp
+//               NifOgre::Loader::createObjects (new ObjectScene) | ogrenifloader.cpp
 //                 NifOgre::NIFObjectLoader::load           <- this method
 //                   NifOgre::NIFSkeletonLoader::createSkeleton   | skeleton.cpp
 //                     Ogre::SkeletonManager::create
@@ -1641,16 +1644,26 @@ void NifOgre::NIFObjectLoader::load (Ogre::SceneNode *sceneNode,
     if (r->nifVer >= 0x0a000100) // TES4 style, i.e. from 10.0.1.0
     {
         handleNode(nif, name, group, sceneNode, node, scene, flags, 0, 0); // flags is 0 by default
-    }
-    else
-        createObjects(nif, name, group, sceneNode, node, scene, flags, 0, 0);
 //#if 0
         // FIXME: temporary, trying out new code
         // probably an auto pointer to be returned by NiModel constructor
         // it can then be cached somewhere
         try
         {
-            std::auto_ptr<NiBtOgre::NiModel> nif(new NiBtOgre::NiModel(name));
+            std::auto_ptr<NiBtOgre::NiModel> nimodel(new NiBtOgre::NiModel(name));
+
+            // sceneNode has the ref's position - see MWRender::Objects::insertBegin() which is
+            // called from MWRender::Objects::insertModel()
+            //
+            // It is not clear why both sceneNode and scene are required?
+            // Possibly becasue scene only has a pointer to the Ogre::SceneManager
+            //
+            // What gets stored in sceneNode and what gets stored in scene?
+            // Maybe sceneNode is just an attachment point?
+            Ogre::SceneNode *sceneNode2 = sceneNode->getCreator()->createSceneNode();         // temp dummy
+            //ObjectScenePtr scene2 = ObjectScenePtr(new ObjectScene(sceneNode->getCreator())); // temp dummy
+            std::auto_ptr<NiBtOgre::BtOgreInst> inst(new NiBtOgre::BtOgreInst(sceneNode2));
+            nimodel->build(inst.get());
         }
         catch (std::exception& e) // FIXME
         {
@@ -1658,11 +1671,9 @@ void NifOgre::NIFObjectLoader::load (Ogre::SceneNode *sceneNode,
             return;
         }
 //#endif
-        // sceneNode has the ref's position - see MWRender::Objects::insertBegin() which is
-        // called from MWRender::Objects::insertModel()
-        Ogre::SceneNode *sceneNode2 = sceneNode->getCreator()->createSceneNode();         // temp dummy
-        ObjectScenePtr scene2 = ObjectScenePtr(new ObjectScene(sceneNode->getCreator())); // temp dummy
-        // nif->build(sceneNode2, scene2));
+    }
+    else
+        createObjects(nif, name, group, sceneNode, node, scene, flags, 0, 0);
 }
 
 void NifOgre::NIFObjectLoader::loadKf (Ogre::Skeleton *skel, const std::string &name,

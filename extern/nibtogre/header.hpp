@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015-2017 cc9cii
+  Copyright (C) 2015-2018 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -18,6 +18,9 @@
   3. This notice may not be removed or altered from any source distribution.
 
   cc9cii cc9c@iinet.net.au
+
+  Much of the information on the NIF file structures are based on the NifSkope
+  documenation.  See http://niftools.sourceforge.net/wiki/NifSkope for details.
 
 */
 #ifndef NIBTOGRE_HEADER_H
@@ -61,6 +64,10 @@ namespace NiBtOgre
     public:
         Header(NiStream& stream); // may throw std::runtime_error
         ~Header() {}
+
+        inline std::uint32_t nifVer() const { return mVer; }
+        inline std::uint32_t userVer() const { return mUserVer; }
+        inline std::uint32_t userVer2() const { return mUserVer2; }
 
         // may throw (does not check bounds)
         inline const std::string& getLongString(std::int32_t index) const {

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015-2017 cc9cii
+  Copyright (C) 2015-2018 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -19,6 +19,9 @@
 
   cc9cii cc9c@iinet.net.au
 
+  Much of the information on the NIF file structures are based on the NifSkope
+  documenation.  See http://niftools.sourceforge.net/wiki/NifSkope for details.
+
 */
 #include "niproperty.hpp"
 
@@ -33,15 +36,15 @@
 
 #if 0
 // Seen in NIF version 20.2.0.7
-NiBtOgre::NiProperty::NiProperty(NiStream& stream, const NiModel& model)
-    : NiObjectNET(stream, model), mIsBSLightingShaderProperty(false)
+NiBtOgre::NiProperty::NiProperty(uint32_t index, NiStream& stream, const NiModel& model)
+    : NiObjectNET(index, stream, model), mIsBSLightingShaderProperty(false)
 {
 }
 #endif
 
 // Seen in NIF version 20.2.0.7
-NiBtOgre::BSEffectShaderProperty::BSEffectShaderProperty(NiStream& stream, const NiModel& model)
-    : NiProperty(stream, model)
+NiBtOgre::BSEffectShaderProperty::BSEffectShaderProperty(uint32_t index, NiStream& stream, const NiModel& model)
+    : NiProperty(index, stream, model)
 {
     stream.read(mShaderFlags1);
     stream.read(mShaderFlags2);
@@ -62,8 +65,8 @@ NiBtOgre::BSEffectShaderProperty::BSEffectShaderProperty(NiStream& stream, const
 }
 
 // Seen in NIF version 20.2.0.7
-NiBtOgre::BSLightingShaderProperty::BSLightingShaderProperty(NiStream& stream, const NiModel& model)
-    : NiProperty(stream, model, true)
+NiBtOgre::BSLightingShaderProperty::BSLightingShaderProperty(uint32_t index, NiStream& stream, const NiModel& model)
+    : NiProperty(index, stream, model, true)
 {
     if (stream.userVer() == 12)
     {
@@ -122,8 +125,8 @@ NiBtOgre::BSLightingShaderProperty::BSLightingShaderProperty(NiStream& stream, c
 }
 
 // Seen in NIF version 20.2.0.7
-NiBtOgre::BSWaterShaderProperty::BSWaterShaderProperty(NiStream& stream, const NiModel& model)
-    : NiProperty(stream, model)
+NiBtOgre::BSWaterShaderProperty::BSWaterShaderProperty(uint32_t index, NiStream& stream, const NiModel& model)
+    : NiProperty(index, stream, model)
 {
     stream.read(mShaderFlags1);
     stream.read(mShaderFlags2);
@@ -136,29 +139,29 @@ NiBtOgre::BSWaterShaderProperty::BSWaterShaderProperty(NiStream& stream, const N
     stream.read(mUnknownS3);
 }
 
-NiBtOgre::NiAlphaProperty::NiAlphaProperty(NiStream& stream, const NiModel& model)
-    : NiProperty(stream, model)
+NiBtOgre::NiAlphaProperty::NiAlphaProperty(uint32_t index, NiStream& stream, const NiModel& model)
+    : NiProperty(index, stream, model)
 {
     stream.read(mFlags);
     stream.read(mThreshold);
 }
 
-NiBtOgre::NiDitherProperty::NiDitherProperty(NiStream& stream, const NiModel& model)
-    : NiProperty(stream, model)
+NiBtOgre::NiDitherProperty::NiDitherProperty(uint32_t index, NiStream& stream, const NiModel& model)
+    : NiProperty(index, stream, model)
 {
     stream.read(mFlags);
 }
 
-NiBtOgre::NiFogProperty::NiFogProperty(NiStream& stream, const NiModel& model)
-    : NiProperty(stream, model)
+NiBtOgre::NiFogProperty::NiFogProperty(uint32_t index, NiStream& stream, const NiModel& model)
+    : NiProperty(index, stream, model)
 {
     stream.read(mFlags);
     stream.read(mFogDepth);
     stream.read(mFogColor);
 }
 
-NiBtOgre::NiMaterialProperty::NiMaterialProperty(NiStream& stream, const NiModel& model)
-    : NiProperty(stream, model)
+NiBtOgre::NiMaterialProperty::NiMaterialProperty(uint32_t index, NiStream& stream, const NiModel& model)
+    : NiProperty(index, stream, model)
 {
     if (stream.nifVer() <= 0x0a000102) // 10.0.1.2
         stream.read(mFlags);
@@ -172,20 +175,20 @@ NiBtOgre::NiMaterialProperty::NiMaterialProperty(NiStream& stream, const NiModel
     // FIXME: mEmitMulti
 }
 
-NiBtOgre::NiShadeProperty::NiShadeProperty(NiStream& stream, const NiModel& model)
-    : NiProperty(stream, model)
+NiBtOgre::NiShadeProperty::NiShadeProperty(uint32_t index, NiStream& stream, const NiModel& model)
+    : NiProperty(index, stream, model)
 {
     stream.read(mFlags);
 }
 
-NiBtOgre::NiSpecularProperty::NiSpecularProperty(NiStream& stream, const NiModel& model)
-    : NiProperty(stream, model)
+NiBtOgre::NiSpecularProperty::NiSpecularProperty(uint32_t index, NiStream& stream, const NiModel& model)
+    : NiProperty(index, stream, model)
 {
     stream.read(mFlags);
 }
 
-NiBtOgre::NiStencilProperty::NiStencilProperty(NiStream& stream, const NiModel& model)
-    : NiProperty(stream, model)
+NiBtOgre::NiStencilProperty::NiStencilProperty(uint32_t index, NiStream& stream, const NiModel& model)
+    : NiProperty(index, stream, model)
 {
     if (stream.nifVer() <= 0x0a000102) // 10.0.1.2
         stream.read(mFlags);
@@ -243,8 +246,8 @@ void NiBtOgre::NiTexturingProperty::TexDesc::read(NiStream& stream)
     }
 }
 
-NiBtOgre::NiTexturingProperty::NiTexturingProperty(NiStream& stream, const NiModel& model)
-    : NiProperty(stream, model)
+NiBtOgre::NiTexturingProperty::NiTexturingProperty(uint32_t index, NiStream& stream, const NiModel& model)
+    : NiProperty(index, stream, model)
 {
     if (stream.nifVer() <= 0x0a000102 || stream.nifVer() >= 0x14010003) // up to 10.0.1.2 or from 20.1.0.3
         stream.read(mFlags);
@@ -324,22 +327,22 @@ NiBtOgre::NiTexturingProperty::NiTexturingProperty(NiStream& stream, const NiMod
     }
 }
 
-NiBtOgre::NiVertexColorProperty::NiVertexColorProperty(NiStream& stream, const NiModel& model)
-    : NiProperty(stream, model)
+NiBtOgre::NiVertexColorProperty::NiVertexColorProperty(uint32_t index, NiStream& stream, const NiModel& model)
+    : NiProperty(index, stream, model)
 {
     stream.read(mFlags);
     stream.read(mVertexMode);
     stream.read(mLightingMode);
 }
 
-NiBtOgre::NiWireframeProperty::NiWireframeProperty(NiStream& stream, const NiModel& model)
-    : NiProperty(stream, model)
+NiBtOgre::NiWireframeProperty::NiWireframeProperty(uint32_t index, NiStream& stream, const NiModel& model)
+    : NiProperty(index, stream, model)
 {
     stream.read(mFlags);
 }
 
-NiBtOgre::NiZBufferProperty::NiZBufferProperty(NiStream& stream, const NiModel& model)
-    : NiProperty(stream, model)
+NiBtOgre::NiZBufferProperty::NiZBufferProperty(uint32_t index, NiStream& stream, const NiModel& model)
+    : NiProperty(index, stream, model)
 {
     stream.read(mFlags);
 
