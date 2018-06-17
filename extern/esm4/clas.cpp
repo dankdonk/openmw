@@ -24,32 +24,33 @@
   trial & error.  See http://en.uesp.net/wiki for details.
 
 */
-#include "misc.hpp"
+#include "clas.hpp"
 
+#include <cassert>
 #include <stdexcept>
+
+#ifdef NDEBUG // FIXME: debuggigng only
+#undef NDEBUG
+#endif
 
 #include "reader.hpp"
 //#include "writer.hpp"
 
-ESM4::MiscItem::MiscItem() : mFormId(0), mFlags(0), mScript(0), mBoundRadius(0.f)
+ESM4::Class::Class()
 {
     mEditorId.clear();
     mFullName.clear();
-    mModel.clear();
+    mDesc.clear();
     mIcon.clear();
-
-    mData.value = 0;
-    mData.weight = 0.f;
 }
 
-ESM4::MiscItem::~MiscItem()
+ESM4::Class::~Class()
 {
 }
 
-void ESM4::MiscItem::load(ESM4::Reader& reader)
+void ESM4::Class::load(ESM4::Reader& reader)
 {
     mFormId = reader.hdr().record.id;
-    reader.adjustFormId(mFormId);
     mFlags  = reader.hdr().record.flags;
 
     while (reader.getSubRecordHeader())
@@ -67,40 +68,39 @@ void ESM4::MiscItem::load(ESM4::Reader& reader)
                     reader.getLocalizedString(formid, mFullName);
                 }
                 else if (!reader.getZString(mFullName))
-                    throw std::runtime_error ("MISC FULL data read error");
-
+                    throw std::runtime_error ("CLAS FULL data read error");
                 break;
             }
-            case ESM4::SUB_MODL: reader.getZString(mModel); break;
-            case ESM4::SUB_ICON: reader.getZString(mIcon);  break;
-            case ESM4::SUB_SCRI: reader.getFormId(mScript); break;
-            case ESM4::SUB_DATA: reader.get(mData);         break;
-            case ESM4::SUB_MODB: reader.get(mBoundRadius);  break;
-            case ESM4::SUB_MODT:
-            case ESM4::SUB_KSIZ:
-            case ESM4::SUB_KWDA:
-            case ESM4::SUB_MODS:
-            case ESM4::SUB_OBND:
-            case ESM4::SUB_VMAD:
-            case ESM4::SUB_YNAM:
-            case ESM4::SUB_ZNAM:
-            case ESM4::SUB_MICO: // FO3
-            case ESM4::SUB_RNAM: // FONV
+            case ESM4::SUB_DESC:
             {
-                //std::cout << "MISC " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
+                if (reader.hasLocalizedStrings())
+                {
+                    std::uint32_t formid;
+                    reader.get(formid);
+                    if (formid)
+                        reader.getLocalizedString(formid, mDesc);
+                }
+                else if (!reader.getZString(mDesc))
+                    throw std::runtime_error ("CLAS DESC data read error");
+                break;
+            }
+            case ESM4::SUB_ICON: reader.getZString(mIcon);     break;
+            case ESM4::SUB_DATA:
+            {
+                //std::cout << "CLAS " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
                 reader.skipSubRecordData();
                 break;
             }
             default:
-                throw std::runtime_error("ESM4::MISC::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
+                throw std::runtime_error("ESM4::CLAS::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
         }
     }
 }
 
-//void ESM4::MiscItem::save(ESM4::Writer& writer) const
+//void ESM4::Class::save(ESM4::Writer& writer) const
 //{
 //}
 
-//void ESM4::MiscItem::blank()
+//void ESM4::Class::blank()
 //{
 //}

@@ -187,7 +187,10 @@ namespace NiBtOgre
     class NiPSysBombModifier : public NiPSysModifier
     {
     public:
-        NiNode *mBombObject; // Ptr
+        // dungeons/vault/roomu/vgeardoor01.nif (TO3) shows that some of the Ptr refer to
+        // objects not yet loaded. Change to Ref instead.
+        //NiNode *mBombObject; // Ptr
+        NiNodeRef mBombObject;
         Ogre::Vector3 mBombAxis;
         float mDecay;
         float mDeltaV;
@@ -228,7 +231,10 @@ namespace NiBtOgre
     class NiPSysDragModifier : public NiPSysModifier
     {
     public:
-        NiObject *mParent; // Ptr
+        // dungeons/vault/roomu/vgeardoor01.nif (TO3) shows that some of the Ptr refer to
+        // objects not yet loaded. Change to Ref instead.
+        //NiObject *mParent; // Ptr
+        NiObjectRef mParent;
         Ogre::Vector3 mDragAxis;
         float mPercentage;
         float mRange;

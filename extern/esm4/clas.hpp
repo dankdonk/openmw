@@ -24,8 +24,8 @@
   trial & error.  See http://en.uesp.net/wiki for details.
 
 */
-#ifndef ESM4_ACTI_H
-#define ESM4_ACTI_H
+#ifndef ESM4_CLAS_H
+#define ESM4_CLAS_H
 
 #include <string>
 #include <cstdint>
@@ -36,28 +36,30 @@ namespace ESM4
     class Writer;
     typedef std::uint32_t FormId;
 
-    struct Activator
+    struct Class
     {
+        struct Data
+        {
+            std::uint32_t attr;
+        };
+
         FormId mFormId;       // from the header
         std::uint32_t mFlags; // from the header, see enum type RecordFlag for details
 
         std::string mEditorId;
         std::string mFullName;
-        std::string mModel;
+        std::string mDesc;
+        std::string mIcon;
+        Data mData;
 
-        FormId mScript;
-        FormId mSound;
+        Class();
+        ~Class();
 
-        float mBoundRadius;
-
-        Activator();
-        virtual ~Activator();
-
-        virtual void load(ESM4::Reader& reader);
-        //virtual void save(ESM4::Writer& writer) const;
+        void load(ESM4::Reader& reader);
+        //void save(ESM4::Writer& reader) const;
 
         //void blank();
     };
 }
 
-#endif // ESM4_ACTI_H
+#endif // ESM4_CLAS_H

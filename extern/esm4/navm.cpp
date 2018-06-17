@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015, 2016 cc9cii
+  Copyright (C) 2015-2016, 2018 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -18,6 +18,10 @@
   3. This notice may not be removed or altered from any source distribution.
 
   cc9cii cc9c@iinet.net.au
+
+  Much of the information on the data structures are based on the information
+  from Tes4Mod:Mod_File_Format and Tes5Mod:File_Formats but also refined by
+  trial & error.  See http://en.uesp.net/wiki for details.
 
 */
 #include "navm.hpp"
@@ -233,8 +237,21 @@ void ESM4::NavMesh::load(ESM4::Reader& reader)
                 reader.get(subSize);
                 break;
             }
+            case ESM4::SUB_NVER: // FO3
+            case ESM4::SUB_DATA: // FO3
+            case ESM4::SUB_NVVX: // FO3
+            case ESM4::SUB_NVTR: // FO3
+            case ESM4::SUB_NVCA: // FO3
+            case ESM4::SUB_NVDP: // FO3
+            case ESM4::SUB_NVGD: // FO3
+            case ESM4::SUB_NVEX: // FO3
+            case ESM4::SUB_EDID: // FO3
+            {
+                reader.skipSubRecordData(); // FIXME:
+                break;
+            }
             default:
-                throw std::runtime_error("ESM4::NAvM::load - Unknown subrecord " +
+                throw std::runtime_error("ESM4::NAVM::load - Unknown subrecord " +
                                           ESM4::printName(reader.subRecordHeader().typeId));
         }
     }

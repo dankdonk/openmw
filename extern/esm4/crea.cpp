@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2016 cc9cii
+  Copyright (C) 2016, 2018 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -18,6 +18,10 @@
   3. This notice may not be removed or altered from any source distribution.
 
   cc9cii cc9c@iinet.net.au
+
+  Much of the information on the data structures are based on the information
+  from Tes4Mod:Mod_File_Format and Tes5Mod:File_Formats but also refined by
+  trial & error.  See http://en.uesp.net/wiki for details.
 
 */
 #include "crea.hpp"
@@ -105,9 +109,30 @@ void ESM4::Creature::load(ESM4::Reader& reader)
             }
             case ESM4::SUB_INAM: reader.getFormId(mDeathItem);   break;
             case ESM4::SUB_SCRI: reader.getFormId(mScript);      break;
-            case ESM4::SUB_AIDT: reader.get(mAIData);       break;
-            case ESM4::SUB_ACBS: reader.get(mBaseConfig);   break;
-            case ESM4::SUB_DATA: reader.get(mData);         break;
+            case ESM4::SUB_AIDT:
+            {
+                if (subHdr.dataSize == 20) // FO3
+                    reader.skipSubRecordData();
+                else
+                    reader.get(mAIData); // 12 bytes
+                break;
+            }
+            case ESM4::SUB_ACBS:
+            {
+                if (subHdr.dataSize == 24) // FO3
+                    reader.skipSubRecordData();
+                else
+                    reader.get(mBaseConfig);
+                break;
+            }
+            case ESM4::SUB_DATA:
+            {
+                if (subHdr.dataSize == 17) // FO3
+                    reader.skipSubRecordData();
+                else
+                    reader.get(mData);
+                break;
+            }
             case ESM4::SUB_ZNAM: reader.getFormId(mCombatStyle); break;
             case ESM4::SUB_CSCR: reader.getFormId(mSoundBase);   break;
             case ESM4::SUB_CSDI: reader.getFormId(mSound);       break;
@@ -133,6 +158,12 @@ void ESM4::Creature::load(ESM4::Reader& reader)
             }
             case ESM4::SUB_NIFT:
             {
+                if (subHdr.dataSize != 4) // FIXME: FO3
+                {
+                    reader.skipSubRecordData();
+                    break;
+                }
+
                 assert(subHdr.dataSize == 4 && "CREA NIFT datasize error");
                 std::uint32_t nift;
                 reader.get(nift);
@@ -156,6 +187,22 @@ void ESM4::Creature::load(ESM4::Reader& reader)
             case ESM4::SUB_MODT:
             case ESM4::SUB_RNAM:
             case ESM4::SUB_CSDT:
+            case ESM4::SUB_OBND: // FO3
+            case ESM4::SUB_EAMT: // FO3
+            case ESM4::SUB_VTCK: // FO3
+            case ESM4::SUB_TPLT: // FO3
+            case ESM4::SUB_PNAM: // FO3
+            case ESM4::SUB_NAM4: // FO3
+            case ESM4::SUB_NAM5: // FO3
+            case ESM4::SUB_CNAM: // FO3
+            case ESM4::SUB_LNAM: // FO3
+            case ESM4::SUB_EITM: // FO3
+            case ESM4::SUB_DEST: // FO3
+            case ESM4::SUB_DSTD: // FO3
+            case ESM4::SUB_DSTF: // FO3
+            case ESM4::SUB_DMDL: // FO3
+            case ESM4::SUB_DMDT: // FO3
+            case ESM4::SUB_COED: // FO3
             {
                 //std::cout << "CREA " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
                 reader.skipSubRecordData();

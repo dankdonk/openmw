@@ -281,6 +281,15 @@ public:
     void post(NIFFile *nif);
 };
 
+class BSDismemberSkinInstance : public NiSkinInstance
+{
+public:
+    // TODO
+
+    void read(NIFStream *nif);
+    void post(NIFFile *nif);
+};
+
 class NiSkinData : public Record
 {
 public:

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015-2017 cc9cii
+  Copyright (C) 2015-2018 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -25,17 +25,18 @@
 #include <cassert>
 #include <stdexcept>
 #include <unordered_map>
+#include <string>
+#include <iostream>
 
-#include <iostream> // FIXME: debugging only
 #ifdef NDEBUG // FIXME: debugging only
 #undef NDEBUG
 #endif
 
+#include <boost/algorithm/string.hpp>
+#include <boost/filesystem/path.hpp>
+#include <boost/filesystem/operations.hpp>
+
 #include <zlib.h>
-
-#include <components/misc/stringops.hpp>
-
-#include <components/esm/esm4reader.hpp>
 
 #include "formid.hpp"
 
@@ -57,8 +58,10 @@ ESM4::Reader::~Reader()
 }
 
 // Since the record data may have been compressed, it is not always possible to use seek() to
-// go to a position of a sub record.  Also, either the record header needs to be saved in the
-// context or the header needs to be re-loaded after restoring the context.
+// go to a position of a sub record.
+//
+// The record header needs to be saved in the context or the header needs to be re-loaded after
+// restoring the context. The latter option was chosen.
 ESM4::ReaderContext ESM4::Reader::getContext()
 {
     mCtx.filePos = mStream->tell() - mCtx.recHeaderSize; // update file position
@@ -111,11 +114,13 @@ bool ESM4::Reader::skipNextGroupCellChild()
     return true;
 }
 
-std::size_t ESM4::Reader::openTes4File(Ogre::DataStreamPtr stream, const std::string& name)
+// TODO: consider checking file path using boost::filesystem::exists()
+std::size_t ESM4::Reader::openTes4File(const std::string& name)
 {
     mCtx.filename = name;
-
-    mStream = stream;
+    mStream = Ogre::DataStreamPtr(new Ogre::FileStreamDataStream(
+                    OGRE_NEW_T(std::ifstream(name.c_str(), std::ios_base::binary),
+                    Ogre::MEMCATEGORY_GENERAL), /*freeOnClose*/true));
     return mStream->size();
 }
 
@@ -127,6 +132,122 @@ void ESM4::Reader::setRecHeaderSize(const std::size_t size)
 void ESM4::Reader::registerForUpdates(ESM4::ReaderObserver *observer)
 {
     mObserver = observer;
+}
+
+// FIXME: only "English" strings supported for now
+void ESM4::Reader::buildStringIndicies()
+{
+    if ((mHeader.mFlags & (Rec_ESM | Rec_Localized)) == 0)
+        return;
+
+    // extra check with versions, probably not necessary since Fallout3.esm does not set Rec_Localized flag
+    if (mHeader.mData.version.ui != 0x3f70a3d7 && mHeader.mData.version.ui != 0x3fd9999a)
+        return; // not Skyrim.esm or Update.esm, but might still be Fallout3.esm
+
+    // now check if the directory 'Strings' exist
+    std::string file = mCtx.filename;
+    boost::filesystem::path p(file);
+    std::string filename = p.stem().filename().string();
+
+    p.remove_filename();
+    p.append("/Strings");
+    if (!boost::filesystem::exists(p))
+        return;
+
+    // finally build the indicies
+    buildStringIndicies(p.string() + "/" + filename + "_English.STRINGS", Type_Strings);
+    buildStringIndicies(p.string() + "/" + filename + "_English.ILSTRINGS", Type_ILStrings);
+    buildStringIndicies(p.string() + "/" + filename + "_English.DLSTRINGS", Type_DLStrings);
+
+#if 0 // FIXME: testing only
+    if (filename != "Skyrim")
+        return;
+    std::string test;
+    getLocalizedString(0x00000001, test); // Strings
+    std::cout << test << std::endl;
+    getLocalizedString(0x00000004, test); // ILStrings
+    std::cout << test << std::endl;
+    getLocalizedString(0x00000044, test); // DLStrings
+    std::cout << test << std::endl;
+#endif
+}
+
+void ESM4::Reader::buildStringIndicies(const std::string& stringFile, LocalizedStringType stringType)
+{
+    if (boost::filesystem::exists(stringFile))
+    {
+        std::uint32_t numEntries;
+        std::uint32_t dataSize;
+        std::uint32_t stringId;
+        StringPos sp;
+        sp.type = stringType;
+
+        Ogre::DataStreamPtr filestream(new Ogre::FileStreamDataStream(
+                    OGRE_NEW_T(std::ifstream(stringFile.c_str(), std::ios_base::binary),
+                    Ogre::MEMCATEGORY_GENERAL)));
+
+        switch (stringType)
+        {
+            case Type_Strings:   mStrings =   filestream; break;
+            case Type_ILStrings: mILStrings = filestream; break;
+            case Type_DLStrings: mDLStrings = filestream; break;
+            default:
+                throw std::runtime_error("ESM4::Reader::unexpected string type");
+        }
+
+        filestream->read(&numEntries, sizeof(std::uint32_t));
+        filestream->read(&dataSize, sizeof(std::uint32_t));
+        std::size_t dataStart = filestream->size() - dataSize;
+        for (unsigned int i = 0; i < numEntries; ++i)
+        {
+            filestream->read(&stringId, sizeof(std::uint32_t));
+            filestream->read(&sp.offset, sizeof(std::uint32_t));
+            sp.offset += (std::uint32_t)dataStart;
+            mStringIndicies[stringId] = sp;
+        }
+        //assert(dataStart - filestream->tell() == 0 && "String file start of data section mismatch");
+    }
+    // else silenty ignore
+}
+
+// FIXME: very messy and probably slow/inefficient
+void ESM4::Reader::getLocalizedString(const FormId stringId, std::string& str)
+{
+    const std::map<FormId, StringPos>::const_iterator it = mStringIndicies.find(stringId);
+
+    if (it != mStringIndicies.end())
+    {
+        Ogre::DataStreamPtr filestream;
+
+        switch (it->second.type)
+        {
+            case Type_Strings:
+            {
+                filestream = mStrings;
+                filestream->seek(it->second.offset);
+
+                char ch;
+                std::vector<char> data;
+                do {
+                    filestream->read(&ch, sizeof(char));
+                    data.push_back(ch);
+                } while (ch != 0);
+
+                str = std::string(data.data());
+                return;
+            }
+            case Type_ILStrings: filestream = mILStrings; break;
+            case Type_DLStrings: filestream = mDLStrings; break;
+            default:
+                throw std::runtime_error("ESM4::Reader::getLocalizedString unexpected string type");
+        }
+
+        // get ILStrings or DLStrings
+        filestream->seek(it->second.offset);
+        getZString(str, filestream);
+    }
+    else
+        throw std::runtime_error("ESM4::Reader::getLocalizedString localized string not found");
 }
 
 bool ESM4::Reader::getRecordHeader()
@@ -155,7 +276,7 @@ bool ESM4::Reader::getSubRecordHeader()
     return (mStream->tell() < mEndOfRecord) && get(mSubRecordHeader);
 }
 
-// NOTE: the parameter files must have the file names in the loaded order
+// NOTE: the parameter 'files' must have the file names in the loaded order
 void ESM4::Reader::updateModIndicies(const std::vector<std::string>& files)
 {
     if (files.size() >= 0xff)
@@ -169,22 +290,23 @@ void ESM4::Reader::updateModIndicies(const std::vector<std::string>& files)
     std::unordered_map<std::string, size_t> fileIndex;
 
     for (size_t i = 0; i < files.size(); ++i) // ATTENTION: assumes current file is not included
-        fileIndex[Misc::StringUtils::lowerCase(files[i])] = i;
+        fileIndex[boost::to_lower_copy<std::string>(files[i])] = i;
 
     mHeader.mModIndicies.resize(mHeader.mMaster.size());
     for (unsigned int i = 0; i < mHeader.mMaster.size(); ++i)
     {
         // locate the position of the dependency in already loaded files
         std::unordered_map<std::string, size_t>::const_iterator it
-            = fileIndex.find(Misc::StringUtils::lowerCase(mHeader.mMaster[i].name));
+            = fileIndex.find(boost::to_lower_copy<std::string>(mHeader.mMaster[i].name));
 
         if (it != fileIndex.end())
             mHeader.mModIndicies[i] = (std::uint32_t)((it->second << 24) & 0xff000000);
         else
             throw std::runtime_error("ESM4::Reader::updateModIndicies required dependency file not loaded");
-//#if 0
-        std::cout << mHeader.mMaster[i].name << ", " << ESM4::formIdToString(mHeader.mModIndicies[i]) << std::endl;
-//#endif
+#if 0
+        std::cout << "Master Mod: " << mHeader.mMaster[i].name << ", " // FIXME: debugging only
+                  << ESM4::formIdToString(mHeader.mModIndicies[i]) << std::endl;
+#endif
     }
 
     if (!mHeader.mModIndicies.empty() &&  mHeader.mModIndicies[0] != 0)
@@ -233,7 +355,8 @@ void ESM4::Reader::checkGroupStatus()
     // pop finished groups
     while (!mCtx.groupStack.empty() && mCtx.groupStack.back().second == 0)
     {
-        ESM4::GroupTypeHeader grp = mCtx.groupStack.back().first; // FIXME: debugging only
+        ESM4::GroupTypeHeader grp = mCtx.groupStack.back().first; // FIXME: grp is for debugging only
+
         uint32_t groupSize = mCtx.groupStack.back().first.groupSize;
         mCtx.groupStack.pop_back();
 #if 0
@@ -297,6 +420,7 @@ void ESM4::Reader::getRecordData()
         case Z_DATA_ERROR:
         case Z_MEM_ERROR:
             inflateEnd(&strm);
+            getRecordDataPostActions();
             throw std::runtime_error("ESM4::Reader::getRecordData - inflate failed");
         }
         assert(ret == Z_OK || ret == Z_STREAM_END);
@@ -323,6 +447,12 @@ void ESM4::Reader::getRecordData()
         mStream = Ogre::DataStreamPtr(new Ogre::MemoryDataStream(mDataBuf.get(), bufSize, false, true));
     }
 
+    getRecordDataPostActions();
+    //std::cout << "data size 0x" << std::hex << mRecordHeader.record.dataSize << std::endl; // FIXME: debug only
+}
+
+void ESM4::Reader::getRecordDataPostActions()
+{
     // keep track of data left to read from the current group
     assert (!mCtx.groupStack.empty() && "Read data for a record without a group");
     mCtx.groupStack.back().second -= (std::uint32_t)mCtx.recHeaderSize + mRecordHeader.record.dataSize;
@@ -330,23 +460,30 @@ void ESM4::Reader::getRecordData()
     // keep track of data left to read from the file
     if (mObserver)
         mObserver->update(mRecordHeader.record.dataSize);
+}
 
-    //std::cout << "data size 0x" << std::hex << mRecordHeader.record.dataSize << std::endl; // FIXME
+bool ESM4::Reader::getZString(std::string& str)
+{
+    return getZString(str, mStream);
 }
 
 // FIXME: how to without using a temp buffer?
-bool ESM4::Reader::getZString(std::string& str)
+bool ESM4::Reader::getZString(std::string& str, Ogre::DataStreamPtr filestream)
 {
-    std::uint16_t size = mSubRecordHeader.dataSize; // assumed size from the header is correct
+    std::uint32_t size = 0;
+    if (filestream == mStream)
+        size = mSubRecordHeader.dataSize; // WARNING: assumed size from the header is correct
+    else
+        filestream->read(&size, sizeof(size));
 
     boost::scoped_array<char> buf(new char[size]);
-    if (mStream->read(buf.get(), size) == (size_t)size)
+    if (filestream->read(buf.get(), size) == (size_t)size)
     {
         if (buf[size-1] != 0)
-            std::cerr << "ESM4::Reader - string is not terminated with a zero" << std::endl;
+            std::cerr << "ESM4::Reader::getZString string is not terminated with a zero" << std::endl;
 
         str.assign(buf.get(), size-1); // don't copy null terminator
-        //assert((size_t)size-1 == str.size() && "ESM4::Reader - string size mismatch");
+        //assert((size_t)size-1 == str.size() && "ESM4::Reader::getZString string size mismatch");
         return true;
     }
     else

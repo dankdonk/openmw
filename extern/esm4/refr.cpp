@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015, 2016 cc9cii
+  Copyright (C) 2015-2016, 2018 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -19,17 +19,16 @@
 
   cc9cii cc9c@iinet.net.au
 
+  Much of the information on the data structures are based on the information
+  from Tes4Mod:Mod_File_Format and Tes5Mod:File_Formats but also refined by
+  trial & error.  See http://en.uesp.net/wiki for details.
+
 */
 #include "refr.hpp"
 
-#include <cassert>
 #include <stdexcept>
 
 #include <iostream> // FIXME: debug only
-#ifdef NDEBUG // FIXME: debuggigng only
-#undef NDEBUG
-#endif
-
 #include "formid.hpp" // FIXME: debug only
 
 #include "reader.hpp"
@@ -59,6 +58,7 @@ void ESM4::Reference::load(ESM4::Reader& reader)
     mFlags  = reader.hdr().record.flags;
     // TODO: Let the engine apply this? Saved games?
     //mDisabled = ((mFlags & ESM4::Rec_Disabled) != 0) ? true : false;
+    std::uint32_t esmVer = reader.esmVersion();
 
     while (reader.getSubRecordHeader())
     {
@@ -68,19 +68,13 @@ void ESM4::Reference::load(ESM4::Reader& reader)
             case ESM4::SUB_EDID: reader.getZString(mEditorId); break;
             case ESM4::SUB_FULL:
             {
-                // NOTE: checking flags does not work, Skyrim.esm does not set the localized flag
-                //
-                // A possible hack is to look for SUB_FULL subrecord size of 4 to indicate that
-                // a lookup is required.  This obviously does not work for a string size of 3,
-                // but the chance of having that is assumed to be low.
-                if ((reader.hdr().record.flags & Rec_Localized) != 0 || subHdr.dataSize == 4)
+                if (reader.hasLocalizedStrings())
                 {
-                    reader.skipSubRecordData(); // FIXME: process the subrecord rather than skip
-                    mFullName = "FIXME";
-                    break;
+                    std::uint32_t formid;
+                    reader.get(formid);
+                    reader.getLocalizedString(formid, mFullName);
                 }
-
-                if (!reader.getZString(mFullName))
+                else if (!reader.getZString(mFullName))
                     throw std::runtime_error ("REFR FULL data read error");
 #if 0
                 std::string padding = "";
@@ -117,7 +111,7 @@ void ESM4::Reference::load(ESM4::Reader& reader)
             {
                 reader.get(mDoor.destDoor);
                 reader.get(mDoor.destPos);
-                if (reader.esmVersion() == ESM4::VER_094 || reader.esmVersion() == ESM4::VER_170)
+                if (esmVer == ESM4::VER_094 || esmVer == ESM4::VER_170 || esmVer == ESM4::VER_134)
                     reader.get(mDoor.flags); // not in Obvlivion
                 //std::cout << "REFR  dest door: " << formIdToString(mDoor.destDoor) << std::endl;// FIXME
                 break;
@@ -233,15 +227,43 @@ void ESM4::Reference::load(ESM4::Reader& reader)
             case ESM4::SUB_XWCN:
             case ESM4::SUB_XWCU:
             case ESM4::SUB_XATR: // Dawnguard only?
-            case MKTAG('X','H','L','T'): // Unofficial Oblivion Patch
-            case MKTAG('X','C','H','G'): // thievery.exp
+            case ESM4::SUB_XHLT: // Unofficial Oblivion Patch
+            case ESM4::SUB_XCHG: // thievery.exp
+            case ESM4::SUB_XHLP: // FO3
+            case ESM4::SUB_XRDO: // FO3
+            case ESM4::SUB_XAMT: // FO3
+            case ESM4::SUB_XAMC: // FO3
+            case ESM4::SUB_XRAD: // FO3
+            case ESM4::SUB_XIBS: // FO3
+            case ESM4::SUB_XORD: // FO3
+            case ESM4::SUB_XCLP: // FO3
+            case ESM4::SUB_SCDA: // FO3
+            case ESM4::SUB_SCRO: // FO3
+            case ESM4::SUB_RCLR: // FO3
+            case ESM4::SUB_BNAM: // FONV
+            case ESM4::SUB_CNAM: // FONV
+            case ESM4::SUB_MMRK: // FONV
+            case ESM4::SUB_MNAM: // FONV
+            case ESM4::SUB_NNAM: // FONV
+            case ESM4::SUB_XATO: // FONV
+            case ESM4::SUB_SCRV: // FONV
+            case ESM4::SUB_SCVR: // FONV
+            case ESM4::SUB_SLSD: // FONV
+            case ESM4::SUB_XSRF: // FONV
+            case ESM4::SUB_XSRD: // FONV
+            case ESM4::SUB_WMI1: // FONV
             {
                 //std::cout << "REFR " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
                 reader.skipSubRecordData();
                 break;
             }
             default:
-                throw std::runtime_error("ESM4::REFR::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
+                //throw std::runtime_error("ESM4::REFR::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
+            {
+                std::cout << "REFR " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
+                reader.skipSubRecordData();
+                break;
+            }
         }
     }
 }

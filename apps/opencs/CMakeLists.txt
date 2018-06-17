@@ -236,6 +236,7 @@ target_link_libraries(openmw-cs
     ${SHINY_LIBRARIES}
     ${ESM4_LIBRARIES}
     ${ZLIB_LIBRARY}
+    ${NIBTOGRE_LIBRARIES}
     ${MURMURHASH_LIBRARIES}
     ${STRVERSCMP_LIBRARIES}
     ${Boost_SYSTEM_LIBRARY}

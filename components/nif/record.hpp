@@ -237,7 +237,12 @@ enum RecordType
   RC_NiBSplineTransformInterpolator,
   RC_NiBSplineCompTransformInterpolator,
   RC_NiBSplineData,
-  RC_NiBSplineBasisData
+  RC_NiBSplineBasisData,
+  // FO3
+  RC_BSShaderPPLightingProperty,
+  RC_BSShaderNoLightingProperty,
+  RC_bhkConvexListShape,
+  RC_BSDismemberSkinInstance
 };
 /// Base class for all records
 struct Record

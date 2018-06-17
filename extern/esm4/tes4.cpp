@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015, 2016 cc9cii
+  Copyright (C) 2015-2016, 2018 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -19,6 +19,10 @@
 
   cc9cii cc9c@iinet.net.au
 
+  Much of the information on the data structures are based on the information
+  from Tes4Mod:Mod_File_Format and Tes5Mod:File_Formats but also refined by
+  trial & error.  See http://en.uesp.net/wiki for details.
+
 */
 #include "tes4.hpp"
 
@@ -37,6 +41,8 @@
 
 void ESM4::Header::load(ESM4::Reader& reader)
 {
+    mFlags = reader.hdr().record.flags; // 0x01 = ESM, 0x80 = localised strings
+
     while (reader.getSubRecordHeader())
     {
         const ESM4::SubRecordHeader& subHdr = reader.subRecordHeader();
@@ -78,11 +84,11 @@ void ESM4::Header::load(ESM4::Reader& reader)
                 {
                     if (!reader.get(*it))
                         throw std::runtime_error("TES4 ONAM data read error");
-//#if 0
+#if 0
                     std::string padding = "";
                     padding.insert(0, reader.stackSize()*2, ' ');
-                    std::cout << padding  << "overrides: " << formIdToString(*it) << std::endl;
-//#endif
+                    std::cout << padding  << "ESM4::Header::ONAM overrides: " << formIdToString(*it) << std::endl;
+#endif
                 }
                 break;
             }
@@ -102,9 +108,5 @@ void ESM4::Header::load(ESM4::Reader& reader)
 }
 
 //void ESM4::Header::save(ESM4::Writer& writer)
-//{
-//}
-
-//void ESM4::Header::blank()
 //{
 //}

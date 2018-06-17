@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015-2017 cc9cii
+  Copyright (C) 2015-2018 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -19,8 +19,9 @@
 
   cc9cii cc9c@iinet.net.au
 
-  Much of the information on the data structures are based on
-  http://www.uesp.net/wiki/Tes5Mod:Mod_File_Format but also refined by trial & error.
+  Much of the information on the data structures are based on the information
+  from Tes4Mod:Mod_File_Format and Tes5Mod:File_Formats but also refined by
+  trial & error.  See http://en.uesp.net/wiki for details.
 
   MKTAG macro was adapated from ScummVM.
 
@@ -40,7 +41,10 @@ namespace ESM4
     {
         VER_080 = 0x3f4ccccd, // TES4
         VER_100 = 0x3f800000, // TES4
-        VER_094 = 0x3f70a3d7, // TES5
+        VER_132 = 0x3fa8f5c3, // FONV Courier's Stash, DeadMoney
+        VER_133 = 0x3faa3d71, // FONV HonestHearts
+        VER_134 = 0x3fab851f, // FONV, GunRunnersArsenal, LonesomeRoad, OldWorldBlues
+        VER_094 = 0x3f70a3d7, // TES5/FO3
         VER_170 = 0x3fd9999a  // TES5
     };
 
@@ -453,7 +457,74 @@ namespace ESM4
         SUB_FNMK = MKTAG('F','N','M','K'),
         SUB_FNPR = MKTAG('F','N','P','R'),
         SUB_WBDT = MKTAG('W','B','D','T'),
-        SUB_QUAL = MKTAG('Q','U','A','L')
+        SUB_QUAL = MKTAG('Q','U','A','L'),
+        SUB_INDX = MKTAG('I','N','D','X'),
+        SUB_ATTR = MKTAG('A','T','T','R'),
+
+        SUB_XHLT = MKTAG('X','H','L','T'), // Unofficial Oblivion Patch
+        SUB_XCHG = MKTAG('X','C','H','G'), // thievery.exp
+
+        SUB_XIBS = MKTAG('X','I','B','S'), // FO3
+        SUB_REPL = MKTAG('R','E','P','L'), // FO3
+        SUB_BIPL = MKTAG('B','I','P','L'), // FO3
+        SUB_MODD = MKTAG('M','O','D','D'), // FO3
+        SUB_MOSD = MKTAG('M','O','S','D'), // FO3
+        SUB_MO3S = MKTAG('M','O','3','S'), // FO3
+        SUB_XCET = MKTAG('X','C','E','T'), // FO3
+        SUB_LVLG = MKTAG('L','V','L','G'), // FO3
+        SUB_NVCI = MKTAG('N','V','C','I'), // FO3
+        SUB_NVVX = MKTAG('N','V','V','X'), // FO3
+        SUB_NVTR = MKTAG('N','V','T','R'), // FO3
+        SUB_NVCA = MKTAG('N','V','C','A'), // FO3
+        SUB_NVDP = MKTAG('N','V','D','P'), // FO3
+        SUB_NVGD = MKTAG('N','V','G','D'), // FO3
+        SUB_NVEX = MKTAG('N','V','E','X'), // FO3
+        SUB_XHLP = MKTAG('X','H','L','P'), // FO3
+        SUB_XRDO = MKTAG('X','R','D','O'), // FO3
+        SUB_XAMT = MKTAG('X','A','M','T'), // FO3
+        SUB_XAMC = MKTAG('X','A','M','C'), // FO3
+        SUB_XRAD = MKTAG('X','R','A','D'), // FO3
+        SUB_XORD = MKTAG('X','O','R','D'), // FO3
+        SUB_XCLP = MKTAG('X','C','L','P'), // FO3
+        SUB_SCDA = MKTAG('S','C','D','A'), // FO3
+        SUB_SCRO = MKTAG('S','C','R','O'), // FO3
+        SUB_IMPS = MKTAG('I','M','P','S'), // FO3 Anchorage
+        SUB_IMPF = MKTAG('I','M','P','F'), // FO3 Anchorage
+
+        SUB_XATO = MKTAG('X','A','T','O'), // FONV
+        SUB_DAT2 = MKTAG('D','A','T','2'), // FONV
+        SUB_RCIL = MKTAG('R','C','I','L'), // FONV
+        SUB_MMRK = MKTAG('M','M','R','K'), // FONV
+        SUB_SCRV = MKTAG('S','C','R','V'), // FONV
+        SUB_SCVR = MKTAG('S','C','V','R'), // FONV
+        SUB_SLSD = MKTAG('S','L','S','D'), // FONV
+        SUB_XSRF = MKTAG('X','S','R','F'), // FONV
+        SUB_XSRD = MKTAG('X','S','R','D'), // FONV
+        SUB_WMI1 = MKTAG('W','M','I','1'), // FONV
+        SUB_RDID = MKTAG('R','D','I','D'), // FONV
+        SUB_RDSB = MKTAG('R','D','S','B'), // FONV
+        SUB_RDSI = MKTAG('R','D','S','I'), // FONV
+        SUB_BRUS = MKTAG('B','R','U','S'), // FONV
+        SUB_VATS = MKTAG('V','A','T','S'), // FONV
+        SUB_VANM = MKTAG('V','A','N','M'), // FONV
+        SUB_MWD1 = MKTAG('M','W','D','1'), // FONV
+        SUB_MWD2 = MKTAG('M','W','D','2'), // FONV
+        SUB_MWD3 = MKTAG('M','W','D','3'), // FONV
+        SUB_MWD4 = MKTAG('M','W','D','4'), // FONV
+        SUB_MWD5 = MKTAG('M','W','D','5'), // FONV
+        SUB_MWD6 = MKTAG('M','W','D','6'), // FONV
+        SUB_MWD7 = MKTAG('M','W','D','7'), // FONV
+        SUB_WMI2 = MKTAG('W','M','I','2'), // FONV
+        SUB_WMI3 = MKTAG('W','M','I','3'), // FONV
+        SUB_WMS1 = MKTAG('W','M','S','1'), // FONV
+        SUB_WMS2 = MKTAG('W','M','S','2'), // FONV
+        SUB_WNM1 = MKTAG('W','N','M','1'), // FONV
+        SUB_WNM2 = MKTAG('W','N','M','2'), // FONV
+        SUB_WNM3 = MKTAG('W','N','M','3'), // FONV
+        SUB_WNM4 = MKTAG('W','N','M','4'), // FONV
+        SUB_WNM5 = MKTAG('W','N','M','5'), // FONV
+        SUB_WNM6 = MKTAG('W','N','M','6'), // FONV
+        SUB_WNM7 = MKTAG('W','N','M','7'), // FONV
     };
 
     enum MagicEffectID

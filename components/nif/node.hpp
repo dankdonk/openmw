@@ -70,7 +70,8 @@ public:
                        const Nif::NiZBufferProperty *&zprop,
                        const Nif::NiSpecularProperty *&specprop,
                        const Nif::NiWireframeProperty *&wireprop,
-                       const Nif::NiStencilProperty *&stencilprop) const;
+                       const Nif::NiStencilProperty *&stencilprop,
+                       const Nif::Property *&prop) const;
 
     Ogre::Matrix4 getLocalTransform() const;
     Ogre::Matrix4 getWorldTransform() const;

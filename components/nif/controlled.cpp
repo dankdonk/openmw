@@ -10,16 +10,18 @@ void Nif::NiSourceTexture::read(NIFStream *nif)
     external = !!nif->getChar();
     if(external)
     {
-        filename = nif->getString();
+        filename = nif->getSkyrimString(nifVer, Record::strings);
         if (nifVer >= 0x0a010000) // 10.1.0.0
             nif->getUInt(); // refNiObject // FIXME
     }
     else
     {
-        if (nifVer >= 0x0a010000) // 10.1.0.0
-            originalFile = nif->getString();
-        else
+        if (nifVer <= 0x0a000100)
             nif->getChar(); // always 1 // FIXME: is this presentn on 10.1.0.0?
+
+        if (nifVer >= 0x0a010000) // 10.1.0.0
+            originalFile = nif->getSkyrimString(nifVer, Record::strings);
+
         data.read(nif);
     }
 
@@ -31,6 +33,9 @@ void Nif::NiSourceTexture::read(NIFStream *nif)
 
     if (nifVer >= 0x0a01006a) // 10.1.0.106
         directRenderer = nif->getBool(nifVer);
+
+    if (nifVer >= 0x14020007)
+        nif->getBool(nifVer);
 }
 
 void Nif::NiSourceTexture::post(NIFFile *nif)

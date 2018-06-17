@@ -205,7 +205,7 @@ bool NIFStream::getBool(unsigned int nifVer)
 
 std::string NIFStream::getSkyrimString(unsigned int nifVer, std::vector<std::string> *strings)
 {
-    if (nifVer >= 0x14020007 && !strings->empty()) // from 20.2.0.7 (Skyrim)
+    if (nifVer >= 0x14010003 && !strings->empty()) // from 20.1.0.3 FIXME: 20.0.0.5 ??
     {
         int index = getInt();
         if (index == -1)

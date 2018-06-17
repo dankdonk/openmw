@@ -857,8 +857,8 @@ namespace MWWorld
 
                 switch (store.find(record.mBaseObj))
                 {
-                    case MKTAG('R','H','A','I'): std::cout << " hair " << std::endl; break;
-                    case MKTAG('S','E','Y','E'): std::cout << " eyes " << std::endl; break;
+                    case MKTAG('R','H','A','I'): /*std::cout << " hair " << std::endl;*/ break; // FIXME
+                    case MKTAG('S','E','Y','E'): /*std::cout << " eyes " << std::endl;*/ break; // FIXME
                     case MKTAG('N','S','O','U'): mForeignSounds.load(record, deleted, store); break;
                     case MKTAG('I','A','C','T'): mForeignActivators.load(record, deleted, store); break;
                     case MKTAG('A','A','P','P'): mForeignApparatus.load(record, deleted, store); break;
@@ -885,7 +885,9 @@ namespace MWWorld
                     case MKTAG('T','S','G','S'): mForeignSigilStones.load(record, deleted, store); break;
                     case MKTAG('I','L','V','L'): mForeignLvlItems.load(record, deleted, store); break;
 
-                    case 0: std::cerr << "Cell reference " + ESM4::formIdToString(record.mBaseObj) + " not found!\n"; break;
+                    // FO3 adds ASPC, IDLM, ARMA, MSTT, NOTE, PWAT, SCOL, TACT, TERM and TXST
+                    // FONV adds CCRD, IMOD and CMNY
+                    case 0: std::cerr << "Cell refr " + ESM4::formIdToString(record.mBaseObj) + " not found!\n"; break;
 
                     default:
                         std::cerr
@@ -905,8 +907,8 @@ namespace MWWorld
 
                 switch (store.find(record.mBaseObj))
                 {
-                    case MKTAG('R','H','A','I'): std::cout << " achr hair " << std::endl; break;
-                    case MKTAG('S','E','Y','E'): std::cout << " achr eyes " << std::endl; break;
+                    case MKTAG('R','H','A','I'): /*std::cout << " achr hair " << std::endl;*/ break; // FIXME
+                    case MKTAG('S','E','Y','E'): /*std::cout << " achr eyes " << std::endl;*/ break; // FIXME
                     case MKTAG('_','N','P','C'): mForeignNpcs.load(record, deleted, store); break;
 
                     case 0: std::cerr << "Cell achr " + ESM4::formIdToString(record.mBaseObj) + " not found!\n"; break;
@@ -929,8 +931,8 @@ namespace MWWorld
 
                 switch (store.find(record.mBaseObj))
                 {
-                    case MKTAG('R','H','A','I'): std::cout << " crea hair " << std::endl; break;
-                    case MKTAG('S','E','Y','E'): std::cout << " crea eyes " << std::endl; break;
+                    case MKTAG('R','H','A','I'): /*std::cout << " crea hair " << std::endl;*/ break; // FIXME
+                    case MKTAG('S','E','Y','E'): /*std::cout << " crea eyes " << std::endl;*/ break; // FIXME
                     case MKTAG('A','C','R','E'): mForeignCreatures.load(record, deleted, store); break;
 
                     case 0: std::cerr << "Cell acre " + ESM4::formIdToString(record.mBaseObj) + " not found!\n"; break;

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015, 2016 cc9cii
+  Copyright (C) 2015-2016, 2018 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -18,6 +18,10 @@
   3. This notice may not be removed or altered from any source distribution.
 
   cc9cii cc9c@iinet.net.au
+
+  Much of the information on the data structures are based on the information
+  from Tes4Mod:Mod_File_Format and Tes5Mod:File_Formats but also refined by
+  trial & error.  See http://en.uesp.net/wiki for details.
 
 */
 #include "ltex.hpp"
@@ -58,9 +62,16 @@ void ESM4::LandTexture::load(ESM4::Reader& reader)
             case ESM4::SUB_EDID: reader.getZString(mEditorId); break;
             case ESM4::SUB_HNAM:
             {
-                if (reader.esmVersion() == ESM4::VER_094 || reader.esmVersion() == ESM4::VER_170)
+                if (reader.esmVersion() == ESM4::VER_134) // FIXME: skip FONV for now
                 {
-                    assert(subHdr.dataSize == 2 && "LTEX unexpected HNAM size");
+                    reader.skipSubRecordData();
+                    break;
+                }
+
+                if ((reader.esmVersion() == ESM4::VER_094 || reader.esmVersion() == ESM4::VER_170)
+                    && subHdr.dataSize == 2) // FO3 is VER_094 but dataSize 3
+                {
+                    //assert(subHdr.dataSize == 2 && "LTEX unexpected HNAM size");
                     reader.get(mHavokFriction);
                     reader.get(mHavokRestitution);
                 }

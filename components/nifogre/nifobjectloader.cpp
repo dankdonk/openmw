@@ -342,8 +342,9 @@ void NifOgre::NIFObjectLoader::createMaterialControllers (const Nif::Node* node,
     const Nif::BSLightingShaderProperty *bsprop = NULL;
     const Nif::BSEffectShaderProperty *effectprop = NULL;
     const Nif::BSWaterShaderProperty *waterprop = NULL;
+    const Nif::Property *prop = NULL;
 
-    node->getProperties(texprop, matprop, alphaprop, vertprop, zprop, specprop, wireprop, stencilprop);
+    node->getProperties(texprop, matprop, alphaprop, vertprop, zprop, specprop, wireprop, stencilprop, prop);
 
     if (node->nifVer >= 0x14020007 && node->userVer == 12)
     {
@@ -530,9 +531,10 @@ void NifOgre::NIFObjectLoader::createParticleSystem (const std::string &name,
     const Nif::BSLightingShaderProperty *bsprop = NULL;
     const Nif::BSEffectShaderProperty *effectprop = NULL;
     const Nif::BSWaterShaderProperty *waterprop = NULL;
+    const Nif::Property *prop = NULL;
     bool needTangents = false;
 
-    partnode->getProperties(texprop, matprop, alphaprop, vertprop, zprop, specprop, wireprop, stencilprop);
+    partnode->getProperties(texprop, matprop, alphaprop, vertprop, zprop, specprop, wireprop, stencilprop, prop);
 
     if (partnode->nifVer >= 0x14020007 && partnode->userVer == 12)
     {
@@ -546,7 +548,7 @@ void NifOgre::NIFObjectLoader::createParticleSystem (const std::string &name,
                                                             vertprop, zprop, specprop,
                                                             wireprop, stencilprop,
                                                             bsprop, effectprop, waterprop,
-                                                            needTangents,
+                                                            prop, needTangents,
                                                             // MW doesn't light particles, but the MaterialProperty
                                                             // used still has lighting, so that must be ignored.
                                                             true));
@@ -1252,7 +1254,7 @@ void NifOgre::NIFObjectLoader::handleNode (const Nif::NIFFilePtr& nif, const std
 
     }
      else if (node->recType != Nif::RC_NiNode)
-        std::cout << "NIFObjectLoader::handleNode: unhandled record type " << node->name << std::endl;
+        //std::cout << "NIFObjectLoader::handleNode: unhandled record type " << node->name << std::endl;
 
 
 

@@ -347,6 +347,8 @@ void ForeignNpcAnimation::updateNpcBase()
     //mSkelBase->setDisplaySkeleton(true); // FIXME for debugging (doesn't work...)
     //mSkelBase->setVisible(true); // FIXME for debugging (doesn't work...)
     //mInsert->showBoundingBox(true);
+    if (mObjectRoot->mSkelBase == nullptr) // FIXME: FO3
+        return;
 
     // Animation at 90 deg issue:
     //

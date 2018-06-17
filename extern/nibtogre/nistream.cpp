@@ -209,3 +209,11 @@ void NiBtOgre::NiStream::readQuaternionXYZW(Ogre::Quaternion& value)
     mStream->read(&value.z, sizeof(float));
     mStream->read(&value.w, sizeof(float));
 }
+
+void NiBtOgre::NiStream::readBtVector3(btVector3& value)
+{
+    mStream->read(&value.m_floats[0], sizeof(float));
+    mStream->read(&value.m_floats[1], sizeof(float));
+    mStream->read(&value.m_floats[2], sizeof(float));
+    mStream->read(&value.m_floats[3], sizeof(float));
+}

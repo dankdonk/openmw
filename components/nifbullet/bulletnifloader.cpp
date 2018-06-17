@@ -967,7 +967,7 @@ void ManualBulletShapeLoader::handleBhkCollisionObject(const Nif::Node *node, un
 
     // FIXME: the logic seems to be broken here, mShape is a global one for the
     //        ManualBulletShapeLoader, not local for this bhkCollisionObject
-    if (mShape->mIsRagdoll)
+    if (0/*FO3*/)//mShape->mIsRagdoll)
     {
         //std::cout << "bhkCollisionObject: ragdoll " << node->name << std::endl;
 

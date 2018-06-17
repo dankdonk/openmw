@@ -82,6 +82,8 @@ PlaneReflection::PlaneReflection(Ogre::SceneManager* sceneManager/*, SkyManager*
     mCamera = mSceneMgr->createCamera ("PlaneReflectionCamera");
     mSceneMgr->addRenderQueueListener(this);
 
+    mTexture = TextureManager::getSingleton().getByName("WaterReflection"); // FIXME FO3
+    if (mTexture.isNull())
     mTexture = TextureManager::getSingleton().createManual("WaterReflection",
         ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, TEX_TYPE_2D, 512, 512, 0, PF_R8G8B8, TU_RENDERTARGET);
 
@@ -201,6 +203,8 @@ Water::Water (Ogre::Camera *camera, SceneNode* root) :
 
     int waterScale = 30;
 
+    Ogre::MeshPtr mesh = MeshManager::getSingleton().getByName("water"); // FO3 temp FIXME
+    if (mesh.isNull())
     MeshManager::getSingleton().createPlane("water", ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, mWaterPlane,
         static_cast<Ogre::Real>(CELL_SIZE*5*waterScale), static_cast<Ogre::Real>(CELL_SIZE*5*waterScale),
         40, 40, true, 1, static_cast<Ogre::Real>(3 * waterScale), static_cast<Ogre::Real>(3 * waterScale), Vector3::UNIT_Y);

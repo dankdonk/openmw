@@ -94,6 +94,7 @@ namespace NiBtOgre
         void getBool(bool& value);
 
         void readQuaternionXYZW(Ogre::Quaternion& value);
+        void readBtVector3(btVector3& value);
 
         inline std::string getLine() { return mStream->getLine(); }
 

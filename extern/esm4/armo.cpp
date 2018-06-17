@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2016 cc9cii
+  Copyright (C) 2016, 2018 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -19,15 +19,14 @@
 
   cc9cii cc9c@iinet.net.au
 
+  Much of the information on the data structures are based on the information
+  from Tes4Mod:Mod_File_Format and Tes5Mod:File_Formats but also refined by
+  trial & error.  See http://en.uesp.net/wiki for details.
+
 */
 #include "armo.hpp"
 
-#include <cassert>
 #include <stdexcept>
-
-#ifdef NDEBUG // FIXME: debuggigng only
-#undef NDEBUG
-#endif
 
 #include "reader.hpp"
 //#include "writer.hpp"
@@ -64,51 +63,50 @@ void ESM4::Armor::load(ESM4::Reader& reader)
             case ESM4::SUB_EDID: reader.getZString(mEditorId); break;
             case ESM4::SUB_FULL:
             {
-                // NOTE: checking flags does not work, Skyrim.esm does not set the localized flag
-                //
-                // A possible hack is to look for SUB_FULL subrecord size of 4 to indicate that
-                // a lookup is required.  This obviously does not work for a string size of 3,
-                // but the chance of having that is assumed to be low.
-                if ((reader.hdr().record.flags & Rec_Localized) != 0 || subHdr.dataSize == 4)
+                if (reader.hasLocalizedStrings())
                 {
-                    reader.skipSubRecordData(); // FIXME: process the subrecord rather than skip
-                    mFullName = "FIXME";
-                    break;
+                    std::uint32_t formid;
+                    reader.get(formid);
+                    reader.getLocalizedString(formid, mFullName);
                 }
-
-                if (!reader.getZString(mFullName))
+                else if (!reader.getZString(mFullName))
                     throw std::runtime_error ("ARMO FULL data read error");
+
                 break;
             }
             case ESM4::SUB_DATA:
             {
                 if (reader.esmVersion() == ESM4::VER_094 || reader.esmVersion() == ESM4::VER_170)
                 {
+                    if (subHdr.dataSize != 8) // FIXME: FO3 has 12 bytes?
+                    {
+                        reader.skipSubRecordData();
+                        break;
+                    }
+
                     reader.get(mData.value);
                     reader.get(mData.weight);
+                }
+                else if (reader.esmVersion() == ESM4::VER_134) // FIXME: FONV
+                {
+                    reader.skipSubRecordData(); // 12 bytes
+                    break;
                 }
                 else
                     reader.get(mData);
 
                 break;
             }
-            case ESM4::SUB_MODL:
+            case ESM4::SUB_MODL: // seems only for Dawnguard/Dragonborn?
             {
-                // seems only for Dawnguard/Dragonborn?
-                if ((reader.hdr().record.flags & Rec_Localized) != 0 || subHdr.dataSize == 4)
-                {
-                    reader.skipSubRecordData(); // FIXME: process the subrecord rather than skip
-                    mFullName = "FIXME";
-                    break;
-                }
-
                 if (!reader.getZString(mModel))
-                    throw std::runtime_error ("ARMO mODL data read error");
+                    throw std::runtime_error ("ARMO MODL data read error");
+
                 break;
             }
             case ESM4::SUB_ICON: reader.getZString(mIconMale);   break;
             case ESM4::SUB_ICO2: reader.getZString(mIconFemale); break;
-            case ESM4::SUB_BMDT: reader.get(mArmorFlags);        break;
+            //case ESM4::SUB_BMDT: reader.get(mArmorFlags);        break; // see below re. FO3
             case ESM4::SUB_SCRI: reader.getFormId(mScript);      break;
             case ESM4::SUB_ANAM: reader.get(mEnchantmentPoints); break;
             case ESM4::SUB_ENAM: reader.getFormId(mEnchantment); break;
@@ -145,6 +143,15 @@ void ESM4::Armor::load(ESM4::Reader& reader)
             case ESM4::SUB_EAMT:
             case ESM4::SUB_EITM:
             case ESM4::SUB_VMAD:
+            case ESM4::SUB_BMDT: // FO3 FIXME might have different format
+            case ESM4::SUB_REPL: // FO3
+            case ESM4::SUB_BIPL: // FO3
+            case ESM4::SUB_MODD: // FO3
+            case ESM4::SUB_MOSD: // FO3
+            case ESM4::SUB_MODS: // FO3
+            case ESM4::SUB_MO3S: // FO3
+            case ESM4::SUB_BNAM: // FONV
+            case ESM4::SUB_SNAM: // FONV
             {
                 //std::cout << "ARMO " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
                 reader.skipSubRecordData();

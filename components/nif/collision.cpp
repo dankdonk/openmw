@@ -278,6 +278,28 @@ void Nif::bhkCompressedMeshShape::post(NIFFile *nif)
     data.post(nif);
 }
 
+void Nif::bhkConvexListShape::read(NIFStream *nif)
+{
+    numSubShapes = nif->getUInt();
+    subShapes.resize(numSubShapes);
+    for (unsigned int i = 0; i < numSubShapes; ++i)
+        subShapes[i].read(nif);
+
+    material = nif->getUInt();
+
+    unknown.resize(6);
+    for (int i = 0; i < 6; ++i)
+        unknown[i] = nif->getFloat();
+    nif->getChar();
+    nif->getFloat();
+}
+
+void Nif::bhkConvexListShape::post(NIFFile *nif)
+{
+    for (unsigned int i = 0; i < subShapes.size(); ++i)
+        subShapes[i].post(nif);
+}
+
 void Nif::bhkConstraint::read(NIFStream *nif)
 {
     unsigned int numEntities = nif->getUInt();

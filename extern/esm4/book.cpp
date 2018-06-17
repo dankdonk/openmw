@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2016 cc9cii
+  Copyright (C) 2016, 2018 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -19,15 +19,14 @@
 
   cc9cii cc9c@iinet.net.au
 
+  Much of the information on the data structures are based on the information
+  from Tes4Mod:Mod_File_Format and Tes5Mod:File_Formats but also refined by
+  trial & error.  See http://en.uesp.net/wiki for details.
+
 */
 #include "book.hpp"
 
-#include <cassert>
 #include <stdexcept>
-
-#ifdef NDEBUG // FIXME: debuggigng only
-#undef NDEBUG
-#endif
 
 #include "reader.hpp"
 //#include "writer.hpp"
@@ -57,6 +56,7 @@ void ESM4::Book::load(ESM4::Reader& reader)
     mFormId = reader.hdr().record.id;
     reader.adjustFormId(mFormId);
     mFlags  = reader.hdr().record.flags;
+    std::uint32_t esmVer = reader.esmVersion();
 
     while (reader.getSubRecordHeader())
     {
@@ -66,42 +66,44 @@ void ESM4::Book::load(ESM4::Reader& reader)
             case ESM4::SUB_EDID: reader.getZString(mEditorId); break;
             case ESM4::SUB_FULL:
             {
-                // NOTE: checking flags does not work, Skyrim.esm does not set the localized flag
-                //
-                // A possible hack is to look for SUB_FULL subrecord size of 4 to indicate that
-                // a lookup is required.  This obviously does not work for a string size of 3,
-                // but the chance of having that is assumed to be low.
-                if ((reader.hdr().record.flags & Rec_Localized) != 0 || subHdr.dataSize == 4)
+                if (reader.hasLocalizedStrings())
                 {
-                    reader.skipSubRecordData(); // FIXME: process the subrecord rather than skip
-                    mFullName = "FIXME";
-                    break;
+                    std::uint32_t formid;
+                    reader.get(formid);
+                    reader.getLocalizedString(formid, mFullName);
                 }
-
-                if (!reader.getZString(mFullName))
+                else if (!reader.getZString(mFullName))
                     throw std::runtime_error ("BOOK FULL data read error");
+
                 break;
             }
             case ESM4::SUB_DESC:
             {
-                // NOTE: checking flags does not work, Skyrim.esm does not set the localized flag
-                //
-                // A possible hack is to look for SUB_FULL subrecord size of 4 to indicate that
-                // a lookup is required.  This obviously does not work for a string size of 3,
-                // but the chance of having that is assumed to be low.
-                if ((reader.hdr().record.flags & Rec_Localized) != 0 || subHdr.dataSize == 4)
+                if (reader.hasLocalizedStrings())
                 {
-                    reader.skipSubRecordData(); // FIXME: process the subrecord rather than skip
-                    mFullName = "FIXME";
-                    break;
+                    std::uint32_t formid;
+                    reader.get(formid);
+                    if (formid)
+                        reader.getLocalizedString(formid, mText); // sometimes formid is null
                 }
-
-                if (!reader.getZString(mText))
+                else if (!reader.getZString(mText))
                     throw std::runtime_error ("BOOK DESC data read error");
+
                 break;
             }
             case ESM4::SUB_DATA:
             {
+                if (reader.esmVersion() == ESM4::VER_094 && subHdr.dataSize == 10) // FIXME: FO3 has 10 bytes?
+                {
+                    reader.skipSubRecordData();
+                    break;
+                }
+                else if (esmVer == ESM4::VER_134) // FIXME: FONV
+                {
+                    reader.skipSubRecordData();
+                    break;
+                }
+
                 reader.get(mData.flags);
                 if (reader.esmVersion() == ESM4::VER_094 || reader.esmVersion() == ESM4::VER_170)
                 {

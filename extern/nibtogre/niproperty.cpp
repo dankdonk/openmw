@@ -124,6 +124,58 @@ NiBtOgre::BSLightingShaderProperty::BSLightingShaderProperty(uint32_t index, NiS
     }
 }
 
+NiBtOgre::BSShaderLightingProperty::BSShaderLightingProperty(uint32_t index, NiStream& stream, const NiModel& model)
+    : NiProperty(index, stream, model)
+{
+    stream.read(mFlags);
+    stream.read(mShaderType);
+    stream.read(mShaderFlags);
+    stream.read(mUnknownInt2);
+
+    if (stream.userVer() == 11)
+        stream.read(mEnvmapScale);
+
+    if (stream.userVer() <= 11)
+        stream.read(mUnknownInt3);
+}
+
+NiBtOgre::BSShaderPPLightingProperty::BSShaderPPLightingProperty(uint32_t index, NiStream& stream, const NiModel& model)
+    : BSShaderLightingProperty(index, stream, model)
+{
+    stream.read(mTextureSetRef);
+
+    if (stream.userVer() == 11)
+    {
+        if (stream.userVer2() > 14)
+        {
+            stream.read(mUnknownFloat2);
+            stream.read(mRefractionPeriod);
+        }
+        if (stream.userVer2() > 24)
+        {
+            stream.read(mUnknownFloat4);
+            stream.read(mUnknownFloat5);
+        }
+    }
+
+    if (stream.userVer() >= 12)
+        stream.read(mEmissiveColor);
+}
+
+NiBtOgre::BSShaderNoLightingProperty::BSShaderNoLightingProperty(uint32_t index, NiStream& stream, const NiModel& model)
+    : BSShaderLightingProperty(index, stream, model)
+{
+    stream.readSizedString(mFileName);
+
+    if (stream.userVer() >= 11 && stream.userVer2() > 26)
+    {
+        stream.read(mUnknownFloat2);
+        stream.read(mUnknownFloat3);
+        stream.read(mUnknownFloat4);
+        stream.read(mUnknownFloat5);
+    }
+}
+
 // Seen in NIF version 20.2.0.7
 NiBtOgre::BSWaterShaderProperty::BSWaterShaderProperty(uint32_t index, NiStream& stream, const NiModel& model)
     : NiProperty(index, stream, model)
@@ -166,13 +218,17 @@ NiBtOgre::NiMaterialProperty::NiMaterialProperty(uint32_t index, NiStream& strea
     if (stream.nifVer() <= 0x0a000102) // 10.0.1.2
         stream.read(mFlags);
 
-    stream.read(mAmbientColor);
-    stream.read(mDiffuseColor);
+    if (!(stream.nifVer() == 0x14020007 && stream.userVer() >= 11 && stream.userVer2() > 21))
+    {
+        stream.read(mAmbientColor);
+        stream.read(mDiffuseColor);
+    }
     stream.read(mSpecularColor);
     stream.read(mEmissiveColor);
     stream.read(mGlossiness);
     stream.read(mAlpha);
-    // FIXME: mEmitMulti
+    if (stream.nifVer() == 0x14020007 && stream.userVer() >= 11 && stream.userVer2() > 21)
+        stream.read(mEmitMulti);
 }
 
 NiBtOgre::NiShadeProperty::NiShadeProperty(uint32_t index, NiStream& stream, const NiModel& model)
@@ -193,14 +249,24 @@ NiBtOgre::NiStencilProperty::NiStencilProperty(uint32_t index, NiStream& stream,
     if (stream.nifVer() <= 0x0a000102) // 10.0.1.2
         stream.read(mFlags);
 
-    stream.read(mStencilEnabled);
-    stream.read(mStencilFunction);
-    stream.read(mStencilRef);
-    stream.read(mStencilMask);
-    stream.read(mFailAction);
-    stream.read(mZFailAction);
-    stream.read(mZPassAction);
-    stream.read(mDrawMode);
+    if (stream.nifVer() <= 0x14000005) // not in FO3
+    {
+        stream.read(mStencilEnabled);
+        stream.read(mStencilFunction);
+        stream.read(mStencilRef);
+        stream.read(mStencilMask);
+        stream.read(mFailAction);
+        stream.read(mZFailAction);
+        stream.read(mZPassAction);
+        stream.read(mDrawMode);
+    }
+
+    if (stream.nifVer() >= 0x14010003) // FO3
+    {
+        stream.read(mFlags); // NOTE: possibly different properties to above
+        stream.read(mStencilRef);
+        stream.read(mStencilMask);
+    }
 }
 
 void NiBtOgre::NiTexturingProperty::TexDesc::read(NiStream& stream)
@@ -256,8 +322,6 @@ NiBtOgre::NiTexturingProperty::NiTexturingProperty(uint32_t index, NiStream& str
         stream.read(mApplyMode);
 
     stream.read(mTextureCount);
-    if (mTextureCount != 7) // FIXME
-        std::cout << "NiTexturingProperty::texture count: " << mTextureCount << std::endl;
 
     if (mHasBaseTexture = stream.getBool())
         mBaseTexture.read(stream);

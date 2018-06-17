@@ -40,7 +40,7 @@ namespace NiBtOgre
         // btRigidBody
         // btConstraints
 
-        BtOgreInst(Ogre::SceneNode *baseNode) : mBaseNode(baseNode) { }
+        BtOgreInst(Ogre::SceneNode *baseNode) : mBaseNode(baseNode), mFlags(0) { }
     };
 }
 

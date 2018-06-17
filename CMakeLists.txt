@@ -742,6 +742,17 @@ if (WIN32)
         set(OPENCS_WARNINGS "${WARNINGS} ${MT_BUILD} /wd4435")
         set_target_properties(openmw-cs PROPERTIES COMPILE_FLAGS ${OPENCS_WARNINGS})
     endif (BUILD_OPENCS)
+
+    #set( OMW_CFLAGS "/DWIN32_LEAN_AND_MEAN ${MT_BUILD}" )
+
+    string( TOUPPER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE )
+
+    # Debug builds need /bigobj
+    if ( CMAKE_BUILD_TYPE STREQUAL "DEBUG" OR CMAKE_BUILD_TYPE STREQUAL "RELWITHDEBINFO" )
+        set( OMW_CFLAGS "${OMW_CFLAGS} /bigobj" )
+    endif ( CMAKE_BUILD_TYPE STREQUAL "DEBUG" OR CMAKE_BUILD_TYPE STREQUAL "RELWITHDEBINFO" )
+
+    set_property( TARGET openmw-cs APPEND_STRING PROPERTY COMPILE_FLAGS " ${OMW_CFLAGS}" )
   endif(MSVC)
 
   # TODO: At some point release builds should not use the console but rather write to a log file

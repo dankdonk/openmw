@@ -21,8 +21,8 @@ namespace ESM
         ESM4::Reader& reader() { return mReader; }
 
         // Added for use with OpenMW (loading progress bar)
-        size_t getFileSize() { return mReader.getFileSize(); }
-        size_t getFileOffset() { return mReader.getFileOffset(); }
+        inline size_t getFileSize() { return mReader.getFileSize(); }
+        inline size_t getFileOffset() { return mReader.getFileOffset(); }
 
         // Added for loading Cell/Land
         ESM4::ReaderContext getESM4Context();
@@ -31,7 +31,8 @@ namespace ESM
 
         void openTes4File(const std::string &name);
 
-        virtual void update(std::size_t size);
+        // callback from mReader to ensure hasMoreRecs() can reliably track to EOF
+        inline void update(std::size_t size) { mCtx.leftFile -= size; }
     };
 }
 #endif // COMPONENT_ESM_4READER_H

@@ -1,7 +1,5 @@
 #include "esm4reader.hpp"
 
-#include "../files/constrainedfiledatastream.hpp"
-
 ESM::ESM4Reader::ESM4Reader(bool oldHeader)
 {
     // TES4 header size is 4 bytes smaller than TES5 header
@@ -15,8 +13,8 @@ ESM::ESM4Reader::~ESM4Reader()
 void ESM::ESM4Reader::openTes4File(const std::string &name)
 {
     mCtx.filename = name;
-    // TODO: try using a different implementation, also note that this one throws exceptions
-    mCtx.leftFile = mReader.openTes4File(openConstrainedFileDataStream (name.c_str ()), name);
+    // WARNING: may throw
+    mCtx.leftFile = mReader.openTes4File(name);
     mReader.registerForUpdates(this); // for updating mCtx.leftFile
 
     mReader.getRecordHeader();
@@ -28,6 +26,8 @@ void ESM::ESM4Reader::openTes4File(const std::string &name)
         // Hack: copy over values to TES3 header for getVer() and getRecordCount() to work
         mHeader.mData.version = mReader.esmVersion();
         mHeader.mData.records = mReader.numRecords();
+
+        mReader.buildStringIndicies(); // for localised strings in Skyrim
     }
     else
         fail("Unknown file format");
@@ -91,10 +91,4 @@ void ESM::ESM4Reader::restoreCellChildrenContext(const ESM4::ReaderContext& ctx)
     else
         fail("Restore Cell Children failed");
 
-}
-
-// callback from mReader to ensure hasMoreRecs() can reliably track to EOF
-void ESM::ESM4Reader::update(std::size_t size)
-{
-    mCtx.leftFile -= size;
 }

@@ -170,7 +170,7 @@ NiBtOgre::NiGeomMorpherController::NiGeomMorpherController(uint32_t index, NiStr
             }
         }
 
-        if (stream.nifVer() >= 0x14000004 && stream.nifVer() <= 0x14000005)
+        if (stream.nifVer() >= 0x14000004 && stream.nifVer() <= 0x14000005 && stream.userVer() >= 10)
         {
             std::uint32_t numUnknownInts;
             stream.read(numUnknownInts);

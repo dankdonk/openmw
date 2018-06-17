@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2016 cc9cii
+  Copyright (C) 2016, 2018 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -19,15 +19,14 @@
 
   cc9cii cc9c@iinet.net.au
 
+  Much of the information on the data structures are based on the information
+  from Tes4Mod:Mod_File_Format and Tes5Mod:File_Formats but also refined by
+  trial & error.  See http://en.uesp.net/wiki for details.
+
 */
 #include "ammo.hpp"
 
-#include <cassert>
 #include <stdexcept>
-
-#ifdef NDEBUG // FIXME: debuggigng only
-#undef NDEBUG
-#endif
 
 #include "reader.hpp"
 //#include "writer.hpp"
@@ -58,32 +57,38 @@ void ESM4::Ammo::load(ESM4::Reader& reader)
             case ESM4::SUB_EDID: reader.getZString(mEditorId); break;
             case ESM4::SUB_FULL:
             {
-                // NOTE: checking flags does not work, Skyrim.esm does not set the localized flag
-                //
-                // A possible hack is to look for SUB_FULL subrecord size of 4 to indicate that
-                // a lookup is required.  This obviously does not work for a string size of 3,
-                // but the chance of having that is assumed to be low.
-                if ((reader.hdr().record.flags & Rec_Localized) != 0 || subHdr.dataSize == 4)
+                if (reader.hasLocalizedStrings())
                 {
-                    reader.skipSubRecordData(); // FIXME: process the subrecord rather than skip
-                    mFullName = "FIXME";
-                    break;
+                    std::uint32_t formid;
+                    reader.get(formid);
+                    reader.getLocalizedString(formid, mFullName);
                 }
-
-                if (!reader.getZString(mFullName))
+                else if (!reader.getZString(mFullName))
                     throw std::runtime_error ("AMMO FULL data read error");
+
                 break;
             }
             case ESM4::SUB_DATA:
             {
                 if (reader.esmVersion() == ESM4::VER_094 || reader.esmVersion() == ESM4::VER_170)
                 {
+                    if (subHdr.dataSize != 16) // FIXME: FO3 has 13 bytes?
+                    {
+                        reader.skipSubRecordData();
+                        break;
+                    }
+
                     FormId projectile;
                     reader.get(projectile);
                     reader.get(mData.flags);
                     reader.get(mData.weight);
                     float damageInFloat;
                     reader.get(damageInFloat);
+                }
+                else if (reader.esmVersion() == ESM4::VER_134)
+                {
+                    reader.skipSubRecordData(); // FIXME: FONV 13 bytes
+                    break;
                 }
                 else
                 {
@@ -107,6 +112,12 @@ void ESM4::Ammo::load(ESM4::Reader& reader)
             case ESM4::SUB_DESC:
             case ESM4::SUB_KSIZ:
             case ESM4::SUB_KWDA:
+            case ESM4::SUB_MICO: // FO3
+            case ESM4::SUB_ONAM: // FO3
+            case ESM4::SUB_DAT2: // FONV
+            case ESM4::SUB_QNAM: // FONV
+            case ESM4::SUB_RCIL: // FONV
+            case ESM4::SUB_SCRI: // FONV
             {
                 //std::cout << "AMMO " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
                 reader.skipSubRecordData();

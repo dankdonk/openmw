@@ -42,7 +42,7 @@ NiBtOgre::NiAVObject::NiAVObject(uint32_t index, NiStream& stream, const NiModel
 {
     stream.read(mFlags);
 
-    if (stream.nifVer() >= 0x14020007 && (stream.userVer() >= 11 || stream.userVer2() > 26)) // from 20.2.0.7
+    if (stream.nifVer() >= 0x14020007 && (stream.userVer() >= 11 && stream.userVer2() > 26)) // from 20.2.0.7
         stream.skip(sizeof(std::uint16_t));
 
     stream.read(mTranslation);
@@ -185,16 +185,18 @@ NiBtOgre::NiGeometry::NiGeometry(uint32_t index, NiStream& stream, const NiModel
         std::uint32_t numMaterials;
         stream.read(numMaterials);
 
-        mMaterialName.resize(numMaterials);
-        for (unsigned int i = 0; i < numMaterials; ++i)
-            stream.readLongString(mMaterialName.at(i));
+        if (numMaterials != 0)
+        {
+            mMaterialName.resize(numMaterials);
+            for (unsigned int i = 0; i < numMaterials; ++i)
+                stream.readLongString(mMaterialName.at(i));
 
-        mMaterialExtraData.resize(numMaterials);
-        for (unsigned int i = 0; i < numMaterials; ++i)
-            stream.read(mMaterialExtraData.at(i));
+            mMaterialExtraData.resize(numMaterials);
+            for (unsigned int i = 0; i < numMaterials; ++i)
+                stream.read(mMaterialExtraData.at(i));
+        }
 
-        //mMaterials.resize(numMaterials);
-        stream.skip(sizeof(std::uint32_t)); // active material?
+        stream.skip(sizeof(std::int32_t)); // active material?
     }
 
     if (stream.nifVer() >= 0x0a000100 && stream.nifVer() <= 0x14010003)
@@ -209,9 +211,12 @@ NiBtOgre::NiGeometry::NiGeometry(uint32_t index, NiStream& stream, const NiModel
     if (stream.nifVer() >= 0x14020007) // from 20.2.0.7 (TES5)
     {
         mDirtyFlag = stream.getBool();
-        mBSProperties.resize(2);
-        stream.read(mBSProperties.at(0));
-        stream.read(mBSProperties.at(1));
+        if (stream.userVer() == 12) // not present in FO3?
+        {
+            mBSProperties.resize(2);
+            stream.read(mBSProperties.at(0));
+            stream.read(mBSProperties.at(1));
+        }
     }
 }
 
@@ -449,7 +454,7 @@ void NiBtOgre::NiNode::build(BtOgreInst *inst, NiObject* parent)
         if (editorMarkerPresent)
         {
             const std::string& nodeName
-                = mModel.getLongString(mModel.getRef<NiAVObject>((int32_t)mChildren[i])->getName());
+                = mModel.getLongString(mModel.getRef<NiAVObject>((int32_t)mChildren[i])->getNameIndex());
             if (nodeName == "EditorMarker")
                 continue;
         }

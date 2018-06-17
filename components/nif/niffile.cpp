@@ -257,6 +257,11 @@ static std::map<std::string,RecordFactoryEntry> makeFactory()
     newFactory.insert(makeEntry("NiBSplineCompTransformInterpolator", &construct <NiBSplineCompTransformInterpolator> , RC_NiBSplineCompTransformInterpolator));
     newFactory.insert(makeEntry("NiBSplineData",              &construct <NiBSplineData>               , RC_NiBSplineData                 ));
     newFactory.insert(makeEntry("NiBSplineBasisData",         &construct <NiBSplineBasisData>          , RC_NiBSplineBasisData            ));
+    // FO3
+    newFactory.insert(makeEntry("BSShaderPPLightingProperty", &construct <BSShaderPPLightingProperty>  , RC_BSShaderPPLightingProperty    ));
+    newFactory.insert(makeEntry("BSShaderNoLightingProperty", &construct <BSShaderNoLightingProperty>  , RC_BSShaderNoLightingProperty    ));
+    newFactory.insert(makeEntry("bhkConvexListShape",         &construct <bhkConvexListShape>          , RC_bhkConvexListShape            ));
+    newFactory.insert(makeEntry("BSDismemberSkinInstance",    &construct <BSDismemberSkinInstance>      , RC_NiSkinInstance               ));
     return newFactory;
 }
 
@@ -318,7 +323,7 @@ size_t NIFFile::parseHeader(NIFStream nif,
         isGood = true;
     }
     if (!isGood)
-		fail("Invalid NIF header:  " + head);
+        fail("Invalid NIF header:  " + head);
 
     // Get BCD version
     mVer = nif.getUInt();
@@ -431,11 +436,13 @@ void NIFFile::parse()
         //assert(nif.tell() < nif.size() && "Nif: EOF but record not read ");
         if (nif.tell() >= nif.size())
             fail ("Nif:: EOF but record not read");
+        //if (i == 9 && records[0]->recType == Nif::RC_BSFadeNode && static_cast<BSFadeNode*>(records[0])->name == "TrigActorBox01")
+            //std::cout << "stop" << std::endl;
 
         r->read(&nif);
     }
 
-	//NiFooter
+    //NiFooter
     assert(nif.tell() < nif.size() && "Nif: EOF but footer not read ");
     //if (nif.tell() >= nif.size())
         //std::cerr << "Nif: " << filename << " EOF but footer not read " << std::endl;

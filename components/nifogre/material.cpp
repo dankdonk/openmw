@@ -93,6 +93,7 @@ Ogre::String NIFMaterialLoader::getMaterial(const Nif::ShapeData *shapedata,
                                             const Nif::BSLightingShaderProperty *bsprop,
                                             const Nif::BSEffectShaderProperty *effectprop,
                                             const Nif::BSWaterShaderProperty *waterprop,
+                                            const Nif::Property *prop,
                                             bool &needTangents, bool particleMaterial)
 {
     Ogre::MaterialManager &matMgr = Ogre::MaterialManager::getSingleton();
@@ -174,6 +175,48 @@ Ogre::String NIFMaterialLoader::getMaterial(const Nif::ShapeData *shapedata,
         }
 
         // FIXME: texture controllers not yet supported
+    }
+    else if (prop)
+    {
+        if (prop->recType == Nif::RC_BSShaderPPLightingProperty)
+        {
+            // FIXME: duplicate of above for bsprop
+
+            const Nif::BSShaderTextureSet *sts = static_cast<const Nif::BSShaderPPLightingProperty*>(prop)->textureSet.getPtr();
+            if (sts && !sts->textures.empty())
+            {
+                if (!sts->textures[0].empty())
+                {
+                    texName[Nif::NiTexturingProperty::BaseTexture] = sts->textures[0]; // diffuse
+                    //std::cout << "diffuse " << " " << texName[0] << ", tex size " << sts->textures.size() << std::endl;
+                }
+                if (!sts->textures[1].empty())
+                {
+                    texName[Nif::NiTexturingProperty::BumpTexture] = sts->textures[1];
+                    //std::cout << "normal? " << " " << sts->textures[1] << std::endl; // FIXME
+                }
+                if (!sts->textures[2].empty())
+                {
+                    texName[Nif::NiTexturingProperty::GlowTexture] = sts->textures[2];
+                    //std::cout << "glow? " << " " << sts->textures[2] << std::endl; // FIXME
+                }
+
+                // FIXME: other textures
+                for (unsigned int i = 3; i < sts->textures.size(); ++i)
+                {
+                    if (!sts->textures[i].empty())
+                        std::cout << "tex " << i  << ", " << sts->textures[i] << std::endl; // FIXME
+                }
+            }
+        }
+        else if (prop->recType == Nif::RC_BSShaderNoLightingProperty)
+        {
+            texName[Nif::NiTexturingProperty::BaseTexture] = static_cast<const Nif::BSShaderNoLightingProperty*>(prop)->fileName; // diffuse
+        }
+        else
+        {
+            // FIXME: some warning
+        }
     }
 
     // Alpha modifiers
@@ -280,7 +323,7 @@ Ogre::String NIFMaterialLoader::getMaterial(const Nif::ShapeData *shapedata,
         alpha = 1.f; // Apparently ignored, might be overridden by particle vertex colors?
     }
 
-    if (texprop) // FIXME
+    if (texprop || prop) // FIXME
     {
         // Generate a hash out of all properties that can affect the material.
         size_t h = 0;
@@ -389,6 +432,13 @@ Ogre::String NIFMaterialLoader::getMaterial(const Nif::ShapeData *shapedata,
             tex.clamp = bsprop->textureClampMode;
             setTextureProperties(instance, "diffuseMap", tex);
         }
+        else if (prop)
+        {
+            Nif::NiTexturingProperty::Texture tex; // FIXME hack
+            tex.uvSet = 0; // ???
+            tex.clamp = 0; // ???
+            setTextureProperties(instance, "diffuseMap", tex);
+        }
     }
     if (!texName[Nif::NiTexturingProperty::GlowTexture].empty())
     {
@@ -400,6 +450,13 @@ Ogre::String NIFMaterialLoader::getMaterial(const Nif::ShapeData *shapedata,
             Nif::NiTexturingProperty::Texture tex; // FIXME hack
             tex.uvSet = 0; // ???
             tex.clamp = bsprop->textureClampMode;
+            setTextureProperties(instance, "emissiveMap", tex);
+        }
+        else if (prop)
+        {
+            Nif::NiTexturingProperty::Texture tex; // FIXME hack
+            tex.uvSet = 0; // ???
+            tex.clamp = 0; // ???
             setTextureProperties(instance, "emissiveMap", tex);
         }
     }

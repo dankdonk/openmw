@@ -41,9 +41,10 @@
 //     NiProperty
 //         BSEffectShaderProperty
 //         BSLightingShaderProperty
-//         BSShaderProperty <----------------------- /* TODO */
-//             BSShaderLightingProperty <----------- /* TODO */
-//                 BSShaderPPLightingProperty <----- /* TODO */
+//         BSShaderProperty <----------------------- /* Not implemented */
+//             BSShaderLightingProperty
+//                 BSShaderPPLightingProperty
+//                 BSShaderNoLightingProperty
 //         BSSkyShaderProperty <-------------------- /* TODO */
 //         BSWaterShaderProperty
 //         NiAlphaProperty
@@ -131,6 +132,47 @@ namespace NiBtOgre
         BSLightingShaderProperty(uint32_t index, NiStream& stream, const NiModel& model);
     };
 
+    class BSShaderLightingProperty : public NiProperty
+    {
+    public:
+        std::uint16_t mFlags;
+        std::uint32_t mShaderType;
+        std::uint32_t mShaderFlags;
+        std::int32_t  mUnknownInt2;
+        float         mEnvmapScale;
+        std::int32_t  mUnknownInt3;
+
+        BSShaderLightingProperty(uint32_t index, NiStream& stream, const NiModel& model);
+    };
+
+    // FO3
+    class BSShaderPPLightingProperty : public BSShaderLightingProperty
+    {
+    public:
+        std::uint32_t mTextureSetRef;
+        float         mUnknownFloat2;
+        std::int32_t  mRefractionPeriod;
+        float         mUnknownFloat4;
+        float         mUnknownFloat5;
+        Ogre::Vector4 mEmissiveColor;
+
+        BSShaderPPLightingProperty(uint32_t index, NiStream& stream, const NiModel& model);
+    };
+
+    // FO3
+    class BSShaderNoLightingProperty : public BSShaderLightingProperty
+    {
+    public:
+        std::string mFileName;
+
+        float mUnknownFloat2;
+        float mUnknownFloat3;
+        float mUnknownFloat4;
+        float mUnknownFloat5;
+
+        BSShaderNoLightingProperty(uint32_t index, NiStream& stream, const NiModel& model);
+    };
+
     // Seen in NIF version 20.2.0.7
     class BSWaterShaderProperty : public NiProperty
     {
@@ -180,6 +222,7 @@ namespace NiBtOgre
         Ogre::Vector3 mEmissiveColor;
         float mGlossiness;
         float mAlpha;
+        float mEmitMulti;
 
         NiMaterialProperty(uint32_t index, NiStream& stream, const NiModel& model);
     };

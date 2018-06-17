@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015, 2016 cc9cii
+  Copyright (C) 2015-2016, 2018 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -24,6 +24,7 @@
 #define ESM4_READER_H
 
 #include <vector>
+#include <map>
 #include <cstddef>
 
 #include <boost/scoped_array.hpp>
@@ -81,12 +82,33 @@ namespace ESM4
         ReaderContext   mCtx;
 
         // Use scoped arrays to avoid memory leak due to exceptions, etc.
-        // TODO: try fixed size buffers on the stack for both below (may be faster)
+        // TODO: try fixed size buffers on the stack for both buffers (may be faster)
         boost::scoped_array<unsigned char> mInBuf;
         boost::scoped_array<unsigned char> mDataBuf;
 
         Ogre::DataStreamPtr mStream;
-        Ogre::DataStreamPtr mSavedStream;
+        Ogre::DataStreamPtr mSavedStream; // mStream is saved here while using deflated memory stream
+
+        Ogre::DataStreamPtr mStrings;
+        Ogre::DataStreamPtr mILStrings;
+        Ogre::DataStreamPtr mDLStrings;
+
+        enum LocalizedStringType
+        {
+            Type_Strings = 0,
+            Type_ILStrings = 1,
+            Type_DLStrings = 2
+        };
+
+        struct StringPos
+        {
+            LocalizedStringType type;
+            std::uint32_t offset;
+        };
+        std::map<FormId, StringPos> mStringIndicies;
+
+        void getRecordDataPostActions(); // housekeeping actions before processing the next record
+        void buildStringIndicies(const std::string& stringFile, LocalizedStringType stringType);
 
     public:
 
@@ -102,7 +124,7 @@ namespace ESM4
         bool restoreContext(const ReaderContext& ctx); // returns the result of re-reading the header
         bool skipNextGroupCellChild(); // returns true if skipped
 
-        std::size_t openTes4File(Ogre::DataStreamPtr stream, const std::string& name);
+        std::size_t openTes4File(const std::string& name);
 
         // NOTE: must be called before calling getRecordHeader()
         void setRecHeaderSize(const std::size_t size);
@@ -110,6 +132,9 @@ namespace ESM4
         void loadHeader() { mHeader.load(*this); }
         unsigned int esmVersion() const { return mHeader.mData.version.ui; }
         unsigned int numRecords() const { return mHeader.mData.records; }
+        void buildStringIndicies();
+        inline bool hasLocalizedStrings() const { return (mHeader.mFlags & Rec_Localized) != 0; }
+        void getLocalizedString(const FormId stringId, std::string& str);
 
         // Read 24 bytes of header. The caller can then decide whether to process or skip the data.
         bool getRecordHeader();
@@ -206,6 +231,7 @@ namespace ESM4
         // Note: does not convert to UTF8
         // Note: assumes string size from the subrecord header
         bool getZString(std::string& str);
+        bool getZString(std::string& str, Ogre::DataStreamPtr fileStream);
 
         void checkGroupStatus();
 

@@ -68,6 +68,7 @@ set(ESM4_SOURCE_FILES
     mato.cpp
     sbsp.cpp
     race.cpp
+    clas.cpp
     formid.cpp
     reader.cpp
 )

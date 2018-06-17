@@ -448,6 +448,22 @@ void Nif::NiSkinInstance::post(NIFFile *nif)
     }
 }
 
+void Nif::BSDismemberSkinInstance::read(NIFStream *nif)
+{
+    NiSkinInstance::read(nif);
+    unsigned int numPartitions = nif->getUInt();
+    for (unsigned int i = 0; i < numPartitions; ++i)
+    {
+        nif->getShort();
+        nif->getShort();
+    }
+}
+
+void Nif::BSDismemberSkinInstance::post(NIFFile *nif)
+{
+    NiSkinInstance::post(nif);
+}
+
 void Nif::NiSkinData::read(NIFStream *nif)
 {
     trafo.rotation = nif->getMatrix3();
@@ -497,16 +513,15 @@ void Nif::NiMorphData::read(NIFStream *nif)
     for(int i = 0;i < morphCount;i++)
     {
         if (nifVer >= 0x0a01006a) // from 10.1.0.106
-            mMorphs[i].mFrameName = nif->getString();
+            mMorphs[i].mFrameName = nif->getSkyrimString(nifVer, Record::strings);
 
         if (nifVer <= 0x0a010000) // up to 10.1.0.0
         {
             mMorphs[i].mData.read(nif, true);
             if (nifVer >= 0x0a01006a && nifVer <= 0x0a020000)
                 nif->getUInt();
-            // FIXME: need to check UserVersion == 0
-            //if (nifVer >= 0x14000004 && nifVer <= 0x14000005)
-                //nif->getUInt();
+            if (nifVer >= 0x14000004 && nifVer <= 0x14000005 && userVer == 0)
+                nif->getUInt();
         }
         nif->getVector3s(mMorphs[i].mVertices, vertCount);
     }

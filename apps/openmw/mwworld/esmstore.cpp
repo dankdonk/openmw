@@ -79,7 +79,7 @@ void ESMStore::load(ESM::ESMReader& esm, Loading::Listener* listener)
 
     int esmVer = esm.getVer();
     bool isTes4 = esmVer == ESM::VER_080 || esmVer == ESM::VER_100;
-    bool isTes5 = esmVer == ESM::VER_094 || esmVer == ESM::VER_17;
+    bool isTes5 = esmVer == ESM::VER_094 || esmVer == ESM::VER_17 || esmVer == ESM::VER_134;
 
     // FIXME: temporary workaround
     if (!(isTes4 || isTes5)) // MW only

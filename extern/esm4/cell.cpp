@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015, 2016 cc9cii
+  Copyright (C) 2015-2016, 2018 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -18,6 +18,10 @@
   3. This notice may not be removed or altered from any source distribution.
 
   cc9cii cc9c@iinet.net.au
+
+  Much of the information on the data structures are based on the information
+  from Tes4Mod:Mod_File_Format and Tes5Mod:File_Formats but also refined by
+  trial & error.  See http://en.uesp.net/wiki for details.
 
 */
 #include "cell.hpp"
@@ -103,6 +107,7 @@ void ESM4::Cell::load(ESM4::Reader& reader)
     // cell child groups if we are loading them after restoring the context
     init(reader);
     reader.setCurrCell(mFormId); // save for LAND (and other children) to access later
+    std::uint32_t esmVer = reader.esmVersion();
 
     while (reader.getSubRecordHeader())
     {
@@ -143,8 +148,9 @@ void ESM4::Cell::load(ESM4::Reader& reader)
                 std::cout << padding << "CELL formId " << std::hex << reader.hdr().record.id << std::endl;
                 std::cout << padding << "CELL X " << std::dec << mX << ", Y " << mY << std::endl;
 #endif
-                if (reader.esmVersion() == ESM4::VER_094 || reader.esmVersion() == ESM4::VER_170)
-                    reader.get(flags); // not in Obvlivion
+                if (esmVer == ESM4::VER_094 || esmVer == ESM4::VER_170 || esmVer == ESM4::VER_134)
+                    if (subHdr.dataSize == 12)
+                        reader.get(flags); // not in Obvlivion, nor FO3/FONV
 
                 // Remember cell grid for later (loading LAND, NAVM which should be CELL temporary children)
                 // Note that grids only apply for external cells.  For interior cells use the cell's formid.
@@ -157,19 +163,13 @@ void ESM4::Cell::load(ESM4::Reader& reader)
             }
             case ESM4::SUB_FULL:
             {
-                // NOTE: checking flags does not work, Skyrim.esm does not set the localized flag
-                //
-                // A possible hack is to look for SUB_FULL subrecord size of 4 to indicate that
-                // a lookup is required.  This obviously does not work for a string size of 3,
-                // but the chance of having that is assumed to be low.
-                if ((reader.hdr().record.flags & Rec_Localized) != 0 || subHdr.dataSize == 4)
+                if (reader.hasLocalizedStrings())
                 {
-                    reader.skipSubRecordData(); // FIXME: process the subrecord rather than skip
-                    mFullName = "FIXME";
-                    break;
+                    std::uint32_t formid;
+                    reader.get(formid);
+                    reader.getLocalizedString(formid, mFullName);
                 }
-
-                if (!reader.getZString(mFullName))
+                else if (!reader.getZString(mFullName))
                     throw std::runtime_error ("CELL FULL data read error");
 #if 0
                 std::string padding = "";
@@ -180,7 +180,7 @@ void ESM4::Cell::load(ESM4::Reader& reader)
             }
             case ESM4::SUB_DATA:
             {
-                if (reader.esmVersion() == ESM4::VER_094 || reader.esmVersion() == ESM4::VER_170)
+                if (esmVer == ESM4::VER_094 || esmVer == ESM4::VER_170 || esmVer == ESM4::VER_134)
                     if (subHdr.dataSize == 2)
                         reader.get(mCellFlags);
                     else
@@ -220,7 +220,8 @@ void ESM4::Cell::load(ESM4::Reader& reader)
             case ESM4::SUB_XCLW: reader.get(mWaterHeight);   break;
             case ESM4::SUB_XCLL:
             {
-                if (reader.esmVersion() == ESM4::VER_094 || reader.esmVersion() == ESM4::VER_170)
+                // 92 bytes for TES5, 19*4 = 76 bytes for FO3/FONV
+                if (esmVer == ESM4::VER_094 || esmVer == ESM4::VER_170 || esmVer == ESM4::VER_134)
                     reader.skipSubRecordData();
                 else
                 {
@@ -247,6 +248,8 @@ void ESM4::Cell::load(ESM4::Reader& reader)
             case ESM4::SUB_XILL:
             case ESM4::SUB_XCMT: // Oblivion only?
             case ESM4::SUB_XRNK: // Oblivion only?
+            case ESM4::SUB_XCET: // FO3
+            case ESM4::SUB_IMPF: // FO3 Zeta
             {
                 //std::cout << "CELL " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
                 reader.skipSubRecordData();

@@ -25,6 +25,9 @@
 */
 #include "bhkrefobject.hpp"
 
+// TODO: defer building constraints until all the bodies have been built
+// TODO: each rigid body types should have their own frame conversion method
+
 #include <cassert>
 #include <stdexcept>
 
@@ -50,7 +53,7 @@
 #include "btogreinst.hpp"
 #include "nidata.hpp"
 
-#if 0 // Commented out, instead use: typedef bhkRefObject bhkSerializable
+#if 0 // Commented out. Use instead: typedef bhkRefObject bhkSerializable
 NiBtOgre::bhkSerializable::bhkSerializable(uint32_t index, NiStream& stream, const NiModel& model)
 {
 }
@@ -81,11 +84,12 @@ NiBtOgre::bhkCompressedMeshShapeData::bhkCompressedMeshShapeData(uint32_t index,
     stream.read(mBoundsMin);
     stream.read(mBoundsMax);
 
-    stream.skip(sizeof(char));          // Unknown Byte 1
-    stream.skip(sizeof(std::uint32_t)); // Unknown Int 3
-    stream.skip(sizeof(std::uint32_t)); // Unknown Int 4
-    stream.skip(sizeof(std::uint32_t)); // Unknown Int 5
-    stream.skip(sizeof(char));          // Unknown Byte 2
+    //stream.skip(sizeof(char));          // Unknown Byte 1
+    //stream.skip(sizeof(std::uint32_t)); // Unknown Int 3
+    //stream.skip(sizeof(std::uint32_t)); // Unknown Int 4
+    //stream.skip(sizeof(std::uint32_t)); // Unknown Int 5
+    //stream.skip(sizeof(char));          // Unknown Byte 2
+    stream.skip(sizeof(char)*2 + sizeof(std::uint32_t)*3);
 
     std::uint32_t numMaterials;
     stream.read(numMaterials);
@@ -135,6 +139,7 @@ NiBtOgre::bhkCompressedMeshShapeData::bhkCompressedMeshShapeData(uint32_t index,
 }
 
 // Seen in NIF version 20.2.0.7
+// e.g. Skyrim/Data/meshes/traps/tripwire/traptripwire01.nif
 NiBtOgre::bhkBallSocketConstraintChain::bhkBallSocketConstraintChain(uint32_t index, NiStream& stream, const NiModel& model)
     : bhkSerializable(index, stream, model)
 {
@@ -257,6 +262,10 @@ void NiBtOgre::HingeDescriptor::read(NiStream& stream)
     }
 }
 // Seen in NIF version 20.2.0.7
+
+// Some examples from TES4
+//   architecture/ships/shipflag01.nif
+//   armor/chainmail/f/cuirass_gnd.nif
 NiBtOgre::bhkHingeConstraint::bhkHingeConstraint(uint32_t index, NiStream& stream, const NiModel& model)
     : bhkConstraint(index, stream, model)
 {
@@ -304,12 +313,21 @@ void NiBtOgre::LimitedHingeDescriptor::read(NiStream& stream)
             //stream.skip(sizeof(float)); // unknown float 5
             //stream.skip(sizeof(float)); // unknown float 6
             //stream.skip(sizeof(char);   // unknown byte 1
-            stream.skip(sizeof(float)*6+sizeof(char));
+            stream.skip(sizeof(float)*6 + sizeof(char));
         }
     }
 }
 
 // Seen in NIF ver 20.0.0.4, 20.0.0.5
+//
+// Some examples from TES4:
+//   architecture/chorrol/signfightersguild.nif
+//   architecture/chorrol/signfireandsteel.nif
+//   architecture/chorrol/signinnoakcrosier.nif
+//   architecture/chorrol/signmageguild01.nif
+//   architecture/chorrol/signnortherngoods.nif
+//   architecture/chorrol/signrenoitbooks.nif
+//   armor/chainmail/m/cuirass_gnd.nif
 NiBtOgre::bhkLimitedHingeConstraint::bhkLimitedHingeConstraint(uint32_t index, NiStream& stream, const NiModel& model)
     : bhkConstraint(index, stream, model)
 {
@@ -320,23 +338,23 @@ void NiBtOgre::RagdollDescriptor::read(NiStream& stream)
 {
     if (stream.nifVer() <= 0x14000005)
     {
-        stream.read(pivotA);
-        stream.read(planeA);
-        stream.read(twistA);
-        stream.read(pivotB);
-        stream.read(planeB);
-        stream.read(twistB);
+        stream.readBtVector3(pivotA);
+        stream.readBtVector3(planeA);
+        stream.readBtVector3(twistA);
+        stream.readBtVector3(pivotB);
+        stream.readBtVector3(planeB);
+        stream.readBtVector3(twistB);
     }
     else if (stream.nifVer() >= 0x14020007)
     {
-        stream.read(twistA);
-        stream.read(planeA);
-        stream.read(motorA);
-        stream.read(pivotA);
-        stream.read(twistB);
-        stream.read(planeB);
-        stream.read(motorB);
-        stream.read(pivotB);
+        stream.readBtVector3(twistA);
+        stream.readBtVector3(planeA);
+        stream.readBtVector3(motorA);
+        stream.readBtVector3(pivotA);
+        stream.readBtVector3(twistB);
+        stream.readBtVector3(planeB);
+        stream.readBtVector3(motorB);
+        stream.readBtVector3(pivotB);
     }
 
     stream.read(coneMaxAngle);
@@ -358,12 +376,39 @@ void NiBtOgre::RagdollDescriptor::read(NiStream& stream)
             //stream.skip(sizeof(float)); // unknown float 5
             //stream.skip(sizeof(float)); // unknown float 6
             //stream.skip(sizeof(char));  // unknown byte 1
-            stream.skip(sizeof(float)*6+sizeof(char));
+            stream.skip(sizeof(float)*6 + sizeof(char));
         }
     }
 }
 
 // seen in nif ver 20.0.0.4, 20.0.0.5
+//
+//   architecture/ships/shipflag01.nif
+//   characters/_male/skeleton.nif
+//   characters/_male/skeletonbeast.nif
+//   characters/_male/skeletonsesheogorath.nif
+//   creatures/baliwog/skeleton.nif
+//   creatures/clannfear/skeleton.nif
+//   creatures/daedroth/skeleton.nif
+//   creatures/dog/skeleton.nif
+//   creatures/frostatronach/skeleton.nif
+//   creatures/horse/skeleton.nif
+//   creatures/imp/skeleton.nif
+//   creatures/landdreugh/skeleton.nif
+//   creatures/lich/skeleton.nif
+//   creatures/lich/skeletonwarlock.nif
+//   creatures/minotaur/skeleton.nif
+//   creatures/mountainlion/skeleton.nif
+//   creatures/murkdweller/skeleton.nif
+//   creatures/ogre/skeleton.nif
+//   creatures/rat/skeleton.nif
+//   creatures/scamp/skeleton.nif
+//   creatures/shambles/skeleton.nif
+//   creatures/skeleton/skeleton.nif
+//   creatures/spiderdaedra/skeleton.nif
+//   creatures/spriggan/skeleton.nif
+//   creatures/troll/skeleton.nif
+//   creatures/zombie/skeleton.nif
 NiBtOgre::bhkMalleableConstraint::bhkMalleableConstraint(uint32_t index, NiStream& stream, const NiModel& model)
     : bhkConstraint(index, stream, model)
 {
@@ -387,6 +432,26 @@ NiBtOgre::bhkMalleableConstraint::bhkMalleableConstraint(uint32_t index, NiStrea
 }
 
 // seen in nif ver 20.0.0.4, 20.0.0.5
+//
+// Seems to be for quivers only? (TES4)
+//    weapons/Amber/arrow.nif
+//    weapons/bone/arrow.nif
+//    weapons/daedric/arrow.nif
+//    weapons/darkseducer/arrow.nif
+//    weapons/dwarven/arrow.nif
+//    weapons/ebony/arrow.nif
+//    weapons/ebony/arrowroseofsithis.nif
+//    weapons/elven/arrow.nif
+//    weapons/glass/arrow.nif
+//    weapons/goldensaint/arrow.nif
+//    weapons/gromite/gromitearrow.nif
+//    weapons/gromite/gromitequiver.nif
+//    weapons/iron/arrow.nif
+//    weapons/madness/arrow.nif
+//    weapons/se32ghostlydagger/se32ghostlyarrow.nif
+//    weapons/silver/arrow.nif
+//    weapons/steel/arrow.nif
+//    weapons/steel/keyshapedarrow.nif
 NiBtOgre::bhkPrismaticConstraint::bhkPrismaticConstraint(uint32_t index, NiStream& stream, const NiModel& model)
     : bhkConstraint(index, stream, model)
 {
@@ -394,7 +459,7 @@ NiBtOgre::bhkPrismaticConstraint::bhkPrismaticConstraint(uint32_t index, NiStrea
     {
         stream.read(mPivotA);
         mRotationMatrixA.resize(4);
-        for (int i = 0; i < 4; ++i)
+        for (unsigned int i = 0; i < 4; ++i)
             stream.read(mRotationMatrixA.at(i));
         stream.read(mPivotB);
         stream.read(mSlidingB);
@@ -427,12 +492,193 @@ NiBtOgre::bhkRagdollConstraint::bhkRagdollConstraint(uint32_t index, NiStream& s
     mRagdoll.read(stream);
 }
 
+void NiBtOgre::bhkRagdollConstraint::linkBodies(BtOgreInst *inst, const bhkEntity *body) const
+{
+#if 0
+if (node->name == "TargetchainRight02" /*|| node->name == "TargetchainRight02"*/)
+//if (node->name == "TargetHeavyTarget")
+    return;
+#endif
+#if 0
+    btTransform localA;
+    btTransform localB;
+    Ogre::Vector3 scale = 1.f;//inst->mScale;
+
+    localA.setIdentity();
+    localB.setIdentity();
+    localA.setOrigin(mRagdoll.pivotA * scale.x); // FIXME: assume uniform scaling for now
+    localB.setOrigin(mRagdoll.pivotB * scale.x); // FIXME: assume uniform scaling for now
+
+    // FIXME: these objects may not have been built yet
+    // e.g. meshes/architecture/arena/chaindollarena01.nif
+    // That means some part of setting up the links must be done at a later time
+    // Maybe register a "post action" to the base NiModel?
+    // Or, build them as required?  (and set a "pre-build" flag so that the work is not
+    // duplicated?)
+    //
+    // Maybe do all linking after all the objects have been built?
+    assert(mEntities[0] == body && "the first entry is not self");
+    assert(mEntities.size() == 2 && "unexpected number of entities");
+
+    btGeneric6DofConstraint *constraint
+        = new btGeneric6DofConstraint(body, mEntities[1], localA, localB, /*useLinearReferenceFrameA*/false);
+
+    // FIXME: need to tune these values
+    constraint->setParam(BT_CONSTRAINT_STOP_ERP,0.8f,0);
+    constraint->setParam(BT_CONSTRAINT_STOP_ERP,0.8f,1);
+    constraint->setParam(BT_CONSTRAINT_STOP_ERP,0.8f,2);
+    constraint->setParam(BT_CONSTRAINT_STOP_CFM,0.f,0);
+    constraint->setParam(BT_CONSTRAINT_STOP_CFM,0.f,1);
+    constraint->setParam(BT_CONSTRAINT_STOP_CFM,0.f,2);
+#endif
+    // defer this to later
+    //mDynamicsWorld->addConstraint(constraint, /*disable collision between linked bodies*/true);
+
+
+
+
+
+
+
+
+
+
+
+
+#if 0
+
+    mShape->mJoints[rigidBody->recIndex].push_back(
+            std::make_pair(rigidBody->constraints[i]->entities[0]->recIndex,
+                           rigidBody->constraints[i]->entities[1]->recIndex));
+
+    Nif::RagdollDescriptor ragdollDesc;
+    const Nif::bhkRagdollConstraint *ragdoll
+        = static_cast<const Nif::bhkRagdollConstraint*>(rigidBody->constraints[i].getPtr());
+
+    // FIXME: try to get the NIF frame of reference so that pivotA and pivotB
+    // can be "fixed" with correct frames of references
+    const Nif::bhkConstraint *constraint = rigidBody->constraints[i].getPtr();
+    // rbA is not needed since this we already have node, translation and rotation
+    //const Nif::bhkRigidBody *rbA
+        //= static_cast<const Nif::bhkRigidBody*>(constraint->entities[0].getPtr()); // 0 HACK
+    // however it doesn't seem possible to get the node info from the rigid body
+    // maybe the shape's mbox translation needs to be used? (but how to get the
+    // second shape from the entity?)
+    const Nif::bhkRigidBody *rbB
+        = static_cast<const Nif::bhkRigidBody*>(constraint->entities[1].getPtr()); // 1 HACK
+
+    Ogre::Matrix4 rbT = Ogre::Matrix4::IDENTITY;
+    typedef std::map<size_t, btRigidBody::btRigidBodyConstructionInfo>::iterator ConstructionInfoIter;
+    ConstructionInfoIter itCIA(mShape->mRigidBodyCI.find(rigidBody->recIndex));
+    if (itCIA == mShape->mRigidBodyCI.end())
+        continue; // FIXME: shouldn't happen, so probably best to throw here
+    btQuaternion qa = itCIA->second.m_startWorldTransform.getRotation();
+
+    if (rigidBody->recType == Nif::RC_bhkRigidBodyT)
+    {
+        rbT.makeTransform(translation*7, Ogre::Vector3(1.f), rotation);
+    }
+
+    if (rigidBody->shape->recType == Nif::RC_bhkCapsuleShape)
+    {
+            //ragdollDesc.pivotA = mShape->mShapeTrans * ragdoll->ragdoll.pivotA *7; // FIXME
+            Ogre::Vector3 t = mShape->mShapeTrans; // t is the midpoint vector
+            Ogre::Vector4 p = ragdoll->ragdoll.pivotA * 7;
+            ragdollDesc.pivotA = Ogre::Vector4(p.x-t.x, p.y-t.y, p.z-t.z, p.w);
+            ragdollDesc.planeA = ragdoll->ragdoll.planeA * 7;
+            ragdollDesc.twistA = ragdoll->ragdoll.twistA * 7;
+    }
+    else
+    {
+#if 0
+            Ogre::Vector4 p = ragdoll->ragdoll.pivotA * 7;
+            Ogre::Vector3 v(p.x, p.y, p.z);
+        v = Ogre::Quaternion(qa.w(), qa.x(), qa.y(), qa.z()) * v; // rotate as per m_startWorldTransform
+            ragdollDesc.pivotA = Ogre::Vector4(v.x, v.y, v.z, p.w);
+#endif
+
+
+            //ragdollDesc.pivotA = rbT.inverse() * ragdoll->ragdoll.pivotA * 7;
+            ragdollDesc.pivotA = ragdoll->ragdoll.pivotA * 7;
+            ragdollDesc.planeA = ragdoll->ragdoll.planeA * 7;
+            ragdollDesc.twistA = ragdoll->ragdoll.twistA * 7;
+    }
+
+
+
+        Ogre::Matrix4 rbTB = Ogre::Matrix4::IDENTITY;
+        typedef std::map<size_t, btRigidBody::btRigidBodyConstructionInfo>::iterator ConstructionInfoIter;
+        ConstructionInfoIter itCI(mShape->mRigidBodyCI.find(rbB->recIndex));
+        if (itCI == mShape->mRigidBodyCI.end())
+            continue; // FIXME: shouldn't happen, so probably best to throw here
+        btQuaternion q = itCI->second.m_startWorldTransform.getRotation();
+        //btTransform qt(q, btVector3(0.f, 0.f, 0.f)); // rotate only
+
+
+
+
+    if (rbB->recType == Nif::RC_bhkRigidBodyT)
+    {
+        Ogre::Vector3 rbBtrans = Ogre::Vector3::ZERO;
+        Ogre::Quaternion rbBrot = Ogre::Quaternion::IDENTITY;
+
+            rbBrot = Ogre::Quaternion(rbB->rotation.w,
+                    rbB->rotation.x, rbB->rotation.y, rbB->rotation.z);
+            rbBtrans = Ogre::Vector3(rbB->translation.x,
+                    rbB->translation.y, rbB->translation.z);
+        rbTB.makeTransform(rbBtrans*7, Ogre::Vector3(1.f), rbBrot);
+    }
+    if (rbB->shape->recType == Nif::RC_bhkCapsuleShape)
+    {
+            Ogre::Vector3 trans = mShape->mShapeTransMap[rbB->recIndex]; // FIXME: just assume one exists!
+            //ragdollDesc.pivotB = trans * ragdoll->ragdoll.pivotB *7; // FIXME
+            Ogre::Vector3 t = trans;
+            Ogre::Vector4 p = ragdoll->ragdoll.pivotB * 7;
+            Ogre::Vector3 v(p.x, p.y, p.z);
+        v = Ogre::Quaternion(q.w(), q.x(), q.y(), q.z()) * v; // rotate as per m_startWorldTransform
+            ragdollDesc.pivotB = Ogre::Vector4(v.x-t.x, v.y-t.y, v.z-t.z, p.w);
+            ragdollDesc.planeB = ragdoll->ragdoll.planeB * 7;
+            ragdollDesc.twistB = ragdoll->ragdoll.twistB * 7;
+    }
+    else
+    {
+#if 0
+            Ogre::Vector4 p = ragdoll->ragdoll.pivotB * 7;
+            Ogre::Vector3 v(p.x, p.y, p.z);
+        v = Ogre::Quaternion(q.w(), q.x(), q.y(), q.z()) * v; // rotate as per m_startWorldTransform
+            ragdollDesc.pivotB = Ogre::Vector4(v.x, v.y, v.z, p.w);
+
+#endif
+
+
+            //ragdollDesc.pivotB = rbTB.inverse() * ragdoll->ragdoll.pivotB * 7;
+            ragdollDesc.pivotB = ragdoll->ragdoll.pivotB * 7;
+            ragdollDesc.planeB = ragdoll->ragdoll.planeB * 7;
+            ragdollDesc.twistB = ragdoll->ragdoll.twistB * 7;
+    }
+        ragdollDesc.coneMaxAngle = ragdoll->ragdoll.coneMaxAngle;
+        ragdollDesc.planeMinAngle = ragdoll->ragdoll.planeMinAngle;
+        ragdollDesc.planeMaxAngle = ragdoll->ragdoll.planeMaxAngle;
+        ragdollDesc.twistMinAngle = ragdoll->ragdoll.twistMinAngle;
+        ragdollDesc.twistMaxAngle = ragdoll->ragdoll.twistMaxAngle;
+        ragdollDesc.maxFriction = ragdoll->ragdoll.maxFriction;
+
+        mShape->mNifRagdollDesc[std::make_pair(rigidBody->recIndex, rbB->recIndex)] = ragdollDesc; // cast away compiler warning
+#endif
+}
+
 NiBtOgre::bhkShape::bhkShape(uint32_t index, NiStream& stream, const NiModel& model)
     : bhkSerializable(index, stream, model)
 {
 }
 
 // seen in nif ver 20.0.0.4, 20.0.0.5
+//
+// Only 4 examples in TES4:
+//   creatures/willothewisp/skeleton.nif
+//   creatures/willothewisp/skeleton02.nif
+//   dungeons/misc/mdtapestryskinned01.nif
+//   dungeons/misc/necrotapestryskinned01.nif
 NiBtOgre::bhkStiffSpringConstraint::bhkStiffSpringConstraint(uint32_t index, NiStream& stream, const NiModel& model)
     : bhkConstraint(index, stream, model)
 {
@@ -449,7 +695,7 @@ NiBtOgre::bhkMoppBvTreeShape::bhkMoppBvTreeShape(uint32_t index, NiStream& strea
     stream.read(mMaterial);
 
     mUnknown8Bytes.resize(8);
-    for (int i = 0; i < 8; ++i)
+    for (unsigned int i = 0; i < 8; ++i)
         stream.read(mUnknown8Bytes.at(i));
 
     stream.read(mUnknownFloat);
@@ -491,7 +737,7 @@ NiBtOgre::bhkCompressedMeshShape::bhkCompressedMeshShape(uint32_t index, NiStrea
     stream.skip(sizeof(float)); // Unknown Float 1
 
     mUnknown4Bytes.resize(4);
-    for (int i = 0; i < 4; ++i)
+    for (unsigned int i = 0; i < 4; ++i)
         stream.read(mUnknown4Bytes.at(i));
 
     stream.skip(sizeof(float)*4); // Unknown Floats 1
@@ -499,9 +745,10 @@ NiBtOgre::bhkCompressedMeshShape::bhkCompressedMeshShape(uint32_t index, NiStrea
     stream.read(mRadius);
     stream.read(mScale);
 
-    stream.skip(sizeof(float)); // Unknown Float 3
-    stream.skip(sizeof(float)); // Unknown Float 4
-    stream.skip(sizeof(float)); // Unknown Float 5
+    //stream.skip(sizeof(float)); // Unknown Float 3
+    //stream.skip(sizeof(float)); // Unknown Float 4
+    //stream.skip(sizeof(float)); // Unknown Float 5
+    stream.skip(sizeof(float)*3);
 
     stream.read(mDataIndex);
 }
@@ -511,6 +758,26 @@ std::unique_ptr<btCollisionShape> NiBtOgre::bhkCompressedMeshShape::buildShape(c
     return std::unique_ptr<btCollisionShape>(nullptr); // FIXME: TODO needed for TES5 only
 }
 
+NiBtOgre::bhkConvexListShape::bhkConvexListShape(uint32_t index, NiStream& stream, const NiModel& model)
+    : bhkShape(index, stream, model)
+{
+    stream.readVector<bhkConvexShapeRef>(mSubShapes);
+    stream.read(mMaterial);
+
+    //mUnknownfloats.resize(6);
+    //for (int i = 0; i < 6; ++i)
+    //    stream.read(mUnknownFloats.at(i));
+    stream.skip(sizeof(float)*6);
+
+    stream.skip(sizeof(char));
+    stream.skip(sizeof(float));
+}
+
+std::unique_ptr<btCollisionShape> NiBtOgre::bhkConvexListShape::buildShape(const btTransform& transform) const
+{
+    return std::unique_ptr<btCollisionShape>(nullptr); // FIXME: TODO needed for TO3
+}
+
 // seen in nif ver 20.0.0.4, 20.0.0.5
 NiBtOgre::bhkListShape::bhkListShape(uint32_t index, NiStream& stream, const NiModel& model)
     : bhkShape(index, stream, model)
@@ -518,7 +785,7 @@ NiBtOgre::bhkListShape::bhkListShape(uint32_t index, NiStream& stream, const NiM
     stream.readVector<bhkShapeRef>(mSubShapes);
     stream.read(mMaterial);
 
-    //munknownfloats.resize(6);
+    //mUnknownfloats.resize(6);
     //for (int i = 0; i < 6; ++i)
     //    stream.read(mUnknownFloats.at(i));
     stream.skip(sizeof(float)*6);
@@ -526,8 +793,14 @@ NiBtOgre::bhkListShape::bhkListShape(uint32_t index, NiStream& stream, const NiM
     stream.readVector<std::uint32_t>(mUnknownInts);
 }
 
-// Note that a bhkListShape can have bhkTransformShape children.  This means a btCompoundShape
-// parent having btCompoundShape children. e.g. meshes/architecture/arena/chorrolarenainteriorground01.nif
+// Note that a bhkListShape can have bhkTransformShape children (in fact, quite often).
+//
+// coc "FortRoebeck02" - HandScythe01 - bhkTransformShape/bhkBoxShape
+// coc "RockmilkCave03"
+// - meshes/clutter/lowerclass/ClothBolt04.nif
+//      bhkCapsuleShape, bhkConvexTransformShape/bhkBoxShape
+// - meshes/clutter/lowerclass/lowerthatchbasket02.nif
+//      bhkConvexVerticesShape, bhkConvexTransformShape/bhkBoxShape
 std::unique_ptr<btCollisionShape> NiBtOgre::bhkListShape::buildShape(const btTransform& transform) const
 {
     std::unique_ptr<btCollisionShape> collisionShape = std::unique_ptr<btCompoundShape>(new btCompoundShape());
@@ -539,75 +812,48 @@ std::unique_ptr<btCollisionShape> NiBtOgre::bhkListShape::buildShape(const btTra
 
         bhkShape *subShape = mModel.getRef<bhkShape>(mSubShapes[i]);
 
-// Implemention Option 1: Simple
-#if 0
-        std::unique_ptr<btCollisionShape> subCollisionShape = subShape->buildShape();
+        std::unique_ptr<btCollisionShape> subCollisionShape = subShape->buildShape(transform);
         assert(subCollisionShape.get() != nullptr && "bhkListShape: child buildShape failed");
 
-        if (subCollisionShape->getName() == "Compound") // is there a better way than text comparison?
+        if (subCollisionShape->isCompound())
         {
-            if (static_cast<btCompoundShape*>(subCollisionShape.get())->getNumChildShapes() > 1)
-            {
-                // FIXME: should throw here
-                //throw std::runtime_error ("bhkListShape: unexpected btCompoundShape");
-                std::cerr << "buildShape: child in ListShape is a List " << mModel.blockType(mSelfIndex) << std::endl;
-                continue;
-            }
+            throw std::runtime_error ("bhkListShape: unexpected btCompoundShape");
+            //std::cerr << "buildShape: child in ListShape is a List " << mModel.blockType(mSelfIndex) << std::endl;
+            //continue;
         }
 
-        static_cast<btCompoundShape*>(collisionShape.get())->addChildShape(btTransform::getIdentity(),
-                                                                           subCollisionShape.get());
-#else // Implemention Option 2: Complex
+        btTransform subTransform;
+        int userIndex = subCollisionShape->getUserIndex();
 
-        // coc "FortRoebeck02" - HandScythe01 - bhkTransformShape/bhkBoxShape
-        // coc "RockmilkCave03"
-        // - meshes/clutter/lowerclass/ClothBolt04.nif
-        //      bhkCapsuleShape, bhkConvexTransformShape/bhkBoxShape
-        // - meshes/clutter/lowerclass/lowerthatchbasket02.nif
-        //      bhkConvexVerticesShape, bhkConvexTransformShape/bhkBoxShape
-        std::string subShapeType = mModel.blockType(mSubShapes[i]);
-
-        if (subShapeType == "bhkTransformShape" || subShapeType == "bhkConvexTransformShape")
+        if (userIndex == 2)        // shape and subshape have their own transforms
         {
-            bhkTransformShape *shape = static_cast<bhkTransformShape*>(subShape);
+            // e.g. bhkCapsuleShape: architecture/daedricstatues/daedricshrinehircine01.nif (cow "tamriel" -2 -5)
+//#if 0 // FIXME: testing
+            std::string subShapeType = mModel.blockType(mSubShapes[i]);
 
-            if (mModel.blockType(static_cast<bhkTransformShape*>(subShape)->shapeIndex()) == "bhkBoxShape")
-            {
-                std::unique_ptr<btCollisionShape> subCollisionShape =
-                    mModel.getRef<bhkBoxShape>(shape->shapeIndex())->buildBoxShape();
-                static_cast<btCompoundShape*>(collisionShape.get())->addChildShape(
-                        transform * shape->transform(), subCollisionShape.get());
-            }
-            else if (mModel.blockType(static_cast<bhkTransformShape*>(subShape)->shapeIndex()) == "bhkCapsuleShape")
-            {
-                bhkCapsuleShape *capsuleShape
-                    = static_cast<bhkCapsuleShape*>(mModel.getRef<bhkCapsuleShape>(shape->shapeIndex()));
-
-                std::unique_ptr<btCollisionShape> subCollisionShape = capsuleShape->buildCapsuleShape();
-                static_cast<btCompoundShape*>(collisionShape.get())->addChildShape(
-                        transform * shape->transform() * capsuleShape->transform(), subCollisionShape.get());
-            }
+            if (subShapeType != "bhkTransformShape" && subShapeType != "bhkConvexTransformShape")
+                throw std::runtime_error ("bhkListShape: transfrom shape was expected");
+//#endif
+            subTransform = transform * subShape->transform()
+                * mModel.getRef<bhkShape>(static_cast<bhkTransformShape*>(subShape)->shapeIndex())->transform();
         }
-        else if (subShapeType == "bhkCapsuleShape")
+        else if (userIndex == 1)   // shape has its own transform
         {
-            bhkCapsuleShape *shape = static_cast<bhkCapsuleShape*>(subShape);
-
-            std::unique_ptr<btCapsuleShape> subCollisionShape = shape->buildCapsuleShape();
-            static_cast<btCompoundShape*>(collisionShape.get())->addChildShape(transform * shape->transform(),
-                                                                               subCollisionShape.get());
+            subTransform = transform * subShape->transform();
         }
-        else
+        else if (userIndex == 0)   // transform applied
         {
-            std::unique_ptr<btCollisionShape> subCollisionShape = subShape->buildShape(transform);
-            // apply transform if buildShape has not applied it
-            static_cast<btCompoundShape*>(collisionShape.get())->addChildShape(
-                    (subCollisionShape->getUserIndex() != 0) ? transform : btTransform::getIdentity(),
-                    subCollisionShape.get());
+            subTransform.getIdentity();
         }
-#endif
+        else//if (userIndex == -1) // no transform applied
+        {
+            subTransform = transform;
+        }
 
+        static_cast<btCompoundShape*>(collisionShape.get())->addChildShape(subTransform, subCollisionShape.get());
     }
 
+    collisionShape->setUserIndex(0); // indicate transform applied (to each of the child shapes, anyway)
     return collisionShape;
 }
 
@@ -644,6 +890,33 @@ NiBtOgre::bhkNiTriStripsShape::bhkNiTriStripsShape(uint32_t index, NiStream& str
     }
 }
 
+// From BulletCollision/CollisionShapes/btStridingMeshInterface.cpp:
+//
+//   The btStridingMeshInterface is the interface class for high performance generic access to
+//   triangle meshes, used in combination with btBvhTriangleMeshShape and some other collision
+//   shapes.
+//
+//   Using index striding of 3*sizeof(integer) it can use triangle arrays, using index striding
+//   of 1*sizeof(integer) it can handle triangle strips.
+//
+// From BulletCollision/CollisionShapes/btTriangleIndexVertexArray.h:
+//
+//   The btTriangleIndexVertexArray allows to access multiple triangle meshes, by indexing into
+//   existing triangle/index arrays.
+//
+//   Additional meshes can be added using addIndexedMesh /No duplcate is made of the
+//   vertex/index data, it only indexes into external vertex/index arrays.  So keep those
+//   arrays around during the lifetime of this btTriangleIndexVertexArray.
+//
+// Notes:
+//
+// It seems Bullet only keeps pointers?  Which means vertices and indicies must be kept around.
+//
+// How does transforms affect this, especially for OL_CLUTTER which is probably havok enabled?
+//
+// However, if using btTriangleMesh m_4componentVertices or m_3componentVertices will keep the
+// vertices and hence no need to keep the arrays around?
+//
 // e.g. architecture/arena/arenacolumn02.nif
 //      clutter/books/wantedposter01.nif
 //      clutter/books/wantedposter02.nif
@@ -651,47 +924,13 @@ std::unique_ptr<btCollisionShape> NiBtOgre::bhkNiTriStripsShape::buildShape(cons
 {
     btTriangleMesh *mesh = new btTriangleMesh();
 
-    for (unsigned int i = 0; i < mStripsData.size(); ++i)
+    for (size_t i = 0; i < mStripsData.size(); ++i)
     {
         if (mStripsData[i] == -1)
             continue; // nothing to build
 
         NiTriStripsData *triStripsData = mModel.getRef<NiTriStripsData>(mStripsData[i]);
         assert(triStripsData != nullptr && "mModel.getRef returned nullptr"); // FIXME: throw instead?
-
-
-
-        // From BulletCollision/CollisionShapes/btStridingMeshInterface.cpp:
-        //
-        //   The btStridingMeshInterface is the interface class for high performance generic
-        //   access to triangle meshes, used in combination with btBvhTriangleMeshShape and
-        //   some other collision shapes.
-        //
-        //   Using index striding of 3*sizeof(integer) it can use triangle arrays, using index
-        //   striding of 1*sizeof(integer) it can handle triangle strips.
-        //
-        // From BulletCollision/CollisionShapes/btTriangleIndexVertexArray.h:
-        //
-        //   The btTriangleIndexVertexArray allows to access multiple triangle meshes, by
-        //   indexing into existing triangle/index arrays.
-        //
-        //   Additional meshes can be added using addIndexedMesh /No duplcate is made of the
-        //   vertex/index data, it only indexes into external vertex/index arrays.  So keep
-        //   those arrays around during the lifetime of this btTriangleIndexVertexArray.
-        //
-        // Notes:
-        //
-        // It seems Bullet only keeps pointers?  Which means vertices and indicies must be kept
-        // around.
-        //
-        // How does transforms affect this, especially for OL_CLUTTER which is probably havok
-        // enabled?
-        //
-        // However, if using btTriangleMesh m_4componentVertices or m_3componentVertices will
-        // keep the vertices and hence no need to keep the arrays around?
-
-
-
 
         // TODO: possibly inefficient by creating too many triangles?
         const std::vector<Ogre::Vector3> &vertices = triStripsData->mVertices;
@@ -779,14 +1018,9 @@ std::unique_ptr<btCollisionShape> NiBtOgre::bhkPackedNiTriStripsShape::buildShap
 
     for(size_t i = 0; i < triData->mTriangles.size(); ++i)
     {
-        // NOTE: havok scale
-        Ogre::Vector3 b1 = triData->mVertices[triData->mTriangles[i].triangle[0]]*7;
-        Ogre::Vector3 b2 = triData->mVertices[triData->mTriangles[i].triangle[1]]*7;
-        Ogre::Vector3 b3 = triData->mVertices[triData->mTriangles[i].triangle[2]]*7;
-
-        mesh->addTriangle(transform * btVector3(b1.x,b1.y,b1.z),
-                          transform * btVector3(b2.x,b2.y,b2.z),
-                          transform * btVector3(b3.x,b3.y,b3.z));
+        mesh->addTriangle(transform * (triData->mVertices[triData->mTriangles[i].triangle[0]]*7), // NOTE: havok scale
+                          transform * (triData->mVertices[triData->mTriangles[i].triangle[1]]*7),
+                          transform * (triData->mVertices[triData->mTriangles[i].triangle[2]]*7));
     }
 
     // TODO: TES5 has triData->mSubShapes here
@@ -812,14 +1046,15 @@ NiBtOgre::hkPackedNiTriStripsData::hkPackedNiTriStripsData(uint32_t index, NiStr
         stream.read(mTriangles[i].triangle.at(1));
         stream.read(mTriangles[i].triangle.at(2));
         stream.read(mTriangles[i].weldingInfo);
-        stream.read(mTriangles[i].normal);
+        if (stream.nifVer() <= 0x14000005)
+            stream.read(mTriangles[i].normal);
     }
 
     std::uint32_t numVertices;
     stream.read(numVertices);
     if (stream.nifVer() >= 0x14020007) // from 20.2.0.7
         stream.skip(sizeof(char)); // unknown byte 1
-    // FIXME: btVector3
+
     mVertices.resize(numVertices);
     for (unsigned int i = 0; i < numVertices; i++)
         stream.read(mVertices.at(i));
@@ -848,10 +1083,7 @@ NiBtOgre::bhkSphereRepShape::bhkSphereRepShape(uint32_t index, NiStream& stream,
 
 std::unique_ptr<btCollisionShape> NiBtOgre::bhkSphereRepShape::buildShape(const btTransform& transform) const
 {
-    std::unique_ptr<btCollisionShape> shape
-        = std::unique_ptr<btSphereShape>(new btSphereShape(mRadius*7)); // NOTE: havok scale
-    shape->setUserIndex(1); // didn't apply transform
-    return shape;
+    return std::unique_ptr<btSphereShape>(new btSphereShape(mRadius*7)); // NOTE: havok scale
 }
 
 // seen in nif ver 20.0.0.4, 20.0.0.5
@@ -866,26 +1098,13 @@ NiBtOgre::bhkBoxShape::bhkBoxShape(uint32_t index, NiStream& stream, const NiMod
     stream.read(mMinimumSize);
 }
 
-// same as buildBoxShape, but sets m_userIndex to 1 to indicate that transform was not applied
+// Examples of bhkBoxShape with bhkRigidBodyT:
+//   clutter/books/wantedposter02static.nif
+//   plants/florasacredlotus01.nif
+//   clutter/middleclass/middlecrate02.nif
 std::unique_ptr<btCollisionShape> NiBtOgre::bhkBoxShape::buildShape(const btTransform& transform) const
 {
-    std::unique_ptr<btCollisionShape> shape
-        = std::unique_ptr<btBoxShape>(new btBoxShape(mDimensions*7)); // NOTE: havok scale
-    shape->setUserIndex(1); // didn't apply transform
-    return shape;
-}
-
-std::unique_ptr<btBoxShape> NiBtOgre::bhkBoxShape::buildBoxShape() const
-{
-    // FIXME: check mMinimumSize first? Can it be zero?
-
-    // old code replaced by Bullet data types
-    //btVector3 dimensions = btVector3(mDimensions.x, mDimensions.y, mDimensions.z);
-
-    // Examples with bhkRigidBodyT:
-    //   clutter/books/wantedposter02static.nif
-    //   plants/florasacredlotus01.nif
-    //   clutter/middleclass/middlecrate02.nif
+    // TODO: check mMinimumSize first? Can it be zero?
     return std::unique_ptr<btBoxShape>(new btBoxShape(mDimensions*7)); // NOTE: havok scale
 }
 
@@ -901,6 +1120,9 @@ NiBtOgre::bhkCapsuleShape::bhkCapsuleShape(uint32_t index, NiStream& stream, con
     stream.read(mRadius1);
     stream.read(mSecondPoint);
     stream.read(mRadius2);
+
+    // Based on examples/Importers/ImportMJCFDemo/BulletMJCFImporter.cpp, also see:
+    // http://lolengine.net/blog/2013/09/18/beautiful-maths-quaternion-from-vectors
 
     btVector3 firstPoint = mFirstPoint*7;   // NOTE: havok scale
     btVector3 secondPoint = mSecondPoint*7; // NOTE: havok scale
@@ -938,86 +1160,9 @@ NiBtOgre::bhkCapsuleShape::bhkCapsuleShape(uint32_t index, NiStream& stream, con
 // in examples/Importers/ImportMJCFDemo/BulletMJCFImporter.cpp
 std::unique_ptr<btCollisionShape> NiBtOgre::bhkCapsuleShape::buildShape(const btTransform& transform) const
 {
-// old and perhaps naive implementation
-#if 0 //                                                                      {{{
-    hasShapeTransform = true;
-    Ogre::Matrix4 localShapeTransform(Ogre::Matrix4::IDENTITY);
-
-    // the btcapsuleShape represents a capsule around the Y axis so it needs to be rotated.
-    // make use of Ogre's convenient functions to do this.
-    Ogre::Vector3 firstPoint = mFirstPoint*7;   // NOTE: havok scale
-    Ogre::Vector3 secondPoint = mSecondPoint*7; // NOTE: havok scale
-    Ogre::Vector3 axis = mSecondPoint - mFirstPoint;
-
-    float radius = mRadius1; // FIXME: can mRadius2 be different to mRadius1 for a capsule?
-
-    Ogre::Vector3 translation = firstPoint.midPoint(secondPoint);
-    Ogre::Quaternion rotation = Ogre::Quaternion::IDENTITY;
-
-    // FIXME: horrible hack - upright capsule shapes don't get the rotations correct for some reason
-    if (firstPoint.x == secondPoint.x && firstPoint.y == secondPoint.y && firstPoint.z != secondPoint.z)
-    {
-        float height = std::abs(firstPoint.z - secondPoint.z); // NOTE: havok scale already factored in
-        localShapeTransform.makeTransform(translation, Ogre::Vector3(1.f), rotation); // assume uniform scale
-        shapeTransform = shapeTransform * localShapeTransform;
-        return std::unique_ptr<btCapsuleShapeZ>(new btCapsuleShapeZ(radius*7, height)); // NOTE: havok scale
-    }
-    else
-    {
-        float height = firstPoint.distance(secondPoint);
-        rotation = axis.getRotationTo(Ogre::Vector3::UNIT_Y); // should this be NEGATIVE_UNIT_Y?
-        localShapeTransform.makeTransform(translation, Ogre::Vector3(1.f), rotation); // assume uniform scale
-        shapeTransform = shapeTransform * localShapeTransform;
-        return std::unique_ptr<btCapsuleShape>(new btCapsuleShape(radius*7, height)); // NOTE: havok scale
-    }
-#endif //                                                                      }}}
-
-    // Based on examples/Importers/ImportMJCFDemo/BulletMJCFImporter.cpp, also see:
-    // http://lolengine.net/blog/2013/09/18/beautiful-maths-quaternion-from-vectors
-#if 0 //                                                                       {{{
-    btVector3 firstPoint = mFirstPoint*7;   // NOTE: havok scale
-    btVector3 secondPoint = mSecondPoint*7; // NOTE: havok scale
-
-    btVector3 localTranslation = btScalar(0.5f) * (firstPoint + secondPoint); // midpoint
-
-    btQuaternion localRotation;
-    localRotation = btQuaternion::getIdentity();
-
-    btVector3 diff = firstPoint - secondPoint;
-    btScalar lenSqr = diff.length2();
-    btScalar height = 0.f;
-
-    if (lenSqr > SIMD_EPSILON)
-    {
-        height = btSqrt(lenSqr);
-        btVector3 axis = diff / height;
-
-        btVector3 zAxis(0.f, 0.f, 1.f);
-        localRotation = shortestArcQuat(zAxis, axis);
-    }
-
-    if (mRadius1 != mRadius2)
-        std::cerr << "Capsule radius different." << std::endl;
-
-    btCapsuleShapeZ *shape = new btCapsuleShapeZ(mRadius1, btScalar(0.5f)*height);
-
-    std::unique_ptr<btCollisionShape> collisionShape(new btCompoundShape());
-    btTransform localTransform(localRotation, localTranslation);
-    static_cast<btCompoundShape*>(collisionShape.get())->addChildShape(localTransform, shape);
+    std::unique_ptr<btCollisionShape> collisionShape(new btCapsuleShapeZ(mRadius1, btScalar(0.5f)*mHeight));
+    collisionShape->setUserIndex(1); // indicate that this shape has own transform
     return collisionShape;
-#endif //                                                                       }}}
-
-    btCapsuleShapeZ *shape = new btCapsuleShapeZ(mRadius1, btScalar(0.5f)*mHeight);
-
-    std::unique_ptr<btCollisionShape> collisionShape(new btCompoundShape());
-    static_cast<btCompoundShape*>(collisionShape.get())->addChildShape(transform * mTransform, shape);
-    collisionShape->setUserIndex(0); // indicate that transform was applied
-    return collisionShape;
-}
-
-std::unique_ptr<btCapsuleShape> NiBtOgre::bhkCapsuleShape::buildCapsuleShape() const
-{
-    return std::unique_ptr<btCapsuleShapeZ>(new btCapsuleShapeZ(mRadius1, btScalar(0.5f)*mHeight));
 }
 
 // seen in nif ver 20.0.0.4, 20.0.0.5
@@ -1030,23 +1175,11 @@ NiBtOgre::bhkConvexVerticesShape::bhkConvexVerticesShape(uint32_t index, NiStrea
 
     stream.read(mNumVertices);
 
-#if 1 // old implementation
     mVertices.resize(mNumVertices);
     for (unsigned int i = 0; i < mNumVertices; ++i)
-    {
-        stream.read(mVertices.at(i).m_floats[0]);
-        stream.read(mVertices.at(i).m_floats[1]);
-        stream.read(mVertices.at(i).m_floats[2]);
-        stream.read(mVertices.at(i).m_floats[3]);
-    }
-#else
-    mVertices = std::unique_ptr<float[]>(new float[mNumVertices*4]);
-    for (unsigned int i = 0; i < mNumVertices*4; ++i)
-    {
-        stream.read(mVertices[i]);
-        mVertices[i] *= 7; // NOTE: havok scale
-    }
-#endif
+        for (unsigned int j = 0; j < 4; ++j)
+            stream.read(mVertices.at(i).m_floats[j]);
+
     // if numVertices > 100 try below
     // http://www.bulletphysics.org/mediawiki-1.5.8/index.php/BtShapeHull_vertex_reduction_utility
 
@@ -1070,21 +1203,23 @@ std::unique_ptr<btCollisionShape> NiBtOgre::bhkConvexVerticesShape::buildShape(c
         shape->addPoint(transform * (mVertices[i]*7), false); // NOTE: havok scale
     shape->recalcLocalAabb();
 
+    convexHull->setUserIndex(0); // indicate that transform was applied
     return convexHull;
-#else
-    // use different ctor for minor optimisation
-    //return std::unique_ptr<btConvexHullShape>(new btConvexHullShape(mVertices.get(), mNumVertices, sizeof(float)*4));
-    vertices = std::unique_ptr<float[]>(new float[mNumVertices*4]);
+#else // use different ctor for minor optimisation; TODO test if it makes any difference
+    std::unique_ptr<float[]> vertices(new float[mNumVertices*4]);
     for (unsigned int i = 0; i < mNumVertices; ++i)
     {
-        btVector point = transform * btVector(mVertices[i*4], mVertices[i*4+1],mVertices[i*4+2]);
+        btVector3 point = transform * (mVertices[i]*7); // NOTE: havok scale
 
-        vertices[i*4]   = point.getX();
-        vertices[i*4+1] = point.getY();
-        vertices[i*4+2] = point.getZ();
+        vertices[i*4]   = point.x();
+        vertices[i*4+1] = point.y();
+        vertices[i*4+2] = point.z();
+        vertices[i*4+3] = point.w();
     }
-    std::unique_ptr<btCollisionShape> collisionShape(
-        new btConvexHullShape(vertices.get(), mNumVertices, sizeof(float)*4));
+
+    std::unique_ptr<btCollisionShape> collisionShape(new btConvexHullShape(vertices.get(),
+                                                                           mNumVertices,
+                                                                           sizeof(float)*4));
     collisionShape->setUserIndex(0); // indicate that transform was applied
     return collisionShape;
 #endif
@@ -1109,16 +1244,6 @@ NiBtOgre::bhkMultiSphereShape::bhkMultiSphereShape(uint32_t index, NiStream& str
 
     stream.read(mNumSpheres);
 
-// old code replaced by Bullet data types
-#if 0 //                                                                       {{{
-    mspheres.resize(mNumSpheres);
-    for (unsigned int i = 0; i < mNumSpheres; ++i)
-    {
-        stream.read(mSpheres[i].center);
-        stream.read(mSpheres[i].radius);
-    }
-#endif //                                                                       }}}
-
     mCenters = std::unique_ptr<btVector3[]>(new btVector3[mNumSpheres]);
     mRadii = std::unique_ptr<btScalar[]>(new btScalar[mNumSpheres]);
 
@@ -1133,10 +1258,9 @@ NiBtOgre::bhkMultiSphereShape::bhkMultiSphereShape(uint32_t index, NiStream& str
 
 std::unique_ptr<btCollisionShape> NiBtOgre::bhkMultiSphereShape::buildShape(const btTransform& transform) const
 {
-    std::unique_ptr<btCollisionShape> shape
-        = std::unique_ptr<btMultiSphereShape>(new btMultiSphereShape(mCenters.get(), mRadii.get(), (int)mNumSpheres));
-    shape->setUserIndex(1); // didn't apply transform
-    return shape;
+    return std::unique_ptr<btMultiSphereShape>(new btMultiSphereShape(mCenters.get(),
+                                                                      mRadii.get(),
+                                                                      (int)mNumSpheres));
 }
 
 // seen in nif ver 20.0.0.4, 20.0.0.5
@@ -1153,94 +1277,49 @@ NiBtOgre::bhkTransformShape::bhkTransformShape(uint32_t index, NiStream& stream,
     float floats[16];
     for (int i = 0; i < 16; ++i)
         stream.read(floats[i]);
-// FIXME: replace with bullet after testing
-#if 0
-    mTransformOld = Ogre::Matrix4(floats[0], floats[4], floats[8],  floats[12],
-                                  floats[1], floats[5], floats[9],  floats[13],
-                                  floats[2], floats[6], floats[10], floats[14],
-                                  floats[3], floats[7], floats[11], floats[15]);
-#endif
+
     mTransform.setFromOpenGLMatrix(floats);
 }
 
-// Looks like most (all?) of the bhkTransformShapes have bhkBoxShape or bhkCapsuleShape
-//   bhkCapsuleShape: architecture/daedricstatues/daedricshrinehircine01.nif
-//   cow "tamriel" -2 -5
+// Looks like most of the bhkTransformShapes in TES4 have bhkBoxShape or bhkCapsuleShape or bhkSphereShape,
+// usually as part of bhkListShape.  Examples of stand-alone bhkTransformShape/bhkBoxShape are
+//
+//   dungeons/misc/triggers/trigzone02.nif (coc "vilverin")
+//   dungeons/caves/clutter01/ancientcoin01.nif
+//
+// Other examples as part of a bhkListShape:
+//
+//   bhkSphereShape & bhkBoxShape: clutter/lowerclass/lowerjugtan01.nif (coc "ICMarketDistrictAFightingChance")
+//   bhkCapsuleShape: architecture/daedricstatues/daedricshrinehircine01.nif (cow "tamriel" -2 -5)
+//
+// Examples of non-primitive shapes in FO3:
+//
+//   bhkMoppBvTreeShape/bhkNiTriStripsShape: architecture/urban/pedwalk/pedwalkstr01.nif
+//
 std::unique_ptr<btCollisionShape> NiBtOgre::bhkTransformShape::buildShape(const btTransform& transform) const
 {
     if (mShapeIndex == -1)
         return std::unique_ptr<btCollisionShape>(nullptr);
 
-// old implementation
-#if 0 //                                                                       {{{
-    hasShapeTransform = true;
-
-    // make this object's transform
-    Ogre::Matrix4 localTransform(Ogre::Matrix4::IDENTITY);
-    Ogre::Vector3 localTranslation = mTransform.getTrans();
-    Ogre::Quaternion localRotation = mTransform.extractQuaternion();
-    // NOTE: havok scale of 7
-    localTransform.makeTransform(localTranslation*7, Ogre::Vector3(1.f), localRotation); // assume uniform scale
-
-    Ogre::Matrix4 localShapeTransform(Ogre::Matrix4::IDENTITY); // NOTE: buildShape may modify
-    bool hasLocalShapeTransform = false;                        // NOTE: buildShape may set to true
-
-    std::unique_ptr<btCollisionShape> res = mModel.getRef<bhkShape>(mShapeIndex)->buildShape();
-
-    if (hasLocalShapeTransform)
-        localTransform = localTransform * localShapeTransform;
-
-    shapeTransform = localTransform; // update the caller
-    return res;
-#endif //                                                                       }}}
-
-// FIXME: testing only
-#if 0 //                                                                       {{{
-    // !string("Object ID" "00025100")
-    // coc "SENSMazaddhasHouse"
-    Ogre::Vector3 vOld = mTransformOld.getTrans();
-    Ogre::Quaternion qOld = mTransformOld.extractQuaternion();
-    btVector3 v = mTransform.getOrigin();
-    btQuaternion q = mTransform.getRotation();
-
-    if (vOld.x != v.x() || vOld.y != v.y() || vOld.z != v.z())
-    {
-        std::cout << "bhkTransformShape: bad vector" << std::endl;
-    }
-
-    if (qOld.x != q.x() || qOld.y != q.y() || qOld.z != q.z() || qOld.w != q.w())
-    {
-        std::cout << "bhkTransformShape: bad quaternion" << std::endl;
-    }
-#endif //                                                                       }}}
-// FIXME: end of testing
-
 // more testing
 //#if 0
     std::string shapeType = mModel.blockType(mShapeIndex);
     if (shapeType == "bhkListShape" || shapeType == "bhkTransformShape" || shapeType == "bhkConvexTransformShape")
-    {
-        throw std::runtime_error ("bhkTransformShape: unexpected btCompoundShape");
-    }
+        throw std::runtime_error ("bhkTransformShape: unexpected shape type");
 //#endif
 
-    std::unique_ptr<btCollisionShape> collisionShape(new btCompoundShape());
+    bhkShape *shape = static_cast<bhkShape*>(mModel.getRef<bhkShape>(mShapeIndex));
+    std::unique_ptr<btCollisionShape> collisionShape = shape->buildShape(transform * mTransform);
 
-    if (shapeType == "bhkCapsuleShape")
-    {
-        bhkCapsuleShape *capsuleShape = static_cast<bhkCapsuleShape*>(mModel.getRef<bhkCapsuleShape>(mShapeIndex));
+    int userIndex = collisionShape->getUserIndex();
 
-        std::unique_ptr<btCapsuleShape> shape = capsuleShape->buildCapsuleShape();
-        static_cast<btCompoundShape*>(collisionShape.get())->addChildShape(
-                transform * mTransform * capsuleShape->transform(), shape.get());
-    }
-    else // bhkBoxShape
-    { // FIXME: assert it is a bhkBoxShape
-        std::unique_ptr<btCollisionShape> shape = mModel.getRef<bhkBoxShape>(mShapeIndex)->buildBoxShape();
-        assert(shape.get() != nullptr && "bhkTransformShape: buildShape failed");
+    if (userIndex == 1)                // shape has its own transform, e.g. btCapsuleShape
+        collisionShape->setUserIndex(2);
+    else if (userIndex == 0)           // transform applied , e.g. bhkMoppBvTreeShape/bhkNiTriStripsShape
+        collisionShape->setUserIndex(0);
+    else // userIndex == -1            // no transform applied, e.g. btBoxShape
+        collisionShape->setUserIndex(1);
 
-        static_cast<btCompoundShape*>(collisionShape.get())->addChildShape(transform * mTransform, shape.get());
-    }
     return collisionShape;
 }
 
@@ -1325,7 +1404,7 @@ NiBtOgre::bhkRigidBody::bhkRigidBody(uint32_t index, NiStream& stream, const NiM
     stream.read(mUnknownInt2);
 
     mUnknown3Ints.resize(3);
-    for (size_t i = 0; i < 3; ++i)
+    for (unsigned int i = 0; i < 3; ++i)
         stream.read(mUnknown3Ints.at(i));
 
     stream.read(mCollisionResponse);
@@ -1340,18 +1419,24 @@ NiBtOgre::bhkRigidBody::bhkRigidBody(uint32_t index, NiStream& stream, const NiM
     stream.read(mColFilterCopy);
 
     mUnknown7Shorts.resize(7);
-    for (size_t i = 0; i < 7; ++i)
+    for (unsigned int i = 0; i < 7; ++i)
         stream.read(mUnknown7Shorts.at(i));
 
-    stream.read(mTranslation); // FIXME: btVector3
-    stream.readQuaternionXYZW(mRotation); // FIXME: btQuaternion
+    for (unsigned int i = 0; i < 4; ++i)
+        stream.read(mTranslation.m_floats[i]);
+
+    float rot[4];
+    for (unsigned int i = 0; i < 4; ++i)
+        stream.read(rot[i]);
+    mRotation = btQuaternion(rot[0], rot[1], rot[2], rot[3]);
+
     stream.read(mLinearVelocity);
     stream.read(mAngularVelocity);
 
     float value = 0;
-    for (size_t i = 0; i < 3; ++i)
+    for (unsigned int i = 0; i < 3; ++i)
     {
-        for (size_t j = 0; j < 4; ++j)
+        for (unsigned int j = 0; j < 4; ++j)
         {
             stream.read(value);
             mInertia[i][j] = Ogre::Real(value);
@@ -1393,36 +1478,26 @@ NiBtOgre::bhkRigidBody::bhkRigidBody(uint32_t index, NiStream& stream, const NiM
     std::uint32_t numConstraints;
     stream.read(numConstraints);
     mConstraints.resize(numConstraints);
-    for (size_t i = 0; i < numConstraints; ++i)
+    for (unsigned int i = 0; i < numConstraints; ++i)
         stream.read(mConstraints.at(i));
 
     if (stream.userVer() <= 11)
         stream.read(mUnknownInt9);
     else if (stream.userVer() >= 12)
         stream.read(mUnknownInt91);
-
-    if (mModel.blockType(mSelfIndex) == "bhkRigidBodyT")
-    {
-        // NOTE: havok scale applied to mTranslation
-        mBodyTransform = btTransform(btQuaternion(mRotation.x, mRotation.y, mRotation.z, mRotation.w),
-                                     btVector3(mTranslation.x*7, mTranslation.y*7, mTranslation.z*7));
-    }
-    else
-        mBodyTransform.setIdentity();
 }
 
 // WARNING: the parameter 'parent' is a NiNode (i.e. not bhkNiCollisionObject)
 // 1. calculate the world transform of the NIF
-// 2. adjust with the transform of the SceneNode
-// 3. create the bkRidgidBody and store it in 'inst', keyed with the index of the parent NiNode
+// 2. create the btRidgidBody and store it in 'inst', keyed with the index of the parent NiNode
 //    so that the associated Ogre::Entity can be used for ragdoll animation
+// 3. the transform of the SceneNode to be applied with btRigidBody
 // 4. create any associated constraints
 // 5. if OL_STATIC register with Bullet for collisions
 // FIXME: only do some of the steps if actual ragdoll?
 //
 // FIXME: some of these should allow raycasting for object identification?
 void NiBtOgre::bhkRigidBody::build(BtOgreInst *inst, NiObject* parentNiNode)
-//void NiBtOgre::bhkRigidBody::buildEntity(BtOgreInst *inst, NiAVObject* parentNiNode)
 {
     if (mShapeIndex == -1) // nothing to build
         return;
@@ -1432,46 +1507,42 @@ void NiBtOgre::bhkRigidBody::build(BtOgreInst *inst, NiObject* parentNiNode)
     Ogre::Quaternion rot;
     static_cast<NiAVObject*>(parentNiNode)->getWorldTransform().decomposition(pos, scale, rot);
 
-    btTransform transform;
+    btTransform transform(btQuaternion(rot.x, rot.y, rot.z, rot.w), btVector3(pos.x, pos.y, pos.z));
 
-    // mSelfIndex refers to either a bhkRigidBody or bhkRigidBodyT
     // apply rotation and translation only if the collision object's body is a bhkRigidBodyT type
-//#if 0
     if (mModel.blockType(mSelfIndex) == "bhkRigidBodyT")
-    {
-        // NOTE: havok scale applied to mTranslation
-        btTransform bodyTransform(btQuaternion(mRotation.x, mRotation.y, mRotation.z, mRotation.w),
-                                  btVector3(mTranslation.x*7, mTranslation.y*7, mTranslation.z*7));
-        transform = bodyTransform * btTransform(btQuaternion(rot.x, rot.y, rot.z, rot.w),
-                                                btVector3(pos.x, pos.y, pos.z));
-    }
-    else
-        transform = btTransform(btQuaternion(rot.x, rot.y, rot.z, rot.w), btVector3(pos.x, pos.y, pos.z));
-//#endif
-
-// old implementation
-#if 0 //                                                                       {{{
-    // for primitive shapes, e.g. btBoxShape, btSphereShape and btMultiSphereShape the
-    // RigidBody/RigidBodyT's world transform is used in createAndAdjustRigidBody
-    //
-    // for bhkCapsuleShape
-
-    Ogre::Matrix4 shapeTransform(Ogre::Matrix4::IDENTITY); // NOTE: buildShape may modify
-    bool hasShapeTransform = false;                        // NOTE: buildShape may set to true
-    bhkShape *shape = mModel.getRef<bhkShape>(mShapeIndex);
-
-    std::unique_ptr<btCollisionShape> tmp = shape->buildShape(); // FIXME
-
-    //if (mModel.blockType(mShapeIndex) == "bhkCapsuleShape") // less efficient?
-    if (hasShapeTransform)
-    {
-        // FIXME: apply shape's transform and havok scale
-    }
-#endif //                                                                       }}}
+        transform = transform * btTransform(mRotation, mTranslation * 7); // NOTE: havok scale
 
     bhkShape *shape = mModel.getRef<bhkShape>(mShapeIndex);
     std::unique_ptr<btCollisionShape> tmp = shape->buildShape(transform); // FIXME: store a master copy?
 
+    // FIXME
+    if (!tmp.get())
+        return;
+
+    int userIndex = tmp->getUserIndex();
+    if (userIndex == 2)                // shape has its own transform, e.g. transform capsule shape
+    {
+        // rigidbody.setWorldTransform(SceneNodeTrans * transform * shape->transform() * subShape->transform());
+        //std::cout << "transform" << std::endl; // never happens?
+    }
+    else if (userIndex == 1)           // shape has its own transform, e.g. btCapsuleShape
+    {
+        // rigidbody.setWorldTransform(SceneNodeTrans * transform * shape->transform());
+        //std::cout << "capsule" << std::endl; // never happens?
+    }
+    else if (userIndex == 0)           // transform applied
+    {
+        // rigidbody.setWorldTransform(SceneNodeTrans);
+        //std::cout << "mesh" << std::endl;
+    }
+    else // userIndex == -1            // no transform applied, e.g. btBoxShape
+    {
+        // rigidbody.setWorldTransform(SceneNodeTrans * transform);
+        //std::cout << "primitive" << std::endl;
+    }
+
+#if 0
     // OL_ANIM_STATIC and OL_BIPED might be ragdoll?
     if (mLayer == 1) // OL_STATIC
     {
@@ -1497,6 +1568,13 @@ void NiBtOgre::bhkRigidBody::build(BtOgreInst *inst, NiObject* parentNiNode)
         std::cout << mModel.getName() << std::endl;
     }
     // FIXME: end testing
+#endif
+
+    // bhkRigidBody may have constraints
+    for (size_t i = 0; i < mConstraints.size(); ++i)
+    {
+        mModel.getRef<bhkConstraint>(mConstraints[i])->linkBodies(inst, this);
+    }
 }
 
 // Seen in NIF ver 20.0.0.4, 20.0.0.5
@@ -1509,6 +1587,12 @@ NiBtOgre::bhkSimpleShapePhantom::bhkSimpleShapePhantom(uint32_t index, NiStream&
     stream.read(mUnknownShort);
 
     stream.skip(sizeof(float)*23); // 7 + 3*5 + 1
+}
+
+// Called from bhkSPCollisionObject
+// e.g. dungeons/misc/triggers/trigzone02.nif (coc "vilverin")
+void NiBtOgre::bhkSimpleShapePhantom::build(BtOgreInst *inst, NiObject* parentNiNode)
+{
 }
 
 // vim: fen fdm=marker fdl=0

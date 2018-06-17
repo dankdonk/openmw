@@ -42,6 +42,9 @@ namespace sh
 
 	bool OgrePass::setPropertyOverride (const std::string &name, PropertyValuePtr& value, PropertySetGet* context)
 	{
+        if (name == "cull_hardware")
+            return true; // FIXME: temporary hack for FO3
+
 		if (((typeid(*value) == typeid(StringValue)) || typeid(*value) == typeid(LinkedValue))
 				&& retrieveValue<StringValue>(value, context).get() == "default")
 			return true;

@@ -83,6 +83,7 @@
 //  NiPosData
 //  NiSkinData
 //  NiSkinInstance
+//      BSDismemberSkinInstance // FO3
 //  NiSkinPartition
 //  NiStringPalette
 //  NiUVData
@@ -675,6 +676,7 @@ namespace NiBtOgre
 
     class NiSkinInstance : public NiObject
     {
+    public:
         NiSkinDataRef         mDataIndex;
         NiSkinPartitionRef    mSkinPartitionIndex;
         NiNode               *mSkeletonRoot; // Ptr
@@ -683,8 +685,21 @@ namespace NiBtOgre
         //std::vector<NiNode*>  mBones;        // Ptr
         std::vector<NiNodeRef>  mBones;
 
-    public:
         NiSkinInstance(uint32_t index, NiStream& stream, const NiModel& model);
+    };
+
+    class BSDismemberSkinInstance : public NiSkinInstance
+    {
+    public:
+        struct BodyPartList
+        {
+            std::uint16_t partFlag;
+            std::uint16_t bodyPart;
+        };
+
+        std::vector<BodyPartList>  mPartitions;
+
+        BSDismemberSkinInstance(uint32_t index, NiStream& stream, const NiModel& model);
     };
 
     // Seen in NIF version 20.0.0.4, 20.0.0.5

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015, 2016 cc9cii
+  Copyright (C) 2015-2016, 2018 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -18,6 +18,10 @@
   3. This notice may not be removed or altered from any source distribution.
 
   cc9cii cc9c@iinet.net.au
+
+  Much of the information on the data structures are based on the information
+  from Tes4Mod:Mod_File_Format and Tes5Mod:File_Formats but also refined by
+  trial & error.  See http://en.uesp.net/wiki for details.
 
 */
 #include "navi.hpp"
@@ -331,6 +335,12 @@ void ESM4::Navigation::load(ESM4::Reader& reader)
             }
             case ESM4::SUB_NVMI: // multiple
             {
+                if (reader.esmVersion() == ESM4::VER_094 || reader.esmVersion() == ESM4::VER_134)
+                {
+                    reader.skipSubRecordData(); // FIXME: FO3/FONV have different form of NavMeshInfo
+                    break;
+                }
+
                 //std::cout << "\nNVMI start" << std::endl;
                 NavMeshInfo nvmi;
                 nvmi.load(reader);
@@ -338,6 +348,7 @@ void ESM4::Navigation::load(ESM4::Reader& reader)
                 break;
             }
             case ESM4::SUB_NVSI: // from Dawnguard onwards
+            case ESM4::SUB_NVCI: // FO3
             {
                 reader.skipSubRecordData(); // FIXME:
                 break;

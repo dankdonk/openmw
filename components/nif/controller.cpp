@@ -268,10 +268,13 @@ void Nif::NiGeomMorpherController::read(NIFStream *nif)
                 interpolatorWeights[i].weight = nif->getFloat();
             }
         }
-        unsigned int count = nif->getUInt();
-        unknownInts.resize(count);
-        for (unsigned int i = 0; i < count; ++i)
-            unknownInts[i] = nif->getUInt();
+        if (nifVer >= 0x14000004 && nifVer <= 0x14000005 && userVer >=10)
+        {
+            unsigned int count = nif->getUInt();
+            unknownInts.resize(count);
+            for (unsigned int i = 0; i < count; ++i)
+                unknownInts[i] = nif->getUInt();
+        }
     }
 }
 

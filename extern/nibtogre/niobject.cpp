@@ -242,6 +242,31 @@ namespace NiBtOgre
         NiObject::define<bhkCompressedMeshShape>("bhkCompressedMeshShape");
         NiObject::define<bhkCompressedMeshShapeData>("bhkCompressedMeshShapeData");
         NiObject::define<bhkHingeConstraint>("bhkHingeConstraint");
+        // Seen in FO3
+        NiObject::define<BSShaderLightingProperty>("BSShaderLightingProperty");
+        NiObject::define<BSShaderPPLightingProperty>("BSShaderPPLightingProperty");
+        NiObject::define<BSShaderNoLightingProperty>("BSShaderNoLightingProperty");
+        NiObject::define<bhkConvexListShape>("bhkConvexListShape");
+        NiObject::define<BSDismemberSkinInstance>("BSDismemberSkinInstance");
+      //NiObject::define<BSAnimNotes>("BSAnimNotes");
+      //NiObject::define<BSMaterialEmittanceMultController>("BSMaterialEmittanceMultController");
+      //NiObject::define<BSMultiBoundAABB>("BSMultiBoundAABB");
+      //NiObject::define<BSMultiBoundSphere>("BSMultiBoundSphere");
+      //NiObject::define<BSRefractionStrengthController>("BSRefractionStrengthController");
+      //NiObject::define<BSSegmentedTriShape>("BSSegmentedTriShape");
+      //NiObject::define<BSTreadTransfController>("BSTreadTransfController");
+      //NiObject::define<BSTreadTransfInterpolator>("BSTreadTransfInterpolator");
+      //NiObject::define<NiAdditionalGeometryData>("NiAdditionalGeometryData");
+      //NiObject::define<NiBSplineCompFloatInterpolator>("NiBSplineCompFloatInterpolator");
+      //NiObject::define<NiBSplineCompPoint3Interpolator>("NiBSplineCompPoint3Interpolator");
+      //NiObject::define<NiLightColorController>("NiLightColorController");
+      //NiObject::define<NiLightDimmerController>("NiLightDimmerController");
+      //NiObject::define<NiOptimizeKeep>("NiOptimizeKeep");
+      //NiObject::define<NiPSysAgeDeath>("NiPSysAgeDeath");
+      //NiObject::define<NiPointLight>("NiPointLight");
+      //NiObject::define<bhkLiquidAction>("bhkLiquidAction");
+      //NiObject::define<bhkOrientHingedBodyAction>("bhkOrientHingedBodyAction");
+      //NiObject::define<bhkPoseArray>("bhkPoseArray");
 
         return true; // it seems compiler can't distinguish the definition
     }

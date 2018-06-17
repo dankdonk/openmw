@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2016 cc9cii
+  Copyright (C) 2016, 2018 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -19,17 +19,16 @@
 
   cc9cii cc9c@iinet.net.au
 
+  Much of the information on the data structures are based on the information
+  from Tes4Mod:Mod_File_Format and Tes5Mod:File_Formats but also refined by
+  trial & error.  See http://en.uesp.net/wiki for details.
+
 */
 #include "race.hpp"
 
-#include <cassert>
 #include <stdexcept>
 #include <iostream> // FIXME: debugging only
 #include <iomanip>
-
-#ifdef NDEBUG // FIXME: debuggigng only
-#undef NDEBUG
-#endif
 
 #include "reader.hpp"
 //#include "writer.hpp"
@@ -67,47 +66,36 @@ void ESM4::Race::load(ESM4::Reader& reader)
             }
             case ESM4::SUB_FULL:
             {
-                // NOTE: checking flags does not work, Skyrim.esm does not set the localized flag
-                //
-                // A possible hack is to look for SUB_FULL subrecord size of 4 to indicate that
-                // a lookup is required.  This obviously does not work for a string size of 3,
-                // but the chance of having that is assumed to be low.
-                if ((reader.hdr().record.flags & Rec_Localized) != 0 || subHdr.dataSize == 4)
+                if (reader.hasLocalizedStrings())
                 {
-                    reader.skipSubRecordData(); // FIXME: process the subrecord rather than skip
-                    mFullName = "FIXME";
-                    break;
+                    std::uint32_t formid;
+                    reader.get(formid);
+                    reader.getLocalizedString(formid, mFullName);
                 }
+                else if (!reader.getZString(mFullName))
+                    throw std::runtime_error ("RACE FULL data read error");
 
-                reader.getZString(mFullName);
-                std::cout << "FullName " << mFullName << std::endl; // FIXME
                 break;
             }
             case ESM4::SUB_MODL: reader.getZString(mModel); break;
             case ESM4::SUB_ICON: reader.getZString(mIcon);  break; // Only in TES4?
-            //case ESM4::SUB_DATA: reader.get(mData);         break;
+          //case ESM4::SUB_DATA: reader.get(mData);         break;
             case ESM4::SUB_MODB: reader.get(mBoundRadius);  break;
-            //case ESM4::SUB_MODT:
+          //case ESM4::SUB_MODT:
             case ESM4::SUB_DESC: //skipping...1 <- different lenghts
             {
-                std::string mDesc; //FIXME
-                // NOTE: checking flags does not work, Skyrim.esm does not set the localized flag
-                //
-                // A possible hack is to look for SUB_FULL subrecord size of 4 to indicate that
-                // a lookup is required.  This obviously does not work for a string size of 3,
-                // but the chance of having that is assumed to be low.
-                if ((reader.hdr().record.flags & Rec_Localized) != 0 || subHdr.dataSize == 4)
+                if (reader.hasLocalizedStrings())
                 {
-                    reader.skipSubRecordData(); // FIXME: process the subrecord rather than skip
-                    mDesc = "FIXME";
-                    break;
+                    std::uint32_t formid;
+                    reader.get(formid);
+                    reader.getLocalizedString(formid, mDesc);
                 }
+                else if (!reader.getZString(mDesc))
+                    throw std::runtime_error ("RACE DESC data read error");
 
-                reader.getZString(mDesc);
-                std::cout << "DESC " << mDesc << std::endl; // FIXME
                 break;
             }
-            case MKTAG('A','T','T','R'): //skipping...16 // Only in TES4? guess - 8 attrib each for male/female?
+            case ESM4::SUB_ATTR: //skipping...16 // Only in TES4? guess - 8 attrib each for male/female?
             // Argonian 28 28 1e 32 32 1e 1e 32 28 32 28 28 28 1e 1e 32
             //          40 40 30 50 50 30 30 50 40 50 40 40 40 30 30 50
             // Nord     32 1e 1e 28 28 32 1e 32 32 1e 28 28 28 28 1e 32
@@ -215,13 +203,19 @@ void ESM4::Race::load(ESM4::Reader& reader)
             case ESM4::SUB_FGGS: //skipping...200 // prob face gen stuff
             case ESM4::SUB_FGTS: //skipping...200 // prob face gen stuff
             case ESM4::SUB_FNAM: //skipping...0 // start marker female model
-            case MKTAG('I','N','D','X'): //skipping...4 // marker preceding egt models? uint32 always 0
+            case ESM4::SUB_INDX: //skipping...4 // marker preceding egt models? uint32 always 0
             case ESM4::SUB_MNAM: //skipping...0 // start marker male model
             case ESM4::SUB_NAM0: //skipping...0 // start marker head data
             case ESM4::SUB_NAM1: //skipping...0 // strat marker egt models
             case ESM4::SUB_PNAM: //skipping...4 // face gen main clamp float
             case ESM4::SUB_SPLO: //skipping...4 // bonus spell formid (TES5 may have SPCT and multiple SPLO)
             case ESM4::SUB_UNAM: //skipping...4 // face gen face clamp float
+            case ESM4::SUB_YNAM: // FO3
+            case ESM4::SUB_NAM2: // FO3
+            case ESM4::SUB_VTCK: // FO3
+            case ESM4::SUB_MODT: // FO3
+            case ESM4::SUB_MODD: // FO3
+            case ESM4::SUB_ONAM: // FO3
             {
 
                 //std::cout << "RACE " << ESM4::printName(subHdr.typeId) << " skipping..." << subHdr.dataSize << std::endl;

@@ -11,7 +11,7 @@ void Nif::Node::read(NIFStream *nif)
     Named::read(nif);
 
     flags = nif->getUShort();
-    if (nifVer >= 0x14020007 && (userVer >= 11 || userVer2 > 26)) // from 20.2.0.7
+    if (nifVer >= 0x14020007 && (userVer >= 11 && userVer2 > 26)) // from 20.2.0.7
         nif->getUShort();
 
     trafo = nif->getTrafo(); // scale (float) included
@@ -95,10 +95,11 @@ void Nif::Node::getProperties(const Nif::NiTexturingProperty *&texprop,
                               const Nif::NiZBufferProperty *&zprop,
                               const Nif::NiSpecularProperty *&specprop,
                               const Nif::NiWireframeProperty *&wireprop,
-                              const Nif::NiStencilProperty *&stencilprop) const
+                              const Nif::NiStencilProperty *&stencilprop,
+                              const Nif::Property *&prop) const
 {
     if(parent)
-        parent->getProperties(texprop, matprop, alphaprop, vertprop, zprop, specprop, wireprop, stencilprop);
+        parent->getProperties(texprop, matprop, alphaprop, vertprop, zprop, specprop, wireprop, stencilprop, prop);
 
     for(size_t i = 0; i < props.length(); ++i)
     {
@@ -124,6 +125,11 @@ void Nif::Node::getProperties(const Nif::NiTexturingProperty *&texprop,
             wireprop = static_cast<const Nif::NiWireframeProperty*>(pr);
         else if (pr->recType == Nif::RC_NiStencilProperty)
             stencilprop = static_cast<const Nif::NiStencilProperty*>(pr);
+        else if (pr->recType == Nif::RC_BSShaderPPLightingProperty ||
+                 pr->recType == Nif::RC_BSShaderNoLightingProperty)
+        {
+            prop = pr; // FO3 handled elsewhere
+        }
         // the following are unused by the MW engine
         else if (pr->recType != Nif::RC_NiFogProperty
                  && pr->recType != Nif::RC_NiDitherProperty
@@ -166,7 +172,7 @@ void Nif::NiGeometry::getBSProperties(const Nif::BSLightingShaderProperty *&bspr
         else if (pr->recType == Nif::RC_BSWaterShaderProperty)
             waterprop = static_cast<const Nif::BSWaterShaderProperty*>(pr);
         else
-            std::cout<< "Unhandled property type: "<< pr->recName << std::endl;
+            std::cout<< "Unhandled BS property type: "<< pr->recName << std::endl;
     }
 }
 
@@ -440,9 +446,12 @@ void Nif::NiGeometry::read(NIFStream *nif)
     if (nifVer >= 0x14020007) // from 20.2.0.7 (Skyrim)
     {
         dirtyFlag = nif->getBool(nifVer);
-        bsprops.resize(2);
-        bsprops[0].read(nif);
-        bsprops[1].read(nif);
+        if (userVer == 12) // not present in FO3?
+        {
+            bsprops.resize(2);
+            bsprops[0].read(nif);
+            bsprops[1].read(nif);
+        }
     }
 }
 
@@ -453,8 +462,11 @@ void Nif::NiGeometry::post(NIFFile *nif)
     skin.post(nif);
     if (nifVer >= 0x14020007) // from 20.2.0.7 (Skyrim)
     {
-        bsprops[0].post(nif);
-        bsprops[1].post(nif);
+        if (userVer == 12) // not present in FO3?
+        {
+            bsprops[0].post(nif);
+            bsprops[1].post(nif);
+        }
     }
 }
 

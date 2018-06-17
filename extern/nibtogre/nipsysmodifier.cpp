@@ -140,12 +140,8 @@ NiBtOgre::NiPSysAgeDeathModifier::NiPSysAgeDeathModifier(uint32_t index, NiStrea
 NiBtOgre::NiPSysBombModifier::NiPSysBombModifier(uint32_t index, NiStream& stream, const NiModel& model)
     : NiPSysModifier(index, stream, model)
 {
-    //stream.getPtr<NiNode>(mBombObject, model.objects());
-    std::int32_t rIndex = -1;
-    stream.read(rIndex);
-    mBombObject = model.getRef<NiNode>(rIndex);
+    stream.read(mBombObject);
 
-    stream.read(mBombAxis);
     stream.read(mDecay);
     stream.read(mDeltaV);
     stream.read(mDecayType);
@@ -177,10 +173,7 @@ NiBtOgre::NiPSysColorModifier::NiPSysColorModifier(uint32_t index, NiStream& str
 NiBtOgre::NiPSysDragModifier::NiPSysDragModifier(uint32_t index, NiStream& stream, const NiModel& model)
     : NiPSysModifier(index, stream, model)
 {
-    //stream.getPtr<NiObject>(mParent, model.objects());
-    std::int32_t rIndex = -1;
-    stream.read(rIndex);
-    mParent = model.getRef<NiObject>(rIndex);
+    stream.read(mParent);
 
     stream.read(mDragAxis);
     stream.read(mPercentage);

@@ -63,7 +63,7 @@ namespace NiBtOgre
         NiObjectNET(uint32_t index, NiStream& stream, const NiModel& model, bool isBSLightingShaderProperty = false);
         virtual ~NiObjectNET() {}
 
-        inline StringIndex getName() const { return mName; }
+        inline StringIndex getNameIndex() const { return mName; }
 
         virtual void build(Ogre::SceneNode *sceneNode, BtOgreInst *inst, NiObject *parent = nullptr);
     };

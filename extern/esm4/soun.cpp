@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2016 cc9cii
+  Copyright (C) 2016, 2018 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -19,15 +19,14 @@
 
   cc9cii cc9c@iinet.net.au
 
+  Much of the information on the data structures are based on the information
+  from Tes4Mod:Mod_File_Format and Tes5Mod:File_Formats but also refined by
+  trial & error.  See http://en.uesp.net/wiki for details.
+
 */
 #include "soun.hpp"
 
-#include <cassert>
 #include <stdexcept>
-
-#ifdef NDEBUG // FIXME: debuggigng only
-#undef NDEBUG
-#endif
 
 #include "reader.hpp"
 //#include "writer.hpp"
@@ -59,6 +58,10 @@ void ESM4::Sound::load(ESM4::Reader& reader)
             case ESM4::SUB_SNDD:
             case ESM4::SUB_OBND: // TES5 only
             case ESM4::SUB_SDSC: // TES5 only
+            case ESM4::SUB_ANAM: // FO3
+            case ESM4::SUB_GNAM: // FO3
+            case ESM4::SUB_HNAM: // FO3
+            case ESM4::SUB_RNAM: // FONV
             {
                 //std::cout << "SOUN " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
                 reader.skipSubRecordData();

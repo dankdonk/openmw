@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2016 cc9cii
+  Copyright (C) 2016, 2018 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -19,15 +19,14 @@
 
   cc9cii cc9c@iinet.net.au
 
+  Much of the information on the data structures are based on the information
+  from Tes4Mod:Mod_File_Format and Tes5Mod:File_Formats but also refined by
+  trial & error.  See http://en.uesp.net/wiki for details.
+
 */
 #include "lvli.hpp"
 
-#include <cassert>
 #include <stdexcept>
-
-#ifdef NDEBUG // FIXME: debuggigng only
-#undef NDEBUG
-#endif
 
 #include "reader.hpp"
 //#include "writer.hpp"
@@ -78,6 +77,15 @@ void ESM4::LeveledItem::load(ESM4::Reader& reader)
 
                 reader.adjustFormId(lvlo.item);
                 mLvlObject.push_back(lvlo);
+                break;
+            }
+            case ESM4::SUB_OBND: // FO3
+            case ESM4::SUB_COED: // FO3
+            case ESM4::SUB_LVLG: // FO3
+            {
+
+                //std::cout << "LVLI " << ESM4::printName(subHdr.typeId) << " skipping..." << subHdr.dataSize << std::endl;
+                reader.skipSubRecordData();
                 break;
             }
             default:

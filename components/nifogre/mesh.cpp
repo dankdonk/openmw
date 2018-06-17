@@ -16,6 +16,7 @@
 #include <OgreKeyFrame.h>
 
 #include <components/nif/node.hpp>
+#include <components/nif/property.hpp>
 #include <components/nif/controller.hpp>
 #include <components/nifcache/nifcache.hpp>
 #include <components/misc/stringops.hpp>
@@ -333,10 +334,11 @@ void NIFMeshLoader::createSubMesh(Ogre::Mesh *mesh, const Nif::NiGeometry *geom)
     const Nif::BSLightingShaderProperty *bsprop = NULL;
     const Nif::BSEffectShaderProperty *effectprop = NULL;
     const Nif::BSWaterShaderProperty *waterprop = NULL;
+    const Nif::Property *prop = NULL; // FO3
     bool needTangents = false;
 
     const Nif::Node *node = static_cast<const Nif::Node*>(geom);
-    node->getProperties(texprop, matprop, alphaprop, vertprop, zprop, specprop, wireprop, stencilprop);
+    node->getProperties(texprop, matprop, alphaprop, vertprop, zprop, specprop, wireprop, stencilprop, prop);
 
     if (node->nifVer >= 0x14020007 && node->userVer == 12)
     {
@@ -349,12 +351,24 @@ void NIFMeshLoader::createSubMesh(Ogre::Mesh *mesh, const Nif::NiGeometry *geom)
             std::cout << "alphaprop over written" << std::endl;
     }
 
+#if 0
+    if (prop) // FO3
+    {
+        if (prop->recType == Nif::RC_BSShaderPPLightingProperty)
+        {
+        }
+        else if (prop->recType == Nif::RC_BSShaderNoLightingProperty)
+        {
+        }
+    }
+#endif
+
     std::string matname = NIFMaterialLoader::getMaterial(data, mesh->getName(), mGroup,
                                                          texprop, matprop, alphaprop,
                                                          vertprop, zprop, specprop,
                                                          wireprop, stencilprop,
                                                          bsprop, effectprop, waterprop,
-                                                         needTangents);
+                                                         prop, needTangents);
     if(matname.length() > 0)
         sub->setMaterialName(matname);
 

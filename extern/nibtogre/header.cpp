@@ -40,7 +40,7 @@ NiBtOgre::Header::Header(NiBtOgre::NiStream& stream) : mVer(0), mUserVer(0), mUs
             header.find("NetImmerse File Format") == std::string::npos)
         throw std::runtime_error("NiBtOgre::Header::unsupported NIF file format");
 
-    // check supported file versions; TES4: 20.0.0.4, 20.0.0.5  TES5: 20.2.0.7  TES3: 4.0.0.2
+    // check supported file versions; TES4: 20.0.0.4, 20.0.0.5  TES5/FO3: 20.2.0.7  TES3: 4.0.0.2
     // TODO: 10.0.1.2, 10.2.0.0
     //
     //   ./creatures/boxtest/idle.kf:                     Gamebryo File Format, Version 10.2.0.0
@@ -122,7 +122,6 @@ NiBtOgre::Header::Header(NiBtOgre::NiStream& stream) : mVer(0), mUserVer(0), mUs
         stream.read(numStrings);
         stream.read(maxStringLength); // possibly useful for reading strings and setting bufer size?
 
-        std::vector<std::string> mStrings;
         mStrings.resize(numStrings);
         for (uint32_t i = 0; i < numStrings; ++i)
             stream.readSizedString(mStrings.at(i));

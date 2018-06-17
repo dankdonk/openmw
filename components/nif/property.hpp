@@ -101,7 +101,13 @@ public:
         GlossTexture = 3,
         GlowTexture = 4,
         BumpTexture = 5,
-        DecalTexture = 6
+        DecalTexture = 6,
+        // 20.2.0.7 onwards
+        NormalTexture = 7,
+        Unknown2Texture = 8,
+        Decal1Texture = 9,
+        Decal2Texture = 10,
+        Decal3Texture = 11
     };
 
     struct ShaderTexture
@@ -111,7 +117,7 @@ public:
 
     };
 
-    Texture textures[7];
+    Texture textures[12]; // usually max 7
     std::vector<ShaderTexture> shaderTextures;
 
     void read(NIFStream *nif);
@@ -385,6 +391,31 @@ public:
     unsigned short unknownS3;
 
     void read(NIFStream *nif);
+};
+
+class BSShaderPPLightingProperty : public Property // FO3
+{
+public:
+    unsigned int skyrimShaderType;
+
+    float envmapScale;
+    BSShaderTextureSetPtr textureSet;
+    Ogre::Vector3 emissiveColor;
+
+    void read(NIFStream *nif);
+    void post(NIFFile *nif);
+};
+
+class BSShaderNoLightingProperty : public Property // FO3
+{
+public:
+    unsigned int skyrimShaderType;
+
+    float envmapScale;
+    std::string fileName;
+
+    void read(NIFStream *nif);
+    void post(NIFFile *nif);
 };
 
 } // Namespace

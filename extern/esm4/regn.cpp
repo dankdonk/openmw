@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015, 2016 cc9cii
+  Copyright (C) 2015-2016, 2018 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -18,6 +18,10 @@
   3. This notice may not be removed or altered from any source distribution.
 
   cc9cii cc9c@iinet.net.au
+
+  Much of the information on the data structures are based on the information
+  from Tes4Mod:Mod_File_Format and Tes5Mod:File_Formats but also refined by
+  trial & error.  See http://en.uesp.net/wiki for details.
 
 */
 #include "regn.hpp"
@@ -97,19 +101,13 @@ void ESM4::Region::load(ESM4::Reader& reader)
                 assert(next == RDAT_Map && "REGN unexpected data type");
                 next = RDAT_None;
 
-                // NOTE: checking flags does not work, Skyrim.esm does not set the localized flag
-                //
-                // A possible hack is to look for SUB_FULL subrecord size of 4 to indicate that
-                // a lookup is required.  This obviously does not work for a string size of 3,
-                // but the chance of having that is assumed to be low.
-                if ((reader.hdr().record.flags & Rec_Localized) != 0 || subHdr.dataSize == 4)
+                if (reader.hasLocalizedStrings())
                 {
-                    reader.skipSubRecordData(); // FIXME: process the subrecord rather than skip
-                    mMapName = "FIXME";
-                    break;
+                    std::uint32_t formid;
+                    reader.get(formid);
+                    reader.getLocalizedString(formid, mMapName);
                 }
-
-                if (!reader.getZString(mMapName))
+                else if (!reader.getZString(mMapName))
                     throw std::runtime_error ("REGN RDMP data read error");
                 break;
             }
@@ -120,6 +118,9 @@ void ESM4::Region::load(ESM4::Reader& reader)
             case ESM4::SUB_RDSA:
             case ESM4::SUB_RDWT: // formId
             case ESM4::SUB_RDOT: // formId
+            case ESM4::SUB_RDID: // FONV
+            case ESM4::SUB_RDSB: // FONV
+            case ESM4::SUB_RDSI: // FONV
             {
                 //RDAT skipping... following is a map
                 //RDMP skipping... map name

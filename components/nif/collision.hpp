@@ -210,6 +210,18 @@ namespace Nif
         void post(NIFFile *nif);
     };
 
+    class bhkConvexListShape : public bhkShape
+    {
+    public:
+        unsigned int numSubShapes;
+        std::vector<bhkShapePtr> subShapes;
+        unsigned int material; // if userVer >= 12, SkyrimHavokMaterial
+        std::vector<float> unknown;
+
+        void read(NIFStream *nif);
+        void post(NIFFile *nif);
+    };
+
     class bhkConstraint : public bhkSerializable
     {
     public:

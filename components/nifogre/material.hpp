@@ -22,6 +22,7 @@ namespace Nif
     class BSLightingShaderProperty;
     class BSEffectShaderProperty;
     class BSWaterShaderProperty;
+    class Property;
 }
 
 namespace NifOgre
@@ -49,6 +50,7 @@ public:
                                     const Nif::BSLightingShaderProperty *bsprop,
                                     const Nif::BSEffectShaderProperty *effectprop,
                                     const Nif::BSWaterShaderProperty *waterprop,
+                                    const Nif::Property *prop,
                                     bool &needTangents, bool particleMaterial=false);
 };
 

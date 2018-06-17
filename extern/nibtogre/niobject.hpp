@@ -161,6 +161,7 @@ namespace NiBtOgre
     typedef std::int32_t NiVisDataRef;
     typedef std::int32_t bhkCompressedMeshShapeDataRef;
     typedef std::int32_t bhkSerializableRef;
+    typedef std::int32_t bhkConvexShapeRef;
     typedef std::int32_t bhkShapeRef;
     typedef std::int32_t hkPackedNiTriStripsDataRef;
 }

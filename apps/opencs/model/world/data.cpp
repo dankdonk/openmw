@@ -1616,7 +1616,7 @@ int CSMWorld::Data::startLoading (const boost::filesystem::path& path, bool base
 
     int esmVer = mReader->getVer();
     bool isTes4 = esmVer == ESM::VER_080 || esmVer == ESM::VER_100;
-    bool isTes5 = esmVer == ESM::VER_094 || esmVer == ESM::VER_17;
+    bool isTes5 = esmVer == ESM::VER_094 || esmVer == ESM::VER_17 || esmVer == ESM::VER_134;
     if (isTes4 || isTes5)
     {
         mReader->close();
@@ -2111,11 +2111,11 @@ bool CSMWorld::Data::loadTes4Record (const ESM4::RecordHeader& hdr, CSMDoc::Mess
         // GMST, GLOB, CLAS, FACT
         case ESM4::REC_HAIR: reader.getRecordData(); mForeignHairs.load(reader, mBase); break;
         case ESM4::REC_EYES: reader.getRecordData(); mForeignEyesSet.load(reader, mBase); break;
-		// RACE
+        // RACE
         case ESM4::REC_SOUN: reader.getRecordData(); mForeignSounds.load(reader, mBase); break;
-		// SKIL, MGEF, SCPT
+        // SKIL, MGEF, SCPT
         case ESM4::REC_LTEX: reader.getRecordData(); mForeignLandTextures.load(reader, mBase); break;
-		// ENCH, SPEL, BSGN
+        // ENCH, SPEL, BSGN
         // ---- referenceables start
         case ESM4::REC_ACTI: reader.getRecordData(); mForeignActivators.load(reader, mBase); break;
         case ESM4::REC_APPA: reader.getRecordData(); mForeignApparatuses.load(reader, mBase); break;
@@ -2344,7 +2344,16 @@ bool CSMWorld::Data::loadTes4Record (const ESM4::RecordHeader& hdr, CSMDoc::Mess
             break;
         }
         // TODO: verify LTEX formIds exist
-        case ESM4::REC_LAND: reader.getRecordData(); mForeignLands.load(reader, mBase); break;
+        case ESM4::REC_LAND:
+            try
+            {
+                reader.getRecordData(); mForeignLands.load(reader, mBase); break;
+            }
+            catch (std::exception& e) // FIXME FONV.esm 0xB0CFF04 LAND record zlip DATA_ERROR
+            {
+                std::cout << "exception while parsing NIF file" << std::endl;
+                break;
+            }
         case ESM4::REC_NAVI: reader.getRecordData(); mNavigation.load(reader, mBase); break;
         case ESM4::REC_NAVM:
         {
@@ -2366,14 +2375,14 @@ bool CSMWorld::Data::loadTes4Record (const ESM4::RecordHeader& hdr, CSMDoc::Mess
             mNavMesh.load(reader, mBase);
             break;
         }
-		//
+        //
         case ESM4::REC_PGRD: // Oblivion only?
         case ESM4::REC_ACRE: // Oblivion only?
-		//
+        //
         case ESM4::REC_LVLI:
         case ESM4::REC_IDLE:
         case ESM4::REC_MATO:
-		//
+        //
         case ESM4::REC_PHZD:
         case ESM4::REC_PGRE:
         case ESM4::REC_ROAD: // Oblivion only?

@@ -806,6 +806,18 @@ NiBtOgre::NiSkinInstance::NiSkinInstance(uint32_t index, NiStream& stream, const
     }
 }
 
+NiBtOgre::BSDismemberSkinInstance::BSDismemberSkinInstance(uint32_t index, NiStream& stream, const NiModel& model)
+    : NiSkinInstance(index, stream, model)
+{
+    std::uint32_t numPartitions;
+    mPartitions.resize(numPartitions);
+    for (uint32_t i = 0; i < numPartitions; ++i)
+    {
+        stream.read(mPartitions.at(i).partFlag);
+        stream.read(mPartitions.at(i).bodyPart);
+    }
+}
+
 // Seen in NIF ver 20.0.0.4, 20.0.0.5
 void NiBtOgre::NiSkinPartition::SkinPartition::read(NiStream& stream)
 {

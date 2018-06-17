@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015, 2016 cc9cii
+  Copyright (C) 2015-2016, 2018 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -18,6 +18,10 @@
   3. This notice may not be removed or altered from any source distribution.
 
   cc9cii cc9c@iinet.net.au
+
+  Much of the information on the data structures are based on the information
+  from Tes4Mod:Mod_File_Format and Tes5Mod:File_Formats but also refined by
+  trial & error.  See http://en.uesp.net/wiki for details.
 
 */
 #ifndef ESM4_TES4_H
@@ -45,6 +49,7 @@ namespace ESM4
         struct Data
         {
             // The supported versions are 0.80 = 0x3f800000, 0.94 = 0x3f70a3d7 and 1.7 = 0x3fd9999a
+            // (also 1.34 = 0x3fab851f eventually)
             ESMVersion    version; // File format version.
             std::int32_t  records; // Number of records
             std::uint32_t nextObjectId;
@@ -65,7 +70,7 @@ namespace ESM4
         std::string mDesc;   // File description
         std::vector<MasterData> mMaster;
 
-        std::vector<FormId> mOverrides; // Skyrim Only, cell children (ACHR, LAND, NAVM, PGRE, PHZD, REFR)
+        std::vector<FormId> mOverrides; // Skyrim only, cell children (ACHR, LAND, NAVM, PGRE, PHZD, REFR)
 
         // position in the vector = mod index of master files above
         // value = adjusted mod index based on all the files loaded so far
@@ -73,8 +78,6 @@ namespace ESM4
 
         void load (Reader& reader);
         //void save (Writer& writer);
-
-        //void blank();
     };
 }
 

@@ -78,7 +78,9 @@ namespace CSVRender
 
         std::pair<Ogre::Vector3, Ogre::Vector3> planeRes = planeAxis();
         mPlane = new Ogre::Plane(planeRes.first, 0);
-        Ogre::MeshPtr mesh = Ogre::MeshManager::getSingleton().createPlane("mouse",
+        Ogre::MeshPtr mesh = Ogre::MeshManager::getSingleton().getByName("mouse");
+        if (mesh.isNull())
+            mesh = Ogre::MeshManager::getSingleton().createPlane("mouse",
             Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
             *mPlane,
             300000,300000,  // FIXME: use far clip dist?
