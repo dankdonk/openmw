@@ -28,14 +28,14 @@
 #include <cassert>
 #include <stdexcept>
 
-#ifdef NDEBUG // FIXME: debuggigng only
-#undef NDEBUG
-#endif
-
 #include "nistream.hpp"
 #include "nimodel.hpp"
 #include "nidata.hpp"
 #include "btogreinst.hpp"
+
+#ifdef NDEBUG // FIXME: debuggigng only
+#undef NDEBUG
+#endif
 
 NiBtOgre::NiAVObject::NiAVObject(uint32_t index, NiStream& stream, const NiModel& model)
     : NiObjectNET(index, stream, model), mHasBoundingBox(false)//, mWorldTransform(Ogre::Matrix4::IDENTITY)

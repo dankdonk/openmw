@@ -28,13 +28,13 @@
 #include <cassert>
 #include <stdexcept>
 
-#ifdef NDEBUG // FIXME: debugging only
-#undef NDEBUG
-#endif
-
 #include "nistream.hpp"
 #include "niavobject.hpp" // static_cast NiNode
 #include "nimodel.hpp"
+
+#ifdef NDEBUG // FIXME: debugging only
+#undef NDEBUG
+#endif
 
 // Seen in NIF ver 20.0.0.4, 20.0.0.5
 NiBtOgre::NiPSysCollider::NiPSysCollider(uint32_t index, NiStream& stream, const NiModel& model)

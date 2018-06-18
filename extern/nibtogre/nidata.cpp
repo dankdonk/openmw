@@ -28,13 +28,13 @@
 #include <cassert>
 #include <stdexcept>
 
-#ifdef NDEBUG // FIXME: debugging only
-#undef NDEBUG
-#endif
-
 #include "nistream.hpp"
 #include "niavobject.hpp" // static_cast NiNode
 #include "nimodel.hpp"
+
+#ifdef NDEBUG // FIXME: debugging only
+#undef NDEBUG
+#endif
 
 NiBtOgre::ATextureRenderData::ATextureRenderData(uint32_t index, NiStream& stream, const NiModel& model)
     : NiObject(index, stream, model)
@@ -810,6 +810,7 @@ NiBtOgre::BSDismemberSkinInstance::BSDismemberSkinInstance(uint32_t index, NiStr
     : NiSkinInstance(index, stream, model)
 {
     std::uint32_t numPartitions;
+    stream.read(numPartitions);
     mPartitions.resize(numPartitions);
     for (uint32_t i = 0; i < numPartitions; ++i)
     {

@@ -73,8 +73,9 @@ namespace ESM4
         struct Data
         {
             std::uint8_t  flags;
-            std::uint8_t  type;      // TES5 only
-            std::uint32_t bookSkill; // uint8_t for TES4
+            std::uint8_t  type;    // TES5 only
+            std::uint32_t teaches; // TES5 only
+            std::int8_t bookSkill; // not in TES5
             std::uint32_t value;
             float         weight;
         };

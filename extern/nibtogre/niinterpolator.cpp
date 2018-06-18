@@ -28,13 +28,13 @@
 #include <cassert>
 #include <stdexcept>
 
-#ifdef NDEBUG // FIXME: debugging only
-#undef NDEBUG
-#endif
-
 #include "nistream.hpp"
 #include "niavobject.hpp" // static_cast NiNode
 #include "nimodel.hpp"
+
+#ifdef NDEBUG // FIXME: debugging only
+#undef NDEBUG
+#endif
 
 // Seen in NIF version 20.2.0.7
 NiBtOgre::NiBSplineInterpolator::NiBSplineInterpolator(uint32_t index, NiStream& stream, const NiModel& model)

@@ -31,10 +31,6 @@
 #include <cassert>
 #include <stdexcept>
 
-#ifdef NDEBUG // FIXME: debugging only
-#undef NDEBUG
-#endif
-
 #include <OgreSceneNode.h>
 
 #include <BulletCollision/CollisionShapes/btCollisionShape.h>
@@ -52,6 +48,10 @@
 #include "nimodel.hpp"
 #include "btogreinst.hpp"
 #include "nidata.hpp"
+
+#ifdef NDEBUG // FIXME: debugging only
+#undef NDEBUG
+#endif
 
 #if 0 // Commented out. Use instead: typedef bhkRefObject bhkSerializable
 NiBtOgre::bhkSerializable::bhkSerializable(uint32_t index, NiStream& stream, const NiModel& model)

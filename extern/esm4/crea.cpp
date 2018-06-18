@@ -32,12 +32,12 @@
 #include <sstream>
 #include <iostream> // FIXME
 
+#include "reader.hpp"
+//#include "writer.hpp"
+
 #ifdef NDEBUG // FIXME: debuggigng only
 #undef NDEBUG
 #endif
-
-#include "reader.hpp"
-//#include "writer.hpp"
 
 ESM4::Creature::Creature() : mFormId(0), mFlags(0), mDeathItem(0), mScript(0), mCombatStyle(0),
                              mSoundBase(0), mSound(0), mSoundChance(0), mBaseScale(0.f),

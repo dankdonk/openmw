@@ -95,20 +95,20 @@ namespace ESM4
 
         enum LocalizedStringType
         {
-            Type_Strings = 0,
+            Type_Strings   = 0,
             Type_ILStrings = 1,
             Type_DLStrings = 2
         };
 
-        struct StringPos
+        struct LStringOffset
         {
             LocalizedStringType type;
             std::uint32_t offset;
         };
-        std::map<FormId, StringPos> mStringIndicies;
+        std::map<FormId, LStringOffset> mLStringIndex;
 
         void getRecordDataPostActions(); // housekeeping actions before processing the next record
-        void buildStringIndicies(const std::string& stringFile, LocalizedStringType stringType);
+        void buildLStringIndex(const std::string& stringFile, LocalizedStringType stringType);
 
     public:
 
@@ -116,8 +116,8 @@ namespace ESM4
         ~Reader();
 
         // Methods added for updating loading progress bars
-        std::size_t getFileSize() const { return mStream->size(); }
-        std::size_t getFileOffset() const { return mStream->tell(); }
+        inline std::size_t getFileSize() const { return mStream->size(); }
+        inline std::size_t getFileOffset() const { return mStream->tell(); }
 
         // Methods added for saving/restoring context
         ReaderContext getContext();
@@ -129,10 +129,11 @@ namespace ESM4
         // NOTE: must be called before calling getRecordHeader()
         void setRecHeaderSize(const std::size_t size);
 
-        void loadHeader() { mHeader.load(*this); }
-        unsigned int esmVersion() const { return mHeader.mData.version.ui; }
-        unsigned int numRecords() const { return mHeader.mData.records; }
-        void buildStringIndicies();
+        inline void loadHeader() { mHeader.load(*this); }
+        inline unsigned int esmVersion() const { return mHeader.mData.version.ui; }
+        inline unsigned int numRecords() const { return mHeader.mData.records; }
+
+        void buildLStringIndex();
         inline bool hasLocalizedStrings() const { return (mHeader.mFlags & Rec_Localized) != 0; }
         void getLocalizedString(const FormId stringId, std::string& str);
 

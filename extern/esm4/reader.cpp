@@ -25,20 +25,21 @@
 #include <cassert>
 #include <stdexcept>
 #include <unordered_map>
-#include <string>
 #include <iostream>
-
-#ifdef NDEBUG // FIXME: debugging only
-#undef NDEBUG
-#endif
 
 #include <boost/algorithm/string.hpp>
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem/operations.hpp>
 
+#include <OgreResourceGroupManager.h>
+
 #include <zlib.h>
 
 #include "formid.hpp"
+
+#ifdef NDEBUG // FIXME: debugging only
+#undef NDEBUG
+#endif
 
 ESM4::Reader::Reader() : mObserver(nullptr), mEndOfRecord(0), mCellGridValid(false)
 {
@@ -135,87 +136,58 @@ void ESM4::Reader::registerForUpdates(ESM4::ReaderObserver *observer)
 }
 
 // FIXME: only "English" strings supported for now
-void ESM4::Reader::buildStringIndicies()
+void ESM4::Reader::buildLStringIndex()
 {
-    if ((mHeader.mFlags & (Rec_ESM | Rec_Localized)) == 0)
+    if ((mHeader.mFlags & Rec_ESM) == 0 || (mHeader.mFlags & Rec_Localized) == 0)
         return;
 
-    // extra check with versions, probably not necessary since Fallout3.esm does not set Rec_Localized flag
-    if (mHeader.mData.version.ui != 0x3f70a3d7 && mHeader.mData.version.ui != 0x3fd9999a)
-        return; // not Skyrim.esm or Update.esm, but might still be Fallout3.esm
-
-    // now check if the directory 'Strings' exist
-    std::string file = mCtx.filename;
-    boost::filesystem::path p(file);
+    boost::filesystem::path p(mCtx.filename);
     std::string filename = p.stem().filename().string();
 
-    p.remove_filename();
-    p.append("/Strings");
-    if (!boost::filesystem::exists(p))
-        return;
-
-    // finally build the indicies
-    buildStringIndicies(p.string() + "/" + filename + "_English.STRINGS", Type_Strings);
-    buildStringIndicies(p.string() + "/" + filename + "_English.ILSTRINGS", Type_ILStrings);
-    buildStringIndicies(p.string() + "/" + filename + "_English.DLSTRINGS", Type_DLStrings);
-
-#if 0 // FIXME: testing only
-    if (filename != "Skyrim")
-        return;
-    std::string test;
-    getLocalizedString(0x00000001, test); // Strings
-    std::cout << test << std::endl;
-    getLocalizedString(0x00000004, test); // ILStrings
-    std::cout << test << std::endl;
-    getLocalizedString(0x00000044, test); // DLStrings
-    std::cout << test << std::endl;
-#endif
+    buildLStringIndex("Strings/" + filename + "_English.STRINGS",   Type_Strings);
+    buildLStringIndex("Strings/" + filename + "_English.ILSTRINGS", Type_ILStrings);
+    buildLStringIndex("Strings/" + filename + "_English.DLSTRINGS", Type_DLStrings);
 }
 
-void ESM4::Reader::buildStringIndicies(const std::string& stringFile, LocalizedStringType stringType)
+void ESM4::Reader::buildLStringIndex(const std::string& stringFile, LocalizedStringType stringType)
 {
-    if (boost::filesystem::exists(stringFile))
+    std::uint32_t numEntries;
+    std::uint32_t dataSize;
+    std::uint32_t stringId;
+    LStringOffset sp;
+    sp.type = stringType;
+
+    // TODO: possibly check if the resource exists?
+    Ogre::DataStreamPtr filestream = Ogre::ResourceGroupManager::getSingleton().openResource(stringFile);
+
+    switch (stringType)
     {
-        std::uint32_t numEntries;
-        std::uint32_t dataSize;
-        std::uint32_t stringId;
-        StringPos sp;
-        sp.type = stringType;
-
-        Ogre::DataStreamPtr filestream(new Ogre::FileStreamDataStream(
-                    OGRE_NEW_T(std::ifstream(stringFile.c_str(), std::ios_base::binary),
-                    Ogre::MEMCATEGORY_GENERAL)));
-
-        switch (stringType)
-        {
-            case Type_Strings:   mStrings =   filestream; break;
-            case Type_ILStrings: mILStrings = filestream; break;
-            case Type_DLStrings: mDLStrings = filestream; break;
-            default:
-                throw std::runtime_error("ESM4::Reader::unexpected string type");
-        }
-
-        filestream->read(&numEntries, sizeof(std::uint32_t));
-        filestream->read(&dataSize, sizeof(std::uint32_t));
-        std::size_t dataStart = filestream->size() - dataSize;
-        for (unsigned int i = 0; i < numEntries; ++i)
-        {
-            filestream->read(&stringId, sizeof(std::uint32_t));
-            filestream->read(&sp.offset, sizeof(std::uint32_t));
-            sp.offset += (std::uint32_t)dataStart;
-            mStringIndicies[stringId] = sp;
-        }
-        //assert(dataStart - filestream->tell() == 0 && "String file start of data section mismatch");
+        case Type_Strings:   mStrings =   filestream; break;
+        case Type_ILStrings: mILStrings = filestream; break;
+        case Type_DLStrings: mDLStrings = filestream; break;
+        default:
+            throw std::runtime_error("ESM4::Reader::unexpected string type");
     }
-    // else silenty ignore
+
+    filestream->read(&numEntries, sizeof(std::uint32_t));
+    filestream->read(&dataSize, sizeof(std::uint32_t));
+    std::size_t dataStart = filestream->size() - dataSize;
+    for (unsigned int i = 0; i < numEntries; ++i)
+    {
+        filestream->read(&stringId, sizeof(std::uint32_t));
+        filestream->read(&sp.offset, sizeof(std::uint32_t));
+        sp.offset += (std::uint32_t)dataStart;
+        mLStringIndex[stringId] = sp;
+    }
+    //assert(dataStart - filestream->tell() == 0 && "String file start of data section mismatch");
 }
 
 // FIXME: very messy and probably slow/inefficient
 void ESM4::Reader::getLocalizedString(const FormId stringId, std::string& str)
 {
-    const std::map<FormId, StringPos>::const_iterator it = mStringIndicies.find(stringId);
+    const std::map<FormId, LStringOffset>::const_iterator it = mLStringIndex.find(stringId);
 
-    if (it != mStringIndicies.end())
+    if (it != mLStringIndex.end())
     {
         Ogre::DataStreamPtr filestream;
 

@@ -26,9 +26,6 @@
 #include <stdexcept>
 
 #include <iostream> // FIXME: debugging only
-#ifdef NDEBUG // FIXME: debugging only
-#undef NDEBUG
-#endif
 
 #include <boost/scoped_array.hpp>
 
@@ -41,6 +38,10 @@
 #include <btBulletDynamicsCommon.h>
 
 #include "header.hpp"
+
+#ifdef NDEBUG // FIXME: debugging only
+#undef NDEBUG
+#endif
 
 NiBtOgre::NiStream::NiStream(const std::string& name)
     : mStream(Ogre::ResourceGroupManager::getSingleton().openResource(name)), mHeader(nullptr),

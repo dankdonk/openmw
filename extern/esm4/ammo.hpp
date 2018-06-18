@@ -38,15 +38,16 @@ namespace ESM4
 
     struct Ammo
     {
-        struct Data
+        struct Data // FIXME: TES5 projectile, damage (float)
         {
             float         speed;
             std::uint32_t flags;
             std::uint32_t value;   // gold
             float         weight;
             std::uint16_t damage;
+            std::uint8_t  clipRounds; // only in FO3/FONV
 
-            Data() : speed(0.f), flags(0), value(0), weight(0.f), damage(0) {}
+            Data() : speed(0.f), flags(0), value(0), weight(0.f), damage(0), clipRounds(0) {}
         };
 
         FormId mFormId;       // from the header

@@ -27,7 +27,7 @@ void ESM::ESM4Reader::openTes4File(const std::string &name)
         mHeader.mData.version = mReader.esmVersion();
         mHeader.mData.records = mReader.numRecords();
 
-        mReader.buildStringIndicies(); // for localised strings in Skyrim
+        mReader.buildLStringIndex(); // for localised strings in Skyrim
     }
     else
         fail("Unknown file format");

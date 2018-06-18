@@ -30,12 +30,13 @@
 #include <stdexcept>
 
 #include <iostream> // FIXME: debug only
-#ifdef NDEBUG // FIXME: debuggigng only
-#undef NDEBUG
-#endif
 
 #include "reader.hpp"
 //#include "writer.hpp"
+
+#ifdef NDEBUG // FIXME: debuggigng only
+#undef NDEBUG
+#endif
 
 ESM4::Cell::Cell() : mParent(0), mFormId(0), mFlags(0), mCellFlags(0), mX(0), mY(0), mOwner(0),
                      mGlobal(0), mClimate(0), mWater(0), mWaterHeight(0.f), mPreloaded(false)

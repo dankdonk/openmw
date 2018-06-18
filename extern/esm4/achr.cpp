@@ -92,6 +92,7 @@ void ESM4::ActorCharacter::load(ESM4::Reader& reader)
             case ESM4::SUB_XPCI: // formId
             case ESM4::SUB_XLOD:
             case ESM4::SUB_VMAD:
+            case ESM4::SUB_XLRL: // Unofficial Skyrim Patch
             case ESM4::SUB_XRDS: // FO3
             case ESM4::SUB_XIBS: // FO3
             case ESM4::SUB_SCHR: // FO3

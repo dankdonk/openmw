@@ -76,24 +76,20 @@ void ESM4::Armor::load(ESM4::Reader& reader)
             }
             case ESM4::SUB_DATA:
             {
-                if (reader.esmVersion() == ESM4::VER_094 || reader.esmVersion() == ESM4::VER_170)
+                //if (reader.esmVersion() == ESM4::VER_094 || reader.esmVersion() == ESM4::VER_170)
+                if (subHdr.dataSize == 8) // FO3 has 12 bytes even though VER_094
                 {
-                    if (subHdr.dataSize != 8) // FIXME: FO3 has 12 bytes?
-                    {
-                        reader.skipSubRecordData();
-                        break;
-                    }
-
                     reader.get(mData.value);
                     reader.get(mData.weight);
                 }
-                else if (reader.esmVersion() == ESM4::VER_134) // FIXME: FONV
+                else if (reader.esmVersion() == ESM4::VER_134 || subHdr.dataSize == 12)
                 {
-                    reader.skipSubRecordData(); // 12 bytes
-                    break;
+                    reader.get(mData.value);
+                    reader.get(mData.health);
+                    reader.get(mData.weight);
                 }
                 else
-                    reader.get(mData);
+                    reader.get(mData); // TES4
 
                 break;
             }

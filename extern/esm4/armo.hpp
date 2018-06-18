@@ -67,9 +67,9 @@ namespace ESM4
 #pragma pack(push, 1)
         struct Data
         {
-            std::uint16_t armor;
+            std::uint16_t armor; // Only in TES4?
             std::uint32_t value;
-            std::uint32_t health;
+            std::uint32_t health; // not in TES5?
             float         weight;
         };
 #pragma pack(pop)

@@ -40,6 +40,7 @@ namespace ESM4
     {
         struct Data
         {
+            std::uint32_t time;               // FO/FONV only
             float         duration;
             std::uint32_t radius;
             std::uint32_t colour; // RGBA

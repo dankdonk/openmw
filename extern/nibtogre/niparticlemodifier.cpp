@@ -28,13 +28,13 @@
 #include <cassert>
 #include <stdexcept>
 
-#ifdef NDEBUG // FIXME: debugging only
-#undef NDEBUG
-#endif
-
 #include "nistream.hpp"
 #include "nitimecontroller.hpp" // static_cast NiParticleSystemController
 #include "nimodel.hpp"
+
+#ifdef NDEBUG // FIXME: debugging only
+#undef NDEBUG
+#endif
 
 NiBtOgre::NiParticleModifier::NiParticleModifier(uint32_t index, NiStream& stream, const NiModel& model)
     : NiObject(index, stream, model)

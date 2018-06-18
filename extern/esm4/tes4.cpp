@@ -30,14 +30,15 @@
 #include <stdexcept>
 
 #include <iostream> // FIXME: debugging only
-#ifdef NDEBUG // FIXME: debuggigng only
-#undef NDEBUG
-#endif
 
 #include "common.hpp"
 #include "formid.hpp"
 #include "reader.hpp"
 //#include "writer.hpp"
+
+#ifdef NDEBUG // FIXME: debuggigng only
+#undef NDEBUG
+#endif
 
 void ESM4::Header::load(ESM4::Reader& reader)
 {
@@ -72,9 +73,19 @@ void ESM4::Header::load(ESM4::Reader& reader)
             case ESM4::SUB_MAST: // multiple
             {
                 MasterData m;
-                if (!reader.getZString(m.name) || !reader.getSubRecord(ESM4::SUB_DATA, m.size))
+                if (!reader.getZString(m.name))
                     throw std::runtime_error("TES4 MAST data read error");
+
+                // NOTE: some mods do not have DATA following MAST so can't read DATA here
+
                 mMaster.push_back (m);
+                break;
+            }
+            case ESM4::SUB_DATA:
+            {
+                // WARNING: assumes DATA always follows MAST
+                if (!reader.get(mMaster.back().size))
+                    throw std::runtime_error("TES4 DATA data read error");
                 break;
             }
             case ESM4::SUB_ONAM:

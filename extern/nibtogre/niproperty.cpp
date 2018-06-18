@@ -28,11 +28,11 @@
 #include <cassert>
 #include <stdexcept>
 
+#include "nistream.hpp"
+
 #ifdef NDEBUG // FIXME: debuggigng only
 #undef NDEBUG
 #endif
-
-#include "nistream.hpp"
 
 #if 0
 // Seen in NIF version 20.2.0.7

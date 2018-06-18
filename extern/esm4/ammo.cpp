@@ -70,27 +70,30 @@ void ESM4::Ammo::load(ESM4::Reader& reader)
             }
             case ESM4::SUB_DATA:
             {
-                if (reader.esmVersion() == ESM4::VER_094 || reader.esmVersion() == ESM4::VER_170)
+                //if (reader.esmVersion() == ESM4::VER_094 || reader.esmVersion() == ESM4::VER_170)
+                if (subHdr.dataSize == 16) // FO3 has 13 bytes even though VER_094
                 {
-                    if (subHdr.dataSize != 16) // FIXME: FO3 has 13 bytes?
-                    {
-                        reader.skipSubRecordData();
-                        break;
-                    }
-
                     FormId projectile;
-                    reader.get(projectile);
+                    reader.get(projectile); // FIXME: add to mData
                     reader.get(mData.flags);
                     reader.get(mData.weight);
                     float damageInFloat;
-                    reader.get(damageInFloat);
+                    reader.get(damageInFloat); // FIXME: add to mData
                 }
-                else if (reader.esmVersion() == ESM4::VER_134)
+                else if (reader.esmVersion() == ESM4::VER_134 || subHdr.dataSize == 13)
                 {
-                    reader.skipSubRecordData(); // FIXME: FONV 13 bytes
-                    break;
+                    reader.get(mData.speed);
+                    std::uint8_t flags;
+                    reader.get(flags);
+                    mData.flags = flags;
+                    static std::uint8_t dummy;
+                    reader.get(dummy);
+                    reader.get(dummy);
+                    reader.get(dummy);
+                    reader.get(mData.value);
+                    reader.get(mData.clipRounds);
                 }
-                else
+                else // TES4
                 {
                     reader.get(mData.speed);
                     reader.get(mData.flags);

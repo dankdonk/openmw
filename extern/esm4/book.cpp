@@ -93,31 +93,19 @@ void ESM4::Book::load(ESM4::Reader& reader)
             }
             case ESM4::SUB_DATA:
             {
-                if (reader.esmVersion() == ESM4::VER_094 && subHdr.dataSize == 10) // FIXME: FO3 has 10 bytes?
-                {
-                    reader.skipSubRecordData();
-                    break;
-                }
-                else if (esmVer == ESM4::VER_134) // FIXME: FONV
-                {
-                    reader.skipSubRecordData();
-                    break;
-                }
-
                 reader.get(mData.flags);
-                if (reader.esmVersion() == ESM4::VER_094 || reader.esmVersion() == ESM4::VER_170)
+                //if (reader.esmVersion() == ESM4::VER_094 || reader.esmVersion() == ESM4::VER_170)
+                if (subHdr.dataSize == 16) // FO3 has 10 bytes even though VER_094
                 {
                     static std::uint8_t dummy;
                     reader.get(mData.type);
                     reader.get(dummy);
                     reader.get(dummy);
-                    reader.get(mData.bookSkill);
+                    reader.get(mData.teaches);
                 }
                 else
                 {
-                    std::uint8_t bookSkill;
-                    reader.get(bookSkill);
-                    mData.bookSkill = bookSkill;
+                    reader.get(mData.bookSkill);
                 }
                 reader.get(mData.value);
                 reader.get(mData.weight);

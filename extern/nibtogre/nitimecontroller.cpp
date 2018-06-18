@@ -28,13 +28,13 @@
 #include <cassert>
 #include <stdexcept>
 
-#ifdef NDEBUG // FIXME: debugging only
-#undef NDEBUG
-#endif
-
 #include "nistream.hpp"
 #include "niavobject.hpp"  // static_cast NiGeometry
 #include "nimodel.hpp"
+
+#ifdef NDEBUG // FIXME: debugging only
+#undef NDEBUG
+#endif
 
 NiBtOgre::NiTimeController::NiTimeController(uint32_t index, NiStream& stream, const NiModel& model)
     : NiObject(index, stream, model)

@@ -48,7 +48,10 @@ namespace ESM4
             std::uint32_t health;
             float         weight;
             std::uint16_t damage;
-            Data() : type(0), speed(0.f), reach(0.f), flags(0), value(0), health(0), weight(0.f), damage(0) {}
+            std::uint8_t  clipSize; // FO3/FONV only
+
+            Data() : type(0), speed(0.f), reach(0.f), flags(0), value(0),
+                     health(0), weight(0.f), damage(0), clipSize(0) {}
         };
 
         FormId mFormId;       // from the header

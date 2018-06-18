@@ -71,22 +71,17 @@ void ESM4::Light::load(ESM4::Reader& reader)
             }
             case ESM4::SUB_DATA:
             {
-                if (reader.esmVersion() == ESM4::VER_094 && subHdr.dataSize == 32) // FO3 is VER_094 but has 32 bytes
-                {
-                    reader.skipSubRecordData();
-                    break; // FIXME
-                }
-                else if (reader.esmVersion() == ESM4::VER_134)
-                {
-                    reader.skipSubRecordData();
-                    break;
-                }
+                if ((reader.esmVersion() == ESM4::VER_134) ||
+                    (reader.esmVersion() == ESM4::VER_094 && subHdr.dataSize == 32)) // FO3
+                    reader.get(mData.time);     // uint32
+                else
+                    reader.get(mData.duration); // float
 
-                reader.get(mData.duration);
                 reader.get(mData.radius);
                 reader.get(mData.colour);
                 reader.get(mData.flags);
-                if (reader.esmVersion() == ESM4::VER_094 || reader.esmVersion() == ESM4::VER_170)
+                //if (reader.esmVersion() == ESM4::VER_094 || reader.esmVersion() == ESM4::VER_170)
+                if (subHdr.dataSize == 48)
                 {
                     reader.get(mData.falloff);
                     reader.get(mData.FOV);

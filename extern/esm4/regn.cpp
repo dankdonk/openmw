@@ -30,12 +30,13 @@
 #include <stdexcept>
 
 #include <iostream> // FIXME: debug only
-#ifdef NDEBUG // FIXME: debuggigng only
-#undef NDEBUG
-#endif
 
 #include "reader.hpp"
 //#include "writer.hpp"
+
+#ifdef NDEBUG // FIXME: debuggigng only
+#undef NDEBUG
+#endif
 
 ESM4::Region::Region() : mFormId(0), mFlags(0)
 {

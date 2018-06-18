@@ -23,12 +23,7 @@
 #include "nimodel.hpp"
 
 #include <stdexcept>
-//#include <cassert>
-
 #include <iostream> // FIXME: debugging only
-#ifdef NDEBUG       // FIXME: debugging only
-#undef NDEBUG
-#endif
 
 #include "niobject.hpp"
 

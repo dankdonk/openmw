@@ -29,12 +29,12 @@
 #include <cassert>
 #include <stdexcept>
 
+#include "reader.hpp"
+//#include "writer.hpp"
+
 #ifdef NDEBUG // FIXME: debuggigng only
 #undef NDEBUG
 #endif
-
-#include "reader.hpp"
-//#include "writer.hpp"
 
 ESM4::Class::Class()
 {

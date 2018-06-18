@@ -252,18 +252,14 @@ void ESM4::Reference::load(ESM4::Reader& reader)
             case ESM4::SUB_XSRF: // FONV
             case ESM4::SUB_XSRD: // FONV
             case ESM4::SUB_WMI1: // FONV
+            case ESM4::SUB_XLRL: // Unofficial Skyrim Patch
             {
                 //std::cout << "REFR " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
                 reader.skipSubRecordData();
                 break;
             }
             default:
-                //throw std::runtime_error("ESM4::REFR::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
-            {
-                std::cout << "REFR " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
-                reader.skipSubRecordData();
-                break;
-            }
+                throw std::runtime_error("ESM4::REFR::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
         }
     }
 }

@@ -29,12 +29,12 @@
 #include <cassert>
 #include <stdexcept>
 
+#include "reader.hpp"
+//#include "writer.hpp"
+
 #ifdef NDEBUG // FIXME: debuggigng only
 #undef NDEBUG
 #endif
-
-#include "reader.hpp"
-//#include "writer.hpp"
 
 ESM4::LandTexture::LandTexture() : mFormId(0), mFlags(0), mHavokFriction(0), mHavokRestitution(0),
                                    mTextureSpecular(0), mGrass(0), mHavokMaterial(0), mTexture(0),

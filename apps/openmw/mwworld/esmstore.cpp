@@ -79,10 +79,11 @@ void ESMStore::load(ESM::ESMReader& esm, Loading::Listener* listener)
 
     int esmVer = esm.getVer();
     bool isTes4 = esmVer == ESM::VER_080 || esmVer == ESM::VER_100;
-    bool isTes5 = esmVer == ESM::VER_094 || esmVer == ESM::VER_17 || esmVer == ESM::VER_134;
+    bool isTes5 = esmVer == ESM::VER_094 || esmVer == ESM::VER_17;
+    bool isFONV = esmVer == ESM4::VER_132 || esmVer == ESM4::VER_133 || esmVer == ESM4::VER_134;
 
     // FIXME: temporary workaround
-    if (!(isTes4 || isTes5)) // MW only
+    if (!(isTes4 || isTes5 || isFONV)) // MW only
     {
         // Land texture loading needs to use a separate internal store for each plugin.
         // We set the number of plugins here to avoid continual resizes during loading,
@@ -93,7 +94,7 @@ void ESMStore::load(ESM::ESMReader& esm, Loading::Listener* listener)
 
     // FIXME: for TES4/TES5 whether a dependent file is loaded is already checked in
     // ESM4::Reader::updateModIndicies() which is called in EsmLoader::load() before this
-    if (!(isTes4 || isTes5)) // MW only
+    if (!(isTes4 || isTes5 || isFONV)) // MW only
     {
         /// \todo Move this to somewhere else. ESMReader?
         // Cache parent esX files by tracking their indices in the global list of
@@ -127,7 +128,7 @@ void ESMStore::load(ESM::ESMReader& esm, Loading::Listener* listener)
     // Loop through all records
     while(esm.hasMoreRecs())
     {
-        if (isTes4 || isTes5)
+        if (isTes4 || isTes5 || isFONV)
         {
             ESM4::Reader& reader = static_cast<ESM::ESM4Reader*>(&esm)->reader();
             reader.checkGroupStatus();

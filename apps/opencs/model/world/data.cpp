@@ -1616,8 +1616,9 @@ int CSMWorld::Data::startLoading (const boost::filesystem::path& path, bool base
 
     int esmVer = mReader->getVer();
     bool isTes4 = esmVer == ESM::VER_080 || esmVer == ESM::VER_100;
-    bool isTes5 = esmVer == ESM::VER_094 || esmVer == ESM::VER_17 || esmVer == ESM::VER_134;
-    if (isTes4 || isTes5)
+    bool isTes5 = esmVer == ESM::VER_094 || esmVer == ESM::VER_17;
+    bool isFONV = esmVer == ESM4::VER_132 || esmVer == ESM4::VER_133 || esmVer == ESM4::VER_134;
+    if (isTes4 || isTes5 || isFONV)
     {
         mReader->close();
         delete mReader;
@@ -1681,10 +1682,11 @@ bool CSMWorld::Data::continueLoading (CSMDoc::Messages& messages)
     int esmVer = mReader->getVer();
     bool isTes4 = esmVer == ESM::VER_080 || esmVer == ESM::VER_100;
     bool isTes5 = esmVer == ESM::VER_094 || esmVer == ESM::VER_17;
+    bool isFONV = esmVer == ESM4::VER_132 || esmVer == ESM4::VER_133 || esmVer == ESM4::VER_134;
     // Check if previous record/group was the final one in this group.  Must be done before
     // calling mReader->hasMoreRecs() below, because all records may have been processed when
     // the previous group is popped off the stack.
-    if (isTes4 || isTes5)
+    if (isTes4 || isTes5 || isFONV)
         static_cast<ESM::ESM4Reader*>(mReader)->reader().checkGroupStatus();
 
     if (!mReader->hasMoreRecs())

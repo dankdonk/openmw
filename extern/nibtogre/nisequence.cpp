@@ -28,13 +28,13 @@
 #include <cassert>
 #include <stdexcept>
 
-#ifdef NDEBUG // FIXME: debuggigng only
-#undef NDEBUG
-#endif
-
 #include "nistream.hpp"
 #include "nitimecontroller.hpp" // static_cast NiControllerManager
 #include "nimodel.hpp"
+
+#ifdef NDEBUG // FIXME: debuggigng only
+#undef NDEBUG
+#endif
 
 // NOTE: assumed that this is not used in TES3 (seems to use NiSequenceStreamHelper),
 //       10.2.0.0 (TES4) seems to be the earliest example

@@ -71,22 +71,20 @@ void ESM4::Weapon::load(ESM4::Reader& reader)
             }
             case ESM4::SUB_DATA:
             {
-                if (reader.esmVersion() == ESM4::VER_094 || reader.esmVersion() == ESM4::VER_170)
+                //if (reader.esmVersion() == ESM4::VER_094 || reader.esmVersion() == ESM4::VER_170)
+                if (subHdr.dataSize == 10) // FO3 has 15 bytes even though VER_094
                 {
-                    if (subHdr.dataSize != 10) // FO3 has 15 bytes?
-                    {
-                        reader.skipSubRecordData();
-                        break;
-                    }
-
                     reader.get(mData.value);
                     reader.get(mData.weight);
                     reader.get(mData.damage);
                 }
-                else if (reader.esmVersion() == ESM4::VER_134)
+                else if (reader.esmVersion() == ESM4::VER_134 || subHdr.dataSize == 15)
                 {
-                    reader.skipSubRecordData(); // FONV 15 bytes
-                    break;
+                    reader.get(mData.value);
+                    reader.get(mData.health);
+                    reader.get(mData.weight);
+                    reader.get(mData.damage);
+                    reader.get(mData.clipSize);
                 }
                 else
                 {
