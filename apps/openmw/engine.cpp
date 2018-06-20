@@ -369,7 +369,7 @@ void OMW::Engine::prepareEngine (Settings::Manager & settings)
     mOgre->createWindow("OpenMW", windowSettings);
 
     Bsa::registerResources (mFileCollections, mArchives, true, mFSStrict);
-    Bsa::registerResources (mFileCollections, mTES4Archives, true, mFSStrict, /*isTes4*/true);
+    Bsa::registerResources (mFileCollections, mTES4Archives, /*useLooseFiles*/false, mFSStrict, /*isTes4*/true);
 
     // Create input and UI first to set up a bootstrapping environment for
     // showing a loading screen and keeping the window responsive while doing so

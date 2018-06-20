@@ -67,6 +67,7 @@ namespace OMW
             ToUTF8::Utf8Encoder* mEncoder;
             Files::PathContainer mDataDirs;
             std::vector<std::string> mArchives;
+            std::vector<std::string> mTES4Archives;
             boost::filesystem::path mResDir;
             OEngine::Render::OgreRenderer *mOgre;
             std::string mCellName;
