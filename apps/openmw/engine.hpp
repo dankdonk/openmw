@@ -137,6 +137,7 @@ namespace OMW
 
             /// Add BSA archive
             void addArchive(const std::string& archive);
+            void addTES4Archive(const std::string& archive);
 
             /// Set resource dir
             void setResourceDir(const boost::filesystem::path& parResDir);

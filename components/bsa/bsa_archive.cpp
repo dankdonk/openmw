@@ -42,6 +42,7 @@
 #endif
 
 #include "bsa_file.hpp"
+#include "tes4bsa_archive.hpp"
 
 #include "../files/constrainedfiledatastream.hpp"
 
@@ -223,6 +224,8 @@ public:
              : Archive(name, "BSA")
   { arc.open(name); }
 
+  BSAArchive(const String& name, const std::string& type) : Archive(name, type) {}
+
   bool isCaseSensitive() const { return false; }
 
   // The archive is loaded in the constructor, and never unloaded.
@@ -241,7 +244,7 @@ public:
     return narc->getFile(filename.c_str());
   }
 
-  bool exists(const String& filename) {
+  virtual bool exists(const String& filename) {
     return arc.exists(filename.c_str());
   }
 
@@ -259,7 +262,7 @@ public:
     return findFileInfo ("*", recursive, dirs);
   }
 
-    StringVectorPtr find(const String& pattern, bool recursive = true,
+    virtual StringVectorPtr find(const String& pattern, bool recursive = true,
                          bool dirs = false)
     {
         std::string normalizedPattern = normalize_path(pattern.begin(), pattern.end());
@@ -304,6 +307,24 @@ public:
 
         return ptr;
     }
+};
+
+class TES4BSAArchive : public BSAArchive
+{
+  Bsa::TES4BSAFile arc;
+
+public:
+  TES4BSAArchive::TES4BSAArchive(const String& name) : BSAArchive(name, "TES4BSA") { arc.open(name); }
+
+  virtual DataStreamPtr open(const String& filename, bool readonly = true)
+  {
+    return arc.getFile(filename.c_str());
+  }
+
+  virtual bool exists(const String& filename)
+  {
+    return arc.exists(filename.c_str());
+  }
 };
 
 // An archive factory for BSA archives
@@ -351,9 +372,32 @@ public:
     void destroyInstance( Archive* arch) { delete arch; }
 };
 
+class TES4BSAArchiveFactory : public ArchiveFactory
+{
+public:
+  const String& getType() const
+  {
+    static String name = "TES4BSA";
+    return name;
+  }
+
+  Archive *createInstance( const String& name )
+  {
+    return new TES4BSAArchive(name);
+  }
+
+  virtual Archive* createInstance(const String& name, bool readOnly)
+  {
+    return new TES4BSAArchive(name);
+  }
+
+  void destroyInstance( Archive* arch) { delete arch; }
+};
+
 
 static bool init = false;
 static bool init2 = false;
+static bool init3 = false;
 
 static void insertBSAFactory()
 {
@@ -361,6 +405,15 @@ static void insertBSAFactory()
     {
       ArchiveManager::getSingleton().addArchiveFactory( new BSAArchiveFactory );
       init = true;
+    }
+}
+
+static void insertTES4BSAFactory()
+{
+  if(!init3)
+    {
+      ArchiveManager::getSingleton().addArchiveFactory( new TES4BSAArchiveFactory );
+      init3 = true;
     }
 }
 
@@ -384,6 +437,13 @@ void addBSA(const std::string& name, const std::string& group)
   insertBSAFactory();
   ResourceGroupManager::getSingleton().
     addResourceLocation(name, "BSA", group, true);
+}
+
+void addTES4BSA(const std::string& name, const std::string& group)
+{
+  insertTES4BSAFactory();
+  ResourceGroupManager::getSingleton().
+    addResourceLocation(name, "TES4BSA", group, true);
 }
 
 void addDir(const std::string& name, const bool& fs, const std::string& group)
