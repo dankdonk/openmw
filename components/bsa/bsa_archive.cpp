@@ -318,12 +318,12 @@ public:
 
   virtual DataStreamPtr open(const String& filename, bool readonly = true)
   {
-    return arc.getFile(filename.c_str());
+    return arc.getFile(filename);
   }
 
   virtual bool exists(const String& filename)
   {
-    return arc.exists(filename.c_str());
+    return arc.exists(filename);
   }
 };
 

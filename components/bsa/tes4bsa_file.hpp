@@ -44,6 +44,8 @@ namespace Bsa
             std::uint32_t size;
             std::uint32_t offset;
 
+            std::string filename; // FIXME: for testing hash collision
+
             FileRecord() : size(0), offset(-1) {}
         };
 
@@ -57,7 +59,7 @@ namespace Bsa
         bool mCompressedByDefault;
         bool mEmbeddedFileNames;
 
-        std::map<std::uint64_t, FileRecord> mFiles; // FIXME: temp till getList implemented
+        std::map<std::uint64_t, FileRecord> mFiles;
         typedef std::map<std::uint64_t, FileRecord> FileList;
 
         struct FolderRecord
@@ -68,7 +70,7 @@ namespace Bsa
         };
         std::map<std::uint64_t, FolderRecord> mFolders;
 
-        FileRecord getFileRecord(const char *str) const;
+        FileRecord getFileRecord(const std::string& str) const;
 
         /// Used for error messages and getting files
         std::string mFilename;
@@ -88,9 +90,9 @@ namespace Bsa
         void open(const std::string &file);
 
         /// Check if a file exists
-        bool exists(const char *file) const;
+        bool exists(const std::string& file) const;
 
-        Ogre::DataStreamPtr getFile(const char *file);
+        Ogre::DataStreamPtr getFile(const std::string& file);
 
         /// Get a list of all files
         const FileList &getList() const // FIXME

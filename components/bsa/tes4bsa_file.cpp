@@ -36,6 +36,8 @@
 
 #include <extern/BSAOpt/hash.hpp> // see: http://en.uesp.net/wiki/Tes4Mod:Hash_Calculation
 
+//#define TEST_UNIQUE_HASH 1
+
 namespace
 {
     void getBZString(std::string& str, boost::filesystem::ifstream& filestream)
@@ -185,11 +187,12 @@ void TES4BSAFile::readHeader()
     isLoaded = true;
 }
 
-TES4BSAFile::FileRecord TES4BSAFile::getFileRecord(const char *str) const
+TES4BSAFile::FileRecord TES4BSAFile::getFileRecord(const std::string& str) const
 {
     boost::filesystem::path p(str);
     std::string stem = p.stem().string();
     std::string ext = p.extension().string();
+    std::string filename = p.filename().string();
     p.remove_filename();
 
     std::string folder = p.string();
@@ -201,21 +204,60 @@ TES4BSAFile::FileRecord TES4BSAFile::getFileRecord(const char *str) const
 
     std::map<std::uint64_t, FolderRecord>::const_iterator it = mFolders.find(folderHash);
     if (it == mFolders.end())
-        return FileRecord();
+        return FileRecord(); // folder not found, return default which has offset of -1
 
     boost::algorithm::to_lower(stem);
     boost::algorithm::to_lower(ext);
     std::uint64_t fileHash = GenOBHashPair(stem, ext);
     std::map<std::uint64_t, FileRecord>::const_iterator iter = it->second.files.find(fileHash);
     if (iter == it->second.files.end())
-        return FileRecord();
+        return FileRecord(); // file not found, return default which has offset of -1
 
+    // cache for next time
+    std::uint64_t hash = GenOBHashPair(p.string(), filename);
+
+#if defined (TEST_UNIQUE_HASH)
+    FileList::const_iterator lb = mFiles.lower_bound(hash);
+    if (lb != mFiles.end() && !(mFiles.key_comp()(hash, lb->first)))
+    {
+        // found, check if same filename
+        if (lb->second.filename == str)
+            return iter->second; // same name, should not have got here!!
+        else
+        {
+            // different filename, hash is not unique!
+            std::cerr << "BSA hash collision: " << str << std::hex << "0x" << hash << std::endl;
+
+            return iter->second; // return without cashing
+        }
+    }
+
+    // not found, cache for later
+    const_cast<FileList&>(mFiles).insert(lb, std::pair<std::uint64_t, FileRecord>(hash, iter->second)); // NOTE: const hack
+    const_cast<FileList&>(mFiles)[hash].filename = str; // FIXME: for testing hash collision
+#else
+    const_cast<FileList&>(mFiles)[hash] = iter->second; // NOTE: const hack
+#endif
     return iter->second;
 }
 
-bool TES4BSAFile::exists(const char *str) const
+bool TES4BSAFile::exists(const std::string& str) const
 {
-    return getFileRecord(str).offset != -1;
+    // check cache first
+    boost::filesystem::path p(str);
+    std::string filename = p.filename().string();
+    p.remove_filename();
+    std::uint64_t hash = GenOBHashPair(p.string(), filename);
+
+    std::map<std::uint64_t, FileRecord>::const_iterator it = mFiles.find(hash);
+#if defined (TEST_UNIQUE_HASH)
+    if (it != mFiles.end() && it->second.filename == str) // FIXME: testing hash collision
+#else
+    if (it != mFiles.end())
+#endif
+        return true;
+    else
+        return getFileRecord(str).offset != -1;
 }
 
 void TES4BSAFile::open(const std::string& file)
@@ -224,7 +266,7 @@ void TES4BSAFile::open(const std::string& file)
     readHeader();
 }
 
-Ogre::DataStreamPtr TES4BSAFile::getFile(const char *file)
+Ogre::DataStreamPtr TES4BSAFile::getFile(const std::string& file)
 {
     assert(file);
 
