@@ -233,8 +233,8 @@ TES4BSAFile::FileRecord TES4BSAFile::getFileRecord(const std::string& str) const
     }
 
     // not found, cache for later
-    const_cast<FileList&>(mFiles).insert(lb, std::pair<std::uint64_t, FileRecord>(hash, iter->second)); // NOTE: const hack
-    const_cast<FileList&>(mFiles)[hash].filename = str; // FIXME: for testing hash collision
+    const_cast<FileList&>(mFiles).insert(lb, std::pair<std::uint64_t, FileRecord>(hash, iter->second));
+    const_cast<FileList&>(mFiles)[hash].filename = str;
 #else
     const_cast<FileList&>(mFiles)[hash] = iter->second; // NOTE: const hack
 #endif
@@ -251,7 +251,7 @@ bool TES4BSAFile::exists(const std::string& str) const
 
     std::map<std::uint64_t, FileRecord>::const_iterator it = mFiles.find(hash);
 #if defined (TEST_UNIQUE_HASH)
-    if (it != mFiles.end() && it->second.filename == str) // FIXME: testing hash collision
+    if (it != mFiles.end() && it->second.filename == str)
 #else
     if (it != mFiles.end())
 #endif

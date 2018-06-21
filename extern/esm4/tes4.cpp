@@ -42,7 +42,7 @@
 
 void ESM4::Header::load(ESM4::Reader& reader)
 {
-    mFlags = reader.hdr().record.flags; // 0x01 = ESM, 0x80 = localised strings
+    mFlags = reader.hdr().record.flags; // 0x01 = Rec_ESM, 0x80 = Rec_Localized
 
     while (reader.getSubRecordHeader())
     {
