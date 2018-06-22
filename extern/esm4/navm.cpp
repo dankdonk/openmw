@@ -223,6 +223,7 @@ void ESM4::NavMesh::load(ESM4::Reader& reader)
                 if (subSize)
                 {
                     reader.skipSubRecordData(subSize); // special post XXXX
+                    reader.updateRecordRemaining(subSize); // WARNING: manual update
                     subSize = 0;
                 }
                 else

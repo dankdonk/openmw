@@ -73,7 +73,7 @@ namespace ESM4
         Header          mHeader;          // ESM header // FIXME
         RecordHeader    mRecordHeader;    // header of the current record or group being processed
         SubRecordHeader mSubRecordHeader; // header of the current sub record being processed
-        std::size_t     mEndOfRecord;     // number of bytes read by sub records
+        std::size_t     mRecordRemaining; // number of bytes to be read by sub records following current
 
         // FIXME: try to get rid of these two members, seem like massive hacks
         CellGrid        mCurrCellGrid;    // TODO: should keep a map of cell formids
@@ -191,6 +191,9 @@ namespace ESM4
 
         // Read 6 bytes of header. The caller can then decide whether to process or skip the data.
         bool getSubRecordHeader();
+
+        // Manally update (i.e. reduce) the bytes remaining to be read after SUB_XXXX
+        inline void updateRecordRemaining(std::uint32_t subSize) { mRecordRemaining -= subSize; }
 
         inline const SubRecordHeader& subRecordHeader() const { return mSubRecordHeader; }
 

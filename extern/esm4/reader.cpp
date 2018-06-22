@@ -41,7 +41,7 @@
 #undef NDEBUG
 #endif
 
-ESM4::Reader::Reader() : mObserver(nullptr), mEndOfRecord(0), mCellGridValid(false)
+ESM4::Reader::Reader() : mObserver(nullptr), mRecordRemaining(0), mCellGridValid(false)
 {
     mCtx.modIndex = 0;
     mCtx.currWorld = 0;
@@ -88,7 +88,7 @@ bool ESM4::Reader::restoreContext(const ESM4::ReaderContext& ctx)
         mObserver->update(mCtx.recHeaderSize);
 
     return (mStream->read(&mRecordHeader, mCtx.recHeaderSize) == mCtx.recHeaderSize
-            && (mEndOfRecord = mStream->tell() + mRecordHeader.record.dataSize)); // for keeping track of sub records
+            && (mRecordRemaining = mRecordHeader.record.dataSize)); // for keeping track of sub records
 }
 
 bool ESM4::Reader::skipNextGroupCellChild()
@@ -169,13 +169,13 @@ void ESM4::Reader::buildLStringIndex(const std::string& stringFile, LocalizedStr
             throw std::runtime_error("ESM4::Reader::unexpected string type");
     }
 
-    filestream->read(&numEntries, sizeof(std::uint32_t));
-    filestream->read(&dataSize, sizeof(std::uint32_t));
+    filestream->read(&numEntries, sizeof(numEntries));
+    filestream->read(&dataSize, sizeof(dataSize));
     std::size_t dataStart = filestream->size() - dataSize;
     for (unsigned int i = 0; i < numEntries; ++i)
     {
-        filestream->read(&stringId, sizeof(std::uint32_t));
-        filestream->read(&sp.offset, sizeof(std::uint32_t));
+        filestream->read(&stringId, sizeof(stringId));
+        filestream->read(&sp.offset, sizeof(sp.offset));
         sp.offset += (std::uint32_t)dataStart;
         mLStringIndex[stringId] = sp;
     }
@@ -201,7 +201,7 @@ void ESM4::Reader::getLocalizedString(const FormId stringId, std::string& str)
                 char ch;
                 std::vector<char> data;
                 do {
-                    filestream->read(&ch, sizeof(char));
+                    filestream->read(&ch, sizeof(ch));
                     data.push_back(ch);
                 } while (ch != 0);
 
@@ -237,7 +237,7 @@ bool ESM4::Reader::getRecordHeader()
         mObserver->update(mCtx.recHeaderSize);
 
     return (mStream->read(&mRecordHeader, mCtx.recHeaderSize) == mCtx.recHeaderSize
-            && (mEndOfRecord = mStream->tell() + mRecordHeader.record.dataSize)); // for keeping track of sub records
+            && (mRecordRemaining = mRecordHeader.record.dataSize)); // for keeping track of sub records
 
     // After reading the record header we can cache a WRLD or CELL formId for convenient access later.
     // (currently currWorld and currCell are set manually when loading the WRLD and CELL records)
@@ -245,7 +245,16 @@ bool ESM4::Reader::getRecordHeader()
 
 bool ESM4::Reader::getSubRecordHeader()
 {
-    return (mStream->tell() < mEndOfRecord) && get(mSubRecordHeader);
+    bool result = false;
+    // NOTE: some SubRecords have 0 dataSize (e.g. SUB_RDSD in one of REC_REGN records in Oblivion.esm).
+    // Also SUB_XXXX has zero dataSize and the following 4 bytes represent the actual dataSize
+    // - hence it require manual updtes to mRecordRemaining. See ESM4::NavMesh and ESM4::World.
+    if (mRecordRemaining >= sizeof(mSubRecordHeader))
+    {
+        result = get(mSubRecordHeader);
+        mRecordRemaining -= (sizeof(mSubRecordHeader) + mSubRecordHeader.dataSize);
+    }
+    return result;
 }
 
 // NOTE: the parameter 'files' must have the file names in the loaded order
@@ -389,7 +398,7 @@ void ESM4::Reader::getRecordData()
         {
         case Z_NEED_DICT:
             ret = Z_DATA_ERROR; /* and fall through */
-        case Z_DATA_ERROR:
+        case Z_DATA_ERROR: //FONV.esm 0xB0CFF04 LAND record zlip DATA_ERROR
         case Z_MEM_ERROR:
             inflateEnd(&strm);
             getRecordDataPostActions();

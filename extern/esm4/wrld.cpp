@@ -160,6 +160,7 @@ void ESM4::World::load(ESM4::Reader& reader)
                 if (subSize)
                 {
                     reader.skipSubRecordData(subSize); // special post XXXX
+                    reader.updateRecordRemaining(subSize); // WARNING: manually update
                     subSize = 0;
                 }
                 else
