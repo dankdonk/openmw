@@ -55,6 +55,7 @@ void ESM4::Npc::load(ESM4::Reader& reader)
     reader.adjustFormId(mFormId);
     mFlags  = reader.hdr().record.flags;
     std::uint32_t esmVer = reader.esmVersion();
+    bool isFONV = esmVer == ESM4::VER_132 || esmVer == ESM4::VER_133 || esmVer == ESM4::VER_134;
 
     while (reader.getSubRecordHeader())
     {
@@ -114,7 +115,7 @@ void ESM4::Npc::load(ESM4::Reader& reader)
             //
             case ESM4::SUB_AIDT:
             {
-                if (esmVer == ESM4::VER_094 || esmVer == ESM4::VER_170 || esmVer == ESM4::VER_134)
+                if (esmVer == ESM4::VER_094 || esmVer == ESM4::VER_170 || isFONV)
                 {
                     reader.skipSubRecordData(); // FIXME: process the subrecord rather than skip
                     break;
@@ -125,7 +126,7 @@ void ESM4::Npc::load(ESM4::Reader& reader)
             }
             case ESM4::SUB_ACBS:
             {
-                if (esmVer == ESM4::VER_094 || esmVer == ESM4::VER_170 || esmVer == ESM4::VER_134)
+                if (esmVer == ESM4::VER_094 || esmVer == ESM4::VER_170 || isFONV)
                 {
                     reader.skipSubRecordData(); // FIXME: process the subrecord rather than skip
                     break;
@@ -136,7 +137,7 @@ void ESM4::Npc::load(ESM4::Reader& reader)
             }
             case ESM4::SUB_DATA:
             {
-                if (esmVer == ESM4::VER_094 || esmVer == ESM4::VER_170 || esmVer == ESM4::VER_134)
+                if (esmVer == ESM4::VER_094 || esmVer == ESM4::VER_170 || isFONV)
                 {
                     if (subHdr.dataSize != 0) // FIXME FO3
                         reader.skipSubRecordData();

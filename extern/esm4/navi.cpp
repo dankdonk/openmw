@@ -248,6 +248,8 @@ void ESM4::Navigation::load(ESM4::Reader& reader)
 {
     //mFormId = reader.hdr().record.id;
     //mFlags  = reader.hdr().record.flags;
+    std::uint32_t esmVer = reader.esmVersion();
+    bool isFONV = esmVer == ESM4::VER_132 || esmVer == ESM4::VER_133 || esmVer == ESM4::VER_134;
 
     while (reader.getSubRecordHeader())
     {
@@ -336,7 +338,7 @@ void ESM4::Navigation::load(ESM4::Reader& reader)
             }
             case ESM4::SUB_NVMI: // multiple
             {
-                if (reader.esmVersion() == ESM4::VER_094 || reader.esmVersion() == ESM4::VER_134)
+                if (esmVer == ESM4::VER_094 || esmVer == ESM4::VER_170 || isFONV)
                 {
                     reader.skipSubRecordData(); // FIXME: FO3/FONV have different form of NavMeshInfo
                     break;

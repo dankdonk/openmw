@@ -49,6 +49,8 @@ void ESM4::Weapon::load(ESM4::Reader& reader)
     mFormId = reader.hdr().record.id;
     reader.adjustFormId(mFormId);
     mFlags  = reader.hdr().record.flags;
+    std::uint32_t esmVer = reader.esmVersion();
+    bool isFONV = esmVer == ESM4::VER_132 || esmVer == ESM4::VER_133 || esmVer == ESM4::VER_134;
 
     while (reader.getSubRecordHeader())
     {
@@ -78,7 +80,7 @@ void ESM4::Weapon::load(ESM4::Reader& reader)
                     reader.get(mData.weight);
                     reader.get(mData.damage);
                 }
-                else if (reader.esmVersion() == ESM4::VER_134 || subHdr.dataSize == 15)
+                else if (isFONV || subHdr.dataSize == 15)
                 {
                     reader.get(mData.value);
                     reader.get(mData.health);
@@ -175,6 +177,7 @@ void ESM4::Weapon::load(ESM4::Reader& reader)
             case ESM4::SUB_WNM5: // FONV
             case ESM4::SUB_WNM6: // FONV
             case ESM4::SUB_WNM7: // FONV
+            case MKTAG('E','F','S','D'): // FONV DeadMoney
             {
                 //std::cout << "WEAP " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
                 reader.skipSubRecordData();

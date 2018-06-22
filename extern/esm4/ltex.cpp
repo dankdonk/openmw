@@ -53,6 +53,8 @@ void ESM4::LandTexture::load(ESM4::Reader& reader)
     mFormId = reader.hdr().record.id;
     reader.adjustFormId(mFormId);
     mFlags  = reader.hdr().record.flags;
+    std::uint32_t esmVer = reader.esmVersion();
+    bool isFONV = esmVer == ESM4::VER_132 || esmVer == ESM4::VER_133 || esmVer == ESM4::VER_134;
 
     while (reader.getSubRecordHeader())
     {
@@ -62,9 +64,9 @@ void ESM4::LandTexture::load(ESM4::Reader& reader)
             case ESM4::SUB_EDID: reader.getZString(mEditorId); break;
             case ESM4::SUB_HNAM:
             {
-                if (reader.esmVersion() == ESM4::VER_134) // FIXME: skip FONV for now
+                if (isFONV)
                 {
-                    reader.skipSubRecordData();
+                    reader.skipSubRecordData(); // FIXME: skip FONV for now
                     break;
                 }
 

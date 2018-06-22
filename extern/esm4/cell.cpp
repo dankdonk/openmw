@@ -109,6 +109,7 @@ void ESM4::Cell::load(ESM4::Reader& reader)
     init(reader);
     reader.setCurrCell(mFormId); // save for LAND (and other children) to access later
     std::uint32_t esmVer = reader.esmVersion();
+    bool isFONV = esmVer == ESM4::VER_132 || esmVer == ESM4::VER_133 || esmVer == ESM4::VER_134;
 
     while (reader.getSubRecordHeader())
     {
@@ -149,7 +150,7 @@ void ESM4::Cell::load(ESM4::Reader& reader)
                 std::cout << padding << "CELL formId " << std::hex << reader.hdr().record.id << std::endl;
                 std::cout << padding << "CELL X " << std::dec << mX << ", Y " << mY << std::endl;
 #endif
-                if (esmVer == ESM4::VER_094 || esmVer == ESM4::VER_170 || esmVer == ESM4::VER_134)
+                if (esmVer == ESM4::VER_094 || esmVer == ESM4::VER_170 || isFONV)
                     if (subHdr.dataSize == 12)
                         reader.get(flags); // not in Obvlivion, nor FO3/FONV
 
@@ -181,7 +182,7 @@ void ESM4::Cell::load(ESM4::Reader& reader)
             }
             case ESM4::SUB_DATA:
             {
-                if (esmVer == ESM4::VER_094 || esmVer == ESM4::VER_170 || esmVer == ESM4::VER_134)
+                if (esmVer == ESM4::VER_094 || esmVer == ESM4::VER_170 || isFONV)
                     if (subHdr.dataSize == 2)
                         reader.get(mCellFlags);
                     else
@@ -222,7 +223,7 @@ void ESM4::Cell::load(ESM4::Reader& reader)
             case ESM4::SUB_XCLL:
             {
                 // 92 bytes for TES5, 19*4 = 76 bytes for FO3/FONV
-                if (esmVer == ESM4::VER_094 || esmVer == ESM4::VER_170 || esmVer == ESM4::VER_134)
+                if (esmVer == ESM4::VER_094 || esmVer == ESM4::VER_170 || isFONV)
                     reader.skipSubRecordData();
                 else
                 {

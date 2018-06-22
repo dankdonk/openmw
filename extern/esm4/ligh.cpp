@@ -49,6 +49,8 @@ void ESM4::Light::load(ESM4::Reader& reader)
     mFormId = reader.hdr().record.id;
     reader.adjustFormId(mFormId);
     mFlags  = reader.hdr().record.flags;
+    std::uint32_t esmVer = reader.esmVersion();
+    bool isFONV = esmVer == ESM4::VER_132 || esmVer == ESM4::VER_133 || esmVer == ESM4::VER_134;
 
     while (reader.getSubRecordHeader())
     {
@@ -71,9 +73,10 @@ void ESM4::Light::load(ESM4::Reader& reader)
             }
             case ESM4::SUB_DATA:
             {
-                if ((reader.esmVersion() == ESM4::VER_134) ||
-                    (reader.esmVersion() == ESM4::VER_094 && subHdr.dataSize == 32)) // FO3
+                if (isFONV || (esmVer == ESM4::VER_094 && subHdr.dataSize == 32)/*FO3*/)
+                {
                     reader.get(mData.time);     // uint32
+                }
                 else
                     reader.get(mData.duration); // float
 

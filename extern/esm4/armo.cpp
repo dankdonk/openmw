@@ -54,6 +54,8 @@ void ESM4::Armor::load(ESM4::Reader& reader)
     mFormId = reader.hdr().record.id;
     reader.adjustFormId(mFormId);
     mFlags  = reader.hdr().record.flags;
+    std::uint32_t esmVer = reader.esmVersion();
+    bool isFONV = esmVer == ESM4::VER_132 || esmVer == ESM4::VER_133 || esmVer == ESM4::VER_134;
 
     while (reader.getSubRecordHeader())
     {
@@ -82,7 +84,7 @@ void ESM4::Armor::load(ESM4::Reader& reader)
                     reader.get(mData.value);
                     reader.get(mData.weight);
                 }
-                else if (reader.esmVersion() == ESM4::VER_134 || subHdr.dataSize == 12)
+                else if (isFONV || subHdr.dataSize == 12)
                 {
                     reader.get(mData.value);
                     reader.get(mData.health);

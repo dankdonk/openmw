@@ -48,6 +48,8 @@ void ESM4::Ammo::load(ESM4::Reader& reader)
     mFormId = reader.hdr().record.id;
     reader.adjustFormId(mFormId);
     mFlags  = reader.hdr().record.flags;
+    std::uint32_t esmVer = reader.esmVersion();
+    bool isFONV = esmVer == ESM4::VER_132 || esmVer == ESM4::VER_133 || esmVer == ESM4::VER_134;
 
     while (reader.getSubRecordHeader())
     {
@@ -80,7 +82,7 @@ void ESM4::Ammo::load(ESM4::Reader& reader)
                     float damageInFloat;
                     reader.get(damageInFloat); // FIXME: add to mData
                 }
-                else if (reader.esmVersion() == ESM4::VER_134 || subHdr.dataSize == 13)
+                else if (isFONV || subHdr.dataSize == 13)
                 {
                     reader.get(mData.speed);
                     std::uint8_t flags;

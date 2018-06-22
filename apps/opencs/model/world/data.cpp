@@ -1713,7 +1713,7 @@ bool CSMWorld::Data::continueLoading (CSMDoc::Messages& messages)
         return true;
     }
 
-    if (isTes4 || isTes5)
+    if (isTes4 || isTes5 || isFONV)
         return loadTes4Group(messages);
 
     ESM::NAME n = mReader->getRecName();
@@ -1996,7 +1996,10 @@ bool CSMWorld::Data::loadTes4Group (CSMDoc::Messages& messages)
 {
     ESM4::Reader& reader = static_cast<ESM::ESM4Reader*>(mReader)->reader();
 
-    reader.getRecordHeader();
+    // check for EOF, sometimes there is a empty group at the end e.g. FONV DeadMoney.esm
+    if (!reader.getRecordHeader() || !mReader->hasMoreRecs())
+        return false;
+
     const ESM4::RecordHeader& hdr = reader.hdr();
 
     if (hdr.record.typeId != ESM4::REC_GRUP)
@@ -2044,7 +2047,9 @@ bool CSMWorld::Data::loadTes4Group (CSMDoc::Messages& messages)
             }
             else
             {
-                //std::cout << "skipping group..." << std::endl; // FIXME
+                std::cout << "Skipping group... "  // FIXME: testing only
+                    << ESM4::printLabel(hdr.group.label, hdr.group.type) << std::endl;
+
                 reader.skipGroup();
                 return false;
             }
@@ -2388,6 +2393,29 @@ bool CSMWorld::Data::loadTes4Record (const ESM4::RecordHeader& hdr, CSMDoc::Mess
         case ESM4::REC_PHZD:
         case ESM4::REC_PGRE:
         case ESM4::REC_ROAD: // Oblivion only?
+        case ESM4::REC_WATR: // FONV DeadMoney
+        case ESM4::REC_EFSH: // FONV DeadMoney
+
+        case MKTAG('E','X','P','L'):
+        case MKTAG('I','M','G','S'):
+        case MKTAG('I','M','A','D'):
+        case MKTAG('F','L','S','T'):
+        case MKTAG('P','E','R','K'):
+        case MKTAG('B','P','T','D'):
+        case MKTAG('V','T','Y','P'):
+        case MKTAG('I','P','C','T'):
+        case MKTAG('I','P','D','S'):
+        case MKTAG('A','R','M','A'):
+        case MKTAG('E','C','Z','N'):
+        case MKTAG('M','E','S','G'):
+        case MKTAG('R','G','D','L'):
+        case MKTAG('L','G','T','M'):
+        case MKTAG('R','C','P','E'):
+        case MKTAG('R','C','C','T'):
+        case MKTAG('C','H','A','L'):
+        case MKTAG('C','H','I','P'):
+        case MKTAG('C','S','N','O'):
+        case MKTAG('A','M','E','F'):
         {
             //std::cout << ESM4::printName(hdr.record.typeId) << " skipping..." << std::endl;
             reader.skipRecordData();

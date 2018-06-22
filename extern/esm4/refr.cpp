@@ -59,6 +59,7 @@ void ESM4::Reference::load(ESM4::Reader& reader)
     // TODO: Let the engine apply this? Saved games?
     //mDisabled = ((mFlags & ESM4::Rec_Disabled) != 0) ? true : false;
     std::uint32_t esmVer = reader.esmVersion();
+    bool isFONV = esmVer == ESM4::VER_132 || esmVer == ESM4::VER_133 || esmVer == ESM4::VER_134;
 
     while (reader.getSubRecordHeader())
     {
@@ -111,7 +112,7 @@ void ESM4::Reference::load(ESM4::Reader& reader)
             {
                 reader.get(mDoor.destDoor);
                 reader.get(mDoor.destPos);
-                if (esmVer == ESM4::VER_094 || esmVer == ESM4::VER_170 || esmVer == ESM4::VER_134)
+                if (esmVer == ESM4::VER_094 || esmVer == ESM4::VER_170 || isFONV)
                     reader.get(mDoor.flags); // not in Obvlivion
                 //std::cout << "REFR  dest door: " << formIdToString(mDoor.destDoor) << std::endl;// FIXME
                 break;
