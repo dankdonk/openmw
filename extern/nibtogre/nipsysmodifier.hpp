@@ -75,7 +75,10 @@ namespace NiBtOgre
     public:
         StringIndex       mName;
         std::uint32_t     mOrder;
-        NiParticleSystem *mTarget; // Ptr
+        // dungeons/vault/roomu/vgeardoor01.nif (TO3) shows that some of the Ptr refer to
+        // objects not yet loaded. Change to Ref instead.
+        //NiParticleSystem *mTarget; // Ptr
+        NiParticleSystemRef mTarget;
         bool              mActive;
 
         NiPSysModifier(uint32_t index, NiStream& stream, const NiModel& model);

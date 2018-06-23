@@ -143,6 +143,7 @@ namespace NiBtOgre
     typedef std::int32_t NiPSysSpawnModifierRef;
     typedef std::int32_t NiPaletteRef;
     typedef std::int32_t NiParticleModifierRef;
+    typedef std::int32_t NiParticleSystemRef;
     typedef std::int32_t NiPixelDataRef;
     typedef std::int32_t NiPoint3InterpolatorRef;
     typedef std::int32_t NiPosDataRef;

@@ -41,12 +41,7 @@ NiBtOgre::NiPSysModifier::NiPSysModifier(uint32_t index, NiStream& stream, const
 {
     stream.readLongString(mName);
     stream.read(mOrder);
-
-    //stream.getPtr<NiParticleSystem>(mTarget, model.objects());
-    std::int32_t rIndex = -1;
-    stream.read(rIndex);
-    mTarget = model.getRef<NiParticleSystem>(rIndex);
-
+    stream.read(mTarget);
     mActive = stream.getBool();
 }
 
@@ -142,6 +137,7 @@ NiBtOgre::NiPSysBombModifier::NiPSysBombModifier(uint32_t index, NiStream& strea
 {
     stream.read(mBombObject);
 
+    stream.read(mBombAxis);
     stream.read(mDecay);
     stream.read(mDeltaV);
     stream.read(mDecayType);
