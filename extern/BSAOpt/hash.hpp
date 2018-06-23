@@ -31,81 +31,12 @@
 #ifndef BSAOPT_HASH_H
 #define BSAOPT_HASH_H
 
-#include <cstdint>
 #include <string>
-#include <algorithm>
 
-std::uint32_t GenOBHashStr(const std::string& s) {
-    std::uint32_t hash = 0;
+std::uint32_t GenOBHashStr(const std::string& s);
 
-  for (std::size_t i = 0; i < s.length(); i++) {
-    hash *= 0x1003F;
-    hash += (unsigned char)s[i];
-  }
+std::uint64_t GenOBHashPair(const std::string& fle, const std::string& ext);
 
-  return hash;
-}
-
-std::uint64_t GenOBHashPair(const std::string& fle, const std::string& ext) {
-    std::uint64_t hash = 0;
-
-  if (fle.length() > 0) {
-    hash = (std::uint64_t)(
-      (((unsigned char)fle[fle.length() - 1]) * 0x1) +
-      ((fle.length() > 2 ? (unsigned char)fle[fle.length() - 2] : (unsigned char)0) * 0x100) +
-      (fle.length() * 0x10000) +
-      (((unsigned char)fle[0]) * 0x1000000)
-    );
-
-    if (fle.length() > 3) {
-      hash += (std::uint64_t)(GenOBHashStr(fle.substr(1, fle.length() - 3)) * 0x100000000);
-    }
-  }
-
-  if (ext.length() > 0) {
-    hash += (std::uint64_t)(GenOBHashStr(ext) * 0x100000000LL);
-
-    unsigned char i = 0;
-    if (ext == ".nif") i = 1;
-    if (ext == ".kf" ) i = 2;
-    if (ext == ".dds") i = 3;
-    if (ext == ".wav") i = 4;
-
-    if (i != 0) {
-      unsigned char a = (unsigned char)(((i & 0xfc ) << 5) + (unsigned char)((hash & 0xff000000) >> 24));
-      unsigned char b = (unsigned char)(((i & 0xfe ) << 6) + (unsigned char)( hash & 0x000000ff)       );
-      unsigned char c = (unsigned char)(( i          << 7) + (unsigned char)((hash & 0x0000ff00) >>  8));
-
-      hash -= hash & 0xFF00FFFF;
-      hash += (std::uint32_t)((a << 24) + b + (c << 8));
-    }
-  }
-
-  return hash;
-}
-
-std::uint64_t GenOBHash(const std::string& path, std::string& file) {
-  std::transform(file.begin(), file.end(), file.begin(), ::tolower);
-  std::replace(file.begin(), file.end(), '/', '\\');
-
-  std::string fle;
-  std::string ext;
-
-  const char *_fle = file.data();
-  const char *_ext = strrchr(_fle, '.');
-  if (_ext) {
-    ext = file.substr((0 + _ext) - _fle);
-    fle = file.substr(0, ( _ext) - _fle);
-  }
-  else {
-    ext = "";
-    fle = file;
-  }
-
-  if (path.length() && fle.length())
-    return GenOBHashPair(path + "\\" + fle, ext);
-  else
-    return GenOBHashPair(path +        fle, ext);
-}
+std::uint64_t GenOBHash(const std::string& path, std::string& file);
 
 #endif // BSAOPT_HASH_H

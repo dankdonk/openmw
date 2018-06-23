@@ -130,6 +130,7 @@ target_link_libraries(openmw
     ${OGRE_STATIC_PLUGINS}
     ${SHINY_LIBRARIES}
     ${ESM4_LIBRARIES}
+    ${BSAOPTHASH_LIBRARIES}
     ${ZLIB_LIBRARY}
     ${NIBTOGRE_LIBRARIES}
     ${OPENAL_LIBRARY}
