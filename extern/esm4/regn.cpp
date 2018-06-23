@@ -103,11 +103,7 @@ void ESM4::Region::load(ESM4::Reader& reader)
                 next = RDAT_None;
 
                 if (reader.hasLocalizedStrings())
-                {
-                    std::uint32_t formid;
-                    reader.get(formid);
-                    reader.getLocalizedString(formid, mMapName);
-                }
+                    reader.getLocalizedString(mMapName);
                 else if (!reader.getZString(mMapName))
                     throw std::runtime_error ("REGN RDMP data read error");
                 break;

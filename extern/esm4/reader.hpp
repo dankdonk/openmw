@@ -135,6 +135,7 @@ namespace ESM4
 
         void buildLStringIndex();
         inline bool hasLocalizedStrings() const { return (mHeader.mFlags & Rec_Localized) != 0; }
+        void getLocalizedString(std::string& str); // convenience method for below
         void getLocalizedString(const FormId stringId, std::string& str);
 
         // Read 24 bytes of header. The caller can then decide whether to process or skip the data.

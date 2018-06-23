@@ -80,11 +80,7 @@ void ESM4::World::load(ESM4::Reader& reader)
             case ESM4::SUB_FULL: // Name of the worldspace
             {
                 if (reader.hasLocalizedStrings())
-                {
-                    std::uint32_t formid;
-                    reader.get(formid);
-                    reader.getLocalizedString(formid, mFullName);
-                }
+                    reader.getLocalizedString(mFullName);
                 else if (!reader.getZString(mFullName))
                     throw std::runtime_error ("WRLD FULL data read error");
 
@@ -147,7 +143,6 @@ void ESM4::World::load(ESM4::Reader& reader)
             case ESM4::SUB_INAM: // FO3
             case ESM4::SUB_NNAM: // FO3
             case ESM4::SUB_XNAM: // FO3
-            //case ESM4::SUB_IMPS: // FO3
             case ESM4::SUB_IMPS: // FO3 Anchorage
             case ESM4::SUB_IMPF: // FO3 Anchorage
             {

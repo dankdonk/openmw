@@ -67,11 +67,7 @@ void ESM4::Race::load(ESM4::Reader& reader)
             case ESM4::SUB_FULL:
             {
                 if (reader.hasLocalizedStrings())
-                {
-                    std::uint32_t formid;
-                    reader.get(formid);
-                    reader.getLocalizedString(formid, mFullName);
-                }
+                    reader.getLocalizedString(mFullName);
                 else if (!reader.getZString(mFullName))
                     throw std::runtime_error ("RACE FULL data read error");
 
@@ -85,11 +81,7 @@ void ESM4::Race::load(ESM4::Reader& reader)
             case ESM4::SUB_DESC: //skipping...1 <- different lenghts
             {
                 if (reader.hasLocalizedStrings())
-                {
-                    std::uint32_t formid;
-                    reader.get(formid);
-                    reader.getLocalizedString(formid, mDesc);
-                }
+                    reader.getLocalizedString(mDesc); // TODO check if formid is null
                 else if (!reader.getZString(mDesc))
                     throw std::runtime_error ("RACE DESC data read error");
 

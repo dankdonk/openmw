@@ -43,6 +43,7 @@ ESM4::Material::~Material()
 
 void ESM4::Material::load(ESM4::Reader& reader)
 {
+    //mFormId = reader.adjustFormId(reader.hdr().record.id); // FIXME: use master adjusted?
     mFormId = reader.hdr().record.id;
     mFlags  = reader.hdr().record.flags;
 

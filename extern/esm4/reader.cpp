@@ -182,6 +182,13 @@ void ESM4::Reader::buildLStringIndex(const std::string& stringFile, LocalizedStr
     //assert(dataStart - filestream->tell() == 0 && "String file start of data section mismatch");
 }
 
+void ESM4::Reader::getLocalizedString(std::string& str)
+{
+    std::uint32_t stringId;
+    get(stringId);
+    getLocalizedString(stringId, str);
+}
+
 // FIXME: very messy and probably slow/inefficient
 void ESM4::Reader::getLocalizedString(const FormId stringId, std::string& str)
 {

@@ -57,11 +57,7 @@ void ESM4::Activator::load(ESM4::Reader& reader)
             case ESM4::SUB_FULL:
             {
                 if (reader.hasLocalizedStrings())
-                {
-                    std::uint32_t formid;
-                    reader.get(formid);
-                    reader.getLocalizedString(formid, mFullName);
-                }
+                    reader.getLocalizedString(mFullName);
                 else if (!reader.getZString(mFullName))
                     throw std::runtime_error ("ACTI FULL data read error");
 

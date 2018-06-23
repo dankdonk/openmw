@@ -52,7 +52,6 @@ ESM4::Reference::~Reference()
 
 void ESM4::Reference::load(ESM4::Reader& reader)
 {
-    //mFormId = reader.adjustFormId(reader.hdr().record.id); // FIXME: maybe use master adjusted?
     mFormId = reader.hdr().record.id;
     reader.adjustFormId(mFormId);
     mFlags  = reader.hdr().record.flags;
@@ -70,11 +69,7 @@ void ESM4::Reference::load(ESM4::Reader& reader)
             case ESM4::SUB_FULL:
             {
                 if (reader.hasLocalizedStrings())
-                {
-                    std::uint32_t formid;
-                    reader.get(formid);
-                    reader.getLocalizedString(formid, mFullName);
-                }
+                    reader.getLocalizedString(mFullName);
                 else if (!reader.getZString(mFullName))
                     throw std::runtime_error ("REFR FULL data read error");
 #if 0
