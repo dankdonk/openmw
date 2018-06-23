@@ -350,12 +350,12 @@ void ESM4::Reader::checkGroupStatus()
             return;
 
         //assert (mCtx.groupStack.back().second >= groupSize && "Read more records than available");
-//#if 0
+#if 0
         if (mCtx.groupStack.back().second < groupSize) // FIXME: debugging only
             std::cerr << ESM4::printLabel(mCtx.groupStack.back().first.label,
                                           mCtx.groupStack.back().first.type)
                       << " read more records than available" << std::endl;
-//#endif
+#endif
         mCtx.groupStack.back().second -= groupSize;
     }
 }
@@ -460,10 +460,15 @@ bool ESM4::Reader::getZString(std::string& str, Ogre::DataStreamPtr filestream)
     boost::scoped_array<char> buf(new char[size]);
     if (filestream->read(buf.get(), size) == (size_t)size)
     {
-        if (buf[size-1] != 0)
-            std::cerr << "ESM4::Reader::getZString string is not terminated with a zero" << std::endl;
 
-        str.assign(buf.get(), size-1); // don't copy null terminator
+        if (buf[size - 1] != 0)
+        {
+            str.assign(buf.get(), size);
+            //std::cerr << "ESM4::Reader::getZString string is not terminated with a zero" << std::endl;
+        }
+        else
+            str.assign(buf.get(), size - 1);// don't copy null terminator
+
         //assert((size_t)size-1 == str.size() && "ESM4::Reader::getZString string size mismatch");
         return true;
     }
@@ -475,7 +480,6 @@ bool ESM4::Reader::getZString(std::string& str, Ogre::DataStreamPtr filestream)
 }
 
 // Assumes that saveGroupStatus() is not called before this (hence we don't update mCtx.groupStack)
-// FIXME: is above comment still relevant?
 void ESM4::Reader::skipGroup()
 {
 #if 0
