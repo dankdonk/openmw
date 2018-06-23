@@ -46,7 +46,7 @@
 
 #include <extern/BSAOpt/hash.hpp>
 #include "bsa_file.hpp"
-#include "tes4bsa_archive.hpp"
+#include "tes4bsa_file.hpp"
 
 #include "../files/constrainedfiledatastream.hpp"
 

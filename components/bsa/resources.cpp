@@ -7,7 +7,6 @@
 #include <OgreStringConverter.h>
 
 #include "bsa_archive.hpp"
-#include "tes4bsa_archive.hpp"
 
 void Bsa::registerResources (const Files::Collections& collections,
     const std::vector<std::string>& archives, bool useLooseFiles, bool fsStrict, bool isTes4)
