@@ -214,7 +214,7 @@ TES4BSAFile::FileRecord TES4BSAFile::getFileRecord(const std::string& str) const
         return FileRecord(); // file not found, return default which has offset of -1
 
     // cache for next time
-    std::uint64_t hash = GenOBHashPair(p.string(), filename);
+    std::uint64_t hash = GenOBHash(folder, filename);
 
 #if defined (TEST_UNIQUE_HASH)
     FileList::const_iterator lb = mFiles.lower_bound(hash);
@@ -247,7 +247,13 @@ bool TES4BSAFile::exists(const std::string& str) const
     boost::filesystem::path p(str);
     std::string filename = p.filename().string();
     p.remove_filename();
-    std::uint64_t hash = GenOBHashPair(p.string(), filename);
+
+    std::string folder = p.string();
+    // GenOBHash already converts to lowercase and replaces file separators but not for path
+    boost::algorithm::to_lower(folder);
+    std::replace(folder.begin(), folder.end(), '/', '\\');
+
+    std::uint64_t hash = GenOBHash(folder, filename);
 
     std::map<std::uint64_t, FileRecord>::const_iterator it = mFiles.find(hash);
 #if defined (TEST_UNIQUE_HASH)
