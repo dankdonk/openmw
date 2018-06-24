@@ -71,7 +71,7 @@ namespace NiBtOgre
         Header   mHeader;
 
         std::vector<std::unique_ptr<NiObject> > mObjects;
-        std::vector<uint32_t> mRoots;
+        std::vector<std::uint32_t> mRoots;
 
         int mCurrIndex; // FIXME: for debugging Ptr
         std::string filename; // FIXME: for testing only

@@ -26,6 +26,8 @@
 #include <iostream> // FIXME: debugging only
 
 #include "niobject.hpp"
+#include "bhkrefobject.hpp" // bhkConstraint
+#include "btogreinst.hpp"
 
 // "name" is the full path to the mesh from the resource directory/BSA added to Ogre::ResourceGroupManager.
 // The file is opened by mNiStream::mStream.
@@ -100,4 +102,10 @@ void NiBtOgre::NiModel::build(BtOgreInst *inst)
     mObjects[mRoots[0]]->build(inst);
 
     // FIXME: what to do with other roots?
+
+    // build any constraints deferred while building rigid bodies
+    for (size_t i = 0; i < inst->mConstraints.size(); ++i)
+    {
+        inst->mConstraints[i].first->linkBodies(inst, inst->mConstraints[i].second);
+    }
 }

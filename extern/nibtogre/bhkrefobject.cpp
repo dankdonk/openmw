@@ -1573,7 +1573,10 @@ void NiBtOgre::bhkRigidBody::build(BtOgreInst *inst, NiObject* parentNiNode)
     // bhkRigidBody may have constraints
     for (size_t i = 0; i < mConstraints.size(); ++i)
     {
-        mModel.getRef<bhkConstraint>(mConstraints[i])->linkBodies(inst, this);
+        // Defer the building of constraints till all the bhkEntities have been built.  Some
+        // (most?) constraints need the rigid bodies to supply the appropriate transforms for
+        // converting NIF space to Bullet space.
+        inst->mConstraints.push_back(std::make_pair(mModel.getRef<bhkConstraint>(mConstraints[i]), this));
     }
 }
 

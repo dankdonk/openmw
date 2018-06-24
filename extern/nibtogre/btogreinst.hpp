@@ -23,6 +23,8 @@
 #ifndef NIBTOGRE_BTOGREINST_H
 #define NIBTOGRE_BTOGREINST_H
 
+#include <vector>
+
 namespace Ogre
 {
     class SceneNode;
@@ -30,11 +32,15 @@ namespace Ogre
 
 namespace NiBtOgre
 {
+    struct bhkEntity;
+    struct bhkConstraint;
+
     struct BtOgreInst
     {
 
         int mFlags; // some global properties
         Ogre::SceneNode *mBaseNode;
+        std::vector<std::pair<bhkConstraint*, bhkEntity*> > mConstraints;
 
         // btCollisionShapes
         // btRigidBody
