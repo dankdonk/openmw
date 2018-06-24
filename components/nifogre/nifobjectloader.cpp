@@ -1253,7 +1253,7 @@ void NifOgre::NIFObjectLoader::handleNode (const Nif::NIFFilePtr& nif, const std
 
 
     }
-     else if (node->recType != Nif::RC_NiNode)
+     //else if (node->recType != Nif::RC_NiNode)
         //std::cout << "NIFObjectLoader::handleNode: unhandled record type " << node->name << std::endl;
 
 
