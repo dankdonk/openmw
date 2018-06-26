@@ -25,6 +25,8 @@
 #include <algorithm>
 #include <iostream>
 
+#include <boost/algorithm/string.hpp>
+
 #include <OgreMovableObject.h>
 #include <OgreParticleSystem.h>
 #include <OgreSceneManager.h>
@@ -1665,9 +1667,21 @@ void NifOgre::NIFObjectLoader::load (Ogre::SceneNode *sceneNode,
             Ogre::SceneNode *sceneNode2 = sceneNode->getCreator()->createSceneNode();         // temp dummy
             //ObjectScenePtr scene2 = ObjectScenePtr(new ObjectScene(sceneNode->getCreator())); // temp dummy
             std::auto_ptr<NiBtOgre::BtOgreInst> inst(new NiBtOgre::BtOgreInst(sceneNode2));
+
+            // FIXME: skip this if condition for OpenMW, since editor markers should not be built
+            // check if editor markers should be built
+            // FIXME: this forces *every* file to have its path examined - rather inefficient
+            // maybe check further up the call stack, before NIF is even loaded?
+            //if ((inst->mFlags & 0x20/*Flag_IgnoreEditorMarker*/) != 0)
+            {
+                std::string dir = name.substr(0, name.find_last_of("\\/"));
+                if (dir.size() == 6 && boost::algorithm::to_lower_copy(dir) == "meshes")
+                    return;
+            }
+
             nimodel->build(inst.get());
         }
-        catch (std::exception& e) // FIXME
+        catch (std::exception&) // FIXME
         {
             nif->warn("exception while parsing NIF file"); // just a simple message for now
             return;

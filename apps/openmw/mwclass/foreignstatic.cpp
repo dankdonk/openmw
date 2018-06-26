@@ -1,5 +1,7 @@
 #include "foreignstatic.hpp"
 
+#include <boost/algorithm/string.hpp>
+
 #include <extern/esm4/stat.hpp>
 
 #include "../mwworld/ptr.hpp"
@@ -18,6 +20,10 @@ namespace MWClass
 
     void ForeignStatic::insertObjectRendering (const MWWorld::Ptr& ptr, const std::string& model, MWRender::RenderingInterface& renderingInterface) const
     {
+        std::string dir = model.substr(0, model.find_last_of("\\/"));
+        if (dir.size() == 6 && boost::algorithm::to_lower_copy(dir) == "meshes")
+            return;
+
         MWWorld::LiveCellRef<ESM4::Static> *ref = ptr.get<ESM4::Static>();
 
         if (!model.empty()) {
@@ -27,6 +33,10 @@ namespace MWClass
 
     void ForeignStatic::insertObject(const MWWorld::Ptr& ptr, const std::string& model, MWWorld::PhysicsSystem& physics) const
     {
+        std::string dir = model.substr(0, model.find_last_of("\\/"));
+        if (dir.size() == 6 && boost::algorithm::to_lower_copy(dir) == "meshes")
+            return;
+
         if(!model.empty())
             physics.addObject(ptr, model);
     }
