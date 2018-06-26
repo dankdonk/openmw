@@ -499,29 +499,28 @@ if (node->name == "TargetchainRight02" /*|| node->name == "TargetchainRight02"*/
 //if (node->name == "TargetHeavyTarget")
     return;
 #endif
-#if 0
+
+    // FIXME: need to call bhkRigiBody to get the right position of the pivots
+
     btTransform localA;
     btTransform localB;
-    Ogre::Vector3 scale = 1.f;//inst->mScale;
+    Ogre::Vector3 scale = Ogre::Vector3(1.f/*inst->mScale*/); // FIXME
 
     localA.setIdentity();
     localB.setIdentity();
     localA.setOrigin(mRagdoll.pivotA * scale.x); // FIXME: assume uniform scaling for now
     localB.setOrigin(mRagdoll.pivotB * scale.x); // FIXME: assume uniform scaling for now
 
-    // FIXME: these objects may not have been built yet
-    // e.g. meshes/architecture/arena/chaindollarena01.nif
-    // That means some part of setting up the links must be done at a later time
-    // Maybe register a "post action" to the base NiModel?
-    // Or, build them as required?  (and set a "pre-build" flag so that the work is not
-    // duplicated?)
-    //
-    // Maybe do all linking after all the objects have been built?
     assert(mEntities[0] == body && "the first entry is not self");
     assert(mEntities.size() == 2 && "unexpected number of entities");
+    // FIXME: what to do if there are more than 2 rigid bodies?
 
     btGeneric6DofConstraint *constraint
-        = new btGeneric6DofConstraint(body, mEntities[1], localA, localB, /*useLinearReferenceFrameA*/false);
+        = new btGeneric6DofConstraint(*(inst->mRigidBodies[mEntities[0]->index()].get()),
+                                      *(inst->mRigidBodies[mEntities[1]->index()].get()),
+                                      localA,
+                                      localB,
+                                      /*useLinearReferenceFrameA*/false);
 
     // FIXME: need to tune these values
     constraint->setParam(BT_CONSTRAINT_STOP_ERP,0.8f,0);
@@ -530,7 +529,7 @@ if (node->name == "TargetchainRight02" /*|| node->name == "TargetchainRight02"*/
     constraint->setParam(BT_CONSTRAINT_STOP_CFM,0.f,0);
     constraint->setParam(BT_CONSTRAINT_STOP_CFM,0.f,1);
     constraint->setParam(BT_CONSTRAINT_STOP_CFM,0.f,2);
-#endif
+
     // defer this to later
     //mDynamicsWorld->addConstraint(constraint, /*disable collision between linked bodies*/true);
 
@@ -1514,13 +1513,13 @@ void NiBtOgre::bhkRigidBody::build(BtOgreInst *inst, NiObject* parentNiNode)
         transform = transform * btTransform(mRotation, mTranslation * 7); // NOTE: havok scale
 
     bhkShape *shape = mModel.getRef<bhkShape>(mShapeIndex);
-    std::unique_ptr<btCollisionShape> tmp = shape->buildShape(transform); // FIXME: store a master copy?
+    std::unique_ptr<btCollisionShape> btShape = shape->buildShape(transform); // FIXME: store a master copy?
 
     // FIXME
-    if (!tmp.get())
+    if (!btShape.get())
         return;
 
-    int userIndex = tmp->getUserIndex();
+    int userIndex = btShape->getUserIndex();
     if (userIndex == 2)                // shape has its own transform, e.g. transform capsule shape
     {
         // rigidbody.setWorldTransform(SceneNodeTrans * transform * shape->transform() * subShape->transform());
@@ -1542,6 +1541,10 @@ void NiBtOgre::bhkRigidBody::build(BtOgreInst *inst, NiObject* parentNiNode)
         //std::cout << "primitive" << std::endl;
     }
 
+    if (mLayer == 2) // OL_ANIM_STATIC
+        std::cout << "anim_static" << std::endl;
+    else if (mLayer == 8) // OL_BIPED
+        std::cout << "biped" << std::endl;
 #if 0
     // OL_ANIM_STATIC and OL_BIPED might be ragdoll?
     if (mLayer == 1) // OL_STATIC
@@ -1560,23 +1563,29 @@ void NiBtOgre::bhkRigidBody::build(BtOgreInst *inst, NiObject* parentNiNode)
 
     // FIXME: testing only
     // bhkRigidBodyT, bhkConvexVerticesShape
-    if (mModel.getName() == "meshes\\architecture\\imperialcity\\icsigncopious01.nif")
+    if (mModel.getModelName() == "meshes\\architecture\\imperialcity\\icsigncopious01.nif")
     {
         Ogre::Vector3 nodeTrans = inst->mBaseNode->_getDerivedPosition();
         Ogre::Quaternion nodeRot = inst->mBaseNode->_getDerivedOrientation();
 
-        std::cout << mModel.getName() << std::endl;
+        std::cout << mModel.getModelName() << std::endl;
     }
     // FIXME: end testing
 #endif
 
+    btRigidBody::btRigidBodyConstructionInfo rbCI(mMass, 0/*btMotionState**/, btShape.get());
+    // FIXME: add friction, damping, etc, here
+
+    inst->mRigidBodies[mSelfIndex] = std::unique_ptr<btRigidBody>(new btRigidBody(rbCI));
+
     // bhkRigidBody may have constraints
     for (size_t i = 0; i < mConstraints.size(); ++i)
     {
-        // Defer the building of constraints till all the bhkEntities have been built.  Some
-        // (most?) constraints need the rigid bodies to supply the appropriate transforms for
-        // converting NIF space to Bullet space.
-        inst->mConstraints.push_back(std::make_pair(mModel.getRef<bhkConstraint>(mConstraints[i]), this));
+        // Defer the building of constraints till all the bhkEntities have been built.
+        // e.g. meshes/architecture/arena/chaindollarena01.nif refers to one not yet built
+        // Some (most?) constraints need the rigid bodies to supply the appropriate transforms
+        // for converting NIF space to Bullet space.
+        inst->mbhkConstraints.push_back(std::make_pair(mModel.getRef<bhkConstraint>(mConstraints[i]), this));
     }
 }
 

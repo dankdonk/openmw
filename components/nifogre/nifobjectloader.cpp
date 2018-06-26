@@ -25,8 +25,6 @@
 #include <algorithm>
 #include <iostream>
 
-#include <boost/algorithm/string.hpp>
-
 #include <OgreMovableObject.h>
 #include <OgreParticleSystem.h>
 #include <OgreSceneManager.h>
@@ -1654,8 +1652,6 @@ void NifOgre::NIFObjectLoader::load (Ogre::SceneNode *sceneNode,
         // it can then be cached somewhere
         try
         {
-            std::auto_ptr<NiBtOgre::NiModel> nimodel(new NiBtOgre::NiModel(name));
-
             // sceneNode has the ref's position - see MWRender::Objects::insertBegin() which is
             // called from MWRender::Objects::insertModel()
             //
@@ -1668,18 +1664,13 @@ void NifOgre::NIFObjectLoader::load (Ogre::SceneNode *sceneNode,
             //ObjectScenePtr scene2 = ObjectScenePtr(new ObjectScene(sceneNode->getCreator())); // temp dummy
             std::auto_ptr<NiBtOgre::BtOgreInst> inst(new NiBtOgre::BtOgreInst(sceneNode2));
 
-            // FIXME: skip this if condition for OpenMW, since editor markers should not be built
-            // check if editor markers should be built
-            // FIXME: this forces *every* file to have its path examined - rather inefficient
-            // maybe check further up the call stack, before NIF is even loaded?
-            //if ((inst->mFlags & 0x20/*Flag_IgnoreEditorMarker*/) != 0)
-            {
-                std::string dir = name.substr(0, name.find_last_of("\\/"));
-                if (dir.size() == 6 && boost::algorithm::to_lower_copy(dir) == "meshes")
-                    return;
-            }
-
-            nimodel->build(inst.get());
+            // FIXME: inst should keep an auto_ptr to nimodel in case it needs to create the
+            // Ogre resouces again.  NiModel's should be managed by some kind of resource
+            // manager so that they don't need to be re-built from the NIF file each time
+            //std::auto_ptr<NiBtOgre::NiModel> nimodel(new NiBtOgre::NiModel(name));
+            //nimodel->build(inst.get());
+            inst->mModel = std::auto_ptr<NiBtOgre::NiModel>(new NiBtOgre::NiModel(name));
+            inst->mModel->build(inst.get());
         }
         catch (std::exception&) // FIXME
         {

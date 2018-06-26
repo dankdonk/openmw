@@ -26,10 +26,6 @@
 #ifndef NIBTOGRE_NIOBJECTNET_H
 #define NIBTOGRE_NIOBJECTNET_H
 
-#include <string>
-#include <vector>
-#include <cstdint>
-
 #include "niobject.hpp"
 
 // Based on NifTools/NifSkope/doc/index.html
@@ -54,7 +50,7 @@ namespace NiBtOgre
     protected:
         bool                        mIsBSLightingShaderProperty;
         std::uint32_t               mSkyrimShaderType;
-        StringIndex                 mName;
+        StringIndex                 mNameIndex;
         NiExtraDataRef              mExtraDataIndex;     // first in a chain, up to 4.2.2.0
         std::vector<NiExtraDataRef> mExtraDataIndexList; // from 10.0.1.0
         NiTimeControllerRef         mControllerIndex;    // first in a chain
@@ -63,7 +59,7 @@ namespace NiBtOgre
         NiObjectNET(uint32_t index, NiStream& stream, const NiModel& model, bool isBSLightingShaderProperty = false);
         virtual ~NiObjectNET() {}
 
-        inline StringIndex getNameIndex() const { return mName; }
+        inline StringIndex getNameIndex() const { return mNameIndex; }
 
         virtual void build(Ogre::SceneNode *sceneNode, BtOgreInst *inst, NiObject *parent = nullptr);
     };

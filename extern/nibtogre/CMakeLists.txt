@@ -26,9 +26,14 @@ set(NIBTOGRE_SOURCE_FILES
     nistream.cpp
     header.cpp
     nimodel.cpp
+    btogreinst.cpp
+    nimeshloader.cpp
 
     niobject.cpp
     niavobject.cpp
+    nigeometry.cpp
+    niparticlesystem.cpp
+    ninode.cpp
     nicollisionobject.cpp
     nidata.cpp
     niinterpolator.cpp

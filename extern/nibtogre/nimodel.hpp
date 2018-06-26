@@ -74,7 +74,7 @@ namespace NiBtOgre
         std::vector<std::uint32_t> mRoots;
 
         int mCurrIndex; // FIXME: for debugging Ptr
-        std::string filename; // FIXME: for testing only
+        std::string mModelName;
 
         // default, copy and assignment not allowed
         NiModel();
@@ -89,7 +89,7 @@ namespace NiBtOgre
         NiModel(const std::string &name);
         ~NiModel();
 
-        const std::string& getName() const { return filename; } // FIXME: for testing only
+        const std::string& getModelName() const { return mModelName; }
 
         template<class T>
         inline T *getRef(std::int32_t index) const {

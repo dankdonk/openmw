@@ -29,7 +29,7 @@
 #include <stdexcept>
 
 #include "nistream.hpp"
-#include "niavobject.hpp" // static_cast NiNode
+#include "ninode.hpp" // static_cast NiNode
 #include "nimodel.hpp"
 
 #ifdef NDEBUG // FIXME: debugging only
@@ -300,7 +300,7 @@ NiBtOgre::NiIntegerExtraData::NiIntegerExtraData(uint32_t index, NiStream& strea
 
 #if 0 // FIXME: testing only
     //if ((model.getLongString(mName) == "BSX") && ((mIntegerData & 0x20) != 0))
-        //std::cout << "EditorMarker present : " << model.getName() << std::endl;
+        //std::cout << "EditorMarker present : " << model.getModelName() << std::endl;
 #endif
 }
 

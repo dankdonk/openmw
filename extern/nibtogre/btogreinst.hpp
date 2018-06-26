@@ -24,6 +24,14 @@
 #define NIBTOGRE_BTOGREINST_H
 
 #include <vector>
+#include <map>
+#include <cstdint>
+#include <memory>
+
+#include <btBulletDynamicsCommon.h>
+
+#include "nimodel.hpp"
+#include "nimeshloader.hpp"
 
 namespace Ogre
 {
@@ -37,16 +45,28 @@ namespace NiBtOgre
 
     struct BtOgreInst
     {
+        // keep it around in case Ogre wants to load the resource (i.e. Mesh) again
+        std::auto_ptr<NiBtOgre::NiModel> mModel;
 
         int mFlags; // some global properties
         Ogre::SceneNode *mBaseNode;
-        std::vector<std::pair<bhkConstraint*, bhkEntity*> > mConstraints;
+        std::vector<std::pair<bhkConstraint*, bhkEntity*> > mbhkConstraints;
+
+        // key is the block index of the parent NiNode
+        std::map<std::uint32_t, std::pair<std::string, std::unique_ptr<NiMeshLoader> > > mMeshes;
+
+        // parent NiNode's block index and name are supplied
+        void addMeshGeometry(std::uint32_t index, const std::string& name, NiGeometry* geometry);
+
+        void buildMeshAndEntity();
+
+        // key is the block index of the target object (i.e. typically NiNode)
+        std::map<std::uint32_t, std::unique_ptr<btRigidBody> > mRigidBodies;
 
         // btCollisionShapes
-        // btRigidBody
         // btConstraints
 
-        BtOgreInst(Ogre::SceneNode *baseNode) : mBaseNode(baseNode), mFlags(0) { }
+        BtOgreInst(Ogre::SceneNode *baseNode);
     };
 }
 

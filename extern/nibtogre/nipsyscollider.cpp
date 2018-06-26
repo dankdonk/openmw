@@ -29,7 +29,7 @@
 #include <stdexcept>
 
 #include "nistream.hpp"
-#include "niavobject.hpp" // static_cast NiNode
+#include "ninode.hpp" // static_cast NiNode
 #include "nimodel.hpp"
 
 #ifdef NDEBUG // FIXME: debugging only

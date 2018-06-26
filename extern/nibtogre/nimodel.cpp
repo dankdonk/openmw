@@ -30,11 +30,11 @@
 #include "btogreinst.hpp"
 
 // "name" is the full path to the mesh from the resource directory/BSA added to Ogre::ResourceGroupManager.
+// This name is required later for Ogre resource managers such as MeshManager.
 // The file is opened by mNiStream::mStream.
 //
 // FIXME: there could be duplicates b/w TES3 and TES4/5
-NiBtOgre::NiModel::NiModel(const std::string& name) : mNiStream(name), mHeader(mNiStream)
-                                                      , filename(name) // FIXME: testing only
+NiBtOgre::NiModel::NiModel(const std::string& name) : mNiStream(name), mHeader(mNiStream), mModelName(name)
 {
     mObjects.resize(mHeader.numBlocks());
     if (mNiStream.nifVer() >= 0x0a000100) // from 10.0.1.0
@@ -85,7 +85,8 @@ NiBtOgre::NiModel::NiModel(const std::string& name) : mNiStream(name), mHeader(m
     if (numRoots == 0)
         throw std::runtime_error(name + " has no roots");
     else if (numRoots > 1) // FIXME: debugging only, to find out which NIF has multiple roots
-        std::cout << name << " has numRoots: " << numRoots << std::endl;
+        throw std::runtime_error(name + " has too many roots");
+        //std::cout << name << " has numRoots: " << numRoots << std::endl;
 
     // FIXME: testing only
     //if (mNiStream.nifVer() >= 0x0a000100)
@@ -103,9 +104,9 @@ void NiBtOgre::NiModel::build(BtOgreInst *inst)
 
     // FIXME: what to do with other roots?
 
-    // build any constraints deferred while building rigid bodies
-    for (size_t i = 0; i < inst->mConstraints.size(); ++i)
+    // build any constraints that were deferred while building the rigid bodies
+    for (size_t i = 0; i < inst->mbhkConstraints.size(); ++i)
     {
-        inst->mConstraints[i].first->linkBodies(inst, inst->mConstraints[i].second);
+        inst->mbhkConstraints[i].first->linkBodies(inst, inst->mbhkConstraints[i].second);
     }
 }

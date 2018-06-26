@@ -29,7 +29,7 @@
 #include <stdexcept>
 
 #include "nistream.hpp"
-#include "niavobject.hpp"  // static_cast NiGeometry
+#include "nigeometry.hpp"  // static_cast NiGeometry
 #include "nimodel.hpp"
 
 #ifdef NDEBUG // FIXME: debugging only

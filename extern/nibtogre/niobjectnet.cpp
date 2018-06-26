@@ -39,7 +39,7 @@ NiBtOgre::NiObjectNET::NiObjectNET(uint32_t index, NiStream& stream, const NiMod
             mSkyrimShaderType = 0;
     }
 
-    stream.readLongString(mName);
+    stream.readLongString(mNameIndex);
 
     if (stream.nifVer() <= 0x04020200) // up to 4.2.2.0
         stream.read(mExtraDataIndex);

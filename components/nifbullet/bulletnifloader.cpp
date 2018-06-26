@@ -967,7 +967,7 @@ void ManualBulletShapeLoader::handleBhkCollisionObject(const Nif::Node *node, un
 
     // FIXME: the logic seems to be broken here, mShape is a global one for the
     //        ManualBulletShapeLoader, not local for this bhkCollisionObject
-    if (0/*FO3*/)//mShape->mIsRagdoll)
+    if (mShape->mIsRagdoll)
     {
         //std::cout << "bhkCollisionObject: ragdoll " << node->name << std::endl;
 
@@ -1296,6 +1296,9 @@ void ManualBulletShapeLoader::handleNode(const Nif::Node *node, unsigned int bsx
         std::cout << "======> No collision: no Exras " << node->name << std::endl;
         return;
     }
+
+    //if (node->name == "CathedralCryptLight02")
+        //std::cout << "stop" << std::endl;
 
     if (!node->parent && isRagdoll(node, bsxFlags)) // check only at the root node
         mShape->mIsRagdoll = true;

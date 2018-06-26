@@ -52,11 +52,12 @@ namespace NiBtOgre
     struct BtOgreInst;
 
     enum BuildFlags {
-        Flag_EnableHavok         = 0x0001,
-        Flag_EnableCollision     = 0x0002,
-        Flag_EditorMarkerPresent = 0x0020,
-        Flag_NonRootObject       = 0x1000, // FIXME: no longer used?
-        Flag_None                = 0x0000
+        Flag_EnableHavok        = 0x0001,
+        Flag_EnableCollision    = 0x0002,
+        Flag_EnableAnimation    = 0x0008,
+        Flag_IgnoreEditorMarker = 0x0020,
+        Flag_NonRootObject      = 0x1000, // FIXME: no longer used?
+        Flag_None               = 0x0000
     };
 
     class NiObject
@@ -82,15 +83,15 @@ namespace NiBtOgre
                 throw std::logic_error(std::string(BOOST_CURRENT_FUNCTION) + ": name already registered");
         }
 
-        NiObject(uint32_t index, NiStream& stream, const NiModel& model) : mSelfIndex(index), mModel(model)  {}
+        NiObject(std::uint32_t index, NiStream& stream, const NiModel& model) : mSelfIndex(index), mModel(model)  {}
 
-        uint32_t index() const { return mSelfIndex; }
+        std::uint32_t index() const { return mSelfIndex; }
 
     protected:
         NiObject() = default;  // disallow the default constructor in derived classes
         const NiModel& mModel; // a little akward, but need a way to access NiObject Ptrs/Refs and TES5 strings
 
-        const uint32_t mSelfIndex; // NIF block index of this object
+        const std::uint32_t mSelfIndex; // NIF block index of this object
 
     private:
         static Factory mFactory;
