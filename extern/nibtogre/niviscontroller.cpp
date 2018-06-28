@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2018 cc9cii
+  Copyright (C) 2015-2018 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -19,30 +19,31 @@
 
   cc9cii cc9c@iinet.net.au
 
+  Much of the information on the NIF file structures are based on the NifSkope
+  documenation.  See http://niftools.sourceforge.net/wiki/NifSkope for details.
+
 */
-#include "nimeshloader.hpp"
+#include "niviscontroller.hpp"
 
-#include <OgreMesh.h>
-#include <OgreSubMesh.h>
+#include <cassert>
+#include <stdexcept>
 
-#include "nigeometry.hpp"
+#include "nistream.hpp"
+#include "nimodel.hpp"
 
-namespace NiBtOgre
+#ifdef NDEBUG // FIXME: debugging only
+#undef NDEBUG
+#endif
+
+// architecture/anvil/lorgrenskeleton01.nif
+// architecture/quests/se01waitingroomwalls.nif
+// architecture/quests/se07ardensulalter.nif
+// architecture/quests/se09breathactbottle.nif
+//
+// plus lots of other examples
+NiBtOgre::NiVisController::NiVisController(uint32_t index, NiStream& stream, const NiModel& model)
+    : NiSingleInterpController(index, stream, model)
 {
-    // This method is not called until the associated entity is created
-    void NiMeshLoader::loadResource(Ogre::Resource *resource)
-    {
-        Ogre::Mesh *mesh = static_cast<Ogre::Mesh*>(resource);
-
-        // create and update (i.e. apply materials, properties and controllers)
-        // an Ogre::SubMesh for each in mMeshGeometry
-        for (size_t i = 0; i < mMeshGeometry.size(); ++i)
-        {
-            mMeshGeometry[i]->createSubMesh(mInstance, mesh);
-        }
-
-        // update bounds including all the sub meshes
-        //mesh->_setBounds()
-        //mesh->_setBoundingSphereRadius)
-    }
+    if (stream.nifVer() <= 0x0a010000) // up to 10.1.0.0
+        stream.read(mDataIndex);
 }

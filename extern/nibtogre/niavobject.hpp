@@ -64,6 +64,7 @@ namespace NiBtOgre
         virtual void build(BtOgreInst *inst, NiObject *parentNiNode = nullptr);
 
         inline const Ogre::Matrix4& getWorldTransform() const { return mWorldTransform; }
+        inline const Ogre::Matrix4& getLocalTransform() const { return mLocalTransform; }
 
     protected:
         std::uint16_t mFlags;
@@ -73,6 +74,7 @@ namespace NiBtOgre
         float         mScale; // only uniform scaling
 
         Ogre::Matrix4 mWorldTransform; // includes local translation, rotation and scale
+        Ogre::Matrix4 mLocalTransform;
 
         Ogre::Vector3 mVelocity; // unknown, to 4.2.2.0
 

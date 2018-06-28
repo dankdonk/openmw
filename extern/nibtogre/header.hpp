@@ -71,7 +71,7 @@ namespace NiBtOgre
         inline std::uint32_t userVer2() const { return mUserVer2; }
 
         // may throw (does not check bounds)
-        inline const std::string& getLongString(std::int32_t index) const {
+        inline const std::string& indexToString(std::int32_t index) const {
             return mStrings.at(index);
         }
 

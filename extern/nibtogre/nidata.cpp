@@ -299,7 +299,7 @@ NiBtOgre::NiIntegerExtraData::NiIntegerExtraData(uint32_t index, NiStream& strea
     stream.read(mIntegerData);
 
 #if 0 // FIXME: testing only
-    //if ((model.getLongString(mName) == "BSX") && ((mIntegerData & 0x20) != 0))
+    //if ((model.indexToString(mName) == "BSX") && ((mIntegerData & 0x20) != 0))
         //std::cout << "EditorMarker present : " << model.getModelName() << std::endl;
 #endif
 }
@@ -317,7 +317,7 @@ NiBtOgre::NiStringExtraData::NiStringExtraData(uint32_t index, NiStream& stream,
     stream.readLongString(mStringData);
 
 #if 0 // FIXME: testing only
-    if (model.getLongString(mStringData) == "MRK") // FIXME: testing only
+    if (model.indexToString(mStringData) == "MRK") // FIXME: testing only
         std::cout << "NiStringExtraData : MRK" << std::endl;
 #endif
 }
@@ -434,8 +434,12 @@ NiBtOgre::NiGeometryData::NiGeometryData(uint32_t index, NiStream& stream, const
         mUVSets.at(i).resize(mNumVertices);
         for (unsigned int j = 0; j < mNumVertices; ++j)
         {
-            stream.read(mUVSets.at(i).at(j).u);
-            stream.read(mUVSets.at(i).at(j).v);
+            //stream.read(mUVSets.at(i).at(j).u);
+            //stream.read(mUVSets.at(i).at(j).v);
+            Ogre::Vector2 uv; // FIXME
+            stream.read(uv.x);
+            stream.read(uv.y);
+            mUVSets.at(i).at(j) = uv;
         }
     }
 

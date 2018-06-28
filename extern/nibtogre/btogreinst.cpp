@@ -28,12 +28,9 @@
 #include <OgreSceneNode.h>
 #include <OgreEntity.h>
 
-#include "niobject.hpp" // Flag_IgnoreEditorMarker (but probably no longer needed)
-
 namespace NiBtOgre
 {
-    // FIXME: Flag_IgnoreEditorMarker is probably no longer required
-    BtOgreInst::BtOgreInst(Ogre::SceneNode *baseNode) : mBaseNode(baseNode), mFlags(Flag_IgnoreEditorMarker)
+    BtOgreInst::BtOgreInst(Ogre::SceneNode *baseNode) : mBaseNode(baseNode), mFlags(0)
     {
     };
 
@@ -50,23 +47,28 @@ namespace NiBtOgre
         else
         {
             // None found, create one
-            std::unique_ptr<NiMeshLoader> loader(new NiMeshLoader());
+            std::unique_ptr<NiMeshLoader> loader(new NiMeshLoader(this));
             loader->addMeshGeometry(geometry);
             mMeshes.insert(lb, std::make_pair(index, std::make_pair(name, std::move(loader))));
         }
     }
 
     // FIXME: maybe pass a parameter here indicating static mesh? (create a "static" group?)
+    // Or group should come from the classes, e.g. static, misc, furniture, etc
     void BtOgreInst::buildMeshAndEntity()
     {
         Ogre::MeshManager& meshManager = Ogre::MeshManager::getSingleton();
 
         // iterate through the loader map
+        //
+        // NOTE: If the model/object is static, we only need one child scenenode from the
+        // basenode.  Else we need one for each NiNode that has a mesh (and collision shape?).
+        // FIXME: how to do this?
         std::map<std::uint32_t,
                  std::pair<std::string, std::unique_ptr<NiMeshLoader> > >::iterator iter = mMeshes.begin();
         for (; iter != mMeshes.end(); ++iter)
         {
-            // iter-second.first = model name + parent NiNode block name
+            // iter-second.first = model name + ":" + parent NiNode block name
             // e.g. meshes\\architecture\\imperialcity\\icwalltower01.nif:ICWallTower01
 
             // iter->second.second = unique_ptr to NiMeshLoader
@@ -82,6 +84,19 @@ namespace NiBtOgre
 
             // either use the mesh's name or shared pointer
             Ogre::Entity *entity = mBaseNode->getCreator()->createEntity(/*iter->second.first*/mesh);
+
+            // FIXME: do we need a map of entities for deleting later?
         }
+    }
+
+    void BtOgreInst::instantiate()
+    {
+        // FIXME: howto transform nodes to root transform after the meshes have been built?
+        // e.g. NiNode CathedralCryptChain11 (18) has 1 mesh CathedralCryptChain11:36 (24)
+        //      but it is a child to NiNode CathedralCryptChain (14) which as its own
+        //      transform.
+        //
+        // Is it possible to leave that for Ogre::SceneNode to take care of?
+        // i.e. for each NiNode with a mesh create a child scenenode
     }
 }

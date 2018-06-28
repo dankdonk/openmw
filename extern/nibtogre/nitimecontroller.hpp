@@ -59,6 +59,7 @@
 //                 NiFlipController
 //                 NiTextureTransformController
 //             NiKeyframeController
+//                 BSKeyframeController
 //                 NiTransformController <---------------- /* NiKeyframeController */
 //             NiPSysModifierCtlr
 //                 NiPSysEmitterCtlr
@@ -69,8 +70,8 @@
 //                     NiPSysEmitterLifeSpanCtlr <-------- /* NiPSysModifierFloatCtlr */
 //                     NiPSysEmitterSpeedCtlr <----------- /* NiPSysModifierFloatCtlr */
 //                     NiPSysGravityStrengthCtlr <-------- /* NiPSysModifierFloatCtlr */
-//             NiPoint3InterpController
-//                 NiMaterialColorController <------------ /* NiPoint3InterpController */
+//             NiPoint3InterpController <----------------- /* not implemented */
+//                 NiMaterialColorController
 //     NiPSysUpdateCtlr <--------------------------------- /* NiTimeController */
 //     NiParticleSystemController
 //         NiBSPArrayController <------------------------- /* NiParticleSystemController */
@@ -170,25 +171,6 @@ namespace NiBtOgre
 
     typedef NiTimeController NiInterpController;
 
-    class NiGeomMorpherController : public NiInterpController
-    {
-        struct MorphWeight
-        {
-            NiInterpolatorRef interpolatorIndex;
-            float weight;
-        };
-
-    public:
-        std::uint16_t mExtraFlags;
-        NiMorphDataRef mDataIndex;
-        unsigned char mAlwaysUpdate;
-        std::vector<NiInterpolatorRef> mInterpolators;
-        std::vector<MorphWeight> mInterpolatorWeights;
-        std::vector<std::uint32_t> mUnknownInts;
-
-        NiGeomMorpherController(uint32_t index, NiStream& stream, const NiModel& model);
-    };
-
     class NiAVObject;
 
     // Seen in NIF ver 20.0.0.4, 20.0.0.5
@@ -210,14 +192,6 @@ namespace NiBtOgre
         NiInterpolatorRef mInterpolatorIndex;
 
         NiSingleInterpController(uint32_t index, NiStream& stream, const NiModel& model);
-    };
-
-    class NiVisController : public NiSingleInterpController
-    {
-    public:
-        NiVisDataRef mDataIndex;
-
-        NiVisController(uint32_t index, NiStream& stream, const NiModel& model);
     };
 
     // Seen in NIF version 20.2.0.7
@@ -268,26 +242,6 @@ namespace NiBtOgre
         BSLightingShaderPropertyFloatController(uint32_t index, NiStream& stream, const NiModel& model);
     };
 
-    class NiAlphaController : public NiSingleInterpController
-    {
-    public:
-        NiFloatDataRef mDataIndex;
-
-        NiAlphaController(uint32_t index, NiStream& stream, const NiModel& model);
-    };
-
-    typedef NiAlphaController BSNiAlphaPropertyTestRefController; // Seen in NIF version 20.2.0.7
-
-    class NiFlipController : public NiSingleInterpController
-    {
-    public:
-        std::int32_t mTexureSlot;
-        float mDelta;
-        std::vector<NiSourceTextureRef> mSources;
-
-        NiFlipController(uint32_t index, NiStream& stream, const NiModel& model);
-    };
-
     // Seen in NIF ver 20.0.0.4, 20.0.0.5
     class NiTextureTransformController : public NiSingleInterpController
     {
@@ -300,74 +254,6 @@ namespace NiBtOgre
 
         NiTextureTransformController(uint32_t index, NiStream& stream, const NiModel& model);
     };
-
-    class NiKeyframeController : public NiSingleInterpController
-    {
-    public:
-        NiKeyframeDataRef mDataIndex;
-
-        NiKeyframeController(uint32_t index, NiStream& stream, const NiModel& model);
-    };
-
-    typedef NiKeyframeController NiTransformController; // Seen in NIF ver 20.0.0.4, 20.0.0.5
-
-    class NiPSysModifierCtlr : public NiSingleInterpController
-    {
-    public:
-        std::uint32_t mModifierNameIndex;
-
-        NiPSysModifierCtlr(uint32_t index, NiStream& stream, const NiModel& model);
-    };
-
-    // Seen in NIF ver 20.0.0.4, 20.0.0.5
-    class NiPSysEmitterCtlr : public NiPSysModifierCtlr
-    {
-    public:
-#if 0
-        NiPSysEmitterCtlrDataRef mDataIndex;
-#endif
-        NiInterpolatorRef mVisibilityInterpolatorIndex;
-
-        NiPSysEmitterCtlr(uint32_t index, NiStream& stream, const NiModel& model);
-    };
-
-    // Seen in NIF ver 20.0.0.4, 20.0.0.5
-    class NiPSysModifierActiveCtlr : public NiPSysModifierCtlr
-    {
-    public:
-#if 0
-        NiVisDataRef mDataIndex;
-#endif
-
-        NiPSysModifierActiveCtlr(uint32_t index, NiStream& stream, const NiModel& model);
-    };
-
-    class NiPSysModifierFloatCtlr : public NiPSysModifierCtlr
-    {
-    public:
-        NiFloatDataRef mDataIndex;
-
-        NiPSysModifierFloatCtlr(uint32_t index, NiStream& stream, const NiModel& model);
-    };
-
-    typedef NiPSysModifierFloatCtlr NiPSysEmitterInitialRadiusCtlr; // Seen in NIF ver 20.0.0.4, 20.0.0.5
-
-    typedef NiPSysModifierFloatCtlr NiPSysEmitterLifeSpanCtlr; // Seen in NIF ver 20.0.0.4, 20.0.0.5
-
-    typedef NiPSysModifierFloatCtlr NiPSysEmitterSpeedCtlr; // Seen in NIF ver 20.0.0.4, 20.0.0.5
-
-    typedef NiPSysModifierFloatCtlr NiPSysGravityStrengthCtlr; // Seen in NIF ver 20.0.0.4, 20.0.0.5
-
-    class NiPoint3InterpController : public NiSingleInterpController
-    {
-    public:
-        std::uint16_t mTargetColor;
-        NiPosDataRef  mDataIndex;
-
-        NiPoint3InterpController(uint32_t index, NiStream& stream, const NiModel& model);
-    };
-
-    typedef NiPoint3InterpController NiMaterialColorController;
 
     typedef NiTimeController NiPSysUpdateCtlr; // Seen in NIF ver 20.0.0.4, 20.0.0.5
 

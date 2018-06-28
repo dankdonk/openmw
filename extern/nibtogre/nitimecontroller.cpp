@@ -137,50 +137,6 @@ NiBtOgre::NiControllerManager::NiControllerManager(uint32_t index, NiStream& str
     stream.read(mObjectPaletteIndex);
 }
 
-NiBtOgre::NiGeomMorpherController::NiGeomMorpherController(uint32_t index, NiStream& stream, const NiModel& model)
-    : NiTimeController(index, stream, model)
-{
-    if (stream.nifVer() >= 0x0a000102) // from 10.0.1.2
-        stream.read(mExtraFlags);
-
-    if (stream.nifVer() == 0x0a01006a) // 10.1.0.106
-        stream.skip(sizeof(char)); // Unknown 2
-
-    stream.read(mDataIndex);
-    stream.read(mAlwaysUpdate);
-
-    if (stream.nifVer() >= 0x0a01006a) // from 10.1.0.106
-    {
-        std::uint32_t numInterpolators;
-        stream.read(numInterpolators);
-        if (stream.nifVer() >= 0x0a020000 && stream.nifVer() <= 0x14000005)
-        {
-            mInterpolators.resize(numInterpolators);
-            for (unsigned int i = 0; i < numInterpolators; ++i)
-                stream.read(mInterpolators.at(i));
-        }
-
-        if (stream.nifVer() >= 0x14010003) // from 20.1.0.3
-        {
-            mInterpolatorWeights.resize(numInterpolators);
-            for (unsigned int i = 0; i < numInterpolators; ++i)
-            {
-                stream.read(mInterpolatorWeights[i].interpolatorIndex);
-                stream.read(mInterpolatorWeights[i].weight);
-            }
-        }
-
-        if (stream.nifVer() >= 0x14000004 && stream.nifVer() <= 0x14000005 && stream.userVer() >= 10)
-        {
-            std::uint32_t numUnknownInts;
-            stream.read(numUnknownInts);
-            mUnknownInts.resize(numUnknownInts);
-            for (unsigned int i = 0; i < numUnknownInts; ++i)
-                stream.read(mUnknownInts.at(i));
-        }
-    }
-}
-
 // Seen in NIF ver 20.0.0.4, 20.0.0.5
 NiBtOgre::NiMultiTargetTransformController::NiMultiTargetTransformController(uint32_t index, NiStream& stream, const NiModel& model)
     : NiTimeController(index, stream, model)
@@ -198,13 +154,6 @@ NiBtOgre::NiSingleInterpController::NiSingleInterpController(uint32_t index, NiS
 {
     if (stream.nifVer() >= 0x0a020000) // from 10.2.0.0
         stream.read(mInterpolatorIndex);
-}
-
-NiBtOgre::NiVisController::NiVisController(uint32_t index, NiStream& stream, const NiModel& model)
-    : NiSingleInterpController(index, stream, model)
-{
-    if (stream.nifVer() <= 0x0a010000) // up to 10.1.0.0
-        stream.read(mDataIndex);
 }
 
 // Seen in NIF version 20.2.0.7
@@ -252,27 +201,6 @@ NiBtOgre::BSLightingShaderPropertyFloatController::BSLightingShaderPropertyFloat
     stream.read(mTargetVariable);
 }
 
-NiBtOgre::NiAlphaController::NiAlphaController(uint32_t index, NiStream& stream, const NiModel& model)
-    : NiSingleInterpController(index, stream, model)
-{
-    if (stream.nifVer() <= 0x0a010000) // up to 10.1.0.0
-        stream.read(mDataIndex);
-}
-
-NiBtOgre::NiFlipController::NiFlipController(uint32_t index, NiStream& stream, const NiModel& model)
-    : NiSingleInterpController(index, stream, model)
-{
-    stream.read(mTexureSlot);
-
-    if (stream.nifVer() >= 0x04000000  && stream.nifVer() <= 0x0a010000)
-        stream.skip(sizeof(std::uint32_t)); // Unknown Int 2
-
-    if (stream.nifVer() <= 0x0a010000) // up to 10.1.0.0
-        stream.read(mDelta);
-
-    stream.readVector<NiSourceTextureRef>(mSources); // from 4.0.0.0
-}
-
 // Seen in NIF ver 20.0.0.4, 20.0.0.5
 NiBtOgre::NiTextureTransformController::NiTextureTransformController(uint32_t index, NiStream& stream, const NiModel& model)
     : NiSingleInterpController(index, stream, model)
@@ -285,58 +213,6 @@ NiBtOgre::NiTextureTransformController::NiTextureTransformController(uint32_t in
     if (stream.nifVer() <= 0x0a010000) // up to 10.1.0.0
         stream.read(mDataIndex);
 #endif
-}
-
-NiBtOgre::NiKeyframeController::NiKeyframeController(uint32_t index, NiStream& stream, const NiModel& model)
-    : NiSingleInterpController(index, stream, model)
-{
-    if (stream.nifVer() <= 0x0a010000) // up to 10.1.0.0
-        stream.read(mDataIndex);
-}
-
-NiBtOgre::NiPSysModifierCtlr::NiPSysModifierCtlr(uint32_t index, NiStream& stream, const NiModel& model)
-    : NiSingleInterpController(index, stream, model)
-{
-    stream.readLongString(mModifierNameIndex);
-}
-
-// Seen in NIF ver 20.0.0.4, 20.0.0.5
-NiBtOgre::NiPSysEmitterCtlr::NiPSysEmitterCtlr(uint32_t index, NiStream& stream, const NiModel& model)
-    : NiPSysModifierCtlr(index, stream, model)
-{
-#if 0 // commented out since this object is not seen in TES3
-    if (stream.nifVer() <= 0x0a010000) // up to 10.1.0.0
-        stream.read(mDataIndex);
-    if (stream.nifVer() >= 0x0a020000) // from 10.2.0.0
-#endif
-        stream.read(mVisibilityInterpolatorIndex);
-}
-
-// Seen in NIF ver 20.0.0.4, 20.0.0.5
-NiBtOgre::NiPSysModifierActiveCtlr::NiPSysModifierActiveCtlr(uint32_t index, NiStream& stream, const NiModel& model)
-    : NiPSysModifierCtlr(index, stream, model)
-{
-#if 0 // commented out since this object is not seen in TES3
-    if (stream.nifVer() <= 0x0a010000) // up to 10.1.0.0
-        stream.read(mDataIndex);
-#endif
-}
-
-NiBtOgre::NiPSysModifierFloatCtlr::NiPSysModifierFloatCtlr(uint32_t index, NiStream& stream, const NiModel& model)
-    : NiPSysModifierCtlr(index, stream, model)
-{
-    if (stream.nifVer() <= 0x0a010000) // up to 10.1.0.0
-        stream.read(mDataIndex);
-}
-
-NiBtOgre::NiPoint3InterpController::NiPoint3InterpController(uint32_t index, NiStream& stream, const NiModel& model)
-    : NiSingleInterpController(index, stream, model)
-{
-    if (stream.nifVer() >= 0x0a010000) // from 10.1.0.0
-        stream.read(mTargetColor);
-
-    if (stream.nifVer() <= 0x0a010000) // up to 10.1.0.0
-        stream.read(mDataIndex);
 }
 
 NiBtOgre::NiParticleSystemController::NiParticleSystemController(uint32_t index, NiStream& stream, const NiModel& model)

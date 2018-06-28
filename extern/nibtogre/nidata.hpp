@@ -472,7 +472,8 @@ namespace NiBtOgre
         Ogre::Vector3              mCenter;
         float                      mRadius;
         std::vector<Ogre::Vector4> mVertexColors;
-        std::vector<std::vector<TexCoord> > mUVSets;
+        //std::vector<std::vector<TexCoord> > mUVSets; // FIXME
+        std::vector<std::vector<Ogre::Vector2> > mUVSets;
 
         std::uint16_t mConsistencyFlags;        // from 10.0.1.0
         AbstractAdditionalGeometryDataRef mAdditionalDataIndex; // from 20.0.0.4
@@ -558,6 +559,8 @@ namespace NiBtOgre
         std::uint16_t mNumTriangles;
 
         NiTriBasedGeomData(uint32_t index, NiStream& stream, const NiModel& model);
+
+        virtual const std::vector<std::uint16_t>& getTriangles() = 0;
     };
 
     // NiTriShapeData, SkinPartition, hkTriangle
@@ -575,6 +578,8 @@ namespace NiBtOgre
         std::vector<std::uint16_t> mTriangles; // vector of vertices rather than triangles
 
         NiTriShapeData(uint32_t index, NiStream& stream, const NiModel& model);
+
+        const std::vector<std::uint16_t>& getTriangles() { return mTriangles; }
     };
 
     // Seen in NIF version 20.0.0.4, 20.0.0.5
@@ -588,6 +593,8 @@ namespace NiBtOgre
         std::vector<std::uint16_t> mTriangles; // vector of vertices rather than triangles
 
         NiTriStripsData(uint32_t index, NiStream& stream, const NiModel& model);
+
+        const std::vector<std::uint16_t>& getTriangles() { return mTriangles; }
     };
 
     template<typename KeyType>

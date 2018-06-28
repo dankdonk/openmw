@@ -1541,10 +1541,10 @@ void NiBtOgre::bhkRigidBody::build(BtOgreInst *inst, NiObject* parentNiNode)
         //std::cout << "primitive" << std::endl;
     }
 
-    if (mLayer == 2) // OL_ANIM_STATIC
-        std::cout << "anim_static" << std::endl;
-    else if (mLayer == 8) // OL_BIPED
-        std::cout << "biped" << std::endl;
+    //if (mLayer == 2) // OL_ANIM_STATIC
+        //std::cout << "anim_static" << std::endl;
+    //else if (mLayer == 8) // OL_BIPED
+        //std::cout << "biped" << std::endl;
 #if 0
     // OL_ANIM_STATIC and OL_BIPED might be ragdoll?
     if (mLayer == 1) // OL_STATIC

@@ -25,16 +25,27 @@
 #include "nidata.hpp"
 #include "nicollisionobject.hpp"
 #include "niinterpolator.hpp"
+
 #include "niavobject.hpp"
 #include "nigeometry.hpp"
 #include "niparticlesystem.hpp"
 #include "ninode.hpp"
+
 #include "niproperty.hpp"
 #include "niparticlemodifier.hpp"
 #include "nipsyscollider.hpp"
 #include "nipsysmodifier.hpp"
 #include "nisequence.hpp"
+
 #include "nitimecontroller.hpp"
+#include "nialphacontroller.hpp"
+#include "niflipcontroller.hpp"
+#include "nigeommorphercontroller.hpp"
+#include "nikeyframecontroller.hpp"
+#include "nimaterialcolorcontroller.hpp"
+#include "nipsysmodifierctlr.hpp"
+#include "niviscontroller.hpp"
+
 #include "bhkrefobject.hpp"
 
 namespace NiBtOgre

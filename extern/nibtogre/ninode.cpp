@@ -47,6 +47,10 @@ NiBtOgre::NiNode::NiNode(uint32_t index, NiStream& stream, const NiModel& model)
 {
     stream.readVector<NiAVObjectRef>(mChildren);
     stream.readVector<NiDynamicEffectRef>(mEffects);
+
+    // Looks like the node name is also used as bone names for those meshes with skins.
+    // Bipeds seems to have a predefined list of bones. See: meshes/armor/legion/m/cuirass.nif
+    mNodeName = mModel.indexToString(NiObjectNET::mNameIndex);
 }
 
 //   name string
@@ -84,17 +88,15 @@ NiBtOgre::NiNode::NiNode(uint32_t index, NiStream& stream, const NiModel& model)
 // necromancer/hood_gnd.nif is 0x0b, i.e. 1011 - animation, collision, havok
 void NiBtOgre::NiNode::build(BtOgreInst *inst, NiObject* parent)
 {
-    mNodeName = mModel.getLongString(NiObjectNET::mNameIndex);
-
     if (mCollisionObjectIndex != -1 || mChildren.size() > 0) // build only if it will be used
     {
         Ogre::Matrix4 localTransform = Ogre::Matrix4(Ogre::Matrix4::IDENTITY);
-        localTransform.makeTransform(mTranslation, Ogre::Vector3(mScale), Ogre::Quaternion(mRotation));
+        mLocalTransform.makeTransform(mTranslation, Ogre::Vector3(mScale), Ogre::Quaternion(mRotation));
 
         if (parent != nullptr)
-            mWorldTransform = static_cast<NiAVObject*>(parent)->getWorldTransform() * localTransform;
+            mWorldTransform = static_cast<NiAVObject*>(parent)->getWorldTransform() * mLocalTransform;
         else
-            mWorldTransform = localTransform;
+            mWorldTransform = mLocalTransform;
     }
     //else
         //mWorldTransform = Ogre::Matrix4(Ogre::Matrix4::IDENTITY);
@@ -146,7 +148,7 @@ void NiBtOgre::NiNode::build(BtOgreInst *inst, NiObject* parent)
             continue;
 
         const std::string& name
-            = mModel.getLongString(mModel.getRef<NiExtraData>((int32_t)mExtraDataIndexList[i])->mName);
+            = mModel.indexToString(mModel.getRef<NiExtraData>((int32_t)mExtraDataIndexList[i])->mName);
 
         if (name == "BSX") // TODO: only for root objects?
         {
@@ -194,7 +196,7 @@ void NiBtOgre::NiNode::build(BtOgreInst *inst, NiObject* parent)
             // Display_Proxy = <None>
             StringIndex stringIndex
                 = mModel.getRef<NiStringExtraData>((int32_t)mExtraDataIndexList[i])->mStringData;
-            const std::string& upb = mModel.getLongString(stringIndex);
+            const std::string& upb = mModel.indexToString(stringIndex);
             // TODO: split the string into a map
         }
         else if (name == "BBX") // BSBound
@@ -209,7 +211,7 @@ void NiBtOgre::NiNode::build(BtOgreInst *inst, NiObject* parent)
             // Seems to point to a Bone attach point? e.g. "Bip01 Head"
             StringIndex stringIndex
                 = mModel.getRef<NiStringExtraData>((int32_t)mExtraDataIndexList[i])->mStringData;
-            const std::string& prn = mModel.getLongString(stringIndex);
+            const std::string& prn = mModel.indexToString(stringIndex);
         }
         else
         {
@@ -249,6 +251,8 @@ void NiBtOgre::NiNode::build(BtOgreInst *inst, NiObject* parent)
         if (mChildren[i] == -1) // no object
             continue;
 
+        // NiGeometry blocks are only registered here and built later.  One possible side
+        // benefit is that at least at this NiNode level we know if there are any skins.
         mModel.getRef<NiObject>((int32_t)mChildren[i])->build(inst, this);
     }
 

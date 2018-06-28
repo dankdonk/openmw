@@ -30,10 +30,12 @@ set(NIBTOGRE_SOURCE_FILES
     nimeshloader.cpp
 
     niobject.cpp
+
     niavobject.cpp
     nigeometry.cpp
     niparticlesystem.cpp
     ninode.cpp
+
     nicollisionobject.cpp
     nidata.cpp
     niinterpolator.cpp
@@ -43,7 +45,16 @@ set(NIBTOGRE_SOURCE_FILES
     nipsyscollider.cpp
     nipsysmodifier.cpp
     nisequence.cpp
+
     nitimecontroller.cpp
+    nialphacontroller.cpp
+    niflipcontroller.cpp
+    nigeommorphercontroller.cpp
+    nikeyframecontroller.cpp
+    nimaterialcolorcontroller.cpp
+    nipsysmodifierctlr.cpp
+    niviscontroller.cpp
+
     bhkrefobject.cpp
 )
 

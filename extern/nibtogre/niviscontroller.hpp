@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2018 cc9cii
+  Copyright (C) 2015-2018 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -19,33 +19,37 @@
 
   cc9cii cc9c@iinet.net.au
 
+  Much of the information on the NIF file structures are based on the NifSkope
+  documenation.  See http://niftools.sourceforge.net/wiki/NifSkope for details.
+
 */
-#ifndef NIBTOGRE_NIMESHLOADER_H
-#define NIBTOGRE_NIMESHLOADER_H
+#ifndef NIBTOGRE_NIVISCONTROLLER_H
+#define NIBTOGRE_NIVISCONTROLLER_H
 
+#include <string>
 #include <vector>
+#include <cstdint>
 
-#include <OgreResource.h>
+#include "nitimecontroller.hpp"
+#include "niobject.hpp"
 
+// Based on NifTools/NifSkope/doc/index.html
+//
+// NiTimeController
+//     NiInterpController <------------------------------- /* NiTimeController */
+//         NiSingleInterpController
+//             NiBoolInterpController <------------------- /* not implemented */
+//                 NiVisController
 namespace NiBtOgre
 {
-    struct NiGeometry;
-    struct BtOgreInst;
-
-    class NiMeshLoader : public Ogre::ManualResourceLoader
+    // Time controller for visibility.
+    class NiVisController : public NiSingleInterpController
     {
-        BtOgreInst *mInstance;
-
-        std::vector<NiGeometry*> mMeshGeometry; // registered NiNode children for the mesh
     public:
+        NiVisDataRef mDataIndex;
 
-        NiMeshLoader(BtOgreInst* inst) : mInstance(inst) {}
-
-        void addMeshGeometry(NiGeometry* geometry) { mMeshGeometry.push_back(geometry); }
-
-        // reimplement Ogre::ManualResourceLoader
-        virtual void loadResource(Ogre::Resource *resource);
+        NiVisController(uint32_t index, NiStream& stream, const NiModel& model);
     };
 }
 
-#endif // NIBTOGRE_NIMESHLOADER_H
+#endif // NIBTOGRE_NIVISCONTROLLER_H

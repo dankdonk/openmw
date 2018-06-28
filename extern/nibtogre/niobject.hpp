@@ -51,15 +51,6 @@ namespace NiBtOgre
     class NiModel;
     struct BtOgreInst;
 
-    enum BuildFlags {
-        Flag_EnableHavok        = 0x0001,
-        Flag_EnableCollision    = 0x0002,
-        Flag_EnableAnimation    = 0x0008,
-        Flag_IgnoreEditorMarker = 0x0020,
-        Flag_NonRootObject      = 0x1000, // FIXME: no longer used?
-        Flag_None               = 0x0000
-    };
-
     class NiObject
     {
     public:

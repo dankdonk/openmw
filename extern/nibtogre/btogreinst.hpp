@@ -43,6 +43,16 @@ namespace NiBtOgre
     struct bhkEntity;
     struct bhkConstraint;
 
+    enum BuildFlags {
+        Flag_EnableHavok        = 0x0001,
+        Flag_EnableCollision    = 0x0002,
+        Flag_EnableAnimation    = 0x0008,
+        Flag_HasSkin            = 0x0010,
+        Flag_IgnoreEditorMarker = 0x0020, // FIXME: no longer used?
+        Flag_NonRootObject      = 0x1000, // FIXME: no longer used?
+        Flag_None               = 0x0000
+    };
+
     struct BtOgreInst
     {
         // keep it around in case Ogre wants to load the resource (i.e. Mesh) again
@@ -67,6 +77,9 @@ namespace NiBtOgre
         // btConstraints
 
         BtOgreInst(Ogre::SceneNode *baseNode);
+
+        // register with bullet dynamics, make entities visible, etc
+        void instantiate();
     };
 }
 

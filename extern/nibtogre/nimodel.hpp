@@ -111,8 +111,8 @@ namespace NiBtOgre
         // needed for the NIF version and strings (TES5)
         inline std::uint32_t nifVer() const { return mHeader.nifVer(); }
 
-        inline const std::string& getLongString(std::int32_t index) const {
-            return mHeader.getLongString(index);
+        inline const std::string& indexToString(std::int32_t index) const {
+            return mHeader.indexToString(index);
         }
     };
 }
