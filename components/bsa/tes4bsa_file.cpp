@@ -36,7 +36,7 @@
 
 #include <extern/BSAOpt/hash.hpp> // see: http://en.uesp.net/wiki/Tes4Mod:Hash_Calculation
 
-//#define TEST_UNIQUE_HASH 1
+#undef TEST_UNIQUE_HASH
 
 namespace
 {
@@ -51,7 +51,7 @@ namespace
         if (buf[size - 1] != 0)
             str.assign(buf.get(), size);
         else
-            str.assign(buf.get(), size - 1);// don't copy null terminator
+            str.assign(buf.get(), size - 1); // don't copy null terminator
         assert((size_t)size-1 == str.size() && "getBZString string size mismatch");
         return;
     }
@@ -221,7 +221,7 @@ TES4BSAFile::FileRecord TES4BSAFile::getFileRecord(const std::string& str) const
     if (lb != mFiles.end() && !(mFiles.key_comp()(hash, lb->first)))
     {
         // found, check if same filename
-        if (lb->second.filename == str)
+        if (lb->second.fileName == str)
             return iter->second; // same name, should not have got here!!
         else
         {
@@ -234,7 +234,7 @@ TES4BSAFile::FileRecord TES4BSAFile::getFileRecord(const std::string& str) const
 
     // not found, cache for later
     const_cast<FileList&>(mFiles).insert(lb, std::pair<std::uint64_t, FileRecord>(hash, iter->second));
-    const_cast<FileList&>(mFiles)[hash].filename = str;
+    const_cast<FileList&>(mFiles)[hash].fileName = str;
 #else
     const_cast<FileList&>(mFiles)[hash] = iter->second; // NOTE: const hack
 #endif
@@ -257,7 +257,7 @@ bool TES4BSAFile::exists(const std::string& str) const
 
     std::map<std::uint64_t, FileRecord>::const_iterator it = mFiles.find(hash);
 #if defined (TEST_UNIQUE_HASH)
-    if (it != mFiles.end() && it->second.filename == str)
+    if (it != mFiles.end() && it->second.fileName == str)
 #else
     if (it != mFiles.end())
 #endif

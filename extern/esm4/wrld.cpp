@@ -177,7 +177,3 @@ void ESM4::World::load(ESM4::Reader& reader)
 //void ESM4::World::save(ESM4::Writer& writer) const
 //{
 //}
-
-void ESM4::World::blank()
-{
-}

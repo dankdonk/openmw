@@ -44,7 +44,7 @@ namespace Bsa
             std::uint32_t size;
             std::uint32_t offset;
 
-            std::string filename; // FIXME: for testing hash collision
+            std::string fileName; // NOTE: for testing hash collision only, see TEST_UNIQUE_HASH
 
             FileRecord() : size(0), offset(-1) {}
         };

@@ -96,6 +96,6 @@ void ESM4::Static::load(ESM4::Reader& reader)
 //{
 //}
 
-void ESM4::Static::blank()
-{
-}
+//void ESM4::Static::blank()
+//{
+//}
