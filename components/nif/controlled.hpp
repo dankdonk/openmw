@@ -64,8 +64,46 @@ public:
     int alpha;
     int directRenderer;
 
-    void read(NIFStream *nif);
-    void post(NIFFile *nif);
+    void read(NIFStream *nif)
+    {
+        Named::read(nif);
+
+        external = !!nif->getChar();
+        if(external)
+        {
+            filename = nif->getSkyrimString(nifVer, Record::strings);
+            if (nifVer >= 0x0a010000) // 10.1.0.0
+                nif->getUInt(); // refNiObject // FIXME
+        }
+        else
+        {
+            if (nifVer <= 0x0a000100)
+                nif->getChar(); // always 1 // FIXME: is this presentn on 10.1.0.0?
+
+            if (nifVer >= 0x0a010000) // 10.1.0.0
+                originalFile = nif->getSkyrimString(nifVer, Record::strings);
+
+            data.read(nif);
+        }
+
+        pixel = nif->getInt();
+        mipmap = nif->getInt();
+        alpha = nif->getInt();
+
+        nif->getChar(); // always 1
+
+        if (nifVer >= 0x0a01006a) // 10.1.0.106
+            directRenderer = nif->getBool(nifVer);
+
+        if (nifVer >= 0x14020007)
+            nif->getBool(nifVer);
+    }
+
+    void post(NIFFile *nif)
+    {
+        Named::post(nif);
+        data.post(nif);
+    }
 };
 
 class NiParticleGrowFade : public NiParticleModifier
@@ -74,7 +112,12 @@ public:
     float growTime;
     float fadeTime;
 
-    void read(NIFStream *nif);
+    void read(NIFStream *nif)
+    {
+        NiParticleModifier::read(nif);
+        growTime = nif->getFloat();
+        fadeTime = nif->getFloat();
+    }
 };
 
 class NiParticleColorModifier : public NiParticleModifier
@@ -82,8 +125,17 @@ class NiParticleColorModifier : public NiParticleModifier
 public:
     NiColorDataPtr data;
 
-    void read(NIFStream *nif);
-    void post(NIFFile *nif);
+    void read(NIFStream *nif)
+    {
+        NiParticleModifier::read(nif);
+        data.read(nif);
+    }
+
+    void post(NIFFile *nif)
+    {
+        NiParticleModifier::post(nif);
+        data.post(nif);
+    }
 };
 
 class NiGravity : public NiParticleModifier
@@ -97,21 +149,50 @@ public:
     Ogre::Vector3 mPosition;
     Ogre::Vector3 mDirection;
 
-    void read(NIFStream *nif);
+    void read(NIFStream *nif)
+    {
+        NiParticleModifier::read(nif);
+
+        /*unknown*/nif->getFloat();
+        mForce = nif->getFloat();
+        mType = nif->getUInt();
+        mPosition = nif->getVector3();
+        mDirection = nif->getVector3();
+    }
 };
 
 // NiPinaColada
 class NiPlanarCollider : public NiParticleModifier
 {
 public:
-    void read(NIFStream *nif);
+    void read(NIFStream *nif)
+    {
+        NiParticleModifier::read(nif);
+
+        // (I think) 4 floats + 4 vectors
+        nif->skip(4*16);
+    }
 };
 
 class NiParticleRotation : public NiParticleModifier
 {
 public:
-    void read(NIFStream *nif);
+    void read(NIFStream *nif)
+    {
+        NiParticleModifier::read(nif);
+
+        /*
+           byte (0 or 1)
+           float (1)
+           float*3
+        */
+        nif->skip(17);
+    }
 };
+
+
+/* --------------------------------------------------------- */
+
 
 class NiPSysModifier : public Record
 {

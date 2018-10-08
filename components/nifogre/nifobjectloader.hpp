@@ -30,7 +30,7 @@
 #include <components/nif/recordptr.hpp>
 #include <components/nif/niffile.hpp>
 
-#include "objectscene.hpp"
+#include "ogrenifloader.hpp"
 
 namespace Ogre
 {
@@ -89,10 +89,6 @@ namespace NifOgre
         static void createObjects (const Nif::NIFFilePtr& nif,
                 const std::string &name, const std::string &group, Ogre::SceneNode *sceneNode, const Nif::Node *node,
                 ObjectScenePtr scene, int flags, int animflags, int partflags, bool isRootCollisionNode = false);
-
-        static void handleNode (const Nif::NIFFilePtr& nif,
-                const std::string &name, const std::string &group, Ogre::SceneNode *sceneNode, const Nif::Node *node,
-                ObjectScenePtr scene, int flags, int animflags, int partflags, bool isRagdollFlag = false);
 #if 0
         static void handleNode2 (const Nif::NIFFilePtr& nif,
                 const std::string &name, const std::string &group, Ogre::SceneNode *sceneNode, const Nif::Node *node,
@@ -109,9 +105,6 @@ namespace NifOgre
 
         static void loadKf (Ogre::Skeleton *skel,
                 const std::string &name, TextKeyMap &textKeys, std::vector<Ogre::Controller<Ogre::Real> > &ctrls);
-
-        static void NifOgre::NIFObjectLoader::loadTES4Kf (Ogre::Skeleton *skel,
-                Nif::NIFFilePtr nif, TextKeyMap &textKeys, std::vector<Ogre::Controller<Ogre::Real> > &ctrls);
     };
 }
 #endif // OPENMW_COMPONENTS_NIFOGRE_NIFOBJECTLOADER_HPP

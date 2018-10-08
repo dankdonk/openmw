@@ -3,97 +3,6 @@
 #include "data.hpp"
 #include "node.hpp" // NiParticleSystem
 
-void Nif::NiSourceTexture::read(NIFStream *nif)
-{
-    Named::read(nif);
-
-    external = !!nif->getChar();
-    if(external)
-    {
-        filename = nif->getSkyrimString(nifVer, Record::strings);
-        if (nifVer >= 0x0a010000) // 10.1.0.0
-            nif->getUInt(); // refNiObject // FIXME
-    }
-    else
-    {
-        if (nifVer <= 0x0a000100)
-            nif->getChar(); // always 1 // FIXME: is this presentn on 10.1.0.0?
-
-        if (nifVer >= 0x0a010000) // 10.1.0.0
-            originalFile = nif->getSkyrimString(nifVer, Record::strings);
-
-        data.read(nif);
-    }
-
-    pixel = nif->getInt();
-    mipmap = nif->getInt();
-    alpha = nif->getInt();
-
-    nif->getChar(); // always 1
-
-    if (nifVer >= 0x0a01006a) // 10.1.0.106
-        directRenderer = nif->getBool(nifVer);
-
-    if (nifVer >= 0x14020007)
-        nif->getBool(nifVer);
-}
-
-void Nif::NiSourceTexture::post(NIFFile *nif)
-{
-    Named::post(nif);
-    data.post(nif);
-}
-
-void Nif::NiParticleGrowFade::read(NIFStream *nif)
-{
-    NiParticleModifier::read(nif);
-    growTime = nif->getFloat();
-    fadeTime = nif->getFloat();
-}
-
-void Nif::NiParticleColorModifier::read(NIFStream *nif)
-{
-    NiParticleModifier::read(nif);
-    data.read(nif);
-}
-
-void Nif::NiParticleColorModifier::post(NIFFile *nif)
-{
-    NiParticleModifier::post(nif);
-    data.post(nif);
-}
-
-void Nif::NiGravity::read(NIFStream *nif)
-{
-    NiParticleModifier::read(nif);
-
-    /*unknown*/nif->getFloat();
-    mForce = nif->getFloat();
-    mType = nif->getUInt();
-    mPosition = nif->getVector3();
-    mDirection = nif->getVector3();
-}
-
-void Nif::NiPlanarCollider::read(NIFStream *nif)
-{
-    NiParticleModifier::read(nif);
-
-    // (I think) 4 floats + 4 vectors
-    nif->skip(4*16);
-}
-
-void Nif::NiParticleRotation::read(NIFStream *nif)
-{
-    NiParticleModifier::read(nif);
-
-    /*
-       byte (0 or 1)
-       float (1)
-       float*3
-    */
-    nif->skip(17);
-}
-
 void Nif::NiPSysModifier::read(NIFStream *nif)
 {
     name = nif->getSkyrimString(nifVer, Record::strings);
@@ -180,7 +89,6 @@ void Nif::BSPSysSimpleColorModifier::read(NIFStream *nif)
 
     nif->getVector4s(colors, 3);
 }
-
 
 void Nif::BSPSysStripUpdateModifier::read(NIFStream *nif)
 {

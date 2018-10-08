@@ -40,6 +40,88 @@ public:
     void post(NIFFile *nif);
 };
 
+class NiVertWeightsExtraData : public NiExtraData
+{
+public:
+    void read(NIFStream *nif)
+    {
+        NiExtraData::read(nif);
+
+        // We should have s*4+2 == i, for some reason. Might simply be the
+        // size of the rest of the record, unhelpful as that may be.
+        /*int i =*/ nif->getInt();
+        int s = nif->getUShort();
+
+        nif->skip(s * sizeof(float)); // vertex weights I guess
+    }
+
+    void post(NIFFile *nif)
+    {
+        NiExtraData::post(nif);
+    }
+};
+
+class NiTextKeyExtraData : public NiExtraData
+{
+public:
+    struct TextKey
+    {
+        float time;
+        std::string text;
+    };
+    std::vector<TextKey> list;
+
+    void read(NIFStream *nif)
+    {
+        NiExtraData::read(nif);
+
+        if (nifVer <= 0x04020200) // up to 4.2.2.0
+            nif->getInt(); // 0
+
+        int keynum = nif->getInt();
+        list.resize(keynum);
+        for(int i=0; i<keynum; i++)
+        {
+            list[i].time = nif->getFloat();
+            list[i].text = nif->getSkyrimString(nifVer, Record::strings);
+        }
+    }
+
+    void post(NIFFile *nif)
+    {
+        NiExtraData::post(nif);
+    }
+};
+
+class NiStringExtraData : public NiExtraData
+{
+public:
+    /* Two known meanings:
+       "MRK" - marker, only visible in the editor, not rendered in-game
+       "NCO" - no collision
+    */
+    std::string stringData;
+
+    void read(NIFStream *nif)
+    {
+        NiExtraData::read(nif);
+
+        if (nifVer <= 0x04020200) // up to 4.2.2.0
+            nif->getInt(); // size of string + 4. Really useful...
+
+        stringData = nif->getSkyrimString(nifVer, Record::strings);
+    }
+
+    void post(NIFFile *nif)
+    {
+        NiExtraData::post(nif);
+    }
+};
+
+
+/* --------------------------------------------------------- */
+
+
 class BSBehaviorGraphExtraData : public NiExtraData
 {
 public:
@@ -157,40 +239,6 @@ class BSXFlags : public NiExtraData // FIXME: should inherit from NiIntegerData
 public:
     unsigned int integerData;
 
-    void read(NIFStream *nif);
-    void post(NIFFile *nif);
-};
-
-class NiStringExtraData : public NiExtraData
-{
-public:
-    /* Two known meanings:
-       "MRK" - marker, only visible in the editor, not rendered in-game
-       "NCO" - no collision
-    */
-    std::string stringData;
-
-    void read(NIFStream *nif);
-    void post(NIFFile *nif);
-};
-
-class NiTextKeyExtraData : public NiExtraData
-{
-public:
-    struct TextKey
-    {
-        float time;
-        std::string text;
-    };
-    std::vector<TextKey> list;
-
-    void read(NIFStream *nif);
-    void post(NIFFile *nif);
-};
-
-class NiVertWeightsExtraData : public NiExtraData
-{
-public:
     void read(NIFStream *nif);
     void post(NIFFile *nif);
 };

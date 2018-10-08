@@ -2,7 +2,6 @@
 
 #include <iostream> // FIXME
 
-#include "controlled.hpp" // NiSouceTexture
 #include "data.hpp" // BSShaderTextureSet
 
 void Nif::Property::read(NIFStream *nif)

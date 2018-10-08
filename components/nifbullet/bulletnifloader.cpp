@@ -127,7 +127,7 @@ void extractControlledNodes(Nif::NIFFilePtr kfFile, std::set<std::string>& contr
 // so an additional check needs to be made to see if it is animated (i.e. has a controller)
 // NOTE: the check for controller only works at the root node
 //
-// FIXME: this is duplicated in nifobjectloader.cpp
+// FIXME: this is duplicated in ogrenifloader.cpp
 bool isRagdoll(const Nif::Node *node, unsigned int bsxFlags)
 {
     if (node->nifVer >= 0x14020007) // TES5

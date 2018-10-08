@@ -10,7 +10,7 @@
 
 #include <OgreVector3.h>
 
-#include <components/nifogre/objectscene.hpp> // FIXME
+//#include <components/nifogre/objectscene.hpp> // FIXME
 //#ifndef Q_MOC_RUN
 #include <components/esm4terrain/terraingrid.hpp>
 //#endif

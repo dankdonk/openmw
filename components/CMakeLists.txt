@@ -35,8 +35,8 @@ add_component_dir (bsa
     )
 
 add_component_dir (nif
-    controlled effect niftypes record controller extra node recordptr data niffile property
-    nifkey base nifstream collision
+    controlled niftypes record controller extra node recordptr data niffile property nifkey base nifstream
+    collision
     )
 
 add_component_dir (nifcache
@@ -44,8 +44,7 @@ add_component_dir (nifcache
     )
 
 add_component_dir (nifogre
-    ogrenifloader skeleton material mesh particles controller nifobjectloader objectscene
-    controller
+    ogrenifloader skeleton material mesh particles
     )
 
 add_component_dir (nifbullet

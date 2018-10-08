@@ -13,7 +13,7 @@
 
 #include <components/misc/stringops.hpp>
 #include <components/esm/loadland.hpp>
-#include <components/nifogre/objectscene.hpp> // FIXME temp
+//#include <components/nifogre/objectscene.hpp> // FIXME temp
 
 #include "../../model/doc/document.hpp"
 #include "../../model/world/idtable.hpp"
