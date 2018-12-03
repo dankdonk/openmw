@@ -30,6 +30,7 @@
 
 #include "nistream.hpp"
 #include "nimodel.hpp"
+#include "nitimecontroller.hpp"
 #include "nidata.hpp"
 #include "btogreinst.hpp"
 
@@ -51,6 +52,52 @@ NiBtOgre::NiNode::NiNode(uint32_t index, NiStream& stream, const NiModel& model)
     // Looks like the node name is also used as bone names for those meshes with skins.
     // Bipeds seems to have a predefined list of bones. See: meshes/armor/legion/m/cuirass.nif
     mNodeName = mModel.indexToString(NiObjectNET::mNameIndex);
+}
+
+void NiBtOgre::NiNode::findBones(const NiNodeRef skeletonRoot, const NiNodeRef childNode)
+{
+    if (mBoneIndexList.size() == 0) // implies skeleton root is not yet found
+    {
+        if (NiObject::index() == skeletonRoot) // am I the one?
+        {
+            mBoneIndexList.push_back(childNode);
+            return;
+        }
+
+        if (mParentNode == nullptr) // should not happen!
+            throw std::runtime_error("NiNode without parent and not found Skeleton Root");
+
+        // not skeleton root, keep searching
+        static_cast<NiNode*>(mParentNode)->findBones(skeletonRoot, NiObject::index());
+        mBoneIndexList.push_back(childNode);
+    }
+    else
+    {
+        if (std::find(mBoneIndexList.begin(), mBoneIndexList.end(), childNode) == mBoneIndexList.end())
+            mBoneIndexList.push_back(childNode); // only if childNode doesn't exist
+    }
+}
+
+void NiBtOgre::NiNode::clearSkeleton()
+{
+    for (unsigned int i = 0; i < mBoneIndexList.size(); ++i)
+    {
+        mModel.getRef<NiNode>(mBoneIndexList[i])->clearSkeleton();
+    }
+
+    mBoneIndexList.clear();
+}
+
+void NiBtOgre::NiNode::buildSkeleton(BtOgreInst *inst, NiSkinInstanceRef skinInstanceIndex)
+{
+    std::cout << "skel " << getNodeName() << std::endl;
+
+    // do bone assignments here?
+
+    for (unsigned int i = 0; i < mBoneIndexList.size(); ++i)
+    {
+        mModel.getRef<NiNode>(mBoneIndexList[i])->buildSkeleton(inst, skinInstanceIndex);
+    }
 }
 
 //   name string
@@ -135,7 +182,7 @@ void NiBtOgre::NiNode::build(BtOgreInst *inst, NiObject* parent)
     // Should not have TES3 NIF versions since NifOgre::NIFObjectLoader::load() checks before
     // calling this method, at least while testing
     if (mModel.nifVer() <= 0x04000002) // up to 4.0.0.2
-        return buildTES3(inst->mBaseNode, inst);
+        return buildTES3(inst->mBaseSceneNode, inst);
 
     // FIXME: should create a child Ogre::SceneNode here using the NiNode's translation, etc?
     // FIXME: apply any properties (? do this first and pass on for building children?)
@@ -246,6 +293,62 @@ void NiBtOgre::NiNode::build(BtOgreInst *inst, NiObject* parent)
     if (enableCollision && mCollisionObjectIndex != -1)
         mModel.getRef<NiObject>((int32_t)mCollisionObjectIndex)->build(inst, this);
 
+    // NiTransformController (e.g. fire/FireTorchLargeSmoke)
+    // NiVisController (e.g. oblivion/seige/siegecrawlerdeathsigil, oblivion/gate/oblivionmagicgate01)
+    //
+    // NiControllerManager (e.g. architecture/ships/MainMast02)
+    //   NiMultiTargetTransformController
+    //   NiControllerSequence
+    //
+    // NiBSBoneLODController (e.g. creature/skeleton) (NOTE: LOD means Level of Detail)
+    // bhkBlendController  (for Bip01 NonAccum only?)
+    //
+    //
+    //
+    //
+    //
+    // NiGeomMorpherController
+    //
+    // NiPSysEmitterCtlr,
+    // NiMaterialColorController
+    //
+    //  e.g. StoneWallGateDoor01
+    //       FireTorchLargeSmoke    (cow "tamriel" 5 11)
+    //       MainMast01, MainMast02 (cow "tamriel" 5 11)
+    //
+    // Some of the animations are applied before the entity is built (i.e. to the mesh), e.g.
+    // NiGeomMorpherController and for the newer versions of the NIF the keyframe details are
+    // in the interpolators indicated in the controlled blocks.
+    //
+    // The controllers are built before NiGeometry in case there are animations and hence some
+    // mappings need to be prepared in advance.
+    //
+    // But, the target nodes (children) have not been built yet - should the controllers be
+    // built after the children?  To build the controllers later, the controller index should
+    // be stored in 'inst' so that duing a build of NiGeomety the required data can be found.
+    //
+    // How are targets mentioned in NiMultiTargetTransformController meant to be used?  They
+    // seem to correspond to the controlled blocks in NiControllerSquence, anyway. These are
+    // also listed in the object palette.
+    NiTimeControllerRef controllerIndex = NiObjectNET::mControllerIndex;
+// FIXME: testing only
+#if 0
+    if (controllerIndex != -1)
+    {
+        std::string name = mModel.blockType(mModel.getRef<NiTimeController>(controllerIndex)->index());
+        if (name != "NiControllerManager" && name != "NiTransformController" && name != "NiVisController"
+                && name != "NiBSBoneLODController" && name != "bhkBlendController")
+            std::cout << name << std::endl;
+    }
+#endif
+    while (controllerIndex != -1)
+    {
+        controllerIndex = mModel.getRef<NiTimeController>(controllerIndex)->build(inst);
+    }
+
+    if (parent != nullptr)
+        mParentNode = parent; // HACK: keep for reverse traversing to find skeleton root
+
     for (unsigned int i = 0; i < mChildren.size(); ++i)
     {
         if (mChildren[i] == -1) // no object
@@ -255,6 +358,16 @@ void NiBtOgre::NiNode::build(BtOgreInst *inst, NiObject* parent)
         // benefit is that at least at this NiNode level we know if there are any skins.
         mModel.getRef<NiObject>((int32_t)mChildren[i])->build(inst, this);
     }
+
+    // FIXME: too many bones filename = "meshes\\oblivion\\gate\\oblivionarchgate01.nif"
+
+    // FIXME: testing only: Doesn't look like NiNodes have properties?
+    // (which means NiGeometry doesn't need to check its parent for properties)
+//    if (NiAVObject::mProperty.size())
+//        throw std::runtime_error("NiNode has properties");
+    //+		mModelName	"meshes\\oblivion\\environment\\oblivionsmokeemitter01.nif"	std::basic_string<char,std::char_traits<char>,std::allocator<char> >
+    // NiZBufferProperty
+
 
     inst->buildMeshAndEntity();
 

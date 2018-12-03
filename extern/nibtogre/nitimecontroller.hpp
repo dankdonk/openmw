@@ -97,6 +97,8 @@ namespace NiBtOgre
         NiObjectNETRef mTargetIndex;
 
         NiTimeController(uint32_t index, NiStream& stream, const NiModel& model);
+
+        virtual NiTimeControllerRef build(BtOgreInst *inst, Ogre::Mesh *mesh = nullptr) { return -1; } // FIXME: don't want mesh here
     };
 
     // Seen in NIF version 20.2.0.7
@@ -167,6 +169,8 @@ namespace NiBtOgre
         NiDefaultAvObjectPaletteRef mObjectPaletteIndex;
 
         NiControllerManager(uint32_t index, NiStream& stream, const NiModel& model);
+
+        virtual NiTimeControllerRef build(BtOgreInst *inst, Ogre::Mesh *mesh = nullptr); // FIXME: mesh
     };
 
     typedef NiTimeController NiInterpController;

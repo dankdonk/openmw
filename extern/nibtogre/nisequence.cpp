@@ -31,6 +31,9 @@
 #include "nistream.hpp"
 #include "nitimecontroller.hpp" // static_cast NiControllerManager
 #include "nimodel.hpp"
+#include "nidata.hpp" // NiStringPalette
+#include "niavobject.hpp" // getTargetObject (see: http://www.cplusplus.com/forum/beginner/134129/#msg717505)
+#include "niinterpolator.hpp"
 
 #ifdef NDEBUG // FIXME: debuggigng only
 #undef NDEBUG
@@ -58,8 +61,10 @@ void NiBtOgre::NiSequence::ControllerLink::read(NiStream& stream)
         stream.read(priority); // TODO userVer >= 10
     }
 
-    if (stream.nifVer() == 0x0a01006a || stream.nifVer() >= 0x14010003) // from header string
+    if (stream.nifVer() == 0x0a01006a || stream.nifVer() >= 0x14010003) // from header
     {
+        stringPaletteIndex = -1;
+
         stream.readLongString(nodeNameIndex);
         stream.readLongString(propertyTypeIndex);
         stream.readLongString(controllerTypeIndex);
@@ -68,13 +73,13 @@ void NiBtOgre::NiSequence::ControllerLink::read(NiStream& stream)
     }
     else if (stream.nifVer() >= 0x0a020000 && stream.nifVer() <= 0x14000005) // from string palette
     {
-        stream.read(stringPaletteIndex);
+        stream.read(stringPaletteIndex); // block index
 
-        stream.read(nodeNameOffset);
-        stream.read(propertyTypeOffset);
-        stream.read(controllerTypeOffset);
-        stream.read(variable1Offset);
-        stream.read(variable2Offset);
+        stream.read(nodeNameIndex);
+        stream.read(propertyTypeIndex);
+        stream.read(controllerTypeIndex);
+        stream.read(variable1Index);
+        stream.read(variable2Index);
     }
 }
 
@@ -84,6 +89,7 @@ NiBtOgre::NiSequence::NiSequence(uint32_t index, NiStream& stream, const NiModel
 {
     stream.readLongString(mNameIndex);
 
+    // probably unused, skip instead?
     if (stream.nifVer() <= 0x0a010000) // up to 10.1.0.0
     {
         stream.readLongString(mTextKeysNameIndex);
@@ -140,4 +146,59 @@ NiBtOgre::NiControllerSequence::NiControllerSequence(uint32_t index, NiStream& s
         if (stream.nifVer() >= 0x14020007 && stream.userVer2() > 28)
             stream.read(mUnknownShort1);
     //}
+}
+
+// Each of the NiControlSequences are "playable" animations.
+//
+// mTextKeysIndex holds text keys such as sound triggers, e.g. 'sound: TRPGearsClaws' in
+// oblivion/architecture/citadel/interior/citadelsmalltower/oblivionsmalltowergatelatch01.nif
+// (probably needs to have actions done through 'inst')
+//
+// FIXME: how to get the sound object EditorID lookup? probably need to implement something
+//        similar to getting world using EditorID, i.e. mStore.get<ForeignWorld>().getFormId(world);
+//
+// Each of the Controlled Blocks refer to the target node name via the string palette which
+// in turn needs to be looked up via the object palette in NiControllerManager
+void NiBtOgre::NiControllerSequence::build(BtOgreInst *inst, const NiDefaultAVObjectPalette* objects)
+{
+    for (unsigned int i = 0; i < mControlledBlocks.size(); ++i)
+    {
+        //if (mModel.nifVer() >= 0x0a020000 && mModel.nifVer() <= 0x14000005)
+            //assert(mStringPaletteIndex == mControlledBlocks[i].stringPaletteIndex); // should be the same
+
+        // NOTE: can be nullptr if nodeNameIndex == 0xffffffff
+        NiAVObject* targetNode = getTargetObject(mControlledBlocks[i].nodeNameIndex, objects);
+
+        // FIXME: from 10.1.0.106 only
+        NiInterpolator *interpolator = mModel.getRef<NiInterpolator>(mControlledBlocks[i].interpolatorIndex);
+
+        // TODO: apply interpolator to the target here?
+        // targets are usually NiGeometry or NiNode
+        // each interpolator type probably has its own animation method
+
+    }
+
+    // FIXME: process mTextKeysIndex here
+}
+
+NiBtOgre::NiAVObject* NiBtOgre::NiControllerSequence::getTargetObject(std::uint32_t objIndex,
+        const NiDefaultAVObjectPalette* objects) const
+{
+    std::string objName;
+    if (mModel.nifVer() >= 0x0a020000 && mModel.nifVer() <= 0x14000005)
+    {
+        if (objIndex == 0xffffffff) // -1, horrible hack
+            return nullptr;
+
+        NiStringPalette *palette = mModel.getRef<NiStringPalette>(mStringPaletteIndex);
+
+        size_t len = palette->mPalette.find_first_of('\0', objIndex) - objIndex;
+        objName = palette->mPalette.substr(objIndex, len);
+    }
+    else //if (mModel.nifVer() == 0x0a01006a || mModel.nifVer() >= 0x14010003)
+    {
+        objName = mModel.indexToString(objIndex);
+    }
+
+    return mModel.getRef<NiAVObject>(objects->getObjectRef(objName));
 }

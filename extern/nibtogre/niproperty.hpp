@@ -60,7 +60,9 @@
 //         NiZBufferProperty
 namespace NiBtOgre
 {
-#if 0
+//#if 0
+    class OgreMaterial;
+
     // Seen in NIF version 20.2.0.7
     class NiProperty : public NiObjectNET
     {
@@ -68,10 +70,13 @@ namespace NiBtOgre
         bool mIsBSLightingShaderProperty;
 
     public:
-        NiProperty(uint32_t index, NiStream& stream, const NiModel& model);
+        NiProperty(uint32_t index, NiStream& stream, const NiModel& model, bool isBSLightingShaderProperty = false);
+
+        virtual void applyMaterialProperty(OgreMaterial& material) {}; // baseclass does nothing
+        void assessProperties() {}; // FIXME
     };
-#endif
-    typedef NiObjectNET NiProperty; // Seen in NIF version 20.2.0.7
+//#endif
+    //typedef NiObjectNET NiProperty; // Seen in NIF version 20.2.0.7
 
     // Seen in NIF version 20.2.0.7
     class BSEffectShaderProperty : public NiProperty
@@ -225,6 +230,8 @@ namespace NiBtOgre
         float mEmitMulti;
 
         NiMaterialProperty(uint32_t index, NiStream& stream, const NiModel& model);
+
+        virtual void applyMaterialProperty(OgreMaterial& material);
     };
 
     struct NiShadeProperty : public NiProperty
@@ -333,6 +340,8 @@ namespace NiBtOgre
         std::vector<ShaderTexDesc> mShaderTextures;
 
         NiTexturingProperty(uint32_t index, NiStream& stream, const NiModel& model);
+
+        virtual void applyMaterialProperty(OgreMaterial& material);
     };
 
     struct NiVertexColorProperty : public NiProperty

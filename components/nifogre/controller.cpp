@@ -124,6 +124,15 @@ void TransformController::setInterpolator( const QModelIndex & iBlock )
     }
 }
 
+/*! Returns the fraction of the way between two keyframes based on the scene time
+ *
+ * @param[in]  inTime		The scene time
+ * @param[in]  nif			The NIF
+ * @param[in]  keysArray	The Keys array in the interpolator
+ * @param[out] prevFrame	The previous row in the Keys array
+ * @param[out] nextFrame	The next row in the Keys array
+ * @param[out] fraction		The current distance between the prev and next frame, as a fraction
+ */
 bool Controller::timeIndex( float time, const NifModel * nif, const QModelIndex & array, int & i, int & j, float & x )
 {
     int count;

@@ -57,6 +57,9 @@ namespace NiBtOgre
     {
         std::string mNodeName; // cached since used frequently
 
+        NiObject *mParentNode; // HACK: assumes the nodes were built before NiSkinInstance is encountered
+        std::vector<NiNodeRef> mBoneIndexList; // FIXME: experimental for building a skeleton
+
         void buildTES3(Ogre::SceneNode *sceneNode, BtOgreInst *inst, NiObject *parentNiNode = nullptr);
 
     protected:
@@ -72,6 +75,12 @@ namespace NiBtOgre
 
         // For NiGeometry children (e.g. NiTriStrips)
         inline const std::string& getNodeName() const { return mNodeName; }
+
+        // Returns true if skeleton root is found
+        void findBones(const NiNodeRef skeletonRoot, const NiNodeRef childNode); // FIXME: experimental
+        void clearSkeleton(); // FIXME: experimental
+        void buildSkeleton(BtOgreInst *inst, NiSkinInstanceRef skinInstanceIndex); // FIXME: experimental
+        NiNode *getParentNode() { return static_cast<NiNode*>(mParentNode); }
     };
 
     typedef NiNode AvoidNode;

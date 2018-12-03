@@ -27,22 +27,27 @@
 
 #include "nigeometry.hpp"
 
-namespace NiBtOgre
+/*std::uint32_t*/void NiBtOgre::NiMeshLoader::registerSubMeshGeometry(NiGeometry* geometry)
 {
-    // This method is not called until the associated entity is created
-    void NiMeshLoader::loadResource(Ogre::Resource *resource)
+    mSubMeshGeometry.push_back(geometry);
+
+    //return (std::uint32_t)mSubMeshGeometry.size() - 1;
+}
+
+// This method is not called until the associated Ogre::Entity is created in
+// BtOgreInst::buildMeshAndEntity()
+void NiBtOgre::NiMeshLoader::loadResource(Ogre::Resource *resource)
+{
+    Ogre::Mesh *mesh = static_cast<Ogre::Mesh*>(resource);
+
+    // create and update (i.e. apply materials, properties and controllers)
+    // an Ogre::SubMesh for each in mSubMeshGeometry
+    for (size_t i = 0; i < mSubMeshGeometry.size(); ++i)
     {
-        Ogre::Mesh *mesh = static_cast<Ogre::Mesh*>(resource);
-
-        // create and update (i.e. apply materials, properties and controllers)
-        // an Ogre::SubMesh for each in mMeshGeometry
-        for (size_t i = 0; i < mMeshGeometry.size(); ++i)
-        {
-            mMeshGeometry[i]->createSubMesh(mInstance, mesh);
-        }
-
-        // update bounds including all the sub meshes
-        //mesh->_setBounds()
-        //mesh->_setBoundingSphereRadius)
+        mSubMeshGeometry[i]->createSubMesh(mInstance, mesh);
     }
+
+    // update bounds including all the sub meshes
+    //mesh->_setBounds()
+    //mesh->_setBoundingSphereRadius)
 }

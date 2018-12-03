@@ -28,6 +28,9 @@
 #include <cassert>
 #include <stdexcept>
 
+#include <OgreAnimationTrack.h>
+#include <OgreKeyframe.h>
+
 #include "nistream.hpp"
 #include "ninode.hpp" // static_cast NiNode
 #include "nimodel.hpp"
@@ -110,11 +113,21 @@ NiBtOgre::NiDefaultAVObjectPalette::NiDefaultAVObjectPalette(uint32_t index, NiS
     std::uint32_t numObjs = 0;
     stream.read(numObjs);
 
+#if 0
     mObjs.resize(numObjs);
-    for (unsigned int i = 0; i < numObjs; i++)
+    for (unsigned int i = 0; i < numObjs; ++i)
     {
         stream.readSizedString(mObjs.at(i).name);
         stream.read(mObjs.at(i).avObjectIndex);
+    }
+#endif
+    std::string name;
+    NiAVObjectRef objIndex;
+    for (unsigned int i = 0; i < numObjs; ++i)
+    {
+        stream.readSizedString(name);
+        stream.read(objIndex);
+        mObjs[name] = objIndex;
     }
 }
 
@@ -164,6 +177,35 @@ NiBtOgre::KeyGroup<float>::KeyGroup(NiStream& stream)
     // FIXME
 }
 #endif
+
+// below code is copied from NifSkope
+bool NiBtOgre::AnimTrackInterpolator<float>::getInterpolatedKeyFrame(const Ogre::AnimationTrack *t,
+        const Ogre::TimeIndex& timeIndex, Ogre::KeyFrame *kf)
+{
+    // only support VertexMorphKeyFrame for now
+    Ogre::VertexPoseKeyFrame *keyFrame = dynamic_cast<Ogre::VertexPoseKeyFrame*>(kf);
+    if (!keyFrame)
+        return false;
+
+    // only support quadratic for now
+    if (mInterpolation != 2)
+        return false;
+
+    float x, v1, v2; // FIXME
+
+    // Tangent 1
+    float t1 = mKey.backward;
+    // Tangent 2
+    float t2 = mKey.forward;
+
+    float x2 = x * x;
+    float x3 = x2 * x;
+
+    float value = v1 * (2.0f * x3 - 3.0f * x2 + 1.0f) + v2 * (-2.0f * x3 + 3.0f * x2) + t1 * (x3 - 2.0f * x2 + x) + t2 * (x3 - x2);
+    keyFrame->updatePoseReference(/*poseIndex*/0, value); // only one PoseRef per keyframe, so index is 0
+
+    return true;
+}
 
 // Seen in NIF version 20.0.0.4, 20.0.0.5
 NiBtOgre::NiBoolData::NiBoolData(uint32_t index, NiStream& stream, const NiModel& model)
@@ -797,6 +839,7 @@ NiBtOgre::NiSkinInstance::NiSkinInstance(uint32_t index, NiStream& stream, const
     if (stream.nifVer() >= 0x0a020000) // from 10.2.0.0
         stream.read(mSkinPartitionIndex);
     //stream.getPtr<NiNode>(mSkeletonRoot, model.objects());
+  //stream.read(mSkeletonRootIndex);
     std::int32_t rIndex = -1;
     stream.read(rIndex);
     mSkeletonRoot = model.getRef<NiNode>(rIndex);

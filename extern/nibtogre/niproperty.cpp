@@ -22,6 +22,8 @@
   Much of the information on the NIF file structures are based on the NifSkope
   documenation.  See http://niftools.sourceforge.net/wiki/NifSkope for details.
 
+  Much of the material handling code is based on OpenMW version 0.36.
+
 */
 #include "niproperty.hpp"
 
@@ -29,18 +31,19 @@
 #include <stdexcept>
 
 #include "nistream.hpp"
+#include "ogrematerial.hpp"
 
 #ifdef NDEBUG // FIXME: debuggigng only
 #undef NDEBUG
 #endif
 
-#if 0
+//#if 0
 // Seen in NIF version 20.2.0.7
-NiBtOgre::NiProperty::NiProperty(uint32_t index, NiStream& stream, const NiModel& model)
+NiBtOgre::NiProperty::NiProperty(uint32_t index, NiStream& stream, const NiModel& model, bool isBSLightingShaderProperty)
     : NiObjectNET(index, stream, model), mIsBSLightingShaderProperty(false)
 {
 }
-#endif
+//#endif
 
 // Seen in NIF version 20.2.0.7
 NiBtOgre::BSEffectShaderProperty::BSEffectShaderProperty(uint32_t index, NiStream& stream, const NiModel& model)
@@ -231,6 +234,11 @@ NiBtOgre::NiMaterialProperty::NiMaterialProperty(uint32_t index, NiStream& strea
         stream.read(mEmitMulti);
 }
 
+void NiBtOgre::NiMaterialProperty::applyMaterialProperty(OgreMaterial& material)
+{
+    // NOTE: below code copied from components/nifogre/material.cpp (OpenMW)
+}
+
 NiBtOgre::NiShadeProperty::NiShadeProperty(uint32_t index, NiStream& stream, const NiModel& model)
     : NiProperty(index, stream, model)
 {
@@ -278,9 +286,16 @@ void NiBtOgre::NiTexturingProperty::TexDesc::read(NiStream& stream)
         stream.read(clampMode);
         stream.read(filterMode);
     }
+    else
+    {
+        clampMode = 0;
+        filterMode = 0;
+    }
 
     if (stream.nifVer() >= 0x14010003) // from 20.1.0.3
         stream.read(flags);
+    else
+        flags = 0;
 
     //if (stream.nifVer() >= 0x14060000) // from 20.6.0.0 (unsupported version, commented out)
         //stream.read(unknownShort);
@@ -310,10 +325,13 @@ void NiBtOgre::NiTexturingProperty::TexDesc::read(NiStream& stream)
             stream.read(centerOffset.v);
         }
     }
+    else
+        hasTextureTransform = false;
 }
 
 NiBtOgre::NiTexturingProperty::NiTexturingProperty(uint32_t index, NiStream& stream, const NiModel& model)
-    : NiProperty(index, stream, model)
+    : NiProperty(index, stream, model), mFlags(0), mApplyMode(/* APPLY_MODULATE */2), mHasNormalTexture(false),
+      mHasUnknown2Texture(false), mHasDecal1Texture(false), mHasDecal2Texture(false), mHasDecal3Texture(false)
 {
     if (stream.nifVer() <= 0x0a000102 || stream.nifVer() >= 0x14010003) // up to 10.0.1.2 or from 20.1.0.3
         stream.read(mFlags);
@@ -389,6 +407,37 @@ NiBtOgre::NiTexturingProperty::NiTexturingProperty(uint32_t index, NiStream& str
             stream.read(mShaderTextures[i].mapIndex);
         }
     }
+}
+
+void NiBtOgre::NiTexturingProperty::applyMaterialProperty(OgreMaterial& material)
+{
+// from NIFMaterialLoader::getMaterial for texprop
+#if 0
+    for(int i = 0;i < 7;i++)
+    {
+        if(!texprop->textures[i].inUse)
+            continue;
+        if(texprop->textures[i].texture.empty())
+        {
+            warn("Texture layer "+Ogre::StringConverter::toString(i)+" is in use but empty in "+name);
+            continue;
+        }
+
+        const Nif::NiSourceTexture *st = texprop->textures[i].texture.getPtr();
+        if(st->external)
+            texName[i] = Misc::ResourceHelpers::correctTexturePath(st->filename);
+        else
+            warn("Found internal texture, ignoring.");
+    }
+
+    Nif::ControllerPtr ctrls = texprop->controller;
+    while(!ctrls.empty())
+    {
+        if (ctrls->recType != Nif::RC_NiFlipController) // Handled in ogrenifloader
+            warn("Unhandled texture controller "+ctrls->recName+" in "+name);
+        ctrls = ctrls->next;
+    }
+#endif
 }
 
 NiBtOgre::NiVertexColorProperty::NiVertexColorProperty(uint32_t index, NiStream& stream, const NiModel& model)

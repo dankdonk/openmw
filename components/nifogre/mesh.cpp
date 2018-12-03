@@ -131,7 +131,7 @@ void NIFMeshLoader::createSubMesh(Ogre::Mesh *mesh, const Nif::NiGeometry *geom)
         // Only set a skeleton when skinning. Unskinned meshes with a skeleton will be
         // explicitly attached later.
         mesh->setSkeletonName(mName);
-        std::cout << "submesh " << mName << std::endl; // FIXME
+        //std::cout << "submesh " << mName << std::endl; // FIXME
 
         // Convert vertices and normals to bone space from bind position. It would be
         // better to transform the bones into bind position, but there doesn't seem to

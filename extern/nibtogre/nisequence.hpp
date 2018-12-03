@@ -40,6 +40,7 @@ namespace NiBtOgre
 {
     class NiSequence : public NiObject
     {
+    protected:
         struct ControllerLink
         {
             // up to 10.1.0.0
@@ -51,27 +52,22 @@ namespace NiBtOgre
             NiTimeControllerRef controller2Index;
             unsigned char priority;
 
-            // 10.1.0.106 and 20.1.0.3 onwards from header string
-            std::uint32_t nodeNameIndex;
+            // 10.1.0.106 and 20.1.0.3 onwards index from header string
+            // 10.2.0.0 to 20.0.0.5 offset from string palette (can be -1)
+            std::uint32_t nodeNameIndex;    // target node name
             std::uint32_t propertyTypeIndex;
             std::uint32_t controllerTypeIndex;
             std::uint32_t variable1Index;
             std::uint32_t variable2Index;
 
-            // 10.2.0.0 to 20.0.0.5 from string palette
             NiStringPaletteRef stringPaletteIndex;
-            std::uint32_t nodeNameOffset;
-            std::uint32_t propertyTypeOffset;
-            std::uint32_t controllerTypeOffset;
-            std::uint32_t variable1Offset;
-            std::uint32_t variable2Offset;
 
             void read(NiStream& stream);
         };
 
-        std::uint32_t mNameIndex;
-        std::uint32_t mTextKeysNameIndex;
-        NiTextKeyExtraDataRef mTextKeysIndex;
+        std::uint32_t mNameIndex;             // name of the animation e.g. "Idle"
+        std::uint32_t mTextKeysNameIndex;     // probably unused by TES3/4/5
+        NiTextKeyExtraDataRef mTextKeysIndex; // probably unused by TES3/4/5
         std::vector<ControllerLink> mControlledBlocks;
 
     public:
@@ -79,6 +75,8 @@ namespace NiBtOgre
     };
 
     class NiControllerManager;
+    struct NiDefaultAVObjectPalette;
+    class NiAVObject;
 
     // Seen in NIF version 20.0.0.4, 20.0.0.5
     class NiControllerSequence : public NiSequence
@@ -101,6 +99,10 @@ namespace NiBtOgre
 
     public:
         NiControllerSequence(uint32_t index, NiStream& stream, const NiModel& model);
+
+        void build(BtOgreInst *inst, const NiDefaultAVObjectPalette* objects);
+
+        NiAVObject* getTargetObject(std::uint32_t objIndex, const NiDefaultAVObjectPalette* objects) const;
     };
 }
 

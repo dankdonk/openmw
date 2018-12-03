@@ -86,7 +86,6 @@ namespace NifOgre
 // 6. recurse into children if 'node' is a NiNode
 void NIFSkeletonLoader::buildBones (Ogre::Skeleton *skel, const Nif::Node *node, Ogre::Bone *parent)
 {
-    const Nif::NiNode *ninode = dynamic_cast<const Nif::NiNode*>(node);
     // Don't check here since needSkeleton() has already checked
     // FIXME: It seems that some objects require bones and/or transformation or will be in
     // wrong places.  These need to be handled elsewhere other than skeleton loader.
@@ -101,47 +100,6 @@ void NIFSkeletonLoader::buildBones (Ogre::Skeleton *skel, const Nif::Node *node,
 
         return;
     }
-//#if 0
-    if (!(node->recType == Nif::RC_NiNode ||     /* Nothing special; children traversed below */
-          node->recType == Nif::RC_BSFadeNode || // should be the same as NiNode
-          node->recType == Nif::RC_RootCollisionNode || /* handled in nifbullet (hopefully) */
-          node->recType == Nif::RC_NiTriShape ||        /* Handled in the mesh loader */
-          node->recType == Nif::RC_NiBSAnimationNode || /* Handled in the object loader */
-          node->recType == Nif::RC_NiBillboardNode ||   /* Handled in the object loader */
-          node->recType == Nif::RC_NiBSParticleNode ||
-          node->recType == Nif::RC_NiCamera ||              // <-- ignored (ToDo: should confirm)
-          node->recType == Nif::RC_NiAutoNormalParticles || // <-- should be ignored (NiGeometry)
-          node->recType == Nif::RC_NiParticleSystem ||      // <-- should be ignored (NiGeometry)
-          node->recType == Nif::RC_BSStripParticleSystem || // <-- should be ignored (NiGeometry)
-          node->recType == Nif::RC_NiRotatingParticles ||   // <-- should be ignored (NiGeometry)
-          node->recType == Nif::RC_NiTriStrips              // <-- should be ignored (NiGeometry)
-          ))
-        warn("Unhandled "+node->recName+" "+node->name+" in "+skel->getName());
-
-    Nif::ControllerPtr ctrl = node->controller;
-    while (!ctrl.empty())
-    {
-        // NiTransformController replaces NiKeyframeController
-        if (!(ctrl->recType == Nif::RC_NiParticleSystemController ||
-              ctrl->recType == Nif::RC_NiBSPArrayController ||
-              ctrl->recType == Nif::RC_NiVisController ||
-              ctrl->recType == Nif::RC_NiUVController ||
-              ctrl->recType == Nif::RC_NiKeyframeController ||
-              ctrl->recType == Nif::RC_NiTransformController ||
-              ctrl->recType == Nif::RC_NiGeomMorpherController ||
-              // FIXME: implement below ones in NifOgre::NIFObjectLoader::createNodeControllers()
-              // for now suppress warning
-              ctrl->recType == Nif::RC_NiBSBoneLODController ||
-              ctrl->recType == Nif::RC_bhkBlendController ||
-              ctrl->recType == Nif::RC_NiControllerManager ||
-              ctrl->recType == Nif::RC_NiMultiTargetTransformController
-              ))
-            warn("Unhandled "+ctrl->recName+" from node "+node->name+" in "+skel->getName());
-        ctrl = ctrl->next;
-    }
-    // FIXME about to add a bone
-    //std::cout << "added bone " << node->name << " " << skel->getName() << std::endl;
-//#endif
     // FIXME: sometimes a bone is created under BSFadeNode but none of the children have bones...
     //        currently resolved by ignoring BSFadeNode in NifOgre::NIFSkeletonLoader::needSkeleton()
     Ogre::Bone *bone;
@@ -157,28 +115,64 @@ void NIFSkeletonLoader::buildBones (Ogre::Skeleton *skel, const Nif::Node *node,
     }
     else
     {
-        if (!skel->hasBone(node->name))
+        if(!skel->hasBone(node->name))
             bone = skel->createBone(node->name);
         else
             bone = skel->createBone();
     }
 
-    if (parent)
-        parent->addChild(bone);
-
-    mNifToOgreHandleMap[(int)node->recIndex] = bone->getHandle();
+    if(parent) parent->addChild(bone);
+    mNifToOgreHandleMap[node->recIndex] = bone->getHandle();
 
     bone->setOrientation(node->trafo.rotation);
     bone->setPosition(node->trafo.pos);
     bone->setScale(Ogre::Vector3(node->trafo.scale));
     bone->setBindingPose();
 
-    if (ninode)
+    if(!(node->recType == Nif::RC_NiNode || /* Nothing special; children traversed below */
+         node->recType == Nif::RC_RootCollisionNode || /* handled in nifbullet (hopefully) */
+         node->recType == Nif::RC_NiTriShape || /* Handled in the mesh loader */
+         node->recType == Nif::RC_NiBSAnimationNode || /* Handled in the object loader */
+         node->recType == Nif::RC_NiBillboardNode || /* Handled in the object loader */
+         node->recType == Nif::RC_NiBSParticleNode ||
+         node->recType == Nif::RC_NiCamera ||
+         node->recType == Nif::RC_NiAutoNormalParticles ||
+         node->recType == Nif::RC_NiRotatingParticles ||
+         node->recType == Nif::RC_NiParticleSystem ||      // <-- should be ignored (NiGeometry)
+         node->recType == Nif::RC_BSStripParticleSystem || // <-- should be ignored (NiGeometry)
+         node->recType == Nif::RC_BSFadeNode || // should be the same as NiNode
+         node->recType == Nif::RC_NiTriStrips              // <-- should be ignored (NiGeometry)
+         ))
+        warn("Unhandled "+node->recName+" "+node->name+" in "+skel->getName());
+
+    Nif::ControllerPtr ctrl = node->controller;
+    while(!ctrl.empty())
+    {
+        if(!(ctrl->recType == Nif::RC_NiParticleSystemController ||
+             ctrl->recType == Nif::RC_NiBSPArrayController ||
+             ctrl->recType == Nif::RC_NiVisController ||
+             ctrl->recType == Nif::RC_NiUVController ||
+             ctrl->recType == Nif::RC_NiKeyframeController ||
+             ctrl->recType == Nif::RC_NiGeomMorpherController ||
+             ctrl->recType == Nif::RC_NiTransformController || // NiTransformController replaces NiKeyframeController
+             // FIXME: implement below ones in NifOgre::NIFObjectLoader::createNodeControllers()
+             // for now suppress warning
+             ctrl->recType == Nif::RC_NiBSBoneLODController ||
+             ctrl->recType == Nif::RC_bhkBlendController ||
+             ctrl->recType == Nif::RC_NiControllerManager ||
+             ctrl->recType == Nif::RC_NiMultiTargetTransformController
+             ))
+            warn("Unhandled "+ctrl->recName+" from node "+node->name+" in "+skel->getName());
+        ctrl = ctrl->next;
+    }
+
+    const Nif::NiNode *ninode = dynamic_cast<const Nif::NiNode*>(node);
+    if(ninode)
     {
         const Nif::NodeList &children = ninode->children;
-        for (size_t i = 0;i < children.length();i++)
+        for(size_t i = 0;i < children.length();i++)
         {
-            if (!children[i].empty())
+            if(!children[i].empty())
                 buildBones(skel, children[i].getPtr(), bone);
         }
     }
@@ -200,8 +194,6 @@ void NIFSkeletonLoader::loadResource(Ogre::Resource *resource)
 
     try {
         buildBones(skel, node);
-        std::cout << "Skel node " << node->name <<", " << skel->getName()
-                  << ", num bones " << skel->getNumBones() << std::endl; // FIXME for testing only
     }
     catch(std::exception &e) {
         std::cerr<< "Exception while loading "<<skel->getName() <<std::endl;

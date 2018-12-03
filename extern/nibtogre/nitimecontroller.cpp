@@ -31,6 +31,8 @@
 #include "nistream.hpp"
 #include "nigeometry.hpp"  // static_cast NiGeometry
 #include "nimodel.hpp"
+#include "nisequence.hpp"
+#include "nidata.hpp" // NiDefaultAVObjectPalette
 
 #ifdef NDEBUG // FIXME: debugging only
 #undef NDEBUG
@@ -135,6 +137,36 @@ NiBtOgre::NiControllerManager::NiControllerManager(uint32_t index, NiStream& str
         stream.read(mControllerSequences.at(i));
 
     stream.read(mObjectPaletteIndex);
+}
+
+// Each NiControllerSequence is a "playable" animation. The animation in Ogre implementation
+// maybe skeletal, vertex, SceneNode, etc.  If the name of the animation if "Idle" it is
+// automatically played (and most likely to be CYCLE_LOOP).
+//
+// Each NiControllerSquence specifies the following animation attributes:
+//
+//   * target node name
+//   * cycle type - loop, run once, reverse <---- ignore the ones in NiControllerManager
+//   * start/stop time, frequency <-------------- ignore the ones in NiControllerManager
+//   * string palette
+//   * text keys (e.g. 'start', 'end'), etc
+//
+// FIXME: how to decide whether to read in the 'kf' files in the directory?
+//
+NiBtOgre::NiTimeControllerRef NiBtOgre::NiControllerManager::build(BtOgreInst *inst, Ogre::Mesh *mesh)
+{
+    // object palette appears to be a lookup table to map the target name string to the block number
+    // that NiSequenceController can use to get to the target objects
+    const NiDefaultAVObjectPalette* objects = mModel.getRef<NiDefaultAVObjectPalette>(mObjectPaletteIndex);
+
+    for (std::uint32_t i = 0; i < mControllerSequences.size(); ++i)
+    {
+        // FIXME: shoud update a map in 'inst' so that the animation can be played
+        // (? how to get the entity for mapping against the animation name?)
+        mModel.getRef<NiControllerSequence>(mControllerSequences[i])->build(inst, objects);
+    }
+
+    return mNextControllerIndex;
 }
 
 // Seen in NIF ver 20.0.0.4, 20.0.0.5

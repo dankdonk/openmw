@@ -532,6 +532,10 @@ void ESM4::Reader::skipSubRecordData(std::uint32_t size)
 // ModIndex adjusted formId according to master file dependencies
 // (see http://www.uesp.net/wiki/Tes4Mod:FormID_Fixup)
 // NOTE: need to update modindex to mModIndicies.size() before saving
+//
+// FIXME: probably should add a parameter to check for mHeader::mOverrides
+//        (ACHR, LAND, NAVM, PGRE, PHZD, REFR), but not sure what exactly overrides mean
+//        i.e. use the modindx of its master?
 void ESM4::Reader::adjustFormId(FormId& id)
 {
     if (mHeader.mModIndicies.empty())

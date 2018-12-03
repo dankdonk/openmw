@@ -22,7 +22,7 @@
   Much of the information on the NIF file structures are based on the NifSkope
   documenation.  See http://niftools.sourceforge.net/wiki/NifSkope for details.
 
-  Ogre code in this file is based on v0.36 of OpenMW.
+  Some of the Ogre code in this file is based on v0.36 of OpenMW.
 
 */
 #include "nigeometry.hpp"
@@ -41,6 +41,9 @@
 #include "ninode.hpp"
 #include "btogreinst.hpp"
 #include "nidata.hpp" // NiGeometryData
+#include "niproperty.hpp" // NiProperty
+#include "ogrematerial.hpp"
+#include "nitimecontroller.hpp"
 
 #ifdef NDEBUG // FIXME: debuggigng only
 #undef NDEBUG
@@ -103,17 +106,83 @@ NiBtOgre::NiGeometry::NiGeometry(uint32_t index, NiStream& stream, const NiModel
 // actual build happens later, after the parent NiNode has processed all its children
 void NiBtOgre::NiGeometry::build(BtOgreInst *inst, NiObject *parent)
 {
-    // FIXME: seems too hacky, but needed to access parent and/or world transforms
+    // FIXME: seems rather hacky, but needed to access parent and/or world transforms
     mParent = static_cast<NiNode*>(parent);
 
     if (mSkinInstanceIndex != -1)
         inst->mFlags |= Flag_HasSkin;
 
-    // The model name and node name are concatenated for use with Ogre::MeshManager
+    // The model name and parent node name are concatenated for use with Ogre::MeshManager
     // without triggering exeptions due to duplicates.
     // e.g. meshes\\architecture\\imperialcity\\icwalltower01.nif:ICWallTower01
-    inst->addMeshGeometry(parent->index(),
-            mModel.getModelName()+":"+static_cast<NiNode*>(parent)->getNodeName(), this);
+    //
+    // FIXME: probably should normalise the names to lowercase
+    inst->registerNiGeometry(parent->index(), mModel.getModelName()+":"+mParent->getNodeName(), this);
+}
+
+// TODO: new classes OgreMaterial, SubEntityController
+//
+// Can't remember why I wanted SubEntityController (a base class maybe?)
+//
+// OgreMaterial would be an object that has all the properties the engine (in this case
+// Ogre) can support.  It would be passed to each of the NiProperty objects for this sub-mesh
+// and updated as required.
+//
+// Kind of works like Nif::Node::getProperties and NIFMaterialLoader::getMaterial
+// (both called from NIFMeshLoader::createSubMesh).
+
+// the parameter 'controllers' are keyed to the index of this sub-mesh
+void NiBtOgre::NiGeometry::applyProperties(std::vector<Ogre::Controller<float> >& controllers)
+{
+    OgreMaterial ogreMaterial;
+
+    // NiGeometry is derived from NiAVObject, so it has its own transform and properties (like NiNode)
+    for (unsigned int i = 0; i < NiAVObject::mProperty.size(); ++i)
+    {
+        NiProperty* property = mModel.getRef<NiProperty>(NiAVObject::mProperty[i]);
+
+        // FIXME: for testing only; note some properties have a blank name
+        std::cout << "property " << mModel.indexToString(property->getNameIndex()) << std::endl;
+
+        property->applyMaterialProperty(ogreMaterial);
+
+        // Each property can have a chain of NiTimeControllers.
+        //property->setup(properties, controllers); // FIXME
+
+#if 0
+        while (property->mControllerIndex != -1)
+        {
+            NiTimeController* controller = mModel.getRef<NiTimeController*>(property->mControllerIndex);
+
+            // current place in controller map
+            //
+            //       BtOgreInst
+            //          o
+            //          | 0..N
+            //      *NiMeshLoader       map key: parent NiNode block index
+            //          o
+            //          | 1..N
+            //       *NiGeometry        vector index: sub mesh index
+            //          o
+            //          | 0..N
+            //       *NiProperty
+            //          o
+            //          | 0..N
+            //     *NiTimeController
+            //
+            int n = inst->mEntityCIMap[mParent->index()].size(); // n-1 is the current sub mesh index
+
+            // under this sub mesh index there are 0..N time controllers
+        }
+#endif
+    }
+
+#if 0
+    // Ogre material for the sub-mesh needs to know about *all* the properties
+    std::string materialName = NIFMaterialLoader::getMaterialName(ogreMaterial);
+    if(materialName.length() > 0)
+        sub->setMaterialName(materialName);
+#endif
 }
 
 // build Ogre mesh and apply shader/material using scene
@@ -127,16 +196,6 @@ void NiBtOgre::NiGeometry::build(BtOgreInst *inst, NiObject *parent)
 // Some NiTriStrips have NiBinaryExtraData (tangent space) - not sure what to do with them
 void NiBtOgre::NiGeometry::createSubMesh(BtOgreInst *inst, Ogre::Mesh *mesh)
 {
-    // Skin seems to be present in things like headhuman, hand, boots, cuirass, gauntlets, greaves,
-    // which are used for animation of characters with skeletons
-    //
-    // If there is a skin, skeleton is needed (skeleton is at mesh level, but skin is at
-    // sub mesh level?)
-    //
-    // FIXME: testing only
-    //if (mSkinInstanceIndex != -1)
-        //std::cout << "skin" << std::endl;
-
     // If inst->mFlags says no animation, no havok then most likely static.  Also check if
     // there is a skin instance (and maybe also see if Oblivion layer is OL_STATIC even though
     // that flag is just for the editor)
@@ -185,7 +244,7 @@ void NiBtOgre::NiGeometry::createSubMesh(BtOgreInst *inst, Ogre::Mesh *mesh)
     else
         transform = mParent->getWorldTransform();
 
-    // NOTE: below code copied from mesh.cpp
+    // NOTE: below code copied from components/nifogre/mesh.cpp (OpenMW)
 
     std::vector<Ogre::Vector3> srcVerts = data->mVertices;
     std::vector<Ogre::Vector3> srcNorms = data->mNormals;
@@ -299,12 +358,101 @@ void NiBtOgre::NiGeometry::createSubMesh(BtOgreInst *inst, Ogre::Mesh *mesh)
         sub->indexData->indexCount = srcIdx->size();
         sub->indexData->indexStart = 0;
     }
+    // Assign bone weights for this TriShape
 
-    // NiGeometry is derived from NiAVObject, so it has its own transform and properties (like NiNode)
-    // Each property can have associated controller(s).
-        // --------------------- properties
-        // --------------------- materials
-        // --------------------- controllers
+    //$ find . -type f -print0 | xargs -0 strings -f | grep -E 'NiSkinData'
+    //./architecture/arena/arenaspectatorf01.nif: NiSkinData    <-- ControllerSequence
+    //./architecture/arena/arenaspectatorm01.nif: NiSkinData    <-- ControllerSequence
+    //./architecture/ships/shipflag01.nif: NiSkinData
+    //./architecture/ships/shipwrecksail01.nif: NiSkinData      <-- havok animation
+    //./architecture/ships/shipwrecksail02.nif: NiSkinData      <-- havok animation
+    //./architecture/ships/shipwrecksail03.nif: NiSkinData      <-- havok animation
+    //./armor/amber/f/boots.nif: NiSkinData
+    //./armor/amber/f/cuirass.nif: NiSkinData
+    //...
+    //./creatures/zombie/righttorso02.nif: NiSkinData
+    //./dungeons/caves/clutter01/roperock01.nif: NiSkinData     <-- havok + ControllerSequence
+    //./dungeons/caves/clutter01/rythorspendant01.nif: NiSkinData
+    //./dungeons/caves/roperock01.nif: NiSkinData               <-- havok + ControllerSequence
+    //./dungeons/chargen/ropebucket01.nif: NiSkinData           <-- havok animation
+    //./dungeons/misc/mdtapestryskinned01.nif: NiSkinData       <-- havok animation
+    //./dungeons/misc/necrotapestryskinned01.nif: NiSkinData    <-- havok animation
+    //./dungeons/misc/roothavok01.nif: NiSkinData
+    //./dungeons/misc/roothavok02.nif: NiSkinData
+    //./dungeons/misc/roothavok04.nif: NiSkinData
+    //./dungeons/misc/roothavok05.nif: NiSkinData
+    //./dungeons/misc/roothavok06.nif: NiSkinData
+    //./dungeons/misc/roothavok07.nif: NiSkinData
+    //./dungeons/misc/ropeskull01.nif: NiSkinData
+    //./oblivion/clutter/containers/clawstandcontainer.nif: NiSkinData
+    //./oblivion/clutter/traps/oblivionclawtrap01.nif: NiSkinData
+    //./oblivion/gate/oblivionarchgate01.nif: NiSkinData
+    //./oblivion/gate/obliviongate_forming.nif: NiSkinData
+    //./oblivion/gate/obliviongate_simple.nif: NiSkinData
+    //
+    // Skin seems to be present in things like headhuman, hand, boots, cuirass, gauntlets, greaves,
+    // which are used for animation of characters with skeletons
+    //
+    // If there is a skin, a skeleton is needed (skeleton is at the NIF level, but skin is at a
+    // sub mesh level?)
+    if (mSkinInstanceIndex != -1)
+    {
+        NiSkinInstance * skinInst = mModel.getRef<NiSkinInstance>(mSkinInstanceIndex);
+
+        // build skeleton on demand; need to check for each mSkinInstanceIndex
+        //
+        // start at Skeleton Root and build a tree? but that can result
+        // in way too many bones (e.g. oblivion/gate/oblivionarchgate01.nif)
+        //
+        // best to reverse search from each of the affected bones
+        skinInst->mSkeletonRoot->clearSkeleton(); // i.e. only one search at a time
+        for (unsigned int i = 0; i < skinInst->mBones.size(); ++i)
+        {
+            NiNode *node = mModel.getRef<NiNode>(skinInst->mBones[i]);
+            // FIXME: check for getParentNode() returning nullptr?
+            node->getParentNode()->findBones(skinInst->mSkeletonRoot->index(), skinInst->mBones[i]);
+        }
+
+        // FIXME: store the created skeleton in 'inst'? there may be more than one skeleton at
+        // the same skeleton root node
+        skinInst->mSkeletonRoot->buildSkeleton(inst, mSkinInstanceIndex);
+
+        // bone assignments here?
+#if 0
+        Ogre::SkeletonPtr skel = Ogre::SkeletonManager::getSingleton().getByName(mName);
+
+        const Nif::NiSkinData *data = skin->data.getPtr();
+        const Nif::NodeList &bones = skin->bones;
+        for(size_t i = 0;i < bones.length();i++)
+        {
+            Ogre::VertexBoneAssignment boneInf;
+            boneInf.boneIndex = skel->getBone(bones[i]->name)->getHandle();
+
+            const std::vector<Nif::NiSkinData::VertWeight> &weights = data->bones[i].weights;
+            for(size_t j = 0;j < weights.size();j++)
+            {
+                boneInf.vertexIndex = weights[j].vertex;
+                boneInf.weight = weights[j].weight;
+                sub->addBoneAssignment(boneInf);
+            }
+        }
+#endif
+    }
+
+    // End of code copied from components/nifogre/mesh.cpp
+
+    // find and apply the material
+
+    // apply controllers e.g. NiGeomMorpherController
+    //
+    // NOTE: NiUVController needs to be associated with a sub-entity, so the build/setup is
+    //       compelted at a later point.  In comparison, NiGeomMorpherController adds animation
+    //       to the sub-mesh so no further setup is required.
+    NiTimeControllerRef controllerIndex = NiObjectNET::mControllerIndex;
+    while (controllerIndex != -1)
+    {
+        controllerIndex = mModel.getRef<NiTimeController>(controllerIndex)->build(inst, mesh);
+    }
 }
 
 // FIXME: maybe make this one for TES5 instead?

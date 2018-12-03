@@ -65,18 +65,21 @@ namespace NiBtOgre
         bool mDirtyFlag;
         std::vector<NiPropertyRef> mBSProperties;
 
+        std::vector<Ogre::Controller<float> > mControllers; // for sub-entities later
+
         NiNode *mParent; // a bit hacky, store for use with createSubMesh() later
 
         NiGeometry(uint32_t index, NiStream& stream, const NiModel& model);
 
         virtual void build(BtOgreInst *inst, NiObject *parentNiNode = nullptr);
 
-        // FIXME: will need additional methods here to return an updated SubMesh to BtOgreInst
         // NiTriStrips builds differently to NiTriShapes only in that the data are different
         void createSubMesh(BtOgreInst *inst, Ogre::Mesh *mesh);
 
     private:
         void buildTES3(Ogre::SceneNode *sceneNode, BtOgreInst *inst, NiObject *parentNiNode = nullptr);
+
+        void applyProperties(std::vector<Ogre::Controller<float> >& controllers);
     };
 
     typedef NiGeometry NiTriBasedGeom;

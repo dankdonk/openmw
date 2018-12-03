@@ -49,6 +49,8 @@ namespace NiBtOgre
             float weight;
         };
 
+        bool mNiControllerSequenceBuilt; // to ensure that we have the right data to build
+
     public:
         std::uint16_t mExtraFlags;
         NiMorphDataRef mDataIndex;
@@ -58,6 +60,9 @@ namespace NiBtOgre
         std::vector<std::uint32_t> mUnknownInts;
 
         NiGeomMorpherController(uint32_t index, NiStream& stream, const NiModel& model);
+
+        virtual NiTimeControllerRef build(BtOgreInst *inst, Ogre::Mesh *mesh);
+        NiTimeControllerRef setupTES3Animation(BtOgreInst *inst, Ogre::Mesh *mesh);
     };
 }
 

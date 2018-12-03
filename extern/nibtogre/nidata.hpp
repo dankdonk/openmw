@@ -35,6 +35,7 @@
 #include <OgreVector4.h>
 #include <OgreMatrix3.h>
 #include <OgreQuaternion.h>
+#include <OgreAnimationTrack.h>
 
 #include "niobject.hpp"
 
@@ -88,6 +89,14 @@
 //  NiStringPalette
 //  NiUVData
 //  NiVisData
+
+namespace Ogre
+{
+    class AnimationTrack;
+    class TimeIndex;
+    class KeyFrame;
+}
+
 namespace NiBtOgre
 {
     struct ATextureRenderData : public NiObject
@@ -166,6 +175,7 @@ namespace NiBtOgre
     // Seen in NIF version 20.0.0.4, 20.0.0.5
     struct NiDefaultAVObjectPalette : public NiAVObjectPalette
     {
+#if 0
         struct AVObject
         {
             std::string name;
@@ -177,8 +187,20 @@ namespace NiBtOgre
 
         // unknown int here
         std::vector<AVObject> mObjs;
+#endif
+    private:
+        std::map<std::string, NiAVObjectRef> mObjs;
 
+    public:
         NiDefaultAVObjectPalette(uint32_t index, NiStream& stream, const NiModel& model);
+
+        NiAVObjectRef getObjectRef(const std::string& name) const {
+            std::map<std::string, NiAVObjectRef>::const_iterator it = mObjs.find(name);
+            if (it != mObjs.cend())
+                return it->second;
+            else
+                return -1;
+        }
     };
 
     // Seen in NIF version 20.2.0.7
@@ -295,6 +317,23 @@ namespace NiBtOgre
             }
         }
     };
+
+    template<typename T>
+    class AnimTrackInterpolator: public Ogre::AnimationTrack::Listener
+    {
+        KeyType mInterpolation;
+        Key<T>  mKey;
+
+        public:
+            AnimTrackInterpolator<T>(const KeyType interpolation, const Key<T>& key)
+                : mInterpolation(interpolation), mKey(key) {}
+
+        virtual bool getInterpolatedKeyFrame(const Ogre::AnimationTrack *t, const Ogre::TimeIndex& timeIndex,
+            Ogre::KeyFrame *kf);
+    };
+
+    bool AnimTrackInterpolator<float>::getInterpolatedKeyFrame(const Ogre::AnimationTrack *t,
+        const Ogre::TimeIndex& timeIndex, Ogre::KeyFrame *kf);
 
     // Seen in NIF version 20.0.0.4, 20.0.0.5
     struct NiBoolData : public NiObject
@@ -629,9 +668,9 @@ namespace NiBtOgre
     {
         struct Morph
         {
-            StringIndex mFrameName;
-            std::uint32_t mInterpolation;
-            std::vector<Key<float> > mKeys;
+            StringIndex mFrameName;              // TES4
+            std::uint32_t mInterpolation;        // TES3
+            std::vector<Key<float> > mKeys;      // TES3
             std::vector<Ogre::Vector3> mVectors;
         };
 
@@ -686,6 +725,7 @@ namespace NiBtOgre
     public:
         NiSkinDataRef         mDataIndex;
         NiSkinPartitionRef    mSkinPartitionIndex;
+      //NiNodeRef             mSkeletonRootIndex;
         NiNode               *mSkeletonRoot; // Ptr
         // imperial/headhuman.nif (TES4) shows that some of the Ptr refer to objects not yet
         // loaded.  Change to Ref instead.

@@ -1068,6 +1068,7 @@ namespace MWWorld
         removeContainerScripts(getPlayerPtr());
 
         ESM4::FormId worldId = mStore.get<ForeignWorld>().getFormId(world);
+        // FIXME: check for worldId == 0 here? Can happen if openmw.cfg does not load Oblivion.esm for example
         mWorldScene->changeToForeignWorldCell(worldId, position, true);
 
         addContainerScripts(getPlayerPtr(), getPlayerPtr().getCell());

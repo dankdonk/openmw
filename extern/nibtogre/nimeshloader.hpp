@@ -36,12 +36,15 @@ namespace NiBtOgre
     {
         BtOgreInst *mInstance;
 
-        std::vector<NiGeometry*> mMeshGeometry; // registered NiNode children for the mesh
+        std::vector<NiGeometry*> mSubMeshGeometry; // registered NiNode children for the mesh
     public:
 
         NiMeshLoader(BtOgreInst* inst) : mInstance(inst) {}
 
-        void addMeshGeometry(NiGeometry* geometry) { mMeshGeometry.push_back(geometry); }
+        const std::vector<NiGeometry*>& getSubMeshGeometry() { return mSubMeshGeometry; }
+
+        // returns the index number of registered NiGeometry
+        /*std::uint32_t*/void registerSubMeshGeometry(NiGeometry* geometry);
 
         // reimplement Ogre::ManualResourceLoader
         virtual void loadResource(Ogre::Resource *resource);

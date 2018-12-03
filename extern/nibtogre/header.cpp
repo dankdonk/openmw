@@ -37,11 +37,14 @@ NiBtOgre::Header::Header(NiBtOgre::NiStream& stream) : mVer(0), mUserVer(0), mUs
     std::string header = stream.getLine();
 
     if (header.find("Gamebryo File Format") == std::string::npos &&
-            header.find("NetImmerse File Format") == std::string::npos)
+        header.find("NetImmerse File Format") == std::string::npos)
+    {
         throw std::runtime_error("NiBtOgre::Header::unsupported NIF file format");
+    }
 
     // check supported file versions; TES4: 20.0.0.4, 20.0.0.5  TES5/FO3: 20.2.0.7  TES3: 4.0.0.2
-    // TODO: 10.0.1.2, 10.2.0.0
+    //
+    // TES4 old versions:
     //
     //   ./creatures/boxtest/idle.kf:                     Gamebryo File Format, Version 10.2.0.0
     //   ./creatures/deer/idleanims/graze.kf:             Gamebryo File Format, Version 10.2.0.0
@@ -52,18 +55,29 @@ NiBtOgre::Header::Header(NiBtOgre::NiStream& stream) : mVer(0), mUserVer(0), mUs
     //   ./creatures/endgame/battle.kf:                   Gamebryo File Format, Version 10.2.0.0
     //   ./creatures/endgame/entry.kf:                    Gamebryo File Format, Version 10.2.0.0
     //
+    // This file exists but doesn't seem to be used in any of the ESM/ESP:
     //   ./creatures/minotaur/minotaurold.nif:            NetImmerse File Format, Version 10.0.1.2
     //
+    // These are only used for OpenCS:
     //   ./marker_arrow.nif:                              NetImmerse File Format, Version 4.0.0.2
     //   ./marker_divine.nif:                             NetImmerse File Format, Version 4.0.0.2
     //   ./marker_temple.nif:                             NetImmerse File Format, Version 4.0.0.2
     //   ./marker_travel.nif:                             NetImmerse File Format, Version 4.0.0.2
     //
+    //   $ find . -type f -print0 | xargs -0 strings -f | grep -E '3\.3\.0\.13'
+    //   ./marker_radius.nif:                             NetImmerse File Format, Version 3.3.0.13
+    //
     // FIXME: what about TES4 versions 10.0.1.0, 10.1.0.101 and 10.1.0.106 (although they don't
     //        seem to be used in the official TES4/TES5 meshes)
+    //
+    // TODO: check FONV/FO4 versions
+    //
     stream.readNifVer(mVer);
-    if (mVer != 0x14000004 && mVer != 0x14000005 && mVer != 0x14020007 && mVer != 0x04000002)
+    if (mVer != 0x14000004 && mVer != 0x14000005 && mVer != 0x14020007 && mVer != 0x04000002 &&
+        mVer != 0x0a020000 && mVer != 0x0303000d /*&& mVer != 0x0a000102*/) // comment out unused
+    {
         throw std::runtime_error("NiBtOgre::Header::unsupported NIF file version " + std::to_string(mVer));
+    }
 
     // verify the byte order we support
     if (mVer >= 0x14000004) // 20.0.0.4

@@ -30,6 +30,7 @@
 NiBtOgre::NiObjectNET::NiObjectNET(uint32_t index, NiStream& stream, const NiModel& model,
                                    bool isBSLightingShaderProperty)
     : NiObject(index, stream, model), mIsBSLightingShaderProperty(isBSLightingShaderProperty)
+  //, mControllerIndex(-1)
 {
     if (mIsBSLightingShaderProperty)
     {
