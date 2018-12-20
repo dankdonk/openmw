@@ -283,6 +283,7 @@ static std::set<unsigned int> makeGoodVersions()
 {
     std::set<unsigned int> versions;
     versions.insert(0x04000002); // Morrowind NIF version
+    versions.insert(0x0a020000); // TES4 old
     versions.insert(0x14000004);
     versions.insert(0x14000005); // Oblivion
     versions.insert(0x14020007); // Skyrim
@@ -344,12 +345,20 @@ size_t NIFFile::parseHeader(NIFStream nif,
 
     if (mVer >= 0x0a010000) // 10.1.0.0
     {
-        mUserVer2 = nif.getUInt();
+        if (mVer == 0x0a020000)
+            std::cout << "stop" << std::endl;
 
-        //\FIXME This only works if Export Info is empty
-        nif.getShortString(mVer); //string creator
-        nif.getShortString(mVer); //string exportInfo1
-        nif.getShortString(mVer); //string exportInfo1
+        if ((mUserVer >= 10) || ((mUserVer == 1) && (mVer != 0x0a020000)))
+        {
+            mUserVer2 = nif.getUInt();
+
+            char size = nif.getChar();
+            nif.getString(size); //string creator
+            size = nif.getChar();
+            nif.getString(size); //string exportInfo1
+            size = nif.getChar();
+            nif.getString(size); //string exportInfo1
+        }
 
         unsigned short numBlockTypes = nif.getUShort();
         for (unsigned int i = 0; i < numBlockTypes; ++i)

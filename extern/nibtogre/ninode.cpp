@@ -46,14 +46,41 @@
 NiBtOgre::NiNode::NiNode(uint32_t index, NiStream& stream, const NiModel& model)
     : NiAVObject(index, stream, model)
 {
-    stream.readVector<NiAVObjectRef>(mChildren);
+    //stream.readVector<NiAVObjectRef>(mChildren);
+    std::uint32_t size = 0;
+    stream.read(size);
+
+    mChildren.resize(size);
+    for (std::uint32_t i = 0; i < size; ++i)
+    {
+        stream.read(mChildren.at(i));
+
+        // store node hierarchy in mModel to help find & build skeletons
+        //
+        // TODO: run the loop second time for this and only do it if the flags indicate
+        //       possible animation? might save a few cpu cycles
+        const_cast<NiModel&>(mModel).setNiNodeParent(mChildren[i], index); // WARNING: const hack
+    }
+
     stream.readVector<NiDynamicEffectRef>(mEffects);
 
     // Looks like the node name is also used as bone names for those meshes with skins.
     // Bipeds seems to have a predefined list of bones. See: meshes/armor/legion/m/cuirass.nif
-    mNodeName = mModel.indexToString(NiObjectNET::mNameIndex);
+    //
+    // TODO: again, we might be able to save a few cpu cycles here
+    mNodeName = NiObject::mModel.indexToString(NiObjectNET::mNameIndex);
 }
 
+NiBtOgre::NiNode *NiBtOgre::NiNode::getParentNode()
+{
+    return NiObject::mModel.getRef<NiNode>(NiObject::mModel.getNiNodeParent(index()));
+}
+
+// build a hierarchy of bones (i.e. mBoneIndexList) so that a skeleton can be built, most
+// likely a much smaller subset of the NiNode hierarchy
+//
+// recursively traverses the NiNode tree until the specified skeletonRoot is found
+// childNode is the index of the caller of this method (which should be a child of this node)
 void NiBtOgre::NiNode::findBones(const NiNodeRef skeletonRoot, const NiNodeRef childNode)
 {
     if (mBoneIndexList.size() == 0) // implies skeleton root is not yet found
@@ -64,11 +91,12 @@ void NiBtOgre::NiNode::findBones(const NiNodeRef skeletonRoot, const NiNodeRef c
             return;
         }
 
-        if (mParentNode == nullptr) // should not happen!
-            throw std::runtime_error("NiNode without parent and not found Skeleton Root");
+        NiNode *parentNode = getParentNode();
+        if (parentNode == nullptr) // should not happen!
+            throw std::runtime_error("NiNode without parent and Skeleton Root not yet found");
 
-        // not skeleton root, keep searching
-        static_cast<NiNode*>(mParentNode)->findBones(skeletonRoot, NiObject::index());
+        // not skeleton root, keep searching recursively
+        parentNode->findBones(skeletonRoot, NiObject::index());
         mBoneIndexList.push_back(childNode);
     }
     else
@@ -78,25 +106,30 @@ void NiBtOgre::NiNode::findBones(const NiNodeRef skeletonRoot, const NiNodeRef c
     }
 }
 
+// this method is only needed if we're building one skeletons at a time; not currently used
 void NiBtOgre::NiNode::clearSkeleton()
 {
     for (unsigned int i = 0; i < mBoneIndexList.size(); ++i)
     {
-        mModel.getRef<NiNode>(mBoneIndexList[i])->clearSkeleton();
+        NiObject::mModel.getRef<NiNode>(mBoneIndexList[i])->clearSkeleton();
     }
 
     mBoneIndexList.clear();
 }
 
+// FIXME: how to add bones to an existing skeleton?
 void NiBtOgre::NiNode::buildSkeleton(BtOgreInst *inst, NiSkinInstanceRef skinInstanceIndex)
 {
     std::cout << "skel " << getNodeName() << std::endl;
 
-    // do bone assignments here?
+
+
+
+    // FIXME: do bone assignments here?
 
     for (unsigned int i = 0; i < mBoneIndexList.size(); ++i)
     {
-        mModel.getRef<NiNode>(mBoneIndexList[i])->buildSkeleton(inst, skinInstanceIndex);
+        NiObject::mModel.getRef<NiNode>(mBoneIndexList[i])->buildSkeleton(inst, skinInstanceIndex);
     }
 }
 
@@ -243,7 +276,7 @@ void NiBtOgre::NiNode::build(BtOgreInst *inst, NiObject* parent)
             // Display_Proxy = <None>
             StringIndex stringIndex
                 = mModel.getRef<NiStringExtraData>((int32_t)mExtraDataIndexList[i])->mStringData;
-            const std::string& upb = mModel.indexToString(stringIndex);
+            const std::string& upb = NiObject::mModel.indexToString(stringIndex);
             // TODO: split the string into a map
         }
         else if (name == "BBX") // BSBound
@@ -258,7 +291,7 @@ void NiBtOgre::NiNode::build(BtOgreInst *inst, NiObject* parent)
             // Seems to point to a Bone attach point? e.g. "Bip01 Head"
             StringIndex stringIndex
                 = mModel.getRef<NiStringExtraData>((int32_t)mExtraDataIndexList[i])->mStringData;
-            const std::string& prn = mModel.indexToString(stringIndex);
+            const std::string& prn = NiObject::mModel.indexToString(stringIndex);
         }
         else
         {
@@ -343,7 +376,7 @@ void NiBtOgre::NiNode::build(BtOgreInst *inst, NiObject* parent)
 #endif
     while (controllerIndex != -1)
     {
-        controllerIndex = mModel.getRef<NiTimeController>(controllerIndex)->build(inst);
+        controllerIndex = NiObject::mModel.getRef<NiTimeController>(controllerIndex)->build(inst);
     }
 
     if (parent != nullptr)
@@ -356,7 +389,7 @@ void NiBtOgre::NiNode::build(BtOgreInst *inst, NiObject* parent)
 
         // NiGeometry blocks are only registered here and built later.  One possible side
         // benefit is that at least at this NiNode level we know if there are any skins.
-        mModel.getRef<NiObject>((int32_t)mChildren[i])->build(inst, this);
+        NiObject::mModel.getRef<NiObject>((int32_t)mChildren[i])->build(inst, this);
     }
 
     // FIXME: too many bones filename = "meshes\\oblivion\\gate\\oblivionarchgate01.nif"
@@ -376,7 +409,7 @@ void NiBtOgre::NiNode::build(BtOgreInst *inst, NiObject* parent)
         if (mEffects[i] == -1) // no object
             continue;
 
-        mModel.getRef<NiObject>((int32_t)mEffects[i])->build(inst, this);
+        NiObject::mModel.getRef<NiObject>((int32_t)mEffects[i])->build(inst, this);
     }
 
 }

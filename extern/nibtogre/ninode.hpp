@@ -80,7 +80,7 @@ namespace NiBtOgre
         void findBones(const NiNodeRef skeletonRoot, const NiNodeRef childNode); // FIXME: experimental
         void clearSkeleton(); // FIXME: experimental
         void buildSkeleton(BtOgreInst *inst, NiSkinInstanceRef skinInstanceIndex); // FIXME: experimental
-        NiNode *getParentNode() { return static_cast<NiNode*>(mParentNode); }
+        NiNode *getParentNode();
     };
 
     typedef NiNode AvoidNode;

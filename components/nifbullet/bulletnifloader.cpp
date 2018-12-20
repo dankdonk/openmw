@@ -321,6 +321,51 @@ btCollisionShape *createBhkShape(const Nif::Node *node,
         }
         case Nif::RC_bhkMoppBvTreeShape: // e.g. ICColArc01.NIF
         {
+            if (static_cast<const Nif::bhkMoppBvTreeShape*>(bhkShape)->shape->recType == Nif::RC_bhkNiTriStripsShape)
+            {
+
+
+
+
+    const Nif::bhkNiTriStripsShape* triShape
+        = static_cast<const Nif::bhkNiTriStripsShape*>(
+            static_cast<const Nif::bhkMoppBvTreeShape*>(bhkShape)->shape.getPtr());
+
+    btTriangleMesh *staticMesh = new btTriangleMesh();
+
+    Ogre::Matrix4 t;
+    // NOTE: havok scale of 7
+    t.makeTransform(translation*7, Ogre::Vector3(1.f), rotation); // assume uniform scale
+    t = node->getWorldTransform() * t;
+
+    for (unsigned int s = 0; s < triShape->stripsData.size(); ++s)
+    {
+        const Nif::NiTriStripsData* triData
+            = static_cast<const Nif::NiTriStripsData*>(triShape->stripsData[s].getPtr());
+
+        const std::vector<Ogre::Vector3> &vertices = triData->vertices;
+        const std::vector<short> &triangles = triData->triangles;
+
+        for(size_t i = 0; i < triData->triangles.size(); i += 3)
+        {
+            Ogre::Vector3 b1 = t*vertices[triangles[i+0]];
+            Ogre::Vector3 b2 = t*vertices[triangles[i+1]];
+            Ogre::Vector3 b3 = t*vertices[triangles[i+2]];
+            staticMesh->addTriangle(btVector3(b1.x,b1.y,b1.z),
+                                    btVector3(b2.x,b2.y,b2.z),
+                                    btVector3(b3.x,b3.y,b3.z));
+        }
+    }
+
+    translation = Ogre::Vector3::ZERO; // transform was applied here, do not apply again later
+    rotation = Ogre::Quaternion::IDENTITY;
+    return new NifBullet::TriangleMeshShape(staticMesh, true);
+
+
+
+
+
+            }
             // FIXME: TODO get some info before moving to the next shape in a link
 
             return createBhkShape(node, translation, rotation,

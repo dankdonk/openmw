@@ -110,3 +110,26 @@ void NiBtOgre::NiModel::build(BtOgreInst *inst)
         inst->mbhkConstraints[i].first->linkBodies(inst, inst->mbhkConstraints[i].second);
     }
 }
+
+void NiBtOgre::NiModel::setNiNodeParent(std::int32_t child, std::int32_t parent)
+{
+    std::map<std::int32_t, std::int32_t >::iterator lb = mNiNodeMap.lower_bound(child);
+
+    if (lb != mNiNodeMap.end() && !(mNiNodeMap.key_comp()(child, lb->first)))
+    {
+        if (lb->second != parent)
+            throw std::logic_error("NiNode parent map: multiple parents");
+        // else the same entry already there for some reason, ignore for now
+    }
+    else
+        mNiNodeMap.insert(lb, std::make_pair(child, parent)); // None found, create one
+}
+
+std::int32_t NiBtOgre::NiModel::getNiNodeParent(std::int32_t child) const
+{
+    std::map<std::int32_t, std::int32_t>::const_iterator it = mNiNodeMap.find(child);
+    if (it != mNiNodeMap.cend())
+        return it->second;
+    else
+        throw std::logic_error("NiNode parent map: parent not found");
+}

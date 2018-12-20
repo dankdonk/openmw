@@ -31,7 +31,7 @@
 #include <stdexcept>
 
 #include "nistream.hpp"
-#include "ogrematerial.hpp"
+//#include "ogrematerial.hpp"
 
 #ifdef NDEBUG // FIXME: debuggigng only
 #undef NDEBUG

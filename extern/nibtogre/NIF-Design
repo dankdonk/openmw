@@ -1,0 +1,45 @@
+[17/12/18]
+Ideally minimise unnecessary loops or processing duplications.
+
+* Cache objects - but at what level?  The choices seem to be:
+
+  - NIF after parsing - each of the object instances based on the same NIF needs to be built
+  - already built object instance - everything's the same except position/rotation/etc
+    (how to clone?)
+
+* Building object instances
+
+  Object Scope and Lifetime
+  =========================
+
+  NIF Object      | Ogre Object            | Ogre Instance
+  ----------------+------------------------+-------------------------
+  NIF             | NiModel                | BtOgreInst (has pos/rot/scale/etc from ESM/ESP)
+  NiNode          | Ogre::Mesh             | Ogre::Entity
+  NiGeometry      |   submesh              |   sub-entity
+                  |     material           |
+                  |   animation            |
+                  |   pose (vertex anim)   |
+  ----------------+------------------------+-------------------------
+  SkeletonRoot    | Ogre::Skeleton         | Ogre::SkeletonInstance
+  Bone            |  bone                  |
+
+
+One design consideration is when does the Ogre objects (e.g. Mesh) get built?
+
+Currently it is triggered when the associated Entity is built (via a loader callback
+mechanism).  This may not be efficient if the same mesh are re-used often (e.g skeleton.nif,
+but have not tested if true).
+
+An alternative might be to create the Ogre objects as each of the NIF files are read.  But
+doing this can lead to a large number of Ogre objects being loaded (Q: do Ogre resource
+managers ever unload?)
+
+Some NiTimeControllers may work with different Ogre objects.  For example:
+
+    - NiGeomMorpherController is setup while creating a sub-mesh (vertex animation)
+      SceneManager::_applySceneAnimations will then call the apply() method of each of the
+      animations
+
+    - NiUVController seems to work at each of the sub-entity level by modifying the associated
+      material (texture scroll)

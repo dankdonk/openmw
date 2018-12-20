@@ -206,37 +206,6 @@ NiBtOgre::NiTimeControllerRef NiBtOgre::NiGeomMorpherController::build(BtOgreIns
 // with NiControllerSequence.  Check examples e.g. mainmast02.nif which has idle animation
 //
 // See Ogre::Animation::apply() regarding the value of AnimationTrack::mHandle for sub-meshes.
-// Basically each Pose has a corresponding Animation object.
-//
-//       Ogre::Mesh
-//         o    o
-//         |    |            (NOTE: Animation needs a unique name within the Mesh)
-//         |    |   N
-//         |    +---- Ogre::Animation
-//         |  mAnimationList    o             Ogre::AnimationTrack
-//         |                    |                      ^
-//         |                    |        1             |
-//         |                    +--------- Ogre::VertexAnimationTrack
-//         |                 mVertexTrackList       o     o
-//         |    N                                   |     |   1
-//         +---- Ogre::Pose                         |     +---- handle (subMeshIndex+1)
-//       mPoseList    o                             |   mHandle
-//            :       |   1                         |
-//            :       +---- target (subMeshIndex+1) |   1
-//            :     mTarget                         +---- Ogre::VertexPoseKeyFrame
-//            :                                   mKeyFrames       o
-//            :                                                    |   1
-//            :                                                    +---- PoseRef
-//            :                                                             o
-//            :                                                             |
-//            :......................................................... poseIndex
-//
-//
-// FIXME: Not sure why each morph ends up being an Animation, maybe each morph should be a track?
-//        Possibly because setValue uses animationID to retrieve animation state?
-//
-//        Actually, maybe each morph should be a track?
-//
 //
 // FIXME: how to apply NiTimeController's frequency, start/stop time, etc?
 //
@@ -250,43 +219,6 @@ NiBtOgre::NiTimeControllerRef NiBtOgre::NiGeomMorpherController::setupTES3Animat
 
     if ((NiTimeController::mFlags & 0x1000) == 0) // not active
         return mNextControllerIndex;
-
-#if 0 // One Animation for each Morph/Pose
-    // NOTE: below code is derived from components/nifogre/mesh.cpp (OpenMW)
-
-    NiMorphData* morphData = mModel.getRef<NiMorphData>(mDataIndex);
-    const std::vector<NiMorphData::Morph>& morphs = morphData->mMorphs;
-
-    // TODO: check if the logic here is correct, empty list means poseIndex = 0
-    unsigned short poseIndex = (unsigned short)mesh->getPoseList().size();
-
-    // create a pose for each Morph
-    for (unsigned int i = 0; i < morphs.size(); ++i)
-    {
-        // NOTE multiple poses are created for the same target
-        Ogre::Pose* pose = mesh->createPose(subMeshIndex+1); // target is user defined (for us subMeshIndex+1)
-        for (unsigned int v = 0; v < data.mVectors.size(); ++v)
-            pose->addVertex(v, morphs[i].mVectors[v]);
-
-        // unique name = block index + "_" + morph index
-        // TODO: maybe block index should be that of NiGeometry, not NiGeomMorpherController?
-        Ogre::String animationID = Ogre::StringConverter::toString(NiObject::index()) // mSelfIndex
-                + "_" + Ogre::StringConverter::toString(i);
-
-        // create an animation track for this pose
-        //
-        // Since we have an animation for each morph with unque id, there is only one track for
-        // each animation.  Not sure if that is the intended outcome?
-        //
-        Ogre::VertexAnimationTrack* track
-            = mesh->createAnimation(animationID, /*total animation length*/0) // unique animation for the mesh
-                  ->createVertexTrack(subMeshIndex+1, Ogre::VAT_POSE);        // NOTE handle = subMeshIndex+1
-
-        Ogre::VertexPoseKeyFrame* keyframe = track->createVertexPoseKeyFrame(/*time pos*/0); // FIXME why 0?
-
-        keyframe->addPoseReference(poseIndex + i, /*influence*/1.f); // 1.f = full offset
-    }
-#else // One track for each Morph/Pose, with interpolation
 
     // An animation has a number of tracks (i.e. poses/morphs in our case).
     //
@@ -366,7 +298,7 @@ NiBtOgre::NiTimeControllerRef NiBtOgre::NiGeomMorpherController::setupTES3Animat
             inst->mInterpolators.push_back(listner); // plug potential memory leak
         }
     }
-#endif
+
     return mNextControllerIndex;
 }
 

@@ -42,7 +42,7 @@
 #include "btogreinst.hpp"
 #include "nidata.hpp" // NiGeometryData
 #include "niproperty.hpp" // NiProperty
-#include "ogrematerial.hpp"
+//#include "ogrematerial.hpp"
 #include "nitimecontroller.hpp"
 
 #ifdef NDEBUG // FIXME: debuggigng only
@@ -117,6 +117,7 @@ void NiBtOgre::NiGeometry::build(BtOgreInst *inst, NiObject *parent)
     // e.g. meshes\\architecture\\imperialcity\\icwalltower01.nif:ICWallTower01
     //
     // FIXME: probably should normalise the names to lowercase
+    // FIXME: look into the use of a hash (possibly the same as BSA) to increase performance
     inst->registerNiGeometry(parent->index(), mModel.getModelName()+":"+mParent->getNodeName(), this);
 }
 
@@ -134,7 +135,7 @@ void NiBtOgre::NiGeometry::build(BtOgreInst *inst, NiObject *parent)
 // the parameter 'controllers' are keyed to the index of this sub-mesh
 void NiBtOgre::NiGeometry::applyProperties(std::vector<Ogre::Controller<float> >& controllers)
 {
-    OgreMaterial ogreMaterial;
+    //OgreMaterial ogreMaterial;
 
     // NiGeometry is derived from NiAVObject, so it has its own transform and properties (like NiNode)
     for (unsigned int i = 0; i < NiAVObject::mProperty.size(); ++i)
@@ -144,7 +145,7 @@ void NiBtOgre::NiGeometry::applyProperties(std::vector<Ogre::Controller<float> >
         // FIXME: for testing only; note some properties have a blank name
         std::cout << "property " << mModel.indexToString(property->getNameIndex()) << std::endl;
 
-        property->applyMaterialProperty(ogreMaterial);
+        //property->applyMaterialProperty(ogreMaterial);
 
         // Each property can have a chain of NiTimeControllers.
         //property->setup(properties, controllers); // FIXME
@@ -405,7 +406,14 @@ void NiBtOgre::NiGeometry::createSubMesh(BtOgreInst *inst, Ogre::Mesh *mesh)
         // in way too many bones (e.g. oblivion/gate/oblivionarchgate01.nif)
         //
         // best to reverse search from each of the affected bones
-        skinInst->mSkeletonRoot->clearSkeleton(); // i.e. only one search at a time
+        //
+        // one option is to have a skeleton for each skin but that may reduce performance if
+        // there are multiple skeletons in one NIF and many/most of the nodes are the same
+        //skinInst->mSkeletonRoot->clearSkeleton(); // i.e. only one search at a time
+
+        // either add bones to existing skeleton or build a new one
+        // FIXME: how is this going to work? just adding more indicies to mBoneIndexList won't
+        // do much if a skeleton was already created?
         for (unsigned int i = 0; i < skinInst->mBones.size(); ++i)
         {
             NiNode *node = mModel.getRef<NiNode>(skinInst->mBones[i]);
@@ -413,7 +421,8 @@ void NiBtOgre::NiGeometry::createSubMesh(BtOgreInst *inst, Ogre::Mesh *mesh)
             node->getParentNode()->findBones(skinInst->mSkeletonRoot->index(), skinInst->mBones[i]);
         }
 
-        // FIXME: store the created skeleton in 'inst'? there may be more than one skeleton at
+        // FIXME: store the created skeleton in 'inst'?
+        // if we decided to have multiple skeletons, there may be more than one skeleton at
         // the same skeleton root node
         skinInst->mSkeletonRoot->buildSkeleton(inst, mSkinInstanceIndex);
 

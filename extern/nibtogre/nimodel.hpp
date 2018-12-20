@@ -24,6 +24,7 @@
 #define NIBTOGRE_NIMODEL_H
 
 #include <vector>
+#include <map>
 #include <string>
 #include <cstdint>
 
@@ -76,6 +77,8 @@ namespace NiBtOgre
         int mCurrIndex; // FIXME: for debugging Ptr
         std::string mModelName;
 
+        std::map<std::int32_t, std::int32_t> mNiNodeMap;
+
         // default, copy and assignment not allowed
         NiModel();
         NiModel(const NiModel& other);
@@ -114,6 +117,10 @@ namespace NiBtOgre
         inline const std::string& indexToString(std::int32_t index) const {
             return mHeader.indexToString(index);
         }
+
+        // NOTE: relies on const hack
+        void setNiNodeParent(std::int32_t child, std::int32_t parent);
+        std::int32_t getNiNodeParent(std::int32_t child) const;
     };
 }
 

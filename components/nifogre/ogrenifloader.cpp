@@ -1909,8 +1909,8 @@ public:
                 // manager so that they don't need to be re-built from the nif file each time
                 //std::auto_ptr<NiBtOgre::NiModel> NiModel(new NiBtOgre::NiModel(name));
                 //nimodel->build(inst.get());
-                inst->mModel = std::auto_ptr<NiBtOgre::NiModel>(new NiBtOgre::NiModel(name));
-                inst->mModel->build(inst.get());
+                inst->mModel = std::auto_ptr<NiBtOgre::NiModel>(new NiBtOgre::NiModel(name)); // read NIF
+                inst->mModel->build(inst.get());                                              // build object
             }
             catch (std::exception&) // fixme
             {
