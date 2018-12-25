@@ -161,7 +161,7 @@ void OgreRenderer::createWindow(const std::string &title, const WindowSettings& 
                     Ogre::PF_A8R8G8B8,
                     Ogre::TU_WRITE_ONLY);
 
-    mScene = mRoot->createSceneManager(ST_GENERIC);
+    mScene = mRoot->createSceneManager();
 
     mCamera = mScene->createCamera("cam");
 

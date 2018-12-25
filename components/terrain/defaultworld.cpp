@@ -95,7 +95,7 @@ namespace Terrain
         mShaders = false;
 #endif
 
-        mCompositeMapSceneMgr = Ogre::Root::getSingleton().createSceneManager(Ogre::ST_GENERIC);
+        mCompositeMapSceneMgr = Ogre::Root::getSingleton().createSceneManager();
 
         /// \todo make composite map size configurable
         Ogre::Camera* compositeMapCam = mCompositeMapSceneMgr->createCamera("a");

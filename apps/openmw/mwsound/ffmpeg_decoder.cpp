@@ -289,7 +289,7 @@ void FFmpeg_Decoder::close()
         avformat_close_input(&mFormatCtx);
     }
 
-    mDataStream.setNull();
+    mDataStream.reset();
 }
 
 std::string FFmpeg_Decoder::getName()

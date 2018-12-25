@@ -1,4 +1,5 @@
 #include <stdexcept>
+#include <iostream>
 
 #include "OgreGpuProgram.hpp"
 
@@ -38,13 +39,13 @@ namespace sh
 		mProgram->setSource(source);
 		mProgram->load();
 
-		if (mProgram.isNull() || !mProgram->isSupported())
+		if (!mProgram || !mProgram->isSupported())
 			std::cerr << "Failed to compile shader \"" << name << "\". Consider the OGRE log for more information." << std::endl;
 	}
 
 	bool OgreGpuProgram::getSupported()
 	{
-		return (!mProgram.isNull() && mProgram->isSupported());
+		return (mProgram && mProgram->isSupported());
 	}
 
 	void OgreGpuProgram::setAutoConstant (const std::string& name, const std::string& autoConstantName, const std::string& extraInfo)

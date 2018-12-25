@@ -91,7 +91,7 @@ namespace Terrain
 
     Chunk::~Chunk()
     {
-        if (!mMaterial.isNull() && mOwnMaterial)
+        if (mMaterial && mOwnMaterial)
         {
 #if TERRAIN_USE_SHADER
             sh::Factory::getInstance().destroyMaterialInstance(mMaterial->getName());
@@ -105,7 +105,7 @@ namespace Terrain
     void Chunk::setMaterial(const Ogre::MaterialPtr &material, bool own)
     {
         // Clean up the previous material, if we own it
-        if (!mMaterial.isNull() && mOwnMaterial)
+        if (mMaterial && mOwnMaterial)
         {
 #if TERRAIN_USE_SHADER
             sh::Factory::getInstance().destroyMaterialInstance(mMaterial->getName());

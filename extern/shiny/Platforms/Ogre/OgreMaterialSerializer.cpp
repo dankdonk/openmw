@@ -9,11 +9,11 @@ namespace sh
 	void OgreMaterialSerializer::reset()
 	{
 		mScriptContext.section = Ogre::MSS_NONE;
-		mScriptContext.material.setNull();
+		mScriptContext.material.reset();
 		mScriptContext.technique = 0;
 		mScriptContext.pass = 0;
 		mScriptContext.textureUnit = 0;
-		mScriptContext.program.setNull();
+		mScriptContext.program.reset();
 		mScriptContext.lineNo = 0;
 		mScriptContext.filename.clear();
 		mScriptContext.techLev = -1;
@@ -52,7 +52,7 @@ namespace sh
 			t->setNumMipmaps(Ogre::StringConverter::parseInt(value));
 			return true;
 		}
-		
+
 		reset();
 
 		mScriptContext.section = Ogre::MSS_TEXTUREUNIT;

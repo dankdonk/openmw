@@ -133,7 +133,7 @@ namespace Render
             else
             {
                 m = Ogre::MaterialManager::getSingleton().getByName("NullMaterial");
-                if(m.isNull())
+                if(!m)
                 {
                     m = Ogre::MaterialManager::getSingleton().create("NullMaterial", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
                     m->getTechnique(0)->getPass(0)->setDepthCheckEnabled(true);
