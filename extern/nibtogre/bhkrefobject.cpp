@@ -937,13 +937,6 @@ std::unique_ptr<btCollisionShape> NiBtOgre::bhkNiTriStripsShape::buildShape(cons
         const std::vector<Ogre::Vector3> &vertices = triStripsData->mVertices;
         const std::vector<uint16_t> &triangles = triStripsData->mTriangles;
 
-        // first check if packing will do better than before - these don't (there'll be others):
-        //
-        // ICStreetlight01, ICWallDoor01, MushroomToadstool01, Opensack01
-        // RockGreatForest045, RockGreatForest050, RockGreatForest070, RockGreatForest085, RockGreatForest320
-        //
-        // basically trading off increased first build time with runtime performance
-        std::vector<uint16_t> packedTriangles;
         for(size_t j = 0; j < triStripsData->mTriangles.size()-2; ++j)
         {
             // skipping (packing?) idea copied from NifSkope nvtristripwrapper::triangulate()
@@ -954,54 +947,13 @@ std::unique_ptr<btCollisionShape> NiBtOgre::bhkNiTriStripsShape::buildShape(cons
             {
                 continue;
             }
-            packedTriangles.push_back(triangles[j+0]);
-            packedTriangles.push_back(triangles[j+1]);
-            packedTriangles.push_back(triangles[j+2]);
-        }
+            Ogre::Vector3 b1 = vertices[triangles[j+0]];
+            Ogre::Vector3 b2 = vertices[triangles[j+1]];
+            Ogre::Vector3 b3 = vertices[triangles[j+2]];
 
-        // icgroundfloor16.nif collision mesh version 20.0.0.4 has problems so always pack
-        // e.g. The Copious Coinpurse (20.0.0.5 version of the mesh is ok)
-        if ((packedTriangles.size() < triStripsData->mTriangles.size()) || mModel.nifVer() == 0x14000004)
-        {
-            if (packedTriangles.size() > triStripsData->mTriangles.size())
-                std::cout << "forced pack " << mModel.getModelName() << " " << mModel.nifVer() << std::endl;
-
-            for(size_t j = 0; j < packedTriangles.size(); j += 3)
-            {
-                Ogre::Vector3 b1 = vertices[packedTriangles[j+0]];
-                Ogre::Vector3 b2 = vertices[packedTriangles[j+1]];
-                Ogre::Vector3 b3 = vertices[packedTriangles[j+2]];
-
-                mesh->addTriangle(transform * btVector3(b1.x,b1.y,b1.z),
-                                  transform * btVector3(b2.x,b2.y,b2.z),
-                                  transform * btVector3(b3.x,b3.y,b3.z));
-            }
-        }
-        else // original was better
-        {
-            // excluding 20.0.0.4 negates the purpose of this complicated check to use the original!
-            // maybe individual meshes need to be excluded instead?
-            //
-            // meshes\architecture\imperialcity\icstreetlight01.nif
-            // meshes\architecture\imperialcity\icwalldoor01.nif
-            // meshes\clutter\opensack01.nif
-            // meshes\plants\mushroomtoadstool01.nif
-            // meshes\rocks\greatforest\rockgreatforest045.nif
-            // meshes\rocks\greatforest\rockgreatforest050.nif
-            // meshes\rocks\greatforest\rockgreatforest070.nif
-            // meshes\rocks\greatforest\rockgreatforest085.nif
-            // meshes\rocks\greatforest\rockgreatforest320.nif
-
-            for(size_t j = 0; j < triStripsData->mTriangles.size(); j += 3)
-            {
-                Ogre::Vector3 b1 = vertices[triangles[j+0]];
-                Ogre::Vector3 b2 = vertices[triangles[j+1]];
-                Ogre::Vector3 b3 = vertices[triangles[j+2]];
-
-                mesh->addTriangle(transform * btVector3(b1.x,b1.y,b1.z),
-                                  transform * btVector3(b2.x,b2.y,b2.z),
-                                  transform * btVector3(b3.x,b3.y,b3.z));
-            }
+            mesh->addTriangle(transform * btVector3(b1.x,b1.y,b1.z),
+                              transform * btVector3(b2.x,b2.y,b2.z),
+                              transform * btVector3(b3.x,b3.y,b3.z));
         }
     }
 

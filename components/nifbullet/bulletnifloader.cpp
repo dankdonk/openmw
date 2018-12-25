@@ -171,36 +171,12 @@ btTriangleMesh *createBhkNiTriStripsShape(const Nif::Node *node,
             {
                 continue;
             }
-            packedTriangles.push_back(triangles[i+0]);
-            packedTriangles.push_back(triangles[i+1]);
-            packedTriangles.push_back(triangles[i+2]);
-        }
-
-        // icgroundfloor16.nif collision mesh version 20.0.0.4 has problems so always pack
-        // e.g. copiouscoinpurse (20.0.0.5 version of the mesh is ok)
-        if ((packedTriangles.size() > triData->triangles.size()) && node->nifVer != 0x14000004)
-        {
-            for(size_t i = 0; i < triData->triangles.size(); i += 3)
-            {
-                Ogre::Vector3 b1 = t*vertices[triangles[i+0]];
-                Ogre::Vector3 b2 = t*vertices[triangles[i+1]];
-                Ogre::Vector3 b3 = t*vertices[triangles[i+2]];
-                staticMesh->addTriangle(btVector3(b1.x,b1.y,b1.z),
-                                        btVector3(b2.x,b2.y,b2.z),
-                                        btVector3(b3.x,b3.y,b3.z));
-            }
-        }
-        else
-        {
-            for(size_t i = 0; i < packedTriangles.size(); i += 3)
-            {
-                Ogre::Vector3 b1 = t*vertices[packedTriangles[i+0]];
-                Ogre::Vector3 b2 = t*vertices[packedTriangles[i+1]];
-                Ogre::Vector3 b3 = t*vertices[packedTriangles[i+2]];
-                staticMesh->addTriangle(btVector3(b1.x,b1.y,b1.z),
-                                        btVector3(b2.x,b2.y,b2.z),
-                                        btVector3(b3.x,b3.y,b3.z));
-            }
+            Ogre::Vector3 b1 = t*vertices[triangles[i+0]];
+            Ogre::Vector3 b2 = t*vertices[triangles[i+1]];
+            Ogre::Vector3 b3 = t*vertices[triangles[i+2]];
+            staticMesh->addTriangle(btVector3(b1.x,b1.y,b1.z),
+                                    btVector3(b2.x,b2.y,b2.z),
+                                    btVector3(b3.x,b3.y,b3.z));
         }
     }
 
@@ -390,43 +366,13 @@ btCollisionShape *createBhkShape(const Nif::Node *node,
             {
                 continue;
             }
-            packedTriangles.push_back(triangles[i+0]);
-            packedTriangles.push_back(triangles[i+1]);
-            packedTriangles.push_back(triangles[i+2]);
+            Ogre::Vector3 b1 = t*vertices[triangles[i+0]];
+            Ogre::Vector3 b2 = t*vertices[triangles[i+1]];
+            Ogre::Vector3 b3 = t*vertices[triangles[i+2]];
+            staticMesh->addTriangle(btVector3(b1.x,b1.y,b1.z),
+                                    btVector3(b2.x,b2.y,b2.z),
+                                    btVector3(b3.x,b3.y,b3.z));
         }
-
-        if ((packedTriangles.size() > triData->triangles.size()) && node->nifVer != 0x14000004)
-        {
-            for(size_t i = 0; i < triData->triangles.size(); i += 3)
-            {
-                Ogre::Vector3 b1 = t*vertices[triangles[i+0]];
-                Ogre::Vector3 b2 = t*vertices[triangles[i+1]];
-                Ogre::Vector3 b3 = t*vertices[triangles[i+2]];
-                staticMesh->addTriangle(btVector3(b1.x,b1.y,b1.z),
-                                        btVector3(b2.x,b2.y,b2.z),
-                                        btVector3(b3.x,b3.y,b3.z));
-            }
-        }
-        else // new
-        {
-            for(size_t i = 0; i < packedTriangles.size(); i += 3)
-            {
-                Ogre::Vector3 b1 = t*vertices[packedTriangles[i+0]];
-                Ogre::Vector3 b2 = t*vertices[packedTriangles[i+1]];
-                Ogre::Vector3 b3 = t*vertices[packedTriangles[i+2]];
-                staticMesh->addTriangle(btVector3(b1.x,b1.y,b1.z),
-                                        btVector3(b2.x,b2.y,b2.z),
-                                        btVector3(b3.x,b3.y,b3.z));
-            }
-        }
-
-
-
-
-
-
-
-
     }
 
     translation = Ogre::Vector3::ZERO; // transform was applied here, do not apply again later
