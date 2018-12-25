@@ -776,7 +776,7 @@ namespace MWWorld
         }
         if (OEngine::Physic::RigidBody* body = mEngine->getRigidBody(handle))
         {
-            if(dynamic_cast<btBoxShape*>(body->getCollisionShape()) == NULL)
+            if(body->getCollisionShape()->getName() != "Box")
                 body->getWorldTransform().setRotation(btQuaternion(rotation.x, rotation.y, rotation.z, rotation.w));
             else
                 mEngine->boxAdjustExternal(handleToMesh[handle], body, node->getScale().x, node->getPosition(), rotation);
@@ -784,7 +784,7 @@ namespace MWWorld
         }
         if (OEngine::Physic::RigidBody* body = mEngine->getRigidBody(handle, true))
         {
-            if(dynamic_cast<btBoxShape*>(body->getCollisionShape()) == NULL)
+            if(body->getCollisionShape()->getName() != "Box")
                 body->getWorldTransform().setRotation(btQuaternion(rotation.x, rotation.y, rotation.z, rotation.w));
             else
                 mEngine->boxAdjustExternal(handleToMesh[handle], body, node->getScale().x, node->getPosition(), rotation);
