@@ -1925,7 +1925,7 @@ void CharacterController::updateHeadTracking(float duration)
             Ogre::Node* targetHead = anim->getNode("Head");
             if (!targetHead)
                 targetHead = anim->getNode("Bip01 Head");
-            if (targetHead)
+            if (targetHead && mHeadTrackTarget.getRefData().getBaseNode()) // FIXME: not sure why null
                 targetPos = mHeadTrackTarget.getRefData().getBaseNode()->convertLocalToWorldPosition(
                         targetHead->_getDerivedPosition());
         }

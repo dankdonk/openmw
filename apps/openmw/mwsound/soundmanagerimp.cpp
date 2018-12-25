@@ -258,7 +258,7 @@ namespace MWSound
         try
         {
             float basevol = volumeFromType(Play_TypeVoice);
-            std::string filePath = "Sound/"+filename;
+            std::string filePath = "Sound\\"+filename;
             const ESM::Position &pos = ptr.getRefData().getPosition();
             const Ogre::Vector3 objpos(pos.pos);
 

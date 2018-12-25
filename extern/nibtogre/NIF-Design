@@ -27,9 +27,13 @@ Ideally minimise unnecessary loops or processing duplications.
 
 One design consideration is when does the Ogre objects (e.g. Mesh) get built?
 
-Currently it is triggered when the associated Entity is built (via a loader callback
+Currently the build is triggered when the associated Entity is built (via a loader callback
 mechanism).  This may not be efficient if the same mesh are re-used often (e.g skeleton.nif,
 but have not tested if true).
+
+Note that I may be misunderstanding some stuff here.  For example, the built meshes are managed
+by the MeshManager so they won't be built again. Similarly the skeletons are managed by the
+SkeletonManager.
 
 An alternative might be to create the Ogre objects as each of the NIF files are read.  But
 doing this can lead to a large number of Ogre objects being loaded (Q: do Ogre resource
@@ -43,3 +47,14 @@ Some NiTimeControllers may work with different Ogre objects.  For example:
 
     - NiUVController seems to work at each of the sub-entity level by modifying the associated
       material (texture scroll)
+
+[23/12/2018] Some unrelated notes
+
+1.  Ogre resource searching is poor for NIF - multiple archives are searched for each and every
+    resource in BSA (or loose files).  See OgreResourceGroupManager.cpp.
+
+    Also, find out if the contents of the BSA can be registered(?) with ArchiveManager or
+    ResourceManager.  It seems grp->ResourceIndexCaseSensitive, etc, are empty.
+
+2.  Each of the sounds throw exception trying to find a .wav format, then finds .mp3 format. Do
+    some intelligent detection while scanning resources?
