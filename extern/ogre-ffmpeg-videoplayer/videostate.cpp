@@ -25,7 +25,6 @@ extern "C"
     // https://github.com/FFmpeg/FFmpeg/commit/06a83505992d5f49846c18507a6c3eb8a47c650e
     #if AV_VERSION_INT(55, 0, 100) <= AV_VERSION_INT(LIBAVFORMAT_VERSION_MAJOR, \
         LIBAVFORMAT_VERSION_MINOR, LIBAVFORMAT_VERSION_MICRO)
-        #include <time.h>
         #include <libavutil/avtime.h> // FIXME: changed name since MSVC 2017 seems to be confused with <time.h>
     #endif
 
@@ -108,11 +107,9 @@ void PacketQueue::put(AVPacket *pkt)
             av_free(pkt1);
             throw std::runtime_error("Failed to duplicate packet");
         }
-        av_packet_unref(pkt); // NOTE: unnecessary? pkt is on the caller's stack
+        av_packet_unref(pkt);
     }
 
-    // TODO: not sure what happens when static buffer (flush_pkt) is used;
-    //       seems to place an AVPacketList with the data from flush_pkt on the queue?
     this->mutex.lock ();
 
     if(!last_pkt)
@@ -368,24 +365,17 @@ double VideoState::synchronize_video(AVFrame *src_frame, double pts)
  * buffer. We use this to store the global_pts in
  * a frame at the time it is allocated.
  */
+/* See APIchanges 2013-03-16; avcodec_default_get_buffer() deprecated */
 static int64_t global_video_pkt_pts = AV_NOPTS_VALUE;
 static int our_get_buffer(struct AVCodecContext *c, AVFrame *pic, int flags)
 {
-    /* See APIchanges 2013-03-16; avcodec_default_get_buffer() deprecated */
-    /* New API uses reference counted frames */
-    int ret = avcodec_default_get_buffer2(c, pic, flags);
-    int64_t *pts = (int64_t*)av_malloc(sizeof(int64_t));
-    *pts = global_video_pkt_pts;
-    pic->opaque = pts;
-    return ret;
+    return 0;
 }
 
 
 /* See APIchanges 2013-03-16; avcodec_default_release_buffer() deprecated */
 static void our_release_buffer(struct AVCodecContext *c, AVFrame *pic)
 {
-    //if(pic) av_freep(&pic->opaque);
-    //avcodec_default_release_buffer(c, pic);
 }
 
 
@@ -394,11 +384,6 @@ void VideoState::video_thread_loop(VideoState *self)
     AVPacket pkt1, *packet = &pkt1;     // NOTE: packet is pointing to pkt1 allocated on the stack
     int frameFinished;
     AVFrame *pFrame;
-    //AVCodecParserContext *parserCtx;
-
-    //parserCtx = av_parser_init((*self->video_st)->codec->codec_id);
-    //if(!parserCtx)
-    //    throw std::runtime_error("Error parser not found");
 
     pFrame = av_frame_alloc();          // NOTE: data buffers are not allocated
     if(!pFrame)
@@ -441,16 +426,6 @@ void VideoState::video_thread_loop(VideoState *self)
         // Decode video frame
         if(avcodec_decode_video2((*self->video_st)->codec, pFrame, &frameFinished, packet) < 0)
             throw std::runtime_error("Error decoding video frame");
-        //int size;
-        //av_parser_parse2(parserCtx,                /* AVCodecParsercontext* */
-        //                 (*self->video_st)->codec, /* AVCodecContext* */
-        //                 pFrame->data,             /* poutbuf */
-        //                 &size,                    /* poutbuf_size */
-        //                 packet->data,   // input
-        //                 packet->size,   // input size
-        //                 AV_NOPTS_VALUE, /* pts */
-        //                 AV_NOPTS_VALUE, /* dts */
-        //                 0);             /* pos */
 
         double pts = 0;
         if(packet->dts != AV_NOPTS_VALUE)
@@ -479,7 +454,7 @@ void VideoState::video_thread_loop(VideoState *self)
 void VideoState::decode_thread_loop(VideoState *self)
 {
     AVFormatContext *pFormatCtx = self->format_ctx;
-    AVPacket pkt1, *packet = &pkt1; // NOTE: packet is pointing to pkt1 allocated on the stack
+    AVPacket pkt1, *packet = &pkt1;
 
     try
     {
@@ -566,11 +541,11 @@ void VideoState::decode_thread_loop(VideoState *self)
 
             // Is this a packet from the video stream?
             if(self->video_st && packet->stream_index == self->video_st-pFormatCtx->streams)
-                self->videoq.put(packet); // NOTE: add a new packet to the queue?
+                self->videoq.put(packet);
             else if(self->audio_st && packet->stream_index == self->audio_st-pFormatCtx->streams)
                 self->audioq.put(packet);
             else
-                av_packet_unref(packet); // NOTE: not sure if this is needed since packet is on the stack
+                av_packet_unref(packet);
         }
     }
     catch(std::runtime_error& e) {
@@ -608,12 +583,6 @@ int VideoState::stream_open(int stream_index, AVFormatContext *pFormatCtx)
     }
 
     codecCtx = pFormatCtx->streams[stream_index]->codec;
-    //codecCtx = avcodec_alloc_context3(codec);
-    //if(!codecCtx)
-    //{
-    //    fprintf(stderr, "Could not allocate codec!\n");
-    //    return -1;
-    //}
 
     int res = avcodec_open2(codecCtx, codec, NULL);
     if (res < 0)
@@ -650,7 +619,6 @@ int VideoState::stream_open(int stream_index, AVFormatContext *pFormatCtx)
         this->video_st = pFormatCtx->streams + stream_index;
 
         codecCtx->get_buffer2 = avcodec_default_get_buffer2;
-        //codecCtx->release_buffer = our_release_buffer;
         this->video_thread = boost::thread(video_thread_loop, this);
         break;
 
