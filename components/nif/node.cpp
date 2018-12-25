@@ -4,7 +4,7 @@
 #include "property.hpp"
 #include "controller.hpp"
 #include "controlled.hpp"
-//#include "extra.hpp"
+#include "foreign.hpp"
 
 void Nif::Node::getProperties(const Nif::NiTexturingProperty *&texprop,
                               const Nif::NiMaterialProperty *&matprop,

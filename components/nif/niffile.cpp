@@ -5,6 +5,7 @@
 #include "controller.hpp"
 #include "controlled.hpp"
 #include "extra.hpp"
+#include "foreign.hpp"
 
 #include <map>
 #include <cassert>

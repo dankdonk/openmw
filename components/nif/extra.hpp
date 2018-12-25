@@ -30,6 +30,7 @@
 namespace Nif
 {
 
+
 class NiExtraData : public Record
 {
 public:

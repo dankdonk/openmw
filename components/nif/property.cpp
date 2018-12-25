@@ -2,7 +2,7 @@
 
 #include <iostream> // FIXME
 
-#include "data.hpp" // BSShaderTextureSet
+#include "foreign.hpp" // BSShaderTextureSet
 
 void Nif::PropertyAndFlags::read(NIFStream *nif)
 {

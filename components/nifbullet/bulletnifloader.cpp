@@ -38,6 +38,7 @@ http://www.gnu.org/licenses/ .
 #include <components/nif/controller.hpp>
 #include <components/nif/extra.hpp>
 #include <components/nif/collision.hpp>
+#include <components/nif/foreign.hpp>
 
 #include <libs/platform/strings.h>
 

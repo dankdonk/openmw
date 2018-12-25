@@ -54,6 +54,7 @@
 #include <components/nif/extra.hpp>      // NiTextKeyExtraData
 #include <components/nif/collision.hpp>  // NiCollisionObject
 #include <components/nif/recordptr.hpp>  // NiCollisionObjectPtr
+#include <components/nif/foreign.hpp>
 #include <components/nifcache/nifcache.hpp>
 #include <components/misc/stringops.hpp>
 #include <components/misc/resourcehelpers.hpp>

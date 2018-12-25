@@ -1,6 +1,7 @@
 #include "collision.hpp"
 
 #include "node.hpp"
+#include "foreign.hpp"
 
 void Nif::hkTriangle::read(NIFStream *nif, unsigned int nifVer)
 {

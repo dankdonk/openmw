@@ -21,78 +21,26 @@ public:
     NiExtraDataList extras;
     bool hasExtras; // FIXME: how to make this part of extras rather than keep separate members?
 
-    void read(NIFStream *nif);
-    void post(NIFFile *nif);
-};
-#if 0
-// same as Controller
-class NiTimeController : public Record
-{
-public:
-    NiTimeControllerPtr next;
-    unsigned short flags;
-    float frequency, phase;
-    float timeStart, timeStop;
-    NiObjectNETPtr target;
+    void read(NIFStream *nif)
+    {
+        // FIXME: this is a linked list
+        if (nifVer <= 0x04020200) // up to 4.2.2.0
+        {
+            extra.read(nif);
+            hasExtras = false;
+        }
 
-    void read(NIFStream *nif);
-    void post(NIFFile *nif);
-};
-
-// same as Named
-class NiObjectNET : public Record
-{
-public:
-    std::string name;
-    NiExtraDataPtr extra;
-    NiExtraDataList extras;
-    bool hasExtras; // FIXME
-    NiTimeControllerPtr controller;
-
-    void read(NIFStream *nif);
+        // FIXME: this is a vector
+        if (nifVer >= 0x0a000100) // from 10.0.1.0
+        {
+            extras.read(nif);
+            if (extras.length() > 0)
+                hasExtras = true;
+        }
+    }
     void post(NIFFile *nif);
 };
 
-// same as Node
-class NiAVObject : public NiObjectNET
-{
-public:
-    unsigned short flags;
-    Transformation transfrom;
-    Ogre::Vector3 velocity; // Unused? Might be a run-time game state
-    NiPropertyList props;
-
-    bool hasBounds = false; // NOTE: this needs to be set to false for NiTriStrips (see ManualBulletShapeLoader)
-    Ogre::Vector3 translation;
-    Ogre::Matrix3 rotation;
-    Ogre::Vector3 raidus;   // per direction
-
-    NiCollisionObjectPtr collision;
-
-    void read(NIFStream *nif);
-    void post(NIFFile *nif);
-
-    NiNode *parent; // FIXME: move this to NiNode?
-
-    const NiSkinData::BoneTrafo *boneTrafo;
-    const NiSkinData::BoneInfo *boneInfo;
-    short boneIndex;
-    void makeRootBone(const NiSkinData::BoneTrafo *tr);
-    void makeBone(short ind, const NiSkinData::BoneInfo &bi);
-
-    void getProperties(const Nif::NiTexturingProperty *&texprop,
-                       const Nif::NiMaterialProperty *&matprop,
-                       const Nif::NiAlphaProperty *&alphaprop,
-                       const Nif::NiVertexColorProperty *&vertprop,
-                       const Nif::NiZBufferProperty *&zprop,
-                       const Nif::NiSpecularProperty *&specprop,
-                       const Nif::NiWireframeProperty *&wireprop,
-                       const Nif::NiStencilProperty *&stencilprop) const;
-
-    Ogre::Matrix4 getLocalTransform() const;
-    Ogre::Matrix4 getWorldTransform() const;
-};
-#endif
 class Controller : public Record
 {
 public:
@@ -102,28 +50,45 @@ public:
     float timeStart, timeStop;
     ControlledPtr target;
 
-    void read(NIFStream *nif);
-    void post(NIFFile *nif);
+    void read(NIFStream *nif)
+    {
+        next.read(nif);
+
+        flags = nif->getUShort();
+
+        frequency = nif->getFloat();
+        phase = nif->getFloat();
+        timeStart = nif->getFloat();
+        timeStop = nif->getFloat();
+
+        target.read(nif);
+    }
+
+    void post(NIFFile *nif)
+    {
+        Record::post(nif);
+        next.post(nif);
+        target.post(nif);
+    }
 };
 
 /// Anything that has a controller
-class Controlled : public Extra // FIXME: should be changed from "is an Extra" to "has an Extra"
+class Controlled : public Extra
 {
 public:
     ControllerPtr controller;
 
-    void read(NIFStream *nif);
-    void post(NIFFile *nif);
-};
+    void read(NIFStream *nif)
+    {
+        Extra::read(nif);
+        controller.read(nif);
+    }
 
-class NiParticleModifier : public Record
-{
-public:
-    NiParticleModifierPtr extra;
-    ControllerPtr controller;
-
-    void read(NIFStream *nif);
-    void post(NIFFile *nif);
+    void post(NIFFile *nif)
+    {
+        Extra::post(nif);
+        controller.post(nif);
+    }
 };
 
 /// Has name, extra-data and controller
@@ -132,7 +97,11 @@ class Named : public Controlled
 public:
     std::string name;
 
-    void read(NIFStream *nif);
+    void read(NIFStream *nif)
+    {
+        name = nif->getSkyrimString(nifVer, Record::strings);
+        Controlled::read(nif);
+    }
 };
 typedef Named NiSequenceStreamHelper;
 
