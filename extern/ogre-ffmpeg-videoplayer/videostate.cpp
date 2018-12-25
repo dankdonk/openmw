@@ -26,7 +26,7 @@ extern "C"
     #if AV_VERSION_INT(55, 0, 100) <= AV_VERSION_INT(LIBAVFORMAT_VERSION_MAJOR, \
         LIBAVFORMAT_VERSION_MINOR, LIBAVFORMAT_VERSION_MICRO)
         #include <time.h>
-        #include <libavutil/time.h> // FIXME: changed name since MSVC 2017 seems to be confused with <time.h>
+        #include <libavutil/avtime.h> // FIXME: changed name since MSVC 2017 seems to be confused with <time.h>
     #endif
 
     #include <libavutil/mathematics.h>
