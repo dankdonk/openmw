@@ -138,6 +138,10 @@ if (OPENMW_USE_UNSHIELD)
     target_link_libraries(openmw-wizard ${LIBUNSHIELD_LIBRARY})
 endif()
 
+if (WIN32)
+    set_target_properties(openmw-wizard PROPERTIES LINK_FLAGS "/SUBSYSTEM:CONSOLE")
+endif()
+
 
 if(DPKG_PROGRAM)
     INSTALL(TARGETS openmw-wizard RUNTIME DESTINATION games COMPONENT openmw-wizard)

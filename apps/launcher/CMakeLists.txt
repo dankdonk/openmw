@@ -110,6 +110,10 @@ else()
     endif()
 endif()
 
+if (WIN32)
+    set_target_properties(openmw-launcher PROPERTIES LINK_FLAGS "/SUBSYSTEM:CONSOLE")
+endif()
+
 if (BUILD_WITH_CODE_COVERAGE)
   add_definitions (--coverage)
   target_link_libraries(openmw-launcher gcov)
