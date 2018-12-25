@@ -1,6 +1,6 @@
 #include "plugin.hpp"
 
-#include <MyGUI_LogManager.h>
+/*#include <MyGUI_LogManager.h>*/
 #include <MyGUI_FactoryManager.h>
 #include <MyGUI_ScrollBar.h>
 #include <MyGUI_Gui.h>
