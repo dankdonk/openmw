@@ -783,6 +783,8 @@ NiBtOgre::bhkListShape::bhkListShape(uint32_t index, NiStream& stream, const NiM
     : bhkShape(index, stream, model)
 {
     stream.readVector<bhkShapeRef>(mSubShapes);
+    if (stream.nifVer() == 0x0a000100)
+        stream.skip(sizeof(std::int32_t)); // e.g. oar01.nif
     stream.read(mMaterial);
 
     //mUnknownfloats.resize(6);
@@ -932,19 +934,74 @@ std::unique_ptr<btCollisionShape> NiBtOgre::bhkNiTriStripsShape::buildShape(cons
         NiTriStripsData *triStripsData = mModel.getRef<NiTriStripsData>(mStripsData[i]);
         assert(triStripsData != nullptr && "mModel.getRef returned nullptr"); // FIXME: throw instead?
 
-        // TODO: possibly inefficient by creating too many triangles?
         const std::vector<Ogre::Vector3> &vertices = triStripsData->mVertices;
         const std::vector<uint16_t> &triangles = triStripsData->mTriangles;
 
-        for(size_t j = 0; j < triStripsData->mTriangles.size(); j += 3)
+        // first check if packing will do better than before - these don't (there'll be others):
+        //
+        // ICStreetlight01, ICWallDoor01, MushroomToadstool01, Opensack01
+        // RockGreatForest045, RockGreatForest050, RockGreatForest070, RockGreatForest085, RockGreatForest320
+        //
+        // basically trading off increased first build time with runtime performance
+        std::vector<uint16_t> packedTriangles;
+        for(size_t j = 0; j < triStripsData->mTriangles.size()-2; ++j)
         {
-            Ogre::Vector3 b1 = vertices[triangles[j+0]];
-            Ogre::Vector3 b2 = vertices[triangles[j+1]];
-            Ogre::Vector3 b3 = vertices[triangles[j+2]];
+            // skipping (packing?) idea copied from NifSkope nvtristripwrapper::triangulate()
+            // i.e. ( a != b && b != c && c != a )
+            if (triangles[j+0] == triangles[j+1] ||
+                triangles[j+1] == triangles[j+2] ||
+                triangles[j+2] == triangles[j+0]   )
+            {
+                continue;
+            }
+            packedTriangles.push_back(triangles[j+0]);
+            packedTriangles.push_back(triangles[j+1]);
+            packedTriangles.push_back(triangles[j+2]);
+        }
 
-            mesh->addTriangle(transform * btVector3(b1.x,b1.y,b1.z),
-                              transform * btVector3(b2.x,b2.y,b2.z),
-                              transform * btVector3(b3.x,b3.y,b3.z));
+        // icgroundfloor16.nif collision mesh version 20.0.0.4 has problems so always pack
+        // e.g. The Copious Coinpurse (20.0.0.5 version of the mesh is ok)
+        if ((packedTriangles.size() < triStripsData->mTriangles.size()) || mModel.nifVer() == 0x14000004)
+        {
+            if (packedTriangles.size() > triStripsData->mTriangles.size())
+                std::cout << "forced pack " << mModel.getModelName() << " " << mModel.nifVer() << std::endl;
+
+            for(size_t j = 0; j < packedTriangles.size(); j += 3)
+            {
+                Ogre::Vector3 b1 = vertices[packedTriangles[j+0]];
+                Ogre::Vector3 b2 = vertices[packedTriangles[j+1]];
+                Ogre::Vector3 b3 = vertices[packedTriangles[j+2]];
+
+                mesh->addTriangle(transform * btVector3(b1.x,b1.y,b1.z),
+                                  transform * btVector3(b2.x,b2.y,b2.z),
+                                  transform * btVector3(b3.x,b3.y,b3.z));
+            }
+        }
+        else // original was better
+        {
+            // excluding 20.0.0.4 negates the purpose of this complicated check to use the original!
+            // maybe individual meshes need to be excluded instead?
+            //
+            // meshes\architecture\imperialcity\icstreetlight01.nif
+            // meshes\architecture\imperialcity\icwalldoor01.nif
+            // meshes\clutter\opensack01.nif
+            // meshes\plants\mushroomtoadstool01.nif
+            // meshes\rocks\greatforest\rockgreatforest045.nif
+            // meshes\rocks\greatforest\rockgreatforest050.nif
+            // meshes\rocks\greatforest\rockgreatforest070.nif
+            // meshes\rocks\greatforest\rockgreatforest085.nif
+            // meshes\rocks\greatforest\rockgreatforest320.nif
+
+            for(size_t j = 0; j < triStripsData->mTriangles.size(); j += 3)
+            {
+                Ogre::Vector3 b1 = vertices[triangles[j+0]];
+                Ogre::Vector3 b2 = vertices[triangles[j+1]];
+                Ogre::Vector3 b3 = vertices[triangles[j+2]];
+
+                mesh->addTriangle(transform * btVector3(b1.x,b1.y,b1.z),
+                                  transform * btVector3(b2.x,b2.y,b2.z),
+                                  transform * btVector3(b3.x,b3.y,b3.z));
+            }
         }
     }
 
@@ -1074,9 +1131,30 @@ std::unique_ptr<btCollisionShape> NiBtOgre::hkPackedNiTriStripsData::buildShape(
     throw std::runtime_error ("hkPackedNiTriStripsData: unexpected call to buildShape");
 }
 
+// seen in NIF ver 10.0.1.0 (clutter/farm/oar0.nif)
+NiBtOgre::bhkConvexSweepShape::bhkConvexSweepShape(uint32_t index, NiStream& stream, const NiModel& model)
+    : bhkShape(index, stream, model)
+{
+    stream.read(mShapeIndex);
+    stream.skip(sizeof(std::int32_t)); // e.g. oar01.nif
+    stream.read(mMaterial);
+    stream.read(mUnknownFloat1);
+    stream.read(mUnknown);
+}
+
+std::unique_ptr<btCollisionShape> NiBtOgre::bhkConvexSweepShape::buildShape(const btTransform& transform) const
+{
+    if (mShapeIndex == -1)
+        return std::unique_ptr<btCollisionShape>(nullptr);
+
+    return mModel.getRef<bhkShape>(mShapeIndex)->buildShape(transform);
+}
+
 NiBtOgre::bhkSphereRepShape::bhkSphereRepShape(uint32_t index, NiStream& stream, const NiModel& model)
     : bhkShape(index, stream, model)
 {
+    if (stream.nifVer() == 0x0a000100)
+        stream.skip(sizeof(std::int32_t)); // e.g. oar01.nif
     stream.read(mMaterial);
     stream.read(mRadius);
 }
@@ -1268,6 +1346,8 @@ NiBtOgre::bhkTransformShape::bhkTransformShape(uint32_t index, NiStream& stream,
     : bhkShape(index, stream, model)
 {
     stream.read(mShapeIndex);
+    if (stream.nifVer() == 0x0a000100)
+        stream.skip(sizeof(std::int32_t)); // e.g. oar01.nif
     stream.read(mMaterial);
     stream.read(mUnknownFloat1);
     mUnknown8Bytes.resize(8);
@@ -1328,9 +1408,11 @@ NiBtOgre::bhkEntity::bhkEntity(uint32_t index, NiStream& stream, const NiModel& 
     : bhkSerializable(index, stream, model)
 {
     stream.read(mShapeIndex);
-    stream.read(mLayer);
-    stream.read(mColFilter);
-    stream.read(mUnknownShort);
+    if (stream.nifVer() == 0x0a000100)     // HACK
+        stream.skip(sizeof(std::int32_t)); // e.g. oar01.nif
+    stream.read(mLayer);                   // Oblivion Layer
+    stream.read(mColFilter);               // Flags and Part Number
+    stream.read(mUnknownShort);            // Group
 }
 
 // oblivionlayer                                                                {{{
@@ -1400,12 +1482,12 @@ NiBtOgre::bhkEntity::bhkEntity(uint32_t index, NiStream& stream, const NiModel& 
 NiBtOgre::bhkRigidBody::bhkRigidBody(uint32_t index, NiStream& stream, const NiModel& model)
     : bhkEntity(index, stream, model)
 {
-    stream.read(mUnknownInt1);
-    stream.read(mUnknownInt2);
+    stream.read(mUnknownInt1);           // unused
+    stream.read(mUnknownInt2);           // first byte Broadphase Type, rest unused
 
     mUnknown3Ints.resize(3);
     for (unsigned int i = 0; i < 3; ++i)
-        stream.read(mUnknown3Ints.at(i));
+        stream.read(mUnknown3Ints.at(i)); // Cinfo Property (Data, Size, Capacity and Flags)
 
     stream.read(mCollisionResponse);
     stream.read(mUnknownByte);
@@ -1415,12 +1497,15 @@ NiBtOgre::bhkRigidBody::bhkRigidBody(uint32_t index, NiStream& stream, const NiM
     stream.read(mUnknown2Shorts.at(0));
     stream.read(mUnknown2Shorts.at(1));
 
-    stream.read(mLayerCopy);
-    stream.read(mColFilterCopy);
+    if (stream.nifVer() != 0x0a000100)     // HACK
+    {
+        stream.read(mLayerCopy);
+        stream.read(mColFilterCopy);
 
-    mUnknown7Shorts.resize(7);
-    for (unsigned int i = 0; i < 7; ++i)
-        stream.read(mUnknown7Shorts.at(i));
+        mUnknown7Shorts.resize(7);
+        for (unsigned int i = 0; i < 7; ++i)
+            stream.read(mUnknown7Shorts.at(i));
+    }
 
     for (unsigned int i = 0; i < 4; ++i)
         stream.read(mTranslation.m_floats[i]);
@@ -1460,9 +1545,12 @@ NiBtOgre::bhkRigidBody::bhkRigidBody(uint32_t index, NiStream& stream, const NiM
         stream.read(mRollingFrictionMultiplier);
 
     stream.read(mRestitution);
-    stream.read(mMaxLinearVelocity);
-    stream.read(mMaxAngularVelocity);
-    stream.read(mPenetrationDepth);
+    if (stream.nifVer() != 0x0a000100)     // HACK
+    {
+        stream.read(mMaxLinearVelocity);
+        stream.read(mMaxAngularVelocity);
+        stream.read(mPenetrationDepth);
+    }
 
     stream.read(mMotionSystem);
     stream.read(mDeactivatorType);

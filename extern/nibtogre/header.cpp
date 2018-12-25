@@ -29,6 +29,8 @@
 
 #include "nistream.hpp"
 
+std::string NiBtOgre::Header::mEmptyString = "";
+
 // See NifTools/NifSkope/doc/header.html
 NiBtOgre::Header::Header(NiBtOgre::NiStream& stream) : mVer(0), mUserVer(0), mUserVer2(0), mNumBlocks(0)
 {
@@ -55,6 +57,10 @@ NiBtOgre::Header::Header(NiBtOgre::NiStream& stream) : mVer(0), mUserVer(0), mUs
     //   ./creatures/endgame/battle.kf:                   Gamebryo File Format, Version 10.2.0.0
     //   ./creatures/endgame/entry.kf:                    Gamebryo File Format, Version 10.2.0.0
     //
+    // In GOG version there are old versions:
+    //   ./clutter/farm/oar01.nif                         NetImmerse File Format, Version 10.0.1.0
+    //   etc
+    //
     // This file exists but doesn't seem to be used in any of the ESM/ESP:
     //   ./creatures/minotaur/minotaurold.nif:            NetImmerse File Format, Version 10.0.1.2
     //
@@ -74,7 +80,7 @@ NiBtOgre::Header::Header(NiBtOgre::NiStream& stream) : mVer(0), mUserVer(0), mUs
     //
     stream.readNifVer(mVer);
     if (mVer != 0x14000004 && mVer != 0x14000005 && mVer != 0x14020007 && mVer != 0x04000002 &&
-        mVer != 0x0a020000 && mVer != 0x0303000d /*&& mVer != 0x0a000102*/) // comment out unused
+        mVer != 0x0a020000 && mVer != 0x0303000d && mVer != 0x0a000100/*&& mVer != 0x0a000102*/) // comment out unused
     {
         throw std::runtime_error("NiBtOgre::Header::unsupported NIF file version " + std::to_string(mVer));
     }
@@ -96,11 +102,16 @@ NiBtOgre::Header::Header(NiBtOgre::NiStream& stream) : mVer(0), mUserVer(0), mUs
 
     stream.read(mNumBlocks);
 
-    if (mVer >= 0x0a010000) // 10.1.0.0
+    if (mVer >= 0x0a000100) // 5.0.0.1 but the oldest we support is 10.0.1.0
     {
         uint16_t numBlockTypes = 0;
 
         // WARN: this block needs updating if we ever end up supporting version 10.0.1.2
+        //(
+        // (Version == 20.2.0.7) ||
+        // (Version == 20.0.0.5) ||
+        // ((Version > 10.0.1.2) && (Version < 20.0.0.4) && (User Version < 11))
+        //) && (User Version > 3)
         if ((mUserVer >= 10) || ((mUserVer == 1) && (mVer != 0x0a020000)))
         {
             stream.readUserVer2(mUserVer2);
@@ -141,16 +152,20 @@ NiBtOgre::Header::Header(NiBtOgre::NiStream& stream) : mVer(0), mUserVer(0), mUs
             stream.readSizedString(mStrings.at(i));
     }
 
-    if (mVer >= 0x0a010000) // 10.1.0.0
+    if (mVer >= 0x0a000100) // 5.0.0.6 but the oldest we support is 10.0.1.0
     {
         uint32_t unknown;
-
         stream.read(unknown);
     }
 }
 
-std::uint32_t NiBtOgre::Header::appendLongString(std::string&& str)
+// FIXME: should search for duplicates and return the corresponding index
+//        (may not be worth the trouble since the frequency of duplicates may be low)
+std::int32_t NiBtOgre::Header::appendLongString(std::string&& str)
 {
+    if (str.empty())
+        return -1;
+
     mStrings.push_back(std::move(str));
     return (std::uint32_t)mStrings.size()-1;
 }

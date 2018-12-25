@@ -160,14 +160,47 @@ btTriangleMesh *createBhkNiTriStripsShape(const Nif::Node *node,
         const std::vector<Ogre::Vector3> &vertices = triData->vertices;
         const std::vector<short> &triangles = triData->triangles;
 
-        for(size_t i = 0; i < triData->triangles.size(); i += 3)
+        std::vector<uint16_t> packedTriangles;
+        for(size_t i = 0; i < triData->triangles.size()-2; ++i)
         {
-            Ogre::Vector3 b1 = t*vertices[triangles[i+0]];
-            Ogre::Vector3 b2 = t*vertices[triangles[i+1]];
-            Ogre::Vector3 b3 = t*vertices[triangles[i+2]];
-            staticMesh->addTriangle(btVector3(b1.x,b1.y,b1.z),
-                                    btVector3(b2.x,b2.y,b2.z),
-                                    btVector3(b3.x,b3.y,b3.z));
+            // skipping (packing?) idea copied from NifSkope nvtristripwrapper::triangulate()
+            // i.e. ( a != b && b != c && c != a )
+            if (triangles[i+0] == triangles[i+1] ||
+                triangles[i+1] == triangles[i+2] ||
+                triangles[i+2] == triangles[i+0]   )
+            {
+                continue;
+            }
+            packedTriangles.push_back(triangles[i+0]);
+            packedTriangles.push_back(triangles[i+1]);
+            packedTriangles.push_back(triangles[i+2]);
+        }
+
+        // icgroundfloor16.nif collision mesh version 20.0.0.4 has problems so always pack
+        // e.g. copiouscoinpurse (20.0.0.5 version of the mesh is ok)
+        if ((packedTriangles.size() > triData->triangles.size()) && node->nifVer != 0x14000004)
+        {
+            for(size_t i = 0; i < triData->triangles.size(); i += 3)
+            {
+                Ogre::Vector3 b1 = t*vertices[triangles[i+0]];
+                Ogre::Vector3 b2 = t*vertices[triangles[i+1]];
+                Ogre::Vector3 b3 = t*vertices[triangles[i+2]];
+                staticMesh->addTriangle(btVector3(b1.x,b1.y,b1.z),
+                                        btVector3(b2.x,b2.y,b2.z),
+                                        btVector3(b3.x,b3.y,b3.z));
+            }
+        }
+        else
+        {
+            for(size_t i = 0; i < packedTriangles.size(); i += 3)
+            {
+                Ogre::Vector3 b1 = t*vertices[packedTriangles[i+0]];
+                Ogre::Vector3 b2 = t*vertices[packedTriangles[i+1]];
+                Ogre::Vector3 b3 = t*vertices[packedTriangles[i+2]];
+                staticMesh->addTriangle(btVector3(b1.x,b1.y,b1.z),
+                                        btVector3(b2.x,b2.y,b2.z),
+                                        btVector3(b3.x,b3.y,b3.z));
+            }
         }
     }
 
@@ -346,15 +379,54 @@ btCollisionShape *createBhkShape(const Nif::Node *node,
         const std::vector<Ogre::Vector3> &vertices = triData->vertices;
         const std::vector<short> &triangles = triData->triangles;
 
-        for(size_t i = 0; i < triData->triangles.size(); i += 3)
+        std::vector<uint16_t> packedTriangles;
+        for(size_t i = 0; i < triData->triangles.size()-2; ++i)
         {
-            Ogre::Vector3 b1 = t*vertices[triangles[i+0]];
-            Ogre::Vector3 b2 = t*vertices[triangles[i+1]];
-            Ogre::Vector3 b3 = t*vertices[triangles[i+2]];
-            staticMesh->addTriangle(btVector3(b1.x,b1.y,b1.z),
-                                    btVector3(b2.x,b2.y,b2.z),
-                                    btVector3(b3.x,b3.y,b3.z));
+            // skipping (packing?) idea copied from NifSkope nvtristripwrapper::triangulate()
+            // i.e. ( a != b && b != c && c != a )
+            if (triangles[i+0] == triangles[i+1] ||
+                triangles[i+1] == triangles[i+2] ||
+                triangles[i+2] == triangles[i+0]   )
+            {
+                continue;
+            }
+            packedTriangles.push_back(triangles[i+0]);
+            packedTriangles.push_back(triangles[i+1]);
+            packedTriangles.push_back(triangles[i+2]);
         }
+
+        if ((packedTriangles.size() > triData->triangles.size()) && node->nifVer != 0x14000004)
+        {
+            for(size_t i = 0; i < triData->triangles.size(); i += 3)
+            {
+                Ogre::Vector3 b1 = t*vertices[triangles[i+0]];
+                Ogre::Vector3 b2 = t*vertices[triangles[i+1]];
+                Ogre::Vector3 b3 = t*vertices[triangles[i+2]];
+                staticMesh->addTriangle(btVector3(b1.x,b1.y,b1.z),
+                                        btVector3(b2.x,b2.y,b2.z),
+                                        btVector3(b3.x,b3.y,b3.z));
+            }
+        }
+        else // new
+        {
+            for(size_t i = 0; i < packedTriangles.size(); i += 3)
+            {
+                Ogre::Vector3 b1 = t*vertices[packedTriangles[i+0]];
+                Ogre::Vector3 b2 = t*vertices[packedTriangles[i+1]];
+                Ogre::Vector3 b3 = t*vertices[packedTriangles[i+2]];
+                staticMesh->addTriangle(btVector3(b1.x,b1.y,b1.z),
+                                        btVector3(b2.x,b2.y,b2.z),
+                                        btVector3(b3.x,b3.y,b3.z));
+            }
+        }
+
+
+
+
+
+
+
+
     }
 
     translation = Ogre::Vector3::ZERO; // transform was applied here, do not apply again later
@@ -370,6 +442,11 @@ btCollisionShape *createBhkShape(const Nif::Node *node,
 
             return createBhkShape(node, translation, rotation,
                     static_cast<const Nif::bhkMoppBvTreeShape*>(bhkShape)->shape.getPtr());
+        }
+        case Nif::RC_bhkConvexSweepShape: // oar01.nif
+        {
+            return createBhkShape(node, translation, rotation,
+                    static_cast<const Nif::bhkConvexSweepShape*>(bhkShape)->shape.getPtr());
         }
         case Nif::RC_bhkPackedNiTriStripsShape: // usually from bhkMoppBvTreeShape
         {

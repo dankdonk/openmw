@@ -405,6 +405,9 @@ NiBtOgre::NiFloatData::NiFloatData(uint32_t index, NiStream& stream, const NiMod
 NiBtOgre::NiGeometryData::NiGeometryData(uint32_t index, NiStream& stream, const NiModel& model, bool isNiPSysData)
     : NiObject(index, stream, model), mNumVertices(0), mNumUVSets(0), mBSNumUVSets(0) , mIsNiPSysData(isNiPSysData)
 {
+    if (stream.nifVer() == 0x0a000100)     // HACK: not sure why this is needed
+        stream.skip(sizeof(std::int32_t)); // oar01.nif
+
     if (stream.nifVer() >= 0x0a020000) // from 10.2.0.0
     {
         std::int32_t unknownInt;
@@ -705,6 +708,44 @@ NiBtOgre::NiTriStripsData::NiTriStripsData(uint32_t index, NiStream& stream, con
             }
         }
     }
+#if 0
+    //std::vector<Triangle> packedTriangle;
+    std::vector<std::uint16_t> packedTriangleStrip;
+    for (unsigned int i = 0; i < numStrips; ++i)
+    {
+        base = static_cast<unsigned int>(mTriangles.size());
+        for (unsigned int j = 0; j < (unsigned int)(mStripLengths[i]-2); ++j)
+        {
+            // skipping (packing?) idea copied from NifSkope nvtristripwrapper::triangulate()
+            // i.e. ( a != b && b != c && c != a )
+            if (mPoints[i][j]   != mPoints[i][j+1] &&
+                mPoints[i][j+1] != mPoints[i][j+2] &&
+                mPoints[i][j+2] != mPoints[i][j]     )
+            {
+                //Triangle triangle;
+                if (j & 1)
+                {
+                    //triangle.v1 = mPoints[i][j];
+                    //triangle.v2 = mPoints[i][j+2];
+                    //triangle.v3 = mPoints[i][j+1];
+                    packedTriangleStrip.push_back(mPoints[i][j]);
+                    packedTriangleStrip.push_back(mPoints[i][j+2]);
+                    packedTriangleStrip.push_back(mPoints[i][j+1]);
+                }
+                else
+                {
+                    //triangle.v1 = mPoints[i][j];
+                    //triangle.v2 = mPoints[i][j+1];
+                    //triangle.v3 = mPoints[i][j+2];
+                    packedTriangleStrip.push_back(mPoints[i][j]);
+                    packedTriangleStrip.push_back(mPoints[i][j+1]);
+                    packedTriangleStrip.push_back(mPoints[i][j+2]);
+                }
+                //packedTriangle.push_back(triangle);
+            }
+        }
+    }
+#endif
 }
 
 NiBtOgre::NiKeyframeData::NiKeyframeData(uint32_t index, NiStream& stream, const NiModel& model)

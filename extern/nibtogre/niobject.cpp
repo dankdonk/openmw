@@ -112,6 +112,8 @@ namespace NiBtOgre
         NiObject::define<NiWireframeProperty>("NiWireframeProperty");
         NiObject::define<NiZBufferProperty>("NiZBufferProperty");
         NiObject::define<RootCollisionNode>("RootCollisionNode");
+        // Seen in NIF version 10.0.1.0
+        NiObject::define<bhkConvexSweepShape>("bhkConvexSweepShape");
         // Seen in NIF version 20.0.0.4, 20.0.0.5
         NiObject::define<BSBound>("BSBound");
         NiObject::define<BSFurnitureMarker>("BSFurnitureMarker");

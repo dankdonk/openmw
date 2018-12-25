@@ -115,6 +115,8 @@ void Nif::bhkListShape::read(NIFStream *nif)
     for (unsigned int i = 0; i < numSubShapes; ++i)
         subShapes[i].read(nif);
 
+    if (nifVer == 0x0a000100)
+        unknownInt = nif->getInt();
     material = nif->getUInt();
 
     unknown.resize(6);
@@ -134,6 +136,8 @@ void Nif::bhkListShape::post(NIFFile *nif)
 
 void Nif::bhkBoxShape::read(NIFStream *nif)
 {
+    if (nifVer == 0x0a000100)
+        nif->getInt();
     material = nif->getUInt();
     radius = nif->getFloat();
     unknown.resize(8);
@@ -166,9 +170,25 @@ void Nif::bhkMultiSphereShape::read(NIFStream *nif)
     }
 }
 
+void Nif::bhkConvexSweepShape::read(NIFStream *nif)
+{
+    shape.read(nif);
+    nif->getInt();
+    material = nif->getUInt();
+    unknownF1 = nif->getFloat();
+    nif->getVector3();
+}
+
+void Nif::bhkConvexSweepShape::post(NIFFile *nif)
+{
+    shape.post(nif);
+}
+
 void Nif::bhkTransformShape::read(NIFStream *nif)
 {
     shape.read(nif);
+    if (nifVer == 0x0a000100)
+        nif->getInt();
     material = nif->getUInt();
     unknownF1 = nif->getFloat();
     unknown.resize(8);
@@ -596,6 +616,8 @@ void Nif::bhkMalleableConstraint::post(NIFFile *nif)
 void Nif::bhkEntity::read(NIFStream *nif)
 {
     shape.read(nif);
+    if (nifVer == 0x0a000100)
+        nif->getInt();
     layer = nif->getChar();
     collisionFilter = nif->getChar();
     unknownShort = nif->getUShort();
@@ -620,11 +642,14 @@ void Nif::bhkRigidBody::read(NIFStream *nif)
     callbackDelay = nif->getUShort();
     unknown2 = nif->getUShort();
     unknown3 = nif->getUShort();
-    layerCopy = nif->getChar();
-    collisionFilterCopy = nif->getChar();
-    unknown7Shorts.resize(7);
-    for(size_t i = 0; i < 7; i++)
-        unknown7Shorts[i] = nif->getUShort();
+    if (nifVer != 0x0a000100)
+    {
+        layerCopy = nif->getChar();
+        collisionFilterCopy = nif->getChar();
+        unknown7Shorts.resize(7);
+        for(size_t i = 0; i < 7; i++)
+            unknown7Shorts[i] = nif->getUShort();
+    }
 
     translation = nif->getVector4();
     rotation = nif->getVector4();
@@ -648,9 +673,12 @@ void Nif::bhkRigidBody::read(NIFStream *nif)
     if (userVer >= 12)
         rollingFrictionMultiplier = nif->getFloat();
     restitution = nif->getFloat();
-    maxVelocityLinear = nif->getFloat();
-    maxVelocityAngular = nif->getFloat();
-    penetrationDepth = nif->getFloat();
+    if (nifVer != 0x0a000100)
+    {
+        maxVelocityLinear = nif->getFloat();
+        maxVelocityAngular = nif->getFloat();
+        penetrationDepth = nif->getFloat();
+    }
 
     motionSystem = nif->getChar();
     deactivatorType = nif->getChar();

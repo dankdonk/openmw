@@ -113,6 +113,9 @@ void NiBtOgre::NiModel::build(BtOgreInst *inst)
 
 void NiBtOgre::NiModel::setNiNodeParent(std::int32_t child, std::int32_t parent)
 {
+    //if (child == -1) // already checked in NiNode before calling
+        //return;
+
     std::map<std::int32_t, std::int32_t >::iterator lb = mNiNodeMap.lower_bound(child);
 
     if (lb != mNiNodeMap.end() && !(mNiNodeMap.key_comp()(child, lb->first)))

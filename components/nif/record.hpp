@@ -242,7 +242,9 @@ enum RecordType
   RC_BSShaderPPLightingProperty,
   RC_BSShaderNoLightingProperty,
   RC_bhkConvexListShape,
-  RC_BSDismemberSkinInstance
+  RC_BSDismemberSkinInstance,
+  //
+  RC_bhkConvexSweepShape
 };
 /// Base class for all records
 struct Record

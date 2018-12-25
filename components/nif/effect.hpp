@@ -56,8 +56,11 @@ struct NiLight : Effect
     {
         Effect::read(nif);
 
-        nif->getInt(); // 1
-        nif->getInt(); // 1?
+		nif->getBool(nifVer);
+
+        unsigned int numAffected = nif->getUInt(); // 1
+		for (unsigned int i = 0; i < numAffected; ++i)
+			nif->getInt(); // 1?
         light.read(nif);
     }
 };

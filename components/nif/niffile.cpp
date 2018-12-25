@@ -261,7 +261,9 @@ static std::map<std::string,RecordFactoryEntry> makeFactory()
     newFactory.insert(makeEntry("BSShaderPPLightingProperty", &construct <BSShaderPPLightingProperty>  , RC_BSShaderPPLightingProperty    ));
     newFactory.insert(makeEntry("BSShaderNoLightingProperty", &construct <BSShaderNoLightingProperty>  , RC_BSShaderNoLightingProperty    ));
     newFactory.insert(makeEntry("bhkConvexListShape",         &construct <bhkConvexListShape>          , RC_bhkConvexListShape            ));
-    newFactory.insert(makeEntry("BSDismemberSkinInstance",    &construct <BSDismemberSkinInstance>      , RC_NiSkinInstance               ));
+    newFactory.insert(makeEntry("BSDismemberSkinInstance",    &construct <BSDismemberSkinInstance>     , RC_NiSkinInstance                ));
+    //
+    newFactory.insert(makeEntry("bhkConvexSweepShape",        &construct <bhkConvexSweepShape>         , RC_bhkConvexSweepShape           ));
     return newFactory;
 }
 
@@ -283,6 +285,7 @@ static std::set<unsigned int> makeGoodVersions()
 {
     std::set<unsigned int> versions;
     versions.insert(0x04000002); // Morrowind NIF version
+	versions.insert(0x0a000100); // TES4 old
     versions.insert(0x0a020000); // TES4 old
     versions.insert(0x14000004);
     versions.insert(0x14000005); // Oblivion
@@ -343,7 +346,7 @@ size_t NIFFile::parseHeader(NIFStream nif,
 
     numBlocks = nif.getInt();
 
-    if (mVer >= 0x0a010000) // 10.1.0.0
+    if (mVer >= 0x0a000100) // 5.0.0.1
     {
         if (mVer == 0x0a020000)
             std::cout << "stop" << std::endl;
@@ -389,15 +392,17 @@ size_t NIFFile::parseHeader(NIFStream nif,
         }
     }
 
-    if (mVer >= 0x0a010000) // 10.1.0.0
+    if (mVer >= 0x0a000100) // 5.0.0.6
         nif.getUInt(); //unsigned int unknown
+	if (mVer == 0x0a000100)
+		nif.getUInt(); // hack
 
     return numBlocks;
 }
 
 void NIFFile::parse()
 {
-    NIFStream nif (this, Ogre::ResourceGroupManager::getSingleton().openResource(filename));
+    NIFStream nif (this, Ogre::ResourceGroupManager::getSingleton().openResource(filename/*, Ogre::ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME*/));
 
     std::vector<std::string> blockTypes;
     std::vector<unsigned short> blockTypeIndex;

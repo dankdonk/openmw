@@ -484,6 +484,19 @@ namespace NiBtOgre
         std::unique_ptr<btCollisionShape> buildShape(const btTransform& transform) const;
     };
 
+    // Seen in NIF ver 10.0.1.0 (clutter/farm/oar0.nif)
+    struct bhkConvexSweepShape : public bhkShape
+    {
+        bhkShapeRef mShapeIndex;
+        std::uint32_t mMaterial; // if userVer >= 12, SkyrimHavokMaterial
+        float mUnknownFloat1;    // radius?
+        btVector3 mUnknown;
+
+        bhkConvexSweepShape(uint32_t index, NiStream& stream, const NiModel& model);
+
+        std::unique_ptr<btCollisionShape> buildShape(const btTransform& transform) const;
+    };
+
     struct bhkSphereRepShape : public bhkShape
     {
         std::uint32_t mMaterial; // if userVer >= 12, SkyrimHavokMaterial

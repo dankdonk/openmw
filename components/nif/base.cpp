@@ -15,7 +15,8 @@ void Nif::Extra::read(NIFStream *nif)
     if (nifVer >= 0x0a000100) // from 10.0.1.0
     {
         extras.read(nif);
-        hasExtras = true;
+        if (extras.length() > 0)
+            hasExtras = true;
     }
 }
 

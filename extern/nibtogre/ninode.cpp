@@ -48,11 +48,11 @@ NiBtOgre::NiNode::NiNode(uint32_t index, NiStream& stream, const NiModel& model)
     : NiAVObject(index, stream, model)
 {
     //stream.readVector<NiAVObjectRef>(mChildren);
-    std::uint32_t size = 0;
-    stream.read(size);
+    std::uint32_t numChildren = 0;
+    stream.read(numChildren);
 
-    mChildren.resize(size);
-    for (std::uint32_t i = 0; i < size; ++i)
+    mChildren.resize(numChildren);
+    for (std::uint32_t i = 0; i < numChildren; ++i)
     {
         stream.read(mChildren.at(i));
 
@@ -60,10 +60,14 @@ NiBtOgre::NiNode::NiNode(uint32_t index, NiStream& stream, const NiModel& model)
         //
         // TODO: run the loop second time for this and only do it if the flags indicate
         //       possible animation? might save a few cpu cycles
-        const_cast<NiModel&>(mModel).setNiNodeParent(mChildren[i], index); // WARNING: const hack
+        if (mChildren[i] > 0) // ignore if -1
+            const_cast<NiModel&>(mModel).setNiNodeParent(mChildren[i], index); // WARNING: const hack
     }
 
     stream.readVector<NiDynamicEffectRef>(mEffects);
+    // HACK: oar01.nif suggests that 10.0.1.0 reads one entry even if there is none
+    if (stream.nifVer() == 0x0a000100)
+        stream.skip(sizeof(NiDynamicEffectRef));
 
     // Looks like the node name is also used as bone names for those meshes with skins.
     // Bipeds seems to have a predefined list of bones. See: meshes/armor/legion/m/cuirass.nif

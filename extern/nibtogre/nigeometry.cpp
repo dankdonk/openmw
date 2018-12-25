@@ -64,6 +64,9 @@ NiBtOgre::NiGeometry::NiGeometry(uint32_t index, NiStream& stream, const NiModel
     stream.read(mDataIndex);
     stream.read(mSkinInstanceIndex);
 
+    if (stream.nifVer() == 0x0a000100)     // HACK: not sure why this is needed
+        stream.skip(sizeof(std::int32_t)); // oar01.nif
+
     if (stream.nifVer() >= 0x14020007) // from 20.2.0.7 (TES5)
     {
         std::uint32_t numMaterials;

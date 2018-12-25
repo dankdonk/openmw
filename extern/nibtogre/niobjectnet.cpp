@@ -40,6 +40,10 @@ NiBtOgre::NiObjectNET::NiObjectNET(uint32_t index, NiStream& stream, const NiMod
             mSkyrimShaderType = 0;
     }
 
+    // might need it
+    if (stream.nifVer() == 0x0a000100)       // HACK not sure about this one
+        stream.skip(sizeof(std::int32_t)); // oar01.nif
+
     stream.readLongString(mNameIndex);
 
     if (stream.nifVer() <= 0x04020200) // up to 4.2.2.0

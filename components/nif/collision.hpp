@@ -93,7 +93,7 @@ namespace Nif
         unsigned int numSubShapes;
         std::vector<bhkShapePtr> subShapes;
         unsigned int material; // if userVer >= 12, SkyrimHavokMaterial
-        float unknownF1;
+        int unknownInt;
         std::vector<float> unknown;
         std::vector<unsigned int> unknownInts;
 
@@ -139,6 +139,17 @@ namespace Nif
         std::vector<SphereBV> spheres;
 
         void read(NIFStream *nif);
+    };
+
+    class bhkConvexSweepShape : public bhkShape
+    {
+    public:
+        bhkShapePtr shape;
+        unsigned int material; // if userVer >= 12, SkyrimHavokMaterial
+        float unknownF1;
+
+        void read(NIFStream *nif);
+        void post(NIFFile *nif);
     };
 
     class bhkTransformShape : public bhkShape

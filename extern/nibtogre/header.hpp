@@ -57,6 +57,8 @@ namespace NiBtOgre
         std::vector<std::uint32_t> mBlockSize; // TES5 only, probably for sanity check
         std::vector<std::string>   mStrings;   // originally TES5 only but now for all
 
+		static std::string   mEmptyString;
+
         // default, copy and assignment not allowed
         Header();
         Header(const Header& other);
@@ -72,11 +74,11 @@ namespace NiBtOgre
 
         // may throw (does not check bounds)
         inline const std::string& indexToString(std::int32_t index) const {
-            return mStrings.at(index);
+            return (index < 0) ? mEmptyString : mStrings.at(index);
         }
 
         // returns index
-        std::uint32_t appendLongString(std::string&& str);
+        std::int32_t appendLongString(std::string&& str);
 
         // returns the number of NiObjects
         inline std::uint32_t numBlocks() const { return mNumBlocks; }

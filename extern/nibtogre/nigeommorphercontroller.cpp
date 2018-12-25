@@ -127,7 +127,7 @@ NiBtOgre::NiTimeControllerRef NiBtOgre::NiGeomMorpherController::build(BtOgreIns
     Ogre::Animation *animation = mesh->createAnimation(animationId, totalAnimationLength);
 
     assert(mesh->getNumSubMeshes() != 0); // should be at least 1
-    std::uint32_t subMeshIndex = mesh->getNumSubMeshes()-1;
+    std::uint32_t subMeshIndex = (std::uint32_t)mesh->getNumSubMeshes()-1;
     unsigned short poseIndex = (unsigned short)mesh->getPoseCount();
 
     // NOTE: assume that NiControllerManager and NiControllerSequence is built already
@@ -261,7 +261,7 @@ NiBtOgre::NiTimeControllerRef NiBtOgre::NiGeomMorpherController::setupTES3Animat
     Ogre::Animation *animation = mesh->createAnimation(animationId, totalAnimationLength);
 
     assert(mesh->getNumSubMeshes() != 0); // should be at least 1
-    std::uint32_t subMeshIndex = mesh->getNumSubMeshes()-1;
+    std::uint32_t subMeshIndex = (std::uint32_t)mesh->getNumSubMeshes()-1;
     unsigned short poseIndex = (unsigned short)mesh->getPoseCount();
 
     // create a pose & track for each Morph

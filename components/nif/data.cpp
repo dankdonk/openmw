@@ -544,6 +544,9 @@ void Nif::NiKeyframeData::read(NIFStream *nif)
 
 void Nif::NiTriStripsData::read(NIFStream *nif)
 {
+    if (nifVer == 0x0a000100) // HACK: not sure why this is needed
+        nif->getInt();
+
     ShapeData::read(nif);            // NiGeometryData
 
     /*int tris =*/ nif->getUShort(); // NiTriBasedGeomData

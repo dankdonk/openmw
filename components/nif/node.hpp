@@ -166,6 +166,9 @@ public:
         Node::read(nif);
         children.read(nif);
         effects.read(nif);
+        // HACK: old versions seem to read one entry even if none
+        if (nifVer == 0x0a000100 && effects.length() == 0)
+            nif->getInt();
 
         // Discard tranformations for the root node, otherwise some meshes
         // occasionally get wrong orientation. Only for NiNode-s for now, but
@@ -219,9 +222,13 @@ public:
 
     void read(NIFStream *nif)
     {
+        if (nifVer == 0x0a000100) // HACK: not sure why this is needed
+            nif->getInt();
         Node::read(nif); // NiAVObject
         data.read(nif);  // refNiGeometryData
         skin.read(nif);
+        if (nifVer == 0x0a000100) // HACK: not sure why this is needed
+            nif->getInt();
 
         if (nifVer >= 0x14020007) // from 20.2.0.7 (Skyrim)
         {

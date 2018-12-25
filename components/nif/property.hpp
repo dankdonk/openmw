@@ -36,6 +36,8 @@ class Property : public Named
 public:
     void read(NIFStream *nif)
     {
+        if (nifVer == 0x0a000100) // HACK: not sure why this is needed
+            nif->getInt();
         Named::read(nif);
     }
 };
