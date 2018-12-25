@@ -1,6 +1,8 @@
 #ifndef OPENMW_MECHANICS_LEVELLEDLIST_H
 #define OPENMW_MECHANICS_LEVELLEDLIST_H
 
+#include <iostream>
+
 #include <openengine/misc/rng.hpp>
 
 #include "../mwworld/ptr.hpp"

@@ -24,6 +24,8 @@
 #ifndef OPENMW_COMPONENTS_NIFOGRE_OGRENIFLOADER_HPP
 #define OPENMW_COMPONENTS_NIFOGRE_OGRENIFLOADER_HPP
 
+#include<boost/shared_ptr.hpp>
+
 #include <OgreResource.h>
 #include <OgreMaterial.h>
 #include <OgreController.h>

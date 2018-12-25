@@ -27,6 +27,7 @@
 
 #include <cassert>
 #include <stdexcept>
+#include <iostream> // FIXME: debugging only
 
 #include "nistream.hpp"
 #include "nimodel.hpp"

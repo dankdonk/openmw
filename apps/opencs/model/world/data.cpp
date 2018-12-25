@@ -2,8 +2,10 @@
 
 #include <stdexcept>
 #include <algorithm>
+#include <iostream> // FIXME: debugging only
 
 #include <boost/filesystem.hpp>
+#include <boost/shared_ptr.hpp>
 
 #include <QAbstractItemModel>
 

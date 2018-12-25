@@ -1,5 +1,7 @@
 #include "mousestate.hpp"
 
+#include <iostream> // FIXME: debugging only
+
 #include <OgreSceneNode.h>
 #include <OgreSceneManager.h>
 #include <OgreEntity.h>

@@ -29,6 +29,7 @@
 
 #include <cassert>
 #include <stdexcept>
+#include <iostream> // FIXME: debugging only
 
 #include <OgreMesh.h>
 #include <OgreSubMesh.h>

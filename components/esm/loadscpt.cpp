@@ -1,5 +1,7 @@
 #include "loadscpt.hpp"
 
+#include <iostream>
+
 #include "esmreader.hpp"
 #include "esmwriter.hpp"
 #include "defs.hpp"
@@ -83,7 +85,7 @@ namespace ESM
                     if (mData.mScriptDataSize)
                     {
                         mScriptData.resize(mData.mScriptDataSize);
-                        esm.getHExact(&mScriptData[0], mScriptData.size());
+                        esm.getHExact(&mScriptData[0], (int)mScriptData.size()); // suppress compiler warning
                     }
                     else
                         esm.skipHSub();

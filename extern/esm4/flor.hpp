@@ -46,7 +46,7 @@ namespace ESM4
             std::uint8_t autumn;
             std::uint8_t winter;
 
-            Production::Production() : spring(0), summer(0), autumn(0), winter(0) {}
+            Production() : spring(0), summer(0), autumn(0), winter(0) {}
         };
 #pragma pack(pop)
 

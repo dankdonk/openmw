@@ -1,6 +1,8 @@
 #include "savegamedialog.hpp"
 #include "widgets.hpp"
 
+#include <ctime>
+
 #include <OgreImage.h>
 #include <OgreTextureManager.h>
 
@@ -334,7 +336,7 @@ namespace MWGui
         std::stringstream text;
         time_t time = mCurrentSlot->mTimeStamp;
         struct tm* timeinfo;
-        timeinfo = localtime(&time);
+        timeinfo = std::localtime(&time);
 
         // Use system/environment locale settings for datetime formatting
         setlocale(LC_TIME, "");
