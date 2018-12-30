@@ -73,8 +73,8 @@
 // oblivion/gate/obliviongate_forming.nif
 // oblivion/gate/obliviongate_simple.nif
 // oblivion/gate/oblivionwargateani02.nif
-NiBtOgre::NiFlipController::NiFlipController(uint32_t index, NiStream& stream, const NiModel& model)
-    : NiSingleInterpController(index, stream, model)
+NiBtOgre::NiFlipController::NiFlipController(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+    : NiSingleInterpController(index, stream, model, data)
 {
     stream.read(mTexureSlot);
 

@@ -69,8 +69,8 @@
 //   w/w_longbow.nif
 //   w/w_longbow_ariel.nif
 //
-NiBtOgre::NiGeomMorpherController::NiGeomMorpherController(uint32_t index, NiStream& stream, const NiModel& model)
-    : NiTimeController(index, stream, model), mNiControllerSequenceBuilt(false)
+NiBtOgre::NiGeomMorpherController::NiGeomMorpherController(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+    : NiTimeController(index, stream, model, data), mNiControllerSequenceBuilt(false)
 {
     if (stream.nifVer() >= 0x0a000102) // from 10.0.1.2
         stream.read(mExtraFlags);
@@ -113,15 +113,17 @@ NiBtOgre::NiGeomMorpherController::NiGeomMorpherController(uint32_t index, NiStr
     }
 }
 
-NiBtOgre::NiTimeControllerRef NiBtOgre::NiGeomMorpherController::build(BtOgreInst *inst, Ogre::Mesh *mesh)
+//NiBtOgre::NiTimeControllerRef NiBtOgre::NiGeomMorpherController::build(BtOgreInst *inst, Ogre::Mesh *mesh)
+NiBtOgre::NiTimeControllerRef NiBtOgre::NiGeomMorpherController::build(
+        std::vector<Ogre::Controller<float> >& controllers, Ogre::Mesh *mesh)
 {
     if (NiObject::mModel.nifVer() <= 0x0a010000)
-        return setupTES3Animation(inst, mesh);
+        return setupTES3Animation(controllers, mesh);
 
-    if ((NiTimeController::mFlags & 0x1000) == 0) // not active
+    if ((NiTimeController::mFlags & 0x8) == 0) // not active
         return mNextControllerIndex;
 
-    std::string animationId = "NiGeomMorph" + std::to_string(NiObject::index()); // mSelfIndex
+    std::string animationId = "NiGeomMorph@block " + std::to_string(NiObject::index()); // mSelfIndex
     float totalAnimationLength = NiTimeController::mStopTime - NiTimeController::mStartTime;
 
     Ogre::Animation *animation = mesh->createAnimation(animationId, totalAnimationLength);
@@ -129,6 +131,10 @@ NiBtOgre::NiTimeControllerRef NiBtOgre::NiGeomMorpherController::build(BtOgreIns
     assert(mesh->getNumSubMeshes() != 0); // should be at least 1
     std::uint32_t subMeshIndex = (std::uint32_t)mesh->getNumSubMeshes()-1;
     unsigned short poseIndex = (unsigned short)mesh->getPoseCount();
+
+    // NOTE: 'handle' is set to subMeshIndex+1 to locate the correct sub-entity vertices when
+    //       Ogre::Animation::apply() is called
+    Ogre::VertexAnimationTrack* track = animation->createVertexTrack(subMeshIndex+1, Ogre::VAT_POSE);
 
     // NOTE: assume that NiControllerManager and NiControllerSequence is built already
     //assert(mNiControllerSequeceBuilt == true); // throw instead?
@@ -164,12 +170,9 @@ NiBtOgre::NiTimeControllerRef NiBtOgre::NiGeomMorpherController::build(BtOgreIns
 
         // NOTE multiple poses are created for the same 'target' (i.e. sub-mesh)
         Ogre::Pose* pose = mesh->createPose(subMeshIndex+1); // target is user defined (for us subMeshIndex+1)
-        for (unsigned int j = 0; j < morphs[i].mVectors.size(); ++j)
-            pose->addVertex(j, morphs[i].mVectors[j]);
+        for (unsigned int v = 0; v < morphs[i].mVectors.size(); ++v)
+            pose->addVertex(v, morphs[i].mVectors[v]);
 
-        // NOTE: 'handle' is set to subMeshIndex+1 to locate the correct sub-entity vertices when
-        //       Ogre::Animation::apply() is called
-        Ogre::VertexAnimationTrack* track = animation->createVertexTrack(subMeshIndex+1, Ogre::VAT_POSE);
 //      for (unsigned int k = 0; k < morphs[i].mKeys.size(); ++k)
 //      {
 //          Ogre::VertexPoseKeyFrame* keyframe = track->createVertexPoseKeyFrame(morphs[i].mKeys[k].time);
@@ -209,7 +212,8 @@ NiBtOgre::NiTimeControllerRef NiBtOgre::NiGeomMorpherController::build(BtOgreIns
 //
 // FIXME: how to apply NiTimeController's frequency, start/stop time, etc?
 //
-NiBtOgre::NiTimeControllerRef NiBtOgre::NiGeomMorpherController::setupTES3Animation(BtOgreInst *inst, Ogre::Mesh *mesh)
+NiBtOgre::NiTimeControllerRef NiBtOgre::NiGeomMorpherController::setupTES3Animation(
+    std::vector<Ogre::Controller<float> >& controllers, Ogre::Mesh *mesh)
 {
     // Newer verions of NiMorphData::Morph don't have keys, use NiControllerSequence instead
     // (in TES4 only creatures/minotaur/minotaurold.nif is older version, 10.0.1.2, and it
@@ -217,7 +221,7 @@ NiBtOgre::NiTimeControllerRef NiBtOgre::NiGeomMorpherController::setupTES3Animat
     if (NiObject::mModel.nifVer() > 0x0a010000) // 10.1.0.0
         return mNextControllerIndex; // TODO: maybe assert or throw rather than silently returning?
 
-    if ((NiTimeController::mFlags & 0x1000) == 0) // not active
+    if ((NiTimeController::mFlags & 0x8) == 0) // not active
         return mNextControllerIndex;
 
     // An animation has a number of tracks (i.e. poses/morphs in our case).
@@ -231,11 +235,12 @@ NiBtOgre::NiTimeControllerRef NiBtOgre::NiGeomMorpherController::setupTES3Animat
     //     o    o
     //     |    |            (NOTE: Animation needs a unique name within the Mesh)
     //     |    |   N
-    //     |    +---- Ogre::Animation
-    //     |  mAnimationList    o             Ogre::AnimationTrack
+    //     |    +---- Ogre::Animation (one per NiGeomMorpherController and others)
+    //     |  mAnimationList    o
+    //     |                    |             Ogre::AnimationTrack
     //     |                    |                      ^
     //     |                    |        N             |
-    //     |                    +--------- Ogre::VertexAnimationTrack (one per Morph)
+    //     |                    +--------- Ogre::VertexAnimationTrack (one per subMesh)
     //     |                 mVertexTrackList       o     o
     //     |    N                                   |     |   1
     //     +---- Ogre::Pose                         |     +---- handle (subMeshIndex+1)
@@ -255,7 +260,7 @@ NiBtOgre::NiTimeControllerRef NiBtOgre::NiGeomMorpherController::setupTES3Animat
     //        :....................................................... poseIndex
     //
 
-    std::string animationId = "NiGeomMorph" + std::to_string(NiObject::index()); // mSelfIndex
+    std::string animationId = "NiGeomMorph@block " + std::to_string(NiObject::index()); // mSelfIndex
     float totalAnimationLength = NiTimeController::mStopTime - NiTimeController::mStartTime;
 
     Ogre::Animation *animation = mesh->createAnimation(animationId, totalAnimationLength);
@@ -263,6 +268,10 @@ NiBtOgre::NiTimeControllerRef NiBtOgre::NiGeomMorpherController::setupTES3Animat
     assert(mesh->getNumSubMeshes() != 0); // should be at least 1
     std::uint32_t subMeshIndex = (std::uint32_t)mesh->getNumSubMeshes()-1;
     unsigned short poseIndex = (unsigned short)mesh->getPoseCount();
+
+    // NOTE: 'handle' is set to subMeshIndex+1 to locate the correct sub-entity vertices when
+    //       Ogre::Animation::apply() is called
+    Ogre::VertexAnimationTrack* track = animation->createVertexTrack(subMeshIndex+1, Ogre::VAT_POSE);
 
     // create a pose & track for each Morph
     NiMorphData* morphData = mModel.getRef<NiMorphData>(mDataIndex);
@@ -275,12 +284,9 @@ NiBtOgre::NiTimeControllerRef NiBtOgre::NiGeomMorpherController::setupTES3Animat
 
         // NOTE multiple poses are created for the same 'target' (i.e. sub-mesh)
         Ogre::Pose* pose = mesh->createPose(subMeshIndex+1); // target is user defined (for us subMeshIndex+1)
-        for (unsigned int j = 0; j < morphs[i].mVectors.size(); ++j)
-            pose->addVertex(j, morphs[i].mVectors[j]);
+        for (unsigned int v = 0; v < morphs[i].mVectors.size(); ++v)
+            pose->addVertex(v, morphs[i].mVectors[v]);
 
-        // NOTE: 'handle' is set to subMeshIndex+1 to locate the correct sub-entity vertices when
-        //       Ogre::Animation::apply() is called
-        Ogre::VertexAnimationTrack* track = animation->createVertexTrack(subMeshIndex+1, Ogre::VAT_POSE);
         for (unsigned int k = 0; k < morphs[i].mKeys.size(); ++k)
         {
             Ogre::VertexPoseKeyFrame* keyframe = track->createVertexPoseKeyFrame(morphs[i].mKeys[k].time);
@@ -295,7 +301,8 @@ NiBtOgre::NiTimeControllerRef NiBtOgre::NiGeomMorpherController::setupTES3Animat
                 = OGRE_NEW AnimTrackInterpolator<float>(/*quadratic*/2, morphs[i].mKeys[k]);
             track->setListener(listner); // custom getInterpolatedKeyFrame()
 
-            inst->mInterpolators.push_back(listner); // plug potential memory leak
+            //FIXME where to store these?
+            //inst->mInterpolators.push_back(listner); // plug potential memory leak
         }
     }
 

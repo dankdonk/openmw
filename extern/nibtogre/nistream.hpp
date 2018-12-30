@@ -39,12 +39,12 @@ namespace Ogre
 
 namespace NiBtOgre
 {
-    class Header;
+    class NiHeader;
 
     class NiStream
     {
         Ogre::DataStreamPtr mStream;
-        Header *mHeader;
+        NiHeader *mHeader;
 
         // cache these here for convenient access
         std::uint32_t mVer;
@@ -64,7 +64,7 @@ namespace NiBtOgre
         size_t tell() { return mStream->tell(); } // FIXME: debugging only
         const std::string& getName() const { return mStream->getName(); } // FIXME: debugging only
 
-        void setHeader(Header *header);
+        void setHeader(NiHeader *header);
 
         inline std::uint32_t nifVer() const { return mVer; }
         inline std::uint32_t userVer() const { return mUserVer; }

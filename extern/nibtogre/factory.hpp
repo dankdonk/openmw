@@ -37,6 +37,7 @@ namespace NiBtOgre
 {
     class NiModel;
     class NiStream;
+    struct ModelData;
 
     template<class Interface, class KeyT=std::string>
     class Factory
@@ -44,7 +45,7 @@ namespace NiBtOgre
     public:
         typedef KeyT Key;
         typedef std::unique_ptr<Interface> Type;
-        typedef Type (*Creator)(uint32_t, NiStream&, const NiModel&);
+        typedef Type (*Creator)(uint32_t, NiStream&, const NiModel&, ModelData&);
         typedef std::map<Key, Creator> Registry;
 
         // Define key -> v relationship, return whether this is a new key.
@@ -53,20 +54,22 @@ namespace NiBtOgre
             return mRegistry.insert(typename Registry::value_type(key, v)).second;
         }
 
-        Type create(Key const& key, uint32_t index, NiStream& stream, const NiModel& model)
+        Type create(Key const& key,
+                uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
         {
             typename Registry::const_iterator iter = mRegistry.find(key);
 
             if (iter == mRegistry.end())
                 throw std::invalid_argument(std::string(BOOST_CURRENT_FUNCTION) + ": key not registered");
             else
-                return iter->second(index, stream, model);
+                return iter->second(index, stream, model, data);
         }
 
         template<class Base, class Derived>
-        static std::unique_ptr<Base> create_func(uint32_t index, NiStream& stream, const NiModel& model)
+        static std::unique_ptr<Base> create_func(
+                uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
         {
-            return std::unique_ptr<Base>(new Derived(index, stream, model));
+            return std::unique_ptr<Base>(new Derived(index, stream, model, data));
         }
 
     private:

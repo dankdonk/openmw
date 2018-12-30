@@ -40,8 +40,8 @@
 #endif
 
 // Seen in NIF ver 20.0.0.4, 20.0.0.5
-NiBtOgre::NiCollisionObject::NiCollisionObject(uint32_t index, NiStream& stream, const NiModel& model)
-    : NiObject(index, stream, model)
+NiBtOgre::NiCollisionObject::NiCollisionObject(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+    : NiObject(index, stream, model, data)
 {
     //stream.getPtr<NiAVObject>(mTarget, model.objects());
     std::int32_t rIndex = -1;
@@ -49,8 +49,8 @@ NiBtOgre::NiCollisionObject::NiCollisionObject(uint32_t index, NiStream& stream,
     mTarget = model.getRef<NiAVObject>(rIndex);
 }
 
-NiBtOgre::NiCollisionData::NiCollisionData(uint32_t index, NiStream& stream, const NiModel& model)
-    : NiCollisionObject(index, stream, model)
+NiBtOgre::NiCollisionData::NiCollisionData(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+    : NiCollisionObject(index, stream, model, data)
 {
     stream.read(mPropagationMode);
     stream.read(mCollisionMode);
@@ -92,8 +92,8 @@ NiBtOgre::NiCollisionData::NiCollisionData(uint32_t index, NiStream& stream, con
 }
 
 // Seen in NIF ver 20.0.0.4, 20.0.0.5
-NiBtOgre::bhkNiCollisionObject::bhkNiCollisionObject(uint32_t index, NiStream& stream, const NiModel& model)
-    : NiCollisionObject(index, stream, model)
+NiBtOgre::bhkNiCollisionObject::bhkNiCollisionObject(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+    : NiCollisionObject(index, stream, model, data)
 {
     stream.read(mFlags);
     stream.read(mBodyIndex);
@@ -126,8 +126,8 @@ void NiBtOgre::bhkNiCollisionObject::build(BtOgreInst *inst, NiObject *parentNiN
 }
 
 // Seen in NIF ver 20.0.0.4, 20.0.0.5
-NiBtOgre::bhkBlendCollisionObject::bhkBlendCollisionObject(uint32_t index, NiStream& stream, const NiModel& model)
-    : bhkCollisionObject(index, stream, model)
+NiBtOgre::bhkBlendCollisionObject::bhkBlendCollisionObject(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+    : bhkCollisionObject(index, stream, model, data)
 {
     stream.read(mUnknown1);
     stream.read(mUnknown2);

@@ -59,10 +59,13 @@ namespace NiBtOgre
         std::vector<MorphWeight> mInterpolatorWeights;
         std::vector<std::uint32_t> mUnknownInts;
 
-        NiGeomMorpherController(uint32_t index, NiStream& stream, const NiModel& model);
+        NiGeomMorpherController(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
 
-        virtual NiTimeControllerRef build(BtOgreInst *inst, Ogre::Mesh *mesh);
-        NiTimeControllerRef setupTES3Animation(BtOgreInst *inst, Ogre::Mesh *mesh);
+        //virtual NiTimeControllerRef build(BtOgreInst *inst, Ogre::Mesh *mesh);
+        virtual NiTimeControllerRef build(std::vector<Ogre::Controller<float> >& controllers,
+                Ogre::Mesh *mesh = nullptr);
+        NiTimeControllerRef setupTES3Animation(
+            std::vector<Ogre::Controller<float> >& controllers, Ogre::Mesh *mesh);
     };
 }
 

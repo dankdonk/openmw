@@ -24,10 +24,12 @@ set(NIBTOGRE_LIBRARY "nibtogre")
 
 set(NIBTOGRE_SOURCE_FILES
     nistream.cpp
-    header.cpp
+    niheader.cpp
     nimodel.cpp
     btogreinst.cpp
-    nimeshloader.cpp
+    meshloader.cpp
+    skeletonloader.cpp
+    ogrematerial.cpp
 
     niobject.cpp
 

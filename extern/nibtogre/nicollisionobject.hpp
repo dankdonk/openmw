@@ -52,7 +52,7 @@ namespace NiBtOgre
         NiAVObject *mTarget; // Ptr
 
     public:
-        NiCollisionObject(uint32_t index, NiStream& stream, const NiModel& model);
+        NiCollisionObject(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
         virtual ~NiCollisionObject() {}
     };
 
@@ -101,7 +101,7 @@ namespace NiBtOgre
         BoundingVolume mBoundingVolume;
 
     public:
-        NiCollisionData(uint32_t index, NiStream& stream, const NiModel& model);
+        NiCollisionData(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
         virtual ~NiCollisionData() {}
     };
 
@@ -114,7 +114,7 @@ namespace NiBtOgre
         NiObjectRef   mBodyIndex;
 
     public:
-        bhkNiCollisionObject(uint32_t index, NiStream& stream, const NiModel& model);
+        bhkNiCollisionObject(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
         virtual ~bhkNiCollisionObject() {}
 
         // parentNiNode is used to calculate the world transform
@@ -130,7 +130,7 @@ namespace NiBtOgre
         float mUnknown2;
 
     public:
-        bhkBlendCollisionObject(uint32_t index, NiStream& stream, const NiModel& model);
+        bhkBlendCollisionObject(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
         virtual ~bhkBlendCollisionObject() {}
     };
 

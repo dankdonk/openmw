@@ -50,7 +50,7 @@ namespace NiBtOgre
         std::uint16_t mTargetColor;
         NiPosDataRef  mDataIndex;
 
-        NiMaterialColorController(uint32_t index, NiStream& stream, const NiModel& model);
+        NiMaterialColorController(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
     };
 
     //typedef NiPoint3InterpController NiMaterialColorController;

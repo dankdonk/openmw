@@ -41,8 +41,8 @@
 // architecture/quests/se09breathactbottle.nif
 //
 // plus lots of other examples
-NiBtOgre::NiVisController::NiVisController(uint32_t index, NiStream& stream, const NiModel& model)
-    : NiSingleInterpController(index, stream, model)
+NiBtOgre::NiVisController::NiVisController(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+    : NiSingleInterpController(index, stream, model, data)
 {
     if (stream.nifVer() <= 0x0a010000) // up to 10.1.0.0
         stream.read(mDataIndex);

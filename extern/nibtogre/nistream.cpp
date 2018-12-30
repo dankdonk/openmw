@@ -37,7 +37,7 @@
 
 #include <btBulletDynamicsCommon.h>
 
-#include "header.hpp"
+#include "niheader.hpp"
 
 #ifdef NDEBUG // FIXME: debugging only
 #undef NDEBUG
@@ -53,7 +53,7 @@ NiBtOgre::NiStream::~NiStream()
 {
 }
 
-void NiBtOgre::NiStream::setHeader(NiBtOgre::Header *header)
+void NiBtOgre::NiStream::setHeader(NiBtOgre::NiHeader *header)
 {
     mHeader = header;
 }

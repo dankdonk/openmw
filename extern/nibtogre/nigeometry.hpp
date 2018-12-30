@@ -27,13 +27,15 @@
 #define NIBTOGRE_NIGEOMETRY_H
 
 #include "niavobject.hpp"
+#include "ogrematerial.hpp"
+#include "boundsfinder.hpp"
 
 // Based on NifTools/NifSkope/doc/index.html
 //
 // NiObjectNET
 //     NiAVObject
 //         NiGeometry
-//             NiTriBasedGeom <------------- /* typedef NiGeometry */
+//             NiTriBasedGeom
 //                 BSLODTriShape
 //                 NiTriShape <------------- /* typedef NiTriBasedGeom */
 //                 NiTriStrips <------------ /* typedef NiTriBasedGeom */
@@ -65,24 +67,29 @@ namespace NiBtOgre
         bool mDirtyFlag;
         std::vector<NiPropertyRef> mBSProperties;
 
-        std::vector<Ogre::Controller<float> > mControllers; // for sub-entities later
+        NiGeometry(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
+    };
+
+    struct NiTriBasedGeom : public NiGeometry
+    {
+        NiTriBasedGeom(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
+
+        void build(BtOgreInst *inst, NiObject *parentNiNode = nullptr);
+
+        // NiTriStrips builds differently to NiTriShapes only in that the data are different
+        bool createSubMesh(Ogre::Mesh *mesh, BoundsFinder& bounds); // returns true if tangents needed
+
+    private:
+
+        void buildTES3(Ogre::SceneNode *sceneNode, BtOgreInst *inst, NiObject *parentNiNode = nullptr);
+
+        std::string getMaterial();
 
         NiNode *mParent; // a bit hacky, store for use with createSubMesh() later
 
-        NiGeometry(uint32_t index, NiStream& stream, const NiModel& model);
-
-        virtual void build(BtOgreInst *inst, NiObject *parentNiNode = nullptr);
-
-        // NiTriStrips builds differently to NiTriShapes only in that the data are different
-        void createSubMesh(BtOgreInst *inst, Ogre::Mesh *mesh);
-
-    private:
-        void buildTES3(Ogre::SceneNode *sceneNode, BtOgreInst *inst, NiObject *parentNiNode = nullptr);
-
-        void applyProperties(std::vector<Ogre::Controller<float> >& controllers);
+        OgreMaterial mOgreMaterial;
     };
 
-    typedef NiGeometry NiTriBasedGeom;
     typedef NiTriBasedGeom NiTriShape;
     typedef NiTriBasedGeom NiTriStrips; // Seen in NIF version 20.0.0.4, 20.0.0.5
 
@@ -94,7 +101,7 @@ namespace NiBtOgre
         std::uint32_t mLevel1Size;
         std::uint32_t mLevel2Size;
 
-        BSLODTriShape(uint32_t index, NiStream& stream, const NiModel& model);
+        BSLODTriShape(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
 
         void build(BtOgreInst *inst, NiObject *parentNiNode = nullptr);
     };

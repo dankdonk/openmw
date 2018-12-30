@@ -37,8 +37,8 @@
 #endif
 
 // Seen in NIF ver 20.0.0.4, 20.0.0.5
-NiBtOgre::NiParticleSystem::NiParticleSystem(uint32_t index, NiStream& stream, const NiModel& model)
-    : NiParticles(index, stream, model), mWorldSpace(false)
+NiBtOgre::NiParticleSystem::NiParticleSystem(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+    : NiParticles(index, stream, model, data), mWorldSpace(false)
 {
     if (stream.userVer() >= 12)
     {

@@ -54,7 +54,7 @@ namespace NiBtOgre
     public:
         std::uint32_t mModifierNameIndex;
 
-        NiPSysModifierCtlr(uint32_t index, NiStream& stream, const NiModel& model);
+        NiPSysModifierCtlr(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
     };
 
     // Seen in NIF ver 20.0.0.4, 20.0.0.5
@@ -66,7 +66,7 @@ namespace NiBtOgre
 #endif
         NiInterpolatorRef mVisibilityInterpolatorIndex;
 
-        NiPSysEmitterCtlr(uint32_t index, NiStream& stream, const NiModel& model);
+        NiPSysEmitterCtlr(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
     };
 
     // Seen in NIF ver 20.0.0.4, 20.0.0.5
@@ -77,7 +77,7 @@ namespace NiBtOgre
         NiVisDataRef mDataIndex;
 #endif
 
-        NiPSysModifierActiveCtlr(uint32_t index, NiStream& stream, const NiModel& model);
+        NiPSysModifierActiveCtlr(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
     };
 
     class NiPSysModifierFloatCtlr : public NiPSysModifierCtlr
@@ -85,7 +85,7 @@ namespace NiBtOgre
     public:
         NiFloatDataRef mDataIndex;
 
-        NiPSysModifierFloatCtlr(uint32_t index, NiStream& stream, const NiModel& model);
+        NiPSysModifierFloatCtlr(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
     };
 
     typedef NiPSysModifierFloatCtlr NiPSysEmitterInitialRadiusCtlr; // Seen in NIF ver 20.0.0.4, 20.0.0.5

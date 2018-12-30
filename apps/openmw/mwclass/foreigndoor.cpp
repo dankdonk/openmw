@@ -5,14 +5,21 @@
 #include "../mwbase/environment.hpp"
 #include "../mwbase/world.hpp"
 #include "../mwbase/windowmanager.hpp"
+#include "../mwbase/soundmanager.hpp"
 
 #include "../mwworld/ptr.hpp"
 #include "../mwworld/physicssystem.hpp"
 #include "../mwworld/cellstore.hpp"
 #include "../mwworld/esmstore.hpp"
+#include "../mwworld/foreignstore.hpp"
 #include "../mwworld/actionteleportforeign.hpp"
 #include "../mwworld/foreigncell.hpp"
 #include "../mwworld/foreignworld.hpp"
+#include "../mwworld/action.hpp"
+#include "../mwworld/actiondoor.hpp"
+#include "../mwworld/actiontrap.hpp"
+#include "../mwworld/failedaction.hpp"
+#include "../mwworld/containerstore.hpp"
 
 #include "../mwrender/objects.hpp"
 #include "../mwrender/renderinginterface.hpp"
@@ -82,9 +89,14 @@ namespace MWClass
         const MWWorld::Ptr& actor) const
     {
         MWWorld::LiveCellRef<ESM4::Door> *ref = ptr.get<ESM4::Door>();
-#if 0
-        const std::string &openSound = ref->mBase->mOpenSound;
-        const std::string &closeSound = ref->mBase->mCloseSound;
+
+        const MWWorld::ESMStore& store = MWBase::Environment::get().getWorld()->getStore();
+        const MWWorld::ForeignStore<ESM4::Sound>& soundStore = store.getForeign<ESM4::Sound>();
+        const ESM4::FormId openSoundId = ref->mBase->mOpenSound;
+        const ESM4::FormId closeSoundId = ref->mBase->mCloseSound;
+
+        const std::string &openSound = soundStore.search(openSoundId)->mSoundFile;
+        const std::string &closeSound = soundStore.search(closeSoundId)->mSoundFile;
         const std::string lockedSound = "LockedDoor";
         const std::string trapActivationSound = "Disarm Trap Fail";
 
@@ -118,10 +130,7 @@ namespace MWClass
         }
 
         if (!needKey || hasKey)
-#endif
-        if(1)
         {
-#if 0
             if(!ptr.getCellRef().getTrap().empty())
             {
                 // Trap activation
@@ -129,10 +138,10 @@ namespace MWClass
                 action->setSound(trapActivationSound);
                 return action;
             }
-#endif
+
             if (ptr.getCellRef().getTeleport())
             {
-                std::cout << "open door" << std::endl;
+                //std::cout << "open door" << std::endl;
                 const MWWorld::ESMStore& store = MWBase::Environment::get().getWorld()->getStore();
                 const ESM4::FormId cellId = store.getDoorCell(ptr.getCellRef().getDestDoor());
                 const MWWorld::ForeignCell *cell = store.get<MWWorld::ForeignCell>().find(cellId);
@@ -142,11 +151,10 @@ namespace MWClass
                             cellId,
                             ptr.getCellRef().getDoorDest(), true));
 
-                //action->setSound(openSound); // FIXME
+                //action->setSound(openSound);  // FIXME: temp disable
 
                 return action;
             }
-#if 0
             else
             {
                 // animated door
@@ -179,9 +187,7 @@ namespace MWClass
 
                 return action;
             }
-#endif
         }
-#if 0
         else
         {
             // locked, and we can't open.
@@ -189,7 +195,6 @@ namespace MWClass
             action->setSound(lockedSound);
             return action;
         }
-#endif
     }
 
     bool ForeignDoor::hasToolTip (const MWWorld::Ptr& ptr) const

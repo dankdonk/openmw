@@ -44,6 +44,7 @@ public:
 
     size_t tell() { return inp->tell(); } // FIXME: debugging only
     size_t size() { return inp->size(); } // FIXME: debugging only
+    void rewind() { inp->seek(0); }
 
     char getChar() { return read_byte(); }
     short getShort() { return read_le16(); }

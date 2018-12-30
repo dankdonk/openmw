@@ -23,16 +23,17 @@
   documenation.  See http://niftools.sourceforge.net/wiki/NifSkope for details.
 
 */
-#include "header.hpp"
+#include "niheader.hpp"
 
 #include <stdexcept>
 
 #include "nistream.hpp"
+#include "nidata.hpp"
 
-std::string NiBtOgre::Header::mEmptyString = "";
+std::string NiBtOgre::NiHeader::mEmptyString = "";
 
 // See NifTools/NifSkope/doc/header.html
-NiBtOgre::Header::Header(NiBtOgre::NiStream& stream) : mVer(0), mUserVer(0), mUserVer2(0), mNumBlocks(0)
+NiBtOgre::NiHeader::NiHeader(NiBtOgre::NiStream& stream) : mVer(0), mUserVer(0), mUserVer2(0), mNumBlocks(0)
 {
     stream.setHeader(this);
 
@@ -41,7 +42,7 @@ NiBtOgre::Header::Header(NiBtOgre::NiStream& stream) : mVer(0), mUserVer(0), mUs
     if (header.find("Gamebryo File Format") == std::string::npos &&
         header.find("NetImmerse File Format") == std::string::npos)
     {
-        throw std::runtime_error("NiBtOgre::Header::unsupported NIF file format");
+        throw std::runtime_error("NiBtOgre::NiHeader::unsupported NIF file format");
     }
 
     // check supported file versions; TES4: 20.0.0.4, 20.0.0.5  TES5/FO3: 20.2.0.7  TES3: 4.0.0.2
@@ -82,7 +83,7 @@ NiBtOgre::Header::Header(NiBtOgre::NiStream& stream) : mVer(0), mUserVer(0), mUs
     if (mVer != 0x14000004 && mVer != 0x14000005 && mVer != 0x14020007 && mVer != 0x04000002 &&
         mVer != 0x0a020000 && mVer != 0x0303000d && mVer != 0x0a000100/*&& mVer != 0x0a000102*/) // comment out unused
     {
-        throw std::runtime_error("NiBtOgre::Header::unsupported NIF file version " + std::to_string(mVer));
+        throw std::runtime_error("NiBtOgre::NiHeader::unsupported NIF file version " + std::to_string(mVer));
     }
 
     // verify the byte order we support
@@ -92,7 +93,7 @@ NiBtOgre::Header::Header(NiBtOgre::NiStream& stream) : mVer(0), mUserVer(0), mUs
 
         stream.read(endian);
         if (!endian)
-            throw std::runtime_error("NiBtOgre::Header::unsupported byte order");
+            throw std::runtime_error("NiBtOgre::NiHeader::unsupported byte order");
     }
 
     if (mVer >= 0x0a010000) // 10.1.0.0
@@ -161,7 +162,7 @@ NiBtOgre::Header::Header(NiBtOgre::NiStream& stream) : mVer(0), mUserVer(0), mUs
 
 // FIXME: should search for duplicates and return the corresponding index
 //        (may not be worth the trouble since the frequency of duplicates may be low)
-std::int32_t NiBtOgre::Header::appendLongString(std::string&& str)
+std::int32_t NiBtOgre::NiHeader::appendLongString(std::string&& str)
 {
     if (str.empty())
         return -1;
@@ -170,8 +171,25 @@ std::int32_t NiBtOgre::Header::appendLongString(std::string&& str)
     return (std::uint32_t)mStrings.size()-1;
 }
 
-const std::string& NiBtOgre::Header::blockType(std::uint32_t index) const
+const std::string& NiBtOgre::NiHeader::blockType(std::uint32_t index) const
 {
     // FIXME: should add a check for mBlockTypeIndex high bit
     return mBlockTypes[mBlockTypeIndex[index]];
 }
+
+//void NiBtOgre::NiHeader::getNiSkinInstances(std::vector<NiSkinInstance*>& skins,
+//                                            std::vector<std::unique_ptr<NiObject> >& objects)
+//{
+//    std::vector<std::string>::const_iterator iter
+//        = std::find(mBlockTypes.begin(), mBlockTypes.end(), "NiSkinInstance");
+//
+//    if (iter != mBlockTypes.end())
+//    {
+//        std::size_t skinIndex = iter - mBlockTypes.begin();
+//        for (unsigned int i = 0; i < mNumBlocks; ++i)
+//        {
+//            if (mBlockTypeIndex[i] == skinIndex)
+//                skins.push_back(static_cast<NiSkinInstance*>(objects[i].get()));
+//        }
+//    }
+//}

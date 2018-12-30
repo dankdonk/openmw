@@ -35,16 +35,18 @@
 #undef NDEBUG
 #endif
 
-NiBtOgre::NiKeyframeController::NiKeyframeController(uint32_t index, NiStream& stream, const NiModel& model)
-    : NiSingleInterpController(index, stream, model)
+NiBtOgre::NiKeyframeController::NiKeyframeController(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+    : NiSingleInterpController(index, stream, model, data)
 {
     if (stream.nifVer() <= 0x0a010000) // up to 10.1.0.0
         stream.read(mDataIndex);
+
+    data.addSkelLeafIndex(NiTimeController::mTargetIndex);
 }
 
 #if 0
-NiBtOgre::BSKeyframeController::BSKeyframeController(uint32_t index, NiStream& stream, const NiModel& model)
-    : NiSingleInterpController(index, stream, model)
+NiBtOgre::BSKeyframeController::BSKeyframeController(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+    : NiSingleInterpController(index, stream, model, data)
 {
     stream.read(mData2Index);
 }

@@ -24,7 +24,19 @@ NIFFile::NIFFile(const std::string &name)
     : mVer(0), mUserVer(0), mUserVer2(0)
     , filename(name)
 {
+#if 0
     parse();
+#else
+    NIFStream nif (this, Ogre::ResourceGroupManager::getSingleton().openResource(filename));
+
+    std::vector<std::string> blockTypes;
+    std::vector<unsigned short> blockTypeIndex;
+    std::vector<unsigned int> blockSize;
+    std::vector<std::string> strings;
+
+    parseHeader(nif, blockTypes, blockTypeIndex, blockSize, strings);
+    nif.rewind();
+#endif
 }
 
 NIFFile::~NIFFile()
@@ -349,9 +361,6 @@ size_t NIFFile::parseHeader(NIFStream nif,
 
     if (mVer >= 0x0a000100) // 5.0.0.1
     {
-        if (mVer == 0x0a020000)
-            std::cout << "stop" << std::endl;
-
         if ((mUserVer >= 10) || ((mUserVer == 1) && (mVer != 0x0a020000)))
         {
             mUserVer2 = nif.getUInt();

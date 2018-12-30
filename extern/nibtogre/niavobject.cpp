@@ -36,8 +36,8 @@
 #undef NDEBUG
 #endif
 
-NiBtOgre::NiAVObject::NiAVObject(uint32_t index, NiStream& stream, const NiModel& model)
-    : NiObjectNET(index, stream, model), mHasBoundingBox(false)//, mWorldTransform(Ogre::Matrix4::IDENTITY)
+NiBtOgre::NiAVObject::NiAVObject(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+    : NiObjectNET(index, stream, model, data), mHasBoundingBox(false)//, mWorldTransform(Ogre::Matrix4::IDENTITY)
 {
     stream.read(mFlags);
 
@@ -84,13 +84,14 @@ NiBtOgre::NiAVObject::NiAVObject(uint32_t index, NiStream& stream, const NiModel
         stream.read(mCollisionObjectIndex);
 }
 
+
 void NiBtOgre::NiAVObject::build(BtOgreInst *inst, NiObject *parent)
 {
     // probably never called, remove?
 }
 
-NiBtOgre::NiCamera::NiCamera(uint32_t index, NiStream& stream, const NiModel& model)
-    : NiAVObject(index, stream, model), mUseOrthographicProjection(false)
+NiBtOgre::NiCamera::NiCamera(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+    : NiAVObject(index, stream, model, data), mUseOrthographicProjection(false)
 {
     if (stream.nifVer() >= 0x0a010000) // from 10.1.0.0
         stream.skip(sizeof(std::uint16_t));
@@ -122,8 +123,8 @@ void NiBtOgre::NiCamera::build(BtOgreInst *inst, NiObject *parent)
 {
 }
 
-NiBtOgre::NiDynamicEffect::NiDynamicEffect(uint32_t index, NiStream& stream, const NiModel& model)
-    : NiAVObject(index, stream, model), mSwitchState(false)
+NiBtOgre::NiDynamicEffect::NiDynamicEffect(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+    : NiAVObject(index, stream, model, data), mSwitchState(false)
 {
     if (stream.nifVer() >= 0x0a01006a) // from 10.1.0.106
         mSwitchState = stream.getBool();
@@ -131,8 +132,8 @@ NiBtOgre::NiDynamicEffect::NiDynamicEffect(uint32_t index, NiStream& stream, con
     stream.readVector<NiAVObjectRef>(mAffectedNodes);
 }
 
-NiBtOgre::NiLight::NiLight(uint32_t index, NiStream& stream, const NiModel& model)
-    : NiDynamicEffect(index, stream, model)
+NiBtOgre::NiLight::NiLight(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+    : NiDynamicEffect(index, stream, model, data)
 {
     stream.read(mDimmer);
     stream.read(mAmbientColor);
@@ -140,8 +141,8 @@ NiBtOgre::NiLight::NiLight(uint32_t index, NiStream& stream, const NiModel& mode
     stream.read(mSpecularColor);
 }
 
-NiBtOgre::NiTextureEffect::NiTextureEffect(uint32_t index, NiStream& stream, const NiModel& model)
-    : NiDynamicEffect(index, stream, model)
+NiBtOgre::NiTextureEffect::NiTextureEffect(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+    : NiDynamicEffect(index, stream, model, data)
 {
     stream.read(mModelProjectionMatrix);
     stream.read(mModelProjectionTransform);

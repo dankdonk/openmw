@@ -28,6 +28,8 @@
 
 #include "niobject.hpp"
 
+#include <OgreController.h>
+
 // Based on NifTools/NifSkope/doc/index.html
 //
 // NiObjectNET
@@ -55,8 +57,10 @@ namespace NiBtOgre
         std::vector<NiExtraDataRef> mExtraDataIndexList; // from 10.0.1.0
         NiTimeControllerRef         mControllerIndex;    // first in a chain
 
+        std::vector<Ogre::Controller<float> > mControllers; // for sub-entities later
+
     public:
-        NiObjectNET(uint32_t index, NiStream& stream, const NiModel& model, bool isBSLightingShaderProperty = false);
+        NiObjectNET(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data, bool isBSLightingShaderProperty = false);
         virtual ~NiObjectNET() {}
 
         inline StringIndex getNameIndex() const { return mNameIndex; }
@@ -85,7 +89,7 @@ namespace NiBtOgre
         bool mDirectRender;
         bool mPersistRenderData;
 
-        NiSourceTexture(uint32_t index, NiStream& stream, const NiModel& model);
+        NiSourceTexture(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
     };
 }
 

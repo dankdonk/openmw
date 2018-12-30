@@ -57,7 +57,7 @@ namespace NiBtOgre
             Ogre::Vector3 radius; // per direction
         };
 
-        NiAVObject(uint32_t index, NiStream& stream, const NiModel& model);
+        NiAVObject(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
         virtual ~NiAVObject() {}
 
         // parentNiNode is used to calculate the world transform
@@ -94,7 +94,7 @@ namespace NiBtOgre
         float mLODAdjust;
 
     public:
-        NiCamera(uint32_t index, NiStream& stream, const NiModel& model);
+        NiCamera(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
         virtual ~NiCamera() {}
 
         void build(BtOgreInst *inst, NiObject *parentNiNode = nullptr);
@@ -105,7 +105,7 @@ namespace NiBtOgre
         bool mSwitchState;
         std::vector<NiAVObjectRef> mAffectedNodes;
 
-        NiDynamicEffect(uint32_t index, NiStream& stream, const NiModel& model);
+        NiDynamicEffect(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
 
         //virtual void build(BtOgreInst *inst, NiObject *parentNiNode = nullptr);
     };
@@ -117,7 +117,7 @@ namespace NiBtOgre
         Ogre::Vector3 mDiffuseColor;
         Ogre::Vector3 mSpecularColor;
 
-        NiLight(uint32_t index, NiStream& stream, const NiModel& model);
+        NiLight(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
 
         //void build(BtOgreInst *inst, NiObject *parentNiNode = nullptr);
     };
@@ -140,7 +140,7 @@ namespace NiBtOgre
 
         char mClippingPlane;
 
-        NiTextureEffect(uint32_t index, NiStream& stream, const NiModel& model);
+        NiTextureEffect(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
 
         //void build(BtOgreInst *inst, NiObject *parentNiNode = nullptr);
     };

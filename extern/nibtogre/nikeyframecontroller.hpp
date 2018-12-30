@@ -44,7 +44,7 @@ namespace NiBtOgre
     public:
         NiKeyframeDataRef mDataIndex;
 
-        NiKeyframeController(uint32_t index, NiStream& stream, const NiModel& model);
+        NiKeyframeController(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
     };
 
     // NiTransformController replaces the NiKeyframeController.
@@ -56,8 +56,8 @@ namespace NiBtOgre
     {
     public:
         NiKeyframeDataRef mData2Index;
-    
-        BSKeyframeController(uint32_t index, NiStream& stream, const NiModel& model);
+
+        BSKeyframeController(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
     };
 #endif
 }

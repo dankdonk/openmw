@@ -51,7 +51,7 @@ namespace NiBtOgre
         float mDelta;
         std::vector<NiSourceTextureRef> mSources;
 
-        NiFlipController(uint32_t index, NiStream& stream, const NiModel& model);
+        NiFlipController(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
     };
 }
 

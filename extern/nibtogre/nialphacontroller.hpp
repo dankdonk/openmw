@@ -47,7 +47,7 @@ namespace NiBtOgre
     public:
         NiFloatDataRef mDataIndex;
 
-        NiAlphaController(uint32_t index, NiStream& stream, const NiModel& model);
+        NiAlphaController(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
     };
 
     typedef NiAlphaController BSNiAlphaPropertyTestRefController; // Seen in NIF version 20.2.0.7

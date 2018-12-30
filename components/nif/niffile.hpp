@@ -33,9 +33,10 @@ class NIFFile
     size_t parseHeader(NIFStream nif,
             std::vector<std::string>& blockTypes, std::vector<unsigned short>& blockTypeIndex,
             std::vector<unsigned int>& blockSize, std::vector<std::string>& strings);
-
+    public:
     /// Parse the file
     void parse();
+    private:
 
     /// Get the file's version in a human readable form
     ///\returns A string containing a human readable NIF version number

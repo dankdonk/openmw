@@ -709,6 +709,7 @@ void ManualBulletShapeLoader::loadResource(Ogre::Resource *resource)
     mStaticMesh = NULL;
 
     Nif::NIFFilePtr pnif (Nif::Cache::getInstance().load(mResourceName.substr(0, mResourceName.length()-7)));
+    pnif->parse(); // FIXME: testing
     Nif::NIFFile & nif = *pnif.get ();
     if (nif.numRoots() < 1)
     {
@@ -743,6 +744,7 @@ void ManualBulletShapeLoader::loadResource(Ogre::Resource *resource)
         if (Ogre::ResourceGroupManager::getSingleton().resourceExistsInAnyGroup(kfname))
         {
             Nif::NIFFilePtr kf (Nif::Cache::getInstance().load(kfname));
+            kf->parse(); // FIXME: testing
             extractControlledNodes(kf, mControlledNodes);
         }
 
@@ -1627,6 +1629,7 @@ bool findBoundingBox (const Nif::Node* node, Ogre::Vector3& halfExtents, Ogre::V
 bool getBoundingBox(const std::string& nifFile, Ogre::Vector3& halfExtents, Ogre::Vector3& translation, Ogre::Quaternion& orientation)
 {
     Nif::NIFFilePtr pnif (Nif::Cache::getInstance().load(nifFile));
+    pnif->parse(); // FIXME: testing
     Nif::NIFFile & nif = *pnif.get ();
 
     if (nif.numRoots() < 1)

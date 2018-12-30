@@ -20,35 +20,30 @@
   cc9cii cc9c@iinet.net.au
 
 */
-#ifndef NIBTOGRE_MESHLOADER_H
-#define NIBTOGRE_MESHLOADER_H
+#ifndef NIBTOGRE_SKELETONLOADER_H
+#define NIBTOGRE_SKELETONLOADER_H
 
-#include <vector>
+#include <map>
 
 #include <OgreResource.h>
 
 namespace NiBtOgre
 {
-    struct NiTriBasedGeom;
     class NiModel;
 
-    class MeshLoader : public Ogre::ManualResourceLoader
+    class SkeletonLoader : public Ogre::ManualResourceLoader
     {
         const NiModel& mModel;
-        std::vector<NiTriBasedGeom*> mSubMeshGeometry; // registered NiNode children for the mesh
+
+        std::map<std::uint32_t, std::uint16_t> mIndexToHandleMap;
 
     public:
 
-        MeshLoader(const NiModel& model);
-
-        const std::vector<NiTriBasedGeom*>& getSubMeshGeometry() { return mSubMeshGeometry; }
-
-        // returns the index number of registered NiTriShape/NiTriStrips
-        /*std::uint32_t*/void registerSubMeshGeometry(NiTriBasedGeom* geometry);
+        SkeletonLoader(const NiModel& model);
 
         // reimplement Ogre::ManualResourceLoader
-        virtual void loadResource(Ogre::Resource *resource);
+        void loadResource(Ogre::Resource *resource);
     };
 }
 
-#endif // NIBTOGRE_MESHLOADER_H
+#endif // NIBTOGRE_SKELETONLOADER_H

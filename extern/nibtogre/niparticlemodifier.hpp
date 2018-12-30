@@ -53,7 +53,7 @@ namespace NiBtOgre
         NiParticleModifierRef mNextModifier;
         NiParticleSystemController *mController; // Ptr
 
-        NiParticleModifier(uint32_t index, NiStream& stream, const NiModel& model);
+        NiParticleModifier(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
     };
 
     class NiGravity : public NiParticleModifier
@@ -64,7 +64,7 @@ namespace NiBtOgre
         Ogre::Vector3 mPosition;
         Ogre::Vector3 mDirection;
 
-        NiGravity(uint32_t index, NiStream& stream, const NiModel& model);
+        NiGravity(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
     };
 
     class NiParticleColorModifier : public NiParticleModifier
@@ -72,7 +72,7 @@ namespace NiBtOgre
     public:
         NiColorDataRef mColorData;
 
-        NiParticleColorModifier(uint32_t index, NiStream& stream, const NiModel& model);
+        NiParticleColorModifier(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
     };
 
     class NiParticleGrowFade : public NiParticleModifier
@@ -81,21 +81,21 @@ namespace NiBtOgre
         float mGrowTime;
         float mFadeTime;
 
-        NiParticleGrowFade(uint32_t index, NiStream& stream, const NiModel& model);
+        NiParticleGrowFade(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
     };
 
     class NiParticleRotation : public NiParticleModifier
     {
         // FIXME: all skipped for now
     public:
-        NiParticleRotation(uint32_t index, NiStream& stream, const NiModel& model);
+        NiParticleRotation(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
     };
 
     class NiPlanarCollider : public NiParticleModifier
     {
         // FIXME: all skipped for now
     public:
-        NiPlanarCollider(uint32_t index, NiStream& stream, const NiModel& model);
+        NiPlanarCollider(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
     };
 }
 

@@ -50,6 +50,7 @@ namespace NiBtOgre
     class Header;
     class NiModel;
     struct BtOgreInst;
+    struct ModelData;
 
     class NiObject
     {
@@ -62,9 +63,10 @@ namespace NiBtOgre
         virtual void build(BtOgreInst *inst, NiObject *parent = nullptr) {}
 
         typedef NiBtOgre::Factory<NiObject> Factory;
-        static Factory::Type create(Factory::Key const& name, uint32_t index, NiStream& stream, const NiModel& model)
+        static Factory::Type create(Factory::Key const& name,
+            uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
         {
-            return mFactory.create(name, index, stream, model);
+            return mFactory.create(name, index, stream, model, data);
         }
 
         template<class Derived>
@@ -74,9 +76,13 @@ namespace NiBtOgre
                 throw std::logic_error(std::string(BOOST_CURRENT_FUNCTION) + ": name already registered");
         }
 
-        NiObject(std::uint32_t index, NiStream& stream, const NiModel& model) : mSelfIndex(index), mModel(model)  {}
+        NiObject(std::uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+            : mSelfIndex(index), mModel(model)  {}
 
         std::uint32_t index() const { return mSelfIndex; }
+
+        // FIXME: experimental
+        virtual void findBones(std::int32_t rootIndex) {};
 
     protected:
         NiObject() = default;  // disallow the default constructor in derived classes

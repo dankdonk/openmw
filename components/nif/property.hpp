@@ -25,7 +25,7 @@
 #define OPENMW_COMPONENTS_NIF_PROPERTY_HPP
 
 #include "base.hpp"
-#include "controlled.hpp" // NiSouceTexture
+#include "controlled.hpp" // NiSourceTexture
 
 namespace Nif
 {

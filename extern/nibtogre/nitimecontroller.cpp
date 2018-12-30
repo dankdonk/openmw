@@ -27,6 +27,7 @@
 
 #include <cassert>
 #include <stdexcept>
+#include <iostream> // FIXME: debugging only
 
 #include "nistream.hpp"
 #include "nigeometry.hpp"  // static_cast NiGeometry
@@ -38,8 +39,8 @@
 #undef NDEBUG
 #endif
 
-NiBtOgre::NiTimeController::NiTimeController(uint32_t index, NiStream& stream, const NiModel& model)
-    : NiObject(index, stream, model)
+NiBtOgre::NiTimeController::NiTimeController(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+    : NiObject(index, stream, model, data)
 {
     stream.read(mNextControllerIndex);
     stream.read(mFlags);
@@ -51,23 +52,32 @@ NiBtOgre::NiTimeController::NiTimeController(uint32_t index, NiStream& stream, c
     stream.read(mTargetIndex);
 }
 
+// baseclass does nothing?
+NiBtOgre::NiTimeControllerRef NiBtOgre::NiTimeController::build(std::vector<Ogre::Controller<float> >& controllers,
+    Ogre::Mesh *mesh)
+{
+    //std::cerr << "controller not implemented: " << NiObject::mModel.blockType(NiObject::index()) << std::endl;
+
+    return -1;
+}
+
 // Seen in NIF version 20.2.0.7
-NiBtOgre::BSFrustumFOVController::BSFrustumFOVController(uint32_t index, NiStream& stream, const NiModel& model)
-    : NiTimeController(index, stream, model)
+NiBtOgre::BSFrustumFOVController::BSFrustumFOVController(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+    : NiTimeController(index, stream, model, data)
 {
     stream.read(mInterpolatorIndex);
 }
 
 // Seen in NIF version 20.2.0.7
-NiBtOgre::BSLagBoneController::BSLagBoneController(uint32_t index, NiStream& stream, const NiModel& model)
-    : NiTimeController(index, stream, model)
+NiBtOgre::BSLagBoneController::BSLagBoneController(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+    : NiTimeController(index, stream, model, data)
 {
     stream.read(mLinearVelocity);
     stream.read(mLinearRotation);
     stream.read(mMaximumDistance);
 }
 
-void NiBtOgre::NiBSBoneLODController::NodeGroup::read(NiStream& stream, const NiModel& model)
+void NiBtOgre::NiBSBoneLODController::NodeGroup::read(NiStream& stream, const NiModel& model, ModelData& data)
 {
     stream.read(numNodes);
 
@@ -76,7 +86,7 @@ void NiBtOgre::NiBSBoneLODController::NodeGroup::read(NiStream& stream, const Ni
         stream.read(nodes.at(i));
 }
 
-void NiBtOgre::NiBSBoneLODController::SkinShapeGroup::read(NiStream& stream, const NiModel& model)
+void NiBtOgre::NiBSBoneLODController::SkinShapeGroup::read(NiStream& stream, const NiModel& model, ModelData& data)
 {
     std::int32_t rIndex = -1;
     stream.read(numLinkPairs);
@@ -93,8 +103,8 @@ void NiBtOgre::NiBSBoneLODController::SkinShapeGroup::read(NiStream& stream, con
 }
 
 // Seen in NIF ver 20.0.0.4, 20.0.0.5
-NiBtOgre::NiBSBoneLODController::NiBSBoneLODController(uint32_t index, NiStream& stream, const NiModel& model)
-    : NiTimeController(index, stream, model)
+NiBtOgre::NiBSBoneLODController::NiBSBoneLODController(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+    : NiTimeController(index, stream, model, data)
 {
     stream.skip(sizeof(std::uint32_t)); // Unknown Int 1
     std::uint32_t numNodeGroups;
@@ -104,7 +114,7 @@ NiBtOgre::NiBSBoneLODController::NiBSBoneLODController(uint32_t index, NiStream&
 
     mNodeGroups.resize(numNodeGroups);
     for (unsigned int i = 0; i < numNodeGroups; ++i)
-        mNodeGroups[i].read(stream, model);
+        mNodeGroups[i].read(stream, model, data);
 
     //if (stream.nifVer() >= 0x04020200) // from 4.2.2.0
     //{
@@ -113,7 +123,7 @@ NiBtOgre::NiBSBoneLODController::NiBSBoneLODController(uint32_t index, NiStream&
         stream.read(numShapeGroups);
         mShapeGroups.resize(numShapeGroups);
         for (unsigned int i = 0; i < numShapeGroups; ++i)
-            mShapeGroups[i].read(index, stream, model);
+            mShapeGroups[i].read(index, stream, model, data);
 
         std::uint32_t numShapeGroups2;
         stream.read(numShapeGroups2);
@@ -125,8 +135,8 @@ NiBtOgre::NiBSBoneLODController::NiBSBoneLODController(uint32_t index, NiStream&
 }
 
 // Seen in NIF ver 20.0.0.4, 20.0.0.5
-NiBtOgre::NiControllerManager::NiControllerManager(uint32_t index, NiStream& stream, const NiModel& model)
-    : NiTimeController(index, stream, model)
+NiBtOgre::NiControllerManager::NiControllerManager(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+    : NiTimeController(index, stream, model, data)
 {
     mCumulative = stream.getBool();
 
@@ -170,8 +180,8 @@ NiBtOgre::NiTimeControllerRef NiBtOgre::NiControllerManager::build(BtOgreInst *i
 }
 
 // Seen in NIF ver 20.0.0.4, 20.0.0.5
-NiBtOgre::NiMultiTargetTransformController::NiMultiTargetTransformController(uint32_t index, NiStream& stream, const NiModel& model)
-    : NiTimeController(index, stream, model)
+NiBtOgre::NiMultiTargetTransformController::NiMultiTargetTransformController(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+    : NiTimeController(index, stream, model, data)
 {
     //std::int32_t rIndex = -1;
 
@@ -181,16 +191,16 @@ NiBtOgre::NiMultiTargetTransformController::NiMultiTargetTransformController(uin
         stream.read(mExtraTargets.at(i));
 }
 
-NiBtOgre::NiSingleInterpController::NiSingleInterpController(uint32_t index, NiStream& stream, const NiModel& model)
-    : NiTimeController(index, stream, model)
+NiBtOgre::NiSingleInterpController::NiSingleInterpController(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+    : NiTimeController(index, stream, model, data)
 {
     if (stream.nifVer() >= 0x0a020000) // from 10.2.0.0
         stream.read(mInterpolatorIndex);
 }
 
 // Seen in NIF version 20.2.0.7
-NiBtOgre::NiFloatExtraDataController::NiFloatExtraDataController(uint32_t index, NiStream& stream, const NiModel& model)
-    : NiSingleInterpController(index, stream, model)
+NiBtOgre::NiFloatExtraDataController::NiFloatExtraDataController(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+    : NiSingleInterpController(index, stream, model, data)
 {
     if (stream.nifVer() >= 0x0a020000) // from 10.2.0.0
         stream.readLongString(mControllerDataIndex);
@@ -206,36 +216,36 @@ NiBtOgre::NiFloatExtraDataController::NiFloatExtraDataController(uint32_t index,
 }
 
 // Seen in NIF version 20.2.0.7
-NiBtOgre::BSEffectShaderPropertyColorController::BSEffectShaderPropertyColorController(uint32_t index, NiStream& stream, const NiModel& model)
-    : NiSingleInterpController(index, stream, model)
+NiBtOgre::BSEffectShaderPropertyColorController::BSEffectShaderPropertyColorController(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+    : NiSingleInterpController(index, stream, model, data)
 {
     stream.read(mUnknownInt1);
 }
 
 // Seen in NIF version 20.2.0.7
-NiBtOgre::BSEffectShaderPropertyFloatController::BSEffectShaderPropertyFloatController(uint32_t index, NiStream& stream, const NiModel& model)
-    : NiSingleInterpController(index, stream, model)
+NiBtOgre::BSEffectShaderPropertyFloatController::BSEffectShaderPropertyFloatController(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+    : NiSingleInterpController(index, stream, model, data)
 {
     stream.read(mTargetVariable);
 }
 
 // Seen in NIF version 20.2.0.7
-NiBtOgre::BSLightingShaderPropertyColorController::BSLightingShaderPropertyColorController(uint32_t index, NiStream& stream, const NiModel& model)
-    : NiSingleInterpController(index, stream, model)
+NiBtOgre::BSLightingShaderPropertyColorController::BSLightingShaderPropertyColorController(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+    : NiSingleInterpController(index, stream, model, data)
 {
     stream.read(mTargetVariable);
 }
 
 // Seen in NIF version 20.2.0.7
-NiBtOgre::BSLightingShaderPropertyFloatController::BSLightingShaderPropertyFloatController(uint32_t index, NiStream& stream, const NiModel& model)
-    : NiSingleInterpController(index, stream, model)
+NiBtOgre::BSLightingShaderPropertyFloatController::BSLightingShaderPropertyFloatController(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+    : NiSingleInterpController(index, stream, model, data)
 {
     stream.read(mTargetVariable);
 }
 
 // Seen in NIF ver 20.0.0.4, 20.0.0.5
-NiBtOgre::NiTextureTransformController::NiTextureTransformController(uint32_t index, NiStream& stream, const NiModel& model)
-    : NiSingleInterpController(index, stream, model)
+NiBtOgre::NiTextureTransformController::NiTextureTransformController(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+    : NiSingleInterpController(index, stream, model, data)
 {
     stream.skip(sizeof(char)); // Unknown2
     stream.read(mTextureSlot);
@@ -247,8 +257,8 @@ NiBtOgre::NiTextureTransformController::NiTextureTransformController(uint32_t in
 #endif
 }
 
-NiBtOgre::NiParticleSystemController::NiParticleSystemController(uint32_t index, NiStream& stream, const NiModel& model)
-    : NiTimeController(index, stream, model)
+NiBtOgre::NiParticleSystemController::NiParticleSystemController(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+    : NiTimeController(index, stream, model, data)
 {
     stream.read(mSpeed);
     stream.read(mSpeedRandom);
@@ -297,8 +307,8 @@ NiBtOgre::NiParticleSystemController::NiParticleSystemController(uint32_t index,
     stream.skip(sizeof(char)); // Trailer
 }
 
-NiBtOgre::NiPathController::NiPathController(uint32_t index, NiStream& stream, const NiModel& model)
-    : NiTimeController(index, stream, model)
+NiBtOgre::NiPathController::NiPathController(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+    : NiTimeController(index, stream, model, data)
 {
     if (stream.nifVer() >= 0x0a010000) // from 10.1.0.0
         stream.skip(sizeof(std::uint16_t)); // Unknown Short 2
@@ -311,16 +321,16 @@ NiBtOgre::NiPathController::NiPathController(uint32_t index, NiStream& stream, c
     stream.read(mFloatDataIndex);
 }
 
-NiBtOgre::NiUVController::NiUVController(uint32_t index, NiStream& stream, const NiModel& model)
-    : NiTimeController(index, stream, model)
+NiBtOgre::NiUVController::NiUVController(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+    : NiTimeController(index, stream, model, data)
 {
     stream.skip(sizeof(std::uint16_t)); // Unknown Short
     stream.read(mDataIndex);
 }
 
 // Seen in NIF ver 20.0.0.4, 20.0.0.5
-NiBtOgre::bhkBlendController::bhkBlendController(uint32_t index, NiStream& stream, const NiModel& model)
-    : NiTimeController(index, stream, model)
+NiBtOgre::bhkBlendController::bhkBlendController(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+    : NiTimeController(index, stream, model, data)
 {
     stream.read(mUnknown);
 }

@@ -54,7 +54,7 @@ namespace NiBtOgre
         NiObjectRef mNextColliderIndex;
         NiNode     *mColliderObject; // Ptr
 
-        NiPSysCollider(uint32_t index, NiStream& stream, const NiModel& model);
+        NiPSysCollider(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
     };
 
     // Seen in NIF ver 20.0.0.4, 20.0.0.5
@@ -66,7 +66,7 @@ namespace NiBtOgre
         Ogre::Vector3 mXAxis;
         Ogre::Vector3 mYAxis;
 
-        NiPSysPlanarCollider(uint32_t index, NiStream& stream, const NiModel& model);
+        NiPSysPlanarCollider(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
     };
 
     // Seen in NIF version 20.2.0.7
@@ -75,7 +75,7 @@ namespace NiBtOgre
     public:
         float mRadius;
 
-        NiPSysSphericalCollider(uint32_t index, NiStream& stream, const NiModel& model);
+        NiPSysSphericalCollider(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
     };
 }
 

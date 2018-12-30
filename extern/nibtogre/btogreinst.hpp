@@ -32,8 +32,9 @@
 
 #include <OgreController.h>
 
+#include <components/nifogre/ogrenifloader.hpp> // ObjectScenePtr
+
 #include "nimodel.hpp"
-#include "nimeshloader.hpp"
 #include "nidata.hpp"
 
 namespace Ogre
@@ -45,6 +46,7 @@ namespace NiBtOgre
 {
     struct bhkEntity;
     struct bhkConstraint;
+    struct NiGeometry;
 
     enum BuildFlags {
         Flag_EnableHavok        = 0x0001,
@@ -100,30 +102,23 @@ namespace NiBtOgre
         };
 #endif
         // Keep the model around in case Ogre wants to load the resource (i.e. Mesh) again
+        // FIXME: resources are no longer loaded from here, do we still need an auto_ptr?
         std::auto_ptr<NiBtOgre::NiModel> mModel;
 
         int mFlags; // some global properties
         Ogre::SceneNode *mBaseSceneNode;
+        NifOgre::ObjectScenePtr mObjectScene;
+
         std::vector<std::pair<bhkConstraint*, bhkEntity*> > mbhkConstraints;
 
         // The key to the map is the block index of the parent NiNode; each child may add a mesh loader.
-        // The first of the construction info is 'name' parameter in registerNiGeometry (see below).
+        // The first of the construction info is 'name' parameter in registerNiTriBasedGeom (see below).
         //std::map<std::uint32_t, EntityConstructionInfo> mEntityCIMap;
-        std::map<std::uint32_t, std::pair<std::string, std::unique_ptr<NiMeshLoader> > > mMeshes;
-
-        // index = parent NiNode's block index
-        // name  = concatenation of model, ":", parent NiNode name
-        //        (e.g. meshes\\architecture\\imperialcity\\icwalltower01.nif:ICWallTower01)
-        void registerNiGeometry(std::uint32_t nodeIndex, const std::string& name, NiGeometry* geometry);
-
-        // called from NiNode after registering all the child NiGeometry objects (NiTriShape or NiTriStrips)
-        void buildMeshAndEntity();
 
         std::vector<AnimTrackInterpolator<float>*> mInterpolators; // prevent memory leak
 
         // key is the block index of the target object (i.e. typically NiNode)
         std::map<std::uint32_t, std::unique_ptr<btRigidBody> > mRigidBodies;
-
 
         std::map<int, std::vector<int> > mGeomMorpherControllerMap;
 
@@ -131,7 +126,7 @@ namespace NiBtOgre
         // btCollisionShapes
         // btConstraints
 
-        BtOgreInst(Ogre::SceneNode *baseNode);
+        BtOgreInst(Ogre::SceneNode *baseNode, NifOgre::ObjectScenePtr scene);
         ~BtOgreInst() {
             for (unsigned int i = 0; i < mInterpolators.size(); ++i)
                 delete mInterpolators[i];

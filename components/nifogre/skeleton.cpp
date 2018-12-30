@@ -190,6 +190,7 @@ void NIFSkeletonLoader::loadResource(Ogre::Resource *resource)
 
     // should have been loaded already by NifOgre::NIFObjectLoader::load
     Nif::NIFFilePtr nif(Nif::Cache::getInstance().load(skel->getName()));
+    nif->parse(); // FIXME: testing
     const Nif::Node *node = static_cast<const Nif::Node*>(nif->getRoot(0));
 
     try {

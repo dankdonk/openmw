@@ -352,18 +352,6 @@ void NIFMeshLoader::createSubMesh(Ogre::Mesh *mesh, const Nif::NiGeometry *geom)
             std::cout << "alphaprop over written" << std::endl;
     }
 
-#if 0
-    if (prop) // FO3
-    {
-        if (prop->recType == Nif::RC_BSShaderPPLightingProperty)
-        {
-        }
-        else if (prop->recType == Nif::RC_BSShaderNoLightingProperty)
-        {
-        }
-    }
-#endif
-
     std::string matname = NIFMaterialLoader::getMaterial(data, mesh->getName(), mGroup,
                                                          texprop, matprop, alphaprop,
                                                          vertprop, zprop, specprop,

@@ -23,8 +23,8 @@
   documenation.  See http://niftools.sourceforge.net/wiki/NifSkope for details.
 
 */
-#ifndef NIBTOGRE_HEADER_H
-#define NIBTOGRE_HEADER_H
+#ifndef NIBTOGRE_NIHEADER_H
+#define NIBTOGRE_NIHEADER_H
 
 #include <string>
 #include <vector>
@@ -33,6 +33,8 @@
 namespace NiBtOgre
 {
     class NiStream;
+    class NiSkinInstance;
+    class NiObject;
 
     // The header contains the NIF file version and a list of all the object names used in the file.
     // The object names are then used to create the corresponding classes.
@@ -40,7 +42,7 @@ namespace NiBtOgre
     //
     // NOTE: Any exceptions thrown by the stream reader are not caught in the constructor.  It is
     // expected that exeptions are caught and handed upstream (e.g. abort loading the whole file)
-    class Header
+    class NiHeader
     {
         std::uint32_t mVer;
         std::uint32_t mUserVer;
@@ -57,16 +59,16 @@ namespace NiBtOgre
         std::vector<std::uint32_t> mBlockSize; // TES5 only, probably for sanity check
         std::vector<std::string>   mStrings;   // originally TES5 only but now for all
 
-		static std::string   mEmptyString;
+        static std::string   mEmptyString;
 
         // default, copy and assignment not allowed
-        Header();
-        Header(const Header& other);
-        Header& operator=(const Header& other);
+        NiHeader();
+        NiHeader(const NiHeader& other);
+        NiHeader& operator=(const NiHeader& other);
 
     public:
-        Header(NiStream& stream); // may throw std::runtime_error
-        ~Header() {}
+        NiHeader(NiStream& stream); // may throw std::runtime_error
+        ~NiHeader() {}
 
         inline std::uint32_t nifVer() const { return mVer; }
         inline std::uint32_t userVer() const { return mUserVer; }
@@ -85,7 +87,10 @@ namespace NiBtOgre
 
         // returns NiObject type name for creation via a factory
         const std::string& blockType(std::uint32_t index) const;
+
+        //void getNiSkinInstances(std::vector<NiSkinInstance*>& skins,
+                                //std::vector<std::unique_ptr<NiObject> >& objects);
     };
 }
 
-#endif // NIBTOGRE_HEADER_H
+#endif // NIBTOGRE_NIHEADER_H

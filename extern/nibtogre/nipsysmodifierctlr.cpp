@@ -35,15 +35,15 @@
 #undef NDEBUG
 #endif
 
-NiBtOgre::NiPSysModifierCtlr::NiPSysModifierCtlr(uint32_t index, NiStream& stream, const NiModel& model)
-    : NiSingleInterpController(index, stream, model)
+NiBtOgre::NiPSysModifierCtlr::NiPSysModifierCtlr(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+    : NiSingleInterpController(index, stream, model, data)
 {
     stream.readLongString(mModifierNameIndex);
 }
 
 // Seen in NIF ver 20.0.0.4, 20.0.0.5
-NiBtOgre::NiPSysEmitterCtlr::NiPSysEmitterCtlr(uint32_t index, NiStream& stream, const NiModel& model)
-    : NiPSysModifierCtlr(index, stream, model)
+NiBtOgre::NiPSysEmitterCtlr::NiPSysEmitterCtlr(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+    : NiPSysModifierCtlr(index, stream, model, data)
 {
 #if 0 // commented out since this object is not seen in TES3
     if (stream.nifVer() <= 0x0a010000) // up to 10.1.0.0
@@ -63,8 +63,8 @@ NiBtOgre::NiPSysEmitterCtlr::NiPSysEmitterCtlr(uint32_t index, NiStream& stream,
 // dungeons/RuinInteriors/traps/trapgascloud01.nif
 // dungeons/RuinInteriors/traps/trapgascloud01.nif
 // and other examples
-NiBtOgre::NiPSysModifierActiveCtlr::NiPSysModifierActiveCtlr(uint32_t index, NiStream& stream, const NiModel& model)
-    : NiPSysModifierCtlr(index, stream, model)
+NiBtOgre::NiPSysModifierActiveCtlr::NiPSysModifierActiveCtlr(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+    : NiPSysModifierCtlr(index, stream, model, data)
 {
 #if 0 // commented out since this object is not seen in TES3
     if (stream.nifVer() <= 0x0a010000) // up to 10.1.0.0
@@ -72,8 +72,8 @@ NiBtOgre::NiPSysModifierActiveCtlr::NiPSysModifierActiveCtlr(uint32_t index, NiS
 #endif
 }
 
-NiBtOgre::NiPSysModifierFloatCtlr::NiPSysModifierFloatCtlr(uint32_t index, NiStream& stream, const NiModel& model)
-    : NiPSysModifierCtlr(index, stream, model)
+NiBtOgre::NiPSysModifierFloatCtlr::NiPSysModifierFloatCtlr(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+    : NiPSysModifierCtlr(index, stream, model, data)
 {
     if (stream.nifVer() <= 0x0a010000) // up to 10.1.0.0
         stream.read(mDataIndex);

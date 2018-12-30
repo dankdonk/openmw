@@ -37,8 +37,8 @@
 #endif
 
 // Seen in NIF ver 20.0.0.4, 20.0.0.5
-NiBtOgre::NiPSysCollider::NiPSysCollider(uint32_t index, NiStream& stream, const NiModel& model)
-    : NiObject(index, stream, model)
+NiBtOgre::NiPSysCollider::NiPSysCollider(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+    : NiObject(index, stream, model, data)
 {
     stream.read(mBounce);
     stream.read(mSpawnOnCollide);
@@ -59,8 +59,8 @@ NiBtOgre::NiPSysCollider::NiPSysCollider(uint32_t index, NiStream& stream, const
 }
 
 // Seen in NIF ver 20.0.0.4, 20.0.0.5
-NiBtOgre::NiPSysPlanarCollider::NiPSysPlanarCollider(uint32_t index, NiStream& stream, const NiModel& model)
-    : NiPSysCollider(index, stream, model)
+NiBtOgre::NiPSysPlanarCollider::NiPSysPlanarCollider(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+    : NiPSysCollider(index, stream, model, data)
 {
     stream.read(mWidth);
     stream.read(mHeight);
@@ -69,8 +69,8 @@ NiBtOgre::NiPSysPlanarCollider::NiPSysPlanarCollider(uint32_t index, NiStream& s
 }
 
 // Seen in NIF version 20.2.0.7
-NiBtOgre::NiPSysSphericalCollider::NiPSysSphericalCollider(uint32_t index, NiStream& stream, const NiModel& model)
-    : NiPSysCollider(index, stream, model)
+NiBtOgre::NiPSysSphericalCollider::NiPSysSphericalCollider(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+    : NiPSysCollider(index, stream, model, data)
 {
     stream.read(mRadius);
 }

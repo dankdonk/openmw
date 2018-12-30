@@ -28,8 +28,11 @@
 #include <string>
 #include <cstdint>
 
+#include <OgreResource.h> // ResourceHandle
+
 #include "nistream.hpp"
-#include "header.hpp"
+#include "niheader.hpp"
+#include "meshloader.hpp" // not sure why this is needed
 
 namespace Ogre
 {
@@ -39,7 +42,37 @@ namespace Ogre
 namespace NiBtOgre
 {
     class NiObject;
+    class SkeletonLoader;
+    struct NiTriBasedGeom;
     struct BtOgreInst;
+    class NiModel;
+
+    struct ModelData
+    {
+        bool mEditorMarkerPresent;
+
+        std::map<std::int32_t, std::int32_t> mNiNodeMap; // keep track of parent NiNode index
+        void setNiNodeParent(std::int32_t child, std::int32_t parent);
+
+        typedef std::int32_t NiNodeRef;
+        std::vector<NiNodeRef> mSkelLeafIndicies; // tempoarily used to find the bones
+        void addSkelLeafIndex(std::int32_t leaf) { mSkelLeafIndicies.push_back(leaf); }
+
+        // The key to the map is the block index of the parent NiNode; each child may add a mesh loader.
+        // The first of the pair is 'name' parameter in registerNiTriBasedGeom (see below).
+        std::map<std::uint32_t, std::pair<std::string, std::unique_ptr<MeshLoader> > > mMeshLoaders;
+
+        // index = parent NiNode's block index
+        // name  = concatenation of model, ":", parent NiNode name
+        //        (e.g. meshes\\architecture\\imperialcity\\icwalltower01.nif:ICWallTower01)
+        void registerNiTriBasedGeom(std::uint32_t nodeIndex, const std::string& name, NiTriBasedGeom* geometry);
+
+        ModelData(const NiModel& model) : mModel(model), mEditorMarkerPresent(false) {}
+
+    private:
+
+        const NiModel& mModel;
+    };
 
     //
     //   +--& NiModel
@@ -69,7 +102,9 @@ namespace NiBtOgre
     {
         // NOTE the initialisation order
         NiStream mNiStream;
-        Header   mHeader;
+        NiHeader mHeader;
+
+        const std::string mGroup;  // Ogre group
 
         std::vector<std::unique_ptr<NiObject> > mObjects;
         std::vector<std::uint32_t> mRoots;
@@ -77,7 +112,10 @@ namespace NiBtOgre
         int mCurrIndex; // FIXME: for debugging Ptr
         std::string mModelName;
 
-        std::map<std::int32_t, std::int32_t> mNiNodeMap;
+        ModelData mModelData;
+        SkeletonLoader *mSkeletonLoader; // keep one around in case NiModel was retrieved from a cache
+
+        bool mShowEditorMarkers;
 
         // default, copy and assignment not allowed
         NiModel();
@@ -89,9 +127,10 @@ namespace NiBtOgre
         // e.g. full path from the directory/BSA added in Bsa::registerResources(), etc
         //
         // NOTE: the constructor may throw
-        NiModel(const std::string &name);
+        NiModel(const std::string& name, const std::string& group, bool showEditorMarker=false);
         ~NiModel();
 
+        const std::string& getOgreGroup() const { return mGroup; }
         const std::string& getModelName() const { return mModelName; }
 
         template<class T>
@@ -118,9 +157,13 @@ namespace NiBtOgre
             return mHeader.indexToString(index);
         }
 
-        // NOTE: relies on const hack
-        void setNiNodeParent(std::int32_t child, std::int32_t parent);
+        inline bool showEditorMarkers() const { return mShowEditorMarkers; }
+
         std::int32_t getNiNodeParent(std::int32_t child) const;
+        std::uint32_t getRootIndex() const { return mRoots[0]; } // assumes only one root
+
+        // called from NiNode after registering all the child NiGeometry objects (NiTriShape or NiTriStrips)
+        void buildMeshAndEntity(BtOgreInst *inst);
     };
 }
 

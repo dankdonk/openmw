@@ -27,9 +27,9 @@
 
 #include "nistream.hpp"
 
-NiBtOgre::NiObjectNET::NiObjectNET(uint32_t index, NiStream& stream, const NiModel& model,
+NiBtOgre::NiObjectNET::NiObjectNET(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data,
                                    bool isBSLightingShaderProperty)
-    : NiObject(index, stream, model), mIsBSLightingShaderProperty(isBSLightingShaderProperty)
+    : NiObject(index, stream, model, data), mIsBSLightingShaderProperty(isBSLightingShaderProperty)
   //, mControllerIndex(-1)
 {
     if (mIsBSLightingShaderProperty)
@@ -40,9 +40,8 @@ NiBtOgre::NiObjectNET::NiObjectNET(uint32_t index, NiStream& stream, const NiMod
             mSkyrimShaderType = 0;
     }
 
-    // might need it
-    if (stream.nifVer() == 0x0a000100)       // HACK not sure about this one
-        stream.skip(sizeof(std::int32_t)); // oar01.nif
+    if (stream.nifVer() == 0x0a000100)     // HACK not sure about this one
+        stream.skip(sizeof(std::int32_t)); // e.g. clutter/farm/oar01.nif version 10.0.1.0
 
     stream.readLongString(mNameIndex);
 
@@ -60,8 +59,8 @@ void NiBtOgre::NiObjectNET::build(Ogre::SceneNode *sceneNode, BtOgreInst *inst, 
 }
 
 
-NiBtOgre::NiSourceTexture::NiSourceTexture(uint32_t index, NiStream& stream, const NiModel& model)
-    : NiTexture(index, stream, model), mDirectRender(false), mPersistRenderData(false)
+NiBtOgre::NiSourceTexture::NiSourceTexture(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+    : NiTexture(index, stream, model, data), mDirectRender(false), mPersistRenderData(false)
 {
     stream.read(mUseExternal);
 

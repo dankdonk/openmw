@@ -2,7 +2,7 @@
 
 #include "data.hpp"
 #include "node.hpp" // NiParticleSystem
-#include "controlled.hpp" // NiSouceTexture
+#include "controlled.hpp" // NiSourceTexture
 #include "extra.hpp"
 
 void Nif::NiPSysModifier::read(NIFStream *nif)

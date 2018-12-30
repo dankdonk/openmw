@@ -81,8 +81,8 @@
 // oblivion/gate/obliviongate_forming.nif
 // oblivion/gate/oblivionwargateani02.nif
 // oblivion/plants/spiddalcloudplant.nif
-NiBtOgre::NiAlphaController::NiAlphaController(uint32_t index, NiStream& stream, const NiModel& model)
-    : NiSingleInterpController(index, stream, model)
+NiBtOgre::NiAlphaController::NiAlphaController(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+    : NiSingleInterpController(index, stream, model, data)
 {
     if (stream.nifVer() <= 0x0a010000) // up to 10.1.0.0
         stream.read(mDataIndex);

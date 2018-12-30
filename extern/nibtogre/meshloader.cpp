@@ -19,15 +19,23 @@
 
   cc9cii cc9c@iinet.net.au
 
+  Some of the Ogre code in this file is based on v0.36 of OpenMW.
 */
-#include "nimeshloader.hpp"
+#include "meshloader.hpp"
 
 #include <OgreMesh.h>
 #include <OgreSubMesh.h>
 
 #include "nigeometry.hpp"
+#include "nidata.hpp"
+#include "nimodel.hpp"
+#include "boundsfinder.hpp"
 
-/*std::uint32_t*/void NiBtOgre::NiMeshLoader::registerSubMeshGeometry(NiGeometry* geometry)
+NiBtOgre::MeshLoader::MeshLoader(const NiModel& model) : mModel(model)
+{
+}
+
+/*std::uint32_t*/void NiBtOgre::MeshLoader::registerSubMeshGeometry(NiTriBasedGeom* geometry)
 {
     mSubMeshGeometry.push_back(geometry);
 
@@ -36,18 +44,30 @@
 
 // This method is not called until the associated Ogre::Entity is created in
 // BtOgreInst::buildMeshAndEntity()
-void NiBtOgre::NiMeshLoader::loadResource(Ogre::Resource *resource)
+void NiBtOgre::MeshLoader::loadResource(Ogre::Resource *resource)
 {
     Ogre::Mesh *mesh = static_cast<Ogre::Mesh*>(resource);
+
+    BoundsFinder bounds;
+    bool needTangents = false;
 
     // create and update (i.e. apply materials, properties and controllers)
     // an Ogre::SubMesh for each in mSubMeshGeometry
     for (size_t i = 0; i < mSubMeshGeometry.size(); ++i)
     {
-        mSubMeshGeometry[i]->createSubMesh(mInstance, mesh);
+        needTangents |= mSubMeshGeometry[i]->createSubMesh(mesh, bounds);
     }
 
-    // update bounds including all the sub meshes
-    //mesh->_setBounds()
-    //mesh->_setBoundingSphereRadius)
+    // build tangents if at least one of the sub-mesh's material needs them
+    // TODO: is it possible to use the ones in the NIF files?
+    if (needTangents)
+    {
+        unsigned short src,dest;
+        if (!mesh->suggestTangentVectorBuildParams(Ogre::VES_TANGENT, src, dest))
+            mesh->buildTangentVectors(Ogre::VES_TANGENT, src, dest);
+    }
+
+    mesh->_setBounds(Ogre::AxisAlignedBox(bounds.minX()-0.5f, bounds.minY()-0.5f, bounds.minZ()-0.5f,
+                                          bounds.maxX()+0.5f, bounds.maxY()+0.5f, bounds.maxZ()+0.5f));
+    mesh->_setBoundingSphereRadius(bounds.getRadius());
 }

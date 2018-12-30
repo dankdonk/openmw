@@ -84,8 +84,8 @@ void NiBtOgre::NiSequence::ControllerLink::read(NiStream& stream)
 }
 
 // Seen in NIF ver 20.0.0.4, 20.0.0.5
-NiBtOgre::NiSequence::NiSequence(uint32_t index, NiStream& stream, const NiModel& model)
-    : NiObject(index, stream, model)
+NiBtOgre::NiSequence::NiSequence(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+    : NiObject(index, stream, model, data)
 {
     stream.readLongString(mNameIndex);
 
@@ -107,8 +107,8 @@ NiBtOgre::NiSequence::NiSequence(uint32_t index, NiStream& stream, const NiModel
 }
 
 // Seen in NIF ver 20.0.0.4, 20.0.0.5
-NiBtOgre::NiControllerSequence::NiControllerSequence(uint32_t index, NiStream& stream, const NiModel& model)
-    : NiSequence(index, stream, model)
+NiBtOgre::NiControllerSequence::NiControllerSequence(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+    : NiSequence(index, stream, model, data)
 {
     //if (stream.nifVer() >= 0x0a01006a) // from 10.1.0.106
     //{

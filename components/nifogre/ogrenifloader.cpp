@@ -1857,38 +1857,11 @@ public:
         // format?  or convert all to the new code?
 
         Nif::NIFFilePtr nif = Nif::Cache::getInstance().load(name);
-        if(nif->numRoots() < 1)
+        if (nif->getVersion() >=0x0a000100) // tes4 style, i.e. from 10.0.1.0
         {
-            nif->warn("Found no root nodes in "+name+".");
-            return;
-        }
-
-        const Nif::Record *r = nif->getRoot(0);
-        assert(r != NULL);
-
-        // nif::node is like an niavobject but actually a root node can be an niobject
-        // todo: check for real examples
-        const Nif::Node *node = dynamic_cast<const Nif::Node*>(r);
-        if(node == NULL)
-        {
-            nif->warn("First root in "+name+" was not a node, but a "+
-                      r->recName+".");
-            return;
-        }
-
-        // todo: maybe we skip creating skelbase for tes4/tes5 till later?
-        if(Ogre::SkeletonManager::getSingleton().resourceExists(name) ||
-           !NIFSkeletonLoader::createSkeleton(name, group, node).isNull())
-        {
-            // Create a base skeleton entity if this NIF needs one
-            createSkelBase(name, group, sceneNode->getCreator(), node, scene);
-        }
-        //std::cout << "creating object "<< name << ", root " << node->name << std::endl; // FIXME
-        if (r->nifVer >= 0x0a000100) // tes4 style, i.e. from 10.0.1.0
-        {
+#if 0
             NIFObjectLoader::handleNode(nif, name, group, sceneNode, node, scene, flags, 0, 0); // flags is 0 by default
-    //#if 0
-            // FIXME: temporary, trying out new code
+#else
             // probably an auto pointer to be returned by NiModel constructor
             // it can then be cached somewhere
             try
@@ -1901,33 +1874,64 @@ public:
                 //
                 // what gets stored in scenenode and what gets stored in scene?
                 // maybe scenenode is just an attachment point?
-                Ogre::SceneNode *scenenode2 = sceneNode->getCreator()->createSceneNode();         // temp dummy
+                //Ogre::SceneNode *scenenode2 = sceneNode->getCreator()->createSceneNode();         // temp dummy
                 //ObjectScenePtr scene2 = ObjectScenePtr(new ObjectScene(sceneNode->getCreator())); // temp dummy
-                std::auto_ptr<NiBtOgre::BtOgreInst> inst(new NiBtOgre::BtOgreInst(scenenode2));
+                std::auto_ptr<NiBtOgre::BtOgreInst> inst(new NiBtOgre::BtOgreInst(sceneNode, scene));
 
                 // FIXME: inst should keep an auto_ptr to NiModel in case it needs to create the
                 // ogre resouces again.  NiModel's should be managed by some kind of resource
                 // manager so that they don't need to be re-built from the nif file each time
                 //std::auto_ptr<NiBtOgre::NiModel> NiModel(new NiBtOgre::NiModel(name));
                 //nimodel->build(inst.get());
-                inst->mModel = std::auto_ptr<NiBtOgre::NiModel>(new NiBtOgre::NiModel(name)); // read NIF
-                inst->mModel->build(inst.get());                                              // build object
+                inst->mModel = std::auto_ptr<NiBtOgre::NiModel>(new NiBtOgre::NiModel(name, group)); // read NIF
+                inst->mModel->build(inst.get());                                                     // build object
             }
             catch (std::exception&) // fixme
             {
                 nif->warn("exception while parsing nif file"); // just a simple message for now
                 return;
             }
-    //#endif
+#endif
         }
         else
+        {
+            nif->parse(); // FIXME: testing
+
+            if(nif->numRoots() < 1)
+            {
+                nif->warn("Found no root nodes in "+name+".");
+                return;
+            }
+
+            const Nif::Record *r = nif->getRoot(0);
+            assert(r != NULL);
+
+            // nif::node is like an niavobject but actually a root node can be an niobject
+            // todo: check for real examples
+            const Nif::Node *node = dynamic_cast<const Nif::Node*>(r);
+            if(node == NULL)
+            {
+                nif->warn("First root in "+name+" was not a node, but a "+
+                          r->recName+".");
+                return;
+            }
+
+            if(Ogre::SkeletonManager::getSingleton().resourceExists(name) ||
+               !NIFSkeletonLoader::createSkeleton(name, group, node).isNull())
+            {
+                // Create a base skeleton entity if this NIF needs one
+                createSkelBase(name, group, sceneNode->getCreator(), node, scene);
+            }
+
             createObjects(nif, name, group, sceneNode, node, scene, flags, 0, 0);
+        }
     }
 
     static void loadKf(Ogre::Skeleton *skel, const std::string &name,
                        TextKeyMap &textKeys, std::vector<Ogre::Controller<Ogre::Real> > &ctrls)
     {
         Nif::NIFFilePtr nif = Nif::Cache::getInstance().load(name);
+        nif->parse(); // FIXME: testing
         if (nif->numRoots() < 1)
         {
             nif->warn("Found no root nodes in "+name+".");
@@ -2639,6 +2643,7 @@ void NifOgre::NIFObjectLoader::loadTES4Kf (Ogre::Skeleton *skel, Nif::NIFFilePtr
 
     // FIXME: hard coded for testing, there's probably some algorithm for selecting an anim file
     Nif::NIFFilePtr kf = Nif::Cache::getInstance().load("meshes\\characters\\_male\\idle.kf");
+    kf->parse(); // FIXME: testing
     //Nif::NIFFilePtr kf = Nif::Cache::getInstance().load("meshes\\characters\\_male\\casttarget.kf");
     //Nif::NIFFilePtr kf = Nif::Cache::getInstance().load("meshes\\characters\\_male\\walkforward.kf");
     if (kf->numRoots() < 1)

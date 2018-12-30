@@ -45,7 +45,7 @@
 #include <BulletCollision/CollisionShapes/btCompoundShape.h>
 
 #include "nistream.hpp"
-#include "niavobject.hpp" // static_cast NiAVObject
+#include "ninode.hpp" // static_cast NiNode
 #include "nimodel.hpp"
 #include "btogreinst.hpp"
 #include "nidata.hpp"
@@ -55,7 +55,7 @@
 #endif
 
 #if 0 // Commented out. Use instead: typedef bhkRefObject bhkSerializable
-NiBtOgre::bhkSerializable::bhkSerializable(uint32_t index, NiStream& stream, const NiModel& model)
+NiBtOgre::bhkSerializable::bhkSerializable(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
 {
 }
 #endif
@@ -74,8 +74,8 @@ void NiBtOgre::bhkCompressedMeshShapeData::bhkCMSDChunk::read(NiStream& stream)
 }
 
 // Seen in NIF version 20.2.0.7
-NiBtOgre::bhkCompressedMeshShapeData::bhkCompressedMeshShapeData(uint32_t index, NiStream& stream, const NiModel& model)
-    : bhkRefObject(index, stream, model)
+NiBtOgre::bhkCompressedMeshShapeData::bhkCompressedMeshShapeData(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+    : bhkRefObject(index, stream, model, data)
 {
     stream.read(mBitsPerIndex);
     stream.read(mBitsPerWIndex);
@@ -141,8 +141,8 @@ NiBtOgre::bhkCompressedMeshShapeData::bhkCompressedMeshShapeData(uint32_t index,
 
 // Seen in NIF version 20.2.0.7
 // e.g. Skyrim/Data/meshes/traps/tripwire/traptripwire01.nif
-NiBtOgre::bhkBallSocketConstraintChain::bhkBallSocketConstraintChain(uint32_t index, NiStream& stream, const NiModel& model)
-    : bhkSerializable(index, stream, model)
+NiBtOgre::bhkBallSocketConstraintChain::bhkBallSocketConstraintChain(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+    : bhkSerializable(index, stream, model, data)
 {
     std::uint32_t numFloats;
     stream.read(numFloats);
@@ -180,8 +180,8 @@ NiBtOgre::bhkBallSocketConstraintChain::bhkBallSocketConstraintChain(uint32_t in
     stream.read(mUnknownInt3);
 }
 
-NiBtOgre::bhkConstraint::bhkConstraint(uint32_t index, NiStream& stream, const NiModel& model)
-    : bhkSerializable(index, stream, model)
+NiBtOgre::bhkConstraint::bhkConstraint(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+    : bhkSerializable(index, stream, model, data)
 {
     std::int32_t rIndex = -1;
     std::uint32_t numEntities;
@@ -199,8 +199,8 @@ NiBtOgre::bhkConstraint::bhkConstraint(uint32_t index, NiStream& stream, const N
 }
 
 // Seen in NIF version 20.2.0.7
-NiBtOgre::bhkBreakableConstraint::bhkBreakableConstraint(uint32_t index, NiStream& stream, const NiModel& model)
-    : bhkConstraint(index, stream, model)
+NiBtOgre::bhkBreakableConstraint::bhkBreakableConstraint(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+    : bhkConstraint(index, stream, model, data)
 {
     if (stream.userVer() <= 11)
     {
@@ -267,8 +267,8 @@ void NiBtOgre::HingeDescriptor::read(NiStream& stream)
 // Some examples from TES4
 //   architecture/ships/shipflag01.nif
 //   armor/chainmail/f/cuirass_gnd.nif
-NiBtOgre::bhkHingeConstraint::bhkHingeConstraint(uint32_t index, NiStream& stream, const NiModel& model)
-    : bhkConstraint(index, stream, model)
+NiBtOgre::bhkHingeConstraint::bhkHingeConstraint(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+    : bhkConstraint(index, stream, model, data)
 {
     mHinge.read(stream);
 }
@@ -329,8 +329,8 @@ void NiBtOgre::LimitedHingeDescriptor::read(NiStream& stream)
 //   architecture/chorrol/signnortherngoods.nif
 //   architecture/chorrol/signrenoitbooks.nif
 //   armor/chainmail/m/cuirass_gnd.nif
-NiBtOgre::bhkLimitedHingeConstraint::bhkLimitedHingeConstraint(uint32_t index, NiStream& stream, const NiModel& model)
-    : bhkConstraint(index, stream, model)
+NiBtOgre::bhkLimitedHingeConstraint::bhkLimitedHingeConstraint(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+    : bhkConstraint(index, stream, model, data)
 {
     mLimitedHinge.read(stream);
 }
@@ -410,8 +410,8 @@ void NiBtOgre::RagdollDescriptor::read(NiStream& stream)
 //   creatures/spriggan/skeleton.nif
 //   creatures/troll/skeleton.nif
 //   creatures/zombie/skeleton.nif
-NiBtOgre::bhkMalleableConstraint::bhkMalleableConstraint(uint32_t index, NiStream& stream, const NiModel& model)
-    : bhkConstraint(index, stream, model)
+NiBtOgre::bhkMalleableConstraint::bhkMalleableConstraint(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+    : bhkConstraint(index, stream, model, data)
 {
     stream.read(mType);
     stream.read(mUnknownInt2);
@@ -453,8 +453,8 @@ NiBtOgre::bhkMalleableConstraint::bhkMalleableConstraint(uint32_t index, NiStrea
 //    weapons/silver/arrow.nif
 //    weapons/steel/arrow.nif
 //    weapons/steel/keyshapedarrow.nif
-NiBtOgre::bhkPrismaticConstraint::bhkPrismaticConstraint(uint32_t index, NiStream& stream, const NiModel& model)
-    : bhkConstraint(index, stream, model)
+NiBtOgre::bhkPrismaticConstraint::bhkPrismaticConstraint(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+    : bhkConstraint(index, stream, model, data)
 {
     if (stream.nifVer() <= 0x14000005)
     {
@@ -487,8 +487,8 @@ NiBtOgre::bhkPrismaticConstraint::bhkPrismaticConstraint(uint32_t index, NiStrea
 }
 
 // seen in nif ver 20.0.0.4, 20.0.0.5
-NiBtOgre::bhkRagdollConstraint::bhkRagdollConstraint(uint32_t index, NiStream& stream, const NiModel& model)
-    : bhkConstraint(index, stream, model)
+NiBtOgre::bhkRagdollConstraint::bhkRagdollConstraint(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+    : bhkConstraint(index, stream, model, data)
 {
     mRagdoll.read(stream);
 }
@@ -667,8 +667,8 @@ if (node->name == "TargetchainRight02" /*|| node->name == "TargetchainRight02"*/
 #endif
 }
 
-NiBtOgre::bhkShape::bhkShape(uint32_t index, NiStream& stream, const NiModel& model)
-    : bhkSerializable(index, stream, model)
+NiBtOgre::bhkShape::bhkShape(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+    : bhkSerializable(index, stream, model, data)
 {
 }
 
@@ -679,8 +679,8 @@ NiBtOgre::bhkShape::bhkShape(uint32_t index, NiStream& stream, const NiModel& mo
 //   creatures/willothewisp/skeleton02.nif
 //   dungeons/misc/mdtapestryskinned01.nif
 //   dungeons/misc/necrotapestryskinned01.nif
-NiBtOgre::bhkStiffSpringConstraint::bhkStiffSpringConstraint(uint32_t index, NiStream& stream, const NiModel& model)
-    : bhkConstraint(index, stream, model)
+NiBtOgre::bhkStiffSpringConstraint::bhkStiffSpringConstraint(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+    : bhkConstraint(index, stream, model, data)
 {
     stream.read(mPivotA);
     stream.read(mPivotB);
@@ -688,8 +688,8 @@ NiBtOgre::bhkStiffSpringConstraint::bhkStiffSpringConstraint(uint32_t index, NiS
 }
 
 // seen in nif ver 20.0.0.4, 20.0.0.5
-NiBtOgre::bhkMoppBvTreeShape::bhkMoppBvTreeShape(uint32_t index, NiStream& stream, const NiModel& model)
-    : bhkShape(index, stream, model)
+NiBtOgre::bhkMoppBvTreeShape::bhkMoppBvTreeShape(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+    : bhkShape(index, stream, model, data)
 {
     stream.read(mShapeIndex);
     stream.read(mMaterial);
@@ -724,8 +724,8 @@ std::unique_ptr<btCollisionShape> NiBtOgre::bhkMoppBvTreeShape::buildShape(const
 }
 
 // seen in nif version 20.2.0.7
-NiBtOgre::bhkCompressedMeshShape::bhkCompressedMeshShape(uint32_t index, NiStream& stream, const NiModel& model)
-    : bhkShape(index, stream, model)
+NiBtOgre::bhkCompressedMeshShape::bhkCompressedMeshShape(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+    : bhkShape(index, stream, model, data)
 {
     //stream.getPtr<NiAVObject>(mTarget, model.objects());
     std::int32_t rIndex = -1;
@@ -758,8 +758,8 @@ std::unique_ptr<btCollisionShape> NiBtOgre::bhkCompressedMeshShape::buildShape(c
     return std::unique_ptr<btCollisionShape>(nullptr); // FIXME: TODO needed for TES5 only
 }
 
-NiBtOgre::bhkConvexListShape::bhkConvexListShape(uint32_t index, NiStream& stream, const NiModel& model)
-    : bhkShape(index, stream, model)
+NiBtOgre::bhkConvexListShape::bhkConvexListShape(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+    : bhkShape(index, stream, model, data)
 {
     stream.readVector<bhkConvexShapeRef>(mSubShapes);
     stream.read(mMaterial);
@@ -779,12 +779,12 @@ std::unique_ptr<btCollisionShape> NiBtOgre::bhkConvexListShape::buildShape(const
 }
 
 // seen in nif ver 20.0.0.4, 20.0.0.5
-NiBtOgre::bhkListShape::bhkListShape(uint32_t index, NiStream& stream, const NiModel& model)
-    : bhkShape(index, stream, model)
+NiBtOgre::bhkListShape::bhkListShape(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+    : bhkShape(index, stream, model, data)
 {
     stream.readVector<bhkShapeRef>(mSubShapes);
     if (stream.nifVer() == 0x0a000100)
-        stream.skip(sizeof(std::int32_t)); // e.g. oar01.nif
+        stream.skip(sizeof(std::int32_t)); // e.g. clutter/farm/oar01.nif version 10.0.1.0
     stream.read(mMaterial);
 
     //mUnknownfloats.resize(6);
@@ -860,8 +860,8 @@ std::unique_ptr<btCollisionShape> NiBtOgre::bhkListShape::buildShape(const btTra
 }
 
 // seen in nif ver 20.0.0.4, 20.0.0.5
-NiBtOgre::bhkNiTriStripsShape::bhkNiTriStripsShape(uint32_t index, NiStream& stream, const NiModel& model)
-    : bhkShape(index, stream, model)
+NiBtOgre::bhkNiTriStripsShape::bhkNiTriStripsShape(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+    : bhkShape(index, stream, model, data)
 {
     stream.read(mMaterial);
     stream.read(mUnknownFloat1);
@@ -975,8 +975,8 @@ void NiBtOgre::OblivionSubShape::read(NiStream& stream)
 }
 
 // seen in nif ver 20.0.0.4, 20.0.0.5
-NiBtOgre::bhkPackedNiTriStripsShape::bhkPackedNiTriStripsShape(uint32_t index, NiStream& stream, const NiModel& model)
-    : bhkShape(index, stream, model)
+NiBtOgre::bhkPackedNiTriStripsShape::bhkPackedNiTriStripsShape(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+    : bhkShape(index, stream, model, data)
 {
     if (stream.nifVer() <= 0x14000005) // up to 20.0.0.5 only
     {
@@ -1042,8 +1042,8 @@ std::unique_ptr<btCollisionShape> NiBtOgre::bhkPackedNiTriStripsShape::buildShap
 }
 
 // seen in nif ver 20.0.0.4, 20.0.0.5
-NiBtOgre::hkPackedNiTriStripsData::hkPackedNiTriStripsData(uint32_t index, NiStream& stream, const NiModel& model)
-    : bhkShape(index, stream, model)
+NiBtOgre::hkPackedNiTriStripsData::hkPackedNiTriStripsData(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+    : bhkShape(index, stream, model, data)
 {
     std::uint32_t numTriangles;
     stream.read(numTriangles);
@@ -1084,11 +1084,11 @@ std::unique_ptr<btCollisionShape> NiBtOgre::hkPackedNiTriStripsData::buildShape(
 }
 
 // seen in NIF ver 10.0.1.0 (clutter/farm/oar0.nif)
-NiBtOgre::bhkConvexSweepShape::bhkConvexSweepShape(uint32_t index, NiStream& stream, const NiModel& model)
-    : bhkShape(index, stream, model)
+NiBtOgre::bhkConvexSweepShape::bhkConvexSweepShape(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+    : bhkShape(index, stream, model, data)
 {
     stream.read(mShapeIndex);
-    stream.skip(sizeof(std::int32_t)); // e.g. oar01.nif
+    stream.skip(sizeof(std::int32_t)); // e.g. clutter/farm/oar01.nif version 10.0.1.0
     stream.read(mMaterial);
     stream.read(mUnknownFloat1);
     stream.read(mUnknown);
@@ -1102,11 +1102,11 @@ std::unique_ptr<btCollisionShape> NiBtOgre::bhkConvexSweepShape::buildShape(cons
     return mModel.getRef<bhkShape>(mShapeIndex)->buildShape(transform);
 }
 
-NiBtOgre::bhkSphereRepShape::bhkSphereRepShape(uint32_t index, NiStream& stream, const NiModel& model)
-    : bhkShape(index, stream, model)
+NiBtOgre::bhkSphereRepShape::bhkSphereRepShape(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+    : bhkShape(index, stream, model, data)
 {
     if (stream.nifVer() == 0x0a000100)
-        stream.skip(sizeof(std::int32_t)); // e.g. oar01.nif
+        stream.skip(sizeof(std::int32_t)); // e.g. clutter/farm/oar01.nif version 10.0.1.0
     stream.read(mMaterial);
     stream.read(mRadius);
 }
@@ -1117,8 +1117,8 @@ std::unique_ptr<btCollisionShape> NiBtOgre::bhkSphereRepShape::buildShape(const 
 }
 
 // seen in nif ver 20.0.0.4, 20.0.0.5
-NiBtOgre::bhkBoxShape::bhkBoxShape(uint32_t index, NiStream& stream, const NiModel& model)
-    : bhkSphereRepShape(index, stream, model)
+NiBtOgre::bhkBoxShape::bhkBoxShape(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+    : bhkSphereRepShape(index, stream, model, data)
 {
     mUnknown8Bytes.resize(8);
     for (int i = 0; i < 8; ++i)
@@ -1139,8 +1139,8 @@ std::unique_ptr<btCollisionShape> NiBtOgre::bhkBoxShape::buildShape(const btTran
 }
 
 // seen in nif ver 20.0.0.4, 20.0.0.5
-NiBtOgre::bhkCapsuleShape::bhkCapsuleShape(uint32_t index, NiStream& stream, const NiModel& model)
-    : bhkSphereRepShape(index, stream, model)
+NiBtOgre::bhkCapsuleShape::bhkCapsuleShape(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+    : bhkSphereRepShape(index, stream, model, data)
 {
     mUnknown8Bytes.resize(8);
     for (unsigned int i = 0; i < 8; ++i)
@@ -1196,8 +1196,8 @@ std::unique_ptr<btCollisionShape> NiBtOgre::bhkCapsuleShape::buildShape(const bt
 }
 
 // seen in nif ver 20.0.0.4, 20.0.0.5
-NiBtOgre::bhkConvexVerticesShape::bhkConvexVerticesShape(uint32_t index, NiStream& stream, const NiModel& model)
-    : bhkSphereRepShape(index, stream, model)
+NiBtOgre::bhkConvexVerticesShape::bhkConvexVerticesShape(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+    : bhkSphereRepShape(index, stream, model, data)
 {
     mUnknown6Floats.resize(6);
     for (unsigned int i = 0; i < 6; ++i)
@@ -1257,8 +1257,8 @@ std::unique_ptr<btCollisionShape> NiBtOgre::bhkConvexVerticesShape::buildShape(c
 
 #if 0 // Commented out, instead use: typedef bhkSphereRepShape bhkSphereShape
 // seen in nif ver 20.0.0.4, 20.0.0.5
-NiBtOgre::bhksphereShape::bhkSphereShape(uint32_t index, NiStream& stream, const NiModel& model)
-    : bhksphererepShape(index, stream, model)
+NiBtOgre::bhksphereShape::bhkSphereShape(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+    : bhksphererepShape(index, stream, model, data)
 {
     stream.read(mMaterial);
     stream.read(mRadius);
@@ -1266,8 +1266,8 @@ NiBtOgre::bhksphereShape::bhkSphereShape(uint32_t index, NiStream& stream, const
 #endif
 
 // seen in nif ver 20.0.0.4, 20.0.0.5
-NiBtOgre::bhkMultiSphereShape::bhkMultiSphereShape(uint32_t index, NiStream& stream, const NiModel& model)
-    : bhkSphereRepShape(index, stream, model)
+NiBtOgre::bhkMultiSphereShape::bhkMultiSphereShape(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+    : bhkSphereRepShape(index, stream, model, data)
 {
     stream.read(mUnknownFloat1);
     stream.read(mUnknownFloat2);
@@ -1294,12 +1294,12 @@ std::unique_ptr<btCollisionShape> NiBtOgre::bhkMultiSphereShape::buildShape(cons
 }
 
 // seen in nif ver 20.0.0.4, 20.0.0.5
-NiBtOgre::bhkTransformShape::bhkTransformShape(uint32_t index, NiStream& stream, const NiModel& model)
-    : bhkShape(index, stream, model)
+NiBtOgre::bhkTransformShape::bhkTransformShape(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+    : bhkShape(index, stream, model, data)
 {
     stream.read(mShapeIndex);
     if (stream.nifVer() == 0x0a000100)
-        stream.skip(sizeof(std::int32_t)); // e.g. oar01.nif
+        stream.skip(sizeof(std::int32_t)); // e.g. clutter/farm/oar01.nif version 10.0.1.0
     stream.read(mMaterial);
     stream.read(mUnknownFloat1);
     mUnknown8Bytes.resize(8);
@@ -1356,12 +1356,12 @@ std::unique_ptr<btCollisionShape> NiBtOgre::bhkTransformShape::buildShape(const 
 }
 
 // seen in nif ver 20.0.0.4, 20.0.0.5 ????
-NiBtOgre::bhkEntity::bhkEntity(uint32_t index, NiStream& stream, const NiModel& model)
-    : bhkSerializable(index, stream, model)
+NiBtOgre::bhkEntity::bhkEntity(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+    : bhkSerializable(index, stream, model, data)
 {
     stream.read(mShapeIndex);
     if (stream.nifVer() == 0x0a000100)     // HACK
-        stream.skip(sizeof(std::int32_t)); // e.g. oar01.nif
+        stream.skip(sizeof(std::int32_t)); // e.g. clutter/farm/oar01.nif version 10.0.1.0
     stream.read(mLayer);                   // Oblivion Layer
     stream.read(mColFilter);               // Flags and Part Number
     stream.read(mUnknownShort);            // Group
@@ -1431,8 +1431,8 @@ NiBtOgre::bhkEntity::bhkEntity(uint32_t index, NiStream& stream, const NiModel& 
 //     57 | OL_NULL            | Null                                           }}}
 
 // Seen in NIF ver 20.0.0.4, 20.0.0.5
-NiBtOgre::bhkRigidBody::bhkRigidBody(uint32_t index, NiStream& stream, const NiModel& model)
-    : bhkEntity(index, stream, model)
+NiBtOgre::bhkRigidBody::bhkRigidBody(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+    : bhkEntity(index, stream, model, data)
 {
     stream.read(mUnknownInt1);           // unused
     stream.read(mUnknownInt2);           // first byte Broadphase Type, rest unused
@@ -1545,7 +1545,7 @@ void NiBtOgre::bhkRigidBody::build(BtOgreInst *inst, NiObject* parentNiNode)
     Ogre::Vector3 pos;
     Ogre::Vector3 scale;
     Ogre::Quaternion rot;
-    static_cast<NiAVObject*>(parentNiNode)->getWorldTransform().decomposition(pos, scale, rot);
+    static_cast<NiNode*>(parentNiNode)->getWorldTransform().decomposition(pos, scale, rot);
 
     btTransform transform(btQuaternion(rot.x, rot.y, rot.z, rot.w), btVector3(pos.x, pos.y, pos.z));
 
@@ -1631,8 +1631,8 @@ void NiBtOgre::bhkRigidBody::build(BtOgreInst *inst, NiObject* parentNiNode)
 }
 
 // Seen in NIF ver 20.0.0.4, 20.0.0.5
-NiBtOgre::bhkSimpleShapePhantom::bhkSimpleShapePhantom(uint32_t index, NiStream& stream, const NiModel& model)
-    : bhkSerializable(index, stream, model)
+NiBtOgre::bhkSimpleShapePhantom::bhkSimpleShapePhantom(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+    : bhkSerializable(index, stream, model, data)
 {
     stream.read(mShapeIndex);
     stream.read(mLayer);

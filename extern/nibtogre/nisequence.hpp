@@ -71,7 +71,7 @@ namespace NiBtOgre
         std::vector<ControllerLink> mControlledBlocks;
 
     public:
-        NiSequence(uint32_t index, NiStream& stream, const NiModel& model);
+        NiSequence(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
     };
 
     class NiControllerManager;
@@ -98,7 +98,7 @@ namespace NiBtOgre
         std::int16_t mUnknownShort1; // TES5
 
     public:
-        NiControllerSequence(uint32_t index, NiStream& stream, const NiModel& model);
+        NiControllerSequence(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
 
         void build(BtOgreInst *inst, const NiDefaultAVObjectPalette* objects);
 

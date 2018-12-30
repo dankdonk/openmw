@@ -55,7 +55,7 @@ namespace NiBtOgre
         bool mWorldSpace;                          // from 10.1.0.0
         std::vector<NiPSysModifierRef> mModifiers; // from 10.1.0.0
 
-        NiParticleSystem(uint32_t index, NiStream& stream, const NiModel& model);
+        NiParticleSystem(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
 
         virtual void build(BtOgreInst *inst, NiObject *parentNiNode = nullptr);
     };

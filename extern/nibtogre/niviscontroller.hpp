@@ -48,7 +48,7 @@ namespace NiBtOgre
     public:
         NiVisDataRef mDataIndex;
 
-        NiVisController(uint32_t index, NiStream& stream, const NiModel& model);
+        NiVisController(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
     };
 }
 
