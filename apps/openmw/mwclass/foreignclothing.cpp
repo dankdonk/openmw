@@ -2,6 +2,12 @@
 
 #include <extern/esm4/clot.hpp>
 
+#include "../mwgui/tooltips.hpp"
+
+#include "../mwbase/environment.hpp"
+#include "../mwbase/world.hpp"
+#include "../mwbase/windowmanager.hpp"
+
 #include <components/misc/stringops.hpp>
 
 #include "../mwworld/ptr.hpp"
@@ -52,6 +58,54 @@ namespace MWClass
     std::string ForeignClothing::getName (const MWWorld::Ptr& ptr) const
     {
         return "";
+    }
+
+    bool ForeignClothing::hasToolTip (const MWWorld::Ptr& ptr) const
+    {
+        MWWorld::LiveCellRef<ESM4::Clothing> *ref =
+            ptr.get<ESM4::Clothing>();
+
+        return (ref->mBase->mFullName != "");
+    }
+
+    MWGui::ToolTipInfo ForeignClothing::getToolTipInfo (const MWWorld::Ptr& ptr) const
+    {
+        MWWorld::LiveCellRef<ESM4::Clothing> *ref =
+            ptr.get<ESM4::Clothing>();
+
+        MWGui::ToolTipInfo info;
+        info.caption = ref->mBase->mFullName + MWGui::ToolTips::getCountString(ptr.getRefData().getCount());
+        info.icon = ref->mBase->mIconMale; // FIXME: there is also mIconFemale
+
+        std::string text;
+
+        text += "\n#{sWeight}: " + MWGui::ToolTips::toString(ref->mBase->mData.weight);
+        text += MWGui::ToolTips::getValueString(ref->mBase->mData.value, "#{sValue}");
+
+        if (MWBase::Environment::get().getWindowManager()->getFullHelp()) {
+            text += MWGui::ToolTips::getCellRefString(ptr.getCellRef());
+            //text += MWGui::ToolTips::getMiscString(ref->mBase->mScript, "Script"); // FIXME: need to lookup FormId
+        }
+
+        info.enchant = "";//ref->mBase->mEnchantment;  // FIXME: need to lookup FormId
+        if (!info.enchant.empty())
+            info.remainingEnchantCharge = static_cast<int>(ptr.getCellRef().getEnchantmentCharge());
+
+        info.text = text;
+
+        return info;
+    }
+
+    int ForeignClothing::getValue (const MWWorld::Ptr& ptr) const
+    {
+        MWWorld::LiveCellRef<ESM4::Clothing> *ref =
+            ptr.get<ESM4::Clothing>();
+
+        int value = ref->mBase->mData.value;
+        if (ptr.getCellRef().getGoldValue() > 1 && ptr.getRefData().getCount() == 1)
+            value = ptr.getCellRef().getGoldValue();
+
+        return value;
     }
 
     void ForeignClothing::registerSelf()

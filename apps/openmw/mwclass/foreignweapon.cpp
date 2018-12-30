@@ -2,6 +2,12 @@
 
 #include <extern/esm4/weap.hpp>
 
+#include "../mwgui/tooltips.hpp"
+
+#include "../mwbase/environment.hpp"
+#include "../mwbase/world.hpp"
+#include "../mwbase/windowmanager.hpp"
+
 #include "../mwworld/ptr.hpp"
 #include "../mwworld/physicssystem.hpp"
 #include "../mwworld/cellstore.hpp"
@@ -45,7 +51,59 @@ namespace MWClass
 
     std::string ForeignWeapon::getName (const MWWorld::Ptr& ptr) const
     {
-        return "";
+        MWWorld::LiveCellRef<ESM4::Weapon> *ref =
+            ptr.get<ESM4::Weapon>();
+
+        return ref->mBase->mFullName;
+    }
+
+    bool ForeignWeapon::hasToolTip (const MWWorld::Ptr& ptr) const
+    {
+        MWWorld::LiveCellRef<ESM4::Weapon> *ref =
+            ptr.get<ESM4::Weapon>();
+
+        return (ref->mBase->mFullName != "");
+    }
+
+    // FIXME
+    MWGui::ToolTipInfo ForeignWeapon::getToolTipInfo (const MWWorld::Ptr& ptr) const
+    {
+        MWWorld::LiveCellRef<ESM4::Weapon> *ref =
+            ptr.get<ESM4::Weapon>();
+
+        MWGui::ToolTipInfo info;
+
+        const MWWorld::ESMStore& store = MWBase::Environment::get().getWorld()->getStore();
+
+        int count = ptr.getRefData().getCount();
+
+        info.icon = ref->mBase->mIcon;
+
+        std::string text;
+
+        text += "\n#{sWeight}: " + MWGui::ToolTips::toString(ref->mBase->mData.weight);
+        text += MWGui::ToolTips::getValueString(getValue(ptr), "#{sValue}");
+
+        if (MWBase::Environment::get().getWindowManager()->getFullHelp()) {
+            text += MWGui::ToolTips::getCellRefString(ptr.getCellRef());
+            //text += MWGui::ToolTips::getMiscString(ref->mBase->mScript, "Script"); // FIXME: need to lookup FormId
+        }
+
+        info.text = text;
+
+        return info;
+    }
+
+    int ForeignWeapon::getValue (const MWWorld::Ptr& ptr) const
+    {
+        MWWorld::LiveCellRef<ESM4::Weapon> *ref =
+            ptr.get<ESM4::Weapon>();
+
+        int value = ref->mBase->mData.value;
+        if (ptr.getCellRef().getGoldValue() > 1 && ptr.getRefData().getCount() == 1)
+            value = ptr.getCellRef().getGoldValue();
+
+        return value;
     }
 
     void ForeignWeapon::registerSelf()

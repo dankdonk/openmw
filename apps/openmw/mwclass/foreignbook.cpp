@@ -2,6 +2,12 @@
 
 #include <extern/esm4/book.hpp>
 
+#include "../mwgui/tooltips.hpp"
+
+#include "../mwbase/environment.hpp"
+#include "../mwbase/world.hpp"
+#include "../mwbase/windowmanager.hpp"
+
 #include "../mwworld/ptr.hpp"
 #include "../mwworld/physicssystem.hpp"
 #include "../mwworld/cellstore.hpp"
@@ -60,5 +66,39 @@ namespace MWClass
         MWWorld::LiveCellRef<ESM4::Book> *ref = ptr.get<ESM4::Book>();
 
         return MWWorld::Ptr(&cell.get<ESM4::Book>().insert(*ref), &cell);
+    }
+
+    bool ForeignBook::hasToolTip (const MWWorld::Ptr& ptr) const
+    {
+        MWWorld::LiveCellRef<ESM4::Book> *ref =
+            ptr.get<ESM4::Book>();
+
+        return (ref->mBase->mFullName != "");
+    }
+
+    MWGui::ToolTipInfo ForeignBook::getToolTipInfo (const MWWorld::Ptr& ptr) const
+    {
+        MWWorld::LiveCellRef<ESM4::Book> *ref =
+            ptr.get<ESM4::Book>();
+
+        MWGui::ToolTipInfo info;
+        info.caption = ref->mBase->mFullName + MWGui::ToolTips::getCountString(ptr.getRefData().getCount());
+        info.icon = ref->mBase->mIcon;
+
+        std::string text;
+
+        text += "\n#{sWeight}: " + MWGui::ToolTips::toString(ref->mBase->mData.weight);
+        text += MWGui::ToolTips::getValueString(ref->mBase->mData.value, "#{sValue}");
+
+        if (MWBase::Environment::get().getWindowManager()->getFullHelp()) {
+            text += MWGui::ToolTips::getCellRefString(ptr.getCellRef());
+            //text += MWGui::ToolTips::getMiscString(ref->mBase->mScript, "Script"); // FIXME: need to lookup FormId
+        }
+
+        //info.enchant = ref->mBase->mEnchant; // FIXME: need to look up FormId
+
+        info.text = text;
+
+        return info;
     }
 }
