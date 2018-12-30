@@ -1624,8 +1624,8 @@ private:
                 ctrl = ctrl->next;
                 continue;
             }
-            else
-                std::cout << "Unsupported controller " << ctrl->recName << std::endl;
+//          else
+//              std::cout << "Unsupported controller " << ctrl->recName << std::endl;
 
             ctrl = ctrl->next;
         } while(!ctrl.empty());
@@ -2659,7 +2659,7 @@ void NifOgre::NIFObjectLoader::loadTES4Kf (Ogre::Skeleton *skel, Nif::NIFFilePtr
 
     // get the text keys (usually start stop times)
     const Nif::NiControllerSequence *seq = static_cast<const Nif::NiControllerSequence*>(r);
-    std::cout << "Anim name " << seq->name << std::endl; // FIXME for testing only
+//  std::cout << "Anim name " << seq->name << std::endl; // FIXME for testing only
     extractTextKeys(static_cast<const Nif::NiTextKeyExtraData*>(seq->textKeys.getPtr()), textKeys);
 
     for (unsigned int i = 0; i < seq->controlledBlocks.size(); ++i)
@@ -2710,7 +2710,7 @@ void NifOgre::NIFObjectLoader::loadTES4Kf (Ogre::Skeleton *skel, Nif::NIFFilePtr
         std::string boneName(std::string(&(ctrl.stringPalette->buffer[0]) + ctrl.nodeNameOffset));
         if (ctrl.nodeNameOffset == -1 || !skel->hasBone(boneName))
         {
-            std::cout << seq->name << ": No bone named " << boneName << " found." << std::endl;
+//          std::cout << seq->name << ": No bone named " << boneName << " found." << std::endl;
             continue;
         }
 

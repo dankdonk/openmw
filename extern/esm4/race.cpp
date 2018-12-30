@@ -61,7 +61,7 @@ void ESM4::Race::load(ESM4::Reader& reader)
             case ESM4::SUB_EDID:
             {
                 reader.getZString(mEditorId);
-                std::cout << "RACE " << mEditorId << std::endl;
+//              std::cout << "RACE " << mEditorId << std::endl;
                 break;
             }
             case ESM4::SUB_FULL:
@@ -166,9 +166,9 @@ void ESM4::Race::load(ESM4::Reader& reader)
                                                 // GLOB reference? shows up in SCRO in sript
                                                 // records and CTDA in INFO records
             {
-                std::cout << "RACE " << ESM4::printName(subHdr.typeId) << " skipping..." << subHdr.dataSize << std::endl;
+//                std::cout << "RACE " << ESM4::printName(subHdr.typeId) << " skipping..." << subHdr.dataSize << std::endl;
     // For debugging only
-//#if 0
+#if 0
                 unsigned char mDataBuf[256/*bufSize*/];
                 reader.get(&mDataBuf[0], subHdr.dataSize);
 
@@ -185,11 +185,11 @@ void ESM4::Race::load(ESM4::Reader& reader)
                         ss << " ";
                 }
                 std::cout << ss.str() << std::endl;
-
-                //reader.skipSubRecordData();
+#else
+                reader.skipSubRecordData();
+#endif
                 break;
             }
-//#endif
             case ESM4::SUB_DNAM: //skipping...8 // decapitate armor, 2 formids
             case ESM4::SUB_FGGA: //skipping...120 // prob face gen stuff
             case ESM4::SUB_FGGS: //skipping...200 // prob face gen stuff

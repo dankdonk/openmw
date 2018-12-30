@@ -237,10 +237,10 @@ btConvexHullShape *createBhkConvexVerticesShape(const Nif::Node *node,
         Ogre::Vector3& translation, Ogre::Quaternion& rotation, const Nif::bhkShape *bhkShape)
 {
     const Nif::bhkConvexVerticesShape *shape = static_cast<const Nif::bhkConvexVerticesShape*>(bhkShape);
-                if (node->name == "ICSignCopious01")
-                {
-                    std::cout << "copious" << std::endl;
-                }
+//              if (node->name == "ICSignCopious01")
+//              {
+//                  std::cout << "copious" << std::endl;
+//              }
 
     btConvexHullShape *convexHull = new btConvexHullShape();
 
@@ -1360,11 +1360,11 @@ void ManualBulletShapeLoader::handleNode(const Nif::Node *node, unsigned int bsx
         else if ((bsxFlags & 0xf) == 0) // TES4  0x1: havok, 0x2: collision, 0x4: skeleton, 0x8: animated
             return;
     }
-    else if (bsxFlags == 0) // no Extras, which implies no BSX flags
-    {
-        std::cout << "======> No collision: no Exras " << node->name << std::endl;
-        return;
-    }
+//  else if (bsxFlags == 0) // no Extras, which implies no BSX flags
+//  {
+//      std::cout << "======> No collision: no Exras " << node->name << std::endl;
+//      return;
+//  }
 
     //if (node->name == "CathedralCryptLight02")
         //std::cout << "stop" << std::endl;

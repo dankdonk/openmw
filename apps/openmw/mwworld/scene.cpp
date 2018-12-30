@@ -644,7 +644,7 @@ namespace MWWorld
                 std::pair<CellStoreCollection::iterator, bool> result = mActiveCells.insert(dummy);
                 if (result.second)
                 {
-                    std::cout << "dummy " << std::endl;
+//                  std::cout << "dummy " << std::endl;
                     loadForeignCell(dummy, loadingListener);
                 }
             }

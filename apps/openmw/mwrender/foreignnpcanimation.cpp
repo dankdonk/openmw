@@ -275,20 +275,20 @@ void ForeignNpcAnimation::updateNpcBase()
     if (store.find(mNpc->mHair) == MKTAG('R','H','A','I'))
     {
         const ESM4::Hair* hair = store.getForeign<ESM4::Hair>().search(mNpc->mHair);
-        if (hair)
-            std::cout << "Hair " << hair->mEditorId << std::endl;
+//      if (hair)
+//          std::cout << "Hair " << hair->mEditorId << std::endl;
     }
-    else
-        std::cerr << "Hair " + ESM4::formIdToString(mNpc->mHair) + " not found!\n";
+//  else
+//      std::cerr << "Hair " + ESM4::formIdToString(mNpc->mHair) + " not found!\n";
 
     if (store.find(mNpc->mEyes) == MKTAG('S','E','Y','E'))
     {
         const ESM4::Eyes* eyes = store.getForeign<ESM4::Eyes>().search(mNpc->mEyes);
-        if (eyes)
-            std::cout << "Eyes " << eyes->mEditorId << std::endl;
+//      if (eyes)
+//          std::cout << "Eyes " << eyes->mEditorId << std::endl;
     }
-    else
-        std::cerr << "Eyes " + ESM4::formIdToString(mNpc->mHair) + " not found!\n";
+//  else
+//      std::cerr << "Eyes " + ESM4::formIdToString(mNpc->mHair) + " not found!\n";
 
 
 
@@ -475,15 +475,15 @@ void ForeignNpcAnimation::updateNpcBase()
     {
         switch (store.find(mNpc->mInventory[i].item))
         {
-            case MKTAG('A','A','P','P'): std::cout << "Apparatus" << std::endl; break;
+            case MKTAG('A','A','P','P'): /*std::cout << "Apparatus" << std::endl;*/ break;
             case MKTAG('O','A','R','M'):
             {
                 const ESM4::Armor* armor
                     = store.getForeign<ESM4::Armor>().search(mNpc->mInventory[i].item);
                 if (armor)
                 {
-                    std::cout << "Inventory " << armor->mEditorId << std::endl;
-                    std::cout << "Inventory " << armor->mModel << std::endl;
+//                  std::cout << "Inventory " << armor->mEditorId << std::endl;
+//                  std::cout << "Inventory " << armor->mModel << std::endl;
     //addOrReplaceIndividualPart(ESM::PRT_RHand, -1, 1, "meshes\\characters\\_male\\hand.nif");
     // LegionBoots
     // Armor\Legion\M\Boots.NIF
@@ -525,43 +525,43 @@ void ForeignNpcAnimation::updateNpcBase()
                 }
                 break;
             }
-            case MKTAG('K','B','O','O'): std::cout << "Books" << std::endl; break;
-            case MKTAG('T','C','L','O'): std::cout << "Clothes" << std::endl; break;
+            case MKTAG('K','B','O','O'): /*std::cout << "Books" << std::endl;*/ break;
+            case MKTAG('T','C','L','O'): /*std::cout << "Clothes" << std::endl;*/ break;
             {
                 const ESM4::Clothing* cloth
                     = store.getForeign<ESM4::Clothing>().search(mNpc->mInventory[i].item);
                 if (cloth)
                 {
-                    std::cout << "Inventory " << cloth->mEditorId << std::endl;
-                    std::cout << "Inventory " << cloth->mModel << std::endl;
+//                  std::cout << "Inventory " << cloth->mEditorId << std::endl;
+//                  std::cout << "Inventory " << cloth->mModel << std::endl;
                 }
                 break;
             }
-            case MKTAG('R','I','N','G'): std::cout << "Ingredients" << std::endl; break;
-            case MKTAG('C','M','I','S'): std::cout << "MiscItems" << std::endl; break;
+            case MKTAG('R','I','N','G'): /*std::cout << "Ingredients" << std::endl;*/ break;
+            case MKTAG('C','M','I','S'): /*std::cout << "MiscItems" << std::endl;*/ break;
             case MKTAG('P','W','E','A'):
             {
                 const ESM4::Weapon* weap
                     = store.getForeign<ESM4::Weapon>().search(mNpc->mInventory[i].item);
                 if (weap)
                 {
-                    std::cout << "Inventory " << weap->mEditorId << std::endl;
-                    std::cout << "Inventory " << weap->mModel << std::endl;
+//                  std::cout << "Inventory " << weap->mEditorId << std::endl;
+//                  std::cout << "Inventory " << weap->mModel << std::endl;
                 }
                 break;
             }
-            case MKTAG('O','A','M','M'): std::cout << "Ammos" << std::endl; break;
-            case MKTAG('M','S','L','G'): std::cout << "SoulGems" << std::endl; break;
-            case MKTAG('M','K','E','Y'): std::cout << "Keys" << std::endl; break;
-            case MKTAG('H','A','L','C'): std::cout << "Potions" << std::endl; break;
-            case MKTAG('T','S','G','S'): std::cout << "SigilStones" << std::endl; break;
+            case MKTAG('O','A','M','M'): /*std::cout << "Ammos" << std::endl;*/ break;
+            case MKTAG('M','S','L','G'): /*std::cout << "SoulGems" << std::endl;*/ break;
+            case MKTAG('M','K','E','Y'): /*std::cout << "Keys" << std::endl;*/ break;
+            case MKTAG('H','A','L','C'): /*std::cout << "Potions" << std::endl;*/ break;
+            case MKTAG('T','S','G','S'): /*std::cout << "SigilStones" << std::endl;*/ break;
             case MKTAG('I','L','V','L'):
             {
                 const ESM4::LeveledItem* lvli
                     = store.getForeign<ESM4::LeveledItem>().search(mNpc->mInventory[i].item);
                 if (!lvli)
                 {
-                    std::cout << "LvlItems not found" << std::endl;
+//                  std::cout << "LvlItems not found" << std::endl;
                     break; // FIXME
                 }
 
@@ -572,44 +572,44 @@ void ForeignNpcAnimation::updateNpcBase()
                                   //<< ", count " << lvli->mLvlObject[j].count << std::endl;
                     switch (store.find(lvli->mLvlObject[lvli->mLvlObject.size()-1].item)) // FIXME
                     {
-                        case MKTAG('A','A','P','P'): std::cout << "lvl Apparatus" << std::endl; break;
-                        case MKTAG('O','A','R','M'): std::cout << "lvl Armors" << std::endl; break;
-                        case MKTAG('K','B','O','O'): std::cout << "lvl Books" << std::endl; break;
+                        case MKTAG('A','A','P','P'): /*std::cout << "lvl Apparatus" << std::endl;*/ break;
+                        case MKTAG('O','A','R','M'): /*std::cout << "lvl Armors" << std::endl;*/ break;
+                        case MKTAG('K','B','O','O'): /*std::cout << "lvl Books" << std::endl;*/ break;
                         case MKTAG('T','C','L','O'):
                         {
                             const ESM4::Clothing* clot
                                 = store.getForeign<ESM4::Clothing>().search(lvli->mLvlObject[lvli->mLvlObject.size()-1].item);
                             if (clot)
                             {
-                                std::cout << "LVLI " << lvli->mEditorId << " LVLO lev "
-                                    << lvli->mLvlObject[j].level << std::endl;
+//                              std::cout << "LVLI " << lvli->mEditorId << " LVLO lev "
+//                                  << lvli->mLvlObject[j].level << std::endl;
                             }
                             break;
                         }
-                        case MKTAG('R','I','N','G'): std::cout << "lvl Ingredients" << std::endl; break;
+                        case MKTAG('R','I','N','G'): /*std::cout << "lvl Ingredients" << std::endl;*/ break;
                         case MKTAG('C','M','I','S'):
                         {
                             const ESM4::MiscItem* misc
                                 = store.getForeign<ESM4::MiscItem>().search(lvli->mLvlObject[lvli->mLvlObject.size()-1].item);
                             if (misc)
                             {
-                                std::cout << "LVLI " << lvli->mEditorId << " LVLO lev "
-                                    << lvli->mLvlObject[j].level << std::endl;
+//                              std::cout << "LVLI " << lvli->mEditorId << " LVLO lev "
+//                                  << lvli->mLvlObject[j].level << std::endl;
                             }
                             break;
                         }
-                        case MKTAG('P','W','E','A'): std::cout << "lvl Weapons" << std::endl; break;
-                        case MKTAG('O','A','M','M'): std::cout << "lvl Ammos" << std::endl; break;
-                        case MKTAG('M','S','L','G'): std::cout << "lvl SoulGems" << std::endl; break;
-                        case MKTAG('M','K','E','Y'): std::cout << "lvl Keys" << std::endl; break;
-                        case MKTAG('H','A','L','C'): std::cout << "lvl Potions" << std::endl; break;
-                        case MKTAG('T','S','G','S'): std::cout << "lvl SigilStones" << std::endl; break;
+                        case MKTAG('P','W','E','A'): /*std::cout << "lvl Weapons" << std::endl;*/ break;
+                        case MKTAG('O','A','M','M'): /*std::cout << "lvl Ammos" << std::endl;*/ break;
+                        case MKTAG('M','S','L','G'): /*std::cout << "lvl SoulGems" << std::endl;*/ break;
+                        case MKTAG('M','K','E','Y'): /*std::cout << "lvl Keys" << std::endl;*/ break;
+                        case MKTAG('H','A','L','C'): /*std::cout << "lvl Potions" << std::endl;*/ break;
+                        case MKTAG('T','S','G','S'): /*std::cout << "lvl SigilStones" << std::endl;*/ break;
                         default: break;
                     }
                 }
                 break;
             }
-            default: std::cout << "unknown inventory" << std::endl; break; // FIXME
+            default: /*std::cout << "unknown inventory" << std::endl;*/ break; // FIXME
         }
     }
 
@@ -987,7 +987,7 @@ void ForeignNpcAnimation::play(const std::string &groupname, int priority, int g
               float speedmult, const std::string &start, const std::string &stop,
               float startpoint, size_t loops, bool loopfallback)
 {
-    std::cout << "anim play" << std::endl;
+    //std::cout << "anim play" << std::endl;
     Animation::play(groupname, priority, groups, autodisable, speedmult, start, stop, startpoint, loops, loopfallback);
 }
 

@@ -175,8 +175,8 @@ public:
         // can be expanded if needed.
         if (0 == recIndex && nifVer <= 0x04010000) // FIXME experiment
         {
-            if (static_cast<Nif::Node*>(this)->trafo.rotation != Nif::Transformation::getIdentity().rotation)
-                std::cout << "Non-identity rotation: " << this->name << ", ver " << std::hex << nifVer << std::endl;
+//          if (static_cast<Nif::Node*>(this)->trafo.rotation != Nif::Transformation::getIdentity().rotation)
+//              std::cout << "Non-identity rotation: " << this->name << ", ver " << std::hex << nifVer << std::endl;
             static_cast<Nif::Node*>(this)->trafo = Nif::Transformation::getIdentity();
         }
     }
