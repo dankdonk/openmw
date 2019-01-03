@@ -10,6 +10,8 @@
 #include <OgreTextureManager.h>
 #include <OgreSceneNode.h>
 
+#include <extern/nibtogre/btrigidbodycimanager.hpp>
+
 #include <openengine/bullet/trace.h>
 #include <openengine/bullet/physic.hpp>
 #include <openengine/bullet/BtOgreExtras.h>
@@ -502,6 +504,7 @@ namespace MWWorld
     PhysicsSystem::PhysicsSystem(OEngine::Render::OgreRenderer &_rend) :
         mRender(_rend), mEngine(0), mTimeAccum(0.0f), mWaterHeight(0), mWaterEnabled(false)
     {
+        NiBtOgre::BtRigidBodyCIManager *btLoader = new NiBtOgre::BtRigidBodyCIManager();
         // Create physics. shapeLoader is deleted by the physic engine
         NifBullet::ManualBulletShapeLoader* shapeLoader = new NifBullet::ManualBulletShapeLoader();
         mEngine = new OEngine::Physic::PhysicEngine(shapeLoader);
@@ -513,6 +516,7 @@ namespace MWWorld
             mEngine->mDynamicsWorld->removeCollisionObject(mWaterCollisionObject.get());
         delete mEngine;
         delete OEngine::Physic::BulletShapeManager::getSingletonPtr();
+        delete NiBtOgre::BtRigidBodyCIManager::getSingletonPtr();
     }
 
     OEngine::Physic::PhysicEngine* PhysicsSystem::getEngine()

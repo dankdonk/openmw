@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015-2018 cc9cii
+  Copyright (C) 2015-2019 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -61,7 +61,7 @@ namespace NiBtOgre
         virtual ~NiAVObject() {}
 
         // parentNiNode is used to calculate the world transform
-        virtual void build(BtOgreInst *inst, NiObject *parentNiNode = nullptr);
+        //virtual void build(BtOgreInst *inst, NiObject *parentNiNode = nullptr);
 
         inline const Ogre::Matrix4& getWorldTransform() const { return mWorldTransform; }
         inline const Ogre::Matrix4& getLocalTransform() const { return mLocalTransform; }
@@ -97,7 +97,7 @@ namespace NiBtOgre
         NiCamera(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
         virtual ~NiCamera() {}
 
-        void build(BtOgreInst *inst, NiObject *parentNiNode = nullptr);
+        void build(BtOgreInst *inst, ModelData *data, NiObject *parentNiNode = nullptr);
     };
 
     struct NiDynamicEffect : public NiAVObject
@@ -107,7 +107,7 @@ namespace NiBtOgre
 
         NiDynamicEffect(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
 
-        //virtual void build(BtOgreInst *inst, NiObject *parentNiNode = nullptr);
+        //virtual void build(BtOgreInst *inst, ModelData *data, NiObject *parentNiNode = nullptr);
     };
 
     struct NiLight : public NiDynamicEffect
@@ -119,7 +119,7 @@ namespace NiBtOgre
 
         NiLight(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
 
-        //void build(BtOgreInst *inst, NiObject *parentNiNode = nullptr);
+        //void build(BtOgreInst *inst, ModelData *data, NiObject *parentNiNode = nullptr);
     };
 
     typedef NiLight NiAmbientLight;
@@ -142,7 +142,7 @@ namespace NiBtOgre
 
         NiTextureEffect(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
 
-        //void build(BtOgreInst *inst, NiObject *parentNiNode = nullptr);
+        //void build(BtOgreInst *inst, ModelData *data, NiObject *parentNiNode = nullptr);
     };
 }
 

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2018 cc9cii
+  Copyright (C) 2018, 2019 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -21,61 +21,61 @@
 
 */
 
-// Object Instances
-// =================
-//
-// Objects (i.e. cell references) are constructed from ESM/ESP and NIF files.
-//
-// The NIF files are like object specifications or 'templates'.  ESM/ESP data specify the object's
-// location, rotation, scale, etc.
-//
-// When loading a NIF file, rather than creating a single object instance, various Ogre
-// framework components are filled with Ogre objects.
-//
-// For example, an Ogre::Mesh is created from a NIF file (see NIFMeshLoader::createSubMesh).
-//
-// Then an Ogre::Entity associated with that mesh is created.  That entity is furnished with
-// material controllers, skeleton, etc and stored in ObjectScene.  (see
-// NIFObjectLoader::createEntity)
-//
-// Finally the entities in ObjectScene are attached to an Ogre::SceneNode (see
-// NIFObjectLoader::createObjects)
-//
-// ObjectScene is probably the closest to being the "instantiation" of a NIF.
-//
-// TODO: lifetime of the objects
-//
-//
-// Collaboration (simplified)
-// -------------
+ Object Instances
+ =================
 
-     MWRender::Animation o---------------MWWorld::Ptr
-           o     o             mPtr
-           |     |
-           |     +-----------------------------+
-           |                                   |
-           |                                   |
-           | mObjectRoot                       | mInsert
-           |                                   |
-      NifOgre::ObjectScene*                    |
-           o                                   |
-           | mEntities                         |
-           |                                   |
-      Ogre::Entity* -------------------o Ogre::SceneNode*
-           o          Ogre::ObjectMap
-           | mMesh
-           |
-      Ogre::Mesh*
+ Objects (i.e. cell references) are constructed from ESM/ESP and NIF files.
+
+ The NIF files are like object specifications or 'templates'.  ESM/ESP data specify the
+ object's location, rotation, scale, etc.
+
+ When loading a NIF file, rather than creating a single object instance, various Ogre
+ framework components are filled with Ogre objects.
+
+ For example, an Ogre::Mesh is created from a NIF file (see NIFMeshLoader::createSubMesh).
+
+ Then an Ogre::Entity associated with that mesh is created.  That entity is furnished with
+ material controllers, skeleton, etc and stored in ObjectScene.  (see
+ NIFObjectLoader::createEntity)
+
+ Finally the entities in ObjectScene are attached to an Ogre::SceneNode (see
+ NIFObjectLoader::createObjects)
+
+ ObjectScene is probably the closest to being the "instantiation" of a NIF.
+
+ TODO: lifetime of the objects
 
 
-// MWWorld::Scene::insertCell calls InsertFunctor that calls ::addObject which in turn
-// calls RenderingManager::addObject then the class's insertObject
-//
-// NifOgre::Loader::createObjects creates a new instance of ObjectScene
-// (see components/nifogre/ogrenifloader.cpp) then returns its pointer to the caller
-// (e.g. Animation::setObjectRoot which then stores it as Animation::mObjectRoot)
-//
-// Looks like there is one ObjectScene for each NIF.
+ Collaboration (simplified)
+ -------------
+
+      MWRender::Animation o------------ MWWorld::Ptr
+            o     o            mPtr
+            |     |
+            |     +------------------+
+            |                        |
+            | mObjectRoot            | mInsert
+            |                        |
+            |                   Ogre::SceneNode*
+      NifOgre::ObjectScene*          o
+            o                        |
+            | mEntities              | Ogre::ObjectMap
+            |                        |
+            +------------------ Ogre::Entity*
+                                     o
+                                     | mMesh
+                                     |
+                                Ogre::Mesh*
+
+
+ MWWorld::Scene::insertCell calls InsertFunctor that calls ::addObject which in turn
+ calls RenderingManager::addObject then the class's insertObject
+
+ NifOgre::Loader::createObjects creates a new instance of ObjectScene
+ (see components/nifogre/ogrenifloader.cpp) then returns its pointer to the caller
+ (e.g. Animation::setObjectRoot which then stores it as Animation::mObjectRoot)
+
+ Looks like there is one ObjectScene for each NIF.
 
 
    Scene::insertCell                                               | apps/openmw/mwworld/scene.cpp
@@ -100,21 +100,20 @@
                NifBullet::ManualBulletShapeLoader::load            | components/nifbullet/bulletnifloader.cpp
 
 
-// Resource Management
-// ===================
-//
-// Ogre's resource management framework is used in several places:
-//
-//   1. Mesh (for rendering, see components/nifogre/mesh.cpp)
-//
-//      Below collaboration diagram highlights the key relationships (Warning: simplified).
+ Resource Management
+ ===================
 
-                           Ogre::Resource
-                                ^
-                                |
-                           Ogre::Mesh
+ Ogre's resource management framework is used in several places:
 
-        Ogre::ResourceManager          Ogre::ManualResourceLoader
+   1. Mesh (for rendering, see components/nifogre/mesh.cpp)
+
+      Below collaboration diagram highlights the key relationships (Warning: simplified).
+
+
+                                                                      Ogre::Resource
+                                                                            ^
+                                                                            |
+        Ogre::ResourceManager          Ogre::ManualResourceLoader ----o Ogre::Mesh
                   ^                               ^    ^
                   |    --------------------------/     |
                   |   /                                |
@@ -122,10 +121,12 @@
                                                        |
                                                        |
                                 map<fullname, NifOgre::NIFMeshLoader>
+                                (map is static, i.e. stays forever)
 
         Ogre::SceneManager::createEntity(fullname)
         (the pointer to the entities are stored in ObjectScene for later destruction)
-        (TODO: check if the meshes are unloaded or destoyed - doesn't look like)
+        (TODO: check if the meshes are unloaded or destoyed)
+
 
      MWClass::ForeignStatic::insertObjectRendering
        MWRender::Objects::insertModel
@@ -148,7 +149,7 @@
           (attach Ogre::Entity in ObjectScene to the parent Ogre::SceneNode)
 
 
-//   2. Skeleton (for Animation)
+   2. Skeleton (for Animation)
 
         Ogre::ResourceManager        Ogre::ManualResourceLoader
                   ^                              ^
@@ -156,7 +157,7 @@
         Ogre::SkeletonManager        NifOgre::NIFSkeletonLoader
 
 
-//   3. Physics (see libs/openengine/bullet/physic.cpp)
+   3. Physics (see libs/openengine/bullet/physic.cpp)
 
         Below diagram highlights the key relationships (Warning: not complete).
 
@@ -199,14 +200,14 @@
                   (loads the BulletShape created above and creates a Physic::RigidBody)
 
 
-//   4. NIF (TODO)
+   4. NIF (TODO)
 
 
-// Resource Granuality
-// ===================
-//
-// Mesh (actually submesh)
-// ----
+ Resource Granularity
+ ====================
+
+ Mesh (actually SubMesh)
+ ----
 
    ::addObject
      MWClass::ForeignStatic::getModel                     | returns "meshes\\"+model path from ESM
@@ -231,16 +232,16 @@
 
    "fullname" used as the key for Ogre::MeshManager (which "is a" Ogre::ResourceManager):
 
-// When calling Ogre::SceneManager::createEntity (in NifOgre::NIFObjectLoader::createEntity)
-// the same 'fullname' must be used so that Ogre knows where to find the mesh.
-// NOTE: Ogre versions 1.9+ allows Mesh* to be used instead of 'fullname'
-//
-// NOTE: Not sure of the reason in using 'fullname' with NIF index and shape string appended,
-// it doesn't seem likely that any reuse can happen (probably just used to allow Ogre::Entity
-// to find the corresponding mesh)
-//
-// Physics
-// -------
+ When calling Ogre::SceneManager::createEntity (in NifOgre::NIFObjectLoader::createEntity)
+ the same 'fullname' must be used so that Ogre knows where to find the mesh.
+ NOTE: Ogre versions 1.9+ allows Mesh* to be used instead of 'fullname'
+
+ NOTE: Not sure of the reason in using 'fullname' with NIF index and shape string appended,
+ it doesn't seem likely that any reuse can happen (probably just used to allow Ogre::Entity
+ to find the corresponding mesh)
+
+ Physics
+ -------
 
    ::addObject
      MWClass::ForeignStatic::getModel                     | returns "meshes\\"+model path from ESM
@@ -260,31 +261,31 @@
                  NifBullet::ManualBulletShapeLoader::loadResource
                  (strip 7 chars before calling Nif::Cache, note bug where name is not lower case)
 
-// In the old implementation, a string composed of mesh name and scale is used, see:
-// OEngine::Physic::PhysicEngine::createAndAdjustRigidBody
-//
-// But that makes the granuality of reusable resource at mesh+scale level.  This might still be
-// ok.  But then it might be better at a RigidBody level, and maybe ragdolls have other
-// unexpected consequences (since there are multiple RigidBodies involved).
-//
-// To use Ogre resource management, either this class needs to be derived (multiple
-// inheritance) or needs to 'have' a derived class for loading (via callback).
-//
-// Alternatively, leave the resource management at NIF level (or even 'fullname' level) and any
-// bullet collision shapes can be contained in the model.
-//
-// Not sure if Ogre resource management should continue to be used for physics, since uniquely
-// identifying re-usable bullet shapes may not be trivial.
-//
-// TODO: also check future direction of Ogre 2.1 resource management
-//
-// FIXME: How to pass the scale of the physics object from the ESM/ESP?
-//        One possibility is to store the scale value in ObjectScene from Loader::createObjects
-//        since the parameter parentNode should already have the scale from ESM/ESP.
-//
-// FIXME: Where is the scale applied to Ogre objects?
-//        Is it in MWRender::Objects::insertModel setting scale to SceneNode and setting as the
-//        baseNode to Ptr?  If so do child SceneNodes inherit scaling?
+ In the old implementation, a string composed of mesh name and scale is used, see:
+ OEngine::Physic::PhysicEngine::createAndAdjustRigidBody
+
+ But that makes the granularity of reusable resource at mesh+scale level.  This might still be
+ ok.  But then it might be better at a RigidBody level, and maybe ragdolls have other
+ unexpected consequences (since there are multiple RigidBodies involved).
+
+ To use Ogre resource management, either this class needs to be derived (multiple
+ inheritance) or needs to 'have' a derived class for loading (via callback).
+
+ Alternatively, leave the resource management at NIF level (or even 'fullname' level) and any
+ bullet collision shapes can be contained in the model.
+
+ Not sure if Ogre resource management should continue to be used for physics, since uniquely
+ identifying re-usable bullet shapes may not be trivial.
+
+ TODO: also check future direction of Ogre 2.1 resource management
+
+ FIXME: How to pass the scale of the physics object from the ESM/ESP?
+        One possibility is to store the scale value in ObjectScene from Loader::createObjects
+        since the parameter parentNode should already have the scale from ESM/ESP.
+
+ FIXME: Where is the scale applied to Ogre objects?
+        Is it in MWRender::Objects::insertModel setting scale to SceneNode and setting as the
+        baseNode to Ptr?  If so do child SceneNodes inherit scaling?
 
     MWRender::Objects::insertModel               | Ptr
       MWRender::Objects::insertBegin             | Ptr::mRef::mData::mBaseNode set with pos & (uniform) scale
@@ -295,42 +296,42 @@
               NifOgre::NIFObjectLoader::load     | *sceneNode <- points to Ptr::mRef::mData::mBaseNode
 
 
-// Collision Shapes and Ragdolls
-// =============================
-//
-// TES4/TES5 NIF files may contain collision shapes as well as ragdoll information.
-//
-// In the old implementation the NIF file was loaded at least twice (once for the Ogre
-// rendering mesh and again for bullet shapes).  Possibly another load for skeleton as well.
-//
-// With this new implementation, the NIF file is loaded once.  All the relevant objects should
-// be created during the load, including the physics objects.
-//
-// FIXME: In order to minimise the impact to the existing code, allow rendering code to remain
-//        separate to physics code.  This decision may need to be reviewed.
-//
-// However, loading of the collision and ragdoll info from NIF will still be done while the
-// rendering objects are being built.  The registration of the physics objects to Bullet will
-// be done when the physics code path is executed.  (e.g. calling
-// btDiscreteDynamicsWorld::addRigidBody)
-//
-// Once the physics objects are built, where are they going to be stored?
-//
-// One option is to store the physics objects in ObjectScene even though it is probably meant
-// for Ogre objects only. See: components/nifogre/objectscene.hpp
-//
-// For non-actors (e.g. Clutter/FightersGuild/TargetHeavy01.NIF) ragdoll should be active at
-// the point of instantiation. i.e. when the physics code path reaches it
-//
-// For actors and creatures ragdoll is enabled when the die.  That means Ptr should have access
-// to the ObjectScene somehow. e.g. via MWBase::Environment::get().getWorld()->getAnimation()
+ Collision Shapes and Ragdolls
+ =============================
+
+ TES4/TES5 NIF files may contain collision shapes as well as ragdoll information.
+
+ In the old implementation the NIF file was loaded at least twice (once for the Ogre
+ rendering mesh and again for bullet shapes).  Possibly another load for skeleton as well.
+
+ With this new implementation, the NIF file is loaded once.  All the relevant objects should
+ be created during the load, including the physics objects.
+
+ FIXME: In order to minimise the impact to the existing code, allow rendering code to remain
+        separate to physics code.  This decision may need to be reviewed.
+
+ However, loading of the collision and ragdoll info from NIF will still be done while the
+ rendering objects are being built.  The registration of the physics objects to Bullet will
+ be done when the physics code path is executed.  (e.g. calling
+ btDiscreteDynamicsWorld::addRigidBody)
+
+ Once the physics objects are built, where are they going to be stored?
+
+ One option is to store the physics objects in ObjectScene even though it is probably meant
+ for Ogre objects only. See: components/nifogre/objectscene.hpp
+
+ For non-actors (e.g. Clutter/FightersGuild/TargetHeavy01.NIF) ragdoll should be active at
+ the point of instantiation. i.e. when the physics code path reaches it
+
+ For actors and creatures ragdoll is enabled when the die.  That means Ptr should have access
+ to the ObjectScene somehow. e.g. via MWBase::Environment::get().getWorld()->getAnimation()
 
 
-// Physics Scaling
-// ===============
-//
-// See notes near PhysicEngine::createRagdoll (libs/openengine/bullet/physic.cpp)
-// TODO: maybe move the notes here?
+ Physics Scaling
+ ===============
+
+ See notes near PhysicEngine::createRagdoll (libs/openengine/bullet/physic.cpp)
+ TODO: maybe move the notes here?
 
 
  Collision Masks
@@ -411,8 +412,8 @@ Any <-> Terrain    (rayTest2 from getFacedHandles)
 
 All <-> CollisionType_World (traceDown) CollisionType_HeightMap (traceDown) // same in master
 
-// getFacedHandle, getFacedHandles, rayTest and rayTest2 are no longer used in master
-// probably getting data directly from Osg meshes
+ getFacedHandle, getFacedHandles, rayTest and rayTest2 are no longer used in master
+ probably getting data directly from Osg meshes
 
 
 
@@ -531,4 +532,4 @@ Date:   Fri Mar 8 23:46:25 2013 +0100
     Create a separate rigid body / shape with full details for raycasting, remove the occlusion query hack
 
 
-// vim: spell spelllang=en_us syntax=cpp
+ vim: spell spelllang=en_us syntax=cpp

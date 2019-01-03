@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2018 cc9cii
+  Copyright (C) 2018, 2019 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -40,6 +40,14 @@
 namespace Ogre
 {
     class SceneNode;
+}
+
+namespace OEngine
+{
+    namespace Physic
+    {
+        class RigidBody;
+    }
 }
 
 namespace NiBtOgre
@@ -88,7 +96,7 @@ namespace NiBtOgre
         struct EntityConstructionInfo
         {
             // A unique name for the mesh.  Uniqueness is needed by the Ogre 1.x MeshManager,
-            // possibly Ogre 2.x as well. Concatenation of model name, ":", parent NiNode name.
+            // possibly Ogre 2.x as well. Concatenation of model name, "@", parent NiNode name.
             // (e.g. meshes\\architecture\\imperialcity\\icwalltower01.nif:ICWallTower01)
             std::string                 mMeshAndNodeName;
 
@@ -103,7 +111,11 @@ namespace NiBtOgre
 #endif
         // Keep the model around in case Ogre wants to load the resource (i.e. Mesh) again
         // FIXME: resources are no longer loaded from here, do we still need an auto_ptr?
+#if 0
         std::auto_ptr<NiBtOgre::NiModel> mModel;
+#else
+        Ogre::SharedPtr<NiBtOgre::NiModel> mModel;
+#endif
 
         int mFlags; // some global properties
         Ogre::SceneNode *mBaseSceneNode;
@@ -118,7 +130,7 @@ namespace NiBtOgre
         std::vector<AnimTrackInterpolator<float>*> mInterpolators; // prevent memory leak
 
         // key is the block index of the target object (i.e. typically NiNode)
-        std::map<std::uint32_t, std::unique_ptr<btRigidBody> > mRigidBodies;
+        std::map<std::uint32_t, std::shared_ptr<OEngine::Physic::RigidBody> > mRigidBodies;
 
         std::map<int, std::vector<int> > mGeomMorpherControllerMap;
 

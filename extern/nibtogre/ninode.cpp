@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015-2018 cc9cii
+  Copyright (C) 2015-2019 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -27,6 +27,7 @@
 
 #include <cassert>
 #include <stdexcept>
+#include <memory>
 #include <iostream> // FIXME: debugging only
 
 #include <OgreSkeleton.h>
@@ -37,6 +38,7 @@
 #include "nitimecontroller.hpp"
 #include "nidata.hpp"
 #include "btogreinst.hpp"
+#include "nicollisionobject.hpp"
 
 #ifdef NDEBUG // FIXME: debuggigng only
 #undef NDEBUG
@@ -80,7 +82,10 @@ NiBtOgre::NiNode::NiNode(uint32_t index, NiStream& stream, const NiModel& model,
 
     if (mCollisionObjectIndex != -1 || mChildren.size() > 0) // build only if it will be used
     {
-        mLocalTransform.makeTransform(mTranslation, Ogre::Vector3(mScale), Ogre::Quaternion(mRotation));
+//      if (NiObject::index() == 0)
+//          mLocalTransform.makeTransform(mTranslation, Ogre::Vector3(mScale), Ogre::Quaternion::IDENTITY);
+//      else
+            mLocalTransform.makeTransform(mTranslation, Ogre::Vector3(mScale), Ogre::Quaternion(mRotation));
 
         if (NiObject::index() > 0)
             mWorldTransform = static_cast<NiAVObject*>(getParentNode())->getWorldTransform() * mLocalTransform;
@@ -216,7 +221,7 @@ void NiBtOgre::NiNode::addBones(Ogre::Skeleton *skeleton,
 //   Bit 9 :                       Unknown
 //
 // necromancer/hood_gnd.nif is 0x0b, i.e. 1011 - animation, collision, havok
-void NiBtOgre::NiNode::build(BtOgreInst *inst, NiObject* parent)
+void NiBtOgre::NiNode::build(BtOgreInst *inst, ModelData *data, NiObject* parent)
 {
     // There doesn't seem to be a flag to indicate an editor marker.  To filter them out, look
     // out for strings starting with:
@@ -360,8 +365,14 @@ void NiBtOgre::NiNode::build(BtOgreInst *inst, NiObject* parent)
     //
     //
     // the collision object might be attached to one of the children, see necromancer/hood_gnd.nif
+    enableCollision = true; // FIXME: temp testing
     if (enableCollision && mCollisionObjectIndex != -1)
-        mModel.getRef<NiObject>((int32_t)mCollisionObjectIndex)->build(inst, this);
+    {
+        //mModel.getRef<NiObject>((int32_t)mCollisionObjectIndex)->build(inst, data, this);
+        data->mBhkRigidBodyMap[NiObject::index()]
+            = std::make_pair(mModel.getModelName()+"@"+mNodeName,
+                             mModel.getRef<bhkCollisionObject>(mCollisionObjectIndex)->getBodyIndex());
+    }
 
     // NiTransformController (e.g. fire/FireTorchLargeSmoke)
     // NiVisController (e.g. oblivion/seige/siegecrawlerdeathsigil, oblivion/gate/oblivionmagicgate01)
@@ -427,7 +438,7 @@ void NiBtOgre::NiNode::build(BtOgreInst *inst, NiObject* parent)
 
         // NiGeometry blocks are only registered here and built later.  One possible side
         // benefit is that at least at this NiNode level we know if there are any skins.
-        NiObject::mModel.getRef<NiObject>((int32_t)mChildren[i])->build(inst, this);
+        NiObject::mModel.getRef<NiObject>((int32_t)mChildren[i])->build(inst, data, this);
     }
 
     // FIXME: too many bones filename = "meshes\\oblivion\\gate\\oblivionarchgate01.nif"
@@ -445,7 +456,7 @@ void NiBtOgre::NiNode::build(BtOgreInst *inst, NiObject* parent)
         if (mEffects[i] == -1) // no object
             continue;
 
-        NiObject::mModel.getRef<NiObject>((int32_t)mEffects[i])->build(inst, this);
+        NiObject::mModel.getRef<NiObject>((int32_t)mEffects[i])->build(inst, data, this);
     }
 
 }

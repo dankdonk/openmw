@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2018 cc9cii
+  Copyright (C) 2018, 2019 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -22,6 +22,9 @@
 */
 #include "btogreinst.hpp"
 
+#include <btBulletDynamicsCommon.h>
+#include <btBulletCollisionCommon.h>
+
 //#include <OgreMeshManager.h>
 #//include <OgreMesh.h>
 //#include <OgreSceneManager.h>
@@ -42,11 +45,11 @@ void NiBtOgre::BtOgreInst::instantiate()
 {
     // FIXME: howto transform nodes to root transform after the meshes have been built?
     // e.g. NiNode CathedralCryptChain11 (18) has 1 mesh CathedralCryptChain11:36 (24)
-    //      but it is a child to NiNode CathedralCryptChain (14) which as its own
+    //      but it is a child to NiNode CathedralCryptChain (14) which has its own
     //      transform.
     //
     // Is it possible to leave that for Ogre::SceneNode to take care of?
     // i.e. for each NiNode with a mesh create a child scenenode
 
-    mModel->buildMeshAndEntity(this);
+    static_cast<NiModel*>(mModel.get())->buildMeshAndEntity(this);
 }

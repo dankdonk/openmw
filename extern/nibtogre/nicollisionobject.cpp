@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015-2018 cc9cii
+  Copyright (C) 2015-2019 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -44,9 +44,10 @@ NiBtOgre::NiCollisionObject::NiCollisionObject(uint32_t index, NiStream& stream,
     : NiObject(index, stream, model, data)
 {
     //stream.getPtr<NiAVObject>(mTarget, model.objects());
-    std::int32_t rIndex = -1;
-    stream.read(rIndex);
-    mTarget = model.getRef<NiAVObject>(rIndex);
+    //std::int32_t rIndex = -1;
+    //stream.read(rIndex);
+    //mTarget = model.getRef<NiAVObject>(rIndex);
+    stream.read(mTargetIndex);
 }
 
 NiBtOgre::NiCollisionData::NiCollisionData(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
@@ -104,11 +105,11 @@ NiBtOgre::bhkNiCollisionObject::bhkNiCollisionObject(uint32_t index, NiStream& s
 // Old implementation was at ManualBulletShapeLoader::handleBhkCollisionObject()
 // It is probably intended to be per rigid body, possibly TES3 NIF had no separate
 // collision shapes and hence considered the whole thing as one rigid body?
-void NiBtOgre::bhkNiCollisionObject::build(BtOgreInst *inst, NiObject *parentNiNode)
+void NiBtOgre::bhkNiCollisionObject::build(BtOgreInst *inst, ModelData *data, NiObject *parentNiNode)
 {
     // collision objects have 'target' which should have the parent world transform
     // FIXME: assert during testing only
-    assert(mTarget->index() == parentNiNode->index() && "CollisionObject: parent is not the target");
+    assert(mTargetIndex == parentNiNode->index() && "CollisionObject: parent is not the target");
 
 #if 0
     // mBodyIndex refers to either a bhkRigidBody or bhkRigidBodyT
@@ -122,7 +123,7 @@ void NiBtOgre::bhkNiCollisionObject::build(BtOgreInst *inst, NiObject *parentNiN
     }
 #endif
 
-    mModel.getRef<NiObject>(mBodyIndex)->build(inst, parentNiNode); // NOTE: parent passed
+    mModel.getRef<NiObject>(mBodyIndex)->build(inst, data, parentNiNode); // NOTE: parent passed
 }
 
 // Seen in NIF ver 20.0.0.4, 20.0.0.5

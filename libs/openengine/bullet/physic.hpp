@@ -6,6 +6,7 @@
 #include <string>
 #include <list>
 #include <map>
+#include <memory>
 #include "BulletShapeLoader.h"
 #include "BulletCollision/CollisionShapes/btScaledBvhTriangleMeshShape.h"
 #include <boost/shared_ptr.hpp>
@@ -182,10 +183,14 @@ namespace Physic
 
     struct AnimatedShapeInstance
     {
+//        std::unique_ptr<btCollisionShape> mBtShape;
+        //bool delme;
         btCollisionShape* mCompound;
 
         // Maps node record index to child index in the compound shape
         std::map<size_t, size_t> mAnimatedShapes;
+        //AnimatedShapeInstance() : delme(false), mCompound(nullptr) {}
+        //~AnimatedShapeInstance() { if (delme && mCompound) delete mCompound; mCompound = 0; }
     };
 
     /**
@@ -368,6 +373,8 @@ namespace Physic
         void stepDebug(Ogre::SceneManager *sceneMgr);
         void createDebugDraw(Ogre::SceneManager *sceneMgr);
         void removeDebugDraw(Ogre::SceneManager *sceneMgr);
+
+        void addRigidBody(RigidBody* body);
 
     private:
         PhysicEngine(const PhysicEngine&);

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2018 cc9cii
+  Copyright (C) 2018, 2019 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -31,10 +31,20 @@ namespace NiBtOgre
 {
     class NiModel;
 
+    // There is one skeleton per NIF model.  Hence the unique name for the
+    // Ogre::SkeletonManager is the NIF name.
+    //
+    // TODO: different games might be using the same name, so some kind of
+    //       namespace concept is needed
     class SkeletonLoader : public Ogre::ManualResourceLoader
     {
         const NiModel& mModel;
 
+        //      NiNode block index
+        //        |
+        //        |            bone handle
+        //        |              |
+        //        v              v
         std::map<std::uint32_t, std::uint16_t> mIndexToHandleMap;
 
     public:

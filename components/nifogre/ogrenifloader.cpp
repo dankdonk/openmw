@@ -41,9 +41,11 @@
 #include <OgreSkeletonInstance.h>
 #include <OgreSceneNode.h>
 #include <OgreMesh.h>
+#include <OgreSharedPtr.h>
 
 #include <extern/shiny/Main/Factory.hpp>
 
+#include <extern/nibtogre/nimodelmanager.hpp>
 #include <extern/nibtogre/nimodel.hpp>
 #include <extern/nibtogre/btogreinst.hpp>
 
@@ -1857,7 +1859,7 @@ public:
         // format?  or convert all to the new code?
 
         Nif::NIFFilePtr nif = Nif::Cache::getInstance().load(name);
-        if (nif->getVersion() >=0x0a000100) // tes4 style, i.e. from 10.0.1.0
+        if (nif->getVersion() >= 0x0a000100) // tes4 style, i.e. from 10.0.1.0
         {
 #if 0
             NIFObjectLoader::handleNode(nif, name, group, sceneNode, node, scene, flags, 0, 0); // flags is 0 by default
@@ -1883,8 +1885,14 @@ public:
                 // manager so that they don't need to be re-built from the nif file each time
                 //std::auto_ptr<NiBtOgre::NiModel> NiModel(new NiBtOgre::NiModel(name));
                 //nimodel->build(inst.get());
+    #if 0
                 inst->mModel = std::auto_ptr<NiBtOgre::NiModel>(new NiBtOgre::NiModel(name, group)); // read NIF
-                inst->mModel->build(inst.get());                                                     // build object
+    #else
+                //inst->mModel = Ogre::static_pointer_cast<NiBtOgre::NiModel>(
+                    //NiBtOgre::NiModelManager::getSingleton().createOrRetrieve(name, group).first);
+                inst->mModel = NiBtOgre::NiModelManager::getSingleton().getOrLoadByName(name, group);
+    #endif
+                static_cast<NiBtOgre::NiModel*>(inst->mModel.get())->build(inst.get());             // build object
             }
             catch (std::exception&) // fixme
             {

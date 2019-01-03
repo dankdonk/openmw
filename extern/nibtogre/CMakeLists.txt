@@ -1,5 +1,5 @@
 #
-#  Copyright (C) 2015-2017 cc9cii
+#  Copyright (C) 2015-2019 cc9cii
 #
 #  This software is provided 'as-is', without any express or implied
 #  warranty.  In no event will the authors be held liable for any damages
@@ -26,9 +26,13 @@ set(NIBTOGRE_SOURCE_FILES
     nistream.cpp
     niheader.cpp
     nimodel.cpp
+    nimodelmanager.cpp
     btogreinst.cpp
     meshloader.cpp
     skeletonloader.cpp
+    btrigidbodyci.cpp
+#   btrigidbodyciloader.cpp
+    btrigidbodycimanager.cpp
     ogrematerial.cpp
 
     niobject.cpp

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015-2018 cc9cii
+  Copyright (C) 2015-2019 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -89,6 +89,7 @@ namespace NiBtOgre
     class NiStream;
     class Header;
     struct bhkRigidBody;
+    class NiNode;
 
     typedef NiObject bhkRefObject;
     typedef bhkRefObject bhkSerializable;
@@ -337,7 +338,7 @@ namespace NiBtOgre
         //    0 = transform applied (e.g. tri mesh, convex vertex hull)
         //    1 = transform not applied and have local transform (e.g. transform sphere/box, capsule)
         //    2 = transform not applied and have local and subshape transforms (e.g. transform capsule)
-        virtual std::unique_ptr<btCollisionShape> buildShape(const btTransform& transform) const = 0;
+        virtual btCollisionShape *buildShape(const btTransform& transform) const = 0;
 
         // some shapes have local transforms (e.g. bhkTransformShape) or have to create one due to the
         // difference between NIF and Bullet's way of specifying the shape (e.g. bhkCapsuleShape)
@@ -361,7 +362,7 @@ namespace NiBtOgre
 
         bhkMoppBvTreeShape(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
 
-        std::unique_ptr<btCollisionShape> buildShape(const btTransform& transform) const;
+        btCollisionShape *buildShape(const btTransform& transform) const;
     };
 
     class NiAVObject;
@@ -378,7 +379,7 @@ namespace NiBtOgre
 
         bhkCompressedMeshShape(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
 
-        std::unique_ptr<btCollisionShape> buildShape(const btTransform& transform) const;
+        btCollisionShape *buildShape(const btTransform& transform) const;
     };
 
     struct bhkConvexListShape : public bhkShape
@@ -389,7 +390,7 @@ namespace NiBtOgre
 
         bhkConvexListShape(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
 
-        std::unique_ptr<btCollisionShape> buildShape(const btTransform& transform) const;
+        btCollisionShape *buildShape(const btTransform& transform) const;
     };
 
     // Seen in NIF ver 20.0.0.4, 20.0.0.5
@@ -402,7 +403,7 @@ namespace NiBtOgre
 
         bhkListShape(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
 
-        std::unique_ptr<btCollisionShape> buildShape(const btTransform& transform) const;
+        btCollisionShape *buildShape(const btTransform& transform) const;
     };
 
     // Seen in NIF ver 20.0.0.4, 20.0.0.5
@@ -431,7 +432,7 @@ namespace NiBtOgre
 
         bhkNiTriStripsShape(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
 
-        std::unique_ptr<btCollisionShape> buildShape(const btTransform& transform) const;
+        btCollisionShape *buildShape(const btTransform& transform) const;
     };
 
     struct OblivionSubShape
@@ -462,7 +463,7 @@ namespace NiBtOgre
 
         bhkPackedNiTriStripsShape(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
 
-        std::unique_ptr<btCollisionShape> buildShape(const btTransform& transform) const;
+        btCollisionShape *buildShape(const btTransform& transform) const;
     };
 
 
@@ -482,7 +483,7 @@ namespace NiBtOgre
 
         hkPackedNiTriStripsData(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
 
-        std::unique_ptr<btCollisionShape> buildShape(const btTransform& transform) const;
+        btCollisionShape *buildShape(const btTransform& transform) const;
     };
 
     // Seen in NIF ver 10.0.1.0 (clutter/farm/oar0.nif)
@@ -495,7 +496,7 @@ namespace NiBtOgre
 
         bhkConvexSweepShape(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
 
-        std::unique_ptr<btCollisionShape> buildShape(const btTransform& transform) const;
+        btCollisionShape *buildShape(const btTransform& transform) const;
     };
 
     struct bhkSphereRepShape : public bhkShape
@@ -505,7 +506,7 @@ namespace NiBtOgre
 
         bhkSphereRepShape(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
 
-        std::unique_ptr<btCollisionShape> buildShape(const btTransform& transform) const;
+        btCollisionShape *buildShape(const btTransform& transform) const;
     };
 
     typedef bhkSphereRepShape bhkConvexShape;
@@ -519,7 +520,7 @@ namespace NiBtOgre
 
         bhkBoxShape(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
 
-        std::unique_ptr<btCollisionShape> buildShape(const btTransform& transform) const;
+        btCollisionShape *buildShape(const btTransform& transform) const;
     };
 
     // Seen in NIF ver 20.0.0.4, 20.0.0.5
@@ -531,12 +532,14 @@ namespace NiBtOgre
         btVector3 mSecondPoint;
         float mRadius2;
 
-        btScalar mHeight;
+        btScalar mHalfHeight;
+    private:
         btTransform mTransform;
+    public:
 
         bhkCapsuleShape(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
 
-        std::unique_ptr<btCollisionShape> buildShape(const btTransform& transform) const;
+        btCollisionShape *buildShape(const btTransform& transform) const;
 
         const btTransform& transform() const { return mTransform; }
     };
@@ -552,7 +555,7 @@ namespace NiBtOgre
 
         bhkConvexVerticesShape(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
 
-        std::unique_ptr<btCollisionShape> buildShape(const btTransform& transform) const;
+        btCollisionShape *buildShape(const btTransform& transform) const;
     };
 
 #if 0 // use typedef instead
@@ -582,7 +585,7 @@ namespace NiBtOgre
 
         bhkMultiSphereShape(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
 
-        std::unique_ptr<btCollisionShape> buildShape(const btTransform& transform) const;
+        btCollisionShape *buildShape(const btTransform& transform) const;
     };
 
     // Seen in NIF ver 20.0.0.4, 20.0.0.5
@@ -593,11 +596,13 @@ namespace NiBtOgre
         float mUnknownFloat1;
         std::vector<unsigned char> mUnknown8Bytes;
         // NOTE: Ogre and OpenGL are right-to-left ordering while Direct3D and Bullet are left-to-right
+    private:
         btTransform mTransform;
+    public:
 
         bhkTransformShape(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
 
-        std::unique_ptr<btCollisionShape> buildShape(const btTransform& transform) const;
+        btCollisionShape *buildShape(const btTransform& transform) const;
 
         const btTransform& transform() const { return mTransform; }
         const bhkShapeRef shapeIndex() const { return mShapeIndex; }
@@ -663,7 +668,8 @@ namespace NiBtOgre
 
         bhkRigidBody(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
 
-        void build(BtOgreInst *inst, NiObject* parent);
+        void build(BtOgreInst *inst, ModelData *data, NiObject* parent);
+        btCollisionShape *getShape(NiNode *parentNiNode);
     };
 
     // NOTE: the rigidbody type can be differentiated by calling NiBtOgre::NiModel::blockType
@@ -682,7 +688,7 @@ namespace NiBtOgre
 
         bhkSimpleShapePhantom(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
 
-        void build(BtOgreInst *inst, NiObject* parent);
+        void build(BtOgreInst *inst, ModelData *data, NiObject* parent);
     };
 }
 

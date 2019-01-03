@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015-2018 cc9cii
+  Copyright (C) 2015-2019 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -85,10 +85,10 @@ NiBtOgre::NiAVObject::NiAVObject(uint32_t index, NiStream& stream, const NiModel
 }
 
 
-void NiBtOgre::NiAVObject::build(BtOgreInst *inst, NiObject *parent)
-{
+//void NiBtOgre::NiAVObject::build(BtOgreInst *inst, NiObject *parent)
+//{
     // probably never called, remove?
-}
+//}
 
 NiBtOgre::NiCamera::NiCamera(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
     : NiAVObject(index, stream, model, data), mUseOrthographicProjection(false)
@@ -119,7 +119,7 @@ NiBtOgre::NiCamera::NiCamera(uint32_t index, NiStream& stream, const NiModel& mo
         stream.skip(sizeof(std::uint32_t)); // Unknown Int2
 }
 
-void NiBtOgre::NiCamera::build(BtOgreInst *inst, NiObject *parent)
+void NiBtOgre::NiCamera::build(BtOgreInst *inst, ModelData *data, NiObject *parent)
 {
 }
 

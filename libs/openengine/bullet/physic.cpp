@@ -11,7 +11,12 @@
 #include <OgreSceneManager.h>
 #include <OgreEntity.h>
 
+#include <extern/nibtogre/btrigidbodyci.hpp>
+#include <extern/nibtogre/btrigidbodycimanager.hpp>
+
 #include <components/nifbullet/bulletnifloader.hpp>
+#include <components/nif/niffile.hpp>
+#include <components/nifcache/nifcache.hpp>
 #include <components/misc/stringops.hpp>
 
 #include "BtOgrePG.h"
@@ -507,8 +512,7 @@ namespace Physic
     // has to be a ragdoll type.
     //
     // Ogre::ResourceManager calls OEngine::physic::BulletShapeManager::createImpl() to create a
-    // new instance of BulletShape. This of course happens before the NIF file is loaded.  We
-    // seem to have a some kind of circular dependency here.
+    // new instance of BulletShape. The NIF file is loaded as required.
     //
     // Because the resource is managed by Ogre, it is probably not a good idea to delete and
     // assign a new object on the fly.
@@ -545,13 +549,97 @@ namespace Physic
         std::string sid = (boost::format("%07.3f") % scale).str();
         std::string outputstring = mesh + sid;
 
-    std::string filetype = mesh;
-    //Misc::StringUtils::lowerCase(filetype);
-    if (Misc::StringUtils::lowerCase(filetype) == "meshes\\architecture\\imperialcity\\icsigncopious01.nif")
-    {
+//  std::string filetype = mesh;
+//  //Misc::StringUtils::lowerCase(filetype);
+//  if (Misc::StringUtils::lowerCase(filetype) == "meshes\\architecture\\imperialcity\\icsigncopious01.nif")
+//  {
+//      std::cout << mesh << std::endl;
+//  }
+        Nif::NIFFilePtr nif = Nif::Cache::getInstance().load(mesh);
+        if (nif->getVersion() >=0x0a000100) // tes4 style, i.e. from 10.0.1.0
+        {
+//          if (scale - 1.f > SIMD_EPSILON)
+//              std::cout << scale << std::endl;
 
-        std::cout << mesh << std::endl;
-    }
+            std::string lowerMesh = /*mesh*/outputstring;
+            Misc::StringUtils::lowerCaseInPlace(lowerMesh);
+
+            BtRigidBodyCIPtr ci
+                = NiBtOgre::BtRigidBodyCIManager::getSingleton().getOrLoadByName(lowerMesh, "General");
+
+            std::map<std::int32_t, btCollisionShape*>::const_iterator iter;
+            for (iter = ci->mBtCollisionShapeMap.begin(); iter != ci->mBtCollisionShapeMap.end(); ++iter)
+            {
+                //AnimatedShapeInstance instance;
+                //instance.mCompound = iter->second;
+                //instance.mCompound->setLocalScaling( btVector3(scale,scale,scale));
+                btCollisionShape *collisionShape = iter->second;
+                collisionShape->setLocalScaling( btVector3(scale,scale,scale));
+                btRigidBody::btRigidBodyConstructionInfo CI
+                    = btRigidBody::btRigidBodyConstructionInfo(0,0, collisionShape);
+                //Ogre::SceneNode childNode = node->createChild();
+                RigidBody* body = new RigidBody(CI,name/*+std::to_string(iter->first)*/); // FIXME: name repeated
+                body->mPlaceable = placeable;
+
+#if 0
+                if (!raycasting/* && !shape->mAnimatedShapes.empty()*/)
+                {
+                    AnimatedShapeInstance instance;
+                    instance.mAnimatedShapes = shape->mAnimatedShapes;
+                    instance.mCompound = collisionShape;
+                    mAnimatedShapes[body] = instance;
+                }
+                if (raycasting/* && !shape->mAnimatedRaycastingShapes.empty()*/)
+                {
+                    AnimatedShapeInstance instance;
+                    instance.mAnimatedShapes = shape->mAnimatedRaycastingShapes;
+                    instance.mCompound = collisionShape;
+                    mAnimatedRaycastingShapes[body] = instance;
+                }
+#endif
+#if 0
+                if (instance.mCompound->getUserIndex() == -1)
+                //if (instance.mCompound->isCompound() && static_cast<btCompoundShape*>(instance.mCompound)->getNumChildShapes() == 1 &&
+                    //std::string(static_cast<btCompoundShape*>(instance.mCompound)->getChildShape(0)->getName()) == "Box")
+                {
+                    //btTransform t = static_cast<btCompoundShape*>(instance.mCompound)->getChildTransform(0);
+                    //btVector3 v = t.getOrigin();
+                    //btQuaternion q = t.getRotation();
+
+                    Ogre::Matrix4 mat = nimodel->getRef<NiBtOgre::NiNode>(iter->first)->getWorldTransform();
+                    adjustRigidBody(body, position, rotation, mat.getTrans()*scale, mat.extractQuaternion());
+
+                    //static_cast<btCompoundShape*>(instance.mCompound)->updateChildTransform(0, btTransform::getIdentity());
+
+                    //adjustRigidBody(body, position, rotation, Ogre::Vector3(v.getX(), v.getY(), v.getZ()) * scale,
+                        //Ogre::Quaternion(q.getW(), q.getX(), q.getY(), q.getZ()));
+                }
+                //else if (instance.mCompound->isCompound())
+                    //std::cout << "check" << std::endl;
+                else
+#endif
+                adjustRigidBody(body, position, rotation, Ogre::Vector3(0.f) * scale, Ogre::Quaternion::IDENTITY);
+
+                if (!raycasting)
+                {
+                    //assert (mCollisionObjectMap.find(name) == mCollisionObjectMap.end());
+                    mCollisionObjectMap[name] = body;
+                    mDynamicsWorld->addRigidBody(
+                            body,CollisionType_World,CollisionType_Actor|CollisionType_HeightMap);
+                }
+                else
+                {
+                    //assert (mRaycastingObjectMap.find(name) == mRaycastingObjectMap.end());
+                    mRaycastingObjectMap[name] = body;
+                    mDynamicsWorld->addRigidBody(
+                            body,CollisionType_Raycasting,CollisionType_Raycasting|CollisionType_Projectile);
+                    body->setCollisionFlags(
+                            body->getCollisionFlags() | btCollisionObject::CF_DISABLE_VISUALIZE_OBJECT);
+                }
+            }
+
+            return 0;
+        }
 
         //get the shape from the .nif
         mShapeLoader->load(outputstring,"General");
@@ -1545,6 +1633,14 @@ namespace Physic
             if(sceneMgr->hasSceneNode(sceneNodeName))
                 sceneMgr->destroySceneNode(sceneNodeName);
         }
+    }
+
+    void PhysicEngine::addRigidBody(RigidBody* body)
+    {
+            mCollisionObjectMap[body->mName] = body;
+
+            mDynamicsWorld->addRigidBody(body,
+                    CollisionType_World, CollisionType_HeightMap|CollisionType_Actor|CollisionType_Projectile);
     }
 
 }

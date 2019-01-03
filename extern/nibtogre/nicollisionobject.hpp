@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015-2018 cc9cii
+  Copyright (C) 2015-2019 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -49,7 +49,10 @@ namespace NiBtOgre
     class NiCollisionObject : public NiObject
     {
     protected:
-        NiAVObject *mTarget; // Ptr
+        // architecture/castle/castlelight01.nif (TES4) shows that some of the Ptr refer to
+        // objects not yet loaded.  Change to Ref instead.
+        //NiAVObject *mTarget; // Ptr
+        NiAVObjectRef mTargetIndex;
 
     public:
         NiCollisionObject(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
@@ -118,7 +121,8 @@ namespace NiBtOgre
         virtual ~bhkNiCollisionObject() {}
 
         // parentNiNode is used to calculate the world transform
-        virtual void build(BtOgreInst *inst, NiObject *parentNiNode = nullptr);
+        virtual void build(BtOgreInst *inst, ModelData *data, NiObject *parentNiNode = nullptr);
+        int32_t getBodyIndex() const { return mBodyIndex; }
     };
 
     typedef bhkNiCollisionObject bhkCollisionObject; // Seen in NIF version 20.0.0.4, 20.0.0.5

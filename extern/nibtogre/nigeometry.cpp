@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015-2018 cc9cii
+  Copyright (C) 2015-2019 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -127,7 +127,7 @@ NiBtOgre::NiTriBasedGeom::NiTriBasedGeom(uint32_t index, NiStream& stream, const
         return;
     }
 
-    data.registerNiTriBasedGeom(parentNode->index(), mModel.getModelName()+":"+parentNode->getNodeName(), this);
+    data.registerNiTriBasedGeom(parentNode->index(), mModel.getModelName()+"@"+parentNode->getNodeName(), this);
 }
 
 // actual build happens later, after the parent NiNode has processed all its children
@@ -203,7 +203,7 @@ std::string NiBtOgre::NiTriBasedGeom::getMaterial()
     // now the sub-mesh knows about *all* the properties, retrieve or create a material
     // NOTE: needs a unique name (in case of creation) for Ogre MaterialManager
     // TODO: probably don't need the parent node name, commented out for now
-    return mOgreMaterial.getOrCreateMaterial(mModel.getModelName()+":"+/*mParent->getNodeName()+":"+*/
+    return mOgreMaterial.getOrCreateMaterial(mModel.getModelName()+"@"+/*mParent->getNodeName()+":"+*/
                                              mModel.indexToString(NiObjectNET::getNameIndex()));
 }
 
@@ -271,11 +271,14 @@ bool NiBtOgre::NiTriBasedGeom::createSubMesh(Ogre::Mesh *mesh, BoundsFinder& bou
                                  Ogre::Vector3(NiAVObject::mScale),
                                  Ogre::Quaternion(NiAVObject::mRotation));
 
+    const NiNode* parentNode
+        = NiObject::mModel.getRef<NiNode>(NiObject::mModel.getNiNodeParent(NiObject::index()));
+
     Ogre::Matrix4 transform = Ogre::Matrix4(Ogre::Matrix4::IDENTITY);
     if (!isStatic)
-        transform = mParent->getLocalTransform() * localTransform;
+        transform = parentNode->getLocalTransform() * localTransform;
     else
-        transform = mParent->getWorldTransform() * localTransform;
+        transform = parentNode->getWorldTransform() * localTransform;
 
     // NOTE: below code copied from components/nifogre/mesh.cpp (OpenMW)
 

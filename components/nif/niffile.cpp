@@ -35,7 +35,7 @@ NIFFile::NIFFile(const std::string &name)
     std::vector<std::string> strings;
 
     parseHeader(nif, blockTypes, blockTypeIndex, blockSize, strings);
-    nif.rewind();
+    nif.close();
 #endif
 }
 

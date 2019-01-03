@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015-2018 cc9cii
+  Copyright (C) 2015-2019 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -76,7 +76,7 @@ namespace NiBtOgre
         virtual ~NiNode() {};
 
         // It seems that for TES4 only NiNodes/NiBillboardNode are root nodes?
-        virtual void build(BtOgreInst *inst, NiObject *parentNiNode = nullptr);
+        virtual void build(BtOgreInst *inst, ModelData *data, NiObject *parentNiNode = nullptr);
 
         // For NiGeometry children (e.g. NiTriStrips)
         virtual inline const std::string& getNodeName() const { return mNodeName; }

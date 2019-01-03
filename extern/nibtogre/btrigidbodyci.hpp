@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2018 cc9cii
+  Copyright (C) 2019 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -20,36 +20,44 @@
   cc9cii cc9c@iinet.net.au
 
 */
-#ifndef NIBTOGRE_MESHLOADER_H
-#define NIBTOGRE_MESHLOADER_H
+#ifndef NIBTOGRE_BTRIGIDBODYCI_H
+#define NIBTOGRE_BTRIGIDBODYCI_H
 
-#include <vector>
+#include <memory>
+
+#include <btBulletCollisionCommon.h>
+#include <btBulletDynamicsCommon.h>
+
+#include <map>
 
 #include <OgreResource.h>
 
+namespace Ogre
+{
+    class ResourceManager;
+    class ManualResourceLoader;
+}
+
 namespace NiBtOgre
 {
-    struct NiTriBasedGeom;
-    class NiModel;
 
-    class MeshLoader : public Ogre::ManualResourceLoader
+    class BtRigidBodyCI: public Ogre::Resource
     {
-        const NiModel& mModel;
+        BtRigidBodyCI();
+        BtRigidBodyCI(const BtRigidBodyCI& other);
+        BtRigidBodyCI& operator=(const BtRigidBodyCI& other);
 
-        std::vector<NiTriBasedGeom*> mSubMeshGeometry; // registered NiNode children for the mesh
+    protected:
+        void loadImpl();
+        void unloadImpl();
 
     public:
+        std::map<int32_t, btCollisionShape *> mBtCollisionShapeMap;
 
-        MeshLoader(const NiModel& model);
-
-        const std::vector<NiTriBasedGeom*>& getSubMeshGeometry() const { return mSubMeshGeometry; }
-
-        // returns the index number of registered NiTriShape/NiTriStrips
-        /*std::uint32_t*/void registerSubMeshGeometry(NiTriBasedGeom* geometry);
-
-        // reimplement Ogre::ManualResourceLoader
-        virtual void loadResource(Ogre::Resource *resource);
+        BtRigidBodyCI(Ogre::ResourceManager *creator, const Ogre::String& name, Ogre::ResourceHandle handle,
+                const Ogre::String& group, bool isManual, Ogre::ManualResourceLoader* loader);
+        ~BtRigidBodyCI();
     };
 }
 
-#endif // NIBTOGRE_MESHLOADER_H
+#endif // NIBTOGRE_BTRIGIDBODYCI_H

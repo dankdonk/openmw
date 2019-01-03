@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2018 cc9cii
+  Copyright (C) 2018, 2019 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -42,7 +42,7 @@ NiBtOgre::SkeletonLoader::SkeletonLoader(const NiModel& model) : mModel(model)
 // indicies/names.
 void NiBtOgre::SkeletonLoader::loadResource(Ogre::Resource *resource)
 {
-    Ogre::Skeleton* skeleton = dynamic_cast<Ogre::Skeleton*>(resource);
+    Ogre::Skeleton* skeleton = static_cast<Ogre::Skeleton*>(resource);
     NiNode *skeletonRoot = mModel.getRef<NiNode>(mModel.getRootIndex());
 
     skeletonRoot->addBones(skeleton, nullptr, mIndexToHandleMap);

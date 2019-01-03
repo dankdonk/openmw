@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2017-2018 cc9cii
+  Copyright (C) 2017-2019 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -60,7 +60,7 @@ namespace NiBtOgre
         //typedef std::vector<std::unique_ptr<NiObject> > RecordBlocks; // FIXME: no longer used
 
         // For some objects build() does not make sense - the default implementation does nothing.
-        virtual void build(BtOgreInst *inst, NiObject *parent = nullptr) {}
+        virtual void build(BtOgreInst *inst, ModelData *data, NiObject *parent = nullptr) {}
 
         typedef NiBtOgre::Factory<NiObject> Factory;
         static Factory::Type create(Factory::Key const& name,
