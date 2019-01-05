@@ -1,5 +1,7 @@
 #include "cell.hpp"
 
+#include <iostream>
+
 #include <OgreSceneManager.h>
 #include <OgreSceneNode.h>
 #include <OgreManualObject.h>
