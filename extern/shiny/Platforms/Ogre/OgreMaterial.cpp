@@ -16,7 +16,7 @@ namespace sh
 		: Material()
 	{
 		mName = name;
-		assert (Ogre::MaterialManager::getSingleton().getByName(name).isNull() && "Material already exists");
+		assert (!Ogre::MaterialManager::getSingleton().getByName(name) && "Material already exists");
 		mMaterial = Ogre::MaterialManager::getSingleton().create (name, resourceGroup);
 		mMaterial->removeAllTechniques();
 		mMaterial->createTechnique()->setSchemeName (sDefaultTechniqueName);
@@ -25,14 +25,14 @@ namespace sh
 
 	void OgreMaterial::ensureLoaded()
 	{
-		if (mMaterial.isNull())
+		if (!mMaterial)
 			mMaterial = Ogre::MaterialManager::getSingleton().getByName(mName);
 	}
 
 	bool OgreMaterial::isUnreferenced()
 	{
 		// Resource system internals hold 3 shared pointers, we hold one, so usecount of 4 means unused
-		return (!mMaterial.isNull() && mMaterial.useCount() <= Ogre::ResourceGroupManager::RESOURCE_SYSTEM_NUM_REFERENCE_COUNTS+1);
+		return (mMaterial && mMaterial.use_count() <= Ogre::ResourceGroupManager::RESOURCE_SYSTEM_NUM_REFERENCE_COUNTS+1);
 	}
 
 	void OgreMaterial::unreferenceTextures()
@@ -42,7 +42,7 @@ namespace sh
 
 	OgreMaterial::~OgreMaterial()
 	{
-		if (!mMaterial.isNull())
+		if (mMaterial)
 			Ogre::MaterialManager::getSingleton().remove(mMaterial->getName());
 	}
 
@@ -53,7 +53,7 @@ namespace sh
 
 	void OgreMaterial::removeAll ()
 	{
-		if (mMaterial.isNull())
+		if (!mMaterial)
 			return;
 		mMaterial->removeAllTechniques();
 		mMaterial->createTechnique()->setSchemeName (sDefaultTechniqueName);

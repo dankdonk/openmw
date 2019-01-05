@@ -49,7 +49,7 @@ void ESMReader::restoreContext(const ESM_Context &rc)
 
 void ESMReader::close()
 {
-    mEsm.setNull();
+    mEsm.reset();
     mCtx.filename.clear();
     mCtx.leftFile = 0;
     mCtx.leftRec = 0;
@@ -529,7 +529,7 @@ void ESMReader::fail(const std::string &msg)
     ss << "\n  File: " << mCtx.filename;
     ss << "\n  Record: " << mCtx.recName.toString();
     ss << "\n  Subrecord: " << mCtx.subName.toString();
-    if (!mEsm.isNull())
+    if (mEsm)
         ss << "\n  Offset: 0x" << hex << mEsm->tell();
     throw std::runtime_error(ss.str());
 }

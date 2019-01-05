@@ -412,10 +412,10 @@ void QuadTreeNode::unload(bool recursive)
         delete mChunk;
         mChunk = NULL;
 
-        if (!mCompositeMap.isNull())
+        if (mCompositeMap)
         {
             Ogre::TextureManager::getSingleton().remove(mCompositeMap->getName());
-            mCompositeMap.setNull();
+            mCompositeMap.reset();
         }
 
         // Do *not* set this when we are still loading!
@@ -573,7 +573,7 @@ void QuadTreeNode::prepareForCompositeMap(Ogre::TRect<float> area)
 
 void QuadTreeNode::ensureCompositeMap()
 {
-    if (!mCompositeMap.isNull())
+    if (mCompositeMap)
         return;
 
     static int i=0;

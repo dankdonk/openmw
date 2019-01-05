@@ -411,7 +411,7 @@ void ManualBulletShapeLoader::load(const std::string &name,const std::string &gr
 {
     // Check if the resource already exists
     Ogre::ResourcePtr ptr = OEngine::Physic::BulletShapeManager::getSingleton().getByName(name, group);
-    if (!ptr.isNull())
+    if (ptr)
         return;
     OEngine::Physic::BulletShapeManager::getSingleton().create(name,group,true,this);
 }

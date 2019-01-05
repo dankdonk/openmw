@@ -40,7 +40,7 @@ namespace CSVRender
 
         setFocusPolicy (Qt::StrongFocus);
 
-        mSceneMgr = Ogre::Root::getSingleton().createSceneManager(Ogre::ST_GENERIC);
+        mSceneMgr = Ogre::Root::getSingleton().createSceneManager();
 
         mSceneMgr->setAmbientLight (Ogre::ColourValue (0,0,0,1));
 

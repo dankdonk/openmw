@@ -165,7 +165,7 @@ void NIFMeshLoader::createSubMesh(Ogre::Mesh *mesh, const Nif::NiTriShape *shape
     else
     {
         Ogre::SkeletonManager *skelMgr = Ogre::SkeletonManager::getSingletonPtr();
-        if(skelMgr->getByName(mName).isNull())
+        if(!skelMgr->getByName(mName))
         {
             // No skinning and no skeleton, so just transform the vertices and
             // normals into position.
@@ -389,7 +389,7 @@ void NIFMeshLoader::loadResource(Ogre::Resource *resource)
     if(mShapeIndex >= nif->numRecords())
     {
         Ogre::SkeletonManager *skelMgr = Ogre::SkeletonManager::getSingletonPtr();
-        if(!skelMgr->getByName(mName).isNull())
+        if(skelMgr->getByName(mName))
             mesh->setSkeletonName(mName);
         return;
     }

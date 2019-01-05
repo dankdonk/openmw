@@ -50,8 +50,8 @@ ESM4::Reader::Reader() : mObserver(nullptr), mRecordRemaining(0), mCellGridValid
 
     mInBuf.reset();
     mDataBuf.reset();
-    mStream.setNull();
-    mSavedStream.setNull();
+    mStream.reset();
+    mSavedStream.reset();
 }
 
 ESM4::Reader::~Reader()
@@ -72,10 +72,10 @@ ESM4::ReaderContext ESM4::Reader::getContext()
 // NOTE: Assumes that the caller has reopened the file if necessary
 bool ESM4::Reader::restoreContext(const ESM4::ReaderContext& ctx)
 {
-    if (!mSavedStream.isNull())
+    if (mSavedStream)
     {
         mStream = mSavedStream;
-        mSavedStream.setNull();
+        mSavedStream.reset();
     }
 
     mCtx.groupStack.clear(); // probably not necessary?
@@ -232,10 +232,10 @@ void ESM4::Reader::getLocalizedString(const FormId stringId, std::string& str)
 bool ESM4::Reader::getRecordHeader()
 {
     // FIXME: this seems very hacky but we may have skipped subrecords from within an inflated data block
-    if (/*mStream->eof() && */!mSavedStream.isNull())
+    if (/*mStream->eof() && */mSavedStream)
     {
         mStream = mSavedStream;
-        mSavedStream.setNull();
+        mSavedStream.reset();
     }
 
     // keep track of data left to read from the file
