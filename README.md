@@ -152,11 +152,14 @@ openmw.cfg example
 Build Dependencies
 ------------------
 
-The development was done using MSVC 2013 then MS Visual Studio Community 2015, Version 14.0.25431.01 Update 3.  The code may or may not compile under linux/gcc (probably not).
+The development was done using MSVC 2013 then MSVC Community 2015, Version 14.0.25431.01 Update 3 then finally MS Visual Studio Community 2017, Version 15.9.4.  The code may or may not compile under linux/gcc (probably not).
 
-* bost-1_63
-* Ogre 1.10.0
-* ffmpeg-20140823-git-7444cf9-win64-dev
-* zlib 1.2.8
+* boost-1_70
+* Ogre 1.10.11
+* ffmpeg-4.1
+* MyGUI-3.2.2
+* SDL-2.0.9
+* libpng-1.6.36
+* zlib 1.2.11
 * Qt5
 

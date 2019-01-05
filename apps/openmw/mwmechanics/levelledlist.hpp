@@ -3,6 +3,9 @@
 
 #include <components/misc/rng.hpp>
 
+#include <iostream>
+
+
 #include "../mwworld/ptr.hpp"
 #include "../mwworld/esmstore.hpp"
 #include "../mwworld/manualref.hpp"

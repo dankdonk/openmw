@@ -209,7 +209,7 @@ public:
     void load() {}
     void unload() {}
 
-    virtual DataStreamPtr open(const String& filename, bool readonly = true) OGRE_CONST
+    virtual DataStreamPtr open(const String& filename, bool readonly = true) const
     {
 #if defined _WIN32 || defined _WIN64
         boost::filesystem::path p(filename);
@@ -245,18 +245,18 @@ public:
 #endif
     }
 
-    StringVectorPtr list(bool recursive = true, bool dirs = false)
+    StringVectorPtr list(bool recursive = true, bool dirs = false) const
     {
         return find ("*", recursive, dirs);
     }
 
-    FileInfoListPtr listFileInfo(bool recursive = true, bool dirs = false)
+    FileInfoListPtr listFileInfo(bool recursive = true, bool dirs = false) const
     {
         return findFileInfo ("*", recursive, dirs);
     }
 
     StringVectorPtr find(const String& pattern, bool recursive = true,
-                        bool dirs = false)
+                        bool dirs = false) const
     {
         std::string normalizedPattern = normalize_path(pattern.begin(), pattern.end());
         StringVectorPtr ptr = StringVectorPtr(new StringVector());
@@ -269,7 +269,7 @@ public:
         return ptr;
     }
 
-    bool exists(const String& filename)
+    bool exists(const String& filename) const
     {
 #if defined _WIN32 || defined _WIN64
         boost::filesystem::path p(filename);
@@ -292,10 +292,10 @@ public:
 #endif
     }
 
-    time_t getModifiedTime(const String&) { return 0; }
+    time_t getModifiedTime(const String&) const { return 0; }
 
     virtual FileInfoListPtr findFileInfo(const String& pattern, bool recursive = true,
-                            bool dirs = false) OGRE_CONST
+                            bool dirs = false) const
     {
         std::string normalizedPattern = normalize_path(pattern.begin(), pattern.end());
         FileInfoListPtr ptr = FileInfoListPtr(new FileInfoList());
@@ -363,7 +363,7 @@ public:
   void load() {}
   void unload() {}
 
-  virtual DataStreamPtr open(const String& filename, bool readonly = true) OGRE_CONST
+  virtual DataStreamPtr open(const String& filename, bool readonly = true) const
   {
     // Get a non-const reference to arc. This is a hack and it's all
     // OGRE's fault. You should NOT expect an open() command not to
@@ -375,26 +375,26 @@ public:
     return narc->getFile(filename.c_str());
   }
 
-  virtual bool exists(const String& filename) {
+  virtual bool exists(const String& filename) const {
     return arc.exists(filename.c_str());
   }
 
-  time_t getModifiedTime(const String&) { return 0; }
+  time_t getModifiedTime(const String&) const { return 0; }
 
   // This is never called as far as I can see. (actually called from CSMWorld::Resources ctor)
-  StringVectorPtr list(bool recursive = true, bool dirs = false)
+  StringVectorPtr list(bool recursive = true, bool dirs = false) const
   {
     return find ("*", recursive, dirs);
   }
 
   // Also never called.
-  FileInfoListPtr listFileInfo(bool recursive = true, bool dirs = false)
+  FileInfoListPtr listFileInfo(bool recursive = true, bool dirs = false) const
   {
     return findFileInfo ("*", recursive, dirs);
   }
 
     virtual StringVectorPtr find(const String& pattern, bool recursive = true,
-                         bool dirs = false)
+                         bool dirs = false) const
     {
         std::string normalizedPattern = normalize_path(pattern.begin(), pattern.end());
         const Bsa::BSAFile::FileList &filelist = arc.getList();
@@ -410,7 +410,7 @@ public:
     }
 
     virtual FileInfoListPtr findFileInfo(const String& pattern, bool recursive = true,
-                                bool dirs = false) OGRE_CONST
+                                bool dirs = false) const
     {
         std::string normalizedPattern = normalize_path(pattern.begin(), pattern.end());
         FileInfoListPtr ptr = FileInfoListPtr(new FileInfoList());
@@ -447,12 +447,13 @@ class TES4BSAArchive : public BSAArchive
 public:
   TES4BSAArchive::TES4BSAArchive(const String& name) : BSAArchive(name, "TES4BSA") { arc.open(name); }
 
-  virtual DataStreamPtr open(const String& filename, bool readonly = true)
+  virtual DataStreamPtr open(const String& filename, bool readonly = true) const
   {
-    return arc.getFile(filename);
+    Bsa::TES4BSAFile *narc = const_cast<Bsa::TES4BSAFile*>(&arc);
+    return narc->getFile(filename.c_str());
   }
 
-  virtual bool exists(const String& filename)
+  virtual bool exists(const String& filename) const
   {
     return arc.exists(filename);
   }

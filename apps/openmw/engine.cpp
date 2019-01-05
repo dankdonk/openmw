@@ -2,6 +2,7 @@
 
 #include <stdexcept>
 #include <iomanip>
+#include <ctime>
 
 #include <OgreRoot.h>
 #include <OgreTimer.h>

@@ -1,6 +1,8 @@
 #include "store.hpp"
 #include "esmstore.hpp"
 
+#include <iostream> // FIXME: debug only
+
 #include <components/esm/esmreader.hpp>
 
 #include <components/misc/rng.hpp>

@@ -3,6 +3,7 @@
 #include <cassert>
 #include <fstream>
 #include <memory>
+#include <iostream>
 
 #include <boost/filesystem.hpp>
 
