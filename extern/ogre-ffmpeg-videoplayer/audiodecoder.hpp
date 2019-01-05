@@ -54,7 +54,7 @@ private:
                 throw std::bad_alloc();
         }
         ~AutoAVPacket()
-        { av_free_packet(this); }
+        { av_packet_unref(this); }
     };
 
 

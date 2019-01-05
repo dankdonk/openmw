@@ -1,5 +1,7 @@
 #include "videostate.hpp"
 
+#include <iostream>
+
 #ifndef __STDC_CONSTANT_MACROS
 #define __STDC_CONSTANT_MACROS
 #endif
@@ -16,13 +18,14 @@ extern "C"
     #include <libavcodec/avcodec.h>
     #include <libavformat/avformat.h>
     #include <libswscale/swscale.h>
+    #include <libavutil/imgutils.h>
 
     // From libavformat version 55.0.100 and onward the declaration of av_gettime() is
     // removed from libavformat/avformat.h and moved to libavutil/time.h
     // https://github.com/FFmpeg/FFmpeg/commit/06a83505992d5f49846c18507a6c3eb8a47c650e
     #if AV_VERSION_INT(55, 0, 100) <= AV_VERSION_INT(LIBAVFORMAT_VERSION_MAJOR, \
         LIBAVFORMAT_VERSION_MINOR, LIBAVFORMAT_VERSION_MICRO)
-        #include <libavutil/time.h>
+        #include <libavutil/avtime.h> // FIXME: changed name since MSVC 2017 seems to be confused with <time.h>
     #endif
 
     #include <libavutil/mathematics.h>
@@ -97,14 +100,14 @@ void PacketQueue::put(AVPacket *pkt)
     pkt1->pkt = *pkt;
     pkt1->next = NULL;
 
-    if(pkt->data != flush_pkt.data && pkt1->pkt.destruct == NULL)
+    if(pkt->data != flush_pkt.data /*&& pkt1->pkt.destruct == NULL*/)
     {
-        if(av_dup_packet(&pkt1->pkt) < 0)
+        if(av_packet_ref(&pkt1->pkt, pkt) < 0)
         {
             av_free(pkt1);
             throw std::runtime_error("Failed to duplicate packet");
         }
-        av_free_packet(pkt);
+        av_packet_unref(pkt);
     }
 
     this->mutex.lock ();
@@ -164,7 +167,7 @@ void PacketQueue::clear()
     {
         pkt1 = pkt->next;
         if (pkt->pkt.data != flush_pkt.data)
-            av_free_packet(&pkt->pkt);
+            av_packet_unref(&pkt->pkt);
         av_freep(&pkt);
     }
     this->last_pkt = NULL;
@@ -221,21 +224,21 @@ int64_t VideoState::OgreResource_Seek(void *user_data, int64_t offset, int whenc
 
 void VideoState::video_display(VideoPicture *vp)
 {
-    if((*this->video_st)->codec->width != 0 && (*this->video_st)->codec->height != 0)
+    if((*this->video_st)->codecpar->width != 0 && (*this->video_st)->codecpar->height != 0)
     {
-        if (mTexture.isNull())
+        if (!mTexture)
         {
             static int i = 0;
             mTexture = Ogre::TextureManager::getSingleton().createManual(
                             "ffmpeg/VideoTexture" + Ogre::StringConverter::toString(++i),
                                     Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
                                     Ogre::TEX_TYPE_2D,
-                                    (*this->video_st)->codec->width, (*this->video_st)->codec->height,
+                                    (*this->video_st)->codecpar->width, (*this->video_st)->codecpar->height,
                                     0,
                                     Ogre::PF_BYTE_RGBA,
                                     Ogre::TU_DYNAMIC_WRITE_ONLY_DISCARDABLE);
         }
-        Ogre::PixelBox pb((*this->video_st)->codec->width, (*this->video_st)->codec->height, 1, Ogre::PF_BYTE_RGBA, &vp->data[0]);
+        Ogre::PixelBox pb((*this->video_st)->codecpar->width, (*this->video_st)->codecpar->height, 1, Ogre::PF_BYTE_RGBA, &vp->data[0]);
         Ogre::HardwarePixelBufferSharedPtr buffer = mTexture->getBuffer();
         buffer->blitFromMemory(pb);
     }
@@ -313,21 +316,21 @@ int VideoState::queue_picture(AVFrame *pFrame, double pts)
     // matches a commonly used format (ie YUV420P)
     if(this->sws_context == NULL)
     {
-        int w = (*this->video_st)->codec->width;
-        int h = (*this->video_st)->codec->height;
-        this->sws_context = sws_getContext(w, h, (*this->video_st)->codec->pix_fmt,
-                                           w, h, PIX_FMT_RGBA, SWS_BICUBIC,
+        int w = (*this->video_st)->codecpar->width;
+        int h = (*this->video_st)->codecpar->height;
+        this->sws_context = sws_getContext(w, h, static_cast<AVPixelFormat>((*this->video_st)->codecpar->format),
+                                           w, h, AV_PIX_FMT_RGBA, SWS_BICUBIC,
                                            NULL, NULL, NULL);
         if(this->sws_context == NULL)
             throw std::runtime_error("Cannot initialize the conversion context!\n");
     }
 
     vp->pts = pts;
-    vp->data.resize((*this->video_st)->codec->width * (*this->video_st)->codec->height * 4);
+    vp->data.resize((*this->video_st)->codecpar->width * (*this->video_st)->codecpar->height * 4);
 
     uint8_t *dst = &vp->data[0];
     sws_scale(this->sws_context, pFrame->data, pFrame->linesize,
-              0, (*this->video_st)->codec->height, &dst, this->rgbaFrame->linesize);
+              0, (*this->video_st)->codecpar->height, &dst, this->rgbaFrame->linesize);
 
     // now we inform our display thread that we have a pic ready
     this->pictq_windex = (this->pictq_windex+1) % VIDEO_PICTURE_QUEUE_SIZE;
@@ -362,32 +365,44 @@ double VideoState::synchronize_video(AVFrame *src_frame, double pts)
  * buffer. We use this to store the global_pts in
  * a frame at the time it is allocated.
  */
+/* See APIchanges 2013-03-16; avcodec_default_get_buffer() deprecated */
 static int64_t global_video_pkt_pts = AV_NOPTS_VALUE;
-static int our_get_buffer(struct AVCodecContext *c, AVFrame *pic)
+static int our_get_buffer(struct AVCodecContext *c, AVFrame *pic, int flags)
 {
-    int ret = avcodec_default_get_buffer(c, pic);
-    int64_t *pts = (int64_t*)av_malloc(sizeof(int64_t));
-    *pts = global_video_pkt_pts;
-    pic->opaque = pts;
-    return ret;
+    return 0;
 }
+
+
+/* See APIchanges 2013-03-16; avcodec_default_release_buffer() deprecated */
 static void our_release_buffer(struct AVCodecContext *c, AVFrame *pic)
 {
-    if(pic) av_freep(&pic->opaque);
-    avcodec_default_release_buffer(c, pic);
 }
 
 
 void VideoState::video_thread_loop(VideoState *self)
 {
-    AVPacket pkt1, *packet = &pkt1;
+    AVPacket pkt1, *packet = &pkt1;     // NOTE: packet is pointing to pkt1 allocated on the stack
     int frameFinished;
     AVFrame *pFrame;
 
-    pFrame = av_frame_alloc();
+    pFrame = av_frame_alloc();          // NOTE: data buffers are not allocated
+    if(!pFrame)
+        throw std::runtime_error("Error frame alloc");
 
-    self->rgbaFrame = av_frame_alloc();
-    avpicture_alloc((AVPicture*)self->rgbaFrame, PIX_FMT_RGBA, (*self->video_st)->codec->width, (*self->video_st)->codec->height);
+    self->rgbaFrame = av_frame_alloc(); // NOTE: data buffers are not allocated
+    if(!self->rgbaFrame)
+        throw std::runtime_error("Error frame alloc");
+
+    if(av_image_alloc(self->rgbaFrame->data,
+                      self->rgbaFrame->linesize,
+                      (*self->video_st)->codecpar->width,
+                      (*self->video_st)->codecpar->height,
+                      AV_PIX_FMT_RGBA,
+                      1) < 0)
+    {
+        av_frame_free(&self->rgbaFrame);
+        throw std::runtime_error("Error image alloc");
+    }
 
     while(self->videoq.get(packet, self) >= 0)
     {
@@ -419,7 +434,7 @@ void VideoState::video_thread_loop(VideoState *self)
             pts = static_cast<double>(*(int64_t*)pFrame->opaque);
         pts *= av_q2d((*self->video_st)->time_base);
 
-        av_free_packet(packet);
+        av_packet_unref(packet); // NOTE: not sure if this is needed since packet is on the stack
 
         // Did we get a video frame?
         if(frameFinished)
@@ -430,10 +445,10 @@ void VideoState::video_thread_loop(VideoState *self)
         }
     }
 
-    av_free(pFrame);
+    av_frame_free(&pFrame);
 
-    avpicture_free((AVPicture*)self->rgbaFrame);
-    av_free(self->rgbaFrame);
+    av_freep(self->rgbaFrame->data);
+    av_frame_free(&self->rgbaFrame);
 }
 
 void VideoState::decode_thread_loop(VideoState *self)
@@ -530,7 +545,7 @@ void VideoState::decode_thread_loop(VideoState *self)
             else if(self->audio_st && packet->stream_index == self->audio_st-pFormatCtx->streams)
                 self->audioq.put(packet);
             else
-                av_free_packet(packet);
+                av_packet_unref(packet);
         }
     }
     catch(std::runtime_error& e) {
@@ -560,11 +575,19 @@ int VideoState::stream_open(int stream_index, AVFormatContext *pFormatCtx)
         return -1;
 
     // Get a pointer to the codec context for the video stream
-    codecCtx = pFormatCtx->streams[stream_index]->codec;
-    codec = avcodec_find_decoder(codecCtx->codec_id);
-    if(!codec || (avcodec_open2(codecCtx, codec, NULL) < 0))
+    codec = avcodec_find_decoder(pFormatCtx->streams[stream_index]->codecpar->codec_id);
+    if(!codec)
     {
         fprintf(stderr, "Unsupported codec!\n");
+        return -1;
+    }
+
+    codecCtx = pFormatCtx->streams[stream_index]->codec;
+
+    int res = avcodec_open2(codecCtx, codec, NULL);
+    if (res < 0)
+    {
+        fprintf(stderr, "Could not open codec!\n");
         return -1;
     }
 
@@ -595,8 +618,7 @@ int VideoState::stream_open(int stream_index, AVFormatContext *pFormatCtx)
     case AVMEDIA_TYPE_VIDEO:
         this->video_st = pFormatCtx->streams + stream_index;
 
-        codecCtx->get_buffer = our_get_buffer;
-        codecCtx->release_buffer = our_release_buffer;
+        codecCtx->get_buffer2 = avcodec_default_get_buffer2;
         this->video_thread = boost::thread(video_thread_loop, this);
         break;
 
@@ -617,7 +639,7 @@ void VideoState::init(const std::string& resourceName)
     this->mQuit = false;
 
     this->stream = Ogre::ResourceGroupManager::getSingleton().openResource(resourceName);
-    if(this->stream.isNull())
+    if(!this->stream)
         throw std::runtime_error("Failed to open video resource");
 
     AVIOContext *ioCtx = avio_alloc_context(NULL, 0, 0, this, OgreResource_Read, OgreResource_Write, OgreResource_Seek);
@@ -662,9 +684,9 @@ void VideoState::init(const std::string& resourceName)
 
     for(i = 0;i < this->format_ctx->nb_streams;i++)
     {
-        if(this->format_ctx->streams[i]->codec->codec_type == AVMEDIA_TYPE_VIDEO && video_index < 0)
+        if(this->format_ctx->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_VIDEO && video_index < 0)
             video_index = i;
-        if(this->format_ctx->streams[i]->codec->codec_type == AVMEDIA_TYPE_AUDIO && audio_index < 0)
+        if(this->format_ctx->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_AUDIO && audio_index < 0)
             audio_index = i;
     }
 
@@ -726,10 +748,10 @@ void VideoState::deinit()
         avformat_close_input(&this->format_ctx);
     }
 
-    if (!mTexture.isNull())
+    if (mTexture)
     {
         Ogre::TextureManager::getSingleton().remove(mTexture->getName());
-        mTexture.setNull();
+        mTexture.reset();
     }
 }
 
