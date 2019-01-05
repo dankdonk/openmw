@@ -24,29 +24,17 @@
 #ifndef OPENMW_COMPONENTS_NIF_EXTRA_HPP
 #define OPENMW_COMPONENTS_NIF_EXTRA_HPP
 
-#include "record.hpp"
-#include "recordptr.hpp"
+#include "base.hpp"
 
 namespace Nif
 {
 
-
-class NiExtraData : public Record
-{
-public:
-    std::string name;
-    NiExtraDataPtr next;
-
-    void read(NIFStream *nif);
-    void post(NIFFile *nif);
-};
-
-class NiVertWeightsExtraData : public NiExtraData
+class NiVertWeightsExtraData : public Extra
 {
 public:
     void read(NIFStream *nif)
     {
-        NiExtraData::read(nif);
+        Extra::read(nif);
 
         // We should have s*4+2 == i, for some reason. Might simply be the
         // size of the rest of the record, unhelpful as that may be.
@@ -55,14 +43,9 @@ public:
 
         nif->skip(s * sizeof(float)); // vertex weights I guess
     }
-
-    void post(NIFFile *nif)
-    {
-        NiExtraData::post(nif);
-    }
 };
 
-class NiTextKeyExtraData : public NiExtraData
+class NiTextKeyExtraData : public Extra
 {
 public:
     struct TextKey
@@ -74,174 +57,36 @@ public:
 
     void read(NIFStream *nif)
     {
-        NiExtraData::read(nif);
+        Extra::read(nif);
 
-        if (nifVer <= 0x04020200) // up to 4.2.2.0
-            nif->getInt(); // 0
+        nif->getInt(); // 0
 
         int keynum = nif->getInt();
         list.resize(keynum);
         for(int i=0; i<keynum; i++)
         {
             list[i].time = nif->getFloat();
-            list[i].text = nif->getSkyrimString(nifVer, Record::strings);
+            list[i].text = nif->getString();
         }
-    }
-
-    void post(NIFFile *nif)
-    {
-        NiExtraData::post(nif);
     }
 };
 
-class NiStringExtraData : public NiExtraData
+class NiStringExtraData : public Extra
 {
 public:
     /* Two known meanings:
        "MRK" - marker, only visible in the editor, not rendered in-game
        "NCO" - no collision
     */
-    std::string stringData;
+    std::string string;
 
     void read(NIFStream *nif)
     {
-        NiExtraData::read(nif);
+        Extra::read(nif);
 
-        if (nifVer <= 0x04020200) // up to 4.2.2.0
-            nif->getInt(); // size of string + 4. Really useful...
-
-        stringData = nif->getSkyrimString(nifVer, Record::strings);
+        nif->getInt(); // size of string + 4. Really useful...
+        string = nif->getString();
     }
-
-    void post(NIFFile *nif)
-    {
-        NiExtraData::post(nif);
-    }
-};
-
-
-/* --------------------------------------------------------- */
-
-
-class BSBehaviorGraphExtraData : public NiExtraData
-{
-public:
-    std::string behaviourGraphFile;
-    unsigned char controlBaseSkeleton;
-
-    void read(NIFStream *nif);
-    void post(NIFFile *nif);
-};
-
-struct DecalVectorArray
-{
-    std::vector<Ogre::Vector3> points;
-    std::vector<Ogre::Vector3> normals;
-
-    void read(NIFStream *nif);
-};
-
-class BSDecalPlacementVectorExtraData : public NiExtraData
-{
-public:
-    float unknown1;
-    std::vector<DecalVectorArray> vectorBlocks;
-
-    void read(NIFStream *nif);
-    void post(NIFFile *nif);
-};
-
-class BSBound : public NiExtraData
-{
-public:
-    Ogre::Vector3 center;
-    Ogre::Vector3 dimensions;
-
-    void read(NIFStream *nif);
-    void post(NIFFile *nif);
-};
-
-struct FurniturePosition
-{
-    Ogre::Vector3 offset;
-    // Oblivion
-    unsigned short orientation;
-    unsigned char posRef1;
-    unsigned char posRef2;
-    // Skyrim
-    float heading;
-    unsigned short animType;
-    unsigned short entryProperties;
-};
-
-class BSFurnitureMarker : public NiExtraData
-{
-public:
-    std::string name;
-    std::vector<FurniturePosition> positions;
-
-    void read(NIFStream *nif);
-    void post(NIFFile *nif);
-};
-
-class BSFurnitureMarkerNode : public BSFurnitureMarker {};
-
-class BSInvMarker : public NiExtraData
-{
-public:
-    unsigned short rotationX;
-    unsigned short rotationY;
-    unsigned short rotationZ;
-    float zoom;
-
-    void read(NIFStream *nif);
-    void post(NIFFile *nif);
-};
-
-class NiBinaryExtraData : public NiExtraData
-{
-public:
-    std::string string;
-    std::vector<char> data;
-
-    void read(NIFStream *nif);
-    void post(NIFFile *nif);
-};
-
-class NiBooleanExtraData : public NiExtraData
-{
-public:
-    unsigned char booleanData;
-
-    void read(NIFStream *nif);
-    void post(NIFFile *nif);
-};
-
-class NiIntegerExtraData : public NiExtraData
-{
-public:
-    unsigned int integerData;
-
-    void read(NIFStream *nif);
-    void post(NIFFile *nif);
-};
-
-class NiFloatExtraData : public NiExtraData
-{
-public:
-    float floatData;
-
-    void read(NIFStream *nif);
-    void post(NIFFile *nif);
-};
-
-class BSXFlags : public NiExtraData // FIXME: should inherit from NiIntegerData
-{
-public:
-    unsigned int integerData;
-
-    void read(NIFStream *nif);
-    void post(NIFFile *nif);
 };
 
 } // Namespace

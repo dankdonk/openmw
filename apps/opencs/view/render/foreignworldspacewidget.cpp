@@ -2,6 +2,7 @@
 
 #include <cmath> // fmin, fmax
 #include <sstream>
+#include <iostream>
 
 #include <QMouseEvent>
 
@@ -358,8 +359,8 @@ void CSVRender::ForeignWorldspaceWidget::addEditModeSelectorButtons (
 
 void CSVRender::ForeignWorldspaceWidget::updateOverlay()
 {
-	if (mWorld != 0x3c) // FIXME: limit to Tamriel for now
-		return;
+    if (mWorld != 0x3c) // FIXME: limit to Tamriel for now
+        return;
 
     if(getCamera()->getViewport())
     {
@@ -596,7 +597,7 @@ CSVRender::ForeignWorldspaceWidget::ForeignWorldspaceWidget (QWidget* parent, CS
     // oblivion sky/lava can be supported
     Ogre::MaterialPtr skyMaterial = Ogre::MaterialManager::getSingleton().getByName(
                 "SkyMaterial");
-    if(skyMaterial.isNull())
+    if(!skyMaterial)
     {
         skyMaterial = Ogre::MaterialManager::getSingleton().create(
                     "SkyMaterial",

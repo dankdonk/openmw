@@ -25,20 +25,20 @@
 #define OPENMW_COMPONENTS_NIF_PROPERTY_HPP
 
 #include "base.hpp"
-#include "controlled.hpp" // NiSourceTexture
 
 namespace Nif
 {
 
-// NiProperty
 class Property : public Named
 {
 public:
+    // The meaning of these depends on the actual property type.
+    int flags;
+
     void read(NIFStream *nif)
     {
-        if (nifVer == 0x0a000100) // HACK: not sure why this is needed
-            nif->getInt();
         Named::read(nif);
+        flags = nif->getUShort();
     }
 };
 
@@ -67,67 +67,27 @@ public:
         int clamp, uvSet, filter;
         short unknown2;
 
-        Ogre::Vector2 translation;
-        Ogre::Vector2 tiling;
-        float wRotation;
-        unsigned int transformType;
-        Ogre::Vector2 cenerOffset;
-
-        void read(NIFStream *nif, unsigned int nifVer)
+        void read(NIFStream *nif)
         {
-            inUse = nif->getBool(nifVer);
+            inUse = !!nif->getInt();
             if(!inUse) return;
 
             texture.read(nif);
-            if (nifVer <= 0x14000005)
-            {
-                clamp = nif->getInt();
-                filter = nif->getInt();
-            }
-
-            if (nifVer >= 0x14010003)
-                nif->getShort();
-            if (nifVer >= 0x14060000)
-                nif->getShort();
-            if (nifVer <= 0x14000005)
-                uvSet = nif->getInt();
+            clamp = nif->getInt();
+            filter = nif->getInt();
+            uvSet = nif->getInt();
 
             // I have no idea, but I think these are actually two
             // PS2-specific shorts (ps2L and ps2K), followed by an unknown
             // short.
-            if (nifVer <= 0x0a040001) // 10.4.0.1
-                nif->skip(4);
-            if (nifVer <= 0x04010002) // 4.1.0.2
-                nif->skip(2);
-
-            if (nifVer >= 0x0a010000) // 10.1.0.0
-            {
-                bool hasTextureTransform = false;
-                if (nifVer >= 0x04000002) // from 4.0.0.2
-                {
-                    hasTextureTransform = nif->getBool(nifVer);
-                    if (hasTextureTransform)
-                    {
-                        translation = nif->getVector2();
-                        tiling = nif->getVector2();
-                        wRotation = nif->getFloat();
-                        transformType = nif->getUInt();
-                        cenerOffset = nif->getVector2();
-                    }
-                }
-            }
+            nif->skip(6);
         }
 
         void post(NIFFile *nif)
         {
-            if (!inUse)
-                return;
-
             texture.post(nif);
         }
     };
-
-    int flags;
 
     /* Apply mode:
         0 - replace
@@ -157,103 +117,45 @@ public:
         GlossTexture = 3,
         GlowTexture = 4,
         BumpTexture = 5,
-        DecalTexture = 6,
-        // 20.2.0.7 onwards
-        NormalTexture = 7,
-        Unknown2Texture = 8,
-        Decal1Texture = 9,
-        Decal2Texture = 10,
-        Decal3Texture = 11
+        DecalTexture = 6
     };
 
-    struct ShaderTexture
-    {
-        Texture texture;
-        unsigned int mapIndex;
-
-    };
-
-    Texture textures[12]; // usually max 7
-    std::vector<ShaderTexture> shaderTextures;
+    Texture textures[7];
 
     void read(NIFStream *nif)
     {
         Property::read(nif);
-        if (nifVer <= 0x0a000102 || nifVer >= 0x14010003)
-            flags = nif->getUShort();
-
-        if (nifVer <= 0x14010003)
-            apply = nif->getInt();
+        apply = nif->getInt();
 
         // Unknown, always 7. Probably the number of textures to read
         // below
-        int count = nif->getInt();
-        if (count > 12)
-            std::cout << "texture count: " << count << std::endl;
+        nif->getInt();
 
-        textures[BaseTexture].read(nif, nifVer);   // Base
-        textures[DarkTexture].read(nif, nifVer);   // Dark
-        textures[DetailTexture].read(nif, nifVer); // Detail
-        textures[GlossTexture].read(nif, nifVer);  // Gloss (never present)
-        textures[GlowTexture].read(nif, nifVer);   // Glow
-        textures[BumpTexture].read(nif, nifVer);   // Bump map
-        if(textures[BumpTexture].inUse)
+        textures[0].read(nif); // Base
+        textures[1].read(nif); // Dark
+        textures[2].read(nif); // Detail
+        textures[3].read(nif); // Gloss (never present)
+        textures[4].read(nif); // Glow
+        textures[5].read(nif); // Bump map
+        if(textures[5].inUse)
         {
             // Ignore these at the moment
             /*float lumaScale =*/ nif->getFloat();
             /*float lumaOffset =*/ nif->getFloat();
             /*const Vector4 *lumaMatrix =*/ nif->getVector4();
         }
-
-        if (nifVer >= 0x14020007) // FO3 onwards?
-        {
-            textures[NormalTexture].read(nif, nifVer);   // Normal
-            textures[Unknown2Texture].read(nif, nifVer); // Unknown2
-            if (textures[8].inUse)
-                nif->getFloat();           // Unknown2 Float
-        }
-
-        textures[DecalTexture].read(nif, nifVer);     // Decal 0
-
-        if ((nifVer <= 0x14010003 && count >= 8) || (nifVer >= 0x14020007 && count >= 10))
-            textures[Decal1Texture].read(nif, nifVer); // Decal1
-
-        if ((nifVer <= 0x14010003 && count >= 9) || (nifVer >= 0x14020007 && count >= 11))
-            textures[Decal2Texture].read(nif, nifVer); // Decal2
-
-        if ((nifVer <= 0x14010003 && count >= 10) || (nifVer >= 0x14020007 && count >= 12))
-            textures[Decal3Texture].read(nif, nifVer); // Decal3
-
-        if (nifVer >= 0x0a000100) // 10.0.1.0
-        {
-            unsigned int numShaderTex = nif->getUInt();
-            shaderTextures.resize(numShaderTex);
-            for (unsigned int i = 0; i < numShaderTex; ++i)
-            {
-                shaderTextures[i].texture.read(nif, nifVer);
-                shaderTextures[i].mapIndex = nif->getUInt();
-            }
-        }
+        textures[6].read(nif); // Decal
     }
 
     void post(NIFFile *nif)
     {
         Property::post(nif);
-        for(int i = 0;i < 12;i++)
+        for(int i = 0;i < 7;i++)
             textures[i].post(nif);
     }
 };
 
-class PropertyAndFlags : public Property
-{
-public:
-    // The meaning of these depends on the actual property type.
-    int flags;
-
-    void read(NIFStream *nif);
-};
-
-class NiFogProperty : public PropertyAndFlags
+class NiFogProperty : public Property
 {
 public:
     float mFogDepth;
@@ -262,7 +164,7 @@ public:
 
     void read(NIFStream *nif)
     {
-        PropertyAndFlags::read(nif);
+        Property::read(nif);
 
         mFogDepth = nif->getFloat();
         mColour = nif->getVector3();
@@ -270,62 +172,39 @@ public:
 };
 
 // These contain no other data than the 'flags' field in Property
-class NiShadeProperty : public PropertyAndFlags { };
-class NiDitherProperty : public PropertyAndFlags { };
-class NiSpecularProperty : public PropertyAndFlags { };
-class NiWireframeProperty : public PropertyAndFlags { };
+class NiShadeProperty : public Property { };
+class NiDitherProperty : public Property { };
+class NiZBufferProperty : public Property { };
+class NiSpecularProperty : public Property { };
+class NiWireframeProperty : public Property { };
 
 // The rest are all struct-based
 template <typename T>
 struct StructPropT : Property
 {
-    // The meaning of these depends on the actual property type.
-    int flags;
     T data;
 
     void read(NIFStream *nif)
     {
         Property::read(nif);
-        flags = nif->getUShort();
         data.read(nif);
     }
 };
 
-class NiZBufferProperty : public PropertyAndFlags
+struct S_MaterialProperty
 {
-public:
-    unsigned int zCompareMode;
-
-    void read(NIFStream *nif);
-};
-
-class NiMaterialProperty : public Property
-{
-public:
-    int flags;
-
     // The vector components are R,G,B
     Ogre::Vector3 ambient, diffuse, specular, emissive;
     float glossiness, alpha;
 
     void read(NIFStream *nif)
     {
-        Property::read(nif);
-        if (nifVer <= 0x0a000102) // 10.0.1.2
-            flags = nif->getUShort();
-
-        if (!(nifVer == 0x14020007 && userVer >= 11 && userVer2 >21)) // FIXME: FO3
-        {
-            ambient = nif->getVector3();
-            diffuse = nif->getVector3();
-        }
+        ambient = nif->getVector3();
+        diffuse = nif->getVector3();
         specular = nif->getVector3();
         emissive = nif->getVector3();
         glossiness = nif->getFloat();
         alpha = nif->getFloat();
-
-        if (nifVer == 0x14020007 && userVer >= 11 && userVer2 >21) // FIXME: FO3
-            float emitMulti = nif->getFloat();
     }
 };
 
@@ -340,12 +219,12 @@ struct S_VertexColorProperty
         0 - lighting emmisive
         1 - lighting emmisive ambient/diffuse
     */
-    unsigned int vertmode, lightmode;
+    int vertmode, lightmode;
 
     void read(NIFStream *nif)
     {
-        vertmode = nif->getUInt();
-        lightmode = nif->getUInt();
+        vertmode = nif->getInt();
+        lightmode = nif->getInt();
     }
 };
 
@@ -409,11 +288,8 @@ struct S_AlphaProperty
     Docs taken from:
     http://niftools.sourceforge.net/doc/nif/NiStencilProperty.html
  */
-class NiStencilProperty : public Property
+struct S_StencilProperty
 {
-public:
-    int flags;
-
     // Is stencil test enabled?
     unsigned char enabled;
 
@@ -453,138 +329,21 @@ public:
 
     void read(NIFStream *nif)
     {
-        Property::read(nif);
-        if (nifVer <= 0x0a000102) // 10.0.1.2
-            flags = nif->getUShort();
-
-        if (nifVer <= 0x14000005) // not in FO3
-        {
-            enabled = nif->getChar();
-            compareFunc = nif->getInt();
-            stencilRef = nif->getUInt();
-            stencilMask = nif->getUInt();
-            failAction = nif->getInt();
-            zFailAction = nif->getInt();
-            zPassAction = nif->getInt();
-            drawMode = nif->getInt();
-        }
-
-        if (nifVer >= 0x14010003) // FO3
-        {
-            flags = nif->getUShort();
-            unsigned int StencilRef = nif->getUInt();
-            unsigned int StencilMask = nif->getUInt();
-        }
+        enabled = nif->getChar();
+        compareFunc = nif->getInt();
+        stencilRef = nif->getUInt();
+        stencilMask = nif->getUInt();
+        failAction = nif->getInt();
+        zFailAction = nif->getInt();
+        zPassAction = nif->getInt();
+        drawMode = nif->getInt();
     }
 };
 
 class NiAlphaProperty : public StructPropT<S_AlphaProperty> { };
+class NiMaterialProperty : public StructPropT<S_MaterialProperty> { };
 class NiVertexColorProperty : public StructPropT<S_VertexColorProperty> { };
-
-// FIXME: use Ogre::Vector2 instead
-struct TexCoord
-{
-    float u;
-    float v;
-};
-
-class BSLightingShaderProperty : public Property
-{
-public:
-    unsigned int skyrimShaderType;
-    unsigned int shaderFlags1;
-    unsigned int shaderFlags2;
-    TexCoord uvOffset;
-    TexCoord uvScale;
-    BSShaderTextureSetPtr textureSet;
-    Ogre::Vector3 emissiveColor;
-    float emissiveMultiple;
-    unsigned int textureClampMode;
-    float alpha;
-    float unknown2;
-    float glossiness;
-    Ogre::Vector3 specularColor;
-    float specularStrength;
-    float lightingEffect1;
-    float lightingEffect2;
-
-    float envMapScale;
-    Ogre::Vector3 skinTintColor;
-    Ogre::Vector3 hairTintColor;
-    float maxPasses;
-    float scale;
-    float parallaxInnerLayerThickness;
-    float parallaxRefractionScale;
-    TexCoord parallaxInnerLayerTextureScale;
-    float parallaxEnvmapStrength;
-    Ogre::Vector4 sparkleParm;
-    float eyeCubemapScale;
-    Ogre::Vector3 leftEyeReflectionCenter;
-    Ogre::Vector3 rightEyeReflectionCenter;
-
-    void read(NIFStream *nif);
-    void post(NIFFile *nif);
-};
-
-class BSEffectShaderProperty : public Property
-{
-public:
-    unsigned int shaderFlags1;
-    unsigned int shaderFlags2;
-    TexCoord uvOffset;
-    TexCoord uvScale;
-    std::string sourceTexture;
-    unsigned int textureClampMode;
-    float falloffStartAngle;
-    float falloffStopAngle;
-    float falloffStartOpacity;
-    float falloffStopOpacity;
-    Ogre::Vector4 emissiveColor;
-    float emissiveMultiple;
-    float softFalloffDepth;
-    std::string greyscaleTexture;
-
-    void read(NIFStream *nif);
-};
-
-class BSWaterShaderProperty : public Property
-{
-public:
-    unsigned int shaderFlags1;
-    unsigned int shaderFlags2;
-    TexCoord uvOffset;
-    TexCoord uvScale;
-    unsigned char waterShaderFlags;
-    unsigned char waterDirection;
-    unsigned short unknownS3;
-
-    void read(NIFStream *nif);
-};
-
-class BSShaderPPLightingProperty : public Property // FO3
-{
-public:
-    unsigned int skyrimShaderType;
-
-    float envmapScale;
-    BSShaderTextureSetPtr textureSet;
-    Ogre::Vector3 emissiveColor;
-
-    void read(NIFStream *nif);
-    void post(NIFFile *nif);
-};
-
-class BSShaderNoLightingProperty : public Property // FO3
-{
-public:
-    unsigned int skyrimShaderType;
-
-    float envmapScale;
-    std::string fileName;
-
-    void read(NIFStream *nif);
-    void post(NIFFile *nif);
-};
+class NiStencilProperty : public StructPropT<S_StencilProperty> { };
 
 } // Namespace
 #endif

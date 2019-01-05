@@ -27,6 +27,7 @@
 
 #include <cassert>
 #include <stdexcept>
+#include <iostream>  // FIXME: debugging only
 
 #include <OgreMesh.h>
 #include <OgreAnimation.h>
@@ -38,6 +39,7 @@
 #include "niobject.hpp" // NiTimeControllerRef
 #include "nidata.hpp"
 #include "btogreinst.hpp"
+#include "niinterpolator.hpp"
 
 #ifdef NDEBUG // FIXME: debugging only
 #undef NDEBUG
@@ -113,24 +115,24 @@ NiBtOgre::NiGeomMorpherController::NiGeomMorpherController(uint32_t index, NiStr
     }
 }
 
-//NiBtOgre::NiTimeControllerRef NiBtOgre::NiGeomMorpherController::build(BtOgreInst *inst, Ogre::Mesh *mesh)
-NiBtOgre::NiTimeControllerRef NiBtOgre::NiGeomMorpherController::build(
-        std::vector<Ogre::Controller<float> >& controllers, Ogre::Mesh *mesh)
+void NiBtOgre::NiGeomMorpherController::setInterpolator(const std::string& frameName, NiInterpolator *interpolator)
 {
-    if (NiObject::mModel.nifVer() <= 0x0a010000)
-        return setupTES3Animation(controllers, mesh);
+    mControlledBlockInterpolators[frameName] = interpolator;
+}
 
+NiBtOgre::NiTimeControllerRef NiBtOgre::NiGeomMorpherController::build(std::vector<Ogre::Controller<float> > & controllers, Ogre::Mesh *mesh)
+{
     if ((NiTimeController::mFlags & 0x8) == 0) // not active
         return mNextControllerIndex;
 
-    std::string animationId = "NiGeomMorph@block " + std::to_string(NiObject::index()); // mSelfIndex
+    std::string animationId = "NiGeomMorph@block_" + std::to_string(NiObject::index()); // mSelfIndex
     float totalAnimationLength = NiTimeController::mStopTime - NiTimeController::mStartTime;
 
     Ogre::Animation *animation = mesh->createAnimation(animationId, totalAnimationLength);
 
     assert(mesh->getNumSubMeshes() != 0); // should be at least 1
     std::uint32_t subMeshIndex = (std::uint32_t)mesh->getNumSubMeshes()-1;
-    unsigned short poseIndex = (unsigned short)mesh->getPoseCount();
+    unsigned short poseIndex = (unsigned short)mesh->getPoseCount()-1;
 
     // NOTE: 'handle' is set to subMeshIndex+1 to locate the correct sub-entity vertices when
     //       Ogre::Animation::apply() is called
@@ -146,7 +148,7 @@ NiBtOgre::NiTimeControllerRef NiBtOgre::NiGeomMorpherController::build(
     //   Controlled Blocks  = track/pose
     //   Interpolator->Data = keyframe
     //
-    // In order to find above they need to be stored in 'inst' with the index of the controller
+    // In order to find above they need to be stored in ModelData with the index of the controller
     // as the key. e.g.
     //
     //   std::map<int, std::vector<int> > mGeomMorpherControllerMap
@@ -160,35 +162,63 @@ NiBtOgre::NiTimeControllerRef NiBtOgre::NiGeomMorpherController::build(
     NiMorphData* morphData = mModel.getRef<NiMorphData>(mDataIndex);
     const std::vector<NiMorphData::Morph>& morphs = morphData->mMorphs;
     // FIXME: ignore base? or create a base pose with a keyframe at time 0 and PoseRef influence of 1.f?
-    for (unsigned int i = 1; i < morphs.size(); ++i)
+    for (unsigned int i = 0/*1*/; i < morphs.size(); ++i)
     {
-//        const std::vector<int>& controlledBlocks = mGeomMorpherControllerMap[mSelfIndex];
-//        NiControllerSequence* seq = mModel.getRef<NiControllerSequence>(inst->seqIndex);
+        const std::vector<Key<float> > *morphKeys;
+        if (NiObject::mModel.nifVer() > 0x0a010000)
+        {
+            std::string frameName = mModel.indexToString(morphs[i].mFrameName);
 
-//      if (morphs[i].mKeys.size() == 0)
-//          continue; // NOTE: ignore morphs that have no keys (i.e. tracks with no keyframes)
+            // weapons/steel/bow.nif does not have NiControllerSequence to setup the map
+            std::map<std::string, NiInterpolator*>::const_iterator iter
+                = mControlledBlockInterpolators.find(frameName);
+            if (iter == mControlledBlockInterpolators.end())
+                continue;
+
+            NiInterpolator *interpolator = mControlledBlockInterpolators[frameName];
+
+            const KeyGroup<float> *keyGroup = interpolator->getMorphKeyGroup();
+            if (!keyGroup)
+                continue;
+
+            morphKeys = &keyGroup->keys;
+        }
+        else
+            morphKeys = &morphs[i].mKeys; // use the values in NiMorphData
+
+        if (morphKeys->size() == 0)
+            continue; // NOTE: ignore morphs that have no keys (i.e. tracks with no keyframes)
 
         // NOTE multiple poses are created for the same 'target' (i.e. sub-mesh)
-        Ogre::Pose* pose = mesh->createPose(subMeshIndex+1); // target is user defined (for us subMeshIndex+1)
+        Ogre::Pose* pose = mesh->createPose(subMeshIndex + 1, // target is user defined (for us subMeshIndex+1)
+                mModel.getModelName()+
+                "block_"+std::to_string(NiObject::index())+"_morph_"+std::to_string(i));  // mSelfIndex+morph
         for (unsigned int v = 0; v < morphs[i].mVectors.size(); ++v)
             pose->addVertex(v, morphs[i].mVectors[v]);
 
-//      for (unsigned int k = 0; k < morphs[i].mKeys.size(); ++k)
-//      {
-//          Ogre::VertexPoseKeyFrame* keyframe = track->createVertexPoseKeyFrame(morphs[i].mKeys[k].time);
-//          keyframe->addPoseReference(poseIndex + i, morphs[i].mKeys[k].value);
+        //const Ogre::Pose::VertexOffsetMap& map = pose->getVertexOffsets();
+        //std::cout << pose->getName() << " size " << map.size() << std::endl;
 
-//          // FIXME: set custom interpolation code for a derived track here?
-//          // But VertexAnimationTrack doesn't use listener! :-(
-//          // Maybe use a modified version of Ogre so that VertexAminationTrack::getInterpolatedKeyFrame
-//          // uses a listener?  Unmodified Ogre should also work, just that we won't get quadratic
-//          // interpolation.
-//          AnimTrackInterpolator<float> *listner
-//              = OGRE_NEW AnimTrackInterpolator<float>(/*quadratic*/2, morphs[i].mKeys[k]);
-//          track->setListener(listner); // custom getInterpolatedKeyFrame()
+        for (unsigned int k = 0; k < morphKeys->size(); ++k)
+        {
+            Ogre::VertexPoseKeyFrame* keyframe = track->createVertexPoseKeyFrame(morphKeys->at(k).time);
+            //std::cout << "time " << morphKeys.at(k).time <<
+                //", influence " << morphKeys.at(k).value << std::endl;
+            keyframe->addPoseReference(poseIndex + i, morphKeys->at(k).value);
 
-//          inst->mInterpolators.push_back(listner); // plug potential memory leak
-//      }
+#if 0
+            // FIXME: set custom interpolation code for a derived track here?
+            // But VertexAnimationTrack doesn't use listener! :-(
+            // Maybe use a modified version of Ogre so that VertexAminationTrack::getInterpolatedKeyFrame
+            // uses a listener?  Unmodified Ogre should also work, just that we won't get quadratic
+            // interpolation.
+            AnimTrackInterpolator<float> *listner
+                = OGRE_NEW AnimTrackInterpolator<float>(/*quadratic*/2, morphKeys->at(k));
+            track->setListener(listner); // custom getInterpolatedKeyFrame()
+
+            //inst->mInterpolators.push_back(listner); // plug potential memory leak
+#endif
+        }
     }
 
     return mNextControllerIndex;
@@ -267,7 +297,7 @@ NiBtOgre::NiTimeControllerRef NiBtOgre::NiGeomMorpherController::setupTES3Animat
 
     assert(mesh->getNumSubMeshes() != 0); // should be at least 1
     std::uint32_t subMeshIndex = (std::uint32_t)mesh->getNumSubMeshes()-1;
-    unsigned short poseIndex = (unsigned short)mesh->getPoseCount();
+    unsigned short poseIndex = (unsigned short)mesh->getPoseCount()-1;
 
     // NOTE: 'handle' is set to subMeshIndex+1 to locate the correct sub-entity vertices when
     //       Ogre::Animation::apply() is called
@@ -292,6 +322,7 @@ NiBtOgre::NiTimeControllerRef NiBtOgre::NiGeomMorpherController::setupTES3Animat
             Ogre::VertexPoseKeyFrame* keyframe = track->createVertexPoseKeyFrame(morphs[i].mKeys[k].time);
             keyframe->addPoseReference(poseIndex + i, morphs[i].mKeys[k].value);
 
+#if 0
             // FIXME: set custom interpolation code for a derived track here?
             // But VertexAnimationTrack doesn't use listener! :-(
             // Maybe use a modified version of Ogre so that VertexAminationTrack::getInterpolatedKeyFrame
@@ -302,7 +333,8 @@ NiBtOgre::NiTimeControllerRef NiBtOgre::NiGeomMorpherController::setupTES3Animat
             track->setListener(listner); // custom getInterpolatedKeyFrame()
 
             //FIXME where to store these?
-            //inst->mInterpolators.push_back(listner); // plug potential memory leak
+            inst->mInterpolators.push_back(listner); // plug potential memory leak
+#endif
         }
     }
 

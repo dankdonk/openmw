@@ -3,32 +3,18 @@
 
 #include <OgreMatrix4.h>
 
-//#include "controlled.hpp"
-//#include "extra.hpp"
-//#include "data.hpp"
+#include "controlled.hpp"
+#include "extra.hpp"
+#include "data.hpp"
 #include "property.hpp"
-//#include "niftypes.hpp"
-//#include "controller.hpp"
+#include "niftypes.hpp"
+#include "controller.hpp"
 #include "base.hpp"
-#include "data.hpp" // NiSkinData
-#include "collision.hpp"
 
 namespace Nif
 {
 
-class NiNode;
-class NiTexturingProperty;
-class NiMaterialProperty;
-class NiAlphaProperty;
-class NiVertexColorProperty;
-class NiZBufferProperty;
-class NiSpecularProperty;
-class NiWireframeProperty;
-class NiStencilProperty;
-class BSLightingShaderProperty;
-class NiAlphaProperty;
-class BSEffectShaderProperty;
-class BSWaterShaderProperty;
+struct NiNode;
 
 /** A Node is an object that's part of the main NIF tree. It has
     parent node (unless it's the root), and transformation (location
@@ -42,10 +28,9 @@ public:
     Transformation trafo;
     Ogre::Vector3 velocity; // Unused? Might be a run-time game state
     PropertyList props;
-    NiCollisionObjectPtr collision;
 
     // Bounding box info
-    bool hasBounds = false; // NOTE: this needs to be set to false for NiTriStrips (see ManualBulletShapeLoader)
+    bool hasBounds;
     Ogre::Vector3 boundPos;
     Ogre::Matrix3 boundRot;
     Ogre::Vector3 boundXYZ; // Box size
@@ -55,47 +40,29 @@ public:
         Named::read(nif);
 
         flags = nif->getUShort();
-        if (nifVer >= 0x14020007 && (userVer >= 11 && userVer2 > 26)) // from 20.2.0.7
-            nif->getUShort();
+        trafo = nif->getTrafo();
+        velocity = nif->getVector3();
+        props.read(nif);
 
-        trafo = nif->getTrafo(); // scale (float) included
-
-        if (nifVer <= 0x04020200) // up to 4.2.2.0
-            velocity = nif->getVector3();
-
-        if (nifVer < 0x14020007 || userVer <= 11) // less than 20.2.0.7 (or user version <= 11)
-            props.read(nif);
-
-        if (nifVer <= 0x04020200) // up to 4.2.2.0
+        hasBounds = !!nif->getInt();
+        if(hasBounds)
         {
-            hasBounds = nif->getBool(nifVer);
-            if(hasBounds)
-            {
-                nif->getInt(); // always 1
-                boundPos = nif->getVector3();
-                boundRot = nif->getMatrix3();
-                boundXYZ = nif->getVector3();
-            }
+            nif->getInt(); // always 1
+            boundPos = nif->getVector3();
+            boundRot = nif->getMatrix3();
+            boundXYZ = nif->getVector3();
         }
 
         parent = NULL;
 
         boneTrafo = NULL;
         boneIndex = -1;
-
-        if (nifVer >= 0x0a000100) // from 10.0.1.0
-            collision.read(nif);
     }
 
     void post(NIFFile *nif)
     {
         Named::post(nif);
-
-        if (nifVer < 0x14020007 || userVer <= 11)
-            props.post(nif);
-
-        if (nifVer >= 0x0a000100)
-            collision.post(nif);
+        props.post(nif);
     }
 
     // Parent node, or NULL for the root node. As far as I'm aware, only
@@ -132,18 +99,16 @@ public:
                        const Nif::NiZBufferProperty *&zprop,
                        const Nif::NiSpecularProperty *&specprop,
                        const Nif::NiWireframeProperty *&wireprop,
-                       const Nif::NiStencilProperty *&stencilprop,
-                       const Nif::Property *&prop) const;
+                       const Nif::NiStencilProperty *&stencilprop) const;
 
     Ogre::Matrix4 getLocalTransform() const;
     Ogre::Matrix4 getWorldTransform() const;
 };
 
-class NiNode : public Node
+struct NiNode : Node
 {
-public:
     NodeList children;
-    NodeList effects; // FIXME: should be a list of NiDynamicEffect
+    NodeList effects;
 
     enum Flags {
         Flag_Hidden = 0x0001,
@@ -166,17 +131,12 @@ public:
         Node::read(nif);
         children.read(nif);
         effects.read(nif);
-        // HACK: old versions seem to read one entry even if none
-        if (nifVer == 0x0a000100 && effects.length() == 0)
-            nif->getInt();
 
         // Discard tranformations for the root node, otherwise some meshes
         // occasionally get wrong orientation. Only for NiNode-s for now, but
         // can be expanded if needed.
-        if (0 == recIndex && nifVer <= 0x04010000) // FIXME experiment
+        if (0 == recIndex)
         {
-//          if (static_cast<Nif::Node*>(this)->trafo.rotation != Nif::Transformation::getIdentity().rotation)
-//              std::cout << "Non-identity rotation: " << this->name << ", ver " << std::hex << nifVer << std::endl;
             static_cast<Nif::Node*>(this)->trafo = Nif::Transformation::getIdentity();
         }
     }
@@ -189,20 +149,14 @@ public:
 
         for(size_t i = 0;i < children.length();i++)
         {
-            // Sometimes a unique list of children can contain empty refs e.g. NoM/NoM_ac_pool00.nif
+            // Why would a unique list of children contain empty refs?
             if(!children[i].empty())
                 children[i]->parent = this;
         }
     }
 };
 
-struct MaterialExtraData
-{
-    std::string name;
-    int extraData;
-};
-
-class NiGeometry : public Node
+struct NiTriShape : Node
 {
     /* Possible flags:
         0x40 - mesh has no vertex normals ?
@@ -210,54 +164,15 @@ class NiGeometry : public Node
         Only flags included in 0x47 (ie. 0x01, 0x02, 0x04 and 0x40) have
         been observed so far.
     */
-public:
-    ShapeDataPtr data; // subclass includes NiTriShapeData
-    NiSkinInstancePtr skin;
 
-    std::vector<MaterialExtraData> materials;
-    std::string shader;
-    int unknown;
-    bool dirtyFlag;
-    std::vector<PropertyPtr> bsprops;
+    NiTriShapeDataPtr data;
+    NiSkinInstancePtr skin;
 
     void read(NIFStream *nif)
     {
-        if (nifVer == 0x0a000100) // HACK: not sure why this is needed
-            nif->getInt();
-        Node::read(nif); // NiAVObject
-        data.read(nif);  // refNiGeometryData
+        Node::read(nif);
+        data.read(nif);
         skin.read(nif);
-        if (nifVer == 0x0a000100) // HACK: not sure why this is needed
-            nif->getInt();
-
-        if (nifVer >= 0x14020007) // from 20.2.0.7 (Skyrim)
-        {
-            unsigned int numMaterials = nif->getUInt();
-            materials.resize(numMaterials);
-            for (unsigned int i = 0; i < numMaterials; ++i)
-            {
-                materials[i].name = nif->getString();
-                materials[i].extraData = nif->getInt();
-            }
-            nif->getInt(); // active material?
-        }
-
-        if (nifVer >= 0x0a000100 && nifVer <= 0x14010003 && nif->getBool(nifVer))
-        {
-            shader = nif->getString();
-            unknown = nif->getInt();
-        }
-
-        if (nifVer >= 0x14020007) // from 20.2.0.7 (Skyrim)
-        {
-            dirtyFlag = nif->getBool(nifVer);
-            if (userVer == 12) // not present in FO3?
-            {
-                bsprops.resize(2);
-                bsprops[0].read(nif);
-                bsprops[1].read(nif);
-            }
-        }
     }
 
     void post(NIFFile *nif)
@@ -265,26 +180,10 @@ public:
         Node::post(nif);
         data.post(nif);
         skin.post(nif);
-        if (nifVer >= 0x14020007) // from 20.2.0.7 (Skyrim)
-        {
-            if (userVer == 12) // not present in FO3?
-            {
-                bsprops[0].post(nif);
-                bsprops[1].post(nif);
-            }
-        }
     }
-
-    void getBSProperties(const Nif::BSLightingShaderProperty *&bsprop,
-                         const Nif::NiAlphaProperty *&alphaprop,
-                         const Nif::BSEffectShaderProperty *&effectprop,
-                         const Nif::BSWaterShaderProperty *&waterprop) const;
 };
 
-struct NiTriShape : public NiGeometry {};
-struct NiTriStrips : public NiGeometry {};
-
-struct NiCamera : public Node
+struct NiCamera : Node
 {
     struct Camera
     {
@@ -297,20 +196,14 @@ struct NiCamera : public Node
         // Level of detail modifier
         float LOD;
 
-        bool useOrtho;
-
-        void read(NIFStream *nif, unsigned int nifVer)
+        void read(NIFStream *nif)
         {
-            if (nifVer >= 0x0a010000) // from 10.1.0.0
-                nif->getUShort();
             left = nif->getFloat();
             right = nif->getFloat();
             top = nif->getFloat();
             bottom = nif->getFloat();
             nearDist = nif->getFloat();
             farDist = nif->getFloat();
-            if (nifVer >= 0x0a010000) // from 10.1.0.0
-                useOrtho = nif->getBool(nifVer);
 
             vleft = nif->getFloat();
             vright = nif->getFloat();
@@ -326,168 +219,47 @@ struct NiCamera : public Node
     {
         Node::read(nif);
 
-        cam.read(nif, nifVer);
+        cam.read(nif);
 
         nif->getInt(); // -1
         nif->getInt(); // 0
-        if (nifVer >= 0x04020100) // from 4.2.1.0
-            nif->getInt();
+    }
+};
+
+struct NiAutoNormalParticles : Node
+{
+    NiAutoNormalParticlesDataPtr data;
+
+    void read(NIFStream *nif)
+    {
+        Node::read(nif);
+        data.read(nif);
+        nif->getInt(); // -1
     }
 
     void post(NIFFile *nif)
     {
         Node::post(nif);
+        data.post(nif);
     }
 };
 
-struct NiAutoNormalParticles : public NiGeometry {};
-
-struct NiRotatingParticles : public NiGeometry {};
-
-
-
-
-
-struct NodeGroup
+struct NiRotatingParticles : Node
 {
-    std::vector<NodePtr> nodes;
+    NiRotatingParticlesDataPtr data;
 
-    void read(NIFStream *nif, unsigned int nifVer);
-    void post(NIFFile *nif);
-};
+    void read(NIFStream *nif)
+    {
+        Node::read(nif);
+        data.read(nif);
+        nif->getInt(); // -1
+    }
 
-class BSMultiBound : public Record
-{
-public:
-    BSMultiBoundDataPtr data;
-
-    void read(NIFStream *nif);
-    void post(NIFFile *nif);
-};
-
-class BSMultiBoundData : public Record
-{
-    void read(NIFStream *nif) {} // do nothing
-};
-
-class BSMultiBoundOBB : public BSMultiBoundData
-{
-public:
-    Ogre::Vector3 center;
-    Ogre::Vector3 size;
-    Ogre::Matrix3 rotation;
-
-    void read(NIFStream *nif);
-};
-
-class BSFadeNode : public NiNode
-{
-public:
-
-    void read(NIFStream *nif);
-    void post(NIFFile *nif);
-};
-
-struct BSLeafAnimNode : public NiNode {};
-
-class BSTreeNode : public NiNode
-{
-public:
-    std::vector<NiNodePtr> bones1;
-    std::vector<NiNodePtr> bones2;
-
-    void read(NIFStream *nif);
-    void post(NIFFile *nif);
-};
-
-class BSValueNode : public NiNode
-{
-public:
-    int value;
-
-    void read(NIFStream *nif);
-    void post(NIFFile *nif);
-};
-
-class BSOrderedNode : public NiNode
-{
-public:
-    Ogre::Vector4 alphaSortBound;
-    unsigned char isStaticBound;
-
-    void read(NIFStream *nif);
-    void post(NIFFile *nif);
-};
-
-class BSMultiBoundNode : public NiNode
-{
-public:
-    BSMultiBoundPtr multiBound;
-    unsigned int unknown;
-
-    void read(NIFStream *nif);
-    void post(NIFFile *nif);
-};
-
-class BSBlastNode : public NiNode
-{
-public:
-    char unknown1;;
-    short unknown2;
-
-    void read(NIFStream *nif);
-    void post(NIFFile *nif);
-};
-
-class NiSwitchNode : public NiNode
-{
-public:
-
-    void read(NIFStream *nif);
-    void post(NIFFile *nif);
-};
-
-class BSDamageStage : public NiNode
-{
-public:
-    char unknown1;;
-    short unknown2;
-
-    void read(NIFStream *nif);
-    void post(NIFFile *nif);
-};
-
-struct NiBillboardNode : public NiNode
-{
-    unsigned short billboardMode;
-
-    void read(NIFStream *nif);
-    void post(NIFFile *nif);
-};
-
-class NiParticleSystem : public NiGeometry
-{
-    unsigned short unknownS2;
-    unsigned short unknownS3;
-    unsigned int unknownI1;
-    bool worldSpace;
-    std::vector<NiPSysModifierPtr> modifiers;
-
-    void read(NIFStream *nif);
-    void post(NIFFile *nif);
-};
-
-class BSStripParticleSystem : public NiParticleSystem {};
-
-class BSLODTriShape : public NiGeometry
-{
-public:
-    unsigned int level0Size;
-    unsigned int level1Size;
-    unsigned int level2Size;
-
-    void read(NIFStream *nif);
-    void post(NIFFile *nif);
+    void post(NIFFile *nif)
+    {
+        Node::post(nif);
+        data.post(nif);
+    }
 };
 
 } // Namespace

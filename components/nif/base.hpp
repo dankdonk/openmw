@@ -17,28 +17,10 @@ namespace Nif
 class Extra : public Record
 {
 public:
-    NiExtraDataPtr extra;
-    NiExtraDataList extras;
-    bool hasExtras; // FIXME: how to make this part of extras rather than keep separate members?
+    ExtraPtr extra;
 
-    void read(NIFStream *nif)
-    {
-        // FIXME: this is a linked list
-        if (nifVer <= 0x04020200) // up to 4.2.2.0
-        {
-            extra.read(nif);
-            hasExtras = false;
-        }
-
-        // FIXME: this is a vector
-        if (nifVer >= 0x0a000100) // from 10.0.1.0
-        {
-            extras.read(nif);
-            if (extras.length() > 0)
-                hasExtras = true;
-        }
-    }
-    void post(NIFFile *nif);
+    void read(NIFStream *nif) { extra.read(nif); }
+    void post(NIFFile *nif) { extra.post(nif); }
 };
 
 class Controller : public Record
@@ -99,7 +81,7 @@ public:
 
     void read(NIFStream *nif)
     {
-        name = nif->getSkyrimString(nifVer, Record::strings);
+        name = nif->getString();
         Controlled::read(nif);
     }
 };

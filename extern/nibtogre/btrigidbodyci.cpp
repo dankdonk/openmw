@@ -79,16 +79,16 @@ void NiBtOgre::BtRigidBodyCI::loadImpl()
 //  NiModelPtr nimodel
 //      = NiBtOgre::NiModelManager::getSingleton().getByName(modelName.substr(0, modelNameSize), getGroup());
 
-    std::string modelName = getName();
+    std::string modelName = getName(); // remove scale
     NiModelPtr nimodel
         = NiBtOgre::NiModelManager::getSingleton().getByName(modelName.substr(0, modelName.length()-7), getGroup());
 
     if (!nimodel) // shouldn't happen, since we need the Entities created already
         throw std::runtime_error("NiModel not loaded");
 
-    const std::map<std::int32_t, std::pair<std::string, int32_t> >& loaders = nimodel->getBhkRigidBodyMap();
+    const std::map<std::int32_t, std::pair<std::string, int32_t> >& rigidBodies = nimodel->getBhkRigidBodyMap();
     std::map<std::int32_t, std::pair<std::string, int32_t> >::const_iterator iter;
-    for (iter = loaders.begin(); iter != loaders.end(); ++iter)
+    for (iter = rigidBodies.begin(); iter != rigidBodies.end(); ++iter)
     {
         if (iter->second.second == -1)
             continue;  // e.g. fire/firetorchlargesmoke.nif@DamageSphere

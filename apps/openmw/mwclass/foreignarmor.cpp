@@ -29,14 +29,28 @@ namespace MWClass
         MWWorld::LiveCellRef<ESM4::Armor> *ref = ptr.get<ESM4::Armor>();
 
         if (!model.empty()) {
-            renderingInterface.getObjects().insertModel(ptr, model/*, !ref->mBase->mPersistent*/); // FIXME
+            // TES4 seems to lack _gnd models for shields
+            std::string lowerModel = Misc::StringUtils::lowerCase(model);
+            size_t pos = lowerModel.find("shield_gnd.");
+            if (pos != std::string::npos)
+                renderingInterface.getObjects().insertModel(ptr, lowerModel.replace(pos+5,4,"")/*, !ref->mBase->mPersistent*/); // FIXME
+            else
+                renderingInterface.getObjects().insertModel(ptr, model/*, !ref->mBase->mPersistent*/); // FIXME
         }
     }
 
     void ForeignArmor::insertObject(const MWWorld::Ptr& ptr, const std::string& model, MWWorld::PhysicsSystem& physics) const
     {
         if(!model.empty())
-            physics.addObject(ptr, model);
+        {
+            // TES4 seems to lack _gnd models for shields
+            std::string lowerModel = Misc::StringUtils::lowerCase(model);
+            size_t pos = lowerModel.find("shield_gnd.");
+            if (pos != std::string::npos)
+                physics.addObject(ptr, lowerModel.replace(pos+5,4,""));
+            else
+                physics.addObject(ptr, model);
+        }
     }
 
     std::string ForeignArmor::getModel(const MWWorld::Ptr &ptr) const

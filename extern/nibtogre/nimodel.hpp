@@ -67,6 +67,7 @@ namespace NiBtOgre
         typedef std::int32_t NiAVObjectRef;
         typedef std::int32_t NiNodeRef;
         typedef std::int32_t bhkEntityRef;
+        typedef std::int32_t NiTimeControllerRef;
 
         std::map<NiAVObjectRef, NiNodeRef> mNiNodeMap; // keep track of parent NiNode index
         void setNiNodeParent(NiAVObjectRef child, NiNodeRef parent);
@@ -105,7 +106,8 @@ namespace NiBtOgre
         //        v                    v
         std::map<NiNodeRef, std::pair<std::string, int32_t> > mBhkRigidBodyMap;
 
-        //std::map<NiNodeRef, int32_t> mBtShapeMap; // bhkRigidBody for the NiNode
+        std::map<NiTimeControllerRef, std::vector<int> > mGeomMorpherControllerMap;
+
 
         ModelData(const NiModel& model) : mModel(model), mEditorMarkerPresent(false) {}
     };

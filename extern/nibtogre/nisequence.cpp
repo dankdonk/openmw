@@ -28,6 +28,8 @@
 #include <cassert>
 #include <stdexcept>
 
+#include <OgreController.h>
+
 #include "nistream.hpp"
 #include "nitimecontroller.hpp" // static_cast NiControllerManager
 #include "nimodel.hpp"
@@ -150,7 +152,7 @@ NiBtOgre::NiControllerSequence::NiControllerSequence(uint32_t index, NiStream& s
 
 // Each of the NiControlSequences are "playable" animations.
 //
-// mTextKeysIndex holds text keys such as sound triggers, e.g. 'sound: TRPGearsClaws' in
+// mTextKeysIndex holds text keys such as 'start' 'end' or sound triggers: 'sound: TRPGearsClaws' in
 // oblivion/architecture/citadel/interior/citadelsmalltower/oblivionsmalltowergatelatch01.nif
 // (probably needs to have actions done through 'inst')
 //
@@ -158,47 +160,115 @@ NiBtOgre::NiControllerSequence::NiControllerSequence(uint32_t index, NiStream& s
 //        similar to getting world using EditorID, i.e. mStore.get<ForeignWorld>().getFormId(world);
 //
 // Each of the Controlled Blocks refer to the target node name via the string palette which
-// in turn needs to be looked up via the object palette in NiControllerManager
-void NiBtOgre::NiControllerSequence::build(BtOgreInst *inst, const NiDefaultAVObjectPalette* objects)
+// in turn needs to be looked up via the object palette in NiControllerManager.  But how to
+// make sense of the palette?  It appears as if the string palette is just a list of all the
+// unique strings that need to be looked up:
+//
+//     strings in the palette     value             index  (deduced from)
+//     -------------------------- ----------------- ------ -----------------
+//     MainMast02:0               nodeName          118    object palette
+//     NiGeomMorpherController    controllerType      7    controller2Index
+//     Base                       interpolatorId           NiMorphData::mFrameName (i.e. pose)
+//     MainMastMorphA             interpolatorId           NiMorphData::mFrameName (i.e. pose)
+//     MainMastMorphB             interpolatorId           NiMorphData::mFrameName (i.e. pose)
+//     MainMast02:3               nodeName          124    object palette
+//     MainMast02:4               nodeName          129    object palette
+//     MainMast02:6               nodeName          134    object palette
+//     MainMast02:7               nodeName          139    object palette
+//     MainMast02:8               nodeName          144    object palette
+//     MainMast02:15              nodeName          149    object palette
+//     MainMast02:23              nodeName          156    object palette
+//     MainMast02:25              nodeName          161    object palette
+//     MainMast02:41              nodeName          167    object palette
+//     MainMast02                 nodeName            0    object palette
+//     NiTransformController      controllerType      4    controller2Index
+//     MainMast02 NonAccum        nodeName          111    object palette
+//
+void NiBtOgre::NiControllerSequence::build(std::vector<Ogre::Controller<float> >& controllers, const NiDefaultAVObjectPalette* objects)
 {
+    // FIXME: process mTextKeysIndex here
+
+    // Each of the controlled block maps to an Ogre::AnimationTrack.  i.e. each controller
+    // block is for one sub-mesh. There can be more than one block for the same sub-mesh.
+    // (one for each pose)
+    //
+    // The interpolator for each block provides the data for Ogre::KeyFrame.
+    //
+    // NiGeomMorpherController   Ogre::VertexAnimationTrack   Ogre::VertexPoseKeyFrame
+    // NiTransformController     Ogre::NodeAnimationTrack(?)  Ogre::TranformKeyFrame
+    //
     for (unsigned int i = 0; i < mControlledBlocks.size(); ++i)
     {
-        //if (mModel.nifVer() >= 0x0a020000 && mModel.nifVer() <= 0x14000005)
-            //assert(mStringPaletteIndex == mControlledBlocks[i].stringPaletteIndex); // should be the same
+        // FIXME: for testing only
+        if (mModel.nifVer() >= 0x0a020000 && mModel.nifVer() <= 0x14000005)
+            assert(mStringPaletteIndex == mControlledBlocks[i].stringPaletteIndex); // should be the same
 
-        // NOTE: can be nullptr if nodeNameIndex == 0xffffffff
-        NiAVObject* targetNode = getTargetObject(mControlledBlocks[i].nodeNameIndex, objects);
+        if (mModel.nifVer() < 0x0a01006a) // 10.1.0.106
+            throw std::logic_error("NiControllerSequence less than version 10.1.0.106");
 
-        // FIXME: from 10.1.0.106 only
-        NiInterpolator *interpolator = mModel.getRef<NiInterpolator>(mControlledBlocks[i].interpolatorIndex);
+        std::int32_t interpolatorIndex = mControlledBlocks[i].interpolatorIndex;
+        if (interpolatorIndex < 0) // -1
+            continue;
 
-        // TODO: apply interpolator to the target here?
-        // targets are usually NiGeometry or NiNode
-        // each interpolator type probably has its own animation method
+        // NOTE: Some interpolators do not have any data!  Ignore these controlled blocks.
+        NiInterpolator *interpolator = mModel.getRef<NiInterpolator>(interpolatorIndex);
+        //if (interpolator->mDataIndex < 0) // -1
+            //continue; // FIXME
 
+        // targetNode can be nullptr if nodeNameIndex == -1
+        if (mControlledBlocks[i].nodeNameIndex == -1)
+            continue;
+
+        // targets are usually NiTriBasedGeom or NiNode
+        std::string targetName = getObjectName(mControlledBlocks[i].nodeNameIndex);
+        NiAVObject *target = mModel.getRef<NiAVObject>(objects->getObjectRef(targetName));
+
+        if (!target)
+            continue;
+
+        target->setHasAnim();
+
+        // Each interpolator type probably has its own animation method get the controller to
+        // do the building; pass the interpolator data for the keys
+        //
+        // NOTE: ingore the chain of controllers here since NiControllerSequence is managing
+        // them all?
+        //
+        // Most of the targets wouldn't have been built yet so just place the data to be picked
+        // up later.
+        //NiObject::mModel.getRef<NiTimeController>(mControlledBlocks[i]controllerIndex)
+            //->buildFromNiControllerSequence(controllers, targetIndex, data);
+        //
+        // For NiGeomMorpherController the target would be a NiTriBasedGeom which corresponds
+        // to an Ogre::SubMesh (which can get to its parent Ogre::Mesh).
+        //
+        // So we need access to a map<NiGeometyRef, Ogre::SubMesh*> probably from ModelData.
+        //
+
+        std::string frameName = getObjectName(mControlledBlocks[i].variable2Index);
+        if (frameName =="")
+            continue;
+
+        NiTimeController *controller
+            = mModel.getRef<NiTimeController>(mControlledBlocks[i].controller2Index);
+        controller->setInterpolator(frameName, interpolator);
     }
-
-    // FIXME: process mTextKeysIndex here
 }
 
-NiBtOgre::NiAVObject* NiBtOgre::NiControllerSequence::getTargetObject(std::uint32_t objIndex,
-        const NiDefaultAVObjectPalette* objects) const
+std::string NiBtOgre::NiControllerSequence::getObjectName(std::uint32_t stringOffset) const
 {
-    std::string objName;
     if (mModel.nifVer() >= 0x0a020000 && mModel.nifVer() <= 0x14000005)
     {
-        if (objIndex == 0xffffffff) // -1, horrible hack
-            return nullptr;
+        if (stringOffset == 0xffffffff) // -1, horrible hack
+            return "";
 
         NiStringPalette *palette = mModel.getRef<NiStringPalette>(mStringPaletteIndex);
 
-        size_t len = palette->mPalette.find_first_of('\0', objIndex) - objIndex;
-        objName = palette->mPalette.substr(objIndex, len);
+        size_t len = palette->mPalette.find_first_of('\0', stringOffset) - stringOffset;
+        return palette->mPalette.substr(stringOffset, len);
     }
     else //if (mModel.nifVer() == 0x0a01006a || mModel.nifVer() >= 0x14010003)
     {
-        objName = mModel.indexToString(objIndex);
+        return mModel.indexToString(stringOffset); // for these versions stringOffset is objectIndex
     }
-
-    return mModel.getRef<NiAVObject>(objects->getObjectRef(objName));
 }

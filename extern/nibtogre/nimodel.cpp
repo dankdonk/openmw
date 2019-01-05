@@ -33,6 +33,7 @@
 #include <OgreSceneNode.h>
 #include <OgreSkeletonManager.h>
 #include <OgreSkeleton.h>
+#include <OgreAnimationState.h>
 //#include <OgreResourceManager.h> // ResourceCreateOrRetrieveResult
 
 #include "niobject.hpp"
@@ -255,6 +256,23 @@ void NiBtOgre::NiModel::buildMeshAndEntity(BtOgreInst* inst)
         //          sub-meshes are created in NiMeshLoader::loadResource
 
         entity->setVisible(true /*!(flags&Nif::NiNode::Flag_Hidden)*/); // FIXME not for newer NIF
+
+        // FIXME: move below to animation
+        if (entity->hasVertexAnimation())
+        {
+            Ogre::AnimationStateSet *anims = entity->getAllAnimationStates();
+            if (anims)
+            {
+                Ogre::AnimationStateIterator i = anims->getAnimationStateIterator();
+                while (i.hasMoreElements())
+                {
+                    Ogre::AnimationState *state = i.getNext();
+                    state->setEnabled(true);
+                    state->setLoop(true); // FIXME: enable looping for all while testing only
+                }
+                inst->mObjectScene->mVertexAnimEntities.push_back(entity);
+            }
+        }
 
         inst->mObjectScene->mEntities.push_back(entity);
 

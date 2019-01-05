@@ -1,18 +1,7 @@
 #include "niffile.hpp"
 #include "effect.hpp"
-#include "collision.hpp"
-#include "property.hpp"
-#include "controller.hpp"
-#include "controlled.hpp"
-#include "extra.hpp"
-#include "foreign.hpp"
 
 #include <map>
-#include <cassert>
-#include <iostream> // FIXME
-#ifdef NDEBUG // FIXME: debuggigng only
-#undef NDEBUG
-#endif
 
 #include <OgreResourceGroupManager.h>
 
@@ -73,7 +62,7 @@ static std::map<std::string,RecordFactoryEntry> makeFactory()
     newFactory.insert(makeEntry("AvoidNode",                  &construct <NiNode>                      , RC_AvoidNode                     ));
     newFactory.insert(makeEntry("NiBSParticleNode",           &construct <NiNode>                      , RC_NiBSParticleNode              ));
     newFactory.insert(makeEntry("NiBSAnimationNode",          &construct <NiNode>                      , RC_NiBSAnimationNode             ));
-    newFactory.insert(makeEntry("NiBillboardNode",            &construct <NiBillboardNode>             , RC_NiBillboardNode               ));
+    newFactory.insert(makeEntry("NiBillboardNode",            &construct <NiNode>                      , RC_NiBillboardNode               ));
     newFactory.insert(makeEntry("NiTriShape",                 &construct <NiTriShape>                  , RC_NiTriShape                    ));
     newFactory.insert(makeEntry("NiRotatingParticles",        &construct <NiRotatingParticles>         , RC_NiRotatingParticles           ));
     newFactory.insert(makeEntry("NiAutoNormalParticles",      &construct <NiAutoNormalParticles>       , RC_NiAutoNormalParticles         ));
@@ -126,159 +115,9 @@ static std::map<std::string,RecordFactoryEntry> makeFactory()
     newFactory.insert(makeEntry("NiSequenceStreamHelper",     &construct <NiSequenceStreamHelper>      , RC_NiSequenceStreamHelper        ));
     newFactory.insert(makeEntry("NiSourceTexture",            &construct <NiSourceTexture>             , RC_NiSourceTexture               ));
     newFactory.insert(makeEntry("NiSkinInstance",             &construct <NiSkinInstance>              , RC_NiSkinInstance                ));
-    //Seen in NIF ver 20.0.0.5
-    newFactory.insert(makeEntry("BSXFlags",                   &construct <BSXFlags>                    , RC_BSXFlags                      ));
-    newFactory.insert(makeEntry("hkPackedNiTriStripsData",    &construct <hkPackedNiTriStripsData>     , RC_hkPackedNiTriStripsData       ));
-    newFactory.insert(makeEntry("bhkPackedNiTriStripsShape",  &construct <bhkPackedNiTriStripsShape>   , RC_bhkPackedNiTriStripsShape     ));
-    newFactory.insert(makeEntry("bhkNiTriStripsShape",        &construct <bhkNiTriStripsShape>         , RC_bhkNiTriStripsShape           ));
-    newFactory.insert(makeEntry("bhkMoppBvTreeShape",         &construct <bhkMoppBvTreeShape>          , RC_bhkMoppBvTreeShape            ));
-    newFactory.insert(makeEntry("bhkRigidBody",               &construct <bhkRigidBody>                , RC_bhkRigidBody                  ));
-    newFactory.insert(makeEntry("bhkRigidBodyT",              &construct <bhkRigidBodyT>               , RC_bhkRigidBodyT                 ));
-    newFactory.insert(makeEntry("NiCollisionObject",          &construct <NiCollisionObject>           , RC_NiCollisionObject             ));
-    newFactory.insert(makeEntry("bhkNiCollisionObject",       &construct <bhkNiCollisionObject>        , RC_bhkNiCollisionObject          ));
-    newFactory.insert(makeEntry("bhkCollisionObject",         &construct <bhkCollisionObject>          , RC_bhkCollisionObject            ));
-    newFactory.insert(makeEntry("bhkSPCollisionObject",       &construct <bhkSPCollisionObject>        , RC_bhkSPCollisionObject          ));
-    newFactory.insert(makeEntry("NiTriStrips",                &construct <NiTriStrips>                 , RC_NiTriStrips                   ));
-    newFactory.insert(makeEntry("NiBinaryExtraData",          &construct <NiBinaryExtraData>           , RC_NiBinaryExtraData             ));
-    newFactory.insert(makeEntry("NiTriStripsData",            &construct <NiTriStripsData>             , RC_NiTriStripsData               ));
-    newFactory.insert(makeEntry("bhkListShape",               &construct <bhkListShape>                , RC_bhkListShape                  ));
-    newFactory.insert(makeEntry("bhkBoxShape",                &construct <bhkBoxShape>                 , RC_bhkBoxShape                   ));
-    newFactory.insert(makeEntry("bhkSphereShape",             &construct <bhkSphereShape>              , RC_bhkSphereShape                ));
-    newFactory.insert(makeEntry("bhkConvexTransformShape",    &construct <bhkConvexTransformShape>     , RC_bhkConvexTransformShape       ));
-    newFactory.insert(makeEntry("bhkConvexVerticesShape",     &construct <bhkConvexVerticesShape>      , RC_bhkConvexVerticesShape        ));
-    newFactory.insert(makeEntry("NiTransformController",      &construct <NiTransformController>       , RC_NiTransformController         ));
-    newFactory.insert(makeEntry("NiPathInterpolator",         &construct <NiPathInterpolator>          , RC_NiPathInterpolator            ));
-    newFactory.insert(makeEntry("NiTransformInterpolator",    &construct <NiTransformInterpolator>     , RC_NiTransformInterpolator       ));
-    newFactory.insert(makeEntry("NiTransformData",            &construct <NiTransformData>             , RC_NiTransformData               ));
-    newFactory.insert(makeEntry("NiGeometry",                 &construct <NiGeometry>                  , RC_NiGeometry                    ));
-    newFactory.insert(makeEntry("NiParticleSystem",           &construct <NiParticleSystem>            , RC_NiParticleSystem              ));
-    newFactory.insert(makeEntry("NiPSysModifier",             &construct <NiPSysModifier>              , RC_NiPSysModifier                ));
-    newFactory.insert(makeEntry("NiControllerManager",        &construct <NiControllerManager>         , RC_NiControllerManager           ));
-    newFactory.insert(makeEntry("NiSequence",                 &construct <NiSequence>                  , RC_NiSequence                    ));
-    newFactory.insert(makeEntry("NiControllerSequence",       &construct <NiControllerSequence>        , RC_NiControllerSequence          ));
-    newFactory.insert(makeEntry("NiStringPalette",            &construct <NiStringPalette>             , RC_NiStringPalette               ));
-    newFactory.insert(makeEntry("NiDefaultAVObjectPalette",   &construct <NiDefaultAVObjectPalette>    , RC_NiDefaultAVObjectPalette      ));
-    newFactory.insert(makeEntry("NiFloatInterpolator",        &construct <NiFloatInterpolator>         , RC_NiFloatInterpolator           ));
-    newFactory.insert(makeEntry("NiBlendFloatInterpolator",   &construct <NiBlendFloatInterpolator>    , RC_NiBlendFloatInterpolator      ));
-    newFactory.insert(makeEntry("NiPSysEmitterCtlr",          &construct <NiPSysEmitterCtlr>           , RC_NiPSysEmitterCtlr             ));
-    newFactory.insert(makeEntry("NiPSysUpdateCtlr",           &construct <NiPSysUpdateCtlr>            , RC_NiPSysUpdateCtlr              ));
-    newFactory.insert(makeEntry("NiBoolInterpolator",         &construct <NiBoolInterpolator>          , RC_NiBoolInterpolator            ));
-    newFactory.insert(makeEntry("NiBoolData",                 &construct <NiBoolData>                  , RC_NiBoolData                    ));
-    newFactory.insert(makeEntry("NiPSysBoxEmitter",           &construct <NiPSysBoxEmitter>            , RC_NiPSysBoxEmitter              ));
-    newFactory.insert(makeEntry("NiPSysAgeDeathModifier",     &construct <NiPSysAgeDeathModifier>      , RC_NiPSysAgeDeathModifier        ));
-    newFactory.insert(makeEntry("NiPSysSpawnModifier",        &construct <NiPSysSpawnModifier>         , RC_NiPSysSpawnModifier           ));
-    newFactory.insert(makeEntry("NiPSysGrowFadeModifier",     &construct <NiPSysGrowFadeModifier>      , RC_NiPSysGrowFadeModifier        ));
-    newFactory.insert(makeEntry("NiPSysColorModifier",        &construct <NiPSysColorModifier>         , RC_NiPSysColorModifier           ));
-    newFactory.insert(makeEntry("NiPSysGravityModifier",      &construct <NiPSysGravityModifier>       , RC_NiPSysGravityModifier         ));
-    newFactory.insert(makeEntry("NiPSysPositionModifier",     &construct <NiPSysPositionModifier>      , RC_NiPSysPositionModifier        ));
-    newFactory.insert(makeEntry("NiPSysBoundUpdateModifier",  &construct <NiPSysBoundUpdateModifier>   , RC_NiPSysBoundUpdateModifier     ));
-    newFactory.insert(makeEntry("NiPSysData",                 &construct <NiPSysData>                  , RC_NiPSysData                    ));
-    newFactory.insert(makeEntry("NiPoint3Interpolator",       &construct <NiPoint3Interpolator>        , RC_NiPoint3Interpolator          ));
-    newFactory.insert(makeEntry("NiBlendPoint3Interpolator",  &construct <NiBlendPoint3Interpolator>   , RC_NiBlendPoint3Interpolator     ));
-    newFactory.insert(makeEntry("NiSkinPartition",            &construct <NiSkinPartition>             , RC_NiSkinPartition               ));
-    newFactory.insert(makeEntry("bhkCapsuleShape",            &construct <bhkCapsuleShape>             , RC_bhkCapsuleShape               ));
-    newFactory.insert(makeEntry("bhkSimpleShapePhantom",      &construct <bhkSimpleShapePhantom>       , RC_bhkSimpleShapePhantom         ));
-    newFactory.insert(makeEntry("NiPSysRotationModifier",     &construct <NiPSysRotationModifier>      , RC_NiPSysRotationModifier        ));
-    newFactory.insert(makeEntry("NiPSysCylinderEmitter",      &construct <NiPSysCylinderEmitter>       , RC_NiPSysCylinderEmitter         ));
-    newFactory.insert(makeEntry("bhkLimitedHingeConstraint",  &construct <bhkLimitedHingeConstraint>   , RC_bhkLimitedHingeConstraint     ));
-    newFactory.insert(makeEntry("NiBlendBoolInterpolator",    &construct <NiBlendBoolInterpolator>     , RC_NiBlendBoolInterpolator       ));
-    newFactory.insert(makeEntry("NiPSysModifierActiveCtlr",   &construct <NiPSysModifierActiveCtlr>    , RC_NiPSysModifierActiveCtlr      ));
-    newFactory.insert(makeEntry("NiPSysDragModifier",         &construct <NiPSysDragModifier>          , RC_NiPSysDragModifier            ));
-    newFactory.insert(makeEntry("NiPSysGravityStrengthCtlr",  &construct <NiPSysGravityStrengthCtlr>   , RC_NiPSysGravityStrengthCtlr     ));
-    newFactory.insert(makeEntry("NiBoolTimelineInterpolator", &construct <NiBoolTimelineInterpolator>  , RC_NiBoolTimelineInterpolator    ));
-    newFactory.insert(makeEntry("BSParentVelocityModifier",   &construct <BSParentVelocityModifier>    , RC_BSParentVelocityModifier      ));
-    newFactory.insert(makeEntry("NiPSysEmitter",              &construct <NiPSysEmitter>               , RC_NiPSysEmitter                 ));
-    newFactory.insert(makeEntry("NiPSysMeshEmitter",          &construct <NiPSysMeshEmitter>           , RC_NiPSysMeshEmitter             ));
-    newFactory.insert(makeEntry("NiPSysEmitterSpeedCtlr",     &construct <NiPSysEmitterSpeedCtlr>      , RC_NiPSysEmitterSpeedCtlr        ));
-    newFactory.insert(makeEntry("bhkRagdollConstraint",       &construct <bhkRagdollConstraint>        , RC_bhkRagdollConstraint          ));
-    newFactory.insert(makeEntry("NiTextureTransformController", &construct <NiTextureTransformController> , RC_NiTextureTransformController));
-    newFactory.insert(makeEntry("bhkTransformShape",          &construct <bhkTransformShape>           , RC_bhkTransformShape             ));
-    newFactory.insert(makeEntry("BSFurnitureMarker",          &construct <BSFurnitureMarker>           , RC_BSFurnitureMarker             ));
-    newFactory.insert(makeEntry("bhkPrismaticConstraint",     &construct <bhkPrismaticConstraint>      , RC_bhkPrismaticConstraint        ));
-    newFactory.insert(makeEntry("NiPSysSphereEmitter",        &construct <NiPSysSphereEmitter>         , RC_NiPSysSphereEmitter           ));
-    newFactory.insert(makeEntry("NiPSysEmitterLifeSpanCtlr",  &construct <NiPSysEmitterLifeSpanCtlr>   , RC_NiPSysEmitterLifeSpanCtlr     ));
-    newFactory.insert(makeEntry("BSBound",                    &construct <BSBound>                     , RC_BSBound                       ));
-    newFactory.insert(makeEntry("bhkStiffSpringConstraint",   &construct <bhkStiffSpringConstraint>    , RC_bhkStiffSpringConstraint      ));
-    newFactory.insert(makeEntry("NiBSBoneLODController",      &construct <NiBSBoneLODController>       , RC_NiBSBoneLODController         ));
-    newFactory.insert(makeEntry("bhkBlendController",         &construct <bhkBlendController>          , RC_bhkBlendController            ));
-    newFactory.insert(makeEntry("bhkBlendCollisionObject",    &construct <bhkBlendCollisionObject>     , RC_bhkBlendCollisionObject       ));
-    newFactory.insert(makeEntry("bhkMalleableConstraint",     &construct <bhkMalleableConstraint>      , RC_bhkMalleableConstraint        ));
-    newFactory.insert(makeEntry("NiPSysColliderManager",      &construct <NiPSysColliderManager>       , RC_NiPSysColliderManager         ));
-    newFactory.insert(makeEntry("NiPSysPlanarCollider",       &construct <NiPSysPlanarCollider>        , RC_NiPSysPlanarCollider          ));
-    newFactory.insert(makeEntry("NiPSysCollider",             &construct <NiPSysCollider>              , RC_NiPSysCollider                ));
-    newFactory.insert(makeEntry("bhkMultiSphereShape",        &construct <bhkMultiSphereShape>         , RC_bhkMultiSphereShape           ));
-    newFactory.insert(makeEntry("NiPSysEmitterInitialRadiusCtlr", &construct <NiPSysEmitterInitialRadiusCtlr>, RC_NiPSysEmitterInitialRadiusCtlr));
-    newFactory.insert(makeEntry("NiBlendTransformInterpolator", &construct <NiBlendTransformInterpolator>, RC_NiBlendTransformInterpolator));
-    newFactory.insert(makeEntry("NiMultiTargetTransformController", &construct <NiMultiTargetTransformController>, RC_NiMultiTargetTransformController));
-    newFactory.insert(makeEntry("BSWindModifier",             &construct <BSWindModifier>              , RC_BSWindModifier                ));
-    newFactory.insert(makeEntry("NiInterpolator",             &construct <NiInterpolator>              , RC_NiInterpolator                ));
-    //
-    newFactory.insert(makeEntry("BSFadeNode",                 &construct <BSFadeNode>                  , RC_BSFadeNode                    ));
-    newFactory.insert(makeEntry("bhkCompressedMeshShape",     &construct <bhkCompressedMeshShape>      , RC_bhkCompressedMeshShape        ));
-    newFactory.insert(makeEntry("bhkCompressedMeshShapeData", &construct <bhkCompressedMeshShapeData>  , RC_bhkCompressedMeshShapeData    ));
-    newFactory.insert(makeEntry("BSLightingShaderProperty",   &construct <BSLightingShaderProperty>    , RC_BSLightingShaderProperty      ));
-    newFactory.insert(makeEntry("BSEffectShaderProperty",     &construct <BSEffectShaderProperty>      , RC_BSEffectShaderProperty        ));
-    newFactory.insert(makeEntry("BSShaderTextureSet",         &construct <BSShaderTextureSet>          , RC_BSShaderTextureSet            ));
-    newFactory.insert(makeEntry("BSFurnitureMarkerNode",      &construct <BSFurnitureMarkerNode>       , RC_BSFurnitureMarkerNode         ));
-    newFactory.insert(makeEntry("BSLODTriShape",              &construct <BSLODTriShape>               , RC_BSLODTriShape                 ));
-    newFactory.insert(makeEntry("NiExtraData",                &construct <NiExtraData>                 , RC_NiExtraData                   ));
-    newFactory.insert(makeEntry("NiBooleanExtraData",         &construct <NiBooleanExtraData>          , RC_NiBooleanExtraData            ));
-    newFactory.insert(makeEntry("NiSwitchNode",               &construct <NiSwitchNode>                , RC_NiSwitchNode                  ));
-    newFactory.insert(makeEntry("BSValueNode",                &construct <BSValueNode>                 , RC_BSValueNode                   ));
-    newFactory.insert(makeEntry("BSInvMarker",                &construct <BSInvMarker>                 , RC_BSInvMarker                   ));
-    newFactory.insert(makeEntry("BSBehaviorGraphExtraData",   &construct <BSBehaviorGraphExtraData>    , RC_BSBehaviorGraphExtraData      ));
-    newFactory.insert(makeEntry("BSPSysLODModifier",          &construct <BSPSysLODModifier>           , RC_BSPSysLODModifier             ));
-    newFactory.insert(makeEntry("BSPSysScaleModifier",        &construct <BSPSysScaleModifier>         , RC_BSPSysScaleModifier           ));
-    newFactory.insert(makeEntry("NiPSysSphericalCollider",    &construct <NiPSysSphericalCollider>     , RC_NiPSysSphericalCollider       ));
-    newFactory.insert(makeEntry("BSLightingShaderPropertyColorController", &construct <BSLightingShaderPropertyColorController>, RC_BSLightingShaderPropertyColorController));
-    newFactory.insert(makeEntry("BSLightingShaderPropertyFloatController", &construct <BSLightingShaderPropertyFloatController>, RC_BSLightingShaderPropertyFloatController));
-    newFactory.insert(makeEntry("BSPSysSimpleColorModifier",  &construct <BSPSysSimpleColorModifier>   , RC_BSPSysSimpleColorModifier     ));
-    newFactory.insert(makeEntry("BSOrderedNode",              &construct <BSOrderedNode>               , RC_BSOrderedNode                 ));
-    newFactory.insert(makeEntry("BSEffectShaderPropertyColorController", &construct <BSLightingShaderPropertyColorController>, RC_BSLightingShaderPropertyColorController));
-    newFactory.insert(makeEntry("BSEffectShaderPropertyFloatController", &construct <BSLightingShaderPropertyFloatController>, RC_BSLightingShaderPropertyFloatController));
-    newFactory.insert(makeEntry("BSBlastNode",                &construct <BSBlastNode>                 , RC_BSBlastNode                   ));
-    newFactory.insert(makeEntry("BSPSysInheritVelocityModifier", &construct <BSPSysInheritVelocityModifier>, RC_BSPSysInheritVelocityModifier));
-    newFactory.insert(makeEntry("NiPSysBombModifier",         &construct <NiPSysBombModifier>          , RC_NiPSysBombModifier            ));
-    newFactory.insert(makeEntry("BSPSysSubTexModifier",       &construct <BSPSysSubTexModifier>        , RC_BSPSysSubTexModifier          ));
-    newFactory.insert(makeEntry("BSMultiBoundNode",           &construct <BSMultiBoundNode>            , RC_BSMultiBoundNode              ));
-    newFactory.insert(makeEntry("BSMultiBound",               &construct <BSMultiBound>                , RC_BSMultiBound                  ));
-    newFactory.insert(makeEntry("BSWaterShaderProperty",      &construct <BSWaterShaderProperty>       , RC_BSWaterShaderProperty         ));
-    newFactory.insert(makeEntry("BSLeafAnimNode",             &construct <BSLeafAnimNode>              , RC_BSLeafAnimNode                ));
-    newFactory.insert(makeEntry("BSTreeNode",                 &construct <BSTreeNode>                  , RC_BSTreeNode                    ));
-    newFactory.insert(makeEntry("BSMultiBoundData",           &construct <BSMultiBoundData>            , RC_BSMultiBoundData              ));
-    newFactory.insert(makeEntry("BSMultiBoundOBB",            &construct <BSMultiBoundOBB>             , RC_BSMultiBoundOBB               ));
-    newFactory.insert(makeEntry("BSDecalPlacementVectorExtraData", &construct <BSDecalPlacementVectorExtraData>, RC_BSDecalPlacementVectorExtraData));
-    newFactory.insert(makeEntry("NiFloatExtraData",           &construct <NiFloatExtraData>            , RC_NiFloatExtraData              ));
-    newFactory.insert(makeEntry("BSLagBoneController",        &construct <BSLagBoneController>         , RC_BSLagBoneController           ));
-    newFactory.insert(makeEntry("BSStripParticleSystem",      &construct <BSStripParticleSystem>       , RC_BSStripParticleSystem         ));
-    newFactory.insert(makeEntry("NiFloatExtraDataController", &construct <NiFloatExtraDataController>  , RC_NiFloatExtraDataController    ));
-    newFactory.insert(makeEntry("bhkBreakableConstraint",     &construct <bhkBreakableConstraint>      , RC_bhkBreakableConstraint        ));
-    newFactory.insert(makeEntry("Property",                   &construct <Property>                    , RC_Property                      ));
-    newFactory.insert(makeEntry("bhkBallSocketConstraintChain", &construct <bhkBallSocketConstraintChain>, RC_bhkBallSocketConstraintChain));
-    newFactory.insert(makeEntry("BSDamageStage",              &construct <BSDamageStage>               , RC_BSDamageStage                 ));
-    newFactory.insert(makeEntry("BSNiAlphaPropertyTestRefController", &construct <NiAlphaController>   , RC_BSNiAlphaPropertyTestRefController));
-    newFactory.insert(makeEntry("NiLookAtInterpolator",       &construct <NiLookAtInterpolator>        , RC_NiLookAtInterpolator          ));
-    newFactory.insert(makeEntry("NiIntegerExtraData",         &construct <NiIntegerExtraData>          , RC_NiIntegerExtraData            ));
-    newFactory.insert(makeEntry("BSFrustumFOVController",     &construct <BSFrustumFOVController>      , RC_BSFrustumFOVController        ));
-    newFactory.insert(makeEntry("bhkHingeConstraint",         &construct <bhkHingeConstraint>          , RC_bhkHingeConstraint            ));
-    newFactory.insert(makeEntry("BSStripPSysData",            &construct <BSStripPSysData>             , RC_BSStripPSysData               ));
-    newFactory.insert(makeEntry("BSPSysStripUpdateModifier",  &construct <BSPSysStripUpdateModifier>   , RC_BSPSysStripUpdateModifier     ));
-    newFactory.insert(makeEntry("NiBSplineInterpolator",      &construct <NiBSplineInterpolator>       , RC_NiBSplineInterpolator         ));
-    newFactory.insert(makeEntry("NiBSplineFloatInterpolator", &construct <NiBSplineFloatInterpolator>  , RC_NiBSplineFloatInterpolator    ));
-    newFactory.insert(makeEntry("NiBSplinePoint3Interpolator", &construct <NiBSplinePoint3Interpolator> , RC_NiBSplinePoint3Interpolator  ));
-    newFactory.insert(makeEntry("NiBSplineTransformInterpolator", &construct <NiBSplineTransformInterpolator> , RC_NiBSplineTransformInterpolator));
-    newFactory.insert(makeEntry("NiBSplineCompTransformInterpolator", &construct <NiBSplineCompTransformInterpolator> , RC_NiBSplineCompTransformInterpolator));
-    newFactory.insert(makeEntry("NiBSplineData",              &construct <NiBSplineData>               , RC_NiBSplineData                 ));
-    newFactory.insert(makeEntry("NiBSplineBasisData",         &construct <NiBSplineBasisData>          , RC_NiBSplineBasisData            ));
-    // FO3
-    newFactory.insert(makeEntry("BSShaderPPLightingProperty", &construct <BSShaderPPLightingProperty>  , RC_BSShaderPPLightingProperty    ));
-    newFactory.insert(makeEntry("BSShaderNoLightingProperty", &construct <BSShaderNoLightingProperty>  , RC_BSShaderNoLightingProperty    ));
-    newFactory.insert(makeEntry("bhkConvexListShape",         &construct <bhkConvexListShape>          , RC_bhkConvexListShape            ));
-    newFactory.insert(makeEntry("BSDismemberSkinInstance",    &construct <BSDismemberSkinInstance>     , RC_NiSkinInstance                ));
-    //
-    newFactory.insert(makeEntry("bhkConvexSweepShape",        &construct <bhkConvexSweepShape>         , RC_bhkConvexSweepShape           ));
     return newFactory;
 }
+
 
 ///Make the factory map used for parsing the file
 static const std::map<std::string,RecordFactoryEntry> factories = makeFactory();
@@ -451,30 +290,21 @@ void NIFFile::parse()
         assert(r->recType != RC_MISSING);
         r->recName = rec;
         r->recIndex = i;
+
         r->nifVer = mVer;
         r->userVer = mUserVer;
         r->userVer2 = mUserVer2;
         r->strings = &strings;
-        records[i] = r;
-        //std::cout << "Start of " << rec << ", block " << i << ": " << nif.tell() << std::endl; // FIXME
-        //assert(nif.tell() < nif.size() && "Nif: EOF but record not read ");
-        if (nif.tell() >= nif.size())
-            fail ("Nif:: EOF but record not read");
-        //if (i == 9 && records[0]->recType == Nif::RC_BSFadeNode && static_cast<BSFadeNode*>(records[0])->name == "TrigActorBox01")
-            //std::cout << "stop" << std::endl;
 
+        records[i] = r;
         r->read(&nif);
     }
 
-    //NiFooter
-    assert(nif.tell() < nif.size() && "Nif: EOF but footer not read ");
-    //if (nif.tell() >= nif.size())
-        //std::cerr << "Nif: " << filename << " EOF but footer not read " << std::endl;
     size_t rootNum = nif.getUInt();
     roots.resize(rootNum);
 
     //Determine which records are roots
-    for(size_t i = 0; i < rootNum; i++)
+    for(size_t i = 0;i < rootNum;i++)
     {
         int idx = nif.getInt();
         if (idx >= 0)
@@ -487,12 +317,9 @@ void NIFFile::parse()
             warn("Null Root found");
         }
     }
-    assert(nif.tell() == nif.size() && "Nif: still has data after reading footer");
-    //if (nif.tell() != nif.size())
-        //std::cerr << "Nif: " << filename << " still has data after reading footer" << std::endl;
 
     // Once parsing is done, do post-processing.
-    for(size_t i = 0; i < recNum; i++)
+    for(size_t i=0; i<recNum; i++)
         records[i]->post(this);
 }
 

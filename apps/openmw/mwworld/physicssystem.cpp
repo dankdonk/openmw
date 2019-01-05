@@ -33,7 +33,9 @@
 #include "../mwworld/esmstore.hpp"
 #include "../mwworld/cellstore.hpp"
 
-#include "../mwrender/animation.hpp"
+#include "../apps/openmw/mwrender/animation.hpp"
+#include "../apps/openmw/mwbase/world.hpp"
+#include "../apps/openmw/mwbase/environment.hpp"
 
 #include "ptr.hpp"
 #include "class.hpp"
@@ -58,16 +60,13 @@ void animateCollisionShapes (std::map<OEngine::Physic::RigidBody*, OEngine::Phys
 
         OEngine::Physic::AnimatedShapeInstance& instance = it->second;
 
-        std::map<size_t, size_t>& shapes = instance.mAnimatedShapes;
-        for (std::map<size_t, size_t>::iterator shapeIt = shapes.begin();
+        std::map<int, int>& shapes = instance.mAnimatedShapes;
+        for (std::map<int, int>::iterator shapeIt = shapes.begin();
              shapeIt != shapes.end(); ++shapeIt)
         {
 
             const std::string& mesh = animation->getObjectRootName();
-            int boneHandle = NifOgre::NIFSkeletonLoader::lookupOgreBoneHandle(mesh, (int)shapeIt->first);
-            if (boneHandle == -1)
-                continue;
-
+            int boneHandle = NifOgre::NIFSkeletonLoader::lookupOgreBoneHandle(mesh, shapeIt->first);
             Ogre::Node* bone = animation->getNode(boneHandle);
 
             if (bone == NULL)
@@ -79,10 +78,10 @@ void animateCollisionShapes (std::map<OEngine::Physic::RigidBody*, OEngine::Phys
             trans.setOrigin(BtOgre::Convert::toBullet(bone->_getDerivedPosition()) * compound->getLocalScaling());
             trans.setRotation(BtOgre::Convert::toBullet(bone->_getDerivedOrientation()));
 
-            compound->getChildShape((int)shapeIt->second)->setLocalScaling(
+            compound->getChildShape(shapeIt->second)->setLocalScaling(
                         compound->getLocalScaling() *
                         BtOgre::Convert::toBullet(bone->_getDerivedScale()));
-            compound->updateChildTransform((int)shapeIt->second, trans);
+            compound->updateChildTransform(shapeIt->second, trans);
         }
 
         // needed because we used btDynamicsWorld::setForceUpdateAllAabbs(false)
@@ -677,64 +676,21 @@ namespace MWWorld
         mEngine->removeHeightField(x, y);
     }
 
-    // MWWorld::Scene::insertCell calls InsertFunctor that calls ::addObject which in turn
-    // calls RenderingManager::addObject and the class's insertObject (see below)
-    //
-    //   MWClass::ForeignStatic::insertObject
-    //     MWWorld::PhysicsSystem::addObject                         <====== this method
-    //       OEngine::Physic::PhysicEngine::createAndAdjustRigidBody
-    //         NifBullet::ManualBulletShapeLoader::load
-    //           OEngine::Physic::BulletShapeManager::create
-    //             Ogre::ResourceManager::createResource
-    //                             :
-    //                             : (callback)
-    //                             v
-    //                   NifBullet::ManualBulletShapeLoader::loadResource
-    //
-    // If we make an assumption that the rendering object is *always* created first, then we
-    // can make use of that for ragdoll objects. FIXME NOTE
-    //
-    // Unfortunately we have to search for the object's animation for now (otherwise a major
-    // rewrite is probably required) FIXME TODO
-    //
     void PhysicsSystem::addObject (const Ptr& ptr, const std::string& mesh, bool placeable)
     {
         Ogre::SceneNode* node = ptr.getRefData().getBaseNode();
         handleToMesh[node->getName()] = mesh;
-
-        MWRender::Animation* objAnim = MWBase::Environment::get().getWorld()->getAnimation(ptr);
-        if (!objAnim->getRagdollEntitiesMap().empty())  // FIXME: this is such a bad hack
-        {
-            mEngine->createAndAdjustRagdollBody(
-                mesh, node, objAnim->getRagdollEntitiesMap(), ptr.getCellRef().getScale(), node->getPosition(), node->getOrientation(), 0, 0, false, placeable);
-            return;
-        }
-
-        // collision object
         mEngine->createAndAdjustRigidBody(
             mesh, node->getName(), ptr.getCellRef().getScale(), node->getPosition(), node->getOrientation(), 0, 0, false, placeable);
-        // raycast object FIXME why are these needed?
         mEngine->createAndAdjustRigidBody(
             mesh, node->getName(), ptr.getCellRef().getScale(), node->getPosition(), node->getOrientation(), 0, 0, true, placeable);
     }
 
     void PhysicsSystem::addActor (const Ptr& ptr, const std::string& mesh)
     {
-        //if(ptr.getTypeName() == typeid(ESM::Creature).name() || ptr.getTypeName() == typeid(ESM::NPC).name())
-        {
-            Ogre::SceneNode* node = ptr.getRefData().getBaseNode();
-            //TODO:optimize this. Searching the std::map isn't very efficient i think.
-            mEngine->addCharacter(node->getName(),
-                    mesh, node->getPosition(), node->getScale().x, node->getOrientation());
-        }
-#if 0
-        else // ESM4::Creature || ESM4::Npc
-        {
-            Ogre::SceneNode* node = ptr.getRefData().getBaseNode();
-            mEngine->addForeignCharacter(node->getName(),
-                    mesh, node->getPosition(), node->getScale().x, node->getOrientation());
-        }
-#endif
+        Ogre::SceneNode* node = ptr.getRefData().getBaseNode();
+        //TODO:optimize this. Searching the std::map isn't very efficient i think.
+        mEngine->addCharacter(node->getName(), mesh, node->getPosition(), node->getScale().x, node->getOrientation());
     }
 
     void PhysicsSystem::removeObject (const std::string& handle)

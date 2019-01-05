@@ -531,8 +531,21 @@ namespace MWWorld
 
         // It seems that ICMarketDistrict needs its parent world's LAND
         //const ForeignCell *cell
-                //ESM4::FormId worldId
+                //ESM4::FormId parentWorldId
                     //= static_cast<const MWWorld::ForeignCell*>(mCurrentCell->getCell())->mCell->mParent;
+
+        ESM4::FormId currentWorldId = 0;
+        if (mCurrentCell->isForeignCell())
+        {
+            if (static_cast<const MWWorld::ForeignCell*>(mCurrentCell->getCell())->mCell->mParent != 0)
+                currentWorldId = static_cast<const MWWorld::ForeignCell*>(mCurrentCell->getCell())->mCell->mParent;
+            else
+                currentWorldId = static_cast<const MWWorld::ForeignCell*>(mCurrentCell->getCell())->mCell->mFormId;
+        }
+
+        CellStore* current = MWBase::Environment::get().getWorld()->getForeignWorld(worldId, X, Y);
+        if (!current) // FIXME
+            return;
 
         mRendering.enableTerrain(true, worldId);
 
@@ -542,31 +555,41 @@ namespace MWWorld
         // For TES4/5 we should double this value (cells are smaller)
         const int halfGridSize = Settings::Manager::getInt("exterior grid size", "Cells");
 
-        // FIXME: Check if worldspace chagned?
-
-        CellStoreCollection::iterator active = mActiveCells.begin();
-        while (active != mActiveCells.end())
+        if (worldId != currentWorldId)
         {
-            if ((*active)->getCell()->isExterior() && // FIXME: should this be an assert instead?
-                (*active)->isForeignCell())
+            int current = 0;
+            CellStoreCollection::iterator active = mActiveCells.begin();
+            while (active != mActiveCells.end())
             {
-                if ((*active)->isDummyCell())
-                {
-                    ++active;
-                    continue;
-                }
-
-                if (std::abs (X-(*active)->getCell()->getGridX()) <= halfGridSize &&
-                    std::abs (Y-(*active)->getCell()->getGridY()) <= halfGridSize)
-                {
-                    // keep cells within the new grid
-                    ++active;
-                    continue;
-                }
+                unloadCell(active++);
+                ++current;
             }
-            unloadCell (active++); // discard cells thare are no longer in the grid (or internal)
         }
+        else
+        {
+            CellStoreCollection::iterator active = mActiveCells.begin();
+            while (active != mActiveCells.end())
+            {
+                if ((*active)->getCell()->isExterior() && // FIXME: should this be an assert instead?
+                    (*active)->isForeignCell())
+                {
+                    if ((*active)->isDummyCell())
+                    {
+                        ++active;
+                        continue;
+                    }
 
+                    if (std::abs(X - (*active)->getCell()->getGridX()) <= halfGridSize &&
+                        std::abs(Y - (*active)->getCell()->getGridY()) <= halfGridSize)
+                    {
+                        // keep cells within the new grid
+                        ++active;
+                        continue;
+                    }
+                }
+                unloadCell(active++); // discard cells thare are no longer in the grid (or internal)
+            }
+        }
         int refsToLoad = 0;
         // get the number of refs to load (for loading bar progress display)
         for (int x = X-halfGridSize; x <= X+halfGridSize; ++x)
@@ -652,10 +675,6 @@ namespace MWWorld
             {
             }
         }
-
-        CellStore* current = MWBase::Environment::get().getWorld()->getForeignWorld(worldId, X, Y);
-        if (!current) // FIXME
-            return;
 
         MWBase::Environment::get().getWindowManager()->changeCell(current);
 

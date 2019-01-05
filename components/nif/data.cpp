@@ -1,14 +1,11 @@
 #include "data.hpp"
 #include "node.hpp"
-#include "foreign.hpp"
 
 namespace Nif
 {
 void NiSkinInstance::post(NIFFile *nif)
 {
     data.post(nif);
-    if (nifVer >= 0x0a020000) // from 10.2.0.0
-        skinPartition.post(nif);
     root.post(nif);
     bones.post(nif);
 

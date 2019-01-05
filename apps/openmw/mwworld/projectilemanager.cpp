@@ -41,7 +41,7 @@ namespace MWWorld
         state.mObject = NifOgre::Loader::createObjects(state.mNode, model);
         for(size_t i = 0;i < state.mObject->mControllers.size();i++)
         {
-            if(state.mObject->mControllers[i].getSource().isNull())
+            if(!state.mObject->mControllers[i].getSource())
                 state.mObject->mControllers[i].setSource(Ogre::SharedPtr<MWRender::EffectAnimationTime> (new MWRender::EffectAnimationTime()));
         }
 

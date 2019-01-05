@@ -30,7 +30,7 @@ void EffectManager::addEffect(const std::string &model, std::string textureOverr
 
     for(size_t i = 0;i < scene->mControllers.size();i++)
     {
-        if(scene->mControllers[i].getSource().isNull())
+        if(!scene->mControllers[i].getSource())
             scene->mControllers[i].setSource(Ogre::SharedPtr<EffectAnimationTime> (new EffectAnimationTime()));
     }
 

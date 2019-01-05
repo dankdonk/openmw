@@ -1015,6 +1015,17 @@ NiBtOgre::NiStringPalette::NiStringPalette(uint32_t index, NiStream& stream, con
 {
     stream.readSizedString(mPalette);
     stream.read(mLength); // TODO: validate against mPalette.size()
+// FIXME: for testing only
+#if 0
+    std::stringstream ss(mPalette);
+    std::string n;
+    std::vector<std::string> names;
+    while (std::getline(ss, n, '\0')) // split the strings
+    {
+        names.push_back(n);
+        std::cout << n << std::endl;
+    }
+#endif
 }
 
 NiBtOgre::NiUVData::NiUVData(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)

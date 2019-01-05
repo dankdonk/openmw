@@ -18,7 +18,7 @@ public:
 
     /// return value in range [0.0f, 1.0f)  <- note open upper range.
     static float rollProbability();
-
+  
     /// return value in range [0.0f, 1.0f]  <- note closed upper range.
     static float rollClosedProbability();
 
@@ -32,4 +32,3 @@ public:
 }
 
 #endif
-

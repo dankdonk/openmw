@@ -38,17 +38,8 @@
 namespace Nif
 {
     class Node;
-    class NiAVObject;
     struct Transformation;
     struct NiTriShape;
-    struct NiTriStrips;
-    class bhkCollisionObject;
-    class bhkBoxShape;
-    class bhkConvexVerticesShape;
-    class bhkConvexTransformShape;
-    struct bhkPackedNiTriStripsShape;
-    class NiCollisionObject;
-    class bhkShape;
 }
 
 namespace NifBullet
@@ -83,7 +74,6 @@ public:
       , mBoundingBox(NULL)
       , mShowMarkers(showMarkers)
     {
-        mFirstTransform.setIdentity();
     }
 
     virtual ~ManualBulletShapeLoader();
@@ -120,14 +110,6 @@ private:
     void handleNode(Nif::Node const *node, int flags, bool isCollisionNode,
                     bool raycasting, bool isAnimated=false);
 
-    void handleNode(const Nif::Node *node, unsigned int bsxFlags);
-
-    void handleBhkCollisionObject(const Nif::Node *node, unsigned int bsxFlags,
-            const Nif::NiCollisionObject *collObj);
-
-    void handleBhkShape(const Nif::Node *node, unsigned int bsxFlags,
-        const Ogre::Vector3& translation, const Ogre::Quaternion& rotation, const Nif::bhkShape *bhkShape);
-
     /**
     *Helper function
     */
@@ -137,7 +119,6 @@ private:
     *convert a NiTriShape to a bullet trishape.
     */
     void handleNiTriShape(const Nif::NiTriShape *shape, int flags, const Ogre::Matrix4 &transform, bool raycasting, bool isAnimated);
-    void handleNiTriStrips(const Nif::NiTriStrips *shape, int flags, const Ogre::Matrix4 &transform, bool raycasting, bool isAnimated);
 
     std::string mResourceName;
 
@@ -152,14 +133,13 @@ private:
     std::set<std::string> mControlledNodes;
 
     bool mShowMarkers;
-
-    btTransform mFirstTransform;
 };
 
 
 bool getBoundingBox(const std::string& nifFile, Ogre::Vector3& halfExtents, Ogre::Vector3& translation, Ogre::Quaternion& orientation);
 
 bool findBoundingBox(const Nif::Node* node, Ogre::Vector3& halfExtents, Ogre::Vector3& translation, Ogre::Quaternion& orientation);
+
 }
 
 #endif

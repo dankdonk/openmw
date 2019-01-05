@@ -1,5 +1,7 @@
 #include "animation.hpp"
 
+#include <iostream>
+
 #include <OgreSkeletonManager.h>
 #include <OgreSkeletonInstance.h>
 #include <OgreEntity.h>
@@ -99,7 +101,7 @@ void Animation::setObjectRoot(const std::string &model, bool baseonly)
     OgreAssert(mAnimSources.empty(), "Setting object root while animation sources are set!");
 
     mSkelBase = NULL;
-    mObjectRoot.setNull();
+    mObjectRoot.reset();
 
     if(model.empty())
         return;
@@ -301,7 +303,7 @@ void Animation::addAnimSource(const std::string &model)
 
     for (unsigned int i = 0; i < mObjectRoot->mControllers.size(); ++i)
     {
-        if (mObjectRoot->mControllers[i].getSource().isNull())
+        if (!mObjectRoot->mControllers[i].getSource())
             mObjectRoot->mControllers[i].setSource(mAnimationTimePtr[0]);
     }
 }
@@ -1144,7 +1146,7 @@ void Animation::disable(const std::string &groupname)
 Ogre::Vector3 Animation::runAnimation(float duration)
 {
     // FIXME: FO3
-    if (mObjectRoot.isNull())
+    if (!mObjectRoot)
         return Ogre::Vector3();
 
     Ogre::Vector3 movement(0.0f);
@@ -1220,7 +1222,7 @@ Ogre::Vector3 Animation::runAnimation(float duration)
 
     for(size_t i = 0;i < mObjectRoot->mControllers.size();i++)
     {
-        if(!mObjectRoot->mControllers[i].getSource().isNull())
+        if(mObjectRoot->mControllers[i].getSource())
             mObjectRoot->mControllers[i].update();
     }
 
@@ -1264,6 +1266,30 @@ Ogre::Vector3 Animation::runAnimation(float duration)
         mSkelBase->getAllAnimationStates()->_notifyDirty();
     }
 
+    // FIXME: need to clean up below
+    if (mObjectRoot->mVertexAnimEntities.size() > 0)
+    {
+        for (unsigned int i = 0; i < mObjectRoot->mVertexAnimEntities.size(); ++i)
+        {
+            //mObjectRoot->mVertexAnimEntities[i]->getAllAnimationStates()->_notifyDirty();
+            //std::cout << mObjectRoot->mVertexAnimEntities[i]->getSubEntity(0)->getSubMesh()->getMaterialName() << std::endl;
+
+            Ogre::AnimationStateSet *aset = mObjectRoot->mVertexAnimEntities[i]->getAllAnimationStates();
+            Ogre::AnimationStateIterator asiter = aset->getAnimationStateIterator();
+            while(asiter.hasMoreElements())
+            {
+                Ogre::AnimationState *state = asiter.getNext();
+                // FIXME: jerky animation
+#if 0
+                if (state->getTimePosition() + duration > state->getLength())
+                    state->setTimePosition(state->getLength());
+                else
+#endif
+                    state->addTime(duration);
+            }
+        }
+    }
+
     updateEffects(duration);
 
     return movement;
@@ -1286,7 +1312,7 @@ public:
 
 void Animation::enableLights(bool enable)
 {
-    if (mObjectRoot.isNull())
+    if (!mObjectRoot)
         return;  // FIXME: FO3
     std::for_each(mObjectRoot->mLights.begin(), mObjectRoot->mLights.end(), ToggleLight(enable));
 }
@@ -1373,7 +1399,7 @@ void Animation::addEffect(const std::string &model, int effectId, bool loop, con
 
     for(size_t i = 0;i < params.mObjects->mControllers.size();i++)
     {
-        if(params.mObjects->mControllers[i].getSource().isNull())
+        if(!params.mObjects->mControllers[i].getSource())
             params.mObjects->mControllers[i].setSource(Ogre::SharedPtr<EffectAnimationTime> (new EffectAnimationTime()));
     }
 
@@ -1515,9 +1541,9 @@ void Animation::preRender(Ogre::Camera *camera)
     for (std::vector<EffectParams>::iterator it = mEffects.begin(); it != mEffects.end(); ++it)
     {
         NifOgre::ObjectScenePtr objects = it->mObjects;
-        if (!objects.isNull()) objects->rotateBillboardNodes(camera); // FIXME
+        if (objects) objects->rotateBillboardNodes(camera); // FIXME
     }
-    if (!mObjectRoot.isNull()) mObjectRoot->rotateBillboardNodes(camera); // FIXME
+    if (mObjectRoot) mObjectRoot->rotateBillboardNodes(camera); // FIXME
 }
 
 // TODO: Should not be here

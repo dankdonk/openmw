@@ -38,7 +38,6 @@ public:
 
     std::string filename; // In case of external textures
     NiPixelDataPtr data;  // In case of internal textures
-    std::string originalFile;
 
     /* Pixel layout
         0 - Palettised
@@ -62,30 +61,17 @@ public:
         3 - default (use material alpha, or multiply material with texture if present)
     */
     int alpha;
-    int directRenderer;
 
     void read(NIFStream *nif)
     {
-        if (nifVer == 0x0a000100) // HACK: not sure why this is needed
-            nif->getInt();
-
         Named::read(nif);
 
         external = !!nif->getChar();
         if(external)
-        {
-            filename = nif->getSkyrimString(nifVer, Record::strings);
-            if (nifVer >= 0x0a010000) // 10.1.0.0
-                nif->getUInt(); // refNiObject // FIXME
-        }
+            filename = nif->getString();
         else
         {
-            if (nifVer <= 0x0a000100)
-                nif->getChar(); // always 1 // FIXME: is this presentn on 10.1.0.0?
-
-            if (nifVer >= 0x0a010000) // 10.1.0.0
-                originalFile = nif->getSkyrimString(nifVer, Record::strings);
-
+            nif->getChar(); // always 1
             data.read(nif);
         }
 
@@ -94,12 +80,6 @@ public:
         alpha = nif->getInt();
 
         nif->getChar(); // always 1
-
-        if (nifVer >= 0x0a01006a) // 10.1.0.106
-            directRenderer = nif->getBool(nifVer);
-
-        if (nifVer >= 0x14020007)
-            nif->getBool(nifVer);
     }
 
     void post(NIFFile *nif)
@@ -109,26 +89,7 @@ public:
     }
 };
 
-class NiParticleModifier : public Record
-{
-public:
-    NiParticleModifierPtr extra;
-    ControllerPtr controller;
-
-    void read(NIFStream *nif)
-    {
-        extra.read(nif);
-        controller.read(nif);
-    }
-
-    void post(NIFFile *nif)
-    {
-        extra.post(nif);
-        controller.post(nif);
-    }
-};
-
-class NiParticleGrowFade : public NiParticleModifier
+class NiParticleGrowFade : public Controlled
 {
 public:
     float growTime;
@@ -136,31 +97,31 @@ public:
 
     void read(NIFStream *nif)
     {
-        NiParticleModifier::read(nif);
+        Controlled::read(nif);
         growTime = nif->getFloat();
         fadeTime = nif->getFloat();
     }
 };
 
-class NiParticleColorModifier : public NiParticleModifier
+class NiParticleColorModifier : public Controlled
 {
 public:
     NiColorDataPtr data;
 
     void read(NIFStream *nif)
     {
-        NiParticleModifier::read(nif);
+        Controlled::read(nif);
         data.read(nif);
     }
 
     void post(NIFFile *nif)
     {
-        NiParticleModifier::post(nif);
+        Controlled::post(nif);
         data.post(nif);
     }
 };
 
-class NiGravity : public NiParticleModifier
+class NiGravity : public Controlled
 {
 public:
     float mForce;
@@ -173,7 +134,7 @@ public:
 
     void read(NIFStream *nif)
     {
-        NiParticleModifier::read(nif);
+        Controlled::read(nif);
 
         /*unknown*/nif->getFloat();
         mForce = nif->getFloat();
@@ -184,24 +145,24 @@ public:
 };
 
 // NiPinaColada
-class NiPlanarCollider : public NiParticleModifier
+class NiPlanarCollider : public Controlled
 {
 public:
     void read(NIFStream *nif)
     {
-        NiParticleModifier::read(nif);
+        Controlled::read(nif);
 
         // (I think) 4 floats + 4 vectors
         nif->skip(4*16);
     }
 };
 
-class NiParticleRotation : public NiParticleModifier
+class NiParticleRotation : public Controlled
 {
 public:
     void read(NIFStream *nif)
     {
-        NiParticleModifier::read(nif);
+        Controlled::read(nif);
 
         /*
            byte (0 or 1)

@@ -1,5 +1,7 @@
 #include "foreignnpcanimation.hpp"
 
+#include <iostream>
+
 #include <OgreSceneManager.h>
 #include <OgreEntity.h>
 #include <OgreParticleSystem.h>
@@ -15,7 +17,7 @@
 #include <extern/esm4/lvlc.hpp>
 #include <extern/esm4/formid.hpp> // mainly for debugging
 
-#include <openengine/misc/rng.hpp>
+#include <components/misc/rng.hpp>
 
 #include <components/misc/resourcehelpers.hpp>
 
@@ -105,7 +107,7 @@ void ForeignHeadAnimationTime::setEnabled(bool enabled)
 
 void ForeignHeadAnimationTime::resetBlinkTimer()
 {
-    mBlinkTimer = -(2.0f + OEngine::Misc::Rng::rollDice(6));
+    mBlinkTimer = -(2.0f + Misc::Rng::rollDice(6));
 }
 
 void ForeignHeadAnimationTime::update(float dt)
@@ -692,7 +694,7 @@ void ForeignNpcAnimation::addAnimSource(const std::string &model)
 
     for (unsigned int i = 0; i < mObjectRoot->mControllers.size(); ++i)
     {
-        if (mObjectRoot->mControllers[i].getSource().isNull())
+        if (!mObjectRoot->mControllers[i].getSource())
             mObjectRoot->mControllers[i].setSource(mAnimationTimePtr[0]);
     }
 }
@@ -1073,7 +1075,7 @@ Ogre::Vector3 ForeignNpcAnimation::runAnimation(float timepassed)
 
     for(size_t i = 0; i < ESM::PRT_Count; ++i)
     {
-        if (mObjectParts[i].isNull())
+        if (!mObjectParts[i])
             continue;
 
         std::vector<Ogre::Controller<Ogre::Real> >::iterator ctrl(mObjectParts[i]->mControllers.begin());
@@ -1097,7 +1099,7 @@ void ForeignNpcAnimation::removeIndividualPart(ESM::PartReferenceType type)
     mPartPriorities[type] = 0;
     mPartslots[type] = -1;
 
-    mObjectParts[type].setNull();
+    mObjectParts[type].reset();
     if (!mSoundIds[type].empty() && !mSoundsDisabled)
     {
         MWBase::Environment::get().getSoundManager()->stopSound3D(mPtr, mSoundIds[type]);
@@ -1194,7 +1196,7 @@ bool ForeignNpcAnimation::addOrReplaceIndividualPart(ESM::PartReferenceType type
     std::vector<Ogre::Controller<Ogre::Real> >::iterator ctrl(mObjectParts[type]->mControllers.begin());
     for(;ctrl != mObjectParts[type]->mControllers.end();++ctrl)
     {
-        if(ctrl->getSource().isNull())
+        if(!ctrl->getSource())
         {
             ctrl->setSource(mNullAnimationTimePtr);
 //#if 0
@@ -1294,10 +1296,10 @@ void ForeignNpcAnimation::showWeapons(bool showWeapon)
                 if (ammo != inv.end() && ammo->get<ESM::Weapon>()->mBase->mData.mType == ESM::Weapon::Bolt)
                     attachArrow();
                 else
-                    mAmmunition.setNull();
+                    mAmmunition.reset();
             }
             else
-                mAmmunition.setNull();
+                mAmmunition.reset();
         }
     }
     else
@@ -1383,7 +1385,7 @@ void ForeignNpcAnimation::setAlpha(float alpha)
 
     for (int i=0; i<ESM::PRT_Count; ++i)
     {
-        if (mObjectParts[i].isNull())
+        if (!mObjectParts[i])
             continue;
 
         for (unsigned int j=0; j<mObjectParts[i]->mEntities.size(); ++j)
@@ -1405,7 +1407,7 @@ void ForeignNpcAnimation::preRender(Ogre::Camera *camera)
     Animation::preRender(camera);
     for (int i=0; i<ESM::PRT_Count; ++i)
     {
-        if (mObjectParts[i].isNull())
+        if (!mObjectParts[i])
             continue;
         mObjectParts[i]->rotateBillboardNodes(camera);
     }

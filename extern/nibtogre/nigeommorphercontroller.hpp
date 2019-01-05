@@ -51,6 +51,8 @@ namespace NiBtOgre
 
         bool mNiControllerSequenceBuilt; // to ensure that we have the right data to build
 
+        std::map<std::string, NiInterpolator*> mControlledBlockInterpolators;
+
     public:
         std::uint16_t mExtraFlags;
         NiMorphDataRef mDataIndex;
@@ -62,10 +64,13 @@ namespace NiBtOgre
         NiGeomMorpherController(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
 
         //virtual NiTimeControllerRef build(BtOgreInst *inst, Ogre::Mesh *mesh);
-        virtual NiTimeControllerRef build(std::vector<Ogre::Controller<float> >& controllers,
+        NiTimeControllerRef build(std::vector<Ogre::Controller<float> >& controllers,
                 Ogre::Mesh *mesh = nullptr);
+
         NiTimeControllerRef setupTES3Animation(
-            std::vector<Ogre::Controller<float> >& controllers, Ogre::Mesh *mesh);
+            std::vector<Ogre::Controller<float> >& controllers, Ogre::Mesh *mesh = nullptr);
+
+        void setInterpolator(const std::string& frameName, NiInterpolator *interpolator);
     };
 }
 

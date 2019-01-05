@@ -59,8 +59,15 @@ namespace NiBtOgre
 {
     class NiStream;
     class Header;
+    template<class T> struct KeyGroup;
 
-    typedef NiObject NiInterpolator; // Seen in NIF version 20.0.0.4, 20.0.0.5
+//  typedef NiObject NiInterpolator; // Seen in NIF version 20.0.0.4, 20.0.0.5
+    struct NiInterpolator : public NiObject
+    {
+        NiInterpolator(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
+
+        virtual const KeyGroup<float> *getMorphKeyGroup();
+    };
 
     // Seen in NIF version 20.2.0.7
     struct NiBSplineInterpolator : public NiInterpolator
@@ -166,6 +173,8 @@ namespace NiBtOgre
         NiFloatDataRef mDataIndex;
 
         NiFloatInterpolator(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
+
+        const KeyGroup<float> *getMorphKeyGroup();
     };
 
     // Seen in NIF version 20.0.0.4, 20.0.0.5

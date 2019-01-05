@@ -1,6 +1,7 @@
 #include "pagedworldspacewidget.hpp"
 
 #include <sstream>
+#include <iostream>
 
 #include <QMouseEvent>
 

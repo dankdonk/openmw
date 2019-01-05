@@ -81,6 +81,7 @@
 namespace NiBtOgre
 {
     class NiObjectNET;
+    struct NiInterpolator;
 
     class NiTimeController : public NiObject
     {
@@ -100,6 +101,8 @@ namespace NiBtOgre
 
         virtual NiTimeControllerRef build(std::vector<Ogre::Controller<float> >& controllers,
                 Ogre::Mesh *mesh = nullptr);
+
+        virtual void setInterpolator(const std::string& frameName, NiInterpolator *interpolator) {}
     };
 
     // Seen in NIF version 20.2.0.7
@@ -171,7 +174,7 @@ namespace NiBtOgre
 
         NiControllerManager(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
 
-        virtual NiTimeControllerRef build(BtOgreInst *inst, Ogre::Mesh *mesh = nullptr); // FIXME: mesh
+        NiTimeControllerRef build(std::vector<Ogre::Controller<float> >& controllers, Ogre::Mesh *mesh = nullptr); // FIXME: mesh
     };
 
     typedef NiTimeController NiInterpController;

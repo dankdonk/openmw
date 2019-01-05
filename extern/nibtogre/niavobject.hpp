@@ -66,6 +66,8 @@ namespace NiBtOgre
         inline const Ogre::Matrix4& getWorldTransform() const { return mWorldTransform; }
         inline const Ogre::Matrix4& getLocalTransform() const { return mLocalTransform; }
 
+        void setHasAnim() { mHasAnim = true; }
+
     protected:
         std::uint16_t mFlags;
 
@@ -84,6 +86,8 @@ namespace NiBtOgre
         BoundingBox   mBoundingBox; // to 4.2.2.0
 
         NiCollisionObjectRef mCollisionObjectIndex; // from 10.0.1.0
+
+        bool mHasAnim;
     };
 
     class NiCamera : public NiAVObject

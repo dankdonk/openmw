@@ -1,5 +1,7 @@
 #include "foreigncell.hpp"
 
+#include <iostream>
+
 #include <OgreSceneManager.h>
 #include <OgreSceneNode.h>
 #include <OgreManualObject.h>
@@ -49,7 +51,7 @@ void CSVRender::ForeignCell::createGridMaterials()
     if(!Ogre::ResourceGroupManager::getSingleton().resourceGroupExists(DEBUGGING_GROUP))
         Ogre::ResourceGroupManager::getSingleton().createResourceGroup(DEBUGGING_GROUP);
 
-    if(Ogre::MaterialManager::getSingleton().getByName(PG_LINE_MATERIAL, DEBUGGING_GROUP).isNull())
+    if(!Ogre::MaterialManager::getSingleton().getByName(PG_LINE_MATERIAL, DEBUGGING_GROUP))
     {
         Ogre::MaterialPtr lineMatPtr =
             Ogre::MaterialManager::getSingleton().create(PG_LINE_MATERIAL, DEBUGGING_GROUP);
@@ -65,7 +67,7 @@ void CSVRender::ForeignCell::destroyGridMaterials()
 {
     if(Ogre::ResourceGroupManager::getSingleton().resourceGroupExists(DEBUGGING_GROUP))
     {
-        if(!Ogre::MaterialManager::getSingleton().getByName(PG_LINE_MATERIAL, DEBUGGING_GROUP).isNull())
+        if(Ogre::MaterialManager::getSingleton().getByName(PG_LINE_MATERIAL, DEBUGGING_GROUP))
             Ogre::MaterialManager::getSingleton().remove(PG_LINE_MATERIAL);
 
         Ogre::ResourceGroupManager::getSingleton().destroyResourceGroup(DEBUGGING_GROUP);
@@ -347,7 +349,7 @@ bool CSVRender::ForeignCell::addObjects (const std::vector<ESM4::FormId>& object
                                                                  tmp,
                                                                  "meshes\\"+clothRec.mModel);
 
-                            if (!dummy.isNull())
+                            if (dummy)
                                 dummy->setVisibilityFlags (Element_Reference);
                             tmp->setPosition (Ogre::Vector3 (
                                 record.get().mPos.pos[0], record.get().mPos.pos[1], record.get().mPos.pos[2]));

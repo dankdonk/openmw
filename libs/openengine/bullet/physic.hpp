@@ -6,7 +6,6 @@
 #include <string>
 #include <list>
 #include <map>
-#include <memory>
 #include "BulletShapeLoader.h"
 #include "BulletCollision/CollisionShapes/btScaledBvhTriangleMeshShape.h"
 #include <boost/shared_ptr.hpp>
@@ -18,7 +17,6 @@ class btSequentialImpulseConstraintSolver;
 class btCollisionDispatcher;
 class btDiscreteDynamicsWorld;
 class btHeightfieldTerrainShape;
-class btTypedConstraint;
 
 namespace BtOgre
 {
@@ -183,14 +181,10 @@ namespace Physic
 
     struct AnimatedShapeInstance
     {
-//        std::unique_ptr<btCollisionShape> mBtShape;
-        //bool delme;
         btCollisionShape* mCompound;
 
         // Maps node record index to child index in the compound shape
-        std::map<size_t, size_t> mAnimatedShapes;
-        //AnimatedShapeInstance() : delme(false), mCompound(nullptr) {}
-        //~AnimatedShapeInstance() { if (delme && mCompound) delete mCompound; mCompound = 0; }
+        std::map<int, int> mAnimatedShapes;
     };
 
     /**
@@ -219,12 +213,6 @@ namespace Physic
         RigidBody* createAndAdjustRigidBody(const std::string &mesh, const std::string &name,
             float scale, const Ogre::Vector3 &position, const Ogre::Quaternion &rotation,
             Ogre::Vector3* scaledBoxTranslation = 0, Ogre::Quaternion* boxRotation = 0, bool raycasting=false, bool placeable=false);
-        RigidBody* createAndAdjustRagdollBody(const std::string &mesh, Ogre::SceneNode *node,
-            const std::unordered_multimap<size_t, Ogre::Entity*>& ragdollEntitiesMap,
-            float scale, const Ogre::Vector3 &position, const Ogre::Quaternion &rotation,
-            Ogre::Vector3* scaledBoxTranslation = 0, Ogre::Quaternion* boxRotation = 0, bool raycasting=false, bool placeable=false);
-        RigidBody *createRagdoll(BulletShapePtr shape, Ogre::SceneNode *node,
-            const std::unordered_multimap<size_t, Ogre::Entity*>& ragdollEntitiesMap, float scale);
 
         /**
          * Adjusts a rigid body to the right position and rotation
@@ -355,9 +343,6 @@ namespace Physic
         typedef std::map<std::string, PhysicActor*>  PhysicActorContainer;
         PhysicActorContainer mActorMap;
 
-        // a RigidBody may have more than one constraint
-        std::unordered_multimap<RigidBody*, btTypedConstraint*> mRagdollConstraintMap;
-
         Ogre::SceneManager* mSceneMgr;
 
         //debug rendering
@@ -373,8 +358,6 @@ namespace Physic
         void stepDebug(Ogre::SceneManager *sceneMgr);
         void createDebugDraw(Ogre::SceneManager *sceneMgr);
         void removeDebugDraw(Ogre::SceneManager *sceneMgr);
-
-        void addRigidBody(RigidBody* body);
 
     private:
         PhysicEngine(const PhysicEngine&);

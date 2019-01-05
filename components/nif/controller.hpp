@@ -25,7 +25,6 @@
 #define OPENMW_COMPONENTS_NIF_CONTROLLER_HPP
 
 #include "base.hpp"
-#include "node.hpp" // NodeGroup
 
 namespace Nif
 {
@@ -73,7 +72,7 @@ public:
     int activeCount;
     std::vector<Particle> particles;
 
-    NiParticleModifierPtr extra;
+    ExtraPtr extra;
 
     void read(NIFStream *nif)
     {
@@ -124,7 +123,7 @@ public:
         }
 
         nif->getUInt(); /* -1? */
-        extra.read(nif); // Ref<NiParticleModifier>
+        extra.read(nif);
         nif->getUInt(); /* -1? */
         nif->getChar();
     }
@@ -141,28 +140,18 @@ typedef NiParticleSystemController NiBSPArrayController;
 class NiMaterialColorController : public Controller
 {
 public:
-    NiInterpolatorPtr interpolator;
-    unsigned short targetColor;
     NiPosDataPtr data;
 
     void read(NIFStream *nif)
     {
         Controller::read(nif);
-        if (nifVer >= 0x0a020000) // from 10.2.0.0
-            interpolator.read(nif);
-        if (nifVer >= 0x0a010000) // from 10.1.0.0
-            targetColor = nif->getUShort();
-        if (nifVer <= 0x0a010000) // up to 10.1.0.0
-            data.read(nif);
+        data.read(nif);
     }
 
     void post(NIFFile *nif)
     {
         Controller::post(nif);
-        if (nifVer >= 0x0a020000) // from 10.2.0.0
-            interpolator.post(nif);
-        if (nifVer <= 0x0a010000) // up to 10.1.0.0
-            data.post(nif);
+        data.post(nif);
     }
 };
 
@@ -175,9 +164,6 @@ public:
     void read(NIFStream *nif)
     {
         Controller::read(nif);
-
-        if (nifVer >= 0x0a010000) // from 10.1.0.0
-            nif->getUShort();
 
         /*
            int = 1
@@ -221,150 +207,79 @@ public:
 class NiKeyframeController : public Controller
 {
 public:
-    NiInterpolatorPtr interpolator;
     NiKeyframeDataPtr data;
 
     void read(NIFStream *nif)
     {
         Controller::read(nif);
-        if (nifVer >= 0x0a020000) // from 10.2.0.0
-            interpolator.read(nif);
-        if (nifVer <= 0x0a010000) // up to 10.1.0.0
-            data.read(nif);
-    }
-
-    void post(NIFFile *nif)
-    {
-        Controller::post(nif);
-        if (nifVer >= 0x0a020000) // from 10.2.0.0
-            interpolator.post(nif);
-        if (nifVer <= 0x0a010000) // up to 10.1.0.0
-            data.post(nif);
-    }
-};
-
-class NiAlphaController : public Controller
-{
-public:
-    NiInterpolatorPtr interpolator;
-    NiFloatDataPtr data;
-
-    void read(NIFStream *nif)
-    {
-        Controller::read(nif);
-        if (nifVer >= 0x0a020000) // from 10.2.0.0
-            interpolator.read(nif);
-        if (nifVer <= 0x0a010000) // up to 10.1.0.0
-            data.read(nif);
-    }
-
-    void post(NIFFile *nif)
-    {
-        Controller::post(nif);
-        if (nifVer >= 0x0a020000) // from 10.2.0.0
-            interpolator.post(nif);
-        if (nifVer <= 0x0a010000) // up to 10.1.0.0
-            data.post(nif);
-    }
-};
-
-struct MorphWeight
-{
-    NiInterpolatorPtr interpolator;
-    float weight;
-};
-
-class NiGeomMorpherController : public Controller
-{
-public:
-    unsigned short extraFlags;
-    NiMorphDataPtr data;
-    std::vector<NiInterpolatorPtr> interpolators;
-    std::vector<MorphWeight> interpolatorWeights;
-    std::vector<unsigned int> unknownInts;
-
-    void read(NIFStream *nif)
-    {
-        Controller::read(nif);
-        if (nifVer >= 0x0a000102) // from 10.0.1.2
-            extraFlags = nif->getUShort();
-        if (nifVer == 0x0a01006a) // 10.1.0.106
-            nif->getChar();
         data.read(nif);
-        nif->getChar(); // always 0
-        if (nifVer >= 0x0a01006a) // from 10.1.0.106
-        {
-            unsigned int numInterpolators = nif->getUInt();
-            if (nifVer >= 0x0a020000 && nifVer <= 0x14000005)
-            {
-                interpolators.resize(numInterpolators);
-                for (unsigned int i = 0; i < numInterpolators; ++i)
-                    interpolators[i].read(nif);
-            }
-            if (nifVer >= 0x14010003) // from 20.1.0.3
-            {
-                interpolatorWeights.resize(numInterpolators);
-                for (unsigned int i = 0; i < numInterpolators; ++i)
-                {
-                    interpolatorWeights[i].interpolator.read(nif);
-                    interpolatorWeights[i].weight = nif->getFloat();
-                }
-            }
-            if (nifVer >= 0x14000004 && nifVer <= 0x14000005 && userVer >=10)
-            {
-                unsigned int count = nif->getUInt();
-                unknownInts.resize(count);
-                for (unsigned int i = 0; i < count; ++i)
-                    unknownInts[i] = nif->getUInt();
-            }
-        }
     }
 
     void post(NIFFile *nif)
     {
         Controller::post(nif);
         data.post(nif);
+    }
+};
 
-        if (nifVer >= 0x0a01006a) // from 10.1.0.106
-        {
-            if (nifVer >= 0x0a020000 && nifVer <= 0x14000005)
-            {
-                for (unsigned int i = 0; i < interpolators.size(); ++i)
-                    interpolators[i].post(nif);
-            }
-        }
+class NiAlphaController : public Controller
+{
+public:
+    NiFloatDataPtr data;
+
+    void read(NIFStream *nif)
+    {
+        Controller::read(nif);
+        data.read(nif);
+    }
+
+    void post(NIFFile *nif)
+    {
+        Controller::post(nif);
+        data.post(nif);
+    }
+};
+
+class NiGeomMorpherController : public Controller
+{
+public:
+    NiMorphDataPtr data;
+
+    void read(NIFStream *nif)
+    {
+        Controller::read(nif);
+        data.read(nif);
+        nif->getChar(); // always 0
+    }
+
+    void post(NIFFile *nif)
+    {
+        Controller::post(nif);
+        data.post(nif);
     }
 };
 
 class NiVisController : public Controller
 {
 public:
-    NiInterpolatorPtr interpolator;
     NiVisDataPtr data;
 
     void read(NIFStream *nif)
     {
         Controller::read(nif);
-        if (nifVer >= 0x0a020000) // from 10.2.0.0
-            interpolator.read(nif);
-        if (nifVer <= 0x0a010000) // up to 10.1.0.0
-            data.read(nif);
+        data.read(nif);
     }
 
     void post(NIFFile *nif)
     {
         Controller::post(nif);
-        if (nifVer >= 0x0a020000) // from 10.2.0.0
-            interpolator.post(nif);
-        if (nifVer <= 0x0a010000) // up to 10.1.0.0
-            data.post(nif);
+        data.post(nif);
     }
 };
 
 class NiFlipController : public Controller
 {
 public:
-    NiInterpolatorPtr interpolator;
     int mTexSlot; // NiTexturingProperty::TextureType
     float mDelta; // Time between two flips. delta = (start_time - stop_time) / num_sources
     NiSourceTextureList mSources;
@@ -372,21 +287,15 @@ public:
     void read(NIFStream *nif)
     {
         Controller::read(nif);
-        if (nifVer >= 0x0a020000) // from 10.2.0.0
-            interpolator.read(nif);
         mTexSlot = nif->getUInt();
-        if (nifVer >= 0x04000000  && nifVer <= 0x0a010000)
-            /*unknown=*/nif->getUInt();/*0?*/
-        if (nifVer <= 0x0a010000) // up to 10.1.0.0
-            mDelta = nif->getFloat();
+        /*unknown=*/nif->getUInt();/*0?*/
+        mDelta = nif->getFloat();
         mSources.read(nif);
     }
 
     void post(NIFFile *nif)
     {
         Controller::post(nif);
-        if (nifVer >= 0x0a020000) // from 10.2.0.0
-            interpolator.post(nif);
         mSources.post(nif);
     }
 };

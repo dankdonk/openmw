@@ -31,10 +31,21 @@
 #include "nistream.hpp"
 #include "ninode.hpp" // static_cast NiNode
 #include "nimodel.hpp"
+#include "nidata.hpp"
 
 #ifdef NDEBUG // FIXME: debugging only
 #undef NDEBUG
 #endif
+
+NiBtOgre::NiInterpolator::NiInterpolator(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+    : NiObject(index, stream, model, data)
+{
+}
+
+const NiBtOgre::KeyGroup<float> *NiBtOgre::NiInterpolator::getMorphKeyGroup()
+{
+    return nullptr;
+}
 
 // Seen in NIF version 20.2.0.7
 NiBtOgre::NiBSplineInterpolator::NiBSplineInterpolator(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
@@ -125,6 +136,14 @@ NiBtOgre::NiFloatInterpolator::NiFloatInterpolator(uint32_t index, NiStream& str
 {
     stream.read(mFloatValue);
     stream.read(mDataIndex);
+}
+
+const NiBtOgre::KeyGroup<float> *NiBtOgre::NiFloatInterpolator::getMorphKeyGroup()
+{
+    if (mDataIndex == -1)
+        return nullptr;
+
+    return &mModel.getRef<NiFloatData>(mDataIndex)->mData;
 }
 
 // Seen in NIF ver 20.0.0.4, 20.0.0.5

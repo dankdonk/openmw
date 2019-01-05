@@ -16,7 +16,7 @@ namespace sh
 		: Material()
 	{
 		mName = name;
-		assert (Ogre::MaterialManager::getSingleton().getByName(name).isNull() && "Material already exists");
+		assert (!Ogre::MaterialManager::getSingleton().getByName(name) && "Material already exists");
 		mMaterial = Ogre::MaterialManager::getSingleton().create (name, resourceGroup);
 		mMaterial->removeAllTechniques();
 		mMaterial->createTechnique()->setSchemeName (sDefaultTechniqueName);

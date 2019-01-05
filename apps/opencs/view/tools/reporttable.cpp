@@ -37,7 +37,7 @@ void CSVTools::RichTextDelegate::paint(QPainter *painter, const QStyleOptionView
 {
     QTextDocument document;
     QVariant value = index.data (Qt::DisplayRole);
-    if (value.isValid() && !value.isNull())
+    if (value.isValid() && value.isNull())
     {
         document.setHtml (value.toString());
         painter->translate (option.rect.topLeft());

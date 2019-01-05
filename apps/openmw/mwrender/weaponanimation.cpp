@@ -154,7 +154,7 @@ void WeaponAnimation::releaseArrow(MWWorld::Ptr actor)
         MWBase::Environment::get().getWorld()->launchProjectile(actor, *ammo, launchPos, orient, *weapon, speed);
 
         inv.remove(*ammo, 1, actor);
-        mAmmunition.setNull();
+        mAmmunition.reset();
     }
 }
 

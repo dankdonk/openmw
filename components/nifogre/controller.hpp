@@ -3,7 +3,6 @@
 
 #include <components/nif/niffile.hpp>
 #include <components/nif/nifkey.hpp>
-#include <components/nif/base.hpp> // Controller
 #include <OgreController.h>
 
 namespace NifOgre

@@ -1,6 +1,6 @@
 #include "cell.hpp"
 
-//#include <iostream> // FIXME
+#include <iostream> // FIXME
 
 #include <OgreSceneManager.h>
 #include <OgreSceneNode.h>
@@ -41,7 +41,7 @@ void CSVRender::Cell::createGridMaterials()
     if(!Ogre::ResourceGroupManager::getSingleton().resourceGroupExists(DEBUGGING_GROUP))
         Ogre::ResourceGroupManager::getSingleton().createResourceGroup(DEBUGGING_GROUP);
 
-    if(Ogre::MaterialManager::getSingleton().getByName(PG_LINE_MATERIAL, DEBUGGING_GROUP).isNull())
+    if(!Ogre::MaterialManager::getSingleton().getByName(PG_LINE_MATERIAL, DEBUGGING_GROUP))
     {
         Ogre::MaterialPtr lineMatPtr =
             Ogre::MaterialManager::getSingleton().create(PG_LINE_MATERIAL, DEBUGGING_GROUP);
@@ -57,7 +57,7 @@ void CSVRender::Cell::destroyGridMaterials()
 {
     if(Ogre::ResourceGroupManager::getSingleton().resourceGroupExists(DEBUGGING_GROUP))
     {
-        if(!Ogre::MaterialManager::getSingleton().getByName(PG_LINE_MATERIAL, DEBUGGING_GROUP).isNull())
+        if(Ogre::MaterialManager::getSingleton().getByName(PG_LINE_MATERIAL, DEBUGGING_GROUP))
             Ogre::MaterialManager::getSingleton().remove(PG_LINE_MATERIAL);
 
         Ogre::ResourceGroupManager::getSingleton().destroyResourceGroup(DEBUGGING_GROUP);

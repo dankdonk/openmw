@@ -163,7 +163,7 @@ NiBtOgre::NiControllerManager::NiControllerManager(uint32_t index, NiStream& str
 //
 // FIXME: how to decide whether to read in the 'kf' files in the directory?
 //
-NiBtOgre::NiTimeControllerRef NiBtOgre::NiControllerManager::build(BtOgreInst *inst, Ogre::Mesh *mesh)
+NiBtOgre::NiTimeControllerRef NiBtOgre::NiControllerManager::build(std::vector<Ogre::Controller<float> >& controllers, Ogre::Mesh *mesh)
 {
     // object palette appears to be a lookup table to map the target name string to the block number
     // that NiSequenceController can use to get to the target objects
@@ -173,7 +173,7 @@ NiBtOgre::NiTimeControllerRef NiBtOgre::NiControllerManager::build(BtOgreInst *i
     {
         // FIXME: shoud update a map in 'inst' so that the animation can be played
         // (? how to get the entity for mapping against the animation name?)
-        mModel.getRef<NiControllerSequence>(mControllerSequences[i])->build(inst, objects);
+        mModel.getRef<NiControllerSequence>(mControllerSequences[i])->build(controllers, objects);
     }
 
     return mNextControllerIndex;

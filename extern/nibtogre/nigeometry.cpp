@@ -287,7 +287,8 @@ bool NiBtOgre::NiTriBasedGeom::createSubMesh(Ogre::Mesh *mesh, BoundsFinder& bou
     Ogre::HardwareBuffer::Usage vertUsage = Ogre::HardwareBuffer::HBU_STATIC;
     bool vertShadowBuffer = false;
 
-    if (mSkinInstanceIndex != -1)
+    // TODO: seems to make no difference to vertex anim
+    if (mSkinInstanceIndex != -1/* || NiAVObject::mHasAnim*/)
     {
         vertUsage = Ogre::HardwareBuffer::HBU_DYNAMIC_WRITE_ONLY;
         vertShadowBuffer = true;
@@ -324,7 +325,7 @@ bool NiBtOgre::NiTriBasedGeom::createSubMesh(Ogre::Mesh *mesh, BoundsFinder& bou
     Ogre::VertexDeclaration *decl;
     int nextBuf = 0;
 
-    Ogre::SubMesh *sub = mesh->createSubMesh();
+    Ogre::SubMesh *sub = mesh->createSubMesh(/*mModel.indexToString(NiObjectNET::mNameIndex)*/);
 
     // Add vertices
     sub->useSharedVertices = false;
@@ -453,20 +454,9 @@ bool NiBtOgre::NiTriBasedGeom::createSubMesh(Ogre::Mesh *mesh, BoundsFinder& bou
         //
         // In case of a Skeleton, a list of bones in the NiModel is required.
         // In case of a Mesh, a list of NiGeometry for that NiNode is required.
-        //
-        // A Skeleton may be incomplete.  So the existence of a Skeleton does not necessarily
-        // indicate that it is fully loaded.  Adding additional bones by checking its name
-        // might be very inefficient, however. So the bone assignment for the skin might have
-        // to be delayed until later.
-        //
-        // One workaround for later versions of NIF might be to check the header for Block
-        // Types and Block Indexes.
 
         // FIXME: move this to NiModel?
-        mesh->setSkeletonName(/*std::to_string(mModel.nifVer())+":"+*/mModel.getModelName());
-
-        // FIXME: should search Ogre SkeletonManager first? (for a Skeleton at Skeleton Root)
-        //        if it exists only add bones not already there
+        mesh->setSkeletonName(mModel.getModelName());
 
         // build skeleton on demand; need to check for each mSkinInstanceIndex
         //
@@ -474,30 +464,10 @@ bool NiBtOgre::NiTriBasedGeom::createSubMesh(Ogre::Mesh *mesh, BoundsFinder& bou
         // in way too many bones (e.g. oblivion/gate/oblivionarchgate01.nif)
         //
         // best to reverse search from each of the affected bones
-        //
-        // one option is to have a skeleton for each skin but that may reduce performance if
-        // there are multiple skeletons in one NIF and many/most of the nodes are the same
-        //skinInst->mSkeletonRoot->clearSkeleton(); // i.e. only one search at a time
 
-        // either add bones to existing skeleton or build a new one
-        // FIXME: how is this going to work? just adding more indicies to mChildBoneNodes won't
-        // do much if a skeleton was already created?
-//      for (unsigned int i = 0; i < skinInst->mBones.size(); ++i)
-//      {
-//          NiNode *node = mModel.getRef<NiNode>(skinInst->mBones[i]);
-//          // FIXME: check for getParentNode() returning nullptr?
-//          node->getParentNode()->findBones(skinInst->mSkeletonRoot->index(), skinInst->mBones[i]);
-//      }
-
-        // TODO: if we decided to have multiple skeletons, there may be more than one skeleton at
-        // the same skeleton root node?
-        // FIXME: what if the current skeleton is incomplete?  when to store it in
-        // SkeletonManager?
-        //skinInst->mSkeletonRoot->buildSkeleton(inst, mSkinInstanceIndex);
-
-        // bone assignments here?
-        Ogre::SkeletonPtr skeleton = Ogre::SkeletonManager::getSingleton().getByName(
-                    /*std::to_string(mModel.nifVer())+":"+*/mModel.getModelName());
+        // bone assignments
+        Ogre::SkeletonPtr skeleton
+            = Ogre::SkeletonManager::getSingleton().getByName(mModel.getModelName());
 
         const NiSkinInstance *skinInstance = mModel.getRef<NiSkinInstance>(mSkinInstanceIndex);
         const NiSkinData *data = mModel.getRef<NiSkinData>(skinInstance->mDataIndex);
@@ -515,7 +485,7 @@ bool NiBtOgre::NiTriBasedGeom::createSubMesh(Ogre::Mesh *mesh, BoundsFinder& bou
                 sub->addBoneAssignment(boneInf);
             }
         }
-    }
+    } // mSkinInstanceIndex != -1
 
     // find and apply the material
     std::string materialName = getMaterial(); // NOTE: materialName may be different to subMesh name
@@ -526,8 +496,6 @@ bool NiBtOgre::NiTriBasedGeom::createSubMesh(Ogre::Mesh *mesh, BoundsFinder& bou
 
     // End of code copied from components/nifogre/mesh.cpp
 
-    // apply controllers e.g. NiGeomMorpherController
-    //
     // NOTE: NiUVController needs to be associated with a sub-entity, so the build/setup is
     //       compelted at a later point.  In comparison, NiGeomMorpherController adds animation
     //       to the sub-mesh so no further setup is required.
@@ -538,6 +506,7 @@ bool NiBtOgre::NiTriBasedGeom::createSubMesh(Ogre::Mesh *mesh, BoundsFinder& bou
             = mModel.getRef<NiTimeController>(controllerIndex)->build(NiObjectNET::mControllers, mesh);
     }
 
+    // if required build tangents at the mesh level
     return mOgreMaterial.needTangents();
 }
 

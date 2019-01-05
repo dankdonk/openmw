@@ -37,7 +37,8 @@
 #endif
 
 NiBtOgre::NiAVObject::NiAVObject(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
-    : NiObjectNET(index, stream, model, data), mHasBoundingBox(false)//, mWorldTransform(Ogre::Matrix4::IDENTITY)
+    : NiObjectNET(index, stream, model, data), mHasBoundingBox(false), mHasAnim(false)
+      //, mWorldTransform(Ogre::Matrix4::IDENTITY)
 {
     stream.read(mFlags);
 

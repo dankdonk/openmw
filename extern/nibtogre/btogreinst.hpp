@@ -132,9 +132,6 @@ namespace NiBtOgre
         // key is the block index of the target object (i.e. typically NiNode)
         std::map<std::uint32_t, std::shared_ptr<OEngine::Physic::RigidBody> > mRigidBodies;
 
-        std::map<int, std::vector<int> > mGeomMorpherControllerMap;
-
-
         // btCollisionShapes
         // btConstraints
 

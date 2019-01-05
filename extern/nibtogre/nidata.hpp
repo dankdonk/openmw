@@ -291,10 +291,8 @@ namespace NiBtOgre
     template<typename T>
     struct KeyGroup
     {
-        typedef std::map<float, Key<T> > MapType;
-
         KeyType interpolation;
-        MapType  keys;
+        std::vector<Key<T> > keys;
 
         void read(NiStream& stream)
         {
@@ -313,7 +311,7 @@ namespace NiBtOgre
             {
                 Key<T> key;
                 key.read(stream, interpolation);
-                keys[key.time] = key;
+                keys.push_back(key);
             }
         }
     };

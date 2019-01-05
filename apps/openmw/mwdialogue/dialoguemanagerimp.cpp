@@ -248,7 +248,7 @@ namespace MWDialogue
                 MWScript::InterpreterContext interpreterContext(&mActor.getRefData().getLocals(),mActor);
                 Interpreter::Interpreter interpreter;
                 MWScript::installOpcodes (interpreter);
-                interpreter.run (&code[0], static_cast<int>(code.size()), interpreterContext);
+                interpreter.run (&code[0], code.size(), interpreterContext);
             }
             catch (const std::exception& error)
             {

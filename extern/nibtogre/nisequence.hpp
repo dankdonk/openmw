@@ -32,6 +32,10 @@
 
 #include "niobject.hpp"
 
+namespace Ogre
+{
+    template<class T> class Controller;
+}
 // Based on NifTools/NifSkope/doc/index.html
 //
 // NiSequence
@@ -100,9 +104,9 @@ namespace NiBtOgre
     public:
         NiControllerSequence(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
 
-        void build(BtOgreInst *inst, const NiDefaultAVObjectPalette* objects);
+        void build(std::vector<Ogre::Controller<float> >& controllers, const NiDefaultAVObjectPalette* objects);
 
-        NiAVObject* getTargetObject(std::uint32_t objIndex, const NiDefaultAVObjectPalette* objects) const;
+        std::string getObjectName(std::uint32_t stringOffset) const;
     };
 }
 

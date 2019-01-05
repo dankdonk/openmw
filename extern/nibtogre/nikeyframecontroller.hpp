@@ -45,6 +45,8 @@ namespace NiBtOgre
         NiKeyframeDataRef mDataIndex;
 
         NiKeyframeController(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
+
+        NiTimeControllerRef build(std::vector<Ogre::Controller<float> >& controllers, Ogre::Mesh *mesh = nullptr);
     };
 
     // NiTransformController replaces the NiKeyframeController.

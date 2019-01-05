@@ -34,15 +34,6 @@
 #include <string>
 #include <map>
 
-#include "controller.hpp" // ValueInterpolator
-
-namespace Nif
-{
-    class Controller;
-    class NiInterpolator;
-
-    typedef boost::shared_ptr<Nif::NIFFile> NIFFilePtr;
-}
 
 // FIXME: This namespace really doesn't do anything Nif-specific. Any supportable
 // model format should go through this.
@@ -71,10 +62,7 @@ struct ObjectScene {
     std::vector<Ogre::Entity*> mEntities;
     std::vector<Ogre::ParticleSystem*> mParticles;
     std::vector<Ogre::Light*> mLights;
-
-    // FIXME: this doesn't really belong here but since we create Ogre::Entities separately
-    // to physics objects we need some way of tying those together for ragdoll movements
-    std::unordered_multimap<size_t, Ogre::Entity*> mRagdollEntities;
+    std::vector<Ogre::Entity*> mVertexAnimEntities;
 
     // Nodes that should always face the camera when rendering
     std::vector<Ogre::Node*> mBillboardNodes;
@@ -160,59 +148,6 @@ public:
     { return mNode; }
 };
 typedef Ogre::SharedPtr<NodeTargetValue<Ogre::Real> > NodeTargetValueRealPtr;
-
-// FIXME: not sure whether to replace Default Function
-#if 0
-class InterpolateFunction : public Ogre::ControllerFunction<Ogre::Real>
-{
-    const Nif::NiInterpolator* mInterpolator;
-
-public:
-    InterpolateFunction (const Nif::NiInterpolator *interp, bool deltaInput);
-
-    virtual Ogre::Real calculate(Ogre::Real value);
-};
-#endif
-class TransformController
-{
-public:
-    class Value : public NodeTargetValue<Ogre::Real>, public ValueInterpolator
-    {
-        const Nif::QuaternionKeyMap* mRotations;
-        const Nif::FloatKeyMap* mXRotations;
-        const Nif::FloatKeyMap* mYRotations;
-        const Nif::FloatKeyMap* mZRotations;
-        const Nif::Vector3KeyMap* mTranslations;
-        const Nif::FloatKeyMap* mScales;
-        const Nif::NiInterpolator* mInterpolator;
-        Nif::NIFFilePtr mNif; // Hold a SharedPtr to make sure key lists stay valid
-        // FIXME: are these used?
-        int mLastRotate;
-        int mLastTranslate;
-        int mLastScale;
-
-        using ValueInterpolator::interpKey;
-
-        static Ogre::Quaternion interpKey(const Nif::QuaternionKeyMap::MapType &keys, float time);
-
-        Ogre::Quaternion getXYZRotation(float time) const;
-
-    public:
-        Value (Ogre::Node *target, const Nif::NIFFilePtr& nif, const Nif::NiInterpolator *interp);
-
-        virtual Ogre::Quaternion getRotation(float time) const;
-
-        virtual Ogre::Vector3 getTranslation(float time) const;
-
-        virtual Ogre::Vector3 getScale(float time) const;
-
-        virtual Ogre::Real getValue() const;
-
-        virtual void setValue(Ogre::Real time);
-    };
-
-    typedef DefaultFunction Function;
-};
 
 }
 

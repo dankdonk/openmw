@@ -38,7 +38,7 @@ void CSVRender::ForeignObject::clearSceneNode (Ogre::SceneNode *node)
 
 void CSVRender::ForeignObject::clear()
 {
-    mObject.setNull();
+    mObject.reset();
 
     if (mBase)
         clearSceneNode (mBase);
@@ -46,7 +46,7 @@ void CSVRender::ForeignObject::clear()
 
 void CSVRender::ForeignObject::update()
 {
-    if(!mObject.isNull())
+    if(mObject)
         mPhysics->removePhysicsObject(mBase->getName());
 
     clear();
@@ -654,7 +654,7 @@ void CSVRender::ForeignObject::update()
         //std::cout << "Using model: " << model << std::endl;
         mObject = NifOgre::Loader::createObjects (mBase, "Meshes\\" + trimmedModel);
 
-        if (!mObject.isNull()) // FIXME: find root cause of null pointer
+        if (mObject) // FIXME: find root cause of null pointer
             mObject->setVisibilityFlags (Element_Reference);
 
         if (mObject->mSkelBase && mObject->mSkelBase->getSkeleton()->hasBone("AttachLight"))

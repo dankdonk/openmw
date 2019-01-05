@@ -49,7 +49,8 @@ CS::Editor::Editor (OgreInit::OgreInit& ogreInit)
 
     Bsa::registerResources (Files::Collections (config.first, !mFsStrict), config.second, true,
         mFsStrict);
-    Bsa::registerResources (Files::Collections (config.first, !mFsStrict), tes4config, /*useLooseFiles*/false, // already done above
+    // useLooseFiles is set false, since it is already done above
+    Bsa::registerResources (Files::Collections (config.first, !mFsStrict), tes4config, /*useLooseFiles*/false,
         mFsStrict, /*isTes4*/true);
 
     mDocumentManager.listResources();

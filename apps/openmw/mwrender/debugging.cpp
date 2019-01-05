@@ -39,7 +39,7 @@ void Debugging::createGridMaterials()
 {
     if (mGridMatsCreated) return;
 
-    if (MaterialManager::getSingleton().getByName(PATHGRID_LINE_MATERIAL, DEBUGGING_GROUP).isNull())
+    if (!MaterialManager::getSingleton().getByName(PATHGRID_LINE_MATERIAL, DEBUGGING_GROUP))
     {
         MaterialPtr lineMatPtr = MaterialManager::getSingleton().create(PATHGRID_LINE_MATERIAL, DEBUGGING_GROUP);
         lineMatPtr->setReceiveShadows(false);
@@ -49,7 +49,7 @@ void Debugging::createGridMaterials()
         lineMatPtr->getTechnique(0)->getPass(0)->setSelfIllumination(1,1,0);
     }
 
-    if (MaterialManager::getSingleton().getByName(PATHGRID_POINT_MATERIAL, DEBUGGING_GROUP).isNull())
+    if (!MaterialManager::getSingleton().getByName(PATHGRID_POINT_MATERIAL, DEBUGGING_GROUP))
     {
         MaterialPtr pointMatPtr = MaterialManager::getSingleton().create(PATHGRID_POINT_MATERIAL, DEBUGGING_GROUP);
         pointMatPtr->setReceiveShadows(false);
