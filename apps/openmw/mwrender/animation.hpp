@@ -344,6 +344,9 @@ public:
     // valid until the next setObjectRoot call.
     Ogre::TagPoint *attachObjectToBone(const Ogre::String &bonename, Ogre::MovableObject *obj);
     void detachObjectFromBone(Ogre::MovableObject *obj);
+
+    int activateDoor();
+    bool addTime(const std::string& anim, float duration);
 };
 
 class ObjectAnimation : public Animation {

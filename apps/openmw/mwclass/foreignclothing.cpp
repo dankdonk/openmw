@@ -29,14 +29,36 @@ namespace MWClass
         MWWorld::LiveCellRef<ESM4::Clothing> *ref = ptr.get<ESM4::Clothing>();
 
         if (!model.empty()) {
-            renderingInterface.getObjects().insertModel(ptr, model/*, !ref->mBase->mPersistent*/); // FIXME
+            // TES4 seems to lack _gnd models for shields
+            std::string lowerModel = Misc::StringUtils::lowerCase(model);
+            size_t pos = lowerModel.find("ring");
+            if (pos != std::string::npos)
+            {
+                size_t pos = lowerModel.find("_gnd.");
+                if (pos != std::string::npos)
+                    renderingInterface.getObjects().insertModel(ptr, lowerModel.replace(pos,4,"")/*, !ref->mBase->mPersistent*/); // FIXME
+            }
+            else
+                renderingInterface.getObjects().insertModel(ptr, model/*, !ref->mBase->mPersistent*/); // FIXME
         }
     }
 
     void ForeignClothing::insertObject(const MWWorld::Ptr& ptr, const std::string& model, MWWorld::PhysicsSystem& physics) const
     {
         if(!model.empty())
-            physics.addObject(ptr, model);
+        {
+            // TES4 seems to lack _gnd models for shields
+            std::string lowerModel = Misc::StringUtils::lowerCase(model);
+            size_t pos = lowerModel.find("ring");
+            if (pos != std::string::npos)
+            {
+                size_t pos = lowerModel.find("_gnd.");
+                if (pos != std::string::npos)
+                    physics.addObject(ptr, lowerModel.replace(pos,4,""));
+            }
+            else
+                physics.addObject(ptr, model);
+        }
     }
 
     std::string ForeignClothing::getModel(const MWWorld::Ptr &ptr) const

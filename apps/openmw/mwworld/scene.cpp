@@ -128,6 +128,12 @@ namespace MWWorld
         ::updateObjectLocalRotation(ptr, *mPhysics, mRendering);
     }
 
+    void Scene::rotateSubObjectLocalRotation (const MWWorld::Ptr& ptr,
+                    const std::string& boneName, const Ogre::Quaternion& rotation)
+    {
+        mPhysics->rotateSubObject(ptr, boneName, rotation);
+    }
+
     void Scene::updateObjectRotation (const Ptr& ptr)
     {
         if(ptr.getRefData().getBaseNode() != 0)
@@ -552,9 +558,8 @@ namespace MWWorld
         std::string loadingExteriorText = "#{sLoadingMessage3}";
         loadingListener->setLabel(loadingExteriorText);
 
-        // For TES4/5 we should double this value (cells are smaller)
-        const int halfGridSize = Settings::Manager::getInt("exterior grid size", "Cells");
-
+        // TODO: For TES4/5 we should double this value? (cells are smaller)
+        const int halfGridSize = Settings::Manager::getInt("exterior grid size", "Cells") / 1.5;
         if (worldId != currentWorldId)
         {
             int current = 0;
@@ -804,7 +809,7 @@ namespace MWWorld
             return;
         }
 
-        std::cout << "Changing to interior\n";
+        std::cout << "Changing to foreign interior\n";
 
         // unload
         int current = 0;

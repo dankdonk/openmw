@@ -44,6 +44,7 @@ namespace Ogre
     class ResourceManager;
     class ManualResourceLoader;
     class SceneNode;
+    class Skeleton;
 }
 
 namespace NiBtOgre
@@ -104,10 +105,33 @@ namespace NiBtOgre
         //        |                  name  = concatenation of model, "@" and parent NiNode name
         //        |                    |
         //        v                    v
-        std::map<NiNodeRef, std::pair<std::string, int32_t> > mBhkRigidBodyMap;
+        std::map<NiNodeRef, /*std::pair<std::string,*/ int32_t/*>*/ > mBhkRigidBodyMap;
+
+        Ogre::SkeletonPtr mSkeleton;
 
         std::map<NiTimeControllerRef, std::vector<int> > mGeomMorpherControllerMap;
 
+        //  FIXME: assumes only one bone per animation!
+        //
+        //       animation name  bone name
+        //            |            |
+        //            v            v
+        std::map<std::string, std::vector<std::string> > mMovingBoneNameMap;
+        void setDoorBoneName(const std::string& anim, const std::string& bone) {
+            std::map<std::string, std::vector<std::string> >::iterator lb
+                = mMovingBoneNameMap.lower_bound(anim);
+
+            if (lb != mMovingBoneNameMap.end() && !(mMovingBoneNameMap.key_comp()(anim, lb->first)))
+            {
+                lb->second.push_back(bone);
+            }
+            else // None found, create one
+            {
+                //std::vector<std::string> tmp;
+                //tmp.push_back(bone);
+                mMovingBoneNameMap.insert(lb, std::make_pair(anim, std::vector<std::string> { bone }));
+            }
+        }
 
         ModelData(const NiModel& model) : mModel(model), mEditorMarkerPresent(false) {}
     };
@@ -210,8 +234,10 @@ namespace NiBtOgre
         std::uint32_t getRootIndex() const { return mRoots[0]; } // assumes only one root
 
         typedef std::int32_t NiNodeRef;
-        const std::map<NiNodeRef, std::pair<std::string, int32_t> >&
-        getBhkRigidBodyMap() const { return mModelData.mBhkRigidBodyMap; }
+        const std::map<NiNodeRef, /*std::pair<std::string,*/ int32_t/*>*/ >&
+            getBhkRigidBodyMap() const { return mModelData.mBhkRigidBodyMap; }
+
+        bool hasSkeleton() const { return !mModelData.mSkeleton.isNull(); }
 
         //const std::map<NiNodeRef, int32_t>& getBhkRigidBodyMap() const { return mModelData.mBhkRigidBocyMap; }
 

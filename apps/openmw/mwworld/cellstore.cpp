@@ -287,7 +287,10 @@ namespace MWWorld
       : mCell (cell), mState (State_Unloaded), mHasState (false), mLastRespawn(0,0),
         mIsForeignCell(isForeignCell), mIsDummyCell(isDummyCell), mForeignLand(0)
     {
-        mWaterLevel = cell->mWater;
+        if (!mIsForeignCell)
+            mWaterLevel = cell->mWater;
+        else
+            mWaterLevel = 0.f; // FIXME: should lookup formid and determine?
     }
 
     const ESM::Cell *CellStore::getCell() const

@@ -48,7 +48,7 @@ namespace
         virtual MWWorld::CustomData *clone() const;
 
         CreatureCustomData() : mContainerStore(0) {}
-        virtual ~CreatureCustomData() { delete mContainerStore; }
+        virtual ~CreatureCustomData() { if (mContainerStore) delete mContainerStore; }
     };
 
     MWWorld::CustomData *CreatureCustomData::clone() const

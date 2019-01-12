@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015-2018 cc9cii
+  Copyright (C) 2015-2019 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -40,6 +40,9 @@
 //         NiGeomMorpherController
 namespace NiBtOgre
 {
+    struct NiInterpolator;
+    class NiControllerSequence;
+
     // Time controller for geometry morphing.
     class NiGeomMorpherController : public NiInterpController
     {
@@ -53,6 +56,8 @@ namespace NiBtOgre
 
         std::map<std::string, NiInterpolator*> mControlledBlockInterpolators;
 
+        NiControllerSequence *mControllerSequence;
+
     public:
         std::uint16_t mExtraFlags;
         NiMorphDataRef mDataIndex;
@@ -64,13 +69,12 @@ namespace NiBtOgre
         NiGeomMorpherController(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
 
         //virtual NiTimeControllerRef build(BtOgreInst *inst, Ogre::Mesh *mesh);
-        NiTimeControllerRef build(std::vector<Ogre::Controller<float> >& controllers,
-                Ogre::Mesh *mesh = nullptr);
+        NiTimeControllerRef build(Ogre::Mesh *mesh);
 
         NiTimeControllerRef setupTES3Animation(
             std::vector<Ogre::Controller<float> >& controllers, Ogre::Mesh *mesh = nullptr);
 
-        void setInterpolator(const std::string& frameName, NiInterpolator *interpolator);
+        void setInterpolator(NiControllerSequence *seq, const std::string& frameName, NiInterpolator *interpolator);
     };
 }
 

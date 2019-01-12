@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015-2018 cc9cii
+  Copyright (C) 2015-2019 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -80,6 +80,8 @@ namespace NiBtOgre
         bool createSubMesh(Ogre::Mesh *mesh, BoundsFinder& bounds); // returns true if tangents needed
 
     private:
+
+        const ModelData& mData;
 
         void buildTES3(Ogre::SceneNode *sceneNode, BtOgreInst *inst, NiObject *parentNiNode = nullptr);
 

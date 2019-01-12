@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015-2018 cc9cii
+  Copyright (C) 2015-2019 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -41,7 +41,7 @@ NiBtOgre::NiKeyframeController::NiKeyframeController(uint32_t index, NiStream& s
     if (stream.nifVer() <= 0x0a010000) // up to 10.1.0.0
         stream.read(mDataIndex);
 
-    data.addSkelLeafIndex(NiTimeController::mTargetIndex);
+    data.addSkelLeafIndex(NiTimeController::mTargetIndex); // FIXME: do this for old NIF versions only?
 }
 
 NiBtOgre::NiTimeControllerRef NiBtOgre::NiKeyframeController::build(std::vector<Ogre::Controller<float> > & controllers, Ogre::Mesh *mesh)

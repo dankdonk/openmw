@@ -52,7 +52,10 @@ namespace NiBtOgre
         void unloadImpl();
 
     public:
-        std::map<int32_t, btCollisionShape *> mBtCollisionShapeMap;
+        //      target NiNode name
+        //              |
+        //              v
+        std::map<std::string, btCollisionShape *> mBtCollisionShapeMap; // used by RigidBody
 
         BtRigidBodyCI(Ogre::ResourceManager *creator, const Ogre::String& name, Ogre::ResourceHandle handle,
                 const Ogre::String& group, bool isManual, Ogre::ManualResourceLoader* loader);

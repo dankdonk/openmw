@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2018, 2019 cc9cii
+  Copyright (C) 2017-2019 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -23,27 +23,32 @@
   documenation.  See http://niftools.sourceforge.net/wiki/NifSkope for details.
 
 */
-#include "niviscontroller.hpp"
+#ifndef NIBTOGRE_NIUVCONTROLLER_H
+#define NIBTOGRE_NIUVCONTROLLER_H
 
-#include <cassert>
-#include <stdexcept>
+#include <string>
+#include <vector>
+#include <cstdint>
 
-#include "nistream.hpp"
-#include "nimodel.hpp"
+#include <OgreVector3.h>
 
-#ifdef NDEBUG // FIXME: debugging only
-#undef NDEBUG
-#endif
+#include "niobject.hpp"
+#include "nitimecontroller.hpp"
 
-// architecture/anvil/lorgrenskeleton01.nif
-// architecture/quests/se01waitingroomwalls.nif
-// architecture/quests/se07ardensulalter.nif
-// architecture/quests/se09breathactbottle.nif
+// Based on NifTools/NifSkope/doc/index.html
 //
-// plus lots of other examples
-NiBtOgre::NiVisController::NiVisController(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
-    : NiSingleInterpController(index, stream, model, data)
+// NiTimeController
+//     NiUVController
+
+namespace NiBtOgre
 {
-    if (stream.nifVer() <= 0x0a010000) // up to 10.1.0.0
-        stream.read(mDataIndex);
+    class NiUVController : public NiTimeController
+    {
+    public:
+        NiUVDataRef mDataIndex;
+
+        NiUVController(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
+    };
 }
+
+#endif // NIBTOGRE_NIUVCONTROLLER_H

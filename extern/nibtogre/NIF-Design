@@ -593,7 +593,7 @@
                   NiModelManager            |                     |
                   ::createImpl()  .....  NiModel           ManualNiModelLoader
                                          ::loadImpl()      ::loadResource()
-                                         ::unloadImpl()
+                                         ::unloadImpl()    (NOTE: not implemented)
 
 
  A manually loaded resource will retain a pointer to its loader (e.g. see Ogre::Mesh).  That
@@ -607,13 +607,13 @@
  Or we could implement an NiModelManager as per above.  An NiModel can then be loaded on-demand.
 
  NOTE: current implementation does not use a ManualResourceLoader which probably means NiModel
-       cannot be reloaded automatically
+       cannot be reloaded automatically (actually, it can)
 
  IDEA: Keep all the loaders in ObjectScene?  Or in BtOgreInst then have ObjectScene destroy
        BtOgreInst in the destructor?
 
  OEngine::Physic::PhysicEngine::mCollisionObjectMap keeps Physic::RigidBody* for later destruction.
- (or mAnimatedShapes, etc)
+ (and mAnimatedShapes, etc)
 
 
     MWWorld::Scene::unloadCell
@@ -643,6 +643,38 @@
  to be generated each time.  (or at least a deep copy made?
  https://stackoverflow.com/questions/12255546/c-deep-copying-a-base-class-pointer)
 
+[06/01/2019] - Issues found while running around
 
+ COW "AnvilWorld" -46 -8
+
+ exception     Ptr World::getPtrViaHandle (const std::string& handle)  Anvil Fighters Guild
+ searches mActiveCells in CellStore
+
+ shirt in display case is half clipping through the bottom (ICMarketDistrictRedDiamondJewelry)
+
+[06/01/2109] - Get to some old code & comments
+
+ Gdiff b44b4bad325296ca8ab7d519e33ca533f679abf8
+
+[08/01/2109] - Some notes on odd build sequences
+
+ NiTriBasedGeom (NiTriShapes/NiTriStrips)
+ - in the constructor register self in ModelData (but first check if parent NiNode is named
+   "EditorMarker")
+ - during the registration a MeshLoader is created and associated with the parent NiNode
+    (note that it is no longer done when a NiNode is building its children)
+ - when the NiModel is 'instantiated' the Mesh and SubMesh are loaded when the Entity is
+   created (using the Mesh pointer, but can be done with the Mesh name)
+ - any vertex animations in SubMeshes are setup with the Entity
+ - note that there may be more than one Mesh per NiModel
+ - in future implementation the MeshLoaders may need to be moved out of ModelData
+
+bhkEntity (bhkRigidBody/bhkRigidBodyT)
+ - in the constructor of NiCollisionObject register the collision object body
+   (TODO: should check if collision is enabled in BSX)
+ - a BtRigidBodyCI object is created with the same name as the NiModel; it then looks for any
+   registerd bhkEntity to build the btShapes, etc.
+ - note that there may be more than one RigidBody per NiModel (these may need to be deleted
+   manually)
 
 # vim: fen fdm=marker fdl=0 spell spelllang=en_us syntax=cpp

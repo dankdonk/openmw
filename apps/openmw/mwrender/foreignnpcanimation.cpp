@@ -662,7 +662,7 @@ void ForeignNpcAnimation::addAnimSource(const std::string &model)
     for(size_t i = 0;i < controllers.size();i++)
     {
         NifOgre::NodeTargetValue<Ogre::Real> *dstval;
-        dstval = static_cast<NifOgre::NodeTargetValue<Ogre::Real>*>(controllers[i].getDestination().getPointer());
+        dstval = static_cast<NifOgre::NodeTargetValue<Ogre::Real>*>(controllers[i].getDestination().get());
 
         size_t grp = detectAnimGroup(dstval->getNode());
 

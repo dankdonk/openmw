@@ -115,6 +115,9 @@ namespace MWWorld
 
             void updateObjectLocalRotation (const Ptr& ptr);
 
+            void rotateSubObjectLocalRotation (const MWWorld::Ptr& ptr,
+                    const std::string& boneName, const Ogre::Quaternion& rotation);
+
             void updateObjectRotation (const Ptr& ptr);
 
             bool isCellActive(const CellStore &cell);

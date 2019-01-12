@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015-2018 cc9cii
+  Copyright (C) 2015-2019 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -32,6 +32,8 @@
 
 #include "nistream.hpp"
 #include "nitimecontroller.hpp" // static_cast NiControllerManager
+#include "nigeommorphercontroller.hpp"
+#include "nikeyframecontroller.hpp"
 #include "nimodel.hpp"
 #include "nidata.hpp" // NiStringPalette
 #include "niavobject.hpp" // getTargetObject (see: http://www.cplusplus.com/forum/beginner/134129/#msg717505)
@@ -184,7 +186,7 @@ NiBtOgre::NiControllerSequence::NiControllerSequence(uint32_t index, NiStream& s
 //     NiTransformController      controllerType      4    controller2Index
 //     MainMast02 NonAccum        nodeName          111    object palette
 //
-void NiBtOgre::NiControllerSequence::build(std::vector<Ogre::Controller<float> >& controllers, const NiDefaultAVObjectPalette* objects)
+void NiBtOgre::NiControllerSequence::build(const NiDefaultAVObjectPalette* objects)
 {
     // FIXME: process mTextKeysIndex here
 
@@ -210,13 +212,8 @@ void NiBtOgre::NiControllerSequence::build(std::vector<Ogre::Controller<float> >
         if (interpolatorIndex < 0) // -1
             continue;
 
-        // NOTE: Some interpolators do not have any data!  Ignore these controlled blocks.
-        NiInterpolator *interpolator = mModel.getRef<NiInterpolator>(interpolatorIndex);
-        //if (interpolator->mDataIndex < 0) // -1
-            //continue; // FIXME
-
-        // targetNode can be nullptr if nodeNameIndex == -1
-        if (mControlledBlocks[i].nodeNameIndex == -1)
+        std::string ctlrTypeName = getObjectName(mControlledBlocks[i].controllerTypeIndex);
+        if (ctlrTypeName =="")
             continue;
 
         // targets are usually NiTriBasedGeom or NiNode
@@ -228,30 +225,67 @@ void NiBtOgre::NiControllerSequence::build(std::vector<Ogre::Controller<float> >
 
         target->setHasAnim();
 
-        // Each interpolator type probably has its own animation method get the controller to
-        // do the building; pass the interpolator data for the keys
-        //
-        // NOTE: ingore the chain of controllers here since NiControllerSequence is managing
-        // them all?
-        //
-        // Most of the targets wouldn't have been built yet so just place the data to be picked
-        // up later.
-        //NiObject::mModel.getRef<NiTimeController>(mControlledBlocks[i]controllerIndex)
-            //->buildFromNiControllerSequence(controllers, targetIndex, data);
-        //
-        // For NiGeomMorpherController the target would be a NiTriBasedGeom which corresponds
-        // to an Ogre::SubMesh (which can get to its parent Ogre::Mesh).
-        //
-        // So we need access to a map<NiGeometyRef, Ogre::SubMesh*> probably from ModelData.
-        //
+        if (ctlrTypeName == "NiGeomMorpherController")
+        {
+            if (mModel.blockType(interpolatorIndex) != "NiFloatInterpolator")
+                throw std::runtime_error("unsupported interpolator: "+mModel.blockType(interpolatorIndex));
 
-        std::string frameName = getObjectName(mControlledBlocks[i].variable2Index);
-        if (frameName =="")
-            continue;
+            // NOTE: Some interpolators do not have any data!  Ignore these controlled blocks.
+            NiFloatInterpolator *interpolator = mModel.getRef<NiFloatInterpolator>(interpolatorIndex);
+            if (interpolator->mDataIndex < 0) // -1
+                continue;
 
-        NiTimeController *controller
-            = mModel.getRef<NiTimeController>(mControlledBlocks[i].controller2Index);
-        controller->setInterpolator(frameName, interpolator);
+            // targetNode can be nullptr if nodeNameIndex == -1
+            if (mControlledBlocks[i].nodeNameIndex == -1)
+                continue;
+
+            // Each interpolator type probably has its own animation method get the controller to
+            // do the building; pass the interpolator data for the keys
+            //
+            // NOTE: ingore the chain of controllers here since NiControllerSequence is managing
+            // them all?
+            //
+            // Most of the targets wouldn't have been built yet so just place the data to be picked
+            // up later.
+            //NiObject::mModel.getRef<NiTimeController>(mControlledBlocks[i]controllerIndex)
+                //->buildFromNiControllerSequence(controllers, targetIndex, data);
+            //
+            // For NiGeomMorpherController the target would be a NiTriBasedGeom which corresponds
+            // to an Ogre::SubMesh (which can get to its parent Ogre::Mesh).
+            //
+            // So we need access to a map<NiGeometyRef, Ogre::SubMesh*> probably from ModelData.
+            //
+
+            std::string frameName = getObjectName(mControlledBlocks[i].variable2Index);
+            if (frameName =="")
+                continue;
+
+            NiGeomMorpherController *controller
+                = mModel.getRef<NiGeomMorpherController>(mControlledBlocks[i].controller2Index);
+
+            // setup the controller for the build later when the sub-mesh gets built on demand
+            controller->setInterpolator(this, frameName, interpolator);
+        }
+        else if (ctlrTypeName == "NiTransformController")
+        {
+            if (mModel.blockType(interpolatorIndex) != "NiTransformInterpolator")
+                throw std::runtime_error("unsupported interpolator: "+mModel.blockType(interpolatorIndex));
+
+            // NOTE: Some interpolators do not have any data!  Ignore these controlled blocks.
+            NiTransformInterpolator *interpolator = mModel.getRef<NiTransformInterpolator>(interpolatorIndex);
+            if (interpolator->mDataIndex < 0) // -1
+                continue;
+
+            // targetNode can be nullptr if nodeNameIndex == -1
+            if (mControlledBlocks[i].nodeNameIndex == -1)
+                continue;
+
+            NiMultiTargetTransformController *controller
+                = mModel.getRef<NiMultiTargetTransformController>(mControlledBlocks[i].controller2Index);
+
+            // FIXME: build it again
+            controller->build(mNameIndex, target, interpolator, mStartTime, mStopTime);
+        }
     }
 }
 

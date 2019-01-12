@@ -55,6 +55,9 @@ namespace MWWorld
 
             void rotateObject (const MWWorld::Ptr& ptr);
 
+            void rotateSubObject (const MWWorld::Ptr& ptr,
+                    const std::string& boneName, const Ogre::Quaternion& rotation);
+
             void scaleObject (const MWWorld::Ptr& ptr);
 
             bool toggleCollisionMode();

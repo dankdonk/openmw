@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015-2018 cc9cii
+  Copyright (C) 2015-2019 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -40,6 +40,7 @@
 #include "nidata.hpp"
 #include "btogreinst.hpp"
 #include "niinterpolator.hpp"
+#include "nisequence.hpp"
 
 #ifdef NDEBUG // FIXME: debugging only
 #undef NDEBUG
@@ -72,7 +73,7 @@
 //   w/w_longbow_ariel.nif
 //
 NiBtOgre::NiGeomMorpherController::NiGeomMorpherController(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
-    : NiTimeController(index, stream, model, data), mNiControllerSequenceBuilt(false)
+    : NiTimeController(index, stream, model, data), mNiControllerSequenceBuilt(false), mControllerSequence(nullptr)
 {
     if (stream.nifVer() >= 0x0a000102) // from 10.0.1.2
         stream.read(mExtraFlags);
@@ -115,12 +116,13 @@ NiBtOgre::NiGeomMorpherController::NiGeomMorpherController(uint32_t index, NiStr
     }
 }
 
-void NiBtOgre::NiGeomMorpherController::setInterpolator(const std::string& frameName, NiInterpolator *interpolator)
+void NiBtOgre::NiGeomMorpherController::setInterpolator(NiControllerSequence *seq, const std::string& frameName, NiInterpolator *interpolator)
 {
+    mControllerSequence = seq;
     mControlledBlockInterpolators[frameName] = interpolator;
 }
 
-NiBtOgre::NiTimeControllerRef NiBtOgre::NiGeomMorpherController::build(std::vector<Ogre::Controller<float> > & controllers, Ogre::Mesh *mesh)
+NiBtOgre::NiTimeControllerRef NiBtOgre::NiGeomMorpherController::build(Ogre::Mesh *mesh)
 {
     if ((NiTimeController::mFlags & 0x8) == 0) // not active
         return mNextControllerIndex;
@@ -128,7 +130,18 @@ NiBtOgre::NiTimeControllerRef NiBtOgre::NiGeomMorpherController::build(std::vect
     std::string animationId = "NiGeomMorph@block_" + std::to_string(NiObject::index()); // mSelfIndex
     float totalAnimationLength = NiTimeController::mStopTime - NiTimeController::mStartTime;
 
-    Ogre::Animation *animation = mesh->createAnimation(animationId, totalAnimationLength);
+    // FIXME meshes\\creatures\\willothewisp\\skeleton.nif
+    if (!mControllerSequence)
+        return mNextControllerIndex;
+
+    animationId = mModel.indexToString(mControllerSequence->getNameIndex());
+
+    Ogre::Animation *animation;
+    if (mesh->hasAnimation(animationId))
+        animation = mesh->getAnimation(animationId);
+    else
+        animation = mesh->createAnimation(animationId, mControllerSequence->getTotalAnimLength());
+    //animation->setInterpolationMode(Ogre::Animation::IM_SPLINE); // not any better...
 
     assert(mesh->getNumSubMeshes() != 0); // should be at least 1
     std::uint32_t subMeshIndex = (std::uint32_t)mesh->getNumSubMeshes()-1;

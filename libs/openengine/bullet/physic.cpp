@@ -464,25 +464,40 @@ namespace Physic
         std::string outputstring = mesh + sid;
 
         Nif::NIFFilePtr nif = Nif::Cache::getInstance().load(mesh);
-        if (nif->getVersion() >=0x0a000100) // tes4 style, i.e. from 10.0.1.0
+        if (nif->getVersion() >= 0x0a000100) // tes4 style, i.e. from 10.0.1.0
         {
             std::string lowerMesh = /*mesh*/outputstring;
             Misc::StringUtils::lowerCaseInPlace(lowerMesh);
 
+            if (lowerMesh == "meshes\\characters\\_male\\skeleton.nif001.000")
+                std::cout << "skeleton" << std::endl;
+
             BtRigidBodyCIPtr ci
                 = NiBtOgre::BtRigidBodyCIManager::getSingleton().getOrLoadByName(lowerMesh, "General");
 
-            std::map<std::int32_t, btCollisionShape*>::const_iterator iter;
+            int numBodies = 0; // keep track of Rigid Bodies with the same 'name'
+            RigidBody *parentBody;
+            std::map<std::string, btCollisionShape*>::const_iterator iter;
             for (iter = ci->mBtCollisionShapeMap.begin(); iter != ci->mBtCollisionShapeMap.end(); ++iter)
             {
                 btCollisionShape *collisionShape = iter->second;
+                if (!collisionShape)
+                    continue; // phantom
+
                 collisionShape->setLocalScaling( btVector3(scale,scale,scale));
                 btRigidBody::btRigidBodyConstructionInfo CI
                     = btRigidBody::btRigidBodyConstructionInfo(0,0, collisionShape);
-                //Ogre::SceneNode childNode = node->createChild();
-                RigidBody* body = new RigidBody(CI,name/*+std::to_string(iter->first)*/); // FIXME: name repeated
-                body->mPlaceable = placeable;
 
+                // FIXME: name repeated (name is the Ogre::SceneNode name)
+                // TODO: maybe the 'name' should be the same for collision detection/raycast?
+                RigidBody *body = new RigidBody(CI, name);
+                body->mPlaceable = placeable;
+                if (numBodies == 0)
+                    parentBody = body;
+                else
+                    parentBody->mChildren[iter->first] = body;
+
+                ++numBodies;
 #if 0
                 if (!raycasting/* && !shape->mAnimatedShapes.empty()*/)
                 {
@@ -504,14 +519,14 @@ namespace Physic
                 if (!raycasting)
                 {
                     assert (mCollisionObjectMap.find(name) == mCollisionObjectMap.end());
-                    mCollisionObjectMap[name] = body;
+                    if (numBodies == 1) mCollisionObjectMap[name] = body; // register only the parent
                     mDynamicsWorld->addRigidBody(
                             body,CollisionType_World,CollisionType_Actor|CollisionType_HeightMap);
                 }
                 else
                 {
                     assert (mRaycastingObjectMap.find(name) == mRaycastingObjectMap.end());
-                    mRaycastingObjectMap[name] = body;
+                    if (numBodies == 1) mRaycastingObjectMap[name] = body; // register only the parent
                     mDynamicsWorld->addRigidBody(
                             body,CollisionType_Raycasting,CollisionType_Raycasting|CollisionType_Projectile);
                     body->setCollisionFlags(
@@ -593,6 +608,7 @@ namespace Physic
         return body;
     }
 
+    // some rigid bodies have children, so ensure that they are all removed
     void PhysicEngine::removeRigidBody(const std::string &name)
     {
         RigidBodyContainer::iterator it = mCollisionObjectMap.find(name);
@@ -601,6 +617,10 @@ namespace Physic
             RigidBody* body = it->second;
             if(body != NULL)
             {
+                std::map<std::string, RigidBody*>::iterator it2 = body->mChildren.begin();
+                for (; it2 != body->mChildren.end(); ++it2)
+                    mDynamicsWorld->removeRigidBody(it2->second);
+
                 mDynamicsWorld->removeRigidBody(body);
             }
         }
@@ -610,11 +630,16 @@ namespace Physic
             RigidBody* body = it->second;
             if(body != NULL)
             {
+                std::map<std::string, RigidBody*>::iterator it2 = body->mChildren.begin();
+                for (; it2 != body->mChildren.end(); ++it2)
+                    mDynamicsWorld->removeRigidBody(it2->second);
+
                 mDynamicsWorld->removeRigidBody(body);
             }
         }
     }
 
+    // some rigid bodies have children, so ensure that they are all deleted
     void PhysicEngine::deleteRigidBody(const std::string &name)
     {
         RigidBodyContainer::iterator it = mCollisionObjectMap.find(name);
@@ -627,6 +652,10 @@ namespace Physic
                 if (mAnimatedShapes.find(body) != mAnimatedShapes.end())
                     deleteShape(mAnimatedShapes[body].mCompound);
                 mAnimatedShapes.erase(body);
+
+                std::map<std::string, RigidBody*>::iterator it2 = body->mChildren.begin();
+                for (; it2 != body->mChildren.end(); ++it2)
+                    delete it2->second;
 
                 delete body;
             }
@@ -642,6 +671,10 @@ namespace Physic
                 if (mAnimatedRaycastingShapes.find(body) != mAnimatedRaycastingShapes.end())
                     deleteShape(mAnimatedRaycastingShapes[body].mCompound);
                 mAnimatedRaycastingShapes.erase(body);
+
+                std::map<std::string, RigidBody*>::iterator it2 = body->mChildren.begin();
+                for (; it2 != body->mChildren.end(); ++it2)
+                    delete it2->second;
 
                 delete body;
             }

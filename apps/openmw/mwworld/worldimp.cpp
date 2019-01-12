@@ -51,6 +51,8 @@
 
 #include "../mwclass/door.hpp"
 
+#include "class.hpp"
+#include "livecellref.hpp"
 #include "player.hpp"
 #include "manualref.hpp"
 #include "cellstore.hpp"
@@ -1532,12 +1534,27 @@ namespace MWWorld
         std::map<MWWorld::Ptr, int>::iterator it = mDoorStates.begin();
         while (it != mDoorStates.end())
         {
+            bool isForeignDoor = it->first.getBase()->mClass->getTypeName() == typeid (ESM4::Door).name();
+            MWRender::Animation *anim = MWBase::Environment::get().getWorld()->getAnimation(it->first);
+
             if (!mWorldScene->isCellActive(*it->first.getCell()) || !it->first.getRefData().getBaseNode())
             {
                 // The door is no longer in an active cell, or it was disabled.
                 // Erase from mDoorStates, since we no longer need to move it.
                 // Once we load the door's cell again (or re-enable the door), Door::insertObject will reinsert to mDoorStates.
                 mDoorStates.erase(it++);
+            }
+            else if (isForeignDoor && anim->hasAnimation("Open"))
+            {
+                if (anim->addTime("Open", duration)) // returns true if animation ended
+                {
+                    it->first.getClass().setDoorState(it->first, 0);
+                    mWorldScene->rotateSubObjectLocalRotation(it->first, "impDunDoor02b", Ogre::Quaternion(
+                                Ogre::Radian(1.57f), Ogre::Vector3::UNIT_Z));
+                    mDoorStates.erase(it++);
+                }
+                else
+                    it++;
             }
             else
             {
@@ -2254,24 +2271,40 @@ namespace MWWorld
     void World::activateDoor(const MWWorld::Ptr& door)
     {
         int state = door.getClass().getDoorState(door);
-        switch (state)
+
+        bool isForeignDoor = door.getBase()->mClass->getTypeName() == typeid (ESM4::Door).name();
+        if (isForeignDoor)
         {
-        case 0:
-            if (door.getRefData().getLocalRotation().rot[2] == 0)
-                state = 1; // if closed, then open
-            else
-                state = 2; // if open, then close
-            break;
-        case 2:
-            state = 1; // if closing, then open
-            break;
-        case 1:
-        default:
-            state = 2; // if opening, then close
-            break;
+            MWRender::Animation *anim = MWBase::Environment::get().getWorld()->getAnimation(door);
+            if (anim->hasAnimation("Open") || anim->hasAnimation("Close"))
+            {
+                // can get lenth and time positon of the AnimationState for the Skeleton
+                // can get NodeAnimationTrack->getAssociatedNode
+                state = anim->activateDoor();
+                door.getClass().setDoorState(door, state);
+                mDoorStates[door] = state;
+                return;
+            }
         }
-        door.getClass().setDoorState(door, state);
-        mDoorStates[door] = state;
+
+             switch (state)
+            {
+            case 0:
+                if (door.getRefData().getLocalRotation().rot[2] == 0)
+                    state = 1; // if closed, then open
+                else
+                    state = 2; // if open, then close
+                break;
+            case 2:
+                state = 1; // if closing, then open
+                break;
+            case 1:
+            default:
+                state = 2; // if opening, then close
+                break;
+            }
+            door.getClass().setDoorState(door, state);
+            mDoorStates[door] = state;
     }
 
     void World::activateDoor(const Ptr &door, int state)
@@ -2546,9 +2579,10 @@ namespace MWWorld
 
     bool World::findForeignInteriorPosition(const std::string &name, ESM::Position &pos)
     {
+#if 0
         pos.rot[0] = pos.rot[1] = pos.rot[2] = 0;
         return true;
-#if 0
+#else
         typedef MWWorld::CellRefList<ESM4::Door>::List DoorList;
         typedef MWWorld::CellRefList<ESM4::Static>::List StaticList;
 
@@ -2560,7 +2594,18 @@ namespace MWWorld
         if (!cellStore)
             return false;
 
-        const DoorList &doors = cellStore->get<ESM4::Door>().mList;
+        const StaticList &statics = cellStore->get<ESM4::Static>().mList;
+        StaticList::const_iterator iter;
+        for (iter = statics.begin(); iter != statics.end(); ++iter)
+        {
+            if (iter->mBase->mEditorId == "MarkerTeleport")
+            {
+                pos = iter->mRef.getPosition(); // FIXME find the closest one instead?
+                return true;
+            }
+        }
+
+        const DoorList &doors = cellStore->getReadOnly<ESM4::Door>().mList;
         for (DoorList::const_iterator it = doors.begin(); it != doors.end(); ++it)
         {
             if (!it->mRef.getTeleport()) // FIXME
@@ -2574,11 +2619,11 @@ namespace MWWorld
                 int x, y;
                 ESM::Position doorDest = it->mRef.getDoorDest(); // FIXME
                 positionToIndex(doorDest.pos[0], doorDest.pos[1], x, y);
-                source = getForeignWorld(xxx, x, y); // FIXME
+                //source = getForeignWorld(xxx, x, y); // FIXME
             }
             else // door to interior
             {
-                source = getForeignInterior(it->mRef.getDestCell()); // FIXME
+                //source = getForeignInterior(it->mRef.getDestCell()); // FIXME
             }
 
             if (source)
@@ -2600,7 +2645,7 @@ namespace MWWorld
             }
         }
         // Fall back to the first static location.
-        const StaticList &statics = cellStore->get<ESM4::Static>().mList;
+        //const StaticList &statics = cellStore->get<ESM4::Static>().mList;
         if ( statics.begin() != statics.end() )
         {
             pos = statics.begin()->mRef.getPosition(); // FIXME

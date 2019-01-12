@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2018 cc9cii
+  Copyright (C) 2019 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -70,4 +70,11 @@ void NiBtOgre::MeshLoader::loadResource(Ogre::Resource *resource)
     mesh->_setBounds(Ogre::AxisAlignedBox(bounds.minX()-0.5f, bounds.minY()-0.5f, bounds.minZ()-0.5f,
                                           bounds.maxX()+0.5f, bounds.maxY()+0.5f, bounds.maxZ()+0.5f));
     mesh->_setBoundingSphereRadius(bounds.getRadius());
+
+    // FIXME: exception
+    // mMaterialName = "meshes\\oblivion\\gate\\oblivionarchgate01.nif@Meteor01:0"
+    // cow "daperyiterealm" 16 15
+    // FIXME: how to tell which Mesh needs the skeleton?
+    //if (!mesh->hasSkeleton() && mModel.hasSkeleton())
+        //mesh->setSkeletonName(mModel.getModelName());
 }

@@ -481,6 +481,19 @@ namespace MWWorld
     }
 
     template<>
+    inline const CellRefList<ESM4::Door>& CellStore::getReadOnly<ESM4::Door>()
+    {
+        return mForeignDoors;
+    }
+
+    template<>
+    inline CellRefList<ESM4::Static>& CellStore::get<ESM4::Static>()
+    {
+        mHasState = true;
+        return mForeignStatics;
+    }
+
+    template<>
     inline CellRefList<ESM4::Npc>& CellStore::get<ESM4::Npc>()
     {
         return mForeignNpcs;

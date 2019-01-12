@@ -33,6 +33,7 @@
 #include "nistream.hpp"
 #include "niavobject.hpp" // static_cast NiAVObject
 #include "nimodel.hpp"
+#include "ninode.hpp"
 #include "bhkrefobject.hpp"
 
 #ifdef NDEBUG // FIXME: debugging only
@@ -98,6 +99,10 @@ NiBtOgre::bhkNiCollisionObject::bhkNiCollisionObject(uint32_t index, NiStream& s
 {
     stream.read(mFlags);
     stream.read(mBodyIndex);
+
+    // make an entry for loading BtRigidBodyCI (for building physics shapes)
+    data.mBhkRigidBodyMap[mTargetIndex]
+        = /*std::make_pair(model.getModelName()+"@"+ model.getRef<NiNode>(mTargetIndex)->getNodeName(), */mBodyIndex/*)*/;
 }
 
 // build the 'body' to the 'target'

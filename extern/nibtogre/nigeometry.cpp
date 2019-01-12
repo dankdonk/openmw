@@ -110,7 +110,7 @@ NiBtOgre::NiGeometry::NiGeometry(uint32_t index, NiStream& stream, const NiModel
 }
 
 NiBtOgre::NiTriBasedGeom::NiTriBasedGeom(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
-    : NiGeometry(index, stream, model, data)
+    : NiGeometry(index, stream, model, data), mData(data) // for accessing mSkeleton later
 {
     // The model name and parent node name are concatenated for use with Ogre::MeshManager
     // without triggering exeptions due to duplicates.
@@ -288,7 +288,7 @@ bool NiBtOgre::NiTriBasedGeom::createSubMesh(Ogre::Mesh *mesh, BoundsFinder& bou
     bool vertShadowBuffer = false;
 
     // TODO: seems to make no difference to vertex anim
-    if (mSkinInstanceIndex != -1/* || NiAVObject::mHasAnim*/)
+    if (mSkinInstanceIndex != -1/* || NiAVObject::mHasAnim*/ || !mData.mSkeleton.isNull())
     {
         vertUsage = Ogre::HardwareBuffer::HBU_DYNAMIC_WRITE_ONLY;
         vertShadowBuffer = true;
@@ -466,8 +466,7 @@ bool NiBtOgre::NiTriBasedGeom::createSubMesh(Ogre::Mesh *mesh, BoundsFinder& bou
         // best to reverse search from each of the affected bones
 
         // bone assignments
-        Ogre::SkeletonPtr skeleton
-            = Ogre::SkeletonManager::getSingleton().getByName(mModel.getModelName());
+        //Ogre::SkeletonPtr skeleton = mData.mSkeleton;
 
         const NiSkinInstance *skinInstance = mModel.getRef<NiSkinInstance>(mSkinInstanceIndex);
         const NiSkinData *data = mModel.getRef<NiSkinData>(skinInstance->mDataIndex);
@@ -475,7 +474,7 @@ bool NiBtOgre::NiTriBasedGeom::createSubMesh(Ogre::Mesh *mesh, BoundsFinder& bou
         {
             Ogre::VertexBoneAssignment boneInf;
             std::string nodeName = mModel.getRef<NiNode>(skinInstance->mBones[i])->getNodeName();
-            boneInf.boneIndex = skeleton->getBone(nodeName)->getHandle();
+            boneInf.boneIndex = mData.mSkeleton->getBone(nodeName)->getHandle();
 
             const std::vector<NiSkinData::SkinData::SkinWeight> &weights = data->mBoneList[i].vertexWeights;
             for(size_t j = 0; j < weights.size(); ++j)
@@ -486,6 +485,27 @@ bool NiBtOgre::NiTriBasedGeom::createSubMesh(Ogre::Mesh *mesh, BoundsFinder& bou
             }
         }
     } // mSkinInstanceIndex != -1
+    else if (!mData.mSkeleton.isNull() // FIXME: this if block is just an experiment
+             &&
+             std::find(mData.mSkelLeafIndicies.begin(), mData.mSkelLeafIndicies.end(),
+                       NiObject::mModel.getNiNodeParent(NiObject::index())) != mData.mSkelLeafIndicies.end())
+    {
+        mesh->setSkeletonName(mModel.getModelName());
+
+        std::string nodeName = parentNode->getNodeName();
+        if (mData.mSkeleton->hasBone(nodeName))
+        {
+            Ogre::VertexBoneAssignment boneInf;
+            boneInf.boneIndex = mData.mSkeleton->getBone(nodeName)->getHandle();
+
+            for (unsigned int j = 0; j < srcVerts.size(); ++j)
+            {
+                boneInf.vertexIndex = j;
+                boneInf.weight = 1.f; // FIXME: hope this is correct
+                sub->addBoneAssignment(boneInf);
+            }
+        }
+    }
 
     // find and apply the material
     std::string materialName = getMaterial(); // NOTE: materialName may be different to subMesh name
@@ -502,8 +522,7 @@ bool NiBtOgre::NiTriBasedGeom::createSubMesh(Ogre::Mesh *mesh, BoundsFinder& bou
     NiTimeControllerRef controllerIndex = NiObjectNET::mControllerIndex;
     while (controllerIndex != -1)
     {
-        controllerIndex
-            = mModel.getRef<NiTimeController>(controllerIndex)->build(NiObjectNET::mControllers, mesh);
+        controllerIndex = mModel.getRef<NiTimeController>(controllerIndex)->build(mesh);
     }
 
     // if required build tangents at the mesh level

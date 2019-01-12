@@ -271,7 +271,7 @@ void Animation::addAnimSource(const std::string &model)
     for(size_t i = 0;i < ctrls.size();i++)
     {
         NifOgre::NodeTargetValue<Ogre::Real> *dstval;
-        dstval = static_cast<NifOgre::NodeTargetValue<Ogre::Real>*>(ctrls[i].getDestination().getPointer());
+        dstval = static_cast<NifOgre::NodeTargetValue<Ogre::Real>*>(ctrls[i].getDestination().get());
 
         size_t grp = detectAnimGroup(dstval->getNode());
 
@@ -450,6 +450,12 @@ bool Animation::hasAnimation(const std::string &anim)
             return true;
     }
 
+    // HACK for foreign doors
+    if (mObjectRoot->mSkeletonAnimEntities.size() > 0)
+    {
+        return mObjectRoot->mSkeletonAnimEntities.find(anim) != mObjectRoot->mSkeletonAnimEntities.end();
+    }
+
     return false;
 }
 
@@ -534,7 +540,7 @@ float Animation::getVelocity(const std::string &groupname) const
     for(size_t i = 0;i < ctrls.size();i++)
     {
         NifOgre::NodeTargetValue<Ogre::Real> *dstval;
-        dstval = static_cast<NifOgre::NodeTargetValue<Ogre::Real>*>(ctrls[i].getDestination().getPointer());
+        dstval = static_cast<NifOgre::NodeTargetValue<Ogre::Real>*>(ctrls[i].getDestination().get());
         if(dstval->getNode() == mNonAccumRoot)
         {
             velocity = calcAnimVelocity(keys, dstval, mAccumulate, groupname);
@@ -556,7 +562,7 @@ float Animation::getVelocity(const std::string &groupname) const
             for(size_t i = 0;i < ctrls.size();i++)
             {
                 NifOgre::NodeTargetValue<Ogre::Real> *dstval;
-                dstval = static_cast<NifOgre::NodeTargetValue<Ogre::Real>*>(ctrls[i].getDestination().getPointer());
+                dstval = static_cast<NifOgre::NodeTargetValue<Ogre::Real>*>(ctrls[i].getDestination().get());
                 if(dstval->getNode() == mNonAccumRoot)
                 {
                     velocity = calcAnimVelocity(keys, dstval, mAccumulate, groupname);
@@ -1061,7 +1067,7 @@ void Animation::resetActiveGroups()
     for(size_t i = 0;i < ctrls.size();i++)
     {
         NifOgre::NodeTargetValue<Ogre::Real> *dstval;
-        dstval = static_cast<NifOgre::NodeTargetValue<Ogre::Real>*>(ctrls[i].getDestination().getPointer());
+        dstval = static_cast<NifOgre::NodeTargetValue<Ogre::Real>*>(ctrls[i].getDestination().get());
         if(dstval->getNode() == mNonAccumRoot)
         {
             mNonAccumCtrl = dstval;
@@ -1285,7 +1291,8 @@ Ogre::Vector3 Animation::runAnimation(float duration)
                     state->setTimePosition(state->getLength());
                 else
 #endif
-                    state->addTime(duration);
+                    if (state->getEnabled())
+                        state->addTime(duration);
             }
         }
     }
@@ -1293,6 +1300,69 @@ Ogre::Vector3 Animation::runAnimation(float duration)
     updateEffects(duration);
 
     return movement;
+}
+
+// this is a hack to get animated doors to work
+bool Animation::addTime(const std::string& anim, float duration)
+{
+    if (mObjectRoot->mSkeletonAnimEntities.size() > 0)
+    {
+#if 0
+        std::map<std::string, Ogre::Entity*>::const_iterator it
+            = mObjectRoot->mSkeletonAnimEntities.begin();
+        for (; it != mObjectRoot->mSkeletonAnimEntities.end(); ++it)
+        {
+            Ogre::AnimationStateSet *aset = it->second->getAllAnimationStates();
+            Ogre::AnimationStateIterator asiter = aset->getAnimationStateIterator();
+            while(asiter.hasMoreElements())
+            {
+                Ogre::AnimationState *state = asiter.getNext();
+                //
+                if (state->getEnabled())
+                    state->addTime(duration);
+            }
+        }
+#else
+        // does the anim exist?
+        std::map<std::string, std::vector<Ogre::Entity*> >::iterator iter
+            = mObjectRoot->mSkeletonAnimEntities.find(anim);
+        if (iter != mObjectRoot->mSkeletonAnimEntities.end())
+        {
+            bool hasEnded = false;
+            // there can be more than one entity being animated, add time to all
+            for (unsigned int i = 0; i < iter->second.size(); ++i)
+            {
+                iter->second[i]->getAnimationState(anim)->addTime(duration);
+                // if any one of the entities has ended its anim then assume all ended
+                hasEnded |= iter->second[i]->getAnimationState(anim)->hasEnded();
+            }
+
+            return hasEnded; // remove from mDoorStates, see processDoors()
+        }
+        else
+            return true; // set to anim ended state if it can't be found?
+#endif
+    }
+}
+
+int Animation::activateDoor() // FIXME: currently open only
+{
+    if (mObjectRoot->mSkeletonAnimEntities.size() > 0)
+    {
+        std::map<std::string, std::vector<Ogre::Entity*> >::iterator it
+            = mObjectRoot->mSkeletonAnimEntities.find("Open");
+        if (it != mObjectRoot->mSkeletonAnimEntities.end())
+        {
+            bool hasEnded = false;
+            for (unsigned int i = 0; i < it->second.size(); ++i)
+            {
+                it->second[i]->getAnimationState("Open")->setEnabled(true);
+                it->second[i]->getAnimationState("Open")->setLoop(false);
+            }
+
+            return 1;
+        }
+    }
 }
 
 void Animation::showWeapons(bool showWeapon)

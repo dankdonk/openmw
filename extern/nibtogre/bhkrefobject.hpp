@@ -90,17 +90,19 @@ namespace NiBtOgre
     class Header;
     struct bhkRigidBody;
     class NiNode;
+    struct ModelData;
 
     typedef NiObject bhkRefObject;
-    typedef bhkRefObject bhkSerializable;
+    //typedef bhkRefObject bhkSerializable;
 
-#if 0 // use typedef instead
-    struct bhkSerializable : public NiObject
+//#if 0 // use typedef instead
+    struct bhkSerializable : public bhkRefObject
     {
-        bhkSerializable(uint32_t index,
-                NiStream& stream, const NiModel& model, ModelData& data, ModelData& data);
+        bhkSerializable(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
+
+        virtual btCollisionShape *getShape(NiNode *parentNiNode);
     };
-#endif
+//#endif
 
     // Seen in NIF version 20.2.0.7
     struct bhkCompressedMeshShapeData : public bhkRefObject
@@ -684,11 +686,10 @@ namespace NiBtOgre
         unsigned char mColFilter;
         std::uint16_t mUnknownShort;
 
-        // FIXME
-
         bhkSimpleShapePhantom(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
 
         void build(BtOgreInst *inst, ModelData *data, NiObject* parent);
+        btCollisionShape *getShape(NiNode *parentNiNode);
     };
 }
 

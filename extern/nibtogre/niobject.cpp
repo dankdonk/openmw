@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2017-2018 cc9cii
+  Copyright (C) 2017-2019 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -43,7 +43,9 @@
 #include "nigeommorphercontroller.hpp"
 #include "nikeyframecontroller.hpp"
 #include "nimaterialcolorcontroller.hpp"
+#include "niparticlesystemcontroller.hpp"
 #include "nipsysmodifierctlr.hpp"
+#include "niuvcontroller.hpp"
 #include "niviscontroller.hpp"
 
 #include "bhkrefobject.hpp"

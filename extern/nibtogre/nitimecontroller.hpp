@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015-2018 cc9cii
+  Copyright (C) 2015-2019 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -81,6 +81,7 @@
 namespace NiBtOgre
 {
     class NiObjectNET;
+    struct NiTransformInterpolator;
     struct NiInterpolator;
 
     class NiTimeController : public NiObject
@@ -99,10 +100,13 @@ namespace NiBtOgre
 
         NiTimeController(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
 
-        virtual NiTimeControllerRef build(std::vector<Ogre::Controller<float> >& controllers,
-                Ogre::Mesh *mesh = nullptr);
+        // used by NiGeomMorpherController only?  (what about UV controller?)
+        virtual NiTimeControllerRef build(Ogre::Mesh *mesh);
 
-        virtual void setInterpolator(const std::string& frameName, NiInterpolator *interpolator) {}
+        virtual NiTimeControllerRef build(std::vector<Ogre::Controller<float> >& controllers);
+
+        // used by NiGeomMorpherController only?
+        //virtual void setInterpolator(const std::string& frameName, NiInterpolator *interpolator);
     };
 
     // Seen in NIF version 20.2.0.7
@@ -174,7 +178,7 @@ namespace NiBtOgre
 
         NiControllerManager(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
 
-        NiTimeControllerRef build(std::vector<Ogre::Controller<float> >& controllers, Ogre::Mesh *mesh = nullptr); // FIXME: mesh
+        NiTimeControllerRef build(std::vector<Ogre::Controller<float> >& controllers);
     };
 
     typedef NiTimeController NiInterpController;
@@ -184,6 +188,8 @@ namespace NiBtOgre
     // Seen in NIF ver 20.0.0.4, 20.0.0.5
     class NiMultiTargetTransformController : public NiInterpController
     {
+        ModelData& mData; // FIXME: should be const
+
     public:
         std::uint16_t mNumExtraTargets;
         // clutter/minotaurhead01.nif (TES4) shows that some of the Ptr refer to objects not yet
@@ -192,6 +198,8 @@ namespace NiBtOgre
         std::vector<NiAVObjectRef> mExtraTargets;
 
         NiMultiTargetTransformController(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
+
+        void build(int32_t nameIndex, NiAVObject* target, NiTransformInterpolator *interpolator, float startTime, float stopTime);
     };
 
     class NiSingleInterpController : public NiInterpController
@@ -265,51 +273,6 @@ namespace NiBtOgre
 
     typedef NiTimeController NiPSysUpdateCtlr; // Seen in NIF ver 20.0.0.4, 20.0.0.5
 
-    class NiParticleSystemController : public NiTimeController
-    {
-    public:
-        struct Particle
-        {
-            Ogre::Vector3 velocity;
-            float lifetime;
-            float lifespan;
-            float timestamp;
-            std::uint16_t vertexID;
-        };
-
-        float mSpeed;
-        float mSpeedRandom;
-
-        float mVerticalDirection;
-        float mVerticalAngle;
-        float mHorizontalDirection;
-        float mHorizontalAngle;
-
-        float mSize;
-        float mEmitStartTime;
-        float mEmitStopTime;
-
-        float mEmitRate;
-        float mLifetime;
-        float mLifetimeRandom;
-
-        std::uint16_t mEmitFlags;
-
-        Ogre::Vector3 mStartRandom;
-
-        NiObject *mEmitter; // Ptr
-
-        std::uint16_t mNumParticles;
-        std::uint16_t mNumValid;
-        std::vector<Particle> mParticles;
-
-        NiParticleModifierRef mParticleExtraIndex;
-
-        NiParticleSystemController(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
-    };
-
-    typedef NiParticleSystemController NiBSPArrayController;
-
     class NiPathController : public NiTimeController
     {
     public:
@@ -317,14 +280,6 @@ namespace NiBtOgre
         NiFloatDataRef mFloatDataIndex;
 
         NiPathController(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
-    };
-
-    class NiUVController : public NiTimeController
-    {
-    public:
-        NiUVDataRef mDataIndex;
-
-        NiUVController(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
     };
 
     // Seen in NIF ver 20.0.0.4, 20.0.0.5

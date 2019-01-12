@@ -58,7 +58,9 @@ set(NIBTOGRE_SOURCE_FILES
     nigeommorphercontroller.cpp
     nikeyframecontroller.cpp
     nimaterialcolorcontroller.cpp
+    niparticlesystemcontroller.cpp
     nipsysmodifierctlr.cpp
+    niuvcontroller.cpp
     niviscontroller.cpp
 
     bhkrefobject.cpp

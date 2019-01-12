@@ -57,11 +57,17 @@
 #undef NDEBUG
 #endif
 
-#if 0 // Commented out. Use instead: typedef bhkRefObject bhkSerializable
+//#if 0 // Commented out. Use instead: typedef bhkRefObject bhkSerializable
 NiBtOgre::bhkSerializable::bhkSerializable(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+    :bhkRefObject(index, stream, model, data)
 {
 }
-#endif
+//#endif
+
+btCollisionShape *NiBtOgre::bhkSerializable::getShape(NiNode *parentNiNode)
+{
+    throw std::logic_error("bhkSerializable::getShape called from base class");
+}
 
 void NiBtOgre::bhkCompressedMeshShapeData::bhkCMSDChunk::read(NiStream& stream)
 {
@@ -848,7 +854,7 @@ btCollisionShape *NiBtOgre::bhkListShape::buildShape(const btTransform& transfor
         }
         else if (userIndex == 0)   // transform applied
         {
-            subTransform.getIdentity();
+            subTransform = btTransform::getIdentity();
         }
         else//if (userIndex == -1) // no transform applied
         {
@@ -1530,7 +1536,7 @@ NiBtOgre::bhkRigidBody::bhkRigidBody(uint32_t index, NiStream& stream, const NiM
         stream.read(mUnknownInt91);
 }
 
-// NOTE: ownership of the btCollisionShape and any subshapes are passed to the caller;
+// NOTE: ownership of the btCollisionShape and any subshapes are passed to the caller
 //       remember to delete them!
 btCollisionShape *NiBtOgre::bhkRigidBody::getShape(NiNode *parentNiNode)
 {
@@ -1712,6 +1718,12 @@ NiBtOgre::bhkSimpleShapePhantom::bhkSimpleShapePhantom(uint32_t index, NiStream&
 // e.g. dungeons/misc/triggers/trigzone02.nif (coc "vilverin")
 void NiBtOgre::bhkSimpleShapePhantom::build(BtOgreInst *inst, ModelData *data, NiObject* parentNiNode)
 {
+}
+
+btCollisionShape *NiBtOgre::bhkSimpleShapePhantom::getShape(NiNode *parentNiNode)
+{
+    std::cout << "phantom: " << mModel.getModelName() << std::endl;
+    return 0;
 }
 
 // vim: fen fdm=marker fdl=0

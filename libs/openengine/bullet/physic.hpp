@@ -62,6 +62,10 @@ namespace Physic
         RigidBody(btRigidBody::btRigidBodyConstructionInfo& CI,std::string name);
         virtual ~RigidBody();
         std::string mName;
+        //     target NiNode name (should be the same as Bone name)
+        //              |
+        //              v
+        std::map<std::string, RigidBody*> mChildren;
 
         // Hack: placeable objects (that can be picked up by the player) have different collision behaviour.
         // This variable needs to be passed to BulletNifLoader.

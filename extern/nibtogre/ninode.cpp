@@ -351,6 +351,10 @@ void NiBtOgre::NiNode::build(BtOgreInst *inst, ModelData *data, NiObject* parent
 
     inst->mFlags = flags;
 
+    // don't build collision for an EditorMarker
+    if (!mModel.showEditorMarkers() && data->mEditorMarkerPresent && (getNodeName() == "EditorMarker"))
+        return;
+
     // temp debugging note: woc "icmarketdistrict" 8 16
     //    meshes/architecture/imperialcity/icwalltower01.nif has a collision shape and
     //    calls bhkCollisionObject::build() which is currently WIP
@@ -369,9 +373,9 @@ void NiBtOgre::NiNode::build(BtOgreInst *inst, ModelData *data, NiObject* parent
     if (enableCollision && mCollisionObjectIndex != -1)
     {
         //mModel.getRef<NiObject>((int32_t)mCollisionObjectIndex)->build(inst, data, this);
-        data->mBhkRigidBodyMap[NiObject::index()]
-            = std::make_pair(mModel.getModelName()+"@"+mNodeName,
-                             mModel.getRef<bhkCollisionObject>(mCollisionObjectIndex)->getBodyIndex());
+//      data->mBhkRigidBodyMap[NiObject::index()]
+//          = std::make_pair(mModel.getModelName()+"@"+mNodeName,
+//                           mModel.getRef<bhkCollisionObject>(mCollisionObjectIndex)->getBodyIndex());
     }
 
     // NiTransformController (e.g. fire/FireTorchLargeSmoke)

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2018, 2019 cc9cii
+  Copyright (C) 2017-2019 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -23,10 +23,11 @@
   documenation.  See http://niftools.sourceforge.net/wiki/NifSkope for details.
 
 */
-#include "niviscontroller.hpp"
+#include "niuvcontroller.hpp"
 
 #include <cassert>
 #include <stdexcept>
+#include <iostream> // FIXME: debugging only
 
 #include "nistream.hpp"
 #include "nimodel.hpp"
@@ -35,15 +36,9 @@
 #undef NDEBUG
 #endif
 
-// architecture/anvil/lorgrenskeleton01.nif
-// architecture/quests/se01waitingroomwalls.nif
-// architecture/quests/se07ardensulalter.nif
-// architecture/quests/se09breathactbottle.nif
-//
-// plus lots of other examples
-NiBtOgre::NiVisController::NiVisController(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
-    : NiSingleInterpController(index, stream, model, data)
+NiBtOgre::NiUVController::NiUVController(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+    : NiTimeController(index, stream, model, data)
 {
-    if (stream.nifVer() <= 0x0a010000) // up to 10.1.0.0
-        stream.read(mDataIndex);
+    stream.skip(sizeof(std::uint16_t)); // Unknown Short
+    stream.read(mDataIndex);
 }

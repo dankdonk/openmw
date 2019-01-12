@@ -59,7 +59,7 @@ NiBtOgre::BtRigidBodyCI::BtRigidBodyCI(Ogre::ResourceManager *creator, const Ogr
 
 NiBtOgre::BtRigidBodyCI::~BtRigidBodyCI()
 {
-    std::map<int32_t, btCollisionShape*>::iterator iter;
+    std::map<std::string, btCollisionShape*>::iterator iter;
     for (iter = mBtCollisionShapeMap.begin(); iter != mBtCollisionShapeMap.end(); ++iter)
     {
         delete iter->second;
@@ -86,17 +86,28 @@ void NiBtOgre::BtRigidBodyCI::loadImpl()
     if (!nimodel) // shouldn't happen, since we need the Entities created already
         throw std::runtime_error("NiModel not loaded");
 
-    const std::map<std::int32_t, std::pair<std::string, int32_t> >& rigidBodies = nimodel->getBhkRigidBodyMap();
-    std::map<std::int32_t, std::pair<std::string, int32_t> >::const_iterator iter;
+    //           target NiNode index               bhkSerializable index (e.g. bhkRigidBody)
+    //                   |                                    |
+    //                   v                                    v
+    const std::map<std::int32_t, /*std::pair<std::string,*/ int32_t/*>*/ >& rigidBodies = nimodel->getBhkRigidBodyMap();
+    std::map<std::int32_t, /*std::pair<std::string, */int32_t/*>*/ >::const_iterator iter;
     for (iter = rigidBodies.begin(); iter != rigidBodies.end(); ++iter)
     {
-        if (iter->second.second == -1)
-            continue;  // e.g. fire/firetorchlargesmoke.nif@DamageSphere
+        //if (iter->second/*.second*/ == -1)
+            //continue;  // e.g. fire/firetorchlargesmoke.nif@DamageSphere
 
-        int32_t bhkIndex = iter->second.second;
-        bhkRigidBody *bhk = nimodel->getRef<bhkRigidBody>(bhkIndex);
 
-        mBtCollisionShapeMap[bhkIndex] = bhk->getShape(nimodel->getRef<NiNode>(iter->first));
+
+        // FIXME: check for phantom
+
+
+
+        int32_t bhkIndex = iter->second/*.second*/;
+        bhkSerializable *bhk = nimodel->getRef<bhkSerializable>(bhkIndex);
+
+        // get the bullet shape with the parent NiNode as a parameter
+        NiNode *node = nimodel->getRef<NiNode>(iter->first);
+        mBtCollisionShapeMap[node->getNodeName()] = bhk->getShape(node);
     }
 }
 

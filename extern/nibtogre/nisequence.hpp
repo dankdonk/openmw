@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015-2018 cc9cii
+  Copyright (C) 2015-2019 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -104,9 +104,11 @@ namespace NiBtOgre
     public:
         NiControllerSequence(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
 
-        void build(std::vector<Ogre::Controller<float> >& controllers, const NiDefaultAVObjectPalette* objects);
+        void build(const NiDefaultAVObjectPalette* objects);
 
         std::string getObjectName(std::uint32_t stringOffset) const;
+        uint32_t getNameIndex() const { return NiSequence::mNameIndex; }
+        const float getTotalAnimLength() const { return mStopTime - mStartTime; }
     };
 }
 

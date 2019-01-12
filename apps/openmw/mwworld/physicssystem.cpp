@@ -752,6 +752,37 @@ namespace MWWorld
         }
     }
 
+    // FIXME: test code for doors only
+    void PhysicsSystem::rotateSubObject (const MWWorld::Ptr& ptr, const std::string& boneName, const Ogre::Quaternion& rotation)
+    {
+        Ogre::SceneNode* node = ptr.getRefData().getBaseNode();
+        const std::string &handle = node->getName();
+
+        if (OEngine::Physic::RigidBody* body = mEngine->getRigidBody(handle))
+        {
+            std::map<std::string, OEngine::Physic::RigidBody*>::const_iterator iter
+                = body->mChildren.find(boneName);
+
+            if (iter != body->mChildren.end())
+                iter->second->getWorldTransform().setRotation(
+                        btQuaternion(rotation.x, rotation.y, rotation.z, rotation.w));
+
+            mEngine->mDynamicsWorld->updateSingleAabb(body);
+        }
+
+        if (OEngine::Physic::RigidBody* body = mEngine->getRigidBody(handle, true))
+        {
+            std::map<std::string, OEngine::Physic::RigidBody*>::const_iterator iter
+                = body->mChildren.find(boneName);
+
+            if (iter != body->mChildren.end())
+                iter->second->getWorldTransform().setRotation(
+                        btQuaternion(rotation.x, rotation.y, rotation.z, rotation.w));
+
+            mEngine->mDynamicsWorld->updateSingleAabb(body);
+        }
+    }
+
     void PhysicsSystem::scaleObject (const Ptr& ptr)
     {
         Ogre::SceneNode* node = ptr.getRefData().getBaseNode();

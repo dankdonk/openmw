@@ -79,7 +79,10 @@ namespace MWScript
                     {
                         // Change to interior even if findInteriorPosition()
                         // yields false. In this case position will be zero-point.
-                        world->findInteriorPosition(cell, pos);
+                        if (!world->findInteriorPosition(cell, pos))
+                            if (world->findForeignInteriorPosition(cell, pos))
+                                world->changeToForeignInteriorCell(cell, pos);
+                        
                         world->changeToInteriorCell(cell, pos);
                     }
                 }

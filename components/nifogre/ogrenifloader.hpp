@@ -63,6 +63,7 @@ struct ObjectScene {
     std::vector<Ogre::ParticleSystem*> mParticles;
     std::vector<Ogre::Light*> mLights;
     std::vector<Ogre::Entity*> mVertexAnimEntities;
+    std::map<std::string, std::vector<Ogre::Entity*> > mSkeletonAnimEntities;
 
     // Nodes that should always face the camera when rendering
     std::vector<Ogre::Node*> mBillboardNodes;
