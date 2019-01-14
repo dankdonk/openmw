@@ -79,6 +79,8 @@ namespace NiBtOgre
         // NiTriStrips builds differently to NiTriShapes only in that the data are different
         bool createSubMesh(Ogre::Mesh *mesh, BoundsFinder& bounds); // returns true if tangents needed
 
+        const Ogre::Matrix4& getWorldTransform();
+
     private:
 
         const ModelData& mData;

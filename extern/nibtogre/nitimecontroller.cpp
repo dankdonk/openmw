@@ -429,12 +429,12 @@ void NiBtOgre::NiMultiTargetTransformController::build(int32_t nameIndex, NiAVOb
             kf->setRotation(/*interpolator->mRotation.Inverse() * */q);
 
             // FIXME: dungeons\chargen\idgate01.nif rotation values are wrong (coc "imperialdungeon01")
-//#if 0
-            //if (mModel.getModelName() == "meshes\\dungeons\\chargen\\idgate01.nif")
+#if 0
+            if (mModel.getModelName() == "meshes\\dungeons\\chargen\\idgate01.nif")
                 std::cout << mModel.getModelName() << ": " << animationId << ": time " << time << " roll "
                           << Ogre::Quaternion(/*interpolator->mRotation.Inverse() * */q).getRoll().valueDegrees()
                           << std::endl;
-//#endif
+#endif
         }
     }
 

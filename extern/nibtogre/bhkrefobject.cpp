@@ -34,6 +34,7 @@
 #include <iostream> // FIXME: debugging only
 
 #include <OgreSceneNode.h>
+#include <OgreSkeleton.h>
 
 #include <BulletCollision/CollisionShapes/btCollisionShape.h>
 #include <BulletCollision/CollisionShapes/btBoxShape.h>
@@ -64,7 +65,7 @@ NiBtOgre::bhkSerializable::bhkSerializable(uint32_t index, NiStream& stream, con
 }
 //#endif
 
-btCollisionShape *NiBtOgre::bhkSerializable::getShape(NiNode *parentNiNode)
+btCollisionShape *NiBtOgre::bhkSerializable::getShape(NiAVObject *target)
 {
     throw std::logic_error("bhkSerializable::getShape called from base class");
 }
@@ -732,6 +733,14 @@ btCollisionShape *NiBtOgre::bhkMoppBvTreeShape::buildShape(const btTransform& tr
     return mModel.getRef<bhkShape>(mShapeIndex)->buildShape(transform);
 }
 
+bool NiBtOgre::bhkMoppBvTreeShape::isStaticShape() const
+{
+    if (mShapeIndex == -1)
+        return false;
+
+    return mModel.getRef<bhkShape>(mShapeIndex)->isStaticShape();  // TODO: cache the pointer for later?
+}
+
 // seen in nif version 20.2.0.7
 NiBtOgre::bhkCompressedMeshShape::bhkCompressedMeshShape(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
     : bhkShape(index, stream, model, data)
@@ -802,6 +811,23 @@ NiBtOgre::bhkListShape::bhkListShape(uint32_t index, NiStream& stream, const NiM
     stream.skip(sizeof(float)*6);
 
     stream.readVector<std::uint32_t>(mUnknownInts);
+}
+
+bool NiBtOgre::bhkListShape::isStaticShape() const
+{
+    bool result;
+    for (unsigned int i = 0; i < mSubShapes.size(); ++i)
+    {
+        if (mSubShapes[i] == -1)
+            continue;
+
+        bhkShape *subShape = mModel.getRef<bhkShape>(mSubShapes[i]);  // TODO: cache the pointers?
+        result |= subShape->isStaticShape();
+        if (result)
+            return result;
+    }
+
+    return false;
 }
 
 // Note that a bhkListShape can have bhkTransformShape children (in fact, quite often).
@@ -1104,6 +1130,14 @@ NiBtOgre::bhkConvexSweepShape::bhkConvexSweepShape(uint32_t index, NiStream& str
     stream.read(mUnknown);
 }
 
+bool NiBtOgre::bhkConvexSweepShape::isStaticShape() const
+{
+    if (mShapeIndex == -1)
+        return false;
+
+    return mModel.getRef<bhkShape>(mShapeIndex)->isStaticShape();  // TODO: cache the pointer for later?
+}
+
 btCollisionShape *NiBtOgre::bhkConvexSweepShape::buildShape(const btTransform& transform) const
 {
     if (mShapeIndex == -1)
@@ -1322,6 +1356,14 @@ NiBtOgre::bhkTransformShape::bhkTransformShape(uint32_t index, NiStream& stream,
     mTransform.setFromOpenGLMatrix(floats);
 }
 
+bool NiBtOgre::bhkTransformShape::isStaticShape() const
+{
+    if (mShapeIndex == -1)
+        return false;
+
+    return mModel.getRef<bhkShape>(mShapeIndex)->isStaticShape();  // TODO: cache the pointer for later?
+}
+
 // Looks like most of the bhkTransformShapes in TES4 have bhkBoxShape, bhkCapsuleShape or bhkSphereShape,
 // usually as part of bhkListShape.  Examples of stand-alone bhkTransformShape/bhkBoxShape are
 //
@@ -1441,7 +1483,7 @@ NiBtOgre::bhkEntity::bhkEntity(uint32_t index, NiStream& stream, const NiModel& 
 
 // Seen in NIF ver 20.0.0.4, 20.0.0.5
 NiBtOgre::bhkRigidBody::bhkRigidBody(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
-    : bhkEntity(index, stream, model, data)
+    : bhkEntity(index, stream, model, data), mData(data)
 {
     stream.read(mUnknownInt1);           // unused
     stream.read(mUnknownInt2);           // first byte Broadphase Type, rest unused
@@ -1538,23 +1580,112 @@ NiBtOgre::bhkRigidBody::bhkRigidBody(uint32_t index, NiStream& stream, const NiM
 
 // NOTE: ownership of the btCollisionShape and any subshapes are passed to the caller
 //       remember to delete them!
-btCollisionShape *NiBtOgre::bhkRigidBody::getShape(NiNode *parentNiNode)
+btCollisionShape *NiBtOgre::bhkRigidBody::getShape(NiAVObject *target)
 {
     if (mShapeIndex == -1) // nothing to build
         return nullptr;
 
-    Ogre::Vector3 pos;
-    Ogre::Vector3 scale;
-    Ogre::Quaternion rot;
-    static_cast<NiNode*>(parentNiNode)->getWorldTransform().decomposition(pos, scale, rot);
-
-    btTransform transform(btQuaternion(rot.x, rot.y, rot.z, rot.w), btVector3(pos.x, pos.y, pos.z));
-
-    // apply rotation and translation only if the collision object's body is a bhkRigidBodyT type
-    if (mModel.blockType(mSelfIndex) == "bhkRigidBodyT")
-        transform = transform * btTransform(mRotation, mTranslation * 7); // NOTE: havok scale
-
+    // This is just a hack to workaround my inability to get the right transforms applied to
+    // the bullet shapes.  For any animated shapes, it should be possible to have the
+    // btRigidBody to take the world transform from the NiNode from which it is attached.
+    //
+    // For example, see impDunDoor02.nif.  The transform of the moving part (NiNode
+    // impDunDoor02b) is offset from the center towards the hinges and bhkRigidBodyT has its
+    // own transform away from the axis of the hinges to the center of the box shape.  So when
+    // a rotation is applied to the rigid body, it should rotate around the axis of the hinges.
+    //
+    // However, this arrangement seems to break some NIFs (e.g. TargetHeavy01.NIF), especially
+    // those with scaling.  Someone with a better understanding of the maths will need to
+    // examine and re-write some of the code and complicated workarounds.
+    //
+    // Another workaround is due to some shapes not being able to take world transform
+    // rotations (e.g. btBvhTriangleMeshShape).  These (static) shapes need all the transforms
+    // from the root NiNode baked into the vertices.
+    //
+    // Note that checking for the mass value does not guarantee that the shape is static.  Some
+    // animated shapes have zero mass (e.g. impDunDoor02b).
+    //
+    // So, to decide whether to use the full transforms from the root NiNode:
+    //
+    //   1. check if the mass is zero and that there are no node animations (node anim would
+    //      imply the existance of a Skeleton) - in this case the shape is static
+    //
+    //   2. if there is a Skeleton, check if there is a bone at the parent NiNode (they should
+    //      have the same name) - if there is no such bone, this shape is static
+    //
+    //   3. hope that there are no other strange exeptions to these rules
+    //
+    btTransform transform;
     bhkShape *shape = mModel.getRef<bhkShape>(mShapeIndex);
+    std::string targetName = mModel.indexToString(target->getNameIndex());
+    if (mModel.blockType(target->index()) == "NiTriStrips")
+        std::cout << "stop" << std::endl;
+
+    bool useFullTransform
+        =  (
+            mMass <= SIMD_EPSILON && (
+                                      mData.mSkeleton.isNull()
+                                      ||
+                                      !mData.mSkeleton->hasBone(targetName)
+                                     )
+           )
+           ||
+           shape->isStaticShape();                           // TODO: check for nullptr first?
+
+    //useFullTransform = true; // FIXME: for testing
+    if (useFullTransform)
+    {
+        Ogre::Vector3 pos;
+        Ogre::Vector3 scale;
+        Ogre::Quaternion rot;
+
+        target->getWorldTransform().decomposition(pos, scale, rot);
+        transform = btTransform(btQuaternion(rot.x, rot.y, rot.z, rot.w), btVector3(pos.x, pos.y, pos.z));
+
+        // apply rotation and translation only if the collision object's body is a bhkRigidBodyT type
+        if (mModel.blockType(mSelfIndex) == "bhkRigidBodyT")
+            transform = transform * btTransform(mRotation, mTranslation * 7); // NOTE: havok scale
+    }
+    else
+    {
+#if 0
+        // apply rotation and translation only if the collision object's body is a bhkRigidBodyT type
+        if (mModel.blockType(mSelfIndex) == "bhkRigidBodyT")
+            transform = btTransform(mRotation, mTranslation * 7); // NOTE: havok scale
+        else
+            transform.setIdentity();
+#else
+        Ogre::Vector3 pos;
+        Ogre::Vector3 scale;
+        Ogre::Quaternion rot;
+
+        target->getWorldTransform().decomposition(pos, scale, rot);
+        transform = btTransform(btQuaternion(rot.x, rot.y, rot.z, rot.w), btVector3(pos.x, pos.y, pos.z));
+
+        // apply rotation and translation only if the collision object's body is a bhkRigidBodyT type
+        if (mModel.blockType(mSelfIndex) == "bhkRigidBodyT")
+            transform = transform * btTransform(mRotation, mTranslation * 7); // NOTE: havok scale
+#endif
+    }
+
+
+
+
+
+        if (mModel.indexToString(target->getNameIndex()) == "Bone01")
+        {
+            btVector3 pos = transform.getOrigin();
+            //Ogre::Vector3 nodeScale; // FIXME: apply scale?
+            btQuaternion q = transform.getRotation();
+            Ogre::Quaternion rot(q.getW(), q.getX(), q.getY(), q.getZ());
+            //transform.decomposition(pos, nodeScale, rot);
+            std::cout << rot.getYaw().valueDegrees() << " " << rot.getPitch().valueDegrees() << " " << rot.getRoll().valueDegrees() << std::endl;
+        }
+
+
+
+
+
     btCollisionShape *btShape = shape->buildShape(transform);
     if (!btShape)
         return nullptr;
@@ -1571,12 +1702,13 @@ btCollisionShape *NiBtOgre::bhkRigidBody::getShape(NiNode *parentNiNode)
         // e.g. "meshes\\dungeons\\misc\\roothavok06.nif "wellspringcave" (but actually a ragdoll)
         btCompoundShape *compoundShape = new btCompoundShape();
         compoundShape->addChildShape(transform * shape->transform(), btShape);
-        compoundShape->setUserIndex(0);
+        compoundShape->setUserIndex(useFullTransform ? 4 : 0);
         return compoundShape;
     }
     else if (userIndex == 0)           // transform applied
     {
         // rigidbody.setWorldTransform(SceneNodeTrans);
+        btShape->setUserIndex(useFullTransform ? 4 : 0);
         return btShape; // nothing futher to do
     }
     else // userIndex == -1            // no transform applied, e.g. btBoxShape
@@ -1587,7 +1719,7 @@ btCollisionShape *NiBtOgre::bhkRigidBody::getShape(NiNode *parentNiNode)
         // rigidbody.setWorldTransform(SceneNodeTrans * transform);
         btCompoundShape *compoundShape = new btCompoundShape();
         compoundShape->addChildShape(transform, btShape);
-        compoundShape->setUserIndex(0);
+        compoundShape->setUserIndex(useFullTransform ? 4 : 0);
         return compoundShape;
     }
 
@@ -1720,7 +1852,7 @@ void NiBtOgre::bhkSimpleShapePhantom::build(BtOgreInst *inst, ModelData *data, N
 {
 }
 
-btCollisionShape *NiBtOgre::bhkSimpleShapePhantom::getShape(NiNode *parentNiNode)
+btCollisionShape *NiBtOgre::bhkSimpleShapePhantom::getShape(NiAVObject *target)
 {
     std::cout << "phantom: " << mModel.getModelName() << std::endl;
     return 0;

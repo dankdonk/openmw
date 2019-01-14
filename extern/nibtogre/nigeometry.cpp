@@ -129,7 +129,18 @@ NiBtOgre::NiTriBasedGeom::NiTriBasedGeom(uint32_t index, NiStream& stream, const
 
     data.registerNiTriBasedGeom(parentNode->index(), mModel.getModelName()+"@"+parentNode->getNodeName(), this);
 }
+//#if 0
+// FIXME: temp testing
+const Ogre::Matrix4& NiBtOgre::NiTriBasedGeom::getWorldTransform()
+{
+    mLocalTransform.makeTransform(mTranslation, Ogre::Vector3(mScale), Ogre::Quaternion(mRotation));
 
+    NiNode * parentNode = mModel.getRef<NiNode>(mModel.getNiNodeParent(NiObject::index()));
+    mWorldTransform = static_cast<NiAVObject*>(parentNode)->getWorldTransform() * mLocalTransform;
+
+    return mWorldTransform;
+}
+//#endif
 // actual build happens later, after the parent NiNode has processed all its children
 void NiBtOgre::NiTriBasedGeom::build(BtOgreInst *inst, NiObject *parent)
 {
@@ -271,7 +282,7 @@ bool NiBtOgre::NiTriBasedGeom::createSubMesh(Ogre::Mesh *mesh, BoundsFinder& bou
                                  Ogre::Vector3(NiAVObject::mScale),
                                  Ogre::Quaternion(NiAVObject::mRotation));
 
-    const NiNode* parentNode
+    /*const*/ NiNode* parentNode
         = NiObject::mModel.getRef<NiNode>(NiObject::mModel.getNiNodeParent(NiObject::index()));
 
     Ogre::Matrix4 transform = Ogre::Matrix4(Ogre::Matrix4::IDENTITY);

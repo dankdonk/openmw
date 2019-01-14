@@ -65,7 +65,7 @@ NiBtOgre::NiNode::NiNode(uint32_t index, NiStream& stream, const NiModel& model,
         //
         // TODO: run the loop second time for this and only do it if the flags indicate
         //       possible animation? might save a few cpu cycles
-        if (mChildren[i] > 0) // ignore if -1
+        if (mChildren[i] > 0) // ignore if -1 and a child can't have an index of 0
             data.setNiNodeParent(mChildren[i], index);
     }
 

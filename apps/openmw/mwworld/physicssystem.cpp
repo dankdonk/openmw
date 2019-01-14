@@ -764,8 +764,32 @@ namespace MWWorld
                 = body->mChildren.find(boneName);
 
             if (iter != body->mChildren.end())
-                iter->second->getWorldTransform().setRotation(
-                        btQuaternion(rotation.x, rotation.y, rotation.z, rotation.w));
+            {
+#if 1
+//                iter->second->getWorldTransform().setRotation(
+//                        btQuaternion(rotation.x, rotation.y, rotation.z, rotation.w));
+                btTransform& t = iter->second->getWorldTransform();
+                btTransform l = btTransform(btQuaternion(0,0,0,1),btVector3(-52.67,-1.823,-33.422));
+                t = t*l;
+                t.setRotation(btQuaternion(rotation.x, rotation.y, rotation.z, rotation.w));
+                t = t*l.inverse();
+#else
+        btTransform tr1 = iter->second->getWorldTransform();
+        btVector3 p = tr1.getOrigin();
+        btQuaternion q = tr1.getRotation();
+
+        tr1.setRotation(btQuaternion(rotation.x, rotation.y, rotation.z, rotation.w));
+
+        Ogre::Quaternion boxrot = rotation;
+        Ogre::Vector3 transrot = boxrot * Ogre::Vector3(-52, -2, -33); // NiNode
+        Ogre::Vector3 newPosition = transrot;
+
+        btTransform tr;
+        tr.setOrigin(btVector3(newPosition.x, newPosition.y, newPosition.z));
+        tr.setRotation(btQuaternion(boxrot.x,boxrot.y,boxrot.z,boxrot.w));
+        iter->second->setWorldTransform(tr1);
+#endif
+            }
 
             mEngine->mDynamicsWorld->updateSingleAabb(body);
         }

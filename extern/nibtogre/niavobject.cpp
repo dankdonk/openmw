@@ -27,6 +27,7 @@
 
 #include <cassert>
 #include <stdexcept>
+#include <iostream> // FIXME
 
 #include "nistream.hpp"
 #include "nimodel.hpp"
@@ -48,6 +49,18 @@ NiBtOgre::NiAVObject::NiAVObject(uint32_t index, NiStream& stream, const NiModel
     stream.read(mTranslation);
     stream.read(mRotation);
     stream.read(mScale);
+
+        if (mModel.indexToString(getNameIndex()) == "Bone01")
+        {
+            Ogre::Radian rx, ry, rz;
+            mRotation.ToEulerAnglesXYZ(rx, ry, rz);
+            //Ogre::Vector3 pos;
+            //Ogre::Vector3 nodeScale; // FIXME: apply scale?
+            //Ogre::Quaternion rot(mRotation);
+            //transform.decomposition(pos, nodeScale, rot);
+            //std::cout << rot.getYaw().valueDegrees() << " " << rot.getPitch().valueDegrees() << " " << rot.getRoll().valueDegrees() << std::endl;
+            std::cout << rx.valueDegrees() << " " << ry.valueDegrees() << " " << rz.valueDegrees() << std::endl;
+        }
 
     if (stream.nifVer() <= 0x04020200) // up to 4.2.2.0
         stream.read(mVelocity);
@@ -84,7 +97,6 @@ NiBtOgre::NiAVObject::NiAVObject(uint32_t index, NiStream& stream, const NiModel
     if (stream.nifVer() >= 0x0a000100) // from 10.0.1.0
         stream.read(mCollisionObjectIndex);
 }
-
 
 //void NiBtOgre::NiAVObject::build(BtOgreInst *inst, NiObject *parent)
 //{

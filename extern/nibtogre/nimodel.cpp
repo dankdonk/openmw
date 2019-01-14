@@ -131,6 +131,7 @@ void NiBtOgre::NiModel::loadImpl()
         //std::cout << "roots " << mHeader.blockType(mRoots[0]) << std::endl;
 
     // find the bones, if any
+    if (mModelData.mSkelLeafIndicies.size() > 1) // FIXME: testing
     for (unsigned int i = 0; i < mModelData.mSkelLeafIndicies.size(); ++i)
         mObjects[mModelData.mSkelLeafIndicies[i]]->findBones(mRoots[0]);
 }
@@ -138,7 +139,7 @@ void NiBtOgre::NiModel::loadImpl()
 void NiBtOgre::NiModel::build(BtOgreInst *inst)
 {
     // FIXME: model name can clash with TES3 model names, e.g. characters/_male/skeleton.nif
-    if (mModelData.mSkelLeafIndicies.size() > 0)
+    if (mModelData.mSkelLeafIndicies.size() > 1) // FIXME: testing
     {
         mModelData.mSkeletonLoader = std::make_unique<SkeletonLoader>(*this);
 

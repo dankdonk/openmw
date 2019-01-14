@@ -59,10 +59,10 @@ NiBtOgre::BtRigidBodyCI::BtRigidBodyCI(Ogre::ResourceManager *creator, const Ogr
 
 NiBtOgre::BtRigidBodyCI::~BtRigidBodyCI()
 {
-    std::map<std::string, btCollisionShape*>::iterator iter;
+    std::map<std::string, std::pair<Ogre::Matrix4, btCollisionShape*> >::iterator iter;
     for (iter = mBtCollisionShapeMap.begin(); iter != mBtCollisionShapeMap.end(); ++iter)
     {
-        delete iter->second;
+        delete iter->second.second;
     }
 }
 
@@ -86,7 +86,7 @@ void NiBtOgre::BtRigidBodyCI::loadImpl()
     if (!nimodel) // shouldn't happen, since we need the Entities created already
         throw std::runtime_error("NiModel not loaded");
 
-    //           target NiNode index               bhkSerializable index (e.g. bhkRigidBody)
+    //           target NiAVObject index               bhkSerializable index (e.g. bhkRigidBody)
     //                   |                                    |
     //                   v                                    v
     const std::map<std::int32_t, /*std::pair<std::string,*/ int32_t/*>*/ >& rigidBodies = nimodel->getBhkRigidBodyMap();
@@ -105,9 +105,68 @@ void NiBtOgre::BtRigidBodyCI::loadImpl()
         int32_t bhkIndex = iter->second/*.second*/;
         bhkSerializable *bhk = nimodel->getRef<bhkSerializable>(bhkIndex);
 
-        // get the bullet shape with the parent NiNode as a parameter
-        NiNode *node = nimodel->getRef<NiNode>(iter->first);
-        mBtCollisionShapeMap[node->getNodeName()] = bhk->getShape(node);
+///     int32_t ninodeIndex;
+///     // get the bullet shape with the parent NiNode as a parameter
+        NiAVObject *target = nimodel->getRef<NiAVObject>(iter->first);
+///     if (nimodel->blockType(iter->first) != "NiNode")
+///         ninodeIndex = nimodel->getNiNodeParent(iter->first); // furniture/middleclass/bearskinrug01.nif
+///     else
+///         ninodeIndex = iter->first;
+
+
+
+
+//      NiNode *node = nimodel->getRef<NiNode>(ninodeIndex);
+//      Ogre::Vector3 pos;
+//      Ogre::Vector3 scale; // FIXME: apply scale?
+//      Ogre::Quaternion rot;
+//      node->getLocalTransform().decomposition(pos, scale, rot);
+        //btTransform transform(btQuaternion(rot.x, rot.y, rot.z, rot.w), btVector3(pos.x, pos.y, pos.z));
+        //if (node->getNodeName() == "ICWallDoor01")
+        //if (node->getNodeName() == "HeavyTargetStructure")
+            //std::cout << "stop" << std::endl;
+
+        // crazy experiment to apply translation only
+        //Ogre::Matrix4 localTransform;
+        //localTransform.makeTransform(pos, Ogre::Vector3(1.f), Ogre::Quaternion::IDENTITY);
+
+        Ogre::Matrix4 worldTransform;
+
+    // original: apply parentNiNode's world transform * bhkRigidBodyT transform
+    //           all shapes are in place, but impDunDoor02 rotation doesn't work
+    //           (rotates about the center of the door)
+    //
+    // try1:     apply only bhkRigidBodyT transform
+    //           various meshes are off 90 deg (e.g. ICWallDoor01)
+    //           TargetHeavy01 all broken
+    //           but impDunDoor02 rotation works
+    //
+    // try2:     apply parentNiNode's local transform * bhkRigidBodyT transform
+    //           most meshes look ok except TargetHeavyStructure
+    //           impDunDoor02 rotation no longer works (i.e. like the original)
+#if 0
+        worldTransform = Ogre::Matrix4::IDENTITY;
+#else
+  #if 1
+        worldTransform = target->getWorldTransform();
+  #else
+        if (node->index() > 0)
+            worldTransform = node->getParentNode()->getWorldTransform();
+        else
+            worldTransform = Ogre::Matrix4::IDENTITY;
+  #endif
+#endif
+        if (nimodel->indexToString(target->getNameIndex()) == "Bone01")
+        {
+            Ogre::Vector3 pos;
+            Ogre::Vector3 nodeScale; // FIXME: apply scale?
+            Ogre::Quaternion rot;
+            worldTransform.decomposition(pos, nodeScale, rot);
+            std::cout << rot.getYaw().valueDegrees() << " " << rot.getPitch().valueDegrees() << " " << rot.getRoll().valueDegrees() << std::endl;
+        }
+
+        mBtCollisionShapeMap[nimodel->indexToString(target->getNameIndex())]
+            = std::make_pair(worldTransform, bhk->getShape(target));
     }
 }
 

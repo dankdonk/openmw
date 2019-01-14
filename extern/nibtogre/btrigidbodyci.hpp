@@ -31,6 +31,7 @@
 #include <map>
 
 #include <OgreResource.h>
+#include <OgreMatrix4.h>
 
 namespace Ogre
 {
@@ -52,10 +53,10 @@ namespace NiBtOgre
         void unloadImpl();
 
     public:
-        //      target NiNode name
-        //              |
-        //              v
-        std::map<std::string, btCollisionShape *> mBtCollisionShapeMap; // used by RigidBody
+        //      target NiNode name     NiNode world transform
+        //              |                   |
+        //              v                   v
+        std::map<std::string, std::pair<Ogre::Matrix4, btCollisionShape *> > mBtCollisionShapeMap; // used by RigidBody
 
         BtRigidBodyCI(Ogre::ResourceManager *creator, const Ogre::String& name, Ogre::ResourceHandle handle,
                 const Ogre::String& group, bool isManual, Ogre::ManualResourceLoader* loader);

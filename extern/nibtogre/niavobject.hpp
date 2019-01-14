@@ -63,7 +63,11 @@ namespace NiBtOgre
         // parentNiNode is used to calculate the world transform
         //virtual void build(BtOgreInst *inst, NiObject *parentNiNode = nullptr);
 
-        inline const Ogre::Matrix4& getWorldTransform() const { return mWorldTransform; }
+#if 0
+        /*inline*/ const Ogre::Matrix4& getWorldTransform();// const { return mWorldTransform; }
+#else
+        /*inline*/ virtual const Ogre::Matrix4& getWorldTransform() /*const*/ { return mWorldTransform; }
+#endif
         inline const Ogre::Matrix4& getLocalTransform() const { return mLocalTransform; }
 
         void setHasAnim() { mHasAnim = true; }

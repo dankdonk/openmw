@@ -89,6 +89,7 @@ namespace NiBtOgre
     class NiStream;
     class Header;
     struct bhkRigidBody;
+    class NiAVObject;
     class NiNode;
     struct ModelData;
 
@@ -100,7 +101,7 @@ namespace NiBtOgre
     {
         bhkSerializable(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
 
-        virtual btCollisionShape *getShape(NiNode *parentNiNode);
+        virtual btCollisionShape *getShape(NiAVObject *target);
     };
 //#endif
 
@@ -349,6 +350,8 @@ namespace NiBtOgre
         // for correcting NIF constraint vector values (e.g. pivot, plane) to work with Bullet
         // for some shapes (e.g. btCapsuleShape); by default do nothing
         virtual void toBtSpace(const Ogre::Vector3& scale, btVector3& vector) const {}
+
+        virtual bool isStaticShape() const { return false; }
     };
 
     // Seen in NIF ver 20.0.0.4, 20.0.0.5
@@ -365,6 +368,8 @@ namespace NiBtOgre
         bhkMoppBvTreeShape(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
 
         btCollisionShape *buildShape(const btTransform& transform) const;
+
+        bool isStaticShape() const;
     };
 
     class NiAVObject;
@@ -406,6 +411,8 @@ namespace NiBtOgre
         bhkListShape(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
 
         btCollisionShape *buildShape(const btTransform& transform) const;
+
+        bool isStaticShape() const;
     };
 
     // Seen in NIF ver 20.0.0.4, 20.0.0.5
@@ -435,6 +442,8 @@ namespace NiBtOgre
         bhkNiTriStripsShape(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
 
         btCollisionShape *buildShape(const btTransform& transform) const;
+
+        bool isStaticShape() const { return true; }
     };
 
     struct OblivionSubShape
@@ -466,6 +475,8 @@ namespace NiBtOgre
         bhkPackedNiTriStripsShape(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
 
         btCollisionShape *buildShape(const btTransform& transform) const;
+
+        bool isStaticShape() const { return true; }
     };
 
 
@@ -499,6 +510,8 @@ namespace NiBtOgre
         bhkConvexSweepShape(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
 
         btCollisionShape *buildShape(const btTransform& transform) const;
+
+        bool isStaticShape() const;
     };
 
     struct bhkSphereRepShape : public bhkShape
@@ -509,6 +522,8 @@ namespace NiBtOgre
         bhkSphereRepShape(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
 
         btCollisionShape *buildShape(const btTransform& transform) const;
+
+        bool isStaticShape() const { return false; }
     };
 
     typedef bhkSphereRepShape bhkConvexShape;
@@ -523,6 +538,8 @@ namespace NiBtOgre
         bhkBoxShape(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
 
         btCollisionShape *buildShape(const btTransform& transform) const;
+
+        bool isStaticShape() const { return false; }
     };
 
     // Seen in NIF ver 20.0.0.4, 20.0.0.5
@@ -544,6 +561,8 @@ namespace NiBtOgre
         btCollisionShape *buildShape(const btTransform& transform) const;
 
         const btTransform& transform() const { return mTransform; }
+
+        bool isStaticShape() const { return false; }
     };
 
     // Seen in NIF ver 20.0.0.4, 20.0.0.5
@@ -558,6 +577,8 @@ namespace NiBtOgre
         bhkConvexVerticesShape(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
 
         btCollisionShape *buildShape(const btTransform& transform) const;
+
+        bool isStaticShape() const { return false; }
     };
 
 #if 0 // use typedef instead
@@ -588,6 +609,8 @@ namespace NiBtOgre
         bhkMultiSphereShape(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
 
         btCollisionShape *buildShape(const btTransform& transform) const;
+
+        bool isStaticShape() const { return false; }
     };
 
     // Seen in NIF ver 20.0.0.4, 20.0.0.5
@@ -608,6 +631,8 @@ namespace NiBtOgre
 
         const btTransform& transform() const { return mTransform; }
         const bhkShapeRef shapeIndex() const { return mShapeIndex; }
+
+        bool isStaticShape() const;
     };
 
     typedef bhkTransformShape bhkConvexTransformShape; // Seen in NIF ver 20.0.0.4, 20.0.0.5
@@ -668,10 +693,12 @@ namespace NiBtOgre
         std::uint32_t mUnknownInt9;
         std::uint16_t mUnknownInt91;
 
+        const ModelData& mData;
+
         bhkRigidBody(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
 
         void build(BtOgreInst *inst, ModelData *data, NiObject* parent);
-        btCollisionShape *getShape(NiNode *parentNiNode);
+        btCollisionShape *getShape(NiAVObject *target);
     };
 
     // NOTE: the rigidbody type can be differentiated by calling NiBtOgre::NiModel::blockType
@@ -689,7 +716,7 @@ namespace NiBtOgre
         bhkSimpleShapePhantom(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
 
         void build(BtOgreInst *inst, ModelData *data, NiObject* parent);
-        btCollisionShape *getShape(NiNode *parentNiNode);
+        btCollisionShape *getShape(NiAVObject *target);
     };
 }
 
