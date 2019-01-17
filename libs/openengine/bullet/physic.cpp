@@ -226,6 +226,8 @@ namespace Physic
         : btRigidBody(CI)
         , mName(name)
         , mPlaceable(false)
+        , mLocalTransform(Ogre::Matrix4::IDENTITY)
+        , mIsForeign(false)
     {
     }
 
@@ -472,6 +474,9 @@ namespace Physic
             if (lowerMesh == "meshes\\characters\\_male\\skeleton.nif001.000")
                 std::cout << "skeleton" << std::endl;
 
+            // FIXME
+            std::map<std::string, RigidBody*> tmpMap;
+
             BtRigidBodyCIPtr ci
                 = NiBtOgre::BtRigidBodyCIManager::getSingleton().getOrLoadByName(lowerMesh, "General");
 
@@ -486,18 +491,17 @@ namespace Physic
 
                 collisionShape->setLocalScaling( btVector3(scale,scale,scale));
                 btRigidBody::btRigidBodyConstructionInfo CI
-                    = btRigidBody::btRigidBodyConstructionInfo(0,0, collisionShape);
+                    = btRigidBody::btRigidBodyConstructionInfo(0.f/*mass*/,
+                                                               0/*btMotionState**/,
+                                                               collisionShape,
+                                                               btVector3(0.f, 0.f, 0.f));
 
                 // FIXME: name repeated (name is the Ogre::SceneNode name)
                 // TODO: maybe the 'name' should be the same for collision detection/raycast?
                 RigidBody *body = new RigidBody(CI, name);
                 body->mPlaceable = placeable;
-                if (numBodies == 0)
-                    parentBody = body;
-                else
-                    parentBody->mChildren[iter->first] = body;
-
-                ++numBodies;
+                body->mLocalTransform = iter->second.first; // need to keep it around
+                body->mIsForeign = true;
 #if 0
                 if (!raycasting/* && !shape->mAnimatedShapes.empty()*/)
                 {
@@ -521,7 +525,7 @@ namespace Physic
                 iter->second.first.decomposition(pos, nodeScale, rot);
 
 //              Ogre::Quaternion qq = rotation * rot/* * Ogre::Quaternion(Ogre::Radian(2.f), Ogre::Vector3::UNIT_Z)*/;
-//#if 0
+#if 0
                 //if (iter->first == "ICWallDoor01") {
                 //if (iter->first == "HeavyTargetStructure") {
                 if (iter->first == "Bone01") {
@@ -537,8 +541,18 @@ namespace Physic
                 btTransform t = body->getWorldTransform();
                 btVector3 v = t.getOrigin();
                 btQuaternion q = body->getWorldTransform().getRotation();
-//#endif
-                if (body->getCollisionShape()->getUserIndex() == 4)
+
+
+
+                if (body->getCollisionShape()->isCompound())
+                {
+                    btCompoundShape *shape = static_cast<btCompoundShape*>(body->getCollisionShape());
+                    btTransform& ct = shape->getChildTransform(0);
+                    btVector3 cv = ct.getOrigin();
+                    btQuaternion cq = ct.getRotation();
+                }
+#endif
+                if (body->getCollisionShape()->getUserIndex() == 4) // useFullTransform
                     adjustRigidBody(body, position, rotation, Ogre::Vector3(0.f) * scale, Ogre::Quaternion::IDENTITY);
                 else
                 {
@@ -546,17 +560,52 @@ namespace Physic
                     //if (iter->first == "Bone01" || iter->first == "bone02")
                         //std::cout << "stop" << std::endl;
                     //adjustRigidBody(body, position, rotation, pos * scale, rot);
-                    adjustRigidBody(body, position, rotation, Ogre::Vector3(0.f) * scale, Ogre::Quaternion::IDENTITY);
-//                  Ogre::Matrix4 t;
-//                  t.makeTransform(position, Ogre::Vector3(scale), rotation);
-//                  Ogre::Matrix4 l;
-//                  l.makeTransform(pos, Ogre::Vector3(nodeScale), rot);
-//                  t = t * l.inverse();
-//                  Ogre::Vector3 p = t.getTrans();
-//                  Ogre::Quaternion q = t.extractQuaternion();
-//                  btTransform bt(btQuaternion(q.x, q.y, q.z, q.w), btVector3(p.x, p.y, p.z));
+                    //adjustRigidBody(body, position, rotation, Ogre::Vector3(0.f) * scale, Ogre::Quaternion::IDENTITY);
+//                  btTransform tf = body->getCenterOfMassTransform();
 
-//                  body->setWorldTransform(bt);
+//                  //tf = tf * btTransform(btQuaternion(rot.x, rot.y, rot.z, rot.w), btVector3(pos.x, pos.y, pos.z));
+//                  btVector3 vector = tf.getOrigin();
+//                  btQuaternion quat = tf.getRotation();
+//                  Ogre::Matrix4 m;
+//                  m.makeTransform(
+//                      Ogre::Vector3(vector.getX(), vector.getY(), vector.getZ()),
+//                      Ogre::Vector3(1.f),
+//                      Ogre::Quaternion(quat.getW(), quat.getX(), quat.getY(), quat.getZ()));
+//                  m = m * iter->second.first;
+//                  Ogre::Vector3 mv = m.getTrans();
+//                  Ogre::Quaternion mq = m.extractQuaternion();
+//                  btTransform gg(btQuaternion(mq.x, mq.y, mq.z, mq.w), btVector3(mv.x, mv.y, mv.z));
+//                  body->setCenterOfMassTransform(gg);
+                    //
+//                  if (iter->first == "Bone01") {
+//                      std::cout << tf.getOrigin() << std::endl;
+
+//      Ogre::Quaternion boxrot = rotation * rot;
+//      Ogre::Vector3 transrot = boxrot * pos*scale;
+//      Ogre::Vector3 newPosition = transrot + position;
+
+//      btTransform tr;
+//      tr.setOrigin(btVector3(newPosition.x, newPosition.y, newPosition.z));
+//      tr.setRotation(btQuaternion(boxrot.x,boxrot.y,boxrot.z,boxrot.w));
+//                  }
+#if 0
+                    adjustRigidBody(body, position, rotation, pos * scale, rot);
+#else
+                    Ogre::Matrix4 t;
+                    t.makeTransform(position, Ogre::Vector3(scale), rotation);
+                    //t = t * iter->second.first;
+
+
+
+                    Ogre::Matrix4 l;
+                    l.makeTransform(pos, Ogre::Vector3(scale), rot); // FIXME: scale
+                    t = t * l;
+                    Ogre::Vector3 p = t.getTrans();
+                    Ogre::Quaternion q = t.extractQuaternion();
+                    btTransform bt(btQuaternion(q.x, q.y, q.z, q.w), btVector3(p.x, p.y, p.z));
+
+                    body->setWorldTransform(bt);
+#endif
                     //btQuaternion q = body->getWorldTransform().getRotation();
                     //body->getWorldTransform().setRotation(q*btQuaternion(rot.x, rot.y, rot.z, rot.w));
                     //btVector3 v = body->getWorldTransform().getOrigin();
@@ -578,22 +627,31 @@ namespace Physic
   //                    std::cout << z << " " << y << " " << x << std::endl;
 
 
+                // keep pointers around to delete later
+                if (numBodies == 0)
+                    parentBody = body;
+                else
+                    parentBody->mChildren[iter->first] = body;
+
+                ++numBodies;
+
+
 
                 if (!raycasting)
                 {
                     assert (mCollisionObjectMap.find(name) == mCollisionObjectMap.end());
-                    if (numBodies == 1) mCollisionObjectMap[name] = body; // register only the parent
                     mDynamicsWorld->addRigidBody(
                             body,CollisionType_World,CollisionType_Actor|CollisionType_HeightMap);
+                    if (numBodies == 1) mCollisionObjectMap[name] = body; // register only the parent
                 }
                 else
                 {
                     assert (mRaycastingObjectMap.find(name) == mRaycastingObjectMap.end());
-                    if (numBodies == 1) mRaycastingObjectMap[name] = body; // register only the parent
                     mDynamicsWorld->addRigidBody(
                             body,CollisionType_Raycasting,CollisionType_Raycasting|CollisionType_Projectile);
                     body->setCollisionFlags(
                             body->getCollisionFlags() | btCollisionObject::CF_DISABLE_VISUALIZE_OBJECT);
+                    if (numBodies == 1) mRaycastingObjectMap[name] = body; // register only the parent
                 }
             }
 
@@ -751,7 +809,7 @@ namespace Physic
         RigidBodyContainer::iterator it = map->find(name);
         if (it != map->end() )
         {
-            RigidBody* body = (*map)[name];
+            RigidBody* body = it->second;//(*map)[name];
             return body;
         }
         else

@@ -708,14 +708,38 @@ namespace MWWorld
 
         if(OEngine::Physic::RigidBody *body = mEngine->getRigidBody(handle))
         {
-            body->getWorldTransform().setOrigin(btVector3(position.x,position.y,position.z));
+            Ogre::Vector3 pos = body->mLocalTransform * position;
+            body->getWorldTransform().setOrigin(btVector3(pos.x,pos.y,pos.z));
             mEngine->mDynamicsWorld->updateSingleAabb(body);
+
+            if (body->mIsForeign)
+            {
+                std::map<std::string, OEngine::Physic::RigidBody*>::iterator it;
+                for (it = body->mChildren.begin(); it != body->mChildren.end(); ++it)
+                {
+                    pos = it->second->mLocalTransform * position;
+                    it->second->getWorldTransform().setOrigin(btVector3(pos.x,pos.y,pos.z));
+                    mEngine->mDynamicsWorld->updateSingleAabb(it->second);
+                }
+            }
         }
 
         if(OEngine::Physic::RigidBody *body = mEngine->getRigidBody(handle, true))
         {
-            body->getWorldTransform().setOrigin(btVector3(position.x,position.y,position.z));
+            Ogre::Vector3 pos = body->mLocalTransform * position;
+            body->getWorldTransform().setOrigin(btVector3(pos.x,pos.y,pos.z));
             mEngine->mDynamicsWorld->updateSingleAabb(body);
+
+            if (body->mIsForeign)
+            {
+                std::map<std::string, OEngine::Physic::RigidBody*>::iterator it;
+                for (it = body->mChildren.begin(); it != body->mChildren.end(); ++it)
+                {
+                    pos = it->second->mLocalTransform * position;
+                    it->second->getWorldTransform().setOrigin(btVector3(pos.x,pos.y,pos.z));
+                    mEngine->mDynamicsWorld->updateSingleAabb(it->second);
+                }
+            }
         }
 
         // Actors update their AABBs every frame (DISABLE_DEACTIVATION), so no need to do it manually
@@ -736,18 +760,72 @@ namespace MWWorld
         }
         if (OEngine::Physic::RigidBody* body = mEngine->getRigidBody(handle))
         {
-            if(body->getCollisionShape()->getName() != "Box")
-                body->getWorldTransform().setRotation(btQuaternion(rotation.x, rotation.y, rotation.z, rotation.w));
+            if (!body->mIsForeign)
+            {
+                if(body->getCollisionShape()->getName() != "Box")
+                    body->getWorldTransform().setRotation(btQuaternion(rotation.x, rotation.y, rotation.z, rotation.w));
+                else
+                    mEngine->boxAdjustExternal(handleToMesh[handle], body, node->getScale().x, node->getPosition(), rotation);
+            }
             else
-                mEngine->boxAdjustExternal(handleToMesh[handle], body, node->getScale().x, node->getPosition(), rotation);
+            {
+                Ogre::Quaternion rot = body->mLocalTransform.extractQuaternion();
+                rot = rotation * rot;
+                if (body->getCollisionShape()->getUserIndex() == 4)
+                    body->getWorldTransform().setRotation(btQuaternion(rotation.x, rotation.y, rotation.z, rotation.w));
+                else
+                    body->getWorldTransform().setRotation(btQuaternion(rot.x, rot.y, rot.z, rot.w));
+                // FIXME: scale?
+
+                std::map<std::string, OEngine::Physic::RigidBody*>::iterator it;
+                for (it = body->mChildren.begin(); it != body->mChildren.end(); ++it)
+                {
+                    rot = it->second->mLocalTransform.extractQuaternion();
+                    rot = rotation * rot;
+                    if (body->getCollisionShape()->getUserIndex() == 4)
+                        body->getWorldTransform().setRotation(btQuaternion(rotation.x, rotation.y, rotation.z, rotation.w));
+                    else
+                        body->getWorldTransform().setRotation(btQuaternion(rot.x, rot.y, rot.z, rot.w));
+
+                    mEngine->mDynamicsWorld->updateSingleAabb(it->second);
+                }
+            }
+
             mEngine->mDynamicsWorld->updateSingleAabb(body);
         }
         if (OEngine::Physic::RigidBody* body = mEngine->getRigidBody(handle, true))
         {
-            if(body->getCollisionShape()->getName() != "Box")
-                body->getWorldTransform().setRotation(btQuaternion(rotation.x, rotation.y, rotation.z, rotation.w));
+            if (!body->mIsForeign)
+            {
+                if(body->getCollisionShape()->getName() != "Box")
+                    body->getWorldTransform().setRotation(btQuaternion(rotation.x, rotation.y, rotation.z, rotation.w));
+                else
+                    mEngine->boxAdjustExternal(handleToMesh[handle], body, node->getScale().x, node->getPosition(), rotation);
+            }
             else
-                mEngine->boxAdjustExternal(handleToMesh[handle], body, node->getScale().x, node->getPosition(), rotation);
+            {
+                Ogre::Quaternion rot = body->mLocalTransform.extractQuaternion();
+                rot = rotation * rot;
+                if (body->getCollisionShape()->getUserIndex() == 4)
+                    body->getWorldTransform().setRotation(btQuaternion(rotation.x, rotation.y, rotation.z, rotation.w));
+                else
+                    body->getWorldTransform().setRotation(btQuaternion(rot.x, rot.y, rot.z, rot.w));
+                // FIXME: scale?
+
+                std::map<std::string, OEngine::Physic::RigidBody*>::iterator it;
+                for (it = body->mChildren.begin(); it != body->mChildren.end(); ++it)
+                {
+                    rot = it->second->mLocalTransform.extractQuaternion();
+                    rot = rotation * rot;
+                    if (body->getCollisionShape()->getUserIndex() == 4)
+                        body->getWorldTransform().setRotation(btQuaternion(rotation.x, rotation.y, rotation.z, rotation.w));
+                    else
+                        body->getWorldTransform().setRotation(btQuaternion(rot.x, rot.y, rot.z, rot.w));
+
+                    mEngine->mDynamicsWorld->updateSingleAabb(it->second);
+                }
+            }
+
             mEngine->mDynamicsWorld->updateSingleAabb(body);
         }
     }
@@ -807,6 +885,7 @@ namespace MWWorld
         }
     }
 
+    // FIXME: local transform
     void PhysicsSystem::scaleObject (const Ptr& ptr)
     {
         Ogre::SceneNode* node = ptr.getRefData().getBaseNode();

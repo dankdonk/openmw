@@ -9,6 +9,7 @@
 #include "BulletShapeLoader.h"
 #include "BulletCollision/CollisionShapes/btScaledBvhTriangleMeshShape.h"
 #include <boost/shared_ptr.hpp>
+#include <OgreMatrix4.h>
 
 class btRigidBody;
 class btBroadphaseInterface;
@@ -62,10 +63,13 @@ namespace Physic
         RigidBody(btRigidBody::btRigidBodyConstructionInfo& CI,std::string name);
         virtual ~RigidBody();
         std::string mName;
-        //     target NiNode name (should be the same as Bone name)
+        //     target node name (should be the same as Bone name)
+        //     FIXME: use block index instead?
         //              |
         //              v
         std::map<std::string, RigidBody*> mChildren;
+        Ogre::Matrix4 mLocalTransform;
+        bool mIsForeign;
 
         // Hack: placeable objects (that can be picked up by the player) have different collision behaviour.
         // This variable needs to be passed to BulletNifLoader.

@@ -144,29 +144,34 @@ void NiBtOgre::BtRigidBodyCI::loadImpl()
     // try2:     apply parentNiNode's local transform * bhkRigidBodyT transform
     //           most meshes look ok except TargetHeavyStructure
     //           impDunDoor02 rotation no longer works (i.e. like the original)
-#if 0
-        worldTransform = Ogre::Matrix4::IDENTITY;
-#else
-  #if 1
-        worldTransform = target->getWorldTransform();
-  #else
-        if (node->index() > 0)
-            worldTransform = node->getParentNode()->getWorldTransform();
-        else
-            worldTransform = Ogre::Matrix4::IDENTITY;
-  #endif
-#endif
-        if (nimodel->indexToString(target->getNameIndex()) == "Bone01")
-        {
-            Ogre::Vector3 pos;
-            Ogre::Vector3 nodeScale; // FIXME: apply scale?
-            Ogre::Quaternion rot;
-            worldTransform.decomposition(pos, nodeScale, rot);
-            std::cout << rot.getYaw().valueDegrees() << " " << rot.getPitch().valueDegrees() << " " << rot.getRoll().valueDegrees() << std::endl;
-        }
+//#if 0
+//        worldTransform = Ogre::Matrix4::IDENTITY;
+//#else
+//  #if 1
+//        worldTransform = target->getWorldTransform();
+//  #else
+//        if (node->index() > 0)
+//            worldTransform = node->getParentNode()->getWorldTransform();
+//        else
+//            worldTransform = Ogre::Matrix4::IDENTITY;
+//  #endif
+//#endif
+//      if (nimodel->indexToString(target->getNameIndex()) == "Bone01")
+//      {
+//          Ogre::Vector3 pos;
+//          Ogre::Vector3 nodeScale; // FIXME: apply scale?
+//          Ogre::Quaternion rot;
+//          worldTransform.decomposition(pos, nodeScale, rot);
+//          std::cout << rot.getYaw().valueDegrees() << " " << rot.getPitch().valueDegrees() << " " << rot.getRoll().valueDegrees() << std::endl;
+//      }
+
+        // expectation is that each target has only one bhkRigidBody
+        if (mBtCollisionShapeMap.find(nimodel->indexToString(target->getNameIndex()))
+                != mBtCollisionShapeMap.end())
+            throw std::logic_error("target name collision "+nimodel->indexToString(target->getNameIndex()));
 
         mBtCollisionShapeMap[nimodel->indexToString(target->getNameIndex())]
-            = std::make_pair(worldTransform, bhk->getShape(target));
+            = std::make_pair(target->getWorldTransform(), bhk->getShape(target));
     }
 }
 

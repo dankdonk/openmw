@@ -1648,7 +1648,7 @@ btCollisionShape *NiBtOgre::bhkRigidBody::getShape(NiAVObject *target)
     }
     else
     {
-#if 0
+#if 1
         // apply rotation and translation only if the collision object's body is a bhkRigidBodyT type
         if (mModel.blockType(mSelfIndex) == "bhkRigidBodyT")
             transform = btTransform(mRotation, mTranslation * 7); // NOTE: havok scale
@@ -1672,15 +1672,15 @@ btCollisionShape *NiBtOgre::bhkRigidBody::getShape(NiAVObject *target)
 
 
 
-        if (mModel.indexToString(target->getNameIndex()) == "Bone01")
-        {
-            btVector3 pos = transform.getOrigin();
-            //Ogre::Vector3 nodeScale; // FIXME: apply scale?
-            btQuaternion q = transform.getRotation();
-            Ogre::Quaternion rot(q.getW(), q.getX(), q.getY(), q.getZ());
-            //transform.decomposition(pos, nodeScale, rot);
-            std::cout << rot.getYaw().valueDegrees() << " " << rot.getPitch().valueDegrees() << " " << rot.getRoll().valueDegrees() << std::endl;
-        }
+//      if (mModel.indexToString(target->getNameIndex()) == "Bone01")
+//      {
+//          btVector3 pos = transform.getOrigin();
+//          //Ogre::Vector3 nodeScale; // FIXME: apply scale?
+//          btQuaternion q = transform.getRotation();
+//          Ogre::Quaternion rot(q.getW(), q.getX(), q.getY(), q.getZ());
+//          //transform.decomposition(pos, nodeScale, rot);
+//          std::cout << rot.getYaw().valueDegrees() << " " << rot.getPitch().valueDegrees() << " " << rot.getRoll().valueDegrees() << std::endl;
+//      }
 
 
 
