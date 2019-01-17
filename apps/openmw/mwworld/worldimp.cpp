@@ -1545,11 +1545,11 @@ namespace MWWorld
                 // Once we load the door's cell again (or re-enable the door), Door::insertObject will reinsert to mDoorStates.
                 mDoorStates.erase(it++);
             }
-            else if (isForeignDoor && anim->hasAnimation("Open"))
+            else if (isForeignDoor && anim->hasAnimation("Open") && (/*anim->getAnimatedDoorState() == 0 || */anim->getAnimatedDoorState() == 1))
             {
                 bool finished =  anim->addTime("Open", duration); // returns true if animation ended
                 // it->first is Ptr (i.e. the door)
-                it->first.getClass().setDoorState(it->first, 0);
+                //it->first.getClass().setDoorState(it->first, 0);
 
                 std::vector<Ogre::Bone*> bones = anim->getBones("Open");
                 for (unsigned int i = 0; i < bones.size(); ++i)
@@ -1566,7 +1566,32 @@ namespace MWWorld
                     //mWorldScene->rotateSubObjectLocalRotation(it->first, "impDunDoor02b", Ogre::Quaternion(
                                 //Ogre::Radian(1.57f), Ogre::Vector3::UNIT_Z));
                 if (finished)
+                {
+                    //anim->activateAnimatedDoor("Open", false);
                     mDoorStates.erase(it++);
+                }
+                else
+                    it++;
+            }
+            else if (isForeignDoor && anim->hasAnimation("Close") && anim->getAnimatedDoorState() == 2)
+            {
+                bool finished =  anim->addTime("Close", duration); // returns true if animation ended
+                // it->first is Ptr (i.e. the door)
+                //it->first.getClass().setDoorState(it->first, 2);
+
+                std::vector<Ogre::Bone*> bones = anim->getBones("Close");
+                for (unsigned int i = 0; i < bones.size(); ++i)
+                {
+                    Ogre::Quaternion q = bones[i]->getOrientation();
+                    Ogre::Quaternion qb = bones[i]->_getBindingPoseInverseOrientation();
+                    mWorldScene->rotateSubObjectLocalRotation(it->first, bones[i]->getName(), q * qb);
+                }
+
+                if (finished)
+                {
+                    //anim->activateAnimatedDoor("Close", false);
+                    mDoorStates.erase(it++);
+                }
                 else
                     it++;
             }
@@ -2294,7 +2319,34 @@ namespace MWWorld
             {
                 // can get lenth and time positon of the AnimationState for the Skeleton
                 // can get NodeAnimationTrack->getAssociatedNode
-                state = anim->activateDoor();
+
+                 switch (state)
+                {
+                case 0:
+                    if (anim->getAnimatedDoorState() == 0)
+                    {
+                        state = 1; // if closed, then open
+                        anim->activateAnimatedDoor("Open", true); // true = enable
+                    }
+                    else
+                    {
+                        state = 2; // if open, then close
+                        //anim->activateAnimatedDoor("Open", false);
+                        //anim->activateAnimatedDoor("Close", true);
+                    }
+                    break;
+                case 2:
+                    state = 1; // if closing, then open
+                    anim->activateAnimatedDoor("Close", false);
+                    anim->activateAnimatedDoor("Open", true);
+                    break;
+                case 1:
+                default:
+                    state = 2; // if opening, then close
+                    anim->activateAnimatedDoor("Open", false);
+                    anim->activateAnimatedDoor("Close", true);
+                    break;
+                }
                 door.getClass().setDoorState(door, state);
                 mDoorStates[door] = state;
                 return;

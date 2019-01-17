@@ -345,7 +345,8 @@ public:
     Ogre::TagPoint *attachObjectToBone(const Ogre::String &bonename, Ogre::MovableObject *obj);
     void detachObjectFromBone(Ogre::MovableObject *obj);
 
-    int activateDoor();
+    void activateAnimatedDoor(const std::string& animation, bool activate);
+    int getAnimatedDoorState() const;
     bool addTime(const std::string& anim, float duration);
     std::vector<Ogre::Bone*> getBones(const std::string& animation) const;
 };

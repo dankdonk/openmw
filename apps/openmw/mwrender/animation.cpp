@@ -1371,24 +1371,88 @@ std::vector<Ogre::Bone*> Animation::getBones(const std::string& animation) const
     return res;
 }
 
-int Animation::activateDoor() // FIXME: currently open only
+// FIXME: inefficient, refactor
+void Animation::activateAnimatedDoor(const std::string& animation, bool activate)
 {
     if (mObjectRoot->mSkeletonAnimEntities.size() > 0)
     {
         std::map<std::string, std::vector<Ogre::Entity*> >::iterator it
+            = mObjectRoot->mSkeletonAnimEntities.find(animation);
+        if (it != mObjectRoot->mSkeletonAnimEntities.end())
+        {
+            for (unsigned int i = 0; i < it->second.size(); ++i)
+            {
+                Ogre::AnimationState *anim = it->second[i]->getAnimationState(animation);
+
+                anim->setEnabled(activate ? true : false);
+                anim->setLoop(false);
+                anim->setTimePosition(0.f);
+
+                if (!activate)
+                {
+//                  std::string meshName = it->second[i]->getMesh()->getName();
+//                  size_t pos = meshName.find_last_of('@');
+//                  meshName = meshName.substr(pos+1);
+//                  if (it->second[i]->getSkeleton()->hasBone(meshName))
+//                      it->second[i]->getSkeleton()->getBone(meshName)->reset();
+                }
+            }
+        }
+    }
+}
+
+// assumes "Open" and/or "Close" animations exist (caller must ensure)
+int Animation::getAnimatedDoorState() const
+{
+    if (mObjectRoot->mSkeletonAnimEntities.size() > 0)
+    {
+        int openState = 0;
+        std::map<std::string, std::vector<Ogre::Entity*> >::iterator it
             = mObjectRoot->mSkeletonAnimEntities.find("Open");
         if (it != mObjectRoot->mSkeletonAnimEntities.end())
         {
-            bool hasEnded = false;
-            for (unsigned int i = 0; i < it->second.size(); ++i)
+            if (it->second[0]->getAnimationState("Open")->getEnabled())
             {
-                it->second[i]->getAnimationState("Open")->setEnabled(true);
-                it->second[i]->getAnimationState("Open")->setLoop(false);
+                bool hasEndedOpen = false;
+                for (unsigned int i = 0; i < it->second.size(); ++i)
+                {
+                    // check that all have ended
+                    hasEndedOpen &= it->second[i]->getAnimationState("Open")->hasEnded();
+                }
+                if (!hasEndedOpen)
+                    openState = 1; // "opening" state
             }
-
-            return 1;
+            // else if not enabled openState remains at 0
         }
+
+        int closeState = 0;
+        std::map<std::string, std::vector<Ogre::Entity*> >::iterator it2
+            = mObjectRoot->mSkeletonAnimEntities.find("Close");
+        if (it2 != mObjectRoot->mSkeletonAnimEntities.end())
+        {
+            if (it2->second[0]->getAnimationState("Close")->getEnabled())
+            {
+                bool hasEndedClose = false;
+                for (unsigned int i = 0; i < it2->second.size(); ++i)
+                {
+                    // check that all have ended
+                    hasEndedClose &= it2->second[i]->getAnimationState("Close")->hasEnded();
+                }
+                if (!hasEndedClose)
+                    closeState = 2; // "closing" state
+            }
+            // else if not enabled closeState remains at 0
+        }
+
+        if (openState == 0 && closeState == 0)
+            return 0;
+        else if (openState == 1)
+            return 1; // ignore closeState
+        else if (closeState == 2)
+            return 2;
     }
+
+    return 0; // shouldn't happen  FIXME: throw?
 }
 
 void Animation::showWeapons(bool showWeapon)

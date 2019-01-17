@@ -70,6 +70,7 @@ namespace Physic
         std::map<std::string, RigidBody*> mChildren;
         Ogre::Matrix4 mLocalTransform;
         btQuaternion mBindingOrientation;
+        btQuaternion mStartingOrientation; // FIXME: experimental
         std::string mTargetName;
         bool mIsForeign;
 

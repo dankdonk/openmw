@@ -1618,8 +1618,8 @@ btCollisionShape *NiBtOgre::bhkRigidBody::getShape(NiAVObject *target)
     btTransform transform;
     bhkShape *shape = mModel.getRef<bhkShape>(mShapeIndex);
     std::string targetName = mModel.indexToString(target->getNameIndex());
-    if (mModel.blockType(target->index()) == "NiTriStrips")
-        std::cout << "stop" << std::endl;
+//  if (mModel.blockType(target->index()) == "NiTriStrips")
+//      std::cout << "stop" << std::endl;
 
     bool useFullTransform
         =  (
