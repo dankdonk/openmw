@@ -708,12 +708,15 @@ namespace MWWorld
 
         if(OEngine::Physic::RigidBody *body = mEngine->getRigidBody(handle))
         {
-            Ogre::Vector3 pos = body->mLocalTransform * position;
-            body->getWorldTransform().setOrigin(btVector3(pos.x,pos.y,pos.z));
-            mEngine->mDynamicsWorld->updateSingleAabb(body);
-
-            if (body->mIsForeign)
+            if (!body->mIsForeign)
             {
+                body->getWorldTransform().setOrigin(btVector3(position.x,position.y,position.z));
+            }
+            else
+            {
+                Ogre::Vector3 pos = body->mLocalTransform * position;
+                body->getWorldTransform().setOrigin(btVector3(pos.x,pos.y,pos.z));
+
                 std::map<std::string, OEngine::Physic::RigidBody*>::iterator it;
                 for (it = body->mChildren.begin(); it != body->mChildren.end(); ++it)
                 {
@@ -722,16 +725,21 @@ namespace MWWorld
                     mEngine->mDynamicsWorld->updateSingleAabb(it->second);
                 }
             }
+
+            mEngine->mDynamicsWorld->updateSingleAabb(body);
         }
 
         if(OEngine::Physic::RigidBody *body = mEngine->getRigidBody(handle, true))
         {
-            Ogre::Vector3 pos = body->mLocalTransform * position;
-            body->getWorldTransform().setOrigin(btVector3(pos.x,pos.y,pos.z));
-            mEngine->mDynamicsWorld->updateSingleAabb(body);
-
-            if (body->mIsForeign)
+            if (!body->mIsForeign)
             {
+                body->getWorldTransform().setOrigin(btVector3(position.x,position.y,position.z));
+            }
+            else
+            {
+                Ogre::Vector3 pos = body->mLocalTransform * position;
+                body->getWorldTransform().setOrigin(btVector3(pos.x,pos.y,pos.z));
+
                 std::map<std::string, OEngine::Physic::RigidBody*>::iterator it;
                 for (it = body->mChildren.begin(); it != body->mChildren.end(); ++it)
                 {
@@ -740,6 +748,8 @@ namespace MWWorld
                     mEngine->mDynamicsWorld->updateSingleAabb(it->second);
                 }
             }
+
+            mEngine->mDynamicsWorld->updateSingleAabb(body);
         }
 
         // Actors update their AABBs every frame (DISABLE_DEACTIVATION), so no need to do it manually
@@ -769,23 +779,28 @@ namespace MWWorld
             }
             else
             {
-                Ogre::Quaternion rot = body->mLocalTransform.extractQuaternion();
-                rot = rotation * rot;
+                Ogre::Quaternion rot;
                 if (body->getCollisionShape()->getUserIndex() == 4)
                     body->getWorldTransform().setRotation(btQuaternion(rotation.x, rotation.y, rotation.z, rotation.w));
                 else
+                {
+                    rot = body->mLocalTransform.extractQuaternion();
+                    rot = rotation * rot;
                     body->getWorldTransform().setRotation(btQuaternion(rot.x, rot.y, rot.z, rot.w));
+                }
                 // FIXME: scale?
 
                 std::map<std::string, OEngine::Physic::RigidBody*>::iterator it;
                 for (it = body->mChildren.begin(); it != body->mChildren.end(); ++it)
                 {
-                    rot = it->second->mLocalTransform.extractQuaternion();
-                    rot = rotation * rot;
                     if (body->getCollisionShape()->getUserIndex() == 4)
                         body->getWorldTransform().setRotation(btQuaternion(rotation.x, rotation.y, rotation.z, rotation.w));
                     else
+                    {
+                        rot = it->second->mLocalTransform.extractQuaternion();
+                        rot = rotation * rot;
                         body->getWorldTransform().setRotation(btQuaternion(rot.x, rot.y, rot.z, rot.w));
+                    }
 
                     mEngine->mDynamicsWorld->updateSingleAabb(it->second);
                 }

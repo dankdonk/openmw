@@ -1632,7 +1632,6 @@ btCollisionShape *NiBtOgre::bhkRigidBody::getShape(NiAVObject *target)
            ||
            shape->isStaticShape();                           // TODO: check for nullptr first?
 
-    //useFullTransform = true; // FIXME: for testing
     if (useFullTransform)
     {
         Ogre::Vector3 pos;
@@ -1648,43 +1647,12 @@ btCollisionShape *NiBtOgre::bhkRigidBody::getShape(NiAVObject *target)
     }
     else
     {
-#if 1
         // apply rotation and translation only if the collision object's body is a bhkRigidBodyT type
         if (mModel.blockType(mSelfIndex) == "bhkRigidBodyT")
             transform = btTransform(mRotation, mTranslation * 7); // NOTE: havok scale
         else
             transform.setIdentity();
-#else
-        Ogre::Vector3 pos;
-        Ogre::Vector3 scale;
-        Ogre::Quaternion rot;
-
-        target->getWorldTransform().decomposition(pos, scale, rot);
-        transform = btTransform(btQuaternion(rot.x, rot.y, rot.z, rot.w), btVector3(pos.x, pos.y, pos.z));
-
-        // apply rotation and translation only if the collision object's body is a bhkRigidBodyT type
-        if (mModel.blockType(mSelfIndex) == "bhkRigidBodyT")
-            transform = transform * btTransform(mRotation, mTranslation * 7); // NOTE: havok scale
-#endif
     }
-
-
-
-
-
-//      if (mModel.indexToString(target->getNameIndex()) == "Bone01")
-//      {
-//          btVector3 pos = transform.getOrigin();
-//          //Ogre::Vector3 nodeScale; // FIXME: apply scale?
-//          btQuaternion q = transform.getRotation();
-//          Ogre::Quaternion rot(q.getW(), q.getX(), q.getY(), q.getZ());
-//          //transform.decomposition(pos, nodeScale, rot);
-//          std::cout << rot.getYaw().valueDegrees() << " " << rot.getPitch().valueDegrees() << " " << rot.getRoll().valueDegrees() << std::endl;
-//      }
-
-
-
-
 
     btCollisionShape *btShape = shape->buildShape(transform);
     if (!btShape)

@@ -518,84 +518,20 @@ namespace Physic
                     mAnimatedRaycastingShapes[body] = instance;
                 }
 #endif
-                //adjustRigidBody(body, position, rotation, Ogre::Vector3(0.f) * scale, Ogre::Quaternion::IDENTITY);
                 Ogre::Vector3 pos;
                 Ogre::Vector3 nodeScale; // FIXME: apply scale?
                 Ogre::Quaternion rot;
                 iter->second.first.decomposition(pos, nodeScale, rot);
 
-//              Ogre::Quaternion qq = rotation * rot/* * Ogre::Quaternion(Ogre::Radian(2.f), Ogre::Vector3::UNIT_Z)*/;
-#if 0
-                //if (iter->first == "ICWallDoor01") {
-                //if (iter->first == "HeavyTargetStructure") {
-                if (iter->first == "Bone01") {
-                    Ogre::Matrix3 m;
-                    rot.ToRotationMatrix(m);
-                    Ogre::Radian rx, ry, rz;
-                    m.ToEulerAnglesXYZ(rx, ry, rz);
-                    std::cout << rx.valueDegrees() << " " << ry.valueDegrees() << " " << rz.valueDegrees() << std::endl;
-
-                    //std::cout << rotation.getRoll().valueDegrees() << std::endl;
-                    //std::cout << qq.getRoll().valueDegrees() << std::endl;
-                }
-                btTransform t = body->getWorldTransform();
-                btVector3 v = t.getOrigin();
-                btQuaternion q = body->getWorldTransform().getRotation();
-
-
-
-                if (body->getCollisionShape()->isCompound())
-                {
-                    btCompoundShape *shape = static_cast<btCompoundShape*>(body->getCollisionShape());
-                    btTransform& ct = shape->getChildTransform(0);
-                    btVector3 cv = ct.getOrigin();
-                    btQuaternion cq = ct.getRotation();
-                }
-#endif
                 if (body->getCollisionShape()->getUserIndex() == 4) // useFullTransform
                     adjustRigidBody(body, position, rotation, Ogre::Vector3(0.f) * scale, Ogre::Quaternion::IDENTITY);
                 else
                 {
-
-                    //if (iter->first == "Bone01" || iter->first == "bone02")
-                        //std::cout << "stop" << std::endl;
-                    //adjustRigidBody(body, position, rotation, pos * scale, rot);
-                    //adjustRigidBody(body, position, rotation, Ogre::Vector3(0.f) * scale, Ogre::Quaternion::IDENTITY);
-//                  btTransform tf = body->getCenterOfMassTransform();
-
-//                  //tf = tf * btTransform(btQuaternion(rot.x, rot.y, rot.z, rot.w), btVector3(pos.x, pos.y, pos.z));
-//                  btVector3 vector = tf.getOrigin();
-//                  btQuaternion quat = tf.getRotation();
-//                  Ogre::Matrix4 m;
-//                  m.makeTransform(
-//                      Ogre::Vector3(vector.getX(), vector.getY(), vector.getZ()),
-//                      Ogre::Vector3(1.f),
-//                      Ogre::Quaternion(quat.getW(), quat.getX(), quat.getY(), quat.getZ()));
-//                  m = m * iter->second.first;
-//                  Ogre::Vector3 mv = m.getTrans();
-//                  Ogre::Quaternion mq = m.extractQuaternion();
-//                  btTransform gg(btQuaternion(mq.x, mq.y, mq.z, mq.w), btVector3(mv.x, mv.y, mv.z));
-//                  body->setCenterOfMassTransform(gg);
-                    //
-//                  if (iter->first == "Bone01") {
-//                      std::cout << tf.getOrigin() << std::endl;
-
-//      Ogre::Quaternion boxrot = rotation * rot;
-//      Ogre::Vector3 transrot = boxrot * pos*scale;
-//      Ogre::Vector3 newPosition = transrot + position;
-
-//      btTransform tr;
-//      tr.setOrigin(btVector3(newPosition.x, newPosition.y, newPosition.z));
-//      tr.setRotation(btQuaternion(boxrot.x,boxrot.y,boxrot.z,boxrot.w));
-//                  }
 #if 0
                     adjustRigidBody(body, position, rotation, pos * scale, rot);
 #else
                     Ogre::Matrix4 t;
                     t.makeTransform(position, Ogre::Vector3(scale), rotation);
-                    //t = t * iter->second.first;
-
-
 
                     Ogre::Matrix4 l;
                     l.makeTransform(pos, Ogre::Vector3(scale), rot); // FIXME: scale
@@ -606,26 +542,7 @@ namespace Physic
 
                     body->setWorldTransform(bt);
 #endif
-                    //btQuaternion q = body->getWorldTransform().getRotation();
-                    //body->getWorldTransform().setRotation(q*btQuaternion(rot.x, rot.y, rot.z, rot.w));
-                    //btVector3 v = body->getWorldTransform().getOrigin();
-                    //body->getWorldTransform().setOrigin(v + btVector3(pos.x*scale, pos.y*scale, pos.z*scale));
                 }
-
-        //btTransform trLocal;
-        //trLocal.setOrigin(btVector3(pos.x, pos.y, pos.z));
-        //trLocal.setRotation(btQuaternion(rot.x,rot.y,rot.z,rot.w));
-  //    btTransform tr;
-  //    tr.setOrigin(btVector3(position.x, position.y, position.z));
-  //    tr.setRotation(btQuaternion(qq.x,qq.y,qq.z,qq.w));
-  //    body->setWorldTransform(tr);
-       // body->getWorldTransform().setRotation(btQuaternion(rot.x,rot.y,rot.z,rot.w));
-  //                q = body->getWorldTransform().getRotation();
-  //                float x, y, z;
-  //                q.getEulerZYX(z, y, x);
-  //                if (iter->first == "ICWallDoor01")
-  //                    std::cout << z << " " << y << " " << x << std::endl;
-
 
                 // keep pointers around to delete later
                 if (numBodies == 0)
@@ -634,8 +551,6 @@ namespace Physic
                     parentBody->mChildren[iter->first] = body;
 
                 ++numBodies;
-
-
 
                 if (!raycasting)
                 {
