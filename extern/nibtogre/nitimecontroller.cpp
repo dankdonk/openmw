@@ -157,7 +157,7 @@ bool interpolate( /*T*/float & value, const NiBtOgre::KeyGroup</*T*/float>& keyG
 
             value = v1 * (2.0f * x3 - 3.0f * x2 + 1.0f) + v2 * (-2.0f * x3 + 3.0f * x2) + t1 * (x3 - 2.0f * x2 + x) + t2 * (x3 - x2);
 
-            value -= frames[0].value; // HACK: let's consider delta changes only (for testing only!)
+            //value -= frames[0].value; // HACK: let's consider delta changes only (for testing only!)
 
         }    return true;
 
@@ -389,7 +389,8 @@ void NiBtOgre::NiMultiTargetTransformController::build(int32_t nameIndex, NiAVOb
     {
         //size_t maxKeys = std::max(data->mXRotations.keys.size(), data->mYRotations.keys.size());
         //maxKeys = std::max(maxKeys, data->mZRotations.keys.size());
-        if (mModel.getModelName() == "meshes\\dungeons\\chargen\\idgate01.nif")
+        if (mModel.getModelName() == "meshes\\dungeons\\chargen\\idgate01.nif" &&
+            mModel.indexToString(nameIndex) == "Close")
             std::cout << time << std::endl;
 
         std::vector<float> timeKeys;
