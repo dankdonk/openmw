@@ -853,50 +853,68 @@ namespace MWWorld
 
         if (OEngine::Physic::RigidBody* body = mEngine->getRigidBody(handle))
         {
+            // ignore static
+            if (body->getCollisionShape()->getUserIndex() == 4)
+                return;
+
+            // rotate parent
+            if (body->mTargetName == boneName)
+            {
+                body-> getWorldTransform().setRotation(
+                    body->mBindingOrientation/*.inverse()*/
+                    *
+                    btQuaternion(rotation.x, rotation.y, rotation.z, rotation.w)
+                    );
+
+                mEngine->mDynamicsWorld->updateSingleAabb(body);
+            }
+
+            // rotate children
+            std::map<std::string, OEngine::Physic::RigidBody*>::const_iterator iter = body->mChildren.find(boneName);
+            if (iter != body->mChildren.end())
+            {
+                iter->second->getWorldTransform().setRotation(
+                    iter->second->mBindingOrientation/*.inverse()*/
+                    *
+                    btQuaternion(rotation.x, rotation.y, rotation.z, rotation.w)
+                    );
+
+                mEngine->mDynamicsWorld->updateSingleAabb(iter->second);
+            }
+        }
+
+        if (OEngine::Physic::RigidBody* body = mEngine->getRigidBody(handle, true))
+        {
+            // ignore static
+            if (body->getCollisionShape()->getUserIndex() == 4)
+                return;
+
+            // rotate parent
+            if (body->mTargetName == boneName)
+            {
+                body-> getWorldTransform().setRotation(
+                    body->mBindingOrientation/*.inverse()*/
+                    *
+                    btQuaternion(rotation.x, rotation.y, rotation.z, rotation.w)
+                    );
+
+                mEngine->mDynamicsWorld->updateSingleAabb(body);
+            }
+
+            // rotate children
             std::map<std::string, OEngine::Physic::RigidBody*>::const_iterator iter
                 = body->mChildren.find(boneName);
 
             if (iter != body->mChildren.end())
             {
-#if 1
-//                iter->second->getWorldTransform().setRotation(
-//                        btQuaternion(rotation.x, rotation.y, rotation.z, rotation.w));
-                btTransform& t = iter->second->getWorldTransform();
-                btTransform l = btTransform(btQuaternion(0,0,0,1),btVector3(-52.67,-1.823,-33.422));
-                t = t*l;
-                t.setRotation(btQuaternion(rotation.x, rotation.y, rotation.z, rotation.w));
-                t = t*l.inverse();
-#else
-        btTransform tr1 = iter->second->getWorldTransform();
-        btVector3 p = tr1.getOrigin();
-        btQuaternion q = tr1.getRotation();
-
-        tr1.setRotation(btQuaternion(rotation.x, rotation.y, rotation.z, rotation.w));
-
-        Ogre::Quaternion boxrot = rotation;
-        Ogre::Vector3 transrot = boxrot * Ogre::Vector3(-52, -2, -33); // NiNode
-        Ogre::Vector3 newPosition = transrot;
-
-        btTransform tr;
-        tr.setOrigin(btVector3(newPosition.x, newPosition.y, newPosition.z));
-        tr.setRotation(btQuaternion(boxrot.x,boxrot.y,boxrot.z,boxrot.w));
-        iter->second->setWorldTransform(tr1);
-#endif
-            }
-
-            mEngine->mDynamicsWorld->updateSingleAabb(body);
-        }
-
-        if (OEngine::Physic::RigidBody* body = mEngine->getRigidBody(handle, true))
-        {
-            std::map<std::string, OEngine::Physic::RigidBody*>::const_iterator iter
-                = body->mChildren.find(boneName);
-
-            if (iter != body->mChildren.end())
                 iter->second->getWorldTransform().setRotation(
-                        btQuaternion(rotation.x, rotation.y, rotation.z, rotation.w));
+                    iter->second->mBindingOrientation/*.inverse()*/
+                    *
+                    btQuaternion(rotation.x, rotation.y, rotation.z, rotation.w)
+                    );
 
-            mEngine->mDynamicsWorld->updateSingleAabb(body);
+                mEngine->mDynamicsWorld->updateSingleAabb(iter->second);
+            }
         }
     }
 

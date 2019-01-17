@@ -347,6 +347,7 @@ public:
 
     int activateDoor();
     bool addTime(const std::string& anim, float duration);
+    std::vector<Ogre::Bone*> getBones(const std::string& animation) const;
 };
 
 class ObjectAnimation : public Animation {

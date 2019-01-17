@@ -14,6 +14,7 @@
 #include <OgreStaticGeometry.h>
 #include <OgreSceneNode.h>
 #include <OgreTechnique.h>
+#include <OgreMesh.h>
 
 #include <components/esm/loadligh.hpp>
 #include <components/esm/loadweap.hpp>
@@ -1343,6 +1344,31 @@ bool Animation::addTime(const std::string& anim, float duration)
             return true; // set to anim ended state if it can't be found?
 #endif
     }
+}
+
+std::vector<Ogre::Bone*> Animation::getBones(const std::string& animation) const
+{
+    std::vector<Ogre::Bone*> res;
+
+    std::map<std::string, std::vector<Ogre::Entity*> >::const_iterator cit
+        = mObjectRoot->mSkeletonAnimEntities.find(animation);
+    if (cit != mObjectRoot->mSkeletonAnimEntities.end())
+    {
+        std::vector<Ogre::Entity*> entityList = cit->second;
+        Ogre::SkeletonInstance *skel = entityList[0]->getSkeleton(); // any one will do
+        for (unsigned int i = 0; i < entityList.size(); ++i)
+        {
+            std::string meshName = entityList[i]->getMesh()->getName();
+            size_t pos = meshName.find_last_of('@');
+            meshName = meshName.substr(pos+1);
+            if (skel->hasBone(meshName))
+            {
+                res.push_back(skel->getBone(meshName));
+            }
+        }
+    }
+
+    return res;
 }
 
 int Animation::activateDoor() // FIXME: currently open only

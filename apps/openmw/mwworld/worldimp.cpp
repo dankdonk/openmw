@@ -14,6 +14,7 @@
 #include "../mwbase/scriptmanager.hpp"
 #include "../mwscript/globalscripts.hpp"
 #include <OgreSceneNode.h>
+#include <OgreBone.h>
 
 #include <libs/openengine/bullet/trace.h>
 #include <libs/openengine/bullet/physic.hpp>
@@ -1546,13 +1547,26 @@ namespace MWWorld
             }
             else if (isForeignDoor && anim->hasAnimation("Open"))
             {
-                if (anim->addTime("Open", duration)) // returns true if animation ended
+                bool finished =  anim->addTime("Open", duration); // returns true if animation ended
+                // it->first is Ptr (i.e. the door)
+                it->first.getClass().setDoorState(it->first, 0);
+
+                std::vector<Ogre::Bone*> bones = anim->getBones("Open");
+                for (unsigned int i = 0; i < bones.size(); ++i)
                 {
-                    it->first.getClass().setDoorState(it->first, 0);
-                    mWorldScene->rotateSubObjectLocalRotation(it->first, "impDunDoor02b", Ogre::Quaternion(
-                                Ogre::Radian(1.57f), Ogre::Vector3::UNIT_Z));
-                    mDoorStates.erase(it++);
+                    Ogre::Quaternion q = bones[i]->getOrientation();
+                    Ogre::Quaternion qb = bones[i]->_getBindingPoseInverseOrientation();
+                    mWorldScene->rotateSubObjectLocalRotation(it->first, bones[i]->getName(), q * qb);
                 }
+
+
+
+
+
+                    //mWorldScene->rotateSubObjectLocalRotation(it->first, "impDunDoor02b", Ogre::Quaternion(
+                                //Ogre::Radian(1.57f), Ogre::Vector3::UNIT_Z));
+                if (finished)
+                    mDoorStates.erase(it++);
                 else
                     it++;
             }

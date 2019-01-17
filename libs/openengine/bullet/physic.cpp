@@ -518,6 +518,7 @@ namespace Physic
                     mAnimatedRaycastingShapes[body] = instance;
                 }
 #endif
+
                 Ogre::Vector3 pos;
                 Ogre::Vector3 nodeScale; // FIXME: apply scale?
                 Ogre::Quaternion rot;
@@ -541,6 +542,8 @@ namespace Physic
                     btTransform bt(btQuaternion(q.x, q.y, q.z, q.w), btVector3(p.x, p.y, p.z));
 
                     body->setWorldTransform(bt);
+                    body->mBindingOrientation = btQuaternion(q.x, q.y, q.z, q.w);
+                    body->mTargetName = iter->first;
 #endif
                 }
 

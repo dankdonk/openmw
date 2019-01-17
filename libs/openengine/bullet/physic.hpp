@@ -69,6 +69,8 @@ namespace Physic
         //              v
         std::map<std::string, RigidBody*> mChildren;
         Ogre::Matrix4 mLocalTransform;
+        btQuaternion mBindingOrientation;
+        std::string mTargetName;
         bool mIsForeign;
 
         // Hack: placeable objects (that can be picked up by the player) have different collision behaviour.
