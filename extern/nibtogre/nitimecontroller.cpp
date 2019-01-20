@@ -40,15 +40,17 @@
 #include "nidata.hpp" // NiDefaultAVObjectPalette
 #include "niavobject.hpp"
 #include "niinterpolator.hpp"
+#include "ninode.hpp"
 
 #ifdef NDEBUG // FIXME: debugging only
 #undef NDEBUG
 #endif
 
-// below code is copied from NifSkope gl/glcontroller.cpp (except for the delta change hack)
+// below code is copied from NifSkope gl/glcontroller.cpp
 namespace
 {
-bool timeIndex(float time, const std::vector<NiBtOgre::Key<float> >& frames, int & last, int & next, float & x )
+template<typename T>
+bool timeIndex( float time, const std::vector<NiBtOgre::Key<T> >& frames, int & last, int & next, float & x )
 {
     int count = static_cast<int>(frames.size());
 
@@ -122,16 +124,16 @@ bool timeIndex(float time, const std::vector<NiBtOgre::Key<float> >& frames, int
     return false;
 }
 
-//template <typename T>
-bool interpolate( /*T*/float & value, const NiBtOgre::KeyGroup</*T*/float>& keyGroup, float time, int & last )
+template <typename T>
+bool interpolate( T & value, const NiBtOgre::KeyGroup<T>& keyGroup, float time, int & last )
 {
-    std::vector<NiBtOgre::Key</*T*/float> > frames = keyGroup.keys;
+    std::vector<NiBtOgre::Key<T> > frames = keyGroup.keys;
     int next;
     float x;
 
     if ( timeIndex( time, frames, last, next, x ) ) {
-        /*T*/float v1 = frames[last].value;
-        /*T*/float v2 = frames[next].value;
+        T v1 = frames[last].value;
+        T v2 = frames[next].value;
 
         switch ( keyGroup.interpolation ) {
 
@@ -145,9 +147,9 @@ bool interpolate( /*T*/float & value, const NiBtOgre::KeyGroup</*T*/float>& keyG
             */
 
             // Tangent 1
-            float t1 = frames[last].backward;
+            T t1 = frames[last].backward;
             // Tangent 2
-            float t2 = frames[next].forward;
+            T t2 = frames[next].forward;
 
             float x2 = x * x;
             float x3 = x2 * x;
@@ -176,6 +178,187 @@ bool interpolate( /*T*/float & value, const NiBtOgre::KeyGroup</*T*/float>& keyG
     }
 
     return false;
+}
+
+/*********************************************************************
+Simple b-spline curve algorithm
+
+Copyright 1994 by Keith Vertanen (vertankd@cda.mrs.umn.edu)
+
+Released to the public domain (your mileage may vary)
+
+Found at: Programmers Heaven (www.programmersheaven.com/zone3/cat415/6660.htm)
+(Seems to be here now: https://www.keithv.com/software/3dpath/spline.cpp)
+Modified by: Theo
+- reformat and convert doubles to floats
+- removed point structure in favor of arbitrary sized float array
+Further modified by: cc9cii
+- use std::vector with offset rather than QModelIndex
+- changed Vector3 and Quat to Ogre::Vector3 and Ogre::Quaternion
+**********************************************************************/
+
+template <typename T>
+struct SplineTraits
+{
+    // Zero data
+    static T & Init( T & v )
+    {
+        v = T();
+        return v;
+    }
+
+    // Number of control points used
+    static int CountOf()
+    {
+        return ( sizeof(T) / sizeof(float) );
+    }
+
+    // Compute point from short array and mult/bias
+    static T & Compute( T & v, const std::vector<short> & c, unsigned int off, float mult )
+    {
+        float * vf = (float *)&v; // assume default data is a vector of floats. specialize if necessary.
+
+        for ( int i = 0; i < CountOf(); ++i )
+            vf[i] = vf[i] + ( float(c.at(off+i)) / float(SHRT_MAX) ) * mult;
+
+        return v;
+    }
+    static T & Adjust( T & v, float mult, float bias )
+    {
+        float * vf = (float *)&v;  // assume default data is a vector of floats. specialize if necessary.
+
+        for ( int i = 0; i < CountOf(); ++i )
+            vf[i] = vf[i] * mult + bias;
+
+        return v;
+    }
+};
+
+template <> struct SplineTraits<Ogre::Vector3>
+{
+    static Ogre::Vector3 & Init( Ogre::Vector3 & v )
+    {
+        v = Ogre::Vector3();
+        return v;
+    }
+    static int CountOf() { return 3; }
+    static Ogre::Vector3 & Compute( Ogre::Vector3 & v, const std::vector<short> & c, unsigned int off, float mult )
+    {
+        v.x = v.x + ( float(c.at(off+0)) / float(SHRT_MAX) ) * mult;
+        v.y = v.y + ( float(c.at(off+1)) / float(SHRT_MAX) ) * mult;
+        v.z = v.z + ( float(c.at(off+2)) / float(SHRT_MAX) ) * mult;
+
+        return v;
+    }
+    static Ogre::Vector3 & Adjust( Ogre::Vector3 & v, float mult, float bias )
+    {
+        v.x = v.x * mult + bias;
+        v.y = v.y * mult + bias;
+        v.z = v.z * mult + bias;
+
+        return v;
+    }
+};
+
+template <> struct SplineTraits<Ogre::Quaternion>
+{
+    static Ogre::Quaternion & Init( Ogre::Quaternion & v )
+    {
+        v = Ogre::Quaternion(); v.w = 0.0f; return v;
+    }
+    static int CountOf() { return 4; }
+    static Ogre::Quaternion & Compute( Ogre::Quaternion & v, const std::vector<short> & c, unsigned int off, float mult )
+    {
+        v.w = v.w + ( float(c.at(off+0)) / float(SHRT_MAX) ) * mult;
+        v.x = v.x + ( float(c.at(off+1)) / float(SHRT_MAX) ) * mult;
+        v.y = v.y + ( float(c.at(off+2)) / float(SHRT_MAX) ) * mult;
+        v.z = v.z + ( float(c.at(off+3)) / float(SHRT_MAX) ) * mult;
+
+        return v;
+    }
+    static Ogre::Quaternion & Adjust( Ogre::Quaternion & v, float mult, float bias )
+    {
+        v.w = v.w * mult + bias;
+        v.x = v.x * mult + bias;
+        v.y = v.y * mult + bias;
+        v.z = v.z * mult + bias;
+
+        return v;
+    }
+};
+
+// calculate the blending value
+static float blend( int k, int t, int * u, float v )
+{
+    float value;
+
+    if ( t == 1 ) {
+        // base case for the recursion
+        value = ( ( u[k] <= v ) && ( v < u[k + 1] ) ) ? 1.0f : 0.0f;
+    } else {
+        if ( ( u[k + t - 1] == u[k] ) && ( u[k + t] == u[k + 1] ) ) // check for divide by zero
+            value = 0;
+        else if ( u[k + t - 1] == u[k] )                            // if a term's denominator is zero,use just the other
+            value = ( u[k + t] - v) / ( u[k + t] - u[k + 1] ) * blend( k + 1, t - 1, u, v );
+        else if ( u[k + t] == u[k + 1] )
+            value = (v - u[k]) / (u[k + t - 1] - u[k]) * blend( k, t - 1, u, v );
+        else
+            value = ( v - u[k] ) / ( u[k + t - 1] - u[k] ) * blend( k, t - 1, u, v )
+                    + ( u[k + t] - v ) / ( u[k + t] - u[k + 1] ) * blend( k + 1, t - 1, u, v );
+    }
+
+    return value;
+}
+
+// figure out the knots
+static void compute_intervals( int * u, int n, int t )
+{
+    for ( int j = 0; j <= n + t; j++ ) {
+        if ( j < t )
+            u[j] = 0;
+        else if ( ( t <= j ) && ( j <= n ) )
+            u[j] = j - t + 1;
+        else if ( j > n )
+            u[j] = n - t + 2;  // if n-t=-2 then we're screwed, everything goes to 0
+    }
+}
+
+template <typename T>
+static void compute_point( int * u, int n, int t, float v, const std::vector<short> & control, unsigned int off, T & output, float mult, float bias )
+{
+    // initialize the variables that will hold our output
+    int l = SplineTraits<T>::CountOf();
+    SplineTraits<T>::Init( output );
+
+    for ( int k = 0; k <= n; k++ ) {
+        SplineTraits<T>::Compute( output, control, off+k*l, blend( k, t, u, v ) );
+    }
+
+    SplineTraits<T>::Adjust( output, mult, bias );
+}
+
+template <typename T>
+bool bsplineinterpolate( T & value, int degree, float interval, unsigned int nctrl, const std::vector<short> & array, unsigned int off, float mult, float bias )
+{
+    if ( off == USHRT_MAX )
+        return false;
+
+    int t = degree + 1;
+    int n = nctrl - 1;
+    int l = SplineTraits<T>::CountOf();
+
+    if ( interval >= float(nctrl - degree) ) {
+        SplineTraits<T>::Init( value );
+        SplineTraits<T>::Compute( value, array, off+n*l, 1.0f );
+        SplineTraits<T>::Adjust( value, mult, bias );
+    } else {
+        int * u = new int[ n + t + 1 ];
+        compute_intervals( u, n, t );
+        compute_point( u, n, t, interval, array, off, value, mult, bias );
+        delete [] u;
+    }
+
+    return true;
 }
 } // anon namespace
 
@@ -337,7 +520,28 @@ NiBtOgre::NiMultiTargetTransformController::NiMultiTargetTransformController(uin
     for (unsigned int i = 0; i < mNumExtraTargets; ++i)
     {
         stream.read(mExtraTargets.at(i));
+        // checking for NiNode children not possible since most are yet to be created
+#if 1
         data.addSkelLeafIndex(mExtraTargets.at(i));
+#else
+        // FIXME: is there a better way than doing a string comparison each time?
+        if (mExtraTargets.at(i) != -1 && model.blockType(mExtraTargets.at(i)) == "NiNode")
+        {
+            data.addSkelLeafIndex(mExtraTargets.at(i));
+
+            NiNode *node = model.getRef<NiNode>(mExtraTargets.at(i));
+            const std::vector<NiAVObjectRef>& children = node->getChildren();
+
+            //if (mExtraTargets.at(i) == 182)
+                //std::cout << "stop" << std::endl;
+
+            for (unsigned int j = 0; j < children.size(); ++j)
+            {
+                if (children[j] != -1 && model.blockType(children[j]) == "NiNode")
+                    data.addSkelLeafIndex(children[j]);
+            }
+        }
+#endif
     }
 }
 
@@ -383,18 +587,12 @@ void NiBtOgre::NiMultiTargetTransformController::build(int32_t nameIndex, NiAVOb
     mData.setDoorBoneName(animationId, boneName);
 
 
+    // get all the unique time keys
+    std::vector<float> timeKeys;
 
     // FIXME: handle other types
     if (data->mRotationType == 4) // XYZ
     {
-        //size_t maxKeys = std::max(data->mXRotations.keys.size(), data->mYRotations.keys.size());
-        //maxKeys = std::max(maxKeys, data->mZRotations.keys.size());
-        if (mModel.getModelName() == "meshes\\dungeons\\chargen\\idgate01.nif" &&
-            mModel.indexToString(nameIndex) == "Close")
-            std::cout << time << std::endl;
-
-        std::vector<float> timeKeys;
-        // get all the unique time keys
         std::vector<Key<float> > frames = data->mXRotations.keys;
         for (unsigned int i = 0; i < frames.size(); ++i)
             if (std::find(timeKeys.begin(), timeKeys.end(), frames[i].time) == timeKeys.end())
@@ -407,42 +605,67 @@ void NiBtOgre::NiMultiTargetTransformController::build(int32_t nameIndex, NiAVOb
         for (unsigned int i = 0; i < frames.size(); ++i) // FIXME: repeated code
             if (std::find(timeKeys.begin(), timeKeys.end(), frames[i].time) == timeKeys.end())
                 timeKeys.push_back(frames[i].time);
-
-        // from avakar's answer on https://stackoverflow.com/questions/2758080/how-to-sort-an-stl-vector
-        std::sort(timeKeys.begin(), timeKeys.end(), [] (float const& a, float const& b) { return a < b; });
-
-        for (unsigned int i = 0; i < timeKeys.size(); ++i)
-        {
-            float time = timeKeys[i];
-            float value;
-            int last;
-            if (!interpolate(value, data->mXRotations, time, last)) value = 0.f;
-            Ogre::Quaternion xr(Ogre::Radian(value), Ogre::Vector3::UNIT_X);
-            if (!interpolate(value, data->mYRotations, time, last)) value = 0.f;
-            Ogre::Quaternion yr(Ogre::Radian(value), Ogre::Vector3::UNIT_Y);
-            if (!interpolate(value, data->mZRotations, time, last)) value = 0.f;
-            Ogre::Quaternion zr(Ogre::Radian(value), Ogre::Vector3::UNIT_Z);
-
-            Ogre::Quaternion q(zr*yr*xr);
-            Ogre::TransformKeyFrame *kf = track->createNodeKeyFrame(time);
-            // FIXME: have no idea why inverse is needed
-            // NOTE: commented out since using the delta change hack
-            kf->setRotation(/*interpolator->mRotation.Inverse() * */q);
-
-            // FIXME: dungeons\chargen\idgate01.nif rotation values are wrong (coc "imperialdungeon01")
-#if 0
-            if (mModel.getModelName() == "meshes\\dungeons\\chargen\\idgate01.nif")
-                std::cout << mModel.getModelName() << ": " << animationId << ": time " << time << " roll "
-                          << Ogre::Quaternion(/*interpolator->mRotation.Inverse() * */q).getRoll().valueDegrees()
-                          << std::endl;
-#endif
-        }
     }
 
-    // FIXME
-        //kf->setTranslate();
-        //kf->setScale();
+    if (data->mTranslations.keys.size() > 0)
+    {
+        std::vector<Key<Ogre::Vector3> > frames = data->mTranslations.keys;
+        for (unsigned int i = 0; i < frames.size(); ++i)
+            if (std::find(timeKeys.begin(), timeKeys.end(), frames[i].time) == timeKeys.end())
+                timeKeys.push_back(frames[i].time);
+    }
 
+    // FIXME: find the time keys for scale
+
+    // from avakar's answer on https://stackoverflow.com/questions/2758080/how-to-sort-an-stl-vector
+    std::sort(timeKeys.begin(), timeKeys.end(), [] (float const& a, float const& b) { return a < b; });
+
+    for (unsigned int i = 0; i < timeKeys.size(); ++i)
+    {
+        float time = timeKeys[i];
+        Ogre::TransformKeyFrame *kf = track->createNodeKeyFrame(time);
+
+        if (data->mRotationType == 4) // XYZ
+        {
+            float value;
+            int last;
+            if (!interpolate<float>(value, data->mXRotations, time, last)) value = 0.f;
+            Ogre::Quaternion xr(Ogre::Radian(value), Ogre::Vector3::UNIT_X);
+            if (!interpolate<float>(value, data->mYRotations, time, last)) value = 0.f;
+            Ogre::Quaternion yr(Ogre::Radian(value), Ogre::Vector3::UNIT_Y);
+            if (!interpolate<float>(value, data->mZRotations, time, last)) value = 0.f;
+            Ogre::Quaternion zr(Ogre::Radian(value), Ogre::Vector3::UNIT_Z);
+            Ogre::Quaternion q(zr*yr*xr);
+
+            // NOTE: I have no idea why the inverse is needed
+            //
+            // (COC "ImperialDungeon01") Dungeons\Chargen\IDGate01.NIF (0003665B)
+            // (COW "AnvilWorld" -46 -8) Architecture\StoneWall\StoneWallGateDoor01.NIF (0002595F)
+            // values are 0xff7fffff
+            //if (interpolator->mRotation.w == -3.40282e+38 || interpolator->mRotation.x == -3.40282e+38 ||
+            //    interpolator->mRotation.y == -3.40282e+38 || interpolator->mRotation.z == -3.40282e+38)
+            if (interpolator->mRotation.x < -5000) // some small value
+                kf->setRotation(q);
+            else
+                kf->setRotation(interpolator->mRotation.Inverse() * q);
+        }
+
+        if (data->mTranslations.keys.size() > 0)
+        {
+            Ogre::Vector3 value;
+            int last;
+            if (!interpolate<Ogre::Vector3>(value, data->mTranslations, time, last)) value = Ogre::Vector3(0.f);
+
+            // NOTE: wrong position & rotation fixed by taking away interpolator transform
+            //
+            // (COC "OblivionMqKvatchCitadelHall01" or COW "MS13CheydinhalOblivionWorld" 1 -1)
+            // Oblivion\Architecture\Citadel\Interior\CitadelHall\CitadelHallDoor01Anim.NIF (000182E8)
+            kf->setTranslate(-interpolator->mTranslation + value);
+        }
+
+        // FIXME
+        //kf->setScale();
+    }
 }
 
 NiBtOgre::NiSingleInterpController::NiSingleInterpController(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)

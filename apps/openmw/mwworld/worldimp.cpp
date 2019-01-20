@@ -1557,6 +1557,9 @@ namespace MWWorld
                     Ogre::Quaternion q = bones[i]->getOrientation();
                     Ogre::Quaternion qb = bones[i]->_getBindingPoseInverseOrientation();
                     mWorldScene->rotateSubObjectLocalRotation(it->first, bones[i]->getName(), q * qb);
+                    Ogre::Vector3 v = bones[i]->getPosition();
+                    Ogre::Vector3 vb = bones[i]->_getBindingPoseInversePosition();
+                    mWorldScene->moveSubObjectLocalPosition(it->first, bones[i]->getName(), v + vb);
                 }
 
 
@@ -1585,6 +1588,9 @@ namespace MWWorld
                     Ogre::Quaternion q = bones[i]->getOrientation();
                     Ogre::Quaternion qb = bones[i]->_getBindingPoseInverseOrientation();
                     mWorldScene->rotateSubObjectLocalRotation(it->first, bones[i]->getName(), q * qb);
+                    Ogre::Vector3 v = bones[i]->getPosition();
+                    Ogre::Vector3 vb = bones[i]->_getBindingPoseInversePosition();
+                    mWorldScene->moveSubObjectLocalPosition(it->first, bones[i]->getName(), v + vb);
                 }
 
                 if (finished)

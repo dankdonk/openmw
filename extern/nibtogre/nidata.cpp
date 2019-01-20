@@ -340,6 +340,10 @@ NiBtOgre::NiIntegerExtraData::NiIntegerExtraData(uint32_t index, NiStream& strea
 {
     stream.read(mIntegerData);
 
+    /* ---------------------------------------------------------------------- */
+
+    // FIXME: this probably doesn't belong here
+    //        used by NiNode and NiTriBasedGeom
     if ((model.indexToString(mName) == "BSX") && ((mIntegerData & 0x20) != 0))
         data.mEditorMarkerPresent = true;
         //std::cout << "EditorMarker present : " << model.getModelName() << std::endl;

@@ -61,11 +61,12 @@ namespace NiBtOgre
 
     class NiNode : public NiAVObject
     {
-        std::string mNodeName; // cached since used frequently
+        std::string mNodeName; // cached here since used frequently
+        NiNode *mParent;       // cached here since used frequently
 
         std::vector<NiNodeRef> mChildBoneNodes; // FIXME: experimental for building a skeleton
 
-        void buildTES3(Ogre::SceneNode *sceneNode, BtOgreInst *inst, NiObject *parentNiNode = nullptr);
+        //void buildTES3(Ogre::SceneNode *sceneNode, BtOgreInst *inst, NiObject *parentNiNode = nullptr);
 
     protected:
         std::vector<NiAVObjectRef>      mChildren;
@@ -79,20 +80,17 @@ namespace NiBtOgre
         virtual void build(BtOgreInst *inst, ModelData *data, NiObject *parentNiNode = nullptr);
 
         // For NiGeometry children (e.g. NiTriStrips)
-        virtual inline const std::string& getNodeName() const { return mNodeName; }
+        inline const std::string& getNiNodeName() const { return mNodeName; }
+        inline const NiNode& getParentNiNode() const { return *mParent; }
 
         // Returns true if skeleton root is found
-        virtual void findBones(const NiNodeRef skeletonRoot, const NiNodeRef childNode); // FIXME: experimental
-        virtual void findBones(std::int32_t rootIndex); // FIXME: experimental
+        void findBones(const NiNodeRef skeletonRoot, const NiNodeRef childNode); // FIXME: experimental
+        void findBones(std::int32_t rootIndex);                                  // FIXME: experimental
 
-        virtual void addBones(Ogre::Skeleton *skeleton,
+        void addBones(Ogre::Skeleton *skeleton,
                 Ogre::Bone *parentBone, std::map<std::uint32_t, std::uint16_t>& indexToHandle);
 
-        virtual NiNode *getParentNode();
-
-        //const std::vector<NiNodeRef>& getChildBones() { return mChildBoneNodes; }
-        //void clearSkeleton(); // FIXME: experimental
-        //void buildSkeleton(BtOgreInst *inst, NiSkinInstanceRef skinInstanceIndex); // FIXME: experimental
+        const std::vector<NiAVObjectRef>& getChildren() const { return mChildren; }
     };
 
     typedef NiNode AvoidNode;

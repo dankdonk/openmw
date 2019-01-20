@@ -1585,9 +1585,12 @@ btCollisionShape *NiBtOgre::bhkRigidBody::getShape(NiAVObject *target)
     if (mShapeIndex == -1) // nothing to build
         return nullptr;
 
-    // This is just a hack to workaround my inability to get the right transforms applied to
-    // the bullet shapes.  For any animated shapes, it should be possible to have the
-    // btRigidBody to take the world transform from the NiNode from which it is attached.
+    // FIXME: physics shape incorrect
+    // (COC "OblivionMqKvatchCitadelHall01" or COW "MS13CheydinhalOblivionWorld" 1 -1)
+    // Oblivion\Architecture\Citadel\Interior\CitadelHall\CitadelHallDoor01Anim.NIF (000182E8)
+
+    // For any animated shapes, it should be possible to have the btRigidBody to take the world
+    // transform from the NiNode from which it is attached.
     //
     // For example, see impDunDoor02.nif.  The transform of the moving part (NiNode
     // impDunDoor02b) is offset from the center towards the hinges and bhkRigidBodyT has its
@@ -1596,11 +1599,11 @@ btCollisionShape *NiBtOgre::bhkRigidBody::getShape(NiAVObject *target)
     //
     // However, this arrangement seems to break some NIFs (e.g. TargetHeavy01.NIF), especially
     // those with scaling.  Someone with a better understanding of the maths will need to
-    // examine and re-write some of the code and complicated workarounds.
+    // examine and re-write some of the code.
     //
-    // Another workaround is due to some shapes not being able to take world transform
-    // rotations (e.g. btBvhTriangleMeshShape).  These (static) shapes need all the transforms
-    // from the root NiNode baked into the vertices.
+    // One workaround is due to some shapes not being able to take world transform rotations
+    // (e.g. btBvhTriangleMeshShape).  These (static) shapes need all the transforms from the
+    // root NiNode baked into the vertices.
     //
     // Note that checking for the mass value does not guarantee that the shape is static.  Some
     // animated shapes have zero mass (e.g. impDunDoor02b).
@@ -1618,8 +1621,10 @@ btCollisionShape *NiBtOgre::bhkRigidBody::getShape(NiAVObject *target)
     btTransform transform;
     bhkShape *shape = mModel.getRef<bhkShape>(mShapeIndex);
     std::string targetName = mModel.indexToString(target->getNameIndex());
-//  if (mModel.blockType(target->index()) == "NiTriStrips")
-//      std::cout << "stop" << std::endl;
+    //  at least one shape's parent is NiTriStrips:
+    //  FIXME: physics shape if a little offset from the render
+    //  Furniture\MiddleClass\BearSkinRug01.NIF (0001C7CA)
+    //  COC "ICMarketDistrictJensinesGoodasNewMerchandise"
 
     bool useFullTransform
         =  (

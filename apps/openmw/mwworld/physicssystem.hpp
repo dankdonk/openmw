@@ -55,6 +55,8 @@ namespace MWWorld
 
             void rotateObject (const MWWorld::Ptr& ptr);
 
+            void moveSubObject (const MWWorld::Ptr& ptr,
+                    const std::string& boneName, const Ogre::Vector3& position);
             void rotateSubObject (const MWWorld::Ptr& ptr,
                     const std::string& boneName, const Ogre::Quaternion& rotation);
 

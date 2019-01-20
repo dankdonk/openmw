@@ -67,6 +67,8 @@ namespace NiBtOgre
         bool mDirtyFlag;
         std::vector<NiPropertyRef> mBSProperties;
 
+        const NiNode& mParent;         // cached here
+
         NiGeometry(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
     };
 
@@ -79,8 +81,6 @@ namespace NiBtOgre
         // NiTriStrips builds differently to NiTriShapes only in that the data are different
         bool createSubMesh(Ogre::Mesh *mesh, BoundsFinder& bounds); // returns true if tangents needed
 
-        const Ogre::Matrix4& getWorldTransform();
-
     private:
 
         const ModelData& mData;
@@ -88,8 +88,6 @@ namespace NiBtOgre
         void buildTES3(Ogre::SceneNode *sceneNode, BtOgreInst *inst, NiObject *parentNiNode = nullptr);
 
         std::string getMaterial();
-
-        NiNode *mParent; // a bit hacky, store for use with createSubMesh() later
 
         OgreMaterial mOgreMaterial;
     };

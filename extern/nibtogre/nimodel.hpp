@@ -55,6 +55,7 @@ namespace NiBtOgre
     struct NiTriBasedGeom;
     struct BtOgreInst;
     class NiModel;
+    class NiNode;
 
     struct ModelData
     {
@@ -70,11 +71,16 @@ namespace NiBtOgre
         typedef std::int32_t bhkEntityRef;
         typedef std::int32_t NiTimeControllerRef;
 
-        std::map<NiAVObjectRef, NiNodeRef> mNiNodeMap; // keep track of parent NiNode index
-        void setNiNodeParent(NiAVObjectRef child, NiNodeRef parent);
+        // helper to get pointer to parent NiNode
+        std::map<NiAVObjectRef, NiNode*> mNiNodeMap;
+        void setNiNodeParent(NiAVObjectRef child, NiNode *parent);
+        /*const*/ NiNode& getNiNodeParent(NiAVObjectRef child) const;
 
         std::vector<NiNodeRef> mSkelLeafIndicies; // tempoarily used to find the bones
         void addSkelLeafIndex(NiNodeRef leaf) { mSkelLeafIndicies.push_back(leaf); }
+        void addNewSkelLeafIndex(NiNodeRef leaf);
+        inline bool hasSkeleton() const { return !mSkeleton.isNull(); }
+        bool hasBoneLeaf(NiNodeRef leaf) const;
 
         std::unique_ptr<SkeletonLoader> mSkeletonLoader;
 
@@ -85,10 +91,7 @@ namespace NiBtOgre
         //        v                    v
         std::map<NiNodeRef, std::pair<std::string, std::unique_ptr<MeshLoader> > > mMeshLoaders;
 
-        // nodeIndex = parent NiNode's block index
-        // name      = concatenation of model, "@", parent NiNode name
-        //             (e.g. meshes\\architecture\\imperialcity\\icwalltower01.nif@ICWallTower01)
-        void registerNiTriBasedGeom(std::uint32_t nodeIndex, const std::string& name, NiTriBasedGeom* geometry);
+        void registerNiTriBasedGeom(const NiNode& parent, NiTriBasedGeom* geometry);
 
         // The btCollisionShape for btRigidBody corresponds to an Ogre::Entity whose Ogre::SceneNode
         // may be controlled for Ragdoll animations.  So we just really need the Model name,
@@ -111,8 +114,6 @@ namespace NiBtOgre
 
         std::map<NiTimeControllerRef, std::vector<int> > mGeomMorpherControllerMap;
 
-        //  FIXME: assumes only one bone per animation!
-        //
         //       animation name  bone name
         //            |            |
         //            v            v
@@ -230,14 +231,11 @@ namespace NiBtOgre
 
         inline bool showEditorMarkers() const { return mShowEditorMarkers; }
 
-        std::int32_t getNiNodeParent(std::int32_t child) const;
         std::uint32_t getRootIndex() const { return mRoots[0]; } // assumes only one root
 
         typedef std::int32_t NiNodeRef;
         const std::map<NiNodeRef, /*std::pair<std::string,*/ int32_t/*>*/ >&
             getBhkRigidBodyMap() const { return mModelData.mBhkRigidBodyMap; }
-
-        bool hasSkeleton() const { return !mModelData.mSkeleton.isNull(); }
 
         //const std::map<NiNodeRef, int32_t>& getBhkRigidBodyMap() const { return mModelData.mBhkRigidBocyMap; }
 

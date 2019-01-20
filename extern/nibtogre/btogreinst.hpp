@@ -66,29 +66,6 @@ namespace NiBtOgre
         Flag_None               = 0x0000
     };
 
-    // Associating controllers with Sub-Entities
-    // =========================================
-    //
-    // NiNode::build                               | iterate through NiNode children
-    //   NiGeometry::build                         | NiTriShape/NiTriStrips is a sub-mesh
-    //   : BtOgreInst::registerNiGeometry          |
-    //   :   NiMeshLoader::registerSubMeshGeometry | store pointer to sub-mesh
-    //   :                                         |
-    //   BtOgreInst::buildMeshAndEntity            |
-    //     Ogre::MeshManager::createManual         | register unique mesh name and associated loader
-    //     Ogre::SceneManager::createEntity        | load the mesh using the unique name
-    //     :    |                                  |
-    //     :    |                                  | callback via Ogre::ManualResourceLoader
-    //     :    v                                  |
-    //     : NiMeshLoader::loadResource            | build the mesh (using stored sub-mesh pointers)
-    //     :   NiGeometry::createSubMesh           |
-    //     :     NiGeometry::applyProperties       | 0..N properties each with 0..N controllers
-    //     :     :
-    //     :     :<-------------------------------------- assess properties and apply material here?
-    //     :
-    //     :<-------------------------------------------- associate controllers to sub-entities here?
-    //
-    // TODD: lifetime of NiGeometry?  Mesh loader will reference it later.
     struct BtOgreInst
     {
         // A NiNode with NiGeometry children may be an Ogre::Entity.

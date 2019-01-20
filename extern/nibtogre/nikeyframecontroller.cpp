@@ -27,9 +27,11 @@
 
 #include <cassert>
 #include <stdexcept>
+#include <iostream> // FIXME
 
 #include "nistream.hpp"
 #include "nimodel.hpp"
+#include "ninode.hpp"
 
 #ifdef NDEBUG // FIXME: debugging only
 #undef NDEBUG
@@ -41,7 +43,31 @@ NiBtOgre::NiKeyframeController::NiKeyframeController(uint32_t index, NiStream& s
     if (stream.nifVer() <= 0x0a010000) // up to 10.1.0.0
         stream.read(mDataIndex);
 
-    data.addSkelLeafIndex(NiTimeController::mTargetIndex); // FIXME: do this for old NIF versions only?
+#if 1
+    if (model.blockType(NiTimeController::mTargetIndex) == "NiNode")
+        data.addSkelLeafIndex(NiTimeController::mTargetIndex); // FIXME: do this for old NIF versions only?
+#else
+    // FIXME: is there a better way than doing a string comparison each time?
+    if (model.blockType(NiTimeController::mTargetIndex) == "NiNode")
+    {
+        data.addSkelLeafIndex(NiTimeController::mTargetIndex);
+
+        NiNode *node = model.getRef<NiNode>(NiTimeController::mTargetIndex);
+        const std::vector<NiAVObjectRef>& children = node->getChildren();
+
+        if (NiTimeController::mTargetIndex == 182)
+            std::cout << "stop" << std::endl;
+
+        for (unsigned int i = 0; i < children.size(); ++i)
+        {
+            if (children[i] == -1)
+                continue;
+
+            if (model.blockType(children[i]) == "NiNode")
+                data.addSkelLeafIndex(children[i]);
+        }
+    }
+#endif
 }
 
 NiBtOgre::NiTimeControllerRef NiBtOgre::NiKeyframeController::build(std::vector<Ogre::Controller<float> > & controllers, Ogre::Mesh *mesh)

@@ -79,10 +79,7 @@ namespace NiBtOgre
         NiObject(std::uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
             : mSelfIndex(index), mModel(model)  {}
 
-        std::uint32_t index() const { return mSelfIndex; }
-
-        // FIXME: experimental
-        virtual void findBones(std::int32_t rootIndex) {};
+        inline std::uint32_t index() const { return mSelfIndex; }
 
     protected:
         NiObject() = default;  // disallow the default constructor in derived classes

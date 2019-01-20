@@ -55,7 +55,7 @@ void NiBtOgre::MeshLoader::loadResource(Ogre::Resource *resource)
     // an Ogre::SubMesh for each in mSubMeshGeometry
     for (size_t i = 0; i < mSubMeshGeometry.size(); ++i)
     {
-        needTangents |= mSubMeshGeometry[i]->createSubMesh(mesh, bounds);
+        needTangents |= mSubMeshGeometry.at(i)->createSubMesh(mesh, bounds);
     }
 
     // build tangents if at least one of the sub-mesh's material needs them

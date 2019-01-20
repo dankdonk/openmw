@@ -42,6 +42,7 @@
 #include "btogreinst.hpp"
 #include "meshloader.hpp"
 #include "skeletonloader.hpp"
+#include "ninode.hpp"
 
 
 // "name" is the full path to the mesh from the resource directory/BSA added to Ogre::ResourceGroupManager.
@@ -131,15 +132,16 @@ void NiBtOgre::NiModel::loadImpl()
         //std::cout << "roots " << mHeader.blockType(mRoots[0]) << std::endl;
 
     // find the bones, if any
-    if (mModelData.mSkelLeafIndicies.size() > 1) // FIXME: testing
-    for (unsigned int i = 0; i < mModelData.mSkelLeafIndicies.size(); ++i)
-        mObjects[mModelData.mSkelLeafIndicies[i]]->findBones(mRoots[0]);
+    // FIXME: mRoots[0] is just an assumption
+    if (mModelData.mSkelLeafIndicies.size() > 1)
+        for (unsigned int i = 0; i < mModelData.mSkelLeafIndicies.size(); ++i)
+            getRef<NiNode>(mModelData.mSkelLeafIndicies[i])->findBones(mRoots[0]);
 }
 
 void NiBtOgre::NiModel::build(BtOgreInst *inst)
 {
     // FIXME: model name can clash with TES3 model names, e.g. characters/_male/skeleton.nif
-    if (mModelData.mSkelLeafIndicies.size() > 1) // FIXME: testing
+    if (mModelData.mSkelLeafIndicies.size() > 1)
     {
         mModelData.mSkeletonLoader = std::make_unique<SkeletonLoader>(*this);
 
@@ -189,15 +191,6 @@ void NiBtOgre::NiModel::build(BtOgreInst *inst)
 //  {
 //      //inst->mbhkConstraints[i].first->linkBodies(inst, inst->mbhkConstraints[i].second);
 //  }
-}
-
-std::int32_t NiBtOgre::NiModel::getNiNodeParent(std::int32_t child) const
-{
-    std::map<std::int32_t, std::int32_t>::const_iterator it = mModelData.mNiNodeMap.find(child);
-    if (it != mModelData.mNiNodeMap.cend())
-        return it->second;
-    else
-        throw std::logic_error("NiNode parent map: parent not found");
 }
 
 // FIXME: maybe pass a parameter here indicating static mesh? (create a "static" group?)
@@ -378,12 +371,12 @@ void NiBtOgre::NiModel::buildMeshAndEntity(BtOgreInst* inst)
 #endif
 }
 
-void NiBtOgre::ModelData::setNiNodeParent(std::int32_t child, std::int32_t parent)
+void NiBtOgre::ModelData::setNiNodeParent(NiAVObjectRef child, NiNode *parent)
 {
     //if (child == -1) // already checked in NiNode before calling this method
         //return;
 
-    std::map<std::int32_t, std::int32_t >::iterator lb = mNiNodeMap.lower_bound(child);
+    std::map<NiAVObjectRef, NiNode*>::iterator lb = mNiNodeMap.lower_bound(child);
 
     if (lb != mNiNodeMap.end() && !(mNiNodeMap.key_comp()(child, lb->first)))
     {
@@ -395,9 +388,32 @@ void NiBtOgre::ModelData::setNiNodeParent(std::int32_t child, std::int32_t paren
         mNiNodeMap.insert(lb, std::make_pair(child, parent)); // None found, create one
 }
 
-// prepare for building the mesh
-void NiBtOgre::ModelData::registerNiTriBasedGeom(std::uint32_t nodeIndex, const std::string& name, NiTriBasedGeom* geometry)
+/*const*/ NiBtOgre::NiNode& NiBtOgre::ModelData::getNiNodeParent(NiAVObjectRef child) const
 {
+    std::map<NiAVObjectRef, NiNode*>::const_iterator it = mNiNodeMap.find(child);
+    if (it != mNiNodeMap.cend())
+        return *it->second;
+    else
+        throw std::logic_error("NiNode parent map: parent not found");
+}
+
+// prepare for building the mesh
+void NiBtOgre::ModelData::registerNiTriBasedGeom(const NiNode& parent, NiTriBasedGeom* geometry)
+{
+    // The model name and parent node name are concatenated for use with Ogre::MeshManager
+    // without triggering exeptions due to duplicates.
+    // e.g. meshes\\architecture\\imperialcity\\icwalltower01.nif@ICWallTower01
+    //
+    // FIXME: probably should normalise the names to lowercase
+    // FIXME: failsafe - check if mParent->getNodeName() returns blank, in which case use block number?
+    // FIXME: consider the use of a hash (possibly the same as BSA) + block number for performance
+    std::string name = mModel.getModelName()+"@"+parent.getNiNodeName();
+    NiNodeRef nodeIndex = parent.index();
+
+    // FIXME: checking the parent's block name feels wrong
+    if (!mModel.showEditorMarkers() && mEditorMarkerPresent && (parent.getNiNodeName() == "EditorMarker"))
+        return;
+
     std::map<NiNodeRef, std::pair<std::string, std::unique_ptr<MeshLoader> > >::iterator lb
         = mMeshLoaders.lower_bound(nodeIndex);
 
@@ -413,30 +429,15 @@ void NiBtOgre::ModelData::registerNiTriBasedGeom(std::uint32_t nodeIndex, const 
         loader->registerSubMeshGeometry(geometry);
         mMeshLoaders.insert(lb, std::make_pair(nodeIndex, std::make_pair(name, std::move(loader))));
     }
-#if 0
-    std::map<std::uint32_t, EntityConstructionInfo>::iterator lb = mEntityCIMap.lower_bound(nodeIndex);
-    if (lb != mEntityCIMap.end() && !(mEntityCIMap.key_comp()(nodeIndex, lb->first)))
-    {
-        // A construction info for this block index exists already, just add to it
-        /*std::uint32_t subIndex = */lb->second.mMeshLoader->registerMeshGeometry(geometry);
+}
 
-        // assess properties and add any controllers
-        //geometry->assessProperties(lb->second.mSubEntityControllers[subIndex]);
-    }
-    else
-    {
-        // A construction info with this block index not found, create one
-        std::auto_ptr<NiMeshLoader> loader(new NiMeshLoader(this));
-        std::uint32_t subIndex = loader->registerMeshGeometry(geometry); // subIndex should be 0
+void NiBtOgre::ModelData::addNewSkelLeafIndex(NiNodeRef leaf)
+{
+    if (std::find(mSkelLeafIndicies.begin(), mSkelLeafIndicies.end(), leaf) == mSkelLeafIndicies.end())
+        mSkelLeafIndicies.push_back(leaf);
+}
 
-        EntityConstructionInfo entityCI;
-        entityCI.mMeshAndNodeName = name;
-        entityCI.mMeshLoader = loader;//std::move(loader);
-
-        // assess properties and add any controllers
-        //geometry->assessProperties(entityCI.mSubEntityControllers[subIndex]);
-
-        mEntityCIMap.insert(lb, std::make_pair(nodeIndex, entityCI));
-    }
-#endif
+bool NiBtOgre::ModelData::hasBoneLeaf(NiNodeRef leaf) const
+{
+     return std::find(mSkelLeafIndicies.begin(), mSkelLeafIndicies.end(), leaf) != mSkelLeafIndicies.end();
 }

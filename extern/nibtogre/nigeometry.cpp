@@ -54,6 +54,7 @@
 
 NiBtOgre::NiGeometry::NiGeometry(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
     : NiAVObject(index, stream, model, data), mHasShader(false), mDirtyFlag(false)
+    , mParent(data.getNiNodeParent((NiAVObjectRef)NiObject::mSelfIndex))
 {
 #if 0
     // Some NiTriShapes are "Shadow", possibly simplified mesh for animated (i.e. non-static)
@@ -112,41 +113,21 @@ NiBtOgre::NiGeometry::NiGeometry(uint32_t index, NiStream& stream, const NiModel
 NiBtOgre::NiTriBasedGeom::NiTriBasedGeom(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
     : NiGeometry(index, stream, model, data), mData(data) // for accessing mSkeleton later
 {
-    // The model name and parent node name are concatenated for use with Ogre::MeshManager
-    // without triggering exeptions due to duplicates.
-    // e.g. meshes\\architecture\\imperialcity\\icwalltower01.nif:ICWallTower01
-    //
-    // FIXME: probably should normalise the names to lowercase
-    // FIXME: failsafe - check if mParent->getNodeName() returns blank, in which case use block number
-    // FIXME: consider the use of a hash (possibly the same as BSA) + block number for performance
-    const NiNode* parentNode
-        = NiObject::mModel.getRef<NiNode>(NiObject::mModel.getNiNodeParent(NiObject::index()));
-
-    if (!mModel.showEditorMarkers() && data.mEditorMarkerPresent && (parentNode->getNodeName() == "EditorMarker"))
-    {
-        return;
-    }
-
-    data.registerNiTriBasedGeom(parentNode->index(), mModel.getModelName()+"@"+parentNode->getNodeName(), this);
-}
-//#if 0
-// FIXME: temp testing
-const Ogre::Matrix4& NiBtOgre::NiTriBasedGeom::getWorldTransform()
-{
     mLocalTransform.makeTransform(mTranslation, Ogre::Vector3(mScale), Ogre::Quaternion(mRotation));
+    if (mCollisionObjectIndex != -1)
+        NiAVObject::mWorldTransform = NiGeometry::mParent.getWorldTransform() * mLocalTransform;
 
-    NiNode * parentNode = mModel.getRef<NiNode>(mModel.getNiNodeParent(NiObject::index()));
-    mWorldTransform = static_cast<NiAVObject*>(parentNode)->getWorldTransform() * mLocalTransform;
+    data.registerNiTriBasedGeom(NiGeometry::mParent, this);
 
-    return mWorldTransform;
+    // if there is node animation in the model add any rendering to be part of the animation
+    // HACK for testing; may add bones that are not necessary
+    if (data.mSkelLeafIndicies.size() > 0 && model.blockType(mParent.index()) == "NiNode")
+        data.addSkelLeafIndex(mParent.index()); // may attempt to add bones already added
 }
-//#endif
+
 // actual build happens later, after the parent NiNode has processed all its children
 void NiBtOgre::NiTriBasedGeom::build(BtOgreInst *inst, NiObject *parent)
 {
-    // FIXME: seems rather hacky, but needed to access parent and/or world transforms
-    mParent = static_cast<NiNode*>(parent);
-
     // FIXME: move the flags to NiModel::mModelData
     if (mSkinInstanceIndex != -1)
         inst->mFlags |= Flag_HasSkin;
@@ -277,19 +258,16 @@ bool NiBtOgre::NiTriBasedGeom::createSubMesh(Ogre::Mesh *mesh, BoundsFinder& bou
     bool isStatic = true;
 #endif
 
-    Ogre::Matrix4 localTransform = Ogre::Matrix4(Ogre::Matrix4::IDENTITY);
-    localTransform.makeTransform(NiAVObject::mTranslation,
-                                 Ogre::Vector3(NiAVObject::mScale),
-                                 Ogre::Quaternion(NiAVObject::mRotation));
-
-    /*const*/ NiNode* parentNode
-        = NiObject::mModel.getRef<NiNode>(NiObject::mModel.getNiNodeParent(NiObject::index()));
+//  Ogre::Matrix4 localTransform = Ogre::Matrix4(Ogre::Matrix4::IDENTITY);
+//  localTransform.makeTransform(NiAVObject::mTranslation,
+//                               Ogre::Vector3(NiAVObject::mScale),
+//                               Ogre::Quaternion(NiAVObject::mRotation));
 
     Ogre::Matrix4 transform = Ogre::Matrix4(Ogre::Matrix4::IDENTITY);
     if (!isStatic)
-        transform = parentNode->getLocalTransform() * localTransform;
+        transform = mParent.getLocalTransform() * mLocalTransform;
     else
-        transform = parentNode->getWorldTransform() * localTransform;
+        transform = mParent.getWorldTransform() * mLocalTransform;
 
     // NOTE: below code copied from components/nifogre/mesh.cpp (OpenMW)
 
@@ -484,7 +462,7 @@ bool NiBtOgre::NiTriBasedGeom::createSubMesh(Ogre::Mesh *mesh, BoundsFinder& bou
         for(size_t i = 0; i < skinInstance->mBones.size(); ++i)
         {
             Ogre::VertexBoneAssignment boneInf;
-            std::string nodeName = mModel.getRef<NiNode>(skinInstance->mBones[i])->getNodeName();
+            std::string nodeName = mModel.getRef<NiNode>(skinInstance->mBones[i])->getNiNodeName();
             boneInf.boneIndex = mData.mSkeleton->getBone(nodeName)->getHandle();
 
             const std::vector<NiSkinData::SkinData::SkinWeight> &weights = data->mBoneList[i].vertexWeights;
@@ -496,25 +474,38 @@ bool NiBtOgre::NiTriBasedGeom::createSubMesh(Ogre::Mesh *mesh, BoundsFinder& bou
             }
         }
     } // mSkinInstanceIndex != -1
-    else if (!mData.mSkeleton.isNull() // FIXME: this if block is just an experiment
-             &&
-             std::find(mData.mSkelLeafIndicies.begin(), mData.mSkelLeafIndicies.end(),
-                       NiObject::mModel.getNiNodeParent(NiObject::index())) != mData.mSkelLeafIndicies.end())
+    else if (mData.hasSkeleton() && mData.mSkeleton->hasBone(mParent.getNiNodeName()))
     {
-        mesh->setSkeletonName(mModel.getModelName());
+        // for node animation
 
-        std::string nodeName = parentNode->getNodeName();
-        if (mData.mSkeleton->hasBone(nodeName))
+        // Architecture\Anvil\BenirusDoor01.NIF (0001D375)
+        // the issue seems to be that the child nodes are not being moved
+        // (more bones were added but that doesn't seem to have helped)
+        //
+        //if (mParent.getNiNodeName() != "gear 13")
         {
-            Ogre::VertexBoneAssignment boneInf;
-            boneInf.boneIndex = mData.mSkeleton->getBone(nodeName)->getHandle();
 
-            for (unsigned int j = 0; j < srcVerts.size(); ++j)
-            {
-                boneInf.vertexIndex = j;
-                boneInf.weight = 1.f; // FIXME: hope this is correct
-                sub->addBoneAssignment(boneInf);
-            }
+
+
+
+
+
+        mesh->setSkeletonName(mModel.getModelName()); // FIXME: not the best place from a SubMesh?
+
+        Ogre::VertexBoneAssignment boneInf;
+        boneInf.boneIndex = mData.mSkeleton->getBone(mParent.getNiNodeName())->getHandle();
+
+        for (unsigned int j = 0; j < srcVerts.size(); ++j)
+        {
+            boneInf.vertexIndex = j;
+            boneInf.weight = 1.f; // FIXME: hope this is correct
+            sub->addBoneAssignment(boneInf);
+        }
+
+
+
+
+
         }
     }
 

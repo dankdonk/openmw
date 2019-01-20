@@ -471,11 +471,8 @@ namespace Physic
             std::string lowerMesh = /*mesh*/outputstring;
             Misc::StringUtils::lowerCaseInPlace(lowerMesh);
 
-            if (lowerMesh == "meshes\\characters\\_male\\skeleton.nif001.000")
+            if (lowerMesh.find("skeleton") != std::string::npos)// == "meshes\\characters\\_male\\skeleton.nif001.000")
                 std::cout << "skeleton" << std::endl;
-
-            // FIXME
-            std::map<std::string, RigidBody*> tmpMap;
 
             BtRigidBodyCIPtr ci
                 = NiBtOgre::BtRigidBodyCIManager::getSingleton().getOrLoadByName(lowerMesh, "General");
@@ -542,6 +539,7 @@ namespace Physic
                     btTransform bt(btQuaternion(q.x, q.y, q.z, q.w), btVector3(p.x, p.y, p.z));
 
                     body->setWorldTransform(bt);
+                    body->mBindingPosition = btVector3(p.x, p.y, p.z);
                     body->mBindingOrientation = btQuaternion(q.x, q.y, q.z, q.w);
                     body->mTargetName = iter->first;
 #endif

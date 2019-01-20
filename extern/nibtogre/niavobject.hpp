@@ -60,17 +60,8 @@ namespace NiBtOgre
         NiAVObject(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
         virtual ~NiAVObject() {}
 
-        // parentNiNode is used to calculate the world transform
-        //virtual void build(BtOgreInst *inst, NiObject *parentNiNode = nullptr);
-
-#if 0
-        /*inline*/ const Ogre::Matrix4& getWorldTransform();// const { return mWorldTransform; }
-#else
-        /*inline*/ virtual const Ogre::Matrix4& getWorldTransform() /*const*/ { return mWorldTransform; }
-#endif
+        inline const Ogre::Matrix4& getWorldTransform() const { return mWorldTransform; }
         inline const Ogre::Matrix4& getLocalTransform() const { return mLocalTransform; }
-
-        void setHasAnim() { mHasAnim = true; }
 
     protected:
         std::uint16_t mFlags;
@@ -91,7 +82,7 @@ namespace NiBtOgre
 
         NiCollisionObjectRef mCollisionObjectIndex; // from 10.0.1.0
 
-        bool mHasAnim;
+        bool mHasAnim; // FIXME: can't remember the purpose
     };
 
     class NiCamera : public NiAVObject

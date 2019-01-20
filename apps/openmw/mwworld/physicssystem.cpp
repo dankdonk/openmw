@@ -846,6 +846,67 @@ namespace MWWorld
     }
 
     // FIXME: test code for doors only
+    void PhysicsSystem::moveSubObject (const MWWorld::Ptr& ptr, const std::string& boneName, const Ogre::Vector3& position)
+    {
+        Ogre::SceneNode* node = ptr.getRefData().getBaseNode();
+        const std::string &handle = node->getName();
+
+        if (OEngine::Physic::RigidBody* body = mEngine->getRigidBody(handle))
+        {
+            // ignore static
+            if (body->getCollisionShape()->getUserIndex() == 4)
+                return;
+
+            // move parent
+            if (body->mTargetName == boneName)
+            {
+                body-> getWorldTransform().setOrigin(
+                    btVector3(position.x, position.y, position.z) + body->mBindingPosition);
+
+                mEngine->mDynamicsWorld->updateSingleAabb(body);
+            }
+
+            // move children
+            std::map<std::string, OEngine::Physic::RigidBody*>::const_iterator iter = body->mChildren.find(boneName);
+            if (iter != body->mChildren.end())
+            {
+                iter->second->getWorldTransform().setOrigin(
+                    btVector3(position.x, position.y, position.z) + iter->second->mBindingPosition);
+
+                mEngine->mDynamicsWorld->updateSingleAabb(iter->second);
+            }
+        }
+
+        if (OEngine::Physic::RigidBody* body = mEngine->getRigidBody(handle, true))
+        {
+            // ignore static
+            if (body->getCollisionShape()->getUserIndex() == 4)
+                return;
+
+            // move parent
+            if (body->mTargetName == boneName)
+            {
+                body-> getWorldTransform().setOrigin(
+                    btVector3(position.x, position.y, position.z) + body->mBindingPosition);
+
+                mEngine->mDynamicsWorld->updateSingleAabb(body);
+            }
+
+            // move children
+            std::map<std::string, OEngine::Physic::RigidBody*>::const_iterator iter
+                = body->mChildren.find(boneName);
+
+            if (iter != body->mChildren.end())
+            {
+                iter->second->getWorldTransform().setOrigin(
+                    btVector3(position.x, position.y, position.z) + iter->second->mBindingPosition);
+
+                mEngine->mDynamicsWorld->updateSingleAabb(iter->second);
+            }
+        }
+    }
+
+    // FIXME: test code for doors only
     void PhysicsSystem::rotateSubObject (const MWWorld::Ptr& ptr, const std::string& boneName, const Ogre::Quaternion& rotation)
     {
         Ogre::SceneNode* node = ptr.getRefData().getBaseNode();

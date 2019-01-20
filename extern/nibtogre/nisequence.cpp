@@ -223,7 +223,7 @@ void NiBtOgre::NiControllerSequence::build(const NiDefaultAVObjectPalette* objec
         if (!target)
             continue;
 
-        target->setHasAnim();
+        //target->setHasAnim();
 
         if (ctlrTypeName == "NiGeomMorpherController")
         {

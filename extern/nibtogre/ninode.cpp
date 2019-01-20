@@ -49,8 +49,12 @@
 //       RootCollisionNode seems to be the last of the children
 //
 // TES4/5: - use bhk* objects for collision
+//
+// The node name is also used as bone names for those meshes with skins.
+// Bipeds seems to have a predefined list of bones. See: meshes/armor/legion/m/cuirass.nif
 NiBtOgre::NiNode::NiNode(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
     : NiAVObject(index, stream, model, data)
+    , mNodeName(model.indexToString(NiObjectNET::mNameIndex))
 {
     //stream.readVector<NiAVObjectRef>(mChildren);
     std::uint32_t numChildren = 0;
@@ -62,11 +66,8 @@ NiBtOgre::NiNode::NiNode(uint32_t index, NiStream& stream, const NiModel& model,
         stream.read(mChildren.at(i));
 
         // store node hierarchy in mModel to help find & build skeletons and meshes
-        //
-        // TODO: run the loop second time for this and only do it if the flags indicate
-        //       possible animation? might save a few cpu cycles
         if (mChildren[i] > 0) // ignore if -1 and a child can't have an index of 0
-            data.setNiNodeParent(mChildren[i], index);
+            data.setNiNodeParent(mChildren[i], this);
     }
 
     stream.readVector<NiDynamicEffectRef>(mEffects);
@@ -74,31 +75,24 @@ NiBtOgre::NiNode::NiNode(uint32_t index, NiStream& stream, const NiModel& model,
     if (stream.nifVer() == 0x0a000100)
         stream.skip(sizeof(NiDynamicEffectRef));
 
-    // Looks like the node name is also used as bone names for those meshes with skins.
-    // Bipeds seems to have a predefined list of bones. See: meshes/armor/legion/m/cuirass.nif
-    //
-    // TODO: again, we might be able to save a few cpu cycles here
-    mNodeName = NiObject::mModel.indexToString(NiObjectNET::mNameIndex);
+    /* ---------------------------------------------------------------------- */
+    // HACK: should check for root node?
+    mParent = (NiObject::mSelfIndex == 0) ? nullptr : &data.getNiNodeParent((NiAVObjectRef)NiObject::mSelfIndex);
 
     if (mCollisionObjectIndex != -1 || mChildren.size() > 0) // build only if it will be used
     {
-//      if (NiObject::index() == 0)
+//      if (!mParent)
 //          mLocalTransform.makeTransform(mTranslation, Ogre::Vector3(mScale), Ogre::Quaternion::IDENTITY);
 //      else
             mLocalTransform.makeTransform(mTranslation, Ogre::Vector3(mScale), Ogre::Quaternion(mRotation));
 
-        if (NiObject::index() > 0)
-            mWorldTransform = static_cast<NiAVObject*>(getParentNode())->getWorldTransform() * mLocalTransform;
+        if (mParent)
+            mWorldTransform = mParent->getWorldTransform() * mLocalTransform;
         else
             mWorldTransform = mLocalTransform;
     }
     //else
         //mWorldTransform = Ogre::Matrix4(Ogre::Matrix4::IDENTITY);
-}
-
-NiBtOgre::NiNode *NiBtOgre::NiNode::getParentNode()
-{
-    return NiObject::mModel.getRef<NiNode>(NiObject::mModel.getNiNodeParent(index()));
 }
 
 // build a hierarchy of bones (i.e. mChildBoneNodes) so that a skeleton can be built, hopefully
@@ -116,12 +110,11 @@ void NiBtOgre::NiNode::findBones(const NiNodeRef skeletonRoot, const NiNodeRef c
             return;
         }
 
-        NiNode *parentNode = getParentNode();
-        if (parentNode == nullptr) // should not happen!
+        if (mParent == nullptr) // should not happen!
             throw std::runtime_error("NiNode without parent and Skeleton Root not yet found");
 
         // not skeleton root, keep searching recursively
-        parentNode->findBones(skeletonRoot, NiObject::index());
+        mParent->findBones(skeletonRoot, NiObject::index());
         mChildBoneNodes.push_back(childNode);
     }
     else
@@ -135,7 +128,7 @@ void NiBtOgre::NiNode::findBones(std::int32_t rootIndex)
 {
     // TODO: do we need a bone if the NiTransformController's target is the root?
     if (rootIndex != NiObject::index())
-        getParentNode()->findBones(rootIndex, NiObject::index());
+        mParent->findBones(rootIndex, NiObject::index());
 }
 #if 0
 // this method is only needed if we're building one skeletons at a time; not currently used
@@ -168,6 +161,10 @@ void NiBtOgre::NiNode::addBones(Ogre::Skeleton *skeleton,
     // FIXME: check if mNodeName can be empty
     if (mNodeName == "")
         throw std::runtime_error("NiNode has empty name");
+
+    // maybe skeleton was built already? but if so why is this method called at all?
+    if (/*!parentBone && */skeleton->hasBone(mNodeName))
+        return;
 
     Ogre::Bone *bone = skeleton->createBone(mNodeName);
     indexToHandle[NiObject::index()] = bone->getHandle();
@@ -248,8 +245,8 @@ void NiBtOgre::NiNode::build(BtOgreInst *inst, ModelData *data, NiObject* parent
     //
     // inst->mFlags should indicate whether editor markers should be ignored (default to
     // ignore)
-    std::string nodeName = getNodeName();
-    //if (nodeName == "CathedralCryptLight02") // FIXME: testing only
+
+    //if (mNodeName == "CathedralCryptLight02") // FIXME: testing only
         //std::cout << "light" << std::endl;
 
     int flags = inst->mFlags;
@@ -257,7 +254,7 @@ void NiBtOgre::NiNode::build(BtOgreInst *inst, ModelData *data, NiObject* parent
     // Should not have TES3 NIF versions since NifOgre::NIFObjectLoader::load() checks before
     // calling this method, at least while testing
     if (mModel.nifVer() <= 0x04000002) // up to 4.0.0.2
-        return buildTES3(inst->mBaseSceneNode, inst);
+        return;// buildTES3(inst->mBaseSceneNode, inst);
 
     // FIXME: should create a child Ogre::SceneNode here using the NiNode's translation, etc?
     // FIXME: apply any properties (? do this first and pass on for building children?)
@@ -352,7 +349,7 @@ void NiBtOgre::NiNode::build(BtOgreInst *inst, ModelData *data, NiObject* parent
     inst->mFlags = flags;
 
     // don't build collision for an EditorMarker
-    if (!mModel.showEditorMarkers() && data->mEditorMarkerPresent && (getNodeName() == "EditorMarker"))
+    if (!mModel.showEditorMarkers() && data->mEditorMarkerPresent && (mNodeName == "EditorMarker"))
         return;
 
     // temp debugging note: woc "icmarketdistrict" 8 16
@@ -472,9 +469,9 @@ void NiBtOgre::NiNode::build(BtOgreInst *inst, ModelData *data, NiObject* parent
 // 4. build each of the dynamic effects
 // 5. apply any properties (? do this first and pass on for building children?)
 // ?. what do do with any bounding boxes?
-void NiBtOgre::NiNode::buildTES3(Ogre::SceneNode* sceneNode, BtOgreInst *inst, NiObject *parent)
-{
-}
+//void NiBtOgre::NiNode::buildTES3(Ogre::SceneNode* sceneNode, BtOgreInst *inst, NiObject *parent)
+//{
+//}
 
 // Seen in NIF version 20.2.0.7
 NiBtOgre::BSBlastNode::BSBlastNode(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)

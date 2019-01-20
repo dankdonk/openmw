@@ -128,6 +128,12 @@ namespace MWWorld
         ::updateObjectLocalRotation(ptr, *mPhysics, mRendering);
     }
 
+    void Scene::moveSubObjectLocalPosition (const MWWorld::Ptr& ptr,
+                    const std::string& boneName, const Ogre::Vector3& position)
+    {
+        mPhysics->moveSubObject(ptr, boneName, position);
+    }
+
     void Scene::rotateSubObjectLocalRotation (const MWWorld::Ptr& ptr,
                     const std::string& boneName, const Ogre::Quaternion& rotation)
     {
