@@ -510,10 +510,10 @@ void NiBtOgre::TransformController::Value::setValue (Ogre::Real time)
         if(mTransformData->mQuaternionKeys.keys.size() > 0 /*&& mNode->getName() != "Bip01"*/)
         {
             Ogre::Quaternion q = interpQuatKey(mTransformData->mQuaternionKeys, 2, time);
-            if (transInterp->mRotation.x < -5000) // some small value
+            //if (transInterp->mRotation.x < -5000) // some small value
                 mNode->setOrientation(q);
-            else
-                mNode->setOrientation(transInterp->mRotation.Inverse() * q);
+            //else
+                //mNode->setOrientation(transInterp->mRotation.Inverse() * q);
         }
         else if (/*mNode->getName() != "Bip01" && */
                 (!mTransformData->mXRotations.keys.empty() || !mTransformData->mYRotations.keys.empty() || !mTransformData->mZRotations.keys.empty()))
@@ -524,7 +524,7 @@ void NiBtOgre::TransformController::Value::setValue (Ogre::Real time)
         {
             float dist;
             Ogre::Vector3 pos = interpolate<Ogre::Vector3>(mTransformData->mTranslations, 2, time);
-            pos = -transInterp->mTranslation + pos;
+            //pos = -transInterp->mTranslation + pos;
 
             // FIXME: hack
             if ((dist = old.squaredDistance(pos)) < 10)
@@ -570,10 +570,10 @@ void NiBtOgre::TransformController::Value::setValue (Ogre::Real time)
                 bsi->mRotationOffset, bsi->mRotationMultiplier, bsi->mRotationBias )
                 /*&& mNode->getName() != "Bip01"*/) // doesn't work
         {
-            if (bsi->mRotation.x < -5000) // some small value
+            //if (bsi->mRotation.x < -5000) // some small value
                 mNode->setOrientation(q);
-            else
-                mNode->setOrientation(bsi->mRotation.Inverse() * q);
+            //else
+                //mNode->setOrientation(bsi->mRotation.Inverse() * q);
         }
 
         // FIXME should verify that the size of of short vector is greater than offset + nCtrl
@@ -586,7 +586,7 @@ void NiBtOgre::TransformController::Value::setValue (Ogre::Real time)
             float dist;
             //if ((dist = old.squaredDistance(mNode->getPosition())) < 10) // FIXME: debug only
             if ((dist = old.squaredDistance(v)) < 10) // FIXME: debug only, horrible hack
-                mNode->setPosition(-bsi->mTranslation + v);
+                mNode->setPosition(/*-bsi->mTranslation +*/ v);
             //else
                 //std::cout << mNode->getName() << " dist " << dist << ", time " << time << std::endl;
         }

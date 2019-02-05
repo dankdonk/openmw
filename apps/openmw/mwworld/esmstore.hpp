@@ -6,6 +6,8 @@
 #include <extern/esm4/hair.hpp>
 #include <extern/esm4/eyes.hpp>
 #include <extern/esm4/race.hpp>
+#include <extern/esm4/achr.hpp>
+#include <extern/esm4/acre.hpp>
 #include <extern/esm4/soun.hpp>
 #include <extern/esm4/ltex.hpp>
 #include <extern/esm4/acti.hpp>
@@ -114,6 +116,8 @@ namespace MWWorld
         ForeignStore<ESM4::Hair>       mForeignHairs;
         ForeignStore<ESM4::Eyes>       mForeignEyesSet;
         ForeignStore<ESM4::Race>       mForeignRaces;
+        ForeignStore<ESM4::ActorCharacter> mForeignACharacters;
+        ForeignStore<ESM4::ActorCreature>  mForeignACreatures;
         ForeignStore<ESM4::Sound>      mForeignSounds;
         ForeignStore<ESM4::LandTexture> mForeignLandTextures;
         // Foreign referenceables
@@ -253,6 +257,8 @@ namespace MWWorld
             mStores[MKTAG('R','H','A','I')] = &mForeignHairs;
             mStores[MKTAG('S','E','Y','E')] = &mForeignEyesSet;
             mStores[MKTAG('E','R','A','C')] = &mForeignRaces;
+            mStores[MKTAG('R','A','C','H')] = &mForeignACharacters;
+            mStores[MKTAG('E','A','C','R')] = &mForeignACreatures;
             mStores[MKTAG('N','S','O','U')] = &mForeignSounds;
             mStores[MKTAG('X','L','T','E')] = &mForeignLandTextures;
 

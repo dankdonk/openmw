@@ -540,6 +540,38 @@ void ForeignNpcAnimation::updateNpcBase()
     }
     mObjectParts[ESM::PRT_Head] = scene;
 
+    if (race->mEditorId == "Imperial" || race->mEditorId == "Nord" ||
+        race->mEditorId == "Breton"   || race->mEditorId == "Redguard" ||
+        race->mEditorId == "HighElf"  || race->mEditorId == "DarkElf"  || race->mEditorId == "WoodElf")
+    {
+        meshName = "meshes\\Characters\\Imperial\\eyerighthuman.nif";
+        NifOgre::ObjectScenePtr scene = NifOgre::ObjectScenePtr (new NifOgre::ObjectScene(mInsert->getCreator()));
+        std::auto_ptr<NiBtOgre::BtOgreInst> inst(new NiBtOgre::BtOgreInst(mInsert->createChildSceneNode(), scene, meshName, group));
+        inst->instantiate(mSkelBase->getMesh()->getSkeleton());
+
+        Ogre::Bone *heBone = mSkelBase->getSkeleton()->getBone("Bip01 Head");
+        Ogre::Quaternion heOrientation = heBone->getOrientation() *
+                               Ogre::Quaternion(Ogre::Degree(90), Ogre::Vector3::UNIT_Y); // fix helmet issue
+        Ogre::Vector3 hePosition = Ogre::Vector3(0.4, -0.3, 0); // FIXME: make eyes fit better
+
+        for (unsigned int i = 0; i < scene->mEntities.size(); ++i)
+        {
+            mSkelBase->attachObjectToBone("Bip01 Head", scene->mEntities[i], heOrientation, hePosition);
+        }
+        mObjectParts[ESM::PRT_RPauldron] = scene;
+
+        meshName = "meshes\\Characters\\Imperial\\eyelefthuman.nif";
+        NifOgre::ObjectScenePtr sceneL = NifOgre::ObjectScenePtr (new NifOgre::ObjectScene(mInsert->getCreator()));
+        std::auto_ptr<NiBtOgre::BtOgreInst> instL(new NiBtOgre::BtOgreInst(mInsert->createChildSceneNode(), sceneL, meshName, group));
+        instL->instantiate(mSkelBase->getMesh()->getSkeleton());
+
+        for (unsigned int i = 0; i < sceneL->mEntities.size(); ++i)
+        {
+            mSkelBase->attachObjectToBone("Bip01 Head", sceneL->mEntities[i], heOrientation, hePosition);
+        }
+        mObjectParts[ESM::PRT_LPauldron] = sceneL;
+    }
+
     const ESM4::Hair* hair = store.getForeign<ESM4::Hair>().search(mNpc->mHair);
     if (hair)
     {
@@ -564,7 +596,8 @@ void ForeignNpcAnimation::updateNpcBase()
                 (float)mNpc->mHairColour.green / 256,
                 (float)mNpc->mHairColour.blue / 256,
                 (float)mNpc->mHairColour.custom / 256);
-#else
+#endif
+#if 0
             Ogre::MaterialPtr mat = sceneHair->mMaterialControllerMgr.getWritableMaterial(sceneHair->mEntities[i]);
             Ogre::Material::TechniqueIterator techs = mat->getTechniqueIterator();
             while(techs.hasMoreElements())
@@ -1071,7 +1104,14 @@ void ForeignNpcAnimation::addAnimSource(const std::string &model)
     addForeignAnimSource(model, animName);
     animName = model.substr(0, pos) + "castself.kf";
     addForeignAnimSource(model, animName);
-    animName = model.substr(0, pos) + "idle.kf";
+    //animName = model.substr(0, pos) + "swimfastforward.kf";
+    //animName = model.substr(0, pos) + "walkfastforward.kf";
+    //animName = model.substr(0, pos) + "swimbackward.kf";
+    //animName = model.substr(0, pos) + "dodgeleft.kf";
+    //animName = model.substr(0, pos) + "idleanims\\cheer01.kf";
+    //animName = model.substr(0, pos) + "idleanims\\talk_armscrossed_motion.kf";
+    //animName = model.substr(0, pos) + "idle.kf";
+    animName = model.substr(0, pos) + "castselfalt.kf";
     addForeignAnimSource(model, animName);
 }
 
@@ -1137,15 +1177,16 @@ void ForeignNpcAnimation::addForeignAnimSource(const std::string& model, const s
     NifOgre::NodeTargetValue<Ogre::Real> *dstval;
     dstval = static_cast<NifOgre::NodeTargetValue<Ogre::Real>*>(controllers[0].getDestination().get());
     Ogre::Node *node = dstval->getNode();
-    while (node->getName() != "Bip01 NonAccum" || node->getParent() == 0)
+    while (node && node->getName() != "Bip01 NonAccum")
     {
         node = node->getParent();
     }
-    if (node->getName() == "Bip01 NonAccum")
+    if (node && node->getName() == "Bip01 NonAccum")
     {
         mNonAccumRoot = node;
         mAccumRoot = mNonAccumRoot->getParent();
     }
+    // else throw?
 
     if (mNonAccumRoot->getName() != "Bip01 NonAccum" || mAccumRoot->getName() != "Bip01")
         std::cout << mAccumRoot->getName() << std::endl;

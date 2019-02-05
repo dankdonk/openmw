@@ -392,10 +392,45 @@ void ESMStore::loadTes4Record (ESM::ESMReader& esm)
             break;
         }
         case ESM4::REC_ACHR:
+        {
+            ESM4::ActorCharacter record;
+
+            reader.getRecordData();
+            record.load(reader);
+            //if (!record.mEditorId.empty())
+                //std::cout << ESM4::printName(hdr.record.typeId) << ": " << record.mEditorId << std::endl; // FIXME
+
+#if 0
+//          RecordId id = mForeignACharacters.load(esm);
+//          if (!id.mId.empty())
+//              std::cout << "ACHR " << id.mId << std::endl;
+
+            bool deleted = (reader.hdr().record.flags & ESM4::Rec_Deleted) != 0;
+            reader.getRecordData();
+            ESM4::ActorCharacter record;
+            record.load(reader);
+            if (!record.mEditorId.empty())
+                std::cout << ESM4::printName(hdr.record.typeId) << ": " << record.mEditorId << std::endl; // FIXME
+
+            switch (store.find(record.mBaseObj))
+            {
+                case MKTAG('R','H','A','I'): std::cout << " achr hair " << std::endl; break; // FIXME
+                case MKTAG('S','E','Y','E'): std::cout << " achr eyes " << std::endl; break; // FIXME
+                case MKTAG('_','N','P','C'): mForeignNpcs.load(record, deleted, store); break;
+
+                case 0: std::cerr << "Cell achr " + ESM4::formIdToString(record.mBaseObj) + " not found!\n"; break;
+
+                default:
+                    std::cerr
+                        << "WARNING: Ignoring achr '" << ESM4::formIdToString(record.mBaseObj) << "' of unhandled type\n";
+            }
+#endif
+            break;
+        }
         case ESM4::REC_ACRE: // Oblivion only?
         {
             reader.skipRecordData();
-            std::cout << "unexpected ACHR/ACRE in persistent child" << std::endl;
+            //std::cout << "unexpected ACHR/ACRE in persistent child" << std::endl;
             break;
         }
         // NOTE: LAND records are loaded later (for now) - see CellStore
