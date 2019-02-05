@@ -44,7 +44,7 @@
 //
 // bhkRefObject <------------------------------ /* typedef NiObject */
 //     bhkCompressedMeshShapeData
-//     bhkSerializable <----------------------- /* typedef bhkRefObject */
+//     bhkSerializable
 //         bhkBallSocketConstraintChain
 //         bhkConstraint
 //             bhkBreakableConstraint
@@ -101,7 +101,7 @@ namespace NiBtOgre
     {
         bhkSerializable(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
 
-        virtual btCollisionShape *getShape(NiAVObject *target);
+        virtual btCollisionShape *getShape(const NiAVObject& target) const;
     };
 //#endif
 
@@ -349,7 +349,7 @@ namespace NiBtOgre
 
         // for correcting NIF constraint vector values (e.g. pivot, plane) to work with Bullet
         // for some shapes (e.g. btCapsuleShape); by default do nothing
-        virtual void toBtSpace(const Ogre::Vector3& scale, btVector3& vector) const {}
+        //virtual void toBtSpace(const Ogre::Vector3& scale, btVector3& vector) const {}
 
         virtual bool isStaticShape() const { return false; }
     };
@@ -697,12 +697,11 @@ namespace NiBtOgre
 
         bhkRigidBody(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
 
-        void build(BtOgreInst *inst, ModelData *data, NiObject* parent);
-        btCollisionShape *getShape(NiAVObject *target);
+        btCollisionShape *getShape(const NiAVObject& target) const;
     };
 
     // NOTE: the rigidbody type can be differentiated by calling NiBtOgre::NiModel::blockType
-    // with the index of the object
+    //       with the index of the object
     typedef bhkRigidBody bhkRigidBodyT;    // Seen in NIF ver 20.0.0.4, 20.0.0.5
 
     // Seen in NIF ver 20.0.0.4, 20.0.0.5
@@ -715,8 +714,7 @@ namespace NiBtOgre
 
         bhkSimpleShapePhantom(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
 
-        void build(BtOgreInst *inst, ModelData *data, NiObject* parent);
-        btCollisionShape *getShape(NiAVObject *target);
+        btCollisionShape *getShape(const NiAVObject& target) const;
     };
 }
 

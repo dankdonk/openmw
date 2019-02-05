@@ -483,8 +483,10 @@ void CharacterController::refreshCurrentAnims(CharacterState idle, CharacterStat
         {
             // TES4 idle uses a different text key for 'stop'
             if(mPtr.getTypeName() == typeid(ESM4::Npc).name())
+            {
                 mAnimation->play(mCurrentIdle, Priority_Default, MWRender::Animation::Group_All, false,
                                  1.0f, "start", "end", 0.0f, ~0ul, true);
+            }
             else
                 mAnimation->play(mCurrentIdle, Priority_Default, MWRender::Animation::Group_All, false,
                                  1.0f, "start", "stop", 0.0f, ~0ul, true);

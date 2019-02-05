@@ -63,6 +63,8 @@ set(NIBTOGRE_SOURCE_FILES
     niuvcontroller.cpp
     niviscontroller.cpp
 
+    transformcontroller.cpp
+
     bhkrefobject.cpp
 )
 

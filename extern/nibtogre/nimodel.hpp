@@ -35,9 +35,9 @@
 
 #include "nistream.hpp"
 #include "niheader.hpp"
-#include "meshloader.hpp" // not sure why this is needed
-#include "skeletonloader.hpp"
-
+#include "skeletonloader.hpp" // not sure why this is needed
+#include "niobject.hpp"
+#include "nimodelmanager.hpp"
 
 namespace Ogre
 {
@@ -45,13 +45,13 @@ namespace Ogre
     class ManualResourceLoader;
     class SceneNode;
     class Skeleton;
+    class SkeletonInstance;
 }
 
 namespace NiBtOgre
 {
     class NiObject;
 //    class SkeletonLoader;
-//    class MeshLoader;
     struct NiTriBasedGeom;
     struct BtOgreInst;
     class NiModel;
@@ -66,15 +66,12 @@ namespace NiBtOgre
 
         bool mEditorMarkerPresent;
 
-        typedef std::int32_t NiAVObjectRef;
-        typedef std::int32_t NiNodeRef;
-        typedef std::int32_t bhkEntityRef;
-        typedef std::int32_t NiTimeControllerRef;
-
         // helper to get pointer to parent NiNode
         std::map<NiAVObjectRef, NiNode*> mNiNodeMap;
         void setNiNodeParent(NiAVObjectRef child, NiNode *parent);
         /*const*/ NiNode& getNiNodeParent(NiAVObjectRef child) const;
+
+        std::map<NiNodeRef, NiNode*> mMeshBuildList;
 
         std::vector<NiNodeRef> mSkelLeafIndicies; // tempoarily used to find the bones
         void addSkelLeafIndex(NiNodeRef leaf) { mSkelLeafIndicies.push_back(leaf); }
@@ -82,16 +79,7 @@ namespace NiBtOgre
         inline bool hasSkeleton() const { return !mSkeleton.isNull(); }
         bool hasBoneLeaf(NiNodeRef leaf) const;
 
-        std::unique_ptr<SkeletonLoader> mSkeletonLoader;
-
-        //      index = parent NiNode's block index
-        //        |
-        //        |                  name  = concatenation of model, "@" and parent NiNode name
-        //        |                    |
-        //        v                    v
-        std::map<NiNodeRef, std::pair<std::string, std::unique_ptr<MeshLoader> > > mMeshLoaders;
-
-        void registerNiTriBasedGeom(const NiNode& parent, NiTriBasedGeom* geometry);
+        bool mIsSkeleton; // npc/creature
 
         // The btCollisionShape for btRigidBody corresponds to an Ogre::Entity whose Ogre::SceneNode
         // may be controlled for Ragdoll animations.  So we just really need the Model name,
@@ -179,6 +167,8 @@ namespace NiBtOgre
 
         bool mShowEditorMarkers; // usually only for OpenCS
 
+        std::map<std::string, NiAVObjectRef> mObjectPalette;
+
         // default, copy and assignment not allowed
         NiModel();
         NiModel(const NiModel& other);
@@ -215,7 +205,16 @@ namespace NiBtOgre
         }
 
         // WARNING: SceneNode in inst should have the scale (assumed uniform)
-        void build(BtOgreInst *inst);
+        void build(BtOgreInst *inst, Ogre::SkeletonPtr skeleton = Ogre::SkeletonPtr());
+
+        void buildAnimation(Ogre::Entity *skelBase, NiModelPtr anim,
+                std::multimap<float, std::string>& textKeys,
+                std::vector<Ogre::Controller<Ogre::Real> >& controllers,
+                NiModel *skeleton,
+                NiModel *bow = nullptr);
+        const std::map<std::string, NiAVObjectRef>& getObjectPalette() const { return mObjectPalette; }
+        Ogre::SkeletonPtr getSkeleton() const { return mModelData.mSkeleton; }
+        void buildSkeleton();
 
         // returns NiObject type name
         const std::string& blockType(std::uint32_t index) const {

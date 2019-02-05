@@ -25,23 +25,24 @@
 #include <btBulletDynamicsCommon.h>
 #include <btBulletCollisionCommon.h>
 
-//#include <OgreMeshManager.h>
-#//include <OgreMesh.h>
-//#include <OgreSceneManager.h>
-#include <OgreSceneNode.h>
-#//include <OgreEntity.h>
-//#include <OgreSubEntity.h> // FIXME: testing only
-//#include <OgreSubMesh.h> // FIXME: testing only
+//#include "nigeometry.hpp"
+#include "nimodelmanager.hpp"
+#include "nimodel.hpp"
 
-#include "nigeometry.hpp"
+namespace Ogre
+{
+    class SceneNode;
+}
 
-NiBtOgre::BtOgreInst::BtOgreInst(Ogre::SceneNode *baseNode, NifOgre::ObjectScenePtr scene)
+NiBtOgre::BtOgreInst::BtOgreInst(Ogre::SceneNode *baseNode, NifOgre::ObjectScenePtr scene, const std::string& name, const std::string& group)
     : mBaseSceneNode(baseNode), mObjectScene(scene), mFlags(0)//, mSkeletonBuilt(false)
 {
+    mModel = NiBtOgre::NiModelManager::getSingleton().getOrLoadByName(name, group);
 };
 
-
-void NiBtOgre::BtOgreInst::instantiate()
+// The parameter skeleton is used for building body part models where existing
+// creature/character skeleton should be used for skinning.
+void NiBtOgre::BtOgreInst::instantiate(Ogre::SkeletonPtr skeleton)
 {
     // FIXME: howto transform nodes to root transform after the meshes have been built?
     // e.g. NiNode CathedralCryptChain11 (18) has 1 mesh CathedralCryptChain11:36 (24)
@@ -51,5 +52,6 @@ void NiBtOgre::BtOgreInst::instantiate()
     // Is it possible to leave that for Ogre::SceneNode to take care of?
     // i.e. for each NiNode with a mesh create a child scenenode
 
-    static_cast<NiModel*>(mModel.get())->buildMeshAndEntity(this);
+    mModel->build(this, skeleton);
+    mModel->buildMeshAndEntity(this);
 }

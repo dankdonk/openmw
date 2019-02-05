@@ -27,8 +27,13 @@
 
 #include <cassert>
 #include <stdexcept>
+#include <iostream> // FIXME
 
 #include <OgreController.h>
+#include <OgreSkeletonInstance.h>
+#include <OgreControllerManager.h>
+#include <OgreBone.h>
+#include <OgreEntity.h>
 
 #include "nistream.hpp"
 #include "nitimecontroller.hpp" // static_cast NiControllerManager
@@ -38,6 +43,7 @@
 #include "nidata.hpp" // NiStringPalette
 #include "niavobject.hpp" // getTargetObject (see: http://www.cplusplus.com/forum/beginner/134129/#msg717505)
 #include "niinterpolator.hpp"
+#include "transformcontroller.hpp"
 
 #ifdef NDEBUG // FIXME: debuggigng only
 #undef NDEBUG
@@ -82,8 +88,8 @@ void NiBtOgre::NiSequence::ControllerLink::read(NiStream& stream)
         stream.read(nodeNameIndex);
         stream.read(propertyTypeIndex);
         stream.read(controllerTypeIndex);
-        stream.read(variable1Index);
-        stream.read(variable2Index);
+        stream.read(variable1Index); // Controller ID Offset
+        stream.read(variable2Index); // Interpolator ID Offset (frame name)
     }
 }
 
@@ -263,6 +269,9 @@ void NiBtOgre::NiControllerSequence::build(const NiDefaultAVObjectPalette* objec
             NiGeomMorpherController *controller
                 = mModel.getRef<NiGeomMorpherController>(mControlledBlocks[i].controller2Index);
 
+            if (!controller)
+                continue;
+
             // setup the controller for the build later when the sub-mesh gets built on demand
             controller->setInterpolator(this, frameName, interpolator);
         }
@@ -283,9 +292,176 @@ void NiBtOgre::NiControllerSequence::build(const NiDefaultAVObjectPalette* objec
             NiMultiTargetTransformController *controller
                 = mModel.getRef<NiMultiTargetTransformController>(mControlledBlocks[i].controller2Index);
 
+            if (!controller)
+                continue;
+
             // FIXME: build it again
             controller->build(mNameIndex, target, interpolator, mStartTime, mStopTime);
         }
+        //else
+            // NiAlphaController
+            // NiFlipController
+            // NiMaterialColorController      Dungeons\AyleidRuins\Exterior\ARWellGrate01.NIF
+            // NiPSysEmitterCtlr              Oblivion\Environment\OblivionSmokeEmitter01.NIF
+            // NiPSysEmitterInitialRadiusCtlr
+            // NiPSysEmitterLifeSpanCtlr
+            // NiPSysEmitterSpeedCtlr
+            // NiPSysGravityStrengthCtlr
+            // NiTextureTransformController
+            // NiVisController
+            //std::cout << "unknown controller type " << ctlrTypeName << std::endl;
+    }
+}
+
+// FIXME: duplicated code
+// FIXME: if the target doesn't exist should throw or return 'false' so that the animation is
+// not registered - this can happen if the character does not have a bow equipped but a bow
+// animation is selected
+//
+// Unlike above, this method builds Ogre::Controller based animation for another NiModel and
+// Skeleton (e.g. skeleton.nif) i.e. the 'kf' animation for characters/creatures
+//
+// That means the target NiAVObjects and NiTimeControllers are in the other model, not the 'kf'
+// animation file.  The animation NiModel supplies the interpolators and their data.
+void NiBtOgre::NiControllerSequence::build(Ogre::Entity *skelBase, NiModelPtr anim,
+        std::multimap<float, std::string>& textKeys,
+        std::vector<Ogre::Controller<float> >& controllers,
+        const NiModel& targetModel, const std::map<std::string, NiAVObjectRef>& objects)
+{
+    const NiTextKeyExtraData *data = mModel.getRef<NiTextKeyExtraData>(mTextKeysIndex);
+    for (unsigned int i = 0; i < data->mTextKeys.size(); ++i)
+    {
+        float time = data->mTextKeys[i].time;
+        textKeys.insert(std::make_pair(time, mModel.indexToString(data->mTextKeys[i].text)));
+    }
+
+    for (unsigned int i = 0; i < mControlledBlocks.size(); ++i)
+    {
+        // FIXME: for testing only
+        if (mModel.nifVer() >= 0x0a020000 && mModel.nifVer() <= 0x14000005)
+            assert(mStringPaletteIndex == mControlledBlocks[i].stringPaletteIndex); // should be the same
+
+        if (mModel.nifVer() < 0x0a01006a) // 10.1.0.106
+            throw std::logic_error("NiControllerSequence less than version 10.1.0.106");
+
+        std::int32_t interpolatorIndex = mControlledBlocks[i].interpolatorIndex;
+        if (interpolatorIndex < 0) // -1
+            continue;
+
+        std::string ctlrTypeName = getObjectName(mControlledBlocks[i].controllerTypeIndex);
+        if (ctlrTypeName =="")
+            continue;
+
+        // targets are either bones (i.e. NiNode) for NiTransformControllers or
+        // NiTriBasedGeom for NiGeomMorpherControllers
+        NiAVObject* target;
+        std::string targetName = getObjectName(mControlledBlocks[i].nodeNameIndex);
+        std::map<std::string, NiAVObjectRef>::const_iterator it = objects.find(targetName);
+        if (it != objects.cend())
+            target = targetModel.getRef<NiAVObject>(it->second);  // NOTE: target is in another model
+        else
+            continue;
+
+        if (ctlrTypeName == "NiGeomMorpherController")
+        {
+            if (mModel.blockType(interpolatorIndex) != "NiFloatInterpolator")
+                throw std::runtime_error("unsupported interpolator: "+mModel.blockType(interpolatorIndex));
+
+            // NOTE: Some interpolators do not have any data!  Ignore these controlled blocks.
+            NiFloatInterpolator *interpolator = mModel.getRef<NiFloatInterpolator>(interpolatorIndex);
+            if (interpolator->mDataIndex < 0) // -1
+                continue;
+
+            // For NiGeomMorpherController the target would be a NiTriBasedGeom which corresponds
+            // to an Ogre::SubMesh (which can get to its parent Ogre::Mesh).
+            //
+            // So we need access to a map<NiGeometyRef, Ogre::SubMesh*> probably from ModelData.
+            //
+
+            std::string frameName = getObjectName(mControlledBlocks[i].variable2Index);
+            if (frameName =="")
+                continue;
+
+            NiGeomMorpherController *controller;
+            if (mControlledBlocks[i].controller2Index != -1)
+                //controller = mModel.getRef<NiGeomMorpherController>(mControlledBlocks[i].controller2Index);
+                throw std::logic_error("anim file shouldn't have controllers: "
+                        +mModel.blockType(mControlledBlocks[i].controller2Index));
+            else
+                controller = static_cast<NiGeomMorpherController*>(target->findController(ctlrTypeName));
+
+            if (!controller)
+                continue;
+
+            // for bows only?  how to get the bow model?
+            //
+            // Some animations only make sense when weapons are attached to skeleton.nif.
+            // e.g. NiControllerSequence "AttackBow" has 2 controlled blocks named "Bow:0"
+            //        with frame names "Base" and "BowMorph"
+            //      Weapons\Iron\Bow.NIF has NiTriStrips named "Bow:0" whose NiTimeController is a
+            //        NiGeomMorpherController and its NiMorphData has two morphs with frame names
+            //        "Base" and "BowMorph"
+            //
+            // This implies that some animations should only be loaded once the weapon is equipped.
+            // (different bows have different mesh and hence will have different poses)
+            //
+            // setup the controller for the build later when the sub-mesh gets built on demand
+            //controller->setInterpolator(this, frameName, interpolator);
+        }
+        else if (ctlrTypeName == "NiTransformController")
+        {
+            if (mModel.blockType(interpolatorIndex) != "NiTransformInterpolator" &&
+                mModel.blockType(interpolatorIndex) != "NiBSplineCompTransformInterpolator")
+                throw std::runtime_error("unsupported interpolator: "+mModel.blockType(interpolatorIndex));
+
+            // NOTE: Some interpolators do not have any data!  Ignore these controlled blocks.
+            NiInterpolator *interpolator;
+            if (mModel.blockType(interpolatorIndex) == "NiTransformInterpolator")
+            {
+                interpolator = mModel.getRef<NiTransformInterpolator>(interpolatorIndex);
+                if (static_cast<NiTransformInterpolator*>(interpolator)->mDataIndex < 0) // -1
+                    continue;
+            }
+            else if (mModel.blockType(interpolatorIndex) == "NiBSplineCompTransformInterpolator")
+            {
+                interpolator = mModel.getRef<NiBSplineCompTransformInterpolator>(interpolatorIndex);
+                if (static_cast<NiBSplineCompTransformInterpolator*>(interpolator)->mSplineDataIndex < 0 ||
+                    static_cast<NiBSplineCompTransformInterpolator*>(interpolator)->mBasisDataIndex < 0) // -1
+                    continue;
+            }
+
+            // find the NiTransformController attached to the target bone
+            // to do that need NiModel of skeleton.nif and a lookup map (i.e. object palette)
+            NiTransformController *controller;
+            if (mControlledBlocks[i].controller2Index != -1)
+                throw std::logic_error("anim file shouldn't have controllers: "
+                        +mModel.blockType(mControlledBlocks[i].controller2Index));
+            else
+                controller = static_cast<NiTransformController*>(target->findController(ctlrTypeName));
+
+            if (!controller)
+                continue;
+
+            // target names are the same as bones
+//#if 0
+            if (targetName == "")
+                throw std::runtime_error("no bone name");
+//#endif
+
+            Ogre::SkeletonInstance *skeleton = skelBase->getSkeleton();
+            if (!skeleton->hasBone(targetName))
+                continue;
+
+            Ogre::Bone *bone = skeleton->getBone(targetName);
+
+            Ogre::ControllerValueRealPtr srcval;
+            Ogre::ControllerValueRealPtr dstval(OGRE_NEW TransformController::Value(bone, anim, interpolator));
+            Ogre::ControllerFunctionRealPtr func(OGRE_NEW TransformController::Function(controller, false));
+
+            controllers.push_back(Ogre::Controller<Ogre::Real>(srcval, dstval, func));
+        }
+        else
+            std::cout << "unknown controller type " << ctlrTypeName << std::endl;
     }
 }
 

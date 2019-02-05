@@ -31,13 +31,19 @@
 #include "reader.hpp"
 //#include "writer.hpp"
 
-ESM4::Npc::Npc() : mFormId(0), mFlags(0), mRace(0), mClass(0), mHair(0), mEyes(0), mDeathItem(0),
+ESM4::Npc::Npc() : mFormId(0), mFlags(0), mRace(0), mClass(0), mHair(0), mEyes(0), mHairLength(0.f),
+                   mDeathItem(0),
                    mScript(0), mCombatStyle(0), mSoundBase(0), mSound(0), mSoundChance(0),
                    mFootWeight(0.f), mBoundRadius(0.f)
 {
     mEditorId.clear();
     mFullName.clear();
     mModel.clear();
+
+    mHairColour.red = 0;
+    mHairColour.green = 0;
+    mHairColour.blue = 0;
+    mHairColour.custom = 0;
 
     std::memset(&mAIData, 0, sizeof(AIData));
     std::memset(&mData, 0, sizeof(Data));
@@ -167,8 +173,16 @@ void ESM4::Npc::load(ESM4::Reader& reader)
 
                 break;
             }
-            case ESM4::SUB_LNAM:
+            case ESM4::SUB_LNAM: reader.get(mHairLength); break;
             case ESM4::SUB_HCLR:
+            {
+                reader.get(mHairColour.red);
+                reader.get(mHairColour.green);
+                reader.get(mHairColour.blue);
+                reader.get(mHairColour.custom);
+
+                break;
+            }
             case ESM4::SUB_FGGS:
             case ESM4::SUB_FGGA:
             case ESM4::SUB_FGTS:

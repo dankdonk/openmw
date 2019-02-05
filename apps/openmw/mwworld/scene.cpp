@@ -287,6 +287,15 @@ namespace MWWorld
                 mPhysics->disableWater();
 
             mRendering.configureAmbient(*cell);
+#if 0
+            // FIXME: update open (status = 1) door anims
+            const MWWorld::Store<ESM4::Door>& doorStore
+                = MWBase::Environment::get().getWorld()->getStore().get<ESM4::Door>();
+            for (MWWorld::Store<ESM4::Door>::iterator it = doorStore.begin(); it != doorStore.end(); ++it)
+            {
+                const ESM4::Door& door = *it;
+            }
+#endif
         }
 
         // register local scripts

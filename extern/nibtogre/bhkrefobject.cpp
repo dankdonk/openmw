@@ -65,7 +65,7 @@ NiBtOgre::bhkSerializable::bhkSerializable(uint32_t index, NiStream& stream, con
 }
 //#endif
 
-btCollisionShape *NiBtOgre::bhkSerializable::getShape(NiAVObject *target)
+btCollisionShape *NiBtOgre::bhkSerializable::getShape(const NiAVObject& target) const
 {
     throw std::logic_error("bhkSerializable::getShape called from base class");
 }
@@ -1580,7 +1580,7 @@ NiBtOgre::bhkRigidBody::bhkRigidBody(uint32_t index, NiStream& stream, const NiM
 
 // NOTE: ownership of the btCollisionShape and any subshapes are passed to the caller
 //       remember to delete them!
-btCollisionShape *NiBtOgre::bhkRigidBody::getShape(NiAVObject *target)
+btCollisionShape *NiBtOgre::bhkRigidBody::getShape(const NiAVObject& target) const
 {
     if (mShapeIndex == -1) // nothing to build
         return nullptr;
@@ -1620,11 +1620,7 @@ btCollisionShape *NiBtOgre::bhkRigidBody::getShape(NiAVObject *target)
     //
     btTransform transform;
     bhkShape *shape = mModel.getRef<bhkShape>(mShapeIndex);
-    std::string targetName = mModel.indexToString(target->getNameIndex());
-    //  at least one shape's parent is NiTriStrips:
-    //  FIXME: physics shape if a little offset from the render
-    //  Furniture\MiddleClass\BearSkinRug01.NIF (0001C7CA)
-    //  COC "ICMarketDistrictJensinesGoodasNewMerchandise"
+    std::string targetName = mModel.indexToString(target.getNameIndex());
 
     bool useFullTransform
         =  (
@@ -1643,7 +1639,7 @@ btCollisionShape *NiBtOgre::bhkRigidBody::getShape(NiAVObject *target)
         Ogre::Vector3 scale;
         Ogre::Quaternion rot;
 
-        target->getWorldTransform().decomposition(pos, scale, rot);
+        target.getWorldTransform().decomposition(pos, scale, rot);
         transform = btTransform(btQuaternion(rot.x, rot.y, rot.z, rot.w), btVector3(pos.x, pos.y, pos.z));
 
         // apply rotation and translation only if the collision object's body is a bhkRigidBodyT type
@@ -1699,6 +1695,7 @@ btCollisionShape *NiBtOgre::bhkRigidBody::getShape(NiAVObject *target)
     return btShape;
 }
 
+#if 0
 // NOTE: the parameter 'parent' is a NiNode (i.e. not bhkNiCollisionObject)
 // 1. calculate the world transform of the NIF
 // 2. create the btRidgidBody and store it in 'inst', keyed with the index of the parent NiNode
@@ -1806,6 +1803,7 @@ void NiBtOgre::bhkRigidBody::build(BtOgreInst *inst, ModelData *data, NiObject* 
 //      inst->mbhkConstraints.push_back(std::make_pair(mModel.getRef<bhkConstraint>(mConstraints[i]), this));
 //  }
 }
+#endif
 
 // Seen in NIF ver 20.0.0.4, 20.0.0.5
 NiBtOgre::bhkSimpleShapePhantom::bhkSimpleShapePhantom(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
@@ -1821,11 +1819,7 @@ NiBtOgre::bhkSimpleShapePhantom::bhkSimpleShapePhantom(uint32_t index, NiStream&
 
 // Called from bhkSPCollisionObject
 // e.g. dungeons/misc/triggers/trigzone02.nif (coc "vilverin")
-void NiBtOgre::bhkSimpleShapePhantom::build(BtOgreInst *inst, ModelData *data, NiObject* parentNiNode)
-{
-}
-
-btCollisionShape *NiBtOgre::bhkSimpleShapePhantom::getShape(NiAVObject *target)
+btCollisionShape *NiBtOgre::bhkSimpleShapePhantom::getShape(const NiAVObject& target) const
 {
     std::cout << "phantom: " << mModel.getModelName() << std::endl;
     return 0;

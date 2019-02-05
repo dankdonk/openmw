@@ -67,7 +67,7 @@ namespace NiBtOgre
         bool mDirtyFlag;
         std::vector<NiPropertyRef> mBSProperties;
 
-        const NiNode& mParent;         // cached here
+        NiNode& mParent;         // cached here
 
         NiGeometry(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
     };
@@ -76,16 +76,12 @@ namespace NiBtOgre
     {
         NiTriBasedGeom(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
 
-        void build(BtOgreInst *inst, NiObject *parentNiNode = nullptr);
-
         // NiTriStrips builds differently to NiTriShapes only in that the data are different
         bool createSubMesh(Ogre::Mesh *mesh, BoundsFinder& bounds); // returns true if tangents needed
 
     private:
 
         const ModelData& mData;
-
-        void buildTES3(Ogre::SceneNode *sceneNode, BtOgreInst *inst, NiObject *parentNiNode = nullptr);
 
         std::string getMaterial();
 
@@ -104,8 +100,6 @@ namespace NiBtOgre
         std::uint32_t mLevel2Size;
 
         BSLODTriShape(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
-
-        void build(BtOgreInst *inst, NiObject *parentNiNode = nullptr);
     };
 }
 

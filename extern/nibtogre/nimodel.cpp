@@ -35,7 +35,7 @@
 #include <OgreSkeleton.h>
 #include <OgreSkeletonInstance.h>
 #include <OgreAnimationState.h>
-//#include <OgreResourceManager.h> // ResourceCreateOrRetrieveResult
+#include <OgreBone.h>
 
 #include "niobject.hpp"
 #include "bhkrefobject.hpp" // bhkConstraint
@@ -43,20 +43,13 @@
 #include "meshloader.hpp"
 #include "skeletonloader.hpp"
 #include "ninode.hpp"
-
+#include "nisequence.hpp"
 
 // "name" is the full path to the mesh from the resource directory/BSA added to Ogre::ResourceGroupManager.
 // This name is required later for Ogre resource managers such as MeshManager.
 // The file is opened by mNiStream::mStream.
 //
 // FIXME: there could be duplicates b/w TES3 and TES4/5
-#if 0
-NiBtOgre::NiModel::NiModel(const std::string& name, const std::string& group, bool showEditorMarkers)
-    : mNiStream(name), mHeader(mNiStream), mGroup(group), mModelName(name), mModelData(*this)
-    , mShowEditorMarkers(showEditorMarkers)
-{
-}
-#else
 NiBtOgre::NiModel::NiModel(Ogre::ResourceManager *creator, const Ogre::String& name, Ogre::ResourceHandle handle,
                            const Ogre::String& group, bool isManual, Ogre::ManualResourceLoader* loader,
                            bool showEditorMarkers)
@@ -64,12 +57,12 @@ NiBtOgre::NiModel::NiModel(Ogre::ResourceManager *creator, const Ogre::String& n
     , mNiStream(name), mHeader(mNiStream), mGroup(group), mModelName(name), mModelData(*this)
     , mShowEditorMarkers(showEditorMarkers)
 {
+    mModelData.mIsSkeleton = false; // FIXME: hack, does not belong here
 }
-#endif
 
 NiBtOgre::NiModel::~NiModel()
 {
-    unload();
+    //unload(); // FIXME: caused exceptions in the destructor of AnimSource
 }
 
 // only called if this resource is not being loaded from a ManualResourceLoader
@@ -78,7 +71,6 @@ void NiBtOgre::NiModel::loadImpl()
     mObjects.resize(mHeader.numBlocks());
     if (mNiStream.nifVer() >= 0x0a000100) // from 10.0.1.0
     {
-
         for (std::uint32_t i = 0; i < mHeader.numBlocks(); ++i)
         {
             //std::cout << "Block " << mHeader.blockType(i) << std::endl; // FIXME: for testing only
@@ -130,45 +122,50 @@ void NiBtOgre::NiModel::loadImpl()
     // FIXME: testing only
     //if (mNiStream.nifVer() >= 0x0a000100)
         //std::cout << "roots " << mHeader.blockType(mRoots[0]) << std::endl;
-
-    // find the bones, if any
-    // FIXME: mRoots[0] is just an assumption
-    if (mModelData.mSkelLeafIndicies.size() > 1)
-        for (unsigned int i = 0; i < mModelData.mSkelLeafIndicies.size(); ++i)
-            getRef<NiNode>(mModelData.mSkelLeafIndicies[i])->findBones(mRoots[0]);
-}
-
-void NiBtOgre::NiModel::build(BtOgreInst *inst)
-{
-    // FIXME: model name can clash with TES3 model names, e.g. characters/_male/skeleton.nif
     if (mModelData.mSkelLeafIndicies.size() > 1)
     {
-        mModelData.mSkeletonLoader = std::make_unique<SkeletonLoader>(*this);
+        // find the bones, if any (i.e. prepare for the skeleton loader)
+        // FIXME: mRoots[0] is just an assumption
+        int32_t index;
+        NiNode *node;
+        for (unsigned int i = 0; i < mModelData.mSkelLeafIndicies.size(); ++i)
+        {
+            index = mModelData.mSkelLeafIndicies[i];
+            node = getRef<NiNode>(index);
+            node->findBones(mRoots[0]);
 
-#if 0
-        Ogre::ResourceManager::ResourceCreateOrRetrieveResult res // true if newly created
-            = Ogre::SkeletonManager::getSingleton().createOrRetrieve(
-                    // use the NIF name, since there is one skeleton per NIF
-                    /*std::to_string(nifVer())+":"+*/getModelName(),
-                    mGroup/*Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME*/,
-                    true/*isManual*/,
-                    mModelData.mSkeletonLoader.get());
+            mObjectPalette[node->getNiNodeName()] = index;
+        }
+    }
+}
 
-        //res.first->load(); // FIXME: for testing loading of skeletons
-#else
+void NiBtOgre::NiModel::build(BtOgreInst *inst, Ogre::SkeletonPtr skeleton)
+{
+    // FIXME: model name may clash with TES3 model names? e.g. characters/_male/skeleton.nif
+    // (maybe not if the full path is used?)
+    if (!skeleton && mModelData.mSkelLeafIndicies.size() > 1)
+    {
         mModelData.mSkeleton = Ogre::SkeletonManager::getSingleton().getByName(getModelName(), mGroup);
         if (!mModelData.mSkeleton)
         {
+            SkeletonLoader loader(*this);
             mModelData.mSkeleton
                 = Ogre::static_pointer_cast<Ogre::Skeleton>(Ogre::SkeletonManager::getSingleton().load(
-                    // use the NIF name, since there is one skeleton per NIF
-                    /*std::to_string(nifVer())+":"+*/getModelName(),
-                    mGroup/*Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME*/,
-                    true/*isManual*/,
-                    mModelData.mSkeletonLoader.get()));
+                    getModelName(), // use the NIF name, since there is one skeleton per NIF
+                    mGroup,         // Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME
+                    true,           // isManual
+                    &loader));
         }
-#endif
+
+
+
+        // doesn't seem to change the vertical position
+        //mModelData.mSkeleton->setBindingPose(); // FIXME: experimental
     }
+
+    // for building body parts
+    if (skeleton)
+        mModelData.mSkeleton = skeleton;
 
     // build the first root
     mObjects[mRoots[0]]->build(inst, &mModelData); // FIXME: what to do with other roots?
@@ -177,7 +174,7 @@ void NiBtOgre::NiModel::build(BtOgreInst *inst)
         //std::cout << "more than 1 rigid body " << getModelName() << std::endl;
 
     //buildMeshAndEntity(inst);
-    inst->instantiate();  // FIXME: probably doesn't belong here
+    //inst->instantiate();  // FIXME: probably doesn't belong here
 
     // FIXME: testing
 //  std::map<std::int32_t, std::pair<std::string, std::unique_ptr<BtShapeLoader> > >::iterator iter;
@@ -218,27 +215,40 @@ void NiBtOgre::NiModel::buildMeshAndEntity(BtOgreInst* inst)
     //
     //    e.g. Weapons\Steel\Longsword.NIF
     //
-//  if (mModelData.mMeshLoaders.size() > 1) // FIXME: testing only
-//      std::cout << "Multiple entities: " << getModelName() << std::endl;
 
-    // iterate through the loader map
+    // iterate through the mesh build map
     //
     // NOTE: If the model/object is static, we only need one child scenenode from the
     // basenode.  Else we need one for each NiNode that has a mesh (and collision shape?).
     // FIXME: how to do this?
-    std::map<NiNodeRef, std::pair<std::string, std::unique_ptr<MeshLoader> > >::iterator iter;
-    for (iter = mModelData.mMeshLoaders.begin(); iter != mModelData.mMeshLoaders.end(); ++iter)
+    std::map<NiNodeRef, NiNode*>::iterator iter;
+    for (iter = mModelData.mMeshBuildList.begin(); iter != mModelData.mMeshBuildList.end(); ++iter)
     {
-        // iter-second.first = model name + "@" + parent NiNode block name
+        MeshLoader loader = MeshLoader(iter->second);
+        // The model name and parent node name are concatenated for use with Ogre::MeshManager
+        // without triggering exeptions due to duplicates.
         // e.g. meshes\\architecture\\imperialcity\\icwalltower01.nif@ICWallTower01
-
-        // FIXME: the loader does not have to be a unique_ptr
-        // iter->second.second = unique_ptr to NiMeshLoader
         //
+        // FIXME: probably should normalise the names to lowercase
+        // FIXME: failsafe - check if mParent->getNodeName() returns blank, in which case use block number?
+        // FIXME: consider the use of a hash (possibly the same as BSA) + block number for performance
+        std::string meshName = getModelName() + "@" + iter->second->getNiNodeName();
+
         // TODO: probably room for optimising the use of the "group" parameter
-        Ogre::MeshPtr mesh = meshManager.getByName(iter->second.first, mGroup);
+        Ogre::MeshPtr mesh = meshManager.getByName(meshName, mGroup);
         if (!mesh)
-            mesh = meshManager.createManual(iter->second.first, mGroup, iter->second.second.get());
+            mesh = meshManager.createManual(meshName, mGroup, &loader);
+
+
+
+        if (!mModelData.mSkeleton.isNull() && mesh->hasSkeleton() && mesh->getSkeleton() != mModelData.mSkeleton)
+        {
+            // need to redo bone asignments
+            //mesh = meshManager.createManual(meshName, mGroup, &loader);
+        }
+
+
+
 
         mesh->setAutoBuildEdgeLists(false);
 
@@ -251,6 +261,27 @@ void NiBtOgre::NiModel::buildMeshAndEntity(BtOgreInst* inst)
         //          sub-meshes are created in NiMeshLoader::loadResource
 
         entity->setVisible(true /*!(flags&Nif::NiNode::Flag_Hidden)*/); // FIXME not for newer NIF
+
+
+
+
+
+
+        // FIXME: experimental
+        // set mSkelBase for Animation::isSkinned()
+        if (mesh->hasSkeleton() && (blockType(iter->second->index()) == "NiNode"))
+        {
+            std::string nodeName = iter->second->getNiNodeName();
+            if (nodeName == "Scene Root")
+            {
+                inst->mObjectScene->mSkelBase = entity;
+            }
+        }
+
+
+
+
+
 
         // FIXME: move this block to animation?
         Ogre::AnimationStateSet *anims = entity->getAllAnimationStates();
@@ -314,7 +345,7 @@ void NiBtOgre::NiModel::buildMeshAndEntity(BtOgreInst* inst)
         }
 
         inst->mObjectScene->mEntities.push_back(entity);
-
+#if 0
         const std::vector<NiTriBasedGeom*>& subMeshGeometry = iter->second.second->getSubMeshGeometry();
         for (unsigned int j = 0; j < subMeshGeometry.size(); ++j)
         {
@@ -322,9 +353,38 @@ void NiBtOgre::NiModel::buildMeshAndEntity(BtOgreInst* inst)
             //std::cout << "nameIndex " << subMeshGeometry[j]->getNameIndex() << std::endl;
             //std::cout << entity->getSubEntity(j)->getSubMesh()->getMaterialName() << std::endl;
         }
-
+#endif
         // FIXME: do we need a map of entities for deleting later?
         //        for now get ObjectScene to do that
+    }
+
+    // FIXME: experimental
+    // skeleton.nif doesn't have any NiTriBasedGeom so no entities would have been created
+    if (mModelData.mIsSkeleton && (blockType(mRoots[0]) == "NiNode"))
+    {
+        NiNode *rootNode = getRef<NiNode>(mRoots[0]);
+        std::string rootName = rootNode->getNiNodeName();
+        if (rootName == "Scene Root")
+        {
+            std::string meshName = getModelName() + "@" + rootName;
+            MeshLoader loader = MeshLoader(rootNode);
+
+            Ogre::MeshPtr mesh = meshManager.getByName(meshName);
+            if (!mesh)
+                mesh = meshManager.createManual(meshName, mGroup, &loader);
+
+            mesh->setSkeletonName(getModelName());
+
+            Ogre::Entity *entity = inst->mBaseSceneNode->getCreator()->createEntity(mesh);
+            inst->mObjectScene->mSkelBase = entity;
+            inst->mObjectScene->mEntities.push_back(entity); // experimental for position
+
+            // FIXME: experimental
+            Ogre::SkeletonInstance *skelinst = inst->mObjectScene->mSkelBase->getSkeleton();
+            Ogre::Skeleton::BoneIterator boneiter = skelinst->getBoneIterator();
+            while(boneiter.hasMoreElements())
+                boneiter.getNext()->setManuallyControlled(true);
+        }
     }
 #if 0
     std::map<std::uint32_t, EntityConstructionInfo>::iterator iter = mEntityCIMap.begin();
@@ -371,6 +431,37 @@ void NiBtOgre::NiModel::buildMeshAndEntity(BtOgreInst* inst)
 #endif
 }
 
+// NOTE: 'model' should be updated each time a weapon (e.g. bow) is equipped or unequipped
+//       since that will affect the object palette.  But the object palette in its current form
+//       returns object index based on a text string name.  The indicies from another model
+//       (e.g.  bow) won't be useful.  i.e. we need a different solution.
+//       TODO: check if the object names can clash
+void NiBtOgre::NiModel::buildAnimation(Ogre::Entity *skelBase, NiModelPtr anim,
+        std::multimap<float, std::string>& textKeys,
+        std::vector<Ogre::Controller<Ogre::Real> >& controllers,
+        NiModel *skeleton, NiModel *bow)
+{
+    getRef<NiControllerSequence>(mRoots[0])->build(skelBase, anim, textKeys, controllers, *skeleton, skeleton->getObjectPalette());
+}
+
+void NiBtOgre::NiModel::buildSkeleton()
+{
+    if (mModelData.mSkelLeafIndicies.size() > 1)
+    {
+        mModelData.mSkeleton = Ogre::SkeletonManager::getSingleton().getByName(getModelName(), mGroup);
+        if (!mModelData.mSkeleton)
+        {
+            SkeletonLoader loader(*this);
+            mModelData.mSkeleton
+                = Ogre::static_pointer_cast<Ogre::Skeleton>(Ogre::SkeletonManager::getSingleton().load(
+                    getModelName(), // use the NIF name, since there is one skeleton per NIF
+                    mGroup,         // Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME
+                    true,           // isManual
+                    &loader));
+        }
+    }
+}
+
 void NiBtOgre::ModelData::setNiNodeParent(NiAVObjectRef child, NiNode *parent)
 {
     //if (child == -1) // already checked in NiNode before calling this method
@@ -394,40 +485,24 @@ void NiBtOgre::ModelData::setNiNodeParent(NiAVObjectRef child, NiNode *parent)
     if (it != mNiNodeMap.cend())
         return *it->second;
     else
-        throw std::logic_error("NiNode parent map: parent not found");
-}
-
-// prepare for building the mesh
-void NiBtOgre::ModelData::registerNiTriBasedGeom(const NiNode& parent, NiTriBasedGeom* geometry)
-{
-    // The model name and parent node name are concatenated for use with Ogre::MeshManager
-    // without triggering exeptions due to duplicates.
-    // e.g. meshes\\architecture\\imperialcity\\icwalltower01.nif@ICWallTower01
-    //
-    // FIXME: probably should normalise the names to lowercase
-    // FIXME: failsafe - check if mParent->getNodeName() returns blank, in which case use block number?
-    // FIXME: consider the use of a hash (possibly the same as BSA) + block number for performance
-    std::string name = mModel.getModelName()+"@"+parent.getNiNodeName();
-    NiNodeRef nodeIndex = parent.index();
-
-    // FIXME: checking the parent's block name feels wrong
-    if (!mModel.showEditorMarkers() && mEditorMarkerPresent && (parent.getNiNodeName() == "EditorMarker"))
-        return;
-
-    std::map<NiNodeRef, std::pair<std::string, std::unique_ptr<MeshLoader> > >::iterator lb
-        = mMeshLoaders.lower_bound(nodeIndex);
-
-    if (lb != mMeshLoaders.end() && !(mMeshLoaders.key_comp()(nodeIndex, lb->first)))
     {
-        // One exists already, add to it
-        lb->second.second->registerSubMeshGeometry(geometry);
-    }
-    else
-    {
-        // None found, create one
-        std::unique_ptr<MeshLoader> loader(new MeshLoader(mModel));
-        loader->registerSubMeshGeometry(geometry);
-        mMeshLoaders.insert(lb, std::make_pair(nodeIndex, std::make_pair(name, std::move(loader))));
+        //throw std::logic_error("NiNode parent map: parent not found");
+        std::cerr << mModel.getModelName() << " : NiNode parent not found - " << child << std::endl;
+        // FIXME: it turns out that some parents have higher index than children (i.e. occurs
+        // later in the file) - to fix this properly quite a bit a change will be required
+        // - although it might be possible to post process before mParent and transforms are
+        // required
+        // architecture\arena\arenaspectatorm01.nif : NiNode parent not found - 128
+        // architecture\arena\arenaspectatorm01.nif : NiNode parent not found - 130
+        // architecture\arena\arenaspectatorm01.nif : NiNode parent not found - 202
+        // architecture\arena\arenaspectatorm01.nif : NiNode parent not found - 215
+        // architecture\arena\arenaspectatorm01.nif : NiNode parent not found - 217
+        // architecture\arena\arenaspectatorf01.nif : NiNode parent not found - 132
+        // architecture\arena\arenaspectatorf01.nif : NiNode parent not found - 134
+        // architecture\arena\arenaspectatorf01.nif : NiNode parent not found - 208
+        // architecture\arena\arenaspectatorf01.nif : NiNode parent not found - 218
+        // architecture\arena\arenaspectatorf01.nif : NiNode parent not found - 220
+        return *mModel.getRef<NiNode>(0);
     }
 }
 

@@ -100,7 +100,7 @@ void ESM4::Armor::load(ESM4::Reader& reader)
             }
             case ESM4::SUB_ICON: reader.getZString(mIconMale);   break;
             case ESM4::SUB_ICO2: reader.getZString(mIconFemale); break;
-            //case ESM4::SUB_BMDT: reader.get(mArmorFlags);        break; // see below re. FO3
+            case ESM4::SUB_BMDT: reader.get(mArmorFlags);        break; // see below re. FO3
             case ESM4::SUB_SCRI: reader.getFormId(mScript);      break;
             case ESM4::SUB_ANAM: reader.get(mEnchantmentPoints); break;
             case ESM4::SUB_ENAM: reader.getFormId(mEnchantment); break;
@@ -137,7 +137,7 @@ void ESM4::Armor::load(ESM4::Reader& reader)
             case ESM4::SUB_EAMT:
             case ESM4::SUB_EITM:
             case ESM4::SUB_VMAD:
-            case ESM4::SUB_BMDT: // FO3 FIXME might have different format
+            //case ESM4::SUB_BMDT: // FO3 FIXME might have different format
             case ESM4::SUB_REPL: // FO3
             case ESM4::SUB_BIPL: // FO3
             case ESM4::SUB_MODD: // FO3

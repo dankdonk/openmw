@@ -107,8 +107,9 @@ void NiBtOgre::BtRigidBodyCI::loadImpl()
             throw std::logic_error("target name collision "+nimodel->indexToString(target->getNameIndex()));
 
         // get the bullet shape with the target as a parameter
+        // TODO: cloning pre-pade shape (e.g. bhkRigidBody via unique_ptr) may be faster?
         mBtCollisionShapeMap[nimodel->indexToString(target->getNameIndex())]
-            = std::make_pair(target->getWorldTransform(), bhk->getShape(target));
+            = std::make_pair(target->getWorldTransform(), bhk->getShape(*target));
     }
 }
 

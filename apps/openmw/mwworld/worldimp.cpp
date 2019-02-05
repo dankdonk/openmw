@@ -1601,6 +1601,10 @@ namespace MWWorld
                 else
                     it++;
             }
+            else if (isForeignDoor && anim->hasAnimation("Open") && anim->getAnimatedDoorState() == 0)
+            {
+                mDoorStates.erase(it++); // FIXME: hack to reset the doors (still not quite right, anyway)
+            }
             else
             {
                 float oldRot = Ogre::Radian(it->first.getRefData().getLocalRotation().rot[2]).valueDegrees();

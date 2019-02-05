@@ -34,6 +34,7 @@ namespace Ogre
 {
     class Skeleton;
     class Bone;
+    class Mesh;
 }
 
 // Based on NifTools/NifSkope/doc/index.html
@@ -58,13 +59,16 @@ namespace Ogre
 namespace NiBtOgre
 {
     class NiStream;
+    struct NiTriBasedGeom;
 
     class NiNode : public NiAVObject
     {
         std::string mNodeName; // cached here since used frequently
         NiNode *mParent;       // cached here since used frequently
+        ModelData& mData;
 
         std::vector<NiNodeRef> mChildBoneNodes; // FIXME: experimental for building a skeleton
+        std::vector<NiTriBasedGeom*> mSubMeshChildren;
 
         //void buildTES3(Ogre::SceneNode *sceneNode, BtOgreInst *inst, NiObject *parentNiNode = nullptr);
 
@@ -83,7 +87,11 @@ namespace NiBtOgre
         inline const std::string& getNiNodeName() const { return mNodeName; }
         inline const NiNode& getParentNiNode() const { return *mParent; }
 
-        // Returns true if skeleton root is found
+        //
+        void registerSubMesh(NiTriBasedGeom* geom);
+        void buildMesh(Ogre::Mesh* mesh);
+
+        //
         void findBones(const NiNodeRef skeletonRoot, const NiNodeRef childNode); // FIXME: experimental
         void findBones(std::int32_t rootIndex);                                  // FIXME: experimental
 

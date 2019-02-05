@@ -44,8 +44,6 @@
 
 #include <extern/shiny/Main/Factory.hpp>
 
-#include <extern/nibtogre/nimodelmanager.hpp>
-#include <extern/nibtogre/nimodel.hpp>
 #include <extern/nibtogre/btogreinst.hpp>
 
 #include <components/nif/node.hpp>
@@ -136,6 +134,8 @@ ObjectScene::~ObjectScene()
     mLights.clear();
     mParticles.clear();
     mEntities.clear();
+    mVertexAnimEntities.clear();
+    mSkeletonAnimEntities.clear();
     mSkelBase = NULL;
 }
 
@@ -1292,9 +1292,8 @@ public:
         {
             try
             {
-                std::auto_ptr<NiBtOgre::BtOgreInst> inst(new NiBtOgre::BtOgreInst(sceneNode, scene));
-                inst->mModel = NiBtOgre::NiModelManager::getSingleton().getOrLoadByName(name, group);
-                static_cast<NiBtOgre::NiModel*>(inst->mModel.get())->build(inst.get());             // build object
+                std::auto_ptr<NiBtOgre::BtOgreInst> inst(new NiBtOgre::BtOgreInst(sceneNode, scene, name, group));
+                inst->instantiate();
                 return;
             }
             catch (std::exception&) // fixme

@@ -32,6 +32,7 @@
 #include "nistream.hpp"
 #include "nimodel.hpp"
 #include "btogreinst.hpp"
+#include "nitimecontroller.hpp"
 
 #ifdef NDEBUG // FIXME: debuggigng only
 #undef NDEBUG
@@ -90,6 +91,20 @@ NiBtOgre::NiAVObject::NiAVObject(uint32_t index, NiStream& stream, const NiModel
 //{
     // probably never called, remove?
 //}
+
+NiBtOgre::NiTimeController *NiBtOgre::NiAVObject::findController(const std::string& controllerType)
+{
+    NiTimeControllerRef index = NiObjectNET::mControllerIndex;
+    while (index != -1)
+    {
+        if (mModel.blockType(index) == controllerType)
+            return mModel.getRef<NiTimeController>(index);
+
+        index = mModel.getRef<NiTimeController>(index)->mNextControllerIndex;
+    }
+
+    return nullptr;
+}
 
 NiBtOgre::NiCamera::NiCamera(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
     : NiAVObject(index, stream, model, data), mUseOrthographicProjection(false)

@@ -45,6 +45,7 @@
 namespace NiBtOgre
 {
     class NiStream;
+    class NiTimeController;
 
     class NiAVObject : public NiObjectNET
     {
@@ -62,6 +63,8 @@ namespace NiBtOgre
 
         inline const Ogre::Matrix4& getWorldTransform() const { return mWorldTransform; }
         inline const Ogre::Matrix4& getLocalTransform() const { return mLocalTransform; }
+
+        NiTimeController *findController(const std::string& controllerType);
 
     protected:
         std::uint16_t mFlags;

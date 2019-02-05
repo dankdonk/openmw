@@ -344,9 +344,17 @@ NiBtOgre::NiIntegerExtraData::NiIntegerExtraData(uint32_t index, NiStream& strea
 
     // FIXME: this probably doesn't belong here
     //        used by NiNode and NiTriBasedGeom
-    if ((model.indexToString(mName) == "BSX") && ((mIntegerData & 0x20) != 0))
-        data.mEditorMarkerPresent = true;
-        //std::cout << "EditorMarker present : " << model.getModelName() << std::endl;
+    if (model.indexToString(mName) == "BSX")
+    {
+        if ((mIntegerData & 0x20) != 0)
+            data.mEditorMarkerPresent = true;
+            //std::cout << "EditorMarker present : " << model.getModelName() << std::endl;
+
+        if ((mIntegerData & 0x04) != 0) // FIXME: TES5 differrent
+            data.mIsSkeleton = true;
+        else
+            data.mIsSkeleton = false;
+    }
 }
 
 // ./x/ex_waterfall_mist_01.nif (has examples of MRK and sgoKeep)
@@ -762,17 +770,25 @@ NiBtOgre::NiKeyframeData::NiKeyframeData(uint32_t index, NiStream& stream, const
 
     if (mRotationType != 4) // not XYZ_ROTATION_KEY
     {
-        mQuaternionKeys.resize(numRotationKeys);
-        for (unsigned int i = 0; i < numRotationKeys; ++i)
+//      mQuaternionKeys.resize(numRotationKeys);
+//      for (unsigned int i = 0; i < numRotationKeys; ++i)
+//      {
+//          stream.read(mQuaternionKeys.at(i).time);
+//          stream.read(mQuaternionKeys.at(i).value);
+//          if (mRotationType == 3/* TBC_KEY */)
+//          {
+//              stream.read(mQuaternionKeys.at(i).tension);
+//              stream.read(mQuaternionKeys.at(i).bias);
+//              stream.read(mQuaternionKeys.at(i).continuity);
+//          }
+//      }
+        mQuaternionKeys.interpolation = mRotationType; // TODO: check not quadratic?
+        for(unsigned int i = 0; i < numRotationKeys; ++i)
         {
-            stream.read(mQuaternionKeys.at(i).time);
-            stream.read(mQuaternionKeys.at(i).value);
-            if (mRotationType == 3/* TBC_KEY */)
-            {
-                stream.read(mQuaternionKeys.at(i).tension);
-                stream.read(mQuaternionKeys.at(i).bias);
-                stream.read(mQuaternionKeys.at(i).continuity);
-            }
+            Key<Ogre::Quaternion> key;
+            key.read(stream, mRotationType);
+            mQuaternionKeys.indexMap[key.time] = (int) mQuaternionKeys.keys.size();
+            mQuaternionKeys.keys.push_back(key);
         }
     }
     else                    // XYZ_ROTATION_KEY

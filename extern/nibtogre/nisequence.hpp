@@ -30,7 +30,10 @@
 #include <vector>
 #include <cstdint>
 
+#include <OgrePrerequisites.h>
+
 #include "niobject.hpp"
+#include "nimodelmanager.hpp"
 
 namespace Ogre
 {
@@ -105,6 +108,12 @@ namespace NiBtOgre
         NiControllerSequence(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
 
         void build(const NiDefaultAVObjectPalette* objects);
+        void build(Ogre::Entity *skelBase, NiModelPtr anim,
+            std::multimap<float, std::string>& textKeys,
+            std::vector<Ogre::Controller<float> >& controllers,
+            const NiModel& targetModel, const std::map<std::string, NiAVObjectRef>& objects);
+
+        //void build(Ogre::SkeletonPtr skeleton);
 
         std::string getObjectName(std::uint32_t stringOffset) const;
         uint32_t getNameIndex() const { return NiSequence::mNameIndex; }

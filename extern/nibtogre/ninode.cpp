@@ -32,6 +32,7 @@
 
 #include <OgreSkeleton.h>
 #include <OgreBone.h>
+#include <OgreMesh.h>
 
 #include "nistream.hpp"
 #include "nimodel.hpp"
@@ -39,6 +40,8 @@
 #include "nidata.hpp"
 #include "btogreinst.hpp"
 #include "nicollisionobject.hpp"
+#include "nigeometry.hpp"
+#include "boundsfinder.hpp"
 
 #ifdef NDEBUG // FIXME: debuggigng only
 #undef NDEBUG
@@ -54,7 +57,7 @@
 // Bipeds seems to have a predefined list of bones. See: meshes/armor/legion/m/cuirass.nif
 NiBtOgre::NiNode::NiNode(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
     : NiAVObject(index, stream, model, data)
-    , mNodeName(model.indexToString(NiObjectNET::mNameIndex))
+    , mNodeName(model.indexToString(NiObjectNET::mNameIndex)), mData(data)
 {
     //stream.readVector<NiAVObjectRef>(mChildren);
     std::uint32_t numChildren = 0;
@@ -95,6 +98,47 @@ NiBtOgre::NiNode::NiNode(uint32_t index, NiStream& stream, const NiModel& model,
         //mWorldTransform = Ogre::Matrix4(Ogre::Matrix4::IDENTITY);
 }
 
+void NiBtOgre::NiNode::registerSubMesh(NiTriBasedGeom* geom)
+{
+    if (!mModel.showEditorMarkers() && mData.mEditorMarkerPresent && (mNodeName == "EditorMarker"))
+        return;
+
+    mData.mMeshBuildList[NiObject::mSelfIndex] = this;
+    mSubMeshChildren.push_back(geom);
+}
+
+
+//  Some of the Ogre code in this method is based on v0.36 of OpenMW.
+void NiBtOgre::NiNode::buildMesh(Ogre::Mesh *mesh)
+{
+    BoundsFinder bounds;
+    bool needTangents = false;
+
+    // create and update (i.e. apply materials, properties and controllers)
+    // an Ogre::SubMesh for each in mSubMeshGeometry
+    for (size_t i = 0; i < mSubMeshChildren.size(); ++i)
+    {
+        needTangents |= mSubMeshChildren.at(i)->createSubMesh(mesh, bounds);
+    }
+
+    // build tangents if at least one of the sub-mesh's material needs them
+    // TODO: is it possible to use the ones in the NIF files?
+    if (needTangents)
+    {
+        unsigned short src, dest;
+        if (!mesh->suggestTangentVectorBuildParams(Ogre::VES_TANGENT, src, dest))
+            mesh->buildTangentVectors(Ogre::VES_TANGENT, src, dest);
+    }
+
+    // for skeleton.nif an empty mesh is created
+    if (mSubMeshChildren.size())
+    {
+        mesh->_setBounds(Ogre::AxisAlignedBox(bounds.minX()-0.5f, bounds.minY()-0.5f, bounds.minZ()-0.5f,
+                                              bounds.maxX()+0.5f, bounds.maxY()+0.5f, bounds.maxZ()+0.5f));
+        mesh->_setBoundingSphereRadius(bounds.getRadius());
+    }
+}
+
 // build a hierarchy of bones (i.e. mChildBoneNodes) so that a skeleton can be built, hopefully
 // a much smaller subset of the NiNode hierarchy
 //
@@ -130,30 +174,6 @@ void NiBtOgre::NiNode::findBones(std::int32_t rootIndex)
     if (rootIndex != NiObject::index())
         mParent->findBones(rootIndex, NiObject::index());
 }
-#if 0
-// this method is only needed if we're building one skeletons at a time; not currently used
-void NiBtOgre::NiNode::clearSkeleton()
-{
-    for (unsigned int i = 0; i < mChildBoneNodes.size(); ++i)
-    {
-        NiObject::mModel.getRef<NiNode>(mChildBoneNodes[i])->clearSkeleton();
-    }
-
-    mChildBoneNodes.clear();
-}
-
-// FIXME: how to add bones to an existing skeleton?
-void NiBtOgre::NiNode::buildSkeleton(BtOgreInst *inst, NiSkinInstanceRef skinInstanceIndex)
-{
-    //FIXME: testing only
-    //std::cout << "skel " << getNodeName() << std::endl;
-
-    for (unsigned int i = 0; i < mChildBoneNodes.size(); ++i)
-    {
-        NiObject::mModel.getRef<NiNode>(mChildBoneNodes[i])->buildSkeleton(inst, skinInstanceIndex);
-    }
-}
-#endif
 
 void NiBtOgre::NiNode::addBones(Ogre::Skeleton *skeleton,
         Ogre::Bone *parentBone, std::map<std::uint32_t, std::uint16_t>& indexToHandle)
@@ -172,7 +192,6 @@ void NiBtOgre::NiNode::addBones(Ogre::Skeleton *skeleton,
     if (parentBone)
         parentBone->addChild(bone);
 
-    //bone->setManuallyControlled(true); // FIXME: when to use this?
     bone->setPosition(NiAVObject::mTranslation);
     bone->setOrientation(NiAVObject::mRotation);
     bone->setScale(Ogre::Vector3(NiAVObject::mScale));

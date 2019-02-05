@@ -46,9 +46,74 @@
 #undef NDEBUG
 #endif
 
-// below code is copied from NifSkope gl/glcontroller.cpp
+// below code is copied from (or based on) NifSkope gl/glcontroller.cpp
 namespace
 {
+template<typename T>
+T interpolateKey (const NiBtOgre::KeyGroup<T>& keyGroup, /*uint32_t cycleType,*/ float time)
+{
+    if(time <= keyGroup.indexMap.begin()->first)
+        return keyGroup.keys[keyGroup.indexMap.begin()->second].value;
+
+    std::map<float, int>::const_iterator nextIt = keyGroup.indexMap.lower_bound(time); // >=
+    if (nextIt != keyGroup.indexMap.end())
+    {
+        std::map<float, int>::const_iterator lastIt = nextIt;
+        --lastIt; // point to prev key
+
+        float nextTime = nextIt->first;
+        float lastTime = lastIt->first;
+        float x = (time - lastTime) / (nextTime - lastTime);
+
+        if (keyGroup.interpolation == 5)      // CONST
+        {
+            if ( x < 0.5f ) // step up at half way (or should it be step up at 1.0f instead?)
+                return keyGroup.keys[lastIt->second].value;
+            else
+                return keyGroup.keys[nextIt->second].value;
+        }
+        else if (keyGroup.interpolation == 2) // QUADRATIC
+        {
+            const T& t1 = keyGroup.keys[lastIt->second].backward;
+            const T& t2 = keyGroup.keys[nextIt->second].forward;
+            const T& v1 = keyGroup.keys[lastIt->second].value;
+            const T& v2 = keyGroup.keys[nextIt->second].value;
+            float x2 = x * x;
+            float x3 = x2 * x;
+
+            // Cubic Hermite spline
+            //    x(t) = (2t^3 - 3t^2 + 1)P1  + (-2t^3 + 3t^2)P2 + (t^3 - 2t^2 + t)T1 + (t^3 - t^2)T2
+            return  v1 * (2.0f * x3 - 3.0f * x2 + 1.0f) + v2 * (-2.0f * x3 + 3.0f * x2) + t1 * (x3 - 2.0f * x2 + x) + t2 * (x3 - x2);
+        }
+        else if (keyGroup.interpolation == 1) // LINEAR
+        {
+            const T& v1 = keyGroup.keys[lastIt->second].value;
+            const T& v2 = keyGroup.keys[nextIt->second].value;
+
+            return v1 + (v2 - v1) * x;
+        }
+        else if (keyGroup.interpolation == 3) // TBC
+        {
+            // oblivion\seige\siegecrawlerdeath.nif
+            // FIXME: use linear for now
+            const T& v1 = keyGroup.keys[lastIt->second].value;
+            const T& v2 = keyGroup.keys[nextIt->second].value;
+
+            return v1 + (v2 - v1) * x;
+        }
+        else
+            throw std::runtime_error("Unsupported interpolation type");
+    }
+    else // no key has >= time; i.e. time is greater than any of the keys'
+    {
+        // FIXME: do we ever get here?
+        //if (cycleType == 2) // CYCLE_CLAMP
+            return keyGroup.keys[keyGroup.indexMap.rbegin()->second].value;
+        //else
+            //return keyGroup.keys[keyGroup.indexMap.begin()->second].value; // wrap around
+    }
+}
+
 template<typename T>
 bool timeIndex( float time, const std::vector<NiBtOgre::Key<T> >& frames, int & last, int & next, float & x )
 {
@@ -159,8 +224,6 @@ bool interpolate( T & value, const NiBtOgre::KeyGroup<T>& keyGroup, float time, 
 
             value = v1 * (2.0f * x3 - 3.0f * x2 + 1.0f) + v2 * (-2.0f * x3 + 3.0f * x2) + t1 * (x3 - 2.0f * x2 + x) + t2 * (x3 - x2);
 
-            //value -= frames[0].value; // HACK: let's consider delta changes only (for testing only!)
-
         }    return true;
 
         case 5:
@@ -178,187 +241,6 @@ bool interpolate( T & value, const NiBtOgre::KeyGroup<T>& keyGroup, float time, 
     }
 
     return false;
-}
-
-/*********************************************************************
-Simple b-spline curve algorithm
-
-Copyright 1994 by Keith Vertanen (vertankd@cda.mrs.umn.edu)
-
-Released to the public domain (your mileage may vary)
-
-Found at: Programmers Heaven (www.programmersheaven.com/zone3/cat415/6660.htm)
-(Seems to be here now: https://www.keithv.com/software/3dpath/spline.cpp)
-Modified by: Theo
-- reformat and convert doubles to floats
-- removed point structure in favor of arbitrary sized float array
-Further modified by: cc9cii
-- use std::vector with offset rather than QModelIndex
-- changed Vector3 and Quat to Ogre::Vector3 and Ogre::Quaternion
-**********************************************************************/
-
-template <typename T>
-struct SplineTraits
-{
-    // Zero data
-    static T & Init( T & v )
-    {
-        v = T();
-        return v;
-    }
-
-    // Number of control points used
-    static int CountOf()
-    {
-        return ( sizeof(T) / sizeof(float) );
-    }
-
-    // Compute point from short array and mult/bias
-    static T & Compute( T & v, const std::vector<short> & c, unsigned int off, float mult )
-    {
-        float * vf = (float *)&v; // assume default data is a vector of floats. specialize if necessary.
-
-        for ( int i = 0; i < CountOf(); ++i )
-            vf[i] = vf[i] + ( float(c.at(off+i)) / float(SHRT_MAX) ) * mult;
-
-        return v;
-    }
-    static T & Adjust( T & v, float mult, float bias )
-    {
-        float * vf = (float *)&v;  // assume default data is a vector of floats. specialize if necessary.
-
-        for ( int i = 0; i < CountOf(); ++i )
-            vf[i] = vf[i] * mult + bias;
-
-        return v;
-    }
-};
-
-template <> struct SplineTraits<Ogre::Vector3>
-{
-    static Ogre::Vector3 & Init( Ogre::Vector3 & v )
-    {
-        v = Ogre::Vector3();
-        return v;
-    }
-    static int CountOf() { return 3; }
-    static Ogre::Vector3 & Compute( Ogre::Vector3 & v, const std::vector<short> & c, unsigned int off, float mult )
-    {
-        v.x = v.x + ( float(c.at(off+0)) / float(SHRT_MAX) ) * mult;
-        v.y = v.y + ( float(c.at(off+1)) / float(SHRT_MAX) ) * mult;
-        v.z = v.z + ( float(c.at(off+2)) / float(SHRT_MAX) ) * mult;
-
-        return v;
-    }
-    static Ogre::Vector3 & Adjust( Ogre::Vector3 & v, float mult, float bias )
-    {
-        v.x = v.x * mult + bias;
-        v.y = v.y * mult + bias;
-        v.z = v.z * mult + bias;
-
-        return v;
-    }
-};
-
-template <> struct SplineTraits<Ogre::Quaternion>
-{
-    static Ogre::Quaternion & Init( Ogre::Quaternion & v )
-    {
-        v = Ogre::Quaternion(); v.w = 0.0f; return v;
-    }
-    static int CountOf() { return 4; }
-    static Ogre::Quaternion & Compute( Ogre::Quaternion & v, const std::vector<short> & c, unsigned int off, float mult )
-    {
-        v.w = v.w + ( float(c.at(off+0)) / float(SHRT_MAX) ) * mult;
-        v.x = v.x + ( float(c.at(off+1)) / float(SHRT_MAX) ) * mult;
-        v.y = v.y + ( float(c.at(off+2)) / float(SHRT_MAX) ) * mult;
-        v.z = v.z + ( float(c.at(off+3)) / float(SHRT_MAX) ) * mult;
-
-        return v;
-    }
-    static Ogre::Quaternion & Adjust( Ogre::Quaternion & v, float mult, float bias )
-    {
-        v.w = v.w * mult + bias;
-        v.x = v.x * mult + bias;
-        v.y = v.y * mult + bias;
-        v.z = v.z * mult + bias;
-
-        return v;
-    }
-};
-
-// calculate the blending value
-static float blend( int k, int t, int * u, float v )
-{
-    float value;
-
-    if ( t == 1 ) {
-        // base case for the recursion
-        value = ( ( u[k] <= v ) && ( v < u[k + 1] ) ) ? 1.0f : 0.0f;
-    } else {
-        if ( ( u[k + t - 1] == u[k] ) && ( u[k + t] == u[k + 1] ) ) // check for divide by zero
-            value = 0;
-        else if ( u[k + t - 1] == u[k] )                            // if a term's denominator is zero,use just the other
-            value = ( u[k + t] - v) / ( u[k + t] - u[k + 1] ) * blend( k + 1, t - 1, u, v );
-        else if ( u[k + t] == u[k + 1] )
-            value = (v - u[k]) / (u[k + t - 1] - u[k]) * blend( k, t - 1, u, v );
-        else
-            value = ( v - u[k] ) / ( u[k + t - 1] - u[k] ) * blend( k, t - 1, u, v )
-                    + ( u[k + t] - v ) / ( u[k + t] - u[k + 1] ) * blend( k + 1, t - 1, u, v );
-    }
-
-    return value;
-}
-
-// figure out the knots
-static void compute_intervals( int * u, int n, int t )
-{
-    for ( int j = 0; j <= n + t; j++ ) {
-        if ( j < t )
-            u[j] = 0;
-        else if ( ( t <= j ) && ( j <= n ) )
-            u[j] = j - t + 1;
-        else if ( j > n )
-            u[j] = n - t + 2;  // if n-t=-2 then we're screwed, everything goes to 0
-    }
-}
-
-template <typename T>
-static void compute_point( int * u, int n, int t, float v, const std::vector<short> & control, unsigned int off, T & output, float mult, float bias )
-{
-    // initialize the variables that will hold our output
-    int l = SplineTraits<T>::CountOf();
-    SplineTraits<T>::Init( output );
-
-    for ( int k = 0; k <= n; k++ ) {
-        SplineTraits<T>::Compute( output, control, off+k*l, blend( k, t, u, v ) );
-    }
-
-    SplineTraits<T>::Adjust( output, mult, bias );
-}
-
-template <typename T>
-bool bsplineinterpolate( T & value, int degree, float interval, unsigned int nctrl, const std::vector<short> & array, unsigned int off, float mult, float bias )
-{
-    if ( off == USHRT_MAX )
-        return false;
-
-    int t = degree + 1;
-    int n = nctrl - 1;
-    int l = SplineTraits<T>::CountOf();
-
-    if ( interval >= float(nctrl - degree) ) {
-        SplineTraits<T>::Init( value );
-        SplineTraits<T>::Compute( value, array, off+n*l, 1.0f );
-        SplineTraits<T>::Adjust( value, mult, bias );
-    } else {
-        int * u = new int[ n + t + 1 ];
-        compute_intervals( u, n, t );
-        compute_point( u, n, t, interval, array, off, value, mult, bias );
-        delete [] u;
-    }
-
-    return true;
 }
 } // anon namespace
 
@@ -628,6 +510,7 @@ void NiBtOgre::NiMultiTargetTransformController::build(int32_t nameIndex, NiAVOb
         if (data->mRotationType == 4) // XYZ
         {
             float value;
+#if 0
             int last;
             if (!interpolate<float>(value, data->mXRotations, time, last)) value = 0.f;
             Ogre::Quaternion xr(Ogre::Radian(value), Ogre::Vector3::UNIT_X);
@@ -635,6 +518,14 @@ void NiBtOgre::NiMultiTargetTransformController::build(int32_t nameIndex, NiAVOb
             Ogre::Quaternion yr(Ogre::Radian(value), Ogre::Vector3::UNIT_Y);
             if (!interpolate<float>(value, data->mZRotations, time, last)) value = 0.f;
             Ogre::Quaternion zr(Ogre::Radian(value), Ogre::Vector3::UNIT_Z);
+#else
+            value = interpolateKey<float>(data->mXRotations, /*0,*/ time);
+            Ogre::Quaternion xr(Ogre::Radian(value), Ogre::Vector3::UNIT_X);
+            value = interpolateKey<float>(data->mYRotations, /*0,*/ time);
+            Ogre::Quaternion yr(Ogre::Radian(value), Ogre::Vector3::UNIT_Y);
+            value = interpolateKey<float>(data->mZRotations, /*0,*/ time);
+            Ogre::Quaternion zr(Ogre::Radian(value), Ogre::Vector3::UNIT_Z);
+#endif
             Ogre::Quaternion q(zr*yr*xr);
 
             // NOTE: I have no idea why the inverse is needed
@@ -653,8 +544,12 @@ void NiBtOgre::NiMultiTargetTransformController::build(int32_t nameIndex, NiAVOb
         if (data->mTranslations.keys.size() > 0)
         {
             Ogre::Vector3 value;
+#if 0
             int last;
             if (!interpolate<Ogre::Vector3>(value, data->mTranslations, time, last)) value = Ogre::Vector3(0.f);
+#else
+            value = interpolateKey<Ogre::Vector3>(data->mTranslations, /*0,*/ time);
+#endif
 
             // NOTE: wrong position & rotation fixed by taking away interpolator transform
             //

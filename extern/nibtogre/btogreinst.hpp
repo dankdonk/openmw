@@ -88,11 +88,7 @@ namespace NiBtOgre
 #endif
         // Keep the model around in case Ogre wants to load the resource (i.e. Mesh) again
         // FIXME: resources are no longer loaded from here, do we still need an auto_ptr?
-#if 0
-        std::auto_ptr<NiBtOgre::NiModel> mModel;
-#else
         Ogre::SharedPtr<NiBtOgre::NiModel> mModel;
-#endif
 
         int mFlags; // some global properties
         Ogre::SceneNode *mBaseSceneNode;
@@ -112,14 +108,14 @@ namespace NiBtOgre
         // btCollisionShapes
         // btConstraints
 
-        BtOgreInst(Ogre::SceneNode *baseNode, NifOgre::ObjectScenePtr scene);
+        BtOgreInst(Ogre::SceneNode *baseNode, NifOgre::ObjectScenePtr scene, const std::string& name, const std::string& group);
         ~BtOgreInst() {
             for (unsigned int i = 0; i < mInterpolators.size(); ++i)
                 delete mInterpolators[i];
         }
 
         // register with bullet dynamics, make entities visible, etc
-        void instantiate();
+        void instantiate(Ogre::SkeletonPtr skeleton = Ogre::SkeletonPtr());
     };
 }
 

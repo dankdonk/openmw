@@ -29,23 +29,15 @@
 
 namespace NiBtOgre
 {
-    struct NiTriBasedGeom;
-    class NiModel;
+    class NiNode;
 
     class MeshLoader : public Ogre::ManualResourceLoader
     {
-        const NiModel& mModel;
-
-        std::vector<NiTriBasedGeom*> mSubMeshGeometry; // registered NiNode children for the mesh
+        NiNode *mNiNode;
 
     public:
 
-        MeshLoader(const NiModel& model);
-
-        const std::vector<NiTriBasedGeom*>& getSubMeshGeometry() const { return mSubMeshGeometry; }
-
-        // returns the index number of registered NiTriShape/NiTriStrips
-        /*std::uint32_t*/void registerSubMeshGeometry(NiTriBasedGeom* geometry);
+        MeshLoader(NiNode *node);
 
         // reimplement Ogre::ManualResourceLoader
         virtual void loadResource(Ogre::Resource *resource);

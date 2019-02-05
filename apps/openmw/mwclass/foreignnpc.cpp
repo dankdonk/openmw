@@ -250,24 +250,26 @@ namespace MWClass
 
                 data->mNpcStats.setNeedRecalcDynamicStats(false);
             }
-#if 0
-            else
+            else // FIXME autocalc
             {
-                gold = ref->mBase->mNpdt12.mGold;
+                gold = ref->mBase->mBaseConfig.barterGold;
+
+                data->mNpcStats.setHealth (ref->mBase->mData.health); // FIXME: uint32 to float
+                data->mNpcStats.setMagicka (ref->mBase->mBaseConfig.baseSpell);
+                data->mNpcStats.setFatigue (ref->mBase->mBaseConfig.fatigue);
 
                 for (int i=0; i<3; ++i)
                     data->mNpcStats.setDynamic (i, 10);
 
-                data->mNpcStats.setLevel(ref->mBase->mNpdt12.mLevel);
-                data->mNpcStats.setBaseDisposition(ref->mBase->mNpdt12.mDisposition);
-                data->mNpcStats.setReputation(ref->mBase->mNpdt12.mReputation);
+                data->mNpcStats.setLevel(ref->mBase->mBaseConfig.level);
+                data->mNpcStats.setBaseDisposition(0);
+                data->mNpcStats.setReputation(0);
 
-                autoCalculateAttributes(ref->mBase, data->mNpcStats);
-                autoCalculateSkills(ref->mBase, data->mNpcStats, ptr);
+                //autoCalculateAttributes(ref->mBase, data->mNpcStats);
+                //autoCalculateSkills(ref->mBase, data->mNpcStats, ptr);
 
                 data->mNpcStats.setNeedRecalcDynamicStats(true);
             }
-#endif
 #if 0
             // race powers
             const ESM::Race *race = MWBase::Environment::get().getWorld()->getStore().get<ESM::Race>().find(ref->mBase->mRace);

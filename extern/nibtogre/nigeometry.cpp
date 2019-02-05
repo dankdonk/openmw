@@ -114,27 +114,21 @@ NiBtOgre::NiTriBasedGeom::NiTriBasedGeom(uint32_t index, NiStream& stream, const
     : NiGeometry(index, stream, model, data), mData(data) // for accessing mSkeleton later
 {
     mLocalTransform.makeTransform(mTranslation, Ogre::Vector3(mScale), Ogre::Quaternion(mRotation));
+    //  at least one shape's parent is NiTriStrips i.e. the world transform will be required
+    //  FIXME: physics shape is a little offset from the render
+    //  Furniture\MiddleClass\BearSkinRug01.NIF (0001C7CA)
+    //  COC "ICMarketDistrictJensinesGoodasNewMerchandise"
     if (mCollisionObjectIndex != -1)
         NiAVObject::mWorldTransform = NiGeometry::mParent.getWorldTransform() * mLocalTransform;
 
-    data.registerNiTriBasedGeom(NiGeometry::mParent, this);
+    mParent.registerSubMesh(this);
 
-    // if there is node animation in the model add any rendering to be part of the animation
-    // HACK for testing; may add bones that are not necessary
+    // if there is node animation in the model include any sub-mesh to be part of the animation
+    // FIXME: HACK for testing; may add bones that are not necessary
     if (data.mSkelLeafIndicies.size() > 0 && model.blockType(mParent.index()) == "NiNode")
         data.addSkelLeafIndex(mParent.index()); // may attempt to add bones already added
 }
 
-// actual build happens later, after the parent NiNode has processed all its children
-void NiBtOgre::NiTriBasedGeom::build(BtOgreInst *inst, NiObject *parent)
-{
-    // FIXME: move the flags to NiModel::mModelData
-    if (mSkinInstanceIndex != -1)
-        inst->mFlags |= Flag_HasSkin;
-}
-
-// TODO: new classes OgreMaterial, SubEntityController
-//
 // Can't remember why I wanted SubEntityController (a base class maybe?)
 // But it can be useful (map with sub-entity index) for BtOgreInst to associate them later.
 // Should keep such a map in the NiModel tree somewhere so that a retrieved one from the cache
@@ -264,7 +258,8 @@ bool NiBtOgre::NiTriBasedGeom::createSubMesh(Ogre::Mesh *mesh, BoundsFinder& bou
 //                               Ogre::Quaternion(NiAVObject::mRotation));
 
     Ogre::Matrix4 transform = Ogre::Matrix4(Ogre::Matrix4::IDENTITY);
-    if (!isStatic)
+    //if (!isStatic)
+    if (mSkinInstanceIndex != -1) // using the local transform doesn't seem to do much
         transform = mParent.getLocalTransform() * mLocalTransform;
     else
         transform = mParent.getWorldTransform() * mLocalTransform;
@@ -445,7 +440,7 @@ bool NiBtOgre::NiTriBasedGeom::createSubMesh(Ogre::Mesh *mesh, BoundsFinder& bou
         // In case of a Mesh, a list of NiGeometry for that NiNode is required.
 
         // FIXME: move this to NiModel?
-        mesh->setSkeletonName(mModel.getModelName());
+        mesh->setSkeletonName(mData.mSkeleton->getName());
 
         // build skeleton on demand; need to check for each mSkinInstanceIndex
         //
@@ -458,14 +453,14 @@ bool NiBtOgre::NiTriBasedGeom::createSubMesh(Ogre::Mesh *mesh, BoundsFinder& bou
         //Ogre::SkeletonPtr skeleton = mData.mSkeleton;
 
         const NiSkinInstance *skinInstance = mModel.getRef<NiSkinInstance>(mSkinInstanceIndex);
-        const NiSkinData *data = mModel.getRef<NiSkinData>(skinInstance->mDataIndex);
+        const NiSkinData *skinData = mModel.getRef<NiSkinData>(skinInstance->mDataIndex);
         for(size_t i = 0; i < skinInstance->mBones.size(); ++i)
         {
             Ogre::VertexBoneAssignment boneInf;
             std::string nodeName = mModel.getRef<NiNode>(skinInstance->mBones[i])->getNiNodeName();
             boneInf.boneIndex = mData.mSkeleton->getBone(nodeName)->getHandle();
 
-            const std::vector<NiSkinData::SkinData::SkinWeight> &weights = data->mBoneList[i].vertexWeights;
+            const std::vector<NiSkinData::SkinData::SkinWeight> &weights = skinData->mBoneList[i].vertexWeights;
             for(size_t j = 0; j < weights.size(); ++j)
             {
                 boneInf.vertexIndex = weights[j].vertex;
@@ -478,9 +473,11 @@ bool NiBtOgre::NiTriBasedGeom::createSubMesh(Ogre::Mesh *mesh, BoundsFinder& bou
     {
         // for node animation
 
-        // Architecture\Anvil\BenirusDoor01.NIF (0001D375)
-        // the issue seems to be that the child nodes are not being moved
+        // FIXME: the issue seems to be that the child nodes are not being moved
         // (more bones were added but that doesn't seem to have helped)
+        //
+        // Architecture\Anvil\BenirusDoor01.NIF (0001D375)
+        // COC "AnvilBenirusManorBasement"
         //
         //if (mParent.getNiNodeName() != "gear 13")
         {
@@ -531,11 +528,6 @@ bool NiBtOgre::NiTriBasedGeom::createSubMesh(Ogre::Mesh *mesh, BoundsFinder& bou
     return mOgreMaterial.needTangents();
 }
 
-// FIXME: maybe make this one for TES5 instead?
-void NiBtOgre::NiTriBasedGeom::buildTES3(Ogre::SceneNode *sceneNode, BtOgreInst *inst, NiObject *parent)
-{
-}
-
 // Seen in NIF version 20.2.0.7
 NiBtOgre::BSLODTriShape::BSLODTriShape(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
     : NiGeometry(index, stream, model, data)
@@ -543,9 +535,4 @@ NiBtOgre::BSLODTriShape::BSLODTriShape(uint32_t index, NiStream& stream, const N
     stream.read(mLevel0Size);
     stream.read(mLevel1Size);
     stream.read(mLevel2Size);
-}
-
-void NiBtOgre::BSLODTriShape::build(BtOgreInst *inst, NiObject *parent)
-{
-    // TODO
 }

@@ -34,6 +34,8 @@
 #include <string>
 #include <map>
 
+#include <extern/nibtogre/nimodelmanager.hpp>
+
 
 // FIXME: This namespace really doesn't do anything Nif-specific. Any supportable
 // model format should go through this.
@@ -143,8 +145,8 @@ public:
     virtual Ogre::Vector3 getTranslation(T value) const = 0;
     virtual Ogre::Vector3 getScale(T value) const = 0;
 
-    void setNode(Ogre::Node *target)
-    { mNode = target; }
+    //void setNode(Ogre::Node *target)
+    //{ mNode = target; }
     Ogre::Node *getNode() const
     { return mNode; }
 };

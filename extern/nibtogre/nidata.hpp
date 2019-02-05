@@ -194,6 +194,8 @@ namespace NiBtOgre
     public:
         NiDefaultAVObjectPalette(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
 
+        const std::map<std::string, NiAVObjectRef>& getObjectPalette() const { return mObjs; }
+
         NiAVObjectRef getObjectRef(const std::string& name) const {
             std::map<std::string, NiAVObjectRef>::const_iterator it = mObjs.find(name);
             if (it != mObjs.cend())
@@ -293,6 +295,7 @@ namespace NiBtOgre
     {
         KeyType interpolation;
         std::vector<Key<T> > keys;
+        std::map<float, int> indexMap;
 
         void read(NiStream& stream)
         {
@@ -311,6 +314,7 @@ namespace NiBtOgre
             {
                 Key<T> key;
                 key.read(stream, interpolation);
+                indexMap[key.time] = (int) keys.size();
                 keys.push_back(key);
             }
         }
@@ -648,7 +652,10 @@ namespace NiBtOgre
     {
         std::uint32_t mRotationType;
 
-        std::vector<QuatKey<Ogre::Quaternion> > mQuaternionKeys;
+        // Key<T> and QuatKey<T> are close enough to use Key<T> instead (makes the code simpler
+        // at the expense of additional memory usage for forward/backward)
+        //std::vector<QuatKey<Ogre::Quaternion> > mQuaternionKeys;
+        KeyGroup<Ogre::Quaternion> mQuaternionKeys;
 
         KeyGroup<float> mXRotations;
         KeyGroup<float> mYRotations;

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2016, 2018 cc9cii
+  Copyright (C) 2016, 2018, 2019 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -30,17 +30,23 @@
 #include <iostream> // FIXME: debugging only
 #include <iomanip>
 
+#include "formid.hpp"
 #include "reader.hpp"
 //#include "writer.hpp"
 
 ESM4::Race::Race() : mFormId(0), mFlags(0), mBoundRadius(0.f)
+                   , mHeightMale(1.f), mHeightFemale(1.f), mWeightMale(1.f), mWeightFemale(1.f)
+                   , mRaceFlags(0)
 {
     mEditorId.clear();
     mFullName.clear();
     mModel.clear();
     mIcon.clear();
+    mDesc.clear();
+    mVNAM.resize(2);
+    mDecapitate.resize(2);
 
-    mData.flags = 0;
+    mData.flags = 0; // is this CNAM? doesn't seem to match
 }
 
 ESM4::Race::~Race()
@@ -61,7 +67,7 @@ void ESM4::Race::load(ESM4::Reader& reader)
             case ESM4::SUB_EDID:
             {
                 reader.getZString(mEditorId);
-//              std::cout << "RACE " << mEditorId << std::endl;
+//              std::cout << "RACE " << mEditorId << " " << formIdToString(mFormId) << std::endl; // FIXME
                 break;
             }
             case ESM4::SUB_FULL:
@@ -75,10 +81,8 @@ void ESM4::Race::load(ESM4::Reader& reader)
             }
             case ESM4::SUB_MODL: reader.getZString(mModel); break;
             case ESM4::SUB_ICON: reader.getZString(mIcon);  break; // Only in TES4?
-          //case ESM4::SUB_DATA: reader.get(mData);         break;
             case ESM4::SUB_MODB: reader.get(mBoundRadius);  break;
-          //case ESM4::SUB_MODT:
-            case ESM4::SUB_DESC: //skipping...1 <- different lenghts
+            case ESM4::SUB_DESC:
             {
                 if (reader.hasLocalizedStrings())
                     reader.getLocalizedString(mDesc); // TODO check if formid is null
@@ -87,84 +91,121 @@ void ESM4::Race::load(ESM4::Reader& reader)
 
                 break;
             }
-            case ESM4::SUB_ATTR: //skipping...16 // Only in TES4? guess - 8 attrib each for male/female?
-            // Argonian 28 28 1e 32 32 1e 1e 32 28 32 28 28 28 1e 1e 32
-            //          40 40 30 50 50 30 30 50 40 50 40 40 40 30 30 50
-            // Nord     32 1e 1e 28 28 32 1e 32 32 1e 28 28 28 28 1e 32
-            //          50 30 30 40 40 50 30 50 50 30 40 40 40 40 30 50
-            //          StrIntWilAglSpdEndPerLuk
-            //          Male                    Female
-            case ESM4::SUB_CNAM: //skipping...1 // Only in TES4?
-                                 // Sheogorath   0x00
-                                 // Golden Saint 0x03
-                                 // Dark Seducer 0x0C
-                                 // Vampire Race 0x00
-                                 // Dremora      0x07
-                                 // Argonian     0x00
-                                 // Nord         0x05
-                                 // Breton       0x05
-                                 // Wood Elf     0x0D
-                                 // khajiit      0x05
-                                 // Dark Elf     0x00
-                                 // Orc          0x0C
-                                 // High Elf     0x0F
-                                 // Redguard     0x0D
-                                 // Imperial     0x0D
-            case ESM4::SUB_DATA: //skipping...36 // ?? different length to TES5
-            // Altimer
-            //
-            // hex 13 05 14 0a 15 05 16 0a 17 05 18 0a ff 00 00 00
-            // dec     5    10     5    10     5    10  -1 0
-            //     alc   alt   conj  dest  illu  myst  none  unknown (always 00 00)
-            //
-            // cd cc 8c 3f  : 1.1 height Male
-            // cd cc 8c 3f  : 1.1 height Female
-            // 00 00 80 3f  : 1.0 weihgt Male
-            // 00 00 80 3f  : 1.0 weight Female
-            // 01 00 00 00  fist byte 1 means playable? uint32_t flag?
-            //
-            // Redguard
-            //
-            // hex 0d 0a 10 0a 12 05 1b 05 0e 0a 1d 05 ff 00 00 00
-            // dec    10    10     5     5    10     5 -1
-            //     ath   blun  h.arm l.arm blade merch
-            //
-            //
-            // 0a d7 83 3f  : 1.03 height Male
-            // 00 00 80 3f  : 1.0  height Female
-            // 0a d7 83 3f  : 1.03 weight Male
-            // 00 00 80 3f  : 1.0  weight Female
-            // 01 00 00 00
-            //
-            // skill index
-            // 0x0C Armorer
-            // 0x0D Athletics
-            // 0x0E Blade
-            // 0x0F Block
-            // 0x10 Blunt
-            // 0x11 HandToHand
-            // 0x12 HeavyArmor
-            // 0x13 Alchemy
-            // 0x14 Alteration
-            // 0x15 Conjuration
-            // 0x16 Destruction
-            // 0x17 Illusion
-            // 0x18 Mysticism
-            // 0x19 Restoration
-            // 0x1A Acrobatics
-            // 0x1B LightArmor
-            // 0x1C Marksman
-            // 0x1D Mercantile
-            // 0x1E Security
-            // 0x1F Sneak
-            // 0x20 Speechcraft
+            case ESM4::SUB_ATTR: // Only in TES4?
+            {
+                reader.get(mAttribMale.strength);
+                reader.get(mAttribMale.intelligence);
+                reader.get(mAttribMale.willpower);
+                reader.get(mAttribMale.agility);
+                reader.get(mAttribMale.speed);
+                reader.get(mAttribMale.endurance);
+                reader.get(mAttribMale.personality);
+                reader.get(mAttribMale.luck);
+                reader.get(mAttribFemale.strength);
+                reader.get(mAttribFemale.intelligence);
+                reader.get(mAttribFemale.willpower);
+                reader.get(mAttribFemale.agility);
+                reader.get(mAttribFemale.speed);
+                reader.get(mAttribFemale.endurance);
+                reader.get(mAttribFemale.personality);
+                reader.get(mAttribFemale.luck);
+
+                break;
+            }
+            case ESM4::SUB_CNAM: // Only in TES4?
+            //              CNAM       SNAM                     VNAM
+            // Sheogorath   0x0  0000  98 2b  10011000 00101011
+            // Golden Saint 0x3  0011  26 46  00100110 01000110
+            // Dark Seducer 0xC  1100  df 55  11011111 01010101
+            // Vampire Race 0x0  0000  77 44
+            // Dremora      0x7  0111  bf 32
+            // Argonian     0x0  0000  dc 3c
+            // Nord         0x5  0101  b6 03
+            // Breton       0x5  0101  48 1d                    00000000 00000907 (Imperial)
+            // Wood Elf     0xD  1101  2e 4a                    00019204 00019204 (HighElf)
+            // khajiit      0x5  0101  54 5b                    00023FE9 00023FE9 (Argonian)
+            // Dark Elf     0x0  0000  72 54                    00019204 00019204 (HighElf)
+            // Orc          0xC  1100  74 09                    000224FD 000224FD (Nord)
+            // High Elf     0xF  1111  e6 21  11100110 00100001
+            // Redguard     0xD  1101  a9 61
+            // Imperial     0xD  1101  8e 35
+            {
+                reader.skipSubRecordData();
+                break;
+            }
+            case ESM4::SUB_DATA: // ?? different length for TES5
+            {
+                std::uint8_t skill;
+                std::uint8_t bonus;
+                for (unsigned int i = 0; i < 8; ++i)
+                {
+                    reader.get(skill);
+                    reader.get(bonus);
+                    mSkillBonus[static_cast<SkillIndex>(skill)] = bonus;
+                }
+                reader.get(mHeightMale);
+                reader.get(mHeightFemale);
+                reader.get(mWeightMale);
+                reader.get(mWeightFemale);
+                reader.get(mRaceFlags);
+
+                break;
+            }
+            case ESM4::SUB_ENAM:
+            {
+                std::size_t numEyeChoices = subHdr.dataSize / sizeof(FormId);
+                mEyeChoices.resize(numEyeChoices);
+                for (unsigned int i = 0; i < numEyeChoices; ++i)
+                    reader.get(mEyeChoices.at(i));
+
+                break;
+            }
+            case ESM4::SUB_HNAM:
+            {
+                std::size_t numHairChoices = subHdr.dataSize / sizeof(FormId);
+                mHairChoices.resize(numHairChoices);
+                for (unsigned int i = 0; i < numHairChoices; ++i)
+                    reader.get(mHairChoices.at(i));
+
+                break;
+            }
+            case ESM4::SUB_XNAM:
+            {
+                FormId race;
+                std::int32_t adjustment;
+                reader.get(race);
+                reader.get(adjustment);
+                mDisposition[race] = adjustment;
+
+                break;
+            }
+            case ESM4::SUB_SPLO: // bonus spell formid (TES5 may have SPCT and multiple SPLO)
+            {
+                FormId magic;
+                reader.get(magic);
+                mBonusSpells.push_back(magic);
+//              std::cout << "RACE " << printName(subHdr.typeId) << " " << formIdToString(magic) << std::endl;
+
+                break;
+            }
+            case ESM4::SUB_VNAM:
+            {
+                // FIXME: different meaning in TES5?
+                // equipment type flags meant to be uint32 ???  GLOB reference? shows up in
+                // SCRO in sript records and CTDA in INFO records
+                reader.get(mVNAM[0]); // For TES4 seems to be 2 race formids
+                reader.get(mVNAM[1]);
+
+                break;
+            }
+            case ESM4::SUB_DNAM:
+            {
+                reader.get(mDecapitate[0]); // male
+                reader.get(mDecapitate[1]); // female
+
+                break;
+            }
             case ESM4::SUB_SNAM: //skipping...2 // only in TES4?
-            case ESM4::SUB_XNAM: //skipping...8 // only in TES4? Often has similar numbers to VNAM
-            case ESM4::SUB_ENAM: //skipping...0 <- different lengthts, maybe formids for EYES?
-            case ESM4::SUB_HNAM: //skipping...0 <- different lengthts, maybe formids for HAIR?
-            case ESM4::SUB_VNAM: //skipping...8 // equipment type flags meant to be uint32 ???
-                                                // GLOB reference? shows up in SCRO in sript
-                                                // records and CTDA in INFO records
             {
 //                std::cout << "RACE " << ESM4::printName(subHdr.typeId) << " skipping..." << subHdr.dataSize << std::endl;
     // For debugging only
@@ -173,6 +214,7 @@ void ESM4::Race::load(ESM4::Reader& reader)
                 reader.get(&mDataBuf[0], subHdr.dataSize);
 
                 std::ostringstream ss;
+                ss << ESM4::printName(subHdr.typeId) << ":size " << subHdr.dataSize << "\n";
                 for (unsigned int i = 0; i < subHdr.dataSize; ++i)
                 {
                     //if (mDataBuf[i] > 64 && mDataBuf[i] < 91)
@@ -190,7 +232,6 @@ void ESM4::Race::load(ESM4::Reader& reader)
 #endif
                 break;
             }
-            case ESM4::SUB_DNAM: //skipping...8 // decapitate armor, 2 formids
             case ESM4::SUB_FGGA: //skipping...120 // prob face gen stuff
             case ESM4::SUB_FGGS: //skipping...200 // prob face gen stuff
             case ESM4::SUB_FGTS: //skipping...200 // prob face gen stuff
@@ -199,9 +240,8 @@ void ESM4::Race::load(ESM4::Reader& reader)
             case ESM4::SUB_MNAM: //skipping...0 // start marker male model
             case ESM4::SUB_NAM0: //skipping...0 // start marker head data
             case ESM4::SUB_NAM1: //skipping...0 // strat marker egt models
-            case ESM4::SUB_PNAM: //skipping...4 // face gen main clamp float
-            case ESM4::SUB_SPLO: //skipping...4 // bonus spell formid (TES5 may have SPCT and multiple SPLO)
-            case ESM4::SUB_UNAM: //skipping...4 // face gen face clamp float
+            case ESM4::SUB_PNAM: //skipping...4 // face gen main clamp float; 0x40A00000 = 5.f
+            case ESM4::SUB_UNAM: //skipping...4 // face gen face clamp float; 0x40400000 = 3.f
             case ESM4::SUB_YNAM: // FO3
             case ESM4::SUB_NAM2: // FO3
             case ESM4::SUB_VTCK: // FO3

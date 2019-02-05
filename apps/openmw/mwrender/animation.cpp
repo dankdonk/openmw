@@ -619,6 +619,7 @@ void Animation::updatePosition(float oldtime, float newtime, Ogre::Vector3 &posi
     position += off - mNonAccumCtrl->getTranslation(oldtime)*mAccumulate;
 
     /* Translate the accumulation root back to compensate for the move. */
+    if(mPtr.getTypeName() != typeid(ESM4::Npc).name()) // FIXME: places the character into the ground
     mAccumRoot->setPosition(-off);
 }
 
@@ -983,6 +984,10 @@ void Animation::play(const std::string &groupname, int priority, int groups, boo
                     ++textkey;
                 }
             }
+            else if(mPtr.getTypeName() == typeid(ESM4::Npc).name())
+            {
+                //std::cout << groupname << std::endl;
+            }
 
             if(state.mTime >= state.mLoopStopTime && state.mLoopCount > 0)
             {
@@ -1012,6 +1017,7 @@ void Animation::play(const std::string &groupname, int priority, int groups, boo
     {
         // If the animation state is not playing, we need to manually apply the accumulation
         // (see updatePosition, which would be called if the animation was playing)
+    //if(mPtr.getTypeName() != typeid(ESM4::Npc).name()) // FIXME
         mAccumRoot->setPosition(-mNonAccumCtrl->getTranslation(state.mTime)*mAccumulate);
     }
 }
@@ -1059,6 +1065,7 @@ void Animation::resetActiveGroups()
     if(state == mStates.end())
     {
         if (mAccumRoot && mNonAccumRoot)
+    if(mPtr.getTypeName() != typeid(ESM4::Npc).name()) // FIXME
             mAccumRoot->setPosition(-mNonAccumRoot->getPosition()*mAccumulate);
         return;
     }
@@ -1077,6 +1084,7 @@ void Animation::resetActiveGroups()
     }
 
     if (mAccumRoot && mNonAccumCtrl)
+    if(mPtr.getTypeName() != typeid(ESM4::Npc).name()) // FIXME
         mAccumRoot->setPosition(-mNonAccumCtrl->getTranslation(state->second.mTime)*mAccumulate);
 }
 

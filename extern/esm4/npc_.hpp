@@ -38,6 +38,7 @@ namespace ESM4
 
     struct Npc
     {
+#pragma pack(push, 1)
         struct SkillValues
         {
             std::uint8_t  armorer;
@@ -63,12 +64,21 @@ namespace ESM4
             std::uint8_t  speechcraft;
         };
 
+        struct HairColour
+        {
+            std::uint8_t red;
+            std::uint8_t green;
+            std::uint8_t blue;
+            std::uint8_t custom; // ?
+        };
+
         struct Data
         {
             SkillValues   skills;
             std::uint32_t health;
             AttributeValues attribs;
         };
+#pragma pack(pop)
 
         FormId mFormId;       // from the header
         std::uint32_t mFlags; // from the header, see enum type RecordFlag for details
@@ -81,6 +91,9 @@ namespace ESM4
         FormId mClass;
         FormId mHair;
         FormId mEyes;
+
+        float mHairLength;
+        HairColour mHairColour;
 
         FormId mDeathItem;
         std::vector<FormId> mSpell;

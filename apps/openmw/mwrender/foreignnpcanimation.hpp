@@ -137,6 +137,7 @@ public:
 
     // TES4 kf files are derived differently
     virtual void addAnimSource(const std::string &model);
+    void addForeignAnimSource(const std::string& model, const std::string &anim);
 
     /** Plays an animation.
      * \param groupname Name of the animation group to play.

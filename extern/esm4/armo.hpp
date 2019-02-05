@@ -38,6 +38,7 @@ namespace ESM4
 
     struct Armor
     {
+        // FIXME: enum Flags duplicated in CLOT
         enum Flags
         {
             // Biped Object Flags
@@ -61,6 +62,7 @@ namespace ESM4
             Flag_HideRings   = 0x00010000,
             Flag_HideAmulet  = 0x00020000,
             Flag_NonPlayable = 0x00400000,
+            Flag_HeavyArmor  = 0x00800000,
             Flag_Unknown     = 0xCD000000
         };
 
