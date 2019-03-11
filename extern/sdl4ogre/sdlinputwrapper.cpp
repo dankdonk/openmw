@@ -1,4 +1,7 @@
 #include "sdlinputwrapper.hpp"
+
+#include <iostream>
+
 #include <SDL_syswm.h>
 
 #include <OgrePlatform.h>

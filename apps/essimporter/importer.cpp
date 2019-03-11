@@ -1,6 +1,7 @@
 #include "importer.hpp"
 
 #include <iomanip>
+#include <iostream>
 
 #include <boost/shared_ptr.hpp>
 

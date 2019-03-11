@@ -65,8 +65,8 @@ void ESM4::LeveledItem::load(ESM4::Reader& reader)
                         reader.get(lvlo.level);
                         reader.get(lvlo.item);
                         reader.get(lvlo.count);
-                        std::cout << "LVLI " << mEditorId << " LVLO lev " << lvlo.level << ", item " << lvlo.item
-                                  << ", count " << lvlo.count << std::endl;
+                        //std::cout << "LVLI " << mEditorId << " LVLO lev " << lvlo.level << ", item " << lvlo.item
+                                  //<< ", count " << lvlo.count << std::endl;
                         break;
                     }
                     else

@@ -1,5 +1,7 @@
 #include "npcanimation.hpp"
 
+#include <iostream>
+
 #include <OgreSceneManager.h>
 #include <OgreEntity.h>
 #include <OgreParticleSystem.h>

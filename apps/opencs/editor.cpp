@@ -1,5 +1,9 @@
 #include "editor.hpp"
 
+#ifdef _WIN32
+    #include <boost/winapi/get_current_process_id.hpp>
+#endif
+
 #include <openengine/bullet/BulletShapeLoader.h>
 
 #include <QApplication>

@@ -3,6 +3,7 @@
 #include <cassert>
 #include <typeinfo>
 #include <stdexcept>
+#include <iostream>
 
 #include <components/esm/inventorystate.hpp>
 

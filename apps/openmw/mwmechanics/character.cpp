@@ -19,6 +19,8 @@
 
 #include "character.hpp"
 
+#include <iostream>
+
 #include <OgreStringConverter.h>
 #include <OgreSceneNode.h>
 

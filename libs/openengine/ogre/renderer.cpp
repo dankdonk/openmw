@@ -1,5 +1,7 @@
 #include "renderer.hpp"
 
+#include <iostream>
+
 #include <SDL.h>
 
 #include <OgreRoot.h>
