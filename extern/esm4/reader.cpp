@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015-2018 cc9cii
+  Copyright (C) 2015-2019 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -225,7 +225,7 @@ void ESM4::Reader::getLocalizedString(const FormId stringId, std::string& str)
         filestream->seek(it->second.offset);
         getZString(str, filestream);
     }
-    else
+    else // FIXME: stringId might be null? (FoxRace)
         throw std::runtime_error("ESM4::Reader::getLocalizedString localized string not found");
 }
 
@@ -532,6 +532,10 @@ void ESM4::Reader::skipSubRecordData(std::uint32_t size)
 // ModIndex adjusted formId according to master file dependencies
 // (see http://www.uesp.net/wiki/Tes4Mod:FormID_Fixup)
 // NOTE: need to update modindex to mModIndicies.size() before saving
+//
+// FIXME: probably should add a parameter to check for mHeader::mOverrides
+//        (ACHR, LAND, NAVM, PGRE, PHZD, REFR), but not sure what exactly overrides mean
+//        i.e. use the modindx of its master?
 void ESM4::Reader::adjustFormId(FormId& id)
 {
     if (mHeader.mModIndicies.empty())

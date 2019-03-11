@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015-2018 cc9cii
+  Copyright (C) 2015-2018, 2019 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -137,6 +137,7 @@ namespace ESM4
         REC_MUST = MKTAG('M','U','S','T'), // Music Track
         REC_NAVI = MKTAG('N','A','V','I'), // Navigation (master data)
         REC_NAVM = MKTAG('N','A','V','M'), // Nav Mesh
+        REC_NOTE = MKTAG('N','O','T','E'), // Note
         REC_NPC_ = MKTAG('N','P','C','_'), // Actor (NPC, Creature)
         REC_OTFT = MKTAG('O','T','F','T'), // Outfit
         REC_PACK = MKTAG('P','A','C','K'), // AI Package
@@ -168,6 +169,7 @@ namespace ESM4
         REC_SPGD = MKTAG('S','P','G','D'), // Shader Particle Geometry
         REC_STAT = MKTAG('S','T','A','T'), // Static
         REC_TACT = MKTAG('T','A','C','T'), // Talking Activator
+        REC_TERM = MKTAG('T','E','R','M'), // Terminal
         REC_TES4 = MKTAG('T','E','S','4'), // Plugin info
         REC_TREE = MKTAG('T','R','E','E'), // Tree
         REC_TXST = MKTAG('T','X','S','T'), // Texture Set
@@ -460,10 +462,62 @@ namespace ESM4
         SUB_QUAL = MKTAG('Q','U','A','L'),
         SUB_INDX = MKTAG('I','N','D','X'),
         SUB_ATTR = MKTAG('A','T','T','R'),
+        SUB_MTNM = MKTAG('M','T','N','M'),
+        SUB_UNES = MKTAG('U','N','E','S'),
+        SUB_TIND = MKTAG('T','I','N','D'),
+        SUB_TINL = MKTAG('T','I','N','L'),
+        SUB_TINP = MKTAG('T','I','N','P'),
+        SUB_TINT = MKTAG('T','I','N','T'),
+        SUB_TIRS = MKTAG('T','I','R','S'),
+        SUB_PHWT = MKTAG('P','H','W','T'),
+        SUB_AHCF = MKTAG('A','H','C','F'),
+        SUB_AHCM = MKTAG('A','H','C','M'),
+        SUB_HEAD = MKTAG('H','E','A','D'),
+        SUB_MPAI = MKTAG('M','P','A','I'),
+        SUB_MPAV = MKTAG('M','P','A','V'),
+        SUB_DFTF = MKTAG('D','F','T','F'),
+        SUB_DFTM = MKTAG('D','F','T','M'),
+        SUB_FLMV = MKTAG('F','L','M','V'),
+        SUB_FTSF = MKTAG('F','T','S','F'),
+        SUB_FTSM = MKTAG('F','T','S','M'),
+        SUB_MTYP = MKTAG('M','T','Y','P'),
+        SUB_PHTN = MKTAG('P','H','T','N'),
+        SUB_RNMV = MKTAG('R','N','M','V'),
+        SUB_RPRF = MKTAG('R','P','R','F'),
+        SUB_RPRM = MKTAG('R','P','R','M'),
+        SUB_SNMV = MKTAG('S','N','M','V'),
+        SUB_SPED = MKTAG('S','P','E','D'),
+        SUB_SWMV = MKTAG('S','W','M','V'),
+        SUB_WKMV = MKTAG('W','K','M','V'),
+        SUB_LLCT = MKTAG('L','L','C','T'),
+        SUB_IDLF = MKTAG('I','D','L','F'),
+        SUB_IDLA = MKTAG('I','D','L','A'),
+        SUB_IDLC = MKTAG('I','D','L','C'),
+        SUB_IDLT = MKTAG('I','D','L','T'),
+        SUB_DODT = MKTAG('D','O','D','T'),
+        SUB_TX00 = MKTAG('T','X','0','0'),
+        SUB_TX01 = MKTAG('T','X','0','1'),
+        SUB_TX02 = MKTAG('T','X','0','2'),
+        SUB_TX03 = MKTAG('T','X','0','3'),
+        SUB_TX04 = MKTAG('T','X','0','4'),
+        SUB_TX05 = MKTAG('T','X','0','5'),
+        SUB_TX06 = MKTAG('T','X','0','6'),
+        SUB_TX07 = MKTAG('T','X','0','7'),
+        SUB_BPND = MKTAG('B','P','N','D'),
+        SUB_BPTN = MKTAG('B','P','T','N'),
+        SUB_BPNN = MKTAG('B','P','N','N'),
+        SUB_BPNT = MKTAG('B','P','N','T'),
+        SUB_BPNI = MKTAG('B','P','N','I'),
+        SUB_RAGA = MKTAG('R','A','G','A'),
 
         SUB_XHLT = MKTAG('X','H','L','T'), // Unofficial Oblivion Patch
         SUB_XCHG = MKTAG('X','C','H','G'), // thievery.exp
 
+        SUB_ITXT = MKTAG('I','T','X','T'),
+        SUB_MO5T = MKTAG('M','O','5','T'),
+        SUB_MOD5 = MKTAG('M','O','D','5'),
+        SUB_MDOB = MKTAG('M','D','O','B'),
+        SUB_SPIT = MKTAG('S','P','I','T'),
         SUB_XIBS = MKTAG('X','I','B','S'), // FO3
         SUB_REPL = MKTAG('R','E','P','L'), // FO3
         SUB_BIPL = MKTAG('B','I','P','L'), // FO3
@@ -525,6 +579,7 @@ namespace ESM4
         SUB_WNM5 = MKTAG('W','N','M','5'), // FONV
         SUB_WNM6 = MKTAG('W','N','M','6'), // FONV
         SUB_WNM7 = MKTAG('W','N','M','7'), // FONV
+        SUB_EFSD = MKTAG('E','F','S','D'), // FONV DeadMoney
     };
 
     enum MagicEffectID

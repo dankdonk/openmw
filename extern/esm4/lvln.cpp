@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2016, 2018, 2019 cc9cii
+  Copyright (C) 2019 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -24,28 +24,30 @@
   trial & error.  See http://en.uesp.net/wiki for details.
 
 */
-#include "lvli.hpp"
+#include "lvln.hpp"
 
 #include <stdexcept>
-//#include <iostream> // FIXME: for debugging
+#include <iostream> // FIXME: testing only
 
 #include "reader.hpp"
 //#include "writer.hpp"
 
-ESM4::LeveledItem::LeveledItem() : mFormId(0), mFlags(0), mChanceNone(0), mLvlItemFlags(0), mData(0)
+ESM4::LeveledActor::LeveledActor() : mFormId(0), mFlags(0), mChanceNone(0), mLvlActorFlags(0), mListCount(0)
 {
     mEditorId.clear();
+    mModel.clear();
 }
 
-ESM4::LeveledItem::~LeveledItem()
+ESM4::LeveledActor::~LeveledActor()
 {
 }
 
-void ESM4::LeveledItem::load(ESM4::Reader& reader)
+void ESM4::LeveledActor::load(ESM4::Reader& reader)
 {
     mFormId = reader.hdr().record.id;
     reader.adjustFormId(mFormId);
     mFlags  = reader.hdr().record.flags;
+    std::uint32_t esmVer = reader.esmVersion();
 
     while (reader.getSubRecordHeader())
     {
@@ -53,9 +55,10 @@ void ESM4::LeveledItem::load(ESM4::Reader& reader)
         switch (subHdr.typeId)
         {
             case ESM4::SUB_EDID: reader.getZString(mEditorId); break;
-            case ESM4::SUB_LVLD: reader.get(mChanceNone);   break;
-            case ESM4::SUB_LVLF: reader.get(mLvlItemFlags); break;
-            case ESM4::SUB_DATA: reader.get(mData);         break;
+            case ESM4::SUB_MODL: reader.getZString(mModel);    break;
+            case ESM4::SUB_LLCT: reader.get(mListCount);       break;
+            case ESM4::SUB_LVLD: reader.get(mChanceNone);      break;
+            case ESM4::SUB_LVLF: reader.get(mLvlActorFlags);   break;
             case ESM4::SUB_LVLO:
             {
                 static LVLO lvlo;
@@ -66,13 +69,21 @@ void ESM4::LeveledItem::load(ESM4::Reader& reader)
                         reader.get(lvlo.level);
                         reader.get(lvlo.item);
                         reader.get(lvlo.count);
-//                        std::cout << "LVLI " << mEditorId << " LVLO lev " << lvlo.level << ", item " << lvlo.item
-//                                  << ", count " << lvlo.count << std::endl;
                         break;
                     }
                     else
-                        throw std::runtime_error("ESM4::LVLI::load - " + mEditorId + " LVLO size error");
+                        throw std::runtime_error("ESM4::LVLN::load - " + mEditorId + " LVLO size error");
                 }
+//              else if (esmVer == ESM4::VER_094 || esmVer == ESM4::VER_170 || isFONV)
+//              {
+//                  std::uint32_t level;
+//                  reader.get(level);
+//                  lvlo.level = static_cast<std::uint16_t>(level);
+//                  reader.get(lvlo.item);
+//                  std::uint32_t count;
+//                  reader.get(count);
+//                  lvlo.count = static_cast<std::uint16_t>(count);
+//              }
                 else
                     reader.get(lvlo);
 
@@ -80,26 +91,24 @@ void ESM4::LeveledItem::load(ESM4::Reader& reader)
                 mLvlObject.push_back(lvlo);
                 break;
             }
-            case ESM4::SUB_LLCT:
-            case ESM4::SUB_OBND: // FO3
-            case ESM4::SUB_COED: // FO3
-            case ESM4::SUB_LVLG: // FO3
+            case ESM4::SUB_COED: // owner
+            case ESM4::SUB_OBND: // object bounds
+            case ESM4::SUB_MODT: // model texture data
             {
-
-                //std::cout << "LVLI " << ESM4::printName(subHdr.typeId) << " skipping..." << subHdr.dataSize << std::endl;
+                //std::cout << "LVLN " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
                 reader.skipSubRecordData();
                 break;
             }
             default:
-                throw std::runtime_error("ESM4::LVLI::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
+                throw std::runtime_error("ESM4::LVLN::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
         }
     }
 }
 
-//void ESM4::LeveledItem::save(ESM4::Writer& writer) const
+//void ESM4::LeveledActor::save(ESM4::Writer& writer) const
 //{
 //}
 
-//void ESM4::LeveledItem::blank()
+//void ESM4::LeveledActor::blank()
 //{
 //}

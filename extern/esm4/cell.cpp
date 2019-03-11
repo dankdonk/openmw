@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015-2016, 2018 cc9cii
+  Copyright (C) 2015-2016, 2018-2019 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -46,13 +46,13 @@ ESM4::Cell::Cell() : mParent(0), mFormId(0), mFlags(0), mCellFlags(0), mX(0), mY
 
     mLighting.ambient = 0;
     mLighting.directional = 0;
-    mLighting.fogNear = 0;
-    mLighting.unknown1 = 0.f;
-    mLighting.unknown2 = 0.f;
-    mLighting.unknown3 = 0;
-    mLighting.unknown4 = 0;
-    mLighting.unknown5 = 0.f;
-    mLighting.unknown6 = 0.f;
+    mLighting.fogColor = 0;
+    mLighting.fogNear = 0.f;
+    mLighting.fogFar = 0.f;
+    mLighting.rotationXY = 0;
+    mLighting.rotationZ = 0;
+    mLighting.fogDirFade = 0.f;
+    mLighting.fogClipDist = 0.f;
 }
 
 ESM4::Cell::~Cell()
@@ -218,9 +218,25 @@ void ESM4::Cell::load(ESM4::Reader& reader)
             case ESM4::SUB_XCLW: reader.get(mWaterHeight);   break;
             case ESM4::SUB_XCLL:
             {
-                // 92 bytes for TES5, 19*4 = 76 bytes for FO3/FONV
+                // 92 bytes for TES5, 19*4 = 76 bytes for FONV (?)
                 if (esmVer == ESM4::VER_094 || esmVer == ESM4::VER_170 || isFONV)
-                    reader.skipSubRecordData();
+                {
+                    if (subHdr.dataSize == 40) // FO3
+                    {
+                        reader.get(mLighting);
+                        float fogPower;
+                        reader.get(fogPower); // FIXME
+                    }
+                    else if (subHdr.dataSize == 92) // TES5
+                    {
+                        reader.get(mLighting);
+                        float fogPower;
+                        reader.get(fogPower); // FIXME
+                        reader.skipSubRecordData(52);
+                    }
+                    else
+                        reader.skipSubRecordData();
+                }
                 else
                 {
                     assert(subHdr.dataSize == 36 && "CELL lighting size error");
