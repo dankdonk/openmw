@@ -535,6 +535,12 @@ public:
         return mVertexFormat;
     }
 
+	void setViewSize(int width, int height)
+	{
+		mViewSize.width = width; // FIXME: not sure if this is correct
+		mViewSize.height = height;
+	}
+
     const RenderTargetInfo& getInfo()
     {
         return mInfo;
