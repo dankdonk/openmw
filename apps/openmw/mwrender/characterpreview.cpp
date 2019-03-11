@@ -59,7 +59,7 @@ namespace MWRender
 
     void CharacterPreview::setup ()
     {
-        mSceneMgr = Ogre::Root::getSingleton().createSceneManager(Ogre::ST_GENERIC);
+        mSceneMgr = Ogre::Root::getSingleton().createSceneManager();
 
         // This is a dummy light to turn off shadows without having to use a separate set of shaders
         Ogre::Light* l = mSceneMgr->createLight();

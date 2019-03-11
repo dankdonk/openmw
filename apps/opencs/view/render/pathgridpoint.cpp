@@ -27,7 +27,7 @@ namespace CSVRender
 
     PathgridPoint::~PathgridPoint()
     {
-        mPgPoint.setNull();
+        mPgPoint.reset();
 
         mPhysics->removeObject(mBase->getName());
 

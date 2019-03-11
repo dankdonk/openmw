@@ -385,7 +385,7 @@ public:
             // We use the Node's user data to connect it with the mesh.
             Ogre::Any customData = node->getUserObjectBindings().getUserAny();
 
-            if (!customData.isEmpty())
+            if (customData.has_value())
                 Ogre::any_cast<Ogre::MovableObject*>(customData)->setVisible(vis);
 
             Ogre::TagPoint *tag = dynamic_cast<Ogre::TagPoint*>(node);
@@ -714,7 +714,7 @@ private:
         Misc::StringUtils::lowerCaseInPlace(fullname);
 
         Ogre::MeshManager &meshMgr = Ogre::MeshManager::getSingleton();
-        if(meshMgr.getByName(fullname).isNull())
+        if(!meshMgr.getByName(fullname))
             NIFMeshLoader::createMesh(name, fullname, group, shape->recIndex);
 
         Ogre::Entity *entity = sceneMgr->createEntity(fullname);
@@ -1273,7 +1273,7 @@ private:
          * is to ensure we have an entity with a skeleton instance, even if all
          * other entities are attached to bones and not skinned. */
         Ogre::MeshManager &meshMgr = Ogre::MeshManager::getSingleton();
-        if(meshMgr.getByName(name).isNull())
+        if(!meshMgr.getByName(name))
             NIFMeshLoader::createMesh(name, name, group, ~(size_t)0);
 
         scene->mSkelBase = sceneMgr->createEntity(name);
@@ -1302,7 +1302,7 @@ public:
         }
 
         if(Ogre::SkeletonManager::getSingleton().resourceExists(name) ||
-           !NIFSkeletonLoader::createSkeleton(name, group, node).isNull())
+           NIFSkeletonLoader::createSkeleton(name, group, node))
         {
             // Create a base skeleton entity if this NIF needs one
             createSkelBase(name, group, sceneNode->getCreator(), node, scene);

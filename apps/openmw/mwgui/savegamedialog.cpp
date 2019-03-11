@@ -371,7 +371,7 @@ namespace MWGui
         Ogre::TexturePtr texture;
         texture = Ogre::TextureManager::getSingleton().getByName(textureName);
         mScreenshot->setImageTexture("");
-        if (texture.isNull())
+        if (!texture)
         {
             texture = Ogre::TextureManager::getSingleton().createManual(textureName,
                 Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,

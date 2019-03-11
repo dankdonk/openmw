@@ -77,8 +77,8 @@ void CreatureWeaponAnimation::showCarriedLeft(bool show)
 
 void CreatureWeaponAnimation::updateParts()
 {
-    mWeapon.setNull();
-    mShield.setNull();
+    mWeapon.reset();
+    mShield.reset();
 
     if (mShowWeapons)
         updatePart(mWeapon, MWWorld::InventoryStore::Slot_CarriedRight);
@@ -96,7 +96,7 @@ void CreatureWeaponAnimation::updatePart(NifOgre::ObjectScenePtr& scene, int slo
 
     if (it == inv.end())
     {
-        scene.setNull();
+        scene.reset();
         return;
     }
     MWWorld::Ptr item = *it;
@@ -122,10 +122,10 @@ void CreatureWeaponAnimation::updatePart(NifOgre::ObjectScenePtr& scene, int slo
         if (ammo != inv.end() && ammo->get<ESM::Weapon>()->mBase->mData.mType == ESM::Weapon::Bolt)
             attachArrow();
         else
-            mAmmunition.setNull();
+            mAmmunition.reset();
     }
     else
-        mAmmunition.setNull();
+        mAmmunition.reset();
 
     if(scene->mSkelBase)
     {
@@ -153,7 +153,7 @@ void CreatureWeaponAnimation::updatePart(NifOgre::ObjectScenePtr& scene, int slo
     std::vector<Ogre::Controller<Ogre::Real> >::iterator ctrl(scene->mControllers.begin());
     for(;ctrl != scene->mControllers.end();++ctrl)
     {
-        if(ctrl->getSource().isNull())
+        if(!ctrl->getSource())
         {
             if (slot == MWWorld::InventoryStore::Slot_CarriedRight)
                 ctrl->setSource(mWeaponAnimationTime);
@@ -188,12 +188,12 @@ Ogre::Vector3 CreatureWeaponAnimation::runAnimation(float duration)
     if (mSkelBase)
         pitchSkeleton(mPtr.getRefData().getPosition().rot[0], mSkelBase->getSkeleton());
 
-    if (!mWeapon.isNull())
+    if (mWeapon)
     {
         for (unsigned int i=0; i<mWeapon->mControllers.size(); ++i)
             mWeapon->mControllers[i].update();
     }
-    if (!mShield.isNull())
+    if (mShield)
     {
         for (unsigned int i=0; i<mShield->mControllers.size(); ++i)
             mShield->mControllers[i].update();

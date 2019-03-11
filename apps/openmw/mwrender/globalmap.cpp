@@ -185,7 +185,7 @@ namespace MWRender
         Ogre::TexturePtr localMapTexture = Ogre::TextureManager::getSingleton().getByName("Cell_"
             + boost::lexical_cast<std::string>(cellX) + "_" + boost::lexical_cast<std::string>(cellY));
 
-        if (!localMapTexture.isNull())
+        if (localMapTexture)
         {
             int mapWidth = localMapTexture->getWidth();
             int mapHeight = localMapTexture->getHeight();

@@ -96,7 +96,7 @@ void LocalMap::saveFogOfWar(MWWorld::CellStore* cell)
         fog->mFogTextures.push_back(ESM::FogTexture());
 
         TexturePtr tex = TextureManager::getSingleton().getByName(textureName);
-        if (tex.isNull())
+        if (!tex)
             return;
 
         Ogre::Image image;
@@ -136,7 +136,7 @@ void LocalMap::saveFogOfWar(MWWorld::CellStore* cell)
                 std::string textureName = cell->getCell()->mName + "_" + coordStr(x,y) + "_fog";
 
                 TexturePtr tex = TextureManager::getSingleton().getByName(textureName);
-                if (tex.isNull())
+                if (!tex)
                     return;
 
                 Ogre::Image image;
@@ -336,7 +336,7 @@ void LocalMap::createFogOfWar(const std::string& texturePrefix)
 Ogre::TexturePtr LocalMap::createFogOfWarTexture(const std::string &texName)
 {
     TexturePtr tex = TextureManager::getSingleton().getByName(texName);
-    if (tex.isNull())
+    if (!tex)
     {
         tex = TextureManager::getSingleton().createManual(
                         texName,
@@ -404,7 +404,7 @@ void LocalMap::render(const float x, const float y,
     TexturePtr tex;
     // try loading from memory
     tex = TextureManager::getSingleton().getByName(texture);
-    if (tex.isNull())
+    if (!tex)
     {
         // render
         mRenderTarget->update();
@@ -572,7 +572,7 @@ void LocalMap::updatePlayer (const Ogre::Vector3& position, const Ogre::Quaterni
             std::string texName = texBaseName + coordStr(x+mx,y+my*-1);
 
             TexturePtr tex = TextureManager::getSingleton().getByName(texName+"_fog");
-            if (!tex.isNull())
+            if (tex)
             {
                 std::map <std::string, std::vector<Ogre::uint32> >::iterator anIter;
 

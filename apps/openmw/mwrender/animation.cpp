@@ -101,7 +101,7 @@ void Animation::setObjectRoot(const std::string &model, bool baseonly)
     OgreAssert(mAnimSources.empty(), "Setting object root while animation sources are set!");
 
     mSkelBase = NULL;
-    mObjectRoot.setNull();
+    mObjectRoot.reset();
 
     if(model.empty())
         return;
@@ -303,7 +303,7 @@ void Animation::addAnimSource(const std::string &model)
 
     for (unsigned int i = 0; i < mObjectRoot->mControllers.size(); ++i)
     {
-        if (mObjectRoot->mControllers[i].getSource().isNull())
+        if (!mObjectRoot->mControllers[i].getSource())
             mObjectRoot->mControllers[i].setSource(mAnimationTimePtr[0]);
     }
 }
@@ -1158,8 +1158,8 @@ Ogre::Vector3 Animation::runAnimation(float duration)
 
     for(size_t i = 0;i < mObjectRoot->mControllers.size();i++)
     {
-        if(!mObjectRoot->mControllers[i].getSource().isNull())
-            mObjectRoot->mControllers[i].update();
+        if(mObjectRoot->mControllers[i].getSource())
+           mObjectRoot->mControllers[i].update();
     }
 
     // Apply group controllers
@@ -1288,7 +1288,7 @@ void Animation::addEffect(const std::string &model, int effectId, bool loop, con
 
     for(size_t i = 0;i < params.mObjects->mControllers.size();i++)
     {
-        if(params.mObjects->mControllers[i].getSource().isNull())
+        if(!params.mObjects->mControllers[i].getSource())
             params.mObjects->mControllers[i].setSource(Ogre::SharedPtr<EffectAnimationTime> (new EffectAnimationTime()));
     }
 

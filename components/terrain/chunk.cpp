@@ -91,7 +91,7 @@ namespace Terrain
 
     Chunk::~Chunk()
     {
-        if (!mMaterial.isNull() && mOwnMaterial)
+        if (mMaterial && mOwnMaterial)
         {
 #if TERRAIN_USE_SHADER
             sh::Factory::getInstance().destroyMaterialInstance(mMaterial->getName());
@@ -105,7 +105,7 @@ namespace Terrain
     void Chunk::setMaterial(const Ogre::MaterialPtr &material, bool own)
     {
         // Clean up the previous material, if we own it
-        if (!mMaterial.isNull() && mOwnMaterial)
+        if (mMaterial && mOwnMaterial)
         {
 #if TERRAIN_USE_SHADER
             sh::Factory::getInstance().destroyMaterialInstance(mMaterial->getName());
@@ -145,8 +145,8 @@ namespace Terrain
 
     void Chunk::getRenderOperation(Ogre::RenderOperation& op)
     {
-        assert (!mIndexData->indexBuffer.isNull() && "Trying to render, but no index buffer set!");
-        assert(!mMaterial.isNull() && "Trying to render, but no material set!");
+        assert (mIndexData->indexBuffer && "Trying to render, but no index buffer set!");
+        assert(mMaterial && "Trying to render, but no material set!");
         op.useIndexes = true;
         op.operationType = Ogre::RenderOperation::OT_TRIANGLE_LIST;
         op.vertexData = mVertexData;

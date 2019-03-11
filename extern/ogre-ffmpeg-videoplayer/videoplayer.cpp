@@ -36,7 +36,7 @@ void VideoPlayer::playVideo(const std::string &resourceName)
         mState->init(resourceName);
 
         // wait until we have the first picture
-        while (mState->video_st && mState->mTexture.isNull())
+        while (mState->video_st && !mState->mTexture)
         {
             if (!mState->update())
                 break;
@@ -58,7 +58,7 @@ bool VideoPlayer::update ()
 std::string VideoPlayer::getTextureName()
 {
     std::string name;
-    if (mState && !mState->mTexture.isNull())
+    if (mState && mState->mTexture)
         name = mState->mTexture->getName();
     return name;
 }
@@ -66,7 +66,7 @@ std::string VideoPlayer::getTextureName()
 int VideoPlayer::getVideoWidth()
 {
     int width=0;
-    if (mState && !mState->mTexture.isNull())
+    if (mState && mState->mTexture)
         width = mState->mTexture->getWidth();
     return width;
 }
@@ -74,7 +74,7 @@ int VideoPlayer::getVideoWidth()
 int VideoPlayer::getVideoHeight()
 {
     int height=0;
-    if (mState && !mState->mTexture.isNull())
+    if (mState && mState->mTexture)
         height = mState->mTexture->getHeight();
     return height;
 }

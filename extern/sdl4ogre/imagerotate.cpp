@@ -27,7 +27,7 @@ void ImageRotate::rotate(const std::string& sourceImage, const std::string& dest
 
     std::string destImageRot = std::string(destImage) + std::string("_rot");
 
-    SceneManager* sceneMgr = root->createSceneManager(ST_GENERIC);
+    SceneManager* sceneMgr = root->createSceneManager();
     Camera* camera = sceneMgr->createCamera("ImageRotateCamera");
 
     MaterialPtr material = MaterialManager::getSingleton().create("ImageRotateMaterial", ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
@@ -41,7 +41,7 @@ void ImageRotate::rotate(const std::string& sourceImage, const std::string& dest
 
     Rectangle2D* rect = new Rectangle2D(true);
     rect->setCorners(-1.0, 1.0, 1.0, -1.0);
-    rect->setMaterial("ImageRotateMaterial");
+    rect->setMaterial(material);
     // Render the background before everything else
     rect->setRenderQueueGroup(RENDER_QUEUE_BACKGROUND);
 
