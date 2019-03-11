@@ -1,5 +1,7 @@
 #include "videoplayer.hpp"
 
+#include <iostream>
+
 #include "audiofactory.hpp"
 #include "videostate.hpp"
 
