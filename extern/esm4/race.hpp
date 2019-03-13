@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2016, 2018 cc9cii
+  Copyright (C) 2016, 2018, 2019 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -29,6 +29,10 @@
 
 #include <string>
 #include <cstdint>
+#include <map>
+#include <vector>
+
+#include "common.hpp" // AttribValues
 
 namespace ESM4
 {
@@ -45,16 +49,62 @@ namespace ESM4
         };
 #pragma pack(pop)
 
+        enum SkillIndex
+        {
+            Skill_Armorer     = 0x0C,
+            Skill_Athletics   = 0x0D,
+            Skill_Blade       = 0x0E,
+            Skill_Block       = 0x0F,
+            Skill_Blunt       = 0x10,
+            Skill_HandToHand  = 0x11,
+            Skill_HeavyArmor  = 0x12,
+            Skill_Alchemy     = 0x13,
+            Skill_Alteration  = 0x14,
+            Skill_Conjuration = 0x15,
+            Skill_Destruction = 0x16,
+            Skill_Illusion    = 0x17,
+            Skill_Mysticism   = 0x18,
+            Skill_Restoration = 0x19,
+            Skill_Acrobatics  = 0x1A,
+            Skill_LightArmor  = 0x1B,
+            Skill_Marksman    = 0x1C,
+            Skill_Mercantile  = 0x1D,
+            Skill_Security    = 0x1E,
+            Skill_Sneak       = 0x1F,
+            Skill_Speechcraft = 0x20,
+            Skill_None        = 0xFF,
+            Skill_Unknown     = 0x00
+        };
+
         FormId mFormId;       // from the header
         std::uint32_t mFlags; // from the header, see enum type RecordFlag for details
 
         std::string mEditorId;
         std::string mFullName;
         std::string mModel;
+        std::string mMaleModel;
+        std::string mFemaleModel;
         std::string mIcon; // inventory
         std::string mDesc;
 
         float mBoundRadius;
+
+        AttributeValues mAttribMale;
+        AttributeValues mAttribFemale;
+        std::map<SkillIndex, std::uint8_t> mSkillBonus;
+        float mHeightMale;
+        float mHeightFemale;
+        float mWeightMale;
+        float mWeightFemale;
+        std::uint32_t mRaceFlags; // 0x0001 = playable?
+        std::uint32_t mNumKeywords;
+        std::vector<FormId> mEyeChoices;
+        std::vector<FormId> mHairChoices;
+
+        std::map<FormId, std::int32_t> mDisposition; // race adjustments
+        std::vector<FormId> mBonusSpells; // race ability/power
+        std::vector<FormId> mVNAM; // don't know what these are; 1 or 2 RACE FormIds
+        std::vector<FormId> mDecapitate; // male/female (HAIR FormId for TES4)
 
         Data mData;
 

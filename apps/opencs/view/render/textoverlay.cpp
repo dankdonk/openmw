@@ -47,7 +47,7 @@ TextOverlay::TextOverlay(const Ogre::MovableObject* obj, const Ogre::Camera* cam
         mFont->setTrueTypeSize(mFontHeight);
         mFont->setTrueTypeResolution(96);
     }
-    if(!mFont.isNull())
+    if(mFont)
         mFont->load();
     else
         throw std::runtime_error("TextOverlay font not loaded.");
@@ -65,7 +65,7 @@ TextOverlay::TextOverlay(const Ogre::MovableObject* obj, const Ogre::Camera* cam
 
     // create texture
     Ogre::TexturePtr texture = Ogre::TextureManager::getSingleton().getByName("DynamicTransBlue");
-    if(texture.isNull())
+    if(!texture)
     {
         texture = Ogre::TextureManager::getSingleton().createManual(
             "DynamicTransBlue", // name
@@ -103,7 +103,7 @@ TextOverlay::TextOverlay(const Ogre::MovableObject* obj, const Ogre::Camera* cam
     // setup material for containers
     Ogre::MaterialPtr mQuadMaterial = Ogre::MaterialManager::getSingleton().getByName(
                 "TransOverlayMaterial");
-    if(mQuadMaterial.isNull())
+    if(!mQuadMaterial)
     {
         mQuadMaterial = Ogre::MaterialManager::getSingleton().create(
                     "TransOverlayMaterial",

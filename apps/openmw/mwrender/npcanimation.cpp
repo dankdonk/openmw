@@ -1,5 +1,7 @@
 #include "npcanimation.hpp"
 
+#include <iostream>
+
 #include <OgreSceneManager.h>
 #include <OgreEntity.h>
 #include <OgreParticleSystem.h>
@@ -662,7 +664,7 @@ Ogre::Vector3 NpcAnimation::runAnimation(float timepassed)
 
     for(size_t i = 0;i < ESM::PRT_Count;i++)
     {
-        if (mObjectParts[i].isNull())
+        if (!mObjectParts[i])
             continue;
         std::vector<Ogre::Controller<Ogre::Real> >::iterator ctrl(mObjectParts[i]->mControllers.begin());
         for(;ctrl != mObjectParts[i]->mControllers.end();++ctrl)
@@ -685,7 +687,7 @@ void NpcAnimation::removeIndividualPart(ESM::PartReferenceType type)
     mPartPriorities[type] = 0;
     mPartslots[type] = -1;
 
-    mObjectParts[type].setNull();
+    mObjectParts[type].reset();
     if (!mSoundIds[type].empty() && !mSoundsDisabled)
     {
         MWBase::Environment::get().getSoundManager()->stopSound3D(mPtr, mSoundIds[type]);
@@ -775,7 +777,7 @@ bool NpcAnimation::addOrReplaceIndividualPart(ESM::PartReferenceType type, int g
     std::vector<Ogre::Controller<Ogre::Real> >::iterator ctrl(mObjectParts[type]->mControllers.begin());
     for(;ctrl != mObjectParts[type]->mControllers.end();++ctrl)
     {
-        if(ctrl->getSource().isNull())
+        if(!ctrl->getSource())
         {
             ctrl->setSource(mNullAnimationTimePtr);
 
@@ -873,10 +875,10 @@ void NpcAnimation::showWeapons(bool showWeapon)
                 if (ammo != inv.end() && ammo->get<ESM::Weapon>()->mBase->mData.mType == ESM::Weapon::Bolt)
                     attachArrow();
                 else
-                    mAmmunition.setNull();
+                    mAmmunition.reset();
             }
             else
-                mAmmunition.setNull();
+                mAmmunition.reset();
         }
     }
     else
@@ -962,7 +964,7 @@ void NpcAnimation::setAlpha(float alpha)
 
     for (int i=0; i<ESM::PRT_Count; ++i)
     {
-        if (mObjectParts[i].isNull())
+        if (!mObjectParts[i])
             continue;
 
         for (unsigned int j=0; j<mObjectParts[i]->mEntities.size(); ++j)
@@ -984,7 +986,7 @@ void NpcAnimation::preRender(Ogre::Camera *camera)
     Animation::preRender(camera);
     for (int i=0; i<ESM::PRT_Count; ++i)
     {
-        if (mObjectParts[i].isNull())
+        if (!mObjectParts[i])
             continue;
         mObjectParts[i]->rotateBillboardNodes(camera);
     }

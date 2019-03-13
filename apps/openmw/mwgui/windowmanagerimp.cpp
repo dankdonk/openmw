@@ -1146,7 +1146,7 @@ namespace MWGui
             Ogre::TexturePtr tex = Ogre::TextureManager::getSingleton().getByName(tex_name);
 
             //everything looks good, send it to the cursor manager
-            if(!tex.isNull())
+            if(tex)
             {
                 Uint8 size_x = imgSetPtr->getSize().width;
                 Uint8 size_y = imgSetPtr->getSize().height;

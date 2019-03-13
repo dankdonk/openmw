@@ -128,7 +128,7 @@ BulletShapePtr BulletShapeManager::load(const Ogre::String &name, const Ogre::St
 {
     BulletShapePtr textf = getByName(name);
 
-    if (textf.isNull())
+    if (!textf)
         textf = create(name, group);
 
     textf->load();

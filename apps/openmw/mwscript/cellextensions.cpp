@@ -1,6 +1,8 @@
 
 #include "cellextensions.hpp"
 
+#include <iostream> // FIXME: debug only
+
 #include "../mwworld/esmstore.hpp"
 
 #include <components/compiler/extensions.hpp>

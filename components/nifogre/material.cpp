@@ -90,7 +90,7 @@ Ogre::String NIFMaterialLoader::getMaterial(const Nif::ShapeData *shapedata,
 {
     Ogre::MaterialManager &matMgr = Ogre::MaterialManager::getSingleton();
     Ogre::MaterialPtr material = matMgr.getByName(name);
-    if(!material.isNull())
+    if(material)
         return name;
 
     Ogre::Vector3 ambient(1.0f);

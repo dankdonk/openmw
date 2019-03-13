@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2016, 2018 cc9cii
+  Copyright (C) 2016, 2018, 2019 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -27,6 +27,7 @@
 #include "lvli.hpp"
 
 #include <stdexcept>
+//#include <iostream> // FIXME: for debugging
 
 #include "reader.hpp"
 //#include "writer.hpp"
@@ -65,8 +66,8 @@ void ESM4::LeveledItem::load(ESM4::Reader& reader)
                         reader.get(lvlo.level);
                         reader.get(lvlo.item);
                         reader.get(lvlo.count);
-                        std::cout << "LVLI " << mEditorId << " LVLO lev " << lvlo.level << ", item " << lvlo.item
-                                  << ", count " << lvlo.count << std::endl;
+//                        std::cout << "LVLI " << mEditorId << " LVLO lev " << lvlo.level << ", item " << lvlo.item
+//                                  << ", count " << lvlo.count << std::endl;
                         break;
                     }
                     else
@@ -79,6 +80,7 @@ void ESM4::LeveledItem::load(ESM4::Reader& reader)
                 mLvlObject.push_back(lvlo);
                 break;
             }
+            case ESM4::SUB_LLCT:
             case ESM4::SUB_OBND: // FO3
             case ESM4::SUB_COED: // FO3
             case ESM4::SUB_LVLG: // FO3

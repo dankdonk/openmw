@@ -1,5 +1,7 @@
 #include <OgreSceneNode.h>
 
+#include <iostream>
+
 #include <components/esm/loadcell.hpp>
 
 #include <components/compiler/extensions.hpp>

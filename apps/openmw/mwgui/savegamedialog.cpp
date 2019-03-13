@@ -1,6 +1,8 @@
 #include "savegamedialog.hpp"
 #include "widgets.hpp"
 
+#include <ctime>
+
 #include <OgreImage.h>
 #include <OgreTextureManager.h>
 
@@ -334,7 +336,7 @@ namespace MWGui
         std::stringstream text;
         time_t time = mCurrentSlot->mTimeStamp;
         struct tm* timeinfo;
-        timeinfo = localtime(&time);
+        timeinfo = std::localtime(&time);
 
         // Use system/environment locale settings for datetime formatting
         setlocale(LC_TIME, "");
@@ -369,7 +371,7 @@ namespace MWGui
         Ogre::TexturePtr texture;
         texture = Ogre::TextureManager::getSingleton().getByName(textureName);
         mScreenshot->setImageTexture("");
-        if (texture.isNull())
+        if (!texture)
         {
             texture = Ogre::TextureManager::getSingleton().createManual(textureName,
                 Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,

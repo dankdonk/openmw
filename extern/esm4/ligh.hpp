@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2016, 2018 cc9cii
+  Copyright (C) 2016, 2018, 2019 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -53,7 +53,7 @@ namespace ESM4
             float         movementAmplitude;  // TES5 only
             std::uint32_t value;   // gold
             float         weight;
-            Data() : duration(-1), radius(0), flags(0), colour(0), falloff(1.f), FOV(90),
+            Data() : duration(-1), radius(0), colour(0), flags(0), falloff(1.f), FOV(90),
                      nearClip(0.f), frequency(0.f), intensityAmplitude(0.f), movementAmplitude(0.f),
                      value(0), weight(0.f) // FIXME: FOV in degrees or radians?
             {}

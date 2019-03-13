@@ -90,13 +90,13 @@ void MovieAudioDecoder::setupFormat()
     if (mAudioResampler->mSwr)
         return; // already set up
 
-    AVSampleFormat inputSampleFormat = mAVStream->codec->sample_fmt;
+    AVSampleFormat inputSampleFormat = static_cast<AVSampleFormat>(mAVStream->codecpar->format);
 
-    uint64_t inputChannelLayout = mAVStream->codec->channel_layout;
+    uint64_t inputChannelLayout = mAVStream->codecpar->channel_layout;
     if (inputChannelLayout == 0)
-        inputChannelLayout = av_get_default_channel_layout(mAVStream->codec->channels);
+        inputChannelLayout = av_get_default_channel_layout(mAVStream->codecpar->channels);
 
-    int inputSampleRate = mAVStream->codec->sample_rate;
+    int inputSampleRate = mAVStream->codecpar->sample_rate;
 
     mOutputSampleRate = inputSampleRate;
     mOutputSampleFormat = inputSampleFormat;
@@ -142,7 +142,7 @@ int MovieAudioDecoder::synchronize_audio()
         {
             int n = av_get_bytes_per_sample(mOutputSampleFormat) *
                     av_get_channel_layout_nb_channels(mOutputChannelLayout);
-            sample_skip = ((int)(diff * mAVStream->codec->sample_rate) * n);
+            sample_skip = ((int)(diff * mAVStream->codecpar->sample_rate) * n);
         }
     }
 
@@ -197,13 +197,13 @@ int MovieAudioDecoder::audio_decode_frame(AVFrame *frame, int &sample_skip)
                 mFrameData = &frame->data[0];
 
             mAudioClock += (double)frame->nb_samples /
-                           (double)mAVStream->codec->sample_rate;
+                           (double)mAVStream->codecpar->sample_rate;
 
             /* We have data, return it and come back for more later */
             return frame->nb_samples * av_get_channel_layout_nb_channels(mOutputChannelLayout) *
                    av_get_bytes_per_sample(mOutputSampleFormat);
         }
-        av_free_packet(pkt);
+        av_packet_unref(pkt);
 
         /* next packet */
         if(mVideoState->audioq.get(pkt, mVideoState) < 0)

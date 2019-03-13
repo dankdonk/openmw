@@ -3,6 +3,10 @@
 #include <OgreSceneNode.h>
 #include <OgreSceneManager.h>
 
+#include <components/esm/loadcrea.hpp>
+#include <components/esm/loadnpc.hpp>
+#include <extern/esm4/npc_.hpp>
+
 #include "../mwworld/ptr.hpp"
 #include "../mwworld/class.hpp"
 

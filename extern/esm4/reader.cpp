@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015-2018 cc9cii
+  Copyright (C) 2015-2019 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -50,8 +50,8 @@ ESM4::Reader::Reader() : mObserver(nullptr), mRecordRemaining(0), mCellGridValid
 
     mInBuf.reset();
     mDataBuf.reset();
-    mStream.setNull();
-    mSavedStream.setNull();
+    mStream.reset();
+    mSavedStream.reset();
 }
 
 ESM4::Reader::~Reader()
@@ -72,10 +72,10 @@ ESM4::ReaderContext ESM4::Reader::getContext()
 // NOTE: Assumes that the caller has reopened the file if necessary
 bool ESM4::Reader::restoreContext(const ESM4::ReaderContext& ctx)
 {
-    if (!mSavedStream.isNull())
+    if (mSavedStream)
     {
         mStream = mSavedStream;
-        mSavedStream.setNull();
+        mSavedStream.reset();
     }
 
     mCtx.groupStack.clear(); // probably not necessary?
@@ -225,17 +225,17 @@ void ESM4::Reader::getLocalizedString(const FormId stringId, std::string& str)
         filestream->seek(it->second.offset);
         getZString(str, filestream);
     }
-    else
+    else // FIXME: stringId might be null? (FoxRace)
         throw std::runtime_error("ESM4::Reader::getLocalizedString localized string not found");
 }
 
 bool ESM4::Reader::getRecordHeader()
 {
     // FIXME: this seems very hacky but we may have skipped subrecords from within an inflated data block
-    if (/*mStream->eof() && */!mSavedStream.isNull())
+    if (/*mStream->eof() && */mSavedStream)
     {
         mStream = mSavedStream;
-        mSavedStream.setNull();
+        mSavedStream.reset();
     }
 
     // keep track of data left to read from the file
@@ -532,6 +532,10 @@ void ESM4::Reader::skipSubRecordData(std::uint32_t size)
 // ModIndex adjusted formId according to master file dependencies
 // (see http://www.uesp.net/wiki/Tes4Mod:FormID_Fixup)
 // NOTE: need to update modindex to mModIndicies.size() before saving
+//
+// FIXME: probably should add a parameter to check for mHeader::mOverrides
+//        (ACHR, LAND, NAVM, PGRE, PHZD, REFR), but not sure what exactly overrides mean
+//        i.e. use the modindx of its master?
 void ESM4::Reader::adjustFormId(FormId& id)
 {
     if (mHeader.mModIndicies.empty())

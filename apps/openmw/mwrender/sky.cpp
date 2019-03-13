@@ -426,7 +426,7 @@ void SkyManager::clearRain()
 {
     for (std::map<Ogre::SceneNode*, NifOgre::ObjectScenePtr>::iterator it = mRainModels.begin(); it != mRainModels.end();)
     {
-        it->second.setNull();
+        it->second.reset();
         mSceneMgr->destroySceneNode(it->first);
         mRainModels.erase(it++);
     }
@@ -447,7 +447,7 @@ void SkyManager::updateRain(float dt)
                 || MWBase::Environment::get().getWorld()->isUnderwater(
                     MWBase::Environment::get().getWorld()->getPlayerPtr().getCell(), it->first->_getDerivedPosition()))
         {
-            it->second.setNull();
+            it->second.reset();
             mSceneMgr->destroySceneNode(it->first);
             mRainModels.erase(it++);
         }
@@ -505,7 +505,7 @@ void SkyManager::update(float duration)
     if (!mEnabled) return;
     const MWWorld::Fallback* fallback=MWBase::Environment::get().getWorld()->getFallback();
 
-    if (!mParticle.isNull())
+    if (mParticle)
     {
         for (unsigned int i=0; i<mParticle->mControllers.size(); ++i)
             mParticle->mControllers[i].update();
@@ -635,7 +635,7 @@ void SkyManager::setWeather(const MWWorld::WeatherResult& weather)
 
         if (mCurrentParticleEffect.empty())
         {
-            mParticle.setNull();
+            mParticle.reset();
         }
         else
         {
@@ -648,8 +648,8 @@ void SkyManager::setWeather(const MWWorld::WeatherResult& weather)
             }
             for (size_t i = 0; i < mParticle->mControllers.size(); ++i)
             {
-                if (mParticle->mControllers[i].getSource().isNull())
-                    mParticle->mControllers[i].setSource(Ogre::ControllerManager::getSingleton().getFrameTimeSource());
+                if (!mParticle->mControllers[i].getSource())
+                     mParticle->mControllers[i].setSource(Ogre::ControllerManager::getSingleton().getFrameTimeSource());
             }
         }
     }
