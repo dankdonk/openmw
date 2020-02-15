@@ -323,7 +323,7 @@
  For non-actors (e.g. Clutter/FightersGuild/TargetHeavy01.NIF) ragdoll should be active at
  the point of instantiation. i.e. when the physics code path reaches it
 
- For actors and creatures ragdoll is enabled when the die.  That means Ptr should have access
+ For actors and creatures ragdoll is enabled when they die.  That means Ptr should have access
  to the ObjectScene somehow. e.g. via MWBase::Environment::get().getWorld()->getAnimation()
 
 

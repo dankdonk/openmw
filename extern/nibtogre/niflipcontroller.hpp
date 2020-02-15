@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015-2018 cc9cii
+  Copyright (C) 2015-2019 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -51,7 +51,7 @@ namespace NiBtOgre
         float mDelta;
         std::vector<NiSourceTextureRef> mSources;
 
-        NiFlipController(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
+        NiFlipController(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
     };
 }
 

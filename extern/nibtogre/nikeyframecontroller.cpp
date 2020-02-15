@@ -37,25 +37,26 @@
 #undef NDEBUG
 #endif
 
-NiBtOgre::NiKeyframeController::NiKeyframeController(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::NiKeyframeController::NiKeyframeController(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : NiSingleInterpController(index, stream, model, data)
 {
     if (stream.nifVer() <= 0x0a010000) // up to 10.1.0.0
-        stream.read(mDataIndex);
+        stream.read(mDataRef);
 
 #if 1
-    if (model.blockType(NiTimeController::mTargetIndex) == "NiNode")
-        data.addSkelLeafIndex(NiTimeController::mTargetIndex); // FIXME: do this for old NIF versions only?
+    //if (NiTimeController::mTargetRef != -1) // FIXME creatures\cliffracer\skeleton.nif
+    if (model.blockType(NiTimeController::mTargetRef) == "NiNode")
+        data.addSkelLeafIndex(NiTimeController::mTargetRef); // FIXME: do this for old NIF versions only?
 #else
     // FIXME: is there a better way than doing a string comparison each time?
-    if (model.blockType(NiTimeController::mTargetIndex) == "NiNode")
+    if (model.blockType(NiTimeController::mTargetRef) == "NiNode")
     {
-        data.addSkelLeafIndex(NiTimeController::mTargetIndex);
+        data.addSkelLeafIndex(NiTimeController::mTargetRef);
 
-        NiNode *node = model.getRef<NiNode>(NiTimeController::mTargetIndex);
+        NiNode *node = model.getRef<NiNode>(NiTimeController::mTargetRef);
         const std::vector<NiAVObjectRef>& children = node->getChildren();
 
-        if (NiTimeController::mTargetIndex == 182)
+        if (NiTimeController::mTargetRef == 182)
             std::cout << "stop" << std::endl;
 
         for (unsigned int i = 0; i < children.size(); ++i)
@@ -75,10 +76,14 @@ NiBtOgre::NiTimeControllerRef NiBtOgre::NiKeyframeController::build(std::vector<
     return -1;
 }
 
+void NiBtOgre::NiKeyframeController::build(NiAVObject* target, const NiTransformInterpolator& interpolator, std::vector<Ogre::Controller<float> >& controllers)
+{
+}
+
 #if 0
-NiBtOgre::BSKeyframeController::BSKeyframeController(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::BSKeyframeController::BSKeyframeController(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : NiSingleInterpController(index, stream, model, data)
 {
-    stream.read(mData2Index);
+    stream.read(mData2Ref);
 }
 #endif

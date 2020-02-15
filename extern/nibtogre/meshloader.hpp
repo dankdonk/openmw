@@ -35,6 +35,8 @@ namespace NiBtOgre
     {
         NiNode *mNiNode;
 
+        static std::map<std::string, MeshLoader> sLoaders; // FIXME: is there a better way?
+
     public:
 
         MeshLoader(NiNode *node);

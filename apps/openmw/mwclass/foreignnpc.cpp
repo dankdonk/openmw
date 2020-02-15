@@ -1,6 +1,7 @@
 #include "foreignnpc.hpp"
 
 #include <extern/esm4/npc_.hpp>
+#include <extern/esm4/race.hpp>
 #include <extern/esm4/formid.hpp> // FIXME mainly for debugging
 
 #include "../mwbase/environment.hpp"
@@ -13,6 +14,7 @@
 #include "../mwworld/cellstore.hpp"
 #include "../mwworld/customdata.hpp"
 #include "../mwworld/inventorystore.hpp"
+#include "../mwworld/esmstore.hpp"
 
 #include "../mwmechanics/npcstats.hpp"
 #include "../mwmechanics/movement.hpp"
@@ -60,7 +62,26 @@ namespace MWClass
 
     void ForeignNpc::insertObject(const MWWorld::Ptr& ptr, const std::string& model, MWWorld::PhysicsSystem& physics) const
     {
-        physics.addActor(ptr, model);
+
+
+#if 0 // FIXME: doesn't work for FO3
+            const MWWorld::ESMStore &store = MWBase::Environment::get().getWorld()->getStore();
+            std::string skelModel;
+            if (model == "")
+            {
+                const ESM4::Npc *npc = ptr.get<ESM4::Npc>()->mBase;
+
+                const ESM4::Race* race = store.getForeign<ESM4::Race>().search(npc->mRace);
+                if ((npc->mActorBaseConfig.flags & 0x1) != 0) // female
+                    skelModel = "meshes\\" + race->mFemaleModel;
+                else
+                    skelModel = "meshes\\" + race->mMaleModel;
+            }
+
+#endif
+
+
+        physics.addActor(ptr, /*skelModel*/model);
         MWBase::Environment::get().getMechanicsManager()->add(ptr);
 #if 0
         if(!model.empty())
@@ -116,8 +137,7 @@ namespace MWClass
         return dynamic_cast<ForeignNpcCustomData&> (*ptr.getRefData().getCustomData()).mInventoryStore;
     }
 
-    MWWorld::InventoryStore& ForeignNpc::getInventoryStore (const MWWorld::Ptr& ptr)
-        const
+    MWWorld::InventoryStore& ForeignNpc::getInventoryStore (const MWWorld::Ptr& ptr) const
     {
         ensureCustomData (ptr);
 
@@ -254,7 +274,7 @@ namespace MWClass
             {
                 gold = ref->mBase->mBaseConfig.barterGold;
 
-                data->mNpcStats.setHealth (ref->mBase->mData.health); // FIXME: uint32 to float
+                data->mNpcStats.setHealth (/*ref->mBase->mData.health*/ 50); // FIXME: uint32 to float
                 data->mNpcStats.setMagicka (ref->mBase->mBaseConfig.baseSpell);
                 data->mNpcStats.setFatigue (ref->mBase->mBaseConfig.fatigue);
 

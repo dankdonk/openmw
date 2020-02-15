@@ -24,7 +24,7 @@ add_openmw_dir (mwrender
     actors objects renderinginterface localmap occlusionquery water shadows
     characterpreview globalmap ripplesimulation refraction
     terrainstorage renderconst effectmanager weaponanimation
-    foreignnpcanimation foreigncreatureanimation
+    foreignnpcanimation foreigncreatureanimation foreignactivatoranimation
     )
 
 add_openmw_dir (foreign
@@ -83,7 +83,7 @@ add_openmw_dir (mwclass
     foreigndoor foreigningredient foreignlight foreignmiscitem foreignstatic foreigngrass
     foreigntree foreignflora foreignfurniture foreignweapon foreignammo foreignnpc foreigncreature
     foreignleveledcreature foreignsoulgem foreignkey foreignpotion foreignsubspace foreignsigilstone
-    foreignleveleditem
+    foreignleveleditem foreignnote
     )
 
 add_openmw_dir (mwmechanics

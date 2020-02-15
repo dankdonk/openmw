@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015-2018 cc9cii
+  Copyright (C) 2015-2019 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -73,7 +73,7 @@
 // oblivion/gate/obliviongate_forming.nif
 // oblivion/gate/obliviongate_simple.nif
 // oblivion/gate/oblivionwargateani02.nif
-NiBtOgre::NiFlipController::NiFlipController(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::NiFlipController::NiFlipController(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : NiSingleInterpController(index, stream, model, data)
 {
     stream.read(mTexureSlot);

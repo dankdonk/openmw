@@ -50,7 +50,7 @@ namespace NiBtOgre
     class Header;
     class NiModel;
     struct BtOgreInst;
-    struct ModelData;
+    struct BuildData;
 
     class NiObject
     {
@@ -60,11 +60,11 @@ namespace NiBtOgre
         //typedef std::vector<std::unique_ptr<NiObject> > RecordBlocks; // FIXME: no longer used
 
         // For some objects build() does not make sense - the default implementation does nothing.
-        virtual void build(BtOgreInst *inst, ModelData *data, NiObject *parent = nullptr) {}
+        virtual void build(BtOgreInst *inst, BuildData *data, NiObject *parent = nullptr) {}
 
         typedef NiBtOgre::Factory<NiObject> Factory;
         static Factory::Type create(Factory::Key const& name,
-            uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+            uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
         {
             return mFactory.create(name, index, stream, model, data);
         }
@@ -76,16 +76,16 @@ namespace NiBtOgre
                 throw std::logic_error(std::string(BOOST_CURRENT_FUNCTION) + ": name already registered");
         }
 
-        NiObject(std::uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
-            : mSelfIndex(index), mModel(model)  {}
+        NiObject(std::uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+            : mSelfRef(index), mModel(model)  {}
 
-        inline std::uint32_t index() const { return mSelfIndex; }
+        inline std::uint32_t selfRef() const { return mSelfRef; }
 
     protected:
         NiObject() = default;  // disallow the default constructor in derived classes
         const NiModel& mModel; // a little akward, but need a way to access NiObject Ptrs/Refs and TES5 strings
 
-        const std::uint32_t mSelfIndex; // NIF block index of this object
+        const std::uint32_t mSelfRef; // NIF block index of this object
 
     private:
         static Factory mFactory;

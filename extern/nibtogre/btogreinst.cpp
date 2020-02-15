@@ -25,7 +25,6 @@
 #include <btBulletDynamicsCommon.h>
 #include <btBulletCollisionCommon.h>
 
-//#include "nigeometry.hpp"
 #include "nimodelmanager.hpp"
 #include "nimodel.hpp"
 
@@ -34,15 +33,27 @@ namespace Ogre
     class SceneNode;
 }
 
-NiBtOgre::BtOgreInst::BtOgreInst(Ogre::SceneNode *baseNode, NifOgre::ObjectScenePtr scene, const std::string& name, const std::string& group)
-    : mBaseSceneNode(baseNode), mObjectScene(scene), mFlags(0)//, mSkeletonBuilt(false)
+NiBtOgre::BtOgreInst::BtOgreInst(Ogre::SceneNode *baseNode, const std::string& name, const std::string& group)
+    : mBaseSceneNode(baseNode), mFlags(0), mSkeletonRoot(nullptr)
 {
     mModel = NiBtOgre::NiModelManager::getSingleton().getOrLoadByName(name, group);
 };
 
-// The parameter skeleton is used for building body part models where existing
-// creature/character skeleton should be used for skinning.
-void NiBtOgre::BtOgreInst::instantiate(Ogre::SkeletonPtr skeleton)
+// for building body part models using the supplied creature/character skeleton for skinning.
+void NiBtOgre::BtOgreInst::instantiate(Ogre::SkeletonPtr skeleton, const std::string& meshExt)
+{
+    mModel->buildBodyPart(this, skeleton);
+    mModel->buildMeshAndEntity(this, meshExt);
+}
+
+// for building fg morphed mesh
+void NiBtOgre::BtOgreInst::instantiate(Ogre::SkeletonPtr skeleton, const std::string& npcName, std::vector<Ogre::Vector3>& vertices)
+{
+    mModel->buildBodyPart(this, skeleton);
+    mModel->buildMeshAndEntity(this, npcName, vertices);
+}
+
+void NiBtOgre::BtOgreInst::instantiate()
 {
     // FIXME: howto transform nodes to root transform after the meshes have been built?
     // e.g. NiNode CathedralCryptChain11 (18) has 1 mesh CathedralCryptChain11:36 (24)
@@ -52,6 +63,18 @@ void NiBtOgre::BtOgreInst::instantiate(Ogre::SkeletonPtr skeleton)
     // Is it possible to leave that for Ogre::SceneNode to take care of?
     // i.e. for each NiNode with a mesh create a child scenenode
 
-    mModel->build(this, skeleton);
+    mModel->build(this);
     mModel->buildMeshAndEntity(this);
+}
+
+bool NiBtOgre::BtOgreInst::hasAnimation(const std::string& animName) const
+{
+    if (mSkeletonAnimEntities.size() > 0) // "fake skin" node animation
+    {
+        return mSkeletonAnimEntities.find(animName) != mSkeletonAnimEntities.end();
+    }
+    else                                  // controller based node animation
+    {
+        return false;
+    }
 }

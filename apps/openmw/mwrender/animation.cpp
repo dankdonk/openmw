@@ -26,6 +26,7 @@
 #include <libs/openengine/ogre/lights.hpp>
 
 #include <extern/shiny/Main/Factory.hpp>
+#include <extern/esm4/ligh.hpp>
 
 #include "../mwbase/environment.hpp"
 #include "../mwbase/soundmanager.hpp"
@@ -38,6 +39,7 @@
 #include "../mwworld/fallback.hpp"
 #include "../mwworld/cellstore.hpp"
 #include "../mwworld/esmstore.hpp"
+#include "../mwworld/foreignstore.hpp"
 
 #include "renderconst.hpp"
 
@@ -324,6 +326,80 @@ void Animation::clearAnimSources()
     mAnimSources.clear();
 }
 
+// FIXME: duplicated code
+void Animation::addLight()
+{
+    MWWorld::LiveCellRef<ESM4::Light> *ref = mPtr.get<ESM4::Light>();
+
+    const unsigned int clr = ref->mBase->mData.colour; // RGBA
+    Ogre::ColourValue color(((clr >>  0) & 0xFF) / 255.0f,
+                            ((clr >>  8) & 0xFF) / 255.0f,
+                            ((clr >> 16) & 0xFF) / 255.0f);
+    const float radius = float(ref->mBase->mData.radius);
+
+    if((ref->mBase->mData.flags & 0x04 /*Negative*/))
+        color *= -1;
+
+    mObjectRoot->mLights.push_back(mInsert->getCreator()->createLight());
+    Ogre::Light *olight = mObjectRoot->mLights.back();
+    olight->setDiffuseColour(color);
+
+    Ogre::ControllerValueRealPtr src(Ogre::ControllerManager::getSingleton().getFrameTimeSource());
+    Ogre::ControllerValueRealPtr dest(OGRE_NEW OEngine::Render::LightValue(olight, color));
+    Ogre::ControllerFunctionRealPtr func(OGRE_NEW OEngine::Render::LightFunction(
+        ((ref->mBase->mData.flags & 0x0008 /*ESM::Light::Flicker*/) != 0)     ? OEngine::Render::LT_Flicker :
+        ((ref->mBase->mData.flags & 0x0040 /*ESM::Light::FlickerSlow*/) != 0) ? OEngine::Render::LT_FlickerSlow :
+        ((ref->mBase->mData.flags & 0x0080 /*ESM::Light::Pulse*/) != 0)       ? OEngine::Render::LT_Pulse :
+        ((ref->mBase->mData.flags & 0x0100 /*ESM::Light::PulseSlow*/) != 0)   ? OEngine::Render::LT_PulseSlow :
+        OEngine::Render::LT_Normal
+    ));
+    mObjectRoot->mControllers.push_back(Ogre::Controller<Ogre::Real>(src, dest, func));
+
+    bool interior = !(mPtr.isInCell() && mPtr.getCell()->getCell()->isExterior());
+
+    const MWWorld::Fallback *fallback = MWBase::Environment::get().getWorld()->getFallback();
+
+    static bool outQuadInLin = fallback->getFallbackBool("LightAttenuation_OutQuadInLin");
+    static bool useQuadratic = fallback->getFallbackBool("LightAttenuation_UseQuadratic");
+    static float quadraticValue = fallback->getFallbackFloat("LightAttenuation_QuadraticValue");
+    static float quadraticRadiusMult = fallback->getFallbackFloat("LightAttenuation_QuadraticRadiusMult");
+    static bool useLinear = fallback->getFallbackBool("LightAttenuation_UseLinear");
+    static float linearRadiusMult = fallback->getFallbackFloat("LightAttenuation_LinearRadiusMult");
+    static float linearValue = fallback->getFallbackFloat("LightAttenuation_LinearValue");
+
+    bool quadratic = useQuadratic && (!outQuadInLin || !interior);
+
+    // with the standard 1 / (c + d*l + d*d*q) equation the attenuation factor never becomes zero,
+    // so we ignore lights if their attenuation falls below this factor.
+    const float threshold = 0.03f;
+
+    float quadraticAttenuation = 0;
+    float linearAttenuation = 0;
+    float activationRange = 0;
+    if (quadratic)
+    {
+        float r = radius * quadraticRadiusMult;
+        quadraticAttenuation = quadraticValue / std::pow(r, 2);
+        activationRange = std::sqrt(1.0f / (threshold * quadraticAttenuation));
+    }
+    if (useLinear)
+    {
+        float r = radius * linearRadiusMult;
+        linearAttenuation = linearValue / r;
+        activationRange = std::max(activationRange, 1.0f / (threshold * linearAttenuation));
+    }
+
+    olight->setAttenuation(activationRange, 0, linearAttenuation, quadraticAttenuation);
+
+    // attach to "AttachLight" node if available
+    if(mObjectRoot->mSkelBase && mObjectRoot->mSkelBase->getSkeleton()->hasBone("AttachLight"))
+        mObjectRoot->mSkelBase->attachObjectToBone("AttachLight", olight);
+    else
+    {
+        Ogre::SceneNode *node = mInsert->createChildSceneNode();
+        node->attachObject(olight);
+    }
+}
 
 void Animation::addExtraLight(Ogre::SceneManager *sceneMgr, NifOgre::ObjectScenePtr objlist, const ESM::Light *light)
 {
@@ -451,11 +527,8 @@ bool Animation::hasAnimation(const std::string &anim)
             return true;
     }
 
-    // HACK for foreign doors
-    if (mObjectRoot->mSkeletonAnimEntities.size() > 0)
-    {
-        return mObjectRoot->mSkeletonAnimEntities.find(anim) != mObjectRoot->mSkeletonAnimEntities.end();
-    }
+    if (!mObjectRoot.isNull() && mObjectRoot->mForeignObj)
+        return mObjectRoot->mForeignObj->hasAnimation(anim);   // HACK for foreign doors/activators
 
     return false;
 }
@@ -617,16 +690,33 @@ void Animation::updatePosition(float oldtime, float newtime, Ogre::Vector3 &posi
      */
     Ogre::Vector3 off = mNonAccumCtrl->getTranslation(newtime)*mAccumulate;
     position += off - mNonAccumCtrl->getTranslation(oldtime)*mAccumulate;
+//  else
+//  {
+//      float z = mAccumRoot->getPosition().z;
+//      Ogre::Vector3 oldPos = mNonAccumCtrl->getTranslation(oldtime)*mAccumulate;
+//      Ogre::Vector3 diff = off - oldPos;
+//      position += diff;
+//      //diff.z = 0.f;//oldPos.z;
+//      //position.z = z;
+//      //off.z = 0.f;//oldPos.z;
+//      Ogre::Vector3 off2;
+//      off2.x = -off.x;
+//      off2.y = -off.y;
+//      off2.z = 0.f;//z;//-off.z;
+//      mAccumRoot->setPosition(-off2);
+//      return;
+//  }
 
     /* Translate the accumulation root back to compensate for the move. */
-    if(mPtr.getTypeName() != typeid(ESM4::Npc).name()) // FIXME: places the character into the ground
+    if(mPtr.getTypeName() != typeid(ESM4::Npc).name() // FIXME: places the character into the ground
+     && mPtr.getTypeName() != typeid(ESM4::Creature).name()) // FIXME
     mAccumRoot->setPosition(-off);
 }
 
 bool Animation::reset(AnimState &state, const NifOgre::TextKeyMap &keys, const std::string &groupname, const std::string &start, const std::string &stop, float startpoint, bool loopfallback)
 {
     // FIXME This is a hack
-    if(mPtr.getTypeName() == typeid(ESM4::Npc).name())
+    if(mPtr.getTypeName() == typeid(ESM4::Npc).name() || mPtr.getTypeName() == typeid(ESM4::Creature).name())
     {
         NifOgre::TextKeyMap::const_iterator it(keys.begin());
         while (it != keys.end())
@@ -673,7 +763,7 @@ bool Animation::reset(AnimState &state, const NifOgre::TextKeyMap &keys, const s
 
     std::string starttag = groupname+": "+start;
     // FIXME: temporary workaround during testing
-    if(mPtr.getTypeName() == typeid(ESM4::Npc).name())
+    if(mPtr.getTypeName() == typeid(ESM4::Npc).name() || mPtr.getTypeName() == typeid(ESM4::Creature).name())
         starttag = start;
     NifOgre::TextKeyMap::const_reverse_iterator startkey(groupend);
     while(startkey != keys.rend() && startkey->second != starttag)
@@ -681,7 +771,7 @@ bool Animation::reset(AnimState &state, const NifOgre::TextKeyMap &keys, const s
     if(startkey == keys.rend() && start == "loop start")
     {
         // FIXME: temporary workaround during testing
-        if(mPtr.getTypeName() == typeid(ESM4::Npc).name())
+        if(mPtr.getTypeName() == typeid(ESM4::Npc).name() || mPtr.getTypeName() == typeid(ESM4::Creature).name())
             starttag = "start";
         else
             starttag = groupname+": start";
@@ -759,7 +849,7 @@ void Animation::handleTextKey(AnimState &state, const std::string &groupname, co
     const std::string &evt = key->second;
 
     // FIXME: temporary workaround during testing
-    if(mPtr.getTypeName() == typeid(ESM4::Npc).name())
+    if(mPtr.getTypeName() == typeid(ESM4::Npc).name() || mPtr.getTypeName() == typeid(ESM4::Creature).name())
     {
         if (evt == "start")
             state.mStartTime = key->first;
@@ -1017,7 +1107,7 @@ void Animation::play(const std::string &groupname, int priority, int groups, boo
     {
         // If the animation state is not playing, we need to manually apply the accumulation
         // (see updatePosition, which would be called if the animation was playing)
-    //if(mPtr.getTypeName() != typeid(ESM4::Npc).name()) // FIXME
+    if(mPtr.getTypeName() != typeid(ESM4::Creature).name()) // FIXME
         mAccumRoot->setPosition(-mNonAccumCtrl->getTranslation(state.mTime)*mAccumulate);
     }
 }
@@ -1065,7 +1155,8 @@ void Animation::resetActiveGroups()
     if(state == mStates.end())
     {
         if (mAccumRoot && mNonAccumRoot)
-    if(mPtr.getTypeName() != typeid(ESM4::Npc).name()) // FIXME
+    if(mPtr.getTypeName() != typeid(ESM4::Npc).name() &&
+       mPtr.getTypeName() != typeid(ESM4::Creature).name()) // FIXME
             mAccumRoot->setPosition(-mNonAccumRoot->getPosition()*mAccumulate);
         return;
     }
@@ -1084,7 +1175,8 @@ void Animation::resetActiveGroups()
     }
 
     if (mAccumRoot && mNonAccumCtrl)
-    if(mPtr.getTypeName() != typeid(ESM4::Npc).name()) // FIXME
+    if(mPtr.getTypeName() != typeid(ESM4::Npc).name() &&
+       mPtr.getTypeName() != typeid(ESM4::Creature).name()) // FIXME
         mAccumRoot->setPosition(-mNonAccumCtrl->getTranslation(state->second.mTime)*mAccumulate);
 }
 
@@ -1282,14 +1374,14 @@ Ogre::Vector3 Animation::runAnimation(float duration)
     }
 
     // FIXME: need to clean up below
-    if (mObjectRoot->mVertexAnimEntities.size() > 0)
+    if (mObjectRoot->mForeignObj && mObjectRoot->mForeignObj->mVertexAnimEntities.size() > 0)
     {
-        for (unsigned int i = 0; i < mObjectRoot->mVertexAnimEntities.size(); ++i)
+        for (unsigned int i = 0; i < mObjectRoot->mForeignObj->mVertexAnimEntities.size(); ++i)
         {
             //mObjectRoot->mVertexAnimEntities[i]->getAllAnimationStates()->_notifyDirty();
             //std::cout << mObjectRoot->mVertexAnimEntities[i]->getSubEntity(0)->getSubMesh()->getMaterialName() << std::endl;
 
-            Ogre::AnimationStateSet *aset = mObjectRoot->mVertexAnimEntities[i]->getAllAnimationStates();
+            Ogre::AnimationStateSet *aset = mObjectRoot->mForeignObj->mVertexAnimEntities[i]->getAllAnimationStates();
             Ogre::AnimationStateIterator asiter = aset->getAnimationStateIterator();
             while(asiter.hasMoreElements())
             {
@@ -1314,7 +1406,7 @@ Ogre::Vector3 Animation::runAnimation(float duration)
 // this is a hack to get animated doors to work
 bool Animation::addTime(const std::string& anim, float duration)
 {
-    if (mObjectRoot->mSkeletonAnimEntities.size() > 0)
+    if (mObjectRoot->mForeignObj && mObjectRoot->mForeignObj->mSkeletonAnimEntities.size() > 0)
     {
 #if 0
         std::map<std::string, Ogre::Entity*>::const_iterator it
@@ -1334,8 +1426,8 @@ bool Animation::addTime(const std::string& anim, float duration)
 #else
         // does the anim exist?
         std::map<std::string, std::vector<Ogre::Entity*> >::iterator iter
-            = mObjectRoot->mSkeletonAnimEntities.find(anim);
-        if (iter != mObjectRoot->mSkeletonAnimEntities.end())
+            = mObjectRoot->mForeignObj->mSkeletonAnimEntities.find(anim);
+        if (iter != mObjectRoot->mForeignObj->mSkeletonAnimEntities.end())
         {
             bool hasEnded = false;
             // there can be more than one entity being animated, add time to all
@@ -1343,7 +1435,8 @@ bool Animation::addTime(const std::string& anim, float duration)
             {
                 iter->second[i]->getAnimationState(anim)->addTime(duration);
                 // if any one of the entities has ended its anim then assume all ended
-                hasEnded |= iter->second[i]->getAnimationState(anim)->hasEnded();
+                if (!hasEnded)
+                    hasEnded |= iter->second[i]->getAnimationState(anim)->hasEnded();
             }
 
             return hasEnded; // remove from mDoorStates, see processDoors()
@@ -1352,6 +1445,8 @@ bool Animation::addTime(const std::string& anim, float duration)
             return true; // set to anim ended state if it can't be found?
 #endif
     }
+    else
+        return true;
 }
 
 std::vector<Ogre::Bone*> Animation::getBones(const std::string& animation) const
@@ -1359,14 +1454,15 @@ std::vector<Ogre::Bone*> Animation::getBones(const std::string& animation) const
     std::vector<Ogre::Bone*> res;
 
     std::map<std::string, std::vector<Ogre::Entity*> >::const_iterator cit
-        = mObjectRoot->mSkeletonAnimEntities.find(animation);
-    if (cit != mObjectRoot->mSkeletonAnimEntities.end())
+        = mObjectRoot->mForeignObj->mSkeletonAnimEntities.find(animation);
+    if (cit != mObjectRoot->mForeignObj->mSkeletonAnimEntities.end())
     {
         std::vector<Ogre::Entity*> entityList = cit->second;
         Ogre::SkeletonInstance *skel = entityList[0]->getSkeleton(); // any one will do
         for (unsigned int i = 0; i < entityList.size(); ++i)
         {
             std::string meshName = entityList[i]->getMesh()->getName();
+            //size_t pos = meshName.find_first_of('#');
             size_t pos = meshName.find_last_of('@');
             meshName = meshName.substr(pos+1);
             if (skel->hasBone(meshName))
@@ -1382,14 +1478,17 @@ std::vector<Ogre::Bone*> Animation::getBones(const std::string& animation) const
 // FIXME: inefficient, refactor
 void Animation::activateAnimatedDoor(const std::string& animation, bool activate)
 {
-    if (mObjectRoot->mSkeletonAnimEntities.size() > 0)
+    if (mObjectRoot->mForeignObj && mObjectRoot->mForeignObj->mSkeletonAnimEntities.size() > 0)
     {
         std::map<std::string, std::vector<Ogre::Entity*> >::iterator it
-            = mObjectRoot->mSkeletonAnimEntities.find(animation);
-        if (it != mObjectRoot->mSkeletonAnimEntities.end())
+            = mObjectRoot->mForeignObj->mSkeletonAnimEntities.find(animation);
+        if (it != mObjectRoot->mForeignObj->mSkeletonAnimEntities.end())
         {
             for (unsigned int i = 0; i < it->second.size(); ++i)
             {
+                if (!it->second[i]->hasAnimationState(animation))
+                    continue;
+
                 Ogre::AnimationState *anim = it->second[i]->getAnimationState(animation);
 
                 anim->setEnabled(activate ? true : false);
@@ -1405,6 +1504,7 @@ void Animation::activateAnimatedDoor(const std::string& animation, bool activate
 //                      it->second[i]->getSkeleton()->getBone(meshName)->reset();
                 }
             }
+            //mObjectRoot->mSkelBase->getSkeleton()->reset(true); // FIXME: hopefuly fixes disappearing doors (NO)
         }
     }
 }
@@ -1412,52 +1512,60 @@ void Animation::activateAnimatedDoor(const std::string& animation, bool activate
 // assumes "Open" and/or "Close" animations exist (caller must ensure)
 int Animation::getAnimatedDoorState() const
 {
-    if (mObjectRoot->mSkeletonAnimEntities.size() > 0)
+    if (mObjectRoot->mForeignObj && mObjectRoot->mForeignObj->mSkeletonAnimEntities.size() > 0)
     {
         int openState = 0;
         std::map<std::string, std::vector<Ogre::Entity*> >::iterator it
-            = mObjectRoot->mSkeletonAnimEntities.find("Open");
-        if (it != mObjectRoot->mSkeletonAnimEntities.end())
+            = mObjectRoot->mForeignObj->mSkeletonAnimEntities.find("Open");
+        if (it != mObjectRoot->mForeignObj->mSkeletonAnimEntities.end())
         {
-            if (it->second[0]->getAnimationState("Open")->getEnabled())
+            if (it->second[0]->hasAnimationState("Open") && it->second[0]->getAnimationState("Open")->getEnabled())
             {
                 bool hasEndedOpen = false;
                 for (unsigned int i = 0; i < it->second.size(); ++i)
                 {
                     // check that all have ended
                     hasEndedOpen &= it->second[i]->getAnimationState("Open")->hasEnded();
+
+                    if (!hasEndedOpen) // only needs one to be unfinished
+                    {
+                        openState = 1; // "opening" state
+                        return 1;
+                    }
                 }
-                if (!hasEndedOpen)
-                    openState = 1; // "opening" state
+                // fully opened, what state is it?
+                return 0;
             }
             // else if not enabled openState remains at 0
         }
 
         int closeState = 0;
         std::map<std::string, std::vector<Ogre::Entity*> >::iterator it2
-            = mObjectRoot->mSkeletonAnimEntities.find("Close");
-        if (it2 != mObjectRoot->mSkeletonAnimEntities.end())
+            = mObjectRoot->mForeignObj->mSkeletonAnimEntities.find("Close");
+        if (it2 != mObjectRoot->mForeignObj->mSkeletonAnimEntities.end())
         {
-            if (it2->second[0]->getAnimationState("Close")->getEnabled())
+            if (it2->second[0]->hasAnimationState("Close") && it2->second[0]->getAnimationState("Close")->getEnabled())
             {
                 bool hasEndedClose = false;
                 for (unsigned int i = 0; i < it2->second.size(); ++i)
                 {
                     // check that all have ended
                     hasEndedClose &= it2->second[i]->getAnimationState("Close")->hasEnded();
+
+                    if (!hasEndedClose) // only needs one to be unfinished
+                    {
+                        closeState = 2; // "closing" state
+                        return 2;
+                    }
                 }
-                if (!hasEndedClose)
-                    closeState = 2; // "closing" state
+                // fully closed, what state is it?
+                return 0;
             }
             // else if not enabled closeState remains at 0
         }
 
-        if (openState == 0 && closeState == 0)
-            return 0;
-        else if (openState == 1)
-            return 1; // ignore closeState
-        else if (closeState == 2)
-            return 2;
+        //if (openState == 0 && closeState == 0)
+            return 0; // neither active
     }
 
     return 0; // shouldn't happen  FIXME: throw?
@@ -1784,6 +1892,100 @@ ObjectAnimation::ObjectAnimation(const MWWorld::Ptr& ptr, const std::string &mod
         setRenderProperties(mObjectRoot, (mPtr.getTypeName() == typeid(ESM::Static).name()) ?
                                          (small ? RV_StaticsSmall : RV_Statics) : RV_Misc,
                             RQG_Main, RQG_Alpha, dist, !ptr.getClass().getEnchantment(ptr).empty(), &col);
+
+        // ----------------  below is all Foreign Object processing ------------------
+
+        if (!mObjectRoot->mForeignObj)
+            return;
+
+        //if (model.find("RootHavok") != std::string::npos)
+            //std::cout << "stop" << std::endl;
+
+        if (mObjectRoot->mForeignObj->havokEnabled()) // Havok enabled objects
+        {
+            // NOTE:
+            //
+            // There isn't necessarily one mesh per btRigidBody e.g.  Dungeons\Misc\RootHavok06.NIF
+            // So we need one SceneNode per target node (target bone in this case, since the
+            // mesh is skinned).
+            //
+            // mBhkRigidBodyMap already has the target NiNode refs; each of these should have a
+            // child SceneNode as a parent.
+            std::map<int32_t/*NiNodeRef*/, int32_t>::const_iterator it =
+                mObjectRoot->mForeignObj->mModel->getBuildData().mBhkRigidBodyMap.begin();
+            for (; it != mObjectRoot->mForeignObj->mModel->getBuildData().mBhkRigidBodyMap.end(); ++it)
+            {
+                Ogre::SceneNode *child = mInsert->createChildSceneNode();
+                mPhysicsNodeMap[it->first] = child;
+
+                std::map<int32_t, Ogre::Entity*>::iterator eit = mObjectRoot->mForeignObj->mEntities.find(it->first);
+                if (eit != mObjectRoot->mForeignObj->mEntities.end())
+                {
+                    //if(eit->second->isAttached())
+                        //eit->second->detachFromParent();
+                    child->attachObject(eit->second);
+                    std::cout << "havok " << eit->second->getMesh()->getName() << std::endl; // FIXME
+                }
+            }
+#if 1 // FIXME: for testing only
+            std::map<int32_t, Ogre::Entity*>::const_iterator cit(mObjectRoot->mForeignObj->mEntities.begin());
+            for (; cit != mObjectRoot->mForeignObj->mEntities.end(); ++cit)
+            {
+                if(!cit->second->isAttached())
+                {
+                    mInsert->attachObject(cit->second);
+                    //std::cout << "entity not attached" << cit->second->getMesh()->getName() << std::endl;
+                }
+            }
+#endif
+        }
+        else
+        {
+            std::map<int32_t, Ogre::Entity*>::const_iterator cit(mObjectRoot->mForeignObj->mEntities.begin());
+            for (; cit != mObjectRoot->mForeignObj->mEntities.end(); ++cit)
+                if(!cit->second->isAttached())
+                    mInsert->attachObject(cit->second);
+        }
+        mObjectRoot->_notifyAttached(); // for particles
+
+        // add any flame nodes
+        if (mObjectRoot->mSkelBase && mObjectRoot->mForeignObj->mFlameNodes.size() > 0)
+        {
+            for (size_t i = 0; i < mObjectRoot->mForeignObj->mFlameNodes.size(); ++i)
+            {
+                // find the bone
+                std::string boneName = mObjectRoot->mForeignObj->mFlameNodes[i];
+                Ogre::SkeletonInstance *skelinst = mObjectRoot->mSkelBase->getSkeleton();
+
+                Ogre::Bone *bone = skelinst->getBone(boneName);
+                if (!bone)
+                    continue;
+
+                const MWWorld::ESMStore& store = MWBase::Environment::get().getWorld()->getStore();
+                const MWWorld::ForeignStore<ESM4::Static>& statStore = store.getForeign<ESM4::Static>();
+                size_t pos = boneName.find_last_of('@');
+                std::string flameNodeName = boneName.substr(0, pos);
+
+                const ESM4::Static *fire = statStore.search(flameNodeName); // FlameNode1 FormId = 0x0000001f
+                if (!fire)
+                    continue;
+
+                // build the flame object
+                std::string fireModel = "meshes\\"+fire->mModel;
+                NifOgre::ObjectScenePtr flameNode(new NifOgre::ObjectScene(mInsert->getCreator()));
+                mFlameNode.push_back(flameNode);
+                flameNode->mForeignObj = std::make_shared<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(mInsert->createChildSceneNode(), fireModel, "General"));
+                flameNode->mForeignObj->instantiate();
+
+                // attach the flame to this object
+                std::map<int32_t, Ogre::Entity*>::const_iterator it(flameNode->mForeignObj->mEntities.begin());
+                for (; it != flameNode->mForeignObj->mEntities.end(); ++it)
+                {
+                    mSkelBase->attachObjectToBone(boneName, it->second);
+                    mObjectRoot->mBillboardNodes.push_back(bone); // FIXME: should check if billboard node
+                }
+            }
+        }
     }
     else
     {

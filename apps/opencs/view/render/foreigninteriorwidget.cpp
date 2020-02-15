@@ -49,8 +49,8 @@ void CSVRender::ForeignInteriorWidget::update()
         getSceneManager()->setFog(Ogre::FogMode::FOG_LINEAR, // FIXME: how to detect which mode?
                 colour,
                 0.001f, // unused for FOG_LINEAR
-                record.get().mLighting.unknown1,  // near
-                record.get().mLighting.unknown2); // far
+                record.get().mLighting.fogNear,  // near
+                record.get().mLighting.fogFar); // far
     }
 
     flagAsModified();

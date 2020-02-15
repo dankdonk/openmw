@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2016, 2018 cc9cii
+  Copyright (C) 2016, 2018, 2019 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -38,38 +38,74 @@ namespace ESM4
 
     struct Armor
     {
-        // FIXME: enum Flags duplicated in CLOT
-        enum Flags
+        enum ArmorFlags
         {
-            // Biped Object Flags
-            Flag_Head        = 0x00000001,
-            Flag_Hair        = 0x00000002,
-            Flag_UpperBody   = 0x00000004,
-            Flag_LowerBody   = 0x00000008,
-            Flag_Hand        = 0x00000010,
-            Flag_Foot        = 0x00000020,
-            Flag_RightRing   = 0x00000040,
-            Flag_LeftRing    = 0x00000080,
-            Flag_Amulet      = 0x00000100,
-            Flag_Weapon      = 0x00000200,
-            Flag_BackWeapon  = 0x00000400,
-            Flag_SideWeapon  = 0x00000800,
-            Flag_Quiver      = 0x00001000,
-            Flag_Shield      = 0x00002000,
-            Flag_Torch       = 0x00004000,
-            Flag_Tail        = 0x00008000,
-            // General Flags
-            Flag_HideRings   = 0x00010000,
-            Flag_HideAmulet  = 0x00020000,
-            Flag_NonPlayable = 0x00400000,
-            Flag_HeavyArmor  = 0x00800000,
-            Flag_Unknown     = 0xCD000000
+            TES4_Head        = 0x00000001,
+            TES4_Hair        = 0x00000002,
+            TES4_UpperBody   = 0x00000004,
+            TES4_LowerBody   = 0x00000008,
+            TES4_Hand        = 0x00000010,
+            TES4_Foot        = 0x00000020,
+            TES4_RightRing   = 0x00000040,
+            TES4_LeftRing    = 0x00000080,
+            TES4_Amulet      = 0x00000100,
+            TES4_Weapon      = 0x00000200,
+            TES4_BackWeapon  = 0x00000400,
+            TES4_SideWeapon  = 0x00000800,
+            TES4_Quiver      = 0x00001000,
+            TES4_Shield      = 0x00002000,
+            TES4_Torch       = 0x00004000,
+            TES4_Tail        = 0x00008000,
+            //
+            FO3_Head         = 0x00000001,
+            FO3_Hair         = 0x00000002,
+            FO3_UpperBody    = 0x00000004,
+            FO3_LeftHand     = 0x00000008,
+            FO3_RightHand    = 0x00000010,
+            FO3_Weapon       = 0x00000020,
+            FO3_PipBoy       = 0x00000040,
+            FO3_Backpack     = 0x00000080,
+            FO3_Necklace     = 0x00000100,
+            FO3_Headband     = 0x00000200,
+            FO3_Hat          = 0x00000400,
+            FO3_EyeGlasses   = 0x00000800,
+            FO3_NoseRing     = 0x00001000,
+            FO3_Earrings     = 0x00002000,
+            FO3_Mask         = 0x00004000,
+            FO3_Choker       = 0x00008000,
+            FO3_MouthObject  = 0x00010000,
+            FO3_BodyAddOn1   = 0x00020000,
+            FO3_BodyAddOn2   = 0x00040000,
+            FO3_BodyAddOn3   = 0x00080000
+        };
+
+        enum GeneralFlags
+        {
+            TYPE_TES4        = 0x1000,
+            TYPE_FO3         = 0x2000,
+            TYPE_TES5        = 0x3000,
+            TYPE_FONV        = 0x4000,
+            //
+            TES4_HideRings   = 0x0001,
+            TES4_HideAmulet  = 0x0002,
+            TES4_NonPlayable = 0x0040,
+            TES4_HeavyArmor  = 0x0080,
+            //
+            FO3_PowerArmor   = 0x0020,
+            FO3_NonPlayable  = 0x0040,
+            FO3_HeavyArmor   = 0x0080,
+            //
+            TES5_LightArmor  = 0x0000,
+            TES5_HeavyArmor  = 0x0001,
+            TES5_None        = 0x0002,
+            TES5_ModVoice    = 0x0004, // note bit shift
+            TES5_NonPlayable = 0x0040  // note bit shift
         };
 
 #pragma pack(push, 1)
         struct Data
         {
-            std::uint16_t armor; // Only in TES4?
+            std::uint16_t armor; // only in TES4?
             std::uint32_t value;
             std::uint32_t health; // not in TES5?
             float         weight;
@@ -81,17 +117,23 @@ namespace ESM4
 
         std::string mEditorId;
         std::string mFullName;
-        std::string mModel;
+        std::string mModelMale;
+        std::string mModelMaleWorld;
+        std::string mModelFemale;
+        std::string mModelFemaleWorld;
+        std::string mText;
         std::string mIconMale;
         std::string mIconFemale;
 
         float mBoundRadius;
 
         std::uint32_t mArmorFlags;
+        std::uint32_t mGeneralFlags;
         FormId        mScript;
         std::uint16_t mEnchantmentPoints;
         FormId        mEnchantment;
 
+        FormId mARMA;
         Data mData;
 
         Armor();

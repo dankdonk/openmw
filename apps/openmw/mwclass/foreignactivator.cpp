@@ -2,12 +2,42 @@
 
 #include <extern/esm4/acti.hpp>
 
+#include <components/esm/doorstate.hpp> // FIXME: pretending to be a door
+
+#include "../mwgui/tooltips.hpp"
+
+#include "../mwbase/environment.hpp"
+#include "../mwbase/world.hpp"
+#include "../mwbase/windowmanager.hpp"
+
 #include "../mwworld/ptr.hpp"
 #include "../mwworld/physicssystem.hpp"
 #include "../mwworld/cellstore.hpp"
+#include "../mwworld/action.hpp"
+#include "../mwworld/nullaction.hpp"
+#include "../mwworld/actiondoor.hpp"
 
 #include "../mwrender/objects.hpp"
 #include "../mwrender/renderinginterface.hpp"
+#include "../mwrender/animation.hpp"
+#include "../mwworld/customdata.hpp"
+
+// FIXME: duplicated from door.cpp
+// FIXME: pretending to be a door
+namespace
+{
+    struct DoorCustomData : public MWWorld::CustomData
+    {
+        int mDoorState; // 0 = nothing, 1 = opening, 2 = closing
+
+        virtual MWWorld::CustomData *clone() const;
+    };
+
+    MWWorld::CustomData *DoorCustomData::clone() const
+    {
+        return new DoorCustomData (*this);
+    }
+}
 
 namespace MWClass
 {
@@ -43,9 +73,12 @@ namespace MWClass
         return "";
     }
 
+    // This is required for activations to work
     std::string ForeignActivator::getName (const MWWorld::Ptr& ptr) const
     {
-        return "";
+        MWWorld::LiveCellRef<ESM4::Activator> *ref = ptr.get<ESM4::Activator>();
+
+        return ref->mBase->mFullName;
     }
 
     void ForeignActivator::registerSelf()
@@ -60,5 +93,97 @@ namespace MWClass
         MWWorld::LiveCellRef<ESM4::Activator> *ref = ptr.get<ESM4::Activator>();
 
         return MWWorld::Ptr(&cell.get<ESM4::Activator>().insert(*ref), &cell);
+    }
+
+    std::string ForeignActivator::getScript (const MWWorld::Ptr& ptr) const
+    {
+        MWWorld::LiveCellRef<ESM4::Activator> *ref = ptr.get<ESM4::Activator>();
+
+        return "";// ref->mBase->mScript; // FIXME: formid
+    }
+
+    bool ForeignActivator::hasToolTip (const MWWorld::Ptr& ptr) const
+    {
+        MWWorld::LiveCellRef<ESM4::Activator> *ref = ptr.get<ESM4::Activator>();
+
+        return (ref->mBase->mFullName != "");
+    }
+
+    MWGui::ToolTipInfo ForeignActivator::getToolTipInfo (const MWWorld::Ptr& ptr) const
+    {
+        MWWorld::LiveCellRef<ESM4::Activator> *ref = ptr.get<ESM4::Activator>();
+
+        MWGui::ToolTipInfo info;
+        info.caption = ref->mBase->mFullName + MWGui::ToolTips::getCountString(ptr.getRefData().getCount());
+
+        std::string text;
+        if (MWBase::Environment::get().getWindowManager()->getFullHelp())
+        {
+            text += MWGui::ToolTips::getCellRefString(ptr.getCellRef());
+            text += MWGui::ToolTips::getMiscString(""/*ref->mBase->mScript*/, "Script"); // FIXME formid lookup
+        }
+        info.text = text;
+
+        return info;
+    }
+
+    // FIXME: only some actions supported for now
+    boost::shared_ptr<MWWorld::Action> ForeignActivator::activate(const MWWorld::Ptr &ptr, const MWWorld::Ptr &actor) const
+    {
+        MWRender::Animation *anim = MWBase::Environment::get().getWorld()->getAnimation(ptr);
+        if (1)//anim->hasAnimation("Open") || anim->hasAnimation("Close"))
+        {
+            boost::shared_ptr<MWWorld::Action> action(new MWWorld::ActionDoor(ptr));
+            return action;
+        }
+        else
+            return boost::shared_ptr<MWWorld::Action>(new MWWorld::NullAction);
+    }
+
+    void ForeignActivator::ensureCustomData(const MWWorld::Ptr &ptr) const
+    {
+        if (!ptr.getRefData().getCustomData())
+        {
+            std::auto_ptr<DoorCustomData> data(new DoorCustomData);
+
+            data->mDoorState = 0;
+            ptr.getRefData().setCustomData(data.release());
+        }
+    }
+
+    int ForeignActivator::getDoorState (const MWWorld::Ptr &ptr) const
+    {
+        MWRender::Animation *anim = MWBase::Environment::get().getWorld()->getAnimation(ptr);
+        ensureCustomData(ptr);
+        const DoorCustomData& customData = dynamic_cast<const DoorCustomData&>(*ptr.getRefData().getCustomData());
+        return customData.mDoorState;
+    }
+
+    void ForeignActivator::setDoorState (const MWWorld::Ptr &ptr, int state) const
+    {
+        if (ptr.getCellRef().getTeleport())
+            throw std::runtime_error("load doors can't be moved");
+
+        ensureCustomData(ptr);
+        DoorCustomData& customData = dynamic_cast<DoorCustomData&>(*ptr.getRefData().getCustomData());
+        customData.mDoorState = state;
+    }
+
+    void ForeignActivator::readAdditionalState (const MWWorld::Ptr& ptr, const ESM::ObjectState& state) const
+    {
+        ensureCustomData(ptr);
+        DoorCustomData& customData = dynamic_cast<DoorCustomData&>(*ptr.getRefData().getCustomData());
+
+        const ESM::DoorState& state2 = dynamic_cast<const ESM::DoorState&>(state);
+        customData.mDoorState = state2.mDoorState;
+    }
+
+    void ForeignActivator::writeAdditionalState (const MWWorld::Ptr& ptr, ESM::ObjectState& state) const
+    {
+        ensureCustomData(ptr);
+        const DoorCustomData& customData = dynamic_cast<const DoorCustomData&>(*ptr.getRefData().getCustomData());
+
+        ESM::DoorState& state2 = dynamic_cast<ESM::DoorState&>(state);
+        state2.mDoorState = customData.mDoorState;
     }
 }

@@ -127,7 +127,7 @@ endif ()
 set(OGRE_COMPONENTS Paging Terrain Overlay
   Plugin_BSPSceneManager Plugin_CgProgramManager Plugin_OctreeSceneManager
   Plugin_OctreeZone Plugin_PCZSceneManager Plugin_ParticleFX
-  RenderSystem_Direct3D10 RenderSystem_Direct3D9 RenderSystem_GL RenderSystem_GLES2)
+  RenderSystem_Direct3D11 RenderSystem_Direct3D9 RenderSystem_GL RenderSystem_GLES2)
 set(OGRE_RESET_VARS
   OGRE_CONFIG_INCLUDE_DIR OGRE_INCLUDE_DIR
   OGRE_LIBRARY_FWK OGRE_LIBRARY_REL OGRE_LIBRARY_DBG
@@ -506,7 +506,7 @@ if (OGRE_STATIC)
   # check if dependencies for plugins are met
   if (NOT DirectX9_FOUND)
     set(OGRE_RenderSystem_Direct3D9_FOUND FALSE)
- else ()
+  else ()
     set(OGRE_INCLUDE_DIRS ${OGRE_INCLUDE_DIRS} ${DirectX9_INCLUDE_DIR})
   endif ()
   if (NOT DirectX_D3D10_FOUND)

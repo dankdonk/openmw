@@ -134,8 +134,8 @@ ObjectScene::~ObjectScene()
     mLights.clear();
     mParticles.clear();
     mEntities.clear();
-    mVertexAnimEntities.clear();
-    mSkeletonAnimEntities.clear();
+    //mVertexAnimEntities.clear();
+    //mSkeletonAnimEntities.clear();
     mSkelBase = NULL;
 }
 
@@ -1292,8 +1292,27 @@ public:
         {
             try
             {
-                std::auto_ptr<NiBtOgre::BtOgreInst> inst(new NiBtOgre::BtOgreInst(sceneNode, scene, name, group));
-                inst->instantiate();
+                scene->mForeignObj = std::make_shared<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(sceneNode, /*scene,*/ name, group));
+                scene->mForeignObj->instantiate();
+                if (scene->mForeignObj)
+                {
+                    if (scene->mForeignObj->mSkeletonRoot)
+                        scene->mSkelBase = scene->mForeignObj->mSkeletonRoot;
+// don't copy Entities here, which means createObjects won't attach to parentNode
+// defer attaching the Entities to the ObjectAnimation ctor
+#if 0
+                    if (scene->mForeignObj->mEntities.size() > 0)
+                    {
+                        for (size_t i = 0; i < scene->mForeignObj->mEntities.size(); ++i)
+                            scene->mEntities.push_back(scene->mForeignObj->mEntities[i]);
+                    }
+#endif
+                    if (scene->mForeignObj->mControllers.size() > 0)
+                    {
+                        for (size_t i = 0; i < scene->mForeignObj->mControllers.size(); ++i)
+                            scene->mControllers.push_back(scene->mForeignObj->mControllers[i]);
+                    }
+                }
                 return;
             }
             catch (std::exception&) // fixme

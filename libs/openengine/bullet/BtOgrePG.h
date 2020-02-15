@@ -53,15 +53,15 @@ class RigidBodyState : public btMotionState
         // ignoring btRigidBodyConstructionInfo::m_startWorldTransform
         //
         // also called by btRigidBody::predictIntegratedTransform
-        virtual void getWorldTransform(btTransform& ret) const
+        virtual void getWorldTransform(btTransform& centerOfMassWorldTrans) const
         {
             // return the previously transform saved from setWorldTransform
-            //ret = mCenterOfMassOffset.inverse() * mTransform;
-            ret = mTransform;  // FIXME: temp testing
+            centerOfMassWorldTrans = mTransform * mCenterOfMassOffset.inverse();
+            //centerOfMassWorldTrans = mTransform;  // FIXME: temp testing
         }
 
         // called by btDiscreteDynamicsWorld::synchronizeSingleMotionState
-        virtual void setWorldTransform(const btTransform& in);
+        virtual void setWorldTransform(const btTransform& centerOfMassWorldTrans);
 #if 0
         {
             if (mSceneNode == nullptr)

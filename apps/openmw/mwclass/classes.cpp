@@ -48,6 +48,7 @@
 #include "foreignsubspace.hpp"
 #include "foreignsigilstone.hpp"
 #include "foreignleveleditem.hpp"
+#include "foreignnote.hpp"
 
 namespace MWClass
 {
@@ -101,5 +102,6 @@ namespace MWClass
         ForeignSubspace::registerSelf();
         ForeignSigilStone::registerSelf();
         ForeignLeveledItem::registerSelf();
+        ForeignNote::registerSelf();
     }
 }

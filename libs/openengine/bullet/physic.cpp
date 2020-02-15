@@ -263,7 +263,7 @@ namespace Physic
         // Should a "static" object ever be moved, we have to update its AABB manually using DynamicsWorld::updateSingleAabb.
         mDynamicsWorld->setForceUpdateAllAabbs(false);
 
-        mDynamicsWorld->setGravity(btVector3(0,0,-10));
+        mDynamicsWorld->setGravity(btVector3(0,0,-70)); // FIXME: was -10, try -70
 
         if(BulletShapeManager::getSingletonPtr() == NULL)
         {
@@ -458,6 +458,167 @@ namespace Physic
         adjustRigidBody(body, position, rotation, shape->mBoxTranslation * scale, shape->mBoxRotation);
     }
 
+    RigidBody* PhysicEngine::createAndAdjustRagdollBody(const std::string &mesh, const std::string &name,
+        const std::map<std::int32_t, Ogre::SceneNode*>& nodeMap,
+        float scale, const Ogre::Vector3 &position, const Ogre::Quaternion &rotation,
+        Ogre::Vector3* scaledBoxTranslation, Ogre::Quaternion* boxRotation, bool raycasting, bool placeable)
+    {
+        std::string sid = (boost::format("%07.3f") % scale).str();
+        std::string outputstring = mesh + sid;
+
+        std::string lowerMesh = /*mesh*/outputstring;
+        Misc::StringUtils::lowerCaseInPlace(lowerMesh);
+
+        if (lowerMesh.find("skeleton") != std::string::npos)// == "meshes\\characters\\_male\\skeleton.nif001.000")
+            std::cout << "skeleton" << std::endl;
+
+
+        // FIXME
+        if (lowerMesh.find("traplog") == std::string::npos)
+            return createAndAdjustRigidBody(mesh, name, scale, position, rotation, scaledBoxTranslation, boxRotation, raycasting, placeable);
+
+
+
+
+        BtRigidBodyCIPtr ci
+            = NiBtOgre::BtRigidBodyCIManager::getSingleton().getOrLoadByName(lowerMesh, "General");
+
+        int numBodies = 0; // keep track of Rigid Bodies with the same 'name'
+        RigidBody *parentBody;
+        std::map<std::int32_t, std::pair<Ogre::Matrix4, btCollisionShape*> >::const_iterator iter;
+        for (iter = ci->mBtCollisionShapeMap.begin(); iter != ci->mBtCollisionShapeMap.end(); ++iter)
+        {
+            btCollisionShape *collisionShape = iter->second.second;
+            if (!collisionShape)
+                continue; // phantom
+
+
+            collisionShape->setLocalScaling(btVector3(scale, scale, scale));
+            btRigidBody::btRigidBodyConstructionInfo CI
+                = btRigidBody::btRigidBodyConstructionInfo(7*20.f/*mass*/,
+                    0/*btMotionState**/,
+                    collisionShape,
+                    btVector3(0.f, 0.f, 0.f)); // local inertia
+
+            //CI.m_localInertia.setZero();
+            //CI.m_collisionShape->calculateLocalInertia(CI.m_mass, CI.m_localInertia);
+            //CI.m_localInertia /= 10;
+
+
+
+
+            Ogre::Vector3 pps(scale);
+            Ogre::SceneNode *childNode = nodeMap.find(iter->first)->second;
+            Ogre::Vector3 cv = childNode->_getDerivedPosition();
+            Ogre::Quaternion cq = childNode->_getDerivedOrientation();
+
+#if 0
+            const Ogre::Matrix4& localTrans = iter->second.first;
+
+            Ogre::Quaternion dq = iter->second.first.extractQuaternion();
+            dq = cq * dq;
+
+            Ogre::Vector3 dv = pps * iter->second.first.getTrans();
+            dv = cq * dv;
+            dv += cv;
+
+            btTransform trans(btQuaternion(dq.x, dq.y, dq.z, dq.w), btVector3(dv.x, dv.y, dv.z));
+#else
+            btTransform orig(btQuaternion(cq.x, cq.y, cq.z, cq.w), btVector3(cv.x, cv.y, cv.z));
+            Ogre::Quaternion dq = iter->second.first.extractQuaternion();
+            Ogre::Vector3 dv = pps * iter->second.first.getTrans();
+            btTransform trans(btQuaternion(dq.x, dq.y, dq.z, dq.w), btVector3(dv.x, dv.y, dv.z));
+            //trans = orig * trans;
+#endif
+#if 0
+            // local transform of the object
+            btQuaternion stq = CI.m_startWorldTransform.getRotation();
+            btVector3 stv = CI.m_startWorldTransform.getOrigin();
+
+            stq = btQuaternion::getIdentity(); // FIXME
+            stv.setZero(); // FIXME
+            // derived rotation
+            Ogre::Quaternion dq = cq * Ogre::Quaternion(stq.w(), stq.x(), stq.y(), stq.z());
+            // derived position
+            Ogre::Vector3 dv = cq * (pps * Ogre::Vector3(stv.x(), stv.y(), stv.z()));
+
+            btTransform originalTransform(stq, btVector3(dv.x, dv.y, dv.z));
+            dv += cv;
+
+            // make transform
+            btTransform trans(btQuaternion(dq.x, dq.y, dq.z, dq.w), btVector3(dv.x, dv.y, dv.z));
+#endif
+
+            btTransform start;
+            start.setIdentity();
+            BtOgre::RigidBodyState *state = new BtOgre::RigidBodyState(childNode, start, trans);
+            CI.m_motionState = state; // NOTE: dtor of RigidBody deletes RigidBodyState
+
+
+
+
+
+            // NOTE: 'name' should be the same for collision detection/raycast
+            RigidBody *body = new RigidBody(CI, name);
+            body->mPlaceable = placeable;
+            body->mLocalTransform = iter->second.first; // need to keep it around
+            body->mIsForeign = true;
+
+            Ogre::Vector3 pos;
+            Ogre::Vector3 nodeScale; // FIXME: apply scale?
+            Ogre::Quaternion rot;
+            iter->second.first.decomposition(pos, nodeScale, rot);
+
+            if (body->getCollisionShape()->getUserIndex() == 4) // useFullTransform
+                adjustRigidBody(body, position, rotation, Ogre::Vector3(0.f) * scale, Ogre::Quaternion::IDENTITY);
+            else
+            {
+                Ogre::Matrix4 t;
+                t.makeTransform(position, Ogre::Vector3(scale), rotation);
+
+                Ogre::Matrix4 l;
+                l.makeTransform(pos, Ogre::Vector3(scale), rot); // FIXME: scale
+                t = t * l;
+                Ogre::Vector3 p = t.getTrans();
+                Ogre::Quaternion q = t.extractQuaternion();
+                btTransform bt(btQuaternion(q.x, q.y, q.z, q.w), btVector3(p.x, p.y, p.z));
+
+                body->setWorldTransform(bt);
+                body->mBindingPosition = btVector3(p.x, p.y, p.z);
+                body->mBindingOrientation = btQuaternion(q.x, q.y, q.z, q.w);
+                body->mTargetName = ci->mTargetNames[iter->first];
+            }
+
+            // keep pointers around to delete later
+            if (numBodies == 0)
+                parentBody = body;
+            else
+                parentBody->mChildren[ci->mTargetNames[iter->first]] = body;
+
+            ++numBodies;
+
+            if (!raycasting)
+            {
+                assert (mCollisionObjectMap.find(name) == mCollisionObjectMap.end());
+                mDynamicsWorld->addRigidBody(
+                        //body,CollisionType_World,CollisionType_Actor|CollisionType_HeightMap);
+                        body,CollisionType_World,CollisionType_World|CollisionType_Actor|CollisionType_HeightMap);
+                if (numBodies == 1) mCollisionObjectMap[name] = body; // register only the parent
+            }
+            else
+            {
+                assert (mRaycastingObjectMap.find(name) == mRaycastingObjectMap.end());
+                mDynamicsWorld->addRigidBody(
+                        body,CollisionType_Raycasting,CollisionType_Raycasting|CollisionType_Projectile);
+                body->setCollisionFlags(
+                        body->getCollisionFlags() | btCollisionObject::CF_DISABLE_VISUALIZE_OBJECT);
+                if (numBodies == 1) mRaycastingObjectMap[name] = body; // register only the parent
+            }
+        }
+
+        return 0;
+    }
+
     RigidBody* PhysicEngine::createAndAdjustRigidBody(const std::string &mesh, const std::string &name,
         float scale, const Ogre::Vector3 &position, const Ogre::Quaternion &rotation,
         Ogre::Vector3* scaledBoxTranslation, Ogre::Quaternion* boxRotation, bool raycasting, bool placeable)
@@ -471,15 +632,12 @@ namespace Physic
             std::string lowerMesh = /*mesh*/outputstring;
             Misc::StringUtils::lowerCaseInPlace(lowerMesh);
 
-            if (lowerMesh.find("skeleton") != std::string::npos)// == "meshes\\characters\\_male\\skeleton.nif001.000")
-                std::cout << "skeleton" << std::endl;
-
             BtRigidBodyCIPtr ci
                 = NiBtOgre::BtRigidBodyCIManager::getSingleton().getOrLoadByName(lowerMesh, "General");
 
             int numBodies = 0; // keep track of Rigid Bodies with the same 'name'
             RigidBody *parentBody;
-            std::map<std::string, std::pair<Ogre::Matrix4, btCollisionShape*> >::const_iterator iter;
+            std::map<std::int32_t, std::pair<Ogre::Matrix4, btCollisionShape*> >::const_iterator iter;
             for (iter = ci->mBtCollisionShapeMap.begin(); iter != ci->mBtCollisionShapeMap.end(); ++iter)
             {
                 btCollisionShape *collisionShape = iter->second.second;
@@ -493,8 +651,7 @@ namespace Physic
                                                                collisionShape,
                                                                btVector3(0.f, 0.f, 0.f));
 
-                // FIXME: name repeated (name is the Ogre::SceneNode name)
-                // TODO: maybe the 'name' should be the same for collision detection/raycast?
+                // NOTE: 'name' should be the same for collision detection/raycast
                 RigidBody *body = new RigidBody(CI, name);
                 body->mPlaceable = placeable;
                 body->mLocalTransform = iter->second.first; // need to keep it around
@@ -541,7 +698,7 @@ namespace Physic
                     body->setWorldTransform(bt);
                     body->mBindingPosition = btVector3(p.x, p.y, p.z);
                     body->mBindingOrientation = btQuaternion(q.x, q.y, q.z, q.w);
-                    body->mTargetName = iter->first;
+                    body->mTargetName = ci->mTargetNames[iter->first];
 #endif
                 }
 
@@ -549,7 +706,7 @@ namespace Physic
                 if (numBodies == 0)
                     parentBody = body;
                 else
-                    parentBody->mChildren[iter->first] = body;
+                    parentBody->mChildren[ci->mTargetNames[iter->first]] = body;
 
                 ++numBodies;
 
@@ -557,7 +714,8 @@ namespace Physic
                 {
                     assert (mCollisionObjectMap.find(name) == mCollisionObjectMap.end());
                     mDynamicsWorld->addRigidBody(
-                            body,CollisionType_World,CollisionType_Actor|CollisionType_HeightMap);
+                            //body,CollisionType_World,CollisionType_Actor|CollisionType_HeightMap);
+                            body,CollisionType_World,CollisionType_World|CollisionType_Actor|CollisionType_HeightMap);
                     if (numBodies == 1) mCollisionObjectMap[name] = body; // register only the parent
                 }
                 else

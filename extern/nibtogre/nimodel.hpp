@@ -56,15 +56,36 @@ namespace NiBtOgre
     struct BtOgreInst;
     class NiModel;
     class NiNode;
+    class MeshLoader;
 
-    struct ModelData
+    enum BuildFlags {
+        Flag_EnableHavok         = 0x0001,
+        Flag_EnableCollision     = 0x0002, // TES4 only?
+        Flag_IsSkeleton          = 0x0004, // TES4 only?
+        Flag_EnableAnimation     = 0x0008,
+        Flag_FlameNodesPresent   = 0x0010, // TES4 only?
+        Flag_EditorMarkerPresent = 0x0020,
+        Flag_IgnoreEditorMarker  = 0x0040,
+        Flag_HasSkin             = 0x0080,
+        Flag_None                = 0xFFFF
+    };
+
+    struct BuildData
     {
     private:
         const NiModel& mModel;
 
     public:
 
-        bool mEditorMarkerPresent;
+        bool mIsSkinned;
+        //bool mFlameNodesPresent;
+        //bool mEditorMarkerPresent;
+
+        int32_t mBuildFlags;
+        inline bool havokEnabled()        const { return (mBuildFlags & Flag_EnableHavok)         != 0; }
+        inline bool isSkeleton()          const { return (mBuildFlags & Flag_IsSkeleton)          != 0; }
+        inline bool flameNodesPresent()   const { return (mBuildFlags & Flag_FlameNodesPresent)   != 0; }
+        inline bool editorMarkerPresent() const { return (mBuildFlags & Flag_EditorMarkerPresent) != 0; }
 
         // helper to get pointer to parent NiNode
         std::map<NiAVObjectRef, NiNode*> mNiNodeMap;
@@ -79,7 +100,7 @@ namespace NiBtOgre
         inline bool hasSkeleton() const { return !mSkeleton.isNull(); }
         bool hasBoneLeaf(NiNodeRef leaf) const;
 
-        bool mIsSkeleton; // npc/creature
+        //bool mIsSkeleton; // npc/creature
 
         // The btCollisionShape for btRigidBody corresponds to an Ogre::Entity whose Ogre::SceneNode
         // may be controlled for Ragdoll animations.  So we just really need the Model name,
@@ -100,13 +121,18 @@ namespace NiBtOgre
 
         Ogre::SkeletonPtr mSkeleton;
 
+        // FIXME: these needs to be vectors (there can be multiple) and the flame node editor
+        // id needs to be extracted (without '@#N' where N is a number)
+        std::vector<NiNode*> mFlameNodes;
+        std::vector<NiNode*> mAttachLights;
+
         std::map<NiTimeControllerRef, std::vector<int> > mGeomMorpherControllerMap;
 
         //       animation name  bone name
         //            |            |
         //            v            v
         std::map<std::string, std::vector<std::string> > mMovingBoneNameMap;
-        void setDoorBoneName(const std::string& anim, const std::string& bone) {
+        void setAnimBoneName(const std::string& anim, const std::string& bone) {
             std::map<std::string, std::vector<std::string> >::iterator lb
                 = mMovingBoneNameMap.lower_bound(anim);
 
@@ -122,7 +148,8 @@ namespace NiBtOgre
             }
         }
 
-        ModelData(const NiModel& model) : mModel(model), mEditorMarkerPresent(false) {}
+        BuildData(const NiModel& model) : mModel(model), mIsSkinned(false), /*mFlameNodesPresent(false), mEditorMarkerPresent(false),*/ mBuildFlags(0)
+        {}
     };
 
     //
@@ -157,13 +184,15 @@ namespace NiBtOgre
 
         const std::string mGroup;  // Ogre group
 
+        std::vector<std::unique_ptr<MeshLoader> > mMeshLoaders;
+
         std::vector<std::unique_ptr<NiObject> > mObjects;
         std::vector<std::uint32_t> mRoots;
 
         int mCurrIndex; // FIXME: for debugging Ptr
         std::string mModelName;
 
-        ModelData mModelData;
+        BuildData mBuildData;
 
         bool mShowEditorMarkers; // usually only for OpenCS
 
@@ -188,7 +217,7 @@ namespace NiBtOgre
 #else
         NiModel(Ogre::ResourceManager *creator, const Ogre::String& name, Ogre::ResourceHandle handle,
                 const Ogre::String& group, bool isManual, Ogre::ManualResourceLoader* loader,
-                bool showEditorMarker=false);
+                const Ogre::NameValuePairList* createParams=nullptr/*bool showEditorMarkers=false*/);
 #endif
         ~NiModel();
 
@@ -205,7 +234,8 @@ namespace NiBtOgre
         }
 
         // WARNING: SceneNode in inst should have the scale (assumed uniform)
-        void build(BtOgreInst *inst, Ogre::SkeletonPtr skeleton = Ogre::SkeletonPtr());
+        void build(BtOgreInst *inst);
+        void buildBodyPart(BtOgreInst *inst, Ogre::SkeletonPtr skeleton = Ogre::SkeletonPtr());
 
         void buildAnimation(Ogre::Entity *skelBase, NiModelPtr anim,
                 std::multimap<float, std::string>& textKeys,
@@ -213,7 +243,7 @@ namespace NiBtOgre
                 NiModel *skeleton,
                 NiModel *bow = nullptr);
         const std::map<std::string, NiAVObjectRef>& getObjectPalette() const { return mObjectPalette; }
-        Ogre::SkeletonPtr getSkeleton() const { return mModelData.mSkeleton; }
+        Ogre::SkeletonPtr getSkeleton() const { return mBuildData.mSkeleton; }
         void buildSkeleton();
 
         // returns NiObject type name
@@ -228,17 +258,20 @@ namespace NiBtOgre
             return mHeader.indexToString(index);
         }
 
-        inline bool showEditorMarkers() const { return mShowEditorMarkers; }
+        inline bool hideEditorMarkers() const { return !mShowEditorMarkers; }
 
         std::uint32_t getRootIndex() const { return mRoots[0]; } // assumes only one root
 
         typedef std::int32_t NiNodeRef;
         const std::map<NiNodeRef, /*std::pair<std::string,*/ int32_t/*>*/ >&
-            getBhkRigidBodyMap() const { return mModelData.mBhkRigidBodyMap; }
+            getBhkRigidBodyMap() const { return mBuildData.mBhkRigidBodyMap; }
 
-        //const std::map<NiNodeRef, int32_t>& getBhkRigidBodyMap() const { return mModelData.mBhkRigidBocyMap; }
+        //const std::map<NiNodeRef, int32_t>& getBhkRigidBodyMap() const { return mBuildData.mBhkRigidBocyMap; }
 
-        void buildMeshAndEntity(BtOgreInst *inst);
+        void buildMeshAndEntity(BtOgreInst *inst, const std::string& meshExt = "");
+        void buildMeshAndEntity(BtOgreInst *inst, const std::string& npcName, std::vector<Ogre::Vector3>& vertices);
+
+        inline const BuildData& getBuildData() const { return mBuildData; }
     };
 }
 

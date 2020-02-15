@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2016, 2018, 2019 cc9cii
+  Copyright (C) 2016, 2018-2020 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -76,34 +76,67 @@ namespace ESM4
             Skill_Unknown     = 0x00
         };
 
+        struct BodyPart
+        {
+            std::string mesh;    // can be empty for arms, hands, etc
+            std::string texture; // can be empty e.g. eye left, eye right
+        };
+
         FormId mFormId;       // from the header
         std::uint32_t mFlags; // from the header, see enum type RecordFlag for details
 
         std::string mEditorId;
         std::string mFullName;
-        std::string mModel;
-        std::string mIcon; // inventory
         std::string mDesc;
-
-        float mBoundRadius;
+        std::string mModelMale;   // TES5 skeleton (in TES4 skeleton is found in npc_)
+        std::string mModelFemale; // TES5 skeleton (in TES4 skeleton is found in npc_)
 
         AttributeValues mAttribMale;
         AttributeValues mAttribFemale;
         std::map<SkillIndex, std::uint8_t> mSkillBonus;
+
+        // DATA
         float mHeightMale;
         float mHeightFemale;
         float mWeightMale;
         float mWeightFemale;
         std::uint32_t mRaceFlags; // 0x0001 = playable?
+
+        // index part
+        //    0  head
+        //    1  ear (male)
+        //    2  ear (female)
+        //    3  mouth
+        //    4  teeth lower
+        //    5  teeth upper
+        //    6  tongue
+        //    7  eye left (no texture)
+        //    8  eye right (no texture)
+        std::vector<BodyPart> mHeadParts;
+
+        //    0  upper body
+        //    1  leg
+        //    2  hands
+        //    3  feet
+        //    4  tail
+        std::vector<BodyPart> mBodyPartsMale;
+        std::vector<BodyPart> mBodyPartsFemale;
+
         std::vector<FormId> mEyeChoices;
         std::vector<FormId> mHairChoices;
 
-        std::map<FormId, std::int32_t> mDisposition; // race adjustments
-        std::vector<FormId> mBonusSpells; // race ability/power
-        std::vector<FormId> mVNAM; // don't know what these are; 1 or 2 RACE FormIds
-        std::vector<FormId> mDecapitate; // male/female (HAIR FormId for TES4)
+        float mFaceGenMainClamp;
+        float mFaceGenFaceClamp;
+        std::vector<float> mSymShapeModeCoefficients;    // should be 50
+        std::vector<float> mAsymShapeModeCoefficients;   // should be 30
+        std::vector<float> mSymTextureModeCoefficients;  // should be 50
 
-        Data mData;
+        std::map<FormId, std::int32_t> mDisposition; // race adjustments
+        std::vector<FormId> mBonusSpells;            // race ability/power
+        std::vector<FormId> mVNAM; // don't know what these are; 1 or 2 RACE FormIds
+        std::vector<FormId> mDefaultHair; // male/female (HAIR FormId for TES4)
+
+        std::uint32_t mNumKeywords;
 
         Race();
         virtual ~Race();

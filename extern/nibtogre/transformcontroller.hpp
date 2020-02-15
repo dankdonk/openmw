@@ -15,6 +15,7 @@
 #include "niinterpolator.hpp"
 #include "nidata.hpp"
 #include "nimodel.hpp"
+#include "nisequence.hpp"
 
 namespace NiBtOgre
 {
@@ -28,12 +29,12 @@ namespace NiBtOgre
         float mStopTime;
 
     public:
-        DefaultFunction(const NiTimeController *controller, bool deltaInput)
+        DefaultFunction(const NiControllerSequence *sequence, bool deltaInput)
             : Ogre::ControllerFunction<Ogre::Real>(deltaInput)
-            , mFrequency(controller->mFrequency)
-            , mPhase(controller->mPhase)
-            , mStartTime(controller->mStartTime)
-            , mStopTime(controller->mStopTime)
+            , mFrequency(sequence->getFrequency())
+            , mPhase(0)//sequence->getPhase())
+            , mStartTime(sequence->getStartTime())
+            , mStopTime(sequence->getStopTime())
         {
             if(mDeltaInput)
                 mDeltaCount = mPhase;
@@ -107,7 +108,7 @@ namespace NiBtOgre
                     = dynamic_cast<const NiTransformInterpolator*>(interpolator);
                 if (transInterp)
                 {
-                    mTransformData = model->getRef<NiTransformData>(transInterp->mDataIndex);
+                    mTransformData = model->getRef<NiTransformData>(transInterp->mDataRef);
                 }
 
                 if (boneName == "" || !isManual)
@@ -123,6 +124,40 @@ namespace NiBtOgre
             virtual Ogre::Real getValue() const;// { return 0.f; }
 
             virtual void setValue(Ogre::Real time);// {}
+        };
+
+        typedef DefaultFunction Function;
+    };
+
+    class MultiTargetTransformController
+    {
+    public:
+        class Value : public Ogre::ControllerValue<Ogre::Real>
+        {
+            NiModelPtr mModel; // Hold a SharedPtr to make sure key lists stay valid
+            std::vector<std::pair<Ogre::Bone*, const NiInterpolator*> > mTargetInterpolators;
+            //const NiTransformData* mTransformData;
+
+            static Ogre::Quaternion interpQuatKey(const KeyGroup<Ogre::Quaternion>& keyGroup, uint32_t cycleType, float time);
+
+            Ogre::Quaternion getXYZRotation(float time, Ogre::Bone *bone, const NiInterpolator* interpolator) const;
+
+        public:
+            Value (const NiModelPtr& model,
+                   std::vector<std::pair<Ogre::Bone*, const NiInterpolator*> > targetInterpolators)
+              : mModel(model), mTargetInterpolators(targetInterpolators)
+            {
+            }
+
+            Ogre::Quaternion getRotation(Ogre::Real time, Ogre::Bone *bone, const NiInterpolator* interpolator) const;
+
+            Ogre::Vector3 getTranslation(Ogre::Real time, Ogre::Bone *bone, const NiInterpolator* interpolator) const;
+
+            Ogre::Vector3 getScale(Ogre::Real time, Ogre::Bone *bone, const NiInterpolator* interpolator) const;
+
+            Ogre::Real getValue() const;
+
+            void setValue(Ogre::Real time);
         };
 
         typedef DefaultFunction Function;

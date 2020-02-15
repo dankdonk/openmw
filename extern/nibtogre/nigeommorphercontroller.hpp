@@ -48,7 +48,7 @@ namespace NiBtOgre
     {
         struct MorphWeight
         {
-            NiInterpolatorRef interpolatorIndex;
+            NiInterpolatorRef interpolatorRef;
             float weight;
         };
 
@@ -60,13 +60,13 @@ namespace NiBtOgre
 
     public:
         std::uint16_t mExtraFlags;
-        NiMorphDataRef mDataIndex;
+        NiMorphDataRef mDataRef;
         unsigned char mAlwaysUpdate;
         std::vector<NiInterpolatorRef> mInterpolators;
         std::vector<MorphWeight> mInterpolatorWeights;
         std::vector<std::uint32_t> mUnknownInts;
 
-        NiGeomMorpherController(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
+        NiGeomMorpherController(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
 
         //virtual NiTimeControllerRef build(BtOgreInst *inst, Ogre::Mesh *mesh);
         NiTimeControllerRef build(Ogre::Mesh *mesh);

@@ -33,6 +33,10 @@ namespace
         std::string id = ptr.getClass().getId(ptr);
         if (id == "prisonmarker" || id == "divinemarker" || id == "templemarker" || id == "northmarker")
             model = ""; // marker objects that have a hardcoded function in the game logic, should be hidden from the player
+
+        //if (model == "")
+            //return;
+
         rendering.addObject(ptr, model);
         ptr.getClass().insertObject (ptr, model, physics);
     }

@@ -1,6 +1,7 @@
 #include "objects.hpp"
 
 #include <cmath>
+//#include <iostream> // FIXME: testing only
 
 #include <OgreSceneNode.h>
 #include <OgreSceneManager.h>
@@ -23,6 +24,7 @@
 
 #include "renderconst.hpp"
 #include "animation.hpp"
+#include "foreignactivatoranimation.hpp"
 
 using namespace MWRender;
 
@@ -73,11 +75,33 @@ void Objects::insertBegin(const MWWorld::Ptr& ptr)
     ptr.getRefData().setBaseNode(insert);
 }
 
-void Objects::insertModel(const MWWorld::Ptr &ptr, const std::string &mesh, bool batch)
+void Objects::insertLight(const MWWorld::Ptr &ptr)
 {
     insertBegin(ptr);
 
-    std::auto_ptr<ObjectAnimation> anim(new ObjectAnimation(ptr, mesh));
+    std::auto_ptr<ObjectAnimation> anim = std::auto_ptr<ObjectAnimation>(new ObjectAnimation(ptr, ""));
+
+    if(anim.get() != NULL)
+    {
+        anim->addLight();
+        mObjects.insert(std::make_pair(ptr, anim.release()));
+    }
+}
+
+const std::map<std::int32_t, Ogre::SceneNode*> *Objects::insertModel(const MWWorld::Ptr &ptr, const std::string &mesh, bool batch)
+{
+    insertBegin(ptr);
+    //if (mesh.find("TorchTall01") != std::string::npos)
+        //std::cout << "stop" << std::endl;
+
+    std::auto_ptr<ObjectAnimation> anim;
+    if(ptr.getTypeName() == typeid(ESM4::Activator).name())
+        anim = std::auto_ptr<ObjectAnimation>(new ForeignActivatorAnimation(ptr, mesh));
+    else
+        anim = std::auto_ptr<ObjectAnimation>(new ObjectAnimation(ptr, mesh));
+
+    if(ptr.getTypeName() == typeid(ESM4::Light).name())
+        anim->addLight();
 
     if (!mesh.empty())
     {
@@ -155,7 +179,13 @@ void Objects::insertModel(const MWWorld::Ptr &ptr, const std::string &mesh, bool
     }
 
     if(anim.get() != NULL)
+    {
+        const std::map<std::int32_t, Ogre::SceneNode*> *res = &anim->getPhysicsNodeMap();
         mObjects.insert(std::make_pair(ptr, anim.release()));
+        return res;
+    }
+    else
+        return nullptr;
 }
 
 bool Objects::deleteObject (const MWWorld::Ptr& ptr)

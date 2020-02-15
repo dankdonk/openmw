@@ -65,6 +65,16 @@ void MWWorld::ForeignCell::preload (ESM4::Reader& reader)
 
     mHasChildren = mCell->preload(reader);
 
+    if ((mCell->mCellFlags & ESM4::CELL_Interior) != 0)
+    {
+        mData.mFlags |= ESM::Cell::Interior;
+
+        mAmbi.mAmbient = mCell->mLighting.ambient;
+        mAmbi.mSunlight = mCell->mLighting.ambient;
+        mAmbi.mFog = mCell->mLighting.fogColor;
+        //mAmbi.mFogDensity = (float)(mCell->mLighting.unknown1)/(float)256; // ?
+    }
+    mAmbi.mFogDensity = 1.f; // FIXME: experiment
 }
 
 void MWWorld::ForeignCell::addFileContext(const ESM4::ReaderContext& ctx)

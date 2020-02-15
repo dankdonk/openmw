@@ -37,6 +37,7 @@ namespace MWWorld
     template<typename T>
     const T *ForeignStore<T>::search(const std::string &id) const
     {
+#if 0
         T item;
         item.mEditorId = Misc::StringUtils::lowerCase(id);
 
@@ -50,15 +51,31 @@ namespace MWWorld
         if (it != mStatic.end() && Misc::StringUtils::ciEqual(it->second.mEditorId, id)) {
             return &(it->second);
         }
+#else
+        // FIXME: just loop through for now, will need to maintain two maps
+        typename Dynamic::const_iterator dit = mDynamic.begin();
+        for (; dit != mDynamic.end(); ++dit)
+        {
+            if (dit->second.mEditorId == id)
+                return &dit->second;
+        }
 
+        typename Static::const_iterator it = mStatic.begin();
+        for (; it != mStatic.end(); ++it)
+        {
+            if (it->second.mEditorId == id)
+                return &it->second;
+        }
+#endif
         return 0;
     }
 
     template<typename T>
     const T *ForeignStore<T>::search(ESM4::FormId id) const
     {
+#if 1
         T item;
-        // FIXME: just loop through for now, will need to maintain two maps (complex)
+        // FIXME: just loop through for now, will need to maintain two maps
         typename Dynamic::const_iterator dit = mDynamic.begin();
         for (; dit != mDynamic.end(); ++dit)
         {
@@ -66,23 +83,22 @@ namespace MWWorld
                 return &dit->second;
         }
 
-        typename std::map<std::string, T>::const_iterator it = mStatic.begin();
+        typename Static::const_iterator it = mStatic.begin();
         for (; it != mStatic.end(); ++it)
         {
             if (it->second.mFormId == id)
                 return &it->second;
         }
-#if 0
-        typename Dynamic::const_iterator dit = mDynamic.find(item.mFormId);
+#else
+        typename std::map<ESM4::FormId, T>::const_iterator dit = mDynamic.find(id);
         if (dit != mDynamic.end())
             return &dit->second;
 
-        typename std::map<ESM4::FormId, T>::const_iterator it = mStatic.find(item.mFormId);
+        typename std::map<ESM4::FormId, T>::const_iterator it = mStatic.find(id);
 
-        if (it != mStatic.end() && it->second.mFormId, id)
+        if (it != mStatic.end())
             return &(it->second);
 #endif
-
         return 0;
     }
 
@@ -318,6 +334,7 @@ template class MWWorld::ForeignStore<ESM4::ActorCharacter>;
 template class MWWorld::ForeignStore<ESM4::ActorCreature>;
 template class MWWorld::ForeignStore<ESM4::Sound>;
 template class MWWorld::ForeignStore<ESM4::LandTexture>;
+template class MWWorld::ForeignStore<ESM4::Script>;
 // Foreign Referenceables
 template class MWWorld::ForeignStore<ESM4::Activator>;
 template class MWWorld::ForeignStore<ESM4::Apparatus>;
@@ -345,5 +362,16 @@ template class MWWorld::ForeignStore<ESM4::Potion>;
 template class MWWorld::ForeignStore<ESM4::Subspace>;
 template class MWWorld::ForeignStore<ESM4::SigilStone>;
 template class MWWorld::ForeignStore<ESM4::LeveledItem>;
+template class MWWorld::ForeignStore<ESM4::LeveledActor>;
+template class MWWorld::ForeignStore<ESM4::IdleMarker>;
+template class MWWorld::ForeignStore<ESM4::MovableStatic>;
+template class MWWorld::ForeignStore<ESM4::TextureSet>;
+template class MWWorld::ForeignStore<ESM4::Scroll>;
+template class MWWorld::ForeignStore<ESM4::ArmorAddon>;
+template class MWWorld::ForeignStore<ESM4::HeadPart>;
+template class MWWorld::ForeignStore<ESM4::Terminal>;
+template class MWWorld::ForeignStore<ESM4::TalkingActivator>;
+template class MWWorld::ForeignStore<ESM4::Note>;
+template class MWWorld::ForeignStore<ESM4::BodyPart>;
 //
 template class MWWorld::ForeignStore<ESM4::AnimObject>;

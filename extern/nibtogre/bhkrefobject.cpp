@@ -59,7 +59,7 @@
 #endif
 
 //#if 0 // Commented out. Use instead: typedef bhkRefObject bhkSerializable
-NiBtOgre::bhkSerializable::bhkSerializable(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::bhkSerializable::bhkSerializable(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     :bhkRefObject(index, stream, model, data)
 {
 }
@@ -80,11 +80,11 @@ void NiBtOgre::bhkCompressedMeshShapeData::bhkCMSDChunk::read(NiStream& stream)
     stream.readVector<std::uint16_t>(vertices);
     stream.readVector<std::uint16_t>(indicies);
     stream.readVector<std::uint16_t>(strips);
-    stream.readVector<std::uint16_t>(indicies2);
+    stream.readVector<std::uint16_t>(indicies2); // welding info
 }
 
 // Seen in NIF version 20.2.0.7
-NiBtOgre::bhkCompressedMeshShapeData::bhkCompressedMeshShapeData(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::bhkCompressedMeshShapeData::bhkCompressedMeshShapeData(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : bhkRefObject(index, stream, model, data)
 {
     stream.read(mBitsPerIndex);
@@ -151,7 +151,7 @@ NiBtOgre::bhkCompressedMeshShapeData::bhkCompressedMeshShapeData(uint32_t index,
 
 // Seen in NIF version 20.2.0.7
 // e.g. Skyrim/Data/meshes/traps/tripwire/traptripwire01.nif
-NiBtOgre::bhkBallSocketConstraintChain::bhkBallSocketConstraintChain(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::bhkBallSocketConstraintChain::bhkBallSocketConstraintChain(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : bhkSerializable(index, stream, model, data)
 {
     std::uint32_t numFloats;
@@ -177,12 +177,12 @@ NiBtOgre::bhkBallSocketConstraintChain::bhkBallSocketConstraintChain(uint32_t in
         mLinks[i] = model.getRef<NiObject>(rIndex);
     }
 
-    stream.read(numLinks); // note: numLinks reused
+    stream.read(numLinks); // WARN: numLinks reused
     mLinks2.resize(numLinks);
     for (unsigned int i = 0; i < numLinks; ++i)
     {
         //stream.getPtr<NiObject>(mLinks2.at(i), model.objects());
-        rIndex = -1; // note: index reused
+        rIndex = -1; // WARN: rIndex reused
         stream.read(rIndex);
         mLinks2[i] = model.getRef<NiObject>(rIndex);
     }
@@ -190,7 +190,25 @@ NiBtOgre::bhkBallSocketConstraintChain::bhkBallSocketConstraintChain(uint32_t in
     stream.read(mUnknownInt3);
 }
 
-NiBtOgre::bhkConstraint::bhkConstraint(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::bhkOrientHingedBodyAction::bhkOrientHingedBodyAction(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+    : bhkSerializable(index, stream, model, data)
+{
+    //stream.getPtr<NiObject>(mLinks.at(i), model.objects());
+    std::int32_t rIndex = -1;
+    stream.read(rIndex);
+    mBody = model.getRef<bhkRigidBody>(rIndex);
+
+    stream.read(mUnknownInt1);
+    stream.read(mUnknownInt2);
+    stream.skip(sizeof(std::uint8_t)*8);
+    stream.read(mHingedAxisLS);
+    stream.read(mForwardLS);
+    stream.read(mStrength);
+    stream.read(mDamping);
+    stream.skip(sizeof(std::uint8_t)*8);
+}
+
+NiBtOgre::bhkConstraint::bhkConstraint(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : bhkSerializable(index, stream, model, data)
 {
     std::int32_t rIndex = -1;
@@ -209,7 +227,7 @@ NiBtOgre::bhkConstraint::bhkConstraint(uint32_t index, NiStream& stream, const N
 }
 
 // Seen in NIF version 20.2.0.7
-NiBtOgre::bhkBreakableConstraint::bhkBreakableConstraint(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::bhkBreakableConstraint::bhkBreakableConstraint(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : bhkConstraint(index, stream, model, data)
 {
     if (stream.userVer() <= 11)
@@ -277,7 +295,7 @@ void NiBtOgre::HingeDescriptor::read(NiStream& stream)
 // Some examples from TES4
 //   architecture/ships/shipflag01.nif
 //   armor/chainmail/f/cuirass_gnd.nif
-NiBtOgre::bhkHingeConstraint::bhkHingeConstraint(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::bhkHingeConstraint::bhkHingeConstraint(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : bhkConstraint(index, stream, model, data)
 {
     mHinge.read(stream);
@@ -339,7 +357,7 @@ void NiBtOgre::LimitedHingeDescriptor::read(NiStream& stream)
 //   architecture/chorrol/signnortherngoods.nif
 //   architecture/chorrol/signrenoitbooks.nif
 //   armor/chainmail/m/cuirass_gnd.nif
-NiBtOgre::bhkLimitedHingeConstraint::bhkLimitedHingeConstraint(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::bhkLimitedHingeConstraint::bhkLimitedHingeConstraint(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : bhkConstraint(index, stream, model, data)
 {
     mLimitedHinge.read(stream);
@@ -420,13 +438,13 @@ void NiBtOgre::RagdollDescriptor::read(NiStream& stream)
 //   creatures/spriggan/skeleton.nif
 //   creatures/troll/skeleton.nif
 //   creatures/zombie/skeleton.nif
-NiBtOgre::bhkMalleableConstraint::bhkMalleableConstraint(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::bhkMalleableConstraint::bhkMalleableConstraint(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : bhkConstraint(index, stream, model, data)
 {
     stream.read(mType);
     stream.read(mUnknownInt2);
-    stream.read(mUnknownLink1Index);
-    stream.read(mUnknownLink2Index);
+    stream.read(mUnknownLink1Ref);
+    stream.read(mUnknownLink2Ref);
     stream.read(mUnknownInt3);
 
     if (mType == 1)
@@ -463,7 +481,7 @@ NiBtOgre::bhkMalleableConstraint::bhkMalleableConstraint(uint32_t index, NiStrea
 //    weapons/silver/arrow.nif
 //    weapons/steel/arrow.nif
 //    weapons/steel/keyshapedarrow.nif
-NiBtOgre::bhkPrismaticConstraint::bhkPrismaticConstraint(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::bhkPrismaticConstraint::bhkPrismaticConstraint(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : bhkConstraint(index, stream, model, data)
 {
     if (stream.nifVer() <= 0x14000005)
@@ -497,7 +515,7 @@ NiBtOgre::bhkPrismaticConstraint::bhkPrismaticConstraint(uint32_t index, NiStrea
 }
 
 // seen in nif ver 20.0.0.4, 20.0.0.5
-NiBtOgre::bhkRagdollConstraint::bhkRagdollConstraint(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::bhkRagdollConstraint::bhkRagdollConstraint(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : bhkConstraint(index, stream, model, data)
 {
     mRagdoll.read(stream);
@@ -527,8 +545,8 @@ if (node->name == "TargetchainRight02" /*|| node->name == "TargetchainRight02"*/
     // FIXME: what to do if there are more than 2 rigid bodies?
 
     btGeneric6DofConstraint *constraint
-        = new btGeneric6DofConstraint(*(inst->mRigidBodies[mEntities[0]->index()].get()),
-                                      *(inst->mRigidBodies[mEntities[1]->index()].get()),
+        = new btGeneric6DofConstraint(*(inst->mRigidBodies[mEntities[0]->selfRef()].get()),
+                                      *(inst->mRigidBodies[mEntities[1]->selfRef()].get()),
                                       localA,
                                       localB,
                                       /*useLinearReferenceFrameA*/false);
@@ -586,32 +604,32 @@ if (node->name == "TargetchainRight02" /*|| node->name == "TargetchainRight02"*/
 
     if (rigidBody->recType == Nif::RC_bhkRigidBodyT)
     {
-        rbT.makeTransform(translation*7, Ogre::Vector3(1.f), rotation);
+        rbT.makeTransform(translation*mHavokScale, Ogre::Vector3(1.f), rotation);
     }
 
     if (rigidBody->shape->recType == Nif::RC_bhkCapsuleShape)
     {
-            //ragdollDesc.pivotA = mShape->mShapeTrans * ragdoll->ragdoll.pivotA *7; // FIXME
+            //ragdollDesc.pivotA = mShape->mShapeTrans * ragdoll->ragdoll.pivotA *mHavokScale; // FIXME
             Ogre::Vector3 t = mShape->mShapeTrans; // t is the midpoint vector
-            Ogre::Vector4 p = ragdoll->ragdoll.pivotA * 7;
+            Ogre::Vector4 p = ragdoll->ragdoll.pivotA * mHavokScale;
             ragdollDesc.pivotA = Ogre::Vector4(p.x-t.x, p.y-t.y, p.z-t.z, p.w);
-            ragdollDesc.planeA = ragdoll->ragdoll.planeA * 7;
-            ragdollDesc.twistA = ragdoll->ragdoll.twistA * 7;
+            ragdollDesc.planeA = ragdoll->ragdoll.planeA * mHavokScale;
+            ragdollDesc.twistA = ragdoll->ragdoll.twistA * mHavokScale;
     }
     else
     {
 #if 0
-            Ogre::Vector4 p = ragdoll->ragdoll.pivotA * 7;
+            Ogre::Vector4 p = ragdoll->ragdoll.pivotA * mHavokScale;
             Ogre::Vector3 v(p.x, p.y, p.z);
         v = Ogre::Quaternion(qa.w(), qa.x(), qa.y(), qa.z()) * v; // rotate as per m_startWorldTransform
             ragdollDesc.pivotA = Ogre::Vector4(v.x, v.y, v.z, p.w);
 #endif
 
 
-            //ragdollDesc.pivotA = rbT.inverse() * ragdoll->ragdoll.pivotA * 7;
-            ragdollDesc.pivotA = ragdoll->ragdoll.pivotA * 7;
-            ragdollDesc.planeA = ragdoll->ragdoll.planeA * 7;
-            ragdollDesc.twistA = ragdoll->ragdoll.twistA * 7;
+            //ragdollDesc.pivotA = rbT.inverse() * ragdoll->ragdoll.pivotA * mHavokScale;
+            ragdollDesc.pivotA = ragdoll->ragdoll.pivotA * mHavokScale;
+            ragdollDesc.planeA = ragdoll->ragdoll.planeA * mHavokScale;
+            ragdollDesc.twistA = ragdoll->ragdoll.twistA * mHavokScale;
     }
 
 
@@ -636,24 +654,24 @@ if (node->name == "TargetchainRight02" /*|| node->name == "TargetchainRight02"*/
                     rbB->rotation.x, rbB->rotation.y, rbB->rotation.z);
             rbBtrans = Ogre::Vector3(rbB->translation.x,
                     rbB->translation.y, rbB->translation.z);
-        rbTB.makeTransform(rbBtrans*7, Ogre::Vector3(1.f), rbBrot);
+        rbTB.makeTransform(rbBtrans*mHavokScale, Ogre::Vector3(1.f), rbBrot);
     }
     if (rbB->shape->recType == Nif::RC_bhkCapsuleShape)
     {
             Ogre::Vector3 trans = mShape->mShapeTransMap[rbB->recIndex]; // FIXME: just assume one exists!
-            //ragdollDesc.pivotB = trans * ragdoll->ragdoll.pivotB *7; // FIXME
+            //ragdollDesc.pivotB = trans * ragdoll->ragdoll.pivotB *mHavokScale; // FIXME
             Ogre::Vector3 t = trans;
-            Ogre::Vector4 p = ragdoll->ragdoll.pivotB * 7;
+            Ogre::Vector4 p = ragdoll->ragdoll.pivotB * mHavokScale;
             Ogre::Vector3 v(p.x, p.y, p.z);
         v = Ogre::Quaternion(q.w(), q.x(), q.y(), q.z()) * v; // rotate as per m_startWorldTransform
             ragdollDesc.pivotB = Ogre::Vector4(v.x-t.x, v.y-t.y, v.z-t.z, p.w);
-            ragdollDesc.planeB = ragdoll->ragdoll.planeB * 7;
-            ragdollDesc.twistB = ragdoll->ragdoll.twistB * 7;
+            ragdollDesc.planeB = ragdoll->ragdoll.planeB * mHavokScale;
+            ragdollDesc.twistB = ragdoll->ragdoll.twistB * mHavokScale;
     }
     else
     {
 #if 0
-            Ogre::Vector4 p = ragdoll->ragdoll.pivotB * 7;
+            Ogre::Vector4 p = ragdoll->ragdoll.pivotB * mHavokScale;
             Ogre::Vector3 v(p.x, p.y, p.z);
         v = Ogre::Quaternion(q.w(), q.x(), q.y(), q.z()) * v; // rotate as per m_startWorldTransform
             ragdollDesc.pivotB = Ogre::Vector4(v.x, v.y, v.z, p.w);
@@ -661,10 +679,10 @@ if (node->name == "TargetchainRight02" /*|| node->name == "TargetchainRight02"*/
 #endif
 
 
-            //ragdollDesc.pivotB = rbTB.inverse() * ragdoll->ragdoll.pivotB * 7;
-            ragdollDesc.pivotB = ragdoll->ragdoll.pivotB * 7;
-            ragdollDesc.planeB = ragdoll->ragdoll.planeB * 7;
-            ragdollDesc.twistB = ragdoll->ragdoll.twistB * 7;
+            //ragdollDesc.pivotB = rbTB.inverse() * ragdoll->ragdoll.pivotB * mHavokScale;
+            ragdollDesc.pivotB = ragdoll->ragdoll.pivotB * mHavokScale;
+            ragdollDesc.planeB = ragdoll->ragdoll.planeB * mHavokScale;
+            ragdollDesc.twistB = ragdoll->ragdoll.twistB * mHavokScale;
     }
         ragdollDesc.coneMaxAngle = ragdoll->ragdoll.coneMaxAngle;
         ragdollDesc.planeMinAngle = ragdoll->ragdoll.planeMinAngle;
@@ -677,9 +695,13 @@ if (node->name == "TargetchainRight02" /*|| node->name == "TargetchainRight02"*/
 #endif
 }
 
-NiBtOgre::bhkShape::bhkShape(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::bhkShape::bhkShape(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : bhkSerializable(index, stream, model, data)
 {
+    if (stream.nifVer() >= 0x14020005 && stream.userVer() >= 12) // from 20.2.0.7
+        mHavokScale = 70;
+    else
+        mHavokScale = 7;
 }
 
 // seen in nif ver 20.0.0.4, 20.0.0.5
@@ -689,7 +711,7 @@ NiBtOgre::bhkShape::bhkShape(uint32_t index, NiStream& stream, const NiModel& mo
 //   creatures/willothewisp/skeleton02.nif
 //   dungeons/misc/mdtapestryskinned01.nif
 //   dungeons/misc/necrotapestryskinned01.nif
-NiBtOgre::bhkStiffSpringConstraint::bhkStiffSpringConstraint(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::bhkStiffSpringConstraint::bhkStiffSpringConstraint(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : bhkConstraint(index, stream, model, data)
 {
     stream.read(mPivotA);
@@ -698,10 +720,10 @@ NiBtOgre::bhkStiffSpringConstraint::bhkStiffSpringConstraint(uint32_t index, NiS
 }
 
 // seen in nif ver 20.0.0.4, 20.0.0.5
-NiBtOgre::bhkMoppBvTreeShape::bhkMoppBvTreeShape(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::bhkMoppBvTreeShape::bhkMoppBvTreeShape(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : bhkShape(index, stream, model, data)
 {
-    stream.read(mShapeIndex);
+    stream.read(mShapeRef);
     stream.read(mMaterial);
 
     mUnknown8Bytes.resize(8);
@@ -727,22 +749,22 @@ btCollisionShape *NiBtOgre::bhkMoppBvTreeShape::buildShape(const btTransform& tr
 {
     // FIXME: TODO get some info before moving to the next shape in a link
 
-    if (mShapeIndex == -1)
+    if (mShapeRef == -1)
         return nullptr;
 
-    return mModel.getRef<bhkShape>(mShapeIndex)->buildShape(transform);
+    return mModel.getRef<bhkShape>(mShapeRef)->buildShape(transform);
 }
 
 bool NiBtOgre::bhkMoppBvTreeShape::isStaticShape() const
 {
-    if (mShapeIndex == -1)
+    if (mShapeRef == -1)
         return false;
 
-    return mModel.getRef<bhkShape>(mShapeIndex)->isStaticShape();  // TODO: cache the pointer for later?
+    return mModel.getRef<bhkShape>(mShapeRef)->isStaticShape();  // TODO: cache the pointer for later?
 }
 
 // seen in nif version 20.2.0.7
-NiBtOgre::bhkCompressedMeshShape::bhkCompressedMeshShape(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::bhkCompressedMeshShape::bhkCompressedMeshShape(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : bhkShape(index, stream, model, data)
 {
     //stream.getPtr<NiAVObject>(mTarget, model.objects());
@@ -768,15 +790,100 @@ NiBtOgre::bhkCompressedMeshShape::bhkCompressedMeshShape(uint32_t index, NiStrea
     //stream.skip(sizeof(float)); // Unknown Float 5
     stream.skip(sizeof(float)*3);
 
-    stream.read(mDataIndex);
+    stream.read(mDataRef);
 }
 
+// below code is based on / copied from nifskope
 btCollisionShape *NiBtOgre::bhkCompressedMeshShape::buildShape(const btTransform& transform) const
 {
-    return nullptr; // FIXME: TODO needed for TES5 only
+    if (mDataRef == -1)
+        return nullptr; // nothing to build
+
+    btTriangleMesh *mesh = new btTriangleMesh();
+    const bhkCompressedMeshShapeData* triData = mModel.getRef<bhkCompressedMeshShapeData>(mDataRef);
+    assert(triData != nullptr && "mModel.getRef returned nullptr"); // FIXME: throw instead?
+
+    // big triangles
+    size_t numBigTriangles = triData->mBigTris.size();
+    for(size_t i = 0; i < numBigTriangles; ++i)
+    {
+        Ogre::Vector4 a, b, c;
+        a = triData->mBigVerts[triData->mBigTris[i].triangle1];
+        b = triData->mBigVerts[triData->mBigTris[i].triangle2];
+        c = triData->mBigVerts[triData->mBigTris[i].triangle3];
+
+        mesh->addTriangle(transform * (btVector3(a.x, a.y, a.z)*btScalar(mHavokScale)), // NOTE: havok scale
+                          transform * (btVector3(b.x, b.y, b.z)*btScalar(mHavokScale)),
+                          transform * (btVector3(c.x, c.y, c.z)*btScalar(mHavokScale)));
+    }
+
+    // chunks
+    for (size_t i = 0; i < triData->mChunks.size(); ++i)
+    {
+        // stripped
+        btTriangleMesh *meshStrip = new btTriangleMesh();
+
+        const Ogre::Vector4& chunkTrans(triData->mChunkTransforms[triData->mChunks[i].transformIndex].translation);
+        const Ogre::Vector4& origin(triData->mChunks[i].translation);
+        int offset = 0;
+
+        size_t numChunkVerts = triData->mChunks[i].vertices.size() / 3;
+        std::vector<Ogre::Vector4> chunkVerts;
+        chunkVerts.resize(numChunkVerts);
+        for (size_t j = 0; j < numChunkVerts; ++j)
+        {
+            chunkVerts[j] = Ogre::Vector4(triData->mChunks[i].vertices[3*j+0]*float(mHavokScale),
+                                          triData->mChunks[i].vertices[3*j+1]*float(mHavokScale),
+                                          triData->mChunks[i].vertices[3*j+2]*float(mHavokScale),
+                                          0) / 1000;
+        }
+
+        Ogre::Vector4 v = origin + chunkTrans;
+        Ogre::Quaternion q = triData->mChunkTransforms[triData->mChunks[i].transformIndex].rotation;
+
+        btTransform chunkTransform(btQuaternion(q.x, q.y, q.z, q.w), btVector3(v.x, v.y, v.z)*btScalar(mHavokScale));
+        chunkTransform = transform * chunkTransform;
+
+        size_t numStrips = triData->mChunks[i].strips.size();
+        const std::vector<std::uint16_t>& indicies = triData->mChunks[i].indicies;
+
+        for (size_t j = 0; j < numStrips; ++j)
+        {
+            for (size_t k = 0; k < triData->mChunks[i].strips[j] - 2; ++k)
+            {
+                Ogre::Vector4 a, b, c;
+                a = chunkVerts[indicies[offset+k+0]];
+                b = chunkVerts[indicies[offset+k+1]];
+                c = chunkVerts[indicies[offset+k+2]];
+
+                mesh->addTriangle(chunkTransform * btVector3(a.x, a.y, a.z),
+                                  chunkTransform * btVector3(b.x, b.y, b.z),
+                                  chunkTransform * btVector3(c.x, c.y, c.z));
+            }
+
+            offset += triData->mChunks[i].strips[j];
+        }
+
+        // non-stripped
+        for (size_t j = 0; j < indicies.size() - offset; j += 3)
+        {
+            Ogre::Vector4 a, b, c;
+            a = chunkVerts[indicies[offset+j+0]];
+            b = chunkVerts[indicies[offset+j+1]];
+            c = chunkVerts[indicies[offset+j+2]];
+
+            mesh->addTriangle(chunkTransform * btVector3(a.x, a.y, a.z),
+                              chunkTransform * btVector3(b.x, b.y, b.z),
+                              chunkTransform * btVector3(c.x, c.y, c.z));
+        }
+    }
+
+    btBvhTriangleMeshShape *collisionShape = new btBvhTriangleMeshShape(mesh, true);
+    collisionShape->setUserIndex(0); // indicate that transform was applied
+    return collisionShape;
 }
 
-NiBtOgre::bhkConvexListShape::bhkConvexListShape(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::bhkConvexListShape::bhkConvexListShape(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : bhkShape(index, stream, model, data)
 {
     stream.readVector<bhkConvexShapeRef>(mSubShapes);
@@ -797,7 +904,7 @@ btCollisionShape *NiBtOgre::bhkConvexListShape::buildShape(const btTransform& tr
 }
 
 // seen in nif ver 20.0.0.4, 20.0.0.5
-NiBtOgre::bhkListShape::bhkListShape(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::bhkListShape::bhkListShape(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : bhkShape(index, stream, model, data)
 {
     stream.readVector<bhkShapeRef>(mSubShapes);
@@ -855,7 +962,7 @@ btCollisionShape *NiBtOgre::bhkListShape::buildShape(const btTransform& transfor
         if (subCollisionShape->isCompound())
         {
             throw std::runtime_error ("bhkListShape: unexpected btCompoundShape");
-            //std::cerr << "buildShape: child in ListShape is a List " << mModel.blockType(mSelfIndex) << std::endl;
+            //std::cerr << "buildShape: child in ListShape is a List " << mModel.blockType(mSelfRef) << std::endl;
             //continue;
         }
 
@@ -872,7 +979,7 @@ btCollisionShape *NiBtOgre::bhkListShape::buildShape(const btTransform& transfor
                 throw std::runtime_error ("bhkListShape: transfrom shape was expected");
 //#endif
             subTransform = transform * subShape->transform()
-                * mModel.getRef<bhkShape>(static_cast<bhkTransformShape*>(subShape)->shapeIndex())->transform();
+                * mModel.getRef<bhkShape>(static_cast<bhkTransformShape*>(subShape)->shapeRef())->transform();
         }
         else if (userIndex == 1)   // shape has its own transform (e.g. bhkTransformShape & bhkBoxShape)
         {
@@ -895,7 +1002,7 @@ btCollisionShape *NiBtOgre::bhkListShape::buildShape(const btTransform& transfor
 }
 
 // seen in nif ver 20.0.0.4, 20.0.0.5
-NiBtOgre::bhkNiTriStripsShape::bhkNiTriStripsShape(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::bhkNiTriStripsShape::bhkNiTriStripsShape(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : bhkShape(index, stream, model, data)
 {
     stream.read(mMaterial);
@@ -1010,7 +1117,7 @@ void NiBtOgre::OblivionSubShape::read(NiStream& stream)
 }
 
 // seen in nif ver 20.0.0.4, 20.0.0.5
-NiBtOgre::bhkPackedNiTriStripsShape::bhkPackedNiTriStripsShape(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::bhkPackedNiTriStripsShape::bhkPackedNiTriStripsShape(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : bhkShape(index, stream, model, data)
 {
     if (stream.nifVer() <= 0x14000005) // up to 20.0.0.5 only
@@ -1032,7 +1139,7 @@ NiBtOgre::bhkPackedNiTriStripsShape::bhkPackedNiTriStripsShape(uint32_t index, N
     stream.read(mScale);
     stream.read(mUnknownFloat4);
 
-    stream.read(mDataIndex);
+    stream.read(mDataRef);
 }
 
 // Looks like these are static hence ok to use btBvhTriangleMeshShape
@@ -1053,20 +1160,20 @@ NiBtOgre::bhkPackedNiTriStripsShape::bhkPackedNiTriStripsShape(uint32_t index, N
 //
 btCollisionShape *NiBtOgre::bhkPackedNiTriStripsShape::buildShape(const btTransform& transform) const
 {
-    if (mDataIndex == -1)
+    if (mDataRef == -1)
         return nullptr; // nothing to build
 
     btTriangleMesh *mesh = new btTriangleMesh();
-    const hkPackedNiTriStripsData* triData = mModel.getRef<hkPackedNiTriStripsData>(mDataIndex);
+    const hkPackedNiTriStripsData* triData = mModel.getRef<hkPackedNiTriStripsData>(mDataRef);
     assert(triData != nullptr && "mModel.getRef returned nullptr"); // FIXME: throw instead?
 
     // FIXME: preallocate
 
     for(size_t i = 0; i < triData->mTriangles.size(); ++i)
     {
-        mesh->addTriangle(transform * (triData->mVertices[triData->mTriangles[i].triangle[0]]*7), // NOTE: havok scale
-                          transform * (triData->mVertices[triData->mTriangles[i].triangle[1]]*7),
-                          transform * (triData->mVertices[triData->mTriangles[i].triangle[2]]*7));
+        mesh->addTriangle(transform * (triData->mVertices[triData->mTriangles[i].triangle[0]]*btScalar(mHavokScale)), // NOTE: havok scale
+                          transform * (triData->mVertices[triData->mTriangles[i].triangle[1]]*btScalar(mHavokScale)),
+                          transform * (triData->mVertices[triData->mTriangles[i].triangle[2]]*btScalar(mHavokScale)));
     }
 
     // TODO: TES5 has triData->mSubShapes here
@@ -1078,7 +1185,7 @@ btCollisionShape *NiBtOgre::bhkPackedNiTriStripsShape::buildShape(const btTransf
 }
 
 // seen in nif ver 20.0.0.4, 20.0.0.5
-NiBtOgre::hkPackedNiTriStripsData::hkPackedNiTriStripsData(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::hkPackedNiTriStripsData::hkPackedNiTriStripsData(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : bhkShape(index, stream, model, data)
 {
     std::uint32_t numTriangles;
@@ -1120,10 +1227,10 @@ btCollisionShape *NiBtOgre::hkPackedNiTriStripsData::buildShape(const btTransfor
 }
 
 // seen in NIF ver 10.0.1.0 (clutter/farm/oar0.nif)
-NiBtOgre::bhkConvexSweepShape::bhkConvexSweepShape(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::bhkConvexSweepShape::bhkConvexSweepShape(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : bhkShape(index, stream, model, data)
 {
-    stream.read(mShapeIndex);
+    stream.read(mShapeRef);
     stream.skip(sizeof(std::int32_t)); // e.g. clutter/farm/oar01.nif version 10.0.1.0
     stream.read(mMaterial);
     stream.read(mUnknownFloat1);
@@ -1132,21 +1239,21 @@ NiBtOgre::bhkConvexSweepShape::bhkConvexSweepShape(uint32_t index, NiStream& str
 
 bool NiBtOgre::bhkConvexSweepShape::isStaticShape() const
 {
-    if (mShapeIndex == -1)
+    if (mShapeRef == -1)
         return false;
 
-    return mModel.getRef<bhkShape>(mShapeIndex)->isStaticShape();  // TODO: cache the pointer for later?
+    return mModel.getRef<bhkShape>(mShapeRef)->isStaticShape();  // TODO: cache the pointer for later?
 }
 
 btCollisionShape *NiBtOgre::bhkConvexSweepShape::buildShape(const btTransform& transform) const
 {
-    if (mShapeIndex == -1)
+    if (mShapeRef == -1)
         return nullptr;
 
-    return mModel.getRef<bhkShape>(mShapeIndex)->buildShape(transform);
+    return mModel.getRef<bhkShape>(mShapeRef)->buildShape(transform);
 }
 
-NiBtOgre::bhkSphereRepShape::bhkSphereRepShape(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::bhkSphereRepShape::bhkSphereRepShape(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : bhkShape(index, stream, model, data)
 {
     if (stream.nifVer() == 0x0a000100)
@@ -1157,11 +1264,11 @@ NiBtOgre::bhkSphereRepShape::bhkSphereRepShape(uint32_t index, NiStream& stream,
 
 btCollisionShape *NiBtOgre::bhkSphereRepShape::buildShape(const btTransform& transform) const
 {
-    return new btSphereShape(mRadius*7); // NOTE: havok scale
+    return new btSphereShape(mRadius*mHavokScale); // NOTE: havok scale
 }
 
 // seen in nif ver 20.0.0.4, 20.0.0.5
-NiBtOgre::bhkBoxShape::bhkBoxShape(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::bhkBoxShape::bhkBoxShape(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : bhkSphereRepShape(index, stream, model, data)
 {
     mUnknown8Bytes.resize(8);
@@ -1179,11 +1286,11 @@ NiBtOgre::bhkBoxShape::bhkBoxShape(uint32_t index, NiStream& stream, const NiMod
 btCollisionShape *NiBtOgre::bhkBoxShape::buildShape(const btTransform& transform) const
 {
     // TODO: check mMinimumSize first? Can it be zero?
-    return new btBoxShape(mDimensions*7); // NOTE: havok scale
+    return new btBoxShape(mDimensions*btScalar(mHavokScale)); // NOTE: havok scale
 }
 
 // seen in nif ver 20.0.0.4, 20.0.0.5
-NiBtOgre::bhkCapsuleShape::bhkCapsuleShape(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::bhkCapsuleShape::bhkCapsuleShape(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : bhkSphereRepShape(index, stream, model, data)
 {
     mUnknown8Bytes.resize(8);
@@ -1198,8 +1305,8 @@ NiBtOgre::bhkCapsuleShape::bhkCapsuleShape(uint32_t index, NiStream& stream, con
     // Based on examples/Importers/ImportMJCFDemo/BulletMJCFImporter.cpp, also see:
     // http://lolengine.net/blog/2013/09/18/beautiful-maths-quaternion-from-vectors
 
-    btVector3 firstPoint = mFirstPoint*7;   // NOTE: havok scale
-    btVector3 secondPoint = mSecondPoint*7; // NOTE: havok scale
+    btVector3 firstPoint = mFirstPoint*btScalar(mHavokScale);   // NOTE: havok scale
+    btVector3 secondPoint = mSecondPoint*btScalar(mHavokScale); // NOTE: havok scale
 
     btVector3 localTranslation = btScalar(0.5f) * (firstPoint + secondPoint); // midpoint
     btQuaternion localRotation = btQuaternion::getIdentity();
@@ -1233,13 +1340,13 @@ NiBtOgre::bhkCapsuleShape::bhkCapsuleShape(uint32_t index, NiStream& stream, con
 // in examples/Importers/ImportMJCFDemo/BulletMJCFImporter.cpp
 btCollisionShape *NiBtOgre::bhkCapsuleShape::buildShape(const btTransform& transform) const
 {
-    btCapsuleShapeZ *collisionShape(new btCapsuleShapeZ(mRadius*7, mHalfHeight)); // NOTE: havok scale
+    btCapsuleShapeZ *collisionShape(new btCapsuleShapeZ(mRadius*mHavokScale, mHalfHeight)); // NOTE: havok scale
     collisionShape->setUserIndex(1); // indicate that this shape has own transform
     return collisionShape;
 }
 
 // seen in nif ver 20.0.0.4, 20.0.0.5
-NiBtOgre::bhkConvexVerticesShape::bhkConvexVerticesShape(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::bhkConvexVerticesShape::bhkConvexVerticesShape(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : bhkSphereRepShape(index, stream, model, data)
 {
     mUnknown6Floats.resize(6);
@@ -1272,7 +1379,7 @@ btCollisionShape *NiBtOgre::bhkConvexVerticesShape::buildShape(const btTransform
     btConvexHullShape *collisionShape = new btConvexHullShape();
 
     for (unsigned int i = 0; i < mVertices.size(); ++i)
-        collisionShape->addPoint(transform * (mVertices[i]*7), false); // NOTE: havok scale
+        collisionShape->addPoint(transform * (mVertices[i]*btScalar(mHavokScale)), false); // NOTE: havok scale
     collisionShape->recalcLocalAabb();
 
     collisionShape->setUserIndex(0); // indicate that transform was applied
@@ -1281,7 +1388,7 @@ btCollisionShape *NiBtOgre::bhkConvexVerticesShape::buildShape(const btTransform
     std::unique_ptr<float[]> vertices(new float[mNumVertices*4]);
     for (unsigned int i = 0; i < mNumVertices; ++i)
     {
-        btVector3 point = transform * (mVertices[i]*7); // NOTE: havok scale
+        btVector3 point = transform * (mVertices[i]*mHavokScale); // NOTE: havok scale
 
         vertices[i*4]   = point.x();
         vertices[i*4+1] = point.y();
@@ -1299,7 +1406,7 @@ btCollisionShape *NiBtOgre::bhkConvexVerticesShape::buildShape(const btTransform
 
 #if 0 // Commented out, instead use: typedef bhkSphereRepShape bhkSphereShape
 // seen in nif ver 20.0.0.4, 20.0.0.5
-NiBtOgre::bhksphereShape::bhkSphereShape(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::bhksphereShape::bhkSphereShape(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : bhksphererepShape(index, stream, model, data)
 {
     stream.read(mMaterial);
@@ -1308,7 +1415,7 @@ NiBtOgre::bhksphereShape::bhkSphereShape(uint32_t index, NiStream& stream, const
 #endif
 
 // seen in nif ver 20.0.0.4, 20.0.0.5
-NiBtOgre::bhkMultiSphereShape::bhkMultiSphereShape(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::bhkMultiSphereShape::bhkMultiSphereShape(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : bhkSphereRepShape(index, stream, model, data)
 {
     stream.read(mUnknownFloat1);
@@ -1323,8 +1430,8 @@ NiBtOgre::bhkMultiSphereShape::bhkMultiSphereShape(uint32_t index, NiStream& str
     {
         stream.read(mCenters[i]);
         stream.read(mRadii[i]);
-        mCenters[i] *= 7; // NOTE: havok scale
-        mRadii[i]   *= 7; // NOTE: havok scale
+        mCenters[i] *= btScalar(mHavokScale); // NOTE: havok scale
+        mRadii[i]   *= btScalar(mHavokScale); // NOTE: havok scale
     }
 }
 
@@ -1334,10 +1441,10 @@ btCollisionShape *NiBtOgre::bhkMultiSphereShape::buildShape(const btTransform& t
 }
 
 // seen in nif ver 20.0.0.4, 20.0.0.5
-NiBtOgre::bhkTransformShape::bhkTransformShape(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::bhkTransformShape::bhkTransformShape(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : bhkShape(index, stream, model, data)
 {
-    stream.read(mShapeIndex);
+    stream.read(mShapeRef);
     if (stream.nifVer() == 0x0a000100)
         stream.skip(sizeof(std::int32_t)); // e.g. clutter/farm/oar01.nif version 10.0.1.0
     stream.read(mMaterial);
@@ -1350,18 +1457,18 @@ NiBtOgre::bhkTransformShape::bhkTransformShape(uint32_t index, NiStream& stream,
     for (int i = 0; i < 16; ++i)
         stream.read(floats[i]);
 
-    floats[12] *= 7; // NOTE: havok scale
-    floats[13] *= 7; // NOTE: havok scale;
-    floats[14] *= 7; // NOTE: havok scale;
+    floats[12] *= mHavokScale; // NOTE: havok scale
+    floats[13] *= mHavokScale; // NOTE: havok scale;
+    floats[14] *= mHavokScale; // NOTE: havok scale;
     mTransform.setFromOpenGLMatrix(floats);
 }
 
 bool NiBtOgre::bhkTransformShape::isStaticShape() const
 {
-    if (mShapeIndex == -1)
+    if (mShapeRef == -1)
         return false;
 
-    return mModel.getRef<bhkShape>(mShapeIndex)->isStaticShape();  // TODO: cache the pointer for later?
+    return mModel.getRef<bhkShape>(mShapeRef)->isStaticShape();  // TODO: cache the pointer for later?
 }
 
 // Looks like most of the bhkTransformShapes in TES4 have bhkBoxShape, bhkCapsuleShape or bhkSphereShape,
@@ -1381,17 +1488,17 @@ bool NiBtOgre::bhkTransformShape::isStaticShape() const
 //
 btCollisionShape *NiBtOgre::bhkTransformShape::buildShape(const btTransform& transform) const
 {
-    if (mShapeIndex == -1)
+    if (mShapeRef == -1)
         return nullptr;
 
 // more testing
 //#if 0
-    std::string shapeType = mModel.blockType(mShapeIndex);
+    std::string shapeType = mModel.blockType(mShapeRef);
     if (shapeType == "bhkListShape" || shapeType == "bhkTransformShape" || shapeType == "bhkConvexTransformShape")
         throw std::runtime_error ("bhkTransformShape: unexpected shape type");
 //#endif
 
-    bhkShape *shape = static_cast<bhkShape*>(mModel.getRef<bhkShape>(mShapeIndex));
+    bhkShape *shape = static_cast<bhkShape*>(mModel.getRef<bhkShape>(mShapeRef));
     btCollisionShape *collisionShape = shape->buildShape(transform * mTransform);
 
     int userIndex = collisionShape->getUserIndex();
@@ -1407,15 +1514,20 @@ btCollisionShape *NiBtOgre::bhkTransformShape::buildShape(const btTransform& tra
 }
 
 // seen in nif ver 20.0.0.4, 20.0.0.5 ????
-NiBtOgre::bhkEntity::bhkEntity(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::bhkEntity::bhkEntity(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : bhkSerializable(index, stream, model, data)
 {
-    stream.read(mShapeIndex);
+    stream.read(mShapeRef);
     if (stream.nifVer() == 0x0a000100)     // HACK
         stream.skip(sizeof(std::int32_t)); // e.g. clutter/farm/oar01.nif version 10.0.1.0
     stream.read(mLayer);                   // Oblivion Layer
     stream.read(mColFilter);               // Flags and Part Number
     stream.read(mUnknownShort);            // Group
+
+    if (stream.nifVer() >= 0x14020005 && stream.userVer() >= 12) // from 20.2.0.7
+        mHavokScale = 70;
+    else
+        mHavokScale = 7;
 }
 
 // oblivionlayer                                                                {{{
@@ -1482,7 +1594,7 @@ NiBtOgre::bhkEntity::bhkEntity(uint32_t index, NiStream& stream, const NiModel& 
 //     57 | OL_NULL            | Null                                           }}}
 
 // Seen in NIF ver 20.0.0.4, 20.0.0.5
-NiBtOgre::bhkRigidBody::bhkRigidBody(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::bhkRigidBody::bhkRigidBody(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : bhkEntity(index, stream, model, data), mData(data)
 {
     stream.read(mUnknownInt1);           // unused
@@ -1582,7 +1694,7 @@ NiBtOgre::bhkRigidBody::bhkRigidBody(uint32_t index, NiStream& stream, const NiM
 //       remember to delete them!
 btCollisionShape *NiBtOgre::bhkRigidBody::getShape(const NiAVObject& target) const
 {
-    if (mShapeIndex == -1) // nothing to build
+    if (mShapeRef == -1) // nothing to build
         return nullptr;
 
     // FIXME: physics shape incorrect
@@ -1619,7 +1731,7 @@ btCollisionShape *NiBtOgre::bhkRigidBody::getShape(const NiAVObject& target) con
     //   3. hope that there are no other strange exeptions to these rules
     //
     btTransform transform;
-    bhkShape *shape = mModel.getRef<bhkShape>(mShapeIndex);
+    bhkShape *shape = mModel.getRef<bhkShape>(mShapeRef);
     std::string targetName = mModel.indexToString(target.getNameIndex());
 
     bool useFullTransform
@@ -1643,14 +1755,14 @@ btCollisionShape *NiBtOgre::bhkRigidBody::getShape(const NiAVObject& target) con
         transform = btTransform(btQuaternion(rot.x, rot.y, rot.z, rot.w), btVector3(pos.x, pos.y, pos.z));
 
         // apply rotation and translation only if the collision object's body is a bhkRigidBodyT type
-        if (mModel.blockType(mSelfIndex) == "bhkRigidBodyT")
-            transform = transform * btTransform(mRotation, mTranslation * 7); // NOTE: havok scale
+        if (mModel.blockType(mSelfRef) == "bhkRigidBodyT")
+            transform = transform * btTransform(mRotation, mTranslation * btScalar(mHavokScale)); // NOTE: havok scale
     }
     else
     {
         // apply rotation and translation only if the collision object's body is a bhkRigidBodyT type
-        if (mModel.blockType(mSelfIndex) == "bhkRigidBodyT")
-            transform = btTransform(mRotation, mTranslation * 7); // NOTE: havok scale
+        if (mModel.blockType(mSelfRef) == "bhkRigidBodyT")
+            transform = btTransform(mRotation, mTranslation * btScalar(mHavokScale)); // NOTE: havok scale
         else
             transform.setIdentity();
     }
@@ -1706,7 +1818,7 @@ btCollisionShape *NiBtOgre::bhkRigidBody::getShape(const NiAVObject& target) con
 // FIXME: only do some of the steps if actual ragdoll?
 //
 // FIXME: some of these should allow raycasting for object identification?
-void NiBtOgre::bhkRigidBody::build(BtOgreInst *inst, ModelData *data, NiObject* parentNiNode)
+void NiBtOgre::bhkRigidBody::build(BtOgreInst *inst, BuildData *data, NiObject* parentNiNode)
 {
 //  if (mShapeIndex == -1) // nothing to build
 //      return;
@@ -1719,13 +1831,13 @@ void NiBtOgre::bhkRigidBody::build(BtOgreInst *inst, ModelData *data, NiObject* 
 //  btTransform transform(btQuaternion(rot.x, rot.y, rot.z, rot.w), btVector3(pos.x, pos.y, pos.z));
 
 //  // apply rotation and translation only if the collision object's body is a bhkRigidBodyT type
-//  if (mModel.blockType(mSelfIndex) == "bhkRigidBodyT")
-//      transform = transform * btTransform(mRotation, mTranslation * 7); // NOTE: havok scale
+//  if (mModel.blockType(mSelfRef) == "bhkRigidBodyT")
+//      transform = transform * btTransform(mRotation, mTranslation * mHavokScale); // NOTE: havok scale
 
-//  bhkShape *shape = mModel.getRef<bhkShape>(mShapeIndex);
+//  bhkShape *shape = mModel.getRef<bhkShape>(mShapeRef);
 //  btCollisionShape *btShape = shape->buildShape(transform); // FIXME: store a master copy?
 
-//  data->mBtShapeMap[parentNiNode->index()] = NiObject::index();
+//  data->mBtShapeMap[parentNiNode->selfRef()] = NiObject::selfRef();
 
 //  // FIXME
 //  if (!btShape)
@@ -1788,8 +1900,8 @@ void NiBtOgre::bhkRigidBody::build(BtOgreInst *inst, ModelData *data, NiObject* 
 //  btRigidBody::btRigidBodyConstructionInfo rbCI(mMass, 0/*btMotionState**/, btShape);
 //  // FIXME: add friction, damping, etc, here
 
-//  //inst->mRigidBodies[mSelfIndex] = std::unique_ptr<btRigidBody>(new btRigidBody(rbCI));
-//  inst->mRigidBodies[parentNiNode->index()]
+//  //inst->mRigidBodies[mSelfRef] = std::unique_ptr<btRigidBody>(new btRigidBody(rbCI));
+//  inst->mRigidBodies[parentNiNode->selfRef()]
 //      = std::shared_ptr<OEngine::Physic::RigidBody>(new OEngine::Physic::RigidBody(rbCI,
 //              inst->mBaseSceneNode->getName()+static_cast<NiNode*>(parentNiNode)->getNodeName()));
 
@@ -1806,10 +1918,10 @@ void NiBtOgre::bhkRigidBody::build(BtOgreInst *inst, ModelData *data, NiObject* 
 #endif
 
 // Seen in NIF ver 20.0.0.4, 20.0.0.5
-NiBtOgre::bhkSimpleShapePhantom::bhkSimpleShapePhantom(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::bhkSimpleShapePhantom::bhkSimpleShapePhantom(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : bhkSerializable(index, stream, model, data)
 {
-    stream.read(mShapeIndex);
+    stream.read(mShapeRef);
     stream.read(mLayer);
     stream.read(mColFilter);
     stream.read(mUnknownShort);

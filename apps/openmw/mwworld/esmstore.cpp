@@ -61,7 +61,18 @@ static bool isCacheableForeignRecord(int id)
         id == MKTAG('H','A','L','C') || /* potion */
         id == MKTAG('P','S','B','S') || /* subspace */
         id == MKTAG('T','S','G','S') || /* sigilstone */
-        id == MKTAG('I','L','V','L')    /* leveled item */
+        id == MKTAG('I','L','V','L') || /* leveled item */
+        id == MKTAG('N','L','V','L') || /* leveled actor */
+        id == MKTAG('M','I','D','L') || /* idle marker */
+        id == MKTAG('T','M','S','T') || /* movable static */
+        id == MKTAG('T','T','X','S') || /* texture set */
+        id == MKTAG('L','S','C','R') || /* scroll */
+        id == MKTAG('A','A','R','M') || /* armature */
+        id == MKTAG('T','H','D','P') || /* head part */
+        id == MKTAG('M','T','E','R') || /* terminal */
+        id == MKTAG('T','T','A','C') || /* talking activator */
+        id == MKTAG('E','N','O','T') || /* note */
+        id == MKTAG('D','B','P','T')    /* body part */
         )
     {
         return true;
@@ -221,7 +232,13 @@ void ESMStore::loadTes4Group (ESM::ESMReader &esm)
                 hdr.group.label.value == ESM4::REC_CREA || hdr.group.label.value == ESM4::REC_LVLC ||
                 hdr.group.label.value == ESM4::REC_LVLI || hdr.group.label.value == ESM4::REC_MATO ||
                 hdr.group.label.value == ESM4::REC_IDLE || hdr.group.label.value == ESM4::REC_LTEX ||
-                hdr.group.label.value == ESM4::REC_RACE || hdr.group.label.value == ESM4::REC_SBSP
+                hdr.group.label.value == ESM4::REC_RACE || hdr.group.label.value == ESM4::REC_SBSP ||
+                hdr.group.label.value == ESM4::REC_LVLN || hdr.group.label.value == ESM4::REC_IDLM ||
+                hdr.group.label.value == ESM4::REC_MSTT || hdr.group.label.value == ESM4::REC_TXST ||
+                hdr.group.label.value == ESM4::REC_SCRL || hdr.group.label.value == ESM4::REC_ARMA ||
+                hdr.group.label.value == ESM4::REC_HDPT || hdr.group.label.value == ESM4::REC_TERM ||
+                hdr.group.label.value == ESM4::REC_TACT || hdr.group.label.value == ESM4::REC_NOTE ||
+                hdr.group.label.value == ESM4::REC_BPTD || hdr.group.label.value == /*ESM4::REC_SCPT*/ MKTAG('S','C','P','T')
                 )
             {
                 reader.saveGroupStatus();
@@ -230,7 +247,7 @@ void ESMStore::loadTes4Group (ESM::ESMReader &esm)
             else
             {
                 // Skip groups that are of no interest (for now).
-                //  GMST GLOB CLAS FACT SKIL MGEF SCPT ENCH SPEL BSGN WTHR CLMT DIAL
+                //  GMST GLOB CLAS FACT SKIL MGEF ENCH SPEL BSGN WTHR CLMT DIAL
                 //  QUST PACK CSTY LSCR LVSP WATR EFSH
 
                 // FIXME: The label field of a group is not reliable, so we will need to check here as well
@@ -335,15 +352,29 @@ void ESMStore::loadTes4Record (ESM::ESMReader& esm)
         case ESM4::REC_FURN: reader.getRecordData(); mForeignFurnitures.load(esm); break;
         case ESM4::REC_WEAP: reader.getRecordData(); mForeignWeapons.load(esm); break;
         case ESM4::REC_AMMO: reader.getRecordData(); mForeignAmmos.load(esm); break;
+        // UrielSeptim
+        //case ESM4::REC_NPC_: reader.getRecordData(((hdr.record.id & 0xfffff) == 0x23F2E)?true:false); mForeignNpcs.load(esm); break;
         case ESM4::REC_NPC_: reader.getRecordData(); mForeignNpcs.load(esm); break;
         case ESM4::REC_CREA: reader.getRecordData(); mForeignCreatures.load(esm); break;
         case ESM4::REC_LVLC: reader.getRecordData(); mForeignLvlCreatures.load(esm); break;
         case ESM4::REC_SLGM: reader.getRecordData(); mForeignSoulGems.load(esm); break;
         case ESM4::REC_KEYM: reader.getRecordData(); mForeignKeys.load(esm); break;
         case ESM4::REC_ALCH: reader.getRecordData(); mForeignPotions.load(esm); break;
-        case MKTAG('S','B','S','P'): reader.getRecordData(); mForeignSubspaces.load(esm); break;
+        case ESM4::REC_SBSP: reader.getRecordData(); mForeignSubspaces.load(esm); break;
         case ESM4::REC_SGST: reader.getRecordData(); mForeignSigilStones.load(esm); break;
         case ESM4::REC_LVLI: reader.getRecordData(); mForeignLvlItems.load(esm); break;
+        case ESM4::REC_LVLN: reader.getRecordData(); mForeignLvlActors.load(esm); break;
+        case ESM4::REC_IDLM: reader.getRecordData(); mForeignIdleMarkers.load(esm); break;
+        case ESM4::REC_MSTT: reader.getRecordData(); mForeignMovableStatics.load(esm); break;
+        case ESM4::REC_TXST: reader.getRecordData(); mForeignTextureSets.load(esm); break;
+        case ESM4::REC_SCRL: reader.getRecordData(); mForeignScrolls.load(esm); break;
+        case ESM4::REC_ARMA: reader.getRecordData(); mForeignArmorAddons.load(esm); break;
+        case ESM4::REC_HDPT: reader.getRecordData(); mForeignHeadParts.load(esm); break;
+        case ESM4::REC_TERM: reader.getRecordData(); mForeignTerminals.load(esm); break;
+        case ESM4::REC_TACT: reader.getRecordData(); mForeignTalkingActivators.load(esm); break;
+        case ESM4::REC_NOTE: reader.getRecordData(); mForeignNotes.load(esm); break;
+        case ESM4::REC_BPTD: reader.getRecordData(); mForeignBodyParts.load(esm); break;
+        case /*ESM4::REC_SCPT*/MKTAG('S','C','P','T'): reader.getRecordData(); mForeignScripts.load(esm); break;
         // ---- referenceables end
         // WTHR, CLMT
         //case ESM4::REC_REGN: reader.getRecordData(); mForeignRegions.load(esm); break;
@@ -393,12 +424,16 @@ void ESMStore::loadTes4Record (ESM::ESMReader& esm)
         }
         case ESM4::REC_ACHR:
         {
+#if 0
             ESM4::ActorCharacter record;
 
             reader.getRecordData();
             record.load(reader);
             //if (!record.mEditorId.empty())
                 //std::cout << ESM4::printName(hdr.record.typeId) << ": " << record.mEditorId << std::endl; // FIXME
+#else
+            reader.skipRecordData();
+#endif
 
 #if 0
 //          RecordId id = mForeignACharacters.load(esm);
@@ -478,6 +513,7 @@ void ESMStore::loadTes4Record (ESM::ESMReader& esm)
         case ESM4::REC_PHZD: case ESM4::REC_PGRE: // Skyrim only?
         case ESM4::REC_ROAD: case ESM4::REC_LAND: case ESM4::REC_NAVM: case ESM4::REC_NAVI:
         case ESM4::REC_IDLE:
+        case ESM4::REC_MATO:
         {
             //std::cout << ESM4::printName(hdr.record.typeId) << " skipping..." << std::endl;
             reader.skipRecordData();

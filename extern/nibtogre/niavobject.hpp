@@ -41,6 +41,7 @@
 //             NiLight
 //                 NiAmbientLight <--------- /* typedef NiLight */
 //                 NiDirectionalLight <----- /* typedef NiLight */
+//                 NiPointLight
 //             NiTextureEffect
 namespace NiBtOgre
 {
@@ -58,7 +59,7 @@ namespace NiBtOgre
             Ogre::Vector3 radius; // per direction
         };
 
-        NiAVObject(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
+        NiAVObject(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
         virtual ~NiAVObject() {}
 
         inline const Ogre::Matrix4& getWorldTransform() const { return mWorldTransform; }
@@ -83,7 +84,7 @@ namespace NiBtOgre
         bool mHasBoundingBox;       // to 4.2.2.0
         BoundingBox   mBoundingBox; // to 4.2.2.0
 
-        NiCollisionObjectRef mCollisionObjectIndex; // from 10.0.1.0
+        NiCollisionObjectRef mCollisionObjectRef; // from 10.0.1.0
 
         bool mHasAnim; // FIXME: can't remember the purpose
     };
@@ -96,10 +97,10 @@ namespace NiBtOgre
         float mLODAdjust;
 
     public:
-        NiCamera(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
+        NiCamera(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
         virtual ~NiCamera() {}
 
-        void build(BtOgreInst *inst, ModelData *data, NiObject *parentNiNode = nullptr);
+        void build(BtOgreInst *inst, BuildData *data, NiObject *parentNiNode = nullptr);
     };
 
     struct NiDynamicEffect : public NiAVObject
@@ -107,9 +108,9 @@ namespace NiBtOgre
         bool mSwitchState;
         std::vector<NiAVObjectRef> mAffectedNodes;
 
-        NiDynamicEffect(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
+        NiDynamicEffect(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
 
-        //virtual void build(BtOgreInst *inst, ModelData *data, NiObject *parentNiNode = nullptr);
+        //virtual void build(BtOgreInst *inst, BuildData *data, NiObject *parentNiNode = nullptr);
     };
 
     struct NiLight : public NiDynamicEffect
@@ -119,9 +120,18 @@ namespace NiBtOgre
         Ogre::Vector3 mDiffuseColor;
         Ogre::Vector3 mSpecularColor;
 
-        NiLight(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
+        NiLight(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
 
-        //void build(BtOgreInst *inst, ModelData *data, NiObject *parentNiNode = nullptr);
+        //void build(BtOgreInst *inst, BuildData *data, NiObject *parentNiNode = nullptr);
+    };
+
+    struct NiPointLight : public NiLight
+    {
+        float mAttenuationConstant;
+        float mAttenuationLinear;
+        float mAttenuationQuadratic;
+
+        NiPointLight(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
     };
 
     typedef NiLight NiAmbientLight;
@@ -142,9 +152,9 @@ namespace NiBtOgre
 
         char mClippingPlane;
 
-        NiTextureEffect(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
+        NiTextureEffect(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
 
-        //void build(BtOgreInst *inst, ModelData *data, NiObject *parentNiNode = nullptr);
+        //void build(BtOgreInst *inst, BuildData *data, NiObject *parentNiNode = nullptr);
     };
 }
 

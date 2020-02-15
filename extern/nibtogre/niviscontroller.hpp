@@ -46,9 +46,9 @@ namespace NiBtOgre
     class NiVisController : public NiSingleInterpController
     {
     public:
-        NiVisDataRef mDataIndex;
+        NiVisDataRef mDataRef;
 
-        NiVisController(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
+        NiVisController(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
     };
 }
 

@@ -151,6 +151,7 @@ namespace NiBtOgre
         NiObject::define<NiPSysEmitter>("NiPSysEmitter");
         NiObject::define<NiPSysEmitterCtlr>("NiPSysEmitterCtlr");
         NiObject::define<NiPSysEmitterInitialRadiusCtlr>("NiPSysEmitterInitialRadiusCtlr");
+        NiObject::define<NiPSysEmitterDeclinationCtlr>("NiPSysEmitterDeclinationCtlr");
         NiObject::define<NiPSysEmitterLifeSpanCtlr>("NiPSysEmitterLifeSpanCtlr");
         NiObject::define<NiPSysEmitterSpeedCtlr>("NiPSysEmitterSpeedCtlr");
         NiObject::define<NiPSysGravityModifier>("NiPSysGravityModifier");
@@ -203,6 +204,7 @@ namespace NiBtOgre
         NiObject::define<bhkTransformShape>("bhkTransformShape");
         NiObject::define<hkPackedNiTriStripsData>("hkPackedNiTriStripsData");
         // Seen in NIF version 20.2.0.7
+        NiObject::define<BSBoneLODExtraData>("BSBoneLODExtraData");
         NiObject::define<BSBehaviorGraphExtraData>("BSBehaviorGraphExtraData");
         NiObject::define<BSBlastNode>("BSBlastNode");
         NiObject::define<BSDamageStage>("BSDamageStage");
@@ -240,6 +242,7 @@ namespace NiBtOgre
         NiObject::define<BSWaterShaderProperty>("BSWaterShaderProperty");
         NiObject::define<NiBSplineBasisData>("NiBSplineBasisData");
         NiObject::define<NiBSplineCompTransformInterpolator>("NiBSplineCompTransformInterpolator");
+        NiObject::define<NiBSplineCompFloatInterpolator>("NiBSplineCompFloatInterpolator");
         NiObject::define<NiBSplineData>("NiBSplineData");
         NiObject::define<NiBSplineFloatInterpolator>("NiBSplineFloatInterpolator");
         NiObject::define<NiBSplineInterpolator>("NiBSplineInterpolator");
@@ -261,11 +264,14 @@ namespace NiBtOgre
         NiObject::define<bhkCompressedMeshShapeData>("bhkCompressedMeshShapeData");
         NiObject::define<bhkHingeConstraint>("bhkHingeConstraint");
         // Seen in FO3
+        NiObject::define<BSRangeNode>("BSRangeNode");
+        NiObject::define<BSDebrisNode>("BSDebrisNode");
         NiObject::define<BSShaderLightingProperty>("BSShaderLightingProperty");
         NiObject::define<BSShaderPPLightingProperty>("BSShaderPPLightingProperty");
         NiObject::define<BSShaderNoLightingProperty>("BSShaderNoLightingProperty");
         NiObject::define<bhkConvexListShape>("bhkConvexListShape");
         NiObject::define<BSDismemberSkinInstance>("BSDismemberSkinInstance");
+        NiObject::define<BSMaterialEmittanceMultController>("BSMaterialEmittanceMultController");
       //NiObject::define<BSAnimNotes>("BSAnimNotes");
       //NiObject::define<BSMaterialEmittanceMultController>("BSMaterialEmittanceMultController");
       //NiObject::define<BSMultiBoundAABB>("BSMultiBoundAABB");
@@ -275,15 +281,14 @@ namespace NiBtOgre
       //NiObject::define<BSTreadTransfController>("BSTreadTransfController");
       //NiObject::define<BSTreadTransfInterpolator>("BSTreadTransfInterpolator");
       //NiObject::define<NiAdditionalGeometryData>("NiAdditionalGeometryData");
-      //NiObject::define<NiBSplineCompFloatInterpolator>("NiBSplineCompFloatInterpolator");
       //NiObject::define<NiBSplineCompPoint3Interpolator>("NiBSplineCompPoint3Interpolator");
-      //NiObject::define<NiLightColorController>("NiLightColorController");
+      NiObject::define<NiLightColorController>("NiLightColorController");
       //NiObject::define<NiLightDimmerController>("NiLightDimmerController");
       //NiObject::define<NiOptimizeKeep>("NiOptimizeKeep");
       //NiObject::define<NiPSysAgeDeath>("NiPSysAgeDeath");
-      //NiObject::define<NiPointLight>("NiPointLight");
+      NiObject::define<NiPointLight>("NiPointLight");
       //NiObject::define<bhkLiquidAction>("bhkLiquidAction");
-      //NiObject::define<bhkOrientHingedBodyAction>("bhkOrientHingedBodyAction");
+      NiObject::define<bhkOrientHingedBodyAction>("bhkOrientHingedBodyAction");
       //NiObject::define<bhkPoseArray>("bhkPoseArray");
 
         return true; // it seems compiler can't distinguish the definition

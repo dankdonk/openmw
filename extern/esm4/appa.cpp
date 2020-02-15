@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2016, 2018 cc9cii
+  Copyright (C) 2016, 2018, 2019 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -36,6 +36,7 @@ ESM4::Apparatus::Apparatus() : mFormId(0), mFlags(0), mBoundRadius(0.f), mScript
     mEditorId.clear();
     mFullName.clear();
     mModel.clear();
+    mText.clear();
     mIcon.clear();
 
     mData.type = 0;
@@ -89,8 +90,21 @@ void ESM4::Apparatus::load(ESM4::Reader& reader)
             case ESM4::SUB_MODL: reader.getZString(mModel); break;
             case ESM4::SUB_SCRI: reader.getFormId(mScript); break;
             case ESM4::SUB_MODB: reader.get(mBoundRadius);  break;
-            case ESM4::SUB_MODT:
             case ESM4::SUB_DESC:
+            {
+                if (reader.hasLocalizedStrings())
+                {
+                    std::uint32_t formid;
+                    reader.get(formid);
+                    if (formid)
+                        reader.getLocalizedString(formid, mText);
+                }
+                else if (!reader.getZString(mText))
+                    throw std::runtime_error ("APPA DESC data read error");
+
+                break;
+            }
+            case ESM4::SUB_MODT:
             case ESM4::SUB_OBND:
             case ESM4::SUB_QUAL:
             {
@@ -99,7 +113,7 @@ void ESM4::Apparatus::load(ESM4::Reader& reader)
                 break;
             }
             default:
-                throw std::runtime_error("ESM4::APPAPPAoad - Unknown subrecord " + ESM4::printName(subHdr.typeId));
+                throw std::runtime_error("ESM4::APPA::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
         }
     }
 }

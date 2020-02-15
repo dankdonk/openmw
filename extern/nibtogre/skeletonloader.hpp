@@ -31,11 +31,11 @@ namespace NiBtOgre
 {
     class NiModel;
 
-    // There is one skeleton per NIF model.  Hence the unique name for the
-    // Ogre::SkeletonManager is the NIF name.
+    // There is one skeleton per NIF model.  Hence the NIF name (i.e. full path to the NIF) is
+    // used as the unique name for the Ogre::SkeletonManager.
     //
-    // TODO: different games might be using the same name, so some kind of
-    //       namespace concept is needed
+    // TODO: different games might be using the same name, so some kind of namespace concept
+    //       may be needed
     class SkeletonLoader : public Ogre::ManualResourceLoader
     {
         const NiModel& mModel;
@@ -45,7 +45,9 @@ namespace NiBtOgre
         //        |            bone handle
         //        |              |
         //        v              v
-        std::map<std::uint32_t, std::uint16_t> mIndexToHandleMap;
+        std::map<std::uint32_t, std::uint16_t> mIndexToHandleMap; // NOTE: not used currently
+
+        static std::map<std::string, SkeletonLoader> sLoaders; // FIXME: is there a better way?
 
     public:
 

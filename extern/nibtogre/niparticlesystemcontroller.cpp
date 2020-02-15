@@ -36,7 +36,7 @@
 #undef NDEBUG
 #endif
 
-NiBtOgre::NiParticleSystemController::NiParticleSystemController(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::NiParticleSystemController::NiParticleSystemController(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : NiTimeController(index, stream, model, data)
 {
     stream.read(mSpeed);
@@ -81,7 +81,7 @@ NiBtOgre::NiParticleSystemController::NiParticleSystemController(uint32_t index,
     }
 
     stream.skip(sizeof(std::int32_t)); // Unknown Link
-    stream.read(mParticleExtraIndex);
+    stream.read(mParticleExtraRef);
     stream.skip(sizeof(std::int32_t)); // Unknown Link 2
     stream.skip(sizeof(char)); // Trailer
 }

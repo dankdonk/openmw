@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015-2018 cc9cii
+  Copyright (C) 2015-2019 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -37,29 +37,30 @@
 #endif
 
 // Seen in NIF ver 20.0.0.4, 20.0.0.5
-NiBtOgre::NiPSysCollider::NiPSysCollider(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::NiPSysCollider::NiPSysCollider(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : NiObject(index, stream, model, data)
 {
     stream.read(mBounce);
     stream.read(mSpawnOnCollide);
     stream.read(mDieOnCollide);
-    stream.read(mSpawnModifierIndex);
+    stream.read(mSpawnModifierRef);
 
     //stream.getPtr<NiObject>(mParent, model.objects());
     std::int32_t rIndex = -1;
     stream.read(rIndex);
     mParent = model.getRef<NiObject>(rIndex);
 
-    stream.read(mNextColliderIndex);
+    stream.read(mNextColliderRef);
 
     //stream.getPtr<NiNode>(mColliderObject, model.objects());
-    rIndex = -1; // note: variable reused
-    stream.read(rIndex);
-    mColliderObject = model.getRef<NiNode>(rIndex);
+    //rIndex = -1; // WARN: rIndex reused
+    //stream.read(rIndex);
+    //mColliderObject = model.getRef<NiNode>(rIndex);
+    stream.read(mColliderObjectRef);
 }
 
 // Seen in NIF ver 20.0.0.4, 20.0.0.5
-NiBtOgre::NiPSysPlanarCollider::NiPSysPlanarCollider(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::NiPSysPlanarCollider::NiPSysPlanarCollider(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : NiPSysCollider(index, stream, model, data)
 {
     stream.read(mWidth);
@@ -69,7 +70,7 @@ NiBtOgre::NiPSysPlanarCollider::NiPSysPlanarCollider(uint32_t index, NiStream& s
 }
 
 // Seen in NIF version 20.2.0.7
-NiBtOgre::NiPSysSphericalCollider::NiPSysSphericalCollider(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::NiPSysSphericalCollider::NiPSysSphericalCollider(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : NiPSysCollider(index, stream, model, data)
 {
     stream.read(mRadius);

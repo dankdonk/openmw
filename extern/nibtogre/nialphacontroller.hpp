@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015-2018 cc9cii
+  Copyright (C) 2015-2019 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -45,9 +45,9 @@ namespace NiBtOgre
     class NiAlphaController : public NiSingleInterpController
     {
     public:
-        NiFloatDataRef mDataIndex;
+        NiFloatDataRef mDataRef;
 
-        NiAlphaController(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
+        NiAlphaController(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
     };
 
     typedef NiAlphaController BSNiAlphaPropertyTestRefController; // Seen in NIF version 20.2.0.7

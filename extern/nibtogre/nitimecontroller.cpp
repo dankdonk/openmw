@@ -32,6 +32,9 @@
 #include <OgreSkeleton.h>
 #include <OgreKeyFrame.h>
 #include <OgreBone.h>
+#include <OgreController.h>
+#include <OgreControllerManager.h>
+#include <OgrePrerequisites.h>
 
 #include "nistream.hpp"
 #include "nigeometry.hpp"  // static_cast NiGeometry
@@ -41,6 +44,8 @@
 #include "niavobject.hpp"
 #include "niinterpolator.hpp"
 #include "ninode.hpp"
+#include "transformcontroller.hpp"
+#include "nimodelmanager.hpp"
 
 #ifdef NDEBUG // FIXME: debugging only
 #undef NDEBUG
@@ -244,44 +249,44 @@ bool interpolate( T & value, const NiBtOgre::KeyGroup<T>& keyGroup, float time, 
 }
 } // anon namespace
 
-NiBtOgre::NiTimeController::NiTimeController(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::NiTimeController::NiTimeController(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : NiObject(index, stream, model, data)
 {
-    stream.read(mNextControllerIndex);
+    stream.read(mNextControllerRef);
     stream.read(mFlags);
     stream.read(mFrequency);
     stream.read(mPhase);
     stream.read(mStartTime);
     stream.read(mStopTime);
 
-    stream.read(mTargetIndex);
+    stream.read(mTargetRef);
 }
 
 // baseclass does nothing?
 NiBtOgre::NiTimeControllerRef NiBtOgre::NiTimeController::build(Ogre::Mesh *mesh)
 {
-    //std::cerr << "controller not implemented: " << NiObject::mModel.blockType(NiObject::index()) << std::endl;
+    //std::cerr << "controller not implemented: " << NiObject::mModel.blockType(NiObject::selfRef()) << std::endl;
 
-    return mNextControllerIndex;
+    return mNextControllerRef;
 }
 
 // baseclass does nothing?
-NiBtOgre::NiTimeControllerRef NiBtOgre::NiTimeController::build(std::vector<Ogre::Controller<float> >& controllers)
+NiBtOgre::NiTimeControllerRef NiBtOgre::NiTimeController::build(std::multimap<float, std::string>& textKeys, std::vector<Ogre::Controller<float> >& controllers)
 {
-    //std::cerr << "controller not implemented: " << NiObject::mModel.blockType(NiObject::index()) << std::endl;
+    //std::cerr << "controller not implemented: " << NiObject::mModel.blockType(NiObject::selfRef()) << std::endl;
 
-    return mNextControllerIndex;
+    return mNextControllerRef;
 }
 
 // Seen in NIF version 20.2.0.7
-NiBtOgre::BSFrustumFOVController::BSFrustumFOVController(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::BSFrustumFOVController::BSFrustumFOVController(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : NiTimeController(index, stream, model, data)
 {
-    stream.read(mInterpolatorIndex);
+    stream.read(mInterpolatorRef);
 }
 
 // Seen in NIF version 20.2.0.7
-NiBtOgre::BSLagBoneController::BSLagBoneController(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::BSLagBoneController::BSLagBoneController(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : NiTimeController(index, stream, model, data)
 {
     stream.read(mLinearVelocity);
@@ -289,16 +294,16 @@ NiBtOgre::BSLagBoneController::BSLagBoneController(uint32_t index, NiStream& str
     stream.read(mMaximumDistance);
 }
 
-void NiBtOgre::NiBSBoneLODController::NodeGroup::read(NiStream& stream, const NiModel& model, ModelData& data)
+void NiBtOgre::NiBSBoneLODController::NodeGroup::read(NiStream& stream, const NiModel& model, BuildData& data)
 {
     stream.read(numNodes);
 
-    nodes.resize(numNodes);
+    nodeRefs.resize(numNodes);
     for (unsigned int i = 0; i < numNodes; ++i)
-        stream.read(nodes.at(i));
+        stream.read(nodeRefs.at(i));
 }
 
-void NiBtOgre::NiBSBoneLODController::SkinShapeGroup::read(NiStream& stream, const NiModel& model, ModelData& data)
+void NiBtOgre::NiBSBoneLODController::SkinShapeGroup::read(NiStream& stream, const NiModel& model, BuildData& data)
 {
     std::int32_t rIndex = -1;
     stream.read(numLinkPairs);
@@ -310,12 +315,12 @@ void NiBtOgre::NiBSBoneLODController::SkinShapeGroup::read(NiStream& stream, con
         rIndex = -1;
         stream.read(rIndex);
         linkPairs.at(i).shape = model.getRef<NiGeometry>(rIndex);
-        stream.read(linkPairs.at(i).skinInstanceIndex);
+        stream.read(linkPairs.at(i).skinInstanceRef);
     }
 }
 
 // Seen in NIF ver 20.0.0.4, 20.0.0.5
-NiBtOgre::NiBSBoneLODController::NiBSBoneLODController(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::NiBSBoneLODController::NiBSBoneLODController(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : NiTimeController(index, stream, model, data)
 {
     stream.skip(sizeof(std::uint32_t)); // Unknown Int 1
@@ -347,7 +352,7 @@ NiBtOgre::NiBSBoneLODController::NiBSBoneLODController(uint32_t index, NiStream&
 }
 
 // Seen in NIF ver 20.0.0.4, 20.0.0.5
-NiBtOgre::NiControllerManager::NiControllerManager(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::NiControllerManager::NiControllerManager(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : NiTimeController(index, stream, model, data)
 {
     mCumulative = stream.getBool();
@@ -358,7 +363,7 @@ NiBtOgre::NiControllerManager::NiControllerManager(uint32_t index, NiStream& str
     for (unsigned int i = 0; i < numControllerSequences; ++i)
         stream.read(mControllerSequences.at(i));
 
-    stream.read(mObjectPaletteIndex);
+    stream.read(mObjectPaletteRef);
 }
 
 // Each NiControllerSequence is a "playable" animation. The animation in Ogre implementation
@@ -375,46 +380,65 @@ NiBtOgre::NiControllerManager::NiControllerManager(uint32_t index, NiStream& str
 //
 // FIXME: how to decide whether to read in the 'kf' files in the directory?
 //
-NiBtOgre::NiTimeControllerRef NiBtOgre::NiControllerManager::build(std::vector<Ogre::Controller<float> >& controllers)
+NiBtOgre::NiTimeControllerRef NiBtOgre::NiControllerManager::build(std::multimap<float, std::string>& textKeys,
+        std::vector<Ogre::Controller<float> >& controllers)
 {
     // object palette appears to be a lookup table to map the target name string to the block number
     // that NiSequenceController can use to get to the target objects
-    const NiDefaultAVObjectPalette* objects = mModel.getRef<NiDefaultAVObjectPalette>(mObjectPaletteIndex);
+    const NiDefaultAVObjectPalette* objects = mModel.getRef<NiDefaultAVObjectPalette>(mObjectPaletteRef);
 
-    for (std::uint32_t i = 0; i < mControllerSequences.size(); ++i)
+    //if (mModel.nifVer() >= 0x14020007) // FO3 onwards
+    if (0)//mModel.getModelName().find("geardoor") != std::string::npos)
     {
-        // FIXME: shoud update a map in 'inst' so that the animation can be played
-        // (? how to get the entity for mapping against the animation name?)
-        mModel.getRef<NiControllerSequence>(mControllerSequences[i])->build(objects);
+        //if (mNextControllerRef != -1 && mModel.blockType(mNextControllerRef) == "NiMultiTargetTransformeController")
+        //{
+            //NiMultiTargetTransformController *controller
+                //= mModel.getRef<NiMultiTargetTransformController>(mNextControllerRef);
+
+            //return controller->build(mControllerSequences, *objects, controllers);
+
+            // FIXME: shoud update a map in 'inst' so that the animation can be played
+            // (? how to get the entity for mapping against the animation name?)
+            for (std::uint32_t i = 0; i < mControllerSequences.size(); ++i)
+                mModel.getRef<NiControllerSequence>(mControllerSequences[i])->buildFO3(*objects, textKeys, controllers);
+        //}
+        //else
+            //throw std::runtime_error("NiControllerManager: NiMultiTargetTransformController not found");
+    }
+    else
+    {
+        for (std::uint32_t i = 0; i < mControllerSequences.size(); ++i)
+            mModel.getRef<NiControllerSequence>(mControllerSequences[i])->build(objects);
     }
 
-    return mNextControllerIndex;
+    return mNextControllerRef;
 }
 
 // Seen in NIF ver 20.0.0.4, 20.0.0.5
-NiBtOgre::NiMultiTargetTransformController::NiMultiTargetTransformController(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::NiMultiTargetTransformController::NiMultiTargetTransformController(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : NiTimeController(index, stream, model, data), mData(data) // for accessing mSkeleton later
+    , mExtraTargetsBuilt(false)
+    , mControllerSequence(nullptr) // only set sometimes
 {
-    //std::int32_t rIndex = -1;
-
     stream.read(mNumExtraTargets);
-    mExtraTargets.resize(mNumExtraTargets);
+    mExtraTargetRefs.resize(mNumExtraTargets);
     for (unsigned int i = 0; i < mNumExtraTargets; ++i)
     {
-        stream.read(mExtraTargets.at(i));
+        stream.read(mExtraTargetRefs.at(i));
         // checking for NiNode children not possible since most are yet to be created
 #if 1
-        data.addSkelLeafIndex(mExtraTargets.at(i));
+        if (mExtraTargetRefs.at(i) != -1) // Furniture\FXspiderWebKitDoorSpecial.nif (TES5 BleakFallsBarrow)
+            data.addSkelLeafIndex(mExtraTargetRefs.at(i));
 #else
         // FIXME: is there a better way than doing a string comparison each time?
-        if (mExtraTargets.at(i) != -1 && model.blockType(mExtraTargets.at(i)) == "NiNode")
+        if (mExtraTargetRefs.at(i) != -1 && model.blockType(mExtraTargetRefs.at(i)) == "NiNode")
         {
-            data.addSkelLeafIndex(mExtraTargets.at(i));
+            data.addSkelLeafIndex(mExtraTargetRefs.at(i));
 
-            NiNode *node = model.getRef<NiNode>(mExtraTargets.at(i));
+            NiNode *node = model.getRef<NiNode>(mExtraTargetRefs.at(i));
             const std::vector<NiAVObjectRef>& children = node->getChildren();
 
-            //if (mExtraTargets.at(i) == 182)
+            //if (mExtraTargetRefs.at(i) == 182)
                 //std::cout << "stop" << std::endl;
 
             for (unsigned int j = 0; j < children.size(); ++j)
@@ -427,6 +451,69 @@ NiBtOgre::NiMultiTargetTransformController::NiMultiTargetTransformController(uin
     }
 }
 
+// create a Ogre::Controller with multiple targets for each animation (i.e. NiControllerSequence)
+NiBtOgre::NiTimeControllerRef NiBtOgre::NiMultiTargetTransformController::build(const std::vector<NiControllerSequenceRef>& animRefs, const NiDefaultAVObjectPalette& objects, std::vector<Ogre::Controller<float> >& controllers)
+{
+    if ((NiTimeController::mFlags & 0x8) == 0)
+        return mNextControllerRef; // not active
+
+    // build the target list (can't build in the constructor since the objects don't exist yet)
+    if (!mExtraTargetsBuilt)
+    {
+        for (size_t i = 0; i < mNumExtraTargets; ++i)
+        {
+            if (mExtraTargetRefs[i] != -1)
+                mExtraTargets.push_back(mModel.getRef<NiAVObject>(mExtraTargetRefs[i]));
+        }
+
+        mExtraTargetsBuilt = true;
+    }
+
+    for (size_t i = 0; i < animRefs.size(); ++i)
+    {
+        //mModel.getRef<NiControllerSequence>(animRefs[i])->buildFO3(objects, mExtraTargets, controllers);
+    }
+
+    return mNextControllerRef;
+}
+
+// actual build
+NiBtOgre::NiTimeControllerRef NiBtOgre::NiMultiTargetTransformController::build(std::multimap<float, std::string>& textKeys, std::vector<Ogre::Controller<float> >& controllers)
+{
+    if ((NiTimeController::mFlags & 0x8) == 0)
+        return mNextControllerRef; // not active
+
+    if (!mControllerSequence)
+        return mNextControllerRef; // FIXME: must have implemented the required controller yet
+
+    Ogre::SharedPtr<NiModel> model
+        = NiBtOgre::NiModelManager::getSingleton().getByName(mModel.getModelName(), "General");
+
+    Ogre::ControllerValueRealPtr srcval;
+    Ogre::ControllerValueRealPtr dstval(OGRE_NEW MultiTargetTransformController::Value(model, mTargetInterpolators));
+    Ogre::ControllerFunctionRealPtr func(OGRE_NEW MultiTargetTransformController::Function(mControllerSequence, false));
+
+    controllers.push_back(Ogre::Controller<Ogre::Real>(srcval, dstval, func));
+
+    return mNextControllerRef;
+}
+
+// called from NiControllerSequence::buildFO3
+// register only, assume it will be built following NiContollerManager
+void NiBtOgre::NiMultiTargetTransformController::registerTarget(const NiControllerSequence *sequence, const std::string& targetName, const NiTransformInterpolator *interpolator)
+{
+    mControllerSequence = sequence;
+
+    Ogre::SkeletonPtr skeleton = mModel.getSkeleton();
+    if (skeleton.isNull() || !skeleton->hasBone(targetName)) // FIXME: should not happen (not hasBone())
+        return;
+
+    Ogre::Bone *bone = skeleton->getBone(targetName);
+    if (bone)
+        mTargetInterpolators.push_back(std::make_pair(bone, interpolator));
+}
+
+// "fake skin" node animation
 void NiBtOgre::NiMultiTargetTransformController::build(int32_t nameIndex, NiAVObject* target, NiTransformInterpolator *interpolator, float startTime, float stopTime)
 {
     if ((NiTimeController::mFlags & 0x8) == 0) // not active
@@ -438,7 +525,7 @@ void NiBtOgre::NiMultiTargetTransformController::build(int32_t nameIndex, NiAVOb
     //if (mModel.indexToString(nameIndex) == "Close") // FIXME: testing
         //return;
 
-    std::string animationId = /*"NiMTTransform@block_" + std::to_string(interpolator->index()) + */mModel.indexToString(nameIndex);
+    std::string animationId = /*"NiMTTransform@block_" + std::to_string(interpolator->selfRef()) + */mModel.indexToString(nameIndex);
     float totalAnimationLength = stopTime - startTime; // use the ones from the controller sequence
 
 
@@ -463,10 +550,10 @@ void NiBtOgre::NiMultiTargetTransformController::build(int32_t nameIndex, NiAVOb
     // use the interpolator block index and the track handle
     Ogre::NodeAnimationTrack* track = animation->createNodeTrack(bone->getHandle(), bone);
 
-    NiTransformData *data = mModel.getRef<NiTransformData>(interpolator->mDataIndex);
+    NiTransformData *data = mModel.getRef<NiTransformData>(interpolator->mDataRef);
 
     // setup data for later
-    mData.setDoorBoneName(animationId, boneName);
+    mData.setAnimBoneName(animationId, boneName);
 
 
     // get all the unique time keys
@@ -541,6 +628,9 @@ void NiBtOgre::NiMultiTargetTransformController::build(int32_t nameIndex, NiAVOb
                 kf->setRotation(interpolator->mRotation.Inverse() * q);
         }
 
+        //if (boneName == "VDoorDoor01") // FIXME: testing only
+            //std::cout << interpolator->mTranslation.x << std::endl;
+
         if (data->mTranslations.keys.size() > 0)
         {
             Ogre::Vector3 value;
@@ -555,7 +645,13 @@ void NiBtOgre::NiMultiTargetTransformController::build(int32_t nameIndex, NiAVOb
             //
             // (COC "OblivionMqKvatchCitadelHall01" or COW "MS13CheydinhalOblivionWorld" 1 -1)
             // Oblivion\Architecture\Citadel\Interior\CitadelHall\CitadelHallDoor01Anim.NIF (000182E8)
-            kf->setTranslate(-interpolator->mTranslation + value);
+            //
+            // Some interpolator transforms may be invalid
+            // mTranslation = {x=-3.40282347e+38 y=-3.40282347e+38 z=-3.40282347e+38 }
+            if (interpolator->mTranslation.x < -5000) // some small value
+                kf->setTranslate(value);
+            else
+                kf->setTranslate(-interpolator->mTranslation + value);
         }
 
         // FIXME
@@ -563,19 +659,19 @@ void NiBtOgre::NiMultiTargetTransformController::build(int32_t nameIndex, NiAVOb
     }
 }
 
-NiBtOgre::NiSingleInterpController::NiSingleInterpController(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::NiSingleInterpController::NiSingleInterpController(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : NiTimeController(index, stream, model, data)
 {
     if (stream.nifVer() >= 0x0a020000) // from 10.2.0.0
-        stream.read(mInterpolatorIndex);
+        stream.read(mInterpolatorRef);
 }
 
 // Seen in NIF version 20.2.0.7
-NiBtOgre::NiFloatExtraDataController::NiFloatExtraDataController(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::NiFloatExtraDataController::NiFloatExtraDataController(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : NiSingleInterpController(index, stream, model, data)
 {
     if (stream.nifVer() >= 0x0a020000) // from 10.2.0.0
-        stream.readLongString(mControllerDataIndex);
+        stream.readLongString(mControllerDataRef);
 
     if (stream.nifVer() <= 0x0a010000) // up to 10.1.0.0
     {
@@ -588,35 +684,35 @@ NiBtOgre::NiFloatExtraDataController::NiFloatExtraDataController(uint32_t index,
 }
 
 // Seen in NIF version 20.2.0.7
-NiBtOgre::BSEffectShaderPropertyColorController::BSEffectShaderPropertyColorController(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::BSEffectShaderPropertyColorController::BSEffectShaderPropertyColorController(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : NiSingleInterpController(index, stream, model, data)
 {
     stream.read(mUnknownInt1);
 }
 
 // Seen in NIF version 20.2.0.7
-NiBtOgre::BSEffectShaderPropertyFloatController::BSEffectShaderPropertyFloatController(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::BSEffectShaderPropertyFloatController::BSEffectShaderPropertyFloatController(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : NiSingleInterpController(index, stream, model, data)
 {
     stream.read(mTargetVariable);
 }
 
 // Seen in NIF version 20.2.0.7
-NiBtOgre::BSLightingShaderPropertyColorController::BSLightingShaderPropertyColorController(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::BSLightingShaderPropertyColorController::BSLightingShaderPropertyColorController(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : NiSingleInterpController(index, stream, model, data)
 {
     stream.read(mTargetVariable);
 }
 
 // Seen in NIF version 20.2.0.7
-NiBtOgre::BSLightingShaderPropertyFloatController::BSLightingShaderPropertyFloatController(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::BSLightingShaderPropertyFloatController::BSLightingShaderPropertyFloatController(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : NiSingleInterpController(index, stream, model, data)
 {
     stream.read(mTargetVariable);
 }
 
 // Seen in NIF ver 20.0.0.4, 20.0.0.5
-NiBtOgre::NiTextureTransformController::NiTextureTransformController(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::NiTextureTransformController::NiTextureTransformController(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : NiSingleInterpController(index, stream, model, data)
 {
     stream.skip(sizeof(char)); // Unknown2
@@ -625,11 +721,17 @@ NiBtOgre::NiTextureTransformController::NiTextureTransformController(uint32_t in
 
 #if 0 // commented out since this object is not seen in TES3
     if (stream.nifVer() <= 0x0a010000) // up to 10.1.0.0
-        stream.read(mDataIndex);
+        stream.read(mDataRef);
 #endif
 }
 
-NiBtOgre::NiPathController::NiPathController(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::NiLightColorController::NiLightColorController(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+    : NiSingleInterpController(index, stream, model, data)
+{
+    stream.read(mTargetColor);
+}
+
+NiBtOgre::NiPathController::NiPathController(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : NiTimeController(index, stream, model, data)
 {
     if (stream.nifVer() >= 0x0a010000) // from 10.1.0.0
@@ -639,12 +741,12 @@ NiBtOgre::NiPathController::NiPathController(uint32_t index, NiStream& stream, c
     stream.skip(sizeof(float)*2);       // Unknown Float 2, 3
     stream.skip(sizeof(std::uint16_t)); // Unknown Short
 
-    stream.read(mPosDataIndex);
-    stream.read(mFloatDataIndex);
+    stream.read(mPosDataRef);
+    stream.read(mFloatDataRef);
 }
 
 // Seen in NIF ver 20.0.0.4, 20.0.0.5
-NiBtOgre::bhkBlendController::bhkBlendController(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::bhkBlendController::bhkBlendController(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : NiTimeController(index, stream, model, data)
 {
     stream.read(mUnknown);

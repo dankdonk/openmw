@@ -1,6 +1,7 @@
 #include "foreignnpcanimation.hpp"
 
 #include <iostream>
+#include <iomanip> // for debugging only setprecision
 
 #include <OgreSceneManager.h>
 #include <OgreEntity.h>
@@ -12,6 +13,10 @@
 #include <OgreBone.h>
 #include <OgreMesh.h>
 #include <OgreTechnique.h>
+#include <OgreHardwarePixelBuffer.h>
+#include <OgreTexturemanager.h>
+#include <OgrePixelFormat.h>
+#include <OgreCommon.h> // Ogre::Box
 
 #include <extern/shiny/Main/Factory.hpp>
 
@@ -19,6 +24,10 @@
 #include <extern/esm4/formid.hpp> // mainly for debugging
 #include <extern/nibtogre/btogreinst.hpp>
 #include <extern/nibtogre/nimodelmanager.hpp>
+#include <extern/nibtogre/fgctl.hpp>
+#include <extern/nibtogre/fgegm.hpp>
+#include <extern/nibtogre/fgtri.hpp>
+#include <extern/nibtogre/fgegt.hpp>
 
 #include <components/misc/rng.hpp>
 #include <components/misc/stringops.hpp>
@@ -83,15 +92,38 @@ bool isSkinned (NifOgre::ObjectScenePtr scene)
 {
     if (scene->mSkelBase == NULL)
         return false;
-    for(size_t j = 0; j < scene->mEntities.size(); j++)
+    std::map<int32_t, Ogre::Entity*>::const_iterator it(scene->mForeignObj->mEntities.begin());
+    for (; it != scene->mForeignObj->mEntities.end(); ++it)
     {
-        Ogre::Entity *ent = scene->mEntities[j];
+        Ogre::Entity *ent = it->second;
         if(/*scene->mSkelBase != ent &&*/ ent->hasSkeleton())// FIXME: not sure why commented out check is needed
         {
             return true;
         }
     }
     return false;
+}
+
+// for adding skinned body parts, we will need to create different models for each of the
+// skeleton types; the model names have to be different for each because they are cached in
+// Ogre::ResourceManager
+std::string bodyPartNameExt(const std::string& skeletonModel)
+{
+    size_t pos = skeletonModel.find_last_of('\\');
+    if (pos == std::string::npos)
+        return ""; // FIXME: should throw here
+
+    std::string lowerName = Misc::StringUtils::lowerCase(skeletonModel.substr(pos+1)); // +1 for '\\'
+    if (lowerName == "skeleton.nif")
+        return "_skeleton";
+    else if (lowerName == "skeleton_female.nif") // TES5 only
+        return "_skeleton_female";
+    else if (lowerName == "skeletonbeast_female.nif") // TES5 only
+        return "_skeletonbeat_female";
+    else if (lowerName == "skeletonbeast.nif")
+        return "_beast";
+    else // skeletonsesheogorath
+        return "_sesheogorath";
 }
 
 }
@@ -169,7 +201,96 @@ void ForeignHeadAnimationTime::setBlinkStop(float value)
     mBlinkStop = value;
 }
 
-    // FIXME: need differnt bone names and parts for TES4
+// FIXME: need differnt bone names and parts
+// TES4 BMDT
+// 0x00000001 = Head
+// 0x00000002 = Hair
+// 0x00000004 = Upper Body
+// 0x00000008 = Lower Body
+// 0x00000010 = Hand
+// 0x00000020 = Foot
+// 0x00000040 = Right Ring
+// 0x00000080 = Left Ring
+// 0x00000100 = Amulet
+// 0x00000200 = Weapon
+// 0x00000400 = Back Weapon
+// 0x00000800 = Side Weapon
+// 0x00001000 = Quiver
+// 0x00002000 = Shield
+// 0x00004000 = Torch
+// 0x00008000 = Tail
+// -- General flags (part of BMDT)
+// 0x00010000 = Hide Rings
+// 0x00020000 = Hide Amulets
+// 0x00400000 = Non-Playable (opposite to checkbox in the CS)
+// 0x00800000 = Heavy armor
+// 0xCD000000 = Unknown default value
+//
+// FO3 BMDT
+// 0x00000001 = Head
+// 0x00000002 = Hair
+// 0x00000004 = Upper Body
+// 0x00000008 = Left Hand
+// 0x00000010 = Right Hand
+// 0x00000020 = Weapon
+// 0x00000040 = PipBoy
+// 0x00000080 = Backpack
+// 0x00000100 = Necklace
+// 0x00000200 = Headband
+// 0x00000400 = Hat
+// 0x00000800 = Eye Glasses
+// 0x00001000 = Nose Ring
+// 0x00002000 = Earrings
+// 0x00004000 = Mask
+// 0x00008000 = Choker
+// 0x00010000 = Mouth Object
+// 0x00020000 = Body AddOn 1
+// 0x00040000 = Body AddOn 2
+// 0x00080000 = Body AddOn 3
+// -- General flags are additional 8 bits
+// 0x01       = ??
+// 0x02       = ??
+// 0x04       = ??
+// 0x08       = ??
+// 0x10       = ??
+// 0x20       = Power Armor
+// 0x40       = Non-Playable
+// 0x80       = Heavy
+//
+// TES5 BODT
+// 0x00000001 = Head
+// 0x00000002 = Hair
+// 0x00000004 = Body
+// 0x00000008 = Hands
+// 0x00000010 = Forearms
+// 0x00000020 = Amulet
+// 0x00000040 = Ring
+// 0x00000080 = Feet
+// 0x00000100 = Calves
+// 0x00000200 = Shield
+// 0x00000400 = Tail
+// 0x00000800 = Long Hair
+// 0x00001000 = Circlet
+// 0x00002000 = Ears
+// 0x00004000 = Body AddOn 3
+// 0x00008000 = Body AddOn 4
+// 0x00010000 = Body AddOn 5
+// 0x00020000 = Body AddOn 6
+// 0x00040000 = Body AddOn 7
+// 0x00080000 = Body AddOn 8
+// 0x00100000 = Decapitate Head
+// 0x00200000 = Decapitate
+// 0x00400000 = Body AddOn 9
+// 0x00800000 = Body AddOn 10
+// 0x01000000 = Body AddOn 11
+// 0x02000000 = Body AddOn 12
+// 0x04000000 = Body AddOn 13
+// 0x08000000 = Body AddOn 14
+// 0x10000000 = Body AddOn 15
+// 0x20000000 = Body AddOn 16
+// 0x40000000 = Body AddOn 17
+// 0x80000000 = FX01
+// -- General flags are separate
 static ForeignNpcAnimation::PartBoneMap createPartListMap()
 {
     ForeignNpcAnimation::PartBoneMap result;
@@ -230,6 +351,8 @@ ForeignNpcAnimation::ForeignNpcAnimation(const MWWorld::Ptr& ptr, Ogre::SceneNod
     mHeadPitch(0.f)
 {
     mNpc = mPtr.get<ESM4::Npc>()->mBase;
+    const MWWorld::ESMStore &store = MWBase::Environment::get().getWorld()->getStore();
+    mRace = store.getForeign<ESM4::Race>().search(mNpc->mRace); // WARN: might be null
 
     mHeadAnimationTime = Ogre::SharedPtr<ForeignHeadAnimationTime>(new ForeignHeadAnimationTime(mPtr));
     mWeaponAnimationTime = Ogre::SharedPtr<WeaponAnimationTime>(new WeaponAnimationTime(this));
@@ -272,6 +395,9 @@ void ForeignNpcAnimation::rebuild()
 // updateParts() - get the correct body parts based on inventory
 void ForeignNpcAnimation::updateNpcBase()
 {
+    if (!mNpc || !mRace)
+        return;
+
     clearAnimSources(); // clears *all* animations
 
     // FIXME: what to do with head and hand?
@@ -279,11 +405,11 @@ void ForeignNpcAnimation::updateNpcBase()
     // find hair and eyes
     const MWWorld::ESMStore &store = MWBase::Environment::get().getWorld()->getStore();
 //#if 0 // FIXME: for testing only
+#if 0
     const ESM4::Race* race = store.getForeign<ESM4::Race>().search(mNpc->mRace);
     if (race)
     {
-        std::cout << "Race " << race->mEditorId << std::endl;
-#if 0
+        //std::cout << "Race " << race->mEditorId << std::endl;
         std::cout << race->mDesc << std::endl;
         for (unsigned int i = 0; i < race->mEyeChoices.size(); ++i)
         {
@@ -305,8 +431,8 @@ void ForeignNpcAnimation::updateNpcBase()
             else
                 std::cout << "hair not found " << ESM4::formIdToString(race->mDecapitate[i]) << std::endl;
         }
-#endif
     }
+#endif
 
     //const ESM4::Hair* hair = store.getForeign<ESM4::Hair>().search(mNpc->mHair);
     //if (hair)
@@ -323,66 +449,61 @@ void ForeignNpcAnimation::updateNpcBase()
 
 
 
-
-
-
-
-#if 0
-    const MWWorld::ESMStore &store = MWBase::Environment::get().getWorld()->getStore();
-    const ESM::Race *race = store.get<ESM::Race>().find(mNpc->mRace);
-    bool isWerewolf = (mNpcType == Type_Werewolf);
-    bool isVampire = (mNpcType == Type_Vampire);
-
-    if (isWerewolf)
+    std::string skeletonModel;
+    if (mNpc->mModel.empty() && mNpc->mBaseTemplate != 0) // TES5
     {
-        mHeadModel = "meshes\\" + store.get<ESM::BodyPart>().find("WerewolfHead")->mModel;
-        mHairModel = "meshes\\" + store.get<ESM::BodyPart>().find("WerewolfHair")->mModel;
+        uint32_t type = store.find(mNpc->mBaseTemplate);
+
+        const ESM4::LeveledActor* lvlActor = store.getForeign<ESM4::LeveledActor>().search(mNpc->mBaseTemplate);
+        if (type == MKTAG('_', 'N', 'P', 'C'))
+        {
+            if ((mNpc->mActorBaseConfig.flags & 0x1) != 0) // female
+                skeletonModel = "meshes\\" + mRace->mModelFemale; // TODO: check if this can be empty
+            else
+                skeletonModel = "meshes\\" + mRace->mModelMale;
+        }
+        else
+            return;
     }
-    else
+    else if (!mNpc->mModel.empty()) // TES4
     {
-        mHeadModel = "";
-        if (isVampire) // FIXME: fall back to regular head when getVampireHead fails?
-            mHeadModel = getVampireHead(mNpc->mRace, mNpc->mFlags & ESM::NPC::Female);
-        else if (!mNpc->mHead.empty())
-        {
-            const ESM::BodyPart* bp = store.get<ESM::BodyPart>().search(mNpc->mHead);
-            if (bp)
-                mHeadModel = "meshes\\" + bp->mModel;
-            else
-                std::cerr << "Failed to load body part '" << mNpc->mHead << "'" << std::endl;
-        }
-
-        mHairModel = "";
-        if (!mNpc->mHair.empty())
-        {
-            const ESM::BodyPart* bp = store.get<ESM::BodyPart>().search(mNpc->mHair);
-            if (bp)
-                mHairModel = "meshes\\" + bp->mModel;
-            else
-                std::cerr << "Failed to load body part '" << mNpc->mHair << "'" << std::endl;
-        }
+        // Characters\_Male\skeleton.nif
+        // Characters\_Male\skeletonbeast.nif
+        // Characters\_Male\skeletonsesheogorath.nif
+        skeletonModel = "meshes\\" + mNpc->mModel;
     }
-    bool isBeast = (race->mData.mFlags & ESM::Race::Beast) != 0;
-    std::string smodel = (mViewMode != VM_FirstPerson) ?
-                         (!isWerewolf ? !isBeast ? "meshes\\base_anim.nif"
-                                                 : "meshes\\base_animkna.nif"
-                                      : "meshes\\wolf\\skin.nif") :
-                         (!isWerewolf ? !isBeast ? "meshes\\base_anim.1st.nif"
-                                                 : "meshes\\base_animkna.1st.nif"
-                                      : "meshes\\wolf\\skin.1st.nif");
-    smodel = Misc::ResourceHelpers::correctActorModelPath(smodel);
-#endif
+    mBodyPartModelNameExt =  bodyPartNameExt(skeletonModel);
 
 
-    std::string smodel = "meshes\\" + mNpc->mModel; // e.g. Characters\_Male\skeleton.nif
+    if (mInsert->getScale().x != 1.0f) // WARN: assumed uniform scaling
+        std::cout << "scale not 1.0 " << skeletonModel << std::endl;
 
-    //smodel = Misc::ResourceHelpers::correctActorModelPath(smodel);
-    setObjectRoot(smodel, true);
-    if (mObjectRoot->mSkelBase == nullptr) // FIXME: FO3
+
+    //skeletonModel = Misc::ResourceHelpers::correctActorModelPath(skeletonModel);
+    setObjectRoot(skeletonModel, true);
+    if (mObjectRoot->mForeignObj)
+    {
+        mObjectRoot->mSkelBase = mObjectRoot->mForeignObj->mSkeletonRoot;
+        mSkelBase = mObjectRoot->mForeignObj->mSkeletonRoot;
+    }
+    if (mSkelBase == nullptr) // FIXME: FO3
         return;
 
     mSkelBase->getSkeleton()->reset(true); // seems to fix the twisted torso
     //mSkelBase->getMesh()->getSkeleton()->reset(true); // but this doesn't work
+
+    //Ogre::Bone *fBone = mSkelBase->getSkeleton()->getBone("Bip01 L Forearm");
+    //Ogre::Bone *tBone = mSkelBase->getSkeleton()->getBone("Bip01 L ForeTwist");
+    //Ogre::Quaternion q = fBone->getOrientation();
+    //tBone->setOrientation(q);//Ogre::Quaternion::IDENTITY);
+    //tBone->setPosition(Ogre::Vector3(0.f,0.f, 0.f));
+    //q.w = 0.f;
+    //tBone->setOrientation(fBone->getOrientation());
+    //fBone = mSkelBase->getSkeleton()->getBone("Bip01 R Forearm");
+    //tBone = mSkelBase->getSkeleton()->getBone("Bip01 R ForeTwist");
+    //tBone->setOrientation(fBone->getOrientation());
+        //tBone->rotate(Ogre::Quaternion(Ogre::Degree(-45), Ogre::Vector3::UNIT_Z) ,Ogre::Node::TS_WORLD);
+
 
     // Animation at 90 deg issue:
     //
@@ -401,8 +522,8 @@ void ForeignNpcAnimation::updateNpcBase()
     if (b && bna)
     {
         //Ogre::Quaternion qb = b->getOrientation(); // skeleton.nif has -90 roll
-        Ogre::Quaternion qbna = bna->getOrientation(); // has 0 roll
-        b->setOrientation(qbna);
+        //Ogre::Quaternion qbna = bna->getOrientation(); // has 0 roll
+        //b->setOrientation(qbna);
         //bna->setOrientation(qb);
 
 
@@ -413,8 +534,10 @@ void ForeignNpcAnimation::updateNpcBase()
         // FIXME: all the skinned meshes seems to be offset by this, probably something to do
         // with the binding position
         Ogre::Vector3 vb = b->getPosition();
+        Ogre::Vector3 vbna = bna->getPosition();
         Ogre::Vector3 ins = mInsert->getPosition();
 
+        b->setPosition(vbna+ Ogre::Vector3(0,0,0.f)); // TEMP testing for FO3
 //      bna->setPosition(vb);
 
         //Ogre::Bone* rootBone = mObjectRoot->mSkelBase->getSkeleton()->getBone("Scene Root");
@@ -433,7 +556,7 @@ void ForeignNpcAnimation::updateNpcBase()
 
     if(mViewMode != VM_FirstPerson)
     {
-        addAnimSource(smodel);
+        addAnimSource(skeletonModel);
 #if 0
         if(!isWerewolf)
         {
@@ -451,7 +574,7 @@ void ForeignNpcAnimation::updateNpcBase()
         bool isFemale = (mNpc->mBaseConfig.flags & 0x000001) != 0; // 0x1 means female
 #if 0
         if(isWerewolf)
-            addAnimSource(smodel);
+            addAnimSource(skeletonModel);
         else
         {
             /* A bit counter-intuitive, but unlike third-person anims, it seems
@@ -466,23 +589,6 @@ void ForeignNpcAnimation::updateNpcBase()
 #endif
     }
 
-    // Assume that the body parts come from the same directory as the chosen skeleton.  However
-    // some races have their own parts, e.g. khajiit
-    //
-    // meshes/characters/_male/skeleton.nif
-    // meshes/characters/_male/skeletonbeast.nif
-    // meshes/characters/_male/skeletonsesheogorath.nif
-    //
-    // meshes/characters/_male/femalefoot.nif
-    // meshes/characters/_male/femalehand.nif
-    // meshes/characters/_male/femalelowerbody.nif
-    // meshes/characters/_male/femaleupperbody.nif
-    // meshes/characters/_male/femaleupperbodynude.nif
-    // meshes/characters/_male/foot.nif
-    // meshes/characters/_male/hand.nif
-    // meshes/characters/_male/lowerbody.nif
-    // meshes/characters/_male/upperbody.nif
-
     // Assume foot/hand models share the same slot with boots/shoes/gloves/gauntlets
     // Similarly upperbody uses the cuirass/shirt slot and lowerbody pants/skirt/greaves slot
     //
@@ -493,131 +599,902 @@ void ForeignNpcAnimation::updateNpcBase()
     // Ogre::SceneNode *mInsert
     // ObjectScenePtr   mObjectRoot
     // ?? reuse mInsert?
-    //
-    // Should attach NPC hair and eyes here
-    // Maybe head mesh is based on race?
-    // Check & attach NPC inventory here
-    //
-    // characters/<race>/head<race>       // khajiit has male head in separate directory
-    //                   ears<race>       // imperial/darkelf/highelf/woodelf
-    //                   tongue<race>     // human/argonian
-    //                   mouth<race>      // human/argonian
-    //                   teeth<race>      // human/argonian
-    //                   tail             // argonian only
-    //                   eyeleft<race>    // human/argonian
-    //                   eyeright<race>   // human/argonian
-    //                   <race>mouth      // khajiit/orc
-    //                   <race>teethlower // khajiit/orc
-    //                   <race>teethupper // khajiit/orc
-    //                   <race>tongue     // khajiit/orc
-    //                   khajiittail      // khajiit only
-    //
     std::string group("General");
-    std::string meshName;// = mSkelBase->getMesh()->getName();
-    //std::cout << "meshName " << meshName << std::endl;
+    std::string meshName;
 
-    if (race->mEditorId == "Imperial" || race->mEditorId == "Nord" ||
-        race->mEditorId == "Breton"   || race->mEditorId == "Redguard" ||
-        race->mEditorId == "HighElf"  || race->mEditorId == "DarkElf"  || race->mEditorId == "WoodElf")
-        meshName = "meshes\\Characters\\Imperial\\headhuman.nif";
-    else if (race->mEditorId == "Argonian")
-        meshName = "meshes\\Characters\\Argonian\\headargonian.nif";
-    else if (race->mEditorId == "Orc")
-        meshName = "meshes\\Characters\\Orc\\headorc.nif";
-    else if (race->mEditorId == "Khajiit")
-        meshName = "meshes\\Characters\\Khajiit\\headkhajiit.nif";
+    bool isTES4 = true;
+    bool isFemale = (mNpc->mBaseConfig.flags & 0x1) != 0;
+
+    meshName = "meshes\\"+mRace->mHeadParts[0/*head*/].mesh;
+    if (meshName.empty())
+    {
+        if (mRace->mEditorId == "Imperial" || mRace->mEditorId == "Nord"     ||
+            mRace->mEditorId == "Breton"   || mRace->mEditorId == "Redguard" ||
+            mRace->mEditorId == "HighElf"  || mRace->mEditorId == "DarkElf"  ||
+            mRace->mEditorId == "WoodElf"  || mRace->mEditorId == "Dremora")
+            meshName = "meshes\\Characters\\Imperial\\headhuman.nif";
+        else if (mRace->mEditorId == "Argonian")
+            meshName = "meshes\\Characters\\Argonian\\headargonian.nif";
+        else if (mRace->mEditorId == "Orc")
+            meshName = "meshes\\Characters\\Orc\\headorc.nif";
+        else if (mRace->mEditorId == "Khajiit")
+            meshName = "meshes\\Characters\\Khajiit\\headkhajiit.nif";
+        else if (0) // FO3
+        {
+            isTES4 = false;
+            isFemale = (mNpc->mActorBaseConfig.flags & 0x1) != 0;
+
+            // FIXME: can be female, ghoul, child, old, etc
+            if (mRace->mEditorId.find("Old") != std::string::npos)
+            {
+                if (isFemale)
+                    meshName = "meshes\\Characters\\head\\headold.nif";
+                else
+                    meshName = "meshes\\Characters\\head\\headoldfemale.nif";
+            }
+            else if (mRace->mEditorId.find("Child") != std::string::npos)
+            {
+                if (isFemale)
+                    meshName = "meshes\\Characters\\head\\headchildfemale.nif";
+                else
+                    meshName = "meshes\\Characters\\head\\headchild.nif";
+            }
+            else
+            {
+                if (isFemale)
+                    meshName = "meshes\\Characters\\head\\headhumanfemale.nif";
+                else
+                    meshName = "meshes\\Characters\\head\\headhuman.nif";
+            }
+            // FO3 races
+            // CaucasianOldAged
+            // AfricanAmericanOldAged
+            // AsianOldAged
+            // HispanicOldAged
+            // AfricanAmericanRaider
+            // AsianRaider
+            // HispanicRaider
+            // CaucasianRaider
+            // TestQACaucasian
+            // HispanicOld
+            // HispanicChild
+            // CaucasianOld
+            // CaucasianChild
+            // AsianOld
+            // AsianChild
+            // AfricanAmericanOld
+            // AfricanAmericanChild
+            // AfricanAmerican
+            // Ghoul
+            // Asian
+            // Hispanic
+            // Caucasian
+            //std::cout << "missing head " << mRace->mEditorId << std::endl;
+            //else
+                //return;
+        }
+    }
+
+    size_t pos = meshName.find_last_of("nif");
+    if (pos == std::string::npos)
+        return ; // FIXME: should throw here
+
+    // FIXME: use resource manager here to stop loading the same file multiple times
+    std::string path = Misc::StringUtils::lowerCase(meshName.substr(0, pos-2));
+    NiBtOgre::FgEgm egm(path+"egm", "General");
+    egm.loadImpl();
+    NiBtOgre::FgTri tri(path+"tri", "General");
+    tri.loadImpl();
+    NiBtOgre::FgEgt egt(path+"egt", "General");
+    egt.loadImpl();
+    NiBtOgre::FgCtl ctl("facegen\\si.ctl", "General");
+    ctl.loadImpl();
+
+    const std::vector<Ogre::Vector3>& vertices = tri.getVertices(); // V + K
+
+    const std::vector<float>& sRaceCoeff = mRace->mSymShapeModeCoefficients;
+    const std::vector<float>& aRaceCoeff = mRace->mAsymShapeModeCoefficients;
+    const std::vector<float>& sRaceTCoeff = mRace->mSymTextureModeCoefficients;
+    const std::vector<float>& sCoeff = mNpc->mSymShapeModeCoefficients;
+    const std::vector<float>& aCoeff = mNpc->mAsymShapeModeCoefficients;
+    const std::vector<float>& sTCoeff = mNpc->mSymTextureModeCoefficients;
+
+    Ogre::Vector3 sym;
+    Ogre::Vector3 asym;
+    std::vector<Ogre::Vector3> fgVertices; // NOTE: this is passed to the instance of the head model
+    fgVertices.resize(tri.getNumVertices());
+    for (size_t i = 0; i < fgVertices.size(); ++i)
+    {
+        sym = Ogre::Vector3::ZERO;
+        for (size_t j = 0; j < 50; ++j) // for TES4 always 50 sym modes
+        {
+            sym += (sRaceCoeff[j]+sCoeff[j]) * egm.mSymMorphModes[j + 50*i];
+            //if (mNpc->mEditorId == "UrielSeptim")
+                //std::cout << "sym " << sym.x << " " << sym.y << " " << sym.z << std::endl;
+        }
+
+        asym = Ogre::Vector3::ZERO;
+        for (size_t k = 0; k < 30; ++k) // for TES4 always 30 asym modes
+        {
+            asym += (aRaceCoeff[k]+aCoeff[k]) * egm.mAsymMorphModes[k + 30*i];
+        }
+
+        fgVertices[i] = vertices[i] + sym + asym;
+    }
+
+
+    // FIXME: need to be able to check other than oblivion.esm
+    std::string textureFile = "textures\\faces\\oblivion.esm\\"+ESM4::formIdToString(mNpc->mFormId)+"_0.dds";
+    if (!Ogre::ResourceGroupManager::getSingleton().resourceExistsInAnyGroup(textureFile))
+        std::cout << mNpc->mEditorId << " does not have a facegen texture" << std::endl;
     else
-        return;
+        std::cout << mNpc->mEditorId << " detail " << ESM4::formIdToString(mNpc->mFormId) << std::endl;
+
+    // FIXME: guess only
+    //
+    // 11/09/19 - maybe src texture should be the one specified in the NIF (being the "mean")
+    // and copyToTexture() to a target texture of 256x256 then apply facegen modes.  Finally
+    // modulate the texture with the modulation map in textures\faces\oblivion.esm\*.dds
 
     NifOgre::ObjectScenePtr scene = NifOgre::ObjectScenePtr (new NifOgre::ObjectScene(mInsert->getCreator()));
-    std::auto_ptr<NiBtOgre::BtOgreInst> inst(new NiBtOgre::BtOgreInst(mInsert->createChildSceneNode(), scene, meshName, group));
-    inst->instantiate(mSkelBase->getMesh()->getSkeleton());
+    scene->mForeignObj = std::make_shared<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(mInsert->createChildSceneNode(), /*scene, */meshName, group));
+    // TODO: is it possible to get the texture name here or should it be hard coded?
+    scene->mForeignObj->instantiate(mSkelBase->getMesh()->getSkeleton(), mNpc->mEditorId, fgVertices);
 
-    for (unsigned int i = 0; i < scene->mEntities.size(); ++i)
+
+    // get the texture from the NIF model
+    // FIXME: for now, get if from Ogre material
+
+
+    std::map<int32_t, Ogre::Entity*>::const_iterator it(scene->mForeignObj->mEntities.begin());
+    for (; it != scene->mForeignObj->mEntities.end(); ++it)
     {
-        scene->mEntities[i]->shareSkeletonInstanceWith(mSkelBase);
-        mInsert->attachObject(scene->mEntities[i]);
+        Ogre::MaterialPtr mat = scene->mMaterialControllerMgr.getWritableMaterial(it->second);
+        Ogre::Material::TechniqueIterator techIter = mat->getTechniqueIterator();
+        while(techIter.hasMoreElements())
+        {
+            Ogre::Technique *tech = techIter.getNext();
+            //tech->removeAllPasses();
+            Ogre::Technique::PassIterator passes = tech->getPassIterator();
+            while(passes.hasMoreElements())
+            {
+                Ogre::Pass *pass = passes.getNext();
+                Ogre::TextureUnitState *tus = pass->getTextureUnitState(0);
+
+                Ogre::PixelFormat pixelFormat = tus->_getTexturePtr()->getFormat();
+
+                // From: http://wiki.ogre3d.org/Creating+dynamic+textures
+                // Create a target texture
+                Ogre::TexturePtr texFg = Ogre::TextureManager::getSingleton().createManual(
+                    "FaceGen"+mNpc->mEditorId, // name
+                    Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
+                    Ogre::TEX_TYPE_2D,  // type
+                    egt.numRows(), egt.numColumns(), // width & height
+                    0,                  // number of mipmaps; FIXME: should be 2? or 1?
+                    //Ogre::PF_DXT5, // pixel format (DXGI_FORMAT_BC3_UNIFORM)
+                    //pixelFormat,
+                    //Ogre::PF_A8R8G8B8,
+                    //
+                    // NOTE: the components are specified in "packed" native byte order. For
+                    // PF_BYTE_* formats this means that platform endianess changes the order:
+                    // e.g. Ogre::PF_BYTE_RGBA on little endian (x86) forms an integer as
+                    // Ogre::PF_A8B8G8R8, while on big endian it "packs" as Ogre::PF_R8G8B8A8
+                    Ogre::PF_BYTE_RGBA,
+                    Ogre::TU_DEFAULT);  // usage; should be TU_DYNAMIC_WRITE_ONLY_DISCARDABLE for
+                                        // textures updated very often (e.g. each frame)
+
+                Ogre::TexturePtr texFg2 = Ogre::TextureManager::getSingleton().createManual(
+                    "FaceGen"+mNpc->mEditorId+"2", // name
+                    Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
+                    Ogre::TEX_TYPE_2D,  // type
+                    egt.numRows(), egt.numColumns(), // width & height
+                    0,                  // number of mipmaps; FIXME: should be 2? or 1?
+                    //Ogre::PF_DXT5, // pixel format (DXGI_FORMAT_BC3_UNIFORM)
+                    //Ogre::PF_A8R8G8B8,
+                    Ogre::PF_BYTE_RGBA,
+                    Ogre::TU_DEFAULT);  // usage; should be TU_DYNAMIC_WRITE_ONLY_DISCARDABLE for
+                                        // textures updated very often (e.g. each frame)
+
+                //tus->_getTexturePtr()->copyToTexture(texFg);
+
+                // should be headhuman.dds or similar
+                //std::cout << mNpc->mEditorId << " " << tus->getTextureName() << std::endl;
+
+                //int height = tus->_getTexturePtr()->getHeight();
+                //if (height == 256)
+                ////if (mNpc->mFormId == 0x0001C458) // BeggarICMarketSimplicia
+                //{
+                //}
+
+                if (mNpc->mEditorId == "UrielSeptim")
+                {
+                    std::cout << mRace->mHeadParts[0/*head*/].mesh << ", " << mRace->mHeadParts[0].texture << ", " << std::endl;
+                }
+                if (mNpc->mEditorId == "UrielSeptim")// || mNpc->mFormId == 0x0001C458) // BeggarICMarketSimplicia
+                    textureFile = "textures\\characters\\imperial\\headhumanm60.dds";
+                else if (mNpc->mEditorId == "Rohssan")
+                    textureFile = "textures\\characters\\imperial\\headhumanf60.dds";
+                else if (mNpc->mFormId == 0x0001C458) // BeggarICMarketSimplicia
+                    textureFile = "textures\\characters\\imperial\\headhumanf60.dds";
+
+                Ogre::TexturePtr texDetail = Ogre::TextureManager::getSingleton().getByName(textureFile, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+                if (texDetail.isNull())
+                {
+                    // textureFile is the detailed texture in textures/faces/oblivion.esm/<formid>_.dds
+                    texDetail = Ogre::TextureManager::getSingleton().create(
+                        textureFile, // name
+                        Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME
+                    );
+                    texDetail->load();
+                }
+
+                // src: can be 128x128
+                Ogre::HardwarePixelBufferSharedPtr pixelBufferSrc = tus->_getTexturePtr()->getBuffer();
+                pixelBufferSrc->unlock(); // prepare for blit()
+
+                // dest: usually 256x256 (egt.numRows()*egt.numColumns())
+                Ogre::HardwarePixelBufferSharedPtr pixelBuffer = texFg->getBuffer();
+                pixelBuffer->unlock(); // prepare for blit()
+
+
+                //Ogre::HardwarePixelBufferSharedPtr pixelBufferSrc = texDetail->getBuffer();
+                Ogre::HardwarePixelBufferSharedPtr pixelBuffer2 = texFg2->getBuffer();
+                pixelBuffer2->unlock();
+
+                // if source and destination dimensions don't match, scaling is done
+                pixelBuffer->blit(pixelBufferSrc);
+
+
+                //Ogre::HardwarePixelBufferSharedPtr pixelBufferDetail = texDetail->getBuffer();
+                //pixelBuffer2->blit(pixelBufferDetail);
+
+                // Lock the pixel buffer and get a pixel box
+                pixelBufferSrc->lock(Ogre::HardwareBuffer::HBL_NORMAL); // for best performance use HBL_DISCARD!
+                pixelBuffer->lock(Ogre::HardwareBuffer::HBL_NORMAL); // for best performance use HBL_DISCARD!
+                //pixelBuffer2->lock(Ogre::HardwareBuffer::HBL_NORMAL); // for best performance use HBL_DISCARD!
+                const Ogre::PixelBox& pixelBoxSrc = pixelBufferSrc->getCurrentLock();
+                const Ogre::PixelBox& pixelBox = pixelBuffer->getCurrentLock();
+                //const Ogre::PixelBox& pixelBox2 = pixelBuffer2->getCurrentLock();
+
+
+
+                //void* pSrc = static_cast<void*>(pixelBoxSrc.data);
+                //void* pDest = static_cast<void*>(pixelBox.data);
+
+                //Ogre::PixelUtil::bulkPixelConversion(pixelBoxSrc, pixelBox);
+
+                //uint8_t *pSrc = static_cast<uint8_t*>(pixelBoxSrc.data);
+                uint8_t *pDest = static_cast<uint8_t*>(pixelBox.data);
+                //size_t pitch = pixelBox.rowPitch;
+                //void* topLeft = pixelBox.getTopLeftFrontPixelPtr();
+                //if (pDest == static_cast<uint8_t*>(topLeft))
+                    //std::cout << "same" << std::endl;
+                //bool origin = pixelBox.isConsecutive();
+                //std::cout << "pitch " << pitch << std::endl;
+                //uint8_t *pDetail = static_cast<uint8_t*>(pixelBox2.data);
+
+                Ogre::HardwarePixelBufferSharedPtr pixelBufferDetail = texDetail->getBuffer();
+                if (pixelBufferDetail.isNull())
+                    std::cout << "detail texture null" << std::endl;
+                //const Ogre::PixelBox& pixelBoxDetail = pixelBufferDetail->lock(Ogre::Box(0,0,256,256), Ogre::HardwareBuffer::HBL_NORMAL);
+                pixelBufferDetail->unlock();
+                pixelBuffer2->blit(pixelBufferDetail);
+
+                pixelBuffer2->lock(Ogre::HardwareBuffer::HBL_NORMAL);
+                pixelBufferDetail->lock(Ogre::HardwareBuffer::HBL_NORMAL);
+                const Ogre::PixelBox& pixelBoxDetail = pixelBuffer2->getCurrentLock();
+                uint8_t *pDetail = static_cast<uint8_t*>(pixelBoxDetail.data);
+                if (!pDetail)
+                    std::cout << "null detail" << std::endl;
+
+                // update the pixels with SCM and detail texture
+                for (size_t i = 0; i < egt.numRows()*egt.numColumns(); ++i) // height*width, should be 256*256
+                {
+                    // sum all the symmetric texture modes for a given pixel i
+                    // NOTE: mSymTextureModes is assumed to have the image pixels in row-major order
+                    sym = Ogre::Vector3::ZERO;                                // WARN: sym reused
+                    for (size_t j = 0; j < 50/*mNumSymTextureModes*/; ++j)
+                        sym += sTCoeff[j] * egt.mSymTextureModes[j + i * 50]; // sTCoeff is from TES4::Npc
+
+                    // Detail texture is applied after reconstruction of the colour map from the SCM.
+                    // Using an average of the 3 colors makes the resulting texture less blotchy. Also see:
+                    // "Each such factor is coded as a single unsigned byte in the range [0,255]..."
+                    int t = *(pDetail+0) + *(pDetail+1) + *(pDetail+2);
+                    float ft = t/192.f; // 64 * 3 = 192
+
+                    int r = *(pDetail+0);
+                    float fr = r/64.f;
+                    fr = ft;
+                    if (mNpc->mEditorId != "UrielSeptim" && mNpc->mEditorId != "Rohssan" &&
+                        mNpc->mFormId != 0x0001C458)
+                        fr = 1.f; // ignore age for now
+                        //fr = (255 - *(pDetail+0))/255.f;
+                    r = std::min(int((*(pDest+0)+sym.x) * fr), 255);
+                    if (mNpc->mEditorId != "UrielSeptim" && mNpc->mEditorId != "Rohssan" &&
+                        mNpc->mFormId != 0x0001C458)
+                        r = std::min(int(*(pDetail+0) * 2 *r /255.f), 255);
+                        //r = std::min(int(*(pDetail+0) + r), 255); // add is too light (greenish)
+                        //r = std::min(int((r + (*(pDetail+3)) * *(pDetail+0)/255)), 255);
+                        //r = std::min(int((*(pDetail+0) + (*(pDest+3)) * r /255)), 255);
+
+                    int g = *(pDetail+1);
+                    float fg = g/64.f;
+                    fg = ft;
+                    if (mNpc->mEditorId != "UrielSeptim" && mNpc->mEditorId != "Rohssan" &&
+                        mNpc->mFormId != 0x0001C458)
+                        fg = 1.f;
+                    g = std::min(int((*(pDest+1)+sym.y) * fg), 255);
+                    if (mNpc->mEditorId != "UrielSeptim" && mNpc->mEditorId != "Rohssan" &&
+                        mNpc->mFormId != 0x0001C458)
+                        g = std::min(int(*(pDetail+1) * 2 * g /255.f), 255);
+
+                    int b = *(pDetail+2);
+                    float fb = b/64.f;
+                    fb = ft;
+                    if (mNpc->mEditorId != "UrielSeptim" && mNpc->mEditorId != "Rohssan" &&
+                        mNpc->mFormId != 0x0001C458)
+                        fb = 1.f;
+                    b = std::min(int((*(pDest+2)+sym.z) * fb), 255);
+                    if (mNpc->mEditorId != "UrielSeptim" && mNpc->mEditorId != "Rohssan" &&
+                        mNpc->mFormId != 0x0001C458)
+                        b = std::min(int(*(pDetail+2) * 2 * b /255.f), 255);
+
+#if 0 // {{{
+                    // Verify the byte order for PF_BYTE_RGBA using Ogre::PixelBox::getColourAt()
+                    // NOTE: probably only works for this particular host (e.g. little endian)
+                    if (mNpc->mEditorId == "UrielSeptim") // CoC "ImperialDungeon01"
+                    {
+                        int ir = (int)i / 256;
+                        int ic = i % 256;
+
+                        //      dest, sym 0 0
+                        //      198.000 63.674 255.000
+                        //      142.000 56.210 201.000
+                        //      107.000 51.185 163.000
+                        //      225.000
+                        //      198 142 107 225.000
+                        //      dest, sym 0 1
+                        //      197.000 63.674 255.000
+                        //      142.000 56.210 201.000
+                        //      107.000 51.185 163.000
+                        //      229.000
+                        //      198 142 107 230.000
+                        //      dest, sym 0 2
+                        //      198.000 63.674 255.000
+                        //      142.000 56.210 201.000
+                        //      107.000 51.185 163.000
+                        //      237.000
+                        //      198 142 107 240.000
+                        //      dest, sym 0 3
+                        //      197.000 63.674 255.000
+                        //      142.000 56.210 201.000
+                        //      107.000 51.185 163.000
+                        //      240.000
+                        //      198 142 107 243.000
+                        //      dest, sym 0 4
+                        //      198.000 63.674 255.000
+                        //      142.000 56.210 201.000
+                        //      107.000 51.185 163.000
+                        //      241.000
+                        //      198 142 107 242.000
+                        //      dest, sym 0 5
+                        // R -> 197.000 63.674 255.000
+                        // G -> 142.000 56.210 201.000
+                        // B -> 107.000 51.185 163.000
+                        // A -> 240.000
+                        //      198 142 107 240.000
+                        //       ^   ^   ^   ^
+                        //       |   |   |   |
+                        //       R   G   B   A
+                        std::cout << std::fixed << std::setprecision(3)
+                            << "dest, sym " << ir << " " << ic << " " << std::endl;
+                        std::cout << float(*(pDest+0)) << " " << sym.x << " " << float(r) << std::endl;
+                        std::cout << float(*(pDest+1)) << " " << sym.y << " " << float(g) << std::endl;
+                        std::cout << float(*(pDest+2)) << " " << sym.z << " " << float(b) << std::endl;
+                        std::cout << float(*(pDest+3)) << std::endl;
+                        Ogre::ColourValue cv = pixelBox.getColourAt(ir, ic, 0); // [0.0..1.0]
+                        cv *= 255;                                              // [0..255]
+                        std::cout << std::dec <<
+                            (int)cv.r << " " << int(cv.g) << " " << int(cv.b) << " " << cv.a << std::endl;
+                    }
+
+                    if (mNpc->mEditorId == "UrielSeptim") // press <F12> to get a screenshot
+                    {
+                        std::cout << std::fixed << std::setprecision(3) << "detail " << i << " | " <<
+                            *(pDetail+0)/64.f << " " <<
+                            *(pDetail+1)/64.f << " " <<
+                            *(pDetail+2)/64.f << " " <<
+                            *(pDetail+3)/1.f << std::endl;
+                    }
+#endif // }}}
+
+                    *(pDest+0) = r;
+                    *(pDest+1) = g;
+                    *(pDest+2) = b;
+                    pDest += 4;
+                    pDetail += 4;
+                }
+
+                // Unlock the pixel buffers
+                pixelBufferSrc->unlock();
+                pixelBuffer->unlock();
+                pixelBuffer2->unlock();
+
+                pass->removeTextureUnitState(0);
+                Ogre::TextureUnitState *newTUS = pass->createTextureUnitState("FaceGen" + mNpc->mEditorId);
+                //unsigned short tusIndex = pass->getTextureUnitStateIndex(newTUS);
+                //if (mNpc->mEditorId == "UrielSeptim")
+                    //std::cout << "tus index " << tusIndex << std::endl;
+
+                //pass->getTextureUnitState(0)->setColourOperation(Ogre::LBO_ALPHA_BLEND);
+                //Ogre::TextureUnitState *tus1 = pass->createTextureUnitState("FaceGen"+mNpc->mEditorId+"2");
+//              if (mNpc->mEditorId == "UrielSeptim")
+//                  textureFile = "textures\\faces\\oblivion.esm\\"+ESM4::formIdToString(mNpc->mFormId)+"_0.dds";
+//              Ogre::TextureUnitState *tus1 = pass->createTextureUnitState(textureFile);
+//              unsigned short tusIndex = pass->getTextureUnitStateIndex(tus1);
+//              if (mNpc->mEditorId == "UrielSeptim")
+//                  std::cout << "tus index " << tusIndex << std::endl;
+                //tus1->setColourOperation(Ogre::LBO_MODULATE);
+                //tus1->setColourOperation(Ogre::LBO_ADD);
+                //tus1->setColourOperation(Ogre::LBO_ALPHA_BLEND);
+                if (0)//mNpc->mFormId == 0x0001C458)
+                {
+                    //Ogre::TexturePtr
+                    tus->setTexture(texDetail);
+                    Ogre::TextureUnitState *tus2 = pass->createTextureUnitState("textures\\characters\\imperial\\headhuman.dds");
+
+                    //Ogre::TextureUnitState *tus2 = pass->createTextureUnitState("textures\\characters\\imperial\\headhumanf60.dds");
+                    tus2->setColourOperation(Ogre::LBO_ALPHA_BLEND);
+                }
+            } // while pass
+            //Ogre::Pass *newPass = tech->createPass();
+            //tech->setSceneBlending(Ogre::SBT_TRANSPARENT_ALPHA);
+            //Ogre::TextureUnitState *tus1 = newPass->createTextureUnitState(textureFile);
+            //tus->setColourOperation(Ogre::LBO_ALPHA_BLEND);
+            //if (0)//mNpc->mFormId == 0x0001C458)
+//          Ogre::Pass *newPass2 = tech->createPass();
+//          if (mNpc->mEditorId == "UrielSeptim")
+//          {
+//              textureFile = "textures\\faces\\oblivion.esm\\"+ESM4::formIdToString(mNpc->mFormId)+"_0.dds";
+//              Ogre::TextureUnitState *tus1 = newPass2->createTextureUnitState(textureFile);
+//              //tus1->setColourOperation(Ogre::LBO_ADD);
+//              //tus1->setColourOperation(Ogre::LBO_ALPHA_BLEND);
+//              //tech->setSceneBlending(Ogre::SBT_TRANSPARENT_ALPHA);
+//          }
+//          else
+//          {
+//              Ogre::TextureUnitState *tus1 = newPass2->createTextureUnitState("FaceGen"+mNpc->mEditorId+"2");
+//              //tus1->setColourOperation(Ogre::LBO_ADD);
+//              //tus1->setColourOperation(Ogre::LBO_ALPHA_BLEND);
+//          }
+        } // while technique
+
+        //Ogre::Pass *pass = mat->getTechnique(0)->createPass();
+        //pass->setLightingEnabled(false); // doesn't do anything?
+        //pass->setCullingMode(Ogre::CULL_NONE);
+        //pass->setSeparateSceneBlending(Ogre::SBT_TRANSPARENT_ALPHA, Ogre::SBT_ADD);
+        //pass->setDepthWriteEnabled(false);
+        //pass->setDepthCheckEnabled(true);
+        //Ogre::TextureUnitState *tus = pass->createTextureUnitState(textureFile/*"FaceGen" + mNpc->mEditorId*/);
+        //tus->setColourOperation(Ogre::LBO_REPLACE);
+        //tus->setColourOperationEx(Ogre::LBX_MODULATE, Ogre::LBS_TEXTURE, Ogre::LBS_MANUAL, Ogre::ColourValue::White, Ogre::ColourValue::Red);
+
+        //pass->setSceneBlending(Ogre::SBT_REPLACE);
+
+        it->second->shareSkeletonInstanceWith(mSkelBase);
+        mInsert->attachObject(it->second);
     }
     mObjectParts[ESM::PRT_Head] = scene;
 
-    if (race->mEditorId == "Imperial" || race->mEditorId == "Nord" ||
-        race->mEditorId == "Breton"   || race->mEditorId == "Redguard" ||
-        race->mEditorId == "HighElf"  || race->mEditorId == "DarkElf"  || race->mEditorId == "WoodElf")
+
+    if (mRace->mEditorId == "Imperial" || mRace->mEditorId == "Nord" ||
+        mRace->mEditorId == "Breton"   || mRace->mEditorId == "Redguard" ||
+        mRace->mEditorId == "HighElf"  || mRace->mEditorId == "DarkElf"  || mRace->mEditorId == "WoodElf")
     {
         meshName = "meshes\\Characters\\Imperial\\eyerighthuman.nif";
         NifOgre::ObjectScenePtr scene = NifOgre::ObjectScenePtr (new NifOgre::ObjectScene(mInsert->getCreator()));
-        std::auto_ptr<NiBtOgre::BtOgreInst> inst(new NiBtOgre::BtOgreInst(mInsert->createChildSceneNode(), scene, meshName, group));
-        inst->instantiate(mSkelBase->getMesh()->getSkeleton());
+        scene->mForeignObj = std::make_shared<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(mInsert->createChildSceneNode(), meshName, group));
+        scene->mForeignObj->instantiate(mSkelBase->getMesh()->getSkeleton());
 
         Ogre::Bone *heBone = mSkelBase->getSkeleton()->getBone("Bip01 Head");
         Ogre::Quaternion heOrientation = heBone->getOrientation() *
                                Ogre::Quaternion(Ogre::Degree(90), Ogre::Vector3::UNIT_Y); // fix helmet issue
         Ogre::Vector3 hePosition = Ogre::Vector3(0.4, -0.3, 0); // FIXME: make eyes fit better
 
-        for (unsigned int i = 0; i < scene->mEntities.size(); ++i)
+        std::map<int32_t, Ogre::Entity*>::const_iterator it(scene->mForeignObj->mEntities.begin());
+        for (; it != scene->mForeignObj->mEntities.end(); ++it)
         {
-            mSkelBase->attachObjectToBone("Bip01 Head", scene->mEntities[i], heOrientation, hePosition);
+            mSkelBase->attachObjectToBone("Bip01 Head", it->second, heOrientation, hePosition);
         }
         mObjectParts[ESM::PRT_RPauldron] = scene;
 
         meshName = "meshes\\Characters\\Imperial\\eyelefthuman.nif";
         NifOgre::ObjectScenePtr sceneL = NifOgre::ObjectScenePtr (new NifOgre::ObjectScene(mInsert->getCreator()));
-        std::auto_ptr<NiBtOgre::BtOgreInst> instL(new NiBtOgre::BtOgreInst(mInsert->createChildSceneNode(), sceneL, meshName, group));
-        instL->instantiate(mSkelBase->getMesh()->getSkeleton());
+        sceneL->mForeignObj = std::make_shared<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(mInsert->createChildSceneNode(), meshName, group));
+        sceneL->mForeignObj->instantiate(mSkelBase->getMesh()->getSkeleton());
 
-        for (unsigned int i = 0; i < sceneL->mEntities.size(); ++i)
+        std::map<int32_t, Ogre::Entity*>::const_iterator itL(sceneL->mForeignObj->mEntities.begin());
+        for (; itL != sceneL->mForeignObj->mEntities.end(); ++itL)
         {
-            mSkelBase->attachObjectToBone("Bip01 Head", sceneL->mEntities[i], heOrientation, hePosition);
+            mSkelBase->attachObjectToBone("Bip01 Head", itL->second, heOrientation, hePosition);
         }
         mObjectParts[ESM::PRT_LPauldron] = sceneL;
     }
-
-    const ESM4::Hair* hair = store.getForeign<ESM4::Hair>().search(mNpc->mHair);
-    if (hair)
+    else if (mRace->mEditorId == "Argonian")
     {
-        meshName = "meshes\\"+hair->mModel;
-        NifOgre::ObjectScenePtr sceneHair = NifOgre::ObjectScenePtr (new NifOgre::ObjectScene(mInsert->getCreator()));
-        std::auto_ptr<NiBtOgre::BtOgreInst>
-            instHair(new NiBtOgre::BtOgreInst(mInsert->createChildSceneNode(), sceneHair, meshName, group));
-        instHair->instantiate(mSkelBase->getMesh()->getSkeleton());
+        meshName = "meshes\\Characters\\Argonian\\eyerightargonian.nif";
+        NifOgre::ObjectScenePtr scene = NifOgre::ObjectScenePtr (new NifOgre::ObjectScene(mInsert->getCreator()));
+        scene->mForeignObj = std::make_shared<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(mInsert->createChildSceneNode(), meshName, group));
+        scene->mForeignObj->instantiate(mSkelBase->getMesh()->getSkeleton());
 
         Ogre::Bone *heBone = mSkelBase->getSkeleton()->getBone("Bip01 Head");
         Ogre::Quaternion heOrientation = heBone->getOrientation() *
                                Ogre::Quaternion(Ogre::Degree(90), Ogre::Vector3::UNIT_Y); // fix helmet issue
-        Ogre::Vector3 hePosition = Ogre::Vector3(0, 0, 0);
-        for (unsigned int i = 0; i < sceneHair->mEntities.size(); ++i)
+        Ogre::Vector3 hePosition = Ogre::Vector3(0.4, -0.3, 0); // FIXME: make eyes fit better
+
+        std::map<int32_t, Ogre::Entity*>::const_iterator it(scene->mForeignObj->mEntities.begin());
+        for (; it != scene->mForeignObj->mEntities.end(); ++it)
+        {
+            mSkelBase->attachObjectToBone("Bip01 Head", it->second, heOrientation, hePosition);
+        }
+        mObjectParts[ESM::PRT_RPauldron] = scene;
+
+        meshName = "meshes\\Characters\\Argonian\\eyeleftargonian.nif";
+        NifOgre::ObjectScenePtr sceneL = NifOgre::ObjectScenePtr (new NifOgre::ObjectScene(mInsert->getCreator()));
+        sceneL->mForeignObj = std::make_shared<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(mInsert->createChildSceneNode(), meshName, group));
+        sceneL->mForeignObj->instantiate(mSkelBase->getMesh()->getSkeleton());
+
+        std::map<int32_t, Ogre::Entity*>::const_iterator itL(sceneL->mForeignObj->mEntities.begin());
+        for (; itL != sceneL->mForeignObj->mEntities.end(); ++itL)
+        {
+            mSkelBase->attachObjectToBone("Bip01 Head", itL->second, heOrientation, hePosition);
+        }
+        mObjectParts[ESM::PRT_LPauldron] = sceneL;
+
+        meshName = "meshes\\Characters\\Argonian\\tail.nif";
+        NifOgre::ObjectScenePtr sceneT = NifOgre::ObjectScenePtr (new NifOgre::ObjectScene(mInsert->getCreator()));
+        sceneT->mForeignObj = std::make_shared<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(mInsert->createChildSceneNode(), meshName, group));
+        sceneT->mForeignObj->instantiate(mSkelBase->getMesh()->getSkeleton());
+
+        std::map<int32_t, Ogre::Entity*>::const_iterator itT(sceneT->mForeignObj->mEntities.begin());
+        for (; itT != sceneT->mForeignObj->mEntities.end(); ++itT)
+        {
+            // FIXME:
+            if (mSkelBase->getMesh()->getSkeleton() == itT->second->getMesh()->getSkeleton())
+                itT->second->shareSkeletonInstanceWith(mSkelBase);
+            else
+                std::cout << "no anim " << mSkelBase->getMesh()->getName()
+                    << itT->second->getMesh()->getName() << std::endl;
+            mInsert->attachObject(itT->second);
+        }
+        mObjectParts[ESM::PRT_Tail] = sceneT;
+    }
+    else if (mRace->mEditorId == "Orc")
+    {
+        meshName = "meshes\\Characters\\Orc\\earsorc.nif";
+        NifOgre::ObjectScenePtr scene = NifOgre::ObjectScenePtr (new NifOgre::ObjectScene(mInsert->getCreator()));
+        scene->mForeignObj = std::make_shared<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(mInsert->createChildSceneNode(), meshName, group));
+        scene->mForeignObj->instantiate(mSkelBase->getMesh()->getSkeleton());
+
+        Ogre::Bone *heBone = mSkelBase->getSkeleton()->getBone("Bip01 Head");
+        // no 90 deg issue with ears
+        //Ogre::Quaternion heOrientation = heBone->getOrientation() *
+                               //Ogre::Quaternion(Ogre::Degree(90), Ogre::Vector3::UNIT_Y); // fix helmet issue
+        //Ogre::Vector3 hePosition = Ogre::Vector3(0.4, -0.3, 0); // FIXME: make eyes fit better
+
+        std::map<int32_t, Ogre::Entity*>::const_iterator it(scene->mForeignObj->mEntities.begin());
+        for (; it != scene->mForeignObj->mEntities.end(); ++it)
+        {
+            mSkelBase->attachObjectToBone("Bip01 Head", it->second/*, heOrientation, hePosition*/);
+        }
+        mObjectParts[ESM::PRT_RPauldron] = scene; // FIXME
+    }
+    else if (mRace->mEditorId == "Khajiit")
+    {
+        meshName = "meshes\\Characters\\Khajiit\\earskhajiit.nif";
+        NifOgre::ObjectScenePtr scene = NifOgre::ObjectScenePtr (new NifOgre::ObjectScene(mInsert->getCreator()));
+        scene->mForeignObj = std::make_shared<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(mInsert->createChildSceneNode(), meshName, group));
+        scene->mForeignObj->instantiate(mSkelBase->getMesh()->getSkeleton());
+
+        Ogre::Bone *heBone = mSkelBase->getSkeleton()->getBone("Bip01 Head");
+        // no 90 deg issue with ears
+        //Ogre::Quaternion heOrientation = heBone->getOrientation() *
+                               //Ogre::Quaternion(Ogre::Degree(90), Ogre::Vector3::UNIT_Y); // fix helmet issue
+        //Ogre::Vector3 hePosition = Ogre::Vector3(0.4, -0.3, 0); // FIXME: make eyes fit better
+
+        std::map<int32_t, Ogre::Entity*>::const_iterator it(scene->mForeignObj->mEntities.begin());
+        for (; it != scene->mForeignObj->mEntities.end(); ++it)
+        {
+            mSkelBase->attachObjectToBone("Bip01 Head", it->second/*, heOrientation, hePosition*/);
+        }
+        mObjectParts[ESM::PRT_RPauldron] = scene; // FIXME
+
+        meshName = "meshes\\Characters\\Khajiit\\khajiittail.nif";
+        NifOgre::ObjectScenePtr sceneT = NifOgre::ObjectScenePtr (new NifOgre::ObjectScene(mInsert->getCreator()));
+        sceneT->mForeignObj = std::make_shared<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(mInsert->createChildSceneNode(), meshName, group));
+        sceneT->mForeignObj->instantiate(mSkelBase->getMesh()->getSkeleton(), mBodyPartModelNameExt);
+
+        std::map<int32_t, Ogre::Entity*>::const_iterator itT(sceneT->mForeignObj->mEntities.begin());
+        for (; itT != sceneT->mForeignObj->mEntities.end(); ++itT)
+        {
+            // FIXME:
+            if (mSkelBase->getMesh()->getSkeleton() == itT->second->getMesh()->getSkeleton())
+                itT->second->shareSkeletonInstanceWith(mSkelBase);
+            else
+                std::cout << "no anim " << mSkelBase->getMesh()->getName()
+                    << itT->second->getMesh()->getName() << std::endl;
+            mInsert->attachObject(itT->second);
+        }
+        mObjectParts[ESM::PRT_Tail] = sceneT;
+    }
+    else if (0)// FO3 FIXME: dremora can hit this block!
+    {
+        meshName = "meshes\\Characters\\head\\eyelefthuman.nif";
+        NifOgre::ObjectScenePtr scene = NifOgre::ObjectScenePtr (new NifOgre::ObjectScene(mInsert->getCreator()));
+        scene->mForeignObj = std::make_shared<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(mInsert->createChildSceneNode(), meshName, group));
+        scene->mForeignObj->instantiate(mSkelBase->getMesh()->getSkeleton());
+
+        Ogre::Bone *heBone = mSkelBase->getSkeleton()->getBone("Bip01 Head");
+        Ogre::Quaternion heOrientation = heBone->getOrientation() *
+                               Ogre::Quaternion(Ogre::Degree(90), Ogre::Vector3::UNIT_Y); // fix helmet issue
+        Ogre::Vector3 hePosition = Ogre::Vector3(0.4, -0.3, 0); // FIXME: make eyes fit better
+
+        std::map<int32_t, Ogre::Entity*>::const_iterator it(scene->mForeignObj->mEntities.begin());
+        for (; it != scene->mForeignObj->mEntities.end(); ++it)
+        {
+            mSkelBase->attachObjectToBone("Bip01 Head", it->second);//, heOrientation, hePosition);
+        }
+        mObjectParts[ESM::PRT_RPauldron] = scene;
+
+        meshName = "meshes\\Characters\\head\\eyerighthuman.nif";
+        NifOgre::ObjectScenePtr sceneL = NifOgre::ObjectScenePtr (new NifOgre::ObjectScene(mInsert->getCreator()));
+        sceneL->mForeignObj = std::make_shared<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(mInsert->createChildSceneNode(), meshName, group));
+        sceneL->mForeignObj->instantiate(mSkelBase->getMesh()->getSkeleton());
+
+        std::map<int32_t, Ogre::Entity*>::const_iterator itL(sceneL->mForeignObj->mEntities.begin());
+        for (; itL != sceneL->mForeignObj->mEntities.end(); ++itL)
+        {
+            mSkelBase->attachObjectToBone("Bip01 Head", itL->second);//, heOrientation, hePosition);
+        }
+        mObjectParts[ESM::PRT_LPauldron] = sceneL;
+
+
+
+
+#if 0
+        meshName = "meshes\\clutter\\food\\apple01.nif";
+        NifOgre::ObjectScenePtr sceneA = NifOgre::ObjectScenePtr (new NifOgre::ObjectScene(mInsert->getCreator()));
+        std::auto_ptr<NiBtOgre::BtOgreInst> instA(new NiBtOgre::BtOgreInst(mInsert->createChildSceneNode(), sceneA, meshName, group));
+        instA->instantiate(mSkelBase->getMesh()->getSkeleton());
+
+        //Ogre::Bone *ABone = mSkelBase->getSkeleton()->getBone("Bip01 L Hand");
+        mSkelBase->attachObjectToBone("Bip01 L ForeTwist", sceneA->mForeignObj->mEntities[0]);
+        mObjectParts[ESM::PRT_RKnee] = sceneA;
+
+        meshName = "meshes\\clutter\\food\\pear01.nif";
+        NifOgre::ObjectScenePtr sceneP = NifOgre::ObjectScenePtr (new NifOgre::ObjectScene(mInsert->getCreator()));
+        std::auto_ptr<NiBtOgre::BtOgreInst> instP(new NiBtOgre::BtOgreInst(mInsert->createChildSceneNode(), sceneP, meshName, group));
+        instP->instantiate(mSkelBase->getMesh()->getSkeleton());
+
+        //Ogre::Bone *ABone = mSkelBase->getSkeleton()->getBone("Bip01 L Hand");
+        mSkelBase->attachObjectToBone("Bip01 R ForeTwist", sceneP->mForeignObj->mEntities[0]);
+        mObjectParts[ESM::PRT_LKnee] = sceneP;
+#endif
+    }
+
+    // ------------------------------- EARS ---------------------------------------------------
+    {
+    //std::cout << mRace->mEditorId << std::endl;
+    if (mRace->mEditorId == "Imperial" || mRace->mEditorId == "Nord" ||
+        mRace->mEditorId == "Breton"   || mRace->mEditorId == "Redguard")
+        meshName = Misc::StringUtils::lowerCase("meshes\\Characters\\Imperial\\earshuman.nif");
+    else if (mRace->mEditorId == "HighElf")
+        meshName = Misc::StringUtils::lowerCase("meshes\\Characters\\HighElf\\earshighelf.nif");
+    else if (mRace->mEditorId == "DarkElf")
+        meshName = Misc::StringUtils::lowerCase("meshes\\Characters\\DarkElf\\earsdarkelf.nif");
+    else if (mRace->mEditorId == "WoodElf")
+        meshName = Misc::StringUtils::lowerCase("meshes\\Characters\\WoodElf\\earswoodelf.nif");
+
+        NifOgre::ObjectScenePtr sceneEar = NifOgre::ObjectScenePtr (new NifOgre::ObjectScene(mInsert->getCreator()));
+        sceneEar->mForeignObj = std::make_shared<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(mInsert->createChildSceneNode(), meshName, group));
+
+    size_t pos = meshName.find_last_of("nif");
+    if (pos == std::string::npos)
+        return ; // FIXME: should throw here
+    std::string path = meshName.substr(0, pos-2);
+
+    if (!Ogre::ResourceGroupManager::getSingleton().resourceExistsInAnyGroup(path+"egm") ||
+        !Ogre::ResourceGroupManager::getSingleton().resourceExistsInAnyGroup(path+"tri"))
+    {
+        sceneEar->mForeignObj->instantiate(mSkelBase->getMesh()->getSkeleton(), mNpc->mEditorId);
+    }
+    else
+    {
+
+    NiBtOgre::FgEgm egm(path+"egm", "General");
+    egm.loadImpl();
+    NiBtOgre::FgTri tri(path+"tri", "General");
+    tri.loadImpl();
+    NiBtOgre::FgEgt egt(path+"egt", "General");
+    egt.loadImpl();
+    const std::vector<Ogre::Vector3>& vertices = tri.getVertices(); // V + K
+
+    const std::vector<float>& sCoeff = mNpc->mSymShapeModeCoefficients;
+    const std::vector<float>& aCoeff = mNpc->mAsymShapeModeCoefficients;
+    const std::vector<float>& sTCoeff = mNpc->mSymTextureModeCoefficients;
+
+    Ogre::Vector3 sym;
+    Ogre::Vector3 asym;
+    std::vector<Ogre::Vector3> fgVertices;
+    fgVertices.resize(tri.getNumVertices());
+    for (size_t i = 0; i < fgVertices.size(); ++i)
+    {
+        sym = Ogre::Vector3::ZERO;
+        for (size_t j = 0; j < 50; ++j)
+        {
+            sym += sCoeff[j] * /*egm.mSymMorphModeScales[j] * */egm.mSymMorphModes[j + 50*i];
+//          float factor = coeff[j] * egm.mSymMorphModeScales[j];
+//          Ogre::Vector3 vert = egm.mSymMorphModes[j + 50 * i];
+//          Ogre::Vector3 newVert = factor * vert;
+//          sym += newVert;
+        }
+
+        asym = Ogre::Vector3::ZERO;
+        for (size_t k = 0; k < 30; ++k)
+        {
+            asym += aCoeff[k] * /*egm.mAsymMorphModeScales[k] * */egm.mAsymMorphModes[k + 30*i];
+        }
+
+        fgVertices[i] = vertices[i] + sym + asym;
+    }
+
+        sceneEar->mForeignObj->instantiate(mSkelBase->getMesh()->getSkeleton(), mNpc->mEditorId, fgVertices);
+    }
+
+        Ogre::Bone *heBone = mSkelBase->getSkeleton()->getBone("Bip01 Head");
+        Ogre::Quaternion heOrientation = heBone->getOrientation() *
+                               Ogre::Quaternion(Ogre::Degree(90), Ogre::Vector3::UNIT_Y); // fix helmet issue
+        //Ogre::Vector3 hePosition = Ogre::Vector3(/*up*/0.2f, /*forward*/1.7f, 0.f); // FIXME non-zero for FO3 to make hair fit better
+        Ogre::Vector3 hePosition = Ogre::Vector3(0.f, 0.f, 0.f);
+        std::map<int32_t, Ogre::Entity*>::const_iterator it(sceneEar->mForeignObj->mEntities.begin());
+        for (; it != sceneEar->mForeignObj->mEntities.end(); ++it)
+        {
+            mSkelBase->attachObjectToBone("Bip01 Head", it->second, heOrientation, hePosition);
+        }
+
+
+        mObjectParts[ESM::PRT_Tail] = sceneEar;
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    const ESM4::Hair* hair = store.getForeign<ESM4::Hair>().search(mNpc->mHair);
+    if (hair)
+    {
+        meshName = Misc::StringUtils::lowerCase("meshes\\"+hair->mModel);
+
+        NifOgre::ObjectScenePtr sceneHair = NifOgre::ObjectScenePtr (new NifOgre::ObjectScene(mInsert->getCreator()));
+        sceneHair->mForeignObj = std::make_shared<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(mInsert->createChildSceneNode(), meshName, group));
+
+
+
+    size_t pos = meshName.find_last_of("nif");
+    if (pos == std::string::npos)
+        return ; // FIXME: should throw here
+
+    std::string path = meshName.substr(0, pos-2);
+    if (!Ogre::ResourceGroupManager::getSingleton().resourceExistsInAnyGroup(path+"egm") ||
+        !Ogre::ResourceGroupManager::getSingleton().resourceExistsInAnyGroup(path+"tri"))
+    {
+        sceneHair->mForeignObj->instantiate(mSkelBase->getMesh()->getSkeleton(), mNpc->mEditorId);
+    }
+    else
+    {
+
+    NiBtOgre::FgEgm egm(path+"egm", "General");
+    egm.loadImpl();
+    NiBtOgre::FgTri tri(path+"tri", "General");
+    tri.loadImpl();
+    const std::vector<Ogre::Vector3>& vertices = tri.getVertices(); // V + K
+
+    const std::vector<float>& sCoeff = mNpc->mSymShapeModeCoefficients;
+    const std::vector<float>& aCoeff = mNpc->mAsymShapeModeCoefficients;
+
+    Ogre::Vector3 sym;
+    Ogre::Vector3 asym;
+    std::vector<Ogre::Vector3> fgVertices;
+    fgVertices.resize(tri.getNumVertices());
+    for (size_t i = 0; i < fgVertices.size(); ++i)
+    {
+        sym = Ogre::Vector3::ZERO;
+        for (size_t j = 0; j < 50; ++j)
+        {
+            sym += sCoeff[j] * /*egm.mSymMorphModeScales[j] * */egm.mSymMorphModes[j + 50*i];
+//          float factor = coeff[j] * egm.mSymMorphModeScales[j];
+//          Ogre::Vector3 vert = egm.mSymMorphModes[j + 50 * i];
+//          Ogre::Vector3 newVert = factor * vert;
+//          sym += newVert;
+        }
+
+        asym = Ogre::Vector3::ZERO;
+        for (size_t k = 0; k < 30; ++k)
+        {
+            asym += aCoeff[k] * /*egm.mAsymMorphModeScales[k] * */egm.mAsymMorphModes[k + 30*i];
+        }
+
+        fgVertices[i] = vertices[i] + sym + asym;
+    }
+
+
+
+
+        sceneHair->mForeignObj->instantiate(mSkelBase->getMesh()->getSkeleton(), mNpc->mEditorId, fgVertices);
+    }
+
+        Ogre::Bone *heBone = mSkelBase->getSkeleton()->getBone("Bip01 Head");
+        Ogre::Quaternion heOrientation = heBone->getOrientation() *
+                               Ogre::Quaternion(Ogre::Degree(90), Ogre::Vector3::UNIT_Y); // fix helmet issue
+        //Ogre::Vector3 hePosition = Ogre::Vector3(/*up*/0.2f, /*forward*/1.7f, 0.f); // FIXME non-zero for FO3 to make hair fit better
+        Ogre::Vector3 hePosition = Ogre::Vector3(0.5f, -0.2f, 0.f);
+        std::map<int32_t, Ogre::Entity*>::const_iterator it(sceneHair->mForeignObj->mEntities.begin());
+        for (; it != sceneHair->mForeignObj->mEntities.end(); ++it)
         {
 
 
 
 #if 0
             //does not work
-            sceneHair->mEntities[i]->getSubEntity(0)->getMaterial()->setDiffuse((float)mNpc->mHairColour.red / 256,
+            it->second->getSubEntity(0)->getMaterial()->setDiffuse((float)mNpc->mHairColour.red / 256,
                 (float)mNpc->mHairColour.green / 256,
                 (float)mNpc->mHairColour.blue / 256,
                 (float)mNpc->mHairColour.custom / 256);
 #endif
-#if 0
-            Ogre::MaterialPtr mat = sceneHair->mMaterialControllerMgr.getWritableMaterial(sceneHair->mEntities[i]);
-            Ogre::Material::TechniqueIterator techs = mat->getTechniqueIterator();
-            while(techs.hasMoreElements())
+#if 1
+            Ogre::MaterialPtr mat = sceneHair->mMaterialControllerMgr.getWritableMaterial(it->second);
+            Ogre::Material::TechniqueIterator techIter = mat->getTechniqueIterator();
+            while(techIter.hasMoreElements())
             {
-                Ogre::Technique *tech = techs.getNext();
+                Ogre::Technique *tech = techIter.getNext();
                 Ogre::Technique::PassIterator passes = tech->getPassIterator();
                 while(passes.hasMoreElements())
                 {
                     Ogre::Pass *pass = passes.getNext();
-                    Ogre::TextureUnitState *tex = pass->getTextureUnitState(0);
+                    //Ogre::TextureUnitState *tex = pass->getTextureUnitState(0);
                     //tex->setColourOperation(Ogre::LBO_ALPHA_BLEND);
-                    tex->setColourOperation(Ogre::LBO_REPLACE);
+                    //tex->setColourOperation(Ogre::LBO_REPLACE);
                     //tex->setBlank(); // FIXME: testing
+#if 1
                     Ogre::ColourValue ambient = pass->getAmbient();
-                    ambient.r = (float)mNpc->mHairColour.red / 256;
-                    ambient.g = (float)mNpc->mHairColour.green / 256;
-                    ambient.b = (float)mNpc->mHairColour.blue / 256;
+                    ambient.r = (float)mNpc->mHairColour.red / 256.f;
+                    ambient.g = (float)mNpc->mHairColour.green / 256.f;
+                    ambient.b = (float)mNpc->mHairColour.blue / 256.f;
                     ambient.a = 1.f;
                     pass->setSceneBlending(Ogre::SBT_REPLACE);
                     pass->setAmbient(ambient);
+                    pass->setVertexColourTracking(pass->getVertexColourTracking() &~Ogre::TVC_AMBIENT);
+#endif
+#if 0
+                    Ogre::ColourValue diffuse = pass->getDiffuse();
+                    diffuse.r = float((float)mNpc->mHairColour.red / 256);
+                    diffuse.g = float((float)mNpc->mHairColour.green / 256);
+                    diffuse.b = float((float)mNpc->mHairColour.blue / 256);
+                    diffuse.a = 1.f;// (float)mNpc->mHairColour.custom / 256.f; //0.f;
+                    pass->setSceneBlending(Ogre::SBT_REPLACE);
+                    pass->setDiffuse(diffuse);
+                    pass->setVertexColourTracking(pass->getVertexColourTracking() &~Ogre::TVC_DIFFUSE);
+#endif
                 }
             }
 #endif
@@ -625,42 +1502,72 @@ void ForeignNpcAnimation::updateNpcBase()
 
 
 
-            mSkelBase->attachObjectToBone("Bip01 Head", sceneHair->mEntities[i], heOrientation, hePosition);
+            mSkelBase->attachObjectToBone("Bip01 Head", it->second, heOrientation, hePosition);
         }
         mObjectParts[ESM::PRT_Hair] = sceneHair;
     }
 
+    if (isTES4)
+    {
+        {
+        if (isFemale)
+    meshName = "meshes\\characters\\_male\\femalehand.nif";
+        else
     meshName = "meshes\\characters\\_male\\hand.nif";
+        }
+    }
+    else
+    {
+    meshName = "meshes\\characters\\_male\\lefthand.nif";
+    }
     NifOgre::ObjectScenePtr sceneRH = NifOgre::ObjectScenePtr (new NifOgre::ObjectScene(mInsert->getCreator()));
-    std::auto_ptr<NiBtOgre::BtOgreInst> instRH(new NiBtOgre::BtOgreInst(mInsert->createChildSceneNode(), sceneRH, meshName, group));
-    instRH->instantiate(mSkelBase->getMesh()->getSkeleton());
+    sceneRH->mForeignObj = std::make_shared<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(mInsert->createChildSceneNode(), meshName, group));
+    sceneRH->mForeignObj->instantiate(mSkelBase->getMesh()->getSkeleton(), mBodyPartModelNameExt);
 
-    for (unsigned int i = 0; i < sceneRH->mEntities.size(); ++i)
+    std::map<int32_t, Ogre::Entity*>::const_iterator itRH(sceneRH->mForeignObj->mEntities.begin());
+    for (; itRH != sceneRH->mForeignObj->mEntities.end(); ++itRH)
     {
         // FIXME:
-        if (mSkelBase->getMesh()->getSkeleton() == sceneRH->mEntities[i]->getMesh()->getSkeleton())
-            sceneRH->mEntities[i]->shareSkeletonInstanceWith(mSkelBase);
+        if (mSkelBase->getMesh()->getSkeleton() == itRH->second->getMesh()->getSkeleton())
+            itRH->second->shareSkeletonInstanceWith(mSkelBase);
         else
-            std::cout << "no anim " << mSkelBase->getMesh()->getName() << std::endl;
-        mInsert->attachObject(sceneRH->mEntities[i]);
+            std::cout << "no anim " << mSkelBase->getMesh()->getName()
+                    << itRH->second->getMesh()->getName() << std::endl;
+        mInsert->attachObject(itRH->second);
     }
     mObjectParts[ESM::PRT_RHand] = sceneRH;
 
+    if (isTES4)
+    {
+        if (isFemale)
+    meshName = "meshes\\characters\\_male\\femalefoot.nif";
+        else
     meshName = "meshes\\characters\\_male\\foot.nif";
-    NifOgre::ObjectScenePtr sceneRF = NifOgre::ObjectScenePtr (new NifOgre::ObjectScene(mInsert->getCreator()));
-    std::auto_ptr<NiBtOgre::BtOgreInst> instRF(new NiBtOgre::BtOgreInst(mInsert->createChildSceneNode(), sceneRF, meshName, group));
-    instRF->instantiate(mSkelBase->getMesh()->getSkeleton());
+    }
+    else
+    meshName = "meshes\\characters\\_male\\righthand.nif";
 
-    for (unsigned int i = 0; i < sceneRF->mEntities.size(); ++i)
+    NifOgre::ObjectScenePtr sceneRF = NifOgre::ObjectScenePtr (new NifOgre::ObjectScene(mInsert->getCreator()));
+    sceneRF->mForeignObj = std::make_shared<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(mInsert->createChildSceneNode(), meshName, group));
+    sceneRF->mForeignObj->instantiate(mSkelBase->getMesh()->getSkeleton(), mBodyPartModelNameExt);
+
+    std::map<int32_t, Ogre::Entity*>::const_iterator itRF(sceneRF->mForeignObj->mEntities.begin());
+    for (; itRF != sceneRF->mForeignObj->mEntities.end(); ++itRF)
     {
         // FIXME:
-        if (mSkelBase->getMesh()->getSkeleton() == sceneRF->mEntities[i]->getMesh()->getSkeleton())
-            sceneRF->mEntities[i]->shareSkeletonInstanceWith(mSkelBase);
+        if (mSkelBase->getMesh()->getSkeleton() == itRF->second->getMesh()->getSkeleton())
+            itRF->second->shareSkeletonInstanceWith(mSkelBase);
         else
-            std::cout << "no anim " << mSkelBase->getMesh()->getName() << std::endl;
-        mInsert->attachObject(sceneRF->mEntities[i]);
+            std::cout << "no anim " << mSkelBase->getMesh()->getName()
+                    << itRF->second->getMesh()->getName() << std::endl;
+        mInsert->attachObject(itRF->second);
     }
     mObjectParts[ESM::PRT_RFoot] = sceneRF;
+
+
+
+
+
 #if 0
     NifOgre::ObjectScenePtr objectH
         = NifOgre::Loader::createObjects(mSkelBase,
@@ -716,27 +1623,32 @@ void ForeignNpcAnimation::updateNpcBase()
     // LegionBoots
     // Armor\Legion\M\Boots.NIF
     //if (armor->mEditorId == "LegionBoots")
-    if ((armor->mArmorFlags & ESM4::Armor::Flag_Foot) != 0)
+    if ((armor->mArmorFlags & ESM4::Armor::TES4_Foot) != 0)
     {
         //addOrReplaceIndividualPart(ESM::PRT_RFoot, -1, 1, "meshes\\armor\\legion\\m\\boots.nif", false, &glowColor);
 
 
 
-    meshName = "meshes\\"+armor->mModel;
+        if ((mNpc->mBaseConfig.flags & 0x01) != 0 && !armor->mModelFemale.empty()) // female
+    meshName = "meshes\\"+armor->mModelFemale;
+        else
+    meshName = "meshes\\"+armor->mModelMale;
     //if (meshName == "meshes\\Armor\\Thief\\M\\Boots.NIF")
         //std::cout << "stop" << std::endl;
     NifOgre::ObjectScenePtr sceneB = NifOgre::ObjectScenePtr (new NifOgre::ObjectScene(mInsert->getCreator()));
-    std::auto_ptr<NiBtOgre::BtOgreInst> instB(new NiBtOgre::BtOgreInst(mInsert->createChildSceneNode(), sceneB, meshName, group));
-    instB->instantiate(mSkelBase->getMesh()->getSkeleton());
+    sceneB->mForeignObj = std::make_shared<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(mInsert->createChildSceneNode(), meshName, group));
+    sceneB->mForeignObj->instantiate(mSkelBase->getMesh()->getSkeleton(), mBodyPartModelNameExt);
 
-    for (unsigned int i = 0; i < sceneB->mEntities.size(); ++i)
+    std::map<int32_t, Ogre::Entity*>::const_iterator it(sceneB->mForeignObj->mEntities.begin());
+    for (; it != sceneB->mForeignObj->mEntities.end(); ++it)
     {
         // FIXME:
-        if (mSkelBase->getMesh()->getSkeleton() == sceneB->mEntities[i]->getMesh()->getSkeleton())
-            sceneB->mEntities[i]->shareSkeletonInstanceWith(mSkelBase);
+        if (mSkelBase->getMesh()->getSkeleton() == it->second->getMesh()->getSkeleton())
+            it->second->shareSkeletonInstanceWith(mSkelBase);
         else
-            std::cout << "no anim " << mSkelBase->getMesh()->getName() << std::endl;
-        mInsert->attachObject(sceneB->mEntities[i]);
+            std::cout << "no anim " << mSkelBase->getMesh()->getName()
+                    << it->second->getMesh()->getName() << std::endl;
+        mInsert->attachObject(it->second);
     }
     mObjectParts[ESM::PRT_RFoot] = sceneB;
 
@@ -746,25 +1658,33 @@ void ForeignNpcAnimation::updateNpcBase()
     // LegionCuirass
     // Armor\Legion\M\Cuirass.NIF
     //if (armor->mEditorId == "LegionCuirass")
-    else if ((armor->mArmorFlags & ESM4::Armor::Flag_UpperBody) != 0)
+    else if (((armor->mArmorFlags & ESM4::Armor::TES4_UpperBody) != 0) ||
+             ((armor->mArmorFlags & ESM4::Armor::FO3_UpperBody) != 0))
     {
         //addOrReplaceIndividualPart(ESM::PRT_Cuirass, -1, 1, "meshes\\armor\\legion\\m\\cuirass.nif", false, &glowColor);
 
 
-    meshName = "meshes\\"+armor->mModel;
+        if (isFemale && !armor->mModelFemale.empty()) // female
+    meshName = "meshes\\"+armor->mModelFemale;
+        else
+    meshName = "meshes\\"+armor->mModelMale;
     NifOgre::ObjectScenePtr sceneC = NifOgre::ObjectScenePtr (new NifOgre::ObjectScene(mInsert->getCreator()));
-    std::auto_ptr<NiBtOgre::BtOgreInst> instC(new NiBtOgre::BtOgreInst(mInsert->createChildSceneNode(), sceneC, meshName, group));
-    instC->instantiate(mSkelBase->getMesh()->getSkeleton());
+    sceneC->mForeignObj = std::make_shared<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(mInsert->createChildSceneNode(), meshName, group));
+    sceneC->mForeignObj->instantiate(mSkelBase->getMesh()->getSkeleton(), mBodyPartModelNameExt);
 
-    for (unsigned int i = 0; i < sceneC->mEntities.size(); ++i)
+    std::map<int32_t, Ogre::Entity*>::const_iterator it(sceneC->mForeignObj->mEntities.begin());
+    for (; it != sceneC->mForeignObj->mEntities.end(); ++it)
     {
         // FIXME:
-        if (mSkelBase->getMesh()->getSkeleton() == sceneC->mEntities[i]->getMesh()->getSkeleton())
-            sceneC->mEntities[i]->shareSkeletonInstanceWith(mSkelBase);
+        if (mSkelBase->getMesh()->getSkeleton() == it->second->getMesh()->getSkeleton())
+            it->second->shareSkeletonInstanceWith(mSkelBase);
         else
-            std::cout << "no anim " << mSkelBase->getMesh()->getName() << std::endl;
-        mInsert->attachObject(sceneC->mEntities[i]);
+            std::cout << "no anim " << mSkelBase->getMesh()->getName()
+                    << it->second->getMesh()->getName() << std::endl;
+        mInsert->attachObject(it->second);
     }
+            if (!mObjectParts[ESM::PRT_Cuirass].isNull())
+                mObjectParts[ESM::PRT_Cuirass].reset();
     mObjectParts[ESM::PRT_Cuirass] = sceneC;
 
 
@@ -772,23 +1692,42 @@ void ForeignNpcAnimation::updateNpcBase()
     // LegionGauntlets
     // Armor\Legion\M\Gauntlets.NIF
     //if (armor->mEditorId == "LegionGauntlets")
-    else if ((armor->mArmorFlags & ESM4::Armor::Flag_Hand) != 0)
+    else if (((armor->mArmorFlags & ESM4::Armor::TES4_Hand) != 0) ||
+             ((armor->mArmorFlags & ESM4::Armor::FO3_RightHand) != 0))
     {
         //addOrReplaceIndividualPart(ESM::PRT_RHand, -1, 1, "meshes\\armor\\legion\\m\\gauntlets.nif", false, &glowColor);
+                // Not sure why detach is needed
+        if (!mObjectParts[ESM::PRT_RHand].isNull() && mObjectParts[ESM::PRT_RHand]->mForeignObj)
+        {
+            std::map<int32_t, Ogre::Entity*>::const_iterator it
+                = mObjectParts[ESM::PRT_RHand]->mForeignObj->mEntities.begin();
+            for (; it != mObjectParts[ESM::PRT_RHand]->mForeignObj->mEntities.end(); ++it)
+            {
+                it->second->stopSharingSkeletonInstance();
+                mInsert->detachObject(it->second);
+            }
+            mObjectParts[ESM::PRT_RHand]->mForeignObj.reset();
+            mObjectParts[ESM::PRT_RHand].reset();
+        }
 
-    meshName = "meshes\\"+armor->mModel;
+        if (isFemale && !armor->mModelFemale.empty()) // female
+    meshName = "meshes\\"+armor->mModelFemale;
+        else
+    meshName = "meshes\\"+armor->mModelMale;
     NifOgre::ObjectScenePtr sceneH = NifOgre::ObjectScenePtr (new NifOgre::ObjectScene(mInsert->getCreator()));
-    std::auto_ptr<NiBtOgre::BtOgreInst> instH(new NiBtOgre::BtOgreInst(mInsert->createChildSceneNode(), sceneH, meshName, group));
-    instH->instantiate(mSkelBase->getMesh()->getSkeleton());
+    sceneH->mForeignObj = std::make_shared<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(mInsert->createChildSceneNode(), meshName, group));
+    sceneH->mForeignObj->instantiate(mSkelBase->getMesh()->getSkeleton(), mBodyPartModelNameExt);
 
-    for (unsigned int i = 0; i < sceneH->mEntities.size(); ++i)
+    std::map<int32_t, Ogre::Entity*>::const_iterator it(sceneH->mForeignObj->mEntities.begin());
+    for (; it != sceneH->mForeignObj->mEntities.end(); ++it)
     {
         // FIXME:
-        if (mSkelBase->getMesh()->getSkeleton() == sceneH->mEntities[i]->getMesh()->getSkeleton())
-            sceneH->mEntities[i]->shareSkeletonInstanceWith(mSkelBase);
+        if (mSkelBase->getMesh()->getSkeleton() == it->second->getMesh()->getSkeleton())
+            it->second->shareSkeletonInstanceWith(mSkelBase);
         else
-            std::cout << "no anim " << mSkelBase->getMesh()->getName() << std::endl;
-        mInsert->attachObject(sceneH->mEntities[i]);
+            std::cout << "no anim " << mSkelBase->getMesh()->getName()
+                    << it->second->getMesh()->getName() << std::endl;
+        mInsert->attachObject(it->second);
     }
     mObjectParts[ESM::PRT_RHand] = sceneH;
 
@@ -797,23 +1736,29 @@ void ForeignNpcAnimation::updateNpcBase()
     // LegionGreaves
     // Armor\Legion\M\Greaves.NIF
     //if (armor->mEditorId == "LegionGreaves")
-    else if ((armor->mArmorFlags & ESM4::Armor::Flag_LowerBody) != 0)
+    else if (((armor->mArmorFlags & ESM4::Armor::TES4_LowerBody) != 0) ||
+             ((armor->mArmorFlags & ESM4::Armor::FO3_PipBoy) != 0))
     {
         //addOrReplaceIndividualPart(ESM::PRT_Groin, -1, 1, "meshes\\armor\\legion\\m\\greaves.nif", false, &glowColor);
 
-    meshName = "meshes\\"+armor->mModel;
+        if (isFemale && !armor->mModelFemale.empty()) // female
+    meshName = "meshes\\"+armor->mModelFemale;
+        else
+    meshName = "meshes\\"+armor->mModelMale;
     NifOgre::ObjectScenePtr sceneG = NifOgre::ObjectScenePtr (new NifOgre::ObjectScene(mInsert->getCreator()));
-    std::auto_ptr<NiBtOgre::BtOgreInst> instG(new NiBtOgre::BtOgreInst(mInsert->createChildSceneNode(), sceneG, meshName, group));
-    instG->instantiate(mSkelBase->getMesh()->getSkeleton());
+    sceneG->mForeignObj = std::make_shared<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(mInsert->createChildSceneNode(), meshName, group));
+    sceneG->mForeignObj->instantiate(mSkelBase->getMesh()->getSkeleton(), mBodyPartModelNameExt);
 
-    for (unsigned int i = 0; i < sceneG->mEntities.size(); ++i)
+    std::map<int32_t, Ogre::Entity*>::const_iterator it(sceneG->mForeignObj->mEntities.begin());
+    for (; it != sceneG->mForeignObj->mEntities.end(); ++it)
     {
         // FIXME:
-        if (mSkelBase->getMesh()->getSkeleton() == sceneG->mEntities[i]->getMesh()->getSkeleton())
-            sceneG->mEntities[i]->shareSkeletonInstanceWith(mSkelBase);
+        if (mSkelBase->getMesh()->getSkeleton() == it->second->getMesh()->getSkeleton())
+            it->second->shareSkeletonInstanceWith(mSkelBase);
         else
-            std::cout << "no anim " << mSkelBase->getMesh()->getName() << std::endl;
-        mInsert->attachObject(sceneG->mEntities[i]);
+            std::cout << "no anim " << mSkelBase->getMesh()->getName()
+                    << it->second->getMesh()->getName() << std::endl;
+        mInsert->attachObject(it->second);
     }
     mObjectParts[ESM::PRT_Groin] = sceneG;
 
@@ -823,8 +1768,22 @@ void ForeignNpcAnimation::updateNpcBase()
     // Armor\LegionHorsebackGuard\Helmet.NIF
 
     //if (armor->mEditorId == "LegionHelmet")
-    else if ((armor->mArmorFlags & ESM4::Armor::Flag_Hair) != 0) // note helmets share hair slot
+    else if (((armor->mArmorFlags & ESM4::Armor::TES4_Hair) != 0) || // note helmets share hair slot
+             ((armor->mArmorFlags & ESM4::Armor::FO3_Hair) != 0))
     {
+        // Not sure why detach is needed
+        if (!mObjectParts[ESM::PRT_Hair].isNull() && mObjectParts[ESM::PRT_Hair]->mForeignObj)
+        {
+            std::map<int32_t, Ogre::Entity*>::const_iterator it
+                = mObjectParts[ESM::PRT_Hair]->mForeignObj->mEntities.begin();
+            for (; it != mObjectParts[ESM::PRT_Hair]->mForeignObj->mEntities.end(); ++it)
+            {
+                mSkelBase->detachObjectFromBone(it->second);
+            }
+            mObjectParts[ESM::PRT_Hair]->mForeignObj.reset();
+            mObjectParts[ESM::PRT_Hair].reset();
+        }
+
         //addOrReplaceIndividualPart(ESM::PRT_Head, -1, 1, "meshes\\armor\\legionhorsebackguard\\helmet.nif", false, &glowColor);
         //mObjectParts[ESM::PRT_Head] = insertBoundedPart("meshes\\armor\\legionhorsebackguard\\helmet.nif", -1, "Bip01 Head", "", false, &glowColor);
         //Ogre::Bone* helmet = mSkelBase->getSkeleton()->createBone("Helmet"); // crashes!
@@ -839,45 +1798,52 @@ void ForeignNpcAnimation::updateNpcBase()
 //                                       //"meshes\\Characters\\Imperial\\headhuman.nif");
 //      mObjectParts[ESM::PRT_Head] = objectHelmet; // FIXME
 
-        meshName = "meshes\\"+armor->mModel;
+        if (isFemale && !armor->mModelFemale.empty()) // female
+    meshName = "meshes\\"+armor->mModelFemale;
+        else
+    meshName = "meshes\\"+armor->mModelMale;
         //else
             //meshName = "meshes\\"+hair->mModel;
 
         NifOgre::ObjectScenePtr sceneHe = NifOgre::ObjectScenePtr (new NifOgre::ObjectScene(mInsert->getCreator()));
-        std::auto_ptr<NiBtOgre::BtOgreInst>
-            instHe(new NiBtOgre::BtOgreInst(mInsert->createChildSceneNode(), sceneHe, meshName, group));
-        instHe->instantiate();
+        sceneHe->mForeignObj = std::make_shared<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(mInsert->createChildSceneNode(), meshName, group));
+        sceneHe->mForeignObj->instantiate();
 
         Ogre::Bone *heBone = mSkelBase->getSkeleton()->getBone("Bip01 Head");
         Ogre::Vector3 bodyPos = mSkelBase->getSkeleton()->getBone("Bip01")->getPosition();
         Ogre::Quaternion heOrientation = heBone->getOrientation() *
                                Ogre::Quaternion(Ogre::Degree(90), Ogre::Vector3::UNIT_Y); // fix helmet issue
         Ogre::Vector3 hePosition = Ogre::Vector3(0, 0, 0);//heBone->getPosition();
-        for (unsigned int i = 0; i < sceneHe->mEntities.size(); ++i)
+        std::map<int32_t, Ogre::Entity*>::const_iterator it(sceneHe->mForeignObj->mEntities.begin());
+        for (; it != sceneHe->mForeignObj->mEntities.end(); ++it)
         {
-            mSkelBase->attachObjectToBone("Bip01 Head", sceneHe->mEntities[i], heOrientation, hePosition);
+            mSkelBase->attachObjectToBone("Bip01 Head", it->second, heOrientation, hePosition);
         }
         mObjectParts[ESM::PRT_Hair] = sceneHe;
 
     }
-    else if ((armor->mArmorFlags & ESM4::Armor::Flag_Shield) != 0)
+    else if ((armor->mArmorFlags & ESM4::Armor::TES4_Shield) != 0)
     {
-    meshName = "meshes\\"+armor->mModel;
+        if (isFemale && !armor->mModelFemale.empty()) // female
+    meshName = "meshes\\"+armor->mModelFemale;
+        else
+    meshName = "meshes\\"+armor->mModelMale;
     //else
         //meshName = "meshes\\"+hair->mModel;
 
     NifOgre::ObjectScenePtr sceneSh = NifOgre::ObjectScenePtr (new NifOgre::ObjectScene(mInsert->getCreator()));
-    std::auto_ptr<NiBtOgre::BtOgreInst> instSh(new NiBtOgre::BtOgreInst(mInsert->createChildSceneNode(), sceneSh, meshName, group));
-    instSh->instantiate();
+    sceneSh->mForeignObj = std::make_shared<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(mInsert->createChildSceneNode(), meshName, group));
+    sceneSh->mForeignObj->instantiate();
 
-    for (unsigned int i = 0; i < sceneSh->mEntities.size(); ++i)
+    std::map<int32_t, Ogre::Entity*>::const_iterator it(sceneSh->mForeignObj->mEntities.begin());
+    for (; it != sceneSh->mForeignObj->mEntities.end(); ++it)
     {
-        mSkelBase->attachObjectToBone("Bip01 L ForearmTwist", sceneSh->mEntities[i]);
+        mSkelBase->attachObjectToBone("Bip01 L ForearmTwist", it->second);
     }
     mObjectParts[ESM::PRT_Shield] = sceneSh;
     }
     else
-        std::cout << "unknown armor " << armor->mEditorId << std::endl;
+        std::cout << "unknown armor " << armor->mEditorId << " " << std::hex << armor->mArmorFlags << std::endl;
 
 
     // LegionShield
@@ -899,36 +1865,56 @@ void ForeignNpcAnimation::updateNpcBase()
 
 
 
-                    std::string meshName = "meshes\\"+cloth->mModel;
+                    std::string meshName;
+        if (isFemale && !cloth->mModelFemale.empty()) // female
+    meshName = "meshes\\"+cloth->mModelFemale;
+        else
+    meshName = "meshes\\"+cloth->mModelMale;
 
         NifOgre::ObjectScenePtr scene = NifOgre::ObjectScenePtr (new NifOgre::ObjectScene(mInsert->getCreator()));
-        std::auto_ptr<NiBtOgre::BtOgreInst>
-            inst(new NiBtOgre::BtOgreInst(mInsert->createChildSceneNode(), scene, meshName, group));
-        inst->instantiate(mSkelBase->getMesh()->getSkeleton());
+        scene->mForeignObj = std::make_shared<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(mInsert->createChildSceneNode(), meshName, group));
+        scene->mForeignObj->instantiate(mSkelBase->getMesh()->getSkeleton(), mBodyPartModelNameExt);
 
-        for (unsigned int i = 0; i < scene->mEntities.size(); ++i)
+        std::map<int32_t, Ogre::Entity*>::const_iterator it(scene->mForeignObj->mEntities.begin());
+        for (; it != scene->mForeignObj->mEntities.end(); ++it)
         {
-            if ((cloth->mClothingFlags & ESM4::Armor::Flag_RightRing) == 0 &&
-                (cloth->mClothingFlags & ESM4::Armor::Flag_LeftRing) == 0)
+            if ((cloth->mClothingFlags & ESM4::Armor::TES4_RightRing) == 0 &&
+                (cloth->mClothingFlags & ESM4::Armor::TES4_LeftRing) == 0)
             {
                 // FIXME:
-                if (mSkelBase->getMesh()->getSkeleton() == scene->mEntities[i]->getMesh()->getSkeleton())
-                    scene->mEntities[i]->shareSkeletonInstanceWith(mSkelBase);
+                if (mSkelBase->getMesh()->getSkeleton() == it->second->getMesh()->getSkeleton())
+                    it->second->shareSkeletonInstanceWith(mSkelBase);
                 else
-                    std::cout << "no anim " << mSkelBase->getMesh()->getName() << std::endl;
-                mInsert->attachObject(scene->mEntities[i]);
+                    std::cout << "no anim " << mSkelBase->getMesh()->getName()
+                    << it->second->getMesh()->getName() << std::endl;
+
+                if ((cloth->mClothingFlags & ESM4::Armor::TES4_UpperBody) != 0 &&
+                    !mObjectParts[ESM::PRT_Cuirass].isNull())
+                    continue;
+                    if ((cloth->mClothingFlags & ESM4::Armor::TES4_LowerBody) != 0 &&
+                        !mObjectParts[ESM::PRT_Groin].isNull())
+                        continue;
+                mInsert->attachObject(it->second);
             }
             //else attach to bone?
         }
-        if ((cloth->mClothingFlags & ESM4::Armor::Flag_UpperBody) != 0)
+        if ((cloth->mClothingFlags & ESM4::Armor::TES4_UpperBody) != 0)
         {
+            if (mObjectParts[ESM::PRT_Cuirass].isNull())
+            {
+            std::cout << cloth->mEditorId << " U " << std::hex << cloth->mClothingFlags << std::endl;
             mObjectParts[ESM::PRT_Cuirass] = scene;
+            }
         }
-        else if ((cloth->mClothingFlags & ESM4::Armor::Flag_LowerBody) != 0)
+        else if ((cloth->mClothingFlags & ESM4::Armor::TES4_LowerBody) != 0)
         {
+            if (mObjectParts[ESM::PRT_Groin].isNull())
+            {
+            std::cout << cloth->mEditorId << " L " << std::hex << cloth->mClothingFlags << std::endl;
             mObjectParts[ESM::PRT_Groin] = scene;
+            }
         }
-        else if ((cloth->mClothingFlags & ESM4::Armor::Flag_Foot) != 0)
+        else if ((cloth->mClothingFlags & ESM4::Armor::TES4_Foot) != 0)
         {
             mObjectParts[ESM::PRT_RFoot] = scene;
         }
@@ -959,6 +1945,7 @@ void ForeignNpcAnimation::updateNpcBase()
             case MKTAG('M','K','E','Y'): /*std::cout << "Keys" << std::endl;*/ break;
             case MKTAG('H','A','L','C'): /*std::cout << "Potions" << std::endl;*/ break;
             case MKTAG('T','S','G','S'): /*std::cout << "SigilStones" << std::endl;*/ break;
+            case MKTAG('E','N','O','T'): /*std::cout << "Notes" << std::endl;*/ break;
             case MKTAG('I','L','V','L'):
             {
                 const ESM4::LeveledItem* lvli
@@ -972,12 +1959,98 @@ void ForeignNpcAnimation::updateNpcBase()
                 for (size_t j = lvli->mLvlObject.size()-1; j < lvli->mLvlObject.size(); ++j)
                 {
                     //std::cout << "LVLI " << lvli->mEditorId << " LVLO lev "
-                        //<< lvli->mLvlObject[j].level << ", item " << lvli->mLvlObject[j].item
-                                  //<< ", count " << lvli->mLvlObject[j].count << std::endl;
+                        //<< lvli->mLvlObject[j].level << ", item " << std::hex << lvli->mLvlObject[j].item
+                              //<< ", count " << lvli->mLvlObject[j].count << std::endl;
                     switch (store.find(lvli->mLvlObject[lvli->mLvlObject.size()-1].item)) // FIXME
                     {
                         case MKTAG('A','A','P','P'): /*std::cout << "lvl Apparatus" << std::endl;*/ break;
-                        case MKTAG('O','A','R','M'): std::cout << "lvl Armors" << std::endl; break;
+                        case MKTAG('I','L','V','L'):
+                        {
+                            //std::cout << "lvli again" << std::endl;
+                            const ESM4::LeveledItem* lvli2
+                                = store.getForeign<ESM4::LeveledItem>().search(lvli->mLvlObject[lvli->mLvlObject.size()-1].item);
+                for (size_t j = lvli2->mLvlObject.size()-1; j < lvli2->mLvlObject.size(); ++j)
+                {
+                    if (store.find(lvli2->mLvlObject[lvli2->mLvlObject.size()-1].item) == MKTAG('O','A','R','M'))
+                    {
+                            const ESM4::Armor* armor
+                                = store.getForeign<ESM4::Armor>().search(mNpc->mInventory[i].item);
+                            if (armor)
+                                std::cout << "found armor" << std::endl;
+                    }
+                }
+                            break;
+                        }
+                        case MKTAG('O','A','R','M'):
+                        {
+                            //std::cout << "lvl Armors" << std::endl; break;
+                            const ESM4::Armor* armor
+                                = store.getForeign<ESM4::Armor>().search(mNpc->mInventory[i].item);
+                            if (armor)
+                            {
+
+
+                    std::string meshName;
+        if (isFemale && !armor->mModelFemale.empty()) // female
+    meshName = "meshes\\"+armor->mModelFemale;
+        else
+    meshName = "meshes\\"+armor->mModelMale;
+
+        NifOgre::ObjectScenePtr scene = NifOgre::ObjectScenePtr (new NifOgre::ObjectScene(mInsert->getCreator()));
+        scene->mForeignObj = std::make_shared<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(mInsert->createChildSceneNode(), meshName, group));
+        scene->mForeignObj->instantiate(mSkelBase->getMesh()->getSkeleton(), mBodyPartModelNameExt);
+
+        std::map<int32_t, Ogre::Entity*>::const_iterator it(scene->mForeignObj->mEntities.begin());
+        for (; it != scene->mForeignObj->mEntities.end(); ++it)
+        {
+            if ((armor->mArmorFlags & ESM4::Armor::TES4_Hair) == 0) // note helmets share hair slot
+            {
+                // FIXME:
+                if (mSkelBase->getMesh()->getSkeleton() == it->second->getMesh()->getSkeleton())
+                    it->second->shareSkeletonInstanceWith(mSkelBase);
+                else
+                    std::cout << "no anim " << mSkelBase->getMesh()->getName()
+                    << it->second->getMesh()->getName() << std::endl;
+            }
+            else
+                mInsert->attachObject(it->second);
+        }
+        if ((armor->mArmorFlags & ESM4::Armor::TES4_UpperBody) != 0)
+        {
+            if (!mObjectParts[ESM::PRT_Cuirass].isNull())
+                mObjectParts[ESM::PRT_Cuirass].reset();
+            mObjectParts[ESM::PRT_Cuirass] = scene;
+        }
+        else if ((armor->mArmorFlags & ESM4::Armor::TES4_LowerBody) != 0)
+        {
+            mObjectParts[ESM::PRT_Groin] = scene;
+        }
+        else if ((armor->mArmorFlags & ESM4::Armor::TES4_Foot) != 0)
+        {
+            mObjectParts[ESM::PRT_RFoot].reset();
+            mObjectParts[ESM::PRT_RFoot] = scene;
+        }
+                            }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                        }
                         case MKTAG('K','B','O','O'): /*std::cout << "lvl Books" << std::endl;*/ break;
                         case MKTAG('T','C','L','O'):
                         {
@@ -985,49 +2058,57 @@ void ForeignNpcAnimation::updateNpcBase()
                                 = store.getForeign<ESM4::Clothing>().search(lvli->mLvlObject[lvli->mLvlObject.size()-1].item);
                             if (cloth)
                             {
-                                std::cout << "LVLI " << lvli->mEditorId << " LVLO lev "
-                                    << lvli->mLvlObject[j].level << std::endl;
+                                //std::cout << "LVLI " << lvli->mEditorId << " LVLO lev "
+                                    //<< lvli->mLvlObject[j].level << std::endl;
 
 
 
 
-#if 0
-                    std::string meshName = "meshes\\"+cloth->mModel;
+//#if 0
+                    std::string meshName;
+        if (isFemale && !cloth->mModelFemale.empty()) // female
+    meshName = "meshes\\"+cloth->mModelFemale;
+        else
+    meshName = "meshes\\"+cloth->mModelMale;
 
         NifOgre::ObjectScenePtr scene = NifOgre::ObjectScenePtr (new NifOgre::ObjectScene(mInsert->getCreator()));
-        std::auto_ptr<NiBtOgre::BtOgreInst>
-            inst(new NiBtOgre::BtOgreInst(mInsert->createChildSceneNode(), scene, meshName, group));
-        inst->instantiate(mSkelBase->getMesh()->getSkeleton());
+        scene->mForeignObj = std::make_shared<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(mInsert->createChildSceneNode(), meshName, group));
+        scene->mForeignObj->instantiate(mSkelBase->getMesh()->getSkeleton(), mBodyPartModelNameExt);
 
-        for (unsigned int i = 0; i < scene->mEntities.size(); ++i)
+        std::map<int32_t, Ogre::Entity*>::const_iterator it(scene->mForeignObj->mEntities.begin());
+        for (; it != scene->mForeignObj->mEntities.end(); ++it)
         {
-            if ((cloth->mClothingFlags & ESM4::Armor::Flag_RightRing) == 0 &&
-                (cloth->mClothingFlags & ESM4::Armor::Flag_LeftRing) == 0)
+            if ((cloth->mClothingFlags & ESM4::Armor::TES4_RightRing) == 0 &&
+                (cloth->mClothingFlags & ESM4::Armor::TES4_LeftRing) == 0)
             {
                 // FIXME:
-                if (mSkelBase->getMesh()->getSkeleton() == scene->mEntities[i]->getMesh()->getSkeleton())
-                    scene->mEntities[i]->shareSkeletonInstanceWith(mSkelBase);
+                if (mSkelBase->getMesh()->getSkeleton() == it->second->getMesh()->getSkeleton())
+                    it->second->shareSkeletonInstanceWith(mSkelBase);
                 else
                     std::cout << "no anim " << mSkelBase->getMesh()->getName() << std::endl;
-                mInsert->attachObject(scene->mEntities[i]);
+                mInsert->attachObject(it->second);
             }
             //else attach to bone?
         }
-        if ((cloth->mClothingFlags & ESM4::Armor::Flag_UpperBody) != 0)
+        if ((cloth->mClothingFlags & ESM4::Armor::TES4_UpperBody) != 0)
         {
+            std::cout << std::hex << cloth->mClothingFlags << std::endl;
+            if (mObjectParts[ESM::PRT_Cuirass].isNull())
             mObjectParts[ESM::PRT_Cuirass] = scene;
         }
-        else if ((cloth->mClothingFlags & ESM4::Armor::Flag_LowerBody) != 0)
+        else if ((cloth->mClothingFlags & ESM4::Armor::TES4_LowerBody) != 0)
         {
+            if (mObjectParts[ESM::PRT_Groin].isNull())
             mObjectParts[ESM::PRT_Groin] = scene;
         }
-        else if ((cloth->mClothingFlags & ESM4::Armor::Flag_Foot) != 0)
+        else if ((cloth->mClothingFlags & ESM4::Armor::TES4_Foot) != 0)
         {
+            mObjectParts[ESM::PRT_RFoot].reset();
             mObjectParts[ESM::PRT_RFoot] = scene;
         }
 
 
-#endif
+//#endif
 
 
 
@@ -1052,6 +2133,7 @@ void ForeignNpcAnimation::updateNpcBase()
                         case MKTAG('M','K','E','Y'): /*std::cout << "lvl Keys" << std::endl;*/ break;
                         case MKTAG('H','A','L','C'): /*std::cout << "lvl Potions" << std::endl;*/ break;
                         case MKTAG('T','S','G','S'): /*std::cout << "lvl SigilStones" << std::endl;*/ break;
+                        case MKTAG('E','N','O','T'): /*std::cout << "lvl notes" << std::endl;*/ break;
                         default: break;
                     }
                 }
@@ -1059,6 +2141,29 @@ void ForeignNpcAnimation::updateNpcBase()
             }
             default: /*std::cout << "unknown inventory" << std::endl;*/ break; // FIXME
         }
+    }
+
+    if (mObjectParts[ESM::PRT_Cuirass].isNull())
+    {
+        if (isFemale)
+        meshName = "meshes\\characters\\_male\\femaleupperbody.nif";
+        else
+        meshName = "meshes\\characters\\_male\\upperbody.nif";
+        NifOgre::ObjectScenePtr scene = NifOgre::ObjectScenePtr (new NifOgre::ObjectScene(mInsert->getCreator()));
+        scene->mForeignObj = std::make_shared<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(mInsert->createChildSceneNode(), meshName, group));
+        scene->mForeignObj->instantiate(mSkelBase->getMesh()->getSkeleton(), mBodyPartModelNameExt);
+
+        std::map<int32_t, Ogre::Entity*>::const_iterator it(scene->mForeignObj->mEntities.begin());
+        for (; it != scene->mForeignObj->mEntities.end(); ++it)
+        {
+            // FIXME:
+            if (mSkelBase->getMesh()->getSkeleton() == it->second->getMesh()->getSkeleton())
+                it->second->shareSkeletonInstanceWith(mSkelBase);
+            else
+                std::cout << "no anim " << mSkelBase->getMesh()->getName() << std::endl;
+            mInsert->attachObject(it->second);
+        }
+        mObjectParts[ESM::PRT_Cuirass] = scene;
     }
 
 
@@ -1069,6 +2174,8 @@ void ForeignNpcAnimation::updateNpcBase()
     mObjectParts[ESM::PRT_Head] = insertBoundedPart(mHeadModel, -1, "Bip01", "Head", false, 0);
     addOrReplaceIndividualPart(ESM::PRT_RHand, -1, 1, "meshes\\characters\\_male\\hand.nif");
 #endif
+
+    //if (mAccumRoot) mAccumRoot->setPosition(Ogre::Vector3());
 
     mWeaponAnimationTime->updateStartTime();
 }
@@ -1086,14 +2193,19 @@ void ForeignNpcAnimation::addAnimSource(const std::string &model)
     // For TES4, different animations (e.g. idle, block) have different kf files.
     size_t pos = lowerModel.find("skeleton.nif");
     if (pos == std::string::npos)
-        return; // FIXME: should throw here
+    {
+        pos = lowerModel.find("skeletonbeast.nif");
+        if (pos == std::string::npos)
+            return; // FIXME: should throw here
+        // TODO: skeletonsesheogorath
+    }
 
     // FIXME: for testing just load idle
     std::string animName = model.substr(0, pos) + "handtohandattackleft_jab.kf";
 
     addForeignAnimSource(model, animName);
-    animName = model.substr(0, pos) + "handtohandattackright_hook.kf";
-    addForeignAnimSource(model, animName);
+    //animName = model.substr(0, pos) + "handtohandattackright_hook.kf";
+    //addForeignAnimSource(model, animName);
     //animName = model.substr(0, pos) + "blockidle.kf";
     //addForeignAnimSource(model, animName);
     //animName = model.substr(0, pos) + "sneakidle.kf";
@@ -1110,8 +2222,15 @@ void ForeignNpcAnimation::addAnimSource(const std::string &model)
     //animName = model.substr(0, pos) + "dodgeleft.kf";
     //animName = model.substr(0, pos) + "idleanims\\cheer01.kf";
     //animName = model.substr(0, pos) + "idleanims\\talk_armscrossed_motion.kf";
-    //animName = model.substr(0, pos) + "idle.kf";
-    animName = model.substr(0, pos) + "castselfalt.kf";
+    //animName = model.substr(0, pos) + "castselfalt.kf";
+    //animName = model.substr(0, pos) + "idleanims\\umpa_disco.kf";
+    animName = model.substr(0, pos) + "walkforward.kf";
+    animName = model.substr(0, pos) + "idle.kf";
+    //
+    //animName = model.substr(0, pos) + "idleanims\\talk_relaxed.kf";
+    //animName = model.substr(0, pos) + "idleanims\\bdaycheera.kf";
+    //animName = model.substr(0, pos) + "idleanims\\laugha.kf";
+    //animName = model.substr(0, pos) + "locomotion\\male\\mtforward.kf";
     addForeignAnimSource(model, animName);
 }
 
@@ -1124,7 +2243,7 @@ void ForeignNpcAnimation::addForeignAnimSource(const std::string& model, const s
     std::string group("General"); // FIXME
     NiModelPtr npcModel = NiBtOgre::NiModelManager::getSingleton().getOrLoadByName(model, group);
     npcModel->buildSkeleton(); // FIXME: hack
-    assert(!NiModelPtr.isNull() && "skeleton.nif should have been built already");
+    assert(!npcModel.isNull() && "skeleton.nif should have been built already");
     NiModelPtr anim = NiBtOgre::NiModelManager::getSingleton().getOrLoadByName(animName, group);
 
     // Animation::AnimSource : public Ogre::AnimationAlloc
@@ -1993,7 +3112,7 @@ Ogre::Radian ForeignNpcAnimation::getHeadYaw() const
 }
 
 // characters/_male/skeleton.nif has:
-//
+//                                    {{{
 // Bip01
 // Bip01 Tail03
 // Bip01 Tail06
@@ -2164,3 +3283,5 @@ Ogre::Radian ForeignNpcAnimation::getHeadYaw() const
 // SideWeapon
 // Bip01 TailRoot
 // ... etc
+//                                    }}}
+/* vim: set tw=110 fen fdm=marker fdl=0: */

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015-2018 cc9cii
+  Copyright (C) 2015-2019 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -53,7 +53,7 @@ namespace NiBtOgre
         NiParticleModifierRef mNextModifier;
         NiParticleSystemController *mController; // Ptr
 
-        NiParticleModifier(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
+        NiParticleModifier(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
     };
 
     class NiGravity : public NiParticleModifier
@@ -64,7 +64,7 @@ namespace NiBtOgre
         Ogre::Vector3 mPosition;
         Ogre::Vector3 mDirection;
 
-        NiGravity(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
+        NiGravity(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
     };
 
     class NiParticleColorModifier : public NiParticleModifier
@@ -72,7 +72,7 @@ namespace NiBtOgre
     public:
         NiColorDataRef mColorData;
 
-        NiParticleColorModifier(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
+        NiParticleColorModifier(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
     };
 
     class NiParticleGrowFade : public NiParticleModifier
@@ -81,21 +81,21 @@ namespace NiBtOgre
         float mGrowTime;
         float mFadeTime;
 
-        NiParticleGrowFade(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
+        NiParticleGrowFade(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
     };
 
     class NiParticleRotation : public NiParticleModifier
     {
         // FIXME: all skipped for now
     public:
-        NiParticleRotation(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
+        NiParticleRotation(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
     };
 
     class NiPlanarCollider : public NiParticleModifier
     {
         // FIXME: all skipped for now
     public:
-        NiPlanarCollider(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
+        NiPlanarCollider(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
     };
 }
 

@@ -680,6 +680,17 @@ namespace MWWorld
     {
         Ogre::SceneNode* node = ptr.getRefData().getBaseNode();
         handleToMesh[node->getName()] = mesh;
+
+        // FIXME: this part is a horrid hack
+        MWRender::Animation* anim = MWBase::Environment::get().getWorld()->getAnimation(ptr);
+        MWRender::ObjectAnimation *objAnim = dynamic_cast<MWRender::ObjectAnimation*>(anim);
+        if (objAnim && !objAnim->getPhysicsNodeMap().empty())  // FIXME: this is such a bad hack
+        {
+            mEngine->createAndAdjustRagdollBody(
+                mesh, node->getName(), objAnim->getPhysicsNodeMap(), ptr.getCellRef().getScale(), node->getPosition(), node->getOrientation(), 0, 0, false, placeable);
+            return;
+        }
+
         mEngine->createAndAdjustRigidBody(
             mesh, node->getName(), ptr.getCellRef().getScale(), node->getPosition(), node->getOrientation(), 0, 0, false, placeable);
         mEngine->createAndAdjustRigidBody(

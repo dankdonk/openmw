@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015-2018 cc9cii
+  Copyright (C) 2015-2019 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -55,7 +55,7 @@ namespace NiBtOgre
         bool mWorldSpace;                          // from 10.1.0.0
         std::vector<NiPSysModifierRef> mModifiers; // from 10.1.0.0
 
-        NiParticleSystem(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
+        NiParticleSystem(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
 
         virtual void build(BtOgreInst *inst, NiObject *parentNiNode = nullptr);
     };

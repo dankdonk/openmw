@@ -14,9 +14,17 @@ namespace MWRender
 {
     class ForeignCreatureAnimation : public Animation
     {
+        std::vector<NifOgre::ObjectScenePtr> mObjectParts;
+        void addForeignAnimSource(const std::string& model, const std::string &animName);
     public:
         ForeignCreatureAnimation(const MWWorld::Ptr& ptr, const std::string &model);
         virtual ~ForeignCreatureAnimation() {}
+        Ogre::Vector3 runAnimation(float timepassed);
+        void addAnimSource(const std::string &skeletonModel);
+
+        void play(const std::string &groupname, int priority, int groups, bool autodisable,
+            float speedmult, const std::string &start, const std::string &stop,
+            float startpoint, size_t loops, bool loopfallback);
     };
 
     // For creatures with weapons and shields

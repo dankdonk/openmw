@@ -40,6 +40,7 @@
 #include <extern/esm4/regn.hpp>
 #include <extern/esm4/land.hpp>
 #include <extern/esm4/anio.hpp>
+#include <extern/esm4/note.hpp>
 
 #include "livecellref.hpp"
 #include "cellreflist.hpp"
@@ -147,6 +148,7 @@ namespace MWWorld
             CellRefList<ESM4::Subspace>         mForeignSubspaces;
             CellRefList<ESM4::SigilStone>       mForeignSigilStones;
             CellRefList<ESM4::LeveledItem>      mForeignLvlItems;
+            CellRefList<ESM4::Note>             mForeignNotes;
 
             void loadTes4Group (const MWWorld::ESMStore &store, ESM::ESMReader& esm);
             void loadTes4Record (const MWWorld::ESMStore &store, ESM::ESMReader& esm);
@@ -257,7 +259,8 @@ namespace MWWorld
                     forEachImp (functor, mForeignPotions) &&
                     forEachImp (functor, mForeignSubspaces) &&
                     forEachImp (functor, mForeignSigilStones) &&
-                    forEachImp (functor, mForeignLvlItems);
+                    forEachImp (functor, mForeignLvlItems) &&
+                    forEachImp (functor, mForeignNotes);
             }
 
             template<class Functor>

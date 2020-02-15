@@ -79,9 +79,9 @@ namespace NiBtOgre
         std::uint16_t mNumValid;
         std::vector<Particle> mParticles;
 
-        NiParticleModifierRef mParticleExtraIndex;
+        NiParticleModifierRef mParticleExtraRef;
 
-        NiParticleSystemController(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
+        NiParticleSystemController(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
     };
 
     typedef NiParticleSystemController NiBSPArrayController;

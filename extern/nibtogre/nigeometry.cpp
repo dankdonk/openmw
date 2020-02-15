@@ -52,9 +52,9 @@
 #undef NDEBUG
 #endif
 
-NiBtOgre::NiGeometry::NiGeometry(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::NiGeometry::NiGeometry(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : NiAVObject(index, stream, model, data), mHasShader(false), mDirtyFlag(false)
-    , mParent(data.getNiNodeParent((NiAVObjectRef)NiObject::mSelfIndex))
+    , mParent(data.getNiNodeParent((NiAVObjectRef)NiObject::mSelfRef))
 {
 #if 0
     // Some NiTriShapes are "Shadow", possibly simplified mesh for animated (i.e. non-static)
@@ -64,11 +64,13 @@ NiBtOgre::NiGeometry::NiGeometry(uint32_t index, NiStream& stream, const NiModel
         std::cout << "Shadow : " << model.getModelName() << " : " << model.indexToString(mName) << std::endl;
     }
 #endif
-    stream.read(mDataIndex);
-    stream.read(mSkinInstanceIndex);
+    stream.read(mDataRef);
+    stream.read(mSkinInstanceRef);
 
     if (stream.nifVer() == 0x0a000100)     // HACK: not sure why this is needed
         stream.skip(sizeof(std::int32_t)); // e.g. clutter/farm/oar01.nif version 10.0.1.0
+    else if (stream.nifVer() == 0x0a01006a)
+        stream.skip(sizeof(std::int32_t)); // e.g. creatures/horse/bridle.nif version 10.1.0.106
 
     if (stream.nifVer() >= 0x14020007) // from 20.2.0.7 (TES5)
     {
@@ -110,23 +112,25 @@ NiBtOgre::NiGeometry::NiGeometry(uint32_t index, NiStream& stream, const NiModel
     }
 }
 
-NiBtOgre::NiTriBasedGeom::NiTriBasedGeom(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::NiTriBasedGeom::NiTriBasedGeom(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : NiGeometry(index, stream, model, data), mData(data) // for accessing mSkeleton later
+    , mVertices(0)
 {
     mLocalTransform.makeTransform(mTranslation, Ogre::Vector3(mScale), Ogre::Quaternion(mRotation));
     //  at least one shape's parent is NiTriStrips i.e. the world transform will be required
     //  FIXME: physics shape is a little offset from the render
     //  Furniture\MiddleClass\BearSkinRug01.NIF (0001C7CA)
     //  COC "ICMarketDistrictJensinesGoodasNewMerchandise"
-    if (mCollisionObjectIndex != -1)
+    if (mCollisionObjectRef != -1)
         NiAVObject::mWorldTransform = NiGeometry::mParent.getWorldTransform() * mLocalTransform;
 
     mParent.registerSubMesh(this);
 
     // if there is node animation in the model include any sub-mesh to be part of the animation
     // FIXME: HACK for testing; may add bones that are not necessary
-    if (data.mSkelLeafIndicies.size() > 0 && model.blockType(mParent.index()) == "NiNode")
-        data.addSkelLeafIndex(mParent.index()); // may attempt to add bones already added
+    if (data.mSkelLeafIndicies.size() > 0 && (model.blockType(mParent.selfRef()) == "NiNode" ||
+                model.blockType(mParent.selfRef()) == "BSFadeNode")) // FIXME
+        data.addSkelLeafIndex(mParent.selfRef()); // may attempt to add bones already added
 }
 
 // Can't remember why I wanted SubEntityController (a base class maybe?)
@@ -144,7 +148,7 @@ NiBtOgre::NiTriBasedGeom::NiTriBasedGeom(uint32_t index, NiStream& stream, const
 // the parameter 'controllers' are keyed to the index of this sub-mesh
 std::string NiBtOgre::NiTriBasedGeom::getMaterial()
 {
-    const NiGeometryData* data = mModel.getRef<NiGeometryData>(mDataIndex);
+    const NiGeometryData* data = mModel.getRef<NiGeometryData>(mDataRef);
     mOgreMaterial.vertexColor = (data->mVertexColors.size() != 0);
 
     // NiGeometry is derived from NiAVObject, so it has its own transform and properties (like NiNode)
@@ -159,9 +163,9 @@ std::string NiBtOgre::NiTriBasedGeom::getMaterial()
         property->applyMaterialProperty(mOgreMaterial, mControllers);
 
 #if 0
-        while (property->mControllerIndex != -1)
+        while (property->mControllerRef != -1)
         {
-            NiTimeController* controller = mModel.getRef<NiTimeController*>(property->mControllerIndex);
+            NiTimeController* controller = mModel.getRef<NiTimeController*>(property->mControllerRef);
 
             // current place in controller map
             //
@@ -179,11 +183,23 @@ std::string NiBtOgre::NiTriBasedGeom::getMaterial()
             //          | 0..N
             //     *NiTimeController
             //
-            int n = inst->mEntityCIMap[mParent->index()].size(); // n-1 is the current sub mesh index
+            int n = inst->mEntityCIMap[mParent->selfRef()].size(); // n-1 is the current sub mesh index
 
             // under this sub mesh index there are 0..N time controllers
         }
 #endif
+    }
+
+    if (mModel.nifVer() >= 0x14020007) // FIXME: user version ignored
+    {
+        for (size_t i = 0; i < mBSProperties.size(); ++i)
+        {
+            if (mBSProperties[i] != -1)
+            {
+                NiProperty* property = mModel.getRef<NiProperty>(mBSProperties[i]);
+                property->applyMaterialProperty(mOgreMaterial, mControllers);
+            }
+        }
     }
 
     // now the sub-mesh knows about *all* the properties, retrieve or create a material
@@ -191,6 +207,40 @@ std::string NiBtOgre::NiTriBasedGeom::getMaterial()
     // TODO: probably don't need the parent node name, commented out for now
     return mOgreMaterial.getOrCreateMaterial(mModel.getModelName()+"@"+/*mParent->getNodeName()+":"+*/
                                              mModel.indexToString(NiObjectNET::getNameIndex()));
+}
+
+void NiBtOgre::NiTriBasedGeom::setVertices(std::vector<Ogre::Vector3>& vertices)
+{
+    mVertices = &vertices;
+}
+
+// FIXME: a lot of copying
+std::vector<Ogre::Vector3> NiBtOgre::NiTriBasedGeom::getVertices()
+{
+    //const NiGeometryData* data = mModel.getRef<NiGeometryData>(mDataRef);
+    if (mVertices)
+    {
+#if 0
+        std::vector<Ogre::Vector3> res;
+        res.resize(mVertices->size());
+        for (size_t i = 0; i < mVertices->size(); ++i)
+        {
+            res[i] = data->mVertices[i];// + mVertices->at(i);
+//          if (data->mVertices[i].x - mVertices->at(i).x > 0.0001 ||
+//              data->mVertices[i].y - mVertices->at(i).y > 0.0001 ||
+//              data->mVertices[i].z - mVertices->at(i).z > 0.0001)
+//              std::cout << "diff index " << i << std::endl;
+        }
+        return res;
+#else
+        return *mVertices;
+#endif
+    }
+    else
+    {
+        const NiGeometryData* data = mModel.getRef<NiGeometryData>(mDataRef);
+        return data->mVertices;
+    }
 }
 
 // build Ogre mesh and apply shader/material using scene
@@ -237,11 +287,11 @@ bool NiBtOgre::NiTriBasedGeom::createSubMesh(Ogre::Mesh *mesh, BoundsFinder& bou
     //
     //Ogre::SubMesh *sub = mesh->createSubMesh();
 
-    const NiGeometryData* data = mModel.getRef<NiGeometryData>(mDataIndex);
-    std::string type = mModel.blockType(data->index());
+    const NiGeometryData* data = mModel.getRef<NiGeometryData>(mDataRef);
+    //std::string type = mModel.blockType(data->selfRef());
 
 #if 0
-    // FIXME: move the flags to NiModel::mModelData
+    // FIXME: move the flags to NiModel::mBuildData
     //
     // ICDoor04, UpperChest02 - these have animation flag but are static. Maybe ignore this flag?
     // NOTE: Flag_HasSkin may not be set if only some of the NiGeometry blocks have skin.
@@ -259,20 +309,26 @@ bool NiBtOgre::NiTriBasedGeom::createSubMesh(Ogre::Mesh *mesh, BoundsFinder& bou
 
     Ogre::Matrix4 transform = Ogre::Matrix4(Ogre::Matrix4::IDENTITY);
     //if (!isStatic)
-    if (mSkinInstanceIndex != -1) // using the local transform doesn't seem to do much
+    if (mSkinInstanceRef != -1) // using the local transform doesn't seem to do much
         transform = mParent.getLocalTransform() * mLocalTransform;
+    //else if (mModel.getModelName().find("geardoor") != std::string::npos)
+        //transform = mParent.getLocalTransform() * mLocalTransform;
     else
         transform = mParent.getWorldTransform() * mLocalTransform;
 
     // NOTE: below code copied from components/nifogre/mesh.cpp (OpenMW)
 
+#if 0
     std::vector<Ogre::Vector3> srcVerts = data->mVertices;
-    std::vector<Ogre::Vector3> srcNorms = data->mNormals;
+#else
+    std::vector<Ogre::Vector3> srcVerts = getVertices();
+#endif
+    std::vector<Ogre::Vector3> srcNorms = data->mNormals; // FIXME: do these need to be re-calculated for FG?
     Ogre::HardwareBuffer::Usage vertUsage = Ogre::HardwareBuffer::HBU_STATIC;
     bool vertShadowBuffer = false;
 
     // TODO: seems to make no difference to vertex anim
-    if (mSkinInstanceIndex != -1/* || NiAVObject::mHasAnim*/ || !mData.mSkeleton.isNull())
+    if (mSkinInstanceRef != -1/* || NiAVObject::mHasAnim*/ || !mData.mSkeleton.isNull())
     {
         vertUsage = Ogre::HardwareBuffer::HBU_DYNAMIC_WRITE_ONLY;
         vertShadowBuffer = true;
@@ -348,7 +404,17 @@ bool NiBtOgre::NiTriBasedGeom::createSubMesh(Ogre::Mesh *mesh, BoundsFinder& bou
         std::vector<Ogre::RGBA> colorsRGB(colors.size());
         for (size_t i = 0; i < colorsRGB.size(); ++i)
         {
+#if 0
             Ogre::ColourValue clr(colors[i][0], colors[i][1], colors[i][2], colors[i][3]);
+            if (mModel.getModelName().find("air") != std::string::npos)
+            {
+                Ogre::Vector3 col(colors[i][0], colors[i][1], colors[i][2]);
+                col += Ogre::Vector3(110/256, 110/256, 110/256);
+                clr = Ogre::ColourValue(col.x, col.y, col.z, colors[i][3]);
+            }
+#else
+            Ogre::ColourValue clr(colors[i][0], colors[i][1], colors[i][2], colors[i][3]);
+#endif
             rs->convertColourValue(clr, &colorsRGB[i]);
         }
         vbuf = hwBufMgr->createVertexBuffer(Ogre::VertexElement::getTypeSize(Ogre::VET_COLOUR),
@@ -430,7 +496,8 @@ bool NiBtOgre::NiTriBasedGeom::createSubMesh(Ogre::Mesh *mesh, BoundsFinder& bou
     //
     // If there is a skin, a skeleton is needed (skeleton is at the NIF level, but skin is at a
     // sub mesh level?)
-    if (mSkinInstanceIndex != -1)
+    if (mSkinInstanceRef != -1)
+        //&& mData.hasSkeleton()) // FIXME: Vvardenfellarmormod\cephalopod\helmet.nif
     {
         // ManualResourceLoaders for Mesh and Skeleton needs to be able to reload as necessary.
         // That means haveing to retrieve an NiModel from a cache and creating the resource
@@ -442,7 +509,7 @@ bool NiBtOgre::NiTriBasedGeom::createSubMesh(Ogre::Mesh *mesh, BoundsFinder& bou
         // FIXME: move this to NiModel?
         mesh->setSkeletonName(mData.mSkeleton->getName());
 
-        // build skeleton on demand; need to check for each mSkinInstanceIndex
+        // build skeleton on demand; need to check for each mSkinInstanceRef
         //
         // start at Skeleton Root and build a tree? but that can result
         // in way too many bones (e.g. oblivion/gate/oblivionarchgate01.nif)
@@ -452,25 +519,97 @@ bool NiBtOgre::NiTriBasedGeom::createSubMesh(Ogre::Mesh *mesh, BoundsFinder& bou
         // bone assignments
         //Ogre::SkeletonPtr skeleton = mData.mSkeleton;
 
-        const NiSkinInstance *skinInstance = mModel.getRef<NiSkinInstance>(mSkinInstanceIndex);
-        const NiSkinData *skinData = mModel.getRef<NiSkinData>(skinInstance->mDataIndex);
-        for(size_t i = 0; i < skinInstance->mBones.size(); ++i)
+        const NiSkinInstance *skinInstance = mModel.getRef<NiSkinInstance>(mSkinInstanceRef);
+        const NiSkinData *skinData = mModel.getRef<NiSkinData>(skinInstance->mDataRef);
+
+
+
+        int foreLTwist,foreRTwist, foreL, foreR;
+        for(size_t i = 0; i < skinInstance->mBoneRefs.size(); ++i)
+        {
+            //Ogre::VertexBoneAssignment boneInf;
+            //std::string nodeName = mModel.getRef<NiNode>(skinInstance->mBones[i])->getNiNodeName();
+            //std::cout << mModel.getModelName() << " " << nodeName << std::endl;
+            //if (nodeName == "Bip01 R ForeTwist")
+                //foreRTwist = i;
+            //else if (nodeName == "Bip01 L ForeTwist")
+                //foreLTwist = i;
+            //else if (nodeName == "Bip01 L Sholder")
+                //foreL= i;
+            //else if (nodeName == "Bip01 R Sholder")
+                //foreR= i;
+        }
+
+
+
+        for(size_t i = 0; i < skinInstance->mBoneRefs.size(); ++i)
         {
             Ogre::VertexBoneAssignment boneInf;
-            std::string nodeName = mModel.getRef<NiNode>(skinInstance->mBones[i])->getNiNodeName();
-            boneInf.boneIndex = mData.mSkeleton->getBone(nodeName)->getHandle();
+            std::string nodeName = mModel.getRef<NiNode>(skinInstance->mBoneRefs[i])->getNiNodeName();
+
+#if 0
+            if (nodeName == "Bip01 L Finger0" || nodeName == "Bip01 R Finger0" ||
+                nodeName == "Bip01 L Finger01" || nodeName == "Bip01 R Finger01" ||
+                nodeName == "Bip01 L Finger1" || nodeName == "Bip01 R Finger1" ||
+                nodeName == "Bip01 L Finger11" || nodeName == "Bip01 R Finger11" ||
+                nodeName == "Bip01 L Finger2" || nodeName == "Bip01 R Finger2" ||
+                nodeName == "Bip01 L Finger21" || nodeName == "Bip01 R Finger21" ||
+                nodeName == "Bip01 L Finger31" || nodeName == "Bip01 R Finger31" ||
+                nodeName == "Bip01 L Finger41" || nodeName == "Bip01 R Finger41")
+                continue;
+            if (nodeName == "Bip01 L ForeTwist" || nodeName == "Bip01 R ForeTwist")
+                continue;
+#endif
+            if (nodeName == "Bip01 L Sholder" || nodeName == "Bip01 R Sholder")
+                continue;
+
+
+            boneInf.boneIndex = mData.mSkeleton->getBone(/*"#"+std::to_string(skinInstance->mBoneRefs[i])+"@"+*/nodeName)->getHandle();
 
             const std::vector<NiSkinData::SkinData::SkinWeight> &weights = skinData->mBoneList[i].vertexWeights;
             for(size_t j = 0; j < weights.size(); ++j)
             {
                 boneInf.vertexIndex = weights[j].vertex;
                 boneInf.weight = weights[j].weight;
+
+
+//#if 0 // FIXME: need to get node numbers
+
+            if (nodeName == "Bip01 L ForeTwist")// || nodeName == "Bip01 R ForeTwist")
+            {
+                boneInf.boneIndex = mData.mSkeleton->getBone("Bip01 L Forearm")->getHandle();
+                //boneInf.vertexIndex = weights[foreL].vertex;
+                //boneInf.weight = weights[foreL].weight;
+            }
+            else if (nodeName == "Bip01 R ForeTwist")
+            {
+                boneInf.boneIndex = mData.mSkeleton->getBone("Bip01 R Forearm")->getHandle();
+                //boneInf.vertexIndex = weights[foreR].vertex;
+                //boneInf.weight = weights[foreR].weight;
+            }
+            //else if (nodeName == "Bip01 L Sholder")
+                //boneInf.boneIndex = mData.mSkeleton->getBone("Bip01 L UpperArm")->getHandle();
+            //else if (nodeName == "Bip01 R Sholder")
+                //boneInf.boneIndex = mData.mSkeleton->getBone("Bip01 R UpperArm")->getHandle();
+
+//#endif
+
+
                 sub->addBoneAssignment(boneInf);
             }
         }
-    } // mSkinInstanceIndex != -1
-    else if (mData.hasSkeleton() && mData.mSkeleton->hasBone(mParent.getNiNodeName()))
+    } // mSkinInstanceRef != -1
+    else if (mData.hasSkeleton()
+        && mData.mSkeleton->getName() == mModel.getModelName() // hack to avoid body parts
+        && mData.mSkeleton->hasBone(mParent.getNiNodeName())
+        //&& (mModel.nifVer() < 0x14020007 || mParent.getNiNodeName() == "HeadAnims") // not FO3 onwards
+
+        //&& mModel.getModelName().find("geardoor") == std::string::npos
+        )
     {
+        // FIXME: for some reason this block is needed for npc animations to work but it
+        // shouldn't
+
         // for node animation
 
         // FIXME: the issue seems to be that the child nodes are not being moved
@@ -483,6 +622,8 @@ bool NiBtOgre::NiTriBasedGeom::createSubMesh(Ogre::Mesh *mesh, BoundsFinder& bou
         {
 
 
+        // FIXME: I have no idea why "HeadAnims" is needed, but without it the NPCs don't show up
+        //std::cout << "mystery " << mModel.getModelName() << " " << mParent.getNiNodeName() << std::endl;
 
 
 
@@ -490,7 +631,7 @@ bool NiBtOgre::NiTriBasedGeom::createSubMesh(Ogre::Mesh *mesh, BoundsFinder& bou
         mesh->setSkeletonName(mModel.getModelName()); // FIXME: not the best place from a SubMesh?
 
         Ogre::VertexBoneAssignment boneInf;
-        boneInf.boneIndex = mData.mSkeleton->getBone(mParent.getNiNodeName())->getHandle();
+        boneInf.boneIndex = mData.mSkeleton->getBone(/*"#"+std::to_string(mParent.selfRef())+"@"+*/mParent.getNiNodeName())->getHandle();
 
         for (unsigned int j = 0; j < srcVerts.size(); ++j)
         {
@@ -518,10 +659,10 @@ bool NiBtOgre::NiTriBasedGeom::createSubMesh(Ogre::Mesh *mesh, BoundsFinder& bou
     // NOTE: NiUVController needs to be associated with a sub-entity, so the build/setup is
     //       compelted at a later point.  In comparison, NiGeomMorpherController adds animation
     //       to the sub-mesh so no further setup is required.
-    NiTimeControllerRef controllerIndex = NiObjectNET::mControllerIndex;
-    while (controllerIndex != -1)
+    NiTimeControllerRef controllerRef = NiObjectNET::mControllerRef;
+    while (controllerRef != -1)
     {
-        controllerIndex = mModel.getRef<NiTimeController>(controllerIndex)->build(mesh);
+        controllerRef = mModel.getRef<NiTimeController>(controllerRef)->build(mesh);
     }
 
     // if required build tangents at the mesh level
@@ -529,8 +670,8 @@ bool NiBtOgre::NiTriBasedGeom::createSubMesh(Ogre::Mesh *mesh, BoundsFinder& bou
 }
 
 // Seen in NIF version 20.2.0.7
-NiBtOgre::BSLODTriShape::BSLODTriShape(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
-    : NiGeometry(index, stream, model, data)
+NiBtOgre::BSLODTriShape::BSLODTriShape(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+    : NiTriBasedGeom(index, stream, model, data)
 {
     stream.read(mLevel0Size);
     stream.read(mLevel1Size);

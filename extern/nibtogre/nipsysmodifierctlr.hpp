@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015-2018 cc9cii
+  Copyright (C) 2015-2019 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -44,6 +44,7 @@
 //                     NiPSysModifierActiveCtlr <--------- /* NiPSysModfierCtlr */
 //                 NiPSysModifierFloatCtlr
 //                     NiPSysEmitterInitialRadiusCtlr <--- /* NiPSysModifierFloatCtlr */
+//                     NiPSysEmitterDeclinationCtlr <----- /* NiPSysModifierFloatCtlr */
 //                     NiPSysEmitterLifeSpanCtlr <-------- /* NiPSysModifierFloatCtlr */
 //                     NiPSysEmitterSpeedCtlr <----------- /* NiPSysModifierFloatCtlr */
 //                     NiPSysGravityStrengthCtlr <-------- /* NiPSysModifierFloatCtlr */
@@ -52,9 +53,9 @@ namespace NiBtOgre
     class NiPSysModifierCtlr : public NiSingleInterpController
     {
     public:
-        std::uint32_t mModifierNameIndex;
+        std::uint32_t mModifierNameRef;
 
-        NiPSysModifierCtlr(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
+        NiPSysModifierCtlr(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
     };
 
     // Seen in NIF ver 20.0.0.4, 20.0.0.5
@@ -62,11 +63,11 @@ namespace NiBtOgre
     {
     public:
 #if 0
-        NiPSysEmitterCtlrDataRef mDataIndex;
+        NiPSysEmitterCtlrDataRef mDataRef;
 #endif
-        NiInterpolatorRef mVisibilityInterpolatorIndex;
+        NiInterpolatorRef mVisibilityInterpolatorRef;
 
-        NiPSysEmitterCtlr(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
+        NiPSysEmitterCtlr(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
     };
 
     // Seen in NIF ver 20.0.0.4, 20.0.0.5
@@ -74,21 +75,23 @@ namespace NiBtOgre
     {
     public:
 #if 0
-        NiVisDataRef mDataIndex;
+        NiVisDataRef mDataRef;
 #endif
 
-        NiPSysModifierActiveCtlr(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
+        NiPSysModifierActiveCtlr(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
     };
 
     class NiPSysModifierFloatCtlr : public NiPSysModifierCtlr
     {
     public:
-        NiFloatDataRef mDataIndex;
+        NiFloatDataRef mDataRef;
 
-        NiPSysModifierFloatCtlr(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
+        NiPSysModifierFloatCtlr(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
     };
 
     typedef NiPSysModifierFloatCtlr NiPSysEmitterInitialRadiusCtlr; // Seen in NIF ver 20.0.0.4, 20.0.0.5
+
+    typedef NiPSysModifierFloatCtlr NiPSysEmitterDeclinationCtlr; // Creatures\Wraith\Skeleton.NIF
 
     typedef NiPSysModifierFloatCtlr NiPSysEmitterLifeSpanCtlr; // Seen in NIF ver 20.0.0.4, 20.0.0.5
 

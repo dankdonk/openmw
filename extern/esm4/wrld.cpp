@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015-2016, 2018 cc9cii
+  Copyright (C) 2015-2016, 2018-2019 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -27,12 +27,13 @@
 #include "wrld.hpp"
 
 #include <stdexcept>
-#include <iostream> // FIXME: debug only
+//#include <iostream> // FIXME: debug only
 
 #include "reader.hpp"
 //#include "writer.hpp"
 
 ESM4::World::World() : mFormId(0), mFlags(0), mParent(0), mWorldFlags(0), mClimate(0), mWater(0),
+                       mLandLevel(-2700.f), mWaterLevel(-14000.f),
                        mMinX(0), mMinY(0), mMaxX(0), mMaxY(0), mSound(0)
 {
     mEditorId.clear();
@@ -123,6 +124,12 @@ void ESM4::World::load(ESM4::Reader& reader)
 
                 break;
             }
+            case ESM4::SUB_DNAM:
+            {
+                reader.get(mLandLevel);
+                reader.get(mWaterLevel);
+                break;
+            }
             case ESM4::SUB_RNAM: // multiple
             case ESM4::SUB_MHDT:
             case ESM4::SUB_LTMP:
@@ -130,7 +137,6 @@ void ESM4::World::load(ESM4::Reader& reader)
             case ESM4::SUB_XLCN:
             case ESM4::SUB_NAM3:
             case ESM4::SUB_NAM4:
-            case ESM4::SUB_DNAM:
             case ESM4::SUB_MODL:
             case ESM4::SUB_NAMA:
             case ESM4::SUB_PNAM:

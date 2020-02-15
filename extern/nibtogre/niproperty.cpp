@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015-2018 cc9cii
+  Copyright (C) 2015-2019 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -35,6 +35,7 @@
 #include "nimodel.hpp"
 #include "nitimecontroller.hpp"
 #include "ogrematerial.hpp"
+#include "nidata.hpp"
 
 #ifdef NDEBUG // FIXME: debuggigng only
 #undef NDEBUG
@@ -42,8 +43,8 @@
 
 //#if 0
 // Seen in NIF version 20.2.0.7
-NiBtOgre::NiProperty::NiProperty(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data, bool isBSLightingShaderProperty)
-    : NiObjectNET(index, stream, model, data), mIsBSLightingShaderProperty(false)
+NiBtOgre::NiProperty::NiProperty(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data, bool isBSLightingShaderProperty)
+    : NiObjectNET(index, stream, model, data, isBSLightingShaderProperty)
 {
 }
 
@@ -55,15 +56,15 @@ void NiBtOgre::NiProperty::applyMaterialProperty(OgreMaterial& material,
     std::cerr << "unhandled property "
         << NiObject::mModel.indexToString(NiObjectNET::getNameIndex()) << std::endl;
 
-    if (mControllerIndex != -1)
+    if (mControllerRef != -1)
         std::cerr << "unhandled controller " << NiObject::mModel.blockType(
-                mModel.getRef<NiTimeController>(mControllerIndex)->index()) << std::endl;
+                mModel.getRef<NiTimeController>(mControllerRef)->selfRef()) << std::endl;
 #endif
 }
 //#endif
 
 // Seen in NIF version 20.2.0.7
-NiBtOgre::BSEffectShaderProperty::BSEffectShaderProperty(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::BSEffectShaderProperty::BSEffectShaderProperty(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : NiProperty(index, stream, model, data)
 {
     stream.read(mShaderFlags1);
@@ -87,11 +88,24 @@ NiBtOgre::BSEffectShaderProperty::BSEffectShaderProperty(uint32_t index, NiStrea
 void NiBtOgre::BSEffectShaderProperty::applyMaterialProperty(OgreMaterial& material,
                                                              std::vector<Ogre::Controller<float> >& controllers)
 {
-    // FIXME
+    if (mSourceTexture == "")
+        return;
+
+    // FIXME: TEMP HACK
+    NiTexturingProperty::TexDesc texDesc;
+    texDesc.clampMode = mTextureClampMode;
+    texDesc.uvSet = 0; // FIXME: material system needs re-written
+
+    material.texName[NiTexturingProperty::Texture_Base] = mSourceTexture; // diffuse
+    mTextureDescriptions[NiTexturingProperty::Texture_Base] = texDesc;
+
+    material.textureDescriptions = &mTextureDescriptions;
+
+    // FIXME: the rest of the stuff
 }
 
 // Seen in NIF version 20.2.0.7
-NiBtOgre::BSLightingShaderProperty::BSLightingShaderProperty(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::BSLightingShaderProperty::BSLightingShaderProperty(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : NiProperty(index, stream, model, data, true)
 {
     if (stream.userVer() == 12)
@@ -103,7 +117,7 @@ NiBtOgre::BSLightingShaderProperty::BSLightingShaderProperty(uint32_t index, NiS
     stream.read(mUVOffset.v);
     stream.read(mUVScale.u);
     stream.read(mUVScale.v);
-    stream.read(mTextureSetIndex);
+    stream.read(mTextureSetRef);
     stream.read(mEmissiveColor);
     stream.read(mEmissiveMultiple);
     stream.read(mTextureClampMode);
@@ -153,10 +167,56 @@ NiBtOgre::BSLightingShaderProperty::BSLightingShaderProperty(uint32_t index, NiS
 void NiBtOgre::BSLightingShaderProperty::applyMaterialProperty(OgreMaterial& material,
                                                                std::vector<Ogre::Controller<float> >& controllers)
 {
-    // FIXME
+    material.alpha = mAlpha;
+
+    // FIXME: TEMP HACK
+    NiTexturingProperty::TexDesc texDesc;
+    texDesc.clampMode = mTextureClampMode;
+    texDesc.uvSet = 0; // FIXME: material system needs re-written
+
+    BSShaderTextureSet* tset = mModel.getRef<BSShaderTextureSet>(mTextureSetRef);
+    if (tset->mTextures[0] != "")
+    {
+        material.texName[NiTexturingProperty::Texture_Base]    = tset->mTextures[0]; // diffuse
+        mTextureDescriptions[NiTexturingProperty::Texture_Base] = texDesc;
+    }
+
+    if (tset->mTextures[1] != "")
+    {
+        if (tset->mTextures[1].find("_n.") != std::string::npos ||
+            tset->mTextures[1].find("_N.") != std::string::npos)
+        {
+            material.texName[NiTexturingProperty::Texture_BumpMap] = tset->mTextures[1];
+            mTextureDescriptions[NiTexturingProperty::Texture_BumpMap] = texDesc;
+        }
+        else if (0)
+        {
+            material.texName[NiTexturingProperty::Texture_Gloss] = tset->mTextures[1];
+            mTextureDescriptions[NiTexturingProperty::Texture_Gloss] = texDesc;
+        }
+    }
+
+    if (tset->mTextures[2] != "")
+    {
+        if (tset->mTextures[2].find("_sk.") != std::string::npos)
+        {
+            //material.texName[NiTexturingProperty::Texture_Detail]  = tset->mTextures[2]; // skin
+            //mTextureDescriptions[NiTexturingProperty::Texture_Detail] = texDesc;
+        }
+        else if (tset->mTextures[2].find("_g.") != std::string::npos ||
+                 tset->mTextures[2].find("_G.") != std::string::npos)
+        {
+            material.texName[NiTexturingProperty::Texture_Glow] = tset->mTextures[2]; // glow
+            mTextureDescriptions[NiTexturingProperty::Texture_Glow] = texDesc;
+        }
+        else
+            std::cout << "not skin nor glow " << tset->mTextures[2] << std::endl; //_hl.dds == hair?
+    }
+
+    material.textureDescriptions = &mTextureDescriptions;
 }
 
-NiBtOgre::BSShaderLightingProperty::BSShaderLightingProperty(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::BSShaderLightingProperty::BSShaderLightingProperty(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : NiProperty(index, stream, model, data)
 {
     stream.read(mFlags);
@@ -171,7 +231,7 @@ NiBtOgre::BSShaderLightingProperty::BSShaderLightingProperty(uint32_t index, NiS
         stream.read(mUnknownInt3);
 }
 
-NiBtOgre::BSShaderPPLightingProperty::BSShaderPPLightingProperty(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::BSShaderPPLightingProperty::BSShaderPPLightingProperty(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : BSShaderLightingProperty(index, stream, model, data)
 {
     stream.read(mTextureSetRef);
@@ -194,13 +254,73 @@ NiBtOgre::BSShaderPPLightingProperty::BSShaderPPLightingProperty(uint32_t index,
         stream.read(mEmissiveColor);
 }
 
+// FO3
 void NiBtOgre::BSShaderPPLightingProperty::applyMaterialProperty(OgreMaterial& material,
                                                                  std::vector<Ogre::Controller<float> >& controllers)
 {
-    // FO3
+    // FIXME: TEMP HACK
+    NiTexturingProperty::TexDesc texDesc;
+    texDesc.clampMode = mUnknownInt3;
+    texDesc.uvSet = 0;
+
+    BSShaderTextureSet* tset = mModel.getRef<BSShaderTextureSet>(mTextureSetRef);
+
+    if (tset->mTextures[0] != "")
+    {
+        material.texName[NiTexturingProperty::Texture_Base]    = tset->mTextures[0]; // diffuse
+        mTextureDescriptions[NiTexturingProperty::Texture_Base] = texDesc;
+    }
+
+  //material.texName[NiTexturingProperty::Texture_Dark]    = "";
+    if (tset->mTextures[1] != "")
+    {
+        if (tset->mTextures[1].find("_n.") != std::string::npos ||
+            tset->mTextures[1].find("_N.") != std::string::npos)
+        {
+            material.texName[NiTexturingProperty::Texture_Normal] = tset->mTextures[1];
+            mTextureDescriptions[NiTexturingProperty::Texture_Normal] = texDesc;
+        }
+        else
+        {
+            material.texName[NiTexturingProperty::Texture_Gloss] = tset->mTextures[1];
+            mTextureDescriptions[NiTexturingProperty::Texture_Gloss] = texDesc;
+        }
+    }
+    if (tset->mTextures[2] != "")
+    {
+        if (tset->mTextures[2].find("_sk.") != std::string::npos)
+        {
+            //material.texName[NiTexturingProperty::Texture_Detail]  = tset->mTextures[2]; // skin
+            //mTextureDescriptions[NiTexturingProperty::Texture_Detail] = texDesc;
+        }
+        else if (tset->mTextures[2].find("_g.") != std::string::npos ||
+                 tset->mTextures[2].find("_G.") != std::string::npos)
+        {
+            material.texName[NiTexturingProperty::Texture_Glow] = tset->mTextures[2]; // glow
+            mTextureDescriptions[NiTexturingProperty::Texture_Glow] = texDesc;
+        }
+        else if (tset->mTextures[2].find("_hl.") != std::string::npos)
+        {
+            // noop
+        }
+        else
+            std::cout << "not skin, hair or glow " << tset->mTextures[2] << std::endl; // _hl.dds == hair?
+    }
+  //material.texName[NiTexturingProperty::Texture_BumpMap] = "";
+
+                                                            //3: Height/Parallax
+                                                            //4: Environment
+                                                            //5: Environment Mask
+                                                            //6: Subsurface for Multilayer Parallax
+                                                            //7: Back Lighting Map (SLSF2_Back_Lighting)
+
+
+
+
+    material.textureDescriptions = &mTextureDescriptions;
 }
 
-NiBtOgre::BSShaderNoLightingProperty::BSShaderNoLightingProperty(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::BSShaderNoLightingProperty::BSShaderNoLightingProperty(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : BSShaderLightingProperty(index, stream, model, data)
 {
     stream.readSizedString(mFileName);
@@ -221,7 +341,7 @@ void NiBtOgre::BSShaderNoLightingProperty::applyMaterialProperty(OgreMaterial& m
 }
 
 // Seen in NIF version 20.2.0.7
-NiBtOgre::BSWaterShaderProperty::BSWaterShaderProperty(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::BSWaterShaderProperty::BSWaterShaderProperty(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : NiProperty(index, stream, model, data)
 {
     stream.read(mShaderFlags1);
@@ -239,9 +359,11 @@ void NiBtOgre::BSWaterShaderProperty::applyMaterialProperty(OgreMaterial& materi
                                                             std::vector<Ogre::Controller<float> >& controllers)
 {
     // FIXME
+    std::cerr << "unhandled BSWaterShader property "
+        << NiObject::mModel.indexToString(NiObjectNET::getNameIndex()) << std::endl;
 }
 
-NiBtOgre::NiAlphaProperty::NiAlphaProperty(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::NiAlphaProperty::NiAlphaProperty(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : NiProperty(index, stream, model, data)
 {
     stream.read(mFlags);
@@ -255,13 +377,13 @@ void NiBtOgre::NiAlphaProperty::applyMaterialProperty(OgreMaterial& material,
     material.alphaTest = mThreshold;
 }
 
-NiBtOgre::NiDitherProperty::NiDitherProperty(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::NiDitherProperty::NiDitherProperty(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : NiProperty(index, stream, model, data)
 {
     stream.read(mFlags);
 }
 
-NiBtOgre::NiFogProperty::NiFogProperty(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::NiFogProperty::NiFogProperty(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : NiProperty(index, stream, model, data)
 {
     stream.read(mFlags);
@@ -269,7 +391,7 @@ NiBtOgre::NiFogProperty::NiFogProperty(uint32_t index, NiStream& stream, const N
     stream.read(mFogColor);
 }
 
-NiBtOgre::NiMaterialProperty::NiMaterialProperty(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::NiMaterialProperty::NiMaterialProperty(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : NiProperty(index, stream, model, data)
 {
     if (stream.nifVer() <= 0x0a000102) // 10.0.1.2
@@ -291,8 +413,11 @@ NiBtOgre::NiMaterialProperty::NiMaterialProperty(uint32_t index, NiStream& strea
 void NiBtOgre::NiMaterialProperty::applyMaterialProperty(OgreMaterial& material,
                                                          std::vector<Ogre::Controller<float> >& controllers)
 {
-    material.ambient = mAmbientColor;
-    material.diffuse = mDiffuseColor;
+    if (!(mModel.nifVer() == 0x14020007/* && mModel.userVer() >= 11 && mModel.userVer2() > 21*/))
+    {
+        material.ambient = mAmbientColor;
+        material.diffuse = mDiffuseColor;
+    }
     material.specular = mSpecularColor;
     material.emissive = mEmissiveColor;
     material.glossiness = mGlossiness;
@@ -300,17 +425,17 @@ void NiBtOgre::NiMaterialProperty::applyMaterialProperty(OgreMaterial& material,
     //material.emitmulti = mEmitMulti;
 
     // probably NiAlphaController or NiMaterialColorController
-    NiTimeControllerRef controllerIndex = NiObjectNET::mControllerIndex;
-    while (controllerIndex != -1)
+    NiTimeControllerRef controllerRef = NiObjectNET::mControllerRef;
+    //while (controllerRef != -1)
     {
 
 
 
 
         // FIXME: testing only
-        //std::cout << "prop controller " << mModel.blockType(controller->index()) << std::endl;
-        NiTimeController* controller = mModel.getRef<NiTimeController>(controllerIndex);
-        controllerIndex = controller->build(NiObjectNET::mControllers);
+        //std::cout << "prop controller " << mModel.blockType(controller->selfRef()) << std::endl;
+        NiTimeController* controller = mModel.getRef<NiTimeController>(controllerRef);
+        //controllerRef = controller->build(NiObjectNET::mControllers);
 
 
 
@@ -318,19 +443,19 @@ void NiBtOgre::NiMaterialProperty::applyMaterialProperty(OgreMaterial& material,
     }
 }
 
-NiBtOgre::NiShadeProperty::NiShadeProperty(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::NiShadeProperty::NiShadeProperty(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : NiProperty(index, stream, model, data)
 {
     stream.read(mFlags);
 }
 
-NiBtOgre::NiSpecularProperty::NiSpecularProperty(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::NiSpecularProperty::NiSpecularProperty(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : NiProperty(index, stream, model, data)
 {
     stream.read(mFlags);
 }
 
-NiBtOgre::NiStencilProperty::NiStencilProperty(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::NiStencilProperty::NiStencilProperty(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : NiProperty(index, stream, model, data)
 {
     if (stream.nifVer() <= 0x0a000102) // 10.0.1.2
@@ -365,7 +490,7 @@ void NiBtOgre::NiStencilProperty::applyMaterialProperty(OgreMaterial& material,
 
 void NiBtOgre::NiTexturingProperty::TexDesc::read(NiStream& stream)
 {
-    stream.read(mSourceIndex);
+    stream.read(mSourceRef);
 
     if (stream.nifVer() <= 0x14000005) // up to 20.0.0.5
     {
@@ -415,7 +540,7 @@ void NiBtOgre::NiTexturingProperty::TexDesc::read(NiStream& stream)
         hasTextureTransform = false;
 }
 
-NiBtOgre::NiTexturingProperty::NiTexturingProperty(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::NiTexturingProperty::NiTexturingProperty(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : NiProperty(index, stream, model, data), mFlags(0), mApplyMode(/* APPLY_MODULATE */2)/*, mHasNormalTexture(false),
       mHasUnknown2Texture(false), mHasDecal1Texture(false), mHasDecal2Texture(false), mHasDecal3Texture(false)*/
 {
@@ -556,27 +681,31 @@ void NiBtOgre::NiTexturingProperty::applyMaterialProperty(OgreMaterial& material
     std::map<TextureType, TexDesc>::const_iterator iter = mTextureDescriptions.begin();
     for (; iter != mTextureDescriptions.end(); ++iter)
     {
-        // /FIXME: throw if iter->second.mSourceIndex is -1
-        const NiSourceTexture *src = mModel.getRef<NiSourceTexture>(iter->second.mSourceIndex);
+        // /FIXME: throw if iter->second.mSourceRef is -1
+        const NiSourceTexture *src = mModel.getRef<NiSourceTexture>(iter->second.mSourceRef);
         if (src && src->mUseExternal)
             material.texName[iter->first] = mModel.indexToString(src->mFileName);
+
+        // FIXME: testing
+        if (material.texName[iter->first].find("EarsHuman") != std::string::npos)
+            material.texName[iter->first] = "textures\\characters\\imperial\\earshuman.dds";
     }
 
     material.textureDescriptions = &mTextureDescriptions;
 
     // probably NiFlipController or NiTextureTransformController (ascensionparticles.nif)
     // CoW "Tamriel" 2 13  (meshes/fire/firetorchlargesmoke.nif)
-    NiTimeControllerRef controllerIndex = NiObjectNET::mControllerIndex;
-    while (controllerIndex != -1)
+    NiTimeControllerRef controllerRef = NiObjectNET::mControllerRef;
+    //while (controllerRef != -1)
     {
 
 
 
 
         // FIXME: testing only
-        //std::cout << "prop controller " << mModel.blockType(controller->index()) << std::endl;
-        NiTimeController* controller = mModel.getRef<NiTimeController>(controllerIndex);
-        controllerIndex = controller->build(NiObjectNET::mControllers);
+        //std::cout << "prop controller " << mModel.blockType(controller->selfRef()) << std::endl;
+        NiTimeController* controller = mModel.getRef<NiTimeController>(controllerRef);
+        //controllerRef = controller->build(NiObjectNET::mControllers);
 
 
 
@@ -584,7 +713,7 @@ void NiBtOgre::NiTexturingProperty::applyMaterialProperty(OgreMaterial& material
     }
 }
 
-NiBtOgre::NiVertexColorProperty::NiVertexColorProperty(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::NiVertexColorProperty::NiVertexColorProperty(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : NiProperty(index, stream, model, data)
 {
     stream.read(mFlags);
@@ -596,11 +725,14 @@ void NiBtOgre::NiVertexColorProperty::applyMaterialProperty(OgreMaterial& materi
                                                             std::vector<Ogre::Controller<float> >& controllers)
 {
     // mFlags?
+    if (mModel.getModelName().find("air") == std::string::npos)
     material.vertMode = mVertexMode;
+    else
+        material.vertMode = 0;
     material.lightMode = mLightingMode;
 }
 
-NiBtOgre::NiWireframeProperty::NiWireframeProperty(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::NiWireframeProperty::NiWireframeProperty(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : NiProperty(index, stream, model, data)
 {
     stream.read(mFlags);
@@ -613,7 +745,7 @@ void NiBtOgre::NiWireframeProperty::applyMaterialProperty(OgreMaterial& material
 }
 
 // either NiGeometry or NiBillboardNode
-NiBtOgre::NiZBufferProperty::NiZBufferProperty(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::NiZBufferProperty::NiZBufferProperty(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : NiProperty(index, stream, model, data)
 {
     stream.read(mFlags);

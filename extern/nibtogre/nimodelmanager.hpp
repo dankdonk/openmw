@@ -19,7 +19,7 @@
 
   cc9cii cc9c@iinet.net.au
 
-  Below code is basically Ogre::SkeletonManager with a new class name.
+  Below code is basically Ogre::SkeletonManager with a different class name.
 
 */
 #ifndef NIBTOGRE_NIMODELMANAGER_H

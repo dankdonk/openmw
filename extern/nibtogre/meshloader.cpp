@@ -25,6 +25,8 @@
 
 #include "ninode.hpp"
 
+std::map<std::string, NiBtOgre::MeshLoader> NiBtOgre::MeshLoader::sLoaders;
+
 NiBtOgre::MeshLoader::MeshLoader(NiNode* node) : mNiNode(node)
 {
 }

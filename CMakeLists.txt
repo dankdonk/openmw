@@ -246,6 +246,7 @@ endif ()
 
     if(WIN32)
         add_static_ogre_plugin(RenderSystem_Direct3D9)
+#       add_static_ogre_plugin(RenderSystem_Direct3D11)
     endif(WIN32)
 endif(OGRE_STATIC)
 

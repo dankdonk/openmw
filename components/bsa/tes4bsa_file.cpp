@@ -274,7 +274,7 @@ void TES4BSAFile::open(const std::string& file)
 
 Ogre::DataStreamPtr TES4BSAFile::getFile(const std::string& file)
 {
-    assert(file);
+    //assert(file); // FIXME: makes no sense to assert a const reference
 
     FileRecord fileRec = getFileRecord(file);
     if(fileRec.offset == -1)

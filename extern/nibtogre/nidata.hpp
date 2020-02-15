@@ -55,6 +55,7 @@
 //  NiColorData
 //  NiExtraData
 //      BSBehaviorGraphExtraData
+//      BSBoneLODExtraData
 //      BSBound
 //      BSDecalPlacementVectorExtraData
 //      BSFurnitureMarker
@@ -131,12 +132,12 @@ namespace NiBtOgre
         std::vector<unsigned char> mUnknown8Bytes;
         //unsigned char mFlags;               // only 20.0.0.4 (TES4) onwards
         //std::vector<ChannelData> mChannels; // only 20.0.0.4 (TES4) onwards
-        NiPaletteRef mPaletteIndex;
+        NiPaletteRef mPaletteRef;
         std::uint32_t mNumMipmaps;
         std::uint32_t mBytesPerPixel;
         std::vector<MipMap> mMipmaps;
 
-        ATextureRenderData(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
+        ATextureRenderData(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
     };
 
     struct NiPixelData : public ATextureRenderData
@@ -144,16 +145,16 @@ namespace NiBtOgre
         std::uint32_t mNumPixels;
         std::vector<unsigned char> mPixelData;
 
-        NiPixelData(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
+        NiPixelData(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
     };
 
     // Seen in NIF version 20.2.0.7
     class BSMultiBound : public NiObject
     {
-        BSMultiBoundDataRef mDataIndex;
+        BSMultiBoundDataRef mDataRef;
 
     public:
-        BSMultiBound(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
+        BSMultiBound(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
     };
 
     typedef NiObject BSMultiBoundData; // Seen in NIF version 20.2.0.7
@@ -165,7 +166,7 @@ namespace NiBtOgre
         Ogre::Vector3 mSize;     // each axis
         Ogre::Matrix3 mRotation;
 
-        BSMultiBoundOBB(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
+        BSMultiBoundOBB(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
     };
 
     typedef NiObject NiAVObjectPalette;
@@ -182,23 +183,23 @@ namespace NiBtOgre
             // clutter/minotaurhead01.nif (TES4) shows that some of the Ptr refer to objects not yet
             // loaded.  Change to Ref instead.
             //NiAVObject *avObject; // Ptr
-            NiAVObjectRef avObjectIndex;
+            NiAVObjectRef avObjectRef;
         };
 
         // unknown int here
         std::vector<AVObject> mObjs;
 #endif
     private:
-        std::map<std::string, NiAVObjectRef> mObjs;
+        std::map<std::string, NiAVObjectRef> mObjRefMap;
 
     public:
-        NiDefaultAVObjectPalette(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
+        NiDefaultAVObjectPalette(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
 
-        const std::map<std::string, NiAVObjectRef>& getObjectPalette() const { return mObjs; }
+        const std::map<std::string, NiAVObjectRef>& getObjectPalette() const { return mObjRefMap; }
 
         NiAVObjectRef getObjectRef(const std::string& name) const {
-            std::map<std::string, NiAVObjectRef>::const_iterator it = mObjs.find(name);
-            if (it != mObjs.cend())
+            std::map<std::string, NiAVObjectRef>::const_iterator it = mObjRefMap.find(name);
+            if (it != mObjRefMap.cend())
                 return it->second;
             else
                 return -1;
@@ -210,7 +211,7 @@ namespace NiBtOgre
     {
         std::vector<std::string> mTextures;
 
-        BSShaderTextureSet(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
+        BSShaderTextureSet(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
     };
 
     // Seen in NIF version 20.0.0.4, 20.0.0.5
@@ -218,7 +219,7 @@ namespace NiBtOgre
     {
         std::uint32_t mNumControlPoints;
 
-        NiBSplineBasisData(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
+        NiBSplineBasisData(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
     };
 
     // Seen in NIF version 20.0.0.4, 20.0.0.5
@@ -227,7 +228,7 @@ namespace NiBtOgre
         std::vector<float>        mFloatControlPoints;
         std::vector<std::int16_t> mShortControlPoints;
 
-        NiBSplineData(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
+        NiBSplineData(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
     };
 
     // 1  LINEAR_KEY       Use linear interpolation.
@@ -252,19 +253,19 @@ namespace NiBtOgre
 
         void read(NiStream& stream, KeyType interpolation)
         {
-            if(interpolation == 1 /* LINEAR */ || interpolation == 5 /* CONSTANT */)
+            if (interpolation == 1 /* LINEAR */ || interpolation == 5 /* CONSTANT */)
             {
                 stream.read(time);
                 stream.read(value);
             }
-            else if(interpolation == 2 /* QUADRATIC */)
+            else if (interpolation == 2 /* QUADRATIC */)
             {
                 stream.read(time);
                 stream.read(value);
                 stream.read(forward);
                 stream.read(backward);
             }
-            else if(interpolation == 3 /* TBC */)
+            else if (interpolation == 3 /* TBC */)
             {
                 stream.read(time);
                 stream.read(value);
@@ -272,17 +273,19 @@ namespace NiBtOgre
                 stream.read(bias);
                 stream.read(continuity);
             }
-            else if(interpolation == 4 /* XYZ */)
+            else if (interpolation == 4 /* XYZ */)
             {
                 //if ( numKeys != 1 ) // FIXME
                     //throw std::runtime_error("NiBtOgre::KeyGroup::XYZ Roatation"); // FIXME: better message
             }
-            else if(interpolation == 7 /* ignore */)
+            else if (interpolation == 7 /* ignore */)
             {
                 // do nothing for now, have no idea what this is meant to do
             }
-            else if (0 == interpolation)
+            else if (interpolation == 0)
             {
+                // TES5 dungeons\nordic\levers\pullchain\norpullchain01.nif ??
+                // FIXME: Morroblivion\Creatures\Kwama\KwamaForager\forward.kf
                 throw std::runtime_error("NiBtOgre::Key::interpolation is 0"); // FIXME: better message
             }
             else
@@ -342,22 +345,22 @@ namespace NiBtOgre
     {
         KeyGroup<char> mData;
 
-        NiBoolData(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
+        NiBoolData(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
     };
 
     struct NiColorData : public NiObject
     {
         KeyGroup<Ogre::Vector4> mData;
 
-        NiColorData(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
+        NiColorData(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
     };
 
     struct NiExtraData : public NiObject
     {
         StringIndex    mName;
-        NiExtraDataRef mNextIndex;
+        NiExtraDataRef mNextRef;
 
-        NiExtraData(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
+        NiExtraData(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
     };
 
     // Seen in NIF version 20.2.0.7
@@ -366,7 +369,7 @@ namespace NiBtOgre
         StringIndex   mBehaviourGraphFile;
         unsigned char mControlBaseSkeleton;
 
-        BSBehaviorGraphExtraData(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
+        BSBehaviorGraphExtraData(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
     };
 
     // Seen in NIF version 20.0.0.4, 20.0.0.5
@@ -375,7 +378,22 @@ namespace NiBtOgre
         Ogre::Vector3 mCenter;
         Ogre::Vector3 mDimensions;
 
-        BSBound(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
+        BSBound(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
+    };
+
+    // Seen in NIF version 20.2.0.7
+    struct BSBoneLODExtraData : public NiExtraData
+    {
+        struct BoneLOD
+        {
+            std::uint32_t distance;
+            StringIndex   boneName;
+        };
+
+        std::uint32_t   mBoneLODCount;
+        std::vector<BoneLOD> mBoneLODInfo;
+
+        BSBoneLODExtraData(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
     };
 
     // Seen in NIF version 20.2.0.7
@@ -391,7 +409,7 @@ namespace NiBtOgre
         float mUnknown1;
         std::vector<DecalVectorArray> mVectorBlocks;
 
-        BSDecalPlacementVectorExtraData(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
+        BSDecalPlacementVectorExtraData(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
     };
 
     // Seen in NIF version 20.0.0.4, 20.0.0.5
@@ -412,7 +430,7 @@ namespace NiBtOgre
 
         std::vector<FurniturePosition> mPositions;
 
-        BSFurnitureMarker(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
+        BSFurnitureMarker(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
     };
 
     typedef BSFurnitureMarker BSFurnitureMarkerNode; // Seen in NIF version 20.2.0.7
@@ -425,7 +443,7 @@ namespace NiBtOgre
         std::uint16_t mRotationZ;
         float         mZoom;
 
-        BSInvMarker(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
+        BSInvMarker(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
     };
 
     // Seen in NIF version 20.0.0.4, 20.0.0.5
@@ -433,7 +451,7 @@ namespace NiBtOgre
     {
         std::vector<char> mData;
 
-        NiBinaryExtraData(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
+        NiBinaryExtraData(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
     };
 
     // Seen in NIF version 20.0.0.4, 20.0.0.5
@@ -441,7 +459,7 @@ namespace NiBtOgre
     {
         unsigned char mBooleanData;
 
-        NiBooleanExtraData(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
+        NiBooleanExtraData(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
     };
 
     // Seen in NIF version 20.2.0.7
@@ -449,7 +467,7 @@ namespace NiBtOgre
     {
         float mFloatData;
 
-        NiFloatExtraData(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
+        NiFloatExtraData(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
     };
 
     // Seen in NIF version 20.0.0.4, 20.0.0.5
@@ -457,7 +475,7 @@ namespace NiBtOgre
     {
         std::uint32_t mIntegerData;
 
-        NiIntegerExtraData(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
+        NiIntegerExtraData(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
     };
 
     typedef NiIntegerExtraData BSXFlags; // Seen in NIF version 20.0.0.4, 20.0.0.5
@@ -466,7 +484,7 @@ namespace NiBtOgre
     {
         StringIndex mStringData;
 
-        NiStringExtraData(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
+        NiStringExtraData(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
     };
 
     struct NiTextKeyExtraData : public NiExtraData
@@ -478,7 +496,7 @@ namespace NiBtOgre
         };
         std::vector<TextKey> mTextKeys;
 
-        NiTextKeyExtraData(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
+        NiTextKeyExtraData(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
     };
 
     struct NiVertWeightsExtraData : public NiExtraData
@@ -486,14 +504,14 @@ namespace NiBtOgre
       //std::uint32_t mNumBytes;
       //std::vector<float> mWeight;
 
-        NiVertWeightsExtraData(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
+        NiVertWeightsExtraData(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
     };
 
     struct NiFloatData : public NiObject
     {
         KeyGroup<float> mData;
 
-        NiFloatData(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
+        NiFloatData(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
     };
 
     struct NiGeometryData : public NiObject
@@ -517,9 +535,9 @@ namespace NiBtOgre
         std::vector<std::vector<Ogre::Vector2> > mUVSets;
 
         std::uint16_t mConsistencyFlags;        // from 10.0.1.0
-        AbstractAdditionalGeometryDataRef mAdditionalDataIndex; // from 20.0.0.4
+        AbstractAdditionalGeometryDataRef mAdditionalDataRef; // from 20.0.0.4
 
-        NiGeometryData(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data, bool isNiPSysData = false);
+        NiGeometryData(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data, bool isNiPSysData = false);
 
     protected:
         bool mIsNiPSysData; // set true by NiPSysData
@@ -549,7 +567,7 @@ namespace NiBtOgre
       //bool hasUVQuads;
         std::vector<Ogre::Vector4> mUVQuadrants;
 
-        NiParticlesData(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data, bool isNiPSysData = false);
+        NiParticlesData(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data, bool isNiPSysData = false);
     };
 
     typedef NiParticlesData NiAutoNormalParticlesData;
@@ -558,7 +576,7 @@ namespace NiBtOgre
     {
         std::vector<Ogre::Quaternion> mRotations2; // to 4.2.2.0
 
-        NiRotatingParticlesData(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data, bool isNiPSysData = false);
+        NiRotatingParticlesData(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data, bool isNiPSysData = false);
     };
 
     // Seen in NIF version 20.0.0.4, 20.0.0.5
@@ -581,7 +599,7 @@ namespace NiBtOgre
         float mAspectRatio;
         std::vector<Ogre::Vector4> mSubTextureOffsetUVs;
 
-        NiPSysData(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
+        NiPSysData(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
     };
 
     // Seen in NIF version 20.2.0.7
@@ -592,14 +610,14 @@ namespace NiBtOgre
         std::int32_t mUnknown7;
         float        mUnknown8;
 
-        BSStripPSysData(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
+        BSStripPSysData(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
     };
 
     struct NiTriBasedGeomData : public NiGeometryData
     {
         std::uint16_t mNumTriangles;
 
-        NiTriBasedGeomData(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
+        NiTriBasedGeomData(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
 
         virtual const std::vector<std::uint16_t>& getTriangles() const = 0;
     };
@@ -618,7 +636,7 @@ namespace NiBtOgre
     {
         std::vector<std::uint16_t> mTriangles; // vector of vertices rather than triangles
 
-        NiTriShapeData(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
+        NiTriShapeData(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
 
         const std::vector<std::uint16_t>& getTriangles() const { return mTriangles; }
     };
@@ -633,7 +651,7 @@ namespace NiBtOgre
         // unless using ManualObject - just convert to trinagles for now
         std::vector<std::uint16_t> mTriangles; // vector of vertices rather than triangles
 
-        NiTriStripsData(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
+        NiTriStripsData(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
 
         const std::vector<std::uint16_t>& getTriangles() const { return mTriangles; }
     };
@@ -664,7 +682,7 @@ namespace NiBtOgre
         KeyGroup<Ogre::Vector3> mTranslations;
         KeyGroup<float> mScales;
 
-        NiKeyframeData(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
+        NiKeyframeData(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
     };
 
     typedef NiKeyframeData NiTransformData; // Seen in NIF version 20.0.0.4, 20.0.0.5
@@ -681,14 +699,14 @@ namespace NiBtOgre
 
         std::vector<Morph> mMorphs;
 
-        NiMorphData(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
+        NiMorphData(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
     };
 
     struct NiPosData : public NiObject
     {
         KeyGroup<Ogre::Vector3> mData;
 
-        NiPosData(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
+        NiPosData(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
     };
 
     struct NiSkinData : public NiObject
@@ -717,10 +735,10 @@ namespace NiBtOgre
         };
 
         SkinTransform         mSkinTransform;
-        NiSkinPartitionRef    mSkinPartitionIndex;
+        NiSkinPartitionRef    mSkinPartitionRef;
         std::vector<SkinData> mBoneList;
 
-        NiSkinData(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
+        NiSkinData(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
     };
 
     class NiNode;
@@ -728,16 +746,16 @@ namespace NiBtOgre
     class NiSkinInstance : public NiObject
     {
     public:
-        NiSkinDataRef         mDataIndex;
-        NiSkinPartitionRef    mSkinPartitionIndex;
-      //NiNodeRef             mSkeletonRootIndex;
+        NiSkinDataRef         mDataRef;
+        NiSkinPartitionRef    mSkinPartitionRef;
+      //NiNodeRef             mSkeletonRootRef;
         NiNode               *mSkeletonRoot; // Ptr
         // imperial/headhuman.nif (TES4) shows that some of the Ptr refer to objects not yet
         // loaded.  Change to Ref instead.
         //std::vector<NiNode*>  mBones;        // Ptr
-        std::vector<NiNodeRef>  mBones;
+        std::vector<NiNodeRef>  mBoneRefs;
 
-        NiSkinInstance(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
+        NiSkinInstance(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
     };
 
     class BSDismemberSkinInstance : public NiSkinInstance
@@ -751,7 +769,7 @@ namespace NiBtOgre
 
         std::vector<BodyPartList>  mPartitions;
 
-        BSDismemberSkinInstance(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
+        BSDismemberSkinInstance(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
     };
 
     // Seen in NIF version 20.0.0.4, 20.0.0.5
@@ -783,7 +801,7 @@ namespace NiBtOgre
         std::vector<SkinPartition> mSkinPartitionBlocks;
 
     public:
-        NiSkinPartition(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
+        NiSkinPartition(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
     };
 
     // Seen in NIF version 20.0.0.4, 20.0.0.5
@@ -792,7 +810,7 @@ namespace NiBtOgre
         std::string   mPalette;
         std::uint32_t mLength;
 
-        NiStringPalette(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
+        NiStringPalette(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
     };
 
     struct NiUVData : public NiObject
@@ -802,14 +820,14 @@ namespace NiBtOgre
         KeyGroup<float> mUVGroups2;
         KeyGroup<float> mUVGroups3;
 
-        NiUVData(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
+        NiUVData(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
     };
 
     struct NiVisData : public NiObject
     {
         std::vector<Key<char> > mKeys;
 
-        NiVisData(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
+        NiVisData(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
     };
 }
 

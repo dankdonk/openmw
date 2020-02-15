@@ -10,6 +10,7 @@
 namespace ESM4
 {
     struct Npc;
+    struct Race;
 }
 
 namespace MWRender
@@ -72,6 +73,7 @@ private:
     std::string mSoundIds[ESM::PRT_Count];
 
     const ESM4::Npc *mNpc;
+    const ESM4::Race *mRace;
     std::string    mHeadModel;
     std::string    mHairModel;
     ViewMode       mViewMode;
@@ -101,6 +103,9 @@ private:
 
     Ogre::Radian mHeadYaw;
     Ogre::Radian mHeadPitch;
+
+    // for adjusting body part model names for different skeleton types
+    std::string mBodyPartModelNameExt;
 
     void updateNpcBase();
 

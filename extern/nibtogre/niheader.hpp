@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015-2018 cc9cii
+  Copyright (C) 2015-2019 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -33,7 +33,7 @@
 namespace NiBtOgre
 {
     class NiStream;
-    class NiSkinInstance;
+    //class NiSkinInstance;
     class NiObject;
 
     // The header contains the NIF file version and a list of all the object names used in the file.

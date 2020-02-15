@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015-2018 cc9cii
+  Copyright (C) 2015-2019 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -48,9 +48,9 @@ namespace NiBtOgre
     {
     public:
         std::uint16_t mTargetColor;
-        NiPosDataRef  mDataIndex;
+        NiPosDataRef  mDataRef;
 
-        NiMaterialColorController(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
+        NiMaterialColorController(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
     };
 
     //typedef NiPoint3InterpController NiMaterialColorController;

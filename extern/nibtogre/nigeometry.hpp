@@ -54,8 +54,8 @@ namespace NiBtOgre
             std::int32_t materialExtraData;
         };
 
-        NiGeometryDataRef mDataIndex; // subclass of NiGeometryData includes NiTriShapeData
-        NiSkinInstanceRef mSkinInstanceIndex;
+        NiGeometryDataRef mDataRef; // subclass of NiGeometryData includes NiTriShapeData
+        NiSkinInstanceRef mSkinInstanceRef;
 
         std::vector<StringIndex> mMaterialName;
         std::vector<std::int32_t> mMaterialExtraData;
@@ -69,19 +69,24 @@ namespace NiBtOgre
 
         NiNode& mParent;         // cached here
 
-        NiGeometry(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
+        NiGeometry(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
     };
 
     struct NiTriBasedGeom : public NiGeometry
     {
-        NiTriBasedGeom(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
+        std::vector<Ogre::Vector3> *mVertices;
+
+        NiTriBasedGeom(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
 
         // NiTriStrips builds differently to NiTriShapes only in that the data are different
         bool createSubMesh(Ogre::Mesh *mesh, BoundsFinder& bounds); // returns true if tangents needed
 
+        void setVertices(std::vector<Ogre::Vector3>& vertices);
+        std::vector<Ogre::Vector3> getVertices();
+
     private:
 
-        const ModelData& mData;
+        const BuildData& mData;
 
         std::string getMaterial();
 
@@ -93,13 +98,13 @@ namespace NiBtOgre
 
 
     // Seen in NIF version 20.2.0.7
-    struct BSLODTriShape : public NiGeometry
+    struct BSLODTriShape : public NiTriBasedGeom
     {
         std::uint32_t mLevel0Size;
         std::uint32_t mLevel1Size;
         std::uint32_t mLevel2Size;
 
-        BSLODTriShape(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
+        BSLODTriShape(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
     };
 }
 

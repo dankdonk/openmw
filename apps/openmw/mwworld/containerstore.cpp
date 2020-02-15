@@ -369,6 +369,7 @@ MWWorld::ContainerStoreIterator MWWorld::ContainerStore::addNewStack (const Ptr&
         case Type_ForeignWeapon: foreignWeapons.mList.push_back (*ptr.get<ESM4::Weapon>()); it = ContainerStoreIterator(this, --foreignWeapons.mList.end()); break;
         case Type_ForeignAmmo: foreignAmmos.mList.push_back (*ptr.get<ESM4::Ammo>()); it = ContainerStoreIterator(this, --foreignAmmos.mList.end()); break;
         case Type_ForeignLeveledItem: foreignLvlItems.mList.push_back (*ptr.get<ESM4::LeveledItem>()); it = ContainerStoreIterator(this, --foreignLvlItems.mList.end()); break;
+        case Type_ForeignNote: foreignNotes.mList.push_back (*ptr.get<ESM4::Note>()); it = ContainerStoreIterator(this, --foreignNotes.mList.end()); break;
     }
 
     it->getRefData().setCount(count);
@@ -619,6 +620,9 @@ int MWWorld::ContainerStore::getType (const Ptr& ptr)
     if (ptr.getTypeName() == typeid(ESM4::LeveledItem).name())
         return Type_ForeignLeveledItem;
 
+    if (ptr.getTypeName() == typeid(ESM4::Note).name())
+        return Type_ForeignNote;
+
     throw std::runtime_error (
         "Object of type " + ptr.getTypeName() + " can not be placed into a container");
 }
@@ -831,6 +835,8 @@ MWWorld::ContainerStoreIterator::ContainerStoreIterator (ContainerStore *contain
     : mType(MWWorld::ContainerStore::Type_ForeignAmmo), mMask(MWWorld::ContainerStore::Type_All), mContainer(container), mForeignAmmo(iterator){}
 MWWorld::ContainerStoreIterator::ContainerStoreIterator (ContainerStore *container, MWWorld::CellRefList<ESM4::LeveledItem>::List::iterator iterator)
     : mType(MWWorld::ContainerStore::Type_ForeignLeveledItem), mMask(MWWorld::ContainerStore::Type_All), mContainer(container), mForeignLeveledItem(iterator){}
+MWWorld::ContainerStoreIterator::ContainerStoreIterator(ContainerStore *container, MWWorld::CellRefList<ESM4::Note>::List::iterator iterator)
+    : mType(MWWorld::ContainerStore::Type_ForeignNote), mMask(MWWorld::ContainerStore::Type_All), mContainer(container), mForeignNote(iterator){}
 
 MWWorld::ContainerStoreIterator::ContainerStoreIterator( const ContainerStoreIterator& src )
 {
@@ -1037,6 +1043,7 @@ MWWorld::Ptr MWWorld::ContainerStoreIterator::operator*() const
         case ContainerStore::Type_ForeignWeapon: ptr = MWWorld::Ptr (&*mForeignWeapon, 0); break;
         case ContainerStore::Type_ForeignAmmo: ptr = MWWorld::Ptr (&*mForeignAmmo, 0); break;
         case ContainerStore::Type_ForeignLeveledItem: ptr = MWWorld::Ptr (&*mForeignLeveledItem, 0); break;
+        case ContainerStore::Type_ForeignNote: ptr = MWWorld::Ptr (&*mForeignNote, 0); break;
     }
 
     if (ptr.isEmpty())
@@ -1103,6 +1110,7 @@ bool MWWorld::ContainerStoreIterator::isEqual (const ContainerStoreIterator& ite
         case ContainerStore::Type_ForeignWeapon: return mForeignWeapon==iter.mForeignWeapon;
         case ContainerStore::Type_ForeignAmmo: return mForeignAmmo==iter.mForeignAmmo;
         case ContainerStore::Type_ForeignLeveledItem: return mForeignLeveledItem==iter.mForeignLeveledItem;
+        case ContainerStore::Type_ForeignNote: return mForeignNote==iter.mForeignNote;
         case -1: return true;
     }
 
@@ -1155,6 +1163,7 @@ void MWWorld::ContainerStoreIterator::copy(const ContainerStoreIterator& src)
         case MWWorld::ContainerStore::Type_ForeignWeapon: mForeignWeapon = src.mForeignWeapon; break;
         case MWWorld::ContainerStore::Type_ForeignAmmo: mForeignAmmo = src.mForeignAmmo; break;
         case MWWorld::ContainerStore::Type_ForeignLeveledItem: mForeignLeveledItem = src.mForeignLeveledItem; break;
+        case MWWorld::ContainerStore::Type_ForeignNote: mForeignNote = src.mForeignNote; break;
         case -1: break;
         default: assert(0);
     }

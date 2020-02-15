@@ -41,17 +41,17 @@
 #endif
 
 // Seen in NIF ver 20.0.0.4, 20.0.0.5
-NiBtOgre::NiCollisionObject::NiCollisionObject(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::NiCollisionObject::NiCollisionObject(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : NiObject(index, stream, model, data)
 {
     //stream.getPtr<NiAVObject>(mTarget, model.objects());
     //std::int32_t rIndex = -1;
     //stream.read(rIndex);
     //mTarget = model.getRef<NiAVObject>(rIndex);
-    stream.read(mTargetIndex);
+    stream.read(mTargetRef);
 }
 
-NiBtOgre::NiCollisionData::NiCollisionData(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::NiCollisionData::NiCollisionData(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : NiCollisionObject(index, stream, model, data)
 {
     stream.read(mPropagationMode);
@@ -94,15 +94,15 @@ NiBtOgre::NiCollisionData::NiCollisionData(uint32_t index, NiStream& stream, con
 }
 
 // Seen in NIF ver 20.0.0.4, 20.0.0.5
-NiBtOgre::bhkNiCollisionObject::bhkNiCollisionObject(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::bhkNiCollisionObject::bhkNiCollisionObject(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : NiCollisionObject(index, stream, model, data)
 {
     stream.read(mFlags);
-    stream.read(mBodyIndex);
+    stream.read(mBodyRef);
 
     // make an entry for loading BtRigidBodyCI (for building physics shapes)
-    data.mBhkRigidBodyMap[mTargetIndex]
-        = /*std::make_pair(model.getModelName()+"@"+ model.getRef<NiNode>(mTargetIndex)->getNodeName(), */mBodyIndex/*)*/;
+    data.mBhkRigidBodyMap[mTargetRef]
+        = /*std::make_pair(model.getModelName()+"@"+ model.getRef<NiNode>(mTargetRef)->getNodeName(), */mBodyRef/*)*/;
 }
 
 // build the 'body' to the 'target'
@@ -110,16 +110,16 @@ NiBtOgre::bhkNiCollisionObject::bhkNiCollisionObject(uint32_t index, NiStream& s
 // Old implementation was at ManualBulletShapeLoader::handleBhkCollisionObject()
 // It is probably intended to be per rigid body, possibly TES3 NIF had no separate
 // collision shapes and hence considered the whole thing as one rigid body?
-void NiBtOgre::bhkNiCollisionObject::build(BtOgreInst *inst, ModelData *data, NiObject *parentNiNode)
+void NiBtOgre::bhkNiCollisionObject::build(BtOgreInst *inst, BuildData *data, NiObject *parentNiNode)
 {
     // collision objects have 'target' which should have the parent world transform
     // FIXME: assert during testing only
-    assert(mTargetIndex == parentNiNode->index() && "CollisionObject: parent is not the target");
+    assert(mTargetRef == parentNiNode->selfRef() && "CollisionObject: parent is not the target");
 
 #if 0
-    // mBodyIndex refers to either a bhkRigidBody or bhkRigidBodyT
+    // mBodyRef refers to either a bhkRigidBody or bhkRigidBodyT
     // apply rotation and translation only if the collision object's body is a bhkRigidBodyT type
-    if (mModel.blockType(mBodyIndex) == "bhkRigidBodyT")
+    if (mModel.blockType(mBodyRef) == "bhkRigidBodyT")
     {
         rotation = Ogre::Quaternion(rigidBody->rotation.w,
                 rigidBody->rotation.x, rigidBody->rotation.y, rigidBody->rotation.z);
@@ -128,11 +128,11 @@ void NiBtOgre::bhkNiCollisionObject::build(BtOgreInst *inst, ModelData *data, Ni
     }
 #endif
 
-    mModel.getRef<NiObject>(mBodyIndex)->build(inst, data, parentNiNode); // NOTE: parent passed
+    mModel.getRef<NiObject>(mBodyRef)->build(inst, data, parentNiNode); // NOTE: parent passed
 }
 
 // Seen in NIF ver 20.0.0.4, 20.0.0.5
-NiBtOgre::bhkBlendCollisionObject::bhkBlendCollisionObject(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::bhkBlendCollisionObject::bhkBlendCollisionObject(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : bhkCollisionObject(index, stream, model, data)
 {
     stream.read(mUnknown1);

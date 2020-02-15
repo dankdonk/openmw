@@ -36,7 +36,7 @@
 #undef NDEBUG
 #endif
 
-NiBtOgre::NiParticleModifier::NiParticleModifier(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::NiParticleModifier::NiParticleModifier(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : NiObject(index, stream, model, data)
 {
     stream.read(mNextModifier);
@@ -47,7 +47,7 @@ NiBtOgre::NiParticleModifier::NiParticleModifier(uint32_t index, NiStream& strea
     mController = model.getRef<NiParticleSystemController>(rIndex);
 }
 
-NiBtOgre::NiGravity::NiGravity(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::NiGravity::NiGravity(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : NiParticleModifier(index, stream, model, data)
 {
     stream.skip(sizeof(float));
@@ -57,20 +57,20 @@ NiBtOgre::NiGravity::NiGravity(uint32_t index, NiStream& stream, const NiModel& 
     stream.read(mDirection);
 }
 
-NiBtOgre::NiParticleColorModifier::NiParticleColorModifier(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::NiParticleColorModifier::NiParticleColorModifier(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : NiParticleModifier(index, stream, model, data)
 {
     stream.read(mColorData);
 }
 
-NiBtOgre::NiParticleGrowFade::NiParticleGrowFade(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::NiParticleGrowFade::NiParticleGrowFade(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : NiParticleModifier(index, stream, model, data)
 {
     stream.read(mGrowTime);
     stream.read(mFadeTime);
 }
 
-NiBtOgre::NiParticleRotation::NiParticleRotation(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::NiParticleRotation::NiParticleRotation(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : NiParticleModifier(index, stream, model, data)
 {
     stream.skip(sizeof(char));
@@ -78,7 +78,7 @@ NiBtOgre::NiParticleRotation::NiParticleRotation(uint32_t index, NiStream& strea
     stream.skip(sizeof(float));
 }
 
-NiBtOgre::NiPlanarCollider::NiPlanarCollider(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::NiPlanarCollider::NiPlanarCollider(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : NiParticleModifier(index, stream, model, data)
 {
     stream.skip(sizeof(std::uint16_t));

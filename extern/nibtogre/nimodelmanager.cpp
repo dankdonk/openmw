@@ -19,7 +19,7 @@
 
   cc9cii cc9c@iinet.net.au
 
-  Below code is basically Ogre::SkeletonManager with a new class name.
+  Below code is basically Ogre::SkeletonManager with a different class name.
 
 */
 #include "nimodelmanager.hpp"
@@ -82,6 +82,6 @@ namespace NiBtOgre
             Ogre::ManualResourceLoader* loader, const Ogre::NameValuePairList* createParams)
     {
         // no use for createParams here
-        return OGRE_NEW NiModel(this, name, handle, group, isManual, loader);
+        return OGRE_NEW NiModel(this, name, handle, group, isManual, loader, createParams);
     }
 }

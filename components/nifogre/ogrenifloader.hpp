@@ -33,8 +33,9 @@
 #include <vector>
 #include <string>
 #include <map>
+#include <memory>
 
-#include <extern/nibtogre/nimodelmanager.hpp>
+#include <extern/nibtogre/btogreinst.hpp>
 
 
 // FIXME: This namespace really doesn't do anything Nif-specific. Any supportable
@@ -64,8 +65,6 @@ struct ObjectScene {
     std::vector<Ogre::Entity*> mEntities;
     std::vector<Ogre::ParticleSystem*> mParticles;
     std::vector<Ogre::Light*> mLights;
-    std::vector<Ogre::Entity*> mVertexAnimEntities;
-    std::map<std::string, std::vector<Ogre::Entity*> > mSkeletonAnimEntities;
 
     // Nodes that should always face the camera when rendering
     std::vector<Ogre::Node*> mBillboardNodes;
@@ -81,8 +80,12 @@ struct ObjectScene {
 
     std::vector<Ogre::Controller<Ogre::Real> > mControllers;
 
+    std::shared_ptr<NiBtOgre::BtOgreInst> mForeignObj;
+
     ObjectScene(Ogre::SceneManager* sceneMgr) : mSkelBase(0), mSceneMgr(sceneMgr), mMaxControllerLength(0)
-    { }
+    {
+        mForeignObj = std::shared_ptr<NiBtOgre::BtOgreInst>(nullptr);
+    }
 
     ~ObjectScene();
 
@@ -145,8 +148,8 @@ public:
     virtual Ogre::Vector3 getTranslation(T value) const = 0;
     virtual Ogre::Vector3 getScale(T value) const = 0;
 
-    //void setNode(Ogre::Node *target)
-    //{ mNode = target; }
+    void setNode(Ogre::Node *target)
+    { mNode = target; }
     Ogre::Node *getNode() const
     { return mNode; }
 };

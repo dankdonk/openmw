@@ -47,6 +47,11 @@
 #undef NDEBUG
 #endif
 
+NiBtOgre::BSFadeNode::BSFadeNode(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+    : NiNode(index, stream, model, data)
+{
+}
+
 // TES3: if one of the children is a RootCollisionNode, generate collision shape differently?
 //       e.g. ./x/ex_hlaalu_win_01.nif (what about if it has a bounding box?)
 //       RootCollisionNode seems to be the last of the children
@@ -55,7 +60,7 @@
 //
 // The node name is also used as bone names for those meshes with skins.
 // Bipeds seems to have a predefined list of bones. See: meshes/armor/legion/m/cuirass.nif
-NiBtOgre::NiNode::NiNode(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::NiNode::NiNode(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : NiAVObject(index, stream, model, data)
     , mNodeName(model.indexToString(NiObjectNET::mNameIndex)), mData(data)
 {
@@ -75,18 +80,19 @@ NiBtOgre::NiNode::NiNode(uint32_t index, NiStream& stream, const NiModel& model,
 
     stream.readVector<NiDynamicEffectRef>(mEffects);
     // HACK: oar01.nif suggests that 10.0.1.0 reads one entry even if there is none?
-    if (stream.nifVer() == 0x0a000100)
+    if (stream.nifVer() == 0x0a000100 || stream.nifVer() == 0x0a01006a)
         stream.skip(sizeof(NiDynamicEffectRef));
 
     /* ---------------------------------------------------------------------- */
     // HACK: should check for root node?
-    mParent = (NiObject::mSelfIndex == 0) ? nullptr : &data.getNiNodeParent((NiAVObjectRef)NiObject::mSelfIndex);
+    mParent = (NiObject::mSelfRef == 0) ? nullptr : &data.getNiNodeParent((NiAVObjectRef)NiObject::mSelfRef);
 
-    if (mCollisionObjectIndex != -1 || mChildren.size() > 0) // build only if it will be used
+    if (mCollisionObjectRef != -1 || mChildren.size() > 0) // build only if it will be used
     {
-//      if (!mParent)
-//          mLocalTransform.makeTransform(mTranslation, Ogre::Vector3(mScale), Ogre::Quaternion::IDENTITY);
-//      else
+        // Architecture\WhiteRun\WRInteriors\WRIntRoofSTCorL.nif is turned around 180°
+        if (!mParent && mModel.blockType(NiAVObject::mSelfRef) == "BSFadeNode")
+            mLocalTransform.makeTransform(mTranslation, Ogre::Vector3(mScale), Ogre::Quaternion::IDENTITY);
+        else
             mLocalTransform.makeTransform(mTranslation, Ogre::Vector3(mScale), Ogre::Quaternion(mRotation));
 
         if (mParent)
@@ -96,21 +102,55 @@ NiBtOgre::NiNode::NiNode(uint32_t index, NiStream& stream, const NiModel& model,
     }
     //else
         //mWorldTransform = Ogre::Matrix4(Ogre::Matrix4::IDENTITY);
+
+    // FIXME: find a better place for this
+    if (data.flameNodesPresent())
+    {
+        // FIXME: AttachLight nodes might be present even without BSX flag FlameNodesPresent
+        if (mNodeName.find("AttachLight") != std::string::npos)
+        {
+            data.mAttachLights.push_back(this);
+            data.addSkelLeafIndex(mSelfRef);
+        }
+        else if (mNodeName.find("FlameNode") != std::string::npos)
+        {
+            data.mFlameNodes.push_back(this);
+            data.addSkelLeafIndex(mSelfRef);
+        }
+    }
 }
 
 void NiBtOgre::NiNode::registerSubMesh(NiTriBasedGeom* geom)
 {
-    if (!mModel.showEditorMarkers() && mData.mEditorMarkerPresent && (mNodeName == "EditorMarker"))
+    // FIXME: TES5 can have EditorMarker at NiTriStrips, etc
+    if (mModel.hideEditorMarkers() &&
+        mData.editorMarkerPresent() &&
+        (mNodeName == "EditorMarker" || mModel.indexToString(geom->getNameIndex()) == "EditorMarker"))
+    {
         return;
+    }
 
-    mData.mMeshBuildList[NiObject::mSelfIndex] = this;
+    mData.mMeshBuildList[NiObject::mSelfRef] = this;
     mSubMeshChildren.push_back(geom);
 }
 
+// if a pre-morphed vertices are supplied there should be just one in mSubMeshChildren
+void NiBtOgre::NiNode::setVertices(std::vector<Ogre::Vector3>& vertices)
+{
+    if (mSubMeshChildren.size() > 1)
+        std::cout << "unexpected sub mesh" << std::endl; // FIXME: should throw
+
+    mSubMeshChildren[0]->setVertices(vertices);
+}
 
 //  Some of the Ogre code in this method is based on v0.36 of OpenMW.
 void NiBtOgre::NiNode::buildMesh(Ogre::Mesh *mesh)
 {
+//  if (mNodeName.find("C_Pudd") != std::string::npos || // FIXME
+//      mNodeName.find("Box01") != std::string::npos || // FIXME
+//      mNodeName.find("Inner01") != std::string::npos) // FIXME
+//      return;
+
     BoundsFinder bounds;
     bool needTangents = false;
 
@@ -148,7 +188,7 @@ void NiBtOgre::NiNode::findBones(const NiNodeRef skeletonRoot, const NiNodeRef c
 {
     if (mChildBoneNodes.size() == 0) // implies skeleton root is not yet found
     {
-        if (NiObject::index() == skeletonRoot) // am I the one?
+        if (NiObject::selfRef() == skeletonRoot) // am I the one?
         {
             mChildBoneNodes.push_back(childNode);
             return;
@@ -158,7 +198,7 @@ void NiBtOgre::NiNode::findBones(const NiNodeRef skeletonRoot, const NiNodeRef c
             throw std::runtime_error("NiNode without parent and Skeleton Root not yet found");
 
         // not skeleton root, keep searching recursively
-        mParent->findBones(skeletonRoot, NiObject::index());
+        mParent->findBones(skeletonRoot, NiObject::selfRef());
         mChildBoneNodes.push_back(childNode);
     }
     else
@@ -171,23 +211,53 @@ void NiBtOgre::NiNode::findBones(const NiNodeRef skeletonRoot, const NiNodeRef c
 void NiBtOgre::NiNode::findBones(std::int32_t rootIndex)
 {
     // TODO: do we need a bone if the NiTransformController's target is the root?
-    if (rootIndex != NiObject::index())
-        mParent->findBones(rootIndex, NiObject::index());
+    if (rootIndex != NiObject::selfRef())
+        mParent->findBones(rootIndex, NiObject::selfRef());
 }
 
 void NiBtOgre::NiNode::addBones(Ogre::Skeleton *skeleton,
         Ogre::Bone *parentBone, std::map<std::uint32_t, std::uint16_t>& indexToHandle)
 {
-    // FIXME: check if mNodeName can be empty
-    if (mNodeName == "")
-        throw std::runtime_error("NiNode has empty name");
+    // Effects\FXAmbWaterSalmon02B.nif (TES5 WhiteRun) can have an empty name
+    // (children of NiSwitchNode don't have names)
+    //if (mNodeName == "")
+        //throw std::runtime_error("NiNode has empty name");
+
+    //std::string selfRef = std::to_string(mSelfRef);
 
     // maybe skeleton was built already? but if so why is this method called at all?
-    if (/*!parentBone && */skeleton->hasBone(mNodeName))
+    // FIXME: too much overhead to search each time
+    if (/*!parentBone && */skeleton->hasBone(/*"#" + selfRef + "@" + */mNodeName))
         return;
 
-    Ogre::Bone *bone = skeleton->createBone(mNodeName);
-    indexToHandle[NiObject::index()] = bone->getHandle();
+    // Keeping the bone names to be the same as the NiNode name is convenient (and probably
+    // required for the current animation code to work) but difficult.
+    //
+    // For example, Lights\MiddlePewterPlateCandles01.NIF has 4 NiNodes with the same name
+    // "FlameNode0".
+    //
+    // However, Lights\Chandelier01.NIF has "FlameNode0", "FlameNode0@#0", "FlameNode0@#1" and
+    // "FlameNode0@#2".
+    //
+    // (NOTE: Architecture\Solitude\SolitudeBase.nif (TES5) also has "Avenuesdetached" 3 times,
+    // although it does not need skeleton/bones)
+    //
+    // One way to solve this is to add the node index to the bone name, e.g. "#8@FlameNode0"
+    // But this makes the skeletal animation code more complicated - "Bip01 NonAccum" will
+    // become something like "#347@Bip01 NonAccum".  Most likely some kind of lookup table with
+    // original NiNode names and bone handles will be required.  That might be a blessing in
+    // disguise if we stop using strings to lookup bones?
+    //
+    // Another way is to "fix" the NiNode and bone names as duplicates are encountered. The
+    // names can be changed similar to Chandelier01.NIF.
+    Ogre::Bone *bone = nullptr;
+    if (mNodeName == "")
+        bone = skeleton->createBone(); // let Ogre assign a generated name
+    else
+        bone = skeleton->createBone(/*"#" + selfRef + "@" + */mNodeName);
+
+    // not used
+    //indexToHandle[NiObject::selfRef()] = bone->getHandle();
 
     if (parentBone)
         parentBone->addChild(bone);
@@ -196,6 +266,10 @@ void NiBtOgre::NiNode::addBones(Ogre::Skeleton *skeleton,
     bone->setOrientation(NiAVObject::mRotation);
     bone->setScale(Ogre::Vector3(NiAVObject::mScale));
     bone->setBindingPose();
+
+    // FIXME
+    if (mModel.getModelName().find("geardoor") != std::string::npos)
+        bone->setManuallyControlled(true);
 
     for (unsigned int i = 0; i < mChildBoneNodes.size(); ++i)
     {
@@ -230,14 +304,14 @@ void NiBtOgre::NiNode::addBones(Ogre::Skeleton *skeleton,
 //   Bit 2 : is skeleton nif?      Ragdoll
 //   Bit 3 : enable animation      Complex
 //   Bit 4 : FlameNodes present    Addon
-//   Bit 5 : EditorMarkers present
+//   Bit 5 : EditorMarkers present EditorMarker (*)
 //   Bit 6 :                       Dynamic
 //   Bit 7 :                       Articulated
 //   Bit 8 :                       IKTarget
 //   Bit 9 :                       Unknown
 //
 // necromancer/hood_gnd.nif is 0x0b, i.e. 1011 - animation, collision, havok
-void NiBtOgre::NiNode::build(BtOgreInst *inst, ModelData *data, NiObject* parent)
+void NiBtOgre::NiNode::build(BtOgreInst *inst, BuildData *data, NiObject* parent)
 {
     // There doesn't seem to be a flag to indicate an editor marker.  To filter them out, look
     // out for strings starting with:
@@ -280,18 +354,19 @@ void NiBtOgre::NiNode::build(BtOgreInst *inst, ModelData *data, NiObject* parent
     bool enableCollision = (flags & Flag_EnableCollision) != 0;
     // temp debugging note: mExtraDataIndexList is from NiObjectNET
     // TODO: consider removing mExtraDataIndex and just use a vector of size 1 for older NIF versions
-    for (unsigned int i = 0; i < mExtraDataIndexList.size(); ++i)
+    for (unsigned int i = 0; i < mExtraDataRefList.size(); ++i)
     {
-        if (mExtraDataIndexList[i] == -1) // TODO: check if this ever happens (i.e. ref -1)
+        if (mExtraDataRefList[i] == -1) // TODO: check if this ever happens (i.e. ref -1)
             continue;
 
         const std::string& name
-            = mModel.indexToString(mModel.getRef<NiExtraData>((int32_t)mExtraDataIndexList[i])->mName);
+            = mModel.indexToString(mModel.getRef<NiExtraData>((int32_t)mExtraDataRefList[i])->mName);
 
-        if (name == "BSX") // TODO: only for root objects?
+        // BSX is handled elsewhere
+        if (0)//name == "BSX") // TODO: only for root objects?
         {
             std::uint32_t bsx
-                = mModel.getRef<NiIntegerExtraData>((int32_t)mExtraDataIndexList[i])->mIntegerData;
+                = mModel.getRef<NiIntegerExtraData>((int32_t)mExtraDataRefList[i])->mIntegerData;
 
             if ((bsx & 0x01) != 0)               // FIXME: different for TES5
                 flags |= Flag_EnableHavok;
@@ -333,7 +408,7 @@ void NiBtOgre::NiNode::build(BtOgreInst *inst, ModelData *data, NiObject* parent
             // Inactive = 0
             // Display_Proxy = <None>
             StringIndex stringIndex
-                = mModel.getRef<NiStringExtraData>((int32_t)mExtraDataIndexList[i])->mStringData;
+                = mModel.getRef<NiStringExtraData>((int32_t)mExtraDataRefList[i])->mStringData;
             const std::string& upb = NiObject::mModel.indexToString(stringIndex);
             // TODO: split the string into a map
         }
@@ -348,7 +423,7 @@ void NiBtOgre::NiNode::build(BtOgreInst *inst, ModelData *data, NiObject* parent
         {
             // Seems to point to a Bone attach point? e.g. "Bip01 Head"
             StringIndex stringIndex
-                = mModel.getRef<NiStringExtraData>((int32_t)mExtraDataIndexList[i])->mStringData;
+                = mModel.getRef<NiStringExtraData>((int32_t)mExtraDataRefList[i])->mStringData;
             const std::string& prn = NiObject::mModel.indexToString(stringIndex);
         }
         else
@@ -368,7 +443,7 @@ void NiBtOgre::NiNode::build(BtOgreInst *inst, ModelData *data, NiObject* parent
     inst->mFlags = flags;
 
     // don't build collision for an EditorMarker
-    if (!mModel.showEditorMarkers() && data->mEditorMarkerPresent && (mNodeName == "EditorMarker"))
+    if (mModel.hideEditorMarkers() && data->editorMarkerPresent() && (mNodeName == "EditorMarker"))
         return;
 
     // temp debugging note: woc "icmarketdistrict" 8 16
@@ -386,12 +461,12 @@ void NiBtOgre::NiNode::build(BtOgreInst *inst, ModelData *data, NiObject* parent
     //
     // the collision object might be attached to one of the children, see necromancer/hood_gnd.nif
     enableCollision = true; // FIXME: temp testing
-    if (enableCollision && mCollisionObjectIndex != -1)
+    if (enableCollision && mCollisionObjectRef != -1)
     {
-        //mModel.getRef<NiObject>((int32_t)mCollisionObjectIndex)->build(inst, data, this);
-//      data->mBhkRigidBodyMap[NiObject::index()]
+        //mModel.getRef<NiObject>((int32_t)mCollisionObjectRef)->build(inst, data, this);
+//      data->mBhkRigidBodyMap[NiObject::selfRef()]
 //          = std::make_pair(mModel.getModelName()+"@"+mNodeName,
-//                           mModel.getRef<bhkCollisionObject>(mCollisionObjectIndex)->getBodyIndex());
+//                           mModel.getRef<bhkCollisionObject>(mCollisionObjectRef)->getBodyIndex());
     }
 
     // NiTransformController (e.g. fire/FireTorchLargeSmoke)
@@ -431,12 +506,12 @@ void NiBtOgre::NiNode::build(BtOgreInst *inst, ModelData *data, NiObject* parent
     // How are targets mentioned in NiMultiTargetTransformController meant to be used?  They
     // seem to correspond to the controlled blocks in NiControllerSquence, anyway. These are
     // also listed in the object palette.
-    NiTimeControllerRef controllerIndex = NiObjectNET::mControllerIndex;
+    NiTimeControllerRef controllerRef = NiObjectNET::mControllerRef;
 // FIXME: testing only
 #if 0
-    if (controllerIndex != -1)
+    if (controllerRef != -1)
     {
-        std::string name = mModel.blockType(mModel.getRef<NiTimeController>(controllerIndex)->index());
+        std::string name = mModel.blockType(mModel.getRef<NiTimeController>(controllerRef)->selfRef());
         if (name != "NiControllerManager" && name != "NiTransformController" && name != "NiVisController"
                 && name != "NiBSBoneLODController" && name != "bhkBlendController")
             std::cout << name << std::endl;
@@ -444,10 +519,11 @@ void NiBtOgre::NiNode::build(BtOgreInst *inst, ModelData *data, NiObject* parent
 #endif
     // NiVisController (idleobjects/GenericBook.NIF)
     // NiTransformController (fire/FireTorchLargeSmoke.NIF)
-    while (controllerIndex != -1)
+    while (controllerRef != -1)
     {
-        controllerIndex
-            = NiObject::mModel.getRef<NiTimeController>(controllerIndex)->build(NiObjectNET::mControllers);
+        controllerRef
+            = NiObject::mModel.getRef<NiTimeController>(controllerRef)->build(
+                    inst->mTextKeys, inst->mControllers/*NiObjectNET::mControllers*/);
     }
 
     // NiNode, NiGeometry, NiCamera, NiLight or NiTextureEffect
@@ -493,7 +569,23 @@ void NiBtOgre::NiNode::build(BtOgreInst *inst, ModelData *data, NiObject* parent
 //}
 
 // Seen in NIF version 20.2.0.7
-NiBtOgre::BSBlastNode::BSBlastNode(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::BSBlastNode::BSBlastNode(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+    : NiNode(index, stream, model, data)
+{
+    stream.read(mUnknown1);
+    stream.read(mUnknown2);
+}
+
+NiBtOgre::BSRangeNode::BSRangeNode(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+    : NiNode(index, stream, model, data)
+{
+    stream.read(mMin);
+    stream.read(mMax);
+    stream.read(mCurrent);
+}
+
+// Seen in NIF version 20.2.0.7
+NiBtOgre::BSDamageStage::BSDamageStage(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : NiNode(index, stream, model, data)
 {
     stream.read(mUnknown1);
@@ -501,24 +593,16 @@ NiBtOgre::BSBlastNode::BSBlastNode(uint32_t index, NiStream& stream, const NiMod
 }
 
 // Seen in NIF version 20.2.0.7
-NiBtOgre::BSDamageStage::BSDamageStage(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::BSMultiBoundNode::BSMultiBoundNode(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : NiNode(index, stream, model, data)
 {
-    stream.read(mUnknown1);
-    stream.read(mUnknown2);
-}
-
-// Seen in NIF version 20.2.0.7
-NiBtOgre::BSMultiBoundNode::BSMultiBoundNode(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
-    : NiNode(index, stream, model, data)
-{
-    stream.read(mMultiBoundIndex);
+    stream.read(mMultiBoundRef);
     if (stream.nifVer() >= 0x14020007) // from 20.2.0.7
         stream.read(mUnknown);
 }
 
 // Seen in NIF version 20.2.0.7
-NiBtOgre::BSOrderedNode::BSOrderedNode(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::BSOrderedNode::BSOrderedNode(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : NiNode(index, stream, model, data)
 {
     stream.read(mAlphaSortBound);
@@ -526,7 +610,7 @@ NiBtOgre::BSOrderedNode::BSOrderedNode(uint32_t index, NiStream& stream, const N
 }
 
 // Seen in NIF version 20.2.0.7
-NiBtOgre::BSTreeNode::BSTreeNode(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::BSTreeNode::BSTreeNode(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : NiNode(index, stream, model, data)
 {
     stream.readVector<NiNodeRef>(mBones1);
@@ -534,7 +618,7 @@ NiBtOgre::BSTreeNode::BSTreeNode(uint32_t index, NiStream& stream, const NiModel
 }
 
 // Seen in NIF version 20.2.0.7
-NiBtOgre::BSValueNode::BSValueNode(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::BSValueNode::BSValueNode(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : NiNode(index, stream, model, data)
 {
     stream.read(mValue);
@@ -542,7 +626,7 @@ NiBtOgre::BSValueNode::BSValueNode(uint32_t index, NiStream& stream, const NiMod
     stream.skip(sizeof(char)); // unknown byte
 }
 
-NiBtOgre::NiBillboardNode::NiBillboardNode(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::NiBillboardNode::NiBillboardNode(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : NiNode(index, stream, model, data)
 {
     if (stream.nifVer() >= 0x0a010000) // from 10.1.0.0
@@ -550,11 +634,37 @@ NiBtOgre::NiBillboardNode::NiBillboardNode(uint32_t index, NiStream& stream, con
 }
 
 // Seen in NIF version 20.2.0.7
-NiBtOgre::NiSwitchNode::NiSwitchNode(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::NiSwitchNode::NiSwitchNode(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : NiNode(index, stream, model, data)
 {
     if (stream.nifVer() >= 0x0a010000) // from 10.1.0.0
-        stream.read(mUnknownFlags);
+        stream.read(mNiSwitchFlags);
 
-    stream.read(mUnknownInt);
+    stream.read(mIndex);
+
+    // FIXME: should create a visibility switch for the children here
+}
+
+// don't create a bone at NiSwitchNode
+void NiBtOgre::NiSwitchNode::addBones(Ogre::Skeleton *skeleton,
+        Ogre::Bone *parentBone, std::map<std::uint32_t, std::uint16_t>& indexToHandle)
+{
+//  Ogre::Bone *bone;
+//  bone = skeleton->createBone(); // get Ogre to generate a name?
+
+//  indexToHandle[NiObject::selfRef()] = bone->getHandle();
+
+//  if (parentBone)
+//      parentBone->addChild(bone);
+
+//  bone->setPosition(NiAVObject::mTranslation);
+//  bone->setOrientation(NiAVObject::mRotation);
+//  bone->setScale(Ogre::Vector3(NiAVObject::mScale));
+//  bone->setBindingPose();
+
+    for (unsigned int i = 0; i < mChildBoneNodes.size(); ++i)
+    {
+        NiNode* childNode = mModel.getRef<NiNode>(mChildBoneNodes[i]);
+        childNode->addBones(skeleton, parentBone, indexToHandle);
+    }
 }

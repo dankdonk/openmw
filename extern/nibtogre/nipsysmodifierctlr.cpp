@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015-2018 cc9cii
+  Copyright (C) 2015-2019 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -35,22 +35,22 @@
 #undef NDEBUG
 #endif
 
-NiBtOgre::NiPSysModifierCtlr::NiPSysModifierCtlr(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::NiPSysModifierCtlr::NiPSysModifierCtlr(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : NiSingleInterpController(index, stream, model, data)
 {
-    stream.readLongString(mModifierNameIndex);
+    stream.readLongString(mModifierNameRef);
 }
 
 // Seen in NIF ver 20.0.0.4, 20.0.0.5
-NiBtOgre::NiPSysEmitterCtlr::NiPSysEmitterCtlr(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::NiPSysEmitterCtlr::NiPSysEmitterCtlr(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : NiPSysModifierCtlr(index, stream, model, data)
 {
 #if 0 // commented out since this object is not seen in TES3
     if (stream.nifVer() <= 0x0a010000) // up to 10.1.0.0
-        stream.read(mDataIndex);
+        stream.read(mDataRef);
     if (stream.nifVer() >= 0x0a020000) // from 10.2.0.0
 #endif
-        stream.read(mVisibilityInterpolatorIndex);
+        stream.read(mVisibilityInterpolatorRef);
 }
 
 // Seen in NIF ver 20.0.0.4, 20.0.0.5
@@ -63,18 +63,18 @@ NiBtOgre::NiPSysEmitterCtlr::NiPSysEmitterCtlr(uint32_t index, NiStream& stream,
 // dungeons/RuinInteriors/traps/trapgascloud01.nif
 // dungeons/RuinInteriors/traps/trapgascloud01.nif
 // and other examples
-NiBtOgre::NiPSysModifierActiveCtlr::NiPSysModifierActiveCtlr(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::NiPSysModifierActiveCtlr::NiPSysModifierActiveCtlr(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : NiPSysModifierCtlr(index, stream, model, data)
 {
 #if 0 // commented out since this object is not seen in TES3
     if (stream.nifVer() <= 0x0a010000) // up to 10.1.0.0
-        stream.read(mDataIndex);
+        stream.read(mDataRef);
 #endif
 }
 
-NiBtOgre::NiPSysModifierFloatCtlr::NiPSysModifierFloatCtlr(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::NiPSysModifierFloatCtlr::NiPSysModifierFloatCtlr(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : NiPSysModifierCtlr(index, stream, model, data)
 {
     if (stream.nifVer() <= 0x0a010000) // up to 10.1.0.0
-        stream.read(mDataIndex);
+        stream.read(mDataRef);
 }

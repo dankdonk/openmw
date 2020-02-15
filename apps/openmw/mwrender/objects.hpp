@@ -6,6 +6,11 @@
 
 #include <openengine/ogre/renderer.hpp>
 
+namespace Ogre
+{
+    class SceneNode;
+}
+
 namespace MWWorld
 {
     class Ptr;
@@ -41,7 +46,9 @@ public:
         , mRootNode(NULL)
     {}
     ~Objects(){}
-    void insertModel(const MWWorld::Ptr& ptr, const std::string &model, bool batch=false);
+    //void insertModel(const MWWorld::Ptr& ptr, const std::string &model, bool batch=false);
+    const std::map<std::int32_t, Ogre::SceneNode*> *insertModel(const MWWorld::Ptr& ptr, const std::string &model, bool batch=false);
+    void insertLight(const MWWorld::Ptr& ptr);
 
     ObjectAnimation* getAnimation(const MWWorld::Ptr &ptr);
 

@@ -75,6 +75,8 @@ MWWorld::ManualRef::ManualRef(const MWWorld::ESMStore& store, const std::string&
         case MKTAG('H','A','L','C'): create(store.getForeign<ESM4::Potion>(), id, mRef, mPtr); break;
         case MKTAG('T','S','G','S'): create(store.getForeign<ESM4::SigilStone>(), id, mRef, mPtr); break;
         case MKTAG('I','L','V','L'): create(store.getForeign<ESM4::LeveledItem>(), id, mRef, mPtr); break;
+        case MKTAG('E','N','O','T'): create(store.getForeign<ESM4::Note>(), id, mRef, mPtr); break;
+        //case MKTAG('L','S','C','R'): create(store.getForeign<ESM4::Scroll>(), id, mRef, mPtr); break;
         default:
             throw std::logic_error("failed to create manual cell ref for " + name + " (unknown ID)");
         }

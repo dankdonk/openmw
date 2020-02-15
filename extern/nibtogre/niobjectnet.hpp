@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015-2018 cc9cii
+  Copyright (C) 2015-2019 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -53,14 +53,14 @@ namespace NiBtOgre
         bool                        mIsBSLightingShaderProperty;
         std::uint32_t               mSkyrimShaderType;
         StringIndex                 mNameIndex;
-        NiExtraDataRef              mExtraDataIndex;     // first in a chain, up to 4.2.2.0
-        std::vector<NiExtraDataRef> mExtraDataIndexList; // from 10.0.1.0
-        NiTimeControllerRef         mControllerIndex;    // first in a chain
+        NiExtraDataRef              mExtraDataRef;     // first in a chain, up to 4.2.2.0
+        std::vector<NiExtraDataRef> mExtraDataRefList; // from 10.0.1.0
+        NiTimeControllerRef         mControllerRef;    // first in a chain
 
-        std::vector<Ogre::Controller<float> > mControllers; // for sub-entities later
+        std::vector<Ogre::Controller<float> > mControllers; // for sub-entities later (see NiMaterialProperty)
 
     public:
-        NiObjectNET(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data, bool isBSLightingShaderProperty = false);
+        NiObjectNET(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data, bool isBSLightingShaderProperty = false);
         virtual ~NiObjectNET() {}
 
         inline StringIndex getNameIndex() const { return mNameIndex; }
@@ -89,7 +89,7 @@ namespace NiBtOgre
         bool mDirectRender;
         bool mPersistRenderData;
 
-        NiSourceTexture(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
+        NiSourceTexture(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
     };
 }
 

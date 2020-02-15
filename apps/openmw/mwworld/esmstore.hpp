@@ -36,6 +36,18 @@
 #include <extern/esm4/sbsp.hpp>
 #include <extern/esm4/sgst.hpp>
 #include <extern/esm4/lvli.hpp>
+#include <extern/esm4/lvln.hpp>
+#include <extern/esm4/idlm.hpp>
+#include <extern/esm4/mstt.hpp>
+#include <extern/esm4/txst.hpp>
+#include <extern/esm4/scrl.hpp>
+#include <extern/esm4/arma.hpp>
+#include <extern/esm4/hdpt.hpp>
+#include <extern/esm4/term.hpp>
+#include <extern/esm4/tact.hpp>
+#include <extern/esm4/note.hpp>
+#include <extern/esm4/bptd.hpp>
+#include <extern/esm4/scpt.hpp>
 #include <extern/esm4/regn.hpp>
 #include <extern/esm4/land.hpp>
 #include <extern/esm4/anio.hpp>
@@ -120,6 +132,7 @@ namespace MWWorld
         ForeignStore<ESM4::ActorCreature>  mForeignACreatures;
         ForeignStore<ESM4::Sound>      mForeignSounds;
         ForeignStore<ESM4::LandTexture> mForeignLandTextures;
+        ForeignStore<ESM4::Script>     mForeignScripts;
         // Foreign referenceables
         ForeignStore<ESM4::Activator>  mForeignActivators;
         ForeignStore<ESM4::Apparatus>  mForeignApparatuses;
@@ -147,6 +160,17 @@ namespace MWWorld
         ForeignStore<ESM4::Subspace>   mForeignSubspaces;
         ForeignStore<ESM4::SigilStone> mForeignSigilStones;
         ForeignStore<ESM4::LeveledItem> mForeignLvlItems;
+        ForeignStore<ESM4::LeveledActor> mForeignLvlActors;
+        ForeignStore<ESM4::IdleMarker> mForeignIdleMarkers;
+        ForeignStore<ESM4::MovableStatic> mForeignMovableStatics;
+        ForeignStore<ESM4::TextureSet> mForeignTextureSets;
+        ForeignStore<ESM4::Scroll>     mForeignScrolls;
+        ForeignStore<ESM4::ArmorAddon>   mForeignArmorAddons;
+        ForeignStore<ESM4::HeadPart>   mForeignHeadParts;
+        ForeignStore<ESM4::Terminal>   mForeignTerminals;
+        ForeignStore<ESM4::TalkingActivator> mForeignTalkingActivators;
+        ForeignStore<ESM4::Note>       mForeignNotes;
+        ForeignStore<ESM4::BodyPart>   mForeignBodyParts;
         //
         ForeignStore<ESM4::AnimObject> mForeignAnimObjs;
 
@@ -261,6 +285,7 @@ namespace MWWorld
             mStores[MKTAG('E','A','C','R')] = &mForeignACreatures;
             mStores[MKTAG('N','S','O','U')] = &mForeignSounds;
             mStores[MKTAG('X','L','T','E')] = &mForeignLandTextures;
+            mStores[MKTAG('T','S','C','P')] = &mForeignScripts;
 
             mStores[MKTAG('I','A','C','T')] = &mForeignActivators;
             mStores[MKTAG('A','A','P','P')] = &mForeignApparatuses;
@@ -288,6 +313,17 @@ namespace MWWorld
             mStores[MKTAG('P','S','B','S')] = &mForeignSubspaces;
             mStores[MKTAG('T','S','G','S')] = &mForeignSigilStones;
             mStores[MKTAG('I','L','V','L')] = &mForeignLvlItems;
+            mStores[MKTAG('N','L','V','L')] = &mForeignLvlActors;
+            mStores[MKTAG('M','I','D','L')] = &mForeignIdleMarkers;
+            mStores[MKTAG('T','M','S','T')] = &mForeignMovableStatics;
+            mStores[MKTAG('T','T','X','S')] = &mForeignTextureSets;
+            mStores[MKTAG('L','S','C','R')] = &mForeignScrolls;
+            mStores[MKTAG('A','A','R','M')] = &mForeignArmorAddons;
+            mStores[MKTAG('T','H','D','P')] = &mForeignHeadParts;
+            mStores[MKTAG('M','T','E','R')] = &mForeignTerminals;
+            mStores[MKTAG('T','T','A','C')] = &mForeignTalkingActivators;
+            mStores[MKTAG('E','N','O','T')] = &mForeignNotes;
+            mStores[MKTAG('D','B','P','T')] = &mForeignBodyParts;
 
             mStores[MKTAG('O','A','N','I')] = &mForeignAnimObjs;
 
@@ -680,6 +716,11 @@ namespace MWWorld
     }
 
     template <>
+    inline const ForeignStore<ESM4::Script>& ESMStore::getForeign<ESM4::Script>() const {
+        return mForeignScripts;
+    }
+
+    template <>
     inline const ForeignStore<ESM4::Activator>& ESMStore::getForeign<ESM4::Activator>() const {
         return mForeignActivators;
     }
@@ -807,6 +848,61 @@ namespace MWWorld
     template <>
     inline const ForeignStore<ESM4::LeveledItem>& ESMStore::getForeign<ESM4::LeveledItem>() const {
         return mForeignLvlItems;
+    }
+
+    template <>
+    inline const ForeignStore<ESM4::LeveledActor>& ESMStore::getForeign<ESM4::LeveledActor>() const {
+        return mForeignLvlActors;
+    }
+
+    template <>
+    inline const ForeignStore<ESM4::IdleMarker>& ESMStore::getForeign<ESM4::IdleMarker>() const {
+        return mForeignIdleMarkers;
+    }
+
+    template <>
+    inline const ForeignStore<ESM4::MovableStatic>& ESMStore::getForeign<ESM4::MovableStatic>() const {
+        return mForeignMovableStatics;
+    }
+
+    template <>
+    inline const ForeignStore<ESM4::TextureSet>& ESMStore::getForeign<ESM4::TextureSet>() const {
+        return mForeignTextureSets;
+    }
+
+    template <>
+    inline const ForeignStore<ESM4::Scroll>& ESMStore::getForeign<ESM4::Scroll>() const {
+        return mForeignScrolls;
+    }
+
+    template <>
+    inline const ForeignStore<ESM4::ArmorAddon>& ESMStore::getForeign<ESM4::ArmorAddon>() const {
+        return mForeignArmorAddons;
+    }
+
+    template <>
+    inline const ForeignStore<ESM4::HeadPart>& ESMStore::getForeign<ESM4::HeadPart>() const {
+        return mForeignHeadParts;
+    }
+
+    template <>
+    inline const ForeignStore<ESM4::Terminal>& ESMStore::getForeign<ESM4::Terminal>() const {
+        return mForeignTerminals;
+    }
+
+    template <>
+    inline const ForeignStore<ESM4::TalkingActivator>& ESMStore::getForeign<ESM4::TalkingActivator>() const {
+        return mForeignTalkingActivators;
+    }
+
+    template <>
+    inline const ForeignStore<ESM4::Note>& ESMStore::getForeign<ESM4::Note>() const {
+        return mForeignNotes;
+    }
+
+    template <>
+    inline const ForeignStore<ESM4::BodyPart>& ESMStore::getForeign<ESM4::BodyPart>() const {
+        return mForeignBodyParts;
     }
 }
 

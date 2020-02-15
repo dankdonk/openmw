@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015-2018 cc9cii
+  Copyright (C) 2015-2019 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -26,6 +26,7 @@
 #include <stdexcept>
 #include <unordered_map>
 #include <iostream>
+#include <iomanip> // for debugging
 
 #include <boost/algorithm/string.hpp>
 #include <boost/filesystem/path.hpp>
@@ -225,7 +226,7 @@ void ESM4::Reader::getLocalizedString(const FormId stringId, std::string& str)
         filestream->seek(it->second.offset);
         getZString(str, filestream);
     }
-    else
+    else // FIXME: stringId might be null? (FoxRace)
         throw std::runtime_error("ESM4::Reader::getLocalizedString localized string not found");
 }
 
@@ -375,7 +376,7 @@ const ESM4::GroupTypeHeader& ESM4::Reader::grp(std::size_t pos) const
     return (*(mCtx.groupStack.end()-pos-1)).first;
 }
 
-void ESM4::Reader::getRecordData()
+void ESM4::Reader::getRecordData(bool dump)
 {
     std::uint32_t bufSize = 0;
 
@@ -414,7 +415,9 @@ void ESM4::Reader::getRecordData()
         assert(ret == Z_OK || ret == Z_STREAM_END);
 
     // For debugging only
-#if 0
+//#if 0
+if (dump)
+{
         std::ostringstream ss;
         for (unsigned int i = 0; i < bufSize; ++i)
         {
@@ -428,7 +431,8 @@ void ESM4::Reader::getRecordData()
                 ss << " ";
         }
         std::cout << ss.str() << std::endl;
-#endif
+}
+//#endif
         inflateEnd(&strm);
 
         mSavedStream = mStream;

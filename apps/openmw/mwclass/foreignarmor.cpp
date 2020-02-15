@@ -33,9 +33,15 @@ namespace MWClass
             std::string lowerModel = Misc::StringUtils::lowerCase(model);
             size_t pos = lowerModel.find("shield_gnd.");
             if (pos != std::string::npos)
-                renderingInterface.getObjects().insertModel(ptr, lowerModel.replace(pos+5,4,"")/*, !ref->mBase->mPersistent*/); // FIXME
+                renderingInterface.getObjects().insertModel(ptr, lowerModel.replace(pos+5,4,"")); // FIXME
             else
-                renderingInterface.getObjects().insertModel(ptr, model/*, !ref->mBase->mPersistent*/); // FIXME
+            {
+                pos = lowerModel.find("hatchild_gnd.");
+                if (pos != std::string::npos)
+                    renderingInterface.getObjects().insertModel(ptr, lowerModel.replace(pos+7,4,"")); // FIXME
+                else
+                    renderingInterface.getObjects().insertModel(ptr, model/*, !ref->mBase->mPersistent*/); // FIXME
+            }
         }
     }
 
@@ -49,7 +55,13 @@ namespace MWClass
             if (pos != std::string::npos)
                 physics.addObject(ptr, lowerModel.replace(pos+5,4,""));
             else
-                physics.addObject(ptr, model);
+            {
+                pos = lowerModel.find("hatchild_gnd.");
+                if (pos != std::string::npos)
+                    physics.addObject(ptr, lowerModel.replace(pos+7,4,""));
+                else
+                    physics.addObject(ptr, model);
+            }
         }
     }
 
@@ -59,7 +71,7 @@ namespace MWClass
         assert(ref->mBase != NULL);
 
         // clothing and armor need "ground" models (with physics) unless being worn
-        std::string model = ref->mBase->mModel;
+        std::string model = ref->mBase->mModelMale; // FIXME: what about female?
         if (!model.empty())
         {
             size_t pos = Misc::StringUtils::lowerCase(model).find_last_of(".nif"); // pos points at 'f'

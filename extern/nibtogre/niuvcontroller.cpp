@@ -36,9 +36,9 @@
 #undef NDEBUG
 #endif
 
-NiBtOgre::NiUVController::NiUVController(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::NiUVController::NiUVController(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : NiTimeController(index, stream, model, data)
 {
     stream.skip(sizeof(std::uint16_t)); // Unknown Short
-    stream.read(mDataIndex);
+    stream.read(mDataRef);
 }

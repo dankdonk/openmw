@@ -42,9 +42,12 @@ namespace NiBtOgre
     class NiKeyframeController : public NiSingleInterpController
     {
     public:
-        NiKeyframeDataRef mDataIndex;
+        NiKeyframeDataRef mDataRef;
 
-        NiKeyframeController(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
+        NiKeyframeController(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
+
+        void build(NiAVObject* target, const NiTransformInterpolator& interpolator,
+                std::vector<Ogre::Controller<float> >& controllers);
 
         NiTimeControllerRef build(std::vector<Ogre::Controller<float> >& controllers, Ogre::Mesh *mesh = nullptr);
     };
@@ -57,9 +60,9 @@ namespace NiBtOgre
     class BSKeyframeController : public NiKeyframeController
     {
     public:
-        NiKeyframeDataRef mData2Index;
+        NiKeyframeDataRef mData2Ref;
 
-        BSKeyframeController(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
+        BSKeyframeController(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
     };
 #endif
 }

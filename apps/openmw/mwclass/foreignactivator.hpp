@@ -7,6 +7,8 @@ namespace MWClass
 {
     class ForeignActivator : public MWWorld::Class
     {
+            void ensureCustomData (const MWWorld::Ptr& ptr) const;
+
             virtual MWWorld::Ptr copyToCellImpl(const MWWorld::Ptr &ptr, MWWorld::CellStore &cell) const;
 
         public:
@@ -26,6 +28,32 @@ namespace MWClass
             static void registerSelf();
 
             virtual std::string getModel(const MWWorld::Ptr &ptr) const;
+
+            virtual bool hasToolTip (const MWWorld::Ptr& ptr) const;
+            ///< @return true if this object has a tooltip when focused (default implementation: false)
+
+            virtual MWGui::ToolTipInfo getToolTipInfo (const MWWorld::Ptr& ptr) const;
+            ///< @return the content of the tool tip to be displayed. raises exception if the object has no tooltip.
+
+            virtual std::string getScript (const MWWorld::Ptr& ptr) const;
+            ///< Return name of the script attached to ptr
+
+            virtual boost::shared_ptr<MWWorld::Action> activate (const MWWorld::Ptr& ptr, const MWWorld::Ptr& actor) const;
+            // FIXME: below copied from ForeignDoor
+
+            /// 0 = nothing, 1 = opening, 2 = closing
+            virtual int getDoorState (const MWWorld::Ptr &ptr) const;
+
+            /// This does not actually cause the door to move. Use World::activateDoor instead.
+            virtual void setDoorState (const MWWorld::Ptr &ptr, int state) const;
+
+            virtual void readAdditionalState (const MWWorld::Ptr& ptr, const ESM::ObjectState& state)
+                const;
+            ///< Read additional state from \a state into \a ptr.
+
+            virtual void writeAdditionalState (const MWWorld::Ptr& ptr, ESM::ObjectState& state)
+                const;
+            ///< Write additional state from \a ptr into \a state.
     };
 }
 

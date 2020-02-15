@@ -20,9 +20,11 @@
 #ifdef ENABLE_PLUGIN_GLES2
 # include "OgreGLES2Plugin.h"
 #endif
-
 #ifdef ENABLE_PLUGIN_Direct3D9
 # include "OgreD3D9Plugin.h"
+#endif
+#ifdef ENABLE_PLUGIN_Direct3D11
+# include "OgreD3D11Plugin.h"
 #endif
 
 namespace Ogre
@@ -72,6 +74,9 @@ namespace OgreInit
         Ogre::GLES2Plugin* mGLES2Plugin;
         #endif
         #ifdef ENABLE_PLUGIN_Direct3D9
+        Ogre::D3D9Plugin* mD3D9Plugin;
+        #endif
+        #ifdef ENABLE_PLUGIN_Direct3D11
         Ogre::D3D9Plugin* mD3D9Plugin;
         #endif
 

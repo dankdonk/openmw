@@ -32,7 +32,7 @@
 
 #include <OgreController.h>
 
-#include <components/nifogre/ogrenifloader.hpp> // ObjectScenePtr
+//#include <components/nifogre/ogrenifloader.hpp> // ObjectScenePtr
 
 #include "nimodel.hpp"
 #include "nidata.hpp"
@@ -55,16 +55,6 @@ namespace NiBtOgre
     struct bhkEntity;
     struct bhkConstraint;
     struct NiGeometry;
-
-    enum BuildFlags {
-        Flag_EnableHavok        = 0x0001,
-        Flag_EnableCollision    = 0x0002,
-        Flag_EnableAnimation    = 0x0008,
-        Flag_HasSkin            = 0x0010,
-        Flag_IgnoreEditorMarker = 0x0020, // FIXME: no longer used?
-        Flag_NonRootObject      = 0x1000, // FIXME: no longer used?
-        Flag_None               = 0x0000
-    };
 
     struct BtOgreInst
     {
@@ -90,9 +80,14 @@ namespace NiBtOgre
         // FIXME: resources are no longer loaded from here, do we still need an auto_ptr?
         Ogre::SharedPtr<NiBtOgre::NiModel> mModel;
 
-        int mFlags; // some global properties
         Ogre::SceneNode *mBaseSceneNode;
-        NifOgre::ObjectScenePtr mObjectScene;
+        int mFlags; // some global properties
+        //NifOgre::ObjectScenePtr mObjectScene;
+
+        std::string mTargetBone;
+        bool mIsSkinned;
+
+        inline bool havokEnabled() const { return mModel->getBuildData().havokEnabled(); }
 
         std::vector<std::pair<bhkConstraint*, bhkEntity*> > mbhkConstraints;
 
@@ -108,14 +103,33 @@ namespace NiBtOgre
         // btCollisionShapes
         // btConstraints
 
-        BtOgreInst(Ogre::SceneNode *baseNode, NifOgre::ObjectScenePtr scene, const std::string& name, const std::string& group);
+        Ogre::Entity *mSkeletonRoot; // assume only one
+        std::map<NiNodeRef, Ogre::Entity*> mEntities;
+        std::vector<Ogre::Entity*> mVertexAnimEntities;
+        std::map<std::string, std::vector<Ogre::Entity*> > mSkeletonAnimEntities;
+        std::multimap<float, std::string> mTextKeys;
+        std::vector<Ogre::Controller<Ogre::Real> > mControllers;
+
+        std::vector<std::string> mFlameNodes;
+        std::vector<std::string> mAttachLights;
+
+        BtOgreInst(Ogre::SceneNode *baseNode, /*NifOgre::ObjectScenePtr scene,*/ const std::string& name, const std::string& group);
         ~BtOgreInst() {
             for (unsigned int i = 0; i < mInterpolators.size(); ++i)
                 delete mInterpolators[i];
         }
 
         // register with bullet dynamics, make entities visible, etc
-        void instantiate(Ogre::SkeletonPtr skeleton = Ogre::SkeletonPtr());
+        void instantiate();
+
+        // FIXME: need a better name
+        // for building body parts using the supplied skeleton
+        void instantiate(Ogre::SkeletonPtr skeleton, const std::string& meshExt = "");
+
+        // for building fg morphed mesh
+        void instantiate(Ogre::SkeletonPtr skeleton, const std::string& npcName, std::vector<Ogre::Vector3>& vertices);
+
+        bool hasAnimation(const std::string& animName) const;
     };
 }
 

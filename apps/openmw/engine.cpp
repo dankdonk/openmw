@@ -331,6 +331,7 @@ void OMW::Engine::prepareEngine (Settings::Manager & settings)
     {
 #if OGRE_PLATFORM == OGRE_PLATFORM_WIN32
         renderSystem = "Direct3D9 Rendering Subsystem";
+        //renderSystem = "Direct3D11 Rendering Subsystem";
 #else
         renderSystem = "OpenGL Rendering Subsystem";
 #endif

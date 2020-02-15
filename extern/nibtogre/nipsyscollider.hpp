@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015-2018 cc9cii
+  Copyright (C) 2015-2019 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -49,12 +49,15 @@ namespace NiBtOgre
         float mBounce;
         bool mSpawnOnCollide;
         bool mDieOnCollide;
-        NiPSysSpawnModifierRef mSpawnModifierIndex;
+        NiPSysSpawnModifierRef mSpawnModifierRef;
         NiObject   *mParent; // Ptr
-        NiObjectRef mNextColliderIndex;
-        NiNode     *mColliderObject; // Ptr
+        NiObjectRef mNextColliderRef;
+        // architecture\pentagon\crane01.nif (FO3) shows that some of the Ptr refer to
+        // objects not yet loaded. Change to Ref instead.
+        //NiNode     *mColliderObject; // Ptr
+        NiAVObjectRef mColliderObjectRef;
 
-        NiPSysCollider(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
+        NiPSysCollider(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
     };
 
     // Seen in NIF ver 20.0.0.4, 20.0.0.5
@@ -66,7 +69,7 @@ namespace NiBtOgre
         Ogre::Vector3 mXAxis;
         Ogre::Vector3 mYAxis;
 
-        NiPSysPlanarCollider(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
+        NiPSysPlanarCollider(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
     };
 
     // Seen in NIF version 20.2.0.7
@@ -75,7 +78,7 @@ namespace NiBtOgre
     public:
         float mRadius;
 
-        NiPSysSphericalCollider(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
+        NiPSysSphericalCollider(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
     };
 }
 

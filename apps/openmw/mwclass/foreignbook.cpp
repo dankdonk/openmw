@@ -70,16 +70,14 @@ namespace MWClass
 
     bool ForeignBook::hasToolTip (const MWWorld::Ptr& ptr) const
     {
-        MWWorld::LiveCellRef<ESM4::Book> *ref =
-            ptr.get<ESM4::Book>();
+        MWWorld::LiveCellRef<ESM4::Book> *ref = ptr.get<ESM4::Book>();
 
         return (ref->mBase->mFullName != "");
     }
 
     MWGui::ToolTipInfo ForeignBook::getToolTipInfo (const MWWorld::Ptr& ptr) const
     {
-        MWWorld::LiveCellRef<ESM4::Book> *ref =
-            ptr.get<ESM4::Book>();
+        MWWorld::LiveCellRef<ESM4::Book> *ref = ptr.get<ESM4::Book>();
 
         MWGui::ToolTipInfo info;
         info.caption = ref->mBase->mFullName + MWGui::ToolTips::getCountString(ptr.getRefData().getCount());

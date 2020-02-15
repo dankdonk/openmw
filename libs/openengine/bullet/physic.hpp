@@ -226,6 +226,11 @@ namespace Physic
             float scale, const Ogre::Vector3 &position, const Ogre::Quaternion &rotation,
             Ogre::Vector3* scaledBoxTranslation = 0, Ogre::Quaternion* boxRotation = 0, bool raycasting=false, bool placeable=false);
 
+        RigidBody* createAndAdjustRagdollBody(const std::string &mesh, const std::string &name,
+            const std::map<std::int32_t, Ogre::SceneNode*>&,
+            float scale, const Ogre::Vector3 &position, const Ogre::Quaternion &rotation,
+            Ogre::Vector3* scaledBoxTranslation = 0, Ogre::Quaternion* boxRotation = 0, bool raycasting=false, bool placeable=false);
+
         /**
          * Adjusts a rigid body to the right position and rotation
          */

@@ -1,4 +1,5 @@
 /*
+
   Copyright (C) 2018, 2019 cc9cii
 
   This software is provided 'as-is', without any express or implied
@@ -20,331 +21,337 @@
   cc9cii cc9c@iinet.net.au
 
 */
-[17/12/18]
- Ideally minimise unnecessary loops or processing duplications.
 
- * Cache objects - but at what level?  The choices seem to be:
+#[17/12/18]
 
-  - NIF after parsing - each of the object instances based on the same NIF needs to be built
-  - already built object instance - everything's the same except position/rotation/etc
+Ideally minimise unnecessary loops or processing duplications.
+
+## Cache objects
+
+But at what level?  The choices seem to be:
+
+  * NIF after parsing - each of the object instances based on the same NIF needs to be built
+  * already built object instance - everything's the same except position/rotation/etc
     (how to clone?)
 
- * Building object instances
+## Building object instances
 
-  Object Scope and Lifetime
-  =========================
+### Object Scope and Lifetime
 
-  NIF Object      | Ogre Object            | Ogre Instance
-  ----------------+------------------------+-------------------------
-  NIF             | NiModel                | BtOgreInst (has pos/rot/scale/etc from ESM/ESP)
-  NiNode          | Ogre::Mesh             | Ogre::Entity
-  NiGeometry      |   submesh              |   sub-entity
-                  |     material           |
-                  |   animation            |
-                  |   pose (vertex anim)   |
-  ----------------+------------------------+-------------------------
-  SkeletonRoot    | Ogre::Skeleton         | Ogre::SkeletonInstance
-  Bone            |  bone                  |
+    NIF Object      | Ogre Object            | Ogre Instance
+    ----------------+------------------------+-------------------------
+    NIF             | NiModel                | BtOgreInst (has pos/rot/scale/etc from ESM/ESP)
+    NiNode          | Ogre::Mesh             | Ogre::Entity
+    NiGeometry      |   submesh              |   sub-entity
+                    |     material           |
+                    |   animation            |
+                    |   pose (vertex anim)   |
+    ----------------+------------------------+-------------------------
+    SkeletonRoot    | Ogre::Skeleton         | Ogre::SkeletonInstance
+    Bone            |  bone                  |
 
 
- One design consideration is when does the Ogre objects (e.g. Mesh) get built?
+One design consideration is when does the Ogre objects (e.g. `Mesh`) get built?
 
- Currently the build is triggered when the associated Entity is built (via a loader callback
- mechanism).  This may not be efficient if the same mesh are re-used often (e.g skeleton.nif,
- but have not tested if true).
+Currently the build is triggered when the associated `Entity` is built (via a loader callback
+mechanism).  This may not be efficient if the same mesh are re-used often (e.g `skeleton.nif`,
+but have not tested if true - **EDIT 22/02/19:** Not true since an often used mesh will be
+retrieved from the `MeshManager`'s cache.  Also see below paragraph.).
 
- Note that I may be misunderstanding some stuff here.  For example, the built meshes are managed
- by the MeshManager so they won't be built again. Similarly the skeletons are managed by the
- SkeletonManager.
+Note that I may be misunderstanding some stuff here.  For example, the built meshes are managed
+by the `MeshManager` so they won't be built again. Similarly the skeletons are managed by the
+`SkeletonManager`.
 
- An alternative might be to create the Ogre objects as each of the NIF files are read.  But
- doing this can lead to a large number of Ogre objects being loaded (Q: do Ogre resource
- managers ever unload?)
+An alternative might be to create the Ogre objects as each of the NIF files are read.  But
+doing this can lead to a large number of Ogre objects being loaded (Q: do Ogre resource
+managers ever unload? A: yes)
 
- Some NiTimeControllers may work with different Ogre objects.  For example:
+Some `NiTimeControllers` may work with different Ogre objects.  For example:
 
-    - NiGeomMorpherController is setup while creating a sub-mesh (vertex animation)
-      SceneManager::_applySceneAnimations will then call the apply() method of each of the
-      animations
+  * `NiGeomMorpherController` is setup while creating a sub-mesh (vertex animation)
+    `SceneManager::_applySceneAnimations` will then call the `apply()` method of each of the
+    animations
 
-    - NiUVController seems to work at each of the sub-entity level by modifying the associated
-      material (texture scroll)
+  * `NiUVController` seems to work at each of the sub-entity level by modifying the associated
+    material (texture scroll)
 
-[23/12/2018] Some unrelated notes
+#[23/12/2018] Some unrelated notes
 
- 1.  Ogre resource searching is poor for NIF - multiple archives are searched for each and every
-     resource in BSA (or loose files).  See OgreResourceGroupManager.cpp.
+  1. Ogre resource searching is poor for NIF - multiple archives are searched for each and every
+     resource in BSA (or loose files).  See `OgreResourceGroupManager.cpp`.
 
-     Also, find out if the contents of the BSA can be registered(?) with ArchiveManager or
-     ResourceManager.  It seems grp->ResourceIndexCaseSensitive, etc, are empty.
+     Also, find out if the contents of the BSA can be registered(?) with `ArchiveManager` or
+     `ResourceManager`.  It seems `grp->ResourceIndexCaseSensitive`, etc, are empty.
 
- 2.  Each of the sounds throw exception trying to find a .wav format, then finds .mp3 format. Do
-     some intelligent detection while scanning resources?
+  2. Each of the sounds throw exception trying to find a `.wav` format, then finds `.mp3` format.
+     Do some intelligent detection while scanning resources?
 
- 3.  Subtitle message box height is too low and hence the bottom of the texts are not showing.
+  3. Subtitle message box height is too low and hence the bottom of the texts are not showing.
 
-[25/12/2018]
+#[25/12/2018]
 
- Decided to revert the bhkNiTriStripsShape packing optimisation.  bhkNiTriStripsShape shouldn't
- be occuring often with the newer NIF versions, anyway (hopefully).  Well, it turns out that
- there are a few - might be worth doing some profiling later.
+Decided to revert the `bhkNiTriStripsShape` packing optimisation.  `bhkNiTriStripsShape` shouldn't
+be occurring often with the newer NIF versions, anyway (hopefully).  Well, it turns out that
+there are a few - might be worth doing some profiling later.
 
- bhkNiTriStripsShape examples:                                     {{{
+    bhkNiTriStripsShape examples:                                     {{{
 
- ./meshes/architecture/arena/arenacolumn02.nif
- ./meshes/architecture/bridges/looseboard01.nif
- ./meshes/architecture/bridges/looseboardbroken.nif
- ./meshes/architecture/cheydinhal/woodplank01.nif
- ./meshes/clutter/bonemarrow.nif
- ./meshes/clutter/books/wantedposter01.nif
- ./meshes/clutter/books/wantedposter02.nif
- ./meshes/clutter/gnarlbark.nif
- ./meshes/clutter/houndstooth.nif
- ./meshes/clutter/hungertongue.nif
- ./meshes/clutter/ingredcinnabarpolyporecap01.nif
- ./meshes/clutter/ingredcinnabarpolyporecap02.nif
- ./meshes/clutter/middleclass/middlechestbrokenbottom02.nif
- ./meshes/clutter/middleclass/middlechestbrokenbottom03.nif
- ./meshes/clutter/scalonfin.nif
- ./meshes/clutter/se02handkerchief.nif
- ./meshes/clutter/sesmokedbaliwogleg.nif
- ./meshes/clutter/shamblesskull.nif
- ./meshes/clutter/USIPHoundsToothKey.NIF
- ./meshes/clutter/voidessence.nif
- ./meshes/dungeons/ayleidruins/exterior/cameronsparadise/cpscreen01.nif
- ./meshes/dungeons/ayleidruins/interior/arwelkydiholder01.nif
- ./meshes/dungeons/caves/cave03/cnhallhalf01a.nif
- ./meshes/dungeons/caves/clutter01/ancientscroll01.nif
- ./meshes/dungeons/caves/clutter01/animalrib01.nif
- ./meshes/dungeons/caves/clutter01/arch03.nif
- ./meshes/dungeons/caves/clutter01/arch04.nif
- ./meshes/dungeons/caves/clutter01/archfull01.nif
- ./meshes/dungeons/caves/clutter01/arrmwallexitwide01.nif
- ./meshes/dungeons/caves/clutter01/arrowrock01.nif
- ./meshes/dungeons/caves/clutter01/arwhalldeadend02.nif
- ./meshes/dungeons/caves/clutter01/arwhallendcrumblewall01.nif
- ./meshes/dungeons/caves/clutter01/ayleidplatform01.nif
- ./meshes/dungeons/caves/clutter01/batincage01.nif
- ./meshes/dungeons/caves/clutter01/beartrapclosed03.nif
- ./meshes/dungeons/caves/clutter01/brainvat01.nif
- ./meshes/dungeons/caves/clutter01/burnttranscript01.nif
- ./meshes/dungeons/caves/clutter01/ceismap01.nif
- ./meshes/dungeons/caves/clutter01/ceismap02.nif
- ./meshes/dungeons/caves/clutter01/ceismap03.nif
- ./meshes/dungeons/caves/clutter01/ceismap04.nif
- ./meshes/dungeons/caves/clutter01/ceismap05.nif
- ./meshes/dungeons/caves/clutter01/ceismap06.nif
- ./meshes/dungeons/caves/clutter01/celestialring01.nif
- ./meshes/dungeons/caves/clutter01/centurionsphere01.nif
- ./meshes/dungeons/caves/clutter01/circularartifact01.nif
- ./meshes/dungeons/caves/clutter01/crystalgroup01.nif
- ./meshes/dungeons/caves/clutter01/crystalgroup02.nif
- ./meshes/dungeons/caves/clutter01/crystalgroup03.nif
- ./meshes/dungeons/caves/clutter01/crystalgroup04.nif
- ./meshes/dungeons/caves/clutter01/crystalgroup05.nif
- ./meshes/dungeons/caves/clutter01/crystalgroup06.nif
- ./meshes/dungeons/caves/clutter01/crystalgroup07.nif
- ./meshes/dungeons/caves/clutter01/crystalgroup08.nif
- ./meshes/dungeons/caves/clutter01/crystalgroup09.nif
- ./meshes/dungeons/caves/clutter01/crystalgroup10.nif
- ./meshes/dungeons/caves/clutter01/crystalgroup11.nif
- ./meshes/dungeons/caves/clutter01/crystalgroup12.nif
- ./meshes/dungeons/caves/clutter01/displayglass01.nif
- ./meshes/dungeons/caves/clutter01/displayglasswide01.nif
- ./meshes/dungeons/caves/clutter01/dragon01.nif
- ./meshes/dungeons/caves/clutter01/dragonegg01.nif
- ./meshes/dungeons/caves/clutter01/dragonskull01.nif
- ./meshes/dungeons/caves/clutter01/dwemercog01.nif
- ./meshes/dungeons/caves/clutter01/dwemercylinder01.nif
- ./meshes/dungeons/caves/clutter01/dwemerpiston01.nif
- ./meshes/dungeons/caves/clutter01/dwemerspiderleg01.nif
- ./meshes/dungeons/caves/clutter01/emptycage01.nif
- ./meshes/dungeons/caves/clutter01/fireflycage01.nif
- ./meshes/dungeons/caves/clutter01/forgering01.nif
- ./meshes/dungeons/caves/clutter01/forgering02.nif
- ./meshes/dungeons/caves/clutter01/geode01.nif
- ./meshes/dungeons/caves/clutter01/geodestatic01.nif
- ./meshes/dungeons/caves/clutter01/gong01.nif
- ./meshes/dungeons/caves/clutter01/gongbrokenbase01.nif
- ./meshes/dungeons/caves/clutter01/gongbrokentop01.nif
- ./meshes/dungeons/caves/clutter01/guildgarden01.nif
- ./meshes/dungeons/caves/clutter01/hollowstump01.nif
- ./meshes/dungeons/caves/clutter01/hornofzyyr01.nif
- ./meshes/dungeons/caves/clutter01/landdreughhead01.nif
- ./meshes/dungeons/caves/clutter01/malevolentzinj01.nif
- ./meshes/dungeons/caves/clutter01/malevolentzinjstatic01.nif
- ./meshes/dungeons/caves/clutter01/meteorite01.nif
- ./meshes/dungeons/caves/clutter01/minotaurstatue01.nif
- ./meshes/dungeons/caves/clutter01/minotaurstatue02.nif
- ./meshes/dungeons/caves/clutter01/musicbox01.nif
- ./meshes/dungeons/caves/clutter01/post01.nif
- ./meshes/dungeons/caves/clutter01/post02.nif
- ./meshes/dungeons/caves/clutter01/post03.nif
- ./meshes/dungeons/caves/clutter01/post04.nif
- ./meshes/dungeons/caves/clutter01/postbrokenbase01.nif
- ./meshes/dungeons/caves/clutter01/postbrokenbase02.nif
- ./meshes/dungeons/caves/clutter01/postbrokenbase03.nif
- ./meshes/dungeons/caves/clutter01/postbrokenbase04.nif
- ./meshes/dungeons/caves/clutter01/postbrokentop01.nif
- ./meshes/dungeons/caves/clutter01/postbrokentop02.nif
- ./meshes/dungeons/caves/clutter01/postbrokentop03.nif
- ./meshes/dungeons/caves/clutter01/postbrokentop04.nif
- ./meshes/dungeons/caves/clutter01/pyre01.nif
- ./meshes/dungeons/caves/clutter01/rock01.nif
- ./meshes/dungeons/caves/clutter01/runesofcyrodiil01.nif
- ./meshes/dungeons/caves/clutter01/rythorspendant02.nif
- ./meshes/dungeons/caves/clutter01/rythorspendant03.nif
- ./meshes/dungeons/caves/clutter01/sarcophagus01.nif
- ./meshes/dungeons/caves/clutter01/scaffolding01.nif
- ./meshes/dungeons/caves/clutter01/sectorcolumn01.nif
- ./meshes/dungeons/caves/clutter01/sectorcolumn02.nif
- ./meshes/dungeons/caves/clutter01/sectorcolumn03.nif
- ./meshes/dungeons/caves/clutter01/sectorcolumn04.nif
- ./meshes/dungeons/caves/clutter01/sectorcolumnbrokenbottom01.nif
- ./meshes/dungeons/caves/clutter01/sectorcolumnbrokenbottom02.nif
- ./meshes/dungeons/caves/clutter01/sectorcolumnbrokenbottom03.nif
- ./meshes/dungeons/caves/clutter01/sectorcolumnbrokenbottom04.nif
- ./meshes/dungeons/caves/clutter01/sectorcolumnbrokentop01.nif
- ./meshes/dungeons/caves/clutter01/sectorcolumnbrokentop02.nif
- ./meshes/dungeons/caves/clutter01/sectorcolumnbrokentop03.nif
- ./meshes/dungeons/caves/clutter01/sectorcolumnbrokentop04.nif
- ./meshes/dungeons/caves/clutter01/shaft01.nif
- ./meshes/dungeons/caves/clutter01/shard01.nif
- ./meshes/dungeons/caves/clutter01/shipwreck02.nif
- ./meshes/dungeons/caves/clutter01/spire01.nif
- ./meshes/dungeons/caves/clutter01/spire02.nif
- ./meshes/dungeons/caves/clutter01/spire03.nif
- ./meshes/dungeons/caves/clutter01/spiredoor01.nif
- ./meshes/dungeons/caves/clutter01/spiredoor02.nif
- ./meshes/dungeons/caves/clutter01/spiredoor03.nif
- ./meshes/dungeons/caves/clutter01/spiredoor04.nif
- ./meshes/dungeons/caves/clutter01/spiredoor05.nif
- ./meshes/dungeons/caves/clutter01/tallcensor01.nif
- ./meshes/dungeons/caves/clutter01/tallcensorbrokenbase01.nif
- ./meshes/dungeons/caves/clutter01/tallcensorbrokentop01.nif
- ./meshes/dungeons/caves/clutter01/tallmushroom01.nif
- ./meshes/dungeons/caves/clutter01/talon01.nif
- ./meshes/dungeons/caves/clutter01/teavscorpse01.nif
- ./meshes/dungeons/caves/clutter01/teavssword01.nif
- ./meshes/dungeons/caves/clutter01/tent02.nif
- ./meshes/dungeons/caves/clutter01/test01.nif
- ./meshes/dungeons/caves/clutter01/test02.nif
- ./meshes/dungeons/caves/clutter01/trilobite02.nif
- ./meshes/dungeons/caves/clutter01/twist01.nif
- ./meshes/dungeons/caves/clutter01/twist03.nif
- ./meshes/dungeons/caves/clutter01/twist04.nif
- ./meshes/dungeons/caves/clutter01/twist05.nif
- ./meshes/dungeons/caves/clutter01/twist06.nif
- ./meshes/dungeons/caves/clutter01/twist07.nif
- ./meshes/dungeons/caves/clutter01/twist08.nif
- ./meshes/dungeons/caves/clutter01/twist09.nif
- ./meshes/dungeons/caves/clutter01/twist10.nif
- ./meshes/dungeons/caves/clutter01/twist11.nif
- ./meshes/dungeons/caves/clutter01/twist12.nif
- ./meshes/dungeons/caves/clutter01/twist13.nif
- ./meshes/dungeons/caves/clutter01/twist14.nif
- ./meshes/dungeons/caves/clutter01/twist15.nif
- ./meshes/dungeons/caves/clutter01/twist16.nif
- ./meshes/dungeons/caves/clutter01/twist17.nif
- ./meshes/dungeons/caves/clutter01/twist18.nif
- ./meshes/dungeons/caves/clutter01/twist19.nif
- ./meshes/dungeons/caves/clutter01/twist20.nif
- ./meshes/dungeons/caves/clutter01/twistpiece01.nif
- ./meshes/dungeons/caves/clutter01/twistpiece02.nif
- ./meshes/dungeons/caves/clutter01/twistpiece03.nif
- ./meshes/dungeons/caves/clutter01/twistpiece04.nif
- ./meshes/dungeons/caves/clutter01/upcolumn01.nif
- ./meshes/dungeons/caves/clutter01/upcolumnbrokenbase01.nif
- ./meshes/dungeons/caves/clutter01/upcolumnbrokenbase02.nif
- ./meshes/dungeons/caves/clutter01/upcolumnbrokenbase03.nif
- ./meshes/dungeons/caves/clutter01/upcolumnbrokenbase04.nif
- ./meshes/dungeons/caves/clutter01/upcolumnbrokentop01.nif
- ./meshes/dungeons/caves/clutter01/upcolumnbrokentop02.nif
- ./meshes/dungeons/caves/clutter01/upcolumnbrokentop03.nif
- ./meshes/dungeons/caves/clutter01/upcolumnbrokentop04.nif
- ./meshes/dungeons/caves/clutter01/wallmushroom01.nif
- ./meshes/dungeons/caves/clutter01/wallmushroom02.nif
- ./meshes/dungeons/caves/clutter01/wallmushroom03.nif
- ./meshes/dungeons/caves/clutter01/warlockartifact01.nif
- ./meshes/dungeons/caves/clutter01/warlockchest01.nif
- ./meshes/dungeons/caves/clutter01/warlockcoffer01.nif
- ./meshes/dungeons/caves/clutter01/warlockcoffer02.nif
- ./meshes/dungeons/caves/clutter01/warlockskeleton01.nif
- ./meshes/dungeons/caves/clutter01/warlockspellshrine01.nif
- ./meshes/dungeons/caves/clutter01/warlocktile01.nif
- ./meshes/dungeons/caves/clutter01/warlocktile02.nif
- ./meshes/dungeons/caves/clutter01/warlocktile03.nif
- ./meshes/dungeons/caves/clutter01/warlocktile04.nif
- ./meshes/dungeons/caves/clutter01/warlocktile05.nif
- ./meshes/dungeons/caves/clutter01/warlocktile06.nif
- ./meshes/dungeons/caves/clutter01/warlocktile07.nif
- ./meshes/dungeons/caves/clutter01/warlocktile08.nif
- ./meshes/dungeons/caves/clutter01/warlocktile09.nif
- ./meshes/dungeons/caves/clutter01/warlocktile10.nif
- ./meshes/dungeons/caves/clutter01/warlocktile11.nif
- ./meshes/dungeons/misc/ricketyfence01.nif
- ./meshes/dungeons/Root/Interior/Misc/gnarlspawner.nif
- ./meshes/dungeons/Root/Interior/Misc/spiketrap.nif
- ./meshes/furniture/middleclass/bearskinrug01.nif
- ./meshes/furniture/middleclass/middlewolfrug01.nif
- ./meshes/furniture/middleclass/ms51rewardpainting.nif
- ./meshes/Museum/HoundsToothKey.NIF
- ./meshes/oblivion/clutter/traps/hallwaytrackbladetrap02.nif
- ./meshes/oblivion/clutter/traps/hallwaytrackbladetrap02b.nif
- ./meshes/plants/Dementia/blisterpodcap.nif
- ./meshes/plants/Dementia/DDigestiveSlime.NIF
- ./meshes/plants/Dementia/dpodpit.nif
- ./meshes/plants/Mania/alocasiafruit.nif
- ./meshes/plants/Mania/kelpgasbladder.nif
- ./meshes/plants/Mania/wormheadcap.nif                             }}}
+    ./meshes/architecture/arena/arenacolumn02.nif
+    ./meshes/architecture/bridges/looseboard01.nif
+    ./meshes/architecture/bridges/looseboardbroken.nif
+    ./meshes/architecture/cheydinhal/woodplank01.nif
+    ./meshes/clutter/bonemarrow.nif
+    ./meshes/clutter/books/wantedposter01.nif
+    ./meshes/clutter/books/wantedposter02.nif
+    ./meshes/clutter/gnarlbark.nif
+    ./meshes/clutter/houndstooth.nif
+    ./meshes/clutter/hungertongue.nif
+    ./meshes/clutter/ingredcinnabarpolyporecap01.nif
+    ./meshes/clutter/ingredcinnabarpolyporecap02.nif
+    ./meshes/clutter/middleclass/middlechestbrokenbottom02.nif
+    ./meshes/clutter/middleclass/middlechestbrokenbottom03.nif
+    ./meshes/clutter/scalonfin.nif
+    ./meshes/clutter/se02handkerchief.nif
+    ./meshes/clutter/sesmokedbaliwogleg.nif
+    ./meshes/clutter/shamblesskull.nif
+    ./meshes/clutter/USIPHoundsToothKey.NIF
+    ./meshes/clutter/voidessence.nif
+    ./meshes/dungeons/ayleidruins/exterior/cameronsparadise/cpscreen01.nif
+    ./meshes/dungeons/ayleidruins/interior/arwelkydiholder01.nif
+    ./meshes/dungeons/caves/cave03/cnhallhalf01a.nif
+    ./meshes/dungeons/caves/clutter01/ancientscroll01.nif
+    ./meshes/dungeons/caves/clutter01/animalrib01.nif
+    ./meshes/dungeons/caves/clutter01/arch03.nif
+    ./meshes/dungeons/caves/clutter01/arch04.nif
+    ./meshes/dungeons/caves/clutter01/archfull01.nif
+    ./meshes/dungeons/caves/clutter01/arrmwallexitwide01.nif
+    ./meshes/dungeons/caves/clutter01/arrowrock01.nif
+    ./meshes/dungeons/caves/clutter01/arwhalldeadend02.nif
+    ./meshes/dungeons/caves/clutter01/arwhallendcrumblewall01.nif
+    ./meshes/dungeons/caves/clutter01/ayleidplatform01.nif
+    ./meshes/dungeons/caves/clutter01/batincage01.nif
+    ./meshes/dungeons/caves/clutter01/beartrapclosed03.nif
+    ./meshes/dungeons/caves/clutter01/brainvat01.nif
+    ./meshes/dungeons/caves/clutter01/burnttranscript01.nif
+    ./meshes/dungeons/caves/clutter01/ceismap01.nif
+    ./meshes/dungeons/caves/clutter01/ceismap02.nif
+    ./meshes/dungeons/caves/clutter01/ceismap03.nif
+    ./meshes/dungeons/caves/clutter01/ceismap04.nif
+    ./meshes/dungeons/caves/clutter01/ceismap05.nif
+    ./meshes/dungeons/caves/clutter01/ceismap06.nif
+    ./meshes/dungeons/caves/clutter01/celestialring01.nif
+    ./meshes/dungeons/caves/clutter01/centurionsphere01.nif
+    ./meshes/dungeons/caves/clutter01/circularartifact01.nif
+    ./meshes/dungeons/caves/clutter01/crystalgroup01.nif
+    ./meshes/dungeons/caves/clutter01/crystalgroup02.nif
+    ./meshes/dungeons/caves/clutter01/crystalgroup03.nif
+    ./meshes/dungeons/caves/clutter01/crystalgroup04.nif
+    ./meshes/dungeons/caves/clutter01/crystalgroup05.nif
+    ./meshes/dungeons/caves/clutter01/crystalgroup06.nif
+    ./meshes/dungeons/caves/clutter01/crystalgroup07.nif
+    ./meshes/dungeons/caves/clutter01/crystalgroup08.nif
+    ./meshes/dungeons/caves/clutter01/crystalgroup09.nif
+    ./meshes/dungeons/caves/clutter01/crystalgroup10.nif
+    ./meshes/dungeons/caves/clutter01/crystalgroup11.nif
+    ./meshes/dungeons/caves/clutter01/crystalgroup12.nif
+    ./meshes/dungeons/caves/clutter01/displayglass01.nif
+    ./meshes/dungeons/caves/clutter01/displayglasswide01.nif
+    ./meshes/dungeons/caves/clutter01/dragon01.nif
+    ./meshes/dungeons/caves/clutter01/dragonegg01.nif
+    ./meshes/dungeons/caves/clutter01/dragonskull01.nif
+    ./meshes/dungeons/caves/clutter01/dwemercog01.nif
+    ./meshes/dungeons/caves/clutter01/dwemercylinder01.nif
+    ./meshes/dungeons/caves/clutter01/dwemerpiston01.nif
+    ./meshes/dungeons/caves/clutter01/dwemerspiderleg01.nif
+    ./meshes/dungeons/caves/clutter01/emptycage01.nif
+    ./meshes/dungeons/caves/clutter01/fireflycage01.nif
+    ./meshes/dungeons/caves/clutter01/forgering01.nif
+    ./meshes/dungeons/caves/clutter01/forgering02.nif
+    ./meshes/dungeons/caves/clutter01/geode01.nif
+    ./meshes/dungeons/caves/clutter01/geodestatic01.nif
+    ./meshes/dungeons/caves/clutter01/gong01.nif
+    ./meshes/dungeons/caves/clutter01/gongbrokenbase01.nif
+    ./meshes/dungeons/caves/clutter01/gongbrokentop01.nif
+    ./meshes/dungeons/caves/clutter01/guildgarden01.nif
+    ./meshes/dungeons/caves/clutter01/hollowstump01.nif
+    ./meshes/dungeons/caves/clutter01/hornofzyyr01.nif
+    ./meshes/dungeons/caves/clutter01/landdreughhead01.nif
+    ./meshes/dungeons/caves/clutter01/malevolentzinj01.nif
+    ./meshes/dungeons/caves/clutter01/malevolentzinjstatic01.nif
+    ./meshes/dungeons/caves/clutter01/meteorite01.nif
+    ./meshes/dungeons/caves/clutter01/minotaurstatue01.nif
+    ./meshes/dungeons/caves/clutter01/minotaurstatue02.nif
+    ./meshes/dungeons/caves/clutter01/musicbox01.nif
+    ./meshes/dungeons/caves/clutter01/post01.nif
+    ./meshes/dungeons/caves/clutter01/post02.nif
+    ./meshes/dungeons/caves/clutter01/post03.nif
+    ./meshes/dungeons/caves/clutter01/post04.nif
+    ./meshes/dungeons/caves/clutter01/postbrokenbase01.nif
+    ./meshes/dungeons/caves/clutter01/postbrokenbase02.nif
+    ./meshes/dungeons/caves/clutter01/postbrokenbase03.nif
+    ./meshes/dungeons/caves/clutter01/postbrokenbase04.nif
+    ./meshes/dungeons/caves/clutter01/postbrokentop01.nif
+    ./meshes/dungeons/caves/clutter01/postbrokentop02.nif
+    ./meshes/dungeons/caves/clutter01/postbrokentop03.nif
+    ./meshes/dungeons/caves/clutter01/postbrokentop04.nif
+    ./meshes/dungeons/caves/clutter01/pyre01.nif
+    ./meshes/dungeons/caves/clutter01/rock01.nif
+    ./meshes/dungeons/caves/clutter01/runesofcyrodiil01.nif
+    ./meshes/dungeons/caves/clutter01/rythorspendant02.nif
+    ./meshes/dungeons/caves/clutter01/rythorspendant03.nif
+    ./meshes/dungeons/caves/clutter01/sarcophagus01.nif
+    ./meshes/dungeons/caves/clutter01/scaffolding01.nif
+    ./meshes/dungeons/caves/clutter01/sectorcolumn01.nif
+    ./meshes/dungeons/caves/clutter01/sectorcolumn02.nif
+    ./meshes/dungeons/caves/clutter01/sectorcolumn03.nif
+    ./meshes/dungeons/caves/clutter01/sectorcolumn04.nif
+    ./meshes/dungeons/caves/clutter01/sectorcolumnbrokenbottom01.nif
+    ./meshes/dungeons/caves/clutter01/sectorcolumnbrokenbottom02.nif
+    ./meshes/dungeons/caves/clutter01/sectorcolumnbrokenbottom03.nif
+    ./meshes/dungeons/caves/clutter01/sectorcolumnbrokenbottom04.nif
+    ./meshes/dungeons/caves/clutter01/sectorcolumnbrokentop01.nif
+    ./meshes/dungeons/caves/clutter01/sectorcolumnbrokentop02.nif
+    ./meshes/dungeons/caves/clutter01/sectorcolumnbrokentop03.nif
+    ./meshes/dungeons/caves/clutter01/sectorcolumnbrokentop04.nif
+    ./meshes/dungeons/caves/clutter01/shaft01.nif
+    ./meshes/dungeons/caves/clutter01/shard01.nif
+    ./meshes/dungeons/caves/clutter01/shipwreck02.nif
+    ./meshes/dungeons/caves/clutter01/spire01.nif
+    ./meshes/dungeons/caves/clutter01/spire02.nif
+    ./meshes/dungeons/caves/clutter01/spire03.nif
+    ./meshes/dungeons/caves/clutter01/spiredoor01.nif
+    ./meshes/dungeons/caves/clutter01/spiredoor02.nif
+    ./meshes/dungeons/caves/clutter01/spiredoor03.nif
+    ./meshes/dungeons/caves/clutter01/spiredoor04.nif
+    ./meshes/dungeons/caves/clutter01/spiredoor05.nif
+    ./meshes/dungeons/caves/clutter01/tallcensor01.nif
+    ./meshes/dungeons/caves/clutter01/tallcensorbrokenbase01.nif
+    ./meshes/dungeons/caves/clutter01/tallcensorbrokentop01.nif
+    ./meshes/dungeons/caves/clutter01/tallmushroom01.nif
+    ./meshes/dungeons/caves/clutter01/talon01.nif
+    ./meshes/dungeons/caves/clutter01/teavscorpse01.nif
+    ./meshes/dungeons/caves/clutter01/teavssword01.nif
+    ./meshes/dungeons/caves/clutter01/tent02.nif
+    ./meshes/dungeons/caves/clutter01/test01.nif
+    ./meshes/dungeons/caves/clutter01/test02.nif
+    ./meshes/dungeons/caves/clutter01/trilobite02.nif
+    ./meshes/dungeons/caves/clutter01/twist01.nif
+    ./meshes/dungeons/caves/clutter01/twist03.nif
+    ./meshes/dungeons/caves/clutter01/twist04.nif
+    ./meshes/dungeons/caves/clutter01/twist05.nif
+    ./meshes/dungeons/caves/clutter01/twist06.nif
+    ./meshes/dungeons/caves/clutter01/twist07.nif
+    ./meshes/dungeons/caves/clutter01/twist08.nif
+    ./meshes/dungeons/caves/clutter01/twist09.nif
+    ./meshes/dungeons/caves/clutter01/twist10.nif
+    ./meshes/dungeons/caves/clutter01/twist11.nif
+    ./meshes/dungeons/caves/clutter01/twist12.nif
+    ./meshes/dungeons/caves/clutter01/twist13.nif
+    ./meshes/dungeons/caves/clutter01/twist14.nif
+    ./meshes/dungeons/caves/clutter01/twist15.nif
+    ./meshes/dungeons/caves/clutter01/twist16.nif
+    ./meshes/dungeons/caves/clutter01/twist17.nif
+    ./meshes/dungeons/caves/clutter01/twist18.nif
+    ./meshes/dungeons/caves/clutter01/twist19.nif
+    ./meshes/dungeons/caves/clutter01/twist20.nif
+    ./meshes/dungeons/caves/clutter01/twistpiece01.nif
+    ./meshes/dungeons/caves/clutter01/twistpiece02.nif
+    ./meshes/dungeons/caves/clutter01/twistpiece03.nif
+    ./meshes/dungeons/caves/clutter01/twistpiece04.nif
+    ./meshes/dungeons/caves/clutter01/upcolumn01.nif
+    ./meshes/dungeons/caves/clutter01/upcolumnbrokenbase01.nif
+    ./meshes/dungeons/caves/clutter01/upcolumnbrokenbase02.nif
+    ./meshes/dungeons/caves/clutter01/upcolumnbrokenbase03.nif
+    ./meshes/dungeons/caves/clutter01/upcolumnbrokenbase04.nif
+    ./meshes/dungeons/caves/clutter01/upcolumnbrokentop01.nif
+    ./meshes/dungeons/caves/clutter01/upcolumnbrokentop02.nif
+    ./meshes/dungeons/caves/clutter01/upcolumnbrokentop03.nif
+    ./meshes/dungeons/caves/clutter01/upcolumnbrokentop04.nif
+    ./meshes/dungeons/caves/clutter01/wallmushroom01.nif
+    ./meshes/dungeons/caves/clutter01/wallmushroom02.nif
+    ./meshes/dungeons/caves/clutter01/wallmushroom03.nif
+    ./meshes/dungeons/caves/clutter01/warlockartifact01.nif
+    ./meshes/dungeons/caves/clutter01/warlockchest01.nif
+    ./meshes/dungeons/caves/clutter01/warlockcoffer01.nif
+    ./meshes/dungeons/caves/clutter01/warlockcoffer02.nif
+    ./meshes/dungeons/caves/clutter01/warlockskeleton01.nif
+    ./meshes/dungeons/caves/clutter01/warlockspellshrine01.nif
+    ./meshes/dungeons/caves/clutter01/warlocktile01.nif
+    ./meshes/dungeons/caves/clutter01/warlocktile02.nif
+    ./meshes/dungeons/caves/clutter01/warlocktile03.nif
+    ./meshes/dungeons/caves/clutter01/warlocktile04.nif
+    ./meshes/dungeons/caves/clutter01/warlocktile05.nif
+    ./meshes/dungeons/caves/clutter01/warlocktile06.nif
+    ./meshes/dungeons/caves/clutter01/warlocktile07.nif
+    ./meshes/dungeons/caves/clutter01/warlocktile08.nif
+    ./meshes/dungeons/caves/clutter01/warlocktile09.nif
+    ./meshes/dungeons/caves/clutter01/warlocktile10.nif
+    ./meshes/dungeons/caves/clutter01/warlocktile11.nif
+    ./meshes/dungeons/misc/ricketyfence01.nif
+    ./meshes/dungeons/Root/Interior/Misc/gnarlspawner.nif
+    ./meshes/dungeons/Root/Interior/Misc/spiketrap.nif
+    ./meshes/furniture/middleclass/bearskinrug01.nif
+    ./meshes/furniture/middleclass/middlewolfrug01.nif
+    ./meshes/furniture/middleclass/ms51rewardpainting.nif
+    ./meshes/Museum/HoundsToothKey.NIF
+    ./meshes/oblivion/clutter/traps/hallwaytrackbladetrap02.nif
+    ./meshes/oblivion/clutter/traps/hallwaytrackbladetrap02b.nif
+    ./meshes/plants/Dementia/blisterpodcap.nif
+    ./meshes/plants/Dementia/DDigestiveSlime.NIF
+    ./meshes/plants/Dementia/dpodpit.nif
+    ./meshes/plants/Mania/alocasiafruit.nif
+    ./meshes/plants/Mania/kelpgasbladder.nif
+    ./meshes/plants/Mania/wormheadcap.nif                             }}}
 
-[25/12/2018]
+#[25/12/2018]
 
- Rough sequence of events:
+## Rough sequence of events:
 
- - Load cell
- - Insert objects as per ESM/ESP references
- - Read NIF model from BSA or loose files (cache the NIF?  probably best to cache the NiModel)
- - Build the Ogre "templates" such as Mesh, Skeleton, Vertex Animation, etc, and store them in
-   their respective resource managers
- - Create Ogre Entities (actually, trying to create the entities trigger the first time
-   'loading' of the resources such as meshes)
- - Also create Bullet objects
- - Associate entity controllers (for some animation types)
+  * Load cell
+  * Insert objects as per ESM/ESP references
+  * Read NIF model from BSA or loose files (cache the NIF?  probably best to cache the `NiModel`)
+  * Build the Ogre "templates" such as Mesh, Skeleton, Vertex Animation, etc, and store them in
+    their respective resource managers
+  * Create Ogre Entities (actually, trying to create the entities trigger the first time
+    'loading' of the resources such as meshes)
+  * Also create Bullet objects
+  * Associate entity controllers (for some animation types)
 
- Some more detail:
+## Some more detail:
 
- - NiNode is a Mesh if any of the children is an NiGeometry, which is a sub-mesh.
-   A sub-mesh may have its own animation (time controllers from NiGeometry)
+### NiNode
+`NiNode` is a `Mesh` if any of the children is an `NiGeometry`, which is a sub-mesh.
+A sub-mesh may have its own animation (time controllers from `NiGeometry`)
 
-   Ogre MeshManager needs a unique identifier (name?) for the Mesh.  For now the NIF model name
-   plus the NiNode name is used but it may be possible to use a hash value + block number
-   instead.
+Ogre `MeshManager` needs a unique identifier (name?) for the `Mesh`.  For now the NIF model name
+plus the `NiNode` name is used but it may be possible to use a hash value + block number
+instead.
 
-   TODO: Since the meshes are loaded on-demand, and sub-meshes are created from a mesh, each of
-         the NiGeomerty children are registered to a loader.  An alternative is to re-scan the
-         children at build time.  Not sure which is more efficient.
+**TODO:** Since the meshes are loaded on-demand, and sub-meshes are created from a mesh, each of
+      the `NiGeomerty` children are registered to a loader.  An alternative is to re-scan the
+      children at build time.  Not sure which is more efficient.
 
-   The mesh loader should be part of NiModel so that the cached one also has the loader.
+The mesh loader should be part of `NiModel` so that the cached one also has the loader.
 
-   Any associated object, such as materials, animations and skeletons should also be loaded.
+Any associated object, such as materials, animations and skeletons should also be loaded.
 
- - NiGeometry may have, in addition to an NiGeometryData:
+### NiGeometry
+`NiGeometry` may have, in addition to an `NiGeometryData`:
 
-      NiAVObject::NiProperties       : e.g. NiMaterialProperty, NiTexturingProperty, etc
-                                     : each of these may have an NiTimeController
-                                       e.g. NiMaterialColorController, NiFlipController
-      NiObjectNET::NiTimeController  : applies at sub-mesh/sub-entity level
-                                       e.g. NiUVController, NiGeomMorpherController
-      NiSkinInstance                 : this will trigger a skeleton to be built
-      Materials                      : (Skyrim)
-      BS Properties                  : (Skyrim)
+     NiAVObject::NiProperties       : e.g. NiMaterialProperty, NiTexturingProperty, etc
+                                    : each of these may have an NiTimeController
+                                      e.g. NiMaterialColorController, NiFlipController
+     NiObjectNET::NiTimeController  : applies at sub-mesh/sub-entity level
+                                      e.g. NiUVController, NiGeomMorpherController
+     NiSkinInstance                 : this will trigger a skeleton to be built
+     Materials                      : (Skyrim)
+     BS Properties                  : (Skyrim)
 
-[27/12/2018]
+#[27/12/2018]
 
- - NiProperty
+## NiProperty
 
-  NiTriShape seems to allow only two properties?
+`NiTriShape` seems to allow only two properties?
 
     Property Name           NIF              Ogre
     ----------------------+----------------+---------------------
@@ -378,7 +385,7 @@
     BSWaterShaderProperty
     Property
 
- - Some notes on Shiny:
+## Some notes on Shiny:
 
     transparent_sorting                Ogre::Pass::setTransparentSortingForced
     num_nipmaps                        Ogre::TextureUnitState::setNumMipmaps
@@ -422,18 +429,22 @@
     alphaTestMode 0
     alphaTestValue 0
 
- - BtOgreInst should maintain the Entities and SceneNodes (probably also RigidBodies)
-   It should "have" an NiModel, at least a pointer/reference to it.
+## BtOgreInst
 
-   When a BtOgreInst is built, it will in turn build its NiModel first.  The NiModel building
-   process should result in finding out which entities are to be built (e.g. name of the Mesh)
+`BtOgreInst` should maintain the `Entities` and `SceneNodes` (probably also `RigidBodies`)
+It should "have" an `NiModel`, at least a pointer/reference to it.
 
- - NiNode may have an associated collision object(s).  These collision shapes and constraints
-   are built in Bullet.
+When a `BtOgreInst` is built, it will in turn build its `NiModel` first.  The `NiModel` building
+process should result in finding out which entities are to be built (e.g. name of the `Mesh`)
 
-[28/12/2018]
+## NiNode
 
- - Controllers:
+`NiNode` may have an associated collision object(s).  These collision shapes and constraints
+are built in Bullet.
+
+#[28/12/2018]
+
+## Controllers:
 
    NiNode               NiVisController            idleobjects/genericbook.nif
                         NiTransformController      fire/firetorchlargesmoke.nif
@@ -449,83 +460,86 @@
 
    ??                   ParticleSystem
 
-[29/12/2018]
+#[29/12/2018]
 
- - Animation
+## Animation
 
-  Vertex Animation
-   - GeomMorpher (Morph implemented by Ogre::Pose)
-     : Animation added to a Mesh
-       AnimationTrack added to the Animation (its handle is subMeshIndex+1)
-       Each Morph is a Pose (all of the poses have the target of subMeshIndex+1)
-       Each Morph key is a VertexPoseKeyFrame (pose index points to a Pose)
-       (from NIF 10.0.1.0 the keys are under NiControllerSequence::mControlledBlocks)
-       Note the current Ogre limitations on interpolator (lacks quadratic)
+### Vertex Animation
 
-  Material Animation
-     : all below affect an Ogre::MovableObject (but should be a SubEntity?)
+  * `GeomMorpher` (`Morph` implemented by `Ogre::Pose`)
+    - `Animation` added to a `Mesh`
+    - `AnimationTrack` added to the Animation (its handle is `subMeshIndex+1`)
+    - Each `Morph` is a `Pose` (all of the poses have the target of `subMeshIndex+1`)
+    - Each `Morph` key is a `VertexPoseKeyFrame` (pose index points to a `Pose`)
+      (from NIF 10.0.1.0 the keys are under `NiControllerSequence::mControlledBlocks`)
+    - Note the current Ogre limitations on interpolator (lacks quadratic)
+
+### Material Animation
+
+  * All below affect an `Ogre::MovableObject` (but should be a `SubEntity`?)
    - UV
    - Alpha
    - Flip
    - MaterialColor
 
-  Node Animation
-   - visibility
-     : affects the visibility of an Ogre::Entity (i.e. NiNode)
-   - Transform/Keyframe
-     : animates an Ogre::Node
-   - skeleton.nif + *.kf
-   - skinned
-     : e.g. armour, clothes
-     : how to attach to an existing skeleton?  by bone names?
-     : note Skeleton Root can be different for each NiSkinInstance and they are not necessarily Scene Root
+### Node Animation
 
- - Finding minimum size skeleton
+  * visibility
+     - affects the visibility of an `Ogre::Entity` (i.e. `NiNode`)
+  * Transform/Keyframe
+     - animates an `Ogre::Node`
+  * `skeleton.nif` + `*.kf`
+  * skinned
+     - e.g. armour, clothes
+     - how to attach to an existing skeleton?  by bone names?
+     - note Skeleton Root can be different for each NiSkinInstance and they are not necessarily Scene Root
 
-  1. While constructing the objects (i.e. reading the NIF file), make a note of NiNode parent
-     NiNodes.
-  2. Also make a note of leaf NiNodes; NiSkinInstance::mBones, NiTransformController::mTargetIndex,
-     and maybe even NiNodes names starting with "AttachLight".
+## Finding minimum size skeleton
+
+  1. While constructing the objects (i.e. reading the NIF file), make a note of `NiNode` parent
+     `NiNode`.
+  2. Also make a note of leaf `NiNode`; `NiSkinInstance::mBones`, `NiTransformController::mTargetRef`,
+     and maybe even `NiNodes` names starting with "`AttachLight`".
   3. Once all the blocks are read in, reverse search from each of the leaf nodes to the root
-     node (prb. use the one in the footer?).  While doing this each of the NiNodes should keep
-     a list of child NiNodes that will be bones.
-  4  Finally create a skeleton using the SkeletonManager and a ManualResourceLoader.  The name
-     of the Skeleton should be the name of the NiModel.
+     node (prb. use the one in the footer?).  While doing this each of the `NiNode` should keep
+     a list of child `NiNode` that will be bones.
+  4  Finally create a skeleton using the `SkeletonManager` and a `ManualResourceLoader`.  The name
+     of the `Skeleton` should be the name of the `NiModel`.
 
- - How to add (attach?) other NIF/kf files to a NIF?
+## How to add (attach?) other NIF/kf files to a NIF?
 
-  e.g. weapons, armour to skeleton
-  e.g. fire to FlameNode
+e.g. weapons, armour to skeleton
+e.g. fire to "`FlameNode`"
 
-[29/12/2018]
+#[29/12/2018]
 
- mwscript/cellextensions.cpp       : opCOW
+    mwscript/cellextensions.cpp       : opCOW
 
- mwclass/foreigndoor.cpp           : activate
- mwworld/actionteleportforeign.cpp : ActionTeleportForeign::teleport
+    mwclass/foreigndoor.cpp           : activate
+    mwworld/actionteleportforeign.cpp : ActionTeleportForeign::teleport
 
- mwworld/worldimp.cpp              : changeToForeignWorldCell
- mwworld/scene.cpp                 : changeToForeignWorldCell     <---- sometimes not working
+    mwworld/worldimp.cpp              : changeToForeignWorldCell
+    mwworld/scene.cpp                 : changeToForeignWorldCell     <---- sometimes not working
 
-[30/12/2018] removed some debugging printouts
+#[30/12/2018] removed some debugging printouts
 
- material.cpp          : unhandled texture controller
- ogrenifloader         : No bone named...
-                       : Unsupported controller...
- foreignnpcanimation   : Inventory...
- scene.cpp             : dummy
- bulletnifloader       : (various)
- esm4/race.cpp         : skipping...
+    material.cpp          : unhandled texture controller
+    ogrenifloader         : No bone named...
+                          : Unsupported controller...
+    foreignnpcanimation   : Inventory...
+    scene.cpp             : dummy
+    bulletnifloader       : (various)
+    esm4/race.cpp         : skipping...
 
 
-[01/01/2018] A new start...
+#[01/01/2018] A new start...
 
- Well, a bit of rethink about object lifecycle management now that the new rendering seems to
- work ok.  This was triggered by Bullet's need to have the collision shapes around during the
- lefetime of RigidBodies.
+Well, a bit of rethink about object life cycle management now that the new rendering seems to
+work ok.  This was triggered by Bullet's need to have the collision shapes around during the
+lifetime of RigidBodies.
 
- Embracing Ogre's resource management philosophy of on-demand resource loading, the NiModel's
- structure needs to change:
+Embracing Ogre's resource management philosophy of on-demand resource loading, the NiModel's
+structure needs to change:
 
 
     SceneNode o-- Entity o-- Mesh o-- SubMesh o-- Material o-- Texture
@@ -537,11 +551,11 @@
                  Skeleton (?)
 
 
- If Ogre decides to create an Entity, it will be based on a Mesh retrieved from a MeshManager.
- The Mesh in turn may use MaterialManager or SkeletonManager.
+If Ogre decides to create an `Entity`, it will be based on a `Mesh` retrieved from a `MeshManager`.
+The `Mesh` in turn may use `MaterialManager` or `SkeletonManager`.
 
- An ESM/ESP model (i.e. a NIF) may result in a Skeleton and a number of Meshes (and other
- things) to be built.  In OpenMW the ownership structure is roughly:
+An ESM/ESP model (i.e. a NIF) may result in a Skeleton and a number of `Meshes` (and other
+things) to be built.  In OpenMW the ownership structure is roughly:
 
 
                                       Animation o-- ObjectScene o-- Entity, Light, Particles...
@@ -554,66 +568,69 @@
              +---------- Actors
 
 
- And in a little more detail (but still simplified):
+And in a little more detail (but still simplified):
 
 
-          MWRender::Animation o------------ MWWorld::Ptr
-                o     o            mPtr
-                |     |
-                |     +------------------+
-                |                        |
-                | mObjectRoot            | mInsert
-                |                        |
-                |                   Ogre::SceneNode*
-          NifOgre::ObjectScene*          o
-                o                        |
-                | mEntities              | Ogre::ObjectMap
-                |                        |
-                +------------------ Ogre::Entity*
-                                         o
-                                         | mMesh
-                                         |
-                                    Ogre::Mesh*
+         MWRender::Animation o------------ MWWorld::Ptr
+               o     o            mPtr
+               |     |
+               |     +------------------+
+               |                        |
+               | mObjectRoot            | mInsert
+               |                        |
+               |                   Ogre::SceneNode*
+         NifOgre::ObjectScene*          o
+               o                        |
+               | mEntities              | Ogre::ObjectMap
+               |                        |
+               +------------------ Ogre::Entity*
+                                        o
+                                        | mMesh
+                                        |
+                                   Ogre::Mesh*
 
 
- A MeshManager may call a Mesh loader which will need to refer to a NIF model (either loaded
- from a file or retrieved from a cache).  Currently the NIF model "owns" the loaders.  This may
- need to be flipped around, i.e. the loaders should be able to trigger the NIF models to be
- loaded/retrieved.
+A `MeshManager` may call a `Mesh` loader which will need to refer to a NIF model (either loaded
+from a file or retrieved from a cache).  Currently the NIF model "owns" the loaders.  This may
+need to be flipped around, i.e. the loaders should be able to trigger the NIF models to be
+loaded/retrieved.
 
- One way of achieving this could be to derive from an Ogre::ResourceManager. e.g.:
-
-
-        ResourceManager   Singleton<NiModelManager>
-                 ^             ^
-                 |             |
-                  \           /          Resource o------- ManualResourceLoader
-                   \         /              ^                     ^
-                    \       /               |                     |
-                  NiModelManager            |                     |
-                  ::createImpl()  .....  NiModel           ManualNiModelLoader
-                                         ::loadImpl()      ::loadResource()
-                                         ::unloadImpl()    (NOTE: not implemented)
+One way of achieving this could be to derive from an `Ogre::ResourceManager`. e.g.:
 
 
- A manually loaded resource will retain a pointer to its loader (e.g. see Ogre::Mesh).  That
- means, for the resource to be reloaded (by its manager) the loader needs to remain valid.
+       ResourceManager   Singleton<NiModelManager>
+                ^             ^
+                |             |
+                 \           /          Resource o------- ManualResourceLoader
+                  \         /              ^                     ^
+                   \       /               |                     |
+                 NiModelManager            |                     |
+                 ::createImpl()  .....  NiModel           ManualNiModelLoader
+                                        ::loadImpl()      ::loadResource()
+                                        ::unloadImpl()    (NOTE: not implemented)
 
- With the current design where the loaders are "owned" by NiModel, NiModel needs to hang around
- until the resources (Mesh, Skeleton, etc) are no longer needed (e.g. unloading a cell).
 
- One simple way could be to maintain a map of NiModel smart pointers in ObjectScene for deletion.
- A slightly better way is to have a cache to avoid multiple loading of the same NIF files.
- Or we could implement an NiModelManager as per above.  An NiModel can then be loaded on-demand.
+A manually loaded resource will retain a pointer to its loader (e.g. see `Ogre::Mesh`).  That
+means, for the resource to be reloaded (by its manager) the loader needs to remain valid.
 
- NOTE: current implementation does not use a ManualResourceLoader which probably means NiModel
-       cannot be reloaded automatically (actually, it can)
+With the current design where the loaders are "owned" by `NiModel`, `NiModel` needs to hang around
+until the resources (`Mesh`, `Skeleton`, etc) are no longer needed (e.g. unloading a cell).
 
- IDEA: Keep all the loaders in ObjectScene?  Or in BtOgreInst then have ObjectScene destroy
-       BtOgreInst in the destructor?
+One simple way could be to maintain a map of `NiModel` smart pointers in `ObjectScene` for deletion.
+A slightly better way is to have a cache to avoid multiple loading of the same NIF files.
+Or we could implement an `NiModelManager` as per above.  An `NiModel` can then be loaded on-demand.
 
- OEngine::Physic::PhysicEngine::mCollisionObjectMap keeps Physic::RigidBody* for later destruction.
- (and mAnimatedShapes, etc)
+(**EDIT 22/02/19:** looks like keeping the mesh loader with the `NiModel` in `ObjectScene` won't work
+since the same mesh for a different instance could be used)
+
+**NOTE:** current implementation does not use a `ManualResourceLoader` which probably means `NiModel`
+      cannot be reloaded automatically (actually, it can)
+
+**IDEA:** Keep all the loaders in `ObjectScene`?  Or in `BtOgreInst` then have `ObjectScene` destroy
+      `BtOgreInst` in the destructor?
+
+`OEngine::Physic::PhysicEngine::mCollisionObjectMap` keeps `Physic::RigidBody*` for later destruction.
+(and `mAnimatedShapes`, etc)
 
 
     MWWorld::Scene::unloadCell
@@ -626,55 +643,291 @@
           delete body;
 
 
- btShapes are deleted in BulletShape dtor and BulletShape is probably stored in BulletShapeManager.
+`btShapes` are deleted in `BulletShape` dtor and `BulletShape` is probably stored in `BulletShapeManager`.
 
-[02/01/2019] - Physics continuing
+#[02/01/2019] - Physics continuing
 
- 1. Get NiModel & get a list of target Entities; need as inputs Ogre::SceneNode, position,
-    rotation and scale.  This means that the Mesh/Entity needs to have been created *before*
-    physics.
- 2. For each target Entity create the resource using the resource manager.
- 3. Using the resource create the btRigidBody corresponding the the Entity.
- 4. Additional setup (e.g. constraints) needs to be done for Ragdolls. (how to detect?)
+  1. Get `NiModel` & get a list of target Entities; need as inputs `Ogre::SceneNode`, position,
+     rotation and scale.  This means that the `Mesh`/`Entity` needs to have been created *before*
+     physics.
+  2. For each target Entity create the resource using the resource manager.
+  3. Using the resource create the `btRigidBody` corresponding the the `Entity`.
+  4. Additional setup (e.g. constraints) needs to be done for ragdolls. (how to detect?)
 
-[02/01/2019] - Physics continuing still
+#[02/01/2019] - Physics continuing still
 
- With btCollisionShape required for constructing btRigidBody, it turns out that a new one needs
- to be generated each time.  (or at least a deep copy made?
- https://stackoverflow.com/questions/12255546/c-deep-copying-a-base-class-pointer)
+With `btCollisionShape` required for constructing `btRigidBody`, it turns out that a new one needs
+to be generated each time.  ([or at least a deep copy made?](
+https://stackoverflow.com/questions/12255546/c-deep-copying-a-base-class-pointer))
 
-[06/01/2019] - Issues found while running around
+#[06/01/2019] - Issues found while running around
 
- COW "AnvilWorld" -46 -8
+## exception
 
- exception     Ptr World::getPtrViaHandle (const std::string& handle)  Anvil Fighters Guild
- searches mActiveCells in CellStore
+    COW "AnvilWorld" -46 -8
 
- shirt in display case is half clipping through the bottom (ICMarketDistrictRedDiamondJewelry)
+    exception     Ptr World::getPtrViaHandle (const std::string& handle)  Anvil Fighters Guild
+    searches mActiveCells in CellStore
 
-[06/01/2109] - Get to some old code & comments
+## wrong position and/or rotation
 
- Gdiff b44b4bad325296ca8ab7d519e33ca533f679abf8
+shirt in display case is half clipping through the bottom (`ICMarketDistrictRedDiamondJewelry`)
 
-[08/01/2109] - Some notes on odd build sequences
+#[06/01/2109] - Get to some old code & comments
 
- NiTriBasedGeom (NiTriShapes/NiTriStrips)
- - in the constructor register self in ModelData (but first check if parent NiNode is named
-   "EditorMarker")
- - during the registration a MeshLoader is created and associated with the parent NiNode
-    (note that it is no longer done when a NiNode is building its children)
- - when the NiModel is 'instantiated' the Mesh and SubMesh are loaded when the Entity is
-   created (using the Mesh pointer, but can be done with the Mesh name)
- - any vertex animations in SubMeshes are setup with the Entity
- - note that there may be more than one Mesh per NiModel
- - in future implementation the MeshLoaders may need to be moved out of ModelData
+    Gdiff b44b4bad325296ca8ab7d519e33ca533f679abf8
 
-bhkEntity (bhkRigidBody/bhkRigidBodyT)
- - in the constructor of NiCollisionObject register the collision object body
-   (TODO: should check if collision is enabled in BSX)
- - a BtRigidBodyCI object is created with the same name as the NiModel; it then looks for any
-   registerd bhkEntity to build the btShapes, etc.
- - note that there may be more than one RigidBody per NiModel (these may need to be deleted
-   manually)
+#[08/01/2109] - Some notes on odd build sequences
 
-# vim: fen fdm=marker fdl=0 spell spelllang=en_us syntax=cpp
+##NiTriBasedGeom (NiTriShapes/NiTriStrips)
+
+  * in the constructor register self in `BuildData` (but first check if parent NiNode is named
+    "`EditorMarker`")
+  * during the registration a `MeshLoader` is created and associated with the parent `NiNode`
+     (note that it is no longer done when a NiNode is building its children)
+  * when the `NiModel` is 'instantiated' the `Mesh` and `SubMesh` are loaded when the `Entity` is
+    created (using the `Mesh` pointer, but can be done with the `Mesh` name)
+  * any vertex animations in a `SubMesh` are setup with the `Entity`
+  * note that there may be more than one `Mesh` per `NiModel`
+  * in future implementation the `MeshLoader` may need to be moved out of `BuildData`
+
+##bhkEntity (bhkRigidBody/bhkRigidBodyT)
+
+  * in the constructor of `NiCollisionObject` register the collision object body
+    (**TODO:** should check if collision is enabled in BSX)
+  * a `BtRigidBodyCI` object is created with the same name as the `NiModel`; it then looks for any
+    registerd `bhkEntity` to build the `btShapes`, etc.
+  * note that there may be more than one `RigidBody` per `NiModel` (these may need to be deleted
+    manually)
+
+#[18/02/2019] - Animation re-write
+
+The animation glitches, especially with the hand positions, may be due to the use of separate
+controllers for each of the bones.  It may be that each of the bones are showing rotations
+and/or positions at different points in time.
+
+**NOTE:** experiments indicate that all the bones are updated at the same time... :-(
+
+Nifskope uses `NiMultiTargetTransformController`, replacing the `NiTransformController` (which is
+*not* its parent class, interestingly) at the "Accum Root" bone specified in `NiControllerSequence`.
+
+Each of the target bones in the *Controlled Blocks* are then added to `mExtraTargetRefs` and
+`mNumExtraTargets` updated (this method is prob. not necessary).  Note that if multiple anims
+are added to the skeleton then only the additional bones are added to `mExtraTargetRefs`.
+
+#[18/02/2019] - skeleton for children
+
+Looks like the bones listed in the skinned meshes indicate the smaller size of the skeleton
+for children.  That means the body parts need to be added and the binding position re-set.
+
+**TODO:** this might not be true at all, need to experiment
+
+#[28/02/2019] - instantiation refactoring
+
+The existing OpenMW code is built around `ObjectScene` and `SkelBase` (`Ogre::Entity` at root).  It
+would be way too much work right now to move away from that.
+
+Q: how best to hold the animation info?
+
+
+        ObjectScenePtr
+              o
+              |
+              +-------- BtOgreInst
+                         o o o o
+                         | | | |
+                         | | | +------- SkelBase
+                         | | +--------- NiModelPtr
+                         | +----------- Animation info (textkeys, controllers)
+                         +------------- std::vector<Ogre::Entity*>
+
+
+#[06/03/2019] - Havok
+
+If Havok enabled, assign a child SceneNode for each `btRgidBody`.
+
+Q: how to allow the SceneNode to move across cell boundary?  is it an issue?
+
+#[08/03/2019] - Havok
+
+In order to make Havok physics work, there is a need to mix rendering instances (e.g.
+`Ogre::SceneNode`) and physics instances (i.e. `btRigidBody`).
+
+The way OpenMW is currently written, they diverge at `::addObject()` (see: `mwworld/scene.cpp`)
+Fortunately, both call path end up with the same class, i.e.:
+
+    ptr.getClass().insertObjectRendering(ptr, model, renderingmanager);
+    ptr.getClass().insertObject (ptr, model, physics);
+
+So we can "cheat" by using the class as an access path to get to the rendering instances data
+which is currently stored in `ObjectAnimation`.  Havok enabled classes include most:
+
+    LIGH (CathedralCryptLight02.NIF)
+    STAT (TargetHeavy01.NIF)
+    CREA (Skeleton.nif)
+    NPC_ (Skeleton.nif)
+    BOOK (Octavo02.NIF)
+    APPA (ApparatusRetortMaster.NIF)
+    etc, etc
+
+#[09/09/2019] - facegen texture again
+
+  * EGT A binary file format containing texture statistics data for each pixel for each mode.
+
+  * SCM The mean color map is a 24-bit RGB color image. Each mode is stored as a signed RGB8 map,
+    along with a floating point scaling factor. Vertex UV coordinates do not change.
+
+    DXGI_FORMAT_BC3_UNORM
+    8 bits per pixel
+    Transparent Selection
+
+Four-component block-compression format. For information about block-compression formats,
+see [Texture Block Compression in Direct3D 11](https://docs.microsoft.com/en-us/windows/win32/api/dxgiformat/ne-dxgiformat-dxgi_format).
+
+## UrielSeptim
+
+Tried to figure out how the vanilla engine is keeping the age value by changing UrielSeptim's age using the
+TES Construction Set and saving it as an ESP.  It appears that the age value itself is not stored but the FGGS
+and FGTS records change.  There must be a way to derive the age value from them.
+
+### Oblivion - Textures - Compressed.bsa
+
+    textures\faces\oblivion.esm\00023f2e_0.dds
+     px x  px  mip level
+    256 x 256     1
+    128 x 128     2
+     64 x  64     3
+     32 x  32     4
+     16 x  16     5
+      8 x   8     6
+      4 x   4     7
+      4 x   4     8
+      4 x   4     9
+
+### Oblivion - Textures - Compressed.bsa
+
+    textures\faces\oblivion.esm\00023f2e_1.dds
+     px x  px  mip level
+     32 x  32     1
+     16 x  16     2
+      8 x   8     3
+      4 x   4     4
+      4 x   4     5
+      4 x   4     6
+
+### Oblivion - Meshes.bsa
+
+    meshes\characters\imperial\headhuman.egm
+    meshes\characters\imperial\headhuman.egt
+    meshes\characters\imperial\headhuman.nif
+    meshes\characters\imperial\headhuman.tri
+    meshes\characters\imperial\headhuman_50.egm
+    meshes\characters\imperial\headhuman_50.egt
+    meshes\characters\imperial\headhuman_50.nif
+    meshes\characters\imperial\headhuman_50.tri
+
+### Oblivion - Misc.bsa
+
+    facegen\si.ctl (not sure how to use the control data)
+
+`headhuman.egt` has 256 rows and 256 columns. There are 50 symmetric morph modes and 0 asymmetric ones.  The
+texture basis version is 0x51 = 81.
+
+#[14/09/2019 - 13/10/2019 - 28/12/2019]
+
+Posted a [question on the OpenMW form](https://forum.openmw.org/viewtopic.php?f=3&t=3017&start=325)
+for some help regarding the application of age related texture to `headhuman.dds`
+
+ponyrider0 replied with this suggestion:
+
+    (base texture) * (age map / 64) = (composited face texture)
+
+    (age map) = (composited face texture / base texture) * 64
+
+#[11/02/2020] - finally getting back to work
+
+    mNpc->mFormId   = 0x0001C458
+        ->mEditorId = "BeggarICMarketSimplicia"
+
+    mNpc->mFormId   = 0x00023F2E
+        ->mEditorId = "UrielSeptim"
+
+## EGM
+A binary format containing the principal component modes as one standard deviation vertex deltas.
+
+    char[8]               Magic number for this filetype: 'FREGM002'
+    unsigned long         Number of vertices (V) (Should equal V+K in TRI file)
+    unsigned long         Number of symmetric morph modes (S)
+    unsigned long         Number of asymmetric morph modes (A)
+    unsigned long         Geometry Basis Version
+    char[40]              Reserved
+    (float+(short*3)*V)*S Symmetric morph mode data for each vertex and all modes.
+                          For each mode in S,
+                          Start with a floating point scale value x
+                          For each vertex in V,
+                          The morph values are stored as 3 signed short m. The actual morph values should be m * x.
+    (float+(short*3)*V)*A As above for the asymmetric morph modes.
+
+`openmw/apps/openmw/mwrender/foreignnpcanimation.cpp`
+
+    const std::vector<Ogre::Vector3>& vertices = tri.getVertices(); // V + K
+
+    const std::vector<float>& sCoeff = mNpc->mSymShapeModeCoefficients;
+    const std::vector<float>& aCoeff = mNpc->mAsymShapeModeCoefficients;
+    const std::vector<float>& sTCoeff = mNpc->mSymTextureModeCoefficients;
+
+    Ogre::Vector3 sym;
+    Ogre::Vector3 asym;
+    std::vector<Ogre::Vector3> fgVertices;
+    fgVertices.resize(tri.getNumVertices());
+    for (size_t i = 0; i < fgVertices.size(); ++i)
+    {
+        sym = Ogre::Vector3::ZERO;
+        for (size_t j = 0; j < 50; ++j) // for TES4 always 50 sym modes
+        {
+            sym += sCoeff[j] * egm.mSymMorphModeScales[j] * egm.mSymMorphModes[j + 50*i];
+            //        ^                 ^                           ^
+            //        |                 |                           |
+            //      float             float                     Ogre::Vector3
+            //      npc_              EGM for the mesh          EGM for the mesh
+
+            //float factor = coeff[j] * egm.mSymMorphModeScales[j];
+            //Ogre::Vector3 vert = egm.mSymMorphModes[j + 50*i];
+            //Ogre::Vector3 newVert = factor * vert;
+            //sym += newVert;
+        }
+
+        asym = Ogre::Vector3::ZERO;
+        for (size_t k = 0; k < 30; ++k) // for TES4 always 30 asym modes
+        {
+            asym += aCoeff[k] * egm.mAsymMorphModeScales[k] * egm.mAsymMorphModes[k + 30*i];
+        }
+
+        fgVertices[i] = vertices[i] + sym(i) + asym(i);
+        //                  ^            ^     ^
+        //                  |             \   /
+        //                 TRI         npc_ & EGM
+    }
+
+## EGT
+
+Base texture: `Textures\Characters\imperial\headhuman.dds`
+
+
+#[13/02/2020] - Trying to remember how the code works
+
+`NiModel` is created using `NiModelManager`. e.g.:
+
+    NiModelPtr npcModel = NiBtOgre::NiModelManager::getSingleton().getOrLoadByName(model, group);
+
+Often it is created in the constructor of `BtOgreInst`.
+
+`NiObjects` are constructed in `NiModel::loadImpl()` and stored in `NiModel::mObjects`.  The NIF file should
+already be opened via `NiStream` created in the constructor of `NiModel`.
+
+The constructor of the each of `NiObjects` read the NIF file stream and populate various data structures in
+advance for the actual instantiation of the object at a later point in time.
+
+
+[//]: # (/* spell spelllang=en_us syntax=cpp */)
+[//]: # (/* vim: set ft=markdown tw=110 fen fdm=marker fdl=0: */)

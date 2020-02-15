@@ -67,7 +67,7 @@ namespace MWClass
         assert(ref->mBase != NULL);
 
         // clothing and armor need "ground" models (with physics) unless being worn
-        std::string model = ref->mBase->mModel;
+        std::string model = ref->mBase->mModelMale; // FIXME: what about female?
         if (!model.empty())
         {
             size_t pos = Misc::StringUtils::lowerCase(model).find_last_of(".nif"); // pos points at 'f'

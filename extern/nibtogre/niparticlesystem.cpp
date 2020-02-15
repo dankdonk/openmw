@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015-2018 cc9cii
+  Copyright (C) 2015-2019 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -37,7 +37,7 @@
 #endif
 
 // Seen in NIF ver 20.0.0.4, 20.0.0.5
-NiBtOgre::NiParticleSystem::NiParticleSystem(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::NiParticleSystem::NiParticleSystem(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : NiParticles(index, stream, model, data), mWorldSpace(false)
 {
     if (stream.userVer() >= 12)

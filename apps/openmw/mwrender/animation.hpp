@@ -1,6 +1,8 @@
 #ifndef GAME_RENDER_ANIMATION_H
 #define GAME_RENDER_ANIMATION_H
 
+#include <map>
+
 #include <OgreController.h>
 #include <OgreVector3.h>
 
@@ -11,6 +13,11 @@
 namespace ESM
 {
     struct Light;
+}
+
+namespace Ogre
+{
+    class SceneNode;
 }
 
 namespace MWRender
@@ -334,6 +341,9 @@ public:
     void enableLights(bool enable);
     virtual void enableHeadAnimation(bool enable) {}
 
+    void addLight();
+    NiBtOgre::BtOgreInst *getForeignObj() { return mObjectRoot->mForeignObj.get(); }
+
     Ogre::AxisAlignedBox getWorldBounds();
 
     Ogre::Node *getNode(const std::string &name);
@@ -352,11 +362,14 @@ public:
 };
 
 class ObjectAnimation : public Animation {
+    std::map<std::int32_t, Ogre::SceneNode*> mPhysicsNodeMap;
+    std::vector<NifOgre::ObjectScenePtr> mFlameNode; // FIXME: testing
 public:
     ObjectAnimation(const MWWorld::Ptr& ptr, const std::string &model);
 
     bool canBatch() const;
     void fillBatch(Ogre::StaticGeometry *sg);
+    const std::map<std::int32_t, Ogre::SceneNode*>& getPhysicsNodeMap() const { return mPhysicsNodeMap; }
 };
 
 }

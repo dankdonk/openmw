@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2016, 2018 cc9cii
+  Copyright (C) 2016, 2018, 2019 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -38,32 +38,6 @@ namespace ESM4
 
     struct Clothing
     {
-        enum Flags
-        {
-            // Biped Object Flags
-            Flag_Head        = 0x00000001,
-            Flag_Hair        = 0x00000002,
-            Flag_UpperBody   = 0x00000004,
-            Flag_LowerBody   = 0x00000008,
-            Flag_Hand        = 0x00000010,
-            Flag_Foot        = 0x00000020,
-            Flag_RightRing   = 0x00000040,
-            Flag_LeftRing    = 0x00000080,
-            Flag_Amulet      = 0x00000100,
-            Flag_Weapon      = 0x00000200,
-            Flag_BackWeapon  = 0x00000400,
-            Flag_SideWeapon  = 0x00000800,
-            Flag_Quiver      = 0x00001000,
-            Flag_Shield      = 0x00002000,
-            Flag_Torch       = 0x00004000,
-            Flag_Tail        = 0x00008000,
-            // General Flags
-            Flag_HideRings   = 0x00010000,
-            Flag_HideAmulet  = 0x00020000,
-            Flag_NonPlayable = 0x00400000,
-            Flag_Unknown     = 0xCD000000
-        };
-
 #pragma pack(push, 1)
         struct Data
         {
@@ -77,13 +51,16 @@ namespace ESM4
 
         std::string mEditorId;
         std::string mFullName;
-        std::string mModel;
+        std::string mModelMale;
+        std::string mModelMaleWorld;
+        std::string mModelFemale;
+        std::string mModelFemaleWorld;
         std::string mIconMale;   // inventory
         std::string mIconFemale; // inventory
 
         float mBoundRadius;
 
-        std::uint32_t mClothingFlags;
+        std::uint32_t mClothingFlags; // see Armor::ArmorFlags for the values
         FormId        mScript;
         std::uint16_t mEnchantmentPoints;
         FormId        mEnchantment;

@@ -96,13 +96,13 @@ namespace BtOgre {
 // (1) the chain rendered meshes are offset from the physics ones
 // (2) one of the right chain constraint seems to be pointing to left
 // FIXME: split out from the header file for testing only
-void RigidBodyState::setWorldTransform(const btTransform &in)
+void RigidBodyState::setWorldTransform(const btTransform &centerOfMassWorldTrans)
 {
     if (mSceneNode == nullptr)
         return; // silently return before we set a node
 
     btTransform old = mTransform;
-    mTransform = in;
+    mTransform = centerOfMassWorldTrans * mCenterOfMassOffset;
     // mTransform at this point should be the new world transform for the physics shape
     // However the visible mesh's node needs to be transformed, so we take away the position of
     // the mesh relative to the node
@@ -147,9 +147,11 @@ void RigidBodyState::setWorldTransform(const btTransform &in)
 
 #endif
 //    btTransform transform = mTransform *mCenterOfMassOffset;
-//#if 0
+#if 1
     //btTransform transform = in * mCenterOfMassOffset;
-    btTransform transform = mCenterOfMassOffset.inverse() * in;
+    btTransform transform = mCenterOfMassOffset.inverse() * centerOfMassWorldTrans;
+    //btTransform transform = centerOfMassWorldTrans * mCenterOfMassOffset;
+    //btTransform transform = centerOfMassWorldTrans;// * mCenterOfMassOffset;
 
     // find the parent SceneNode's transform
     Ogre::SceneNode *parent = mSceneNode->getParentSceneNode();
@@ -169,7 +171,20 @@ void RigidBodyState::setWorldTransform(const btTransform &in)
 
     // take away parent's transform from the input
     inputTransform = parentTransform.inverse() * inputTransform;
-//#endif
+#else
+    btTransform transform = centerOfMassWorldTrans * mCenterOfMassOffset;
+    //btTransform transform = mTransform;//centerOfMassWorldTrans;
+
+    btQuaternion iq = transform.getRotation();
+    btVector3 iv = transform.getOrigin();
+
+    Ogre::Matrix4 inputTransform;
+    inputTransform.makeTransform(Ogre::Vector3(iv.x(), iv.y(), iv.z()), /*ps*/ Ogre::Vector3(1.f),
+                                 Ogre::Quaternion(iq.w(), iq.x(), iq.y(), iq.z()));
+    mSceneNode->_setDerivedOrientation(Ogre::Quaternion(iq.w(), iq.x(), iq.y(), iq.z()));
+    mSceneNode->_setDerivedPosition(Ogre::Vector3(iv.x(), iv.y(), iv.z()));
+    return;
+#endif
 #if 0
     // some debugging
     btVector3 vold = old.getOrigin();

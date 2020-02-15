@@ -59,7 +59,7 @@ NiBtOgre::BtRigidBodyCI::BtRigidBodyCI(Ogre::ResourceManager *creator, const Ogr
 
 NiBtOgre::BtRigidBodyCI::~BtRigidBodyCI()
 {
-    std::map<std::string, std::pair<Ogre::Matrix4, btCollisionShape*> >::iterator iter;
+    std::map<std::int32_t, std::pair<Ogre::Matrix4, btCollisionShape*> >::iterator iter;
     for (iter = mBtCollisionShapeMap.begin(); iter != mBtCollisionShapeMap.end(); ++iter)
     {
         delete iter->second.second;
@@ -79,37 +79,40 @@ void NiBtOgre::BtRigidBodyCI::loadImpl()
 //  NiModelPtr nimodel
 //      = NiBtOgre::NiModelManager::getSingleton().getByName(modelName.substr(0, modelNameSize), getGroup());
 
-    std::string modelName = getName(); // remove scale
+    std::string modelName = getName(); // remove scale from the name
     NiModelPtr nimodel
         = NiBtOgre::NiModelManager::getSingleton().getByName(modelName.substr(0, modelName.length()-7), getGroup());
 
     if (!nimodel) // shouldn't happen, since we need the Entities created already
         throw std::runtime_error("NiModel not loaded");
 
-    //           target NiAVObject index               bhkSerializable index (e.g. bhkRigidBody)
+    //           target NiAVObject ref               bhkSerializable ref (e.g. bhkRigidBody)
     //                   |                                    |
     //                   v                                    v
     const std::map<std::int32_t, /*std::pair<std::string,*/ int32_t/*>*/ >& rigidBodies = nimodel->getBhkRigidBodyMap();
-    std::map<std::int32_t, /*std::pair<std::string, */int32_t/*>*/ >::const_iterator iter;
-    for (iter = rigidBodies.begin(); iter != rigidBodies.end(); ++iter)
+    std::map<std::int32_t, /*std::pair<std::string, */int32_t/*>*/ >::const_iterator iter(rigidBodies.begin());
+    for (; iter != rigidBodies.end(); ++iter)
     {
         //if (iter->second/*.second*/ == -1)
             //continue;  // e.g. fire/firetorchlargesmoke.nif@DamageSphere
         // FIXME: check for phantom
 
-        int32_t bhkIndex = iter->second/*.second*/;
-        bhkSerializable *bhk = nimodel->getRef<bhkSerializable>(bhkIndex);
-        NiAVObject *target = nimodel->getRef<NiAVObject>(iter->first);
+        std::int32_t bhkRef = iter->second/*.second*/;
+        bhkSerializable *bhk = nimodel->getRef<bhkSerializable>(bhkRef);
+        std::int32_t targetRef = iter->first;
+        NiAVObject *target = nimodel->getRef<NiAVObject>(targetRef);
+
+        mTargetNames[targetRef] = nimodel->indexToString(target->getNameIndex());
 
         // expectation is that each target has only one bhkRigidBody
-        if (mBtCollisionShapeMap.find(nimodel->indexToString(target->getNameIndex()))
-                != mBtCollisionShapeMap.end())
-            throw std::logic_error("target name collision "+nimodel->indexToString(target->getNameIndex()));
+        if (mBtCollisionShapeMap.find(targetRef) != mBtCollisionShapeMap.end())
+            throw std::logic_error("target name collision "+nimodel->indexToString(targetRef));
+
 
         // get the bullet shape with the target as a parameter
         // TODO: cloning pre-pade shape (e.g. bhkRigidBody via unique_ptr) may be faster?
-        mBtCollisionShapeMap[nimodel->indexToString(target->getNameIndex())]
-            = std::make_pair(target->getWorldTransform(), bhk->getShape(*target));
+        mBtCollisionShapeMap[targetRef] = std::make_pair(target->getWorldTransform(), bhk->getShape(*target));
+
     }
 }
 

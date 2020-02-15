@@ -1,5 +1,7 @@
 #include "foreignlight.hpp"
 
+#include <iostream> // FIXME: testing only
+
 #include <extern/esm4/ligh.hpp>
 
 #include "../mwworld/ptr.hpp"
@@ -20,9 +22,19 @@ namespace MWClass
     {
         MWWorld::LiveCellRef<ESM4::Light> *ref = ptr.get<ESM4::Light>();
 
+        // some LIGH records have models (and most likely will have "AttachLight" node/bone) -
+        // for those insertLight should specify to attach
+        //
+        // some ACTI records (e.g. Lights\TorchTall01.NIF) also have "AttachLight" node/bone -
+        // thse may also have associated scripts for damage
+        //
+        // some ACTI, MISC or STAT records may be torches - not sure what kind of light to attach
         if (!model.empty()) {
+            //std::cout << "Foreign light has model " << model << std::endl;
             renderingInterface.getObjects().insertModel(ptr, model/*, !ref->mBase->mPersistent*/); // FIXME
         }
+        else
+            renderingInterface.getObjects().insertLight(ptr);
     }
 
     void ForeignLight::insertObject(const MWWorld::Ptr& ptr, const std::string& model, MWWorld::PhysicsSystem& physics) const

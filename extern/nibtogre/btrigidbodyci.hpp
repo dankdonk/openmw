@@ -53,10 +53,11 @@ namespace NiBtOgre
         void unloadImpl();
 
     public:
-        //      target NiNode name     NiNode world transform
+        //      target NiNode ref     NiNode world transform
         //              |                   |
         //              v                   v
-        std::map<std::string, std::pair<Ogre::Matrix4, btCollisionShape *> > mBtCollisionShapeMap; // used by RigidBody
+        std::map<std::int32_t, std::pair<Ogre::Matrix4, btCollisionShape *> > mBtCollisionShapeMap; // used by RigidBody
+        std::map<std::int32_t, std::string> mTargetNames; // for doors
 
         BtRigidBodyCI(Ogre::ResourceManager *creator, const Ogre::String& name, Ogre::ResourceHandle handle,
                 const Ogre::String& group, bool isManual, Ogre::ManualResourceLoader* loader);

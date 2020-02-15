@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2018 cc9cii
+  Copyright (C) 2018, 2019 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -289,6 +289,7 @@ std::string NiBtOgre::OgreMaterial::getOrCreateMaterial(const std::string& name)
         instance->setProperty("cullmode", sh::makeProperty(new sh::StringValue("anticlockwise")));
     else if (drawMode == 3)
         instance->setProperty("cullmode", sh::makeProperty(new sh::StringValue("none")));
+
     if (vertexColor)
         instance->setProperty("has_vertex_colour", sh::makeProperty(new sh::BooleanValue(true)));
 
@@ -304,9 +305,11 @@ std::string NiBtOgre::OgreMaterial::getOrCreateMaterial(const std::string& name)
 
     if((alphaFlags>>9)&1)
     {
-        // alpha test not supported in OpenGL ES 2, use manual implementation in shader
-        instance->setProperty("alphaTestMode", sh::makeProperty(new sh::IntValue((alphaFlags>>10)&0x7)));
-        instance->setProperty("alphaTestValue", sh::makeProperty(new sh::FloatValue(alphaTest/255.f)));
+        std::string reject;
+        reject += getTestMode((alphaFlags>>10)&0x7);
+        reject += " ";
+        reject += std::to_string(alphaTest);
+        instance->setProperty("alpha_rejection", sh::makeProperty(new sh::StringValue(reject)));
     }
     else
         instance->getMaterial()->setShadowCasterMaterial("openmw_shadowcaster_noalpha");

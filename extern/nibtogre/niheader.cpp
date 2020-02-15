@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015-2018 cc9cii
+  Copyright (C) 2015-2019 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -81,7 +81,7 @@ NiBtOgre::NiHeader::NiHeader(NiBtOgre::NiStream& stream) : mVer(0), mUserVer(0),
     //
     stream.readNifVer(mVer);
     if (mVer != 0x14000004 && mVer != 0x14000005 && mVer != 0x14020007 && mVer != 0x04000002 &&
-        mVer != 0x0a020000 && mVer != 0x0303000d && mVer != 0x0a000100/*&& mVer != 0x0a000102*/) // comment out unused
+        mVer != 0x0a020000 && mVer != 0x0303000d && mVer != 0x0a000100 && mVer != 0x0a01006a/*&& mVer != 0x0a000102*/) // comment out unused
     {
         throw std::runtime_error("NiBtOgre::NiHeader::unsupported NIF file version " + std::to_string(mVer));
     }

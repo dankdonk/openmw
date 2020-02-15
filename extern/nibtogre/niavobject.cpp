@@ -38,7 +38,7 @@
 #undef NDEBUG
 #endif
 
-NiBtOgre::NiAVObject::NiAVObject(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::NiAVObject::NiAVObject(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : NiObjectNET(index, stream, model, data), mHasBoundingBox(false)//, mHasAnim(false)
       //, mWorldTransform(Ogre::Matrix4::IDENTITY)
 {
@@ -84,7 +84,7 @@ NiBtOgre::NiAVObject::NiAVObject(uint32_t index, NiStream& stream, const NiModel
     }
 
     if (stream.nifVer() >= 0x0a000100) // from 10.0.1.0
-        stream.read(mCollisionObjectIndex);
+        stream.read(mCollisionObjectRef);
 }
 
 //void NiBtOgre::NiAVObject::build(BtOgreInst *inst, NiObject *parent)
@@ -94,19 +94,19 @@ NiBtOgre::NiAVObject::NiAVObject(uint32_t index, NiStream& stream, const NiModel
 
 NiBtOgre::NiTimeController *NiBtOgre::NiAVObject::findController(const std::string& controllerType)
 {
-    NiTimeControllerRef index = NiObjectNET::mControllerIndex;
+    NiTimeControllerRef index = NiObjectNET::mControllerRef;
     while (index != -1)
     {
         if (mModel.blockType(index) == controllerType)
             return mModel.getRef<NiTimeController>(index);
 
-        index = mModel.getRef<NiTimeController>(index)->mNextControllerIndex;
+        index = mModel.getRef<NiTimeController>(index)->mNextControllerRef;
     }
 
     return nullptr;
 }
 
-NiBtOgre::NiCamera::NiCamera(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::NiCamera::NiCamera(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : NiAVObject(index, stream, model, data), mUseOrthographicProjection(false)
 {
     if (stream.nifVer() >= 0x0a010000) // from 10.1.0.0
@@ -135,11 +135,11 @@ NiBtOgre::NiCamera::NiCamera(uint32_t index, NiStream& stream, const NiModel& mo
         stream.skip(sizeof(std::uint32_t)); // Unknown Int2
 }
 
-void NiBtOgre::NiCamera::build(BtOgreInst *inst, ModelData *data, NiObject *parent)
+void NiBtOgre::NiCamera::build(BtOgreInst *inst, BuildData *data, NiObject *parent)
 {
 }
 
-NiBtOgre::NiDynamicEffect::NiDynamicEffect(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::NiDynamicEffect::NiDynamicEffect(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : NiAVObject(index, stream, model, data), mSwitchState(false)
 {
     if (stream.nifVer() >= 0x0a01006a) // from 10.1.0.106
@@ -148,7 +148,7 @@ NiBtOgre::NiDynamicEffect::NiDynamicEffect(uint32_t index, NiStream& stream, con
     stream.readVector<NiAVObjectRef>(mAffectedNodes);
 }
 
-NiBtOgre::NiLight::NiLight(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::NiLight::NiLight(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : NiDynamicEffect(index, stream, model, data)
 {
     stream.read(mDimmer);
@@ -157,7 +157,15 @@ NiBtOgre::NiLight::NiLight(uint32_t index, NiStream& stream, const NiModel& mode
     stream.read(mSpecularColor);
 }
 
-NiBtOgre::NiTextureEffect::NiTextureEffect(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::NiPointLight::NiPointLight(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+    : NiLight(index, stream, model, data)
+{
+    stream.read(mAttenuationConstant);
+    stream.read(mAttenuationLinear);
+    stream.read(mAttenuationQuadratic);
+}
+
+NiBtOgre::NiTextureEffect::NiTextureEffect(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : NiDynamicEffect(index, stream, model, data)
 {
     stream.read(mModelProjectionMatrix);

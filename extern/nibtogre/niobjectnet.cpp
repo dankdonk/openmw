@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015-2018 cc9cii
+  Copyright (C) 2015-2019 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -27,10 +27,10 @@
 
 #include "nistream.hpp"
 
-NiBtOgre::NiObjectNET::NiObjectNET(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data,
+NiBtOgre::NiObjectNET::NiObjectNET(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data,
                                    bool isBSLightingShaderProperty)
     : NiObject(index, stream, model, data), mIsBSLightingShaderProperty(isBSLightingShaderProperty)
-  //, mControllerIndex(-1)
+  //, mControllerRef(-1)
 {
     if (mIsBSLightingShaderProperty)
     {
@@ -42,16 +42,18 @@ NiBtOgre::NiObjectNET::NiObjectNET(uint32_t index, NiStream& stream, const NiMod
 
     if (stream.nifVer() == 0x0a000100)     // HACK not sure about this one
         stream.skip(sizeof(std::int32_t)); // e.g. clutter/farm/oar01.nif version 10.0.1.0
+    else if (stream.nifVer() == 0x0a01006a)
+        stream.skip(sizeof(std::int32_t)); // e.g. creatures/horse/bridle.nif version 10.1.0.106
 
     stream.readLongString(mNameIndex);
 
     if (stream.nifVer() <= 0x04020200) // up to 4.2.2.0
-        stream.read(mExtraDataIndex);
+        stream.read(mExtraDataRef);
 
     if (stream.nifVer() >= 0x0a000100) // from 10.0.1.0
-        stream.readVector<NiExtraDataRef>(mExtraDataIndexList);
+        stream.readVector<NiExtraDataRef>(mExtraDataRefList);
 
-    stream.read(mControllerIndex);
+    stream.read(mControllerRef);
 }
 
 void NiBtOgre::NiObjectNET::build(Ogre::SceneNode *sceneNode, BtOgreInst *inst, NiObject *parent)
@@ -59,7 +61,7 @@ void NiBtOgre::NiObjectNET::build(Ogre::SceneNode *sceneNode, BtOgreInst *inst, 
 }
 
 
-NiBtOgre::NiSourceTexture::NiSourceTexture(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data)
+NiBtOgre::NiSourceTexture::NiSourceTexture(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
     : NiTexture(index, stream, model, data), mDirectRender(false), mPersistRenderData(false)
 {
     stream.read(mUseExternal);

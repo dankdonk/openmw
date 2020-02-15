@@ -66,6 +66,12 @@ set(NIBTOGRE_SOURCE_FILES
     transformcontroller.cpp
 
     bhkrefobject.cpp
+
+    fgstream.cpp
+    fgegm.cpp
+    fgegt.cpp
+    fgtri.cpp
+    fgctl.cpp
 )
 
 add_library(${NIBTOGRE_LIBRARY} STATIC ${NIBTOGRE_SOURCE_FILES})

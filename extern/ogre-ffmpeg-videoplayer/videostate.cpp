@@ -25,7 +25,7 @@ extern "C"
     // https://github.com/FFmpeg/FFmpeg/commit/06a83505992d5f49846c18507a6c3eb8a47c650e
     #if AV_VERSION_INT(55, 0, 100) <= AV_VERSION_INT(LIBAVFORMAT_VERSION_MAJOR, \
         LIBAVFORMAT_VERSION_MINOR, LIBAVFORMAT_VERSION_MICRO)
-        #include <libavutil/avtime.h> // FIXME: changed name since MSVC 2017 seems to be confused with <time.h>
+        #include <libavutil/time.h> // FIXME: changed name since MSVC 2017 seems to be confused with <time.h>
     #endif
 
     #include <libavutil/mathematics.h>

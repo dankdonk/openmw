@@ -45,9 +45,9 @@ namespace NiBtOgre
     class NiUVController : public NiTimeController
     {
     public:
-        NiUVDataRef mDataIndex;
+        NiUVDataRef mDataRef;
 
-        NiUVController(uint32_t index, NiStream& stream, const NiModel& model, ModelData& data);
+        NiUVController(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
     };
 }
 
