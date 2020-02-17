@@ -27,25 +27,25 @@
 #include <vector>
 #include <string>
 
-#include <OgreResource.h>
+//#include <OgreResource.h>
 #include <OgreVector3.h>
 
 #include "fgstream.hpp"
 
-namespace Ogre
-{
-    class ResourceManager;
-    class ManualResourceLoader;
-}
+//namespace Ogre
+//{
+//    class ResourceManager;
+//    class ManualResourceLoader;
+//}
 
 namespace NiBtOgre
 {
     class FgEgt //: public Ogre::Resource
     {
-        FgStream mFgStream;
+        //FgStream mFgStream;
 
-        const std::string mGroup;  // Ogre group
-        const std::string mName;   // file name
+        //const std::string mGroup;  // Ogre group
+        //const std::string mName;   // file name
 
     public: // FIXME: should be private
         std::uint64_t mFileType;
@@ -67,9 +67,9 @@ namespace NiBtOgre
         FgEgt& operator=(const FgEgt& other);
 
     //protected: // FIXME: pure virtual methods of Ogre::Resource
-    public:
-        void loadImpl();
-        void unloadImpl() {}
+    //public:
+        //void loadImpl();
+        //void unloadImpl() {}
 
     public:
         // The parameter 'name' refers to those in the Ogre::ResourceGroupManager
@@ -79,20 +79,24 @@ namespace NiBtOgre
 //      FgEgt(Ogre::ResourceManager *creator, const Ogre::String& name, Ogre::ResourceHandle handle,
 //              const Ogre::String& group, bool isManual, Ogre::ManualResourceLoader* loader,
 //              const Ogre::NameValuePairList* createParams=nullptr/*bool showEditorMarkers=false*/);
-        FgEgt(const Ogre::String& name, const Ogre::String& group); // FIXME: for testing only
+        //FgEgt(const Ogre::String& name, const Ogre::String& group); // FIXME: for testing only
+        FgEgt(const std::string& name);
         ~FgEgt();
 
-        const std::string& getOgreGroup() const { return mGroup; }
-        const std::string& getName() const { return mName; }
+        //const std::string& getOgreGroup() const { return mGroup; }
+        //const std::string& getName() const { return mName; }
 
         inline const std::uint32_t numRows() const { return mNumRows; }
         inline const std::uint32_t numColumns() const { return mNumColumns; }
         inline const std::uint32_t numSymTextureModes() const { return mNumSymTextureModes; }
+        //inline const std::uint32_t numAsymTextureModes() const { return mNumAsymTextureModes; }
 
-//      const std::int16_t *getSymMorph(std::size_t vertIndex) const;  // pointer to start of SymMorphMode
-//      const std::int16_t *getAsymMorph(std::size_t vertIndex) const; // pointer to start of AsymMorphMode
-        inline const std::vector<Ogre::Vector3>& getSymTexture() const { return mSymTextureModes; }
-        inline const std::vector<Ogre::Vector3>& getAsymTexture() const { return mAsymTextureModes; }
+//      const std::int16_t *getSymTexture(std::size_t vertIndex) const;  // pointer to start of SymTextureModes
+//      const std::int16_t *getAsymTexture(std::size_t vertIndex) const; // pointer to start of AsymTextureModes
+        //inline const boost::scoped_array<std::int16_t>& symMorphModes() const { return mSymTextureModes; }
+        //inline const boost::scoped_array<std::int16_t>& asymMorphModes() const { return mAsymTextureModes; }
+        inline const std::vector<Ogre::Vector3>& symTextureModes() const { return mSymTextureModes; }
+        inline const std::vector<Ogre::Vector3>& asymTextureModes() const { return mAsymTextureModes; }
     };
 }
 

@@ -54,7 +54,7 @@ NiBtOgre::NiModel::NiModel(Ogre::ResourceManager *creator, const Ogre::String& n
                            const Ogre::String& group, bool isManual, Ogre::ManualResourceLoader* loader,
                            const Ogre::NameValuePairList* createParams/*bool showEditorMarkers*/)
     : Resource(creator, name, handle, group, isManual, loader)
-    , mNiStream(name), mHeader(mNiStream), mGroup(group), mModelName(name), mBuildData(*this)
+    , mNiStream(name), mHeader(mNiStream), mGroup(group), mCurrIndex(-1), mModelName(name), mBuildData(*this)
     , mShowEditorMarkers(false/*showEditorMarkers*/)
 {
     //mBuildData.mIsSkeleton = false; // FIXME: hack, does not belong here

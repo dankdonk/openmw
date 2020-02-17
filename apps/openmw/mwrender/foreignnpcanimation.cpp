@@ -24,10 +24,11 @@
 #include <extern/esm4/formid.hpp> // mainly for debugging
 #include <extern/nibtogre/btogreinst.hpp>
 #include <extern/nibtogre/nimodelmanager.hpp>
+#include <extern/nibtogre/fgsam.hpp>
 #include <extern/nibtogre/fgctl.hpp>
-#include <extern/nibtogre/fgegm.hpp>
-#include <extern/nibtogre/fgtri.hpp>
-#include <extern/nibtogre/fgegt.hpp>
+//#include <extern/nibtogre/fgegm.hpp>
+//#include <extern/nibtogre/fgtri.hpp>
+//#include <extern/nibtogre/fgegt.hpp>
 
 #include <components/misc/rng.hpp>
 #include <components/misc/stringops.hpp>
@@ -317,10 +318,10 @@ static ForeignNpcAnimation::PartBoneMap createPartListMap()
     result.insert(std::make_pair(ESM::PRT_LKnee, "Left Knee"));
     result.insert(std::make_pair(ESM::PRT_RLeg, "Right Upper Leg"));
     result.insert(std::make_pair(ESM::PRT_LLeg, "Left Upper Leg"));
-    result.insert(std::make_pair(ESM::PRT_RPauldron, "Right Clavicle"));
-    result.insert(std::make_pair(ESM::PRT_LPauldron, "Left Clavicle"));
+    result.insert(std::make_pair(ESM::PRT_RPauldron, "Right Clavicle")); // used for ear in TES4
+    result.insert(std::make_pair(ESM::PRT_LPauldron, "Left Clavicle"));  // used for eye in TES4
     result.insert(std::make_pair(ESM::PRT_Weapon, "Weapon Bone"));
-    result.insert(std::make_pair(ESM::PRT_Tail, "Tail"));
+    result.insert(std::make_pair(ESM::PRT_Tail, "Tail"));                // used for tail in TES4
     return result;
 }
 const ForeignNpcAnimation::PartBoneMap ForeignNpcAnimation::sPartList = createPartListMap();
@@ -681,16 +682,18 @@ void ForeignNpcAnimation::updateNpcBase()
 
     // FIXME: use resource manager here to stop loading the same file multiple times
     std::string path = Misc::StringUtils::lowerCase(meshName.substr(0, pos-2));
-    NiBtOgre::FgEgm egm(path+"egm", "General");
-    egm.loadImpl();
-    NiBtOgre::FgTri tri(path+"tri", "General");
-    tri.loadImpl();
-    NiBtOgre::FgEgt egt(path+"egt", "General");
-    egt.loadImpl();
-    NiBtOgre::FgCtl ctl("facegen\\si.ctl", "General");
-    ctl.loadImpl();
+    //FgEgmPtr egm = NiBtOgre::FgEgmManager::getSingleton().getOrLoadByName(path+"egm", "General");
+    //NiBtOgre::FgEgm egm(path+"egm", "General");
+    //egm.loadImpl();
+    NiBtOgre::FgSam sam;
+    //NiBtOgre::FgTri tri(path+"tri", "General");
+    //tri.loadImpl();
+    //NiBtOgre::FgEgt egt(path+"egt", "General");
+    //egt.loadImpl();
+    //NiBtOgre::FgCtl ctl("facegen\\si.ctl", "General");
+    //ctl.loadImpl();
 
-    const std::vector<Ogre::Vector3>& vertices = tri.getVertices(); // V + K
+    //const std::vector<Ogre::Vector3>& vertices = tri.getVertices(); // V + K
 
     const std::vector<float>& sRaceCoeff = mRace->mSymShapeModeCoefficients;
     const std::vector<float>& aRaceCoeff = mRace->mAsymShapeModeCoefficients;
@@ -702,27 +705,29 @@ void ForeignNpcAnimation::updateNpcBase()
     Ogre::Vector3 sym;
     Ogre::Vector3 asym;
     std::vector<Ogre::Vector3> fgVertices; // NOTE: this is passed to the instance of the head model
+
+#if 1
+    const NiBtOgre::FgSam::FgFiles *fgFiles =
+        sam.getMorphedVertices(fgVertices, meshName, sRaceCoeff, aRaceCoeff, sCoeff, aCoeff);
+    if (fgFiles == nullptr)
+        return;
+#else
     fgVertices.resize(tri.getNumVertices());
     for (size_t i = 0; i < fgVertices.size(); ++i)
     {
+        // NOTE: just guessed that the race and npc coefficients should be added
+        //       (see Thoronir-without-race-coeff.png, looks bad without the race coefficients)
         sym = Ogre::Vector3::ZERO;
         for (size_t j = 0; j < 50; ++j) // for TES4 always 50 sym modes
-        {
-            sym += (sRaceCoeff[j]+sCoeff[j]) * egm.mSymMorphModes[j + 50*i];
-            //if (mNpc->mEditorId == "UrielSeptim")
-                //std::cout << "sym " << sym.x << " " << sym.y << " " << sym.z << std::endl;
-        }
+            sym += (sRaceCoeff[j] + sCoeff[j]) * egm.mSymMorphModes[50*i + j];
 
         asym = Ogre::Vector3::ZERO;
         for (size_t k = 0; k < 30; ++k) // for TES4 always 30 asym modes
-        {
-            asym += (aRaceCoeff[k]+aCoeff[k]) * egm.mAsymMorphModes[k + 30*i];
-        }
+            asym += (aRaceCoeff[k] + aCoeff[k]) * egm.mAsymMorphModes[30*i + k];
 
         fgVertices[i] = vertices[i] + sym + asym;
     }
-
-
+#endif
     // FIXME: need to be able to check other than oblivion.esm
     std::string textureFile = "textures\\faces\\oblivion.esm\\"+ESM4::formIdToString(mNpc->mFormId)+"_0.dds";
     if (!Ogre::ResourceGroupManager::getSingleton().resourceExistsInAnyGroup(textureFile))
@@ -738,11 +743,14 @@ void ForeignNpcAnimation::updateNpcBase()
 
     NifOgre::ObjectScenePtr scene = NifOgre::ObjectScenePtr (new NifOgre::ObjectScene(mInsert->getCreator()));
     scene->mForeignObj = std::make_shared<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(mInsert->createChildSceneNode(), /*scene, */meshName, group));
+
+
+
     // TODO: is it possible to get the texture name here or should it be hard coded?
     scene->mForeignObj->instantiate(mSkelBase->getMesh()->getSkeleton(), mNpc->mEditorId, fgVertices);
 
 
-    // get the texture from the NIF model
+    // get the texture from mRace
     // FIXME: for now, get if from Ogre material
 
 
@@ -765,59 +773,45 @@ void ForeignNpcAnimation::updateNpcBase()
 
                 // From: http://wiki.ogre3d.org/Creating+dynamic+textures
                 // Create a target texture
-                Ogre::TexturePtr texFg = Ogre::TextureManager::getSingleton().createManual(
-                    "FaceGen"+mNpc->mEditorId, // name
-                    Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
-                    Ogre::TEX_TYPE_2D,  // type
-                    egt.numRows(), egt.numColumns(), // width & height
-                    0,                  // number of mipmaps; FIXME: should be 2? or 1?
-                    //Ogre::PF_DXT5, // pixel format (DXGI_FORMAT_BC3_UNIFORM)
-                    //pixelFormat,
-                    //Ogre::PF_A8R8G8B8,
-                    //
-                    // NOTE: the components are specified in "packed" native byte order. For
-                    // PF_BYTE_* formats this means that platform endianess changes the order:
-                    // e.g. Ogre::PF_BYTE_RGBA on little endian (x86) forms an integer as
-                    // Ogre::PF_A8B8G8R8, while on big endian it "packs" as Ogre::PF_R8G8B8A8
-                    Ogre::PF_BYTE_RGBA,
-                    Ogre::TU_DEFAULT);  // usage; should be TU_DYNAMIC_WRITE_ONLY_DISCARDABLE for
-                                        // textures updated very often (e.g. each frame)
+                Ogre::TexturePtr texFg = Ogre::TextureManager::getSingleton().getByName(
+                       "FaceGen"+mNpc->mEditorId, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+                if (texFg.isNull())
+                {
+                    texFg = Ogre::TextureManager::getSingleton().createManual(
+                        "FaceGen"+mNpc->mEditorId, // name
+                        Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
+                        Ogre::TEX_TYPE_2D,  // type
+                        fgFiles->egt.numRows(), fgFiles->egt.numColumns(), // width & height
+                        0,                  // number of mipmaps; FIXME: should be 2? or 1?
+                        Ogre::PF_BYTE_RGBA,
+                        Ogre::TU_DEFAULT);  // usage; should be TU_DYNAMIC_WRITE_ONLY_DISCARDABLE for
+                                            // textures updated very often (e.g. each frame)
+                }
 
-                Ogre::TexturePtr texFg2 = Ogre::TextureManager::getSingleton().createManual(
-                    "FaceGen"+mNpc->mEditorId+"2", // name
-                    Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
-                    Ogre::TEX_TYPE_2D,  // type
-                    egt.numRows(), egt.numColumns(), // width & height
-                    0,                  // number of mipmaps; FIXME: should be 2? or 1?
-                    //Ogre::PF_DXT5, // pixel format (DXGI_FORMAT_BC3_UNIFORM)
-                    //Ogre::PF_A8R8G8B8,
-                    Ogre::PF_BYTE_RGBA,
-                    Ogre::TU_DEFAULT);  // usage; should be TU_DYNAMIC_WRITE_ONLY_DISCARDABLE for
-                                        // textures updated very often (e.g. each frame)
-
-                //tus->_getTexturePtr()->copyToTexture(texFg);
-
-                // should be headhuman.dds or similar
-                //std::cout << mNpc->mEditorId << " " << tus->getTextureName() << std::endl;
-
-                //int height = tus->_getTexturePtr()->getHeight();
-                //if (height == 256)
-                ////if (mNpc->mFormId == 0x0001C458) // BeggarICMarketSimplicia
-                //{
-                //}
+                Ogre::TexturePtr texFg2 = Ogre::TextureManager::getSingleton().getByName(
+                       "FaceGen"+mNpc->mEditorId+"2", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+                if (texFg2.isNull())
+                {
+                    texFg2 = Ogre::TextureManager::getSingleton().createManual(
+                        "FaceGen"+mNpc->mEditorId+"2", // name
+                        Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
+                        Ogre::TEX_TYPE_2D,  // type
+                        fgFiles->egt.numRows(), fgFiles->egt.numColumns(), // width & height
+                        0,                  // number of mipmaps; FIXME: should be 2? or 1?
+                        Ogre::PF_BYTE_RGBA,
+                        Ogre::TU_DEFAULT);  // usage; should be TU_DYNAMIC_WRITE_ONLY_DISCARDABLE for
+                                            // textures updated very often (e.g. each frame)
+                }
 
                 if (mNpc->mEditorId == "UrielSeptim")
-                {
-                    std::cout << mRace->mHeadParts[0/*head*/].mesh << ", " << mRace->mHeadParts[0].texture << ", " << std::endl;
-                }
-                if (mNpc->mEditorId == "UrielSeptim")// || mNpc->mFormId == 0x0001C458) // BeggarICMarketSimplicia
-                    textureFile = "textures\\characters\\imperial\\headhumanm60.dds";
+                    textureFile = "textures\\characters\\imperial\\headhumanm60.dds"; // male
                 else if (mNpc->mEditorId == "Rohssan")
-                    textureFile = "textures\\characters\\imperial\\headhumanf60.dds";
+                    textureFile = "textures\\characters\\imperial\\headhumanf60.dds"; // female
                 else if (mNpc->mFormId == 0x0001C458) // BeggarICMarketSimplicia
-                    textureFile = "textures\\characters\\imperial\\headhumanf60.dds";
+                    textureFile = "textures\\characters\\imperial\\headhumanf60.dds"; // female
 
-                Ogre::TexturePtr texDetail = Ogre::TextureManager::getSingleton().getByName(textureFile, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+                Ogre::TexturePtr texDetail = Ogre::TextureManager::getSingleton().getByName(
+                        textureFile, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
                 if (texDetail.isNull())
                 {
                     // textureFile is the detailed texture in textures/faces/oblivion.esm/<formid>_.dds
@@ -836,47 +830,25 @@ void ForeignNpcAnimation::updateNpcBase()
                 Ogre::HardwarePixelBufferSharedPtr pixelBuffer = texFg->getBuffer();
                 pixelBuffer->unlock(); // prepare for blit()
 
-
-                //Ogre::HardwarePixelBufferSharedPtr pixelBufferSrc = texDetail->getBuffer();
                 Ogre::HardwarePixelBufferSharedPtr pixelBuffer2 = texFg2->getBuffer();
                 pixelBuffer2->unlock();
 
                 // if source and destination dimensions don't match, scaling is done
                 pixelBuffer->blit(pixelBufferSrc);
 
-
-                //Ogre::HardwarePixelBufferSharedPtr pixelBufferDetail = texDetail->getBuffer();
-                //pixelBuffer2->blit(pixelBufferDetail);
-
                 // Lock the pixel buffer and get a pixel box
                 pixelBufferSrc->lock(Ogre::HardwareBuffer::HBL_NORMAL); // for best performance use HBL_DISCARD!
                 pixelBuffer->lock(Ogre::HardwareBuffer::HBL_NORMAL); // for best performance use HBL_DISCARD!
-                //pixelBuffer2->lock(Ogre::HardwareBuffer::HBL_NORMAL); // for best performance use HBL_DISCARD!
+
                 const Ogre::PixelBox& pixelBoxSrc = pixelBufferSrc->getCurrentLock();
                 const Ogre::PixelBox& pixelBox = pixelBuffer->getCurrentLock();
-                //const Ogre::PixelBox& pixelBox2 = pixelBuffer2->getCurrentLock();
 
-
-
-                //void* pSrc = static_cast<void*>(pixelBoxSrc.data);
-                //void* pDest = static_cast<void*>(pixelBox.data);
-
-                //Ogre::PixelUtil::bulkPixelConversion(pixelBoxSrc, pixelBox);
-
-                //uint8_t *pSrc = static_cast<uint8_t*>(pixelBoxSrc.data);
                 uint8_t *pDest = static_cast<uint8_t*>(pixelBox.data);
-                //size_t pitch = pixelBox.rowPitch;
-                //void* topLeft = pixelBox.getTopLeftFrontPixelPtr();
-                //if (pDest == static_cast<uint8_t*>(topLeft))
-                    //std::cout << "same" << std::endl;
-                //bool origin = pixelBox.isConsecutive();
-                //std::cout << "pitch " << pitch << std::endl;
-                //uint8_t *pDetail = static_cast<uint8_t*>(pixelBox2.data);
 
                 Ogre::HardwarePixelBufferSharedPtr pixelBufferDetail = texDetail->getBuffer();
                 if (pixelBufferDetail.isNull())
                     std::cout << "detail texture null" << std::endl;
-                //const Ogre::PixelBox& pixelBoxDetail = pixelBufferDetail->lock(Ogre::Box(0,0,256,256), Ogre::HardwareBuffer::HBL_NORMAL);
+
                 pixelBufferDetail->unlock();
                 pixelBuffer2->blit(pixelBufferDetail);
 
@@ -888,13 +860,15 @@ void ForeignNpcAnimation::updateNpcBase()
                     std::cout << "null detail" << std::endl;
 
                 // update the pixels with SCM and detail texture
-                for (size_t i = 0; i < egt.numRows()*egt.numColumns(); ++i) // height*width, should be 256*256
+                // NOTE: mSymTextureModes is assumed to have the image pixels in row-major order
+                for (size_t i = 0; i < fgFiles->egt.numRows()*fgFiles->egt.numColumns(); ++i) // height*width, should be 256*256
                 {
+                    // FIXME: for some reason adding the race coefficients makes it look worse
+                    //        even though it is clear that for shapes they are needed
                     // sum all the symmetric texture modes for a given pixel i
-                    // NOTE: mSymTextureModes is assumed to have the image pixels in row-major order
-                    sym = Ogre::Vector3::ZERO;                                // WARN: sym reused
+                    sym = Ogre::Vector3::ZERO; // WARN: sym reused
                     for (size_t j = 0; j < 50/*mNumSymTextureModes*/; ++j)
-                        sym += sTCoeff[j] * egt.mSymTextureModes[j + i * 50]; // sTCoeff is from TES4::Npc
+                        sym += (sRaceTCoeff[j] + sTCoeff[j]) * fgFiles->egt.mSymTextureModes[50*i + j];
 
                     // Detail texture is applied after reconstruction of the colour map from the SCM.
                     // Using an average of the 3 colors makes the resulting texture less blotchy. Also see:
@@ -908,14 +882,10 @@ void ForeignNpcAnimation::updateNpcBase()
                     if (mNpc->mEditorId != "UrielSeptim" && mNpc->mEditorId != "Rohssan" &&
                         mNpc->mFormId != 0x0001C458)
                         fr = 1.f; // ignore age for now
-                        //fr = (255 - *(pDetail+0))/255.f;
                     r = std::min(int((*(pDest+0)+sym.x) * fr), 255);
                     if (mNpc->mEditorId != "UrielSeptim" && mNpc->mEditorId != "Rohssan" &&
                         mNpc->mFormId != 0x0001C458)
                         r = std::min(int(*(pDetail+0) * 2 *r /255.f), 255);
-                        //r = std::min(int(*(pDetail+0) + r), 255); // add is too light (greenish)
-                        //r = std::min(int((r + (*(pDetail+3)) * *(pDetail+0)/255)), 255);
-                        //r = std::min(int((*(pDetail+0) + (*(pDest+3)) * r /255)), 255);
 
                     int g = *(pDetail+1);
                     float fg = g/64.f;
@@ -1022,71 +992,16 @@ void ForeignNpcAnimation::updateNpcBase()
 
                 pass->removeTextureUnitState(0);
                 Ogre::TextureUnitState *newTUS = pass->createTextureUnitState("FaceGen" + mNpc->mEditorId);
-                //unsigned short tusIndex = pass->getTextureUnitStateIndex(newTUS);
-                //if (mNpc->mEditorId == "UrielSeptim")
-                    //std::cout << "tus index " << tusIndex << std::endl;
 
-                //pass->getTextureUnitState(0)->setColourOperation(Ogre::LBO_ALPHA_BLEND);
-                //Ogre::TextureUnitState *tus1 = pass->createTextureUnitState("FaceGen"+mNpc->mEditorId+"2");
-//              if (mNpc->mEditorId == "UrielSeptim")
-//                  textureFile = "textures\\faces\\oblivion.esm\\"+ESM4::formIdToString(mNpc->mFormId)+"_0.dds";
-//              Ogre::TextureUnitState *tus1 = pass->createTextureUnitState(textureFile);
-//              unsigned short tusIndex = pass->getTextureUnitStateIndex(tus1);
-//              if (mNpc->mEditorId == "UrielSeptim")
-//                  std::cout << "tus index " << tusIndex << std::endl;
-                //tus1->setColourOperation(Ogre::LBO_MODULATE);
-                //tus1->setColourOperation(Ogre::LBO_ADD);
-                //tus1->setColourOperation(Ogre::LBO_ALPHA_BLEND);
-                if (0)//mNpc->mFormId == 0x0001C458)
-                {
-                    //Ogre::TexturePtr
-                    tus->setTexture(texDetail);
-                    Ogre::TextureUnitState *tus2 = pass->createTextureUnitState("textures\\characters\\imperial\\headhuman.dds");
-
-                    //Ogre::TextureUnitState *tus2 = pass->createTextureUnitState("textures\\characters\\imperial\\headhumanf60.dds");
-                    tus2->setColourOperation(Ogre::LBO_ALPHA_BLEND);
-                }
             } // while pass
-            //Ogre::Pass *newPass = tech->createPass();
-            //tech->setSceneBlending(Ogre::SBT_TRANSPARENT_ALPHA);
-            //Ogre::TextureUnitState *tus1 = newPass->createTextureUnitState(textureFile);
-            //tus->setColourOperation(Ogre::LBO_ALPHA_BLEND);
-            //if (0)//mNpc->mFormId == 0x0001C458)
-//          Ogre::Pass *newPass2 = tech->createPass();
-//          if (mNpc->mEditorId == "UrielSeptim")
-//          {
-//              textureFile = "textures\\faces\\oblivion.esm\\"+ESM4::formIdToString(mNpc->mFormId)+"_0.dds";
-//              Ogre::TextureUnitState *tus1 = newPass2->createTextureUnitState(textureFile);
-//              //tus1->setColourOperation(Ogre::LBO_ADD);
-//              //tus1->setColourOperation(Ogre::LBO_ALPHA_BLEND);
-//              //tech->setSceneBlending(Ogre::SBT_TRANSPARENT_ALPHA);
-//          }
-//          else
-//          {
-//              Ogre::TextureUnitState *tus1 = newPass2->createTextureUnitState("FaceGen"+mNpc->mEditorId+"2");
-//              //tus1->setColourOperation(Ogre::LBO_ADD);
-//              //tus1->setColourOperation(Ogre::LBO_ALPHA_BLEND);
-//          }
         } // while technique
-
-        //Ogre::Pass *pass = mat->getTechnique(0)->createPass();
-        //pass->setLightingEnabled(false); // doesn't do anything?
-        //pass->setCullingMode(Ogre::CULL_NONE);
-        //pass->setSeparateSceneBlending(Ogre::SBT_TRANSPARENT_ALPHA, Ogre::SBT_ADD);
-        //pass->setDepthWriteEnabled(false);
-        //pass->setDepthCheckEnabled(true);
-        //Ogre::TextureUnitState *tus = pass->createTextureUnitState(textureFile/*"FaceGen" + mNpc->mEditorId*/);
-        //tus->setColourOperation(Ogre::LBO_REPLACE);
-        //tus->setColourOperationEx(Ogre::LBX_MODULATE, Ogre::LBS_TEXTURE, Ogre::LBS_MANUAL, Ogre::ColourValue::White, Ogre::ColourValue::Red);
-
-        //pass->setSceneBlending(Ogre::SBT_REPLACE);
 
         it->second->shareSkeletonInstanceWith(mSkelBase);
         mInsert->attachObject(it->second);
     }
     mObjectParts[ESM::PRT_Head] = scene;
 
-
+#if 0
     if (mRace->mEditorId == "Imperial" || mRace->mEditorId == "Nord" ||
         mRace->mEditorId == "Breton"   || mRace->mEditorId == "Redguard" ||
         mRace->mEditorId == "HighElf"  || mRace->mEditorId == "DarkElf"  || mRace->mEditorId == "WoodElf")
@@ -1311,8 +1226,8 @@ void ForeignNpcAnimation::updateNpcBase()
     else
     {
 
-    NiBtOgre::FgEgm egm(path+"egm", "General");
-    egm.loadImpl();
+    //NiBtOgre::FgEgm egm(path+"egm", "General");
+    //egm.loadImpl();
     NiBtOgre::FgTri tri(path+"tri", "General");
     tri.loadImpl();
     NiBtOgre::FgEgt egt(path+"egt", "General");
@@ -1329,6 +1244,7 @@ void ForeignNpcAnimation::updateNpcBase()
     fgVertices.resize(tri.getNumVertices());
     for (size_t i = 0; i < fgVertices.size(); ++i)
     {
+#if 0
         sym = Ogre::Vector3::ZERO;
         for (size_t j = 0; j < 50; ++j)
         {
@@ -1344,9 +1260,10 @@ void ForeignNpcAnimation::updateNpcBase()
         {
             asym += aCoeff[k] * /*egm.mAsymMorphModeScales[k] * */egm.mAsymMorphModes[k + 30*i];
         }
-
+#endif
         fgVertices[i] = vertices[i] + sym + asym;
     }
+        sam.getMorphedVertices(fgVertices, meshName, sRaceCoeff, aRaceCoeff, sCoeff, aCoeff);
 
         sceneEar->mForeignObj->instantiate(mSkelBase->getMesh()->getSkeleton(), mNpc->mEditorId, fgVertices);
     }
@@ -1403,11 +1320,11 @@ void ForeignNpcAnimation::updateNpcBase()
     else
     {
 
-    NiBtOgre::FgEgm egm(path+"egm", "General");
-    egm.loadImpl();
+    //NiBtOgre::FgEgm egm(path+"egm", "General");
+    //egm.loadImpl();
     NiBtOgre::FgTri tri(path+"tri", "General");
     tri.loadImpl();
-    const std::vector<Ogre::Vector3>& vertices = tri.getVertices(); // V + K
+    const std::vector<Ogre::Vector3>& vertices = tri.vertices(); // V + K
 
     const std::vector<float>& sCoeff = mNpc->mSymShapeModeCoefficients;
     const std::vector<float>& aCoeff = mNpc->mAsymShapeModeCoefficients;
@@ -1415,9 +1332,10 @@ void ForeignNpcAnimation::updateNpcBase()
     Ogre::Vector3 sym;
     Ogre::Vector3 asym;
     std::vector<Ogre::Vector3> fgVertices;
-    fgVertices.resize(tri.getNumVertices());
+    fgVertices.resize(tri.numVertices());
     for (size_t i = 0; i < fgVertices.size(); ++i)
     {
+#if 0
         sym = Ogre::Vector3::ZERO;
         for (size_t j = 0; j < 50; ++j)
         {
@@ -1433,7 +1351,7 @@ void ForeignNpcAnimation::updateNpcBase()
         {
             asym += aCoeff[k] * /*egm.mAsymMorphModeScales[k] * */egm.mAsymMorphModes[k + 30*i];
         }
-
+#endif
         fgVertices[i] = vertices[i] + sym + asym;
     }
 
@@ -1507,6 +1425,7 @@ void ForeignNpcAnimation::updateNpcBase()
         mObjectParts[ESM::PRT_Hair] = sceneHair;
     }
 
+#endif
     if (isTES4)
     {
         {

@@ -32,7 +32,7 @@
 #include <map>
 #include <vector>
 
-#include "common.hpp" // AttribValues
+#include "common.hpp" // AttributeValues
 
 namespace ESM4
 {

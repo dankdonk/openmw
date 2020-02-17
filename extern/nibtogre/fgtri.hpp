@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019 cc9cii
+  Copyright (C) 2019, 2020 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -25,30 +25,24 @@
 
 #include <string>
 #include <cstdint>
-//#include <memory>
 
 #include <boost/scoped_array.hpp>
 
-#include <OgreResource.h>
-#include <OgreVector3.h>
+//#include <OgreDataStream.h>
+//#include <OgreVector3.h>
 
-#include "fgstream.hpp"
-
-namespace Ogre
-{
-    class ResourceManager;
-    class ManualResourceLoader;
-}
+//namespace Ogre
+//{
+//    class ResourceManager;
+//    class ManualResourceLoader;
+//}
 
 namespace NiBtOgre
 {
     class FgTri //: public Ogre::Resource
     {
-        FgStream mFgStream;
-
-        const std::string mGroup;  // Ogre group
-
-        std::string mName;
+        //const std::string mGroup;  // Ogre group
+        //std::string mName;
 
         std::uint64_t mFileType;
         std::uint32_t mNumVertices;
@@ -62,8 +56,8 @@ namespace NiBtOgre
         std::uint32_t mNumLabelledStatMorphs;
         std::uint32_t mNumTotalStatMorphVertices;
 
-        //boost::scoped_array<float> mVertices;
-        std::vector<Ogre::Vector3> mVertices;
+        boost::scoped_array<float> mVertices;
+        //std::vector<Ogre::Vector3> mVertices;
         boost::scoped_array<std::int32_t> mTriangleIndicies;
         boost::scoped_array<std::int32_t> mQuadIndicies;
 
@@ -72,10 +66,9 @@ namespace NiBtOgre
         FgTri(const FgTri& other);
         FgTri& operator=(const FgTri& other);
 
-    public:
     //protected:
-        void loadImpl();
-        void unloadImpl() {}
+        //void loadImpl();
+        //void unloadImpl() {}
 
     public:
         // The parameter 'name' refers to those in the Ogre::ResourceGroupManager
@@ -85,15 +78,17 @@ namespace NiBtOgre
 //      FgTri(Ogre::ResourceManager *creator, const Ogre::String& name, Ogre::ResourceHandle handle,
 //              const Ogre::String& group, bool isManual, Ogre::ManualResourceLoader* loader,
 //              const Ogre::NameValuePairList* createParams=nullptr/*bool showEditorMarkers=false*/);
-        FgTri(const Ogre::String& name, const Ogre::String& group); // FIXME
+        //FgTri(const Ogre::String& name, const Ogre::String& group); // FIXME
+        FgTri(const std::string& name);
         ~FgTri();
 
-        const std::string& getOgreGroup() const { return mGroup; }
-        const std::string& getName() const { return mName; }
+        //const std::string& getOgreGroup() const { return mGroup; }
+        //const std::string& getName() const { return mName; }
 
-        //const float *getVertices() const { return &mVertices[0]; }
-        inline const std::uint32_t getNumVertices() const { return mNumVertices; }
-        inline const std::vector<Ogre::Vector3>& getVertices() const { return mVertices; }
+        inline const std::uint32_t numVertices() const { return mNumVertices; }
+        inline const std::uint32_t numMorphVertices() const { return mNumTotalStatMorphVertices; }
+        //inline const std::vector<Ogre::Vector3>& getVertices() const { return mVertices; }
+        inline const boost::scoped_array<float>& vertices() const { return mVertices; }
     };
 }
 

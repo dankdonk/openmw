@@ -1,6 +1,6 @@
 /*
 
-  Copyright (C) 2018, 2019 cc9cii
+  Copyright (C) 2018-2020 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -854,6 +854,7 @@ ponyrider0 replied with this suggestion:
 
 ## EGM
 A binary format containing the principal component modes as one standard deviation vertex deltas.
+See [fileformats](https://facegen.com/dl/sdk/doc/manual/fileformats.html).
 
     char[8]               Magic number for this filetype: 'FREGM002'
     unsigned long         Number of vertices (V) (Should equal V+K in TRI file)
@@ -874,7 +875,8 @@ A binary format containing the principal component modes as one standard deviati
 
     const std::vector<float>& sCoeff = mNpc->mSymShapeModeCoefficients;
     const std::vector<float>& aCoeff = mNpc->mAsymShapeModeCoefficients;
-    const std::vector<float>& sTCoeff = mNpc->mSymTextureModeCoefficients;
+    const std::vector<float>& sRaceCoeff = mRace->mSymShapeModeCoefficients;
+    const std::vector<float>& aRaceCoeff = mRace->mAsymShapeModeCoefficients;
 
     Ogre::Vector3 sym;
     Ogre::Vector3 asym;
@@ -885,33 +887,29 @@ A binary format containing the principal component modes as one standard deviati
         sym = Ogre::Vector3::ZERO;
         for (size_t j = 0; j < 50; ++j) // for TES4 always 50 sym modes
         {
-            sym += sCoeff[j] * egm.mSymMorphModeScales[j] * egm.mSymMorphModes[j + 50*i];
-            //        ^                 ^                           ^
-            //        |                 |                           |
-            //      float             float                     Ogre::Vector3
-            //      npc_              EGM for the mesh          EGM for the mesh
-
-            //float factor = coeff[j] * egm.mSymMorphModeScales[j];
-            //Ogre::Vector3 vert = egm.mSymMorphModes[j + 50*i];
-            //Ogre::Vector3 newVert = factor * vert;
-            //sym += newVert;
+            sym += (sRaceCoeff[j] + sCoeff[j])  * egm.mSymMorphModes[50*i + j];
+            //            ^             ^                 ^
+            //            |             |                 |
+            //          float         float           Ogre::Vector3
+            //          race          npc_            EGM for the mesh
+            //          (guess)                       (scaled for mode j)
         }
 
         asym = Ogre::Vector3::ZERO;
         for (size_t k = 0; k < 30; ++k) // for TES4 always 30 asym modes
         {
-            asym += aCoeff[k] * egm.mAsymMorphModeScales[k] * egm.mAsymMorphModes[k + 30*i];
+            asym += (aRaceCoeff[k] + aCoeff[k]) * egm.mAsymMorphModes[30*i + k];
         }
 
-        fgVertices[i] = vertices[i] + sym(i) + asym(i);
-        //                  ^            ^     ^
-        //                  |             \   /
-        //                 TRI         npc_ & EGM
+        fgVertices[i] = vertices[i] + sym + asym;
+        //                  ^           ^     ^
+        //                  |            \   /
+        //                 TRI       race, npc_ & EGM (at i)
     }
 
 ## EGT
 
-Base texture: `Textures\Characters\imperial\headhuman.dds`
+Base texture example: `Textures\Characters\imperial\headhuman.dds`
 
 
 #[13/02/2020] - Trying to remember how the code works
@@ -927,6 +925,43 @@ already be opened via `NiStream` created in the constructor of `NiModel`.
 
 The constructor of the each of `NiObjects` read the NIF file stream and populate various data structures in
 advance for the actual instantiation of the object at a later point in time.
+
+#[16/02/2020] - Refactor code generating the body parts.
+
+See `openmw/apps/openmw/mwrender/foreignnpcanimation.cpp`:
+
+For TES4, ESM/ESP specify the game based on the resources in the BSA (or loose) files.  The graphics and
+physics models for a given scene needs to be constructed and passed onto the respective engines for rendering,
+collisions, etc.
+
+When a character is placed into a scene we do a few extra things compared to a static (or havok based)
+objects.
+
+  * A character has a set of animations some of which may get played depending on the character's current
+    movements.
+  * A character with animations will have a skeleton.
+  * A character is usually made from several parts - head, hair, hands, clothes/armour, weapons, etc.
+  * A character's race and it's own data (`npc_` record) will determine which mesh and texture to use.
+    For weapons/armour/etc, the character's currently equipped inventory will be visible.
+  * Many of the parts will be "skinned".
+  * For some body parts FaceGen will be used to create unique, but realistic appearances.
+
+i.e. the specified skeleton, inventory, body parts, etc need to be sourced from NIF and other resources to be
+ready for instantiation by the rendering engine.
+
+It should be noted that the resource "templates" (for the want of a better description) may be used by many
+different characters or objects.  They need to be managed by resource managers some kind (even if it is a
+simple static map).
+
+Obviously, care needs to be taken in creating these resource "templates" so that executing the same piece of
+calculations is avoided or minimised.  In some cases it may be worth ordering the data structures so that
+cache misses are minimised.
+
+#[17/02/2020] - Refactor FaceGen related code
+
+        stat morph vertices in TRI
+        0x4fb + 0x1cd=461
+        npc_::hairlength
 
 
 [//]: # (/* spell spelllang=en_us syntax=cpp */)

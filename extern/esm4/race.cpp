@@ -40,9 +40,13 @@ ESM4::Race::Race() : mFormId(0), mFlags(0)
 {
     mEditorId.clear();
     mFullName.clear();
+    mDesc.clear();
     mModelMale.clear();
     mModelFemale.clear();
-    mDesc.clear();
+
+    std::memset(&mAttribMale, 0, sizeof(AttributeValues));
+    std::memset(&mAttribFemale, 0, sizeof(AttributeValues));
+
     mVNAM.resize(2);
     mDefaultHair.resize(2);
 }

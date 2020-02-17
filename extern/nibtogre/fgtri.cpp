@@ -25,10 +25,10 @@
 */
 #include "fgtri.hpp"
 
-#include <memory>
 #include <stdexcept>
-#include <iostream> // FIXME: debugging only
+#include <iostream> // FIXME: for debugging only
 
+#include "fgstream.hpp"
 
 // "name" is the full path to the mesh from the resource directory/BSA added to Ogre::ResourceGroupManager.
 // This name is required later for Ogre resource managers such as MeshManager.
@@ -41,67 +41,53 @@
 //{
 //}
 
-NiBtOgre::FgTri::FgTri(const Ogre::String& name, const Ogre::String& group)
-    : mFgStream(name), mGroup(group), mName(name)
+//NiBtOgre::FgTri::FgTri(const Ogre::String& name, const Ogre::String& group)
+//    : mFgStream(name), mGroup(group), mName(name)
+//{
+//}
+
+namespace NiBtOgre
 {
-}
-
-NiBtOgre::FgTri::~FgTri()
-{
-}
-
-// only called if this resource is not being loaded from a ManualResourceLoader
-void NiBtOgre::FgTri::loadImpl()
-{
-    mFgStream.read(mFileType); // FIXME: assert that it is "FRTRI003"
-    mFgStream.read(mNumVertices);
-    mFgStream.read(mNumTriangles);
-    mFgStream.read(mNumQuads);
-    mFgStream.read(mNumLabelledVertices);
-    mFgStream.read(mNumLabelledSurfacePoints);
-    mFgStream.read(mNumTextureCoordinates);
-    mFgStream.read(mExtensionInfo);
-    mFgStream.read(mNumLabelledDiffMorphs);
-    mFgStream.read(mNumLabelledStatMorphs);
-    mFgStream.read(mNumTotalStatMorphVertices);
-
-    mFgStream.skip(16); // Reserved
-
-    float x, y, z;
-#if 0
-    boost::scoped_array<float> mVertices(new float[3 * (mNumVertices + mNumTotalStatMorphVertices)]);
-    for (std::size_t i = 0; i < (mNumVertices + mNumTotalStatMorphVertices); ++i)
+    FgTri::FgTri(const std::string& name)
     {
-        mFgStream.read(mVertices[i+0]);
-        mFgStream.read(mVertices[i+1]);
-        mFgStream.read(mVertices[i+2]);
-    }
-#else
-    mVertices.resize(mNumVertices + mNumTotalStatMorphVertices);
-    for (std::size_t i = 0; i < (mNumVertices + mNumTotalStatMorphVertices); ++i)
-    {
-        mFgStream.read(x);
-        mFgStream.read(y);
-        mFgStream.read(z);
-        mVertices[i] = Ogre::Vector3(x, y, z);
-    }
-#endif
+        FgStream tri(name);
 
-    boost::scoped_array<std::int32_t> mTriangleIndicies(new std::int32_t[3 * mNumTriangles]);
-    for (std::size_t i = 0; i < mNumTriangles; ++i)
-    {
-        mFgStream.read(mTriangleIndicies[i+0]);
-        mFgStream.read(mTriangleIndicies[i+1]);
-        mFgStream.read(mTriangleIndicies[i+2]);
+        tri.read(mFileType); // FIXME: assert that it is "FRTRI003"
+        tri.read(mNumVertices);
+        tri.read(mNumTriangles);
+        tri.read(mNumQuads);
+        tri.read(mNumLabelledVertices);
+        tri.read(mNumLabelledSurfacePoints);
+        tri.read(mNumTextureCoordinates);
+        tri.read(mExtensionInfo);
+        tri.read(mNumLabelledDiffMorphs);
+        tri.read(mNumLabelledStatMorphs);
+        tri.read(mNumTotalStatMorphVertices);
+
+        tri.skip(16); // Reserved
+
+        boost::scoped_array<float> vertices(new float[3 * (mNumVertices + mNumTotalStatMorphVertices)]);
+        for (std::size_t i = 0; i < 3 * (mNumVertices + mNumTotalStatMorphVertices); ++i)
+            tri.read(vertices[i]);
+
+        mVertices.swap(vertices);
+
+        boost::scoped_array<std::int32_t> triangleIndicies(new std::int32_t[3 * mNumTriangles]);
+        for (std::size_t i = 0; i < 3 * mNumTriangles; ++i)
+            tri.read(triangleIndicies[i]);
+
+        mTriangleIndicies.swap(triangleIndicies);
+
+        boost::scoped_array<std::int32_t> quadIndicies(new std::int32_t[3 * mNumQuads]);
+        for (std::size_t i = 0; i < 3 * mNumQuads; ++i)
+            tri.read(quadIndicies[i]);
+
+        mQuadIndicies.swap(quadIndicies);
+
+        // FIXME the rest of the file
     }
 
-    boost::scoped_array<std::int32_t> mQuadIndicies(new std::int32_t[3 * mNumQuads]);
-    for (std::size_t i = 0; i < mNumQuads; ++i)
+    FgTri::~FgTri()
     {
-        mFgStream.read(mQuadIndicies[i+0]);
-        mFgStream.read(mQuadIndicies[i+1]);
-        mFgStream.read(mQuadIndicies[i+2]);
     }
-
-    // ignore the rest of the file for now
 }

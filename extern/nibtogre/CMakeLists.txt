@@ -72,6 +72,7 @@ set(NIBTOGRE_SOURCE_FILES
     fgegt.cpp
     fgtri.cpp
     fgctl.cpp
+    fgsam.cpp
 )
 
 add_library(${NIBTOGRE_LIBRARY} STATIC ${NIBTOGRE_SOURCE_FILES})

@@ -594,7 +594,7 @@ NiBtOgre::BSDamageStage::BSDamageStage(uint32_t index, NiStream& stream, const N
 
 // Seen in NIF version 20.2.0.7
 NiBtOgre::BSMultiBoundNode::BSMultiBoundNode(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
-    : NiNode(index, stream, model, data)
+    : NiNode(index, stream, model, data), mUnknown(0)
 {
     stream.read(mMultiBoundRef);
     if (stream.nifVer() >= 0x14020007) // from 20.2.0.7
@@ -603,7 +603,7 @@ NiBtOgre::BSMultiBoundNode::BSMultiBoundNode(uint32_t index, NiStream& stream, c
 
 // Seen in NIF version 20.2.0.7
 NiBtOgre::BSOrderedNode::BSOrderedNode(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
-    : NiNode(index, stream, model, data)
+    : NiNode(index, stream, model, data), mIsStaticBound(0)
 {
     stream.read(mAlphaSortBound);
     stream.read(mIsStaticBound);
@@ -619,7 +619,7 @@ NiBtOgre::BSTreeNode::BSTreeNode(uint32_t index, NiStream& stream, const NiModel
 
 // Seen in NIF version 20.2.0.7
 NiBtOgre::BSValueNode::BSValueNode(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
-    : NiNode(index, stream, model, data)
+    : NiNode(index, stream, model, data), mValue(0)
 {
     stream.read(mValue);
 
@@ -627,7 +627,7 @@ NiBtOgre::BSValueNode::BSValueNode(uint32_t index, NiStream& stream, const NiMod
 }
 
 NiBtOgre::NiBillboardNode::NiBillboardNode(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
-    : NiNode(index, stream, model, data)
+    : NiNode(index, stream, model, data), mBillboardMode(0)
 {
     if (stream.nifVer() >= 0x0a010000) // from 10.1.0.0
         stream.read(mBillboardMode);
@@ -635,7 +635,7 @@ NiBtOgre::NiBillboardNode::NiBillboardNode(uint32_t index, NiStream& stream, con
 
 // Seen in NIF version 20.2.0.7
 NiBtOgre::NiSwitchNode::NiSwitchNode(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
-    : NiNode(index, stream, model, data)
+    : NiNode(index, stream, model, data), mNiSwitchFlags(0), mIndex(0)
 {
     if (stream.nifVer() >= 0x0a010000) // from 10.1.0.0
         stream.read(mNiSwitchFlags);

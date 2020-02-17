@@ -25,10 +25,12 @@
 */
 #include "fgegm.hpp"
 
-#include <memory>
+//#include <memory>
 #include <stdexcept>
-#include <iostream> // FIXME: debugging only
+#include <iostream> // FIXME: for debugging only
 
+#include "fgstream.hpp"
+#include "fgtri.hpp"
 
 // "name" is the full path to the mesh from the resource directory/BSA added to Ogre::ResourceGroupManager.
 // This name is required later for Ogre resource managers such as MeshManager.
@@ -41,14 +43,13 @@
 //{
 //}
 
-NiBtOgre::FgEgm::FgEgm(const Ogre::String& name, const Ogre::String& group)
-    : mFgStream(name), mGroup(group), mName(name)
-{
-}
+//NiBtOgre::FgEgm::FgEgm(const Ogre::String& name, const Ogre::String& group)
+//    : mFgStream(name), mGroup(group), mName(name)
+//{
+//}
 
-NiBtOgre::FgEgm::~FgEgm()
+namespace NiBtOgre
 {
-}
 #if 0
 // only called if this resource is not being loaded from a ManualResourceLoader
 void NiBtOgre::FgEgm::loadImpl()
@@ -134,6 +135,7 @@ const std::int16_t *NiBtOgre::FgEgm::getAsymMorph(std::size_t vertIndex) const
     return &mAsymMorphModes[vertIndex * 3 * 30/*mNumAsymMorphModes*/];
 }
 #else
+#if 0
 // only called if this resource is not being loaded from a ManualResourceLoader
 void NiBtOgre::FgEgm::loadImpl()
 {
@@ -197,3 +199,52 @@ void NiBtOgre::FgEgm::loadImpl()
     }
 }
 #endif
+#endif
+    FgEgm::FgEgm(const std::string& name, const FgTri& tri)
+    {
+        FgStream egm(name);
+
+        egm.read(mFileType); // FIXME: assert that it is "FREGM002"
+        egm.read(mNumVertices);
+        if (mNumVertices != (tri.numVertices() + tri.numMorphVertices()))
+            throw std::runtime_error("EGM: Number of vertices does not match that of TRI");
+        egm.read(mNumSymMorphModes);
+        if (mNumSymMorphModes != 50)
+            throw std::runtime_error("EGM: Number of Symmetric Morph Modes is not 50");
+        egm.read(mNumAsymMorphModes);
+        if (mNumAsymMorphModes != 30)
+            throw std::runtime_error("EGM: Number of Asymmetric Morph Modes is not 30");
+        egm.read(mGeometryBasisVersion);
+
+        egm.skip(40); // Reserved
+
+        std::size_t index;
+        boost::scoped_array<float> symMorphModeScales(new float[50]);
+        boost::scoped_array<std::int16_t> symMorphModes((new std::int16_t[3 * mNumVertices * 50]));
+        for (std::size_t j = 0; j < 50; ++j)
+        {
+            egm.read(symMorphModeScales[j]);
+            index = 3 * mNumVertices * j;
+            for (std::size_t v = 0; v < 3 * mNumVertices; ++v)
+                egm.read(symMorphModes[index + v]);
+        }
+        mSymMorphModeScales.swap(symMorphModeScales);
+        mSymMorphModes.swap(symMorphModes);
+
+        boost::scoped_array<float> asymMorphModeScales(new float[30]);
+        boost::scoped_array<std::int16_t> asymMorphModes((new std::int16_t[3 * mNumVertices * 30]));
+        for (std::size_t k = 0; k < 30; ++k)
+        {
+            egm.read(asymMorphModeScales[k]);
+            index = 3 * mNumVertices * k; // WARN: index reused
+            for (std::size_t v = 0; v < 3 * mNumVertices; ++v)
+                egm.read(asymMorphModes[index + v]);
+        }
+        mAsymMorphModeScales.swap(asymMorphModeScales);
+        mAsymMorphModes.swap(asymMorphModes);
+    }
+
+    FgEgm::~FgEgm()
+    {
+    }
+}

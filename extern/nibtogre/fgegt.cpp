@@ -42,30 +42,32 @@
 //{
 //}
 
-NiBtOgre::FgEgt::FgEgt(const Ogre::String& name, const Ogre::String& group)
-    : mFgStream(name), mGroup(group), mName(name)
-{
-}
-
+//NiBtOgre::FgEgt::FgEgt(const Ogre::String& name, const Ogre::String& group)
+//    : mFgStream(name), mGroup(group), mName(name)
+//{
+//}
+//
 NiBtOgre::FgEgt::~FgEgt()
 {
 }
 
 // only called if this resource is not being loaded from a ManualResourceLoader
-void NiBtOgre::FgEgt::loadImpl()
+NiBtOgre::FgEgt::FgEgt(const std::string& name)
 {
-    mFgStream.read(mFileType); // FIXME: assert that it is "FREGM002"
-    mFgStream.read(mNumRows);
-    mFgStream.read(mNumColumns);
-    mFgStream.read(mNumSymTextureModes);
-    if (mNumSymTextureModes != 50)
-        throw std::runtime_error("Number of Symmetric Texture Modes is not 50");
-    mFgStream.read(mNumAsymTextureModes);
-    if (mNumAsymTextureModes != 0)
-        throw std::runtime_error("Number of Asymmetric Texture Modes is not 0");
-    mFgStream.read(mTextureBasisVersion);
+    FgStream egt(name);
 
-    mFgStream.skip(36); // Reserved
+    egt.read(mFileType); // FIXME: assert that it is "FREGM002"
+    egt.read(mNumRows);
+    egt.read(mNumColumns);
+    egt.read(mNumSymTextureModes);
+    if (mNumSymTextureModes != 50)
+        throw std::runtime_error("EGT: Number of Symmetric Texture Modes is not 50");
+    egt.read(mNumAsymTextureModes);
+    if (mNumAsymTextureModes != 0)
+        throw std::runtime_error("EGT: Number of Asymmetric Texture Modes is not 0");
+    egt.read(mTextureBasisVersion);
+
+    egt.skip(36); // Reserved
 
     char r, g, b;
     std::size_t index = 0;
@@ -90,17 +92,17 @@ void NiBtOgre::FgEgt::loadImpl()
     boost::scoped_array<std::size_t> flip(new size_t[imgSize]);
     for (std::size_t r = 0; r < mNumRows; ++r)
         for (std::size_t c = 0; c < mNumColumns; ++c)
-            flip[index++] = (mNumRows -1 - r) * mNumColumns + c;
+            flip[index++] = (mNumRows -1 -r) * mNumColumns + c;
 
     mSymTextureModeScales.resize(50/*mNumSymTextureModes*/);
     mSymTextureModes.resize(size);
 
     for (std::size_t j = 0; j < 50/*mNumSymTextureModes*/; ++j)
     {
-        mFgStream.read(mSymTextureModeScales.at(j)); // scale for symmetric texture mode j
+        egt.read(mSymTextureModeScales.at(j)); // scale for symmetric texture mode j
 
         for (std::size_t v = 0; v < 3*imgSize; ++v)  // (R image + G image + B image) for each mode j
-            mFgStream.read(rgb[j*3*imgSize + v]);
+            egt.read(rgb[j*3*imgSize + v]);
 
         // reorganise to have all modes for the same pixel location grouped together
         // FIXME: prob. premature optimisation
@@ -120,9 +122,11 @@ void NiBtOgre::FgEgt::loadImpl()
             g = rgb[j*3*imgSize + i + 1*imgSize];
             b = rgb[j*3*imgSize + i + 2*imgSize];
 
-            // convert i to index (to row-major order starting top left)
-            index = j + flip[i] * 50/*mNumSymTextureModes*/; // WARN: index reused
-            mSymTextureModes[index] = Ogre::Vector3(float(r), float(g), float(b)) * mSymTextureModeScales[j];
+            // convert i to row-major order starting top left
+            mSymTextureModes[j + flip[i] * 50/*mNumSymTextureModes*/]
+                = Ogre::Vector3(float(r), float(g), float(b)) * mSymTextureModeScales[j];
         }
     }
+
+    // FIXME: asym texture modes
 }
