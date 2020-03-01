@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2016, 2018, 2019 cc9cii
+  Copyright (C) 2016, 2018-2020 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -40,6 +40,13 @@ namespace ESM4
     {
         struct Data
         {
+            // type
+            // 0 = Blade One Hand
+            // 1 = Blade Two Hand
+            // 2 = Blunt One Hand
+            // 3 = Blunt Two Hand
+            // 4 = Staff
+            // 5 = Bow
             std::uint32_t type;
             float         speed;
             float         reach;

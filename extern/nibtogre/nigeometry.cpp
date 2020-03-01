@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015-2019 cc9cii
+  Copyright (C) 2015-2020 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -52,7 +52,7 @@
 #undef NDEBUG
 #endif
 
-NiBtOgre::NiGeometry::NiGeometry(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::NiGeometry::NiGeometry(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiAVObject(index, stream, model, data), mHasShader(false), mDirtyFlag(false)
     , mParent(data.getNiNodeParent((NiAVObjectRef)NiObject::mSelfRef))
 {
@@ -64,58 +64,60 @@ NiBtOgre::NiGeometry::NiGeometry(uint32_t index, NiStream& stream, const NiModel
         std::cout << "Shadow : " << model.getModelName() << " : " << model.indexToString(mName) << std::endl;
     }
 #endif
-    stream.read(mDataRef);
-    stream.read(mSkinInstanceRef);
+    stream->read(mDataRef);
+    stream->read(mSkinInstanceRef);
 
-    if (stream.nifVer() == 0x0a000100)     // HACK: not sure why this is needed
-        stream.skip(sizeof(std::int32_t)); // e.g. clutter/farm/oar01.nif version 10.0.1.0
-    else if (stream.nifVer() == 0x0a01006a)
-        stream.skip(sizeof(std::int32_t)); // e.g. creatures/horse/bridle.nif version 10.1.0.106
+    if (stream->nifVer() == 0x0a000100)     // HACK: not sure why this is needed
+        stream->skip(sizeof(std::int32_t)); // e.g. clutter/farm/oar01.nif version 10.0.1.0
+    else if (stream->nifVer() == 0x0a01006a)
+        stream->skip(sizeof(std::int32_t)); // e.g. creatures/horse/bridle.nif version 10.1.0.106
 
-    if (stream.nifVer() >= 0x14020007) // from 20.2.0.7 (TES5)
+    if (stream->nifVer() >= 0x14020007) // from 20.2.0.7 (TES5)
     {
         std::uint32_t numMaterials;
-        stream.read(numMaterials);
+        stream->read(numMaterials);
 
         if (numMaterials != 0)
         {
             mMaterialName.resize(numMaterials);
             for (unsigned int i = 0; i < numMaterials; ++i)
-                stream.readLongString(mMaterialName.at(i));
+                stream->readLongString(mMaterialName.at(i));
 
             mMaterialExtraData.resize(numMaterials);
             for (unsigned int i = 0; i < numMaterials; ++i)
-                stream.read(mMaterialExtraData.at(i));
+                stream->read(mMaterialExtraData.at(i));
         }
 
-        stream.skip(sizeof(std::int32_t)); // active material?
+        stream->skip(sizeof(std::int32_t)); // active material?
     }
 
-    if (stream.nifVer() >= 0x0a000100 && stream.nifVer() <= 0x14010003)
+    if (stream->nifVer() >= 0x0a000100 && stream->nifVer() <= 0x14010003)
     {
-        if (mHasShader = stream.getBool())
+        if (mHasShader = stream->getBool())
         {
-            stream.readLongString(mShaderName);
-            stream.skip(sizeof(std::int32_t)); // unknown integer
+            stream->readLongString(mShaderName);
+            stream->skip(sizeof(std::int32_t)); // unknown integer
         }
     }
 
-    if (stream.nifVer() >= 0x14020007) // from 20.2.0.7 (TES5)
+    if (stream->nifVer() >= 0x14020007) // from 20.2.0.7 (TES5)
     {
-        mDirtyFlag = stream.getBool();
-        if (stream.userVer() == 12) // not present in FO3?
+        mDirtyFlag = stream->getBool();
+        if (stream->userVer() == 12) // not present in FO3?
         {
             mBSProperties.resize(2);
-            stream.read(mBSProperties.at(0));
-            stream.read(mBSProperties.at(1));
+            stream->read(mBSProperties.at(0));
+            stream->read(mBSProperties.at(1));
         }
     }
 }
 
-NiBtOgre::NiTriBasedGeom::NiTriBasedGeom(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::NiTriBasedGeom::NiTriBasedGeom(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiGeometry(index, stream, model, data), mData(data) // for accessing mSkeleton later
-    , mVertices(0)
 {
+    //mMorphedVertices.reset();
+    mMorphVertices.clear();
+
     mLocalTransform.makeTransform(mTranslation, Ogre::Vector3(mScale), Ogre::Quaternion(mRotation));
     //  at least one shape's parent is NiTriStrips i.e. the world transform will be required
     //  FIXME: physics shape is a little offset from the render
@@ -209,38 +211,31 @@ std::string NiBtOgre::NiTriBasedGeom::getMaterial()
                                              mModel.indexToString(NiObjectNET::getNameIndex()));
 }
 
-void NiBtOgre::NiTriBasedGeom::setVertices(std::vector<Ogre::Vector3>& vertices)
-{
-    mVertices = &vertices;
-}
+//void NiBtOgre::NiTriBasedGeom::setVertices(std::unique_ptr<std::vector<Ogre::Vector3> > morphedVertices)
+//{
+//    mMorphedVertices = std::move(morphedVertices);
+//
+//    if (mMorphedVertices.get()->empty())
+//        throw std::runtime_error("NiTriBasedGeom: trying to re-popluate morphed vertices");
+//}
 
-// FIXME: a lot of copying
-std::vector<Ogre::Vector3> NiBtOgre::NiTriBasedGeom::getVertices()
+//const std::vector<Ogre::Vector3>& NiBtOgre::NiTriBasedGeom::vertices()
+//{
+    //return mModel.getRef<NiGeometryData>(mDataRef)->mVertices;
+//}
+
+const std::vector<Ogre::Vector3>& NiBtOgre::NiTriBasedGeom::getVertices(bool morphed)
 {
-    //const NiGeometryData* data = mModel.getRef<NiGeometryData>(mDataRef);
-    if (mVertices)
-    {
-#if 0
-        std::vector<Ogre::Vector3> res;
-        res.resize(mVertices->size());
-        for (size_t i = 0; i < mVertices->size(); ++i)
-        {
-            res[i] = data->mVertices[i];// + mVertices->at(i);
-//          if (data->mVertices[i].x - mVertices->at(i).x > 0.0001 ||
-//              data->mVertices[i].y - mVertices->at(i).y > 0.0001 ||
-//              data->mVertices[i].z - mVertices->at(i).z > 0.0001)
-//              std::cout << "diff index " << i << std::endl;
-        }
-        return res;
-#else
-        return *mVertices;
-#endif
-    }
+    // TODO: maybe check that either or both of them are not empty?
+    const NiGeometryData* data = mModel.getRef<NiGeometryData>(mDataRef);
+    //if (mMorphedVertices.get() != nullptr && (mMorphedVertices->size() == data->mVertices.size()))
+        //return mMorphedVertices.get();
+    //else
+        //return &(data->mVertices);
+    if (morphed && mMorphVertices.size() == data->mVertices.size())
+        return mMorphVertices;
     else
-    {
-        const NiGeometryData* data = mModel.getRef<NiGeometryData>(mDataRef);
         return data->mVertices;
-    }
 }
 
 // build Ogre mesh and apply shader/material using scene
@@ -252,7 +247,7 @@ std::vector<Ogre::Vector3> NiBtOgre::NiTriBasedGeom::getVertices()
 // Should check if animated, has skeleton and/or has skin (static objects do not have these)
 //
 // Some NiTriStrips have NiBinaryExtraData (tangent space) - not sure what to do with them
-bool NiBtOgre::NiTriBasedGeom::createSubMesh(Ogre::Mesh *mesh, BoundsFinder& bounds)
+bool NiBtOgre::NiTriBasedGeom::buildSubMesh(Ogre::Mesh *mesh, BoundsFinder& bounds)
 {
     // If inst->mFlags says no animation, no havok then most likely static.  Also check if
     // there is a skin instance (and maybe also see if Oblivion layer is OL_STATIC even though
@@ -318,11 +313,10 @@ bool NiBtOgre::NiTriBasedGeom::createSubMesh(Ogre::Mesh *mesh, BoundsFinder& bou
 
     // NOTE: below code copied from components/nifogre/mesh.cpp (OpenMW)
 
-#if 0
-    std::vector<Ogre::Vector3> srcVerts = data->mVertices;
-#else
-    std::vector<Ogre::Vector3> srcVerts = getVertices();
-#endif
+    const std::vector<Ogre::Vector3>& srcVerts = getVertices();
+    std::vector<Ogre::Vector3> vertices;
+    vertices.resize(srcVerts.size());
+
     std::vector<Ogre::Vector3> srcNorms = data->mNormals; // FIXME: do these need to be re-calculated for FG?
     Ogre::HardwareBuffer::Usage vertUsage = Ogre::HardwareBuffer::HBU_STATIC;
     bool vertShadowBuffer = false;
@@ -335,11 +329,11 @@ bool NiBtOgre::NiTriBasedGeom::createSubMesh(Ogre::Mesh *mesh, BoundsFinder& bou
     }
 
     // transform the vertices and normals into position.
-    for (size_t i = 0;i < srcVerts.size();i++)
+    for (size_t i = 0;i < vertices.size();i++)
     {
         Ogre::Vector4 vec4(srcVerts[i].x, srcVerts[i].y, srcVerts[i].z, 1.0f);
         vec4 = transform*vec4;
-        srcVerts[i] = Ogre::Vector3(&vec4[0]);
+        vertices[i] = Ogre::Vector3(&vec4[0]);
     }
 
     for (size_t i = 0;i < srcNorms.size();i++)
@@ -350,7 +344,7 @@ bool NiBtOgre::NiTriBasedGeom::createSubMesh(Ogre::Mesh *mesh, BoundsFinder& bou
     }
 
     // update bounds including all the sub meshes
-    bounds.add(&srcVerts[0][0], srcVerts.size());
+    bounds.add(&vertices[0][0], vertices.size());
     if(!bounds.isValid())
     {
         float v[3] = { 0.0f, 0.0f, 0.0f };
@@ -371,15 +365,15 @@ bool NiBtOgre::NiTriBasedGeom::createSubMesh(Ogre::Mesh *mesh, BoundsFinder& bou
     sub->useSharedVertices = false;
     sub->vertexData = new Ogre::VertexData();
     sub->vertexData->vertexStart = 0;
-    sub->vertexData->vertexCount = srcVerts.size();
+    sub->vertexData->vertexCount = vertices.size();
 
     decl = sub->vertexData->vertexDeclaration;
     bind = sub->vertexData->vertexBufferBinding;
-    if (srcVerts.size())
+    if (vertices.size())
     {
         vbuf = hwBufMgr->createVertexBuffer(Ogre::VertexElement::getTypeSize(Ogre::VET_FLOAT3),
-                                            srcVerts.size(), vertUsage, vertShadowBuffer);
-        vbuf->writeData(0, vbuf->getSizeInBytes(), &srcVerts[0][0], true);
+                                            vertices.size(), vertUsage, vertShadowBuffer);
+        vbuf->writeData(0, vbuf->getSizeInBytes(), &vertices[0][0], true);
 
         decl->addElement(nextBuf, 0, Ogre::VET_FLOAT3, Ogre::VES_POSITION);
         bind->setBinding(nextBuf++, vbuf);
@@ -433,16 +427,16 @@ bool NiBtOgre::NiTriBasedGeom::createSubMesh(Ogre::Mesh *mesh, BoundsFinder& bou
         for(unsigned short i = 0; i < numUVs; ++i)
             decl->addElement(nextBuf, (unsigned short)elemSize*i, Ogre::VET_FLOAT2, Ogre::VES_TEXTURE_COORDINATES, i);
 
-        vbuf = hwBufMgr->createVertexBuffer(decl->getVertexSize(nextBuf), srcVerts.size(),
+        vbuf = hwBufMgr->createVertexBuffer(decl->getVertexSize(nextBuf), vertices.size(),
                                             Ogre::HardwareBuffer::HBU_STATIC);
 
         std::vector<Ogre::Vector2> allUVs;
-        allUVs.reserve(srcVerts.size()*numUVs);
-        for (size_t vert = 0; vert < srcVerts.size(); ++vert)
+        allUVs.reserve(vertices.size()*numUVs);
+        for (size_t vert = 0; vert < vertices.size(); ++vert)
             for (size_t i = 0; i < numUVs; i++)
                 allUVs.push_back(data->mUVSets[i][vert]);
 
-        vbuf->writeData(0, elemSize*srcVerts.size()*numUVs, &allUVs[0], true);
+        vbuf->writeData(0, elemSize*vertices.size()*numUVs, &allUVs[0], true);
 
         bind->setBinding(nextBuf++, vbuf);
     }
@@ -633,7 +627,7 @@ bool NiBtOgre::NiTriBasedGeom::createSubMesh(Ogre::Mesh *mesh, BoundsFinder& bou
         Ogre::VertexBoneAssignment boneInf;
         boneInf.boneIndex = mData.mSkeleton->getBone(/*"#"+std::to_string(mParent.selfRef())+"@"+*/mParent.getNiNodeName())->getHandle();
 
-        for (unsigned int j = 0; j < srcVerts.size(); ++j)
+        for (unsigned int j = 0; j < vertices.size(); ++j)
         {
             boneInf.vertexIndex = j;
             boneInf.weight = 1.f; // FIXME: hope this is correct
@@ -670,10 +664,10 @@ bool NiBtOgre::NiTriBasedGeom::createSubMesh(Ogre::Mesh *mesh, BoundsFinder& bou
 }
 
 // Seen in NIF version 20.2.0.7
-NiBtOgre::BSLODTriShape::BSLODTriShape(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::BSLODTriShape::BSLODTriShape(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiTriBasedGeom(index, stream, model, data)
 {
-    stream.read(mLevel0Size);
-    stream.read(mLevel1Size);
-    stream.read(mLevel2Size);
+    stream->read(mLevel0Size);
+    stream->read(mLevel1Size);
+    stream->read(mLevel2Size);
 }

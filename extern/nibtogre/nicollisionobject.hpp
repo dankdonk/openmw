@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015-2019 cc9cii
+  Copyright (C) 2015-2020 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -55,7 +55,7 @@ namespace NiBtOgre
         NiAVObjectRef mTargetRef;
 
     public:
-        NiCollisionObject(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
+        NiCollisionObject(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
         virtual ~NiCollisionObject() {}
     };
 
@@ -104,7 +104,7 @@ namespace NiBtOgre
         BoundingVolume mBoundingVolume;
 
     public:
-        NiCollisionData(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
+        NiCollisionData(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
         virtual ~NiCollisionData() {}
     };
 
@@ -117,7 +117,7 @@ namespace NiBtOgre
         NiObjectRef   mBodyRef;
 
     public:
-        bhkNiCollisionObject(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
+        bhkNiCollisionObject(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
         virtual ~bhkNiCollisionObject() {}
 
         // parentNiNode is used to calculate the world transform
@@ -134,7 +134,7 @@ namespace NiBtOgre
         float mUnknown2;
 
     public:
-        bhkBlendCollisionObject(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
+        bhkBlendCollisionObject(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
         virtual ~bhkBlendCollisionObject() {}
     };
 

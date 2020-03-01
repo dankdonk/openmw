@@ -61,8 +61,8 @@ namespace NiBtOgre
         NiStream(const std::string& name);
         ~NiStream();
 
-        size_t tell() { return mStream->tell(); } // FIXME: debugging only
-        const std::string& getName() const { return mStream->getName(); } // FIXME: debugging only
+        //size_t tell() { return mStream->tell(); } // FIXME: debugging only
+        //const std::string& getName() const { return mStream->getName(); } // FIXME: debugging only
 
         void setHeader(NiHeader *header);
 

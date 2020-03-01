@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015-2019 cc9cii
+  Copyright (C) 2015-2020 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -55,7 +55,7 @@ namespace NiBtOgre
     public:
         std::uint32_t mModifierNameRef;
 
-        NiPSysModifierCtlr(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
+        NiPSysModifierCtlr(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
     };
 
     // Seen in NIF ver 20.0.0.4, 20.0.0.5
@@ -67,7 +67,7 @@ namespace NiBtOgre
 #endif
         NiInterpolatorRef mVisibilityInterpolatorRef;
 
-        NiPSysEmitterCtlr(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
+        NiPSysEmitterCtlr(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
     };
 
     // Seen in NIF ver 20.0.0.4, 20.0.0.5
@@ -78,7 +78,7 @@ namespace NiBtOgre
         NiVisDataRef mDataRef;
 #endif
 
-        NiPSysModifierActiveCtlr(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
+        NiPSysModifierActiveCtlr(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
     };
 
     class NiPSysModifierFloatCtlr : public NiPSysModifierCtlr
@@ -86,7 +86,7 @@ namespace NiBtOgre
     public:
         NiFloatDataRef mDataRef;
 
-        NiPSysModifierFloatCtlr(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
+        NiPSysModifierFloatCtlr(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
     };
 
     typedef NiPSysModifierFloatCtlr NiPSysEmitterInitialRadiusCtlr; // Seen in NIF ver 20.0.0.4, 20.0.0.5

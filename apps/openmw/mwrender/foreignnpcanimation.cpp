@@ -1,5 +1,6 @@
 #include "foreignnpcanimation.hpp"
 
+#include <memory>
 #include <iostream>
 #include <iomanip> // for debugging only setprecision
 
@@ -24,11 +25,12 @@
 #include <extern/esm4/formid.hpp> // mainly for debugging
 #include <extern/nibtogre/btogreinst.hpp>
 #include <extern/nibtogre/nimodelmanager.hpp>
-#include <extern/nibtogre/fgsam.hpp>
-#include <extern/nibtogre/fgctl.hpp>
-//#include <extern/nibtogre/fgegm.hpp>
-//#include <extern/nibtogre/fgtri.hpp>
-//#include <extern/nibtogre/fgegt.hpp>
+#include <extern/fglib/fgsam.hpp>
+#include <extern/fglib/fgctl.hpp>
+#include <extern/fglib/fgfile.hpp>
+//#include <extern/fglib/fgegm.hpp>
+//#include <extern/fglib/fgtri.hpp>
+#include <extern/fglib/fgegt.hpp>
 
 #include <components/misc/rng.hpp>
 #include <components/misc/stringops.hpp>
@@ -394,6 +396,10 @@ void ForeignNpcAnimation::rebuild()
 //    NifOgre::ObjectScenePtr mObjectRoot and Ogre::Entity *mSkelBase
 // addAnimSource() - FIXME need to figure out how
 // updateParts() - get the correct body parts based on inventory
+//
+// NOTE: maybe updateParts needs to come before updating the NPC models - this is due to the high
+// cost of updating FaceGen models for head, hair, eyes, ears, etc.  Or at least consider if the
+// relevant slot is already occupied by the equipped items.
 void ForeignNpcAnimation::updateNpcBase()
 {
     if (!mNpc || !mRace)
@@ -401,54 +407,7 @@ void ForeignNpcAnimation::updateNpcBase()
 
     clearAnimSources(); // clears *all* animations
 
-    // FIXME: what to do with head and hand?
-
-    // find hair and eyes
     const MWWorld::ESMStore &store = MWBase::Environment::get().getWorld()->getStore();
-//#if 0 // FIXME: for testing only
-#if 0
-    const ESM4::Race* race = store.getForeign<ESM4::Race>().search(mNpc->mRace);
-    if (race)
-    {
-        //std::cout << "Race " << race->mEditorId << std::endl;
-        std::cout << race->mDesc << std::endl;
-        for (unsigned int i = 0; i < race->mEyeChoices.size(); ++i)
-        {
-            const ESM4::Eyes* eyes = store.getForeign<ESM4::Eyes>().search(race->mEyeChoices[i]);
-            std::cout << "eye choice " << eyes->mEditorId << std::endl;
-        }
-
-        for (unsigned int i = 0; i < race->mHairChoices.size(); ++i)
-        {
-            const ESM4::Hair* hair = store.getForeign<ESM4::Hair>().search(race->mHairChoices[i]);
-            std::cout << "hair choice " << hair->mEditorId << std::endl;
-        }
-
-        for (unsigned int i = 0; i < 2; ++i)
-        {
-            const ESM4::Hair* hair = store.getForeign<ESM4::Hair>().search(race->mDecapitate[i]);
-            if (hair)
-                std::cout << "decap" << i << " " << hair->mEditorId << std::endl;
-            else
-                std::cout << "hair not found " << ESM4::formIdToString(race->mDecapitate[i]) << std::endl;
-        }
-    }
-#endif
-
-    //const ESM4::Hair* hair = store.getForeign<ESM4::Hair>().search(mNpc->mHair);
-    //if (hair)
-        //std::cout << "Hair " << hair->mEditorId << std::endl;
-       // check NiObjectNET::mExtraDataIndexList (NiStringExtraData) for bone to attach
-
-    const ESM4::Eyes* eyes = store.getForeign<ESM4::Eyes>().search(mNpc->mEyes);
-    //if (eyes)
-        //std::cout << "Eyes " << eyes->mEditorId << std::endl;
-       // eye mesh is race dependent but what is the attach point?
-       // possibly somewhere on headhuman.nif
-       // the texture (mIcon) is avilable
-//#endif
-
-
 
     std::string skeletonModel;
     if (mNpc->mModel.empty() && mNpc->mBaseTemplate != 0) // TES5
@@ -590,21 +549,234 @@ void ForeignNpcAnimation::updateNpcBase()
 #endif
     }
 
-    // Assume foot/hand models share the same slot with boots/shoes/gloves/gauntlets
-    // Similarly upperbody uses the cuirass/shirt slot and lowerbody pants/skirt/greaves slot
-    //
-    // However head, hair and eyes should have permanent slots.
-
     //MWRender::Animation
     // Ogre::Entity    *mSkelBase
     // Ogre::SceneNode *mInsert
     // ObjectScenePtr   mObjectRoot
     // ?? reuse mInsert?
     std::string group("General");
-    std::string meshName;
+    std::string modelName;
+
+    // Slots for Bipid Object (from the Construction Set) - may occupy more than one slot (e.g. Robe)
+    // See Armor::mArmorFlags and Clothing::mClothingFlags.  There are total 16 slots.
+    //
+    //     Head
+    //     Hair
+    //     UpperBody
+    //     LowerBody
+    //     Hand
+    //     Foot
+    //     RightRing
+    //     LeftRing
+    //     Amulet
+    //     Weapon
+    //     BackWeapon
+    //     SideWeapon
+    //     Quiver
+    //     Shield
+    //     Torch
+    //     Tail
+    //
+    // Loop through to select the wearable items with the most value for a given slot.
+    // Probably only Armor, Clothing and Weapon.
+    //
+    // FIXME: not sure how to compare items that have more than one slot?
+    // One possibility might be to sort the inventory in value order and equip the items while
+    // checking for slot clashes.
+    //
+    // This item equipping algorithm should be encapsulated as it is likely to have a large bearing
+    // on the gameplay (and whether we emulate vanilla closely).
+    //
+    // TODO: NPC scripts may disallow some items to be equipped (TODO: confirm this)
+
+    // FIXME: for testing only
+    MWWorld::InventoryStore& inv = mPtr.getClass().getInventoryStore(mPtr);
+    MWWorld::ContainerStoreIterator storeHelmet = inv.getSlot(MWWorld::InventoryStore::Slot_ForeignHair);
+    std::uint16_t slot;
+    for (size_t i = 0; i < mNpc->mInventory.size(); ++i)
+    {
+        // check flag for hide rings/amulet to skip
+    }
 
     bool isTES4 = true;
     bool isFemale = (mNpc->mBaseConfig.flags & 0x1) != 0;
+    std::string meshName;
+    std::string textureName;
+
+    FgLib::FgSam sam;
+
+    const std::vector<float>& sRaceCoeff = mRace->mSymShapeModeCoefficients;
+    const std::vector<float>& aRaceCoeff = mRace->mAsymShapeModeCoefficients;
+    const std::vector<float>& sRaceTCoeff = mRace->mSymTextureModeCoefficients;
+    const std::vector<float>& sCoeff = mNpc->mSymShapeModeCoefficients;
+    const std::vector<float>& aCoeff = mNpc->mAsymShapeModeCoefficients;
+    const std::vector<float>& sTCoeff = mNpc->mSymTextureModeCoefficients;
+
+    // Hair is not considered as a "head part".
+    // check NiObjectNET::mExtraDataIndexList (NiStringExtraData) for bone to attach
+    if (storeHelmet == inv.end())
+    {
+        // FIXME: first check if the hair resource for this NPC has been created already
+        // MeshManager and TextureManager or nimodelmanager?
+        modelName = mNpc->mEditorId + "_Hair";
+        //NiModelPtr hairModel = NiBtOgre::NiModelManager::getSingleton().getOrLoadByName(modelName, group);
+
+
+
+
+
+
+        const MWWorld::ESMStore &store = MWBase::Environment::get().getWorld()->getStore();
+        const ESM4::Hair *hair = store.getForeign<ESM4::Hair>().search(mNpc->mHair);
+        if (!hair)
+        {
+            // try to use the Race defaults
+            hair = store.getForeign<ESM4::Hair>().search(mRace->mDefaultHair[isFemale ? 1 : 0]);
+            if (!hair)
+                throw std::runtime_error("Hair record not found.");
+        }
+
+        meshName = "meshes\\"+hair->mModel;
+        textureName = "textures\\"+hair->mIcon;
+
+        std::unique_ptr<std::vector<Ogre::Vector3> > fgVertices // NOTE: ownership passed to the model
+            = std::make_unique<std::vector<Ogre::Vector3> >();
+
+        sam.getMorphedVertices(fgVertices.get(), meshName, sRaceCoeff, aRaceCoeff, sCoeff, aCoeff);
+
+        // FIXME
+        //sam.getMorphedTexture(xxx, meshName, sRaceCoeff, aRaceCoeff, sCoeff, aCoeff);
+
+        NifOgre::ObjectScenePtr sceneHair = NifOgre::ObjectScenePtr (new NifOgre::ObjectScene(mInsert->getCreator()));
+        sceneHair->mForeignObj = std::make_shared<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(mInsert->createChildSceneNode(), meshName, group));
+
+        sceneHair->mForeignObj->instantiate(mSkelBase->getMesh()->getSkeleton(), mNpc->mEditorId, std::move(fgVertices));
+
+        Ogre::Bone *heBone = mSkelBase->getSkeleton()->getBone("Bip01 Head");
+        Ogre::Quaternion heOrientation = heBone->getOrientation() *
+                               Ogre::Quaternion(Ogre::Degree(90), Ogre::Vector3::UNIT_Y); // fix helmet issue
+        //Ogre::Vector3 hePosition = Ogre::Vector3(/*up*/0.2f, /*forward*/1.7f, 0.f); // FIXME non-zero for FO3 to make hair fit better
+        //Ogre::Vector3 hePosition = Ogre::Vector3(0.5f, -0.2f, 0.f);
+        Ogre::Vector3 hePosition = Ogre::Vector3(0.f, -0.2f, 0.f);
+        std::map<int32_t, Ogre::Entity*>::const_iterator it(sceneHair->mForeignObj->mEntities.begin());
+        for (; it != sceneHair->mForeignObj->mEntities.end(); ++it)
+        {
+
+
+
+#if 1
+            Ogre::MaterialPtr mat = sceneHair->mMaterialControllerMgr.getWritableMaterial(it->second);
+            Ogre::Material::TechniqueIterator techIter = mat->getTechniqueIterator();
+            while(techIter.hasMoreElements())
+            {
+                Ogre::Technique *tech = techIter.getNext();
+                Ogre::Technique::PassIterator passes = tech->getPassIterator();
+                while(passes.hasMoreElements())
+                {
+                    Ogre::Pass *pass = passes.getNext();
+                    //Ogre::TextureUnitState *tex = pass->getTextureUnitState(0);
+                    //tex->setColourOperation(Ogre::LBO_ALPHA_BLEND);
+                    //tex->setColourOperation(Ogre::LBO_REPLACE);
+                    //tex->setBlank(); // FIXME: testing
+#if 1
+                    Ogre::ColourValue ambient = pass->getAmbient();
+                    ambient.r = (float)mNpc->mHairColour.red / 256.f;
+                    ambient.g = (float)mNpc->mHairColour.green / 256.f;
+                    ambient.b = (float)mNpc->mHairColour.blue / 256.f;
+                    ambient.a = 1.f;
+                    pass->setSceneBlending(Ogre::SBT_REPLACE);
+                    pass->setAmbient(ambient);
+                    pass->setVertexColourTracking(pass->getVertexColourTracking() &~Ogre::TVC_AMBIENT);
+#endif
+#if 0
+                    Ogre::ColourValue diffuse = pass->getDiffuse();
+                    diffuse.r = float((float)mNpc->mHairColour.red / 256);
+                    diffuse.g = float((float)mNpc->mHairColour.green / 256);
+                    diffuse.b = float((float)mNpc->mHairColour.blue / 256);
+                    diffuse.a = 1.f;// (float)mNpc->mHairColour.custom / 256.f; //0.f;
+                    pass->setSceneBlending(Ogre::SBT_REPLACE);
+                    pass->setDiffuse(diffuse);
+                    pass->setVertexColourTracking(pass->getVertexColourTracking() &~Ogre::TVC_DIFFUSE);
+#endif
+                }
+            }
+#endif
+
+
+
+
+            mSkelBase->attachObjectToBone("Bip01 Head", it->second, heOrientation, hePosition);
+        }
+        mObjectParts[ESM::PRT_Hair] = sceneHair;
+    }
+
+    for (int index = ESM4::Race::Head; index < ESM4::Race::NumHeadParts; ++index)
+    {
+        // skip 2 if male, skip 1 if female (ears)
+        if ((isFemale && index == ESM4::Race::EarMale) || (!isFemale && index == ESM4::Race::EarFemale))
+            continue;
+
+        // skip ears if wearing a helmet - check for the head slot
+        if ((index == ESM4::Race::EarMale || index == ESM4::Race::EarFemale) && (storeHelmet != inv.end()))
+            continue;
+
+        // FIXME: skip mouth, teeth (upper/lower) and tongue for now
+        if (index >= ESM4::Race::Mouth && index <= ESM4::Race::Tongue)
+            continue;
+
+        meshName = "meshes\\"+mRace->mHeadParts[index].mesh;
+
+        // Get mesh and texture names from RACE except eye textures which are specified in
+        // Npc::mEyes formid (NOTE: Oblivion.esm NPC_ records all have valid mEyes formid)
+        if (index == ESM4::Race::EyeLeft || index == ESM4::Race::EyeRight)
+        {
+            const ESM4::Eyes* eyes = store.getForeign<ESM4::Eyes>().search(mNpc->mEyes);
+            if (!eyes)
+                continue; // FIXME: the character won't have any eyes, should throw?
+
+            textureName = "textures\\"+eyes->mIcon;
+        }
+        else
+            textureName = "textures\\"+mRace->mHeadParts[index].texture;
+
+        // TODO: if the texture doesn't exist, then grab it from the mesh (but shouldn't happen, so
+        // log an error before proceeding with the fallback)
+
+
+
+
+        // FaceGen:
+        // dependency: model and texture files found
+        //
+        // Find the corresponding EGM file in the same directory as the NIF file. If it doesn't
+        // exist, log an error and abandon any morphs for this mesh.
+        //
+        // Find the corresponding TRI file in the same directory as the NIF file. In a few cases
+        // they don't exist so construct a dummy one from the NIF file.
+        //
+        // Morph the vertices in the TRI file using the RACE and NPC_ morph coefficients and the EGM
+        // file.
+        //
+        // Find the corresponding EGT file in same directory as the NIF file. If it doesn't
+        // exist, log an error and abandon any morphs for this texture.
+        //
+        // FIXME: detail modulation, need to find the age from NPC_ symmetric morph coefficients.
+        //
+        // Morph the texture using the NPC_ morph coefficients, detail modulation and the EGT file.
+        //
+        // Find the detai map texture from "textures\\faces\\oblivion.esm\\" for the Npc::mFormId.
+        //
+        // Create the object using the morphed vertices, morphed texture and the detail map.
+        //
+        // FIXME: not sure what to do with si.ctl
+        //
+        // TODO: to save unnecessary searches for the resources, these info should be persisted
+
+        // NOTE: morphed mesh and texture need to be treated as a "resource" and named with NPC's
+        // editorId - the base headhuman.nif, for example, should not be modified
+
+    }
+
 
     meshName = "meshes\\"+mRace->mHeadParts[0/*head*/].mesh;
     if (meshName.empty())
@@ -681,53 +853,60 @@ void ForeignNpcAnimation::updateNpcBase()
         return ; // FIXME: should throw here
 
     // FIXME: use resource manager here to stop loading the same file multiple times
-    std::string path = Misc::StringUtils::lowerCase(meshName.substr(0, pos-2));
-    //FgEgmPtr egm = NiBtOgre::FgEgmManager::getSingleton().getOrLoadByName(path+"egm", "General");
-    //NiBtOgre::FgEgm egm(path+"egm", "General");
-    //egm.loadImpl();
-    NiBtOgre::FgSam sam;
-    //NiBtOgre::FgTri tri(path+"tri", "General");
-    //tri.loadImpl();
-    //NiBtOgre::FgEgt egt(path+"egt", "General");
-    //egt.loadImpl();
-    //NiBtOgre::FgCtl ctl("facegen\\si.ctl", "General");
+    //std::string path = Misc::StringUtils::lowerCase(meshName.substr(0, pos-2));
+    //FgLib::FgCtl ctl("facegen\\si.ctl", "General");
     //ctl.loadImpl();
+    //FgLib::FgSam sam;
 
-    //const std::vector<Ogre::Vector3>& vertices = tri.getVertices(); // V + K
-
-    const std::vector<float>& sRaceCoeff = mRace->mSymShapeModeCoefficients;
-    const std::vector<float>& aRaceCoeff = mRace->mAsymShapeModeCoefficients;
-    const std::vector<float>& sRaceTCoeff = mRace->mSymTextureModeCoefficients;
-    const std::vector<float>& sCoeff = mNpc->mSymShapeModeCoefficients;
-    const std::vector<float>& aCoeff = mNpc->mAsymShapeModeCoefficients;
-    const std::vector<float>& sTCoeff = mNpc->mSymTextureModeCoefficients;
+    //const std::vector<float>& sRaceCoeff = mRace->mSymShapeModeCoefficients;
+    //const std::vector<float>& aRaceCoeff = mRace->mAsymShapeModeCoefficients;
+    //const std::vector<float>& sRaceTCoeff = mRace->mSymTextureModeCoefficients;
+    //const std::vector<float>& sCoeff = mNpc->mSymShapeModeCoefficients;
+    //const std::vector<float>& aCoeff = mNpc->mAsymShapeModeCoefficients;
+    //const std::vector<float>& sTCoeff = mNpc->mSymTextureModeCoefficients;
 
     Ogre::Vector3 sym;
     Ogre::Vector3 asym;
-    std::vector<Ogre::Vector3> fgVertices; // NOTE: this is passed to the instance of the head model
-
-#if 1
-    const NiBtOgre::FgSam::FgFiles *fgFiles =
-        sam.getMorphedVertices(fgVertices, meshName, sRaceCoeff, aRaceCoeff, sCoeff, aCoeff);
-    if (fgFiles == nullptr)
-        return;
-#else
-    fgVertices.resize(tri.getNumVertices());
-    for (size_t i = 0; i < fgVertices.size(); ++i)
+    // NiModel is an Ogre::Resource
+    //
+    // FIXME:
+    // - a resource may be unloaded, which means that it needs to be re-morphed when loaded again
+    // - also, each NPC's head model may be unique, which means they need to be managed separately
+    //   once morphed
+    // - a solution might be to have a "MorphedModelManager" which will call FgSam as required
+    //
+    // head, ears, eyes left, eyes right, hair, teethupper, teeth lower, tongue, mouth
+    // i.e. all the "head parts" and hair
+    //
+    // also, a few have egt but not egm (but these apply to all npcs in the same race?)
+    //
+#if 0
+    // getOrLoadByName calls getResourceByName
+    // mNpc is ESM4::Npc*
+    NiModelPtr headModel = NiBtOgre::NiModelManager::getSingleton().getOrLoadByName(meshName, "General", mNpc);
+    if (!headModel->hasMorphedVertices())
     {
-        // NOTE: just guessed that the race and npc coefficients should be added
-        //       (see Thoronir-without-race-coeff.png, looks bad without the race coefficients)
-        sym = Ogre::Vector3::ZERO;
-        for (size_t j = 0; j < 50; ++j) // for TES4 always 50 sym modes
-            sym += (sRaceCoeff[j] + sCoeff[j]) * egm.mSymMorphModes[50*i + j];
+        std::unique_ptr<std::vector<Ogre::Vector3> >
+                fgVertices = std::make_unique<std::vector<Ogre::Vector3> >();
+        sam.getMorphedVertices(fgVertices.get(), meshName, sRaceCoeff, aRaceCoeff, sCoeff, aCoeff);
 
-        asym = Ogre::Vector3::ZERO;
-        for (size_t k = 0; k < 30; ++k) // for TES4 always 30 asym modes
-            asym += (aRaceCoeff[k] + aCoeff[k]) * egm.mAsymMorphModes[30*i + k];
-
-        fgVertices[i] = vertices[i] + sym + asym;
+        headModel->setVertices(std::move(fgVertices));
     }
+    else
+    {
+        // have another BtOgreInst ctor to pass the NiModelPtr to remove the need to search for the model
+        // WARN: assumed morphed texture is not possible without morphed vertices
+    }
+
 #endif
+
+
+
+    std::unique_ptr<std::vector<Ogre::Vector3> > // NOTE: ownership passed to the head model
+        fgVertices = std::make_unique<std::vector<Ogre::Vector3> >();
+
+    sam.getMorphedVertices(fgVertices.get(), meshName, sRaceCoeff, aRaceCoeff, sCoeff, aCoeff);
+
     // FIXME: need to be able to check other than oblivion.esm
     std::string textureFile = "textures\\faces\\oblivion.esm\\"+ESM4::formIdToString(mNpc->mFormId)+"_0.dds";
     if (!Ogre::ResourceGroupManager::getSingleton().resourceExistsInAnyGroup(textureFile))
@@ -735,24 +914,22 @@ void ForeignNpcAnimation::updateNpcBase()
     else
         std::cout << mNpc->mEditorId << " detail " << ESM4::formIdToString(mNpc->mFormId) << std::endl;
 
-    // FIXME: guess only
-    //
-    // 11/09/19 - maybe src texture should be the one specified in the NIF (being the "mean")
-    // and copyToTexture() to a target texture of 256x256 then apply facegen modes.  Finally
-    // modulate the texture with the modulation map in textures\faces\oblivion.esm\*.dds
-
     NifOgre::ObjectScenePtr scene = NifOgre::ObjectScenePtr (new NifOgre::ObjectScene(mInsert->getCreator()));
     scene->mForeignObj = std::make_shared<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(mInsert->createChildSceneNode(), /*scene, */meshName, group));
 
-
+    // IDEA: manage morphed vertices as a resource? Similar to having morphed textures managed by
+    // Ogre::TextureManager.  That way if the same NPC is needed for another scene we don't need to
+    // re-create the morph.
+    //
+    // Alternatively, since the NiModel for that NPC's head should be managed already, we don't need
+    // to manage the vertices separately?
 
     // TODO: is it possible to get the texture name here or should it be hard coded?
-    scene->mForeignObj->instantiate(mSkelBase->getMesh()->getSkeleton(), mNpc->mEditorId, fgVertices);
+    scene->mForeignObj->instantiate(mSkelBase->getMesh()->getSkeleton(), mNpc->mEditorId, std::move(fgVertices));
 
 
     // get the texture from mRace
     // FIXME: for now, get if from Ogre material
-
 
     std::map<int32_t, Ogre::Entity*>::const_iterator it(scene->mForeignObj->mEntities.begin());
     for (; it != scene->mForeignObj->mEntities.end(); ++it)
@@ -771,6 +948,9 @@ void ForeignNpcAnimation::updateNpcBase()
 
                 Ogre::PixelFormat pixelFormat = tus->_getTexturePtr()->getFormat();
 
+                FgLib::FgFile<FgLib::FgEgt> egtFile;
+                const FgLib::FgEgt *egt = egtFile.getOrLoadByName(meshName);
+
                 // From: http://wiki.ogre3d.org/Creating+dynamic+textures
                 // Create a target texture
                 Ogre::TexturePtr texFg = Ogre::TextureManager::getSingleton().getByName(
@@ -781,7 +961,7 @@ void ForeignNpcAnimation::updateNpcBase()
                         "FaceGen"+mNpc->mEditorId, // name
                         Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
                         Ogre::TEX_TYPE_2D,  // type
-                        fgFiles->egt.numRows(), fgFiles->egt.numColumns(), // width & height
+                        egt->numRows(), egt->numColumns(), // width & height
                         0,                  // number of mipmaps; FIXME: should be 2? or 1?
                         Ogre::PF_BYTE_RGBA,
                         Ogre::TU_DEFAULT);  // usage; should be TU_DYNAMIC_WRITE_ONLY_DISCARDABLE for
@@ -796,7 +976,7 @@ void ForeignNpcAnimation::updateNpcBase()
                         "FaceGen"+mNpc->mEditorId+"2", // name
                         Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
                         Ogre::TEX_TYPE_2D,  // type
-                        fgFiles->egt.numRows(), fgFiles->egt.numColumns(), // width & height
+                        egt->numRows(), egt->numColumns(), // width & height
                         0,                  // number of mipmaps; FIXME: should be 2? or 1?
                         Ogre::PF_BYTE_RGBA,
                         Ogre::TU_DEFAULT);  // usage; should be TU_DYNAMIC_WRITE_ONLY_DISCARDABLE for
@@ -861,14 +1041,14 @@ void ForeignNpcAnimation::updateNpcBase()
 
                 // update the pixels with SCM and detail texture
                 // NOTE: mSymTextureModes is assumed to have the image pixels in row-major order
-                for (size_t i = 0; i < fgFiles->egt.numRows()*fgFiles->egt.numColumns(); ++i) // height*width, should be 256*256
+                for (size_t i = 0; i < egt->numRows()*egt->numColumns(); ++i) // height*width, should be 256*256
                 {
                     // FIXME: for some reason adding the race coefficients makes it look worse
                     //        even though it is clear that for shapes they are needed
                     // sum all the symmetric texture modes for a given pixel i
                     sym = Ogre::Vector3::ZERO; // WARN: sym reused
                     for (size_t j = 0; j < 50/*mNumSymTextureModes*/; ++j)
-                        sym += (sRaceTCoeff[j] + sTCoeff[j]) * fgFiles->egt.mSymTextureModes[50*i + j];
+                        sym += (sRaceTCoeff[j] + sTCoeff[j]) * egt->mSymTextureModes[50*i + j];
 
                     // Detail texture is applied after reconstruction of the colour map from the SCM.
                     // Using an average of the 3 colors makes the resulting texture less blotchy. Also see:
@@ -1786,13 +1966,32 @@ void ForeignNpcAnimation::updateNpcBase()
 
                     std::string meshName;
         if (isFemale && !cloth->mModelFemale.empty()) // female
-    meshName = "meshes\\"+cloth->mModelFemale;
+    meshName = Misc::StringUtils::lowerCase("meshes\\"+cloth->mModelFemale);
         else
-    meshName = "meshes\\"+cloth->mModelMale;
+    meshName = Misc::StringUtils::lowerCase("meshes\\"+cloth->mModelMale);
+
+    size_t pos = meshName.find_last_of("nif");
+    if (pos == std::string::npos)
+        return ; // FIXME: should throw here
+    std::string path = meshName.substr(0, pos-2);
+
+        std::unique_ptr<std::vector<Ogre::Vector3> > fgVertices // NOTE: ownership passed to the model
+            = std::make_unique<std::vector<Ogre::Vector3> >();
+
+    if (Ogre::ResourceGroupManager::getSingleton().resourceExistsInAnyGroup(path+"egm"))
+        sam.getMorphedVertices(fgVertices.get(), meshName, sRaceCoeff, aRaceCoeff, sCoeff, aCoeff);
 
         NifOgre::ObjectScenePtr scene = NifOgre::ObjectScenePtr (new NifOgre::ObjectScene(mInsert->getCreator()));
         scene->mForeignObj = std::make_shared<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(mInsert->createChildSceneNode(), meshName, group));
+    if (!Ogre::ResourceGroupManager::getSingleton().resourceExistsInAnyGroup(path+"egm"))
         scene->mForeignObj->instantiate(mSkelBase->getMesh()->getSkeleton(), mBodyPartModelNameExt);
+    else
+        scene->mForeignObj->instantiate(mSkelBase->getMesh()->getSkeleton(), mBodyPartModelNameExt, std::move(fgVertices));
+
+    MWWorld::ContainerStoreIterator storeChest = inv.getSlot(MWWorld::InventoryStore::Slot_ForeignUpperBody);
+    MWWorld::ContainerStoreIterator storeLegs = inv.getSlot(MWWorld::InventoryStore::Slot_ForeignLowerBody);
+
+    //std::pair<std::vector<int>, bool> slots = cloth->getEquipmentSlots
 
         std::map<int32_t, Ogre::Entity*>::const_iterator it(scene->mForeignObj->mEntities.begin());
         for (; it != scene->mForeignObj->mEntities.end(); ++it)
@@ -1810,9 +2009,9 @@ void ForeignNpcAnimation::updateNpcBase()
                 if ((cloth->mClothingFlags & ESM4::Armor::TES4_UpperBody) != 0 &&
                     !mObjectParts[ESM::PRT_Cuirass].isNull())
                     continue;
-                    if ((cloth->mClothingFlags & ESM4::Armor::TES4_LowerBody) != 0 &&
-                        !mObjectParts[ESM::PRT_Groin].isNull())
-                        continue;
+                if ((cloth->mClothingFlags & ESM4::Armor::TES4_LowerBody) != 0 &&
+                    !mObjectParts[ESM::PRT_Groin].isNull())
+                    continue;
                 mInsert->attachObject(it->second);
             }
             //else attach to bone?
@@ -2042,7 +2241,8 @@ void ForeignNpcAnimation::updateNpcBase()
                             if (misc)
                             {
 //                              std::cout << "LVLI " << lvli->mEditorId << " LVLO lev "
-//                                  << lvli->mLvlObject[j].level << std::endl;
+//                                  << lvli->mLvlObject[j].level << " "
+//                                  << ESM4::formIdToString(lvli->mLvlObject[j].item) << std::endl;
                             }
                             break;
                         }
@@ -2298,14 +2498,22 @@ void ForeignNpcAnimation::updateParts()
         { MWWorld::InventoryStore::Slot_Pants,         0 },
         { MWWorld::InventoryStore::Slot_CarriedLeft,   0 },
         { MWWorld::InventoryStore::Slot_CarriedRight,  0 },
-        { MWWorld::InventoryStore::Slot_ForeignHelmet,      0 },
-        { MWWorld::InventoryStore::Slot_ForeignUpperBody,   0 },
-        { MWWorld::InventoryStore::Slot_ForeignLowerBody,   0 },
-        { MWWorld::InventoryStore::Slot_ForeignLeftHand,    0 },
-        { MWWorld::InventoryStore::Slot_ForeignRightHand,   0 },
-        { MWWorld::InventoryStore::Slot_ForeignBoots,       0 },
-        { MWWorld::InventoryStore::Slot_ForeignCarriedRight,0 },
-        { MWWorld::InventoryStore::Slot_ForeignCarriedLeft, 0 }
+        { MWWorld::InventoryStore::Slot_ForeignHead,      0 },
+        { MWWorld::InventoryStore::Slot_ForeignHair,      0 },
+        { MWWorld::InventoryStore::Slot_ForeignUpperBody, 0 },
+        { MWWorld::InventoryStore::Slot_ForeignLowerBody, 0 },
+        { MWWorld::InventoryStore::Slot_ForeignHand,      0 },
+        { MWWorld::InventoryStore::Slot_ForeignFoot,      0 },
+        { MWWorld::InventoryStore::Slot_ForeignRightRing, 0 },
+        { MWWorld::InventoryStore::Slot_ForeignLeftRing,  0 },
+        { MWWorld::InventoryStore::Slot_ForeignAmulet,    0 },
+        { MWWorld::InventoryStore::Slot_ForeignWeapon,    0 },
+        { MWWorld::InventoryStore::Slot_ForeignBackWeapon,0 },
+        { MWWorld::InventoryStore::Slot_ForeignSideWeapon,0 },
+        { MWWorld::InventoryStore::Slot_ForeignQuiver,    0 },
+        { MWWorld::InventoryStore::Slot_ForeignShield,    0 },
+        { MWWorld::InventoryStore::Slot_ForeignTorch,     0 },
+        { MWWorld::InventoryStore::Slot_ForeignTail,      0 }
     };
     static const size_t slotlistsize = sizeof(slotlist)/sizeof(slotlist[0]);
 
@@ -3203,4 +3411,4 @@ Ogre::Radian ForeignNpcAnimation::getHeadYaw() const
 // Bip01 TailRoot
 // ... etc
 //                                    }}}
-/* vim: set tw=110 fen fdm=marker fdl=0: */
+/* vim: set tw=100 fen fdm=marker fdl=0: */

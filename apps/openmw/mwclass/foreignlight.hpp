@@ -23,7 +23,11 @@ namespace MWClass
             ///< \return name (the one that is to be presented to the user; not the internal one);
             /// can return an empty string.
 
+            virtual std::pair<std::vector<int>, bool> getEquipmentSlots (const MWWorld::Ptr& ptr) const;
+
             static void registerSelf();
+
+            virtual std::pair<int, std::string> canBeEquipped(const MWWorld::Ptr &ptr, const MWWorld::Ptr &npc) const;
 
             virtual std::string getModel(const MWWorld::Ptr &ptr) const;
     };

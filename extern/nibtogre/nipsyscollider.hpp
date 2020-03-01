@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015-2019 cc9cii
+  Copyright (C) 2015-2020 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -57,7 +57,7 @@ namespace NiBtOgre
         //NiNode     *mColliderObject; // Ptr
         NiAVObjectRef mColliderObjectRef;
 
-        NiPSysCollider(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
+        NiPSysCollider(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
     };
 
     // Seen in NIF ver 20.0.0.4, 20.0.0.5
@@ -69,7 +69,7 @@ namespace NiBtOgre
         Ogre::Vector3 mXAxis;
         Ogre::Vector3 mYAxis;
 
-        NiPSysPlanarCollider(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
+        NiPSysPlanarCollider(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
     };
 
     // Seen in NIF version 20.2.0.7
@@ -78,7 +78,7 @@ namespace NiBtOgre
     public:
         float mRadius;
 
-        NiPSysSphericalCollider(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
+        NiPSysSphericalCollider(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
     };
 }
 

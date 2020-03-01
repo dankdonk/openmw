@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2017-2019 cc9cii
+  Copyright (C) 2017-2020 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -36,52 +36,52 @@
 #undef NDEBUG
 #endif
 
-NiBtOgre::NiParticleSystemController::NiParticleSystemController(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::NiParticleSystemController::NiParticleSystemController(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiTimeController(index, stream, model, data)
 {
-    stream.read(mSpeed);
-    stream.read(mSpeedRandom);
-    stream.read(mVerticalDirection);
-    stream.read(mVerticalAngle);
-    stream.read(mHorizontalDirection);
-    stream.read(mHorizontalAngle);
-    stream.skip(sizeof(float)*3);// normal?
-    stream.skip(sizeof(float)*4);// color?
-    stream.read(mSize);
-    stream.read(mEmitStartTime);
-    stream.read(mEmitStopTime);
-    stream.skip(sizeof(char)); // Unknown Byte, from 4.0.0.2
-    stream.read(mEmitRate);
-    stream.read(mLifetime);
-    stream.read(mLifetimeRandom);
+    stream->read(mSpeed);
+    stream->read(mSpeedRandom);
+    stream->read(mVerticalDirection);
+    stream->read(mVerticalAngle);
+    stream->read(mHorizontalDirection);
+    stream->read(mHorizontalAngle);
+    stream->skip(sizeof(float)*3);// normal?
+    stream->skip(sizeof(float)*4);// color?
+    stream->read(mSize);
+    stream->read(mEmitStartTime);
+    stream->read(mEmitStopTime);
+    stream->skip(sizeof(char)); // Unknown Byte, from 4.0.0.2
+    stream->read(mEmitRate);
+    stream->read(mLifetime);
+    stream->read(mLifetimeRandom);
 
-    stream.read(mEmitFlags);
-    stream.read(mStartRandom);
+    stream->read(mEmitFlags);
+    stream->read(mStartRandom);
 
-    //stream.getPtr<NiObject>(mEmitter, model.objects());
+    //stream->getPtr<NiObject>(mEmitter, model.objects());
     std::int32_t rIndex = -1;
-    stream.read(rIndex);
+    stream->read(rIndex);
     mEmitter = model.getRef<NiObject>(rIndex);
 
-    stream.skip(16); // FIXME: provide more detail on what's being skipped
+    stream->skip(16); // FIXME: provide more detail on what's being skipped
 
-    stream.read(mNumParticles);
-    stream.read(mNumValid);
+    stream->read(mNumParticles);
+    stream->read(mNumValid);
 
     mParticles.resize(mNumParticles);
     for (unsigned int i = 0; i < mNumParticles; ++i)
     {
-        stream.read(mParticles[i].velocity);
-        stream.skip(sizeof(float)*3); // Unknown Vector
-        stream.read(mParticles[i].lifetime);
-        stream.read(mParticles[i].lifespan);
-        stream.read(mParticles[i].timestamp);
-        stream.skip(sizeof(std::int16_t)); // Unknown Short
-        stream.read(mParticles[i].vertexID);
+        stream->read(mParticles[i].velocity);
+        stream->skip(sizeof(float)*3); // Unknown Vector
+        stream->read(mParticles[i].lifetime);
+        stream->read(mParticles[i].lifespan);
+        stream->read(mParticles[i].timestamp);
+        stream->skip(sizeof(std::int16_t)); // Unknown Short
+        stream->read(mParticles[i].vertexID);
     }
 
-    stream.skip(sizeof(std::int32_t)); // Unknown Link
-    stream.read(mParticleExtraRef);
-    stream.skip(sizeof(std::int32_t)); // Unknown Link 2
-    stream.skip(sizeof(char)); // Trailer
+    stream->skip(sizeof(std::int32_t)); // Unknown Link
+    stream->read(mParticleExtraRef);
+    stream->skip(sizeof(std::int32_t)); // Unknown Link 2
+    stream->skip(sizeof(char)); // Trailer
 }

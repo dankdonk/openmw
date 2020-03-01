@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015-2019 cc9cii
+  Copyright (C) 2015-2020 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -42,12 +42,12 @@
 // creatures/flameatronach/flameatronach.nif
 //
 // plus lots of other examples
-NiBtOgre::NiMaterialColorController::NiMaterialColorController(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::NiMaterialColorController::NiMaterialColorController(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiSingleInterpController(index, stream, model, data)
 {
-    if (stream.nifVer() >= 0x0a010000) // from 10.1.0.0
-        stream.read(mTargetColor);
+    if (stream->nifVer() >= 0x0a010000) // from 10.1.0.0
+        stream->read(mTargetColor);
 
-    if (stream.nifVer() <= 0x0a010000) // up to 10.1.0.0
-        stream.read(mDataRef);
+    if (stream->nifVer() <= 0x0a010000) // up to 10.1.0.0
+        stream->read(mDataRef);
 }

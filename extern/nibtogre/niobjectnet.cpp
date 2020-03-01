@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015-2019 cc9cii
+  Copyright (C) 2015-2020 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -27,33 +27,33 @@
 
 #include "nistream.hpp"
 
-NiBtOgre::NiObjectNET::NiObjectNET(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data,
+NiBtOgre::NiObjectNET::NiObjectNET(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data,
                                    bool isBSLightingShaderProperty)
     : NiObject(index, stream, model, data), mIsBSLightingShaderProperty(isBSLightingShaderProperty)
   //, mControllerRef(-1)
 {
     if (mIsBSLightingShaderProperty)
     {
-        if (stream.userVer() >= 12)
-            stream.read(mSkyrimShaderType);
+        if (stream->userVer() >= 12)
+            stream->read(mSkyrimShaderType);
         else
             mSkyrimShaderType = 0;
     }
 
-    if (stream.nifVer() == 0x0a000100)     // HACK not sure about this one
-        stream.skip(sizeof(std::int32_t)); // e.g. clutter/farm/oar01.nif version 10.0.1.0
-    else if (stream.nifVer() == 0x0a01006a)
-        stream.skip(sizeof(std::int32_t)); // e.g. creatures/horse/bridle.nif version 10.1.0.106
+    if (stream->nifVer() == 0x0a000100)     // HACK not sure about this one
+        stream->skip(sizeof(std::int32_t)); // e.g. clutter/farm/oar01.nif version 10.0.1.0
+    else if (stream->nifVer() == 0x0a01006a)
+        stream->skip(sizeof(std::int32_t)); // e.g. creatures/horse/bridle.nif version 10.1.0.106
 
-    stream.readLongString(mNameIndex);
+    stream->readLongString(mNameIndex);
 
-    if (stream.nifVer() <= 0x04020200) // up to 4.2.2.0
-        stream.read(mExtraDataRef);
+    if (stream->nifVer() <= 0x04020200) // up to 4.2.2.0
+        stream->read(mExtraDataRef);
 
-    if (stream.nifVer() >= 0x0a000100) // from 10.0.1.0
-        stream.readVector<NiExtraDataRef>(mExtraDataRefList);
+    if (stream->nifVer() >= 0x0a000100) // from 10.0.1.0
+        stream->readVector<NiExtraDataRef>(mExtraDataRefList);
 
-    stream.read(mControllerRef);
+    stream->read(mControllerRef);
 }
 
 void NiBtOgre::NiObjectNET::build(Ogre::SceneNode *sceneNode, BtOgreInst *inst, NiObject *parent)
@@ -61,37 +61,37 @@ void NiBtOgre::NiObjectNET::build(Ogre::SceneNode *sceneNode, BtOgreInst *inst, 
 }
 
 
-NiBtOgre::NiSourceTexture::NiSourceTexture(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::NiSourceTexture::NiSourceTexture(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiTexture(index, stream, model, data), mDirectRender(false), mPersistRenderData(false)
 {
-    stream.read(mUseExternal);
+    stream->read(mUseExternal);
 
     if (mUseExternal != 0)
     {
-        stream.readLongString(mFileName); // external filename
+        stream->readLongString(mFileName); // external filename
 
-        if (stream.nifVer() >= 0x0a010000) // from 10.1.0.0
-            stream.skip(sizeof(NiObjectRef));
+        if (stream->nifVer() >= 0x0a010000) // from 10.1.0.0
+            stream->skip(sizeof(NiObjectRef));
     }
     else
     {
-        if (stream.nifVer() <= 0x0a000100) // up to 10.0.1.0
-            stream.skip(sizeof(char));
+        if (stream->nifVer() <= 0x0a000100) // up to 10.0.1.0
+            stream->skip(sizeof(char));
 
-        if (stream.nifVer() >= 0x0a010000) // from 10.1.0.0
-            stream.readLongString(mFileName); // original filename
+        if (stream->nifVer() >= 0x0a010000) // from 10.1.0.0
+            stream->readLongString(mFileName); // original filename
 
-        stream.read(mATextureRenderDataRef);
+        stream->read(mATextureRenderDataRef);
     }
 
-    stream.read(mPixelLayout);
-    stream.read(mUseMipmaps);
-    stream.read(mAlphaFormat);
-    stream.read(mIsStatic);
+    stream->read(mPixelLayout);
+    stream->read(mUseMipmaps);
+    stream->read(mAlphaFormat);
+    stream->read(mIsStatic);
 
-    if (stream.nifVer() >= 0x0a01006a) // from 10.1.0.106
-        mDirectRender = stream.getBool();
+    if (stream->nifVer() >= 0x0a01006a) // from 10.1.0.106
+        mDirectRender = stream->getBool();
 
-    if (stream.nifVer() >= 0x14020007) // from 20.2.0.7
-        mPersistRenderData = stream.getBool();
+    if (stream->nifVer() >= 0x14020007) // from 20.2.0.7
+        mPersistRenderData = stream->getBool();
 }

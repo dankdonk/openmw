@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015-2019 cc9cii
+  Copyright (C) 2015-2020 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -73,16 +73,16 @@
 // oblivion/gate/obliviongate_forming.nif
 // oblivion/gate/obliviongate_simple.nif
 // oblivion/gate/oblivionwargateani02.nif
-NiBtOgre::NiFlipController::NiFlipController(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::NiFlipController::NiFlipController(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiSingleInterpController(index, stream, model, data)
 {
-    stream.read(mTexureSlot);
+    stream->read(mTexureSlot);
 
-    if (stream.nifVer() >= 0x04000000  && stream.nifVer() <= 0x0a010000)
-        stream.skip(sizeof(std::uint32_t)); // Unknown Int 2
+    if (stream->nifVer() >= 0x04000000  && stream->nifVer() <= 0x0a010000)
+        stream->skip(sizeof(std::uint32_t)); // Unknown Int 2
 
-    if (stream.nifVer() <= 0x0a010000) // up to 10.1.0.0
-        stream.read(mDelta);
+    if (stream->nifVer() <= 0x0a010000) // up to 10.1.0.0
+        stream->read(mDelta);
 
-    stream.readVector<NiSourceTextureRef>(mSources); // from 4.0.0.0
+    stream->readVector<NiSourceTextureRef>(mSources); // from 4.0.0.0
 }

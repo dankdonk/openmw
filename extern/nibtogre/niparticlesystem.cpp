@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015-2019 cc9cii
+  Copyright (C) 2015-2020 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -37,24 +37,24 @@
 #endif
 
 // Seen in NIF ver 20.0.0.4, 20.0.0.5
-NiBtOgre::NiParticleSystem::NiParticleSystem(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::NiParticleSystem::NiParticleSystem(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiParticles(index, stream, model, data), mWorldSpace(false)
 {
-    if (stream.userVer() >= 12)
+    if (stream->userVer() >= 12)
     {
-        stream.read(mUnknownS2);
-        stream.read(mUnknownS3);
-        stream.read(mUnknownI1);
+        stream->read(mUnknownS2);
+        stream->read(mUnknownS3);
+        stream->read(mUnknownI1);
     }
 
-    if (stream.nifVer() >= 0x0a010000) // from 10.1.0.0
+    if (stream->nifVer() >= 0x0a010000) // from 10.1.0.0
     {
-        mWorldSpace = stream.getBool();
+        mWorldSpace = stream->getBool();
         std::uint32_t numModifiers;
-        stream.read(numModifiers);
+        stream->read(numModifiers);
         mModifiers.resize(numModifiers);
         for (unsigned int i = 0; i < numModifiers; ++i)
-            stream.read(mModifiers.at(i));
+            stream->read(mModifiers.at(i));
     }
 }
 

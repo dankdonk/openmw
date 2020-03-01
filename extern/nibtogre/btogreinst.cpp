@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2018, 2019 cc9cii
+  Copyright (C) 2018-2020 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -38,7 +38,13 @@ NiBtOgre::BtOgreInst::BtOgreInst(Ogre::SceneNode *baseNode, const std::string& n
 {
     mModel = NiBtOgre::NiModelManager::getSingleton().getOrLoadByName(name, group);
 };
-
+#if 0
+NiBtOgre::BtOgreInst::BtOgreInst(Ogre::SceneNode *baseNode, const std::string& name, const std::string& group)
+    : mBaseSceneNode(baseNode), mFlags(0), mSkeletonRoot(nullptr)
+{
+    mModel =
+};
+#endif
 // for building body part models using the supplied creature/character skeleton for skinning.
 void NiBtOgre::BtOgreInst::instantiate(Ogre::SkeletonPtr skeleton, const std::string& meshExt)
 {
@@ -47,10 +53,11 @@ void NiBtOgre::BtOgreInst::instantiate(Ogre::SkeletonPtr skeleton, const std::st
 }
 
 // for building fg morphed mesh
-void NiBtOgre::BtOgreInst::instantiate(Ogre::SkeletonPtr skeleton, const std::string& npcName, std::vector<Ogre::Vector3>& vertices)
+void NiBtOgre::BtOgreInst::instantiate(Ogre::SkeletonPtr skeleton, const std::string& npcName,
+        std::unique_ptr<std::vector<Ogre::Vector3> > morphedVertices)
 {
     mModel->buildBodyPart(this, skeleton);
-    mModel->buildMeshAndEntity(this, npcName, vertices);
+    mModel->buildMeshAndEntity(this, npcName, std::move(morphedVertices));
 }
 
 void NiBtOgre::BtOgreInst::instantiate()

@@ -13,6 +13,7 @@
 #include "../mwworld/ptr.hpp"
 #include "../mwworld/physicssystem.hpp"
 #include "../mwworld/cellstore.hpp"
+#include "../mwworld/inventorystore.hpp"
 
 #include "../mwrender/objects.hpp"
 #include "../mwrender/renderinginterface.hpp"
@@ -74,9 +75,9 @@ namespace MWClass
         std::string model = ref->mBase->mModelMale; // FIXME: what about female?
         if (!model.empty())
         {
-            size_t pos = Misc::StringUtils::lowerCase(model).find_last_of(".nif"); // pos points at 'f'
-            if (pos != std::string::npos) // mModel does not end in ".nif"
-                return "meshes\\" + model.substr(0, pos-3) + "_gnd.nif";
+            size_t pos = Misc::StringUtils::lowerCase(model).find_last_of("."); // pos points at '.'
+            if (pos == std::string::npos || model.substr(pos+1) != "nif") // mModel does not end in ".nif"
+                return "meshes\\" + model.substr(0, pos-1) + "_gnd.nif";
         }
         return "";
     }
@@ -126,6 +127,32 @@ namespace MWClass
         return info;
     }
 
+    std::pair<std::vector<int>, bool> ForeignArmor::getEquipmentSlots (const MWWorld::Ptr& ptr) const
+    {
+        MWWorld::LiveCellRef<ESM4::Armor> *ref = ptr.get<ESM4::Armor>();
+
+        std::vector<int> slots_;
+
+        const int size = 7;
+
+        static const int sMapping[size][2] =
+        {
+            { ESM4::Armor::TES4_Hair,      MWWorld::InventoryStore::Slot_ForeignHair },
+            { ESM4::Armor::TES4_UpperBody, MWWorld::InventoryStore::Slot_ForeignUpperBody },
+            { ESM4::Armor::TES4_LowerBody, MWWorld::InventoryStore::Slot_ForeignLowerBody },
+            { ESM4::Armor::TES4_Hand,      MWWorld::InventoryStore::Slot_ForeignHand },
+            { ESM4::Armor::TES4_Foot,      MWWorld::InventoryStore::Slot_ForeignFoot },
+            { ESM4::Armor::TES4_Shield,    MWWorld::InventoryStore::Slot_ForeignShield },
+            { ESM4::Armor::TES4_Tail,      MWWorld::InventoryStore::Slot_ForeignTail },
+        };
+
+        for (int i=0; i<size; ++i)
+            if ((sMapping[i][0] & ref->mBase->mArmorFlags) != 0)
+                slots_.push_back (int (sMapping[i][1]));
+
+        return std::make_pair (slots_, false);
+    }
+
     int ForeignArmor::getValue (const MWWorld::Ptr& ptr) const
     {
         MWWorld::LiveCellRef<ESM4::Armor> *ref =
@@ -143,6 +170,68 @@ namespace MWClass
         boost::shared_ptr<Class> instance (new ForeignArmor);
 
         registerClass (typeid (ESM4::Armor).name(), instance);
+    }
+
+    // Armor and Weapon have "health" - a character will not wear the item if the health is zero.
+    std::pair<int, std::string> ForeignArmor::canBeEquipped(const MWWorld::Ptr &ptr, const MWWorld::Ptr &npc) const
+    {
+        MWWorld::InventoryStore& invStore = npc.getClass().getInventoryStore(npc);
+
+        if (ptr.getCellRef().getCharge() == 0)
+            return std::make_pair(0, "#{sInventoryMessage1}");
+
+        // slots that this item can be equipped in
+        std::pair<std::vector<int>, bool> slots_ = ptr.getClass().getEquipmentSlots(ptr);
+
+        if (slots_.first.empty())
+            return std::make_pair(0, "");
+
+//      if (npc.getClass().isNpc())
+//      {
+//          std::string npcRace = npc.get<ESM::NPC>()->mBase->mRace;
+
+//          // Beast races cannot equip shoes / boots, or full helms (head part vs hair part)
+//          const ESM::Race* race = MWBase::Environment::get().getWorld()->getStore().get<ESM::Race>().find(npcRace);
+//          if(race->mData.mFlags & ESM::Race::Beast)
+//          {
+//              std::vector<ESM::PartReference> parts = ptr.get<ESM::Armor>()->mBase->mParts.mParts;
+
+//              for(std::vector<ESM::PartReference>::iterator itr = parts.begin(); itr != parts.end(); ++itr)
+//              {
+//                  if((*itr).mPart == ESM::PRT_Head)
+//                      return std::make_pair(0, "#{sNotifyMessage13}");
+//                  if((*itr).mPart == ESM::PRT_LFoot || (*itr).mPart == ESM::PRT_RFoot)
+//                      return std::make_pair(0, "#{sNotifyMessage14}");
+//              }
+//          }
+//      }
+
+        for (std::vector<int>::const_iterator slot=slots_.first.begin();
+            slot!=slots_.first.end(); ++slot)
+        {
+            // If equipping a shield, check if there's a twohanded weapon conflicting with it
+            if(*slot == MWWorld::InventoryStore::Slot_CarriedLeft)
+            {
+                MWWorld::ContainerStoreIterator weapon = invStore.getSlot(MWWorld::InventoryStore::Slot_CarriedRight);
+
+                if(weapon == invStore.end())
+                    return std::make_pair(1,"");
+
+//              if(weapon->getTypeName() == typeid(ESM::Weapon).name() &&
+//                      (weapon->get<ESM::Weapon>()->mBase->mData.mType == ESM::Weapon::LongBladeTwoHand ||
+//              weapon->get<ESM::Weapon>()->mBase->mData.mType == ESM::Weapon::BluntTwoClose ||
+//              weapon->get<ESM::Weapon>()->mBase->mData.mType == ESM::Weapon::BluntTwoWide ||
+//              weapon->get<ESM::Weapon>()->mBase->mData.mType == ESM::Weapon::SpearTwoWide ||
+//              weapon->get<ESM::Weapon>()->mBase->mData.mType == ESM::Weapon::AxeTwoHand ||
+//              weapon->get<ESM::Weapon>()->mBase->mData.mType == ESM::Weapon::MarksmanBow ||
+//              weapon->get<ESM::Weapon>()->mBase->mData.mType == ESM::Weapon::MarksmanCrossbow))
+//              {
+//                  return std::make_pair(3,"");
+//              }
+                return std::make_pair(1,"");
+            }
+        }
+        return std::make_pair(1,"");
     }
 
     MWWorld::Ptr ForeignArmor::copyToCellImpl(const MWWorld::Ptr &ptr, MWWorld::CellStore &cell) const

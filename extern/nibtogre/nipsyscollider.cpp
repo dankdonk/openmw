@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015-2019 cc9cii
+  Copyright (C) 2015-2020 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -37,41 +37,41 @@
 #endif
 
 // Seen in NIF ver 20.0.0.4, 20.0.0.5
-NiBtOgre::NiPSysCollider::NiPSysCollider(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::NiPSysCollider::NiPSysCollider(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiObject(index, stream, model, data)
 {
-    stream.read(mBounce);
-    stream.read(mSpawnOnCollide);
-    stream.read(mDieOnCollide);
-    stream.read(mSpawnModifierRef);
+    stream->read(mBounce);
+    stream->read(mSpawnOnCollide);
+    stream->read(mDieOnCollide);
+    stream->read(mSpawnModifierRef);
 
-    //stream.getPtr<NiObject>(mParent, model.objects());
+    //stream->getPtr<NiObject>(mParent, model.objects());
     std::int32_t rIndex = -1;
-    stream.read(rIndex);
+    stream->read(rIndex);
     mParent = model.getRef<NiObject>(rIndex);
 
-    stream.read(mNextColliderRef);
+    stream->read(mNextColliderRef);
 
-    //stream.getPtr<NiNode>(mColliderObject, model.objects());
+    //stream->getPtr<NiNode>(mColliderObject, model.objects());
     //rIndex = -1; // WARN: rIndex reused
-    //stream.read(rIndex);
+    //stream->read(rIndex);
     //mColliderObject = model.getRef<NiNode>(rIndex);
-    stream.read(mColliderObjectRef);
+    stream->read(mColliderObjectRef);
 }
 
 // Seen in NIF ver 20.0.0.4, 20.0.0.5
-NiBtOgre::NiPSysPlanarCollider::NiPSysPlanarCollider(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::NiPSysPlanarCollider::NiPSysPlanarCollider(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiPSysCollider(index, stream, model, data)
 {
-    stream.read(mWidth);
-    stream.read(mHeight);
-    stream.read(mXAxis);
-    stream.read(mYAxis);
+    stream->read(mWidth);
+    stream->read(mHeight);
+    stream->read(mXAxis);
+    stream->read(mYAxis);
 }
 
 // Seen in NIF version 20.2.0.7
-NiBtOgre::NiPSysSphericalCollider::NiPSysSphericalCollider(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::NiPSysSphericalCollider::NiPSysSphericalCollider(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiPSysCollider(index, stream, model, data)
 {
-    stream.read(mRadius);
+    stream->read(mRadius);
 }

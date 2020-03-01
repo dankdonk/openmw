@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015-2019 cc9cii
+  Copyright (C) 2015-2020 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -37,265 +37,265 @@
 #undef NDEBUG
 #endif
 
-NiBtOgre::NiPSysModifier::NiPSysModifier(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::NiPSysModifier::NiPSysModifier(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiObject(index, stream, model, data)
 {
-    stream.readLongString(mName);
-    stream.read(mOrder);
-    stream.read(mTargetRef);
-    mActive = stream.getBool();
+    stream->readLongString(mName);
+    stream->read(mOrder);
+    stream->read(mTargetRef);
+    mActive = stream->getBool();
 }
 
 // Seen in NIF version 20.2.0.7
-NiBtOgre::BSPSysInheritVelocityModifier::BSPSysInheritVelocityModifier(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::BSPSysInheritVelocityModifier::BSPSysInheritVelocityModifier(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiPSysModifier(index, stream, model, data)
 {
-    stream.read(mUnknownI1);
-    stream.read(mUnknownF1);
-    stream.read(mUnknownF2);
-    stream.read(mUnknownF3);
+    stream->read(mUnknownI1);
+    stream->read(mUnknownF1);
+    stream->read(mUnknownF2);
+    stream->read(mUnknownF3);
 }
 
 // Seen in NIF version 20.2.0.7
-NiBtOgre::BSPSysLODModifier::BSPSysLODModifier(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::BSPSysLODModifier::BSPSysLODModifier(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiPSysModifier(index, stream, model, data)
 {
-    stream.read(mUnknown1);
-    stream.read(mUnknown2);
-    stream.read(mUnknown3);
-    stream.read(mUnknown4);
+    stream->read(mUnknown1);
+    stream->read(mUnknown2);
+    stream->read(mUnknown3);
+    stream->read(mUnknown4);
 }
 
 // Seen in NIF version 20.2.0.7
-NiBtOgre::BSPSysScaleModifier::BSPSysScaleModifier(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::BSPSysScaleModifier::BSPSysScaleModifier(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiPSysModifier(index, stream, model, data)
 {
-    stream.readVector<float>(mFloats);
+    stream->readVector<float>(mFloats);
 }
 
 // Seen in NIF version 20.2.0.7
-NiBtOgre::BSPSysSimpleColorModifier::BSPSysSimpleColorModifier(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::BSPSysSimpleColorModifier::BSPSysSimpleColorModifier(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiPSysModifier(index, stream, model, data)
 {
-    stream.read(mFadeInPercent);
-    stream.read(mFadeOutPercent);
-    stream.read(mColor1EndPerCent);
-    stream.read(mColor1StartPerCent);
-    stream.read(mColor2EndPerCent);
-    stream.read(mColor2StartPerCent);
+    stream->read(mFadeInPercent);
+    stream->read(mFadeOutPercent);
+    stream->read(mColor1EndPerCent);
+    stream->read(mColor1StartPerCent);
+    stream->read(mColor2EndPerCent);
+    stream->read(mColor2StartPerCent);
 
     mColors.resize(3);
-    stream.read(mColors.at(0));
-    stream.read(mColors.at(1));
-    stream.read(mColors.at(2));
+    stream->read(mColors.at(0));
+    stream->read(mColors.at(1));
+    stream->read(mColors.at(2));
 }
 
 // Seen in NIF version 20.2.0.7
-NiBtOgre::BSPSysStripUpdateModifier::BSPSysStripUpdateModifier(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::BSPSysStripUpdateModifier::BSPSysStripUpdateModifier(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiPSysModifier(index, stream, model, data)
 {
-    stream.read(mUpdateDeltaTime);
+    stream->read(mUpdateDeltaTime);
 }
 
 // Seen in NIF version 20.2.0.7
-NiBtOgre::BSPSysSubTexModifier::BSPSysSubTexModifier(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::BSPSysSubTexModifier::BSPSysSubTexModifier(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiPSysModifier(index, stream, model, data)
 {
-    stream.read(mStartFrame);
-    stream.read(mStartFrameFudge);
-    stream.read(mEndFrame);
-    stream.read(mLoopStartFrame);
-    stream.read(mLoopStartFrameFudge);
-    stream.read(mFrameCount);
-    stream.read(mFrameCountFudge);
+    stream->read(mStartFrame);
+    stream->read(mStartFrameFudge);
+    stream->read(mEndFrame);
+    stream->read(mLoopStartFrame);
+    stream->read(mLoopStartFrameFudge);
+    stream->read(mFrameCount);
+    stream->read(mFrameCountFudge);
 }
 
 // Seen in NIF ver 20.0.0.4, 20.0.0.5
-NiBtOgre::BSParentVelocityModifier::BSParentVelocityModifier(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::BSParentVelocityModifier::BSParentVelocityModifier(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiPSysModifier(index, stream, model, data)
 {
-    stream.read(mDamping);
+    stream->read(mDamping);
 }
 
 // Seen in NIF ver 20.0.0.4, 20.0.0.5
-NiBtOgre::BSWindModifier::BSWindModifier(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::BSWindModifier::BSWindModifier(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiPSysModifier(index, stream, model, data)
 {
-    stream.read(mStrength);
+    stream->read(mStrength);
 }
 
 // Seen in NIF ver 20.0.0.4, 20.0.0.5
-NiBtOgre::NiPSysAgeDeathModifier::NiPSysAgeDeathModifier(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::NiPSysAgeDeathModifier::NiPSysAgeDeathModifier(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiPSysModifier(index, stream, model, data)
 {
-    stream.read(mSpawnOnDeath);
-    stream.read(mSpawnModifierRef);
+    stream->read(mSpawnOnDeath);
+    stream->read(mSpawnModifierRef);
 }
 
 // Seen in NIF ver 20.0.0.4, 20.0.0.5
-NiBtOgre::NiPSysBombModifier::NiPSysBombModifier(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::NiPSysBombModifier::NiPSysBombModifier(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiPSysModifier(index, stream, model, data)
 {
-    stream.read(mBombObjectRef);
+    stream->read(mBombObjectRef);
 
-    stream.read(mBombAxis);
-    stream.read(mDecay);
-    stream.read(mDeltaV);
-    stream.read(mDecayType);
-    stream.read(mSymmetryType);
+    stream->read(mBombAxis);
+    stream->read(mDecay);
+    stream->read(mDeltaV);
+    stream->read(mDecayType);
+    stream->read(mSymmetryType);
 }
 
 // Seen in NIF ver 20.0.0.4, 20.0.0.5
-NiBtOgre::NiPSysBoundUpdateModifier::NiPSysBoundUpdateModifier(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::NiPSysBoundUpdateModifier::NiPSysBoundUpdateModifier(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiPSysModifier(index, stream, model, data)
 {
-    stream.read(mUpdateSkip);
+    stream->read(mUpdateSkip);
 }
 
 // Seen in NIF ver 20.0.0.4, 20.0.0.5
-NiBtOgre::NiPSysColliderManager::NiPSysColliderManager(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::NiPSysColliderManager::NiPSysColliderManager(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiPSysModifier(index, stream, model, data)
 {
-    stream.read(mColliderRef);
+    stream->read(mColliderRef);
 }
 
 // Seen in NIF ver 20.0.0.4, 20.0.0.5
-NiBtOgre::NiPSysColorModifier::NiPSysColorModifier(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::NiPSysColorModifier::NiPSysColorModifier(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiPSysModifier(index, stream, model, data)
 {
-    stream.read(mDataRef);
+    stream->read(mDataRef);
 }
 
 // Seen in NIF ver 20.0.0.4, 20.0.0.5
-NiBtOgre::NiPSysDragModifier::NiPSysDragModifier(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::NiPSysDragModifier::NiPSysDragModifier(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiPSysModifier(index, stream, model, data)
 {
-    stream.read(mParentRef);
+    stream->read(mParentRef);
 
-    stream.read(mDragAxis);
-    stream.read(mPercentage);
-    stream.read(mRange);
-    stream.read(mRangeFalloff);
+    stream->read(mDragAxis);
+    stream->read(mPercentage);
+    stream->read(mRange);
+    stream->read(mRangeFalloff);
 }
 
 // Seen in NIF ver 20.0.0.4, 20.0.0.5
-NiBtOgre::NiPSysEmitter::NiPSysEmitter(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::NiPSysEmitter::NiPSysEmitter(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiPSysModifier(index, stream, model, data)
 {
-    stream.read(mSpeed);
-    stream.read(mSpeedVariation);
-    stream.read(mDeclination);
-    stream.read(mDeclinationVariation);
-    stream.read(mPlanarAngle);
-    stream.read(mPlanarAngleVariation);
-    stream.read(mInitialColor);
-    stream.read(mInitialRadius);
-    stream.read(mRadiusVariation); // from 10.4.0.1
-    stream.read(mLifeSpan);
-    stream.read(mLifeSpanVariation);
+    stream->read(mSpeed);
+    stream->read(mSpeedVariation);
+    stream->read(mDeclination);
+    stream->read(mDeclinationVariation);
+    stream->read(mPlanarAngle);
+    stream->read(mPlanarAngleVariation);
+    stream->read(mInitialColor);
+    stream->read(mInitialRadius);
+    stream->read(mRadiusVariation); // from 10.4.0.1
+    stream->read(mLifeSpan);
+    stream->read(mLifeSpanVariation);
 }
 
 // Seen in NIF ver 20.0.0.4, 20.0.0.5
-NiBtOgre::NiPSysMeshEmitter::NiPSysMeshEmitter(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::NiPSysMeshEmitter::NiPSysMeshEmitter(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiPSysEmitter(index, stream, model, data)
 {
-    stream.readVector<NiTriBasedGeomRef>(mEmitterMeshes);
+    stream->readVector<NiTriBasedGeomRef>(mEmitterMeshes);
 
-    stream.read(mInitialVelocityType);
-    stream.read(mEmissionType);
-    stream.read(mEmissionAxis);
+    stream->read(mInitialVelocityType);
+    stream->read(mEmissionType);
+    stream->read(mEmissionAxis);
 }
 
 // Seen in NIF ver 20.0.0.4, 20.0.0.5 ????
-NiBtOgre::NiPSysVolumeEmitter::NiPSysVolumeEmitter(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::NiPSysVolumeEmitter::NiPSysVolumeEmitter(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiPSysEmitter(index, stream, model, data)
 {
-    //stream.getPtr<NiNode>(mEmitterObject, model.objects());
+    //stream->getPtr<NiNode>(mEmitterObject, model.objects());
     std::int32_t rIndex = -1;
-    stream.read(rIndex);
+    stream->read(rIndex);
     mEmitterObject = model.getRef<NiNode>(rIndex); // from 10.1.0.0
 }
 
 // Seen in NIF ver 20.0.0.4, 20.0.0.5
-NiBtOgre::NiPSysBoxEmitter::NiPSysBoxEmitter(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::NiPSysBoxEmitter::NiPSysBoxEmitter(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiPSysVolumeEmitter(index, stream, model, data)
 {
-    stream.read(mWidth);
-    stream.read(mHeight);
-    stream.read(mDepth);
+    stream->read(mWidth);
+    stream->read(mHeight);
+    stream->read(mDepth);
 }
 
 // Seen in NIF ver 20.0.0.4, 20.0.0.5
-NiBtOgre::NiPSysCylinderEmitter::NiPSysCylinderEmitter(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::NiPSysCylinderEmitter::NiPSysCylinderEmitter(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiPSysVolumeEmitter(index, stream, model, data)
 {
-    stream.read(mRadius);
-    stream.read(mHeight);
+    stream->read(mRadius);
+    stream->read(mHeight);
 }
 
 // Seen in NIF ver 20.0.0.4, 20.0.0.5
-NiBtOgre::NiPSysSphereEmitter::NiPSysSphereEmitter(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::NiPSysSphereEmitter::NiPSysSphereEmitter(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiPSysVolumeEmitter(index, stream, model, data)
 {
-    stream.read(mRadius);
+    stream->read(mRadius);
 }
 
 // Seen in NIF ver 20.0.0.4, 20.0.0.5
-NiBtOgre::NiPSysGravityModifier::NiPSysGravityModifier(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::NiPSysGravityModifier::NiPSysGravityModifier(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiPSysModifier(index, stream, model, data)
 {
-    stream.read(mGravityObjectRef);
+    stream->read(mGravityObjectRef);
 
-    stream.read(mGravityAxis);
-    stream.read(mDecay);
-    stream.read(mStrength);
-    stream.read(mForceType);
-    stream.read(mTurbulence);
-    stream.read(mTurbulenceScale);
-    if (stream.nifVer() >= 0x14020007) // from 20.2.0.7
-        stream.skip(sizeof(char));
+    stream->read(mGravityAxis);
+    stream->read(mDecay);
+    stream->read(mStrength);
+    stream->read(mForceType);
+    stream->read(mTurbulence);
+    stream->read(mTurbulenceScale);
+    if (stream->nifVer() >= 0x14020007) // from 20.2.0.7
+        stream->skip(sizeof(char));
 }
 
 // Seen in NIF ver 20.0.0.4, 20.0.0.5
-NiBtOgre::NiPSysGrowFadeModifier::NiPSysGrowFadeModifier(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::NiPSysGrowFadeModifier::NiPSysGrowFadeModifier(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiPSysModifier(index, stream, model, data)
 {
-    stream.read(mGrowTime);
-    stream.read(mGrowGeneration);
-    stream.read(mFadeTime);
-    stream.read(mFadeGeneration);
-    if (stream.nifVer() >= 0x14020007) // from 20.2.0.7
-        stream.read(mBaseScale);
+    stream->read(mGrowTime);
+    stream->read(mGrowGeneration);
+    stream->read(mFadeTime);
+    stream->read(mFadeGeneration);
+    if (stream->nifVer() >= 0x14020007) // from 20.2.0.7
+        stream->read(mBaseScale);
 }
 
 // Seen in NIF ver 20.0.0.4, 20.0.0.5
-NiBtOgre::NiPSysRotationModifier::NiPSysRotationModifier(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::NiPSysRotationModifier::NiPSysRotationModifier(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiPSysModifier(index, stream, model, data)
 {
-    stream.read(mInitialRotationSpeed);
+    stream->read(mInitialRotationSpeed);
 
-    if (stream.nifVer() >= 0x14000004) // from 20.0.0.4
+    if (stream->nifVer() >= 0x14000004) // from 20.0.0.4
     {
-        stream.read(mInitialRotationSpeedVariation);
-        stream.read(mInitialRotationAngle);
-        stream.read(mInitialRotationAngleVariation);
-        stream.read(mRandomRotSpeedSign);
+        stream->read(mInitialRotationSpeedVariation);
+        stream->read(mInitialRotationAngle);
+        stream->read(mInitialRotationAngleVariation);
+        stream->read(mRandomRotSpeedSign);
     }
-    mRandomInitialAxis = stream.getBool();
-    stream.read(mInitialAxis);
+    mRandomInitialAxis = stream->getBool();
+    stream->read(mInitialAxis);
 }
 
 // Seen in NIF ver 20.0.0.4, 20.0.0.5
-NiBtOgre::NiPSysSpawnModifier::NiPSysSpawnModifier(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::NiPSysSpawnModifier::NiPSysSpawnModifier(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiPSysModifier(index, stream, model, data)
 {
-    stream.read(mNumSpawnGenerations);
-    stream.read(mPercentSpawned);
-    stream.read(mMinNumToSpawn);
-    stream.read(mMaxNumToSpawn);
-    stream.read(mSpawnSpeedChaos);
-    stream.read(mSpawnDirChaos);
-    stream.read(mLifeSpan);
-    stream.read(mLifeSpanVariation);
+    stream->read(mNumSpawnGenerations);
+    stream->read(mPercentSpawned);
+    stream->read(mMinNumToSpawn);
+    stream->read(mMaxNumToSpawn);
+    stream->read(mSpawnSpeedChaos);
+    stream->read(mSpawnDirChaos);
+    stream->read(mLifeSpan);
+    stream->read(mLifeSpanVariation);
     // 10.4.0.1 has an unknown int here
 }

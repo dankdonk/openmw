@@ -1,5 +1,6 @@
 /*
-  Copyright (C) 2018, 2019 cc9cii
+
+  Copyright (C) 2020 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -20,30 +21,12 @@
   cc9cii cc9c@iinet.net.au
 
 */
-#ifndef NIBTOGRE_MESHLOADER_H
-#define NIBTOGRE_MESHLOADER_H
 
-#include <vector>
+#Purpose
 
-#include <OgreResource.h>
+The code in this directory relate to the processing of FaceGen related files such as TRI, EGM and
+EGT.
 
-namespace NiBtOgre
-{
-    class NiNode;
 
-    class MeshLoader : public Ogre::ManualResourceLoader
-    {
-        NiNode *mNiNode;
-
-        static std::map<std::string, MeshLoader> sLoaders; // FIXME: is there a better way?
-
-    public:
-
-        MeshLoader(NiNode *node);
-
-        // reimplement Ogre::ManualResourceLoader
-        virtual void loadResource(Ogre::Resource *resource);
-    };
-}
-
-#endif // NIBTOGRE_MESHLOADER_H
+[//]: # (/* spell spelllang=en_au syntax=cpp */)
+[//]: # (/* vim: set ft=markdown tw=0 lbr bri fen fdm=marker fdl=0: */)

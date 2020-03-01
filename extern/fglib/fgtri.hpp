@@ -20,30 +20,18 @@
   cc9cii cc9c@iinet.net.au
 
 */
-#ifndef NIBTOGRE_FGTRI_H
-#define NIBTOGRE_FGTRI_H
+#ifndef FGLIB_FGTRI_H
+#define FGLIB_FGTRI_H
 
 #include <string>
 #include <cstdint>
 
 #include <boost/scoped_array.hpp>
 
-//#include <OgreDataStream.h>
-//#include <OgreVector3.h>
-
-//namespace Ogre
-//{
-//    class ResourceManager;
-//    class ManualResourceLoader;
-//}
-
-namespace NiBtOgre
+namespace FgLib
 {
-    class FgTri //: public Ogre::Resource
+    class FgTri
     {
-        //const std::string mGroup;  // Ogre group
-        //std::string mName;
-
         std::uint64_t mFileType;
         std::uint32_t mNumVertices;
         std::uint32_t mNumTriangles;
@@ -57,7 +45,6 @@ namespace NiBtOgre
         std::uint32_t mNumTotalStatMorphVertices;
 
         boost::scoped_array<float> mVertices;
-        //std::vector<Ogre::Vector3> mVertices;
         boost::scoped_array<std::int32_t> mTriangleIndicies;
         boost::scoped_array<std::int32_t> mQuadIndicies;
 
@@ -66,30 +53,17 @@ namespace NiBtOgre
         FgTri(const FgTri& other);
         FgTri& operator=(const FgTri& other);
 
-    //protected:
-        //void loadImpl();
-        //void unloadImpl() {}
-
     public:
         // The parameter 'name' refers to those in the Ogre::ResourceGroupManager
         // e.g. full path from the directory/BSA added in Bsa::registerResources(), etc
-        //
-        // NOTE: the constructor may throw
-//      FgTri(Ogre::ResourceManager *creator, const Ogre::String& name, Ogre::ResourceHandle handle,
-//              const Ogre::String& group, bool isManual, Ogre::ManualResourceLoader* loader,
-//              const Ogre::NameValuePairList* createParams=nullptr/*bool showEditorMarkers=false*/);
-        //FgTri(const Ogre::String& name, const Ogre::String& group); // FIXME
         FgTri(const std::string& name);
         ~FgTri();
 
-        //const std::string& getOgreGroup() const { return mGroup; }
-        //const std::string& getName() const { return mName; }
-
         inline const std::uint32_t numVertices() const { return mNumVertices; }
         inline const std::uint32_t numMorphVertices() const { return mNumTotalStatMorphVertices; }
-        //inline const std::vector<Ogre::Vector3>& getVertices() const { return mVertices; }
+
         inline const boost::scoped_array<float>& vertices() const { return mVertices; }
     };
 }
 
-#endif // NIBTOGRE_FGTRI_H
+#endif // FGLIB_FGTRI_H

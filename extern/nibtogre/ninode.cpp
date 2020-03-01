@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015-2019 cc9cii
+  Copyright (C) 2015-2020 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -47,7 +47,7 @@
 #undef NDEBUG
 #endif
 
-NiBtOgre::BSFadeNode::BSFadeNode(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::BSFadeNode::BSFadeNode(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiNode(index, stream, model, data)
 {
 }
@@ -60,28 +60,28 @@ NiBtOgre::BSFadeNode::BSFadeNode(uint32_t index, NiStream& stream, const NiModel
 //
 // The node name is also used as bone names for those meshes with skins.
 // Bipeds seems to have a predefined list of bones. See: meshes/armor/legion/m/cuirass.nif
-NiBtOgre::NiNode::NiNode(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::NiNode::NiNode(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiAVObject(index, stream, model, data)
     , mNodeName(model.indexToString(NiObjectNET::mNameIndex)), mData(data)
 {
-    //stream.readVector<NiAVObjectRef>(mChildren);
+    //stream->readVector<NiAVObjectRef>(mChildren);
     std::uint32_t numChildren = 0;
-    stream.read(numChildren);
+    stream->read(numChildren);
 
     mChildren.resize(numChildren);
     for (std::uint32_t i = 0; i < numChildren; ++i)
     {
-        stream.read(mChildren.at(i));
+        stream->read(mChildren.at(i));
 
         // store node hierarchy in mModel to help find & build skeletons and meshes
         if (mChildren[i] > 0) // ignore if -1 and a child can't have an index of 0
             data.setNiNodeParent(mChildren[i], this);
     }
 
-    stream.readVector<NiDynamicEffectRef>(mEffects);
+    stream->readVector<NiDynamicEffectRef>(mEffects);
     // HACK: oar01.nif suggests that 10.0.1.0 reads one entry even if there is none?
-    if (stream.nifVer() == 0x0a000100 || stream.nifVer() == 0x0a01006a)
-        stream.skip(sizeof(NiDynamicEffectRef));
+    if (stream->nifVer() == 0x0a000100 || stream->nifVer() == 0x0a01006a)
+        stream->skip(sizeof(NiDynamicEffectRef));
 
     /* ---------------------------------------------------------------------- */
     // HACK: should check for root node?
@@ -134,16 +134,24 @@ void NiBtOgre::NiNode::registerSubMesh(NiTriBasedGeom* geom)
     mSubMeshChildren.push_back(geom);
 }
 
-// if a pre-morphed vertices are supplied there should be just one in mSubMeshChildren
-void NiBtOgre::NiNode::setVertices(std::vector<Ogre::Vector3>& vertices)
+NiBtOgre::NiTriBasedGeom *NiBtOgre::NiNode::getUniqueSubMeshChild()
 {
-    if (mSubMeshChildren.size() > 1)
-        std::cout << "unexpected sub mesh" << std::endl; // FIXME: should throw
-
-    mSubMeshChildren[0]->setVertices(vertices);
+    if (mSubMeshChildren.size() == 1)
+        return mSubMeshChildren.back();
+    else
+        throw std::logic_error("NiNode: NiTriBasedGeom on a Root NiNode is not unique");
 }
 
-//  Some of the Ogre code in this method is based on v0.36 of OpenMW.
+// if a pre-morphed vertices are supplied there should be just one in mSubMeshChildren
+//void NiBtOgre::NiNode::setVertices(std::unique_ptr<std::vector<Ogre::Vector3> > morphedVertices)
+//{
+    //if (mSubMeshChildren.size() > 1)
+        //std::cout << "unexpected sub mesh" << std::endl; // FIXME: should throw
+
+    //mSubMeshChildren[0]->setVertices(std::move(morphedVertices));
+//}
+
+//  Some of the Ogre code in this method is based on v0.36 of OpenMW. (including boundsfinder.hpp)
 void NiBtOgre::NiNode::buildMesh(Ogre::Mesh *mesh)
 {
 //  if (mNodeName.find("C_Pudd") != std::string::npos || // FIXME
@@ -158,7 +166,7 @@ void NiBtOgre::NiNode::buildMesh(Ogre::Mesh *mesh)
     // an Ogre::SubMesh for each in mSubMeshGeometry
     for (size_t i = 0; i < mSubMeshChildren.size(); ++i)
     {
-        needTangents |= mSubMeshChildren.at(i)->createSubMesh(mesh, bounds);
+        needTangents |= mSubMeshChildren.at(i)->buildSubMesh(mesh, bounds);
     }
 
     // build tangents if at least one of the sub-mesh's material needs them
@@ -569,78 +577,78 @@ void NiBtOgre::NiNode::build(BtOgreInst *inst, BuildData *data, NiObject* parent
 //}
 
 // Seen in NIF version 20.2.0.7
-NiBtOgre::BSBlastNode::BSBlastNode(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::BSBlastNode::BSBlastNode(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiNode(index, stream, model, data)
 {
-    stream.read(mUnknown1);
-    stream.read(mUnknown2);
+    stream->read(mUnknown1);
+    stream->read(mUnknown2);
 }
 
-NiBtOgre::BSRangeNode::BSRangeNode(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::BSRangeNode::BSRangeNode(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiNode(index, stream, model, data)
 {
-    stream.read(mMin);
-    stream.read(mMax);
-    stream.read(mCurrent);
-}
-
-// Seen in NIF version 20.2.0.7
-NiBtOgre::BSDamageStage::BSDamageStage(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
-    : NiNode(index, stream, model, data)
-{
-    stream.read(mUnknown1);
-    stream.read(mUnknown2);
+    stream->read(mMin);
+    stream->read(mMax);
+    stream->read(mCurrent);
 }
 
 // Seen in NIF version 20.2.0.7
-NiBtOgre::BSMultiBoundNode::BSMultiBoundNode(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::BSDamageStage::BSDamageStage(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
+    : NiNode(index, stream, model, data)
+{
+    stream->read(mUnknown1);
+    stream->read(mUnknown2);
+}
+
+// Seen in NIF version 20.2.0.7
+NiBtOgre::BSMultiBoundNode::BSMultiBoundNode(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiNode(index, stream, model, data), mUnknown(0)
 {
-    stream.read(mMultiBoundRef);
-    if (stream.nifVer() >= 0x14020007) // from 20.2.0.7
-        stream.read(mUnknown);
+    stream->read(mMultiBoundRef);
+    if (stream->nifVer() >= 0x14020007) // from 20.2.0.7
+        stream->read(mUnknown);
 }
 
 // Seen in NIF version 20.2.0.7
-NiBtOgre::BSOrderedNode::BSOrderedNode(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::BSOrderedNode::BSOrderedNode(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiNode(index, stream, model, data), mIsStaticBound(0)
 {
-    stream.read(mAlphaSortBound);
-    stream.read(mIsStaticBound);
+    stream->read(mAlphaSortBound);
+    stream->read(mIsStaticBound);
 }
 
 // Seen in NIF version 20.2.0.7
-NiBtOgre::BSTreeNode::BSTreeNode(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::BSTreeNode::BSTreeNode(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiNode(index, stream, model, data)
 {
-    stream.readVector<NiNodeRef>(mBones1);
-    stream.readVector<NiNodeRef>(mBones2);
+    stream->readVector<NiNodeRef>(mBones1);
+    stream->readVector<NiNodeRef>(mBones2);
 }
 
 // Seen in NIF version 20.2.0.7
-NiBtOgre::BSValueNode::BSValueNode(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::BSValueNode::BSValueNode(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiNode(index, stream, model, data), mValue(0)
 {
-    stream.read(mValue);
+    stream->read(mValue);
 
-    stream.skip(sizeof(char)); // unknown byte
+    stream->skip(sizeof(char)); // unknown byte
 }
 
-NiBtOgre::NiBillboardNode::NiBillboardNode(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::NiBillboardNode::NiBillboardNode(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiNode(index, stream, model, data), mBillboardMode(0)
 {
-    if (stream.nifVer() >= 0x0a010000) // from 10.1.0.0
-        stream.read(mBillboardMode);
+    if (stream->nifVer() >= 0x0a010000) // from 10.1.0.0
+        stream->read(mBillboardMode);
 }
 
 // Seen in NIF version 20.2.0.7
-NiBtOgre::NiSwitchNode::NiSwitchNode(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::NiSwitchNode::NiSwitchNode(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiNode(index, stream, model, data), mNiSwitchFlags(0), mIndex(0)
 {
-    if (stream.nifVer() >= 0x0a010000) // from 10.1.0.0
-        stream.read(mNiSwitchFlags);
+    if (stream->nifVer() >= 0x0a010000) // from 10.1.0.0
+        stream->read(mNiSwitchFlags);
 
-    stream.read(mIndex);
+    stream->read(mIndex);
 
     // FIXME: should create a visibility switch for the children here
 }

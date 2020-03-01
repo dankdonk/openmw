@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2017-2019 cc9cii
+  Copyright (C) 2017-2020 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -45,7 +45,7 @@ namespace NiBtOgre
     public:
         typedef KeyT Key;
         typedef std::unique_ptr<Interface> Type;
-        typedef Type (*Creator)(uint32_t, NiStream&, const NiModel&, BuildData&);
+        typedef Type (*Creator)(uint32_t, NiStream*, const NiModel&, BuildData&);
         typedef std::map<Key, Creator> Registry;
 
         // Define key -> v relationship, return whether this is a new key.
@@ -55,7 +55,7 @@ namespace NiBtOgre
         }
 
         Type create(Key const& key,
-                uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+                uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
         {
             typename Registry::const_iterator iter = mRegistry.find(key);
 
@@ -67,7 +67,7 @@ namespace NiBtOgre
 
         template<class Base, class Derived>
         static std::unique_ptr<Base> create_func(
-                uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+                uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
         {
             return std::unique_ptr<Base>(new Derived(index, stream, model, data));
         }

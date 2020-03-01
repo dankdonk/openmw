@@ -215,6 +215,8 @@ void ESM4::Armor::load(ESM4::Reader& reader)
                 throw std::runtime_error("ESM4::ARMO::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
         }
     }
+    //if ((mArmorFlags&0xffff) == 0x02) // only hair
+        //std::cout << "only hair " << mEditorId << std::endl;
 }
 
 //void ESM4::Armor::save(ESM4::Writer& writer) const

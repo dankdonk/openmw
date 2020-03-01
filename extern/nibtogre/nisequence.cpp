@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015-2019 cc9cii
+  Copyright (C) 2015-2020 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -51,65 +51,65 @@
 
 // NOTE: assumed that this is not used in TES3 (seems to use NiSequenceStreamHelper),
 //       10.2.0.0 (TES4) seems to be the earliest example
-void NiBtOgre::NiSequence::ControllerLink::read(NiStream& stream)
+void NiBtOgre::NiSequence::ControllerLink::read(NiStream *stream)
 {
-    if (stream.nifVer() <= 0x0a010000) // up to 10.1.0.0
+    if (stream->nifVer() <= 0x0a010000) // up to 10.1.0.0
     {
-        stream.readSizedString(targetName);
-        stream.read(controllerRef);
+        stream->readSizedString(targetName);
+        stream->read(controllerRef);
     }
 
-    if (stream.nifVer() >= 0x0a01006a) // from 10.1.0.106
+    if (stream->nifVer() >= 0x0a01006a) // from 10.1.0.106
     {
-        stream.read(interpolatorRef);
-        stream.read(controller2Ref);
-        if (stream.nifVer() == 0x0a01006a) // 10.1.0.106
+        stream->read(interpolatorRef);
+        stream->read(controller2Ref);
+        if (stream->nifVer() == 0x0a01006a) // 10.1.0.106
         {
-            stream.skip(sizeof(std::uint32_t)); // Unknown Link 2
-            stream.skip(sizeof(std::uint16_t)); // Unknown Short 0
+            stream->skip(sizeof(std::uint32_t)); // Unknown Link 2
+            stream->skip(sizeof(std::uint16_t)); // Unknown Short 0
         }
-        stream.read(priority); // TODO userVer >= 10
+        stream->read(priority); // TODO userVer >= 10
     }
 
-    if (stream.nifVer() == 0x0a01006a || stream.nifVer() >= 0x14010003) // from header
+    if (stream->nifVer() == 0x0a01006a || stream->nifVer() >= 0x14010003) // from header
     {
         stringPaletteRef = -1;
 
-        stream.readLongString(nodeNameIndex);
-        stream.readLongString(propertyTypeIndex);
-        stream.readLongString(controllerTypeIndex);
-        stream.readLongString(variable1Index);
-        stream.readLongString(variable2Index);
+        stream->readLongString(nodeNameIndex);
+        stream->readLongString(propertyTypeIndex);
+        stream->readLongString(controllerTypeIndex);
+        stream->readLongString(variable1Index);
+        stream->readLongString(variable2Index);
     }
-    else if (stream.nifVer() >= 0x0a020000 && stream.nifVer() <= 0x14000005) // from string palette
+    else if (stream->nifVer() >= 0x0a020000 && stream->nifVer() <= 0x14000005) // from string palette
     {
-        stream.read(stringPaletteRef); // block index
+        stream->read(stringPaletteRef); // block index
 
-        stream.read(nodeNameIndex);
-        stream.read(propertyTypeIndex);
-        stream.read(controllerTypeIndex);
-        stream.read(variable1Index); // Controller ID Offset
-        stream.read(variable2Index); // Interpolator ID Offset (frame name)
+        stream->read(nodeNameIndex);
+        stream->read(propertyTypeIndex);
+        stream->read(controllerTypeIndex);
+        stream->read(variable1Index); // Controller ID Offset
+        stream->read(variable2Index); // Interpolator ID Offset (frame name)
     }
 }
 
 // Seen in NIF ver 20.0.0.4, 20.0.0.5
-NiBtOgre::NiSequence::NiSequence(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::NiSequence::NiSequence(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiObject(index, stream, model, data)
 {
-    stream.readLongString(mNameIndex);
+    stream->readLongString(mNameIndex);
 
     // probably unused, skip instead?
-    if (stream.nifVer() <= 0x0a010000) // up to 10.1.0.0
+    if (stream->nifVer() <= 0x0a010000) // up to 10.1.0.0
     {
-        stream.readLongString(mTextKeysNameOLDIndex);
-        stream.read(mTextKeysOLDRef);
+        stream->readLongString(mTextKeysNameOLDIndex);
+        stream->read(mTextKeysOLDRef);
     }
 
     std::uint32_t numControlledBlocks;
-    stream.read(numControlledBlocks);
-    if (stream.nifVer() >= 0x0a01006a) // from 10.1.0.106
-        stream.skip(sizeof(std::uint32_t));
+    stream->read(numControlledBlocks);
+    if (stream->nifVer() >= 0x0a01006a) // from 10.1.0.106
+        stream->skip(sizeof(std::uint32_t));
 
     mControlledBlocks.resize(numControlledBlocks);
     for (unsigned int i = 0; i < numControlledBlocks; ++i)
@@ -117,44 +117,44 @@ NiBtOgre::NiSequence::NiSequence(uint32_t index, NiStream& stream, const NiModel
 }
 
 // Seen in NIF ver 20.0.0.4, 20.0.0.5
-NiBtOgre::NiControllerSequence::NiControllerSequence(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::NiControllerSequence::NiControllerSequence(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiSequence(index, stream, model, data), mData(data)
 {
-    //if (stream.nifVer() >= 0x0a01006a) // from 10.1.0.106
+    //if (stream->nifVer() >= 0x0a01006a) // from 10.1.0.106
     //{
-        stream.read(mWeight);
-        stream.read(mTextKeysRef);
-        stream.read(mCycleType);
+        stream->read(mWeight);
+        stream->read(mTextKeysRef);
+        stream->read(mCycleType);
 
-        if (stream.nifVer() == 0x0a01006a) // 10.1.0.106
-            stream.read(mUnknown0);
+        if (stream->nifVer() == 0x0a01006a) // 10.1.0.106
+            stream->read(mUnknown0);
 
-        stream.read(mFrequency);
-        stream.read(mStartTime);
+        stream->read(mFrequency);
+        stream->read(mStartTime);
 
-        if (stream.nifVer() >= 0x0a020000 && stream.nifVer() <= 0x0a040001)
-            stream.read(mUnknownFloat2);
+        if (stream->nifVer() >= 0x0a020000 && stream->nifVer() <= 0x0a040001)
+            stream->read(mUnknownFloat2);
 
-        stream.read(mStopTime);
+        stream->read(mStopTime);
 
-        if (stream.nifVer() == 0x0a01006a) // 10.1.0.106
-            stream.read(mUnknownByte);
+        if (stream->nifVer() == 0x0a01006a) // 10.1.0.106
+            stream->read(mUnknownByte);
 
-        //stream.getPtr<NiControllerManager>(mManager, model.objects());
+        //stream->getPtr<NiControllerManager>(mManager, model.objects());
         std::int32_t rIndex = -1;
-        stream.read(rIndex);
+        stream->read(rIndex);
         mManager = model.getRef<NiControllerManager>(rIndex);
 
-        stream.readLongString(mTargetNameIndex);
+        stream->readLongString(mTargetNameIndex);
 
-        if (stream.nifVer() >= 0x0a020000 && stream.nifVer() <= 0x14000005)
-            stream.read(mStringPaletteRef);
+        if (stream->nifVer() >= 0x0a020000 && stream->nifVer() <= 0x14000005)
+            stream->read(mStringPaletteRef);
 
-        if (stream.nifVer() >= 0x14020007 && stream.userVer() >= 11 && (stream.userVer2() >= 24 && stream.userVer2() <= 28))
-            stream.read(mAnimNotesRef);
+        if (stream->nifVer() >= 0x14020007 && stream->userVer() >= 11 && (stream->userVer2() >= 24 && stream->userVer2() <= 28))
+            stream->read(mAnimNotesRef);
 
-        if (stream.nifVer() >= 0x14020007 && stream.userVer2() > 28)
-            stream.read(mUnknownShort1);
+        if (stream->nifVer() >= 0x14020007 && stream->userVer2() > 28)
+            stream->read(mUnknownShort1);
     //}
 }
 

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019 cc9cii
+  Copyright (C) 2019, 2020 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -35,7 +35,7 @@ namespace Ogre
     class Matrix3;
 }
 
-namespace NiBtOgre
+namespace FgLib
 {
     class FgStream
     {

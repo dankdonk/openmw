@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2017-2019 cc9cii
+  Copyright (C) 2017-2020 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -36,9 +36,9 @@
 #undef NDEBUG
 #endif
 
-NiBtOgre::NiUVController::NiUVController(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::NiUVController::NiUVController(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiTimeController(index, stream, model, data)
 {
-    stream.skip(sizeof(std::uint16_t)); // Unknown Short
-    stream.read(mDataRef);
+    stream->skip(sizeof(std::uint16_t)); // Unknown Short
+    stream->read(mDataRef);
 }

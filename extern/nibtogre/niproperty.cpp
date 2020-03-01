@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015-2019 cc9cii
+  Copyright (C) 2015-2020 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -43,7 +43,7 @@
 
 //#if 0
 // Seen in NIF version 20.2.0.7
-NiBtOgre::NiProperty::NiProperty(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data, bool isBSLightingShaderProperty)
+NiBtOgre::NiProperty::NiProperty(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data, bool isBSLightingShaderProperty)
     : NiObjectNET(index, stream, model, data, isBSLightingShaderProperty)
 {
 }
@@ -64,25 +64,25 @@ void NiBtOgre::NiProperty::applyMaterialProperty(OgreMaterial& material,
 //#endif
 
 // Seen in NIF version 20.2.0.7
-NiBtOgre::BSEffectShaderProperty::BSEffectShaderProperty(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::BSEffectShaderProperty::BSEffectShaderProperty(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiProperty(index, stream, model, data)
 {
-    stream.read(mShaderFlags1);
-    stream.read(mShaderFlags2);
-    stream.read(mUVOffset.u);
-    stream.read(mUVOffset.v);
-    stream.read(mUVScale.u);
-    stream.read(mUVScale.v);
-    stream.readSizedString(mSourceTexture);
-    stream.read(mTextureClampMode);
-    stream.read(mFalloffStartAngle);
-    stream.read(mFalloffStopAngle);
-    stream.read(mFalloffStartOpacity);
-    stream.read(mFalloffStopOpacity);
-    stream.read(mEmissiveColor);
-    stream.read(mEmissiveMultiple);
-    stream.read(mSoftFalloffDepth);
-    stream.readSizedString(mGreyscaleTexture);
+    stream->read(mShaderFlags1);
+    stream->read(mShaderFlags2);
+    stream->read(mUVOffset.u);
+    stream->read(mUVOffset.v);
+    stream->read(mUVScale.u);
+    stream->read(mUVScale.v);
+    stream->readSizedString(mSourceTexture);
+    stream->read(mTextureClampMode);
+    stream->read(mFalloffStartAngle);
+    stream->read(mFalloffStopAngle);
+    stream->read(mFalloffStartOpacity);
+    stream->read(mFalloffStopOpacity);
+    stream->read(mEmissiveColor);
+    stream->read(mEmissiveMultiple);
+    stream->read(mSoftFalloffDepth);
+    stream->readSizedString(mGreyscaleTexture);
 }
 
 void NiBtOgre::BSEffectShaderProperty::applyMaterialProperty(OgreMaterial& material,
@@ -105,59 +105,59 @@ void NiBtOgre::BSEffectShaderProperty::applyMaterialProperty(OgreMaterial& mater
 }
 
 // Seen in NIF version 20.2.0.7
-NiBtOgre::BSLightingShaderProperty::BSLightingShaderProperty(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::BSLightingShaderProperty::BSLightingShaderProperty(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiProperty(index, stream, model, data, true)
 {
-    if (stream.userVer() == 12)
+    if (stream->userVer() == 12)
     {
-        stream.read(mShaderFlags1);
-        stream.read(mShaderFlags2);
+        stream->read(mShaderFlags1);
+        stream->read(mShaderFlags2);
     }
-    stream.read(mUVOffset.u);
-    stream.read(mUVOffset.v);
-    stream.read(mUVScale.u);
-    stream.read(mUVScale.v);
-    stream.read(mTextureSetRef);
-    stream.read(mEmissiveColor);
-    stream.read(mEmissiveMultiple);
-    stream.read(mTextureClampMode);
-    stream.read(mAlpha);
-    stream.read(mUnknown2);
-    stream.read(mGlossiness);
-    stream.read(mSpecularColor);
-    stream.read(mSpecularStrength);
-    stream.read(mLightingEffect1);
-    stream.read(mLightingEffect2);
+    stream->read(mUVOffset.u);
+    stream->read(mUVOffset.v);
+    stream->read(mUVScale.u);
+    stream->read(mUVScale.v);
+    stream->read(mTextureSetRef);
+    stream->read(mEmissiveColor);
+    stream->read(mEmissiveMultiple);
+    stream->read(mTextureClampMode);
+    stream->read(mAlpha);
+    stream->read(mUnknown2);
+    stream->read(mGlossiness);
+    stream->read(mSpecularColor);
+    stream->read(mSpecularStrength);
+    stream->read(mLightingEffect1);
+    stream->read(mLightingEffect2);
 
     switch (mSkyrimShaderType)
     {
         case 1: // Environment Map
-            stream.read(mEnvironmentMapScale);
+            stream->read(mEnvironmentMapScale);
             break;
         case 5: // Skin Tint
-            stream.read(mSkinTintColor);
+            stream->read(mSkinTintColor);
             break;
         case 6: // Hair Tint
-            stream.read(mHairTintColor);
+            stream->read(mHairTintColor);
             break;
         case 7: // Parallax Occ Material
-            stream.read(mMaxPasses);
-            stream.read(mScale);
+            stream->read(mMaxPasses);
+            stream->read(mScale);
             break;
         case 11: // MultiLayer Parallax
-            stream.read(mParallaxInnerLayerThickness);
-            stream.read(mParallaxRefractionScale);
-            stream.read(mParallaxInnerLayerTextureScale.u);
-            stream.read(mParallaxInnerLayerTextureScale.v);
-            stream.read(mParallaxEnvmapStrength);
+            stream->read(mParallaxInnerLayerThickness);
+            stream->read(mParallaxRefractionScale);
+            stream->read(mParallaxInnerLayerTextureScale.u);
+            stream->read(mParallaxInnerLayerTextureScale.v);
+            stream->read(mParallaxEnvmapStrength);
             break;
         case 14: // Sparkle Snow
-            stream.read(mSparkleParameters);
+            stream->read(mSparkleParameters);
             break;
         case 16: // Eye Envmap
-            stream.read(mEyeCubemapScale);
-            stream.read(mLeftEyeReflectionCenter);
-            stream.read(mRightEyeReflectionCenter);
+            stream->read(mEyeCubemapScale);
+            stream->read(mLeftEyeReflectionCenter);
+            stream->read(mRightEyeReflectionCenter);
             break;
         default:
             break;
@@ -216,42 +216,42 @@ void NiBtOgre::BSLightingShaderProperty::applyMaterialProperty(OgreMaterial& mat
     material.textureDescriptions = &mTextureDescriptions;
 }
 
-NiBtOgre::BSShaderLightingProperty::BSShaderLightingProperty(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::BSShaderLightingProperty::BSShaderLightingProperty(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiProperty(index, stream, model, data)
 {
-    stream.read(mFlags);
-    stream.read(mShaderType);
-    stream.read(mShaderFlags);
-    stream.read(mUnknownInt2);
+    stream->read(mFlags);
+    stream->read(mShaderType);
+    stream->read(mShaderFlags);
+    stream->read(mUnknownInt2);
 
-    if (stream.userVer() == 11)
-        stream.read(mEnvmapScale);
+    if (stream->userVer() == 11)
+        stream->read(mEnvmapScale);
 
-    if (stream.userVer() <= 11)
-        stream.read(mUnknownInt3);
+    if (stream->userVer() <= 11)
+        stream->read(mUnknownInt3);
 }
 
-NiBtOgre::BSShaderPPLightingProperty::BSShaderPPLightingProperty(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::BSShaderPPLightingProperty::BSShaderPPLightingProperty(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : BSShaderLightingProperty(index, stream, model, data)
 {
-    stream.read(mTextureSetRef);
+    stream->read(mTextureSetRef);
 
-    if (stream.userVer() == 11)
+    if (stream->userVer() == 11)
     {
-        if (stream.userVer2() > 14)
+        if (stream->userVer2() > 14)
         {
-            stream.read(mUnknownFloat2);
-            stream.read(mRefractionPeriod);
+            stream->read(mUnknownFloat2);
+            stream->read(mRefractionPeriod);
         }
-        if (stream.userVer2() > 24)
+        if (stream->userVer2() > 24)
         {
-            stream.read(mUnknownFloat4);
-            stream.read(mUnknownFloat5);
+            stream->read(mUnknownFloat4);
+            stream->read(mUnknownFloat5);
         }
     }
 
-    if (stream.userVer() >= 12)
-        stream.read(mEmissiveColor);
+    if (stream->userVer() >= 12)
+        stream->read(mEmissiveColor);
 }
 
 // FO3
@@ -320,17 +320,17 @@ void NiBtOgre::BSShaderPPLightingProperty::applyMaterialProperty(OgreMaterial& m
     material.textureDescriptions = &mTextureDescriptions;
 }
 
-NiBtOgre::BSShaderNoLightingProperty::BSShaderNoLightingProperty(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::BSShaderNoLightingProperty::BSShaderNoLightingProperty(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : BSShaderLightingProperty(index, stream, model, data)
 {
-    stream.readSizedString(mFileName);
+    stream->readSizedString(mFileName);
 
-    if (stream.userVer() >= 11 && stream.userVer2() > 26)
+    if (stream->userVer() >= 11 && stream->userVer2() > 26)
     {
-        stream.read(mUnknownFloat2);
-        stream.read(mUnknownFloat3);
-        stream.read(mUnknownFloat4);
-        stream.read(mUnknownFloat5);
+        stream->read(mUnknownFloat2);
+        stream->read(mUnknownFloat3);
+        stream->read(mUnknownFloat4);
+        stream->read(mUnknownFloat5);
     }
 }
 
@@ -341,18 +341,18 @@ void NiBtOgre::BSShaderNoLightingProperty::applyMaterialProperty(OgreMaterial& m
 }
 
 // Seen in NIF version 20.2.0.7
-NiBtOgre::BSWaterShaderProperty::BSWaterShaderProperty(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::BSWaterShaderProperty::BSWaterShaderProperty(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiProperty(index, stream, model, data)
 {
-    stream.read(mShaderFlags1);
-    stream.read(mShaderFlags2);
-    stream.read(mUVOffset.u);
-    stream.read(mUVOffset.v);
-    stream.read(mUVScale.u);
-    stream.read(mUVScale.v);
-    stream.read(mWaterShaderFlags);
-    stream.read(mWaterDirection);
-    stream.read(mUnknownS3);
+    stream->read(mShaderFlags1);
+    stream->read(mShaderFlags2);
+    stream->read(mUVOffset.u);
+    stream->read(mUVOffset.v);
+    stream->read(mUVScale.u);
+    stream->read(mUVScale.v);
+    stream->read(mWaterShaderFlags);
+    stream->read(mWaterDirection);
+    stream->read(mUnknownS3);
 }
 
 void NiBtOgre::BSWaterShaderProperty::applyMaterialProperty(OgreMaterial& material,
@@ -363,11 +363,11 @@ void NiBtOgre::BSWaterShaderProperty::applyMaterialProperty(OgreMaterial& materi
         << NiObject::mModel.indexToString(NiObjectNET::getNameIndex()) << std::endl;
 }
 
-NiBtOgre::NiAlphaProperty::NiAlphaProperty(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::NiAlphaProperty::NiAlphaProperty(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiProperty(index, stream, model, data)
 {
-    stream.read(mFlags);
-    stream.read(mThreshold);
+    stream->read(mFlags);
+    stream->read(mThreshold);
 }
 
 void NiBtOgre::NiAlphaProperty::applyMaterialProperty(OgreMaterial& material,
@@ -377,37 +377,37 @@ void NiBtOgre::NiAlphaProperty::applyMaterialProperty(OgreMaterial& material,
     material.alphaTest = mThreshold;
 }
 
-NiBtOgre::NiDitherProperty::NiDitherProperty(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::NiDitherProperty::NiDitherProperty(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiProperty(index, stream, model, data)
 {
-    stream.read(mFlags);
+    stream->read(mFlags);
 }
 
-NiBtOgre::NiFogProperty::NiFogProperty(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::NiFogProperty::NiFogProperty(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiProperty(index, stream, model, data)
 {
-    stream.read(mFlags);
-    stream.read(mFogDepth);
-    stream.read(mFogColor);
+    stream->read(mFlags);
+    stream->read(mFogDepth);
+    stream->read(mFogColor);
 }
 
-NiBtOgre::NiMaterialProperty::NiMaterialProperty(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::NiMaterialProperty::NiMaterialProperty(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiProperty(index, stream, model, data)
 {
-    if (stream.nifVer() <= 0x0a000102) // 10.0.1.2
-        stream.read(mFlags);
+    if (stream->nifVer() <= 0x0a000102) // 10.0.1.2
+        stream->read(mFlags);
 
-    if (!(stream.nifVer() == 0x14020007 && stream.userVer() >= 11 && stream.userVer2() > 21))
+    if (!(stream->nifVer() == 0x14020007 && stream->userVer() >= 11 && stream->userVer2() > 21))
     {
-        stream.read(mAmbientColor);
-        stream.read(mDiffuseColor);
+        stream->read(mAmbientColor);
+        stream->read(mDiffuseColor);
     }
-    stream.read(mSpecularColor);
-    stream.read(mEmissiveColor);
-    stream.read(mGlossiness);
-    stream.read(mAlpha);
-    if (stream.nifVer() == 0x14020007 && stream.userVer() >= 11 && stream.userVer2() > 21)
-        stream.read(mEmitMulti);
+    stream->read(mSpecularColor);
+    stream->read(mEmissiveColor);
+    stream->read(mGlossiness);
+    stream->read(mAlpha);
+    if (stream->nifVer() == 0x14020007 && stream->userVer() >= 11 && stream->userVer2() > 21)
+        stream->read(mEmitMulti);
 }
 
 void NiBtOgre::NiMaterialProperty::applyMaterialProperty(OgreMaterial& material,
@@ -443,41 +443,41 @@ void NiBtOgre::NiMaterialProperty::applyMaterialProperty(OgreMaterial& material,
     }
 }
 
-NiBtOgre::NiShadeProperty::NiShadeProperty(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::NiShadeProperty::NiShadeProperty(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiProperty(index, stream, model, data)
 {
-    stream.read(mFlags);
+    stream->read(mFlags);
 }
 
-NiBtOgre::NiSpecularProperty::NiSpecularProperty(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::NiSpecularProperty::NiSpecularProperty(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiProperty(index, stream, model, data)
 {
-    stream.read(mFlags);
+    stream->read(mFlags);
 }
 
-NiBtOgre::NiStencilProperty::NiStencilProperty(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::NiStencilProperty::NiStencilProperty(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiProperty(index, stream, model, data)
 {
-    if (stream.nifVer() <= 0x0a000102) // 10.0.1.2
-        stream.read(mFlags);
+    if (stream->nifVer() <= 0x0a000102) // 10.0.1.2
+        stream->read(mFlags);
 
-    if (stream.nifVer() <= 0x14000005) // not in FO3
+    if (stream->nifVer() <= 0x14000005) // not in FO3
     {
-        stream.read(mStencilEnabled);
-        stream.read(mStencilFunction);
-        stream.read(mStencilRef);
-        stream.read(mStencilMask);
-        stream.read(mFailAction);
-        stream.read(mZFailAction);
-        stream.read(mZPassAction);
-        stream.read(mDrawMode);
+        stream->read(mStencilEnabled);
+        stream->read(mStencilFunction);
+        stream->read(mStencilRef);
+        stream->read(mStencilMask);
+        stream->read(mFailAction);
+        stream->read(mZFailAction);
+        stream->read(mZPassAction);
+        stream->read(mDrawMode);
     }
 
-    if (stream.nifVer() >= 0x14010003) // FO3
+    if (stream->nifVer() >= 0x14010003) // FO3
     {
-        stream.read(mFlags); // NOTE: possibly different properties to above
-        stream.read(mStencilRef);
-        stream.read(mStencilMask);
+        stream->read(mFlags); // NOTE: possibly different properties to above
+        stream->read(mStencilRef);
+        stream->read(mStencilMask);
     }
 }
 
@@ -488,14 +488,14 @@ void NiBtOgre::NiStencilProperty::applyMaterialProperty(OgreMaterial& material,
     // FIXME: what to do with other properties?
 }
 
-void NiBtOgre::NiTexturingProperty::TexDesc::read(NiStream& stream)
+void NiBtOgre::NiTexturingProperty::TexDesc::read(NiStream *stream)
 {
-    stream.read(mSourceRef);
+    stream->read(mSourceRef);
 
-    if (stream.nifVer() <= 0x14000005) // up to 20.0.0.5
+    if (stream->nifVer() <= 0x14000005) // up to 20.0.0.5
     {
-        stream.read(clampMode);
-        stream.read(filterMode);
+        stream->read(clampMode);
+        stream->read(filterMode);
     }
     else
     {
@@ -503,174 +503,174 @@ void NiBtOgre::NiTexturingProperty::TexDesc::read(NiStream& stream)
         filterMode = 0;
     }
 
-    if (stream.nifVer() >= 0x14010003) // from 20.1.0.3
-        stream.read(flags);
+    if (stream->nifVer() >= 0x14010003) // from 20.1.0.3
+        stream->read(flags);
     else
         flags = 0;
 
-    //if (stream.nifVer() >= 0x14060000) // from 20.6.0.0 (unsupported version, commented out)
-        //stream.read(unknownShort);
+    //if (stream->nifVer() >= 0x14060000) // from 20.6.0.0 (unsupported version, commented out)
+        //stream->read(unknownShort);
 
-    if (stream.nifVer() <= 0x14000005) // up to 20.0.0.5
-        stream.read(uvSet);
+    if (stream->nifVer() <= 0x14000005) // up to 20.0.0.5
+        stream->read(uvSet);
 
-    if (stream.nifVer() <= 0x0a040001) // up to 10.4.0.1
+    if (stream->nifVer() <= 0x0a040001) // up to 10.4.0.1
     {
-        stream.skip(sizeof(std::int16_t)*2);
+        stream->skip(sizeof(std::int16_t)*2);
     }
 
-    if (stream.nifVer() <= 0x0401000c) // up to 4.1.0.12
-        stream.skip(sizeof(std::uint16_t)); // Unknown1
+    if (stream->nifVer() <= 0x0401000c) // up to 4.1.0.12
+        stream->skip(sizeof(std::uint16_t)); // Unknown1
 
-    if (stream.nifVer() >= 0x0a010000) // from 10.1.0.0
+    if (stream->nifVer() >= 0x0a010000) // from 10.1.0.0
     {
-        if (hasTextureTransform = stream.getBool())
+        if (hasTextureTransform = stream->getBool())
         {
-            stream.read(translation.u);
-            stream.read(translation.v);
-            stream.read(tiling.u);
-            stream.read(tiling.v);
-            stream.read(wRotation);
-            stream.read(transformType);
-            stream.read(centerOffset.u);
-            stream.read(centerOffset.v);
+            stream->read(translation.u);
+            stream->read(translation.v);
+            stream->read(tiling.u);
+            stream->read(tiling.v);
+            stream->read(wRotation);
+            stream->read(transformType);
+            stream->read(centerOffset.u);
+            stream->read(centerOffset.v);
         }
     }
     else
         hasTextureTransform = false;
 }
 
-NiBtOgre::NiTexturingProperty::NiTexturingProperty(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::NiTexturingProperty::NiTexturingProperty(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiProperty(index, stream, model, data), mFlags(0), mApplyMode(/* APPLY_MODULATE */2)/*, mHasNormalTexture(false),
       mHasUnknown2Texture(false), mHasDecal1Texture(false), mHasDecal2Texture(false), mHasDecal3Texture(false)*/
 {
-    if (stream.nifVer() <= 0x0a000102 || stream.nifVer() >= 0x14010003) // up to 10.0.1.2 or from 20.1.0.3
-        stream.read(mFlags);
+    if (stream->nifVer() <= 0x0a000102 || stream->nifVer() >= 0x14010003) // up to 10.0.1.2 or from 20.1.0.3
+        stream->read(mFlags);
 
-    if (stream.nifVer() <= 0x14000005) // up to 20.0.0.5
-        stream.read(mApplyMode);
+    if (stream->nifVer() <= 0x14000005) // up to 20.0.0.5
+        stream->read(mApplyMode);
 
-    stream.read(mTextureCount);
+    stream->read(mTextureCount);
 #if 0
-    if (mHasBaseTexture = stream.getBool())
+    if (mHasBaseTexture = stream->getBool())
         mBaseTexture.read(stream);
 
-    if (mHasDarkTexture = stream.getBool())
+    if (mHasDarkTexture = stream->getBool())
         mDarkTexture.read(stream);
 
-    if (mHasDetailTexture = stream.getBool())
+    if (mHasDetailTexture = stream->getBool())
         mDetailTexture.read(stream);
 
-    if (mHasGlossTexture = stream.getBool())
+    if (mHasGlossTexture = stream->getBool())
         mGlossTexture.read(stream);
 
-    if (mHasGlowTexture = stream.getBool())
+    if (mHasGlowTexture = stream->getBool())
         mGlowTexture.read(stream);
 
-    if (mHasBumpMapTexture = stream.getBool())
+    if (mHasBumpMapTexture = stream->getBool())
     {
         mBumpMapTexture.read(stream);
 
-        stream.skip(sizeof(float));   // Bump Map Luma Scale
-        stream.skip(sizeof(float));   // Bump Map Luma Offset
-        stream.skip(sizeof(float)*4); // Bump Map Matrix
+        stream->skip(sizeof(float));   // Bump Map Luma Scale
+        stream->skip(sizeof(float));   // Bump Map Luma Offset
+        stream->skip(sizeof(float)*4); // Bump Map Matrix
     }
 
-    if (stream.nifVer() >= 0x14020007) // from 20.2.0.7
+    if (stream->nifVer() >= 0x14020007) // from 20.2.0.7
     {
-        if (mHasNormalTexture = stream.getBool())
+        if (mHasNormalTexture = stream->getBool())
             mNormalTexture.read(stream);
 
-        if (mHasUnknown2Texture = stream.getBool())
+        if (mHasUnknown2Texture = stream->getBool())
         {
             mUnknown2Texture.read(stream);
-            stream.skip(sizeof(float));
+            stream->skip(sizeof(float));
         }
     }
 
-    if (mHasDecal0Texture = stream.getBool())
+    if (mHasDecal0Texture = stream->getBool())
         mDecal0Texture.read(stream);
 
     unsigned int offset = 0;
-    if (stream.nifVer() >= 0x14020007) // from 20.2.0.7
+    if (stream->nifVer() >= 0x14020007) // from 20.2.0.7
         offset = 2;
 
     if (mTextureCount >= 8+offset)
-        if (mHasDecal1Texture = stream.getBool())
+        if (mHasDecal1Texture = stream->getBool())
             mDecal1Texture.read(stream);
 
     if (mTextureCount >= 9+offset)
-        if (mHasDecal2Texture = stream.getBool())
+        if (mHasDecal2Texture = stream->getBool())
             mDecal2Texture.read(stream);
 
     if (mTextureCount >= 10+offset)
-        if (mHasDecal3Texture = stream.getBool())
+        if (mHasDecal3Texture = stream->getBool())
             mDecal3Texture.read(stream);
 #else
-    if (stream.getBool())
+    if (stream->getBool())
         mTextureDescriptions[Texture_Base].read(stream);
 
-    if (stream.getBool())
+    if (stream->getBool())
         mTextureDescriptions[Texture_Dark].read(stream);
 
-    if (stream.getBool())
+    if (stream->getBool())
         mTextureDescriptions[Texture_Detail].read(stream);
 
-    if (stream.getBool())
+    if (stream->getBool())
         mTextureDescriptions[Texture_Gloss].read(stream);
 
-    if (stream.getBool())
+    if (stream->getBool())
         mTextureDescriptions[Texture_Glow].read(stream);
 
-    if (stream.getBool())
+    if (stream->getBool())
     {
         mTextureDescriptions[Texture_BumpMap].read(stream);
 
-        stream.skip(sizeof(float));   // Bump Map Luma Scale
-        stream.skip(sizeof(float));   // Bump Map Luma Offset
-        stream.skip(sizeof(float)*4); // Bump Map Matrix
+        stream->skip(sizeof(float));   // Bump Map Luma Scale
+        stream->skip(sizeof(float));   // Bump Map Luma Offset
+        stream->skip(sizeof(float)*4); // Bump Map Matrix
     }
 
-    if (stream.nifVer() >= 0x14020007) // from 20.2.0.7
+    if (stream->nifVer() >= 0x14020007) // from 20.2.0.7
     {
-        if (stream.getBool())
+        if (stream->getBool())
             mTextureDescriptions[Texture_Normal].read(stream);
 
-        if (stream.getBool())
+        if (stream->getBool())
         {
             mTextureDescriptions[Texture_Unknown2].read(stream);
-            stream.skip(sizeof(float));
+            stream->skip(sizeof(float));
         }
     }
 
-    if (stream.getBool())
+    if (stream->getBool())
         mTextureDescriptions[Texture_Decal0].read(stream);
 
     unsigned int offset = 0;
-    if (stream.nifVer() >= 0x14020007) // from 20.2.0.7
+    if (stream->nifVer() >= 0x14020007) // from 20.2.0.7
         offset = 2;
 
     if (mTextureCount >= 8+offset)
-        if (stream.getBool())
+        if (stream->getBool())
             mTextureDescriptions[Texture_Decal1].read(stream);
 
     if (mTextureCount >= 9+offset)
-        if (stream.getBool())
+        if (stream->getBool())
             mTextureDescriptions[Texture_Decal2].read(stream);
 
     if (mTextureCount >= 10+offset)
-        if (stream.getBool())
+        if (stream->getBool())
             mTextureDescriptions[Texture_Decal3].read(stream);
 #endif
-    if (stream.nifVer() >= 0x0a000100) // 10.0.1.0
+    if (stream->nifVer() >= 0x0a000100) // 10.0.1.0
     {
         std::uint32_t numShaderTextures;
-        stream.read(numShaderTextures);
+        stream->read(numShaderTextures);
         mShaderTextures.resize(numShaderTextures);
         for (unsigned int i = 0; i < numShaderTextures; ++i)
         {
             mShaderTextures[i].textureData.read(stream);
-            stream.read(mShaderTextures[i].mapIndex);
+            stream->read(mShaderTextures[i].mapIndex);
         }
     }
 }
@@ -713,12 +713,12 @@ void NiBtOgre::NiTexturingProperty::applyMaterialProperty(OgreMaterial& material
     }
 }
 
-NiBtOgre::NiVertexColorProperty::NiVertexColorProperty(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::NiVertexColorProperty::NiVertexColorProperty(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiProperty(index, stream, model, data)
 {
-    stream.read(mFlags);
-    stream.read(mVertexMode);
-    stream.read(mLightingMode);
+    stream->read(mFlags);
+    stream->read(mVertexMode);
+    stream->read(mLightingMode);
 }
 
 void NiBtOgre::NiVertexColorProperty::applyMaterialProperty(OgreMaterial& material,
@@ -732,10 +732,10 @@ void NiBtOgre::NiVertexColorProperty::applyMaterialProperty(OgreMaterial& materi
     material.lightMode = mLightingMode;
 }
 
-NiBtOgre::NiWireframeProperty::NiWireframeProperty(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::NiWireframeProperty::NiWireframeProperty(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiProperty(index, stream, model, data)
 {
-    stream.read(mFlags);
+    stream->read(mFlags);
 }
 
 void NiBtOgre::NiWireframeProperty::applyMaterialProperty(OgreMaterial& material,
@@ -745,13 +745,13 @@ void NiBtOgre::NiWireframeProperty::applyMaterialProperty(OgreMaterial& material
 }
 
 // either NiGeometry or NiBillboardNode
-NiBtOgre::NiZBufferProperty::NiZBufferProperty(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::NiZBufferProperty::NiZBufferProperty(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiProperty(index, stream, model, data)
 {
-    stream.read(mFlags);
+    stream->read(mFlags);
 
-    if (stream.nifVer() >= 0x0401000c && stream.nifVer() <= 0x14000005) // 4.1.0.12 to 20.0.0.5
-        stream.read(mFunction);
+    if (stream->nifVer() >= 0x0401000c && stream->nifVer() <= 0x14000005) // 4.1.0.12 to 20.0.0.5
+        stream->read(mFunction);
 }
 
 void NiBtOgre::NiZBufferProperty::applyMaterialProperty(OgreMaterial& material,

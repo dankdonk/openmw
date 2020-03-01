@@ -30,6 +30,7 @@
 #include <iostream> // NOTE: for testing only
 #include <iomanip>  // NOTE: for testing only
 
+#include "formid.hpp" // NOTE: for testing only
 #include "reader.hpp"
 //#include "writer.hpp"
 
@@ -195,25 +196,9 @@ void ESM4::Npc::load(ESM4::Reader& reader)
             case ESM4::SUB_TPLT: reader.get(mBaseTemplate); break;
             case ESM4::SUB_FGGS:
             {
-                //std::cout << mEditorId << std::endl;
                 mSymShapeModeCoefficients.resize(50);
                 for (std::size_t i = 0; i < 50; ++i)
-                {
                     reader.get(mSymShapeModeCoefficients.at(i));
-// NOTE: for testing only
-//                  if (mEditorId == "UrielSeptim")
-//                      std::cout << std::fixed << std::setprecision(6)
-//                                << mSymShapeModeCoefficients[i] << std::endl;
-                }
-// NOTE: for testing only
-//              if (mEditorId == "UrielSeptim")
-//              {
-//                  float sum = 0.f;
-//                  for (std::size_t i = 0; i < 50; ++i)
-//                      sum += mSymShapeModeCoefficients[i];
-//                  std::cout << std::fixed << std::setprecision(6)
-//                            << "sum " << sum << std::endl;
-//              }
 
                 break;
             }
@@ -229,22 +214,7 @@ void ESM4::Npc::load(ESM4::Reader& reader)
             {
                 mSymTextureModeCoefficients.resize(50);
                 for (std::size_t i = 0; i < 50; ++i)
-                {
                     reader.get(mSymTextureModeCoefficients.at(i));
-// NOTE: for testing only
-//                  if (mEditorId == "UrielSeptim")
-//                      std::cout << std::fixed << std::setprecision(6)
-//                                << mSymTextureModeCoefficients[i] << std::endl;
-                }
-// NOTE: for testing only
-//              if (mEditorId == "UrielSeptim")
-//              {
-//                  float sum = 0.f;
-//                  for (std::size_t i = 0; i < 50; ++i)
-//                      sum += mSymTextureModeCoefficients[i];
-//                  std::cout << std::fixed << std::setprecision(6)
-//                            << "sum " << sum << std::endl;
-//              }
 
                 break;
             }

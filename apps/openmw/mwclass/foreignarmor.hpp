@@ -29,10 +29,14 @@ namespace MWClass
             virtual MWGui::ToolTipInfo getToolTipInfo (const MWWorld::Ptr& ptr) const;
             ///< @return the content of the tool tip to be displayed. raises exception if the object has no tooltip.
 
+            virtual std::pair<std::vector<int>, bool> getEquipmentSlots (const MWWorld::Ptr& ptr) const;
+
             virtual int getValue (const MWWorld::Ptr& ptr) const;
             ///< Return trade value of the object. Throws an exception, if the object can't be traded.
 
             static void registerSelf();
+
+            virtual std::pair<int, std::string> canBeEquipped(const MWWorld::Ptr &ptr, const MWWorld::Ptr &npc) const;
 
             virtual std::string getModel(const MWWorld::Ptr &ptr) const;
     };

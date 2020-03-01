@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015-2019 cc9cii
+  Copyright (C) 2015-2020 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -81,7 +81,7 @@ namespace NiBtOgre
         NiParticleSystemRef mTargetRef;
         bool              mActive;
 
-        NiPSysModifier(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
+        NiPSysModifier(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
     };
 
     // Seen in NIF version 20.2.0.7
@@ -93,7 +93,7 @@ namespace NiBtOgre
         float         mUnknownF2;
         float         mUnknownF3;
 
-        BSPSysInheritVelocityModifier(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
+        BSPSysInheritVelocityModifier(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
     };
 
     // Seen in NIF version 20.2.0.7
@@ -105,7 +105,7 @@ namespace NiBtOgre
         float mUnknown3;
         float mUnknown4;
 
-        BSPSysLODModifier(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
+        BSPSysLODModifier(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
     };
 
     // Seen in NIF version 20.2.0.7
@@ -114,7 +114,7 @@ namespace NiBtOgre
     public:
         std::vector<float> mFloats;
 
-        BSPSysScaleModifier(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
+        BSPSysScaleModifier(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
     };
 
     // Seen in NIF version 20.2.0.7
@@ -129,7 +129,7 @@ namespace NiBtOgre
         float mColor2StartPerCent;
         std::vector<Ogre::Vector4> mColors;
 
-        BSPSysSimpleColorModifier(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
+        BSPSysSimpleColorModifier(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
     };
 
     // Seen in NIF version 20.2.0.7
@@ -138,7 +138,7 @@ namespace NiBtOgre
     public:
         float mUpdateDeltaTime;
 
-        BSPSysStripUpdateModifier(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
+        BSPSysStripUpdateModifier(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
     };
 
     // Seen in NIF version 20.2.0.7
@@ -153,7 +153,7 @@ namespace NiBtOgre
         float mFrameCount;
         float mFrameCountFudge;
 
-        BSPSysSubTexModifier(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
+        BSPSysSubTexModifier(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
     };
 
     // Seen in NIF ver 20.0.0.4, 20.0.0.5
@@ -162,7 +162,7 @@ namespace NiBtOgre
     public:
         float mDamping;
 
-        BSParentVelocityModifier(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
+        BSParentVelocityModifier(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
     };
 
     // Seen in NIF ver 20.0.0.4, 20.0.0.5
@@ -171,7 +171,7 @@ namespace NiBtOgre
     public:
         float mStrength;
 
-        BSWindModifier(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
+        BSWindModifier(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
     };
 
     // Seen in NIF ver 20.0.0.4, 20.0.0.5
@@ -181,7 +181,7 @@ namespace NiBtOgre
         bool mSpawnOnDeath;
         NiPSysSpawnModifierRef mSpawnModifierRef;
 
-        NiPSysAgeDeathModifier(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
+        NiPSysAgeDeathModifier(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
     };
 
     class NiNode;
@@ -200,7 +200,7 @@ namespace NiBtOgre
         std::uint32_t mDecayType;
         std::uint32_t mSymmetryType;
 
-        NiPSysBombModifier(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
+        NiPSysBombModifier(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
     };
 
     // Seen in NIF ver 20.0.0.4, 20.0.0.5
@@ -209,7 +209,7 @@ namespace NiBtOgre
     public:
         std::uint16_t mUpdateSkip;
 
-        NiPSysBoundUpdateModifier(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
+        NiPSysBoundUpdateModifier(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
     };
 
     // Seen in NIF ver 20.0.0.4, 20.0.0.5
@@ -218,7 +218,7 @@ namespace NiBtOgre
     public:
         NiPSysColliderRef mColliderRef;
 
-        NiPSysColliderManager(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
+        NiPSysColliderManager(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
     };
 
     // Seen in NIF ver 20.0.0.4, 20.0.0.5
@@ -227,7 +227,7 @@ namespace NiBtOgre
     public:
         NiColorDataRef mDataRef;
 
-        NiPSysColorModifier(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
+        NiPSysColorModifier(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
     };
 
     // Seen in NIF ver 20.0.0.4, 20.0.0.5
@@ -243,7 +243,7 @@ namespace NiBtOgre
         float mRange;
         float mRangeFalloff;
 
-        NiPSysDragModifier(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
+        NiPSysDragModifier(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
     };
 
     // Seen in NIF ver 20.0.0.4, 20.0.0.5
@@ -262,7 +262,7 @@ namespace NiBtOgre
         float mLifeSpan;
         float mLifeSpanVariation;
 
-        NiPSysEmitter(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
+        NiPSysEmitter(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
     };
 
     // Seen in NIF ver 20.0.0.4, 20.0.0.5
@@ -274,7 +274,7 @@ namespace NiBtOgre
         std::uint32_t mEmissionType;
         Ogre::Vector3 mEmissionAxis;
 
-        NiPSysMeshEmitter(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
+        NiPSysMeshEmitter(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
     };
 
     class NiPSysVolumeEmitter : public NiPSysEmitter
@@ -282,7 +282,7 @@ namespace NiBtOgre
         NiNode *mEmitterObject; // Ptr
 
     public:
-        NiPSysVolumeEmitter(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
+        NiPSysVolumeEmitter(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
     };
 
     // Seen in NIF ver 20.0.0.4, 20.0.0.5
@@ -293,7 +293,7 @@ namespace NiBtOgre
         float mHeight;
         float mDepth;
 
-        NiPSysBoxEmitter(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
+        NiPSysBoxEmitter(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
     };
 
     // Seen in NIF ver 20.0.0.4, 20.0.0.5
@@ -303,7 +303,7 @@ namespace NiBtOgre
         float mRadius;
         float mHeight;
 
-        NiPSysCylinderEmitter(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
+        NiPSysCylinderEmitter(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
     };
 
     // Seen in NIF ver 20.0.0.4, 20.0.0.5
@@ -312,7 +312,7 @@ namespace NiBtOgre
     public:
         float mRadius;
 
-        NiPSysSphereEmitter(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
+        NiPSysSphereEmitter(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
     };
 
     class NiNode;
@@ -332,7 +332,7 @@ namespace NiBtOgre
         float mTurbulence;
         float mTurbulenceScale;
 
-        NiPSysGravityModifier(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
+        NiPSysGravityModifier(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
     };
 
     // Seen in NIF ver 20.0.0.4, 20.0.0.5
@@ -345,7 +345,7 @@ namespace NiBtOgre
         std::uint16_t mFadeGeneration;
         float mBaseScale;
 
-        NiPSysGrowFadeModifier(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
+        NiPSysGrowFadeModifier(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
     };
 
     typedef NiPSysModifier NiPSysPositionModifier; // Seen in NIF ver 20.0.0.4, 20.0.0.5
@@ -362,7 +362,7 @@ namespace NiBtOgre
         bool  mRandomInitialAxis;
         Ogre::Vector3 mInitialAxis;
 
-        NiPSysRotationModifier(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
+        NiPSysRotationModifier(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
     };
 
     // Seen in NIF ver 20.0.0.4, 20.0.0.5
@@ -378,7 +378,7 @@ namespace NiBtOgre
         float mLifeSpan;
         float mLifeSpanVariation;
 
-        NiPSysSpawnModifier(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
+        NiPSysSpawnModifier(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
     };
 }
 

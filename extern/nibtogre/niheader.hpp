@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015-2019 cc9cii
+  Copyright (C) 2015-2020 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -67,7 +67,7 @@ namespace NiBtOgre
         NiHeader& operator=(const NiHeader& other);
 
     public:
-        NiHeader(NiStream& stream); // may throw std::runtime_error
+        NiHeader(NiStream *stream); // may throw std::runtime_error
         ~NiHeader() {}
 
         inline std::uint32_t nifVer() const { return mVer; }

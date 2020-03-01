@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015-2019 cc9cii
+  Copyright (C) 2015-2020 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -38,26 +38,26 @@
 #undef NDEBUG
 #endif
 
-NiBtOgre::NiAVObject::NiAVObject(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::NiAVObject::NiAVObject(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiObjectNET(index, stream, model, data), mHasBoundingBox(false)//, mHasAnim(false)
       //, mWorldTransform(Ogre::Matrix4::IDENTITY)
 {
-    stream.read(mFlags);
+    stream->read(mFlags);
 
-    if (stream.nifVer() >= 0x14020007 && (stream.userVer() >= 11 && stream.userVer2() > 26)) // from 20.2.0.7
-        stream.skip(sizeof(std::uint16_t));
+    if (stream->nifVer() >= 0x14020007 && (stream->userVer() >= 11 && stream->userVer2() > 26)) // from 20.2.0.7
+        stream->skip(sizeof(std::uint16_t));
 
-    stream.read(mTranslation);
-    stream.read(mRotation);
-    stream.read(mScale);
+    stream->read(mTranslation);
+    stream->read(mRotation);
+    stream->read(mScale);
 
-    if (stream.nifVer() <= 0x04020200) // up to 4.2.2.0
-        stream.read(mVelocity);
+    if (stream->nifVer() <= 0x04020200) // up to 4.2.2.0
+        stream->read(mVelocity);
 
-    if (stream.nifVer() < 0x14020007 || stream.userVer() <= 11) // less than 20.2.0.7 (or user version <= 11)
-        stream.readVector<NiPropertyRef>(mProperty);
+    if (stream->nifVer() < 0x14020007 || stream->userVer() <= 11) // less than 20.2.0.7 (or user version <= 11)
+        stream->readVector<NiPropertyRef>(mProperty);
 
-    if (stream.nifVer() <= 0x04020200) // up to 4.2.2.0
+    if (stream->nifVer() <= 0x04020200) // up to 4.2.2.0
     {
         // Looks like only used for animations, examples include:
         //   ./r/xashslave.nif
@@ -74,17 +74,17 @@ NiBtOgre::NiAVObject::NiAVObject(uint32_t index, NiStream& stream, const NiModel
         //   ./xbase_anim.1st.nif
         //   ./xbase_anim.nif
         //   ./xbase_animkna.nif
-        if(mHasBoundingBox = stream.getBool())
+        if(mHasBoundingBox = stream->getBool())
         {
-            stream.read(mBoundingBox.unknownInt);
-            stream.read(mBoundingBox.translation);
-            stream.read(mBoundingBox.rotation);
-            stream.read(mBoundingBox.radius);
+            stream->read(mBoundingBox.unknownInt);
+            stream->read(mBoundingBox.translation);
+            stream->read(mBoundingBox.rotation);
+            stream->read(mBoundingBox.radius);
         }
     }
 
-    if (stream.nifVer() >= 0x0a000100) // from 10.0.1.0
-        stream.read(mCollisionObjectRef);
+    if (stream->nifVer() >= 0x0a000100) // from 10.0.1.0
+        stream->read(mCollisionObjectRef);
 }
 
 //void NiBtOgre::NiAVObject::build(BtOgreInst *inst, NiObject *parent)
@@ -106,87 +106,87 @@ NiBtOgre::NiTimeController *NiBtOgre::NiAVObject::findController(const std::stri
     return nullptr;
 }
 
-NiBtOgre::NiCamera::NiCamera(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::NiCamera::NiCamera(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiAVObject(index, stream, model, data), mUseOrthographicProjection(false)
 {
-    if (stream.nifVer() >= 0x0a010000) // from 10.1.0.0
-        stream.skip(sizeof(std::uint16_t));
+    if (stream->nifVer() >= 0x0a010000) // from 10.1.0.0
+        stream->skip(sizeof(std::uint16_t));
 
-    stream.read(mFrustumLeft);
-    stream.read(mFrustumRight);
-    stream.read(mFrustumTop);
-    stream.read(mFrustumBottom);
-    stream.read(mFrustumNear);
-    stream.read(mFrustumFar);
+    stream->read(mFrustumLeft);
+    stream->read(mFrustumRight);
+    stream->read(mFrustumTop);
+    stream->read(mFrustumBottom);
+    stream->read(mFrustumNear);
+    stream->read(mFrustumFar);
 
-    if (stream.nifVer() >= 0x0a010000) // from 10.1.0.0
-        mUseOrthographicProjection = stream.getBool();
+    if (stream->nifVer() >= 0x0a010000) // from 10.1.0.0
+        mUseOrthographicProjection = stream->getBool();
 
-    stream.read(mViewportLeft);
-    stream.read(mViewportRight);
-    stream.read(mViewportTop);
-    stream.read(mViewportBottom);
+    stream->read(mViewportLeft);
+    stream->read(mViewportRight);
+    stream->read(mViewportTop);
+    stream->read(mViewportBottom);
 
-    stream.read(mLODAdjust);
+    stream->read(mLODAdjust);
 
-    stream.skip(sizeof(std::uint32_t)); // Unknown Ref
-    stream.skip(sizeof(std::uint32_t)); // Unknown Int
-    if (stream.nifVer() >= 0x04020100) // from 4.2.1.0
-        stream.skip(sizeof(std::uint32_t)); // Unknown Int2
+    stream->skip(sizeof(std::uint32_t)); // Unknown Ref
+    stream->skip(sizeof(std::uint32_t)); // Unknown Int
+    if (stream->nifVer() >= 0x04020100) // from 4.2.1.0
+        stream->skip(sizeof(std::uint32_t)); // Unknown Int2
 }
 
 void NiBtOgre::NiCamera::build(BtOgreInst *inst, BuildData *data, NiObject *parent)
 {
 }
 
-NiBtOgre::NiDynamicEffect::NiDynamicEffect(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::NiDynamicEffect::NiDynamicEffect(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiAVObject(index, stream, model, data), mSwitchState(false)
 {
-    if (stream.nifVer() >= 0x0a01006a) // from 10.1.0.106
-        mSwitchState = stream.getBool();
+    if (stream->nifVer() >= 0x0a01006a) // from 10.1.0.106
+        mSwitchState = stream->getBool();
     // TODO: how to decode the pointers in ver 4.0.0.2
-    stream.readVector<NiAVObjectRef>(mAffectedNodes);
+    stream->readVector<NiAVObjectRef>(mAffectedNodes);
 }
 
-NiBtOgre::NiLight::NiLight(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::NiLight::NiLight(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiDynamicEffect(index, stream, model, data)
 {
-    stream.read(mDimmer);
-    stream.read(mAmbientColor);
-    stream.read(mDiffuseColor);
-    stream.read(mSpecularColor);
+    stream->read(mDimmer);
+    stream->read(mAmbientColor);
+    stream->read(mDiffuseColor);
+    stream->read(mSpecularColor);
 }
 
-NiBtOgre::NiPointLight::NiPointLight(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::NiPointLight::NiPointLight(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiLight(index, stream, model, data)
 {
-    stream.read(mAttenuationConstant);
-    stream.read(mAttenuationLinear);
-    stream.read(mAttenuationQuadratic);
+    stream->read(mAttenuationConstant);
+    stream->read(mAttenuationLinear);
+    stream->read(mAttenuationQuadratic);
 }
 
-NiBtOgre::NiTextureEffect::NiTextureEffect(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::NiTextureEffect::NiTextureEffect(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiDynamicEffect(index, stream, model, data)
 {
-    stream.read(mModelProjectionMatrix);
-    stream.read(mModelProjectionTransform);
+    stream->read(mModelProjectionMatrix);
+    stream->read(mModelProjectionTransform);
 
-    stream.read(mTextureFiltering);
-    stream.read(mTextureClamping);
-    stream.read(mTextureType);
-    stream.read(mCoordGenType);
+    stream->read(mTextureFiltering);
+    stream->read(mTextureClamping);
+    stream->read(mTextureType);
+    stream->read(mCoordGenType);
 
-    stream.read(mSourceTexture); // from 4.0.0.0
+    stream->read(mSourceTexture); // from 4.0.0.0
 
-    stream.read(mClippingPlane);
-    stream.skip(4*sizeof(float)); // Unknown Vector3 and float
+    stream->read(mClippingPlane);
+    stream->skip(4*sizeof(float)); // Unknown Vector3 and float
 
-    if (stream.nifVer() <= 0x0a020000) // up to 10.2.0.0
+    if (stream->nifVer() <= 0x0a020000) // up to 10.2.0.0
     {
-        stream.skip(sizeof(std::int16_t)); // 0?
-        stream.skip(sizeof(std::int16_t)); // -75?
+        stream->skip(sizeof(std::int16_t)); // 0?
+        stream->skip(sizeof(std::int16_t)); // -75?
     }
 
-    if (stream.nifVer() <= 0x0401000c) // up to 4.1.0.12
-        stream.skip(sizeof(std::uint16_t));
+    if (stream->nifVer() <= 0x0401000c) // up to 4.1.0.12
+        stream->skip(sizeof(std::uint16_t));
 }

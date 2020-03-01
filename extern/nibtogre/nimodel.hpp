@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015-2019 cc9cii
+  Copyright (C) 2015-2020 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -56,7 +56,7 @@ namespace NiBtOgre
     struct BtOgreInst;
     class NiModel;
     class NiNode;
-    class MeshLoader;
+    class NiMeshLoader;
 
     enum BuildFlags {
         Flag_EnableHavok         = 0x0001,
@@ -94,11 +94,22 @@ namespace NiBtOgre
 
         std::map<NiNodeRef, NiNode*> mMeshBuildList;
 
+        // during construction various NiObjects may indicate that it has bones
+        // these are then used as the starting points for NiNode::findBones which recursively
+        // traverses till a skeleton root is found - the main objective is to filter out any
+        // NiNodes that are not needed as bones (to minimise the number of bones)
         std::vector<NiNodeRef> mSkelLeafIndicies; // tempoarily used to find the bones
+        // adds without checking
+        // NiSkinInstance - bone refs
+        // NiNode - flame nodes, attach light
+        // NiKeyframeController - target refs
+        // NiMultiTargetTransformController - extra target refs (what is this?)
+        // NiTriBasedGeom - hack for testing animation of sub-mesh
         void addSkelLeafIndex(NiNodeRef leaf) { mSkelLeafIndicies.push_back(leaf); }
-        void addNewSkelLeafIndex(NiNodeRef leaf);
+        // only adds if none found
+        void addNewSkelLeafIndex(NiNodeRef leaf); // FIXME: not used?
         inline bool hasSkeleton() const { return !mSkeleton.isNull(); }
-        bool hasBoneLeaf(NiNodeRef leaf) const;
+        bool hasBoneLeaf(NiNodeRef leaf) const; // FIXME: not used?
 
         //bool mIsSkeleton; // npc/creature
 
@@ -149,42 +160,49 @@ namespace NiBtOgre
         }
 
         BuildData(const NiModel& model) : mModel(model), mIsSkinned(false), /*mFlameNodesPresent(false), mEditorMarkerPresent(false),*/ mBuildFlags(0)
-        {}
+        {
+            //mIsSkeleton = false; // FIXME: hack, does not belong here
+            mSkeleton.setNull();
+        }
     };
 
     //
-    //   +--& NiModel
-    //   |     o o o
-    //   |     | | |
-    //   |     | | +--- NiStream
-    //   |     | |        o o
-    //   |     | |        | |
-    //   |     | |        | +-- NIF version numbers (local copy)
-    //   |     | |        *
-    //   |     | +----- Header
-    //   |     |         o o
-    //   |     |         | |
-    //   |     |         | +--- NIF version numbers
-    //   |     |         |
-    //   |     |         +----- vector<string>
-    //   |     |
-    //   |     +------- vector<NiObject*>
-    //   |                       o
-    //   |                       |
-    //   +-----------------------+
+    //   +--& NiModel o--- NiStream
+    //   |    o o o o        o o
+    //   |    | | | |        | +-- NIF version numbers (local copy)
+    //   |    | | | |        *
+    //   |    | | | +----- Header
+    //   |    | | |         o o
+    //   |    | | |         | +--- NIF version numbers
+    //   |    | | |         +----- vector<string>
+    //   |    | | |
+    //   |    | | +--- ObjectPalatte
+    //   |    | |
+    //   |    | +--- BuildData &--+   (access during construction)
+    //   |    |                   o
+    //   |    +------- vector<NiObject*>
+    //   |                      o
+    //   +----------------------+
     //
     // NOTE: NiStream has a pointer to Header for the appending long strings (TES3/TES4)
     //       NiObject has a reference to NiModel for getting strings and other NiObject Ptrs/Refs
     //
+    //       BuildData is passed to NiObject to capture useful data during construction
+    //       (this reduces the need to scan the objects later)
+    //
+    //       FIXME: skeleton should be here along with ObjectPalatte?
+    //
+    //       ObjectPalatte is used by another NiModel to build animation based on targets
+    //       (bones) in this NiModel
+    //
     class NiModel : public Ogre::Resource
     {
-        // NOTE the initialisation order
-        NiStream mNiStream;
-        NiHeader mHeader;
+        std::unique_ptr<NiStream> mNiStream; // NOTE: the initialisation order of NiStream and NiHeader
+        std::unique_ptr<NiHeader> mHeader;
 
         const std::string mGroup;  // Ogre group
 
-        std::vector<std::unique_ptr<MeshLoader> > mMeshLoaders;
+        //std::vector<std::unique_ptr<MeshLoader> > mMeshLoaders; // TODO: doesn't belong here?
 
         std::vector<std::unique_ptr<NiObject> > mObjects;
         std::vector<std::uint32_t> mRoots;
@@ -193,6 +211,8 @@ namespace NiBtOgre
         std::string mModelName;
 
         BuildData mBuildData;
+
+        std::string mNif;
 
         bool mShowEditorMarkers; // usually only for OpenCS
 
@@ -204,21 +224,17 @@ namespace NiBtOgre
         NiModel& operator=(const NiModel& other);
 
     protected:
-        void loadImpl();
-        void unloadImpl() {}
+        virtual void prepareImpl();
+        virtual void unprepareImpl();
+        virtual void loadImpl();     // called by Ogre::Resource::load()
+        virtual void unloadImpl() {} // called by Ogre::Resource::unload()
 
     public:
-        // The parameter 'name' refers to those in the Ogre::ResourceGroupManager
+        // The parameter 'nif' refers to those in the Ogre::ResourceGroupManager
         // e.g. full path from the directory/BSA added in Bsa::registerResources(), etc
-        //
-        // NOTE: the constructor may throw
-#if 0
-        NiModel(const std::string& name, const std::string& group, bool showEditorMarker=false);
-#else
         NiModel(Ogre::ResourceManager *creator, const Ogre::String& name, Ogre::ResourceHandle handle,
                 const Ogre::String& group, bool isManual, Ogre::ManualResourceLoader* loader,
-                const Ogre::NameValuePairList* createParams=nullptr/*bool showEditorMarkers=false*/);
-#endif
+                const Ogre::String& nif/*, bool showEditorMarkers=false*/);
         ~NiModel();
 
         const std::string& getOgreGroup() const { return mGroup; }
@@ -233,7 +249,7 @@ namespace NiBtOgre
             return (index < 0) ? nullptr : static_cast<T*>(mObjects[index].get());
         }
 
-        // WARNING: SceneNode in inst should have the scale (assumed uniform)
+        // WARNING: SceneNode in 'inst' should have the scale (assumed uniform)
         void build(BtOgreInst *inst);
         void buildBodyPart(BtOgreInst *inst, Ogre::SkeletonPtr skeleton = Ogre::SkeletonPtr());
 
@@ -246,21 +262,24 @@ namespace NiBtOgre
         Ogre::SkeletonPtr getSkeleton() const { return mBuildData.mSkeleton; }
         void buildSkeleton();
 
+        // skeleton name to be used for skinned objects so that the same base NIF can be used
+        void createNiObjects(const std::string& skeleton = "");
+
         // returns NiObject type name
         const std::string& blockType(std::uint32_t index) const {
-            return mHeader.blockType(index);
+            return mHeader->blockType(index);
         }
 
         // needed for the NIF version and strings (TES5)
-        inline std::uint32_t nifVer() const { return mHeader.nifVer(); }
+        inline std::uint32_t nifVer() const { return mHeader->nifVer(); }
 
         inline const std::string& indexToString(std::int32_t index) const {
-            return mHeader.indexToString(index);
+            return mHeader->indexToString(index);
         }
 
         inline bool hideEditorMarkers() const { return !mShowEditorMarkers; }
 
-        std::uint32_t getRootIndex() const { return mRoots[0]; } // assumes only one root
+        std::uint32_t getRootIndex() const { return mRoots[0]; } // FIXME: assumes only one root
 
         typedef std::int32_t NiNodeRef;
         const std::map<NiNodeRef, /*std::pair<std::string,*/ int32_t/*>*/ >&
@@ -269,9 +288,24 @@ namespace NiBtOgre
         //const std::map<NiNodeRef, int32_t>& getBhkRigidBodyMap() const { return mBuildData.mBhkRigidBocyMap; }
 
         void buildMeshAndEntity(BtOgreInst *inst, const std::string& meshExt = "");
-        void buildMeshAndEntity(BtOgreInst *inst, const std::string& npcName, std::vector<Ogre::Vector3>& vertices);
+        void buildMeshAndEntity(BtOgreInst *inst, const std::string& npcName,
+                std::unique_ptr<std::vector<Ogre::Vector3> > morphedVertices);
 
         inline const BuildData& getBuildData() const { return mBuildData; }
+
+        // used to generate a FaceGen TRI file, returns the vertices of the first NiTriBasedGeom
+        const std::vector<Ogre::Vector3>& fgVertices();
+
+        // used by FgSam to populate the morphed vertices
+        std::vector<Ogre::Vector3>& fgMorphVertices();
+
+    private:
+        void buildBones();
+        void createMesh(const std::string& skeleton);
+
+        // access to NiGeometryData for generating a FaceGen TRI file or to populate morphed vertices
+        // WARN: may throw
+        NiTriBasedGeom *fgGeometry();
     };
 }
 

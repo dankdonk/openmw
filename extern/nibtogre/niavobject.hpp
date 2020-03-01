@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015-2019 cc9cii
+  Copyright (C) 2015-2020 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -59,7 +59,7 @@ namespace NiBtOgre
             Ogre::Vector3 radius; // per direction
         };
 
-        NiAVObject(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
+        NiAVObject(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
         virtual ~NiAVObject() {}
 
         inline const Ogre::Matrix4& getWorldTransform() const { return mWorldTransform; }
@@ -97,7 +97,7 @@ namespace NiBtOgre
         float mLODAdjust;
 
     public:
-        NiCamera(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
+        NiCamera(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
         virtual ~NiCamera() {}
 
         void build(BtOgreInst *inst, BuildData *data, NiObject *parentNiNode = nullptr);
@@ -108,7 +108,7 @@ namespace NiBtOgre
         bool mSwitchState;
         std::vector<NiAVObjectRef> mAffectedNodes;
 
-        NiDynamicEffect(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
+        NiDynamicEffect(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
 
         //virtual void build(BtOgreInst *inst, BuildData *data, NiObject *parentNiNode = nullptr);
     };
@@ -120,7 +120,7 @@ namespace NiBtOgre
         Ogre::Vector3 mDiffuseColor;
         Ogre::Vector3 mSpecularColor;
 
-        NiLight(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
+        NiLight(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
 
         //void build(BtOgreInst *inst, BuildData *data, NiObject *parentNiNode = nullptr);
     };
@@ -131,7 +131,7 @@ namespace NiBtOgre
         float mAttenuationLinear;
         float mAttenuationQuadratic;
 
-        NiPointLight(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
+        NiPointLight(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
     };
 
     typedef NiLight NiAmbientLight;
@@ -152,7 +152,7 @@ namespace NiBtOgre
 
         char mClippingPlane;
 
-        NiTextureEffect(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
+        NiTextureEffect(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
 
         //void build(BtOgreInst *inst, BuildData *data, NiObject *parentNiNode = nullptr);
     };

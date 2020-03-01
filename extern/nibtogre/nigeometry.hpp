@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015-2019 cc9cii
+  Copyright (C) 2015-2020 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -25,6 +25,8 @@
 */
 #ifndef NIBTOGRE_NIGEOMETRY_H
 #define NIBTOGRE_NIGEOMETRY_H
+
+#include <memory>
 
 #include "niavobject.hpp"
 #include "ogrematerial.hpp"
@@ -69,20 +71,21 @@ namespace NiBtOgre
 
         NiNode& mParent;         // cached here
 
-        NiGeometry(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
+        NiGeometry(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
     };
 
     struct NiTriBasedGeom : public NiGeometry
     {
-        std::vector<Ogre::Vector3> *mVertices;
+        //std::unique_ptr<std::vector<Ogre::Vector3> > mMorphedVertices;
+        std::vector<Ogre::Vector3> mMorphVertices;
 
-        NiTriBasedGeom(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
+        NiTriBasedGeom(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
 
         // NiTriStrips builds differently to NiTriShapes only in that the data are different
-        bool createSubMesh(Ogre::Mesh *mesh, BoundsFinder& bounds); // returns true if tangents needed
+        bool buildSubMesh(Ogre::Mesh *mesh, BoundsFinder& bounds); // returns true if tangents needed
 
-        void setVertices(std::vector<Ogre::Vector3>& vertices);
-        std::vector<Ogre::Vector3> getVertices();
+        //void setVertices(std::unique_ptr<std::vector<Ogre::Vector3> > morphedVertices);
+        const std::vector<Ogre::Vector3>& getVertices(bool morphed = false);
 
     private:
 
@@ -104,7 +107,7 @@ namespace NiBtOgre
         std::uint32_t mLevel1Size;
         std::uint32_t mLevel2Size;
 
-        BSLODTriShape(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
+        BSLODTriShape(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
     };
 }
 

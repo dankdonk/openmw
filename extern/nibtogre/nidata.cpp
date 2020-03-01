@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015-2019 cc9cii
+  Copyright (C) 2015-2020 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -39,140 +39,140 @@
 #undef NDEBUG
 #endif
 
-NiBtOgre::ATextureRenderData::ATextureRenderData(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::ATextureRenderData::ATextureRenderData(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiObject(index, stream, model, data)
 {
-    if (stream.nifVer() > 0x14000004)
+    if (stream->nifVer() > 0x14000004)
         throw std::runtime_error("NiBtOgre::ATextureRenderData::unsupported NIF file version");
 
-    stream.read(mPixelFormat);
-    stream.read(mRedMask);
-    stream.read(mGreenMask);
-    stream.read(mBlueMask);
-    stream.read(mAlphaMask);
-    stream.read(mBitsPerPixel);
+    stream->read(mPixelFormat);
+    stream->read(mRedMask);
+    stream->read(mGreenMask);
+    stream->read(mBlueMask);
+    stream->read(mAlphaMask);
+    stream->read(mBitsPerPixel);
 
     mUnknown3Bytes.resize(3);
     for (unsigned int i = 0; i < 3; ++i)
-        stream.read(mUnknown3Bytes.at(i));
+        stream->read(mUnknown3Bytes.at(i));
 
     mUnknown8Bytes.resize(8);
     for (unsigned int i = 0; i < 8; ++i)
-        stream.read(mUnknown8Bytes.at(i));
+        stream->read(mUnknown8Bytes.at(i));
 
-    if (stream.nifVer() >= 0x0a010000 && stream.nifVer() <= 0x0a020000)
-        stream.skip(sizeof(std::uint32_t));
+    if (stream->nifVer() >= 0x0a010000 && stream->nifVer() <= 0x0a020000)
+        stream->skip(sizeof(std::uint32_t));
 
-    stream.read(mPaletteRef);
-    stream.read(mNumMipmaps);
-    stream.read(mBytesPerPixel);
+    stream->read(mPaletteRef);
+    stream->read(mNumMipmaps);
+    stream->read(mBytesPerPixel);
 
     mMipmaps.resize(mNumMipmaps);
     for (unsigned int i = 0; i < mNumMipmaps; ++i)
     {
-        stream.read(mMipmaps[i].width);
-        stream.read(mMipmaps[i].height);
-        stream.read(mMipmaps[i].offset);
+        stream->read(mMipmaps[i].width);
+        stream->read(mMipmaps[i].height);
+        stream->read(mMipmaps[i].offset);
     }
 }
 
-NiBtOgre::NiPixelData::NiPixelData(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::NiPixelData::NiPixelData(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : ATextureRenderData(index, stream, model, data)
 {
-    if (stream.nifVer() > 0x14000004)
+    if (stream->nifVer() > 0x14000004)
         throw std::runtime_error("NiBtOgre::NiPixelData::unsupported NIF file version");
 
-    stream.read(mNumPixels);
+    stream->read(mNumPixels);
     mPixelData.resize(mNumPixels);
     for (unsigned int i = 0; i < mNumPixels; ++i)
-        stream.read(mPixelData.at(i));
+        stream->read(mPixelData.at(i));
 }
 
 // Seen in NIF version 20.2.0.7
-NiBtOgre::BSMultiBound::BSMultiBound(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::BSMultiBound::BSMultiBound(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiObject(index, stream, model, data)
 {
-    stream.read(mDataRef);
+    stream->read(mDataRef);
 }
 
 // Seen in NIF version 20.2.0.7
-NiBtOgre::BSMultiBoundOBB::BSMultiBoundOBB(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::BSMultiBoundOBB::BSMultiBoundOBB(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : BSMultiBoundData(index, stream, model, data)
 {
-    stream.read(mCenter);
-    stream.read(mSize);
-    stream.read(mRotation);
+    stream->read(mCenter);
+    stream->read(mSize);
+    stream->read(mRotation);
 }
 
 // Seen in NIF version 20.0.0.4, 20.0.0.5
-NiBtOgre::NiDefaultAVObjectPalette::NiDefaultAVObjectPalette(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::NiDefaultAVObjectPalette::NiDefaultAVObjectPalette(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiAVObjectPalette(index, stream, model, data)
 {
-    stream.skip(sizeof(std::uint32_t));
+    stream->skip(sizeof(std::uint32_t));
 
     std::uint32_t numObjs = 0;
-    stream.read(numObjs);
+    stream->read(numObjs);
 
 #if 0
     mObjs.resize(numObjs);
     for (unsigned int i = 0; i < numObjs; ++i)
     {
-        stream.readSizedString(mObjs.at(i).name);
-        stream.read(mObjs.at(i).avObjectRef);
+        stream->readSizedString(mObjs.at(i).name);
+        stream->read(mObjs.at(i).avObjectRef);
     }
 #endif
     std::string name;
     NiAVObjectRef objRef;
     for (unsigned int i = 0; i < numObjs; ++i)
     {
-        stream.readSizedString(name);
-        stream.read(objRef);
+        stream->readSizedString(name);
+        stream->read(objRef);
         mObjRefMap[name] = objRef;
     }
 }
 
 // Seen in NIF version 20.2.0.7
-NiBtOgre::BSShaderTextureSet::BSShaderTextureSet(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::BSShaderTextureSet::BSShaderTextureSet(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiObject(index, stream, model, data)
 {
     std::uint32_t numTextures = 0;
-    stream.read(numTextures);
+    stream->read(numTextures);
 
     mTextures.resize(numTextures);
     for (unsigned int i = 0; i < numTextures; ++i)
-        stream.readSizedString(mTextures.at(i));
+        stream->readSizedString(mTextures.at(i));
 }
 
 // Seen in NIF version 20.0.0.4, 20.0.0.5
-NiBtOgre::NiBSplineBasisData::NiBSplineBasisData(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::NiBSplineBasisData::NiBSplineBasisData(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiObject(index, stream, model, data)
 {
-    stream.read(mNumControlPoints);
+    stream->read(mNumControlPoints);
 }
 
 // Seen in NIF version 20.0.0.4, 20.0.0.5
-NiBtOgre::NiBSplineData::NiBSplineData(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::NiBSplineData::NiBSplineData(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiObject(index, stream, model, data)
 {
-    stream.readVector<float>(mFloatControlPoints);
-    stream.readVector<std::int16_t>(mShortControlPoints);
+    stream->readVector<float>(mFloatControlPoints);
+    stream->readVector<std::int16_t>(mShortControlPoints);
 }
 
 #if 0
 template<>
-NiBtOgre::KeyGroup<char>::KeyGroup(NiStream& stream)
+NiBtOgre::KeyGroup<char>::KeyGroup(NiStream *stream)
 {
     // FIXME
 }
 
 template<>
-NiBtOgre::KeyGroup<Ogre::Vector4>::KeyGroup(NiStream& stream)
+NiBtOgre::KeyGroup<Ogre::Vector4>::KeyGroup(NiStream *stream)
 {
     // FIXME
 }
 
 template<>
-NiBtOgre::KeyGroup<float>::KeyGroup(NiStream& stream)
+NiBtOgre::KeyGroup<float>::KeyGroup(NiStream *stream)
 {
     // FIXME
 }
@@ -191,7 +191,7 @@ bool NiBtOgre::AnimTrackInterpolator<float>::getInterpolatedKeyFrame(const Ogre:
     if (mInterpolation != 2)
         return false;
 
-    float x, v1, v2; // FIXME
+    float x, v1, v2; // FIXME: not initialised ?!  fortunately nobody seems to be calling this method for now
 
     // Tangent 1
     float t1 = mKey.backward;
@@ -208,138 +208,138 @@ bool NiBtOgre::AnimTrackInterpolator<float>::getInterpolatedKeyFrame(const Ogre:
 }
 
 // Seen in NIF version 20.0.0.4, 20.0.0.5
-NiBtOgre::NiBoolData::NiBoolData(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::NiBoolData::NiBoolData(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiObject(index, stream, model, data)
 {
     mData.read(stream);
 }
 
-NiBtOgre::NiColorData::NiColorData(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::NiColorData::NiColorData(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiObject(index, stream, model, data)
 {
     mData.read(stream);
 }
 
-NiBtOgre::NiExtraData::NiExtraData(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::NiExtraData::NiExtraData(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiObject(index, stream, model, data)
 {
-    if (stream.nifVer() >= 0x0a000100) // from 10.0.1.0
-        stream.readLongString(mName);
+    if (stream->nifVer() >= 0x0a000100) // from 10.0.1.0
+        stream->readLongString(mName);
 
-    if (stream.nifVer() <= 0x04020200) // up to 4.2.2.0
-        stream.read(mNextRef);
+    if (stream->nifVer() <= 0x04020200) // up to 4.2.2.0
+        stream->read(mNextRef);
 }
 
 // Seen in NIF version 20.2.0.7
-NiBtOgre::BSBehaviorGraphExtraData::BSBehaviorGraphExtraData(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::BSBehaviorGraphExtraData::BSBehaviorGraphExtraData(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiExtraData(index, stream, model, data)
 {
-    stream.readLongString(mBehaviourGraphFile);
-    stream.read(mControlBaseSkeleton);
+    stream->readLongString(mBehaviourGraphFile);
+    stream->read(mControlBaseSkeleton);
 }
 
 // Seen in NIF version 20.0.0.4, 20.0.0.5
-NiBtOgre::BSBound::BSBound(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::BSBound::BSBound(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiExtraData(index, stream, model, data)
 {
-    stream.read(mCenter);
-    stream.read(mDimensions);
+    stream->read(mCenter);
+    stream->read(mDimensions);
 }
 
 // Seen in NIF version 20.2.0.7
-NiBtOgre::BSBoneLODExtraData::BSBoneLODExtraData(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::BSBoneLODExtraData::BSBoneLODExtraData(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiExtraData(index, stream, model, data)
 {
-    stream.read(mBoneLODCount);
+    stream->read(mBoneLODCount);
 
     mBoneLODInfo.resize(mBoneLODCount);
     for (unsigned int i = 0; i < mBoneLODCount; ++i)
     {
-        stream.read(mBoneLODInfo.at(i).distance);
-        stream.readLongString(mBoneLODInfo.at(i).boneName);
+        stream->read(mBoneLODInfo.at(i).distance);
+        stream->readLongString(mBoneLODInfo.at(i).boneName);
     }
 }
 
 // Seen in NIF version 20.2.0.7
-NiBtOgre::BSDecalPlacementVectorExtraData::BSDecalPlacementVectorExtraData(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::BSDecalPlacementVectorExtraData::BSDecalPlacementVectorExtraData(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiExtraData(index, stream, model, data)
 {
-    stream.read(mUnknown1);
+    stream->read(mUnknown1);
 
     std::uint16_t numVectorBlocks;
-    stream.read(numVectorBlocks);
+    stream->read(numVectorBlocks);
 
     mVectorBlocks.resize(numVectorBlocks);
     for (unsigned int i = 0; i < numVectorBlocks; ++i)
     {
         std::uint16_t numVectors;
-        stream.read(numVectors);
+        stream->read(numVectors);
 
         mVectorBlocks[i].points.resize(numVectors);
         for (unsigned int j = 0; j < numVectors; ++j)
-            stream.read(mVectorBlocks[i].points.at(j));
+            stream->read(mVectorBlocks[i].points.at(j));
 
         mVectorBlocks[i].normals.resize(numVectors);
         for (unsigned int j = 0; j < numVectors; ++j)
-            stream.read(mVectorBlocks[i].normals.at(j));
+            stream->read(mVectorBlocks[i].normals.at(j));
     }
 }
 
 // Seen in NIF ver 20.0.0.4, 20.0.0.5
-NiBtOgre::BSFurnitureMarker::BSFurnitureMarker(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::BSFurnitureMarker::BSFurnitureMarker(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiExtraData(index, stream, model, data)
 {
     std::uint32_t numPos;
-    stream.read(numPos);
+    stream->read(numPos);
 
     mPositions.resize(numPos);
     for (unsigned int i = 0; i < numPos; ++i)
     {
-        stream.read(mPositions[i].offset);
-        if (stream.userVer() <= 11)
+        stream->read(mPositions[i].offset);
+        if (stream->userVer() <= 11)
         {
-            stream.read(mPositions[i].orientation);
-            stream.read(mPositions[i].posRef1);
-            stream.read(mPositions[i].posRef2);
+            stream->read(mPositions[i].orientation);
+            stream->read(mPositions[i].posRef1);
+            stream->read(mPositions[i].posRef2);
         }
-        if (stream.nifVer() >= 0x14020007 && stream.userVer() >= 12) // from 20.2.0.7
+        if (stream->nifVer() >= 0x14020007 && stream->userVer() >= 12) // from 20.2.0.7
         {
-            stream.read(mPositions[i].heading);
-            stream.read(mPositions[i].animationType);
-            stream.read(mPositions[i].entryProperties);
+            stream->read(mPositions[i].heading);
+            stream->read(mPositions[i].animationType);
+            stream->read(mPositions[i].entryProperties);
         }
     }
 }
 
 // Seen in NIF version 20.2.0.7
-NiBtOgre::BSInvMarker::BSInvMarker(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::BSInvMarker::BSInvMarker(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiExtraData(index, stream, model, data)
 {
-    stream.read(mRotationX);
-    stream.read(mRotationY);
-    stream.read(mRotationZ);
-    stream.read(mZoom);
+    stream->read(mRotationX);
+    stream->read(mRotationY);
+    stream->read(mRotationZ);
+    stream->read(mZoom);
 }
 
 // Seen in NIF version 20.0.0.4, 20.0.0.5
-NiBtOgre::NiBinaryExtraData::NiBinaryExtraData(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::NiBinaryExtraData::NiBinaryExtraData(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiExtraData(index, stream, model, data)
 {
-    stream.readVector<char>(mData);
+    stream->readVector<char>(mData);
 }
 
 // Seen in NIF version 20.0.0.4, 20.0.0.5
-NiBtOgre::NiBooleanExtraData::NiBooleanExtraData(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::NiBooleanExtraData::NiBooleanExtraData(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiExtraData(index, stream, model, data)
 {
-    stream.read(mBooleanData);
+    stream->read(mBooleanData);
 }
 
 // Seen in NIF version 20.2.0.7
-NiBtOgre::NiFloatExtraData::NiFloatExtraData(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::NiFloatExtraData::NiFloatExtraData(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiExtraData(index, stream, model, data)
 {
-    stream.read(mFloatData);
+    stream->read(mFloatData);
 }
 
 // Seen in NIF version 20.0.0.4, 20.0.0.5
@@ -349,10 +349,10 @@ NiBtOgre::NiFloatExtraData::NiFloatExtraData(uint32_t index, NiStream& stream, c
 //
 // EditorMarker NiNodes seem to have Flag == 0x10 == 0b10000(similarly Gravity NiNode)
 //   - but ./effects/sefxbreathstreight512.nif has 0xE == 0b01110
-NiBtOgre::NiIntegerExtraData::NiIntegerExtraData(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::NiIntegerExtraData::NiIntegerExtraData(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiExtraData(index, stream, model, data)
 {
-    stream.read(mIntegerData);
+    stream->read(mIntegerData);
 
     /* ---------------------------------------------------------------------- */
 
@@ -369,7 +369,7 @@ NiBtOgre::NiIntegerExtraData::NiIntegerExtraData(uint32_t index, NiStream& strea
         //else
             //data.mEditorMarkerPresent = false;
 
-        if (stream.nifVer() < 0x14020007) // FIXME: TES5 differrent
+        if (stream->nifVer() < 0x14020007) // FIXME: TES5 differrent
         {
             if ((mIntegerData & 0x01) != 0)
                 data.mBuildFlags |= Flag_EnableHavok;
@@ -397,7 +397,7 @@ NiBtOgre::NiIntegerExtraData::NiIntegerExtraData(uint32_t index, NiStream& strea
                 //data.mFlameNodesPresent = false;
         }
 #else
-        if (stream.nifVer() < 0x14020007)
+        if (stream->nifVer() < 0x14020007)
             data.mBuildFlags |= (mIntegerData & 0x3f); // lower 6 bits
         else
         {
@@ -418,13 +418,13 @@ NiBtOgre::NiIntegerExtraData::NiIntegerExtraData(uint32_t index, NiStream& strea
 //
 // NCO means "No COllision" (e.g. ./l/light_com_lantern_02.nif)
 // MRK means "there is an Editor Marker in this file"
-NiBtOgre::NiStringExtraData::NiStringExtraData(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::NiStringExtraData::NiStringExtraData(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiExtraData(index, stream, model, data)
 {
-    if (stream.nifVer() <= 0x04020200) // up to 4.2.2.0
-        stream.skip(sizeof(std::uint32_t));
+    if (stream->nifVer() <= 0x04020200) // up to 4.2.2.0
+        stream->skip(sizeof(std::uint32_t));
 
-    stream.readLongString(mStringData);
+    stream->readLongString(mStringData);
 
 #if 0 // FIXME: testing only
     if (model.indexToString(mStringData) == "MRK") // FIXME: testing only
@@ -436,112 +436,112 @@ NiBtOgre::NiStringExtraData::NiStringExtraData(uint32_t index, NiStream& stream,
 //                  specified in text keys)
 // ./architecture/anvil/anvildoormcanim01.nif (special sound effect)
 // ./architecture/solitude/interiors/ssecretjaildoor01.nif (start/end)
-NiBtOgre::NiTextKeyExtraData::NiTextKeyExtraData(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::NiTextKeyExtraData::NiTextKeyExtraData(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiExtraData(index, stream, model, data)
 {
-    if (stream.nifVer() <= 0x04020200) // up to 4.2.2.0
-        stream.skip(sizeof(std::uint32_t)); // always 0?
+    if (stream->nifVer() <= 0x04020200) // up to 4.2.2.0
+        stream->skip(sizeof(std::uint32_t)); // always 0?
 
     std::uint32_t numTextKeys;
-    stream.read(numTextKeys);
+    stream->read(numTextKeys);
     mTextKeys.resize(numTextKeys);
     for (unsigned int i = 0; i < numTextKeys; ++i)
     {
-        stream.read(mTextKeys.at(i).time);
-        stream.readLongString(mTextKeys.at(i).text);
+        stream->read(mTextKeys.at(i).time);
+        stream->readLongString(mTextKeys.at(i).text);
     }
 }
 
-NiBtOgre::NiVertWeightsExtraData::NiVertWeightsExtraData(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::NiVertWeightsExtraData::NiVertWeightsExtraData(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiExtraData(index, stream, model, data)
 {
     std::uint32_t numBytes;
-    stream.read(numBytes);
+    stream->read(numBytes);
 
     std::uint16_t numVertices;
-    stream.read(numVertices);
+    stream->read(numVertices);
 
-    stream.skip(numVertices * sizeof(float));
+    stream->skip(numVertices * sizeof(float));
 }
 
-NiBtOgre::NiFloatData::NiFloatData(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::NiFloatData::NiFloatData(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiObject(index, stream, model, data)
 {
     mData.read(stream);
 }
 
-NiBtOgre::NiGeometryData::NiGeometryData(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data, bool isNiPSysData)
+NiBtOgre::NiGeometryData::NiGeometryData(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data, bool isNiPSysData)
     : NiObject(index, stream, model, data), mNumVertices(0), mNumUVSets(0), mBSNumUVSets(0) , mIsNiPSysData(isNiPSysData)
 {
-    if (stream.nifVer() == 0x0a000100)     // HACK: not sure why this is needed
-        stream.skip(sizeof(std::int32_t)); // e.g. clutter/farm/oar01.nif version 10.0.1.0
-    else if (stream.nifVer() == 0x0a01006a)
-        stream.skip(sizeof(std::int32_t)); // e.g. creatures/horse/bridle.nif version 10.1.0.106
+    if (stream->nifVer() == 0x0a000100)     // HACK: not sure why this is needed
+        stream->skip(sizeof(std::int32_t)); // e.g. clutter/farm/oar01.nif version 10.0.1.0
+    else if (stream->nifVer() == 0x0a01006a)
+        stream->skip(sizeof(std::int32_t)); // e.g. creatures/horse/bridle.nif version 10.1.0.106
 
-    if (stream.nifVer() >= 0x0a020000) // from 10.2.0.0
+    if (stream->nifVer() >= 0x0a020000) // from 10.2.0.0
     {
         std::int32_t unknownInt;
-        stream.read(unknownInt); // always 0
+        stream->read(unknownInt); // always 0
     }
 
-    if (!mIsNiPSysData || (mIsNiPSysData && (stream.nifVer() < 0x14020007 || stream.userVer() < 11)))
-        stream.read(mNumVertices);
+    if (!mIsNiPSysData || (mIsNiPSysData && (stream->nifVer() < 0x14020007 || stream->userVer() < 11)))
+        stream->read(mNumVertices);
 
-    if (mIsNiPSysData && stream.nifVer() >= 0x14020007 && stream.userVer() >= 11)
-        stream.read(mBSMaxVertices);
+    if (mIsNiPSysData && stream->nifVer() >= 0x14020007 && stream->userVer() >= 11)
+        stream->read(mBSMaxVertices);
 
-    if (stream.nifVer() >= 0x0a010000) // from 10.1.0.0
+    if (stream->nifVer() >= 0x0a010000) // from 10.1.0.0
     {
-        stream.read(mKeepFlags);
-        stream.read(mCompressFlags);
+        stream->read(mKeepFlags);
+        stream->read(mCompressFlags);
     }
 
-    if (stream.getBool()) // has vertices
+    if (stream->getBool()) // has vertices
     {
-        stream.readVector<Ogre::Vector3>(mVertices, mNumVertices);
+        stream->readVector<Ogre::Vector3>(mVertices, mNumVertices);
     }
 
-    if (stream.nifVer() >= 0x0a000100) // from 10.0.1.0
+    if (stream->nifVer() >= 0x0a000100) // from 10.0.1.0
     {
-        if (stream.nifVer() < 0x14020007 || stream.userVer() < 11)
-            stream.read(mNumUVSets);
+        if (stream->nifVer() < 0x14020007 || stream->userVer() < 11)
+            stream->read(mNumUVSets);
 
-        if (stream.nifVer() >= 0x14020007 && stream.userVer() >= 11)
-            stream.read(mBSNumUVSets);
+        if (stream->nifVer() >= 0x14020007 && stream->userVer() >= 11)
+            stream->read(mBSNumUVSets);
     }
 
-    if (!mIsNiPSysData && stream.nifVer() >= 0x14020007 && stream.userVer() == 12)
-        stream.skip(sizeof(std::uint32_t)); // Unknown Int 2
+    if (!mIsNiPSysData && stream->nifVer() >= 0x14020007 && stream->userVer() == 12)
+        stream->skip(sizeof(std::uint32_t)); // Unknown Int 2
 
-    bool hasNormals = stream.getBool();
+    bool hasNormals = stream->getBool();
     if (hasNormals)
-        stream.readVector<Ogre::Vector3>(mNormals, mNumVertices);
+        stream->readVector<Ogre::Vector3>(mNormals, mNumVertices);
 
     if (hasNormals && ((mNumUVSets & 0xf000) || (mBSNumUVSets & 0xf000)))
     {
-        stream.readVector<Ogre::Vector3>(mTangents, mNumVertices);
-        stream.readVector<Ogre::Vector3>(mBitangents, mNumVertices);
+        stream->readVector<Ogre::Vector3>(mTangents, mNumVertices);
+        stream->readVector<Ogre::Vector3>(mBitangents, mNumVertices);
     }
 
-    stream.read(mCenter);
-    stream.read(mRadius);
+    stream->read(mCenter);
+    stream->read(mRadius);
 
-    if (stream.getBool()) // has vertex colors
-        stream.readVector<Ogre::Vector4>(mVertexColors, mNumVertices);
+    if (stream->getBool()) // has vertex colors
+        stream->readVector<Ogre::Vector4>(mVertexColors, mNumVertices);
 
     std::uint16_t numUVSets = 0;
-    if (stream.nifVer() <= 0x04020200) // up to 4.2.2.0
+    if (stream->nifVer() <= 0x04020200) // up to 4.2.2.0
     {
-        stream.read(numUVSets);
+        stream->read(numUVSets);
         numUVSets &= 0x3f;
     }
-    if (stream.nifVer() >= 0x0a000100) // from 10.0.1.0
+    if (stream->nifVer() >= 0x0a000100) // from 10.0.1.0
         numUVSets = mNumUVSets & 0x3f;
-    if (stream.nifVer() >= 0x14020007 && stream.userVer() >= 11)
+    if (stream->nifVer() >= 0x14020007 && stream->userVer() >= 11)
         numUVSets |= mBSNumUVSets & 1;
 
-    if (stream.nifVer() <= 0x04000002) // up to 4.0.0.2
-        bool hasUV = stream.getBool(); // is this used anywhere?
+    if (stream->nifVer() <= 0x04000002) // up to 4.0.0.2
+        bool hasUV = stream->getBool(); // is this used anywhere?
 
     mUVSets.resize(numUVSets);
     for (unsigned int i = 0; i < numUVSets; ++i)
@@ -549,197 +549,197 @@ NiBtOgre::NiGeometryData::NiGeometryData(uint32_t index, NiStream& stream, const
         mUVSets.at(i).resize(mNumVertices);
         for (unsigned int j = 0; j < mNumVertices; ++j)
         {
-            //stream.read(mUVSets.at(i).at(j).u);
-            //stream.read(mUVSets.at(i).at(j).v);
+            //stream->read(mUVSets.at(i).at(j).u);
+            //stream->read(mUVSets.at(i).at(j).v);
             Ogre::Vector2 uv; // FIXME
-            stream.read(uv.x);
-            stream.read(uv.y);
+            stream->read(uv.x);
+            stream->read(uv.y);
             mUVSets.at(i).at(j) = uv;
         }
     }
 
-    if (stream.nifVer() >= 0x0a000100) // from 10.0.1.0
-        if (stream.userVer() < 12 || (stream.userVer() >= 12 && !mIsNiPSysData))
-            stream.read(mConsistencyFlags);
+    if (stream->nifVer() >= 0x0a000100) // from 10.0.1.0
+        if (stream->userVer() < 12 || (stream->userVer() >= 12 && !mIsNiPSysData))
+            stream->read(mConsistencyFlags);
 
-    if (stream.nifVer() >= 0x14000004) // from 20.0.0.4
-        if (stream.userVer() < 12 || (stream.userVer() >= 12 && !mIsNiPSysData))
-            stream.read(mAdditionalDataRef);
+    if (stream->nifVer() >= 0x14000004) // from 20.0.0.4
+        if (stream->userVer() < 12 || (stream->userVer() >= 12 && !mIsNiPSysData))
+            stream->read(mAdditionalDataRef);
 }
 
-NiBtOgre::NiParticlesData::NiParticlesData(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data, bool isNiPSysData)
+NiBtOgre::NiParticlesData::NiParticlesData(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data, bool isNiPSysData)
     : NiGeometryData(index, stream, model, data, isNiPSysData)
 {
-    if (stream.nifVer() <= 0x04020200) // up to 4.2.2.0
-        stream.read(mNumParticles);
+    if (stream->nifVer() <= 0x04020200) // up to 4.2.2.0
+        stream->read(mNumParticles);
 
-    if (stream.nifVer() <= 0x0a000100) // up to 10.0.1.0
-        stream.read(mParticleRadius);
+    if (stream->nifVer() <= 0x0a000100) // up to 10.0.1.0
+        stream->read(mParticleRadius);
 
-    if (stream.nifVer() >= 0x0a010000) // from 10.1.0.0
+    if (stream->nifVer() >= 0x0a010000) // from 10.1.0.0
     {
-        if (stream.getBool() && !(stream.nifVer() >= 0x14020007 && stream.userVer() >= 11))
-            stream.readVector<float>(mRadii, mNumVertices);
+        if (stream->getBool() && !(stream->nifVer() >= 0x14020007 && stream->userVer() >= 11))
+            stream->readVector<float>(mRadii, mNumVertices);
     }
 
-    stream.read(mNumActive);
+    stream->read(mNumActive);
 
-    if (stream.getBool() && !(stream.nifVer() >= 0x14020007 && stream.userVer() >= 11))
-        stream.readVector<float>(mSizes, mNumVertices);
+    if (stream->getBool() && !(stream->nifVer() >= 0x14020007 && stream->userVer() >= 11))
+        stream->readVector<float>(mSizes, mNumVertices);
 
-    if (stream.nifVer() >= 0x0a010000) // from 10.1.0.0
+    if (stream->nifVer() >= 0x0a010000) // from 10.1.0.0
     {
-        if (stream.getBool() && !(stream.nifVer() >= 0x14020007 && stream.userVer() >= 11))
-            stream.readVector<Ogre::Quaternion>(mRotations, mNumVertices);
+        if (stream->getBool() && !(stream->nifVer() >= 0x14020007 && stream->userVer() >= 11))
+            stream->readVector<Ogre::Quaternion>(mRotations, mNumVertices);
     }
 
-    if (stream.nifVer() >= 0x14020007 && stream.userVer() >= 12)
+    if (stream->nifVer() >= 0x14020007 && stream->userVer() >= 12)
     {
-        stream.skip(sizeof(char)); // unknown byte 1
+        stream->skip(sizeof(char)); // unknown byte 1
         NiObjectRef unknownLink;
-        stream.read(unknownLink);
+        stream->read(unknownLink);
     }
 
-    if (stream.nifVer() >= 0x14000004) // from 20.0.0.4
+    if (stream->nifVer() >= 0x14000004) // from 20.0.0.4
     {
-        if (stream.getBool() && !(stream.nifVer() >= 0x14020007 && stream.userVer() >= 11))
-            stream.readVector<float>(mRotationAngles, mNumVertices);
+        if (stream->getBool() && !(stream->nifVer() >= 0x14020007 && stream->userVer() >= 11))
+            stream->readVector<float>(mRotationAngles, mNumVertices);
     }
 
-    if (stream.nifVer() >= 0x14000004) // from 20.0.0.4
+    if (stream->nifVer() >= 0x14000004) // from 20.0.0.4
     {
-        if (stream.getBool() && !(stream.nifVer() >= 0x14020007 && stream.userVer() >= 11))
-            stream.readVector<Ogre::Vector3>(mRotationAxes, mNumVertices);
+        if (stream->getBool() && !(stream->nifVer() >= 0x14020007 && stream->userVer() >= 11))
+            stream->readVector<Ogre::Vector3>(mRotationAxes, mNumVertices);
     }
 
-    if (stream.nifVer() >= 0x14020007 && stream.userVer() == 11)
+    if (stream->nifVer() >= 0x14020007 && stream->userVer() == 11)
     {
-        bool hasUVQuads = stream.getBool();
+        bool hasUVQuads = stream->getBool();
         unsigned char numUVQuadrants = 0;
-        stream.read(numUVQuadrants);
+        stream->read(numUVQuadrants);
         if (hasUVQuads)
-            stream.readVector<Ogre::Vector4>(mUVQuadrants, numUVQuadrants);
+            stream->readVector<Ogre::Vector4>(mUVQuadrants, numUVQuadrants);
     }
 
-    if (stream.nifVer() == 0x14020007 && stream.userVer() >= 11)
-        stream.skip(sizeof(char)); // unknown byte 2
+    if (stream->nifVer() == 0x14020007 && stream->userVer() >= 11)
+        stream->skip(sizeof(char)); // unknown byte 2
 }
 
-NiBtOgre::NiRotatingParticlesData::NiRotatingParticlesData(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data,
+NiBtOgre::NiRotatingParticlesData::NiRotatingParticlesData(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data,
         bool isNiPSysData)
     : NiParticlesData(index, stream, model, data, isNiPSysData)
 {
-    if (stream.nifVer() <= 0x04020200) // up to 4.2.2.0
-        if (stream.getBool())
-            stream.readVector<Ogre::Quaternion>(mRotations2, mNumVertices);
+    if (stream->nifVer() <= 0x04020200) // up to 4.2.2.0
+        if (stream->getBool())
+            stream->readVector<Ogre::Quaternion>(mRotations2, mNumVertices);
 }
 
 // Seen in NIF ver 20.0.0.4, 20.0.0.5
-NiBtOgre::NiPSysData::NiPSysData(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::NiPSysData::NiPSysData(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiRotatingParticlesData(index, stream, model, data, true)
 {
-    if (!(stream.nifVer() >= 0x14020007 && stream.userVer() >= 11))
+    if (!(stream->nifVer() >= 0x14020007 && stream->userVer() >= 11))
     {
         mParticleDescriptions.resize(mNumVertices);
         for (unsigned int i = 0; i < mNumVertices; ++i)
         {
             // ParticleDesc
-            stream.read(mParticleDescriptions.at(i).translation);
-            if (stream.nifVer() <= 0x0a040001) // up to 10.4.0.1
-                stream.read(mParticleDescriptions.at(i).unknownFloats);
-            stream.read(mParticleDescriptions.at(i).unknown1);
-            stream.read(mParticleDescriptions.at(i).unknown2);
-            stream.read(mParticleDescriptions.at(i).unknown3);
-            stream.read(mParticleDescriptions.at(i).unknown);
+            stream->read(mParticleDescriptions.at(i).translation);
+            if (stream->nifVer() <= 0x0a040001) // up to 10.4.0.1
+                stream->read(mParticleDescriptions.at(i).unknownFloats);
+            stream->read(mParticleDescriptions.at(i).unknown1);
+            stream->read(mParticleDescriptions.at(i).unknown2);
+            stream->read(mParticleDescriptions.at(i).unknown3);
+            stream->read(mParticleDescriptions.at(i).unknown);
         }
     }
 
-    if (stream.nifVer() >= 0x14000004 && !(stream.nifVer() >= 0x14020007 && stream.userVer() >= 11))
+    if (stream->nifVer() >= 0x14000004 && !(stream->nifVer() >= 0x14020007 && stream->userVer() >= 11))
     {
-        if (stream.getBool())
-            stream.readVector<float>(mUnknownFloats3, mNumVertices);
+        if (stream->getBool())
+            stream->readVector<float>(mUnknownFloats3, mNumVertices);
     }
 
-    if (!(stream.nifVer() >= 0x14020007 && stream.userVer() == 11))
+    if (!(stream->nifVer() >= 0x14020007 && stream->userVer() == 11))
     {
-        stream.skip(sizeof(std::uint16_t));
-        stream.skip(sizeof(std::uint16_t));
+        stream->skip(sizeof(std::uint16_t));
+        stream->skip(sizeof(std::uint16_t));
     }
 
-    if (stream.nifVer() >= 0x14020007 && stream.userVer() >= 12)
+    if (stream->nifVer() >= 0x14020007 && stream->userVer() >= 12)
     {
-        bool hasSubTexOffsetUVs = stream.getBool();
+        bool hasSubTexOffsetUVs = stream->getBool();
         std::uint32_t numSubTexOffsetUVs;
-        stream.read(numSubTexOffsetUVs);
-        stream.read(mAspectRatio);
+        stream->read(numSubTexOffsetUVs);
+        stream->read(mAspectRatio);
         if (hasSubTexOffsetUVs)
-            stream.readVector<Ogre::Vector4>(mSubTextureOffsetUVs, numSubTexOffsetUVs);
-        stream.skip(sizeof(std::uint32_t)); // unknown Int 4
-        stream.skip(sizeof(std::uint32_t)); // unknown Int 5
-        stream.skip(sizeof(std::uint32_t)); // unknown Int 6
-        stream.skip(sizeof(std::uint16_t)); // unknown short 3
-        stream.skip(sizeof(char)); // unknown byte 4
+            stream->readVector<Ogre::Vector4>(mSubTextureOffsetUVs, numSubTexOffsetUVs);
+        stream->skip(sizeof(std::uint32_t)); // unknown Int 4
+        stream->skip(sizeof(std::uint32_t)); // unknown Int 5
+        stream->skip(sizeof(std::uint32_t)); // unknown Int 6
+        stream->skip(sizeof(std::uint16_t)); // unknown short 3
+        stream->skip(sizeof(char)); // unknown byte 4
     }
 }
 
 // Seen in NIF version 20.2.0.7
-NiBtOgre::BSStripPSysData::BSStripPSysData(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::BSStripPSysData::BSStripPSysData(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiPSysData(index, stream, model, data)
 {
-    stream.read(mUnknown5);
-    stream.read(mUnknown6);
-    stream.read(mUnknown7);
-    stream.read(mUnknown8);
+    stream->read(mUnknown5);
+    stream->read(mUnknown6);
+    stream->read(mUnknown7);
+    stream->read(mUnknown8);
 }
 
-NiBtOgre::NiTriBasedGeomData::NiTriBasedGeomData(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::NiTriBasedGeomData::NiTriBasedGeomData(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiGeometryData(index, stream, model, data)
 {
-    stream.read(mNumTriangles);
+    stream->read(mNumTriangles);
 }
 
-NiBtOgre::NiTriShapeData::NiTriShapeData(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::NiTriShapeData::NiTriShapeData(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiTriBasedGeomData(index, stream, model, data)
 {
     std::uint32_t numTrianglePoints; // mNumTriangles times 3
-    stream.read(numTrianglePoints);
+    stream->read(numTrianglePoints);
 
     bool hasTriangles = false;
-    if (stream.nifVer() >= 0x0a000100) // from 10.0.1.0
-        hasTriangles = stream.getBool();
+    if (stream->nifVer() >= 0x0a000100) // from 10.0.1.0
+        hasTriangles = stream->getBool();
     else
         hasTriangles = true;
 
     if (hasTriangles)
-        stream.readVector<std::uint16_t>(mTriangles, numTrianglePoints);
+        stream->readVector<std::uint16_t>(mTriangles, numTrianglePoints);
 
     std::uint16_t numMatchGroups;
-    stream.read(numMatchGroups);
+    stream->read(numMatchGroups);
 
     std::uint16_t numVertices;
     for (unsigned int i = 0; i < numMatchGroups; ++i)
     {
-        stream.read(numVertices);
-        stream.skip(numVertices * sizeof(std::uint16_t));
+        stream->read(numVertices);
+        stream->skip(numVertices * sizeof(std::uint16_t));
     }
 }
 
 // Seen in NIF ver 20.0.0.4, 20.0.0.5
-NiBtOgre::NiTriStripsData::NiTriStripsData(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::NiTriStripsData::NiTriStripsData(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiTriBasedGeomData(index, stream, model, data)
 {
     std::uint16_t numStrips;
-    stream.read(numStrips);
+    stream->read(numStrips);
 
     mStripLengths.resize(numStrips);
     for (unsigned int i = 0; i < numStrips; ++i)
-        stream.read(mStripLengths.at(i));
+        stream->read(mStripLengths.at(i));
 
     bool hasPoints = false;
-    if (stream.nifVer() <= 0x0a000102) // up to 10.0.1.2
+    if (stream->nifVer() <= 0x0a000102) // up to 10.0.1.2
         hasPoints = true;
     else
-        hasPoints = stream.getBool();
+        hasPoints = stream->getBool();
 
     if (hasPoints)
     {
@@ -748,7 +748,7 @@ NiBtOgre::NiTriStripsData::NiTriStripsData(uint32_t index, NiStream& stream, con
         {
             mPoints[i].resize(mStripLengths[i]);
             for (unsigned int j = 0; j < mStripLengths[i]; ++j)
-                stream.read(mPoints.at(i).at(j));
+                stream->read(mPoints.at(i).at(j));
         }
     }
 
@@ -818,27 +818,27 @@ NiBtOgre::NiTriStripsData::NiTriStripsData(uint32_t index, NiStream& stream, con
 #endif
 }
 
-NiBtOgre::NiKeyframeData::NiKeyframeData(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::NiKeyframeData::NiKeyframeData(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiObject(index, stream, model, data), mRotationType(1/*LINEAR_KEY*/)
 {
     std::uint32_t numRotationKeys = 0;
-    stream.read(numRotationKeys);
+    stream->read(numRotationKeys);
 
     if (numRotationKeys != 0)
-        stream.read(mRotationType);
+        stream->read(mRotationType);
 
     if (mRotationType != 4) // not XYZ_ROTATION_KEY (i.e. LINEAR, QUADRATIC, TBC, CONSTANT)
     {
 //      mQuaternionKeys.resize(numRotationKeys);
 //      for (unsigned int i = 0; i < numRotationKeys; ++i)
 //      {
-//          stream.read(mQuaternionKeys.at(i).time);
-//          stream.read(mQuaternionKeys.at(i).value);
+//          stream->read(mQuaternionKeys.at(i).time);
+//          stream->read(mQuaternionKeys.at(i).value);
 //          if (mRotationType == 3/* TBC_KEY */)
 //          {
-//              stream.read(mQuaternionKeys.at(i).tension);
-//              stream.read(mQuaternionKeys.at(i).bias);
-//              stream.read(mQuaternionKeys.at(i).continuity);
+//              stream->read(mQuaternionKeys.at(i).tension);
+//              stream->read(mQuaternionKeys.at(i).bias);
+//              stream->read(mQuaternionKeys.at(i).continuity);
 //          }
 //      }
         mQuaternionKeys.interpolation = mRotationType; // TODO: check not quadratic?
@@ -857,8 +857,8 @@ NiBtOgre::NiKeyframeData::NiKeyframeData(uint32_t index, NiStream& stream, const
     }
     else                    // XYZ_ROTATION_KEY
     {
-        if (stream.nifVer() <= 0x0a010000) // up to 10.1.0.0
-            stream.skip(sizeof(float)); // unknown float
+        if (stream->nifVer() <= 0x0a010000) // up to 10.1.0.0
+            stream->skip(sizeof(float)); // unknown float
         mXRotations.read(stream);
         mYRotations.read(stream);
         mZRotations.read(stream);
@@ -867,29 +867,29 @@ NiBtOgre::NiKeyframeData::NiKeyframeData(uint32_t index, NiStream& stream, const
     mScales.read(stream);
 }
 
-NiBtOgre::NiMorphData::NiMorphData(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::NiMorphData::NiMorphData(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiObject(index, stream, model, data)
 {
     std::uint32_t numMorphs;
-    stream.read(numMorphs);
+    stream->read(numMorphs);
 
     std::uint32_t numVertices;
-    stream.read(numVertices);
+    stream->read(numVertices);
 
-    stream.skip(sizeof(char)); // relative targets
+    stream->skip(sizeof(char)); // relative targets
 
     mMorphs.resize(numMorphs);
     for (unsigned int i = 0; i < numMorphs; ++i)
     {
-        if (stream.nifVer() >= 0x0a01006a) // from 10.1.0.106
-            stream.readLongString(mMorphs.at(i).mFrameName);
+        if (stream->nifVer() >= 0x0a01006a) // from 10.1.0.106
+            stream->readLongString(mMorphs.at(i).mFrameName);
 
-        if (stream.nifVer() <= 0x0a010000) // up to 10.1.0.0
+        if (stream->nifVer() <= 0x0a010000) // up to 10.1.0.0
         {
             std::uint32_t numKeys;
-            stream.read(numKeys);
+            stream->read(numKeys);
             std::uint32_t interpolation;
-            stream.read(interpolation);
+            stream->read(interpolation);
 
             mMorphs.at(i).mKeys.resize(numKeys);
             for (unsigned int j = 0; j < numKeys; ++j)
@@ -899,128 +899,128 @@ NiBtOgre::NiMorphData::NiMorphData(uint32_t index, NiStream& stream, const NiMod
             }
         }
 
-        if (stream.nifVer() >= 0x0a01006a && stream.nifVer() <= 0x0a020000)
-            stream.skip(sizeof(std::uint32_t));
+        if (stream->nifVer() >= 0x0a01006a && stream->nifVer() <= 0x0a020000)
+            stream->skip(sizeof(std::uint32_t));
 
-        if (stream.nifVer() >= 0x14000004 && stream.nifVer() <= 0x14000005 && stream.userVer() == 0)
-            stream.skip(sizeof(std::uint32_t));
+        if (stream->nifVer() >= 0x14000004 && stream->nifVer() <= 0x14000005 && stream->userVer() == 0)
+            stream->skip(sizeof(std::uint32_t));
 
-        stream.readVector<Ogre::Vector3>(mMorphs.at(i).mVectors, numVertices);
+        stream->readVector<Ogre::Vector3>(mMorphs.at(i).mVectors, numVertices);
     }
 
-    if (stream.nifVer() == 0x0a01006a) // 10.1.0.106
-        stream.skip(sizeof(int32_t)); // e.g. creatures/horse/bridle.nif version 10.1.0.106
+    if (stream->nifVer() == 0x0a01006a) // 10.1.0.106
+        stream->skip(sizeof(int32_t)); // e.g. creatures/horse/bridle.nif version 10.1.0.106
 }
 
-NiBtOgre::NiPosData::NiPosData(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::NiPosData::NiPosData(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiObject(index, stream, model, data)
 {
     mData.read(stream);
 }
 
-NiBtOgre::NiSkinData::NiSkinData(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::NiSkinData::NiSkinData(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiObject(index, stream, model, data), mSkinPartitionRef(-1)
 {
-    stream.read(mSkinTransform.rotation);
-    stream.read(mSkinTransform.translation);
-    stream.read(mSkinTransform.scale);
+    stream->read(mSkinTransform.rotation);
+    stream->read(mSkinTransform.translation);
+    stream->read(mSkinTransform.scale);
 
     std::uint32_t numBones;
-    stream.read(numBones);
-    if (/*stream.nifVer() >= 0x04000002 && */stream.nifVer() <= 0x0a010000) // we don't support < 4.0.0.2
-        stream.read(mSkinPartitionRef);
+    stream->read(numBones);
+    if (/*stream->nifVer() >= 0x04000002 && */stream->nifVer() <= 0x0a010000) // we don't support < 4.0.0.2
+        stream->read(mSkinPartitionRef);
 
     unsigned char hasVertexWeights = 0;
-    if (stream.nifVer() >= 0x04020100) // from 4.2.1.0 (should this be 4.2.2.0?)
-        stream.read(hasVertexWeights);
+    if (stream->nifVer() >= 0x04020100) // from 4.2.1.0 (should this be 4.2.2.0?)
+        stream->read(hasVertexWeights);
 
     mBoneList.resize(numBones);
     for (unsigned int i = 0; i < numBones; ++i)
     {
         SkinData &skin = mBoneList.at(i);
 
-        stream.read(skin.skinTransform.rotation);
-        stream.read(skin.skinTransform.translation);
-        stream.read(skin.skinTransform.scale);
-        stream.read(skin.boundingSphereOffset);
-        stream.read(skin.boundingSphereRadius);
+        stream->read(skin.skinTransform.rotation);
+        stream->read(skin.skinTransform.translation);
+        stream->read(skin.skinTransform.scale);
+        stream->read(skin.boundingSphereOffset);
+        stream->read(skin.boundingSphereRadius);
 
         std::uint16_t numVertices;
-        stream.read(numVertices);
-        if (stream.nifVer() <= 0x04020100 || (stream.nifVer() >= 0x04020200 && hasVertexWeights))
+        stream->read(numVertices);
+        if (stream->nifVer() <= 0x04020100 || (stream->nifVer() >= 0x04020200 && hasVertexWeights))
         {
             skin.vertexWeights.resize(numVertices);
             for (unsigned int j = 0; j < numVertices; ++j)
             {
-                stream.read(skin.vertexWeights[j].vertex);
-                stream.read(skin.vertexWeights[j].weight);
+                stream->read(skin.vertexWeights[j].vertex);
+                stream->read(skin.vertexWeights[j].weight);
             }
         }
     }
 }
 
-NiBtOgre::NiSkinInstance::NiSkinInstance(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::NiSkinInstance::NiSkinInstance(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiObject(index, stream, model, data)
 {
-    stream.read(mDataRef);
-    if (stream.nifVer() >= 0x0a020000) // from 10.2.0.0
-        stream.read(mSkinPartitionRef);
-    //stream.getPtr<NiNode>(mSkeletonRoot, model.objects());
-  //stream.read(mSkeletonRootRef);
+    stream->read(mDataRef);
+    if (stream->nifVer() >= 0x0a020000) // from 10.2.0.0
+        stream->read(mSkinPartitionRef);
+    //stream->getPtr<NiNode>(mSkeletonRoot, model.objects());
+  //stream->read(mSkeletonRootRef);
     std::int32_t rIndex = -1;
-    stream.read(rIndex);
+    stream->read(rIndex);
     mSkeletonRoot = model.getRef<NiNode>(rIndex);
 
     std::uint32_t numBones;
-    stream.read(numBones);
+    stream->read(numBones);
     mBoneRefs.resize(numBones);
     for (unsigned int i = 0; i < numBones; ++i)
     {
-        stream.read(mBoneRefs.at(i));
+        stream->read(mBoneRefs.at(i));
         data.addSkelLeafIndex(mBoneRefs.at(i)); // register for building a skeleton
         if (mBoneRefs.at(i) != -1)
             data.mIsSkinned = true;
     }
 }
 
-NiBtOgre::BSDismemberSkinInstance::BSDismemberSkinInstance(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::BSDismemberSkinInstance::BSDismemberSkinInstance(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiSkinInstance(index, stream, model, data)
 {
     std::uint32_t numPartitions;
-    stream.read(numPartitions);
+    stream->read(numPartitions);
     mPartitions.resize(numPartitions);
     for (uint32_t i = 0; i < numPartitions; ++i)
     {
-        stream.read(mPartitions.at(i).partFlag);
-        stream.read(mPartitions.at(i).bodyPart);
+        stream->read(mPartitions.at(i).partFlag);
+        stream->read(mPartitions.at(i).bodyPart);
     }
 }
 
 // Seen in NIF ver 20.0.0.4, 20.0.0.5
-void NiBtOgre::NiSkinPartition::SkinPartition::read(NiStream& stream)
+void NiBtOgre::NiSkinPartition::SkinPartition::read(NiStream *stream)
 {
-    stream.read(numVertices);
-    stream.read(numTriangles);
-    stream.read(numBones);
-    stream.read(numStrips);
-    stream.read(numWeightsPerVertex);
+    stream->read(numVertices);
+    stream->read(numTriangles);
+    stream->read(numBones);
+    stream->read(numStrips);
+    stream->read(numWeightsPerVertex);
 
     bones.resize(numBones);
     for (unsigned int i = 0; i < numBones; ++i)
-        stream.read(bones.at(i));
+        stream->read(bones.at(i));
 
-    if (stream.nifVer() >= 0x0a010000) // from 10.1.0.0
-        hasVertexMap = stream.getBool();
-    if (stream.nifVer() <= 0x0a000102 || (stream.nifVer() >= 0x0a010000 && hasVertexMap))
+    if (stream->nifVer() >= 0x0a010000) // from 10.1.0.0
+        hasVertexMap = stream->getBool();
+    if (stream->nifVer() <= 0x0a000102 || (stream->nifVer() >= 0x0a010000 && hasVertexMap))
     {
         vertexMap.resize(numVertices);
         for (unsigned int i = 0; i < numVertices; ++i)
-            stream.read(vertexMap.at(i));
+            stream->read(vertexMap.at(i));
     }
 
-    if (stream.nifVer() >= 0x0a010000) // from 10.1.0.0
-        hasVertexWeights = stream.getBool();
-    if (stream.nifVer() <= 0x0a000102 || (stream.nifVer() >= 0x0a010000 && hasVertexWeights))
+    if (stream->nifVer() >= 0x0a010000) // from 10.1.0.0
+        hasVertexWeights = stream->getBool();
+    if (stream->nifVer() <= 0x0a000102 || (stream->nifVer() >= 0x0a010000 && hasVertexWeights))
     {
         vertexWeights.resize(numVertices);
         for (unsigned int i = 0; i < numVertices; ++i)
@@ -1028,21 +1028,21 @@ void NiBtOgre::NiSkinPartition::SkinPartition::read(NiStream& stream)
             vertexWeights[i].resize(numWeightsPerVertex);
             for (unsigned int j = 0; j < numWeightsPerVertex; ++j)
             {
-                stream.read(vertexWeights.at(i).at(j));
+                stream->read(vertexWeights.at(i).at(j));
             }
         }
     }
 
     stripLengths.resize(numStrips);
     for (unsigned int i = 0; i < numStrips; ++i)
-        stream.read(stripLengths.at(i));
+        stream->read(stripLengths.at(i));
 
-    if (stream.nifVer() >= 0x0a010000) // from 10.1.0.0
-        hasFaces = stream.getBool();
+    if (stream->nifVer() >= 0x0a010000) // from 10.1.0.0
+        hasFaces = stream->getBool();
 
     if (hasFaces && numStrips != 0)
     {
-        if (stream.nifVer() <= 0x0a000102 || (stream.nifVer() >= 0x0a010000 && hasFaces))
+        if (stream->nifVer() <= 0x0a000102 || (stream->nifVer() >= 0x0a010000 && hasFaces))
         {
             strips.resize(numStrips);
             for (unsigned int i = 0; i < numStrips; ++i)
@@ -1050,26 +1050,26 @@ void NiBtOgre::NiSkinPartition::SkinPartition::read(NiStream& stream)
                 strips[i].resize(stripLengths[i]);
                 for (unsigned int j = 0; j < stripLengths[i]; ++j)
                 {
-                    stream.read(strips.at(i).at(j));
+                    stream->read(strips.at(i).at(j));
                 }
             }
         }
     }
     else // numStrips == 0
     {
-        if (stream.nifVer() <= 0x0a000102 || (stream.nifVer() >= 0x0a010000 && hasFaces))
+        if (stream->nifVer() <= 0x0a000102 || (stream->nifVer() >= 0x0a010000 && hasFaces))
         {
             triangles.resize(numTriangles);
             for (unsigned int i = 0; i < numTriangles; ++i)
             {
-                stream.read(triangles.at(i).v1);
-                stream.read(triangles.at(i).v2);
-                stream.read(triangles.at(i).v3);
+                stream->read(triangles.at(i).v1);
+                stream->read(triangles.at(i).v2);
+                stream->read(triangles.at(i).v3);
             }
         }
     }
 
-    hasBoneIndices = stream.getBool();
+    hasBoneIndices = stream->getBool();
     if (hasBoneIndices)
     {
         boneIndices.resize(numVertices);
@@ -1078,32 +1078,32 @@ void NiBtOgre::NiSkinPartition::SkinPartition::read(NiStream& stream)
             boneIndices[i].resize(numWeightsPerVertex);
             for (unsigned int j = 0; j < numWeightsPerVertex; ++j)
             {
-                stream.read(boneIndices.at(i).at(j));
+                stream->read(boneIndices.at(i).at(j));
             }
         }
     }
 
-    if (stream.userVer() >= 12)
-        stream.skip(sizeof(std::uint16_t));
+    if (stream->userVer() >= 12)
+        stream->skip(sizeof(std::uint16_t));
 
     // FIXME: more unknowns here for version 10.2.0.0
 }
 
-NiBtOgre::NiSkinPartition::NiSkinPartition(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::NiSkinPartition::NiSkinPartition(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiObject(index, stream, model, data)
 {
-    stream.read(mNumSkinPartitionBlocks);
+    stream->read(mNumSkinPartitionBlocks);
     mSkinPartitionBlocks.resize(mNumSkinPartitionBlocks);
     for (unsigned int i = 0; i < mNumSkinPartitionBlocks; ++i)
         mSkinPartitionBlocks[i].read(stream);
 }
 
 // Seen in NIF version 20.0.0.4, 20.0.0.5
-NiBtOgre::NiStringPalette::NiStringPalette(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::NiStringPalette::NiStringPalette(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiObject(index, stream, model, data)
 {
-    stream.readSizedString(mPalette);
-    stream.read(mLength); // TODO: validate against mPalette.size()
+    stream->readSizedString(mPalette);
+    stream->read(mLength); // TODO: validate against mPalette.size()
 // FIXME: for testing only
 #if 0
     std::stringstream ss(mPalette);
@@ -1117,7 +1117,7 @@ NiBtOgre::NiStringPalette::NiStringPalette(uint32_t index, NiStream& stream, con
 #endif
 }
 
-NiBtOgre::NiUVData::NiUVData(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::NiUVData::NiUVData(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiObject(index, stream, model, data)
 {
     mUVGroups0.read(stream);
@@ -1126,11 +1126,11 @@ NiBtOgre::NiUVData::NiUVData(uint32_t index, NiStream& stream, const NiModel& mo
     mUVGroups3.read(stream);
 }
 
-NiBtOgre::NiVisData::NiVisData(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::NiVisData::NiVisData(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiObject(index, stream, model, data)
 {
     std::uint32_t numKeys;
-    stream.read(numKeys);
+    stream->read(numKeys);
 
     mKeys.resize(numKeys);
     for (unsigned int i = 0; i < numKeys; ++i)

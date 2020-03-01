@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2017-2019 cc9cii
+  Copyright (C) 2017-2020 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -64,7 +64,7 @@ namespace NiBtOgre
 
         typedef NiBtOgre::Factory<NiObject> Factory;
         static Factory::Type create(Factory::Key const& name,
-            uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+            uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
         {
             return mFactory.create(name, index, stream, model, data);
         }
@@ -76,7 +76,7 @@ namespace NiBtOgre
                 throw std::logic_error(std::string(BOOST_CURRENT_FUNCTION) + ": name already registered");
         }
 
-        NiObject(std::uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+        NiObject(std::uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
             : mSelfRef(index), mModel(model)  {}
 
         inline std::uint32_t selfRef() const { return mSelfRef; }

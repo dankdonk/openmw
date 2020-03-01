@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015-2019 cc9cii
+  Copyright (C) 2015-2020 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -72,50 +72,50 @@
 //   w/w_longbow.nif
 //   w/w_longbow_ariel.nif
 //
-NiBtOgre::NiGeomMorpherController::NiGeomMorpherController(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::NiGeomMorpherController::NiGeomMorpherController(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiTimeController(index, stream, model, data), mNiControllerSequenceBuilt(false), mControllerSequence(nullptr)
 {
-    if (stream.nifVer() >= 0x0a000102) // from 10.0.1.2
-        stream.read(mExtraFlags);
+    if (stream->nifVer() >= 0x0a000102) // from 10.0.1.2
+        stream->read(mExtraFlags);
 
-    if (stream.nifVer() == 0x0a01006a) // 10.1.0.106
-        stream.skip(sizeof(char)); // Unknown 2
+    if (stream->nifVer() == 0x0a01006a) // 10.1.0.106
+        stream->skip(sizeof(char)); // Unknown 2
 
-    stream.read(mDataRef);
-    stream.read(mAlwaysUpdate);
+    stream->read(mDataRef);
+    stream->read(mAlwaysUpdate);
 
-    if (stream.nifVer() >= 0x0a01006a) // from 10.1.0.106
+    if (stream->nifVer() >= 0x0a01006a) // from 10.1.0.106
     {
         std::uint32_t numInterpolators;
-        stream.read(numInterpolators);
-        if (stream.nifVer() >= /*0x0a020000*/0x0a01006a && stream.nifVer() <= 0x14000005)
+        stream->read(numInterpolators);
+        if (stream->nifVer() >= /*0x0a020000*/0x0a01006a && stream->nifVer() <= 0x14000005)
         {
             mInterpolators.resize(numInterpolators);
             for (unsigned int i = 0; i < numInterpolators; ++i)
-                stream.read(mInterpolators.at(i));
+                stream->read(mInterpolators.at(i));
         }
 
-        if (stream.nifVer() >= 0x14010003) // from 20.1.0.3
+        if (stream->nifVer() >= 0x14010003) // from 20.1.0.3
         {
             mInterpolatorWeights.resize(numInterpolators);
             for (unsigned int i = 0; i < numInterpolators; ++i)
             {
-                stream.read(mInterpolatorWeights[i].interpolatorRef);
-                stream.read(mInterpolatorWeights[i].weight);
+                stream->read(mInterpolatorWeights[i].interpolatorRef);
+                stream->read(mInterpolatorWeights[i].weight);
             }
         }
 
-        if (stream.nifVer() >= 0x14000004 && stream.nifVer() <= 0x14000005 && stream.userVer() >= 10)
+        if (stream->nifVer() >= 0x14000004 && stream->nifVer() <= 0x14000005 && stream->userVer() >= 10)
         {
             std::uint32_t numUnknownInts;
-            stream.read(numUnknownInts);
+            stream->read(numUnknownInts);
             mUnknownInts.resize(numUnknownInts);
             for (unsigned int i = 0; i < numUnknownInts; ++i)
-                stream.read(mUnknownInts.at(i));
+                stream->read(mUnknownInts.at(i));
         }
 
-        if (stream.nifVer() == 0x0a01006a) // 10.1.0.106
-            stream.skip(sizeof(int32_t)); // e.g. creatures/horse/bridle.nif version 10.1.0.106
+        if (stream->nifVer() == 0x0a01006a) // 10.1.0.106
+            stream->skip(sizeof(int32_t)); // e.g. creatures/horse/bridle.nif version 10.1.0.106
     }
 }
 

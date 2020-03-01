@@ -7,6 +7,7 @@
 #include "../mwworld/ptr.hpp"
 #include "../mwworld/physicssystem.hpp"
 #include "../mwworld/cellstore.hpp"
+#include "../mwworld/inventorystore.hpp"
 
 #include "../mwrender/objects.hpp"
 #include "../mwrender/renderinginterface.hpp"
@@ -60,11 +61,46 @@ namespace MWClass
         return "";
     }
 
+    std::pair<std::vector<int>, bool> ForeignLight::getEquipmentSlots (const MWWorld::Ptr& ptr) const
+    {
+        MWWorld::LiveCellRef<ESM4::Light> *ref = ptr.get<ESM4::Light>();
+
+        std::vector<int> slots_;
+
+        if ((ref->mBase->mData.flags & 0x0002/*can be carried*/) != 0)
+            slots_.push_back (int (MWWorld::InventoryStore::Slot_ForeignTorch));
+
+        return std::make_pair (slots_, false);
+    }
+
     void ForeignLight::registerSelf()
     {
         boost::shared_ptr<Class> instance (new ForeignLight);
 
         registerClass (typeid (ESM4::Light).name(), instance);
+    }
+
+    std::pair<int, std::string> ForeignLight::canBeEquipped(const MWWorld::Ptr &ptr, const MWWorld::Ptr &npc) const
+    {
+//      MWWorld::InventoryStore& invStore = npc.getClass().getInventoryStore(npc);
+//      MWWorld::ContainerStoreIterator weapon = invStore.getSlot(MWWorld::InventoryStore::Slot_CarriedRight);
+
+//      if(weapon == invStore.end())
+//          return std::make_pair(1,"");
+
+//      /// \todo the 2h check is repeated many times; put it in a function
+//      if(weapon->getTypeName() == typeid(ESM::Weapon).name() &&
+//              (weapon->get<ESM::Weapon>()->mBase->mData.mType == ESM::Weapon::LongBladeTwoHand ||
+//      weapon->get<ESM::Weapon>()->mBase->mData.mType == ESM::Weapon::BluntTwoClose ||
+//      weapon->get<ESM::Weapon>()->mBase->mData.mType == ESM::Weapon::BluntTwoWide ||
+//      weapon->get<ESM::Weapon>()->mBase->mData.mType == ESM::Weapon::SpearTwoWide ||
+//      weapon->get<ESM::Weapon>()->mBase->mData.mType == ESM::Weapon::AxeTwoHand ||
+//      weapon->get<ESM::Weapon>()->mBase->mData.mType == ESM::Weapon::MarksmanBow ||
+//      weapon->get<ESM::Weapon>()->mBase->mData.mType == ESM::Weapon::MarksmanCrossbow))
+//      {
+//          return std::make_pair(3,"");
+//      }
+        return std::make_pair(1,"");
     }
 
     MWWorld::Ptr ForeignLight::copyToCellImpl(const MWWorld::Ptr &ptr, MWWorld::CellStore &cell) const

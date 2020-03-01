@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015-2019 cc9cii
+  Copyright (C) 2015-2020 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -40,25 +40,25 @@
 #include "niobject.hpp"
 #include "bhkrefobject.hpp" // bhkConstraint
 #include "btogreinst.hpp"
-#include "meshloader.hpp"
+#include "nimeshloader.hpp"
 #include "skeletonloader.hpp"
 #include "ninode.hpp"
 #include "nisequence.hpp"
+#include "nigeometry.hpp" // for getVertices()
 
-// "name" is the full path to the mesh from the resource directory/BSA added to Ogre::ResourceGroupManager.
+// "nif" is the full path to the mesh from the resource directory/BSA added to Ogre::ResourceGroupManager.
 // This name is required later for Ogre resource managers such as MeshManager.
 // The file is opened by mNiStream::mStream.
 //
 // FIXME: there could be duplicates b/w TES3 and TES4/5
 NiBtOgre::NiModel::NiModel(Ogre::ResourceManager *creator, const Ogre::String& name, Ogre::ResourceHandle handle,
                            const Ogre::String& group, bool isManual, Ogre::ManualResourceLoader* loader,
-                           const Ogre::NameValuePairList* createParams/*bool showEditorMarkers*/)
+                           const Ogre::String& nif/*, bool showEditorMarkers*/)
     : Resource(creator, name, handle, group, isManual, loader)
-    , mNiStream(name), mHeader(mNiStream), mGroup(group), mCurrIndex(-1), mModelName(name), mBuildData(*this)
-    , mShowEditorMarkers(false/*showEditorMarkers*/)
+    , /*mNiStream(nif), mHeader(mNiStream),*/ mGroup(group), mCurrIndex(-1), mModelName(name), mBuildData(*this)
+    , mNif(nif), mShowEditorMarkers(false/*showEditorMarkers*/)
 {
-    //mBuildData.mIsSkeleton = false; // FIXME: hack, does not belong here
-    mBuildData.mSkeleton.setNull();
+    mObjects.clear();
 }
 
 NiBtOgre::NiModel::~NiModel()
@@ -66,18 +66,44 @@ NiBtOgre::NiModel::~NiModel()
     //unload(); // FIXME: caused exceptions in the destructor of AnimSource
 }
 
+void NiBtOgre::NiModel::prepareImpl()
+{
+    mNiStream = std::make_unique<NiBtOgre::NiStream>(mNif); // WARN: may throw
+    mHeader = std::make_unique<NiBtOgre::NiHeader>(mNiStream.get());
+}
+
+void NiBtOgre::NiModel::unprepareImpl()
+{
+    mHeader.reset();
+    mNiStream.reset();
+}
+
+
 // only called if this resource is not being loaded from a ManualResourceLoader
 void NiBtOgre::NiModel::loadImpl()
 {
+    createNiObjects();
+}
+
+// FIXME: maybe
+void NiBtOgre::NiModel::createNiObjects(const std::string& skeleton)
+{
+    if (!mObjects.empty())
+        return; // don't create the objects again
+
+    // TODO: check if this is required?
+    if (mNiStream.get() == nullptr)
+        prepareImpl(); // manual load
+
     //if (mModelName.find("smeltermarker") != std::string::npos)/*fxambwatersalmon02b*/
         //std::cout << mModelName << std::endl;
     //if (getModelName().find("vgeardoor01") != std::string::npos)
         //std::cout << "door" << std::endl;
 
-    mObjects.resize(mHeader.numBlocks());
-    if (mNiStream.nifVer() >= 0x0a000100) // from 10.0.1.0
+    mObjects.resize(mHeader->numBlocks());
+    if (mNiStream->nifVer() >= 0x0a000100) // from 10.0.1.0
     {
-        for (std::uint32_t i = 0; i < mHeader.numBlocks(); ++i)
+        for (std::uint32_t i = 0; i < mHeader->numBlocks(); ++i)
         {
             //if (blockType(0) == "NiTriShape")
                 //return; // FIXME: morroblivion\environment\bittercoast\bcscum03.nif
@@ -86,16 +112,16 @@ void NiBtOgre::NiModel::loadImpl()
             mCurrIndex = i; // FIXME: debugging only
 
             // From ver 10.0.1.0 (i.e. TES4) we already know the object types from the header.
-            mObjects[i] = NiObject::create(mHeader.blockType(i), i, mNiStream, *this, mBuildData);
+            mObjects[i] = NiObject::create(mHeader->blockType(i), i, mNiStream.get(), *this, mBuildData);
         }
     }
     else
     {
-        for (std::uint32_t i = 0; i < mHeader.numBlocks(); ++i)
+        for (std::uint32_t i = 0; i < mHeader->numBlocks(); ++i)
         {
             mCurrIndex = i; // FIXME: debugging only
 //#if 0
-            std::string blockName = mNiStream.readString();
+            std::string blockName = mNiStream->readString();
             //if (blockName == "RootCollisionNode")
                 //std::cout << name << " : " << "RootCollisionNode" << std::endl;
             //if (blockName == "AvoidNode")
@@ -103,7 +129,7 @@ void NiBtOgre::NiModel::loadImpl()
             //if (blockName == "NiStringExtraData")
                 //std::cout << name << " : " << "NiStringExtraData" << std::endl;
             //std::cout << name << " : " << "BoundingBox" << std::endl;
-            mObjects[i] = NiObject::create(blockName, i, mNiStream, *this, mBuildData);
+            mObjects[i] = NiObject::create(blockName, i, mNiStream.get(), *this, mBuildData);
             //std::cout << "Block " << blockName << std::endl; // FIXME: for testing only
 //#endif
             // For TES3, the object type string is read first to determine the type.
@@ -116,11 +142,11 @@ void NiBtOgre::NiModel::loadImpl()
 
     // read the footer to check for root nodes
     std::uint32_t numRoots = 0;
-    mNiStream.read(numRoots);
+    mNiStream->read(numRoots);
 
     mRoots.resize(numRoots);
     for (std::uint32_t i = 0; i < numRoots; ++i)
-        mNiStream.read(mRoots.at(i));
+        mNiStream->read(mRoots.at(i));
 
     if (numRoots == 0)
         throw std::runtime_error(mModelName + " has no roots");
@@ -129,6 +155,15 @@ void NiBtOgre::NiModel::loadImpl()
         // Creatures\Bear\forward.kf had 3 roots
         //throw std::runtime_error(mModelName + " has too many roots");
 
+    // FIXME: call this only when required
+    // FIXME: for building skeleton.nif, skeletonbeast.nif, etc, should include *all* the bones
+    buildBones();
+
+    //createMesh(skeleton);
+}
+
+void NiBtOgre::NiModel::buildBones()
+{
     // find the bones, if any (i.e. prepare for the skeleton loader)
     // NOTE: ideally we can defer this step of finding the potential bones (potential because
     //       we may decide not to create a skeleton) but we need to populate mObjectPalette for
@@ -150,6 +185,37 @@ void NiBtOgre::NiModel::loadImpl()
         }
     }
 }
+
+//#if 0
+void NiBtOgre::NiModel::createMesh(const std::string& skeleton)
+{
+    Ogre::MeshManager& meshManager = Ogre::MeshManager::getSingleton();
+    NiMeshLoader& meshLoader = NiMeshLoader::getSingleton();
+
+    std::map<NiNodeRef, NiNode*>::iterator iter;
+    for (iter = mBuildData.mMeshBuildList.begin(); iter != mBuildData.mMeshBuildList.end(); ++iter)
+    {
+        // skeleton name: only used for skinned meshes (same mesh used for different skeletons)
+        //   e.g. Armor\Thief\M\Boots.NIF, "CoW "Tamriel" 5 11" (TES4)
+        //   ShadySam (Breton, skeleton.nif) & DeadArgonianAgent (Argonian, SkeletonBeast.NIF)
+        //
+        // NiNode index: some NIF files have the NiNode name for different nodes in the same NIF
+        //   e.g. Architecture\Solitude\SolitudeBase.nif (TES5)
+        //
+        // NiNode name: technically not required but useful for debugging
+        std::string meshName = skeleton + getModelName() +
+                               "#" + std::to_string(iter->second->selfRef()) + // node index
+                               "@" + iter->second->getNiNodeName();            // node name
+
+        // TODO: probably possible to optimise the use of the "group" parameter, e.g. per cell
+        Ogre::MeshPtr mesh = meshManager.getByName(meshName, mGroup);
+        if (!mesh)
+            mesh = meshLoader.createMesh(meshName, mGroup, this, iter->second->selfRef());
+
+        mesh->setAutoBuildEdgeLists(false);
+    }
+}
+//#endif
 
 // for building body parts
 void NiBtOgre::NiModel::buildBodyPart(BtOgreInst *inst, Ogre::SkeletonPtr skeleton)
@@ -213,14 +279,15 @@ void NiBtOgre::NiModel::build(BtOgreInst *inst)
 //  }
 }
 
-void NiBtOgre::NiModel::buildMeshAndEntity(BtOgreInst* inst, const std::string& npcName, std::vector<Ogre::Vector3>& vertices)
+void NiBtOgre::NiModel::buildMeshAndEntity(BtOgreInst* inst, const std::string& npcName,
+        std::unique_ptr<std::vector<Ogre::Vector3> > morphedVertices)
 {
     // if a pre-morphed vertices are supplied there should be just one in mMeshBuildList (prob. "Scene Root")
     // e.g. headhuman.nif
     if (mBuildData.mMeshBuildList.size() > 1)
         std::cout << "unexpected mesh " << getModelName() << std::endl; // FIXME: should throw
 
-    mBuildData.mMeshBuildList.begin()->second->setVertices(vertices);
+    //mBuildData.mMeshBuildList.begin()->second->setVertices(std::move(morphedVertices));
     buildMeshAndEntity(inst, npcName);
 }
 
@@ -235,6 +302,7 @@ void NiBtOgre::NiModel::buildMeshAndEntity(BtOgreInst* inst, const std::string& 
 
 
     Ogre::MeshManager& meshManager = Ogre::MeshManager::getSingleton();
+    NiMeshLoader& meshLoader = NiMeshLoader::getSingleton();
 
     // There are several types of NIFs that have more than one Mesh/Entity:
     //
@@ -265,8 +333,8 @@ void NiBtOgre::NiModel::buildMeshAndEntity(BtOgreInst* inst, const std::string& 
     for (iter = mBuildData.mMeshBuildList.begin(); iter != mBuildData.mMeshBuildList.end(); ++iter)
     {
         // FIXME: need to make this persist somehow
-        std::unique_ptr<MeshLoader> loader(new MeshLoader(iter->second));
-        mMeshLoaders.push_back(std::move(loader));
+        //std::unique_ptr<MeshLoader> loader(new MeshLoader(iter->second));
+        //mMeshLoaders.push_back(std::move(loader));
 
         // The model name and parent node name are concatenated for use with Ogre::MeshManager
         // without triggering exeptions due to duplicates.
@@ -285,7 +353,7 @@ void NiBtOgre::NiModel::buildMeshAndEntity(BtOgreInst* inst, const std::string& 
         // TODO: probably room for optimising the use of the "group" parameter
         Ogre::MeshPtr mesh = meshManager.getByName(meshName, mGroup);
         if (!mesh)
-            mesh = meshManager.createManual(meshName, mGroup, mMeshLoaders.back().get());
+            mesh = meshLoader.createMesh(meshName, mGroup, this, iter->second->selfRef());
 
 
 
@@ -430,11 +498,12 @@ void NiBtOgre::NiModel::buildMeshAndEntity(BtOgreInst* inst, const std::string& 
         if (rootName == "Scene Root" || blockType(0) == "BSFadeNode") // FIXME: HACK not always "Scene Root"
         {
             std::string meshName = getModelName() + "@" + rootName;
-            MeshLoader loader = MeshLoader(rootNode);
+            //MeshLoader loader = MeshLoader(rootNode);
+            NiMeshLoader& loader = NiMeshLoader::getSingleton();
 
             Ogre::MeshPtr mesh = meshManager.getByName(meshName);
             if (!mesh)
-                mesh = meshManager.createManual(meshName, mGroup, &loader);
+                mesh = loader.createMesh(meshName, mGroup, this, mRoots[0]);
 
             mesh->setSkeletonName(getModelName());
 
@@ -464,12 +533,13 @@ void NiBtOgre::NiModel::buildMeshAndEntity(BtOgreInst* inst, const std::string& 
         if (rootName == "Scene Root" || rootName == "skeleton.nif")
         {
             std::string meshName = getModelName() + "@" + rootName;
-            MeshLoader loader = MeshLoader(rootNode);
+            //MeshLoader loader = MeshLoader(rootNode);
+            NiMeshLoader& loader = NiMeshLoader::getSingleton();
             //std::cout << meshName << std::endl;
 
             Ogre::MeshPtr mesh = meshManager.getByName(meshName);
             if (!mesh)
-                mesh = meshManager.createManual(meshName, mGroup, &loader);
+                mesh = loader.createMesh(meshName, mGroup, this, mRoots[0]);
 
             //if (!mesh)
                 //return; // FIXME: morroblivion\creatures\wildlife\kagouti\skeleton.nif
@@ -579,6 +649,52 @@ void NiBtOgre::NiModel::buildSkeleton()
                     &loader));
         }
     }
+}
+
+const std::vector<Ogre::Vector3>& NiBtOgre::NiModel::fgVertices()
+{
+    return fgGeometry()->getVertices(false/*morphed*/);
+}
+
+std::vector<Ogre::Vector3>& NiBtOgre::NiModel::fgMorphVertices()
+{
+    return fgGeometry()->mMorphVertices;
+}
+
+// WARN: returns the vertices from the first NiTriBasedGeom child of the root NiNode
+//       (this can be used to get around the lack of TRI files for certain NIF models)
+NiBtOgre::NiTriBasedGeom *NiBtOgre::NiModel::fgGeometry()
+{
+    // FIXME: need to ensure that the objects have been built first
+#if 0
+    int count = 0;
+    NiTriBasedGeom *geom;
+    NiNode *ninode = getRef<NiNode>(mRoots[0]);
+    const std::vector<NiAVObjectRef>& childRefs = ninode->getChildren();
+    for (size_t i = 0; i < childRefs.size(); ++i)
+    {
+        if (childRefs[i] == -1)
+            continue; // e.g. Characters\Imperial\HeadHumah.NIF
+
+        if (blockType(childRefs[i]) == "NiTriShape" || blockType(childRefs[i]) == "NiTriStrips")
+        {
+            geom = getRef<NiTriBasedGeom>(childRefs[i]);
+
+            count++;
+        }
+    }
+
+    if (count == 1)
+        return geom;
+    else if (count == 0)
+        throw std::logic_error("NiModel: couldn't find a NiTriBasedGeom on a Root NiNode");
+    else
+        throw std::logic_error("NiModel: more than one NiTriBasedGeom on a Root NiNode");
+#else
+    NiNode *ninode = getRef<NiNode>(mRoots[0]);
+
+    return ninode->getUniqueSubMeshChild();
+#endif
 }
 
 void NiBtOgre::BuildData::setNiNodeParent(NiAVObjectRef child, NiNode *parent)

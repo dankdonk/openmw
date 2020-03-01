@@ -76,6 +76,30 @@ namespace ESM4
             Skill_Unknown     = 0x00
         };
 
+        enum HeadPartIndex
+        {
+            Head              = 0,
+            EarMale           = 1,
+            EarFemale         = 2,
+            Mouth             = 3,
+            TeethLower        = 4,
+            TeethUpper        = 5,
+            Tongue            = 6,
+            EyeLeft           = 7, // no texture
+            EyeRight          = 8, // no texture
+            NumHeadParts      = 9
+        };
+
+        enum BodyPartIndex
+        {
+            UpperBody         = 0,
+            Legs              = 1,
+            Hands             = 2,
+            Feet              = 3,
+            Tail              = 4,
+            NumBodyParts      = 5
+        };
+
         struct BodyPart
         {
             std::string mesh;    // can be empty for arms, hands, etc
@@ -102,25 +126,10 @@ namespace ESM4
         float mWeightFemale;
         std::uint32_t mRaceFlags; // 0x0001 = playable?
 
-        // index part
-        //    0  head
-        //    1  ear (male)
-        //    2  ear (female)
-        //    3  mouth
-        //    4  teeth lower
-        //    5  teeth upper
-        //    6  tongue
-        //    7  eye left (no texture)
-        //    8  eye right (no texture)
-        std::vector<BodyPart> mHeadParts;
+        std::vector<BodyPart> mHeadParts;       // see HeadPartIndex
 
-        //    0  upper body
-        //    1  leg
-        //    2  hands
-        //    3  feet
-        //    4  tail
-        std::vector<BodyPart> mBodyPartsMale;
-        std::vector<BodyPart> mBodyPartsFemale;
+        std::vector<BodyPart> mBodyPartsMale;   // see BodyPartIndex
+        std::vector<BodyPart> mBodyPartsFemale; // see BodyPartIndex
 
         std::vector<FormId> mEyeChoices;
         std::vector<FormId> mHairChoices;

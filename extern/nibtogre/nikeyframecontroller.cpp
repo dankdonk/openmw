@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015-2019 cc9cii
+  Copyright (C) 2015-2020 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -37,11 +37,11 @@
 #undef NDEBUG
 #endif
 
-NiBtOgre::NiKeyframeController::NiKeyframeController(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::NiKeyframeController::NiKeyframeController(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiSingleInterpController(index, stream, model, data)
 {
-    if (stream.nifVer() <= 0x0a010000) // up to 10.1.0.0
-        stream.read(mDataRef);
+    if (stream->nifVer() <= 0x0a010000) // up to 10.1.0.0
+        stream->read(mDataRef);
 
 #if 1
     //if (NiTimeController::mTargetRef != -1) // FIXME creatures\cliffracer\skeleton.nif
@@ -81,9 +81,9 @@ void NiBtOgre::NiKeyframeController::build(NiAVObject* target, const NiTransform
 }
 
 #if 0
-NiBtOgre::BSKeyframeController::BSKeyframeController(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::BSKeyframeController::BSKeyframeController(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiSingleInterpController(index, stream, model, data)
 {
-    stream.read(mData2Ref);
+    stream->read(mData2Ref);
 }
 #endif

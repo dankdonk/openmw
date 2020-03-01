@@ -63,25 +63,25 @@ namespace MWWorld
             static const int Type_Repair = 0x0400;
             static const int Type_Weapon = 0x0800;
 
-            static const int Type_ForeignPotion = 0x1001;
-            static const int Type_ForeignApparatus = 0x1002;
-            static const int Type_ForeignArmor = 0x1004;
-            static const int Type_ForeignBook = 0x1008;
-            static const int Type_ForeignClothing = 0x1010;
-            static const int Type_ForeignIngredient = 0x1020;
-            static const int Type_ForeignLight = 0x1040;
-            static const int Type_ForeignSoulGem = 0x1080;
-            static const int Type_ForeignMiscItem = 0x1100;
-            static const int Type_ForeignKey = 0x1200;
-            static const int Type_ForeignSigilStone = 0x1400;
-            static const int Type_ForeignWeapon = 0x1800;
-            static const int Type_ForeignAmmo = 0x2000;
-            static const int Type_ForeignLeveledItem = 0x2001;
-            static const int Type_ForeignNote = 0x2002;
+            static const int Type_ForeignPotion       = 0x1000; // see incType, needs bit shift by one
+            static const int Type_ForeignApparatus    = 0x2000 ;
+            static const int Type_ForeignArmor        = 0x4000;
+            static const int Type_ForeignBook         = 0x8000;
+            static const int Type_ForeignClothing    = 0x10000;
+            static const int Type_ForeignIngredient  = 0x20000;
+            static const int Type_ForeignLight       = 0x40000;
+            static const int Type_ForeignSoulGem     = 0x80000;
+            static const int Type_ForeignMiscItem   = 0x100000;
+            static const int Type_ForeignKey        = 0x200000;
+            static const int Type_ForeignSigilStone = 0x400000;
+            static const int Type_ForeignWeapon     = 0x800000;
+            static const int Type_ForeignAmmo      = 0x1000000;
+            static const int Type_ForeignNote      = 0x2000000;
+            static const int Type_ForeignLeveledItem = 0x4000000;
 
             static const int Type_Last = Type_ForeignNote;
 
-            static const int Type_All = 0xffff;
+            static const int Type_All = 0xffffffff;
 
             static const std::string sGoldId;
 
@@ -113,7 +113,6 @@ namespace MWWorld
             MWWorld::CellRefList<ESM4::SigilStone>       foreignSigilStones;
             MWWorld::CellRefList<ESM4::Weapon>           foreignWeapons;
             MWWorld::CellRefList<ESM4::Ammo>             foreignAmmos;
-            MWWorld::CellRefList<ESM4::LeveledItem>      foreignLvlItems;
             MWWorld::CellRefList<ESM4::Note>             foreignNotes;
 
             std::map<std::string, int> mLevelledItemMap;
@@ -228,8 +227,17 @@ namespace MWWorld
     ///
     /// \note The iterator will automatically skip over deleted objects.
     class ContainerStoreIterator
-        : public std::iterator<std::forward_iterator_tag, Ptr, std::ptrdiff_t, Ptr *, Ptr&>
+        //: public std::iterator<std::forward_iterator_tag, Ptr, std::ptrdiff_t, Ptr *, Ptr&>
     {
+        public:
+            // std::iterator to be deprecated in C++17, need C++11 for keyword 'using'
+            using iterator_category = std::forward_iterator_tag; // allows multiple copies
+            using value_type = Ptr;
+            using difference_type = std::ptrdiff_t;
+            using pointer = Ptr*;
+            using reference = Ptr&;
+
+        private:
             int mType;
             int mMask;
             ContainerStore *mContainer;
@@ -261,7 +269,6 @@ namespace MWWorld
             MWWorld::CellRefList<ESM4::SigilStone>::List::iterator mForeignSigilStone;
             MWWorld::CellRefList<ESM4::Weapon>::List::iterator mForeignWeapon;
             MWWorld::CellRefList<ESM4::Ammo>::List::iterator mForeignAmmo;
-            MWWorld::CellRefList<ESM4::LeveledItem>::List::iterator mForeignLeveledItem;
             MWWorld::CellRefList<ESM4::Note>::List::iterator mForeignNote;
 
         private:
@@ -299,7 +306,6 @@ namespace MWWorld
             ContainerStoreIterator (ContainerStore *container, MWWorld::CellRefList<ESM4::SigilStone>::List::iterator);
             ContainerStoreIterator (ContainerStore *container, MWWorld::CellRefList<ESM4::Weapon>::List::iterator);
             ContainerStoreIterator (ContainerStore *container, MWWorld::CellRefList<ESM4::Ammo>::List::iterator);
-            ContainerStoreIterator (ContainerStore *container, MWWorld::CellRefList<ESM4::LeveledItem>::List::iterator);
             ContainerStoreIterator (ContainerStore *container, MWWorld::CellRefList<ESM4::Note>::List::iterator);
 
             void copy (const ContainerStoreIterator& src);

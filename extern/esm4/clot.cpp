@@ -27,6 +27,7 @@
 #include "clot.hpp"
 
 #include <stdexcept>
+//#include <iostream> // FIXME: for debugging only
 
 #include "reader.hpp"
 //#include "writer.hpp"
@@ -92,6 +93,8 @@ void ESM4::Clothing::load(ESM4::Reader& reader)
                 throw std::runtime_error("ESM4::CLOT::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
         }
     }
+    //if ((mClothingFlags&0xffff) == 0x02) // only hair
+        //std::cout << "only hair " << mEditorId << std::endl;
 }
 
 //void ESM4::Clothing::save(ESM4::Writer& writer) const

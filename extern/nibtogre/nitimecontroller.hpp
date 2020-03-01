@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015-2019 cc9cii
+  Copyright (C) 2015-2020 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -98,7 +98,7 @@ namespace NiBtOgre
         //NiObjectNET *mTarget; // Ptr
         NiObjectNETRef mTargetRef;
 
-        NiTimeController(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
+        NiTimeController(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
 
         // used by NiGeomMorpherController only?  (what about UV controller?)
         virtual NiTimeControllerRef build(Ogre::Mesh *mesh);
@@ -116,7 +116,7 @@ namespace NiBtOgre
     public:
         NiFloatInterpolatorRef mInterpolatorRef;
 
-        BSFrustumFOVController(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
+        BSFrustumFOVController(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
     };
 
     // Seen in NIF version 20.2.0.7
@@ -127,7 +127,7 @@ namespace NiBtOgre
         float mLinearRotation;
         float mMaximumDistance;
 
-        BSLagBoneController(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
+        BSLagBoneController(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
     };
 
     class NiNode;
@@ -144,7 +144,7 @@ namespace NiBtOgre
             //std::vector<NiNode*> nodes; // Ptr
             std::vector<NiNodeRef> nodeRefs;
 
-            void read(NiStream& stream, const NiModel& model, BuildData& data);
+            void read(NiStream *stream, const NiModel& model, BuildData& data);
         };
 
         struct SkinShapeGroup
@@ -158,7 +158,7 @@ namespace NiBtOgre
             std::uint32_t          numLinkPairs;
             std::vector<SkinShape> linkPairs;
 
-            void read(NiStream& stream, const NiModel& model, BuildData& data);
+            void read(NiStream *stream, const NiModel& model, BuildData& data);
         };
 
         std::vector<NodeGroup>         mNodeGroups;
@@ -166,7 +166,7 @@ namespace NiBtOgre
         std::vector<NiTriBasedGeomRef> mShapeGroups2;
 
     public:
-        NiBSBoneLODController(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
+        NiBSBoneLODController(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
     };
 
     // Seen in NIF ver 20.0.0.4, 20.0.0.5
@@ -177,7 +177,7 @@ namespace NiBtOgre
         std::vector<NiControllerSequenceRef> mControllerSequences;
         NiDefaultAvObjectPaletteRef mObjectPaletteRef;
 
-        NiControllerManager(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
+        NiControllerManager(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
 
         NiTimeControllerRef build(std::multimap<float, std::string>& textKeys,
                 std::vector<Ogre::Controller<float> >& controllers);
@@ -206,7 +206,7 @@ namespace NiBtOgre
         //std::vector<NiAVObject*> mExtraTargets; // Ptr
         std::vector<NiAVObjectRef> mExtraTargetRefs;
 
-        NiMultiTargetTransformController(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
+        NiMultiTargetTransformController(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
 
         NiTimeControllerRef build(const std::vector<NiControllerSequenceRef>& animRefs,
                 const NiDefaultAVObjectPalette& objects, std::vector<Ogre::Controller<float> >& controllers);
@@ -229,7 +229,7 @@ namespace NiBtOgre
     public:
         NiInterpolatorRef mInterpolatorRef;
 
-        NiSingleInterpController(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
+        NiSingleInterpController(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
     };
 
     // Seen in NIF version 20.2.0.7
@@ -238,7 +238,7 @@ namespace NiBtOgre
     public:
         std::uint32_t mControllerDataRef;
 
-        NiFloatExtraDataController(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
+        NiFloatExtraDataController(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
     };
 
     typedef NiSingleInterpController BSMaterialEmittanceMultController;
@@ -249,7 +249,7 @@ namespace NiBtOgre
     public:
         std::uint32_t mUnknownInt1;
 
-        BSEffectShaderPropertyColorController(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
+        BSEffectShaderPropertyColorController(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
     };
 
     // FIXME looks identical to BSEffectShaderPropertyColorController
@@ -259,7 +259,7 @@ namespace NiBtOgre
     public:
         std::uint32_t mTargetVariable;
 
-        BSEffectShaderPropertyFloatController(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
+        BSEffectShaderPropertyFloatController(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
     };
 
     // FIXME looks identical to BSEffectShaderPropertyColorController
@@ -269,7 +269,7 @@ namespace NiBtOgre
         std::uint32_t mTargetVariable;
 
     public:
-        BSLightingShaderPropertyColorController(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
+        BSLightingShaderPropertyColorController(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
     };
 
     // FIXME looks identical to BSEffectShaderPropertyColorController
@@ -279,7 +279,7 @@ namespace NiBtOgre
         std::uint32_t mTargetVariable;
 
     public:
-        BSLightingShaderPropertyFloatController(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
+        BSLightingShaderPropertyFloatController(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
     };
 
     // Seen in NIF ver 20.0.0.4, 20.0.0.5
@@ -292,7 +292,7 @@ namespace NiBtOgre
         NiFloatDataRef mDataRef;
 #endif
 
-        NiTextureTransformController(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
+        NiTextureTransformController(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
     };
 
     class NiLightColorController : public NiSingleInterpController
@@ -300,7 +300,7 @@ namespace NiBtOgre
     public:
         std::uint16_t mTargetColor;
 
-        NiLightColorController(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
+        NiLightColorController(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
     };
 
     typedef NiTimeController NiPSysUpdateCtlr; // Seen in NIF ver 20.0.0.4, 20.0.0.5
@@ -311,7 +311,7 @@ namespace NiBtOgre
         NiPosDataRef   mPosDataRef;
         NiFloatDataRef mFloatDataRef;
 
-        NiPathController(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
+        NiPathController(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
     };
 
     // Seen in NIF ver 20.0.0.4, 20.0.0.5
@@ -320,7 +320,7 @@ namespace NiBtOgre
     public:
         std::uint32_t mUnknown;
 
-        bhkBlendController(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
+        bhkBlendController(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
     };
 }
 

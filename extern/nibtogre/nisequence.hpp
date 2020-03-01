@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015-2019 cc9cii
+  Copyright (C) 2015-2020 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -69,7 +69,7 @@ namespace NiBtOgre
 
             NiStringPaletteRef stringPaletteRef;
 
-            void read(NiStream& stream);
+            void read(NiStream *stream);
         };
 
         std::uint32_t mNameIndex;              // name of the animation e.g. "Idle"
@@ -78,7 +78,7 @@ namespace NiBtOgre
         std::vector<ControllerLink> mControlledBlocks;
 
     public:
-        NiSequence(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
+        NiSequence(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
     };
 
     class NiControllerManager;
@@ -107,7 +107,7 @@ namespace NiBtOgre
         std::int16_t mUnknownShort1;  // TES5
 
     public:
-        NiControllerSequence(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
+        NiControllerSequence(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
 
         void build(const NiDefaultAVObjectPalette *objects);
 

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019 cc9cii
+  Copyright (C) 2019, 2020 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -19,14 +19,23 @@
 
   cc9cii cc9c@iinet.net.au
 
-  Below code is basically Ogre::SkeletonManager with a different class name.
+  Below code is based on Ogre::SkeletonManager and Ogre::MeshManager.
 
 */
 #ifndef NIBTOGRE_NIMODELMANAGER_H
 #define NIBTOGRE_NIMODELMANAGER_H
 
+#include <map>
+
 #include <OgreResourceManager.h>
 #include <OgreSingleton.h>
+#include <OgreResource.h>
+
+namespace ESM4
+{
+    struct Npc;
+    struct Race;
+}
 
 namespace NiBtOgre
 {
@@ -36,40 +45,76 @@ typedef Ogre::SharedPtr<NiBtOgre::NiModel> NiModelPtr;
 
 namespace NiBtOgre
 {
-    class NiModelManager : public Ogre::ResourceManager, public Ogre::Singleton<NiModelManager>
+    class NiModelManager
+        : public Ogre::ResourceManager, public Ogre::Singleton<NiModelManager>, public Ogre::ManualResourceLoader
     {
+        enum ModelBuildType
+        {
+            MBT_Object,
+            MBT_Skinned,
+            MBT_Skeleton,
+            MBT_Morphed
+        };
+
+        enum ModelBodyPart
+        {
+            Head        = 0,
+            EarMale     = 1,
+            EarFemale   = 2,
+            Mouth       = 3,
+            TeethLower  = 4,
+            TeethUpper  = 5,
+            Tongue      = 6,
+            EyeLeft     = 7,
+            EyeRight    = 8,
+            UpperBody   = 9,
+            Hair        = 10
+        };
+
+        struct ModelBuildInfo
+        {
+            ModelBuildType type;
+            const ESM4::Npc *npc;   // FIXME: danger in holding pointers here?
+            const ESM4::Race *race;
+            ModelBodyPart bodyPart;
+            Ogre::String baseNif;
+            Ogre::String baseTexture;
+        };
+
+        std::map<Ogre::Resource*, ModelBuildInfo> mModelBuildInfoMap;
+
+        void loadManualMorphedModel(NiModel* pModel, const ModelBuildInfo& params);
+
     public:
-        /// Constructor
         NiModelManager();
         ~NiModelManager();
 
-        /// Create a new NiModel
-        /// @see ResourceManager::createResource
-        NiModelPtr create(const Ogre::String& name, const Ogre::String& group,
-                          bool isManual = false, Ogre::ManualResourceLoader* loader = 0,
-                          const Ogre::NameValuePairList* createParams = 0);
-
-        /// Get a resource by name
-        /// @see ResourceManager::getResourceByName
         NiModelPtr getByName(const Ogre::String& name,
-                             const Ogre::String& groupName
-                             = Ogre::ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME);
+                const Ogre::String& group = Ogre::ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME);
 
-        NiModelPtr getOrLoadByName(const Ogre::String& name,
-                                   const Ogre::String& groupName
-                                   = Ogre::ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME);
+        NiModelPtr create(const Ogre::String& name, const Ogre::String& group,
+                bool isManual = false,
+                Ogre::ManualResourceLoader* loader = 0,
+                const Ogre::NameValuePairList* createParams = 0);
 
-        /// @copydoc Singleton::getSingleton()
+        NiModelPtr createManual(const Ogre::String& name, const Ogre::String& group,
+                const Ogre::String& nif, Ogre::ManualResourceLoader* loader);
+
         static NiModelManager& getSingleton(void);
-        /// @copydoc Singleton::getSingleton()
         static NiModelManager* getSingletonPtr(void);
 
+        void loadResource(Ogre::Resource* res);
+
+        NiModelPtr createMorphed(const Ogre::String& nif, const Ogre::String& group,
+                const ESM4::Npc *npc, const ESM4::Race *race, const Ogre::String& texture);
+
+        NiModelPtr getOrLoadByName(const Ogre::String& name,
+                const Ogre::String& group = Ogre::ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME);
+
     protected:
-        /// @copydoc ResourceManager::createImpl
         Ogre::Resource* createImpl(const Ogre::String& name, Ogre::ResourceHandle handle,
-                                   const Ogre::String& group, bool isManual,
-                                   Ogre::ManualResourceLoader* loader,
-                                   const Ogre::NameValuePairList* createParams);
+                const Ogre::String& group, bool isManual, Ogre::ManualResourceLoader* loader,
+                const Ogre::NameValuePairList* createParams);
     };
 }
 

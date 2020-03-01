@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015-2019 cc9cii
+  Copyright (C) 2015-2020 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -41,51 +41,51 @@
 #endif
 
 // Seen in NIF ver 20.0.0.4, 20.0.0.5
-NiBtOgre::NiCollisionObject::NiCollisionObject(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::NiCollisionObject::NiCollisionObject(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiObject(index, stream, model, data)
 {
-    //stream.getPtr<NiAVObject>(mTarget, model.objects());
+    //stream->getPtr<NiAVObject>(mTarget, model.objects());
     //std::int32_t rIndex = -1;
-    //stream.read(rIndex);
+    //stream->read(rIndex);
     //mTarget = model.getRef<NiAVObject>(rIndex);
-    stream.read(mTargetRef);
+    stream->read(mTargetRef);
 }
 
-NiBtOgre::NiCollisionData::NiCollisionData(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::NiCollisionData::NiCollisionData(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiCollisionObject(index, stream, model, data)
 {
-    stream.read(mPropagationMode);
-    stream.read(mCollisionMode);
+    stream->read(mPropagationMode);
+    stream->read(mCollisionMode);
 
     char useABV;
-    stream.read(useABV);
+    stream->read(useABV);
     if (useABV != 0)
     {
-        stream.read(mBoundingVolume.mCollisionType);
+        stream->read(mBoundingVolume.mCollisionType);
         switch (mBoundingVolume.mCollisionType)
         {
             case 0: // Sphere
-                stream.read(mBoundingVolume.mSphere.center);
-                stream.read(mBoundingVolume.mSphere.radius);
+                stream->read(mBoundingVolume.mSphere.center);
+                stream->read(mBoundingVolume.mSphere.radius);
                 break;
             case 1: // Box
-                stream.read(mBoundingVolume.mBox.center);
+                stream->read(mBoundingVolume.mBox.center);
                 mBoundingVolume.mBox.axis.resize(3);
                 for (int i = 0; i < 3; ++i)
-                    stream.read(mBoundingVolume.mBox.axis.at(i));
+                    stream->read(mBoundingVolume.mBox.axis.at(i));
                 mBoundingVolume.mBox.extent.resize(3);
                 for (int i = 0; i < 3; ++i)
-                    stream.read(mBoundingVolume.mBox.extent.at(i));
+                    stream->read(mBoundingVolume.mBox.extent.at(i));
                 break;
             case 2: // Capsule
-                stream.read(mBoundingVolume.mCapsule.center);
-                stream.read(mBoundingVolume.mCapsule.origin);
-                stream.read(mBoundingVolume.mCapsule.unknown1);
-                stream.read(mBoundingVolume.mCapsule.unknown2);
+                stream->read(mBoundingVolume.mCapsule.center);
+                stream->read(mBoundingVolume.mCapsule.origin);
+                stream->read(mBoundingVolume.mCapsule.unknown1);
+                stream->read(mBoundingVolume.mCapsule.unknown2);
                 break;
             case 5: // HalfSpace
-                stream.read(mBoundingVolume.mHalfspace.normal);
-                stream.read(mBoundingVolume.mHalfspace.center);
+                stream->read(mBoundingVolume.mHalfspace.normal);
+                stream->read(mBoundingVolume.mHalfspace.center);
                 break;
             default:
                 break;
@@ -94,11 +94,11 @@ NiBtOgre::NiCollisionData::NiCollisionData(uint32_t index, NiStream& stream, con
 }
 
 // Seen in NIF ver 20.0.0.4, 20.0.0.5
-NiBtOgre::bhkNiCollisionObject::bhkNiCollisionObject(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::bhkNiCollisionObject::bhkNiCollisionObject(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiCollisionObject(index, stream, model, data)
 {
-    stream.read(mFlags);
-    stream.read(mBodyRef);
+    stream->read(mFlags);
+    stream->read(mBodyRef);
 
     // make an entry for loading BtRigidBodyCI (for building physics shapes)
     data.mBhkRigidBodyMap[mTargetRef]
@@ -132,9 +132,9 @@ void NiBtOgre::bhkNiCollisionObject::build(BtOgreInst *inst, BuildData *data, Ni
 }
 
 // Seen in NIF ver 20.0.0.4, 20.0.0.5
-NiBtOgre::bhkBlendCollisionObject::bhkBlendCollisionObject(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data)
+NiBtOgre::bhkBlendCollisionObject::bhkBlendCollisionObject(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : bhkCollisionObject(index, stream, model, data)
 {
-    stream.read(mUnknown1);
-    stream.read(mUnknown2);
+    stream->read(mUnknown1);
+    stream->read(mUnknown2);
 }

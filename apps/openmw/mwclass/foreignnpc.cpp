@@ -339,6 +339,10 @@ namespace MWClass
 
             // inventory
             // setting ownership is used to make the NPC auto-equip his initial equipment only, and not bartered items
+
+
+            // make ESM4 inventory look like ESM::InventoryList so that we can pass it to
+            // mInventoryStore.fill()
             ESM::InventoryList inventory;
             for (unsigned int i = 0; i < ref->mBase->mInventory.size(); ++i)
             {
@@ -349,14 +353,16 @@ namespace MWClass
                 inventory.mList.push_back(item);
             }
 
+            // this "fills" the inventory with iterators for quick access?
             data->mInventoryStore.fill(inventory, getId(ptr));
 
             data->mNpcStats.setGoldPool(gold);
 
-            // store
+            // store the data
             ptr.getRefData().setCustomData (data.release());
 
-            getInventoryStore(ptr).autoEquip(ptr);
+            // assign some of the inventory to the equipment "slots"
+            getInventoryStore(ptr).autoEquipTES4(ptr);
         }
     }
 

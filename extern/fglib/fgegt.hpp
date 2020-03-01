@@ -20,34 +20,21 @@
   cc9cii cc9c@iinet.net.au
 
 */
-#ifndef NIBTOGRE_FGEGT_H
-#define NIBTOGRE_FGEGT_H
+#ifndef FGLIB_FGEGT_H
+#define FGLIB_FGEGT_H
 
 #include <cstdint>
 #include <vector>
 #include <string>
 
-//#include <OgreResource.h>
 #include <OgreVector3.h>
 
 #include "fgstream.hpp"
 
-//namespace Ogre
-//{
-//    class ResourceManager;
-//    class ManualResourceLoader;
-//}
-
-namespace NiBtOgre
+namespace FgLib
 {
-    class FgEgt //: public Ogre::Resource
+    class FgEgt
     {
-        //FgStream mFgStream;
-
-        //const std::string mGroup;  // Ogre group
-        //const std::string mName;   // file name
-
-    public: // FIXME: should be private
         std::uint64_t mFileType;
         std::uint32_t mNumRows;
         std::uint32_t mNumColumns;
@@ -55,7 +42,9 @@ namespace NiBtOgre
         std::uint32_t mNumAsymTextureModes; // should be 0
         std::uint32_t mTextureBasisVersion;
 
+    public: // FIXME
         std::vector<Ogre::Vector3> mSymTextureModes;  // image starts at top left corner
+    private:
         std::vector<Ogre::Vector3> mAsymTextureModes; // should be empty
         std::vector<float> mSymTextureModeScales;  // should be 50
         std::vector<float> mAsymTextureModeScales; // should be 0
@@ -66,20 +55,9 @@ namespace NiBtOgre
         FgEgt(const FgEgt& other);
         FgEgt& operator=(const FgEgt& other);
 
-    //protected: // FIXME: pure virtual methods of Ogre::Resource
-    //public:
-        //void loadImpl();
-        //void unloadImpl() {}
-
     public:
         // The parameter 'name' refers to those in the Ogre::ResourceGroupManager
         // e.g. full path from the directory/BSA added in Bsa::registerResources(), etc
-        //
-        // NOTE: the constructor may throw
-//      FgEgt(Ogre::ResourceManager *creator, const Ogre::String& name, Ogre::ResourceHandle handle,
-//              const Ogre::String& group, bool isManual, Ogre::ManualResourceLoader* loader,
-//              const Ogre::NameValuePairList* createParams=nullptr/*bool showEditorMarkers=false*/);
-        //FgEgt(const Ogre::String& name, const Ogre::String& group); // FIXME: for testing only
         FgEgt(const std::string& name);
         ~FgEgt();
 
@@ -100,4 +78,4 @@ namespace NiBtOgre
     };
 }
 
-#endif // NIBTOGRE_FGEGT_H
+#endif // FGLIB_FGEGT_H

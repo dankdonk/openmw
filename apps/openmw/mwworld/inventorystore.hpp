@@ -61,21 +61,25 @@ namespace MWWorld
             static const int Slot_CarriedLeft = 17;
             static const int Slot_Ammunition = 18;
 
-            // No separate shirt/pants/skirt/belt/pauldrons slots for TES4
-            static const int Slot_ForeignHelmet = 19;
-            static const int Slot_ForeignUpperBody = 20;
-            static const int Slot_ForeignLowerBody = 21;
-            static const int Slot_ForeignLeftHand = 22;
-            static const int Slot_ForeignRightHand = 23;
-            static const int Slot_ForeignBoots = 24;
-            static const int Slot_ForeignLeftRing = 25;
-            static const int Slot_ForeignRightRing = 26;
-            static const int Slot_ForeignAmulet = 27;
-            static const int Slot_ForeignCarriedRight = 28;
-            static const int Slot_ForeignCarriedLeft = 29;
-            static const int Slot_ForeignAmmunition = 30;
+            // No separate shirt/pants/skirt/belt/pauldrons slots for TES4, etc.
+            static const int Slot_ForeignHead      = 19;
+            static const int Slot_ForeignHair      = 20;
+            static const int Slot_ForeignUpperBody = 21;
+            static const int Slot_ForeignLowerBody = 22;
+            static const int Slot_ForeignHand      = 23;
+            static const int Slot_ForeignFoot      = 24;
+            static const int Slot_ForeignRightRing = 25;
+            static const int Slot_ForeignLeftRing  = 26;
+            static const int Slot_ForeignAmulet    = 27;
+            static const int Slot_ForeignWeapon    = 28;
+            static const int Slot_ForeignBackWeapon = 29;
+            static const int Slot_ForeignSideWeapon = 30;
+            static const int Slot_ForeignQuiver    = 31;
+            static const int Slot_ForeignShield    = 32;
+            static const int Slot_ForeignTorch     = 33;
+            static const int Slot_ForeignTail      = 34;
 
-            static const int Slots = 31;
+            static const int Slots = 35;
 
             static const int Slot_NoSlot = -1;
 
@@ -173,6 +177,7 @@ namespace MWWorld
             ///< Unequip all currently equipped items.
 
             void autoEquip (const MWWorld::Ptr& actor);
+            void autoEquipTES4 (const MWWorld::Ptr& actor);
             ///< Auto equip items according to stats and item value.
 
             const MWMechanics::MagicEffects& getMagicEffects() const;

@@ -326,6 +326,77 @@ void MWWorld::InventoryStore::autoEquip (const MWWorld::Ptr& actor)
     }
 }
 
+// FIXME: the slots for TES4 need to be separated
+void MWWorld::InventoryStore::autoEquipTES4 (const MWWorld::Ptr& actor)
+{
+    std::vector<ContainerStoreIterator> slots_;
+    initSlots (slots_); // push_back iterators for each possible equippable slots e.g. Helmet
+
+    // disable excessive model update to listners during auto-equipTES4
+    mUpdatesEnabled = false;
+
+    // iter points to the actor's inventory (all types, e.g. potion, armor, lockpicks)
+    for (ContainerStoreIterator iter (begin()); iter!=end(); ++iter)
+    {
+        Ptr test = *iter; // temp inventory item for checking suitability
+
+        // itemSlots.first specifies the slots for the equipment, the int values are defined in the
+        // header, e.g.:
+        //     static const int Slot_Helmet = 0;
+        std::pair<std::vector<int>, bool> itemsSlots = iter->getClass().getEquipmentSlots (*iter);
+
+        // iter2 points to a slot number for this equipment
+        std::vector<int>::const_iterator iter2 (itemsSlots.first.begin());
+        for (; iter2!=itemsSlots.first.end(); ++iter2)
+        {
+            if (slots_.at (*iter2)!=end()) // equipment slot for the new equipment already occupied
+            {
+                 // check if the new equipment is more valuable than existing, etc
+            }
+
+            // canBeEquipped() - each class, e.g. ESM4::Clothing has its own logic
+            //   0 if player cannot equip item
+            //   1 if can equip
+            //   2 if it's twohanded weapon
+            //   3 if twohanded weapon conflicts with that
+            if (test.getClass().canBeEquipped (test, actor).first == 0)
+                continue; // check the next itemSlot in the for loop
+
+            if (!itemsSlots.second) // can't stack when equipped
+            {
+                // unstack item pointed to by iterator if required
+                if (iter->getRefData().getCount() > 1)
+                {
+                    unstack(*iter, actor);
+                }
+            }
+
+            slots_[*iter2] = iter;
+            break;
+        }
+    }
+
+    bool changed = false;
+
+    for (std::size_t i=0; i<slots_.size(); ++i)
+    {
+        if (slots_[i] != mSlots[i])
+        {
+            changed = true;
+            break;
+        }
+    }
+    mUpdatesEnabled = true;
+
+    if (changed)
+    {
+        mSlots.swap (slots_);
+        fireEquipmentChangedEvent(actor);
+        updateMagicEffects(actor);
+        flagAsModified();
+    }
+}
+
 const MWMechanics::MagicEffects& MWWorld::InventoryStore::getMagicEffects() const
 {
     return mMagicEffects;

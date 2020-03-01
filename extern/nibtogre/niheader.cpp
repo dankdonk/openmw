@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015-2019 cc9cii
+  Copyright (C) 2015-2020 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -33,11 +33,11 @@
 std::string NiBtOgre::NiHeader::mEmptyString = "";
 
 // See NifTools/NifSkope/doc/header.html
-NiBtOgre::NiHeader::NiHeader(NiBtOgre::NiStream& stream) : mVer(0), mUserVer(0), mUserVer2(0), mNumBlocks(0)
+NiBtOgre::NiHeader::NiHeader(NiBtOgre::NiStream *stream) : mVer(0), mUserVer(0), mUserVer2(0), mNumBlocks(0)
 {
-    stream.setHeader(this);
+    stream->setHeader(this);
 
-    std::string header = stream.getLine();
+    std::string header = stream->getLine();
 
     if (header.find("Gamebryo File Format") == std::string::npos &&
         header.find("NetImmerse File Format") == std::string::npos)
@@ -79,7 +79,7 @@ NiBtOgre::NiHeader::NiHeader(NiBtOgre::NiStream& stream) : mVer(0), mUserVer(0),
     //
     // TODO: check FONV/FO4 versions
     //
-    stream.readNifVer(mVer);
+    stream->readNifVer(mVer);
     if (mVer != 0x14000004 && mVer != 0x14000005 && mVer != 0x14020007 && mVer != 0x04000002 &&
         mVer != 0x0a020000 && mVer != 0x0303000d && mVer != 0x0a000100 && mVer != 0x0a01006a/*&& mVer != 0x0a000102*/) // comment out unused
     {
@@ -91,17 +91,17 @@ NiBtOgre::NiHeader::NiHeader(NiBtOgre::NiStream& stream) : mVer(0), mUserVer(0),
     {
         char endian;
 
-        stream.read(endian);
+        stream->read(endian);
         if (!endian)
             throw std::runtime_error("NiBtOgre::NiHeader::unsupported byte order");
     }
 
     if (mVer >= 0x0a010000) // 10.1.0.0
     {
-        stream.readUserVer(mUserVer);
+        stream->readUserVer(mUserVer);
     }
 
-    stream.read(mNumBlocks);
+    stream->read(mNumBlocks);
 
     if (mVer >= 0x0a000100) // 5.0.0.1 but the oldest we support is 10.0.1.0
     {
@@ -115,29 +115,29 @@ NiBtOgre::NiHeader::NiHeader(NiBtOgre::NiStream& stream) : mVer(0), mUserVer(0),
         //) && (User Version > 3)
         if ((mUserVer >= 10) || ((mUserVer == 1) && (mVer != 0x0a020000)))
         {
-            stream.readUserVer2(mUserVer2);
+            stream->readUserVer2(mUserVer2);
 
-            stream.readShortString(mCreator);
-            stream.readShortString(mExportInfo1);
-            stream.readShortString(mExportInfo2);
+            stream->readShortString(mCreator);
+            stream->readShortString(mExportInfo1);
+            stream->readShortString(mExportInfo2);
         }
 
-        stream.read(numBlockTypes);
+        stream->read(numBlockTypes);
 
         mBlockTypes.resize(numBlockTypes);
         for (uint16_t i = 0; i < numBlockTypes; ++i)
-            stream.readSizedString(mBlockTypes.at(i));
+            stream->readSizedString(mBlockTypes.at(i));
 
         mBlockTypeIndex.resize(mNumBlocks);
         for (uint32_t i = 0; i < mNumBlocks; ++i)
-            stream.read(mBlockTypeIndex.at(i));
+            stream->read(mBlockTypeIndex.at(i));
     }
 
     if (mVer >= 0x14020007) // 20.2.0.7
     {
         mBlockSize.resize(mNumBlocks);
         for (uint32_t i = 0; i < mNumBlocks; ++i)
-            stream.read(mBlockSize.at(i));
+            stream->read(mBlockSize.at(i));
     }
 
     if (mVer >= 0x14010003) // 20.1.0.3
@@ -145,18 +145,18 @@ NiBtOgre::NiHeader::NiHeader(NiBtOgre::NiStream& stream) : mVer(0), mUserVer(0),
         uint32_t numStrings;
         uint32_t maxStringLength;
 
-        stream.read(numStrings);
-        stream.read(maxStringLength); // possibly useful for reading strings and setting bufer size?
+        stream->read(numStrings);
+        stream->read(maxStringLength); // possibly useful for reading strings and setting bufer size?
 
         mStrings.resize(numStrings);
         for (uint32_t i = 0; i < numStrings; ++i)
-            stream.readSizedString(mStrings.at(i));
+            stream->readSizedString(mStrings.at(i));
     }
 
     if (mVer >= 0x0a000100) // 5.0.0.6 but the oldest we support is 10.0.1.0
     {
         uint32_t unknown;
-        stream.read(unknown);
+        stream->read(unknown);
     }
 }
 

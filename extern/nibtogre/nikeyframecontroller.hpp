@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015-2019 cc9cii
+  Copyright (C) 2015-2020 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -44,7 +44,7 @@ namespace NiBtOgre
     public:
         NiKeyframeDataRef mDataRef;
 
-        NiKeyframeController(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
+        NiKeyframeController(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
 
         void build(NiAVObject* target, const NiTransformInterpolator& interpolator,
                 std::vector<Ogre::Controller<float> >& controllers);
@@ -62,7 +62,7 @@ namespace NiBtOgre
     public:
         NiKeyframeDataRef mData2Ref;
 
-        BSKeyframeController(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
+        BSKeyframeController(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
     };
 #endif
 }

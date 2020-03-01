@@ -368,7 +368,6 @@ MWWorld::ContainerStoreIterator MWWorld::ContainerStore::addNewStack (const Ptr&
         case Type_ForeignSigilStone: foreignSigilStones.mList.push_back (*ptr.get<ESM4::SigilStone>()); it = ContainerStoreIterator(this, --foreignSigilStones.mList.end()); break;
         case Type_ForeignWeapon: foreignWeapons.mList.push_back (*ptr.get<ESM4::Weapon>()); it = ContainerStoreIterator(this, --foreignWeapons.mList.end()); break;
         case Type_ForeignAmmo: foreignAmmos.mList.push_back (*ptr.get<ESM4::Ammo>()); it = ContainerStoreIterator(this, --foreignAmmos.mList.end()); break;
-        case Type_ForeignLeveledItem: foreignLvlItems.mList.push_back (*ptr.get<ESM4::LeveledItem>()); it = ContainerStoreIterator(this, --foreignLvlItems.mList.end()); break;
         case Type_ForeignNote: foreignNotes.mList.push_back (*ptr.get<ESM4::Note>()); it = ContainerStoreIterator(this, --foreignNotes.mList.end()); break;
     }
 
@@ -451,12 +450,38 @@ void MWWorld::ContainerStore::addInitialItem (const std::string& id, const std::
             addInitialItem(id, owner, count, false, levItem->mId);
         }
     }
+    else if (ref.getPtr().getTypeName()==typeid (ESM4::LeveledItem).name())
+    {
+        const ESM4::LeveledItem* levItem = ref.getPtr().get<ESM4::LeveledItem>()->mBase;
+
+        if (topLevel && std::abs(count) > 1 && levItem->calcEachItemInCount())
+        {
+            for (int i = 0; i < std::abs(count); ++i)
+            {
+                // go topLevel again but this time with negative count
+                addInitialItem(id, owner, count > 0 ? 1 : -1, true/*topLevel*/,
+                               ESM4::formIdToString(ref.getPtr().get<ESM4::LeveledItem>()->mBase->mFormId));
+            }
+        }
+        else
+        {
+            std::string id
+                = MWMechanics::getTES4LevelledItem(ref.getPtr().get<ESM4::LeveledItem>()->mBase);
+
+            if (id.empty())
+                return; // RNG not kind today :-(
+
+            addInitialItem(id, owner, count, false, // NOTE: new id from getTES4LevelledItem
+                           ESM4::formIdToString(ref.getPtr().get<ESM4::LeveledItem>()->mBase->mFormId));
+        }
+    }
     else
     {
         // A negative count indicates restocking items
         // For a restocking levelled item, remember what we spawned so we can delete it later when the merchant restocks
         if (!levItem.empty() && count < 0)
         {
+            // FIXME: not yet done for TES4
             if (mLevelledItemMap.find(id) == mLevelledItemMap.end())
                 mLevelledItemMap[id] = 0;
             mLevelledItemMap[id] += std::abs(count);
@@ -833,8 +858,8 @@ MWWorld::ContainerStoreIterator::ContainerStoreIterator (ContainerStore *contain
     : mType(MWWorld::ContainerStore::Type_ForeignWeapon), mMask(MWWorld::ContainerStore::Type_All), mContainer(container), mForeignWeapon(iterator){}
 MWWorld::ContainerStoreIterator::ContainerStoreIterator (ContainerStore *container, MWWorld::CellRefList<ESM4::Ammo>::List::iterator iterator)
     : mType(MWWorld::ContainerStore::Type_ForeignAmmo), mMask(MWWorld::ContainerStore::Type_All), mContainer(container), mForeignAmmo(iterator){}
-MWWorld::ContainerStoreIterator::ContainerStoreIterator (ContainerStore *container, MWWorld::CellRefList<ESM4::LeveledItem>::List::iterator iterator)
-    : mType(MWWorld::ContainerStore::Type_ForeignLeveledItem), mMask(MWWorld::ContainerStore::Type_All), mContainer(container), mForeignLeveledItem(iterator){}
+//MWWorld::ContainerStoreIterator::ContainerStoreIterator (ContainerStore *container, MWWorld::CellRefList<ESM4::LeveledItem>::List::iterator iterator)
+//    : mType(MWWorld::ContainerStore::Type_ForeignLeveledItem), mMask(MWWorld::ContainerStore::Type_All), mContainer(container), mForeignLeveledItem(iterator){}
 MWWorld::ContainerStoreIterator::ContainerStoreIterator(ContainerStore *container, MWWorld::CellRefList<ESM4::Note>::List::iterator iterator)
     : mType(MWWorld::ContainerStore::Type_ForeignNote), mMask(MWWorld::ContainerStore::Type_All), mContainer(container), mForeignNote(iterator){}
 
@@ -931,6 +956,81 @@ bool MWWorld::ContainerStoreIterator::resetIterator()
 
             mWeapon = mContainer->weapons.mList.begin();
             return mWeapon!=mContainer->weapons.mList.end();
+
+        case ContainerStore::Type_ForeignPotion:
+
+            mForeignPotion = mContainer->foreignPotions.mList.begin();
+            return mForeignPotion!=mContainer->foreignPotions.mList.end();
+
+        case ContainerStore::Type_ForeignApparatus:
+
+            mForeignApparatus = mContainer->foreignAppas.mList.begin();
+            return mForeignApparatus!=mContainer->foreignAppas.mList.end();
+
+        case ContainerStore::Type_ForeignArmor:
+
+            mForeignArmor = mContainer->foreignArmors.mList.begin();
+            return mForeignArmor!=mContainer->foreignArmors.mList.end();
+
+        case ContainerStore::Type_ForeignBook:
+
+            mForeignBook = mContainer->foreignBooks.mList.begin();
+            return mForeignBook!=mContainer->foreignBooks.mList.end();
+
+        case ContainerStore::Type_ForeignClothing:
+
+            mForeignClothing = mContainer->foreignClothes.mList.begin();
+            return mForeignClothing!=mContainer->foreignClothes.mList.end();
+
+        case ContainerStore::Type_ForeignIngredient:
+
+            mForeignIngredient = mContainer->foreignIngredients.mList.begin();
+            return mForeignIngredient!=mContainer->foreignIngredients.mList.end();
+
+        case ContainerStore::Type_ForeignLight:
+
+            mForeignLight = mContainer->foreignLights.mList.begin();
+            return mForeignLight!=mContainer->foreignLights.mList.end();
+
+        case ContainerStore::Type_ForeignSoulGem:
+
+            mForeignSoulGem = mContainer->foreignSoulGems.mList.begin();
+            return mForeignSoulGem!=mContainer->foreignSoulGems.mList.end();
+
+        case ContainerStore::Type_ForeignMiscItem:
+
+            mForeignMiscItem = mContainer->foreignMiscItems.mList.begin();
+            return mForeignMiscItem!=mContainer->foreignMiscItems.mList.end();
+
+        case ContainerStore::Type_ForeignKey:
+
+            mForeignKey = mContainer->foreignKeys.mList.begin();
+            return mForeignKey!=mContainer->foreignKeys.mList.end();
+
+        case ContainerStore::Type_ForeignSigilStone:
+
+            mForeignSigilStone = mContainer->foreignSigilStones.mList.begin();
+            return mForeignSigilStone!=mContainer->foreignSigilStones.mList.end();
+
+        case ContainerStore::Type_ForeignWeapon:
+
+            mForeignWeapon = mContainer->foreignWeapons.mList.begin();
+            return mForeignWeapon!=mContainer->foreignWeapons.mList.end();
+
+        case ContainerStore::Type_ForeignAmmo:
+
+            mForeignAmmo = mContainer->foreignAmmos.mList.begin();
+            return mForeignAmmo!=mContainer->foreignAmmos.mList.end();
+
+        //case ContainerStore::Type_ForeignLeveledItem:
+
+            //mForeignLeveledItem = mContainer->foreignLvlItems.mList.begin();
+            //return mForeignLeveledItem!=mContainer->foreignLvlItems.mList.end();
+
+        case ContainerStore::Type_ForeignNote:
+
+            mForeignNote = mContainer->foreignNotes.mList.begin();
+            return mForeignNote!=mContainer->foreignNotes.mList.end();
     }
 
     return false;
@@ -999,6 +1099,76 @@ bool MWWorld::ContainerStoreIterator::incIterator()
 
             ++mWeapon;
             return mWeapon==mContainer->weapons.mList.end();
+
+        case ContainerStore::Type_ForeignPotion:
+
+            ++mForeignPotion;
+            return mForeignPotion==mContainer->foreignPotions.mList.end();
+
+        case ContainerStore::Type_ForeignApparatus:
+
+            ++mForeignApparatus;
+            return mForeignApparatus==mContainer->foreignAppas.mList.end();
+
+        case ContainerStore::Type_ForeignArmor:
+
+            ++mForeignArmor;
+            return mForeignArmor==mContainer->foreignArmors.mList.end();
+
+        case ContainerStore::Type_ForeignBook:
+
+            ++mForeignBook;
+            return mForeignBook==mContainer->foreignBooks.mList.end();
+
+        case ContainerStore::Type_ForeignClothing:
+
+            ++mForeignClothing;
+            return mForeignClothing==mContainer->foreignClothes.mList.end();
+
+        case ContainerStore::Type_ForeignIngredient:
+
+            ++mForeignIngredient;
+            return mForeignIngredient==mContainer->foreignIngredients.mList.end();
+
+        case ContainerStore::Type_ForeignLight:
+
+            ++mForeignLight;
+            return mForeignLight==mContainer->foreignLights.mList.end();
+
+        case ContainerStore::Type_ForeignSoulGem:
+
+            ++mForeignSoulGem;
+            return mForeignSoulGem==mContainer->foreignSoulGems.mList.end();
+
+        case ContainerStore::Type_ForeignMiscItem:
+
+            ++mForeignMiscItem;
+            return mForeignMiscItem==mContainer->foreignMiscItems.mList.end();
+
+        case ContainerStore::Type_ForeignKey:
+
+            ++mForeignKey;
+            return mForeignKey==mContainer->foreignKeys.mList.end();
+
+        case ContainerStore::Type_ForeignSigilStone:
+
+            ++mForeignSigilStone;
+            return mForeignSigilStone==mContainer->foreignSigilStones.mList.end();
+
+        case ContainerStore::Type_ForeignWeapon:
+
+            ++mForeignWeapon;
+            return mForeignWeapon==mContainer->foreignWeapons.mList.end();
+
+        case ContainerStore::Type_ForeignAmmo:
+
+            ++mForeignAmmo;
+            return mForeignAmmo==mContainer->foreignAmmos.mList.end();
+
+        case ContainerStore::Type_ForeignNote:
+
+            ++mForeignNote;
+            return mForeignNote==mContainer->foreignNotes.mList.end();
     }
 
     return true;
@@ -1042,7 +1212,7 @@ MWWorld::Ptr MWWorld::ContainerStoreIterator::operator*() const
         case ContainerStore::Type_ForeignSigilStone: ptr = MWWorld::Ptr (&*mForeignSigilStone, 0); break;
         case ContainerStore::Type_ForeignWeapon: ptr = MWWorld::Ptr (&*mForeignWeapon, 0); break;
         case ContainerStore::Type_ForeignAmmo: ptr = MWWorld::Ptr (&*mForeignAmmo, 0); break;
-        case ContainerStore::Type_ForeignLeveledItem: ptr = MWWorld::Ptr (&*mForeignLeveledItem, 0); break;
+        //case ContainerStore::Type_ForeignLeveledItem: ptr = MWWorld::Ptr (&*mForeignLeveledItem, 0); break;
         case ContainerStore::Type_ForeignNote: ptr = MWWorld::Ptr (&*mForeignNote, 0); break;
     }
 
@@ -1109,7 +1279,7 @@ bool MWWorld::ContainerStoreIterator::isEqual (const ContainerStoreIterator& ite
         case ContainerStore::Type_ForeignSigilStone: return mForeignSigilStone==iter.mForeignSigilStone;
         case ContainerStore::Type_ForeignWeapon: return mForeignWeapon==iter.mForeignWeapon;
         case ContainerStore::Type_ForeignAmmo: return mForeignAmmo==iter.mForeignAmmo;
-        case ContainerStore::Type_ForeignLeveledItem: return mForeignLeveledItem==iter.mForeignLeveledItem;
+        //case ContainerStore::Type_ForeignLeveledItem: return mForeignLeveledItem==iter.mForeignLeveledItem;
         case ContainerStore::Type_ForeignNote: return mForeignNote==iter.mForeignNote;
         case -1: return true;
     }
@@ -1162,7 +1332,7 @@ void MWWorld::ContainerStoreIterator::copy(const ContainerStoreIterator& src)
         case MWWorld::ContainerStore::Type_ForeignSigilStone: mForeignSigilStone = src.mForeignSigilStone; break;
         case MWWorld::ContainerStore::Type_ForeignWeapon: mForeignWeapon = src.mForeignWeapon; break;
         case MWWorld::ContainerStore::Type_ForeignAmmo: mForeignAmmo = src.mForeignAmmo; break;
-        case MWWorld::ContainerStore::Type_ForeignLeveledItem: mForeignLeveledItem = src.mForeignLeveledItem; break;
+        //case MWWorld::ContainerStore::Type_ForeignLeveledItem: mForeignLeveledItem = src.mForeignLeveledItem; break;
         case MWWorld::ContainerStore::Type_ForeignNote: mForeignNote = src.mForeignNote; break;
         case -1: break;
         default: assert(0);

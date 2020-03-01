@@ -11,6 +11,7 @@
 #include "../mwworld/ptr.hpp"
 #include "../mwworld/physicssystem.hpp"
 #include "../mwworld/cellstore.hpp"
+#include "../mwworld/inventorystore.hpp"
 
 #include "../mwrender/objects.hpp"
 #include "../mwrender/renderinginterface.hpp"
@@ -92,6 +93,30 @@ namespace MWClass
         info.text = text;
 
         return info;
+    }
+
+    std::pair<std::vector<int>, bool> ForeignWeapon::getEquipmentSlots (const MWWorld::Ptr& ptr) const
+    {
+        MWWorld::LiveCellRef<ESM4::Weapon> *ref = ptr.get<ESM4::Weapon>();
+
+        std::vector<int> slots_;
+        bool stack = false;
+
+        // FIXME
+//      if (ref->mBase->mData.type==ESM::Weapon::Arrow || ref->mBase->mData.type==ESM::Weapon::Bolt)
+//      {
+//          slots_.push_back (int (MWWorld::InventoryStore::Slot_Ammunition));
+//          stack = true;
+//      }
+//      else if (ref->mBase->mData.type==ESM::Weapon::MarksmanThrown)
+//      {
+//          slots_.push_back (int (MWWorld::InventoryStore::Slot_CarriedRight));
+//          stack = true;
+//      }
+//      else
+//          slots_.push_back (int (MWWorld::InventoryStore::Slot_CarriedRight));
+
+        return std::make_pair (slots_, stack);
     }
 
     int ForeignWeapon::getValue (const MWWorld::Ptr& ptr) const

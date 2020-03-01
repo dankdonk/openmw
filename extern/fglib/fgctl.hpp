@@ -20,31 +20,31 @@
   cc9cii cc9c@iinet.net.au
 
 */
-#ifndef NIBTOGRE_FGCTL_H
-#define NIBTOGRE_FGCTL_H
+#ifndef FGLIB_FGCTL_H
+#define FGLIB_FGCTL_H
 
 #include <cstdint>
 
-#include <OgreResource.h>
+//#include <OgreResource.h>
 
 #include "fgstream.hpp"
 
-namespace Ogre
-{
-    class ResourceManager;
-    class ManualResourceLoader;
-}
+//namespace Ogre
+//{
+    //class ResourceManager;
+    //class ManualResourceLoader;
+//}
 
-namespace NiBtOgre
+namespace FgLib
 {
     class FgCtl //: public Ogre::Resource // FIXME: for quick testing
     {
-        FgStream mFgStream;
+        //FgStream mFgStream;
 
-        const std::string mGroup;  // Ogre group
-        const std::string mName;   // file name
+        //const std::string mGroup;  // Ogre group
+        //const std::string mName;   // file name
 
-    public: // FIXME: should be private
+    //public: // FIXME: should be private
         std::uint64_t mFileType;
         std::uint32_t mGeometryBasisVersion;
         std::uint32_t mTextureBasisVersion;
@@ -74,16 +74,16 @@ namespace NiBtOgre
 
         // FIXME: add rest of the data in si.ctl
 
-    private:
+    //private:
         // default, copy and assignment not allowed
         FgCtl();
         FgCtl(const FgCtl& other);
         FgCtl& operator=(const FgCtl& other);
 
     //protected: // FIXME: pure virtual methods of Ogre::Resource
-    public:
-        void loadImpl();
-        void unloadImpl() {}
+    //public:
+        //void loadImpl();
+        //void unloadImpl() {}
 
     public:
         // The parameter 'name' refers to those in the Ogre::ResourceGroupManager
@@ -93,31 +93,31 @@ namespace NiBtOgre
 //      FgCtl(Ogre::ResourceManager *creator, const Ogre::String& name, Ogre::ResourceHandle handle,
 //              const Ogre::String& group, bool isManual, Ogre::ManualResourceLoader* loader,
 //              const Ogre::NameValuePairList* createParams=nullptr/*bool showEditorMarkers=false*/);
-        FgCtl(const Ogre::String& name, const Ogre::String& group); // FIXME: for testing only
+        FgCtl(const Ogre::String& name/*, const Ogre::String& group*/); // FIXME: for testing only
         ~FgCtl();
 
-        const std::string& getOgreGroup() const { return mGroup; }
-        const std::string& getName() const { return mName; }
+        //const std::string& getOgreGroup() const { return mGroup; }
+        //const std::string& getName() const { return mName; }
 
-        inline const std::vector<std::pair<std::vector<float>, std::string> >& getSymMorphCtl() const {
+        inline const std::vector<std::pair<std::vector<float>, std::string> >& symMorphCtl() const {
             return mGSymLinearControls;
         }
 
-        inline const std::vector<std::pair<std::vector<float>, std::string> >& getSymTextureCtl() const {
+        inline const std::vector<std::pair<std::vector<float>, std::string> >& symTextureCtl() const {
             return mTSymLinearControls;
         }
 
-        inline const std::vector<std::pair<std::vector<float>, float> >& getAllPrtOffsetCtl() const {
+        inline const std::vector<std::pair<std::vector<float>, float> >& allPrtOffsetCtl() const {
             return mAllPrtOffsetLinearControls;
         }
 
     private:
         void readLinearControls(uint32_t& numControls, uint32_t numModes,
-                std::vector<std::pair<std::vector<float>, std::string> >& controls);
+                std::vector<std::pair<std::vector<float>, std::string> >& controls, FgStream& ctl);
 
         void readOffsetLinearControls(uint32_t numModes,
-                std::vector<std::pair<std::vector<float>, float> >& controls);
+                std::vector<std::pair<std::vector<float>, float> >& controls, FgStream& ctl);
     };
 }
 
-#endif // NIBTOGRE_FGCTL_H
+#endif // FGLIB_FGCTL_H

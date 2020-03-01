@@ -22,7 +22,7 @@
 
 */
 
-#[17/12/18]
+# [17/12/18] NIF Design
 
 Ideally minimise unnecessary loops or processing duplications.
 
@@ -31,7 +31,7 @@ Ideally minimise unnecessary loops or processing duplications.
 But at what level?  The choices seem to be:
 
   * NIF after parsing - each of the object instances based on the same NIF needs to be built
-  * already built object instance - everything's the same except position/rotation/etc
+  * already built object instance - everything is the same except position/rotation/etc
     (how to clone?)
 
 ## Building object instances
@@ -53,49 +53,35 @@ But at what level?  The choices seem to be:
 
 One design consideration is when does the Ogre objects (e.g. `Mesh`) get built?
 
-Currently the build is triggered when the associated `Entity` is built (via a loader callback
-mechanism).  This may not be efficient if the same mesh are re-used often (e.g `skeleton.nif`,
-but have not tested if true - **EDIT 22/02/19:** Not true since an often used mesh will be
-retrieved from the `MeshManager`'s cache.  Also see below paragraph.).
+Currently the build is triggered when the associated `Entity` is built (via a loader callback mechanism).  This may not be efficient if the same mesh are re-used often (e.g. `skeleton.nif`, but have not tested if true - **EDIT: 22/02/19** Not true since an often used mesh will be retrieved from the `MeshManager`'s cache.  Also see below paragraph.).
 
-Note that I may be misunderstanding some stuff here.  For example, the built meshes are managed
-by the `MeshManager` so they won't be built again. Similarly the skeletons are managed by the
-`SkeletonManager`.
+Note that I may be misunderstanding some stuff here.  For example, the built meshes are managed by the `MeshManager` so they won't be built again. Similarly the skeletons are managed by the `SkeletonManager`.
 
-An alternative might be to create the Ogre objects as each of the NIF files are read.  But
-doing this can lead to a large number of Ogre objects being loaded (Q: do Ogre resource
-managers ever unload? A: yes)
+An alternative might be to create the Ogre objects as each of the NIF files are read.  But doing this can lead to a large number of Ogre objects being loaded (Q: do Ogre resource managers ever unload? A: yes)
 
 Some `NiTimeControllers` may work with different Ogre objects.  For example:
 
-  * `NiGeomMorpherController` is setup while creating a sub-mesh (vertex animation)
-    `SceneManager::_applySceneAnimations` will then call the `apply()` method of each of the
-    animations
+  * `NiGeomMorpherController` is setup while creating a sub-mesh (vertex animation) `SceneManager::_applySceneAnimations` will then call the `apply()` method of each of the animations
 
   * `NiUVController` seems to work at each of the sub-entity level by modifying the associated
     material (texture scroll)
 
-#[23/12/2018] Some unrelated notes
+# [23/12/2018] Some unrelated notes
 
-  1. Ogre resource searching is poor for NIF - multiple archives are searched for each and every
-     resource in BSA (or loose files).  See `OgreResourceGroupManager.cpp`.
+  1. Ogre resource searching is poor for NIF - multiple archives are searched for each and every resource in BSA (or loose files).  See `OgreResourceGroupManager.cpp`.
 
-     Also, find out if the contents of the BSA can be registered(?) with `ArchiveManager` or
-     `ResourceManager`.  It seems `grp->ResourceIndexCaseSensitive`, etc, are empty.
+     Also, find out if the contents of the BSA can be registered(?) with `ArchiveManager` or `ResourceManager`.  It seems `grp->ResourceIndexCaseSensitive`, etc, are empty.
 
-  2. Each of the sounds throw exception trying to find a `.wav` format, then finds `.mp3` format.
-     Do some intelligent detection while scanning resources?
+  2. Each of the sounds throw exception trying to find a `.wav` format, then finds `.mp3` format.  Do some intelligent detection while scanning resources?
 
   3. Subtitle message box height is too low and hence the bottom of the texts are not showing.
 
-#[25/12/2018]
+# [25/12/2018]
 
-Decided to revert the `bhkNiTriStripsShape` packing optimisation.  `bhkNiTriStripsShape` shouldn't
-be occurring often with the newer NIF versions, anyway (hopefully).  Well, it turns out that
-there are a few - might be worth doing some profiling later.
+Decided to revert the `bhkNiTriStripsShape` packing optimisation.  `bhkNiTriStripsShape` shouldn't be occurring often with the newer NIF versions, anyway (hopefully).  Well, it turns out that there are a few - might be worth doing some profiling later.
 
-    bhkNiTriStripsShape examples:                                     {{{
-
+[//]: # (                                                             {{{
+    bhkNiTriStripsShape examples:
     ./meshes/architecture/arena/arenacolumn02.nif
     ./meshes/architecture/bridges/looseboard01.nif
     ./meshes/architecture/bridges/looseboardbroken.nif
@@ -301,9 +287,9 @@ there are a few - might be worth doing some profiling later.
     ./meshes/plants/Dementia/dpodpit.nif
     ./meshes/plants/Mania/alocasiafruit.nif
     ./meshes/plants/Mania/kelpgasbladder.nif
-    ./meshes/plants/Mania/wormheadcap.nif                             }}}
+    ./meshes/plants/Mania/wormheadcap.nif                             }}})
 
-#[25/12/2018]
+# [25/12/2018]
 
 ## Rough sequence of events:
 
@@ -312,7 +298,7 @@ there are a few - might be worth doing some profiling later.
   * Read NIF model from BSA or loose files (cache the NIF?  probably best to cache the `NiModel`)
   * Build the Ogre "templates" such as Mesh, Skeleton, Vertex Animation, etc, and store them in
     their respective resource managers
-  * Create Ogre Entities (actually, trying to create the entities trigger the first time
+  * Create Ogre Entities (actually, trying to create an `Ogre::Entity` triggers the first time
     'loading' of the resources such as meshes)
   * Also create Bullet objects
   * Associate entity controllers (for some animation types)
@@ -320,16 +306,11 @@ there are a few - might be worth doing some profiling later.
 ## Some more detail:
 
 ### NiNode
-`NiNode` is a `Mesh` if any of the children is an `NiGeometry`, which is a sub-mesh.
-A sub-mesh may have its own animation (time controllers from `NiGeometry`)
+`NiNode` is a `Mesh` if any of the children is an `NiGeometry`, which is a sub-mesh.  A sub-mesh may have its own animation (time controllers from `NiGeometry`)
 
-Ogre `MeshManager` needs a unique identifier (name?) for the `Mesh`.  For now the NIF model name
-plus the `NiNode` name is used but it may be possible to use a hash value + block number
-instead.
+Ogre `MeshManager` needs a unique identifier (name?) for the `Mesh`.  For now the NIF model name plus the `NiNode` name is used but it may be possible to use a hash value + block number instead.
 
-**TODO:** Since the meshes are loaded on-demand, and sub-meshes are created from a mesh, each of
-      the `NiGeomerty` children are registered to a loader.  An alternative is to re-scan the
-      children at build time.  Not sure which is more efficient.
+**TODO:** Since the meshes are loaded on-demand, and sub-meshes are created from a mesh, each of the `NiGeomerty` children are registered to a loader.  An alternative is to re-scan the children at build time.  Not sure which is more efficient.
 
 The mesh loader should be part of `NiModel` so that the cached one also has the loader.
 
@@ -347,7 +328,7 @@ Any associated object, such as materials, animations and skeletons should also b
      Materials                      : (Skyrim)
      BS Properties                  : (Skyrim)
 
-#[27/12/2018]
+# [27/12/2018]
 
 ## NiProperty
 
@@ -431,18 +412,15 @@ Any associated object, such as materials, animations and skeletons should also b
 
 ## BtOgreInst
 
-`BtOgreInst` should maintain the `Entities` and `SceneNodes` (probably also `RigidBodies`)
-It should "have" an `NiModel`, at least a pointer/reference to it.
+`BtOgreInst` should maintain the `Entities` and `SceneNodes` (probably also `RigidBodies`) It should "have" an `NiModel`, at least a pointer/reference to it.
 
-When a `BtOgreInst` is built, it will in turn build its `NiModel` first.  The `NiModel` building
-process should result in finding out which entities are to be built (e.g. name of the `Mesh`)
+When a `BtOgreInst` is built, it will in turn build its `NiModel` first.  The `NiModel` building process should result in finding out which entities are to be built (e.g. name of the `Mesh`)
 
 ## NiNode
 
-`NiNode` may have an associated collision object(s).  These collision shapes and constraints
-are built in Bullet.
+`NiNode` may have an associated collision object(s).  These collision shapes and constraints are built in Bullet.
 
-#[28/12/2018]
+# [28/12/2018]
 
 ## Controllers:
 
@@ -460,7 +438,7 @@ are built in Bullet.
 
    ??                   ParticleSystem
 
-#[29/12/2018]
+# [29/12/2018]
 
 ## Animation
 
@@ -496,22 +474,17 @@ are built in Bullet.
 
 ## Finding minimum size skeleton
 
-  1. While constructing the objects (i.e. reading the NIF file), make a note of `NiNode` parent
-     `NiNode`.
-  2. Also make a note of leaf `NiNode`; `NiSkinInstance::mBones`, `NiTransformController::mTargetRef`,
-     and maybe even `NiNodes` names starting with "`AttachLight`".
-  3. Once all the blocks are read in, reverse search from each of the leaf nodes to the root
-     node (prb. use the one in the footer?).  While doing this each of the `NiNode` should keep
-     a list of child `NiNode` that will be bones.
-  4  Finally create a skeleton using the `SkeletonManager` and a `ManualResourceLoader`.  The name
-     of the `Skeleton` should be the name of the `NiModel`.
+  1. While constructing the objects (i.e. reading the NIF file), make a note of `NiNode` parent `NiNode`.
+  2. Also make a note of leaf `NiNode`; `NiSkinInstance::mBones`, `NiTransformController::mTargetRef`, and maybe even `NiNodes` names starting with "`AttachLight`".
+  3. Once all the blocks are read in, reverse search from each of the leaf nodes to the root node (prb. use the one in the footer?).  While doing this each of the `NiNode` should keep a list of child `NiNode` that will be bones.
+  4.  Finally create a skeleton using the `SkeletonManager` and a `ManualResourceLoader`.  The name of the `Skeleton` should be the name of the `NiModel`.
 
 ## How to add (attach?) other NIF/kf files to a NIF?
 
 e.g. weapons, armour to skeleton
 e.g. fire to "`FlameNode`"
 
-#[29/12/2018]
+# [29/12/2018]
 
     mwscript/cellextensions.cpp       : opCOW
 
@@ -521,7 +494,7 @@ e.g. fire to "`FlameNode`"
     mwworld/worldimp.cpp              : changeToForeignWorldCell
     mwworld/scene.cpp                 : changeToForeignWorldCell     <---- sometimes not working
 
-#[30/12/2018] removed some debugging printouts
+# [30/12/2018] removed some debugging printouts
 
     material.cpp          : unhandled texture controller
     ogrenifloader         : No bone named...
@@ -532,14 +505,11 @@ e.g. fire to "`FlameNode`"
     esm4/race.cpp         : skipping...
 
 
-#[01/01/2018] A new start...
+# [01/01/2018] A new start...
 
-Well, a bit of rethink about object life cycle management now that the new rendering seems to
-work ok.  This was triggered by Bullet's need to have the collision shapes around during the
-lifetime of RigidBodies.
+Well, a bit of rethink about object life cycle management now that the new rendering seems to work ok.  This was triggered by Bullet's need to have the collision shapes around during the lifetime of RigidBodies.
 
-Embracing Ogre's resource management philosophy of on-demand resource loading, the NiModel's
-structure needs to change:
+Embracing Ogre's resource management philosophy of on-demand resource loading, the NiModel's structure needs to change:
 
 
     SceneNode o-- Entity o-- Mesh o-- SubMesh o-- Material o-- Texture
@@ -551,11 +521,9 @@ structure needs to change:
                  Skeleton (?)
 
 
-If Ogre decides to create an `Entity`, it will be based on a `Mesh` retrieved from a `MeshManager`.
-The `Mesh` in turn may use `MaterialManager` or `SkeletonManager`.
+If Ogre decides to create an `Entity`, it will be based on a `Mesh` retrieved from a `MeshManager`.  The `Mesh` in turn may use `MaterialManager` or `SkeletonManager`.
 
-An ESM/ESP model (i.e. a NIF) may result in a Skeleton and a number of `Meshes` (and other
-things) to be built.  In OpenMW the ownership structure is roughly:
+An ESM/ESP model (i.e. a NIF) may result in a Skeleton and a number of `Meshes` (and other things) to be built.  In OpenMW the ownership structure is roughly:
 
 
                                       Animation o-- ObjectScene o-- Entity, Light, Particles...
@@ -590,10 +558,7 @@ And in a little more detail (but still simplified):
                                    Ogre::Mesh*
 
 
-A `MeshManager` may call a `Mesh` loader which will need to refer to a NIF model (either loaded
-from a file or retrieved from a cache).  Currently the NIF model "owns" the loaders.  This may
-need to be flipped around, i.e. the loaders should be able to trigger the NIF models to be
-loaded/retrieved.
+A `MeshManager` may call a `Mesh` loader which will need to refer to a NIF model (either loaded from a file or retrieved from a cache).  Currently the NIF model "owns" the loaders.  This may need to be flipped around, i.e. the loaders should be able to trigger the NIF models to be loaded/retrieved.
 
 One way of achieving this could be to derive from an `Ogre::ResourceManager`. e.g.:
 
@@ -610,27 +575,19 @@ One way of achieving this could be to derive from an `Ogre::ResourceManager`. e.
                                         ::unloadImpl()    (NOTE: not implemented)
 
 
-A manually loaded resource will retain a pointer to its loader (e.g. see `Ogre::Mesh`).  That
-means, for the resource to be reloaded (by its manager) the loader needs to remain valid.
+A manually loaded resource will retain a pointer to its loader (e.g. see `Ogre::Mesh`).  That means, for the resource to be reloaded (by its manager) the loader needs to remain valid.
 
-With the current design where the loaders are "owned" by `NiModel`, `NiModel` needs to hang around
-until the resources (`Mesh`, `Skeleton`, etc) are no longer needed (e.g. unloading a cell).
+With the current design where the loaders are "owned" by `NiModel`, `NiModel` needs to hang around until the resources (`Mesh`, `Skeleton`, etc) are no longer needed (e.g. unloading a cell).
 
-One simple way could be to maintain a map of `NiModel` smart pointers in `ObjectScene` for deletion.
-A slightly better way is to have a cache to avoid multiple loading of the same NIF files.
-Or we could implement an `NiModelManager` as per above.  An `NiModel` can then be loaded on-demand.
+One simple way could be to maintain a map of `NiModel` smart pointers in `ObjectScene` for deletion.  A slightly better way is to have a cache to avoid multiple loading of the same NIF files.  Or we could implement an `NiModelManager` as per above.  An `NiModel` can then be loaded on-demand.
 
-(**EDIT 22/02/19:** looks like keeping the mesh loader with the `NiModel` in `ObjectScene` won't work
-since the same mesh for a different instance could be used)
+(**EDIT: 22/02/19** looks like keeping the mesh loader with the `NiModel` in `ObjectScene` won't work since the same mesh for a different instance could be used)
 
-**NOTE:** current implementation does not use a `ManualResourceLoader` which probably means `NiModel`
-      cannot be reloaded automatically (actually, it can)
+**NOTE:** current implementation does not use a `ManualResourceLoader` which probably means `NiModel` cannot be reloaded automatically (actually, it can)
 
-**IDEA:** Keep all the loaders in `ObjectScene`?  Or in `BtOgreInst` then have `ObjectScene` destroy
-      `BtOgreInst` in the destructor?
+**IDEA:** Keep all the loaders in `ObjectScene`?  Or in `BtOgreInst` then have `ObjectScene` destroy `BtOgreInst` in the destructor?
 
-`OEngine::Physic::PhysicEngine::mCollisionObjectMap` keeps `Physic::RigidBody*` for later destruction.
-(and `mAnimatedShapes`, etc)
+`OEngine::Physic::PhysicEngine::mCollisionObjectMap` keeps `Physic::RigidBody*` for later destruction.  (and `mAnimatedShapes`, etc.)
 
 
     MWWorld::Scene::unloadCell
@@ -645,22 +602,18 @@ since the same mesh for a different instance could be used)
 
 `btShapes` are deleted in `BulletShape` dtor and `BulletShape` is probably stored in `BulletShapeManager`.
 
-#[02/01/2019] - Physics continuing
+# [02/01/2019] Physics continuing
 
-  1. Get `NiModel` & get a list of target Entities; need as inputs `Ogre::SceneNode`, position,
-     rotation and scale.  This means that the `Mesh`/`Entity` needs to have been created *before*
-     physics.
+  1. Get `NiModel` & get a list of target Entities; need as inputs `Ogre::SceneNode`, position, rotation and scale.  This means that the `Mesh`/`Entity` needs to have been created *before* physics.
   2. For each target Entity create the resource using the resource manager.
-  3. Using the resource create the `btRigidBody` corresponding the the `Entity`.
+  3. Using the resource create the `btRigidBody` corresponding the `Entity`.
   4. Additional setup (e.g. constraints) needs to be done for ragdolls. (how to detect?)
 
-#[02/01/2019] - Physics continuing still
+# [02/01/2019] Physics continuing still
 
-With `btCollisionShape` required for constructing `btRigidBody`, it turns out that a new one needs
-to be generated each time.  ([or at least a deep copy made?](
-https://stackoverflow.com/questions/12255546/c-deep-copying-a-base-class-pointer))
+With `btCollisionShape` required for constructing `btRigidBody`, it turns out that a new one needs to be generated each time.  ([or at least a deep copy made?]( https://stackoverflow.com/questions/12255546/c-deep-copying-a-base-class-pointer))
 
-#[06/01/2019] - Issues found while running around
+# [06/01/2019] Issues found while running around
 
 ## exception
 
@@ -671,61 +624,52 @@ https://stackoverflow.com/questions/12255546/c-deep-copying-a-base-class-pointer
 
 ## wrong position and/or rotation
 
-shirt in display case is half clipping through the bottom (`ICMarketDistrictRedDiamondJewelry`)
+The shirt in display case is half clipping through the bottom (`ICMarketDistrictRedDiamondJewelry`)
 
-#[06/01/2109] - Get to some old code & comments
+# [06/01/2019] Get to some old code & comments
 
     Gdiff b44b4bad325296ca8ab7d519e33ca533f679abf8
 
-#[08/01/2109] - Some notes on odd build sequences
+# [08/01/2019] Some notes on odd build sequences
 
-##NiTriBasedGeom (NiTriShapes/NiTriStrips)
+## NiTriBasedGeom (NiTriShapes/NiTriStrips)
 
-  * in the constructor register self in `BuildData` (but first check if parent NiNode is named
-    "`EditorMarker`")
+**EDIT: 29/02/20** `MeshLoader` is being re-designed
+
+  * in the constructor register self in `BuildData` (but first check if parent NiNode is named "`EditorMarker`")
   * during the registration a `MeshLoader` is created and associated with the parent `NiNode`
      (note that it is no longer done when a NiNode is building its children)
-  * when the `NiModel` is 'instantiated' the `Mesh` and `SubMesh` are loaded when the `Entity` is
-    created (using the `Mesh` pointer, but can be done with the `Mesh` name)
+  * when the `NiModel` is 'instantiated' the `Mesh` and `SubMesh` are loaded when the `Entity` is created (using the `Mesh` pointer, but can be done with the `Mesh` name)
   * any vertex animations in a `SubMesh` are setup with the `Entity`
   * note that there may be more than one `Mesh` per `NiModel`
   * in future implementation the `MeshLoader` may need to be moved out of `BuildData`
 
-##bhkEntity (bhkRigidBody/bhkRigidBodyT)
+## bhkEntity (bhkRigidBody/bhkRigidBodyT)
 
   * in the constructor of `NiCollisionObject` register the collision object body
     (**TODO:** should check if collision is enabled in BSX)
-  * a `BtRigidBodyCI` object is created with the same name as the `NiModel`; it then looks for any
-    registerd `bhkEntity` to build the `btShapes`, etc.
-  * note that there may be more than one `RigidBody` per `NiModel` (these may need to be deleted
-    manually)
+  * a `BtRigidBodyCI` object is created with the same name as the `NiModel`; it then looks for any registerd `bhkEntity` to build the `btShapes`, etc.
+  * note that there may be more than one `RigidBody` per `NiModel` (these may need to be deleted manually)
 
-#[18/02/2019] - Animation re-write
+# [18/02/2019] Animation re-write
 
-The animation glitches, especially with the hand positions, may be due to the use of separate
-controllers for each of the bones.  It may be that each of the bones are showing rotations
-and/or positions at different points in time.
+The animation glitches, especially with the hand positions, may be due to the use of separate controllers for each of the bones.  It may be that each of the bones are showing rotations and/or positions at different points in time.
 
 **NOTE:** experiments indicate that all the bones are updated at the same time... :-(
 
-Nifskope uses `NiMultiTargetTransformController`, replacing the `NiTransformController` (which is
-*not* its parent class, interestingly) at the "Accum Root" bone specified in `NiControllerSequence`.
+Nifskope uses `NiMultiTargetTransformController`, replacing the `NiTransformController` (which is *not* its parent class, interestingly) at the "Accum Root" bone specified in `NiControllerSequence`.
 
-Each of the target bones in the *Controlled Blocks* are then added to `mExtraTargetRefs` and
-`mNumExtraTargets` updated (this method is prob. not necessary).  Note that if multiple anims
-are added to the skeleton then only the additional bones are added to `mExtraTargetRefs`.
+Each of the target bones in the *Controlled Blocks* are then added to `mExtraTargetRefs` and `mNumExtraTargets` updated (this method is prob. not necessary).  Note that if multiple anims are added to the skeleton then only the additional bones are added to `mExtraTargetRefs`.
 
-#[18/02/2019] - skeleton for children
+# [18/02/2019] skeleton for children
 
-Looks like the bones listed in the skinned meshes indicate the smaller size of the skeleton
-for children.  That means the body parts need to be added and the binding position re-set.
+Looks like the bones listed in the skinned meshes indicate the smaller size of the skeleton for children.  That means the body parts need to be added and the binding position re-set.
 
 **TODO:** this might not be true at all, need to experiment
 
-#[28/02/2019] - instantiation refactoring
+# [28/02/2019] instantiation refactoring
 
-The existing OpenMW code is built around `ObjectScene` and `SkelBase` (`Ogre::Entity` at root).  It
-would be way too much work right now to move away from that.
+The existing OpenMW code is built around `ObjectScene` and `SkelBase` (`Ogre::Entity` at root).  It would be way too much work right now to move away from that.
 
 Q: how best to hold the animation info?
 
@@ -742,25 +686,24 @@ Q: how best to hold the animation info?
                          +------------- std::vector<Ogre::Entity*>
 
 
-#[06/03/2019] - Havok
+# [06/03/2019] Havok
 
 If Havok enabled, assign a child SceneNode for each `btRgidBody`.
 
 Q: how to allow the SceneNode to move across cell boundary?  is it an issue?
 
-#[08/03/2019] - Havok
+# [08/03/2019] Havok
 
-In order to make Havok physics work, there is a need to mix rendering instances (e.g.
-`Ogre::SceneNode`) and physics instances (i.e. `btRigidBody`).
+In order to make Havok physics work, there is a need to mix rendering instances (e.g.  `Ogre::SceneNode`) and physics instances (i.e. `btRigidBody`).
 
-The way OpenMW is currently written, they diverge at `::addObject()` (see: `mwworld/scene.cpp`)
-Fortunately, both call path end up with the same class, i.e.:
+The way OpenMW is currently written, they diverge at `::addObject()` (see: `mwworld/scene.cpp`) Fortunately, both call path end up with the same class, i.e.:
 
-    ptr.getClass().insertObjectRendering(ptr, model, renderingmanager);
-    ptr.getClass().insertObject (ptr, model, physics);
+```cpp
+ptr.getClass().insertObjectRendering(ptr, model, renderingmanager);
+ptr.getClass().insertObject (ptr, model, physics);
+```
 
-So we can "cheat" by using the class as an access path to get to the rendering instances data
-which is currently stored in `ObjectAnimation`.  Havok enabled classes include most:
+So we can "cheat" by using the class as an access path to get to the rendering instances data which is currently stored in `ObjectAnimation`.  Havok enabled classes include most:
 
     LIGH (CathedralCryptLight02.NIF)
     STAT (TargetHeavy01.NIF)
@@ -770,25 +713,21 @@ which is currently stored in `ObjectAnimation`.  Havok enabled classes include m
     APPA (ApparatusRetortMaster.NIF)
     etc, etc
 
-#[09/09/2019] - facegen texture again
+# [09/09/2019] FaceGen texture again
 
   * EGT A binary file format containing texture statistics data for each pixel for each mode.
 
-  * SCM The mean color map is a 24-bit RGB color image. Each mode is stored as a signed RGB8 map,
-    along with a floating point scaling factor. Vertex UV coordinates do not change.
+  * SCM The mean colour map is a 24-bit RGB colour image. Each mode is stored as a signed RGB8 map, along with a floating point scaling factor. Vertex UV coordinates do not change.
 
     DXGI_FORMAT_BC3_UNORM
     8 bits per pixel
     Transparent Selection
 
-Four-component block-compression format. For information about block-compression formats,
-see [Texture Block Compression in Direct3D 11](https://docs.microsoft.com/en-us/windows/win32/api/dxgiformat/ne-dxgiformat-dxgi_format).
+Four-component block-compression format. For information about block-compression formats, see [Texture Block Compression in Direct3D 11](https://docs.microsoft.com/en-us/windows/win32/api/dxgiformat/ne-dxgiformat-dxgi_format).
 
 ## UrielSeptim
 
-Tried to figure out how the vanilla engine is keeping the age value by changing UrielSeptim's age using the
-TES Construction Set and saving it as an ESP.  It appears that the age value itself is not stored but the FGGS
-and FGTS records change.  There must be a way to derive the age value from them.
+Tried to figure out how the vanilla engine is keeping the age value by changing UrielSeptim's age using the TES Construction Set and saving it as an ESP.  It appears that the age value itself is not stored but the `FGGS` and `FGTS` records change.  There must be a way to derive the age value from them.
 
 ### Oblivion - Textures - Compressed.bsa
 
@@ -830,27 +769,29 @@ and FGTS records change.  There must be a way to derive the age value from them.
 
     facegen\si.ctl (not sure how to use the control data)
 
-`headhuman.egt` has 256 rows and 256 columns. There are 50 symmetric morph modes and 0 asymmetric ones.  The
-texture basis version is 0x51 = 81.
+`headhuman.egt` has 256 rows and 256 columns. There are 50 symmetric morph modes and 0 asymmetric ones.  The texture basis version is 0x51 = 81.
 
-#[14/09/2019 - 13/10/2019 - 28/12/2019]
+# [14/09/2019 - 13/10/2019 - 28/12/2019]
 
-Posted a [question on the OpenMW form](https://forum.openmw.org/viewtopic.php?f=3&t=3017&start=325)
-for some help regarding the application of age related texture to `headhuman.dds`
+Posted a [question on the OpenMW form](https://forum.openmw.org/viewtopic.php?f=3&t=3017&start=325) for some help regarding the application of age related texture to `headhuman.dds`
 
 ponyrider0 replied with this suggestion:
 
-    (base texture) * (age map / 64) = (composited face texture)
+```cpp
+(base texture) * (age map / 64) = (composited face texture)
 
-    (age map) = (composited face texture / base texture) * 64
+(age map) = (composited face texture / base texture) * 64
+```
 
-#[11/02/2020] - finally getting back to work
+# [11/02/2020] finally getting back to work
 
-    mNpc->mFormId   = 0x0001C458
-        ->mEditorId = "BeggarICMarketSimplicia"
+```cpp
+mNpc->mFormId   = 0x0001C458
+mNpc->mEditorId = "BeggarICMarketSimplicia"
 
-    mNpc->mFormId   = 0x00023F2E
-        ->mEditorId = "UrielSeptim"
+mNpc->mFormId   = 0x00023F2E
+mNpc->mEditorId = "UrielSeptim"
+```
 
 ## EGM
 A binary format containing the principal component modes as one standard deviation vertex deltas.
@@ -871,98 +812,678 @@ See [fileformats](https://facegen.com/dl/sdk/doc/manual/fileformats.html).
 
 `openmw/apps/openmw/mwrender/foreignnpcanimation.cpp`
 
-    const std::vector<Ogre::Vector3>& vertices = tri.getVertices(); // V + K
+```cpp
+const std::vector<Ogre::Vector3>& vertices = tri.getVertices(); // V + K
 
-    const std::vector<float>& sCoeff = mNpc->mSymShapeModeCoefficients;
-    const std::vector<float>& aCoeff = mNpc->mAsymShapeModeCoefficients;
-    const std::vector<float>& sRaceCoeff = mRace->mSymShapeModeCoefficients;
-    const std::vector<float>& aRaceCoeff = mRace->mAsymShapeModeCoefficients;
+const std::vector<float>& sCoeff = mNpc->mSymShapeModeCoefficients;
+const std::vector<float>& aCoeff = mNpc->mAsymShapeModeCoefficients;
+const std::vector<float>& sRaceCoeff = mRace->mSymShapeModeCoefficients;
+const std::vector<float>& aRaceCoeff = mRace->mAsymShapeModeCoefficients;
 
-    Ogre::Vector3 sym;
-    Ogre::Vector3 asym;
-    std::vector<Ogre::Vector3> fgVertices;
-    fgVertices.resize(tri.getNumVertices());
-    for (size_t i = 0; i < fgVertices.size(); ++i)
+Ogre::Vector3 sym;
+Ogre::Vector3 asym;
+std::vector<Ogre::Vector3> fgVertices;
+fgVertices.resize(tri.getNumVertices());
+for (size_t i = 0; i < fgVertices.size(); ++i)
+{
+    sym = Ogre::Vector3::ZERO;
+    for (size_t j = 0; j < 50; ++j) // for TES4 always 50 sym modes
     {
-        sym = Ogre::Vector3::ZERO;
-        for (size_t j = 0; j < 50; ++j) // for TES4 always 50 sym modes
-        {
-            sym += (sRaceCoeff[j] + sCoeff[j])  * egm.mSymMorphModes[50*i + j];
-            //            ^             ^                 ^
-            //            |             |                 |
-            //          float         float           Ogre::Vector3
-            //          race          npc_            EGM for the mesh
-            //          (guess)                       (scaled for mode j)
-        }
-
-        asym = Ogre::Vector3::ZERO;
-        for (size_t k = 0; k < 30; ++k) // for TES4 always 30 asym modes
-        {
-            asym += (aRaceCoeff[k] + aCoeff[k]) * egm.mAsymMorphModes[30*i + k];
-        }
-
-        fgVertices[i] = vertices[i] + sym + asym;
-        //                  ^           ^     ^
-        //                  |            \   /
-        //                 TRI       race, npc_ & EGM (at i)
+        sym += (sRaceCoeff[j] + sCoeff[j])  * egm.mSymMorphModes[50*i + j];
+        //            ^             ^                 ^
+        //            |             |                 |
+        //          float         float           Ogre::Vector3
+        //          race          npc_            EGM for the mesh
+        //          (guess)                       (scaled for mode j)
     }
+
+    asym = Ogre::Vector3::ZERO;
+    for (size_t k = 0; k < 30; ++k) // for TES4 always 30 asym modes
+    {
+        asym += (aRaceCoeff[k] + aCoeff[k]) * egm.mAsymMorphModes[30*i + k];
+    }
+
+    fgVertices[i] = vertices[i] + sym + asym;
+    //                  ^           ^     ^
+    //                  |            \   /
+    //                 TRI       race, npc_ & EGM (at i)
+}
+```
 
 ## EGT
 
 Base texture example: `Textures\Characters\imperial\headhuman.dds`
 
 
-#[13/02/2020] - Trying to remember how the code works
+# [13/02/2020] Trying to remember how the code works
 
 `NiModel` is created using `NiModelManager`. e.g.:
 
-    NiModelPtr npcModel = NiBtOgre::NiModelManager::getSingleton().getOrLoadByName(model, group);
+```cpp
+NiModelPtr npcModel = NiBtOgre::NiModelManager::getSingleton().getOrLoadByName(model, group);
+```
 
 Often it is created in the constructor of `BtOgreInst`.
 
-`NiObjects` are constructed in `NiModel::loadImpl()` and stored in `NiModel::mObjects`.  The NIF file should
-already be opened via `NiStream` created in the constructor of `NiModel`.
+`NiObjects` are constructed in `NiModel::loadImpl()` and stored in `NiModel::mObjects`.  The NIF file should already be opened via `NiStream` created in the constructor of `NiModel`.
 
-The constructor of the each of `NiObjects` read the NIF file stream and populate various data structures in
-advance for the actual instantiation of the object at a later point in time.
+The constructor of the each of `NiObjects` read the NIF file stream and populate various data structures in advance for the actual instantiation of the object at a later point in time.
 
-#[16/02/2020] - Refactor code generating the body parts.
+# [16/02/2020] Refactor code generating the body parts.
 
 See `openmw/apps/openmw/mwrender/foreignnpcanimation.cpp`:
 
-For TES4, ESM/ESP specify the game based on the resources in the BSA (or loose) files.  The graphics and
-physics models for a given scene needs to be constructed and passed onto the respective engines for rendering,
-collisions, etc.
+For TES4, ESM/ESP specify the game based on the resources in the BSA (or loose) files.  The graphics and physics models for a given scene needs to be constructed and passed onto the respective engines for rendering, collisions, etc.
 
-When a character is placed into a scene we do a few extra things compared to a static (or havok based)
-objects.
+When a character is placed into a scene we do a few extra things compared to a static (or Havok based) objects.
 
-  * A character has a set of animations some of which may get played depending on the character's current
-    movements.
+  * A character has a set of animations some of which may get played depending on the character's current movements.
   * A character with animations will have a skeleton.
   * A character is usually made from several parts - head, hair, hands, clothes/armour, weapons, etc.
-  * A character's race and it's own data (`npc_` record) will determine which mesh and texture to use.
-    For weapons/armour/etc, the character's currently equipped inventory will be visible.
+  * A character's race and it's own data (`npc_` record) will determine which mesh and texture to use.  For weapons/armour/etc, the character's currently equipped inventory will be visible.
   * Many of the parts will be "skinned".
   * For some body parts FaceGen will be used to create unique, but realistic appearances.
 
-i.e. the specified skeleton, inventory, body parts, etc need to be sourced from NIF and other resources to be
-ready for instantiation by the rendering engine.
+i.e. the specified skeleton, inventory, body parts, etc need to be sourced from NIF and other resources to be ready for instantiation by the rendering engine.
 
-It should be noted that the resource "templates" (for the want of a better description) may be used by many
-different characters or objects.  They need to be managed by resource managers some kind (even if it is a
-simple static map).
+It should be noted that the resource "templates" (for the want of a better description) may be used by many different characters or objects.  They need to be managed by resource managers some kind (even if it is a simple static map).
 
-Obviously, care needs to be taken in creating these resource "templates" so that executing the same piece of
-calculations is avoided or minimised.  In some cases it may be worth ordering the data structures so that
-cache misses are minimised.
+Obviously, care needs to be taken in creating these resource "templates" so that executing the same piece of calculations is avoided or minimised.  In some cases it may be worth ordering the data structures so that cache misses are minimised.
 
-#[17/02/2020] - Refactor FaceGen related code
+# [17/02/2020] Refactor FaceGen related code
 
-        stat morph vertices in TRI
-        0x4fb + 0x1cd=461
-        npc_::hairlength
+    stat morph vertices in TRI
+    0x4fb + 0x1cd = 461
+    npc_::hairlength
+
+Each of `npc_::mHair` are present in `hair` records.  I guess to be safe the race default should be checked if it is not found.
+
+# [17/02/2020] FindFFmpeg.cmake seems to be broken
+
+Thought that was fixed?  Had to manually delete the component include directories from MSVC properties.  This happened after checking out an old branch to test something.
+
+# [18/02/2020] Hair and Eyes
+
+Most of the hair found in the BSA files are used in the game, except maybe below:
+
+    Characters\Hair\Emperor.nif/egm
+    Characters\Hair\NordFemaleBunches.nif/egm/tri
+    Characters\Hair\OrcFemaleBunches.nif/egm/tri
+
+Some of the hairs in the BSA files do not have a corresponding TRI file.  For these, it may be necessary to get the vertices from the NIF files.
+
+    Characters\Hair\Blindfold.NIF
+    Characters\Hair\Emperor.nif
+    Characters\Hair\KhajiitEarrings.NIF
+    Characters\Hair\Style07.NIF
+
+So the method of getting the files should be:
+
+  * get mHair and mEye from `NPC_`
+  * find the mesh and texture file names from HAIR and EYES
+    - if not found, get the default hair (male/female FormID) and eyes (left/right mesh) from the corresponding RACE
+  * for EYES the mesh name is only in the RACE records (but not the texture nor the EYE FormID)
+  * the corresponding EGM and TRI files should be in the same directory as the mesh (EGT not used?)
+  * for some HAIR the corresponding TRI files are not present in the BSA - maybe try to get the vertices from the mesh
+
+# [22/02/2020] Hair textures
+
+Noticed that some hair textures have 4 different files in a set:
+
+    grey.dds
+    grey_hh.dds
+    grey_hl.dds
+    grey_n.dds
+
+Also noticed that the decompiled [shaders](https://github.com/Alenett/TES-Shaders) that the following textures are used:
+
+    sampler2D AnisoMap   : register(s3);
+    sampler2D DiffuseMap : register(s0);
+    sampler2D HeightMap  : register(s2);
+    sampler2D LayerMap   : register(s5);
+    sampler2D NormalMap  : register(s1);
+
+Diffuse (`*.dds`) and normal (`*_n.dds`) are easy enough but which ones are Aniso/Height/Layer?
+
+Some [clues](https://www.nexusmods.com/skyrim/mods/30745?tab=posts) on the different texture maps:
+
+>  Edit : Here's more information on the types of textures used in skyrim :
+>
+>  in a "menu"-folder: User-interface element, alpha is element-mask
+>  in a "landscapelod"- or "terrain"-folder: World-space normal-map for terrain, no alpha
+>  "_n"-suffix: Tangent-space normal-map, alpha is specularity
+>  "_msn"-suffix: Model-space normal-map, no alpha
+>  "_g"-, "_glow"- or "_emit"-suffix: Glow-map, alpha is a mask
+>  "_hh"-suffix: Gloss-map for hair, no alpha
+>  "_hl"-suffix: Detail-map for hair, alpha is opacity
+>  "_m"-suffix: Reflectivity-map for light-sources, no alpha
+>  "_em"- or "_envmap"-suffix: Reflectivity-map for environment-maps, no alpha
+>  "_e"-suffix: Environment-map (some are planar, some are cube-maps), no alpha
+>  "_b"- or "_bl"-suffix: Backlight-map, no alpha
+>  "_s"-suffix: Specularity-map for skins, no alpha
+>  "_sk"-suffix: Tone-map for skins, no alpha
+>  "_p"-suffix: Parallax-map, no alpha
+>  "_d"-suffix: Diffuse-map, alpha is opacity
+>  "_h"-suffix: Haze-map, alpha is unknown
+>  All others are color-map, alpha is opacity or parallax
+
+Initial guesses are:
+
+    AnisoMap:  alpha channel of `_n.dds`
+    HeightMap: `_hh.dds`  (hair heightmap?)
+    LayerMap:  `_hl.dds`  (hair layermap?)
+
+`PSHairTint` is probably `Npc::mHairColour`
+
+# [22/02/2020] Which Shaders?
+
+Wasn't sure if the [shaders from Alenett](https://github.com/Alenett/TES-Shaders) was the same as the official ones (e.g. shaderpackage013.sdp).  Tried to decompile them using [TimeSlip's tool](http://timeslip.chorrol.com/current/ShaderEdit.7z) but even running from Windows XP mode on a Windows 7 PC the program crashes (maybe missing .NET version 2.0).
+
+But this post from [juhana](https://forums.uesp.net/viewtopic.php?f=10&t=6955) gave a hint on how to read the file.  Using [xvi32](http://www.chmaas.handshake.de/delphi/freeware/xvi32/xvi32.htm) the number of shaders is 0x028D or 653.
+
+    cc9c@LAPTOP-Q4SRRS0H:~/dev/src/TES-Shaders/OblivionShaders
+    $ ls Disassembly/ | wc -l
+    653
+
+Looks like we're not missing anything, although I'm still not sure if different shader packages have slightly different implentations based on the detected GPU capabilities.
+
+# [27/02/2020] Back to `Ogre::Resources`
+
+## Past Week on Shaders
+
+Spent the past week on reading up various aspects of Oblivion shaders.  Long story short - for now I will have to create a new material, say hair.mat (to fit in with `Shiny` naming scheme) and implement the shaders.  Once I am in a position to move to Ogre 2.1 then I will need to revisit the code since HLMS will come into pay.
+
+## Manual loading of Resources
+
+Can't quite figure out the right paradigm for auto-loading the resources.  So for now I will go ahead and load the morphed resources manually.
+
+## Which Resources to manage?
+
+We already have `Ogre::TextureManager`, `Ogre::MeshManager` and `NiModelManager`.  Not keen to introduce any more.
+
+But what about the use of `Ogre::MaterialManager`?  It normally expects to load the materials from the material scripts but we will need to use manual loading instead.
+
+`Ogre::ManualResourceLoader` can be implemented in different ways.  Ogre itself has a few examples.  The `MeshManager` way is probably the right fit here.
+
+### Let the Resource inherit from `Ogre::ManualresourceLoader`
+
+                     Resource   ManualResourceLoader
+                          ^        ^
+                           \      /
+                            \    /
+                             Font
+
+### Let the ResourceManager inherit from `Ogre::ManualResourceLoader`
+
+    ResourceManager  Singleton<MeshManager>  ManualResourceLoader
+               ^               ^                ^
+               |               |                |
+               +----------     |     -----------+
+                          \    |    /
+                           \   |   /
+                          MeshManager
+
+## NiModelManager
+
+Normally specifying the NIF file to NiModelManager will be enough.  The mesh, sub-mesh and material details specified in the NIF file are then used to create the Ogre resources and the respective managers are called during the build of the NIF model.  But we now need to supply additional info to create the morphed resources (the morphed vertices for the mesh/sub-mesh and the morphed texture for the material).
+
+The typical way to get a `NiModel` is to call `NiModelManager::getOrLoadByName()`.  However we don't want to create morphed resources each time so we should overload `getByName()` then afterwards use `create()` and `load()`.
+
+# [28/02/2020] Consider creating NiMaterialManager
+
+The materials used in NIF models are not loaded from material scripts and are most likely (always?) manually loaded.  `NiMaterialManager` can inherit from `Ogre::MaterialManager` and `Ogre::ManualResourceLoader`.
+
+One possibility is to pass on the FormID of the resource in a string so that the manual resource loader can get the required details for the resource.  But this means the resource loader will need to know about the implementation of the asset store (tight coupling).  Perhaps the class can be further specialised to provide implementations to pure virtual functions?  e.g. `findFromStore()`
+
+# [28/02/2020] What FaceGen resource management do we need?
+
+In summary we need the base model (NIF file), base texture, Npc record (for FGGS, etc) and Race record (again, FGGS, etc).
+
+**TODO:** It is unclear if the properties in the NIF should be used in creating the material.
+
+  Record              | Data
+  --------------------|-----
+  Npc                 | FGGS, FGTS, FGGA, mRace, mHair, mEyes
+  Race                | FGGS, FGTS, FGGA, mHeadParts (models and textures except for eyes), mBodyParts (body texture), mData (flags)
+  Hair                | mModel (model), mIcon (texture), mData (flags)
+  Eyes                | mIcon (texture), mData (flags)
+  Clothing (only hood)| mModelMale/mModelFemale (model), mIconMale/mIconFemale (texture), mClothingFlags
+  Armor (only helmet) | mModelMale/mModelFemale (model), mIconMale/mIconFemale (texture), mArmorFlags
+
+## Helmets and Hoods
+
+Not sure how we identify hood & helmet - possibly by checking mArmorFlags/mClothingFlags.  The following armor/clothing in Oblivion.esm have **only** the `ESM4::Race::TES4_Hair` slot indicated in mArmorFlags/mClothingFlags (NOTE: only the bottom 16 bits are relavant) - looks like all of them?
+
+[//]: # (                                                             {{{
+    SEAmberMagicHelmet2
+    SEAmberMagicHelmet1
+    SEAmberHelmet2
+    SEAmberHelmet1
+    SEDarkSeducerOfficerHelmet1
+    SEDarkSeducerOfficerHelmet2
+    SEDarkSeducerOfficerHelmet3
+    SEDarkSeducerOfficerHelmet4
+    SEDarkSeducerOfficerHelmet5
+    SEDarkSeducerOfficerHelmet6
+    SEGoldenSaintOfficerHelmet1
+    SEGoldenSaintOfficerHelmet2
+    SEGoldenSaintOfficerHelmet3
+    SEGoldenSaintOfficerHelmet4
+    SEGoldenSaintOfficerHelmet5
+    SEGoldenSaintOfficerHelmet6
+    SETEST07ADarkSeducerEliteHelmet
+    SETESTDarkSeducerOfficerHelmet
+    SETESTGoldenSaintOfficerHelmet
+    SEGoldenSaintHelmetReward6Daedric
+    SEGoldenSaintHelmetReward5Ebony
+    SEGoldenSaintHelmetReward4Orcish
+    SEGoldenSaintHelmetReward3Dwarven
+    SEGoldenSaintHelmetReward2Steel
+    SEGoldenSaintHelmetReward1Iron
+    SEDarkSeducerHelmetReward6Glass
+    SEDarkSeducerHelmetReward5Elven
+    SEDarkSeducerHelmetReward4Mithril
+    SEDarkSeducerHelmetReward3Chain
+    SEDarkSeducerHelmetReward2Leather
+    SEDarkSeducerHelmetReward1Fur
+    SE07ThadonsCrown30
+    SE07ThadonsCrown25
+    SE07ThadonsCrown20
+    SE07ThadonsCrown15
+    SE07ThadonsCrown10
+    SE07ThadonsCrown05
+    SE07ThadonsCrown01
+    SETESTSaintHelmet
+    SETESTHelmet
+    SE07ADarkSeducerEliteHelmet
+    SEDarkSeducerOfficerHelmet
+    SEGoldenSaintOfficerHelmet
+    SEEnchOrcishHelmetNighteye
+    SEEnchSteelHelmetResistMagicka
+    SEEnchMithrilHelmetNighteye
+    SEEnchChainmailHelmetDetectLife
+    SEEnchLeatherHelmetResistMagic
+    SEEnchFurHelmetFortMagicka
+    SEGoldenSaintHelmet6Daedric
+    SEGoldenSaintHelmet5Ebony
+    SEGoldenSaintHelmet4Orcish
+    SEGoldenSaintHelmet3Dwarven
+    SEGoldenSaintHelmet2Steel
+    SEDarkSeducerHelmet6Glass
+    SEDarkSeducerHelmet5Elven
+    SEDarkSeducerHelmet4Mithril
+    SEDarkSeducerHelmet3Chain
+    SEDarkSeducerHelmet2Leather
+    SEDarkSeducerHelmet1Fur
+    SEGoldenSaintHelmet1Iron
+    SEAmberMagicHelmet6
+    SEAmberMagicHelmet5
+    SEAmberMagicHelmet4
+    SEAmberMagicHelmet3
+    SEAmberHelmet6
+    SEAmberHelmet5
+    SEAmberHelmet4
+    SEAmberHelmet3
+    SE12GnarlWidget
+    SE12OrderWidget
+    DAUmbraHelmet15
+    DAUmbraHelmet9
+    PitHelmet
+    TG11ElvenHelmet
+    replicaElvenHelmet
+    UniqueOrcishHelmFerocity
+    BladesHelmetAncient
+    MS27LindaiAyleidCrown05
+    MS27NenalataAyleidCrown25
+    MS27NenalataAyleidCrown20
+    MS27NenalataAyleidCrown15
+    MS27NenalataAyleidCrown10
+    MS27NenalataAyleidCrown05
+    MS27LindaiAyleidCrown25
+    MS27LindaiAyleidCrown20
+    MS27LindaiAyleidCrown15
+    MS27LindaiAyleidCrown10
+    ArenaBladesHelmet
+    ArenaEbonyHelmet
+    ArenaOrcishHelmet
+    ArenaSteelHelmet
+    ArenaIronHelmet
+    ArenaGlassHelmet
+    ArenaElvenHelmet
+    ArenaMithrilHelmet
+    ArenaLeatherHelmet
+    ArenaFurHelmet
+    ImperialDragonHelmetLight
+    ImperialDragonHelmetHeavy
+    LegionHelmet
+    DarkFinGleam
+    BloodwormHelm25
+    BloodwormHelm20
+    BloodwormHelm15
+    BloodwormHelm10
+    BloodwormHelm05
+    DarkCaeliaHelmet
+    CGIronHelmet
+    ImperialPalaceHelmet
+    CGLeatherHelmetBandit
+    FGC07AmelionHelmet
+    MS27LindaiAyleidCrownBroken
+    FGD09BearclawHelm
+    MS27NenalataAyleidCrown01
+    MS27LindaiAyleidCrown01
+    ArenaChainmailHelmet
+    EnchEbonyHelmetWaterbreathing
+    EnchEbonyHelmetResistMagicka
+    EnchEbonyHelmetDetectLife
+    EnchOrcishHelmetWaterbreathing
+    EnchOrcishHelmetNighteye
+    EnchOrcishHelmetFortMagicka
+    EnchOrcishHelmetDetectLife
+    EnchSteelHelmetWaterbreathing
+    EnchSteelHelmetResistMagicka
+    EnchSteelHelmetFortMagicka
+    EnchSteelHelmetDetectLife
+    EnchIronHelmetWaterbreathing
+    EnchIronHelmetResistMagicka
+    EnchIronHelmetDetectLife
+    EnchIronHelmetFortMagicka
+    EnchGlassHelmetResistMagicka
+    EnchGlassHelmetDetectLife
+    EnchElvenHelmetResistMagicka
+    EnchElvenHelmetDetectLife
+    EnchMithrilHelmetResistMagicka
+    EnchMithrilHelmetNighteye
+    EnchMithrilHelmetFortMagicka
+    EnchMithrilHelmetDetectLife
+    EnchChainmailHelmetResistMagicka
+    EnchChainmailHelmetNighteye
+    EnchChainmailHelmetFortMagicka
+    EnchChainmailHelmetDetectLife
+    EnchLeatherHelmetResistMagic
+    EnchLeatherHelmetFortMagicka
+    EnchLeatherHelmetDetectLife
+    EnchFurHelmetResistMagicka
+    EnchFurHelmetFortMagicka
+    EnchFurHelmetDetectLife
+    EnchEbonyHelmetMage
+    EnchMithrilHelmetMind
+    BlackwoodHelmet
+    BladesHelmetCG
+    MG10ElvenHelmet
+    EmperorHelmet
+    BloodwormHelm01
+    EbonyHelmet
+    OrcishHelmet
+    GlassHelmet
+    DBLeatherHelmet
+    MithrilHelmet
+    TownguardHelmet
+    LegionHelmetOld
+    FurHelmet
+    BladesHelmet
+    LeatherHelmet
+    ChainmailHelmet
+    IronHelmet
+    ElvenHelmet
+    SteelHelmet
+    SEZealotHood
+    SEHereticHood
+    UniqueClothingHoodDiplomat
+    UniqueClothingHoodGatherer
+    UniqueClothingHoodSeer
+    UniqueClothingHoodDruid
+    UpperRobe03hood
+    UpperRobe02hood
+    LowerRobe05hood
+    LowerRobe04hood
+    LowerRobe03hood
+    MGRobeHood
+    DBBlackHandHood
+    BlackHood
+    MageHood
+    ArchMageHood
+    KingofWormsHood
+    NecromancerHood
+    LowerRobe02hood
+    MythicDawnRobeHood
+    TGGrayFoxCowl                                                     }}})
+
+## Resource naming convension
+
+  Resource Type    | Naming Convension
+  -----------------|------------------
+  Mesh             | base model + skeleton name + # + NiNode index + @ + NiNode name (see note 1 below)
+  Mesh (proposed)  | skeleton name + _ + base model + # + NiNode index + @ + NiNode name
+  Texture          | base texture (specified in the NIF for the sub-mesh)
+  Material         | base model + @ + NiTriBasedGeom name (each sub-mesh has its own material, see note 2 below)
+  NiModel          | base model
+  Morphed Mesh     | NPC name + _ + base model + @ + NiNode name
+  Morphed texture  | NPC name + _ + base texture
+  Morphed Material | NPC name + _ + base model + @ + NiTriBasedGeom name
+  Morphed NiModel  | NPC name + _ + base model
+
+Note that, unlike other objects, FaceGen morph NIF models have **exactly one** NiNode with a `NiTriBasedGeom`.  i.e. one mesh  This means that the resources (mesh/materail/model) can't be reused.
+
+**NOTE 1:** In TES5 `Architecture\Solitude\SolitudeBase.nif` has several NiNode instances with the same name.  Hence *both* NiNode index and NiNode name are needed in the mesh name.  Just the index is enough but for now it is easier for debugging if the NiNode name is also present.
+
+**NOTE 2:** Material name may not match the actual NIF or NiTriBasedGeom (the same material from another model will be used if found).
+
+## Putting it all together for NiModel
+
+```cpp
+NiBtOgre::NiModelManager& modelManager = NiBtOgre::NiModelManager::getSingleton();
+
+// nif and texture are resource path + filename + ext
+// the logic to locate nif & texture are hard coded
+std::string name = mNpc->mEditorId + "_" + nif;
+
+// the logic to locate the FaceGen files are hard coded
+NiModelPtr morphedModel = modelManager.getByName(name);
+if (morphedModel.isNull())
+    morphedModel = modelManager.createMorphed(nif, "General", mNpc, mRace, texture);
+```
+
+The diagram from 01/01/2018 needs to be updated:
+
+       ResourceManager   Singleton<NiModelManager>   ManualResourceLoader
+                ^                    ^                    ^
+                |                    |                    |
+                +---------------+    |    +---------------+
+                                |    |    |
+                                |    |    |           Resource
+                                |    |    |           ::load()
+                                |    |    |              ^
+                               NiModelManager            |
+                               ::createImpl()  .....  NiModel
+                               ::loadResource()       ::loadImpl()
+                                                      ::unloadImpl()
+                                                      ::prepareImpl()
+                                                      ::unprepareImpl()
 
 
-[//]: # (/* spell spelllang=en_us syntax=cpp */)
-[//]: # (/* vim: set ft=markdown tw=110 fen fdm=marker fdl=0: */)
+`NiModel::prepareImpl()` creates the NIF data stream and reads the header.  `NiModel::unprepareImpl()` undos `prepareImpl()`.  These are only called by `Ogre::Resource::load()` if NiModel is not manually loaded.  **TODO:** check if we have to call `prepareImpl()` for manual loading as well?
+
+**NOTE:** consider changing `prepareImpl()` s.t. the NIF file is pre-buffered similar to `Ogre::Mesh::prepareImpl()`.  Below method implements the pre-buffering:
+
+```cpp
+Ogre::MemoryDataStream::MemoryDataStream(const String& name,
+                                         const DataStreamPtr& sourceStream,
+                                         bool freeOnClose = true,
+                                         bool readOnly = false )
+```
+
+`NiModel::loadImpl()` parses the NIF data stream to create the objects.
+
+Simplified interaction diagram for NiModel retrieving and manual loading sequences:
+**NOTE:** NiModel is loaded immediately upon creation (like manual loading Ogre::Mesh).
+
+        application    NiModelManager    ResourceManager   ManualResourceLoader   Resource
+            |                 |                   |                 |                 |
+            | getByName()     |                   |                 |                 |
+            |---------------->|                   |                 |                 |
+            |                 |getResourceByName()|                 |                 |
+            |                 |------------------>|                 |                 |
+            |                 |         Resource* |                 |                 |
+            |      NiModelPtr |<------------------|                 |                 |
+            |<----------------|                   |                 |                 |
+            :                 :                   :                 :                 :
+            :                 :                   :                 :                 :
+            | createMorphed() |                   |                 |                 |
+            |---------------->|                   |                 |                 |
+            |                 |--+                |                 |                 |
+            |                 |  | createManual() |                 |                 |
+            |                 |<-+                |                 |                 |
+            |                 |--+                |                 |                 |
+            |                 |  | create()       |                 |                 |
+            |                 |<-+                |                 |                 |
+            |                 | createResource()  |                 |                 |
+            |                 |------------------>|                 |                 |
+            |                 |      createImpl() |                 |                 |
+            |                 |<------------------|                 |                 |
+            |                 | load()            |                 |                 |
+            |                 |------------------------------------------------------>|
+            |                 |                   |                 |  loadResource() |
+            |                 |                   |  loadResource() |<----------------|
+            |                 |<------------------------------------|                 |
+            |                 |--+                |                 |                 |
+            |                 |  | ...            |                 |                 |
+            |      NiModelPtr |<-+                |                 |                 |
+            |<----------------|                   |                 |                 |
+            |                 |                   |                 |                 |
+
+
+# [29/02/2020] Redesign mesh loading
+
+Currently `Ogre::Mesh` is created and loaded *only* when an `Ogre::Entity` is instantiated.  That means, at least with the current design, NiModel is not fully built after `load()`.  It also means that any `Ogre::Material` used by the meshes are not created/loaded, either.
+
+So, if we are to retain our current design, any morphed vertices or textures need to be prepared for loading the meshes and/or material at a later point in time.
+
+For the morphed vertices, we can directly modify the vertices read in from the NIF file.  The vertices are read and stored from the constructor (in `NiGeometryData::mVertices` as `std::vector<Ogre::Vector3>`).
+
+**TODO:** Current design uses the vertices from the TRI file, if available, rather than the one from the NIF.  These are slightly different (see `Characters\Imperial\HeadHumah.TRI`).  Alternatively, both sets of vertices could be stored at the cost of some memory so that the solution can be fine tuned later.
+
+**FIXME:** Should the normals, tangents and bitangents in NiGeometryData be re-calculated once the vertices are morphed?
+
+Current design:
+
+        BtOgreInst   Ogre::MeshManager    NiModel             NiNode        NiTriBasedGeom
+           |               |                |                   |                 |
+           |               |                |                   |                 |--+
+           |               |                |                   |registerSubMesh()|  | ctor
+           |               |                |       insert      |<----------------|  |
+           |               |                |  mMeshBuildList[] |                 |<-+
+           |               |                |<------------------|                 |
+           :               :                :                   :                 :
+           :               :                :                   :                 :
+           | instantiate() |                |                   |                 |
+           |------------------------------->|                   |                 |
+           |               |                |--+                |                 |
+           |               |                |  |                |                 |
+           |               |                |<-+                |                 |
+           |               |                |                   |                 |
+           |               | createManual() |--+                |                 |
+           |               |<---------------|  |                |                 |
+           |               |                |<-+ loop           |                 |
+           |               |                |  mMeshBuildList[] |                 |
+           |               |                |                   |                 |
+
+
+Proposed change:
+
+        BtOgreInst   Ogre::MeshManager    NiModel             NiNode        NiTriBasedGeom
+           |               |                |                   |                 |
+           |               |                |                   |                 |--+
+           |               |                |                   |registerSubMesh()|  | ctor
+           |               |                |       insert      |<----------------|  |
+           |               |                |  mMeshBuildList[] |                 |<-+
+           |               |                |<------------------|                 |
+           |               |                |--+                |                 |
+           |               |                |  | ...            |                 |
+           |               |                |<-+                |                 |
+           |               |                |                   |                 |
+           |               | createManual() |--+                |                 |
+           |               |<---------------|  |                |                 |
+           |               |                |<-+ loop           |                 |
+           |               |                |  mMeshBuildList[] |                 |
+           :               :                :                   :                 :
+           :               :                :                   :                 :
+           | instantiate() |                |                   |                 |
+           |------------------------------->|                   |                 |
+           |               |                |                   |                 |
+
+
+Rather than creating a new resource manager based on `Ogre::MeshManager`, we can try creating NiMeshLoader as a singleton.
+
+NiModel is either created from the NIF file, via `NiModel::loadImpl()`, or manually via `NiModelManager::createMorphed()` and `NiModelManager::loadResource()`.  In former case, the NIF file name can be deduced from the mesh name by takeing away the skeleton name (if any) and the NiNode name.  In latter case, re-loading the NiModel appears a little more difficult.
+
+**IDEA:** It might be possible to get Ogre to do most of the work - maybe just remember the resource name and get NiModelPtr from NiModelManager singleton?  Or just save a `NiModel*` and use it during `loadResource()`.
+
+Simplified create and load interactions of NiMeshLoader:
+
+        application      MeshManager   ResourceManager NiMeshLoader  ManualResourceLoader  Resource
+            |                |                  |           |                |                |
+            | createXXXXXX() |                  |           |                |                |
+            |---------------------------------------------->|                |                |
+            |                |               createManual() |                |                |
+            |                |<-----------------------------|                |                |
+            |                | createResource() |           |                |                |
+            |                |----------------->|           |                |                |
+            |                |     createImpl() |           |                |                |
+            |                |<-----------------|           |                |                |
+            |                | new Mesh         |           |                |                |
+            |                |----------------->|           |                |                |
+            |                |           Mesh*  |           |                |                |
+            |                |<-----------------|           |                |                |
+            |                | MeshPtr          |           |                |                |
+            |                |----------------------------->|                |                |
+            |                |                  |           |--+ store       |                |
+            |                |                  |           |  | param       |                |
+            |                |                  |   MeshPtr |<-+             |                |
+            |<----------------------------------------------|                |                |
+            :                :                  :           :                :                :
+            :                :                  :           :                :                :
+            |--------------->|                  |           |                |                |
+            |                | load()           |           |                |                |
+            |                |--------------------------------------------------------------->|
+            |                |                  |           |                | loadResource() |
+            |                |                  |           | loadResource() |<---------------|
+            |                |                  |           |<---------------|                |
+            |                |                  |           |--+             |                |
+            |                |                  |           |  | ...         |                |
+            |                |                  |           |<-+             |                |
+            |                |                  |           |                |                |
+
+
+## ToDo
+
+  * Mesh and Material creation parts from NiModel should be moved to the loading stage.  i.e. at least create the meshes during NiModel load stage - currently the meshes are created during instantiation
+
+  * Need to fix SkeletonLoader and BtRigidBodyCIManager.
+
+# [01/03/2020] Material
+
+## FaceGenMap in shaders
+
+Looking at the decompiled [shaders](https://github.com/Alenett/TES-Shaders) again and noticed that all of the ones with FaceGenMap have 2 of them.  Most of them are numbered 0 and 1, e.g. FaceGenMap0, FaceGenMap1.  One of them must be the NPC specific detail map in `textures\faces\oblivion.esm`.  But what is the other one?  It must be either the second, smaller detail map in the same directory (DXGI_FORMAT_BC3_UNORM, 32x32 only) or the age-based detail texture for headhuman.dds (DXGI_FORMAT_BC1_UNORM, 256x256).
+
+Either way, still need to figure out how to determine the NPC's age just by examininig their FGGS and/or FGTS.  See previous notes from 09/09/2019.
+
+The normal map for headhuman.dds must be age-based as well? (i.e. replace, not merge with headhuman_n.dds)
+**TODO:** experiement and compare the in-game visuals
+
+## NPC Age
+
+Figured out how to get the NPC age value.
+
+# [02/03/2020] Commit the changes since 17/02/2020
+
+  * equipment slot handling as per OpenMW's implementation
+  * moved FaceGen code to extern/fglib
+  * FaceGen NPC age
+  * redesigned resource management for NiModel and NiMesh (still to fix Skeleton and BtRigidBodyCI)
+
+
+
+
+[//]: # (/* spell spelllang=en_au syntax=cpp */)
+[//]: # (/* vim: set ft=markdown tw=0 lbr bri fen fdm=marker fdl=0: */)

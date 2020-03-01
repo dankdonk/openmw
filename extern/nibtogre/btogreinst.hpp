@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2018, 2019 cc9cii
+  Copyright (C) 2018-2020 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -78,7 +78,7 @@ namespace NiBtOgre
 #endif
         // Keep the model around in case Ogre wants to load the resource (i.e. Mesh) again
         // FIXME: resources are no longer loaded from here, do we still need an auto_ptr?
-        Ogre::SharedPtr<NiBtOgre::NiModel> mModel;
+        NiModelPtr mModel;
 
         Ogre::SceneNode *mBaseSceneNode;
         int mFlags; // some global properties
@@ -114,6 +114,7 @@ namespace NiBtOgre
         std::vector<std::string> mAttachLights;
 
         BtOgreInst(Ogre::SceneNode *baseNode, /*NifOgre::ObjectScenePtr scene,*/ const std::string& name, const std::string& group);
+        BtOgreInst(NiModelPtr model, Ogre::SceneNode *baseNode, const std::string& name, const std::string& group);
         ~BtOgreInst() {
             for (unsigned int i = 0; i < mInterpolators.size(); ++i)
                 delete mInterpolators[i];
@@ -127,7 +128,8 @@ namespace NiBtOgre
         void instantiate(Ogre::SkeletonPtr skeleton, const std::string& meshExt = "");
 
         // for building fg morphed mesh
-        void instantiate(Ogre::SkeletonPtr skeleton, const std::string& npcName, std::vector<Ogre::Vector3>& vertices);
+        void instantiate(Ogre::SkeletonPtr skeleton, const std::string& npcName,
+                std::unique_ptr<std::vector<Ogre::Vector3> > morphedVertices);
 
         bool hasAnimation(const std::string& animName) const;
     };

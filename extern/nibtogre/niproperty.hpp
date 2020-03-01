@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015-2019 cc9cii
+  Copyright (C) 2015-2020 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -69,7 +69,7 @@ namespace NiBtOgre
         //bool mIsBSLightingShaderProperty; // 25/02/20  this does not belong here
 
     public:
-        NiProperty(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data, bool isBSLightingShaderProperty = false);
+        NiProperty(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data, bool isBSLightingShaderProperty = false);
 
         virtual void applyMaterialProperty(OgreMaterial& material, std::vector<Ogre::Controller<float> >& controllers);
     };
@@ -112,7 +112,7 @@ namespace NiBtOgre
             std::uint32_t transformType;
             TexCoord centerOffset;
 
-            void read(NiStream& stream);
+            void read(NiStream *stream);
         };
 
         std::uint16_t mFlags;
@@ -166,7 +166,7 @@ namespace NiBtOgre
 #endif
         std::vector<ShaderTexDesc> mShaderTextures;
 
-        NiTexturingProperty(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
+        NiTexturingProperty(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
 
         virtual void applyMaterialProperty(OgreMaterial& material,
                                            std::vector<Ogre::Controller<float> >& controllers);
@@ -194,7 +194,7 @@ namespace NiBtOgre
         // FIXME
         std::map<NiTexturingProperty::TextureType, NiTexturingProperty::TexDesc> mTextureDescriptions;
 
-        BSEffectShaderProperty(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
+        BSEffectShaderProperty(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
 
         virtual void applyMaterialProperty(OgreMaterial& material,
                                            std::vector<Ogre::Controller<float> >& controllers);
@@ -237,7 +237,7 @@ namespace NiBtOgre
         // FIXME
         std::map<NiTexturingProperty::TextureType, NiTexturingProperty::TexDesc> mTextureDescriptions;
 
-        BSLightingShaderProperty(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
+        BSLightingShaderProperty(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
 
         virtual void applyMaterialProperty(OgreMaterial& material,
                                            std::vector<Ogre::Controller<float> >& controllers);
@@ -256,7 +256,7 @@ namespace NiBtOgre
         // FIXME
         std::map<NiTexturingProperty::TextureType, NiTexturingProperty::TexDesc> mTextureDescriptions;
 
-        BSShaderLightingProperty(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
+        BSShaderLightingProperty(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
     };
 
     // FO3
@@ -270,7 +270,7 @@ namespace NiBtOgre
         float         mUnknownFloat5;
         Ogre::Vector4 mEmissiveColor;
 
-        BSShaderPPLightingProperty(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
+        BSShaderPPLightingProperty(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
 
         virtual void applyMaterialProperty(OgreMaterial& material,
                                            std::vector<Ogre::Controller<float> >& controllers);
@@ -287,7 +287,7 @@ namespace NiBtOgre
         float mUnknownFloat4;
         float mUnknownFloat5;
 
-        BSShaderNoLightingProperty(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
+        BSShaderNoLightingProperty(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
 
         virtual void applyMaterialProperty(OgreMaterial& material,
                                            std::vector<Ogre::Controller<float> >& controllers);
@@ -305,7 +305,7 @@ namespace NiBtOgre
         unsigned char mWaterDirection;
         std::uint16_t mUnknownS3;
 
-        BSWaterShaderProperty(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
+        BSWaterShaderProperty(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
 
         virtual void applyMaterialProperty(OgreMaterial& material,
                                            std::vector<Ogre::Controller<float> >& controllers);
@@ -316,7 +316,7 @@ namespace NiBtOgre
         std::uint16_t mFlags;
         unsigned char mThreshold;
 
-        NiAlphaProperty(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
+        NiAlphaProperty(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
 
         virtual void applyMaterialProperty(OgreMaterial& material,
                                            std::vector<Ogre::Controller<float> >& controllers);
@@ -326,7 +326,7 @@ namespace NiBtOgre
     {
         std::uint16_t mFlags;
 
-        NiDitherProperty(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
+        NiDitherProperty(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
     };
 
     struct NiFogProperty : public NiProperty
@@ -335,7 +335,7 @@ namespace NiBtOgre
         float         mFogDepth;
         Ogre::Vector3 mFogColor;
 
-        NiFogProperty(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
+        NiFogProperty(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
     };
 
     struct NiMaterialProperty : public NiProperty
@@ -350,7 +350,7 @@ namespace NiBtOgre
         float mAlpha;
         float mEmitMulti;
 
-        NiMaterialProperty(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
+        NiMaterialProperty(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
 
         virtual void applyMaterialProperty(OgreMaterial& material,
                                            std::vector<Ogre::Controller<float> >& controllers);
@@ -360,14 +360,14 @@ namespace NiBtOgre
     {
         std::uint16_t mFlags;
 
-        NiShadeProperty(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
+        NiShadeProperty(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
     };
 
     struct NiSpecularProperty : public NiProperty
     {
         std::uint16_t mFlags;
 
-        NiSpecularProperty(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
+        NiSpecularProperty(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
     };
 
     struct NiStencilProperty : public NiProperty
@@ -384,7 +384,7 @@ namespace NiBtOgre
         std::uint32_t mZPassAction;
         std::uint32_t mDrawMode;
 
-        NiStencilProperty(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
+        NiStencilProperty(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
 
         virtual void applyMaterialProperty(OgreMaterial& material,
                                            std::vector<Ogre::Controller<float> >& controllers);
@@ -396,7 +396,7 @@ namespace NiBtOgre
         std::uint32_t mVertexMode;
         std::uint32_t mLightingMode;
 
-        NiVertexColorProperty(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
+        NiVertexColorProperty(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
 
         virtual void applyMaterialProperty(OgreMaterial& material,
                                            std::vector<Ogre::Controller<float> >& controllers);
@@ -406,7 +406,7 @@ namespace NiBtOgre
     {
         std::uint16_t mFlags;
 
-        NiWireframeProperty(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
+        NiWireframeProperty(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
 
         virtual void applyMaterialProperty(OgreMaterial& material,
                                            std::vector<Ogre::Controller<float> >& controllers);
@@ -417,7 +417,7 @@ namespace NiBtOgre
         std::uint16_t mFlags;
         std::uint32_t mFunction;
 
-        NiZBufferProperty(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
+        NiZBufferProperty(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
 
         virtual void applyMaterialProperty(OgreMaterial& material,
                                            std::vector<Ogre::Controller<float> >& controllers);

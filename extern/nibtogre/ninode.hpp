@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015-2019 cc9cii
+  Copyright (C) 2015-2020 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -80,7 +80,7 @@ namespace NiBtOgre
         std::vector<NiNodeRef> mChildBoneNodes; // FIXME: experimental for building a skeleton
 
     public:
-        NiNode(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
+        NiNode(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
         virtual ~NiNode() {};
 
         // It seems that for TES4 only NiNodes/NiBillboardNode are root nodes?
@@ -103,7 +103,8 @@ namespace NiBtOgre
 
         virtual const std::vector<NiAVObjectRef>& getChildren() const { return mChildren; }
 
-        void setVertices(std::vector<Ogre::Vector3>& vertices);
+        //void setVertices(std::unique_ptr<std::vector<Ogre::Vector3> > morphedVertices);
+        NiTriBasedGeom *getUniqueSubMeshChild(); // WARN: may throw
     };
 
     typedef NiNode AvoidNode;
@@ -115,7 +116,7 @@ namespace NiBtOgre
         short mUnknown2;
 
     public:
-        BSBlastNode(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
+        BSBlastNode(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
         virtual ~BSBlastNode() {};
 
         //void build(BtOgreInst *inst, NiObject *parentNiNode = nullptr);
@@ -128,7 +129,7 @@ namespace NiBtOgre
         std::int16_t mUnknown2;
 
     public:
-        BSDamageStage(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
+        BSDamageStage(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
         virtual ~BSDamageStage() {};
 
         //void build(BtOgreInst *inst, NiObject *parentNiNode = nullptr);
@@ -141,7 +142,7 @@ namespace NiBtOgre
         std::uint8_t mCurrent;
 
     public:
-        BSRangeNode(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
+        BSRangeNode(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
     };
 
     typedef BSRangeNode BSDebrisNode;
@@ -150,7 +151,7 @@ namespace NiBtOgre
     class BSFadeNode : public NiNode
     {
     public:
-        BSFadeNode(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
+        BSFadeNode(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
         virtual ~BSFadeNode() {};
     };
 
@@ -164,7 +165,7 @@ namespace NiBtOgre
         std::int32_t  mNumParticleSystems;
         NiAVObjectRef mParticleSystemsRef;
 
-        BSMasterParticleSystem(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
+        BSMasterParticleSystem(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
     };
 
     // Seen in NIF version 20.2.0.7
@@ -174,7 +175,7 @@ namespace NiBtOgre
         std::uint32_t mUnknown; // from 20.2.0.7
 
     public:
-        BSMultiBoundNode(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
+        BSMultiBoundNode(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
         virtual ~BSMultiBoundNode() {};
 
         //void build(BtOgreInst *inst, NiObject *parentNiNode = nullptr);
@@ -187,7 +188,7 @@ namespace NiBtOgre
         unsigned char mIsStaticBound;
 
     public:
-        BSOrderedNode(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
+        BSOrderedNode(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
         virtual ~BSOrderedNode() {};
 
         //virtual void build(BtOgreInst *inst, NiObject *parentNiNode = nullptr);
@@ -200,7 +201,7 @@ namespace NiBtOgre
         std::vector<NiNodeRef> mBones2;
 
     public:
-        BSTreeNode(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
+        BSTreeNode(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
         virtual ~BSTreeNode() {};
 
         //void build(BtOgreInst *inst, NiObject *parentNiNode = nullptr);
@@ -212,7 +213,7 @@ namespace NiBtOgre
         std::int32_t mValue;
 
     public:
-        BSValueNode(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
+        BSValueNode(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
         virtual ~BSValueNode() {};
 
         //void build(BtOgreInst *inst, NiObject *parentNiNode = nullptr);
@@ -223,7 +224,7 @@ namespace NiBtOgre
         std::uint16_t mBillboardMode;
 
     public:
-        NiBillboardNode(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
+        NiBillboardNode(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
         virtual ~NiBillboardNode() {};
 
         //void build(BtOgreInst *inst, NiObject *parentNiNode = nullptr);
@@ -239,7 +240,7 @@ namespace NiBtOgre
         std::int32_t mIndex;
 
     public:
-        NiSwitchNode(uint32_t index, NiStream& stream, const NiModel& model, BuildData& data);
+        NiSwitchNode(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
 
         void addBones(Ogre::Skeleton *skeleton,
                 Ogre::Bone *parentBone, std::map<std::uint32_t, std::uint16_t>& indexToHandle);
