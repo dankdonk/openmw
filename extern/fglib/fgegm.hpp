@@ -38,8 +38,8 @@ namespace FgLib
         std::uint32_t mNumAsymMorphModes; // should be 30
         std::uint32_t mGeometryBasisVersion;
 
-        boost::scoped_array<float> mSymMorphModeScales;  // should be 50
-        boost::scoped_array<float> mAsymMorphModeScales; // should be 30
+        boost::scoped_array<float> mSymMorphModeScales;    // should be 50
+        boost::scoped_array<float> mAsymMorphModeScales;   // should be 30
         boost::scoped_array<std::int16_t> mSymMorphModes;  // 3 * mNumVertices * mNumSymMorphModes
         boost::scoped_array<std::int16_t> mAsymMorphModes; // 3 * mNumVertices * mNumAsymMorphModes
 

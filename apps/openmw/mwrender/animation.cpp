@@ -1870,6 +1870,83 @@ void Animation::setLightEffect(float effect)
     }
 }
 
+// code duplicated from MWRender::Animation and NifOgre::Loader::createObjectBase
+// (not ideal but allows subtle changes for TES4)
+void Animation::setForeignObjectRootBase(const std::string& skeletonModel)
+{
+    OgreAssert(mAnimSources.empty(), "Setting object root while animation sources are set!");
+
+    mSkelBase = NULL;
+    mObjectRoot.reset();
+
+    if(skeletonModel.empty())
+        return;
+
+    Ogre::SharedPtr<NifOgre::ObjectScene> scene
+        = Ogre::SharedPtr<NifOgre::ObjectScene>(new NifOgre::ObjectScene(mInsert->getCreator()));
+
+    // FIXME: create a skeleton NiModel and pass it in
+    NiBtOgre::NiModelManager& modelManager = NiBtOgre::NiModelManager::getSingleton();
+    NiModelPtr skeleton = modelManager.getByName(skeletonModel, "General");
+    if (!skeleton)
+        skeleton = modelManager.createSkeletonModel(skeletonModel, "General");
+
+    scene->mForeignObj
+        = std::make_shared<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(skeleton, mInsert, skeletonModel, "General"));
+    scene->mForeignObj->instantiate();
+
+    if (scene->mForeignObj)
+    {
+        if (scene->mForeignObj->mSkeletonRoot)
+            scene->mSkelBase = scene->mForeignObj->mSkeletonRoot;
+
+        const std::vector<Ogre::Controller<Ogre::Real> >& controllers = scene->mForeignObj->modelControllers();
+        scene->mControllers.clear();
+        for (size_t i = 0; i < controllers.size(); ++i)
+            scene->mControllers.push_back(controllers[i]);
+    }
+
+    if(scene->mSkelBase)
+        mInsert->attachObject(scene->mSkelBase);
+
+    mObjectRoot = scene;
+
+    if(mObjectRoot->mSkelBase)
+    {
+        mSkelBase = mObjectRoot->mSkelBase;
+
+        Ogre::AnimationStateSet *aset = mObjectRoot->mSkelBase->getAllAnimationStates();
+        Ogre::AnimationStateIterator asiter = aset->getAnimationStateIterator();
+        while(asiter.hasMoreElements())
+        {
+            Ogre::AnimationState *state = asiter.getNext();
+            state->setEnabled(false);
+            state->setLoop(false);
+        }
+
+        // Set the bones as manually controlled since we're applying the
+        // transformations manually
+        Ogre::SkeletonInstance *skelinst = mObjectRoot->mSkelBase->getSkeleton();
+        Ogre::Skeleton::BoneIterator boneiter = skelinst->getBoneIterator();
+        while(boneiter.hasMoreElements())
+            boneiter.getNext()->setManuallyControlled(true);
+
+        // Reattach any objects that have been attached to this one
+        ObjectAttachMap::iterator iter = mAttachedObjects.begin();
+        while(iter != mAttachedObjects.end())
+        {
+            if(!skelinst->hasBone(iter->second))
+                mAttachedObjects.erase(iter++);
+            else
+            {
+                mSkelBase->attachObjectToBone(iter->second, iter->first);
+                ++iter;
+            }
+        }
+    }
+    else
+        mAttachedObjects.clear();
+}
 
 ObjectAnimation::ObjectAnimation(const MWWorld::Ptr& ptr, const std::string &model)
   : Animation(ptr, ptr.getRefData().getBaseNode())
@@ -1912,8 +1989,8 @@ ObjectAnimation::ObjectAnimation(const MWWorld::Ptr& ptr, const std::string &mod
             // mBhkRigidBodyMap already has the target NiNode refs; each of these should have a
             // child SceneNode as a parent.
             std::map<int32_t/*NiNodeRef*/, int32_t>::const_iterator it =
-                mObjectRoot->mForeignObj->mModel->getBuildData().mBhkRigidBodyMap.begin();
-            for (; it != mObjectRoot->mForeignObj->mModel->getBuildData().mBhkRigidBodyMap.end(); ++it)
+                mObjectRoot->mForeignObj->mModel->buildData().mBhkRigidBodyMap.begin();
+            for (; it != mObjectRoot->mForeignObj->mModel->buildData().mBhkRigidBodyMap.end(); ++it)
             {
                 Ogre::SceneNode *child = mInsert->createChildSceneNode();
                 mPhysicsNodeMap[it->first] = child;

@@ -29,8 +29,6 @@
 
 #include <OgreVector3.h>
 
-#include "fgstream.hpp"
-
 namespace FgLib
 {
     class FgEgt
@@ -42,14 +40,11 @@ namespace FgLib
         std::uint32_t mNumAsymTextureModes; // should be 0
         std::uint32_t mTextureBasisVersion;
 
-    public: // FIXME
         std::vector<Ogre::Vector3> mSymTextureModes;  // image starts at top left corner
-    private:
         std::vector<Ogre::Vector3> mAsymTextureModes; // should be empty
-        std::vector<float> mSymTextureModeScales;  // should be 50
-        std::vector<float> mAsymTextureModeScales; // should be 0
+        std::vector<float> mSymTextureModeScales;     // should be 50
+        std::vector<float> mAsymTextureModeScales;    // should be 0
 
-    private:
         // default, copy and assignment not allowed
         FgEgt();
         FgEgt(const FgEgt& other);
@@ -61,18 +56,11 @@ namespace FgLib
         FgEgt(const std::string& name);
         ~FgEgt();
 
-        //const std::string& getOgreGroup() const { return mGroup; }
-        //const std::string& getName() const { return mName; }
-
         inline const std::uint32_t numRows() const { return mNumRows; }
         inline const std::uint32_t numColumns() const { return mNumColumns; }
         inline const std::uint32_t numSymTextureModes() const { return mNumSymTextureModes; }
-        //inline const std::uint32_t numAsymTextureModes() const { return mNumAsymTextureModes; }
+      //inline const std::uint32_t numAsymTextureModes() const { return mNumAsymTextureModes; }
 
-//      const std::int16_t *getSymTexture(std::size_t vertIndex) const;  // pointer to start of SymTextureModes
-//      const std::int16_t *getAsymTexture(std::size_t vertIndex) const; // pointer to start of AsymTextureModes
-        //inline const boost::scoped_array<std::int16_t>& symMorphModes() const { return mSymTextureModes; }
-        //inline const boost::scoped_array<std::int16_t>& asymMorphModes() const { return mAsymTextureModes; }
         inline const std::vector<Ogre::Vector3>& symTextureModes() const { return mSymTextureModes; }
         inline const std::vector<Ogre::Vector3>& asymTextureModes() const { return mAsymTextureModes; }
     };

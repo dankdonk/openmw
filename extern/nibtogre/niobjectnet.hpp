@@ -65,7 +65,9 @@ namespace NiBtOgre
 
         inline StringIndex getNameIndex() const { return mNameIndex; }
 
-        virtual void build(Ogre::SceneNode *sceneNode, BtOgreInst *inst, NiObject *parent = nullptr);
+        std::string getExtraDataString(const std::string& name) const;
+
+        virtual void build(Ogre::SceneNode *sceneNode, NiObject *parent = nullptr);
     };
 
     typedef NiObjectNET NiSequenceStreamHelper;

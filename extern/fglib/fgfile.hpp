@@ -28,20 +28,14 @@
 #include <memory>
 #include <iostream>
 
-#include <boost/algorithm/string.hpp>
-
 #include <OgreException.h>
-
-//#include "fgtri.hpp"
-//#include "fgegm.hpp"
-//#include "fgegt.hpp"
 
 namespace FgLib
 {
-    class FgTri;
-    class FgEgm;
-    class FgEgt;
-    class FgCtl;
+    //class FgTri;
+    //class FgEgm;
+    //class FgEgt;
+    //class FgCtl;
 
     template<typename T>
     class FgFile
@@ -66,9 +60,8 @@ namespace FgLib
     template<typename T>
     const T *FgFile<T>::getOrLoadByName(const std::string& mesh, const std::string& ext) const
     {
-        std::string name = boost::algorithm::to_lower_copy(mesh);
-
-        size_t pos = name.find_last_of(".");
+        std::string name = mesh;
+        size_t pos = mesh.find_last_of(".");
         if (pos != std::string::npos && name.substr(pos+1) == "nif")
         {
             name = mesh.substr(0, pos+1)+ext;
@@ -103,17 +96,6 @@ namespace FgLib
             }
         }
     }
-
-    //template<>
-    //const FgTri *FgFile<FgTri>::getOrLoadByName(const std::string& mesh) const;
-    ////template<>
-    ////std::map<std::string, std::unique_ptr<FgTri> > FgFile<FgTri>::sFgFileMap;
-
-    //template<>
-    //const FgEgm *FgFile<FgEgm>::getOrLoadByName(const std::string& mesh) const;
-
-    //template<>
-    //const FgEgt *FgFile<FgEgt>::getOrLoadByName(const std::string& mesh) const;
 }
 
 #endif // FGLIB_FGFILE_H

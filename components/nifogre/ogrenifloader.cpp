@@ -1307,11 +1307,11 @@ public:
                             scene->mEntities.push_back(scene->mForeignObj->mEntities[i]);
                     }
 #endif
-                    if (scene->mForeignObj->mControllers.size() > 0)
-                    {
-                        for (size_t i = 0; i < scene->mForeignObj->mControllers.size(); ++i)
-                            scene->mControllers.push_back(scene->mForeignObj->mControllers[i]);
-                    }
+                    const std::vector<Ogre::Controller<Ogre::Real> >& controllers
+                        = scene->mForeignObj->modelControllers();
+                    scene->mControllers.clear(); // FIXME: maybe there can be multiple?
+                    for (size_t i = 0; i < controllers.size(); ++i)
+                        scene->mControllers.push_back(controllers[i]);
                 }
                 return;
             }

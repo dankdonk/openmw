@@ -75,7 +75,7 @@ namespace MWRender
             //addAnimSource(model);
 
             Ogre::SharedPtr<AnimSource> animSource(OGRE_NEW AnimSource);
-            std::vector<Ogre::Controller<Ogre::Real> >& controllers = mObjectRoot->mForeignObj->mControllers;
+            std::vector<Ogre::Controller<Ogre::Real> >& controllers = mObjectRoot->mControllers;
 
             mAnimSources.push_back(animSource);
 

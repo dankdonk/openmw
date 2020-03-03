@@ -23,6 +23,8 @@
 
 #include "fgfile.hpp"
 
+#include <boost/algorithm/string.hpp>
+
 #include "fgtri.hpp"
 #include "fgegm.hpp"
 #include "fgegt.hpp"
@@ -33,32 +35,29 @@ namespace FgLib
     template<>
     const FgTri *FgFile<FgTri>::getOrLoadByName(const std::string& mesh) const
     {
-        return getOrLoadByName(mesh, "tri");
+        return getOrLoadByName(boost::algorithm::to_lower_copy(mesh), "tri");
     }
 
     template<>
     const FgEgm *FgFile<FgEgm>::getOrLoadByName(const std::string& mesh) const
     {
-        return getOrLoadByName(mesh, "egm");
+        return getOrLoadByName(boost::algorithm::to_lower_copy(mesh), "egm");
     }
 
     template<>
     const FgEgt *FgFile<FgEgt>::getOrLoadByName(const std::string& mesh) const
     {
-        return getOrLoadByName(mesh, "egt");
+        return getOrLoadByName(boost::algorithm::to_lower_copy(mesh), "egt");
     }
 
     template<>
     const FgCtl *FgFile<FgCtl>::getOrLoadByName(const std::string& name) const
     {
-        return getOrLoadByName(name, "");
+        return getOrLoadByName(boost::algorithm::to_lower_copy(name), "");
     }
 
     std::map<std::string, std::unique_ptr<FgTri> > FgFile<FgTri>::sFgFileMap;
     std::map<std::string, std::unique_ptr<FgEgm> > FgFile<FgEgm>::sFgFileMap;
     std::map<std::string, std::unique_ptr<FgEgt> > FgFile<FgEgt>::sFgFileMap;
-    std::map<std::string, std::unique_ptr<FgCtl> > FgFile<FgCtl>::sFgFileMap;
-    //FgFile<FgTri> tri();
-    //FgFile<FgEgm> egm();
-    //FgFile<FgEgt> egt();
+    std::map<std::string, std::unique_ptr<FgCtl> > FgFile<FgCtl>::sFgFileMap; // there is only one :-(
 }

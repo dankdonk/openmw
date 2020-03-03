@@ -153,7 +153,6 @@ namespace FgLib
                     tri.read(dummy); // Y
                     tri.read(dummy); // Z
                 }
-
             }
 
             for (std::size_t ms = 0; ms < mNumLabelledStatMorphs; ++ms)
@@ -203,7 +202,6 @@ namespace FgLib
             // mimic Ogre exeption
             if (pos == std::string::npos || name.substr(pos+1) != "tri")
                 OGRE_EXCEPT(Ogre::Exception::ERR_FILE_NOT_FOUND, "Cannot locate resource "+name +".", "FgTri::ctor");
-
 
             std::string mesh = name.substr(0, pos+1)+"nif";
             NiModelPtr model = NiBtOgre::NiModelManager::getSingleton().getOrLoadByName(mesh, "General");

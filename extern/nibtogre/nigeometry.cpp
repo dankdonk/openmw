@@ -130,9 +130,9 @@ NiBtOgre::NiTriBasedGeom::NiTriBasedGeom(uint32_t index, NiStream *stream, const
 
     // if there is node animation in the model include any sub-mesh to be part of the animation
     // FIXME: HACK for testing; may add bones that are not necessary
-    if (data.mSkelLeafIndicies.size() > 0 && (model.blockType(mParent.selfRef()) == "NiNode" ||
-                model.blockType(mParent.selfRef()) == "BSFadeNode")) // FIXME
-        data.addSkelLeafIndex(mParent.selfRef()); // may attempt to add bones already added
+//  if (data.mSkelLeafIndicies.size() > 0 && (model.blockType(mParent.selfRef()) == "NiNode" ||
+//              model.blockType(mParent.selfRef()) == "BSFadeNode")) // FIXME
+//      data.addSkelLeafIndex(mParent.selfRef()); // may attempt to add bones already added
 }
 
 // Can't remember why I wanted SubEntityController (a base class maybe?)
@@ -322,7 +322,7 @@ bool NiBtOgre::NiTriBasedGeom::buildSubMesh(Ogre::Mesh *mesh, BoundsFinder& boun
     bool vertShadowBuffer = false;
 
     // TODO: seems to make no difference to vertex anim
-    if (mSkinInstanceRef != -1/* || NiAVObject::mHasAnim*/ || !mData.mSkeleton.isNull())
+    if (mSkinInstanceRef != -1/* || NiAVObject::mHasAnim*/ || mModel.hasSkeleton())
     {
         vertUsage = Ogre::HardwareBuffer::HBU_DYNAMIC_WRITE_ONLY;
         vertShadowBuffer = true;
@@ -501,7 +501,7 @@ bool NiBtOgre::NiTriBasedGeom::buildSubMesh(Ogre::Mesh *mesh, BoundsFinder& boun
         // In case of a Mesh, a list of NiGeometry for that NiNode is required.
 
         // FIXME: move this to NiModel?
-        mesh->setSkeletonName(mData.mSkeleton->getName());
+        mesh->setSkeletonName(mModel.getSkeleton()->getName());
 
         // build skeleton on demand; need to check for each mSkinInstanceRef
         //
@@ -558,7 +558,7 @@ bool NiBtOgre::NiTriBasedGeom::buildSubMesh(Ogre::Mesh *mesh, BoundsFinder& boun
                 continue;
 
 
-            boneInf.boneIndex = mData.mSkeleton->getBone(/*"#"+std::to_string(skinInstance->mBoneRefs[i])+"@"+*/nodeName)->getHandle();
+            boneInf.boneIndex = mModel.getSkeleton()->getBone(/*"#"+std::to_string(skinInstance->mBoneRefs[i])+"@"+*/nodeName)->getHandle();
 
             const std::vector<NiSkinData::SkinData::SkinWeight> &weights = skinData->mBoneList[i].vertexWeights;
             for(size_t j = 0; j < weights.size(); ++j)
@@ -571,20 +571,20 @@ bool NiBtOgre::NiTriBasedGeom::buildSubMesh(Ogre::Mesh *mesh, BoundsFinder& boun
 
             if (nodeName == "Bip01 L ForeTwist")// || nodeName == "Bip01 R ForeTwist")
             {
-                boneInf.boneIndex = mData.mSkeleton->getBone("Bip01 L Forearm")->getHandle();
+                boneInf.boneIndex = mModel.getSkeleton()->getBone("Bip01 L Forearm")->getHandle();
                 //boneInf.vertexIndex = weights[foreL].vertex;
                 //boneInf.weight = weights[foreL].weight;
             }
             else if (nodeName == "Bip01 R ForeTwist")
             {
-                boneInf.boneIndex = mData.mSkeleton->getBone("Bip01 R Forearm")->getHandle();
+                boneInf.boneIndex = mModel.getSkeleton()->getBone("Bip01 R Forearm")->getHandle();
                 //boneInf.vertexIndex = weights[foreR].vertex;
                 //boneInf.weight = weights[foreR].weight;
             }
             //else if (nodeName == "Bip01 L Sholder")
-                //boneInf.boneIndex = mData.mSkeleton->getBone("Bip01 L UpperArm")->getHandle();
+                //boneInf.boneIndex = mModel.getSkeleton()->getBone("Bip01 L UpperArm")->getHandle();
             //else if (nodeName == "Bip01 R Sholder")
-                //boneInf.boneIndex = mData.mSkeleton->getBone("Bip01 R UpperArm")->getHandle();
+                //boneInf.boneIndex = mModel.getSkeleton()->getBone("Bip01 R UpperArm")->getHandle();
 
 //#endif
 
@@ -593,9 +593,9 @@ bool NiBtOgre::NiTriBasedGeom::buildSubMesh(Ogre::Mesh *mesh, BoundsFinder& boun
             }
         }
     } // mSkinInstanceRef != -1
-    else if (mData.hasSkeleton()
-        && mData.mSkeleton->getName() == mModel.getModelName() // hack to avoid body parts
-        && mData.mSkeleton->hasBone(mParent.getNiNodeName())
+    else if (mModel.hasSkeleton()
+        && mModel.getSkeleton()->getName() == mModel.getModelName() // hack to avoid body parts
+        && mModel.getSkeleton()->hasBone(mParent.getNiNodeName())
         //&& (mModel.nifVer() < 0x14020007 || mParent.getNiNodeName() == "HeadAnims") // not FO3 onwards
 
         //&& mModel.getModelName().find("geardoor") == std::string::npos
@@ -625,7 +625,7 @@ bool NiBtOgre::NiTriBasedGeom::buildSubMesh(Ogre::Mesh *mesh, BoundsFinder& boun
         mesh->setSkeletonName(mModel.getModelName()); // FIXME: not the best place from a SubMesh?
 
         Ogre::VertexBoneAssignment boneInf;
-        boneInf.boneIndex = mData.mSkeleton->getBone(/*"#"+std::to_string(mParent.selfRef())+"@"+*/mParent.getNiNodeName())->getHandle();
+        boneInf.boneIndex = mModel.getSkeleton()->getBone(/*"#"+std::to_string(mParent.selfRef())+"@"+*/mParent.getNiNodeName())->getHandle();
 
         for (unsigned int j = 0; j < vertices.size(); ++j)
         {

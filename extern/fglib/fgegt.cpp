@@ -29,15 +29,10 @@
 
 #include <boost/scoped_array.hpp>
 
+#include "fgstream.hpp"
+
 namespace FgLib
 {
-    // "name" is the full path to the mesh from the resource directory/BSA added to Ogre::ResourceGroupManager.
-    // This name is required later for Ogre resource managers such as MeshManager.
-    // The file is opened by mFgStream::mStream.
-    FgEgt::~FgEgt()
-    {
-    }
-
     FgEgt::FgEgt(const std::string& name)
     {
         FgStream egt(name);
@@ -115,5 +110,9 @@ namespace FgLib
         }
 
         // FIXME: asym texture modes
+    }
+
+    FgEgt::~FgEgt()
+    {
     }
 }

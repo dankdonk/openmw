@@ -135,7 +135,7 @@ NiBtOgre::NiCamera::NiCamera(uint32_t index, NiStream *stream, const NiModel& mo
         stream->skip(sizeof(std::uint32_t)); // Unknown Int2
 }
 
-void NiBtOgre::NiCamera::build(BtOgreInst *inst, BuildData *data, NiObject *parent)
+void NiBtOgre::NiCamera::build(BuildData *data, NiObject *parent)
 {
 }
 

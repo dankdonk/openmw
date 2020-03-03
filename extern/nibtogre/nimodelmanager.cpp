@@ -143,8 +143,8 @@ namespace NiBtOgre
                          "Cannot find build parameters for " + res->getName(),
                          "NiModelManager::loadResource");
         }
-        ModelBuildInfo& bInfo = it->second;
 
+        ModelBuildInfo& bInfo = it->second;
         switch(bInfo.type)
         {
         case MBT_Object:
@@ -154,7 +154,7 @@ namespace NiBtOgre
             //loadManualSkinnedModel(model, bInfo);
             break;
         case MBT_Skeleton:
-            //loadManualSkeletonModel(model, bInfo);
+            loadManualSkeletonModel(model, bInfo);
             break;
         case MBT_Morphed:
             loadManualMorphedModel(model, bInfo);
@@ -164,6 +164,13 @@ namespace NiBtOgre
                          "Unknown build parameters for " + res->getName(),
                          "NiModelManager::loadResource");
         }
+    }
+
+    void NiModelManager::loadManualSkeletonModel(NiModel* pModel, const ModelBuildInfo& bInfo)
+    {
+        pModel->findBoneNodes(true/*buildObjectPalette*/);
+        pModel->buildSkeleton(true/*load*/); // NOTE: was buildFullSkeleton
+        pModel->createDummyMesh();
     }
 
     void NiModelManager::loadManualMorphedModel(NiModel* pModel, const ModelBuildInfo& bInfo)
@@ -249,7 +256,24 @@ namespace NiBtOgre
         // build the rest of the model / misc odds and ends
     }
 
-    NiModelPtr NiModelManager::createMorphed(const Ogre::String& nif, const Ogre::String& group,
+    NiModelPtr NiModelManager::createSkeletonModel(const Ogre::String& nif, const Ogre::String& group)
+    {
+        // Create manual model which calls back self to load
+        NiModelPtr pModel = createManual(nif, group, nif, this);
+
+        // store parameters
+        ModelBuildInfo bInfo;
+        bInfo.type = MBT_Skeleton;
+        bInfo.baseNif = nif;
+        mModelBuildInfoMap[pModel.get()] = bInfo;
+
+        // load immediately
+        pModel->load();
+
+        return pModel;
+    }
+
+    NiModelPtr NiModelManager::createMorphedModel(const Ogre::String& nif, const Ogre::String& group,
             const ESM4::Npc *npc, const ESM4::Race *race, const Ogre::String& texture)
     {
         // Create manual model which calls back self to load
@@ -264,7 +288,7 @@ namespace NiBtOgre
         bInfo.baseTexture = texture;
         mModelBuildInfoMap[pModel.get()] = bInfo;
 
-        // to preserve previous behaviour, load immediately
+        // load immediately
         pModel->load();
 
         return pModel;

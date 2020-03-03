@@ -73,7 +73,7 @@ namespace MWClass
         {
             size_t pos = Misc::StringUtils::lowerCase(model).find_last_of("."); // pos points at '.'
             if (pos == std::string::npos || model.substr(pos+1) != "nif") // mModel does not end in ".nif"
-                return "meshes\\" + model.substr(0, pos-1) + "_gnd.nif";
+                return "meshes\\" + model.substr(0, pos) + "_gnd.nif";
         }
         return "";
     }

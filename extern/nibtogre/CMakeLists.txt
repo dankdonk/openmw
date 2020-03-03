@@ -29,7 +29,7 @@ set(NIBTOGRE_SOURCE_FILES
     nimodelmanager.cpp
     btogreinst.cpp
     nimeshloader.cpp
-    skeletonloader.cpp
+    niskeletonloader.cpp
     btrigidbodyci.cpp
 #   btrigidbodyciloader.cpp
     btrigidbodycimanager.cpp

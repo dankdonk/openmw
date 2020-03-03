@@ -25,7 +25,7 @@
 #include <cassert>
 #include <stdexcept>
 
-#include <iostream> // FIXME: debugging only
+//#include <iostream> // FIXME: debugging only
 
 #include <boost/scoped_array.hpp>
 
@@ -34,9 +34,9 @@
 #include <OgreVector4.h>
 #include <OgreMatrix3.h>
 
-#ifdef NDEBUG // FIXME: debugging only
-#undef NDEBUG
-#endif
+//#ifdef NDEBUG // FIXME: debugging only
+//#undef NDEBUG
+//#endif
 
 namespace FgLib
 {

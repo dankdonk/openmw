@@ -32,10 +32,10 @@
 #include <btBulletCollisionCommon.h>
 
 #include <OgreResource.h>
+#include <OgreController.h>
 
 #include "nistream.hpp"
 #include "niheader.hpp"
-#include "skeletonloader.hpp" // not sure why this is needed
 #include "niobject.hpp"
 #include "nimodelmanager.hpp"
 
@@ -51,12 +51,10 @@ namespace Ogre
 namespace NiBtOgre
 {
     class NiObject;
-//    class SkeletonLoader;
     struct NiTriBasedGeom;
     struct BtOgreInst;
     class NiModel;
     class NiNode;
-    class NiMeshLoader;
 
     enum BuildFlags {
         Flag_EnableHavok         = 0x0001,
@@ -82,10 +80,10 @@ namespace NiBtOgre
         //bool mEditorMarkerPresent;
 
         int32_t mBuildFlags;
-        inline bool havokEnabled()        const { return (mBuildFlags & Flag_EnableHavok)         != 0; }
-        inline bool isSkeleton()          const { return (mBuildFlags & Flag_IsSkeleton)          != 0; }
-        inline bool flameNodesPresent()   const { return (mBuildFlags & Flag_FlameNodesPresent)   != 0; }
-        inline bool editorMarkerPresent() const { return (mBuildFlags & Flag_EditorMarkerPresent) != 0; }
+        inline bool havokEnabled()          const { return (mBuildFlags & Flag_EnableHavok)         != 0; }
+        inline bool isSkeletonTES4()        const { return (mBuildFlags & Flag_IsSkeleton)          != 0; }
+        inline bool flameNodesPresentTES4() const { return (mBuildFlags & Flag_FlameNodesPresent)   != 0; }
+        inline bool editorMarkerPresent()   const { return (mBuildFlags & Flag_EditorMarkerPresent) != 0; }
 
         // helper to get pointer to parent NiNode
         std::map<NiAVObjectRef, NiNode*> mNiNodeMap;
@@ -108,7 +106,7 @@ namespace NiBtOgre
         void addSkelLeafIndex(NiNodeRef leaf) { mSkelLeafIndicies.push_back(leaf); }
         // only adds if none found
         void addNewSkelLeafIndex(NiNodeRef leaf); // FIXME: not used?
-        inline bool hasSkeleton() const { return !mSkeleton.isNull(); }
+        //inline bool hasSkeleton() const { return !mSkeleton.isNull(); }
         bool hasBoneLeaf(NiNodeRef leaf) const; // FIXME: not used?
 
         //bool mIsSkeleton; // npc/creature
@@ -130,7 +128,7 @@ namespace NiBtOgre
         //        v                    v
         std::map<NiNodeRef, /*std::pair<std::string,*/ int32_t/*>*/ > mBhkRigidBodyMap;
 
-        Ogre::SkeletonPtr mSkeleton;
+        //Ogre::SkeletonPtr mSkeleton;
 
         // FIXME: these needs to be vectors (there can be multiple) and the flame node editor
         // id needs to be extracted (without '@#N' where N is a number)
@@ -143,7 +141,9 @@ namespace NiBtOgre
         //            |            |
         //            v            v
         std::map<std::string, std::vector<std::string> > mMovingBoneNameMap;
-        void setAnimBoneName(const std::string& anim, const std::string& bone) {
+
+        void setAnimBoneName(const std::string& anim, const std::string& bone)
+        {
             std::map<std::string, std::vector<std::string> >::iterator lb
                 = mMovingBoneNameMap.lower_bound(anim);
 
@@ -159,10 +159,15 @@ namespace NiBtOgre
             }
         }
 
-        BuildData(const NiModel& model) : mModel(model), mIsSkinned(false), /*mFlameNodesPresent(false), mEditorMarkerPresent(false),*/ mBuildFlags(0)
+        std::multimap<float, std::string> mTextKeys;
+        std::vector<Ogre::Controller<Ogre::Real> > mControllers;
+
+        int mFlags; // some global properties
+
+        BuildData(const NiModel& model) : mModel(model), mIsSkinned(false), /*mFlameNodesPresent(false), mEditorMarkerPresent(false),*/ mBuildFlags(0), mFlags(0)
         {
             //mIsSkeleton = false; // FIXME: hack, does not belong here
-            mSkeleton.setNull();
+            //mSkeleton.setNull();
         }
     };
 
@@ -202,20 +207,21 @@ namespace NiBtOgre
 
         const std::string mGroup;  // Ogre group
 
-        //std::vector<std::unique_ptr<MeshLoader> > mMeshLoaders; // TODO: doesn't belong here?
-
         std::vector<std::unique_ptr<NiObject> > mObjects;
         std::vector<std::uint32_t> mRoots;
 
         int mCurrIndex; // FIXME: for debugging Ptr
+
         std::string mModelName;
+        std::string mNif; // store NIF path for prepareImpl (may be different to mModelName)
 
         BuildData mBuildData;
-
-        std::string mNif;
+        Ogre::SkeletonPtr mSkeleton;
+        std::vector<std::pair<Ogre::MeshPtr, NiNode*> > mMeshes;
 
         bool mShowEditorMarkers; // usually only for OpenCS
 
+        // for skeleton.nif, etc, only
         std::map<std::string, NiAVObjectRef> mObjectPalette;
 
         // default, copy and assignment not allowed
@@ -249,22 +255,6 @@ namespace NiBtOgre
             return (index < 0) ? nullptr : static_cast<T*>(mObjects[index].get());
         }
 
-        // WARNING: SceneNode in 'inst' should have the scale (assumed uniform)
-        void build(BtOgreInst *inst);
-        void buildBodyPart(BtOgreInst *inst, Ogre::SkeletonPtr skeleton = Ogre::SkeletonPtr());
-
-        void buildAnimation(Ogre::Entity *skelBase, NiModelPtr anim,
-                std::multimap<float, std::string>& textKeys,
-                std::vector<Ogre::Controller<Ogre::Real> >& controllers,
-                NiModel *skeleton,
-                NiModel *bow = nullptr);
-        const std::map<std::string, NiAVObjectRef>& getObjectPalette() const { return mObjectPalette; }
-        Ogre::SkeletonPtr getSkeleton() const { return mBuildData.mSkeleton; }
-        void buildSkeleton();
-
-        // skeleton name to be used for skinned objects so that the same base NIF can be used
-        void createNiObjects(const std::string& skeleton = "");
-
         // returns NiObject type name
         const std::string& blockType(std::uint32_t index) const {
             return mHeader->blockType(index);
@@ -279,19 +269,45 @@ namespace NiBtOgre
 
         inline bool hideEditorMarkers() const { return !mShowEditorMarkers; }
 
-        std::uint32_t getRootIndex() const { return mRoots[0]; } // FIXME: assumes only one root
+        std::uint32_t rootIndex() const { return mRoots[0]; } // FIXME: assumes only one root
 
         typedef std::int32_t NiNodeRef;
         const std::map<NiNodeRef, /*std::pair<std::string,*/ int32_t/*>*/ >&
             getBhkRigidBodyMap() const { return mBuildData.mBhkRigidBodyMap; }
 
+        const std::multimap<float, std::string>& textKeys() const { return mBuildData.mTextKeys; }
+        const std::vector<Ogre::Controller<Ogre::Real> >& controllers() const { return mBuildData.mControllers; }
+
         //const std::map<NiNodeRef, int32_t>& getBhkRigidBodyMap() const { return mBuildData.mBhkRigidBocyMap; }
 
-        void buildMeshAndEntity(BtOgreInst *inst, const std::string& meshExt = "");
-        void buildMeshAndEntity(BtOgreInst *inst, const std::string& npcName,
-                std::unique_ptr<std::vector<Ogre::Vector3> > morphedVertices);
+        // WARNING: SceneNode in 'inst' should have the scale (assumed uniform)
+        void build(BtOgreInst *inst);
+        std::string buildBodyPart(Ogre::SkeletonPtr skeleton = Ogre::SkeletonPtr());
 
-        inline const BuildData& getBuildData() const { return mBuildData; }
+        void buildAnimation(Ogre::Entity *skelBase, NiModelPtr anim,
+                std::multimap<float, std::string>& textKeys,
+                std::vector<Ogre::Controller<Ogre::Real> >& controllers,
+                NiModel *skeleton,
+                NiModel *bow = nullptr);
+        const std::map<std::string, NiAVObjectRef>& getObjectPalette() const { return mObjectPalette; }
+
+        Ogre::SkeletonPtr getSkeleton() const { return mSkeleton; }
+        inline bool hasSkeleton() const { return !mSkeleton.isNull(); }
+        void buildSkeleton(bool load = false);
+        void buildFullSkeleton(bool load = false);
+
+        inline const std::vector<std::pair<Ogre::MeshPtr, NiNode*> >& meshes() const { return mMeshes; }
+
+        void createNiObjects();
+        // for skeleton.nif, etc, that requires an Entity for ObjectScene
+        void createDummyMesh();
+
+        // FIXME: move out?
+        //void buildEntities(BtOgreInst *inst);
+        //void buildEntities(BtOgreInst *inst, const std::string& npcName,
+                //std::unique_ptr<std::vector<Ogre::Vector3> > morphedVertices);
+
+        inline const BuildData& buildData() const { return mBuildData; }
 
         // used to generate a FaceGen TRI file, returns the vertices of the first NiTriBasedGeom
         const std::vector<Ogre::Vector3>& fgVertices();
@@ -299,9 +315,10 @@ namespace NiBtOgre
         // used by FgSam to populate the morphed vertices
         std::vector<Ogre::Vector3>& fgMorphVertices();
 
+        void findBoneNodes(bool buildObjectPalette = false);
     private:
-        void buildBones();
-        void createMesh(const std::string& skeleton);
+        // supply skeleton for skinned objects
+        void createMesh(Ogre::SkeletonPtr skeleton = Ogre::SkeletonPtr());
 
         // access to NiGeometryData for generating a FaceGen TRI file or to populate morphed vertices
         // WARN: may throw

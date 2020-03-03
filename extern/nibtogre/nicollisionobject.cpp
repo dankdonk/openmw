@@ -110,7 +110,7 @@ NiBtOgre::bhkNiCollisionObject::bhkNiCollisionObject(uint32_t index, NiStream *s
 // Old implementation was at ManualBulletShapeLoader::handleBhkCollisionObject()
 // It is probably intended to be per rigid body, possibly TES3 NIF had no separate
 // collision shapes and hence considered the whole thing as one rigid body?
-void NiBtOgre::bhkNiCollisionObject::build(BtOgreInst *inst, BuildData *data, NiObject *parentNiNode)
+void NiBtOgre::bhkNiCollisionObject::build(BuildData *data, NiObject *parentNiNode)
 {
     // collision objects have 'target' which should have the parent world transform
     // FIXME: assert during testing only
@@ -128,7 +128,7 @@ void NiBtOgre::bhkNiCollisionObject::build(BtOgreInst *inst, BuildData *data, Ni
     }
 #endif
 
-    mModel.getRef<NiObject>(mBodyRef)->build(inst, data, parentNiNode); // NOTE: parent passed
+    mModel.getRef<NiObject>(mBodyRef)->build(data, parentNiNode); // NOTE: parent passed
 }
 
 // Seen in NIF ver 20.0.0.4, 20.0.0.5

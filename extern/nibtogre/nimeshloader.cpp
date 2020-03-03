@@ -27,12 +27,13 @@
 #include <OgreMeshManager.h>
 
 #include "nimodel.hpp"
+#include "nimodelmanager.hpp"
 #include "ninode.hpp"
-
-template<> NiBtOgre::NiMeshLoader* Ogre::Singleton<NiBtOgre::NiMeshLoader>::msSingleton = 0;
 
 namespace NiBtOgre
 {
+    std::map<Ogre::Resource*, NiMeshLoader::ModelBuildInfo> NiMeshLoader::sModelBuildInfoMap;
+
     NiMeshLoader::NiMeshLoader()
     {
     }
@@ -41,36 +42,27 @@ namespace NiBtOgre
     {
     }
 
-    NiMeshLoader* NiMeshLoader::getSingletonPtr(void)
-    {
-        return msSingleton;
-    }
-
-    NiMeshLoader& NiMeshLoader::getSingleton(void)
-    {
-        assert( msSingleton ); return ( *msSingleton );
-    }
-
-    Ogre::MeshPtr NiMeshLoader::createMesh(const Ogre::String& name,
-            const Ogre::String& group, NiModel *model, std::int32_t ninode)
+    Ogre::MeshPtr NiMeshLoader::createMesh(const Ogre::String& name, const Ogre::String& group,
+            NiModel *model, std::int32_t ninode, const Ogre::String skeleton)
     {
         // Create manual model which calls back self to load
         Ogre::MeshPtr pMesh = createManual(name, group);
 
         // store parameters
         ModelBuildInfo bInfo;
-        bInfo.type = MBT_Object;
+        bInfo.type = (skeleton.empty() ?  MBT_Object : MBT_Skinned);
         bInfo.model = model;
         bInfo.ninode = ninode;
-        mModelBuildInfoMap[pMesh.get()] = bInfo;
+        bInfo.skeleton = skeleton;
+        sModelBuildInfoMap[pMesh.get()] = bInfo;
 
         return pMesh; // at this point the mesh is created but not yet loaded
     }
 
     // WARN: must ensure that 'name' includes the NPC EditorID and 'model' must also be the NPC
     // specific one.
-    Ogre::MeshPtr NiMeshLoader::createMorphedMesh(const Ogre::String& name,
-            const Ogre::String& group, const Ogre::String& morphedTexture, NiModel *model, std::int32_t ninode)
+    Ogre::MeshPtr NiMeshLoader::createMorphedMesh(const Ogre::String& name, const Ogre::String& group,
+            const Ogre::String& morphedTexture, Ogre::ResourcePtr/*NiModel **/model, std::int32_t ninode)
     {
         // Create manual model which calls back self to load
         Ogre::MeshPtr pMesh = createManual(name, group);
@@ -78,10 +70,10 @@ namespace NiBtOgre
         // store parameters
         ModelBuildInfo bInfo;
         bInfo.type = MBT_Morphed;
-        bInfo.model = model;
+        bInfo.modelPtr = model;
         bInfo.ninode = ninode;
-        // create an Ogre::Material but not yet load and store in bInfo
-        mModelBuildInfoMap[pMesh.get()] = bInfo;
+        // FIXME: create an Ogre::Material but not yet load and store in bInfo?
+        sModelBuildInfoMap[pMesh.get()] = bInfo;
 
         return pMesh; // at this point the mesh is created but not yet loaded
     }
@@ -107,19 +99,22 @@ namespace NiBtOgre
         Ogre::Mesh *mesh = static_cast<Ogre::Mesh*>(res);
 
         // Find build parameters
-        std::map<Ogre::Resource*, ModelBuildInfo>::iterator it = mModelBuildInfoMap.find(res);
-        if (it == mModelBuildInfoMap.end())
+        std::map<Ogre::Resource*, ModelBuildInfo>::iterator it = sModelBuildInfoMap.find(res);
+        if (it == sModelBuildInfoMap.end())
         {
             OGRE_EXCEPT( Ogre::Exception::ERR_ITEM_NOT_FOUND,
                          "Cannot find build parameters for " + res->getName(),
                          "NiMeshLoader::loadResource");
         }
-        ModelBuildInfo& bInfo = it->second;
 
+        ModelBuildInfo& bInfo = it->second;
         switch(bInfo.type)
         {
         case MBT_Object:
             loadManualMesh(mesh, bInfo);
+            break;
+        case MBT_Skinned:
+            loadManualSkinnedMesh(mesh, bInfo);
             break;
         case MBT_Morphed:
             loadManualMorphedMesh(mesh, bInfo);
@@ -133,13 +128,73 @@ namespace NiBtOgre
 
     void NiMeshLoader::loadManualMesh(Ogre::Mesh* pMesh, const ModelBuildInfo& params)
     {
-        NiNode *node = params.model->getRef<NiNode>(params.ninode); // get NiNode
+        NiNode *node = nullptr;
+
+        try
+        {
+            node = params.model->getRef<NiNode>(params.ninode);
+        }
+        catch (...)
+        {
+            // mesh name = base model + # + NiNode index + @ + NiNode name
+            std::string meshName = pMesh->getName();
+            std::size_t pos = meshName.find_first_of("#");
+            if (pos == std::string::npos)
+                OGRE_EXCEPT( Ogre::Exception::ERR_ITEM_NOT_FOUND,
+                             "Mesh name convention not met for " + pMesh->getName(),
+                             "NiMeshLoader::loadManualMesh");
+
+            std::string modelName = meshName.substr(0, pos);
+
+            NiModelManager& modelManager = NiModelManager::getSingleton();
+            NiModelPtr model = modelManager.getOrLoadByName(modelName, pMesh->getGroup());
+
+            node = model->getRef<NiNode>(params.ninode);
+        }
+
         node->buildMesh(pMesh);
     }
 
+    void NiMeshLoader::loadManualSkinnedMesh(Ogre::Mesh* pMesh, const ModelBuildInfo& params)
+    {
+        NiNode *node = nullptr;
+
+        try
+        {
+            node = params.model->getRef<NiNode>(params.ninode);
+        }
+        catch (...)
+        {
+            // mesh name = skeleton name + _ + base model + # + NiNode index + @ + NiNode name
+            std::string meshName = pMesh->getName();
+            std::size_t pos = meshName.find_first_of("#");
+            if (pos == std::string::npos)
+                OGRE_EXCEPT( Ogre::Exception::ERR_ITEM_NOT_FOUND,
+                             "Mesh name convention not met for " + pMesh->getName(),
+                             "NiMeshLoader::loadManualSkinnedMesh");
+
+            size_t start = (params.skeleton.empty()) ? 0 : params.skeleton.size() + 1; // +1 for "_"
+            std::string modelName = meshName.substr(start, pos-start);
+
+            NiModelManager& modelManager = NiModelManager::getSingleton();
+            NiModelPtr model = modelManager.getByName(modelName, pMesh->getGroup());
+
+            // FIXME: probably have to do something about the skeleton the mesh needs to use
+
+            node = model->getRef<NiNode>(params.ninode);
+        }
+
+        node->buildMesh(pMesh);
+    }
+
+    // morphed meshes hold the shared pointer to NiModel so in theory the model should never be destroyed
     void NiMeshLoader::loadManualMorphedMesh(Ogre::Mesh* pMesh, const ModelBuildInfo& params)
     {
-        NiNode *node = params.model->getRef<NiNode>(params.ninode); // get NiNode
+        NiModelPtr model = params.modelPtr.staticCast<NiModel>();
+        NiNode *node = model->getRef<NiNode>(params.ninode); // get NiNode
+        //NiNode *node = params.model->getRef<NiNode>(params.ninode); // get NiNode
+
+        // FIXME
         // load material from params
         //Ogre::MaterialPtr mat =
         //node->buildMesh(pMesh, mat);

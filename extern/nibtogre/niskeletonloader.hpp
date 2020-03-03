@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2018, 2019 cc9cii
+  Copyright (C) 2018-2020 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -20,25 +20,32 @@
   cc9cii cc9c@iinet.net.au
 
 */
-#ifndef NIBTOGRE_SKELETONLOADER_H
-#define NIBTOGRE_SKELETONLOADER_H
+#ifndef NIBTOGRE_NISKELETONLOADER_H
+#define NIBTOGRE_NISKELETONLOADER_H
 
 #include <map>
+#include <cstdint>
 
 #include <OgreResource.h>
+
+namespace Ogre
+{
+    class Skeleton;
+}
 
 namespace NiBtOgre
 {
     class NiModel;
+    class NiNode;
 
     // There is one skeleton per NIF model.  Hence the NIF name (i.e. full path to the NIF) is
     // used as the unique name for the Ogre::SkeletonManager.
     //
     // TODO: different games might be using the same name, so some kind of namespace concept
     //       may be needed
-    class SkeletonLoader : public Ogre::ManualResourceLoader
+    class NiSkeletonLoader : public Ogre::ManualResourceLoader
     {
-        const NiModel& mModel;
+        //const NiModel& mModel;
 
         //      NiNode block index
         //        |
@@ -47,15 +54,39 @@ namespace NiBtOgre
         //        v              v
         std::map<std::uint32_t, std::uint16_t> mIndexToHandleMap; // NOTE: not used currently
 
-        static std::map<std::string, SkeletonLoader> sLoaders; // FIXME: is there a better way?
+        enum ModelBuildType
+        {
+            MBT_Object,
+            MBT_Skeleton
+        };
+
+        struct ModelBuildInfo
+        {
+            ModelBuildType type;
+            const NiModel *model;
+            //std::int32_t ninode;  // NiNodeRef
+        };
+
+        static std::map<Ogre::Resource*, ModelBuildInfo> sModelBuildInfoMap;
+
+        Ogre::SkeletonPtr createManual(const Ogre::String& name, const Ogre::String& group);
+
+        void loadManualSkeleton(Ogre::Skeleton* pSkel, NiNode *skeletonRoot);
+        void loadFullSkeleton(Ogre::Skeleton* pSkel, NiNode *skeletonRoot);
 
     public:
+        NiSkeletonLoader();
+        ~NiSkeletonLoader();
 
-        SkeletonLoader(const NiModel& model);
+        Ogre::SkeletonPtr createSkeleton(const Ogre::String& name, const Ogre::String& group,
+                NiModel *model/*, std::int32_t ninode*/);
+
+        Ogre::SkeletonPtr createFullSkeleton(const Ogre::String& name, const Ogre::String& group,
+                NiModel *model);
 
         // reimplement Ogre::ManualResourceLoader
-        void loadResource(Ogre::Resource *resource);
+        void loadResource(Ogre::Resource *res);
     };
 }
 
-#endif // NIBTOGRE_SKELETONLOADER_H
+#endif // NIBTOGRE_NISKELETONLOADER_H

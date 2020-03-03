@@ -193,6 +193,7 @@ protected:
      * root. All nodes previously retrieved with getNode will also become invalidated.
      */
     void setObjectRoot(const std::string &model, bool baseonly);
+    void setForeignObjectRootBase(const std::string& skeletonModel);
 
     /* Adds the keyframe controllers in the specified model as a new animation source. Note that
      * the filename portion of the provided model name will be prepended with 'x', and the .nif

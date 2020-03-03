@@ -19,7 +19,6 @@
 #include <extern/shiny/Main/Factory.hpp>
 #include <extern/shiny/Platforms/Ogre/OgrePlatform.hpp>
 #include <extern/nibtogre/nimodelmanager.hpp>
-#include <extern/nibtogre/nimeshloader.hpp>
 
 #include <openengine/bullet/physic.hpp>
 
@@ -184,14 +183,12 @@ RenderingManager::RenderingManager(OEngine::Render::OgreRenderer& _rend, const b
     setMenuTransparency(Settings::Manager::getFloat("menu transparency", "GUI"));
 
     NiBtOgre::NiModelManager *nifLoader = new NiBtOgre::NiModelManager();
-    NiBtOgre::NiMeshLoader *meshLoader = new NiBtOgre::NiMeshLoader();
 }
 
 RenderingManager::~RenderingManager ()
 {
     mRendering.getWindow()->removeListener(this);
 
-    delete NiBtOgre::NiMeshLoader::getSingletonPtr();
     delete NiBtOgre::NiModelManager::getSingletonPtr();
     delete mPlayerAnimation;
     delete mCamera;

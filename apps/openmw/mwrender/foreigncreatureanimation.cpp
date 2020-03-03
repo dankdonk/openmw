@@ -49,7 +49,8 @@ ForeignCreatureAnimation::ForeignCreatureAnimation(const MWWorld::Ptr &ptr, cons
     if(skeletonModel.empty())
         return;
 
-    setObjectRoot(skeletonModel, /*baseOnly*/true);
+    setForeignObjectRootBase(skeletonModel);
+    //setObjectRoot(skeletonModel, /*baseOnly*/true);
     //setRenderProperties(mObjectRoot, RV_Actors, RQG_Main, RQG_Alpha);
 
     if (mObjectRoot->mForeignObj)
@@ -315,8 +316,8 @@ Ogre::Vector3 ForeignCreatureAnimation::runAnimation(float timepassed)
 
     for(size_t i = 0; i < mObjectParts.size(); ++i)
     {
-        std::vector<Ogre::Controller<Ogre::Real> >::iterator ctrl(mObjectParts[i]->mForeignObj->mControllers.begin());
-        for(;ctrl != mObjectParts[i]->mForeignObj->mControllers.end();++ctrl)
+        std::vector<Ogre::Controller<Ogre::Real> >::iterator ctrl(mObjectParts[i]->mControllers.begin());
+        for(;ctrl != mObjectParts[i]->mControllers.end();++ctrl)
             ctrl->update();
 
         if (mObjectParts[i]->mForeignObj->mEntities.size() == 0 ||

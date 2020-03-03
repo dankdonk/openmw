@@ -100,7 +100,7 @@ namespace NiBtOgre
         NiCamera(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
         virtual ~NiCamera() {}
 
-        void build(BtOgreInst *inst, BuildData *data, NiObject *parentNiNode = nullptr);
+        void build(BuildData *data, NiObject *parentNiNode = nullptr);
     };
 
     struct NiDynamicEffect : public NiAVObject
@@ -110,7 +110,7 @@ namespace NiBtOgre
 
         NiDynamicEffect(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
 
-        //virtual void build(BtOgreInst *inst, BuildData *data, NiObject *parentNiNode = nullptr);
+        //virtual void build(BuildData *data, NiObject *parentNiNode = nullptr);
     };
 
     struct NiLight : public NiDynamicEffect
@@ -122,7 +122,7 @@ namespace NiBtOgre
 
         NiLight(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
 
-        //void build(BtOgreInst *inst, BuildData *data, NiObject *parentNiNode = nullptr);
+        //void build(BuildData *data, NiObject *parentNiNode = nullptr);
     };
 
     struct NiPointLight : public NiLight
@@ -154,7 +154,7 @@ namespace NiBtOgre
 
         NiTextureEffect(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
 
-        //void build(BtOgreInst *inst, BuildData *data, NiObject *parentNiNode = nullptr);
+        //void build(BuildData *data, NiObject *parentNiNode = nullptr);
     };
 }
 

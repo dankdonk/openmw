@@ -49,7 +49,6 @@ namespace NiBtOgre
     class NiStream;
     class Header;
     class NiModel;
-    struct BtOgreInst;
     struct BuildData;
 
     class NiObject
@@ -60,7 +59,7 @@ namespace NiBtOgre
         //typedef std::vector<std::unique_ptr<NiObject> > RecordBlocks; // FIXME: no longer used
 
         // For some objects build() does not make sense - the default implementation does nothing.
-        virtual void build(BtOgreInst *inst, BuildData *data, NiObject *parent = nullptr) {}
+        virtual void build(BuildData *data, NiObject *parent = nullptr) {}
 
         typedef NiBtOgre::Factory<NiObject> Factory;
         static Factory::Type create(Factory::Key const& name,

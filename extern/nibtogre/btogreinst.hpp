@@ -87,7 +87,7 @@ namespace NiBtOgre
         std::string mTargetBone;
         bool mIsSkinned;
 
-        inline bool havokEnabled() const { return mModel->getBuildData().havokEnabled(); }
+        inline bool havokEnabled() const { return mModel->buildData().havokEnabled(); }
 
         std::vector<std::pair<bhkConstraint*, bhkEntity*> > mbhkConstraints;
 
@@ -107,8 +107,11 @@ namespace NiBtOgre
         std::map<NiNodeRef, Ogre::Entity*> mEntities;
         std::vector<Ogre::Entity*> mVertexAnimEntities;
         std::map<std::string, std::vector<Ogre::Entity*> > mSkeletonAnimEntities;
-        std::multimap<float, std::string> mTextKeys;
-        std::vector<Ogre::Controller<Ogre::Real> > mControllers;
+
+        //std::multimap<float, std::string> mTextKeys;
+        const std::multimap<float, std::string>& modelTextKeys() const { return mModel->textKeys(); }
+        //std::vector<Ogre::Controller<Ogre::Real> > mControllers;
+        const std::vector<Ogre::Controller<Ogre::Real> >& modelControllers() const { return mModel->controllers(); }
 
         std::vector<std::string> mFlameNodes;
         std::vector<std::string> mAttachLights;
@@ -132,6 +135,9 @@ namespace NiBtOgre
                 std::unique_ptr<std::vector<Ogre::Vector3> > morphedVertices);
 
         bool hasAnimation(const std::string& animName) const;
+
+    private:
+        void buildEntities();
     };
 }
 

@@ -24,27 +24,15 @@
 #define FGLIB_FGCTL_H
 
 #include <cstdint>
-
-//#include <OgreResource.h>
-
-#include "fgstream.hpp"
-
-//namespace Ogre
-//{
-    //class ResourceManager;
-    //class ManualResourceLoader;
-//}
+#include <vector>
+#include <string>
 
 namespace FgLib
 {
-    class FgCtl //: public Ogre::Resource // FIXME: for quick testing
+    class FgStream;
+
+    class FgCtl
     {
-        //FgStream mFgStream;
-
-        //const std::string mGroup;  // Ogre group
-        //const std::string mName;   // file name
-
-    //public: // FIXME: should be private
         std::uint64_t mFileType;
         std::uint32_t mGeometryBasisVersion;
         std::uint32_t mTextureBasisVersion;
@@ -74,30 +62,16 @@ namespace FgLib
 
         // FIXME: add rest of the data in si.ctl
 
-    //private:
         // default, copy and assignment not allowed
         FgCtl();
         FgCtl(const FgCtl& other);
         FgCtl& operator=(const FgCtl& other);
 
-    //protected: // FIXME: pure virtual methods of Ogre::Resource
-    //public:
-        //void loadImpl();
-        //void unloadImpl() {}
-
     public:
         // The parameter 'name' refers to those in the Ogre::ResourceGroupManager
         // e.g. full path from the directory/BSA added in Bsa::registerResources(), etc
-        //
-        // NOTE: the constructor may throw
-//      FgCtl(Ogre::ResourceManager *creator, const Ogre::String& name, Ogre::ResourceHandle handle,
-//              const Ogre::String& group, bool isManual, Ogre::ManualResourceLoader* loader,
-//              const Ogre::NameValuePairList* createParams=nullptr/*bool showEditorMarkers=false*/);
-        FgCtl(const Ogre::String& name/*, const Ogre::String& group*/); // FIXME: for testing only
+        FgCtl(const std::string& name); // NOTE: the constructor may throw
         ~FgCtl();
-
-        //const std::string& getOgreGroup() const { return mGroup; }
-        //const std::string& getName() const { return mName; }
 
         inline const std::vector<std::pair<std::vector<float>, std::string> >& symMorphCtl() const {
             return mGSymLinearControls;

@@ -25,9 +25,11 @@
 
 #include <map>
 #include <cstdint>
+//#include <string>
 
 #include <OgreSingleton.h>
 #include <OgreResource.h>
+#include <OgreSharedPtr.h>
 
 namespace Ogre
 {
@@ -38,27 +40,30 @@ namespace NiBtOgre
 {
     class NiModel;
 
-    class NiMeshLoader : public Ogre::Singleton<NiMeshLoader>, public Ogre::ManualResourceLoader
+    class NiMeshLoader : public Ogre::ManualResourceLoader
     {
         enum ModelBuildType
         {
             MBT_Object,
-          //MBT_Skinned,
+            MBT_Skinned,
             MBT_Morphed
         };
 
         struct ModelBuildInfo
         {
             ModelBuildType type;
-            const NiModel *model; // FIXME: danger in holding pointers here?
+            const NiModel *model;
+            Ogre::String skeleton;
+            Ogre::ResourcePtr modelPtr; // only for morphed mesh
             std::int32_t ninode;  // NiNodeRef
         };
 
-        std::map<Ogre::Resource*, ModelBuildInfo> mModelBuildInfoMap;
+        static std::map<Ogre::Resource*, ModelBuildInfo> sModelBuildInfoMap;
 
         Ogre::MeshPtr createManual(const Ogre::String& name, const Ogre::String& group);
 
         void loadManualMesh(Ogre::Mesh* pMesh, const ModelBuildInfo& params);
+        void loadManualSkinnedMesh(Ogre::Mesh* pMesh, const ModelBuildInfo& params);
         void loadManualMorphedMesh(Ogre::Mesh* pMesh, const ModelBuildInfo& params);
 
     public:
@@ -66,14 +71,12 @@ namespace NiBtOgre
         NiMeshLoader();
         ~NiMeshLoader();
 
-        static NiMeshLoader& getSingleton(void);
-        static NiMeshLoader* getSingletonPtr(void);
-
+        // creates normal (static?) meshes as well as skinned meshes
         Ogre::MeshPtr createMesh(const Ogre::String& name, const Ogre::String& group,
-                NiModel *model, std::int32_t ninode);
+                NiModel *model, std::int32_t ninode, const Ogre::String skeleton = "");
 
         Ogre::MeshPtr createMorphedMesh(const Ogre::String& name, const Ogre::String& group,
-                const Ogre::String& morphedTexture, NiModel *model, std::int32_t ninode);
+                const Ogre::String& morphedTexture, Ogre::ResourcePtr model, std::int32_t ninode);
 
         // reimplement Ogre::ManualResourceLoader
         virtual void loadResource(Ogre::Resource *resource);

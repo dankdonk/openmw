@@ -26,12 +26,15 @@
 #include "fgctl.hpp"
 
 #include <stdexcept>
-#include <iostream> // NOTE: for debugging only
+//#include <iostream> // NOTE: for debugging only
+
+//#include <boost/scoped_array.hpp>
+
+#include "fgstream.hpp"
 
 namespace FgLib
 {
-    FgCtl::FgCtl(const Ogre::String& name/*, const Ogre::String& group*/)
-//        : mFgStream(name), mGroup(group), mName(name)
+    FgCtl::FgCtl(const std::string& name)
     {
         FgStream ctl(name);
 
@@ -59,7 +62,6 @@ namespace FgLib
 
         // addr in si.ctl 0x5EC5 at this point
 
-        // mNumSymMorphModes = mNumSymTextureModes = 50
         readOffsetLinearControls(50, mAllPrtOffsetLinearControls,  ctl);
         readOffsetLinearControls(50, mAfroPrtOffsetLinearControls, ctl);
         readOffsetLinearControls(50, mAsiaPrtOffsetLinearControls, ctl);
@@ -94,10 +96,10 @@ namespace FgLib
             buf[strSize] = 0x00;
             controls[i].second = std::string(buf);
 
-    // NOTE: for debugging only
-    //      std::cout << controls[i].second << std::endl;
-    //      for (std::size_t j = 0; j < numModes; ++j)
-    //          std::cout << controls[i].first[j] << std::endl;
+            // NOTE: for debugging only
+//          std::cout << controls[i].second << std::endl;
+//          for (std::size_t j = 0; j < numModes; ++j)
+//              std::cout << controls[i].first[j] << std::endl;
         }
     }
 
@@ -113,103 +115,14 @@ namespace FgLib
                 ctl.read(controls[i].first.at(j));
             ctl.read(controls[i].second);
 
-    // NOTE: for debugging only
-    //      std::cout << "type " << i << std::endl;
-    //      float res = 0.f;
-    //      for (std::size_t j = 0; j < numModes; ++j)
-    //          res += controls[i].first[j];
-    //      std::cout << "sum " << res << std::endl;
-    //          //std::cout << controls[i].first[j] << std::endl;
-    //      //std::cout << "offset " << controls[i].second << std::endl;
+            // NOTE: for debugging only
+//          std::cout << "type " << i << std::endl;
+//          float res = 0.f;
+//          for (std::size_t j = 0; j < numModes; ++j)
+//              res += controls[i].first[j];
+//          std::cout << "sum " << res << std::endl;
+//          //std::cout << controls[i].first[j] << std::endl;
+//          //std::cout << "offset " << controls[i].second << std::endl;
         }
     }
-#if 0
-    // only called if this resource is not being loaded from a ManualResourceLoader
-    void FgCtl::loadImpl()
-    {
-        mFgStream.read(mFileType);             // FIXME: assert that it is "FRCTL001"
-        mFgStream.read(mGeometryBasisVersion); // FIXME: assert that it is the same as EGM
-        mFgStream.read(mTextureBasisVersion);  // FIXME: assert that it is the same as EGT
-
-        mFgStream.read(mNumSymMorphModes);
-        if (mNumSymMorphModes != 50)
-            throw std::runtime_error("Number of Symmetric Morph Modes is not 50");
-        mFgStream.read(mNumAsymMorphModes);
-        if (mNumAsymMorphModes != 30)
-            throw std::runtime_error("Number of Asymmetric Morph Modes is not 30");
-        mFgStream.read(mNumSymTextureModes);
-        if (mNumSymTextureModes != 50)
-            throw std::runtime_error("Number of Symmetric Texture Modes is not 50");
-        mFgStream.read(mNumAsymTextureModes);
-        if (mNumAsymTextureModes != 0)
-            throw std::runtime_error("Number of Asymmetric Texture Modes is not 0");
-
-        readLinearControls(mNumGSLinearControls, 50/*mNumSymMorphModes*/,    mGSymLinearControls);
-        readLinearControls(mNumGALinearControls, 30/*mNumAsymMorphModes*/,   mGAsymLinearControls);
-        readLinearControls(mNumTSLinearControls, 50/*mNumSymTextureModes*/,  mTSymLinearControls);
-        readLinearControls(mNumTALinearControls,  0/*mNumAsymTextureModes*/, mTAsymLinearControls);
-
-        // addr in si.ctl 0x5EC5 at this point
-
-        // mNumSymMorphModes = mNumSymTextureModes = 50
-        readOffsetLinearControls(50, mAllPrtOffsetLinearControls);
-        readOffsetLinearControls(50, mAfroPrtOffsetLinearControls);
-        readOffsetLinearControls(50, mAsiaPrtOffsetLinearControls);
-        readOffsetLinearControls(50, mEindPrtOffsetLinearControls);
-        readOffsetLinearControls(50, mEuroPrtOffsetLinearControls);
-
-        // TODO: remainder of si.ctl, race morphing offset linear controls, density
-        //       distribution for each race group, etc
-    }
-
-    void FgCtl::readLinearControls(uint32_t& numControls, uint32_t numModes,
-            std::vector<std::pair<std::vector<float>, std::string> >& controls)
-    {
-        char buf[100]; // 100 should be enough
-        std::uint32_t strSize;
-        mFgStream.read(numControls);
-        controls.resize(numControls);
-        for (std::size_t i = 0; i < numControls; ++i)
-        {
-            controls[i].first.resize(numModes);
-            for (std::size_t j = 0; j < numModes; ++j)
-                mFgStream.read(controls[i].first.at(j));
-
-            mFgStream.read(strSize);
-            //boost::scoped_array<char> buf(new char[strSize+1]);
-            for (std::size_t c = 0; c < strSize; ++c)
-                mFgStream.read(buf[c]);
-            buf[strSize] = 0x00;
-            controls[i].second = std::string(buf);
-
-    // NOTE: for debugging only
-    //      std::cout << controls[i].second << std::endl;
-    //      for (std::size_t j = 0; j < numModes; ++j)
-    //          std::cout << controls[i].first[j] << std::endl;
-        }
-    }
-
-    void FgCtl::readOffsetLinearControls(uint32_t numModes,
-            std::vector<std::pair<std::vector<float>, float> >& controls)
-    {
-        // guess: 0 = age sym, 1 = age texture, 2 = gender sym, 3 = gender texture
-        controls.resize(4);
-        for (std::size_t i = 0; i < 4; ++i)
-        {
-            controls[i].first.resize(numModes);
-            for (std::size_t j = 0; j < numModes; ++j)
-                mFgStream.read(controls[i].first.at(j));
-            mFgStream.read(controls[i].second);
-
-    // NOTE: for debugging only
-    //      std::cout << "type " << i << std::endl;
-    //      float res = 0.f;
-    //      for (std::size_t j = 0; j < numModes; ++j)
-    //          res += controls[i].first[j];
-    //      std::cout << "sum " << res << std::endl;
-    //          //std::cout << controls[i].first[j] << std::endl;
-    //      //std::cout << "offset " << controls[i].second << std::endl;
-        }
-    }
-#endif
 }

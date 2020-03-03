@@ -104,7 +104,7 @@ NiBtOgre::NiNode::NiNode(uint32_t index, NiStream *stream, const NiModel& model,
         //mWorldTransform = Ogre::Matrix4(Ogre::Matrix4::IDENTITY);
 
     // FIXME: find a better place for this
-    if (data.flameNodesPresent())
+    if (data.flameNodesPresentTES4())
     {
         // FIXME: AttachLight nodes might be present even without BSX flag FlameNodesPresent
         if (mNodeName.find("AttachLight") != std::string::npos)
@@ -233,11 +233,6 @@ void NiBtOgre::NiNode::addBones(Ogre::Skeleton *skeleton,
 
     //std::string selfRef = std::to_string(mSelfRef);
 
-    // maybe skeleton was built already? but if so why is this method called at all?
-    // FIXME: too much overhead to search each time
-    if (/*!parentBone && */skeleton->hasBone(/*"#" + selfRef + "@" + */mNodeName))
-        return;
-
     // Keeping the bone names to be the same as the NiNode name is convenient (and probably
     // required for the current animation code to work) but difficult.
     //
@@ -258,14 +253,67 @@ void NiBtOgre::NiNode::addBones(Ogre::Skeleton *skeleton,
     //
     // Another way is to "fix" the NiNode and bone names as duplicates are encountered. The
     // names can be changed similar to Chandelier01.NIF.
+    //
+    // FIXME: too much overhead to search each time
+    if (skeleton->hasBone(/*"#" + selfRef + "@" + */mNodeName))
+        return; // FIXME: just a hack for now
+
+    Ogre::Bone *bone = nullptr;
+
+    // try to avoid "Scene Root" becoming a bone
+    if (!parentBone) // also most likely mParent == nullptr
+    {
+#if 0
+        std::size_t i = 0;
+        for (; i < mData.mSkelLeafIndicies.size(); ++i)
+        {
+            if (NiObject::selfRef()  == mData.mSkelLeafIndicies[i])
+                break;
+        }
+
+        if (i < mData.mSkelLeafIndicies.size())
+#else
+        // this only works if mObjectPalette was built
+        const std::map<std::string, NiAVObjectRef>& objPalette = mModel.getObjectPalette();
+        if (objPalette.find(mNodeName) != objPalette.end())
+#endif
+            bone = skeleton->createBone(/*"#" + selfRef + "@" + */mNodeName); // found, create
+    }
+    else if (mNodeName != "")
+        bone = skeleton->createBone(/*"#" + selfRef + "@" + */mNodeName);
+
+    if (bone)
+    {
+        // not used
+        //indexToHandle[NiObject::selfRef()] = bone->getHandle();
+
+        if (parentBone)
+            parentBone->addChild(bone);
+
+        bone->setPosition(NiAVObject::mTranslation);
+        bone->setOrientation(NiAVObject::mRotation);
+        bone->setScale(Ogre::Vector3(NiAVObject::mScale));
+        bone->setBindingPose();
+    }
+
+    // FIXME
+    //if (mModel.getModelName().find("geardoor") != std::string::npos)
+        //bone->setManuallyControlled(true);
+
+    for (std::size_t i = 0; i < mChildBoneNodes.size(); ++i)
+    {
+        NiNode* childNode = mModel.getRef<NiNode>(mChildBoneNodes[i]);
+        childNode->addBones(skeleton, bone, indexToHandle);
+    }
+}
+
+void NiBtOgre::NiNode::addAllBones(Ogre::Skeleton *skeleton, Ogre::Bone *parentBone)
+{
     Ogre::Bone *bone = nullptr;
     if (mNodeName == "")
         bone = skeleton->createBone(); // let Ogre assign a generated name
     else
         bone = skeleton->createBone(/*"#" + selfRef + "@" + */mNodeName);
-
-    // not used
-    //indexToHandle[NiObject::selfRef()] = bone->getHandle();
 
     if (parentBone)
         parentBone->addChild(bone);
@@ -275,14 +323,48 @@ void NiBtOgre::NiNode::addBones(Ogre::Skeleton *skeleton,
     bone->setScale(Ogre::Vector3(NiAVObject::mScale));
     bone->setBindingPose();
 
-    // FIXME
-    if (mModel.getModelName().find("geardoor") != std::string::npos)
-        bone->setManuallyControlled(true);
-
-    for (unsigned int i = 0; i < mChildBoneNodes.size(); ++i)
+    for (std::size_t i = 0; i < mChildren.size(); ++i)
     {
-        NiNode* childNode = mModel.getRef<NiNode>(mChildBoneNodes[i]);
-        childNode->addBones(skeleton, bone, indexToHandle);
+        if (mChildren[i] == -1 /*no object*/ || mModel.blockType(mChildren[i]) != "NiNode")
+            continue;
+
+        NiNode* childNode = mModel.getRef<NiNode>(mChildren[i]);
+
+        if (isBSBone(childNode))
+            childNode->addAllBones(skeleton, bone);
+    }
+}
+
+// no longer used
+bool NiBtOgre::NiNode::isBSBone(const NiNode *node) const
+{
+    std::string upb = node->getExtraDataString("UPB");
+
+    return upb.find("BSBone") != std::string::npos;
+}
+
+// used for skeleton.nif, etc
+// FIXME: the code duplicates much of addAllBones()
+void NiBtOgre::NiNode::buildObjectPalette(std::map<std::string, NiAVObjectRef>& objectPalette, bool first)
+{
+    if (isBSBone(this))
+        objectPalette[mNodeName] = NiObject::selfRef();
+
+    // TODO: can a node that is not a bone still have bone children?
+    for (std::size_t i = 0; i < mChildren.size(); ++i)
+    {    if (mChildren[i] == -1 /*no object*/ || mModel.blockType(mChildren[i]) != "NiNode")
+            continue;
+
+        NiNode* childNode = mModel.getRef<NiNode>(mChildren[i]);
+        childNode->buildObjectPalette(objectPalette);
+
+        // FIXME: just some testing
+        if (first)
+        {
+            std::string upb = childNode->getExtraDataString("UPB");
+            if (upb.find("BoneRoot") == std::string::npos)
+                std::cout << mModel.getModelName() + ":" + mNodeName + " is not \"BoneRoot\"" << std::endl;
+        }
     }
 }
 
@@ -319,7 +401,7 @@ void NiBtOgre::NiNode::addBones(Ogre::Skeleton *skeleton,
 //   Bit 9 :                       Unknown
 //
 // necromancer/hood_gnd.nif is 0x0b, i.e. 1011 - animation, collision, havok
-void NiBtOgre::NiNode::build(BtOgreInst *inst, BuildData *data, NiObject* parent)
+void NiBtOgre::NiNode::build(BuildData *data, NiObject* parent)
 {
     // There doesn't seem to be a flag to indicate an editor marker.  To filter them out, look
     // out for strings starting with:
@@ -350,7 +432,7 @@ void NiBtOgre::NiNode::build(BtOgreInst *inst, BuildData *data, NiObject* parent
     //if (mNodeName == "CathedralCryptLight02") // FIXME: testing only
         //std::cout << "light" << std::endl;
 
-    int flags = inst->mFlags;
+    int flags = data->mFlags;
 
     // Should not have TES3 NIF versions since NifOgre::NIFObjectLoader::load() checks before
     // calling this method, at least while testing
@@ -448,7 +530,7 @@ void NiBtOgre::NiNode::build(BtOgreInst *inst, BuildData *data, NiObject* parent
         }
     }
 
-    inst->mFlags = flags;
+    data->mFlags = flags;
 
     // don't build collision for an EditorMarker
     if (mModel.hideEditorMarkers() && data->editorMarkerPresent() && (mNodeName == "EditorMarker"))
@@ -531,7 +613,7 @@ void NiBtOgre::NiNode::build(BtOgreInst *inst, BuildData *data, NiObject* parent
     {
         controllerRef
             = NiObject::mModel.getRef<NiTimeController>(controllerRef)->build(
-                    inst->mTextKeys, inst->mControllers/*NiObjectNET::mControllers*/);
+                    data->mTextKeys, data->mControllers/*NiObjectNET::mControllers*/);
     }
 
     // NiNode, NiGeometry, NiCamera, NiLight or NiTextureEffect
@@ -542,7 +624,7 @@ void NiBtOgre::NiNode::build(BtOgreInst *inst, BuildData *data, NiObject* parent
 
         // NiGeometry blocks are only registered here and built later.  One possible side
         // benefit is that at least at this NiNode level we know if there are any skins.
-        NiObject::mModel.getRef<NiObject>((int32_t)mChildren[i])->build(inst, data, this);
+        NiObject::mModel.getRef<NiObject>((int32_t)mChildren[i])->build(data, this);
     }
 
     // FIXME: too many bones filename = "meshes\\oblivion\\gate\\oblivionarchgate01.nif"
@@ -560,7 +642,7 @@ void NiBtOgre::NiNode::build(BtOgreInst *inst, BuildData *data, NiObject* parent
         if (mEffects[i] == -1) // no object
             continue;
 
-        NiObject::mModel.getRef<NiObject>((int32_t)mEffects[i])->build(inst, data, this);
+        NiObject::mModel.getRef<NiObject>((int32_t)mEffects[i])->build(data, this);
     }
 
 }

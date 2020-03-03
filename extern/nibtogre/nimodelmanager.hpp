@@ -31,6 +31,9 @@
 #include <OgreSingleton.h>
 #include <OgreResource.h>
 
+#include "nimeshloader.hpp"
+#include "niskeletonloader.hpp"
+
 namespace ESM4
 {
     struct Npc;
@@ -66,7 +69,7 @@ namespace NiBtOgre
             TeethUpper  = 5,
             Tongue      = 6,
             EyeLeft     = 7,
-            EyeRight    = 8,
+            EyeRight    = 8, // NOTE: up to here the same as ESM4::Race::HeadPartIndex
             UpperBody   = 9,
             Hair        = 10
         };
@@ -83,6 +86,10 @@ namespace NiBtOgre
 
         std::map<Ogre::Resource*, ModelBuildInfo> mModelBuildInfoMap;
 
+        NiSkeletonLoader mSkeletonLoader;
+        NiMeshLoader mMeshLoader;
+
+        void loadManualSkeletonModel(NiModel* pModel, const ModelBuildInfo& params);
         void loadManualMorphedModel(NiModel* pModel, const ModelBuildInfo& params);
 
     public:
@@ -105,11 +112,16 @@ namespace NiBtOgre
 
         void loadResource(Ogre::Resource* res);
 
-        NiModelPtr createMorphed(const Ogre::String& nif, const Ogre::String& group,
+        NiModelPtr createMorphedModel(const Ogre::String& nif, const Ogre::String& group,
                 const ESM4::Npc *npc, const ESM4::Race *race, const Ogre::String& texture);
+
+        NiModelPtr createSkeletonModel(const Ogre::String& name, const Ogre::String& group);
 
         NiModelPtr getOrLoadByName(const Ogre::String& name,
                 const Ogre::String& group = Ogre::ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME);
+
+        NiSkeletonLoader& skeletonLoader() { return mSkeletonLoader; }
+        NiMeshLoader& meshLoader() { return mMeshLoader; }
 
     protected:
         Ogre::Resource* createImpl(const Ogre::String& name, Ogre::ResourceHandle handle,

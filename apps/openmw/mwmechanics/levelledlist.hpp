@@ -124,6 +124,9 @@ namespace MWMechanics
 
         std::string item = getLeveledObject(items, failChance, allLevels);
 
+        if (item.empty())
+            return std::string();
+
         // copy Morrowind behaviour for now
         if (!MWBase::Environment::get().getWorld()->getStore().find(ESM4::stringToFormId(item)))
         {
@@ -157,6 +160,9 @@ namespace MWMechanics
         failChance += levCreature->chanceNone();
 
         std::string item = getLeveledObject(items, failChance, allLevels);
+
+        if (item.empty())
+            return std::string();
 
         // copy Morrowind behaviour for now
         if (!MWBase::Environment::get().getWorld()->getStore().find(ESM4::stringToFormId(item)))

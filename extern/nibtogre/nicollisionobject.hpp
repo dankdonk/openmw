@@ -121,7 +121,7 @@ namespace NiBtOgre
         virtual ~bhkNiCollisionObject() {}
 
         // parentNiNode is used to calculate the world transform
-        virtual void build(BtOgreInst *inst, BuildData *data, NiObject *parentNiNode = nullptr);
+        virtual void build(BuildData *data, NiObject *parentNiNode = nullptr);
         int32_t getBodyRef() const { return mBodyRef; }
     };
 

@@ -57,7 +57,7 @@ namespace NiBtOgre
 
         NiParticleSystem(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
 
-        virtual void build(BtOgreInst *inst, NiObject *parentNiNode = nullptr);
+        virtual void build(NiObject *parentNiNode = nullptr);
     };
 
     typedef NiParticleSystem BSStripParticleSystem; // Seen in NIF version 20.2.0.7

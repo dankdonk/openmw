@@ -26,6 +26,8 @@
 #include "niobjectnet.hpp"
 
 #include "nistream.hpp"
+#include "nimodel.hpp"
+#include "nidata.hpp"
 
 NiBtOgre::NiObjectNET::NiObjectNET(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data,
                                    bool isBSLightingShaderProperty)
@@ -56,10 +58,30 @@ NiBtOgre::NiObjectNET::NiObjectNET(uint32_t index, NiStream *stream, const NiMod
     stream->read(mControllerRef);
 }
 
-void NiBtOgre::NiObjectNET::build(Ogre::SceneNode *sceneNode, BtOgreInst *inst, NiObject *parent)
+void NiBtOgre::NiObjectNET::build(Ogre::SceneNode *sceneNode, NiObject *parent)
 {
 }
 
+// WARN: this only works from version 10.0.1.0
+std::string NiBtOgre::NiObjectNET::getExtraDataString(const std::string& name) const
+{
+    if (mExtraDataRefList.empty())
+        return "";
+
+    for (std::size_t i = 0; i < mExtraDataRefList.size(); ++i)
+    {
+        if (mModel.blockType(mExtraDataRefList[i]) != "NiStringExtraData")
+            continue;
+
+        NiStringExtraData *extra = mModel.getRef<NiStringExtraData>(mExtraDataRefList[i]);
+        if (mModel.indexToString(extra->mName) != name)
+            continue;
+
+        return mModel.indexToString(extra->mStringData);
+    }
+
+    return ""; // none found
+}
 
 NiBtOgre::NiSourceTexture::NiSourceTexture(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiTexture(index, stream, model, data), mDirectRender(false), mPersistRenderData(false)

@@ -1280,7 +1280,7 @@ std::string name = mNpc->mEditorId + "_" + nif;
 // the logic to locate the FaceGen files are hard coded
 NiModelPtr morphedModel = modelManager.getByName(name);
 if (morphedModel.isNull())
-    morphedModel = modelManager.createMorphed(nif, "General", mNpc, mRace, texture);
+    morphedModel = modelManager.createMorphedModel(nif, "General", mNpc, mRace, texture);
 ```
 
 The diagram from 01/01/2018 needs to be updated:
@@ -1328,7 +1328,7 @@ Simplified interaction diagram for NiModel retrieving and manual loading sequenc
             |<----------------|                   |                 |                 |
             :                 :                   :                 :                 :
             :                 :                   :                 :                 :
-            | createMorphed() |                   |                 |                 |
+            | createMorphedModel()                |                 |                 |
             |---------------->|                   |                 |                 |
             |                 |--+                |                 |                 |
             |                 |  | createManual() |                 |                 |
@@ -1414,7 +1414,7 @@ Proposed change:
 
 Rather than creating a new resource manager based on `Ogre::MeshManager`, we can try creating NiMeshLoader as a singleton.
 
-NiModel is either created from the NIF file, via `NiModel::loadImpl()`, or manually via `NiModelManager::createMorphed()` and `NiModelManager::loadResource()`.  In former case, the NIF file name can be deduced from the mesh name by takeing away the skeleton name (if any) and the NiNode name.  In latter case, re-loading the NiModel appears a little more difficult.
+NiModel is either created from the NIF file, via `NiModel::loadImpl()`, or manually via `NiModelManager::createMorphedModel()` and `NiModelManager::loadResource()`.  In former case, the NIF file name can be deduced from the mesh name by takeing away the skeleton name (if any) and the NiNode name.  In latter case, re-loading the NiModel appears a little more difficult.
 
 **IDEA:** It might be possible to get Ogre to do most of the work - maybe just remember the resource name and get NiModelPtr from NiModelManager singleton?  Or just save a `NiModel*` and use it during `loadResource()`.
 
@@ -1482,6 +1482,106 @@ Figured out how to get the NPC age value.
   * FaceGen NPC age
   * redesigned resource management for NiModel and NiMesh (still to fix Skeleton and BtRigidBodyCI)
 
+## SkeletonLoader
+
+Make SkeletonLoader work the same way as NiMeshLoader.  Not too happy about creating so many singletons, however.  Is there another way to ensure the skeleton manual loader to hang around?
+
+There are 3 different use cases for skeletons.
+
+  1. An NiModel may need to build a skeleton to animate the entities/meshes in the Model.
+  2. An NiModel may be "skinned", i.e. depends on an external skeleton (see below).  **NOTE:** there may be several different skeletons, so there needs to several different NiModels even with the same base NIF.
+  3. An NiModel may be a skeleton itself.  In TES4, BSX flag will indicate if a NIF is a skeleton.
+
+## `MWRender::Animation::setObjectRoot()`
+
+`ESM4::Npc::mModel` for TES4 or `ESM4::Race::mModelMale`/`ESM4::Race::mModelFemale` for TES5 are the skeletal models for an NPC.
+
+# [03/03/2020] Skeletons
+
+Manual creation for a skeleton NiModel:
+
+        application    NiModelManager       NiModel        NiNode    NiSkeletonLoader  Ogre::Skeleton
+          |               |                   |              |               |                |
+          | getByName()   |                   |              |               |                |
+          |-------------->|                   |              |               |                |
+          |    NiModelPtr |                   |              |               |                |
+          |<--------------|                   |              |               |                |
+          |               |                   |              |               |                |
+          |createSkeletonModel()              |              |               |                |
+          |-------------->|                   |              |               |                |
+          |               |                   |              |               |                |
+          |               | load()            |              |               |                |
+          |               |------------------>|              |               |                |
+          |               | loadResource()    |              |               |                |
+          |               |<------------------|              |               |                |
+          |               |                   |              |               |                |
+          |               | createNiObjects() |              |               |                |
+          |               |------------------>|              |               |                |
+          |               |                   |              |               |                |
+          |               |buildFullSkeleton()|              |               |                |
+          |               |------------------>|              |               |                |
+          |               |                   | createFullSkeleton()         |                |
+          |               |                   |----------------------------->|                |
+          |               |                   |    Ogre::SkeletonPtr         |                |
+          |               |                   |<-----------------------------|                |
+          |               |                   |              |               |                |
+          |               |                   | load()       |               |                |
+          |               |                   |---------------------------------------------->|
+          |               |                   |              |               | loadResource() |
+          |               |                   |              |               |<---------------|
+          |               |                   |              | addAllBones() |                |
+          |               |                   |              |<--------------|                |
+          |               |                   |              | createBone()  |                |
+          |               |                   |              |------------------------------->|
+          |               | createDummyMesh() |              |               |                |
+          |               |------------------>|              |               |                |
+          |               |                   |              |               |                |
+
+
+Creation for a normal NiModel:
+**NOTE:** createSkeleton is currently triggered by build() which seems too late
+**NOTE:** `createSkeleton()/addBones()` uses `NiNode::mChildBoneNodes` whereas `createFullSkeleton()/addAllBones()` uses `NiNode::mChildren`
+
+        application    NiModelManager    NiModel            NiNode   NiSkeletonLoader  Ogre::Skeleton
+          |               |                |                  |              |                |
+          |getOrLoadByName()               |                  |              |                |
+          |-------------->|                |                  |              |                |
+          |               | load()         |                  |              |                |
+          |               |--------------->|                  |              |                |
+          |               |                |--+ prepareImpl() |              |                |
+          |               |                |<-+               |              |                |
+          |               |                |                  |              |                |
+          |               |                |--+ loadImpl()    |              |                |
+          |               |                |  |               |              |                |
+          |               |                | createNiObjects()|              |                |
+          |               |                | buildBones()     |              |                |
+          |               |                |  | findBones()   |              |                |
+          |               |                |  | ------------->|--+           |                |
+          |               |                |<-+              mChildBoneNodes |                |
+          |               |                |                  |<-+           |                |
+          :               :                :                  :              :                :
+          :               :                :                  :              :                :
+          | build()       |                |                  |              |                |
+          |------------------------------->|                  |              |                |
+          |     ^         |                | createSkeleton() |              |                |
+          |     |         |                |-------------------------------->|                |
+          |   remove      |                |    Ogre::SkeletonPtr            |                |
+          |    call       |                |<--------------------------------|                |
+          |               |                |                  |              |                |
+          |               |                | load()           |              |                |
+          |               |                |------------------------------------------------->|
+          |               |                |                  |              | loadResource() |
+          |               |                |                  |              |<---------------|
+          |               |                |                  | addBones()   |                |
+          |               |                |                  |<-------------|                |
+          |               |                |                  | createBone() |                |
+          |               |                |                  |------------------------------>|
+          |               | createMesh()   |                  |              |                |
+          |               |--------------->|                  |              |                |
+          |               |                |                  |              |                |
+
+
+**NOTE:** After all that effort, the new method of using `createFullSkeleton()/addAllBones()` turned out to be inferior and had to revert to using `createSkeleton()/buildSkeletion()/addBones()` even for skeleton.nif, etc.
 
 
 

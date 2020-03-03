@@ -35,7 +35,7 @@ namespace FgLib
     {
         FgStream egm(name);
 
-        egm.read(mFileType); // FIXME: assert that it is "FREGM002"
+        egm.read(mFileType);    // FIXME: assert that it is "FREGM002"
         egm.read(mNumVertices); // NOTE: this is validated later in FgSam
         egm.read(mNumSymMorphModes);
         if (mNumSymMorphModes != 50)

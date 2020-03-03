@@ -58,6 +58,6 @@ NiBtOgre::NiParticleSystem::NiParticleSystem(uint32_t index, NiStream *stream, c
     }
 }
 
-void NiBtOgre::NiParticleSystem::build(BtOgreInst *inst, NiObject *parent)
+void NiBtOgre::NiParticleSystem::build(NiObject *parent)
 {
 }

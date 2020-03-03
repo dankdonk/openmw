@@ -199,7 +199,8 @@ namespace NiBtOgre
 
         bhkConstraint(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
 
-        virtual void linkBodies(BtOgreInst *inst, const bhkEntity *body) const {} // FIXME
+        // FIXME: move to BtOgreInst
+        //virtual void linkBodies(const bhkEntity *body) const {} // FIXME
     };
 
     // Seen in NIF version 20.2.0.7
@@ -334,7 +335,8 @@ namespace NiBtOgre
 
         bhkRagdollConstraint(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
 
-        void linkBodies(BtOgreInst *inst, const bhkEntity *body) const;
+        //FIXME: move to BtOgreInst
+        //void linkBodies(const bhkEntity *body) const;
     };
 
     // Seen in NIF ver 20.0.0.4, 20.0.0.5

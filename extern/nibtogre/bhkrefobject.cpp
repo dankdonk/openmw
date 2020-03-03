@@ -521,6 +521,8 @@ NiBtOgre::bhkRagdollConstraint::bhkRagdollConstraint(uint32_t index, NiStream *s
     mRagdoll.read(stream);
 }
 
+// FIXME: move to BtOgreInst
+#if 0
 void NiBtOgre::bhkRagdollConstraint::linkBodies(BtOgreInst *inst, const bhkEntity *body) const
 {
 #if 0
@@ -694,7 +696,7 @@ if (node->name == "TargetchainRight02" /*|| node->name == "TargetchainRight02"*/
         mShape->mNifRagdollDesc[std::make_pair(rigidBody->recIndex, rbB->recIndex)] = ragdollDesc; // cast away compiler warning
 #endif
 }
-
+#endif
 NiBtOgre::bhkShape::bhkShape(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : bhkSerializable(index, stream, model, data)
 {
@@ -1737,9 +1739,9 @@ btCollisionShape *NiBtOgre::bhkRigidBody::getShape(const NiAVObject& target) con
     bool useFullTransform
         =  (
             mMass <= SIMD_EPSILON && (
-                                      mData.mSkeleton.isNull()
+                                      !mModel.hasSkeleton()
                                       ||
-                                      !mData.mSkeleton->hasBone(targetName)
+                                      !mModel.getSkeleton()->hasBone(targetName)
                                      )
            )
            ||
@@ -1818,7 +1820,7 @@ btCollisionShape *NiBtOgre::bhkRigidBody::getShape(const NiAVObject& target) con
 // FIXME: only do some of the steps if actual ragdoll?
 //
 // FIXME: some of these should allow raycasting for object identification?
-void NiBtOgre::bhkRigidBody::build(BtOgreInst *inst, BuildData *data, NiObject* parentNiNode)
+void NiBtOgre::bhkRigidBody::build(BuildData *data, NiObject* parentNiNode)
 {
 //  if (mShapeIndex == -1) // nothing to build
 //      return;

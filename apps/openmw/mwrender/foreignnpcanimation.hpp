@@ -13,6 +13,11 @@ namespace ESM4
     struct Race;
 }
 
+namespace MWWorld
+{
+    class ESMStore;
+}
+
 namespace MWRender
 {
 class ForeignHeadAnimationTime : public Ogre::ControllerValue<Ogre::Real>
@@ -108,6 +113,7 @@ private:
     std::string mBodyPartModelNameExt;
 
     void updateNpcBase();
+    std::string getSkeletonModel(const MWWorld::ESMStore& store) const;
 
     NifOgre::ObjectScenePtr insertBoundedPart(const std::string &model, int group, const std::string &bonename,
                                               const std::string &bonefilter,

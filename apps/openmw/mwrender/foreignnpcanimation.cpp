@@ -26,7 +26,7 @@
 #include <extern/nibtogre/btogreinst.hpp>
 #include <extern/nibtogre/nimodelmanager.hpp>
 #include <extern/fglib/fgsam.hpp>
-#include <extern/fglib/fgctl.hpp>
+//#include <extern/fglib/fgctl.hpp>
 #include <extern/fglib/fgfile.hpp>
 //#include <extern/fglib/fgegm.hpp>
 //#include <extern/fglib/fgtri.hpp>
@@ -408,44 +408,28 @@ void ForeignNpcAnimation::updateNpcBase()
     clearAnimSources(); // clears *all* animations
 
     const MWWorld::ESMStore &store = MWBase::Environment::get().getWorld()->getStore();
+    std::string skeletonModel = getSkeletonModel(store);
+    if (skeletonModel.empty())
+        return; // FIXME: perhaps should log an error first
 
-    std::string skeletonModel;
-    if (mNpc->mModel.empty() && mNpc->mBaseTemplate != 0) // TES5
-    {
-        uint32_t type = store.find(mNpc->mBaseTemplate);
+    Misc::StringUtils::lowerCaseInPlace(skeletonModel);
 
-        const ESM4::LeveledActor* lvlActor = store.getForeign<ESM4::LeveledActor>().search(mNpc->mBaseTemplate);
-        if (type == MKTAG('_', 'N', 'P', 'C'))
-        {
-            if ((mNpc->mActorBaseConfig.flags & 0x1) != 0) // female
-                skeletonModel = "meshes\\" + mRace->mModelFemale; // TODO: check if this can be empty
-            else
-                skeletonModel = "meshes\\" + mRace->mModelMale;
-        }
-        else
-            return;
-    }
-    else if (!mNpc->mModel.empty()) // TES4
-    {
-        // Characters\_Male\skeleton.nif
-        // Characters\_Male\skeletonbeast.nif
-        // Characters\_Male\skeletonsesheogorath.nif
-        skeletonModel = "meshes\\" + mNpc->mModel;
-    }
+
+    // FIXME: needs a better way to deal with skinned models
     mBodyPartModelNameExt =  bodyPartNameExt(skeletonModel);
 
 
     if (mInsert->getScale().x != 1.0f) // WARN: assumed uniform scaling
         std::cout << "scale not 1.0 " << skeletonModel << std::endl;
 
-
-    //skeletonModel = Misc::ResourceHelpers::correctActorModelPath(skeletonModel);
-    setObjectRoot(skeletonModel, true);
+    setForeignObjectRootBase(skeletonModel);
+    //Animation::setObjectRoot(skeletonModel, true);
     if (mObjectRoot->mForeignObj)
     {
         mObjectRoot->mSkelBase = mObjectRoot->mForeignObj->mSkeletonRoot;
         mSkelBase = mObjectRoot->mForeignObj->mSkeletonRoot;
     }
+
     if (mSkelBase == nullptr) // FIXME: FO3
         return;
 
@@ -631,9 +615,10 @@ void ForeignNpcAnimation::updateNpcBase()
         if (!hair)
         {
             // try to use the Race defaults
+            // but "TG05Dremora" does not have a hair record nor race defaults and will throw an exception
             hair = store.getForeign<ESM4::Hair>().search(mRace->mDefaultHair[isFemale ? 1 : 0]);
             if (!hair)
-                throw std::runtime_error("Hair record not found.");
+                return;//throw std::runtime_error("Hair record not found.");
         }
 
         meshName = "meshes\\"+hair->mModel;
@@ -650,7 +635,8 @@ void ForeignNpcAnimation::updateNpcBase()
         NifOgre::ObjectScenePtr sceneHair = NifOgre::ObjectScenePtr (new NifOgre::ObjectScene(mInsert->getCreator()));
         sceneHair->mForeignObj = std::make_shared<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(mInsert->createChildSceneNode(), meshName, group));
 
-        sceneHair->mForeignObj->instantiate(mSkelBase->getMesh()->getSkeleton(), mNpc->mEditorId, std::move(fgVertices));
+        //sceneHair->mForeignObj->instantiate(mSkelBase->getMesh()->getSkeleton(), mNpc->mEditorId, std::move(fgVertices));
+        sceneHair->mForeignObj->instantiate(mSkelBase->getMesh()->getSkeleton(), mNpc->mEditorId);
 
         Ogre::Bone *heBone = mSkelBase->getSkeleton()->getBone("Bip01 Head");
         Ogre::Quaternion heOrientation = heBone->getOrientation() *
@@ -908,11 +894,17 @@ void ForeignNpcAnimation::updateNpcBase()
     sam.getMorphedVertices(fgVertices.get(), meshName, sRaceCoeff, aRaceCoeff, sCoeff, aCoeff);
 
     // FIXME: need to be able to check other than oblivion.esm
+    // mName = "textures\\faces\\oblivion.esm\\0001A117_0.dds"
+    // SEBelmyneDreleth does not have a facegen texture
     std::string textureFile = "textures\\faces\\oblivion.esm\\"+ESM4::formIdToString(mNpc->mFormId)+"_0.dds";
     if (!Ogre::ResourceGroupManager::getSingleton().resourceExistsInAnyGroup(textureFile))
+    {
         std::cout << mNpc->mEditorId << " does not have a facegen texture" << std::endl;
-    else
-        std::cout << mNpc->mEditorId << " detail " << ESM4::formIdToString(mNpc->mFormId) << std::endl;
+
+        return; // FIXME: a bit drastic
+    }
+    //else
+        //std::cout << mNpc->mEditorId << " detail " << ESM4::formIdToString(mNpc->mFormId) << std::endl;
 
     NifOgre::ObjectScenePtr scene = NifOgre::ObjectScenePtr (new NifOgre::ObjectScene(mInsert->getCreator()));
     scene->mForeignObj = std::make_shared<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(mInsert->createChildSceneNode(), /*scene, */meshName, group));
@@ -925,7 +917,8 @@ void ForeignNpcAnimation::updateNpcBase()
     // to manage the vertices separately?
 
     // TODO: is it possible to get the texture name here or should it be hard coded?
-    scene->mForeignObj->instantiate(mSkelBase->getMesh()->getSkeleton(), mNpc->mEditorId, std::move(fgVertices));
+    //scene->mForeignObj->instantiate(mSkelBase->getMesh()->getSkeleton(), mNpc->mEditorId, std::move(fgVertices));
+    scene->mForeignObj->instantiate(mSkelBase->getMesh()->getSkeleton(), mNpc->mEditorId);
 
 
     // get the texture from mRace
@@ -1039,6 +1032,8 @@ void ForeignNpcAnimation::updateNpcBase()
                 if (!pDetail)
                     std::cout << "null detail" << std::endl;
 
+                const std::vector<Ogre::Vector3>& symTextureModes = egt->symTextureModes();
+
                 // update the pixels with SCM and detail texture
                 // NOTE: mSymTextureModes is assumed to have the image pixels in row-major order
                 for (size_t i = 0; i < egt->numRows()*egt->numColumns(); ++i) // height*width, should be 256*256
@@ -1048,7 +1043,7 @@ void ForeignNpcAnimation::updateNpcBase()
                     // sum all the symmetric texture modes for a given pixel i
                     sym = Ogre::Vector3::ZERO; // WARN: sym reused
                     for (size_t j = 0; j < 50/*mNumSymTextureModes*/; ++j)
-                        sym += (sRaceTCoeff[j] + sTCoeff[j]) * egt->mSymTextureModes[50*i + j];
+                        sym += (sRaceTCoeff[j] + sTCoeff[j]) * symTextureModes[50*i + j];
 
                     // Detail texture is applied after reconstruction of the colour map from the SCM.
                     // Using an average of the 3 colors makes the resulting texture less blotchy. Also see:
@@ -1802,7 +1797,7 @@ void ForeignNpcAnimation::updateNpcBase()
                 = mObjectParts[ESM::PRT_RHand]->mForeignObj->mEntities.begin();
             for (; it != mObjectParts[ESM::PRT_RHand]->mForeignObj->mEntities.end(); ++it)
             {
-                it->second->stopSharingSkeletonInstance();
+                //it->second->stopSharingSkeletonInstance(); // DeadArgonianAgent throws exception here
                 mInsert->detachObject(it->second);
             }
             mObjectParts[ESM::PRT_RHand]->mForeignObj.reset();
@@ -1986,7 +1981,8 @@ void ForeignNpcAnimation::updateNpcBase()
     if (!Ogre::ResourceGroupManager::getSingleton().resourceExistsInAnyGroup(path+"egm"))
         scene->mForeignObj->instantiate(mSkelBase->getMesh()->getSkeleton(), mBodyPartModelNameExt);
     else
-        scene->mForeignObj->instantiate(mSkelBase->getMesh()->getSkeleton(), mBodyPartModelNameExt, std::move(fgVertices));
+        //scene->mForeignObj->instantiate(mSkelBase->getMesh()->getSkeleton(), mBodyPartModelNameExt, std::move(fgVertices));
+        scene->mForeignObj->instantiate(mSkelBase->getMesh()->getSkeleton(), mBodyPartModelNameExt);
 
     MWWorld::ContainerStoreIterator storeChest = inv.getSlot(MWWorld::InventoryStore::Slot_ForeignUpperBody);
     MWWorld::ContainerStoreIterator storeLegs = inv.getSlot(MWWorld::InventoryStore::Slot_ForeignLowerBody);
@@ -2299,6 +2295,47 @@ void ForeignNpcAnimation::updateNpcBase()
     mWeaponAnimationTime->updateStartTime();
 }
 
+// needs: mNpc, mRace
+std::string ForeignNpcAnimation::getSkeletonModel(const MWWorld::ESMStore& store) const
+{
+    std::string skeletonModel;
+
+    if (mNpc->mModel.empty() && mNpc->mBaseTemplate != 0) // TES5
+    {
+        uint32_t type = store.find(mNpc->mBaseTemplate);
+
+        if (type == MKTAG('_', 'N', 'P', 'C'))
+        {
+            if ((mNpc->mActorBaseConfig.flags & 0x1) != 0) // female
+                return  "meshes\\" + mRace->mModelFemale; // TODO: check if this can be empty
+            else
+                return "meshes\\" + mRace->mModelMale;
+        }
+        else if (type == MKTAG('N', 'L', 'V', 'L'))
+        {
+            const ESM4::LeveledActor* lvlActor
+                = store.getForeign<ESM4::LeveledActor>().search(mNpc->mBaseTemplate);
+
+            std::cout <<  "TES5 LVLN: " << mNpc->mEditorId << ","
+                      << lvlActor->mEditorId << "," << lvlActor->mModel << std::endl;
+
+            return "meshes\\" + lvlActor->mModel;
+        }
+        else
+            throw std::runtime_error(mNpc->mEditorId + " TES5 NPC unknown BaseTemplate type");
+
+    }
+    else if (!mNpc->mModel.empty()) // TES4
+    {
+        // Characters\_Male\skeleton.nif
+        // Characters\_Male\skeletonbeast.nif
+        // Characters\_Male\skeletonsesheogorath.nif
+        return "meshes\\" + mNpc->mModel;
+    }
+    else
+        return ""; // shouldn't happen
+}
+
 void ForeignNpcAnimation::addAnimSource(const std::string &model)
 {
     OgreAssert(mInsert, "Object is missing a root!");
@@ -2361,7 +2398,7 @@ void ForeignNpcAnimation::addForeignAnimSource(const std::string& model, const s
 
     std::string group("General"); // FIXME
     NiModelPtr npcModel = NiBtOgre::NiModelManager::getSingleton().getOrLoadByName(model, group);
-    npcModel->buildSkeleton(); // FIXME: hack
+    npcModel->buildSkeleton(true); // FIXME: hack
     assert(!npcModel.isNull() && "skeleton.nif should have been built already");
     NiModelPtr anim = NiBtOgre::NiModelManager::getSingleton().getOrLoadByName(animName, group);
 

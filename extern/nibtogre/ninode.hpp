@@ -74,6 +74,8 @@ namespace NiBtOgre
 
         //void buildTES3(Ogre::SceneNode *sceneNode, BtOgreInst *inst, NiObject *parentNiNode = nullptr);
 
+        bool isBSBone(const NiNode *node) const;
+
     protected:
         std::vector<NiAVObjectRef>      mChildren;
         std::vector<NiDynamicEffectRef> mEffects;
@@ -84,7 +86,7 @@ namespace NiBtOgre
         virtual ~NiNode() {};
 
         // It seems that for TES4 only NiNodes/NiBillboardNode are root nodes?
-        virtual void build(BtOgreInst *inst, BuildData *data, NiObject *parentNiNode = nullptr);
+        virtual void build(BuildData *data, NiObject *parentNiNode = nullptr);
 
         // For NiGeometry children (e.g. NiTriStrips)
         virtual const std::string& getNiNodeName() const { return mNodeName; }
@@ -98,8 +100,10 @@ namespace NiBtOgre
         virtual void findBones(const NiNodeRef skeletonRoot, const NiNodeRef childNode); // FIXME: experimental
         virtual void findBones(std::int32_t rootIndex);                                  // FIXME: experimental
 
-        virtual void addBones(Ogre::Skeleton *skeleton,
+        void addBones(Ogre::Skeleton *skeleton,
                 Ogre::Bone *parentBone, std::map<std::uint32_t, std::uint16_t>& indexToHandle);
+        void addAllBones(Ogre::Skeleton *skeleton, Ogre::Bone *parentBone);
+        void buildObjectPalette(std::map<std::string, NiAVObjectRef>& objectPalette, bool first = false);
 
         virtual const std::vector<NiAVObjectRef>& getChildren() const { return mChildren; }
 
@@ -119,7 +123,7 @@ namespace NiBtOgre
         BSBlastNode(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
         virtual ~BSBlastNode() {};
 
-        //void build(BtOgreInst *inst, NiObject *parentNiNode = nullptr);
+        //void build(NiObject *parentNiNode = nullptr);
     };
 
     // Seen in NIF version 20.2.0.7
@@ -132,7 +136,7 @@ namespace NiBtOgre
         BSDamageStage(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
         virtual ~BSDamageStage() {};
 
-        //void build(BtOgreInst *inst, NiObject *parentNiNode = nullptr);
+        //void build(NiObject *parentNiNode = nullptr);
     };
 
     class BSRangeNode : public NiNode
@@ -178,7 +182,7 @@ namespace NiBtOgre
         BSMultiBoundNode(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
         virtual ~BSMultiBoundNode() {};
 
-        //void build(BtOgreInst *inst, NiObject *parentNiNode = nullptr);
+        //void build(NiObject *parentNiNode = nullptr);
     };
 
     // Seen in NIF version 20.2.0.7
@@ -191,7 +195,7 @@ namespace NiBtOgre
         BSOrderedNode(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
         virtual ~BSOrderedNode() {};
 
-        //virtual void build(BtOgreInst *inst, NiObject *parentNiNode = nullptr);
+        //virtual void build(NiObject *parentNiNode = nullptr);
     };
 
     // Seen in NIF version 20.2.0.7
@@ -204,7 +208,7 @@ namespace NiBtOgre
         BSTreeNode(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
         virtual ~BSTreeNode() {};
 
-        //void build(BtOgreInst *inst, NiObject *parentNiNode = nullptr);
+        //void build(NiObject *parentNiNode = nullptr);
     };
 
     // Seen in NIF version 20.2.0.7
@@ -216,7 +220,7 @@ namespace NiBtOgre
         BSValueNode(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
         virtual ~BSValueNode() {};
 
-        //void build(BtOgreInst *inst, NiObject *parentNiNode = nullptr);
+        //void build(NiObject *parentNiNode = nullptr);
     };
 
     struct NiBillboardNode : public NiNode
@@ -227,7 +231,7 @@ namespace NiBtOgre
         NiBillboardNode(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
         virtual ~NiBillboardNode() {};
 
-        //void build(BtOgreInst *inst, NiObject *parentNiNode = nullptr);
+        //void build(NiObject *parentNiNode = nullptr);
     };
 
     typedef NiNode NiBSAnimationNode;

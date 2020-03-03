@@ -22,11 +22,22 @@
 */
 #include "btogreinst.hpp"
 
+#include <iostream> // FIXME: for debugging only
+
 #include <btBulletDynamicsCommon.h>
 #include <btBulletCollisionCommon.h>
 
+#include <OgreSceneNode.h>
+#include <OgreSceneManager.h>
+#include <OgreEntity.h>
+#include <OgreMesh.h>
+#include <OgreSkeleton.h>
+#include <OgreSkeletonInstance.h>
+#include <OgreBone.h>
+
 #include "nimodelmanager.hpp"
 #include "nimodel.hpp"
+#include "ninode.hpp"
 
 namespace Ogre
 {
@@ -37,28 +48,33 @@ NiBtOgre::BtOgreInst::BtOgreInst(Ogre::SceneNode *baseNode, const std::string& n
     : mBaseSceneNode(baseNode), mFlags(0), mSkeletonRoot(nullptr)
 {
     mModel = NiBtOgre::NiModelManager::getSingleton().getOrLoadByName(name, group);
-};
-#if 0
-NiBtOgre::BtOgreInst::BtOgreInst(Ogre::SceneNode *baseNode, const std::string& name, const std::string& group)
+}
+
+NiBtOgre::BtOgreInst::BtOgreInst(NiModelPtr model, Ogre::SceneNode *baseNode, const std::string& name, const std::string& group)
     : mBaseSceneNode(baseNode), mFlags(0), mSkeletonRoot(nullptr)
 {
-    mModel =
-};
-#endif
+    mModel = model;
+}
+
 // for building body part models using the supplied creature/character skeleton for skinning.
 void NiBtOgre::BtOgreInst::instantiate(Ogre::SkeletonPtr skeleton, const std::string& meshExt)
 {
-    mModel->buildBodyPart(this, skeleton);
-    mModel->buildMeshAndEntity(this, meshExt);
+    mTargetBone = mModel->buildBodyPart(skeleton);
+
+    // make a convenience copy
+    mIsSkinned = mModel->buildData().mIsSkinned;
+
+    buildEntities();
+    //copyControllers();
 }
 
 // for building fg morphed mesh
-void NiBtOgre::BtOgreInst::instantiate(Ogre::SkeletonPtr skeleton, const std::string& npcName,
-        std::unique_ptr<std::vector<Ogre::Vector3> > morphedVertices)
-{
-    mModel->buildBodyPart(this, skeleton);
-    mModel->buildMeshAndEntity(this, npcName, std::move(morphedVertices));
-}
+//void NiBtOgre::BtOgreInst::instantiate(Ogre::SkeletonPtr skeleton, const std::string& npcName,
+//        std::unique_ptr<std::vector<Ogre::Vector3> > morphedVertices)
+//{
+//    mModel->buildBodyPart(this, skeleton);
+//    mModel->buildMeshAndEntity(this, npcName, std::move(morphedVertices));
+//}
 
 void NiBtOgre::BtOgreInst::instantiate()
 {
@@ -71,7 +87,200 @@ void NiBtOgre::BtOgreInst::instantiate()
     // i.e. for each NiNode with a mesh create a child scenenode
 
     mModel->build(this);
-    mModel->buildMeshAndEntity(this);
+    buildEntities();
+    //copyControllers();
+}
+
+void NiBtOgre::BtOgreInst::buildEntities()
+{
+    //if (mModel.getModelName().find("marker") != std::string::npos)
+        //return; // FIXME: testing oil puddle
+    //if (mModel.getModelName().find("vgeardoor01") != std::string::npos)
+        //std::cout << "door" << std::endl;
+
+    const BuildData& buildData = mModel->buildData();
+
+    const std::vector<std::pair<Ogre::MeshPtr, NiNode*> >& meshes = mModel->meshes();
+    for (std::size_t i = 0; i < meshes.size(); ++i)
+    {
+        Ogre::Entity *entity = mBaseSceneNode->getCreator()->createEntity(meshes[i].first);
+        // FIXME: don't want skeleton.nif to be visible?
+        entity->setVisible(true /*!(flags&Nif::NiNode::Flag_Hidden)*/); // FIXME not for newer NIF
+
+        // associate controllers to sub entities
+        //
+        // WARNING: Assumed that the sub entity order is the same as the order in which the
+        //          sub-meshes are created in NiMeshLoader::loadResource
+
+
+
+        // FIXME: experimental - how to choose which one is mSkeletonRoot?
+        // set mSkelBase for Animation::isSkinned()
+        if (meshes[i].first->hasSkeleton() && (mModel->blockType(meshes[i].second->selfRef()) == "NiNode")) // FIXME
+        {
+            std::string nodeName = meshes[i].second->getNiNodeName();
+            if (meshes[i].second->selfRef() == 0)
+            //if (nodeName == "Scene Root")
+            {
+                mSkeletonRoot = entity;
+            }
+        }
+        else if (meshes[i].first->hasSkeleton() && (mModel->blockType(meshes[i].second->selfRef()) == "BSFadeNode"))
+        {
+            mSkeletonRoot = entity;
+        }
+
+
+
+
+        // FIXME: move this block to animation?
+        Ogre::AnimationStateSet *anims = entity->getAllAnimationStates();
+        if (anims)
+        {
+            Ogre::AnimationStateIterator i = anims->getAnimationStateIterator();
+            while (i.hasMoreElements())
+            {
+                Ogre::AnimationState *state = i.getNext();
+                if (state->getAnimationName() == "Idle" || state->getAnimationName() == "SpecialIdle")
+                    state->setEnabled(true);
+                else
+                    state->setEnabled(false);
+                state->setLoop(true); // FIXME: enable looping for all while testing only
+            }
+        }
+
+        // update all vertex animated entities
+        if (entity->hasVertexAnimation())
+            mVertexAnimEntities.push_back(entity);
+
+        // update the name of the skeletal animations and the associated entities
+        if (1)//entity->hasSkeleton() && entity->getSkeleton()->getNumAnimations() > 0)
+        {
+            // iterate through all the skeletal animations in the NIF
+            std::map<std::string, std::vector<std::string> >::const_iterator it
+                = buildData.mMovingBoneNameMap.begin();
+            for (; it != buildData.mMovingBoneNameMap.end(); ++it)
+            {
+                // find all the bones for the animation (the same NiNode name is used as the Bone name)
+                //
+                // entity->getName() returns a unique, autogenerated name...
+                // instead get the encoded NiNode name from the unique Mesh name
+                //size_t pos = iter->second.first.find_last_of('@');
+                //std::string meshName = iter->second.first.substr(pos+1);
+                std::string meshName = entity->getMesh()->getName();
+                //size_t pos = meshName.find_first_of('#');
+                size_t pos = meshName.find_last_of('@');
+                std::string boneName = meshName.substr(pos+1); // discard the NIF file name to get NiNode name
+                for (unsigned int i = 0; i < it->second.size(); ++i)
+                {
+                    if (boneName == it->second[i]) // matches the Bone name, update BtOgreInst
+                    {
+                        std::map<std::string, std::vector<Ogre::Entity*> >& skelMap
+                            = mSkeletonAnimEntities;
+
+                        // does the anim entry exist in the map?
+                        std::map<std::string, std::vector<Ogre::Entity*> >::iterator lb
+                            = skelMap.lower_bound(it->first);
+
+                        if (lb != skelMap.end() && !(skelMap.key_comp()(it->first, lb->first)))
+                        {
+                            lb->second.push_back(entity); // found anim, add entity to the list
+                        }
+                        else // none found, create an entry in the map
+                        {
+                            skelMap.insert(lb, std::make_pair(it->first, std::vector<Ogre::Entity*> { entity }));
+                        }
+                    }
+                }
+            }
+        }
+
+        mEntities[meshes[i].second->selfRef()] = entity;
+    }
+
+    // FIXME: experimental
+    // skeleton.nif doesn't have any NiTriBasedGeom so no entities would have been created
+    if (buildData.isSkeletonTES4() && (mModel->blockType(mModel->rootIndex()) == "NiNode" || mModel->blockType(mModel->rootIndex()) == "BSFadeNode"))
+        //&& mModelName != "meshes\\morroblivion\\creatures\\wildlife\\kagouti\\skeleton.nif") // FIXME
+    {
+        // FIXME: experimental
+        Ogre::SkeletonInstance *skelinst = mSkeletonRoot->getSkeleton();
+
+        //if (!skelinst)
+            //return; // FIXME: morroblivion\creatures\wildlife\kagouti\skeleton.nif
+
+        Ogre::Skeleton::BoneIterator boneiter = skelinst->getBoneIterator();
+        while(boneiter.hasMoreElements())
+            boneiter.getNext()->setManuallyControlled(true);
+
+
+        // FIXME: just some testing
+        const std::map<std::string, NiAVObjectRef>& objPalette = mModel->getObjectPalette();
+        boneiter = skelinst->getBoneIterator();
+        while(boneiter.hasMoreElements())
+        {
+            std::string name = boneiter.getNext()->getName();
+            if (objPalette.find(name) == objPalette.end())
+                std::cout << "missing bone name " << name << " in ObjectPalette" << std::endl;
+        }
+    }
+
+    // FIXME: maybe just have pointers to the vectors rather than copying all the content?
+    for (size_t i = 0; i < buildData.mFlameNodes.size(); ++i)
+    {
+        mFlameNodes.push_back(buildData.mFlameNodes[i]->getNiNodeName());
+        //std::cout << "flame " << getModelName() << " " << inst->mFlameNodes.back() << std::endl;
+    }
+
+    for (size_t i = 0; i < buildData.mAttachLights.size(); ++i)
+    {
+        mAttachLights.push_back(buildData.mAttachLights[i]->getNiNodeName());
+        //std::cout << "light " << getModelName() << " " << inst->mAttachLights.back() << std::endl;
+    }
+
+#if 0
+    std::map<std::uint32_t, EntityConstructionInfo>::iterator iter = mEntityCIMap.begin();
+
+    // one Ogre::Mesh for each NiNode whose children NiGeometry are sub meshes
+    for (; iter != mEntityCIMap.end(); ++iter)
+    {
+        // iter-second.first = model name + "@" + parent NiNode block name
+        // iter->second.second = unique_ptr to NiMeshLoader
+        //
+        // FIXME: work around duplicates for now, should solve it by caching NiModel instead
+        //        MeshManager needs a unique string, so probably need to supply the full
+        //        name starting from "\\mesh"
+        // FIXME: probably room for optimising the use of the "group" parameter
+        Ogre::MeshPtr mesh = meshManager.getByName(iter->second.mMeshAndNodeName, "General");
+        if (!mesh)
+        {
+            mesh = meshManager.createManual(iter->second.mMeshAndNodeName, "General",
+                                            iter->second.mMeshLoader.get());
+        }
+        mesh->setAutoBuildEdgeLists(false);
+
+        // either use the mesh's name or shared pointer
+        Ogre::Entity *entity = mBaseSceneNode->getCreator()->createEntity(/*iter->second.first*/mesh);
+
+
+
+
+
+        // associate controllers to sub entities
+        //
+        // WARNING: Assumed that the sub entity order is the same as the order in which the
+        //          sub-meshes are created in NiMeshLoader::loadResource
+        unsigned int numSubEntities = entity->getNumSubEntities();
+
+        for (unsigned int j = 0; j < numSubEntities; ++j)
+        {
+            // FIXME: testing only
+            std::cout << entity->getSubEntity(j)->getSubMesh()->getMaterialName() << std::endl;
+        }
+
+        // FIXME: do we need a map of entities for deleting later?
+    }
+#endif
 }
 
 bool NiBtOgre::BtOgreInst::hasAnimation(const std::string& animName) const

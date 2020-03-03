@@ -532,17 +532,17 @@ void NiBtOgre::NiMultiTargetTransformController::build(int32_t nameIndex, NiAVOb
 
     // FIXME: animation should be created by NiSequenceController
     Ogre::Animation *animation;
-    if (mData.mSkeleton->hasAnimation(animationId))
-        animation = mData.mSkeleton->getAnimation(animationId);
+    if (mModel.getSkeleton()->hasAnimation(animationId))
+        animation = mModel.getSkeleton()->getAnimation(animationId);
     else
     {
-        animation = mData.mSkeleton->createAnimation(animationId, totalAnimationLength);
+        animation = mModel.getSkeleton()->createAnimation(animationId, totalAnimationLength);
         animation->setInterpolationMode(Ogre::Animation::IM_SPLINE);
     }
 
     // lookup bones
     std::string boneName = mModel.indexToString(target->getNameIndex());
-    Ogre::Bone *bone = mData.mSkeleton->getBone(boneName);
+    Ogre::Bone *bone = mModel.getSkeleton()->getBone(boneName);
 
     if (animation->hasNodeTrack(bone->getHandle()))
         return; // HACK: stop creation of the same object multiple times

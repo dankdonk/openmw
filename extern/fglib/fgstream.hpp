@@ -51,8 +51,8 @@ namespace FgLib
         FgStream(const std::string& name);
         ~FgStream();
 
-        size_t tell() { return mStream->tell(); } // FIXME: debugging only
-        const std::string& getName() const { return mStream->getName(); } // FIXME: debugging only
+        //size_t tell() { return mStream->tell(); } // FIXME: debugging only
+        //const std::string& getName() const { return mStream->getName(); } // FIXME: debugging only
 
         std::string readString();
         void readSizedString(std::string& str);
