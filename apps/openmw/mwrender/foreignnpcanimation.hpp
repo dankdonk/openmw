@@ -113,7 +113,15 @@ private:
     std::string mBodyPartModelNameExt;
 
     void updateNpcBase();
+
     std::string getSkeletonModel(const MWWorld::ESMStore& store) const;
+
+    NifOgre::ObjectScenePtr createSkinnedObject(Ogre::SceneNode *baseNode,
+        Ogre::Entity *skelBase, const std::string& meshName, const std::string& group, NiModelPtr skeletonModel);
+
+    /*NifOgre::ObjectScenePtr*/
+    bool createObject(ESM::PartReferenceType type, Ogre::SceneNode *baseNode,
+        Ogre::Entity *skelBase, const std::string& meshName, const std::string& group, NiModelPtr skeletonModel);
 
     NifOgre::ObjectScenePtr insertBoundedPart(const std::string &model, int group, const std::string &bonename,
                                               const std::string &bonefilter,

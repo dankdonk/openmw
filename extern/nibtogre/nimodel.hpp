@@ -232,8 +232,8 @@ namespace NiBtOgre
     protected:
         virtual void prepareImpl();
         virtual void unprepareImpl();
-        virtual void loadImpl();     // called by Ogre::Resource::load()
-        virtual void unloadImpl() {} // called by Ogre::Resource::unload()
+        virtual void loadImpl();   // called by Ogre::Resource::load()
+        virtual void unloadImpl(); // called by Ogre::Resource::unload()
 
     public:
         // The parameter 'nif' refers to those in the Ogre::ResourceGroupManager
@@ -281,7 +281,6 @@ namespace NiBtOgre
         //const std::map<NiNodeRef, int32_t>& getBhkRigidBodyMap() const { return mBuildData.mBhkRigidBocyMap; }
 
         // WARNING: SceneNode in 'inst' should have the scale (assumed uniform)
-        void build(BtOgreInst *inst);
         std::string buildBodyPart(Ogre::SkeletonPtr skeleton = Ogre::SkeletonPtr());
 
         void buildAnimation(Ogre::Entity *skelBase, NiModelPtr anim,
@@ -294,13 +293,14 @@ namespace NiBtOgre
         Ogre::SkeletonPtr getSkeleton() const { return mSkeleton; }
         inline bool hasSkeleton() const { return !mSkeleton.isNull(); }
         void buildSkeleton(bool load = false);
-        void buildFullSkeleton(bool load = false);
 
         inline const std::vector<std::pair<Ogre::MeshPtr, NiNode*> >& meshes() const { return mMeshes; }
 
         void createNiObjects();
         // for skeleton.nif, etc, that requires an Entity for ObjectScene
         void createDummyMesh();
+        // supply skeleton for skinned objects
+        void createMesh(Ogre::SkeletonPtr skeleton = Ogre::SkeletonPtr());
 
         // FIXME: move out?
         //void buildEntities(BtOgreInst *inst);
@@ -317,8 +317,8 @@ namespace NiBtOgre
 
         void findBoneNodes(bool buildObjectPalette = false);
     private:
-        // supply skeleton for skinned objects
-        void createMesh(Ogre::SkeletonPtr skeleton = Ogre::SkeletonPtr());
+
+        void build();
 
         // access to NiGeometryData for generating a FaceGen TRI file or to populate morphed vertices
         // WARN: may throw

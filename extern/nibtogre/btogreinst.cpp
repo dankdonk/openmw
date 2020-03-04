@@ -50,12 +50,43 @@ NiBtOgre::BtOgreInst::BtOgreInst(Ogre::SceneNode *baseNode, const std::string& n
     mModel = NiBtOgre::NiModelManager::getSingleton().getOrLoadByName(name, group);
 }
 
-NiBtOgre::BtOgreInst::BtOgreInst(NiModelPtr model, Ogre::SceneNode *baseNode, const std::string& name, const std::string& group)
+// for manually created NiModel (e.g. morphed, skinned)
+NiBtOgre::BtOgreInst::BtOgreInst(NiModelPtr model, Ogre::SceneNode *baseNode)
     : mBaseSceneNode(baseNode), mFlags(0), mSkeletonRoot(nullptr)
 {
     mModel = model;
 }
 
+//NiBtOgre::BtOgreInst::BtOgreInst(Ogre::SceneNode *baseNode, const std::string& name, const std::string& group,
+//        NiModelPtr skeleton)
+//    : mBaseSceneNode(baseNode), mFlags(0), mSkeletonRoot(nullptr)
+//{
+//    mModel = NiBtOgre::NiModelManager::getSingleton().getOrLoadByName(name, group);
+//}
+
+NiBtOgre::BtOgreInst::~BtOgreInst()
+{
+    // FIXME: destroy others !!!
+
+    for (unsigned int i = 0; i < mInterpolators.size(); ++i)
+        delete mInterpolators[i];
+
+    std::map<NiNodeRef, Ogre::Entity*>::iterator iter(mEntities.begin());
+    for (; iter != mEntities.end(); ++iter)
+    {
+        if (iter->second)
+        {
+            iter->second->detachFromParent();
+            mBaseSceneNode->getCreator()->destroyEntity(iter->second);
+            iter->second = 0;
+        }
+        mEntities.erase(iter);
+    }
+
+    mModel.reset();
+}
+
+// FIXME: deprecated
 // for building body part models using the supplied creature/character skeleton for skinning.
 void NiBtOgre::BtOgreInst::instantiate(Ogre::SkeletonPtr skeleton, const std::string& meshExt)
 {
@@ -66,6 +97,36 @@ void NiBtOgre::BtOgreInst::instantiate(Ogre::SkeletonPtr skeleton, const std::st
 
     buildEntities();
     //copyControllers();
+}
+
+// for building body part models using the supplied creature/character skeleton for skinning.
+void NiBtOgre::BtOgreInst::instantiate(Ogre::SceneNode *baseNode, Ogre::Entity *skelBase)
+{
+    // FIXME: skinned objects don't attach to a target bone?
+    // see if there is a target bone
+    //NiNode *rootNode = mModel->getRef<NiNode>(mModel->rootIndex());
+    //std::string targetBone = rootNode->getExtraDataString("Prn");
+
+    // make a convenience copy
+    mIsSkinned = mModel->buildData().mIsSkinned;
+
+    buildEntities();
+
+    std::map<int32_t, Ogre::Entity*>::const_iterator iter(mEntities.begin());
+    for (; iter != mEntities.end(); ++iter)
+    {
+        // FIXME:
+        if (skelBase->getMesh()->getSkeleton() == iter->second->getMesh()->getSkeleton())
+            iter->second->shareSkeletonInstanceWith(skelBase);
+        else
+            std::cout << "no anim " << skelBase->getMesh()->getName() << " different skeleton to "
+                      << iter->second->getMesh()->getName() << std::endl;
+
+        //if (targetBone == "")
+            baseNode->attachObject(iter->second);
+        //else
+            //skelBase->attachObjectToBone(targetBone, iter->second);
+    }
 }
 
 // for building fg morphed mesh
@@ -86,9 +147,28 @@ void NiBtOgre::BtOgreInst::instantiate()
     // Is it possible to leave that for Ogre::SceneNode to take care of?
     // i.e. for each NiNode with a mesh create a child scenenode
 
-    mModel->build(this);
+    // make a convenience copy
+    mIsSkinned = mModel->buildData().mIsSkinned;
+
     buildEntities();
     //copyControllers();
+
+
+// FIXME: testing block from NiModel
+//  if (mBuildData.mBtShapeLoaders.size() > 1)
+//      std::cout << "more than 1 rigid body " << getModelName() << std::endl;
+
+//  std::map<std::int32_t, std::pair<std::string, std::unique_ptr<BtShapeLoader> > >::iterator iter;
+//  for (iter = mBuildData.mBtShapeLoaders.begin(); iter != mBuildData.mBtShapeLoaders.end(); ++iter)
+//  {
+//      std::cout << iter->second.first << std::endl;
+//  }
+
+    // build any constraints that were deferred while building the rigid bodies
+//  for (size_t i = 0; i < inst->mbhkConstraints.size(); ++i)
+//  {
+//      //inst->mbhkConstraints[i].first->linkBodies(inst->mRigidBodies, inst->mbhkConstraints[i].second);
+//  }
 }
 
 void NiBtOgre::BtOgreInst::buildEntities()

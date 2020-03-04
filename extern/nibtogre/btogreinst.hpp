@@ -117,18 +117,17 @@ namespace NiBtOgre
         std::vector<std::string> mAttachLights;
 
         BtOgreInst(Ogre::SceneNode *baseNode, /*NifOgre::ObjectScenePtr scene,*/ const std::string& name, const std::string& group);
-        BtOgreInst(NiModelPtr model, Ogre::SceneNode *baseNode, const std::string& name, const std::string& group);
-        ~BtOgreInst() {
-            for (unsigned int i = 0; i < mInterpolators.size(); ++i)
-                delete mInterpolators[i];
-        }
+        BtOgreInst(NiModelPtr model, Ogre::SceneNode *baseNode);
+        ~BtOgreInst();
 
         // register with bullet dynamics, make entities visible, etc
         void instantiate();
 
+        // deprecated
+        void instantiate(Ogre::SkeletonPtr skeleton, const std::string& meshExt = "");
         // FIXME: need a better name
         // for building body parts using the supplied skeleton
-        void instantiate(Ogre::SkeletonPtr skeleton, const std::string& meshExt = "");
+        void instantiate(Ogre::SceneNode* baseNode, Ogre::Entity* skelBase);
 
         // for building fg morphed mesh
         void instantiate(Ogre::SkeletonPtr skeleton, const std::string& npcName,

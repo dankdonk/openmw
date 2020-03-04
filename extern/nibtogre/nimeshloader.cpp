@@ -42,6 +42,21 @@ namespace NiBtOgre
     {
     }
 
+    Ogre::MeshPtr NiMeshLoader::createManual(const Ogre::String& name, const Ogre::String& group)
+    {
+        Ogre::MeshManager& meshManager = Ogre::MeshManager::getSingleton();
+
+        // Don't try to get existing, create should fail if already exists
+        if( meshManager.getResourceByName( name, group ) )
+        {
+            OGRE_EXCEPT( Ogre::Exception::ERR_DUPLICATE_ITEM,
+                         "Mesh with name '" + name + "' already exists.",
+                         "NiMeshLoader::createManual" );
+        }
+
+        return meshManager.createManual(name, group, this);
+    }
+
     Ogre::MeshPtr NiMeshLoader::createMesh(const Ogre::String& name, const Ogre::String& group,
             NiModel *model, std::int32_t ninode, const Ogre::String skeleton)
     {
@@ -76,21 +91,6 @@ namespace NiBtOgre
         sModelBuildInfoMap[pMesh.get()] = bInfo;
 
         return pMesh; // at this point the mesh is created but not yet loaded
-    }
-
-    Ogre::MeshPtr NiMeshLoader::createManual(const Ogre::String& name, const Ogre::String& group)
-    {
-        Ogre::MeshManager& meshManager = Ogre::MeshManager::getSingleton();
-
-        // Don't try to get existing, create should fail if already exists
-        if( meshManager.getResourceByName( name, group ) )
-        {
-            OGRE_EXCEPT( Ogre::Exception::ERR_DUPLICATE_ITEM,
-                         "Mesh with name '" + name + "' already exists.",
-                         "NiMeshLoader::createManual" );
-        }
-
-        return meshManager.createManual(name, group, this);
     }
 
     // this method is not called until the associated Ogre::Entity is created

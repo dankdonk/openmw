@@ -1885,14 +1885,13 @@ void Animation::setForeignObjectRootBase(const std::string& skeletonModel)
     Ogre::SharedPtr<NifOgre::ObjectScene> scene
         = Ogre::SharedPtr<NifOgre::ObjectScene>(new NifOgre::ObjectScene(mInsert->getCreator()));
 
-    // FIXME: create a skeleton NiModel and pass it in
     NiBtOgre::NiModelManager& modelManager = NiBtOgre::NiModelManager::getSingleton();
     NiModelPtr skeleton = modelManager.getByName(skeletonModel, "General");
     if (!skeleton)
         skeleton = modelManager.createSkeletonModel(skeletonModel, "General");
 
     scene->mForeignObj
-        = std::make_shared<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(skeleton, mInsert, skeletonModel, "General"));
+        = std::make_shared<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(skeleton, mInsert));
     scene->mForeignObj->instantiate();
 
     if (scene->mForeignObj)

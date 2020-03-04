@@ -34,6 +34,11 @@
 #include "nimeshloader.hpp"
 #include "niskeletonloader.hpp"
 
+namespace Ogre
+{
+    class Skeleton;
+}
+
 namespace ESM4
 {
     struct Npc;
@@ -56,7 +61,8 @@ namespace NiBtOgre
             MBT_Object,
             MBT_Skinned,
             MBT_Skeleton,
-            MBT_Morphed
+            MBT_Morphed,
+            MBT_Anim
         };
 
         enum ModelBodyPart
@@ -79,6 +85,9 @@ namespace NiBtOgre
             ModelBuildType type;
             const ESM4::Npc *npc;   // FIXME: danger in holding pointers here?
             const ESM4::Race *race;
+            const NiModel *skel;
+            Ogre::String skelNif;
+            Ogre::String skelGroup;
             ModelBodyPart bodyPart;
             Ogre::String baseNif;
             Ogre::String baseTexture;
@@ -89,8 +98,10 @@ namespace NiBtOgre
         NiSkeletonLoader mSkeletonLoader;
         NiMeshLoader mMeshLoader;
 
+        void loadManualSkinnedModel(NiModel* pModel, const ModelBuildInfo& params);
         void loadManualSkeletonModel(NiModel* pModel, const ModelBuildInfo& params);
         void loadManualMorphedModel(NiModel* pModel, const ModelBuildInfo& params);
+        void loadManualAnimModel(NiModel* pModel, const ModelBuildInfo& params);
 
     public:
         NiModelManager();
@@ -112,10 +123,16 @@ namespace NiBtOgre
 
         void loadResource(Ogre::Resource* res);
 
+        NiModelPtr createSkinnedModel(const Ogre::String& name, const Ogre::String& group,
+                NiModel *skeleton);
+
+        NiModelPtr createSkeletonModel(const Ogre::String& name, const Ogre::String& group);
+
         NiModelPtr createMorphedModel(const Ogre::String& nif, const Ogre::String& group,
                 const ESM4::Npc *npc, const ESM4::Race *race, const Ogre::String& texture);
 
-        NiModelPtr createSkeletonModel(const Ogre::String& name, const Ogre::String& group);
+        NiModelPtr createAnimModel(const Ogre::String& name, const Ogre::String& group,
+                NiModel *skeleton);
 
         NiModelPtr getOrLoadByName(const Ogre::String& name,
                 const Ogre::String& group = Ogre::ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME);

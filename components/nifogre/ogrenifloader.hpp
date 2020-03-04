@@ -84,7 +84,7 @@ struct ObjectScene {
 
     ObjectScene(Ogre::SceneManager* sceneMgr) : mSkelBase(0), mSceneMgr(sceneMgr), mMaxControllerLength(0)
     {
-        mForeignObj = std::shared_ptr<NiBtOgre::BtOgreInst>(nullptr);
+        mForeignObj = std::unique_ptr<NiBtOgre::BtOgreInst>(nullptr);
     }
 
     ~ObjectScene();

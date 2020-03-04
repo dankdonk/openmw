@@ -31,6 +31,7 @@
 #include <OgreTextureManager.h>
 #include <OgreTexture.h>
 #include <OgreVector3.h>
+#include <OgreSkeleton.h>
 
 #include <extern/esm4/npc_.hpp>
 #include <extern/esm4/race.hpp>
@@ -110,24 +111,107 @@ namespace NiBtOgre
         if (createParams)
         {
             Ogre::String nif("nif");
-#if 0
-            std::map<Ogre::String, Ogre::String>::const_iterator lb = createParams->lower_bound(nif);
-            if (lb != createParams->end() && !(createParams->key_comp()(nif, lb->first)))
-            {
-                return OGRE_NEW NiModel(this, name, handle, group, isManual, loader, lb->second);
-            }
-#else
+
             std::map<Ogre::String, Ogre::String>::const_iterator it = createParams->find(nif);
             if (it != createParams->end())
             {
                 return OGRE_NEW NiModel(this, name, handle, group, isManual, loader, it->second);
             }
-#endif
         }
 
         OGRE_EXCEPT( Ogre::Exception::ERR_ITEM_NOT_FOUND,
                      "Cannot find build parameters for " + name,
                      "NiModelManager::createImpl");
+    }
+
+    NiModelPtr NiModelManager::createSkinnedModel(const Ogre::String& nif, const Ogre::String& group,
+            NiModel *skeleton)
+    {
+        // Create manual model which calls back self to load
+        NiModelPtr pModel = createManual(skeleton->getModelName()+"_"+nif, group, nif, this);
+
+        // store parameters
+        ModelBuildInfo bInfo;
+        bInfo.type = MBT_Skinned;
+        bInfo.baseNif = nif;
+        bInfo.skel = skeleton;
+        bInfo.skelNif = skeleton->getModelName();
+        bInfo.skelGroup = skeleton->getOgreGroup();
+        mModelBuildInfoMap[pModel.get()] = bInfo;
+
+        pModel->load(); // load immediately
+
+        return pModel;
+    }
+
+    NiModelPtr NiModelManager::createSkeletonModel(const Ogre::String& nif, const Ogre::String& group)
+    {
+        // Create manual model which calls back self to load
+        NiModelPtr pModel = createManual(nif, group, nif, this);
+
+        // store parameters
+        ModelBuildInfo bInfo;
+        bInfo.type = MBT_Skeleton;
+        bInfo.baseNif = nif;
+        mModelBuildInfoMap[pModel.get()] = bInfo;
+
+        pModel->load(); // load immediately
+
+        return pModel;
+    }
+
+    NiModelPtr NiModelManager::createMorphedModel(const Ogre::String& nif, const Ogre::String& group,
+            const ESM4::Npc *npc, const ESM4::Race *race, const Ogre::String& texture)
+    {
+        // Create manual model which calls back self to load
+        NiModelPtr pModel = createManual(npc->mEditorId + "_" + nif, group, nif, this);
+
+        // store parameters
+        ModelBuildInfo bInfo;
+        bInfo.type = MBT_Morphed;
+        bInfo.npc = npc;
+        bInfo.race = race;
+        bInfo.baseNif = nif;
+        bInfo.baseTexture = texture;
+        mModelBuildInfoMap[pModel.get()] = bInfo;
+
+        pModel->load(); // load immediately
+
+        return pModel;
+    }
+
+    NiModelPtr NiModelManager::createAnimModel(const Ogre::String& nif, const Ogre::String& group,
+            NiModel *skeleton)
+    {
+        // Create manual model which calls back self to load
+        NiModelPtr pModel = createManual(nif, group, nif, this);
+
+        // store parameters
+        ModelBuildInfo bInfo;
+        bInfo.type = MBT_Anim;
+        bInfo.baseNif = nif;
+        mModelBuildInfoMap[pModel.get()] = bInfo;
+
+        pModel->load(); // load immediately
+
+        return pModel;
+    }
+
+    NiModelPtr NiModelManager::getOrLoadByName(const Ogre::String& name, const Ogre::String& group)
+    {
+        Ogre::ResourcePtr res = getResourceByName(name, group);
+
+        // load() calls ResourceManager::createOrRetrieve() then Resource::load()
+        // which results in Resource::loadImpl() being called
+        if (!res)
+        {
+            Ogre::NameValuePairList params;
+            params.insert( std::make_pair(Ogre::String("nif"), name) );
+
+            res = load(name, group, false/*isManual*/, nullptr/*ManualResourceLoader**/, &params);
+        }
+
+        return Ogre::static_pointer_cast<NiModel>(res);
     }
 
     void NiModelManager::loadResource(Ogre::Resource* res)
@@ -151,7 +235,7 @@ namespace NiBtOgre
             //loadManual(model, bInfo); // FIXME: these are not manually loaded?
             break;
         case MBT_Skinned:
-            //loadManualSkinnedModel(model, bInfo);
+            loadManualSkinnedModel(model, bInfo);
             break;
         case MBT_Skeleton:
             loadManualSkeletonModel(model, bInfo);
@@ -159,11 +243,34 @@ namespace NiBtOgre
         case MBT_Morphed:
             loadManualMorphedModel(model, bInfo);
             break;
+        case MBT_Anim:
+            loadManualAnimModel(model, bInfo);
+            break;
         default:
             OGRE_EXCEPT( Ogre::Exception::ERR_ITEM_NOT_FOUND,
                          "Unknown build parameters for " + res->getName(),
                          "NiModelManager::loadResource");
         }
+    }
+
+    void NiModelManager::loadManualSkinnedModel(NiModel* pModel, const ModelBuildInfo& bInfo)
+    {
+        pModel->createNiObjects();
+
+        Ogre::SkeletonPtr skel;
+
+        try
+        {
+            skel = bInfo.skel->getSkeleton();
+        }
+        catch (...)
+        {
+            NiModelPtr skelModel = getByName(bInfo.skelNif, bInfo.skelGroup);
+            skel = skelModel->getSkeleton();
+        }
+
+        pModel->createMesh(skel);
+        pModel->buildBodyPart(skel);
     }
 
     void NiModelManager::loadManualSkeletonModel(NiModel* pModel, const ModelBuildInfo& bInfo)
@@ -256,58 +363,16 @@ namespace NiBtOgre
         // build the rest of the model / misc odds and ends
     }
 
-    NiModelPtr NiModelManager::createSkeletonModel(const Ogre::String& nif, const Ogre::String& group)
+    void NiModelManager::loadManualAnimModel(NiModel* pModel, const ModelBuildInfo& bInfo)
     {
-        // Create manual model which calls back self to load
-        NiModelPtr pModel = createManual(nif, group, nif, this);
-
-        // store parameters
-        ModelBuildInfo bInfo;
-        bInfo.type = MBT_Skeleton;
-        bInfo.baseNif = nif;
-        mModelBuildInfoMap[pModel.get()] = bInfo;
-
-        // load immediately
-        pModel->load();
-
-        return pModel;
-    }
-
-    NiModelPtr NiModelManager::createMorphedModel(const Ogre::String& nif, const Ogre::String& group,
-            const ESM4::Npc *npc, const ESM4::Race *race, const Ogre::String& texture)
-    {
-        // Create manual model which calls back self to load
-        NiModelPtr pModel = createManual(npc->mEditorId + "_" + nif, group, nif, this);
-
-        // store parameters
-        ModelBuildInfo bInfo;
-        bInfo.type = MBT_Morphed;
-        bInfo.npc = npc;
-        bInfo.race = race;
-        bInfo.baseNif = nif;
-        bInfo.baseTexture = texture;
-        mModelBuildInfoMap[pModel.get()] = bInfo;
-
-        // load immediately
-        pModel->load();
-
-        return pModel;
-    }
-
-    NiModelPtr NiModelManager::getOrLoadByName(const Ogre::String& name, const Ogre::String& group)
-    {
-        Ogre::ResourcePtr res = getResourceByName(name, group);
-
-        // load() calls ResourceManager::createOrRetrieve() then Resource::load()
-        // which results in Resource::loadImpl() being called
-        if (!res)
-        {
-            Ogre::NameValuePairList params;
-            params.insert( std::make_pair(Ogre::String("nif"), name) );
-
-            res = load(name, group, false/*isManual*/, nullptr/*ManualResourceLoader**/, &params);
-        }
-
-        return Ogre::static_pointer_cast<NiModel>(res);
+#if 0
+        pModel->buildAnimation(
+                Ogre::Entity *skelBase,
+                NiModelPtr anim,
+                std::multimap<float, std::string>& textKeys,
+                std::vector<Ogre::Controller<Ogre::Real> >& controllers,
+                NiModel *skeleton,
+                NiModel *bow)
+#endif
     }
 }

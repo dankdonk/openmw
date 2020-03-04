@@ -25,6 +25,7 @@
 #include <extern/esm4/formid.hpp> // mainly for debugging
 #include <extern/nibtogre/btogreinst.hpp>
 #include <extern/nibtogre/nimodelmanager.hpp>
+#include <extern/nibtogre/ninode.hpp>
 #include <extern/fglib/fgsam.hpp>
 //#include <extern/fglib/fgctl.hpp>
 #include <extern/fglib/fgfile.hpp>
@@ -413,7 +414,8 @@ void ForeignNpcAnimation::updateNpcBase()
         return; // FIXME: perhaps should log an error first
 
     Misc::StringUtils::lowerCaseInPlace(skeletonModel);
-
+    NiBtOgre::NiModelManager& modelManager = NiBtOgre::NiModelManager::getSingleton();
+    std::string group("General");
 
     // FIXME: needs a better way to deal with skinned models
     mBodyPartModelNameExt =  bodyPartNameExt(skeletonModel);
@@ -422,11 +424,10 @@ void ForeignNpcAnimation::updateNpcBase()
     if (mInsert->getScale().x != 1.0f) // WARN: assumed uniform scaling
         std::cout << "scale not 1.0 " << skeletonModel << std::endl;
 
-    setForeignObjectRootBase(skeletonModel);
-    //Animation::setObjectRoot(skeletonModel, true);
+    setForeignObjectRootBase(skeletonModel); // create the skeleton
     if (mObjectRoot->mForeignObj)
     {
-        mObjectRoot->mSkelBase = mObjectRoot->mForeignObj->mSkeletonRoot;
+        mObjectRoot->mSkelBase = mObjectRoot->mForeignObj->mSkeletonRoot; // Ogre::Entity*
         mSkelBase = mObjectRoot->mForeignObj->mSkeletonRoot;
     }
 
@@ -538,7 +539,6 @@ void ForeignNpcAnimation::updateNpcBase()
     // Ogre::SceneNode *mInsert
     // ObjectScenePtr   mObjectRoot
     // ?? reuse mInsert?
-    std::string group("General");
     std::string modelName;
 
     // Slots for Bipid Object (from the Construction Set) - may occupy more than one slot (e.g. Robe)
@@ -907,7 +907,7 @@ void ForeignNpcAnimation::updateNpcBase()
         //std::cout << mNpc->mEditorId << " detail " << ESM4::formIdToString(mNpc->mFormId) << std::endl;
 
     NifOgre::ObjectScenePtr scene = NifOgre::ObjectScenePtr (new NifOgre::ObjectScene(mInsert->getCreator()));
-    scene->mForeignObj = std::make_shared<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(mInsert->createChildSceneNode(), /*scene, */meshName, group));
+    scene->mForeignObj = std::make_unique<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(mInsert->createChildSceneNode(), /*scene, */meshName, group));
 
     // IDEA: manage morphed vertices as a resource? Similar to having morphed textures managed by
     // Ogre::TextureManager.  That way if the same NPC is needed for another scene we don't need to
@@ -1603,96 +1603,53 @@ void ForeignNpcAnimation::updateNpcBase()
 #endif
     if (isTES4)
     {
-        {
         if (isFemale)
-    meshName = "meshes\\characters\\_male\\femalehand.nif";
+            meshName = "meshes\\characters\\_male\\femalehand.nif";
         else
-    meshName = "meshes\\characters\\_male\\hand.nif";
-        }
+            meshName = "meshes\\characters\\_male\\hand.nif";
     }
     else
     {
-    meshName = "meshes\\characters\\_male\\lefthand.nif";
+        meshName = "meshes\\characters\\_male\\lefthand.nif";
     }
-    NifOgre::ObjectScenePtr sceneRH = NifOgre::ObjectScenePtr (new NifOgre::ObjectScene(mInsert->getCreator()));
-    sceneRH->mForeignObj = std::make_shared<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(mInsert->createChildSceneNode(), meshName, group));
-    sceneRH->mForeignObj->instantiate(mSkelBase->getMesh()->getSkeleton(), mBodyPartModelNameExt);
 
-    std::map<int32_t, Ogre::Entity*>::const_iterator itRH(sceneRH->mForeignObj->mEntities.begin());
-    for (; itRH != sceneRH->mForeignObj->mEntities.end(); ++itRH)
-    {
-        // FIXME:
-        if (mSkelBase->getMesh()->getSkeleton() == itRH->second->getMesh()->getSkeleton())
-            itRH->second->shareSkeletonInstanceWith(mSkelBase);
-        else
-            std::cout << "no anim " << mSkelBase->getMesh()->getName()
-                    << itRH->second->getMesh()->getName() << std::endl;
-        mInsert->attachObject(itRH->second);
-    }
+#if 0
+    // first create an ObjectScene
+    NifOgre::ObjectScenePtr sceneRH = NifOgre::ObjectScenePtr (new NifOgre::ObjectScene(mInsert->getCreator()));
+    // get or create a skinned model with this NPC's skeleton
+    std::string skeletonName = mObjectRoot->mForeignObj->mModel->getModelName();
+    NiModelPtr hand = modelManager.getByName(skeletonName+"_"+meshName, group);
+    if (!hand)
+        hand = modelManager.createSkinnedModel(meshName, group, mObjectRoot->mForeignObj->mModel.get());
+    // create an instance of the model
+    sceneRH->mForeignObj
+        = std::make_shared<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(hand, mInsert->createChildSceneNode()));
+    sceneRH->mForeignObj->instantiate(mInsert, mSkelBase);
     mObjectParts[ESM::PRT_RHand] = sceneRH;
+#else
+    //removeIndividualPart(ESM::PRT_RHand);
+    //NifOgre::ObjectScenePtr sceneRH
+    //    = createSkinnedObject(mInsert, mSkelBase, meshName, group, mObjectRoot->mForeignObj->mModel);
+    //mObjectParts[ESM::PRT_RHand] = sceneRH;
+    createObject(ESM::PRT_RFoot, mInsert, mSkelBase, meshName, group, mObjectRoot->mForeignObj->mModel);
+#endif
 
     if (isTES4)
     {
         if (isFemale)
-    meshName = "meshes\\characters\\_male\\femalefoot.nif";
+            meshName = "meshes\\characters\\_male\\femalefoot.nif";
         else
-    meshName = "meshes\\characters\\_male\\foot.nif";
+            meshName = "meshes\\characters\\_male\\foot.nif";
     }
     else
-    meshName = "meshes\\characters\\_male\\righthand.nif";
+        meshName = "meshes\\characters\\_male\\righthand.nif";
 
-    NifOgre::ObjectScenePtr sceneRF = NifOgre::ObjectScenePtr (new NifOgre::ObjectScene(mInsert->getCreator()));
-    sceneRF->mForeignObj = std::make_shared<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(mInsert->createChildSceneNode(), meshName, group));
-    sceneRF->mForeignObj->instantiate(mSkelBase->getMesh()->getSkeleton(), mBodyPartModelNameExt);
+    //removeIndividualPart(ESM::PRT_RFoot);
+    ///*NifOgre::ObjectScenePtr */sceneRH
+    //    = createSkinnedObject(mInsert, mSkelBase, meshName, group, mObjectRoot->mForeignObj->mModel);
+    //mObjectParts[ESM::PRT_RFoot] = sceneRH;
+    createObject(ESM::PRT_RFoot, mInsert, mSkelBase, meshName, group, mObjectRoot->mForeignObj->mModel);
 
-    std::map<int32_t, Ogre::Entity*>::const_iterator itRF(sceneRF->mForeignObj->mEntities.begin());
-    for (; itRF != sceneRF->mForeignObj->mEntities.end(); ++itRF)
-    {
-        // FIXME:
-        if (mSkelBase->getMesh()->getSkeleton() == itRF->second->getMesh()->getSkeleton())
-            itRF->second->shareSkeletonInstanceWith(mSkelBase);
-        else
-            std::cout << "no anim " << mSkelBase->getMesh()->getName()
-                    << itRF->second->getMesh()->getName() << std::endl;
-        mInsert->attachObject(itRF->second);
-    }
-    mObjectParts[ESM::PRT_RFoot] = sceneRF;
-
-
-
-
-
-#if 0
-    NifOgre::ObjectScenePtr objectH
-        = NifOgre::Loader::createObjects(mSkelBase,
-                                         "Bip01 Head", // not used for skinned
-                                         "",
-                                         mInsert,
-                                         "meshes\\characters\\imperial\\headhuman.nif");
-    Ogre::SceneNode *nodeHand = mInsert->createChildSceneNode();
-    NifOgre::ObjectScenePtr objectHand
-        = NifOgre::Loader::createObjects(mSkelBase,
-                                         "Bip01", // not used for skinned
-                                         "",
-                                         mInsert,
-                                         "meshes\\characters\\_male\\hand.nif");
-#endif
-
-#if 0
-    Ogre::Vector3 glowColor;
-    setRenderProperties(scene,
-                        (mViewMode == VM_FirstPerson) ? RV_FirstPerson : mVisibilityFlags,
-                        RQG_Main, RQG_Alpha,
-                        0,
-                        false, /*enchantedGlow*/
-                        &glowColor);
-    setRenderProperties(objectHand,
-                        (mViewMode == VM_FirstPerson) ? RV_FirstPerson : mVisibilityFlags,
-                        RQG_Main, RQG_Alpha,
-                        0,
-                        false, /*enchantedGlow*/
-                        &glowColor);
-#endif
 
     //for(size_t i = 0;i < ESM::PRT_Count;i++)
         //removeIndividualPart((ESM::PartReferenceType)i);
@@ -1724,11 +1681,13 @@ void ForeignNpcAnimation::updateNpcBase()
 
 
         if ((mNpc->mBaseConfig.flags & 0x01) != 0 && !armor->mModelFemale.empty()) // female
-    meshName = "meshes\\"+armor->mModelFemale;
+            meshName = "meshes\\"+armor->mModelFemale;
         else
-    meshName = "meshes\\"+armor->mModelMale;
-    //if (meshName == "meshes\\Armor\\Thief\\M\\Boots.NIF")
-        //std::cout << "stop" << std::endl;
+            meshName = "meshes\\"+armor->mModelMale;
+        //if (meshName == "meshes\\Armor\\Thief\\M\\Boots.NIF")
+            //std::cout << "stop" << std::endl;
+
+#if 0
     NifOgre::ObjectScenePtr sceneB = NifOgre::ObjectScenePtr (new NifOgre::ObjectScene(mInsert->getCreator()));
     sceneB->mForeignObj = std::make_shared<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(mInsert->createChildSceneNode(), meshName, group));
     sceneB->mForeignObj->instantiate(mSkelBase->getMesh()->getSkeleton(), mBodyPartModelNameExt);
@@ -1745,7 +1704,12 @@ void ForeignNpcAnimation::updateNpcBase()
         mInsert->attachObject(it->second);
     }
     mObjectParts[ESM::PRT_RFoot] = sceneB;
-
+#else
+        //removeIndividualPart(ESM::PRT_RFoot);
+        //sceneRH = createSkinnedObject(mInsert, mSkelBase, meshName, group, mObjectRoot->mForeignObj->mModel);
+        //mObjectParts[ESM::PRT_RFoot] = sceneRH;
+        createObject(ESM::PRT_RFoot, mInsert, mSkelBase, meshName, group, mObjectRoot->mForeignObj->mModel);
+#endif
 
 
     }
@@ -1759,9 +1723,10 @@ void ForeignNpcAnimation::updateNpcBase()
 
 
         if (isFemale && !armor->mModelFemale.empty()) // female
-    meshName = "meshes\\"+armor->mModelFemale;
+            meshName = "meshes\\"+armor->mModelFemale;
         else
-    meshName = "meshes\\"+armor->mModelMale;
+            meshName = "meshes\\"+armor->mModelMale;
+#if 0
     NifOgre::ObjectScenePtr sceneC = NifOgre::ObjectScenePtr (new NifOgre::ObjectScene(mInsert->getCreator()));
     sceneC->mForeignObj = std::make_shared<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(mInsert->createChildSceneNode(), meshName, group));
     sceneC->mForeignObj->instantiate(mSkelBase->getMesh()->getSkeleton(), mBodyPartModelNameExt);
@@ -1779,9 +1744,13 @@ void ForeignNpcAnimation::updateNpcBase()
     }
             if (!mObjectParts[ESM::PRT_Cuirass].isNull())
                 mObjectParts[ESM::PRT_Cuirass].reset();
-    mObjectParts[ESM::PRT_Cuirass] = sceneC;
-
-
+                mObjectParts[ESM::PRT_Cuirass] = sceneC;
+#else
+      //removeIndividualPart(ESM::PRT_Cuirass);
+      //sceneRH = createSkinnedObject(mInsert, mSkelBase, meshName, group, mObjectRoot->mForeignObj->mModel);
+      //mObjectParts[ESM::PRT_Cuirass] = sceneRH;
+        createObject(ESM::PRT_Cuirass, mInsert, mSkelBase, meshName, group, mObjectRoot->mForeignObj->mModel);
+#endif
     }
     // LegionGauntlets
     // Armor\Legion\M\Gauntlets.NIF
@@ -1790,6 +1759,7 @@ void ForeignNpcAnimation::updateNpcBase()
              ((armor->mArmorFlags & ESM4::Armor::FO3_RightHand) != 0))
     {
         //addOrReplaceIndividualPart(ESM::PRT_RHand, -1, 1, "meshes\\armor\\legion\\m\\gauntlets.nif", false, &glowColor);
+#if 0
                 // Not sure why detach is needed
         if (!mObjectParts[ESM::PRT_RHand].isNull() && mObjectParts[ESM::PRT_RHand]->mForeignObj)
         {
@@ -1803,11 +1773,12 @@ void ForeignNpcAnimation::updateNpcBase()
             mObjectParts[ESM::PRT_RHand]->mForeignObj.reset();
             mObjectParts[ESM::PRT_RHand].reset();
         }
-
+#endif
         if (isFemale && !armor->mModelFemale.empty()) // female
-    meshName = "meshes\\"+armor->mModelFemale;
+            meshName = "meshes\\"+armor->mModelFemale;
         else
-    meshName = "meshes\\"+armor->mModelMale;
+            meshName = "meshes\\"+armor->mModelMale;
+#if 0
     NifOgre::ObjectScenePtr sceneH = NifOgre::ObjectScenePtr (new NifOgre::ObjectScene(mInsert->getCreator()));
     sceneH->mForeignObj = std::make_shared<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(mInsert->createChildSceneNode(), meshName, group));
     sceneH->mForeignObj->instantiate(mSkelBase->getMesh()->getSkeleton(), mBodyPartModelNameExt);
@@ -1824,7 +1795,13 @@ void ForeignNpcAnimation::updateNpcBase()
         mInsert->attachObject(it->second);
     }
     mObjectParts[ESM::PRT_RHand] = sceneH;
-
+#else
+    //removeIndividualPart(ESM::PRT_RHand);
+    //sceneRH = createSkinnedObject(mInsert, mSkelBase, meshName, group, mObjectRoot->mForeignObj->mModel);
+    //mObjectParts[ESM::PRT_RHand] = sceneRH;
+    //mObjectParts[ESM::PRT_RHand] =
+        createObject(ESM::PRT_RHand, mInsert, mSkelBase, meshName, group, mObjectRoot->mForeignObj->mModel);
+#endif
     }
 
     // LegionGreaves
@@ -1836,9 +1813,10 @@ void ForeignNpcAnimation::updateNpcBase()
         //addOrReplaceIndividualPart(ESM::PRT_Groin, -1, 1, "meshes\\armor\\legion\\m\\greaves.nif", false, &glowColor);
 
         if (isFemale && !armor->mModelFemale.empty()) // female
-    meshName = "meshes\\"+armor->mModelFemale;
+            meshName = "meshes\\"+armor->mModelFemale;
         else
-    meshName = "meshes\\"+armor->mModelMale;
+            meshName = "meshes\\"+armor->mModelMale;
+#if 0
     NifOgre::ObjectScenePtr sceneG = NifOgre::ObjectScenePtr (new NifOgre::ObjectScene(mInsert->getCreator()));
     sceneG->mForeignObj = std::make_shared<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(mInsert->createChildSceneNode(), meshName, group));
     sceneG->mForeignObj->instantiate(mSkelBase->getMesh()->getSkeleton(), mBodyPartModelNameExt);
@@ -1855,7 +1833,17 @@ void ForeignNpcAnimation::updateNpcBase()
         mInsert->attachObject(it->second);
     }
     mObjectParts[ESM::PRT_Groin] = sceneG;
-
+#else
+#    if 0
+    removeIndividualPart(ESM::PRT_Groin);
+    sceneRH = createSkinnedObject(mInsert, mSkelBase, meshName, group, mObjectRoot->mForeignObj->mModel);
+    mObjectParts[ESM::PRT_Groin] = sceneRH;
+#    else
+    //removeIndividualPart(ESM::PRT_Groin);
+    //mObjectParts[ESM::PRT_Groin] =
+        createObject(ESM::PRT_Groin, mInsert, mSkelBase, meshName, group, mObjectRoot->mForeignObj->mModel);
+#    endif
+#endif
 
     }
     // LegionHelmet
@@ -1900,7 +1888,7 @@ void ForeignNpcAnimation::updateNpcBase()
             //meshName = "meshes\\"+hair->mModel;
 
         NifOgre::ObjectScenePtr sceneHe = NifOgre::ObjectScenePtr (new NifOgre::ObjectScene(mInsert->getCreator()));
-        sceneHe->mForeignObj = std::make_shared<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(mInsert->createChildSceneNode(), meshName, group));
+        sceneHe->mForeignObj = std::make_unique<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(mInsert->createChildSceneNode(), meshName, group));
         sceneHe->mForeignObj->instantiate();
 
         Ogre::Bone *heBone = mSkelBase->getSkeleton()->getBone("Bip01 Head");
@@ -1919,12 +1907,10 @@ void ForeignNpcAnimation::updateNpcBase()
     else if ((armor->mArmorFlags & ESM4::Armor::TES4_Shield) != 0)
     {
         if (isFemale && !armor->mModelFemale.empty()) // female
-    meshName = "meshes\\"+armor->mModelFemale;
+            meshName = "meshes\\"+armor->mModelFemale;
         else
-    meshName = "meshes\\"+armor->mModelMale;
-    //else
-        //meshName = "meshes\\"+hair->mModel;
-
+            meshName = "meshes\\"+armor->mModelMale;
+#if 0
     NifOgre::ObjectScenePtr sceneSh = NifOgre::ObjectScenePtr (new NifOgre::ObjectScene(mInsert->getCreator()));
     sceneSh->mForeignObj = std::make_shared<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(mInsert->createChildSceneNode(), meshName, group));
     sceneSh->mForeignObj->instantiate();
@@ -1935,6 +1921,11 @@ void ForeignNpcAnimation::updateNpcBase()
         mSkelBase->attachObjectToBone("Bip01 L ForearmTwist", it->second);
     }
     mObjectParts[ESM::PRT_Shield] = sceneSh;
+#else
+    //removeIndividualPart(ESM::PRT_Shield);
+    //mObjectParts[ESM::PRT_Shield] =
+        createObject(ESM::PRT_Shield, mInsert, mSkelBase, meshName, group, mObjectRoot->mForeignObj->mModel);
+#endif
     }
     else
         std::cout << "unknown armor " << armor->mEditorId << " " << std::hex << armor->mArmorFlags << std::endl;
@@ -1977,7 +1968,7 @@ void ForeignNpcAnimation::updateNpcBase()
         sam.getMorphedVertices(fgVertices.get(), meshName, sRaceCoeff, aRaceCoeff, sCoeff, aCoeff);
 
         NifOgre::ObjectScenePtr scene = NifOgre::ObjectScenePtr (new NifOgre::ObjectScene(mInsert->getCreator()));
-        scene->mForeignObj = std::make_shared<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(mInsert->createChildSceneNode(), meshName, group));
+        scene->mForeignObj = std::make_unique<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(mInsert->createChildSceneNode(), meshName, group));
     if (!Ogre::ResourceGroupManager::getSingleton().resourceExistsInAnyGroup(path+"egm"))
         scene->mForeignObj->instantiate(mSkelBase->getMesh()->getSkeleton(), mBodyPartModelNameExt);
     else
@@ -2111,7 +2102,7 @@ void ForeignNpcAnimation::updateNpcBase()
     meshName = "meshes\\"+armor->mModelMale;
 
         NifOgre::ObjectScenePtr scene = NifOgre::ObjectScenePtr (new NifOgre::ObjectScene(mInsert->getCreator()));
-        scene->mForeignObj = std::make_shared<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(mInsert->createChildSceneNode(), meshName, group));
+        scene->mForeignObj = std::make_unique<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(mInsert->createChildSceneNode(), meshName, group));
         scene->mForeignObj->instantiate(mSkelBase->getMesh()->getSkeleton(), mBodyPartModelNameExt);
 
         std::map<int32_t, Ogre::Entity*>::const_iterator it(scene->mForeignObj->mEntities.begin());
@@ -2186,7 +2177,7 @@ void ForeignNpcAnimation::updateNpcBase()
     meshName = "meshes\\"+cloth->mModelMale;
 
         NifOgre::ObjectScenePtr scene = NifOgre::ObjectScenePtr (new NifOgre::ObjectScene(mInsert->getCreator()));
-        scene->mForeignObj = std::make_shared<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(mInsert->createChildSceneNode(), meshName, group));
+        scene->mForeignObj = std::make_unique<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(mInsert->createChildSceneNode(), meshName, group));
         scene->mForeignObj->instantiate(mSkelBase->getMesh()->getSkeleton(), mBodyPartModelNameExt);
 
         std::map<int32_t, Ogre::Entity*>::const_iterator it(scene->mForeignObj->mEntities.begin());
@@ -2265,7 +2256,7 @@ void ForeignNpcAnimation::updateNpcBase()
         else
         meshName = "meshes\\characters\\_male\\upperbody.nif";
         NifOgre::ObjectScenePtr scene = NifOgre::ObjectScenePtr (new NifOgre::ObjectScene(mInsert->getCreator()));
-        scene->mForeignObj = std::make_shared<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(mInsert->createChildSceneNode(), meshName, group));
+        scene->mForeignObj = std::make_unique<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(mInsert->createChildSceneNode(), meshName, group));
         scene->mForeignObj->instantiate(mSkelBase->getMesh()->getSkeleton(), mBodyPartModelNameExt);
 
         std::map<int32_t, Ogre::Entity*>::const_iterator it(scene->mForeignObj->mEntities.begin());
@@ -2334,6 +2325,77 @@ std::string ForeignNpcAnimation::getSkeletonModel(const MWWorld::ESMStore& store
     }
     else
         return ""; // shouldn't happen
+}
+
+NifOgre::ObjectScenePtr ForeignNpcAnimation::createSkinnedObject(Ogre::SceneNode *baseNode,
+        Ogre::Entity *skelBase, const std::string& meshName, const std::string& group, NiModelPtr skeletonModel)
+{
+    // first create an ObjectScene
+    NifOgre::ObjectScenePtr scene = NifOgre::ObjectScenePtr (new NifOgre::ObjectScene(baseNode->getCreator()));
+
+    // get or create a skinned model with this NPC's skeleton
+    std::string skeletonName = skeletonModel->getModelName();
+
+    NiBtOgre::NiModelManager& modelManager = NiBtOgre::NiModelManager::getSingleton();
+    NiModelPtr object = modelManager.getByName(skeletonName+"_"+meshName, group);
+    if (!object)
+        object = modelManager.createSkinnedModel(meshName, group, skeletonModel.get());
+
+    // create an instance of the model
+    scene->mForeignObj
+        = std::make_unique<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(object, baseNode->createChildSceneNode()));
+
+    scene->mForeignObj->instantiate(baseNode, skelBase);
+
+    return scene;
+}
+
+/*NifOgre::ObjectScenePtr*/
+bool ForeignNpcAnimation::createObject(ESM::PartReferenceType type, Ogre::SceneNode *baseNode,
+        Ogre::Entity *skelBase, const std::string& meshName, const std::string& group, NiModelPtr skeletonModel)
+{
+    // FIXME: should check priority
+    removeIndividualPart(type);
+
+    // FIXME: probably needs a try/catch block here
+
+    // first test if the model is skinned
+    NiBtOgre::NiModelManager& modelManager = NiBtOgre::NiModelManager::getSingleton();
+    NiModelPtr testModel = modelManager.getOrLoadByName(meshName, group);
+
+    if(testModel->buildData().mIsSkinned)
+    {
+        mObjectParts[type]
+            = createSkinnedObject(mInsert, mSkelBase, meshName, group, mObjectRoot->mForeignObj->mModel);
+
+        return true;
+    }
+    else // some objects, e.g. a Shield, is not skinned
+    {
+        NiBtOgre::NiNode *rootNode = testModel->getRef<NiBtOgre::NiNode>(testModel->rootIndex());
+        std::string targetBone = rootNode->getExtraDataString("Prn");
+
+        NifOgre::ObjectScenePtr scene
+            = NifOgre::ObjectScenePtr (new NifOgre::ObjectScene(mInsert->getCreator()));
+
+        scene->mForeignObj
+            = std::make_unique<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(testModel, mInsert->createChildSceneNode()));
+        scene->mForeignObj->instantiate();
+
+        if (targetBone != "")
+        {
+            std::map<int32_t, Ogre::Entity*>::const_iterator it(scene->mForeignObj->mEntities.begin());
+            for (; it != scene->mForeignObj->mEntities.end(); ++it)
+                mSkelBase->attachObjectToBone(targetBone, it->second);
+
+            mObjectParts[type] = scene;
+
+            return true;
+        }
+        else
+            return false;
+            //throw std::runtime_error("createObject: No target bone to attach part");
+    }
 }
 
 void ForeignNpcAnimation::addAnimSource(const std::string &model)
@@ -3101,6 +3163,8 @@ void ForeignNpcAnimation::showWeapons(bool showWeapon)
 void ForeignNpcAnimation::showCarriedLeft(bool show)
 {
     mShowCarriedLeft = show;
+    // FIXME: need to do logic for Slot_CarriedLeft
+#if 0
     MWWorld::InventoryStore& inv = mPtr.getClass().getInventoryStore(mPtr);
     MWWorld::ContainerStoreIterator iter = inv.getSlot(MWWorld::InventoryStore::Slot_CarriedLeft);
     if(show && iter != inv.end())
@@ -3116,6 +3180,7 @@ void ForeignNpcAnimation::showCarriedLeft(bool show)
     }
     else
         removeIndividualPart(ESM::PRT_Shield);
+#endif
 }
 
 void ForeignNpcAnimation::configureAddedObject(NifOgre::ObjectScenePtr object, MWWorld::Ptr ptr, int slot)

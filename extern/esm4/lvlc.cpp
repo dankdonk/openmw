@@ -109,7 +109,7 @@ bool ESM4::LeveledCreature::calcEachItemInCount() const
     if (mHasLvlCreaFlags)
         return (mLvlCreaFlags & 0x02) != 0;
     else
-        true; // FIXME: just a guess
+        return true; // FIXME: just a guess
 }
 
 std::int8_t ESM4::LeveledCreature::chanceNone() const

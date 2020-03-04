@@ -134,6 +134,7 @@ ObjectScene::~ObjectScene()
     mLights.clear();
     mParticles.clear();
     mEntities.clear();
+    mForeignObj.reset();
     //mVertexAnimEntities.clear();
     //mSkeletonAnimEntities.clear();
     mSkelBase = NULL;
@@ -1292,7 +1293,7 @@ public:
         {
             try
             {
-                scene->mForeignObj = std::make_shared<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(sceneNode, /*scene,*/ name, group));
+                scene->mForeignObj = std::make_unique<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(sceneNode, /*scene,*/ name, group));
                 scene->mForeignObj->instantiate();
                 if (scene->mForeignObj)
                 {
