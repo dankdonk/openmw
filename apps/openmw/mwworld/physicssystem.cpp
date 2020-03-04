@@ -688,6 +688,10 @@ namespace MWWorld
         {
             mEngine->createAndAdjustRagdollBody(
                 mesh, node->getName(), objAnim->getPhysicsNodeMap(), ptr.getCellRef().getScale(), node->getPosition(), node->getOrientation(), 0, 0, false, placeable);
+
+            // FIXME: really want to get rid of doing this twice
+            mEngine->createAndAdjustRagdollBody(
+                mesh, node->getName(), objAnim->getPhysicsNodeMap(), ptr.getCellRef().getScale(), node->getPosition(), node->getOrientation(), 0, 0, true, placeable);
             return;
         }
 

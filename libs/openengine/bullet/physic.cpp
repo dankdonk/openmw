@@ -595,15 +595,14 @@ namespace Physic
             else
                 parentBody->mChildren[ci->mTargetNames[iter->first]] = body;
 
-            ++numBodies;
-
             if (!raycasting)
             {
                 assert (mCollisionObjectMap.find(name) == mCollisionObjectMap.end());
                 mDynamicsWorld->addRigidBody(
                         //body,CollisionType_World,CollisionType_Actor|CollisionType_HeightMap);
                         body,CollisionType_World,CollisionType_World|CollisionType_Actor|CollisionType_HeightMap);
-                if (numBodies == 1) mCollisionObjectMap[name] = body; // register only the parent
+                if (numBodies == 0)
+                    mCollisionObjectMap[name] = body; // register only the parent
             }
             else
             {
@@ -612,8 +611,11 @@ namespace Physic
                         body,CollisionType_Raycasting,CollisionType_Raycasting|CollisionType_Projectile);
                 body->setCollisionFlags(
                         body->getCollisionFlags() | btCollisionObject::CF_DISABLE_VISUALIZE_OBJECT);
-                if (numBodies == 1) mRaycastingObjectMap[name] = body; // register only the parent
+                if (numBodies == 0)
+                    mRaycastingObjectMap[name] = body; // register only the parent
             }
+
+            ++numBodies;
         }
 
         return 0;
@@ -708,15 +710,14 @@ namespace Physic
                 else
                     parentBody->mChildren[ci->mTargetNames[iter->first]] = body;
 
-                ++numBodies;
-
                 if (!raycasting)
                 {
                     assert (mCollisionObjectMap.find(name) == mCollisionObjectMap.end());
                     mDynamicsWorld->addRigidBody(
                             //body,CollisionType_World,CollisionType_Actor|CollisionType_HeightMap);
                             body,CollisionType_World,CollisionType_World|CollisionType_Actor|CollisionType_HeightMap);
-                    if (numBodies == 1) mCollisionObjectMap[name] = body; // register only the parent
+                    if (numBodies == 0)
+                        mCollisionObjectMap[name] = body; // register only the parent
                 }
                 else
                 {
@@ -725,8 +726,11 @@ namespace Physic
                             body,CollisionType_Raycasting,CollisionType_Raycasting|CollisionType_Projectile);
                     body->setCollisionFlags(
                             body->getCollisionFlags() | btCollisionObject::CF_DISABLE_VISUALIZE_OBJECT);
-                    if (numBodies == 1) mRaycastingObjectMap[name] = body; // register only the parent
+                    if (numBodies == 0)
+                        mRaycastingObjectMap[name] = body; // register only the parent
                 }
+
+                ++numBodies;
             }
 
             return 0;

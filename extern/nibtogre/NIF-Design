@@ -1583,6 +1583,130 @@ Creation for a normal NiModel:
 
 **NOTE:** After all that effort, the new method of using `createFullSkeleton()/addAllBones()` turned out to be inferior and had to revert to using `createSkeleton()/buildSkeletion()/addBones()` even for skeleton.nif, etc.
 
+# [04/03/2020] Trying to get doors working again.
+
+  * [15/02/19] af0e502c75c2df5ab8853ef43e38fc60558863b3 doors work
+  * [17/02/20] 004a1d72985115fed43acd644f5da8ce2d90d302 doors no longer work
+
+But so much change in a year - don't know where to start.  Looking at the call stack:
+
+    openmw.exe!MWWorld::Scene::searchPtrViaHandle(const std::string & handle) Line 956	C++
+    openmw.exe!MWWorld::World::searchPtrViaHandle(const std::string & handle) Line 734	C++
+    openmw.exe!MWWorld::World::getPtrViaHandle(const std::string & handle) Line 723	C++
+    openmw.exe!MWWorld::World::getFacedObject() Line 1126	C++
+    openmw.exe!MWWorld::World::updateWindowManager() Line 1797	C++
+
+Maybe we're not storing the physics handles properly?  Placed a breakpoint at `PhysicEngine::createAndAdjustRagdollBody()` to track `Dungeons\Chargen\impDunDoor02.NIF`:
+
+```cpp
+RigidBody* PhysicEngine::createAndAdjustRigidBody(const std::string &mesh, const std::string &name,
+```
+
+The comparison of ptr.mRef.mData.mBaseNode.mName with OEngine::Physic::RigidBody::mName is done here:
+
+```cpp
+Ptr World::getPtrViaHandle (const std::string& handle)
+{
+    Ptr res = searchPtrViaHandle (handle);
+    if (res.isEmpty ())
+        throw std::runtime_error ("unknown Ogre handle: " + handle);
+    return res;
+}
+```
+
+Ok, that means the handle in `InsertFunctor::operator()` (scene.cpp) should be the same as the on returned by `rayTest()` and subsequently getPrtViaHandle().
+
+```cpp
+try
+{
+    addObject(ptr, mPhysics, mRendering);   // <---- check here
+    updateObjectLocalRotation(ptr, mPhysics, mRendering);
+    if (ptr.getRefData().getBaseNode())
+```
+
+It should be noted that RigidBody::mName is the same for **all** rigid bodies in a NIF.  There are some overly complicated code to handle this.
+
+After some stepping through the debugger, it turns out that the raycast creation was not done, see below:
+
+```cpp
+if (objAnim && !objAnim->getPhysicsNodeMap().empty())  // FIXME: this is such a bad hack
+{
+    mEngine->createAndAdjustRagdollBody(
+        mesh, node->getName(), objAnim->getPhysicsNodeMap(), ptr.getCellRef().getScale(), node->getPosition(), node->getOrientation(), 0, 0, false, placeable);
+    return;
+}
+```
+
+## FIXME 1
+
+Index number looks wrong?
+
+    havok meshes\dungeons\chargen\idcrumblewall01.nif#44@IDCrumbleBrick05
+    havok meshes\dungeons\chargen\idcrumblewall01.nif#61@IDCrumbleBrick06
+    havok meshes\dungeons\chargen\idcrumblewall01.nif#72@IDCrumbleBrick07
+    havok meshes\dungeons\chargen\idcrumblewall01.nif#83@IDCrumbleBrick08
+    havok meshes\dungeons\chargen\idcrumblewall01.nif#94@IDCrumbleBrick09
+    havok meshes\dungeons\chargen\idcrumblewall01.nif#105@IDCrumbleBrick10
+    havok meshes\dungeons\chargen\idcrumblewall01.nif#116@IDCrumbleBrick06b
+    havok meshes\dungeons\chargen\idcrumblewall01.nif#127@IDCrumbleBrick07b
+    havok meshes\dungeons\chargen\idcrumblewall01.nif#138@IDCrumbleBrick08b
+    havok meshes\dungeons\chargen\idcrumblewall01.nif#149@IDCrumbleBrick01
+    havok meshes\dungeons\chargen\idcrumblewall01.nif#158@IDCrumbleBrick02
+    havok meshes\dungeons\chargen\idcrumblewall01.nif#169@IDCrumbleBrick03
+    havok meshes\dungeons\chargen\idcrumblewall01.nif#177@IDCrumbleBrick04
+    havok meshes\dungeons\chargen\prisonsecretwallswitch01.nif#16@Switch
+    havok meshes\dungeons\chargen\prisonsecretwall01.nif#114@bed
+    havok meshes\dungeons\chargen\prisonsecretwall01.nif#126@wall
+    phantom: meshes\dungeons\misc\triggers\trigzone02.nif
+    havok meshes\dungeons\chargen\prisoncelltorch01.nif#0@PrisonCellTorch01
+    havok meshes\dungeons\chargen\ropebucket01.nif#75@Bucket
+    havok meshes\armor\leather\shield.nif#0@Shield
+    havok meshes\dungeons\chargen\cgprisoncellgate01.nif#24@gate01
+    havok meshes\dungeons\chargen\cgprisoncellgate01.nif#44@gate02
+    havok meshes\dungeons\chargen\idgate01.nif#24@IDGate01b
+    havok meshes\dungeons\chargen\idgate01.nif#36@IDGate01c
+    havok meshes\architecture\castleinterior\towersmall\castletowerdoor01anim.nif#17@CastleTowerDoor01Anim NonAccum
+    havok meshes\dungeons\caves\cdoor03.nif#31@CDoor03 NonAccum
+    havok meshes\dungeons\caves\cdoor03.nif#37@Door
+    havok meshes\dungeons\caves\cdoor03.nif#49@Door@#0 <- 48?
+
+## FIXME 2
+
+handleToMesh keeps growing!!!
+
+```cpp
+void PhysicsSystem::addObject (const Ptr& ptr, const std::string& mesh, bool placeable)
+    handleToMesh[node->getName()] = mesh;
+```
+
+# [04/03/2020] Finding missing TrapLog
+
+CoC "ImperialDungeon05" and look for `Dungeons\Caves\Traps\CTrapLog01.NIF`.  Found it - it turns out that CollisoinType_World had to be added in th flags otherwise the physics shapes don't collide with the floor and sink through.
+
+```cpp
+if (!raycasting)
+{
+    assert (mCollisionObjectMap.find(name) == mCollisionObjectMap.end());
+    mDynamicsWorld->addRigidBody(
+            //body,CollisionType_World,CollisionType_Actor|CollisionType_HeightMap);
+            body,CollisionType_World,CollisionType_World|CollisionType_Actor|CollisionType_HeightMap);
+    if (numBodies == 0)
+        mCollisionObjectMap[name] = body; // register only the parent
+}
+```
+
+**The activator is not working, however.**  Activation results in some weird rotation of the logs.
+
+**Also, there a strange code:**
+
+```cpp
+// FIXME
+if (lowerMesh.find("traplog") == std::string::npos)
+    return createAndAdjustRigidBody(mesh, name, scale, position, rotation, scaledBoxTranslation, boxRotation,   raycasting, placeable);
+```
+
+That might be due to the inability to determine whether the rigid bodies are ragdoll or not?
+
 
 
 [//]: # (/* spell spelllang=en_au syntax=cpp */)
