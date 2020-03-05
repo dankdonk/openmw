@@ -129,7 +129,7 @@ namespace NiBtOgre
         NiModelPtr createSkeletonModel(const Ogre::String& name, const Ogre::String& group);
 
         NiModelPtr createMorphedModel(const Ogre::String& nif, const Ogre::String& group,
-                const ESM4::Npc *npc, const ESM4::Race *race, const Ogre::String& texture);
+                const ESM4::Npc *npc, const ESM4::Race *race, const Ogre::String& texture, NiModel *skeleton);
 
         NiModelPtr createAnimModel(const Ogre::String& name, const Ogre::String& group,
                 NiModel *skeleton);

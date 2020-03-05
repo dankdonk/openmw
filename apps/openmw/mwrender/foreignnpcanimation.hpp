@@ -116,12 +116,18 @@ private:
 
     std::string getSkeletonModel(const MWWorld::ESMStore& store) const;
 
-    NifOgre::ObjectScenePtr createSkinnedObject(Ogre::SceneNode *baseNode,
-        Ogre::Entity *skelBase, const std::string& meshName, const std::string& group, NiModelPtr skeletonModel);
+    NifOgre::ObjectScenePtr createSkinnedObject(NifOgre::ObjectScenePtr scene,
+            const std::string& meshName, const std::string& group, NiModelPtr skeletonModel);
 
-    /*NifOgre::ObjectScenePtr*/
+    bool createMorphedObject(ESM::PartReferenceType type, const std::string& meshName, const std::string& group,
+        const ESM4::Npc *npc, const ESM4::Race *race, const Ogre::String& texture, NiModelPtr skeletonModel);
+
     bool createObject(ESM::PartReferenceType type, Ogre::SceneNode *baseNode,
         Ogre::Entity *skelBase, const std::string& meshName, const std::string& group, NiModelPtr skeletonModel);
+
+    ESM::PartReferenceType getPartType(std::uint32_t armorFlags);
+
+    bool equipArmor(const ESM4::Armor* armor, bool isFemale);
 
     NifOgre::ObjectScenePtr insertBoundedPart(const std::string &model, int group, const std::string &bonename,
                                               const std::string &bonefilter,

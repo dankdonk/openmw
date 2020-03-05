@@ -283,6 +283,8 @@ namespace NiBtOgre
         // WARNING: SceneNode in 'inst' should have the scale (assumed uniform)
         std::string buildBodyPart(Ogre::SkeletonPtr skeleton = Ogre::SkeletonPtr());
 
+        void build();
+
         void buildAnimation(Ogre::Entity *skelBase, NiModelPtr anim,
                 std::multimap<float, std::string>& textKeys,
                 std::vector<Ogre::Controller<Ogre::Real> >& controllers,
@@ -300,7 +302,7 @@ namespace NiBtOgre
         // for skeleton.nif, etc, that requires an Entity for ObjectScene
         void createDummyMesh();
         // supply skeleton for skinned objects
-        void createMesh(Ogre::SkeletonPtr skeleton = Ogre::SkeletonPtr());
+        void createMesh(bool isMorphed = false, Ogre::SkeletonPtr skeleton = Ogre::SkeletonPtr());
 
         // FIXME: move out?
         //void buildEntities(BtOgreInst *inst);
@@ -310,19 +312,21 @@ namespace NiBtOgre
         inline const BuildData& buildData() const { return mBuildData; }
 
         // used to generate a FaceGen TRI file, returns the vertices of the first NiTriBasedGeom
-        const std::vector<Ogre::Vector3>& fgVertices();
+        const std::vector<Ogre::Vector3>& fgVertices() const;
 
         // used by FgSam to populate the morphed vertices
         std::vector<Ogre::Vector3>& fgMorphVertices();
 
+        void useFgMorphVertices();
+
+        std::string targetBone() const;
+
         void findBoneNodes(bool buildObjectPalette = false);
     private:
 
-        void build();
-
         // access to NiGeometryData for generating a FaceGen TRI file or to populate morphed vertices
         // WARN: may throw
-        NiTriBasedGeom *fgGeometry();
+        NiTriBasedGeom *fgGeometry() const;
     };
 }
 

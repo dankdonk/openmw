@@ -113,7 +113,9 @@ NiBtOgre::NiGeometry::NiGeometry(uint32_t index, NiStream *stream, const NiModel
 }
 
 NiBtOgre::NiTriBasedGeom::NiTriBasedGeom(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
-    : NiGeometry(index, stream, model, data), mData(data) // for accessing mSkeleton later
+    : NiGeometry(index, stream, model, data)
+    , mUseMorphed(false)
+    , mData(data) // for accessing mSkeleton later
 {
     //mMorphedVertices.reset();
     mMorphVertices.clear();
@@ -313,7 +315,7 @@ bool NiBtOgre::NiTriBasedGeom::buildSubMesh(Ogre::Mesh *mesh, BoundsFinder& boun
 
     // NOTE: below code copied from components/nifogre/mesh.cpp (OpenMW)
 
-    const std::vector<Ogre::Vector3>& srcVerts = getVertices();
+    const std::vector<Ogre::Vector3>& srcVerts = getVertices(mUseMorphed ? true : false);
     std::vector<Ogre::Vector3> vertices;
     vertices.resize(srcVerts.size());
 

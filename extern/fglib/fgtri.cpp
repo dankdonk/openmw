@@ -197,6 +197,11 @@ namespace FgLib
             // Characters\Hair\KhajiitEarrings.NIF
             // Characters\Hair\Style07.NIF
 
+
+            // NOTE: Armor\Blades\M\Helmet.NIF or Armor\LegionHorsebackGuard\Helmet.NIF clips
+            //       if the "fake" TRI vertices are used.  Maybe it is better not to morph?
+
+
             // try to construct one from the mesh (vertices only)
             size_t pos = name.find_last_of(".");
             // mimic Ogre exeption

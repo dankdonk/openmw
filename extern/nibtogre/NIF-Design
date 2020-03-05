@@ -1707,6 +1707,17 @@ if (lowerMesh.find("traplog") == std::string::npos)
 
 That might be due to the inability to determine whether the rigid bodies are ragdoll or not?
 
+# [05/03/2020] Making progress with NiModel
+
+Naming convension needs to be revisited.  A head model may be morphed per NPC's FaceGen coefficients.  However it is alos skinned, meaning it will have an external skeleton.  **NOTE:** not sure if the external skeleton can be anything other than skeleton.nif for FaceGen head models.
+
+Made progress with morphed models but looks like a redesign is required.  There were some assumptions that may not be correct:
+
+  * Assumed all models that needs to attach to a bone has "Prn" NiExtraDataString - however ears and eyes don't.
+  * Assumed it would be ok to use the vertices from the NIF files when the corresponding TRI files do not exist.  However some helmets (e.g. Armor\Blades\M\Helmet.NIF and Armor\LegionHorsebackGuard\Helmet.NIF ) clip the head model when the vertices are morphed this way.  Maybe it is better not to morph if the TRI file does not exist?
+
+Also the codebase has become a spaghetti mess and is rather difficult to follow.
+
 
 
 [//]: # (/* spell spelllang=en_au syntax=cpp */)

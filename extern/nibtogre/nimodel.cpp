@@ -205,12 +205,26 @@ void NiBtOgre::NiModel::findBoneNodes(bool buildObjectPalette)
 //
 // FIXME: maybe pass a parameter here indicating static mesh? (create a "static" group?)
 // Or group should come from the classes, e.g. static, misc, furniture, etc
-void NiBtOgre::NiModel::createMesh(Ogre::SkeletonPtr skeleton)
+void NiBtOgre::NiModel::createMesh(bool isMorphed, Ogre::SkeletonPtr skeleton)
 {
     Ogre::MeshManager& meshManager = Ogre::MeshManager::getSingleton();
     NiMeshLoader& meshLoader = NiModelManager::getSingleton().meshLoader();
 
     std::string skelName = boost::to_lower_copy((skeleton.isNull()) ? "" : skeleton->getName());
+    std::string prepend;
+    if (isMorphed)
+    {
+        prepend = ""; // should already have npcname_ prepended in the modelname
+    }
+    else if (!skeleton)
+    {
+        prepend = "";
+    }
+    else
+    {
+        prepend = skelName + "_";
+    }
+
     // iterate through the mesh build map
     //
     // NOTE: If the model/object is static, we only need one child scenenode from the
@@ -234,7 +248,7 @@ void NiBtOgre::NiModel::createMesh(Ogre::SkeletonPtr skeleton)
         //
         // FIXME: failsafe - check if mParent->getNodeName() returns blank, in which case use block number?
         // FIXME: consider the use of a hash (possibly the same as BSA) + block number for performance
-        std::string meshName = ((skeleton.isNull()) ? "" : skelName + "_") + getModelName() +
+        std::string meshName = prepend + getModelName() +
                                "#" + std::to_string(iter->second->selfRef()) + // node index
                                "@" + iter->second->getNiNodeName();            // node name
 
@@ -376,7 +390,19 @@ void NiBtOgre::NiModel::buildSkeleton(bool load)
     }
 }
 
-const std::vector<Ogre::Vector3>& NiBtOgre::NiModel::fgVertices()
+// for non-skinned parts
+std::string NiBtOgre::NiModel::targetBone() const
+{
+    NiBtOgre::NiNode *rootNode = getRef<NiBtOgre::NiNode>(rootIndex());
+    return rootNode->getExtraDataString("Prn");
+}
+
+void NiBtOgre::NiModel::useFgMorphVertices()
+{
+    fgGeometry()->mUseMorphed = true;
+}
+
+const std::vector<Ogre::Vector3>& NiBtOgre::NiModel::fgVertices() const
 {
     return fgGeometry()->getVertices(false/*morphed*/);
 }
@@ -388,12 +414,12 @@ std::vector<Ogre::Vector3>& NiBtOgre::NiModel::fgMorphVertices()
 
 // WARN: returns the vertices from the first NiTriBasedGeom child of the root NiNode
 //       (this can be used to get around the lack of TRI files for certain NIF models)
-NiBtOgre::NiTriBasedGeom *NiBtOgre::NiModel::fgGeometry()
+NiBtOgre::NiTriBasedGeom *NiBtOgre::NiModel::fgGeometry() const
 {
     if (mObjects.empty())
         throw std::logic_error("NiModel attempting to retrieve an object that is not yet built.");
 
-    NiNode *ninode = getRef<NiNode>(mRoots[0]);
+    NiNode *ninode = getRef<NiNode>(rootIndex());
 
     return ninode->getUniqueSubMeshChild();
 }

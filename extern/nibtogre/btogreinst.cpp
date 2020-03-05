@@ -76,6 +76,7 @@ NiBtOgre::BtOgreInst::~BtOgreInst()
     {
         if (iter->second)
         {
+            //it->second->stopSharingSkeletonInstance(); // FIXME: is this needed, too?
             iter->second->detachFromParent();
             mBaseSceneNode->getCreator()->destroyEntity(iter->second);
             iter->second = 0;
@@ -104,8 +105,7 @@ void NiBtOgre::BtOgreInst::instantiate(Ogre::SceneNode *baseNode, Ogre::Entity *
 {
     // FIXME: skinned objects don't attach to a target bone?
     // see if there is a target bone
-    //NiNode *rootNode = mModel->getRef<NiNode>(mModel->rootIndex());
-    //std::string targetBone = rootNode->getExtraDataString("Prn");
+    //std::string targetBone = mModel->targetBone();
 
     // make a convenience copy
     mIsSkinned = mModel->buildData().mIsSkinned;
@@ -280,8 +280,14 @@ void NiBtOgre::BtOgreInst::buildEntities()
 
     // FIXME: experimental
     // skeleton.nif doesn't have any NiTriBasedGeom so no entities would have been created
-    if (buildData.isSkeletonTES4() && (mModel->blockType(mModel->rootIndex()) == "NiNode" || mModel->blockType(mModel->rootIndex()) == "BSFadeNode"))
-        //&& mModelName != "meshes\\morroblivion\\creatures\\wildlife\\kagouti\\skeleton.nif") // FIXME
+    if (mSkeletonRoot/*buildData.isSkeletonTES4()*/
+            &&
+            (
+             mModel->blockType(mModel->rootIndex()) == "NiNode"
+             ||
+             mModel->blockType(mModel->rootIndex()) == "BSFadeNode"
+            )
+       )//&& mModelName != "meshes\\morroblivion\\creatures\\wildlife\\kagouti\\skeleton.nif") // FIXME
     {
         // FIXME: experimental
         Ogre::SkeletonInstance *skelinst = mSkeletonRoot->getSkeleton();
@@ -293,16 +299,20 @@ void NiBtOgre::BtOgreInst::buildEntities()
         while(boneiter.hasMoreElements())
             boneiter.getNext()->setManuallyControlled(true);
 
-
+//#if 0
         // FIXME: just some testing
-        const std::map<std::string, NiAVObjectRef>& objPalette = mModel->getObjectPalette();
-        boneiter = skelinst->getBoneIterator();
-        while(boneiter.hasMoreElements())
+        if (buildData.isSkeletonTES4())
         {
-            std::string name = boneiter.getNext()->getName();
-            if (objPalette.find(name) == objPalette.end())
-                std::cout << "missing bone name " << name << " in ObjectPalette" << std::endl;
+            const std::map<std::string, NiAVObjectRef>& objPalette = mModel->getObjectPalette();
+            boneiter = skelinst->getBoneIterator();
+            while(boneiter.hasMoreElements())
+            {
+                std::string name = boneiter.getNext()->getName();
+                if (objPalette.find(name) == objPalette.end())
+                    std::cout << "missing bone name " << name << " in ObjectPalette" << std::endl;
+            }
         }
+//#endif
     }
 
     // FIXME: maybe just have pointers to the vectors rather than copying all the content?

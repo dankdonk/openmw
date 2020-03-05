@@ -120,6 +120,8 @@ namespace FgLib
 
         // FIXME: update normals, tangents and bitangents?
 
+        model->useFgMorphVertices();
+
         return true;
     }
 

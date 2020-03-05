@@ -161,7 +161,7 @@ namespace NiBtOgre
     }
 
     NiModelPtr NiModelManager::createMorphedModel(const Ogre::String& nif, const Ogre::String& group,
-            const ESM4::Npc *npc, const ESM4::Race *race, const Ogre::String& texture)
+            const ESM4::Npc *npc, const ESM4::Race *race, const Ogre::String& texture, NiModel *skeleton)
     {
         // Create manual model which calls back self to load
         NiModelPtr pModel = createManual(npc->mEditorId + "_" + nif, group, nif, this);
@@ -173,6 +173,17 @@ namespace NiBtOgre
         bInfo.race = race;
         bInfo.baseNif = nif;
         bInfo.baseTexture = texture;
+        bInfo.skel = skeleton;
+        if (skeleton)
+        {
+            bInfo.skelNif = skeleton->getModelName();
+            bInfo.skelGroup = skeleton->getOgreGroup();
+        }
+        else
+        {
+            bInfo.skelNif.clear();
+            bInfo.skelGroup.clear();
+        }
         mModelBuildInfoMap[pModel.get()] = bInfo;
 
         pModel->load(); // load immediately
@@ -255,8 +266,6 @@ namespace NiBtOgre
 
     void NiModelManager::loadManualSkinnedModel(NiModel* pModel, const ModelBuildInfo& bInfo)
     {
-        pModel->createNiObjects();
-
         Ogre::SkeletonPtr skel;
 
         try
@@ -269,7 +278,7 @@ namespace NiBtOgre
             skel = skelModel->getSkeleton();
         }
 
-        pModel->createMesh(skel);
+        pModel->createMesh(false, skel);
         pModel->buildBodyPart(skel);
     }
 
@@ -282,6 +291,8 @@ namespace NiBtOgre
 
     void NiModelManager::loadManualMorphedModel(NiModel* pModel, const ModelBuildInfo& bInfo)
     {
+        // FIXME: needs a try/catch block here
+
         const std::vector<float>& sRaceCoeff = bInfo.race->mSymShapeModeCoefficients;
         const std::vector<float>& aRaceCoeff = bInfo.race->mAsymShapeModeCoefficients;
         const std::vector<float>& sRaceTCoeff = bInfo.race->mSymTextureModeCoefficients;
@@ -342,7 +353,7 @@ namespace NiBtOgre
         }
 
 
-
+#if 0
         // build the morphed texture and use it as the base texture
         Ogre::TexturePtr fgTexture
             = Ogre::TextureManager::getSingleton().getByName(bInfo.baseTexture, pModel->getGroup());
@@ -355,12 +366,35 @@ namespace NiBtOgre
 
         sam.getMorphedTexture(fgTexture,
                 bInfo.baseNif, bInfo.npc->mEditorId, sRaceCoeff, aRaceCoeff, sCoeff, aCoeff);
-
+#endif
         // build the material
 
         // build the mesh ??? maybe not since circular?  just create?
 
         // build the rest of the model / misc odds and ends
+        if (pModel->targetBone() != "")
+        //if (!pModel->buildData().mIsSkinned)
+        {
+            pModel->createMesh(true/*isMorphed*/);
+            pModel->build();
+        }
+        else // skinned, need skeleton
+        {
+            Ogre::SkeletonPtr skel;
+
+            try
+            {
+                skel = bInfo.skel->getSkeleton();
+            }
+            catch (...)
+            {
+                NiModelPtr skelModel = getByName(bInfo.skelNif, bInfo.skelGroup);
+                skel = skelModel->getSkeleton();
+            }
+
+            pModel->createMesh(true/*isMorphed*/, skel);
+            pModel->buildBodyPart(skel);
+        }
     }
 
     void NiModelManager::loadManualAnimModel(NiModel* pModel, const ModelBuildInfo& bInfo)

@@ -78,6 +78,7 @@ namespace NiBtOgre
     {
         //std::unique_ptr<std::vector<Ogre::Vector3> > mMorphedVertices;
         std::vector<Ogre::Vector3> mMorphVertices;
+        bool mUseMorphed;
 
         NiTriBasedGeom(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
 
