@@ -79,7 +79,7 @@ namespace NiBtOgre
     protected:
         std::vector<NiAVObjectRef>      mChildren;
         std::vector<NiDynamicEffectRef> mEffects;
-        std::vector<NiNodeRef> mChildBoneNodes; // FIXME: experimental for building a skeleton
+        std::vector<NiNodeRef> mChildBoneNodes;
 
     public:
         NiNode(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
@@ -97,8 +97,8 @@ namespace NiBtOgre
         virtual void buildMesh(Ogre::Mesh* mesh);
 
         //
-        virtual void findBones(const NiNodeRef skeletonRoot, const NiNodeRef childNode); // FIXME: experimental
-        virtual void findBones(std::int32_t rootIndex);                                  // FIXME: experimental
+        NiNodeRef findBones(const NiNodeRef skeletonRoot, const NiNodeRef childNode);
+        NiNodeRef findBones(std::int32_t rootIndex);
 
         void addBones(Ogre::Skeleton *skeleton,
                 Ogre::Bone *parentBone, std::map<std::uint32_t, std::uint16_t>& indexToHandle);

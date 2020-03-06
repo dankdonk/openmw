@@ -27,6 +27,8 @@
 #include <vector>
 #include <cassert>
 
+#include <boost/algorithm/string.hpp>
+
 #include <OgreResourceGroupManager.h>
 #include <OgreTextureManager.h>
 #include <OgreTexture.h>
@@ -123,18 +125,50 @@ namespace NiBtOgre
                      "Cannot find build parameters for " + name,
                      "NiModelManager::createImpl");
     }
+#if 0
+    // this method may create a skinned model instead if NiSkinInstance is found
+    NiModelPtr NiModelManager::createModel(const Ogre::String& nif, const Ogre::String& group,
+            NiModel *skeleton)
+    {
+        // check if existing - we may be attempting to auto-detect whether the model is skinned
+        NiModelPtr pModel = getByName(nif, group);
+        if (!pModel)
+            pModel = createManual(nif, group, nif, this);
 
+        // store parameters
+        ModelBuildInfo bInfo;
+        bInfo.type = MBT_Object;
+        bInfo.baseNif = nif;
+        bInfo.skel = skeleton;
+        if (skeleton)
+        {
+            bInfo.skelNif = skeleton->getModelName();
+            bInfo.skelGroup = skeleton->getOgreGroup();
+        }
+        else
+        {
+            bInfo.skelNif.clear();
+            bInfo.skelGroup.clear();
+        }
+        mModelBuildInfoMap[pModel.get()] = bInfo;
+
+        pModel->load(); // load immediately
+
+        return pModel;
+    }
+#endif
     NiModelPtr NiModelManager::createSkinnedModel(const Ogre::String& nif, const Ogre::String& group,
             NiModel *skeleton)
     {
+        std::string skelName = boost::to_lower_copy(skeleton->getModelName());
         // Create manual model which calls back self to load
-        NiModelPtr pModel = createManual(skeleton->getModelName()+"_"+nif, group, nif, this);
+        NiModelPtr pModel = createManual(skelName+"_"+nif, group, nif, this);
 
         // store parameters
         ModelBuildInfo bInfo;
         bInfo.type = MBT_Skinned;
         bInfo.baseNif = nif;
-        bInfo.skel = skeleton;
+        bInfo.skel = skeleton; // TODO: throw exeption if no skeleton?
         bInfo.skelNif = skeleton->getModelName();
         bInfo.skelGroup = skeleton->getOgreGroup();
         mModelBuildInfoMap[pModel.get()] = bInfo;
@@ -242,25 +276,63 @@ namespace NiBtOgre
         ModelBuildInfo& bInfo = it->second;
         switch(bInfo.type)
         {
-        case MBT_Object:
-            //loadManual(model, bInfo); // FIXME: these are not manually loaded?
-            break;
-        case MBT_Skinned:
-            loadManualSkinnedModel(model, bInfo);
-            break;
-        case MBT_Skeleton:
-            loadManualSkeletonModel(model, bInfo);
-            break;
-        case MBT_Morphed:
-            loadManualMorphedModel(model, bInfo);
-            break;
-        case MBT_Anim:
-            loadManualAnimModel(model, bInfo);
-            break;
-        default:
-            OGRE_EXCEPT( Ogre::Exception::ERR_ITEM_NOT_FOUND,
-                         "Unknown build parameters for " + res->getName(),
-                         "NiModelManager::loadResource");
+            case MBT_Object:
+#if 0
+            {
+                bool isSkinned = model->buildData().mIsSkinned; // indicates the presence of NiSkinInstance
+
+                if (!isSkinned || bInfo.skel == nullptr)
+                {
+                    model->findBoneNodes(true);
+                    model->createMesh();
+                    model->buildModel();
+                }
+                else // skinned
+                {
+                    Ogre::SkeletonPtr skel;
+                    try
+                    {
+                        skel = bInfo.skel->getSkeleton();
+                    }
+                    catch (...)
+                    {
+                        NiModelPtr skelModel = getByName(bInfo.skelNif, bInfo.skelGroup);
+                        skel = skelModel->getSkeleton();
+                    }
+
+                    Ogre::String modelName = bInfo.skelNif+"_"+res->getName();
+                    NiModelPtr newModel = createManual(modelName, res->getGroup(), res->getName(), this);
+
+                    ModelBuildInfo newInfo = bInfo;
+                    newInfo.type = MBT_Skinned;
+                    mModelBuildInfoMap[newModel.get()] = newInfo;
+
+                    mModelBuildInfoMap.erase(it); // not sure if we need to erase this
+
+                    newModel->load();
+                }
+
+                break;
+            }
+#else
+                break;
+#endif
+            case MBT_Skinned:
+                loadManualSkinnedModel(model, bInfo);
+                break;
+            case MBT_Skeleton:
+                loadManualSkeletonModel(model, bInfo);
+                break;
+            case MBT_Morphed:
+                loadManualMorphedModel(model, bInfo);
+                break;
+            case MBT_Anim:
+                loadManualAnimModel(model, bInfo);
+                break;
+            default:
+                OGRE_EXCEPT( Ogre::Exception::ERR_ITEM_NOT_FOUND,
+                             "Unknown build parameters for " + res->getName(),
+                             "NiModelManager::loadResource");
         }
     }
 
@@ -279,13 +351,13 @@ namespace NiBtOgre
         }
 
         pModel->createMesh(false, skel);
-        pModel->buildBodyPart(skel);
+        pModel->buildSkinnedModel(skel);
     }
 
     void NiModelManager::loadManualSkeletonModel(NiModel* pModel, const ModelBuildInfo& bInfo)
     {
         pModel->findBoneNodes(true/*buildObjectPalette*/);
-        pModel->buildSkeleton(true/*load*/); // NOTE: was buildFullSkeleton
+        pModel->buildSkeleton(true/*load*/);
         pModel->createDummyMesh();
     }
 
@@ -301,7 +373,7 @@ namespace NiBtOgre
         const std::vector<float>& sTCoeff = bInfo.npc->mSymTextureModeCoefficients;
 
         // FIXME: no morphed vertices for upper body
-        // if EGM found build morphed vertices (use TRI if available)
+        // if EGM and TRI both found, build morphed vertices
         FgLib::FgSam sam;
         sam.buildMorphedVertices(pModel, bInfo.baseNif, sRaceCoeff, aRaceCoeff, sCoeff, aCoeff);
 
@@ -372,11 +444,12 @@ namespace NiBtOgre
         // build the mesh ??? maybe not since circular?  just create?
 
         // build the rest of the model / misc odds and ends
-        if (pModel->targetBone() != "")
-        //if (!pModel->buildData().mIsSkinned)
+
+        //if (pModel->targetBone() != "") // this should also work
+        if (!pModel->buildData().mIsSkinned)
         {
             pModel->createMesh(true/*isMorphed*/);
-            pModel->build();
+            pModel->buildModel();
         }
         else // skinned, need skeleton
         {
@@ -393,7 +466,7 @@ namespace NiBtOgre
             }
 
             pModel->createMesh(true/*isMorphed*/, skel);
-            pModel->buildBodyPart(skel);
+            pModel->buildSkinnedModel(skel);
         }
     }
 

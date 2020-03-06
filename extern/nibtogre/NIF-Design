@@ -1679,6 +1679,11 @@ void PhysicsSystem::addObject (const Ptr& ptr, const std::string& mesh, bool pla
     handleToMesh[node->getName()] = mesh;
 ```
 
+## FIXME 3
+
+    // TODO: probably possible to optimise the use of the "group" parameter, e.g. per cell
+
+
 # [04/03/2020] Finding missing TrapLog
 
 CoC "ImperialDungeon05" and look for `Dungeons\Caves\Traps\CTrapLog01.NIF`.  Found it - it turns out that CollisoinType_World had to be added in th flags otherwise the physics shapes don't collide with the floor and sink through.
@@ -1697,7 +1702,7 @@ if (!raycasting)
 
 **The activator is not working, however.**  Activation results in some weird rotation of the logs.
 
-**Also, there a strange code:**
+**Also, there a strange piece of code:**
 
 ```cpp
 // FIXME
@@ -1713,11 +1718,32 @@ Naming convension needs to be revisited.  A head model may be morphed per NPC's 
 
 Made progress with morphed models but looks like a redesign is required.  There were some assumptions that may not be correct:
 
-  * Assumed all models that needs to attach to a bone has "Prn" NiExtraDataString - however ears and eyes don't.
+  * Assumed all models that needs to attach to a bone has "Prn" NiStringExtraData - however ears and eyes don't.
   * Assumed it would be ok to use the vertices from the NIF files when the corresponding TRI files do not exist.  However some helmets (e.g. Armor\Blades\M\Helmet.NIF and Armor\LegionHorsebackGuard\Helmet.NIF ) clip the head model when the vertices are morphed this way.  Maybe it is better not to morph if the TRI file does not exist?
 
 Also the codebase has become a spaghetti mess and is rather difficult to follow.
 
+## More code restructuring - model and mesh naming
+
+Initially we may not be certain if the model is skinned - only once the NiObjects created in loadResource we can decide whether the skeleton is needed.  But then it becomes difficult to maintain the model and mesh naming convention where the skeleton name is prepended for skinned models.
+
+One possible solution is to always build a "test" model to see if it is skinned. If it turns out that the model is not skinned, we can go ahead and load it and instantiate it.  If it is skinned then a new model with a different name may be required (but maybe only with equipment that can be shared with multiple types of skeletons?).
+
+For skinned body parts for creatures we don't need to worry about the uniqueness of the model/mesh names.  But then perhaps we are making things more complicated with special handling for creatures, etc.
+
+# [06/03/2020] Continuing...
+
+## FIXME 4
+
+TRI file exeption commented out
+
+## FIXME 5
+
+Case folding for skeleton and object names are causing no end of troubles
+
+## FIXME 6
+
+The use of skeletonRoot() in NiSkeletonLoader is not working
 
 
 [//]: # (/* spell spelllang=en_au syntax=cpp */)

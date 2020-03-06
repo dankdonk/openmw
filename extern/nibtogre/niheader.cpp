@@ -177,6 +177,17 @@ const std::string& NiBtOgre::NiHeader::blockType(std::uint32_t index) const
     return mBlockTypes[mBlockTypeIndex[index]];
 }
 
+std::int32_t NiBtOgre::NiHeader::searchStrings(const std::string& str) const
+{
+    for (std::size_t i = 0; i < mStrings.size(); ++i)
+    {
+        if (mStrings[i].find(str) != std::string::npos)
+            return i;
+    }
+
+    return -1;
+}
+
 //void NiBtOgre::NiHeader::getNiSkinInstances(std::vector<NiSkinInstance*>& skins,
 //                                            std::vector<std::unique_ptr<NiObject> >& objects)
 //{

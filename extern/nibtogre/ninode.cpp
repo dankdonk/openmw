@@ -190,37 +190,61 @@ void NiBtOgre::NiNode::buildMesh(Ogre::Mesh *mesh)
 // build a hierarchy of bones (i.e. mChildBoneNodes) so that a skeleton can be built, hopefully
 // a much smaller subset of the NiNode hierarchy
 //
-// recursively traverses the NiNode tree until the specified skeletonRoot is found
+// recursively traverses the NiNode tree until the specified NiNode is found
 // childNode is the index of the caller of this method (which should be a child of this node)
-void NiBtOgre::NiNode::findBones(const NiNodeRef skeletonRoot, const NiNodeRef childNode)
+NiBtOgre::NiNodeRef NiBtOgre::NiNode::findBones(const NiNodeRef targetRef, const NiNodeRef childNode)
 {
-    if (mChildBoneNodes.size() == 0) // implies skeleton root is not yet found
+    if (mChildBoneNodes.size() == 0) // implies target (hopefully skeleton root) not yet found
     {
-        if (NiObject::selfRef() == skeletonRoot) // am I the one?
+        if (NiObject::selfRef() == targetRef) // am I the one?
         {
             mChildBoneNodes.push_back(childNode);
-            return;
+#if 0
+            return ;
+#else
+            // most likely that one of the children of mRoots[0] is the skeleton root
+            std::string upb = mModel.getRef<NiNode>(childNode)->getStringExtraData("UPB");
+            if (upb.find("BoneRoot") != std::string::npos)
+            {
+                return childNode;
+            }
+            else
+            {
+                // try myself?
+                upb = getStringExtraData("UPB");
+                if (upb.find("BoneRoot") != std::string::npos)
+                    return targetRef;
+                else
+                    return -1;
+            }
+#endif
         }
 
         if (mParent == nullptr) // should not happen!
             throw std::runtime_error("NiNode without parent and Skeleton Root not yet found");
 
-        // not skeleton root, keep searching recursively
-        mParent->findBones(skeletonRoot, NiObject::selfRef());
+        // not the target, keep searching recursively
+        NiNodeRef res = mParent->findBones(targetRef, NiObject::selfRef());
         mChildBoneNodes.push_back(childNode);
+
+        return res;
     }
     else
     {
         if (std::find(mChildBoneNodes.begin(), mChildBoneNodes.end(), childNode) == mChildBoneNodes.end())
             mChildBoneNodes.push_back(childNode); // only if childNode doesn't exist
     }
+
+    return -1;
 }
 
-void NiBtOgre::NiNode::findBones(std::int32_t rootIndex)
+NiBtOgre::NiNodeRef NiBtOgre::NiNode::findBones(std::int32_t rootIndex)
 {
     // TODO: do we need a bone if the NiTransformController's target is the root?
     if (rootIndex != NiObject::selfRef())
-        mParent->findBones(rootIndex, NiObject::selfRef());
+        return mParent->findBones(rootIndex, NiObject::selfRef());
+
+    return -1;
 }
 
 void NiBtOgre::NiNode::addBones(Ogre::Skeleton *skeleton,
@@ -338,7 +362,7 @@ void NiBtOgre::NiNode::addAllBones(Ogre::Skeleton *skeleton, Ogre::Bone *parentB
 // no longer used
 bool NiBtOgre::NiNode::isBSBone(const NiNode *node) const
 {
-    std::string upb = node->getExtraDataString("UPB");
+    std::string upb = node->getStringExtraData("UPB");
 
     return upb.find("BSBone") != std::string::npos;
 }
@@ -361,7 +385,7 @@ void NiBtOgre::NiNode::buildObjectPalette(std::map<std::string, NiAVObjectRef>& 
         // FIXME: just some testing
         if (first)
         {
-            std::string upb = childNode->getExtraDataString("UPB");
+            std::string upb = childNode->getStringExtraData("UPB");
             if (upb.find("BoneRoot") == std::string::npos)
                 std::cout << mModel.getModelName() + ":" + mNodeName + " is not \"BoneRoot\"" << std::endl;
         }

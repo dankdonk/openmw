@@ -55,7 +55,7 @@ namespace NiBtOgre
             const NiModel *model;
             Ogre::String skeleton;
             Ogre::ResourcePtr modelPtr; // only for morphed mesh
-            std::int32_t ninode;  // NiNodeRef
+            std::int32_t ninodeIndex;   // NiNodeRef
         };
 
         static std::map<Ogre::Resource*, ModelBuildInfo> sModelBuildInfoMap;
@@ -73,10 +73,10 @@ namespace NiBtOgre
 
         // creates normal (static?) meshes as well as skinned meshes
         Ogre::MeshPtr createMesh(const Ogre::String& name, const Ogre::String& group,
-                NiModel *model, std::int32_t ninode, const Ogre::String skeleton = "");
+                NiModel *model, std::int32_t ninodeIndex, const Ogre::String skeleton = "");
 
         Ogre::MeshPtr createMorphedMesh(const Ogre::String& name, const Ogre::String& group,
-                const Ogre::String& morphedTexture, Ogre::ResourcePtr model, std::int32_t ninode);
+                const Ogre::String& morphedTexture, Ogre::ResourcePtr model, std::int32_t ninodeIndex);
 
         // reimplement Ogre::ManualResourceLoader
         virtual void loadResource(Ogre::Resource *resource);

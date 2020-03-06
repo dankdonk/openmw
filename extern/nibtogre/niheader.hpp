@@ -75,8 +75,13 @@ namespace NiBtOgre
         inline std::uint32_t userVer2() const { return mUserVer2; }
 
         // may throw (does not check bounds)
-        inline const std::string& indexToString(std::int32_t index) const {
-            return (index < 0) ? mEmptyString : mStrings.at(index);
+        const std::string& indexToString(std::int32_t index) const {
+            try {
+                return mStrings.at(index);
+            }
+            catch (...) { // out of bounds
+                return mEmptyString;
+            }
         }
 
         // returns index
@@ -90,6 +95,9 @@ namespace NiBtOgre
 
         //void getNiSkinInstances(std::vector<NiSkinInstance*>& skins,
                                 //std::vector<std::unique_ptr<NiObject> >& objects);
+
+        // returns -1 if none found
+        std::int32_t searchStrings(const std::string& str) const;
     };
 }
 

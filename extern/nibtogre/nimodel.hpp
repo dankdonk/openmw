@@ -78,6 +78,7 @@ namespace NiBtOgre
         bool mIsSkinned;
         //bool mFlameNodesPresent;
         //bool mEditorMarkerPresent;
+        NiNodeRef mSkeletonRoot;
 
         int32_t mBuildFlags;
         inline bool havokEnabled()          const { return (mBuildFlags & Flag_EnableHavok)         != 0; }
@@ -164,7 +165,9 @@ namespace NiBtOgre
 
         int mFlags; // some global properties
 
-        BuildData(const NiModel& model) : mModel(model), mIsSkinned(false), /*mFlameNodesPresent(false), mEditorMarkerPresent(false),*/ mBuildFlags(0), mFlags(0)
+        BuildData(const NiModel& model)
+            : mModel(model), mIsSkinned(false), mSkeletonRoot(0)
+            , /*mFlameNodesPresent(false), mEditorMarkerPresent(false) ,*/ mBuildFlags(0), mFlags(0)
         {
             //mIsSkeleton = false; // FIXME: hack, does not belong here
             //mSkeleton.setNull();
@@ -215,6 +218,9 @@ namespace NiBtOgre
         std::string mModelName;
         std::string mNif; // store NIF path for prepareImpl (may be different to mModelName)
 
+        NiNode *mRootNode; // convenience copy (NOTE: only valid if there is only one)
+        NiNode *mBoneRootNode; // convenience copy
+
         BuildData mBuildData;
         Ogre::SkeletonPtr mSkeleton;
         std::vector<std::pair<Ogre::MeshPtr, NiNode*> > mMeshes;
@@ -234,6 +240,8 @@ namespace NiBtOgre
         virtual void unprepareImpl();
         virtual void loadImpl();   // called by Ogre::Resource::load()
         virtual void unloadImpl(); // called by Ogre::Resource::unload()
+        virtual void preLoadImpl();   // called by Ogre::Resource::load()
+        virtual void preUnloadImpl(); // called by Ogre::Resource::unload()
 
     public:
         // The parameter 'nif' refers to those in the Ogre::ResourceGroupManager
@@ -248,11 +256,19 @@ namespace NiBtOgre
 
         template<class T>
         inline T *getRef(std::int32_t index) const {
-
+#if 0
+            try {
+                return static_cast<T*>(mObjects[index].get());
+            }
+            catch (...) {
+                return nullptr;
+            }
+#else
             if (index >= 0 && (index > mCurrIndex)) // FIXME: for debugging Ptr
                 throw std::runtime_error("Ptr");
 
             return (index < 0) ? nullptr : static_cast<T*>(mObjects[index].get());
+#endif
         }
 
         // returns NiObject type name
@@ -267,9 +283,17 @@ namespace NiBtOgre
             return mHeader->indexToString(index);
         }
 
+        inline std::int32_t searchStrings(const std::string& str) const {
+            return mHeader->searchStrings(str);
+        }
+
         inline bool hideEditorMarkers() const { return !mShowEditorMarkers; }
 
-        std::uint32_t rootIndex() const { return mRoots[0]; } // FIXME: assumes only one root
+        NiNode *skeletonRoot();          // returns nullptr if none found
+
+        NiNode *rootNode();              // returns the root NiNode of the model
+        std::uint32_t rootIndex() const; // WARN: will throw if there are more than one
+        inline std::size_t numRootNodes() const { return mRoots.size(); }
 
         typedef std::int32_t NiNodeRef;
         const std::map<NiNodeRef, /*std::pair<std::string,*/ int32_t/*>*/ >&
@@ -280,10 +304,9 @@ namespace NiBtOgre
 
         //const std::map<NiNodeRef, int32_t>& getBhkRigidBodyMap() const { return mBuildData.mBhkRigidBocyMap; }
 
-        // WARNING: SceneNode in 'inst' should have the scale (assumed uniform)
-        std::string buildBodyPart(Ogre::SkeletonPtr skeleton = Ogre::SkeletonPtr());
+        void buildSkinnedModel(Ogre::SkeletonPtr skeleton = Ogre::SkeletonPtr());
 
-        void build();
+        void buildModel();
 
         void buildAnimation(Ogre::Entity *skelBase, NiModelPtr anim,
                 std::multimap<float, std::string>& textKeys,
@@ -321,7 +344,8 @@ namespace NiBtOgre
 
         std::string targetBone() const;
 
-        void findBoneNodes(bool buildObjectPalette = false);
+        void findBoneNodes(bool buildObjectPalette = false, std::size_t rootIndex = 0);
+
     private:
 
         // access to NiGeometryData for generating a FaceGen TRI file or to populate morphed vertices

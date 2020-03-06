@@ -124,14 +124,14 @@ namespace NiBtOgre
         void instantiate();
 
         // deprecated
-        void instantiate(Ogre::SkeletonPtr skeleton, const std::string& meshExt = "");
+        //void instantiate(Ogre::SkeletonPtr skeleton, const std::string& meshExt = "");
         // FIXME: need a better name
         // for building body parts using the supplied skeleton
         void instantiate(Ogre::SceneNode* baseNode, Ogre::Entity* skelBase);
 
         // for building fg morphed mesh
-        void instantiate(Ogre::SkeletonPtr skeleton, const std::string& npcName,
-                std::unique_ptr<std::vector<Ogre::Vector3> > morphedVertices);
+        //void instantiate(Ogre::SkeletonPtr skeleton, const std::string& npcName,
+                //std::unique_ptr<std::vector<Ogre::Vector3> > morphedVertices);
 
         bool hasAnimation(const std::string& animName) const;
 

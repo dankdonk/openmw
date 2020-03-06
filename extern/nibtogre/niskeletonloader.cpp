@@ -22,6 +22,8 @@
 */
 #include "niskeletonloader.hpp"
 
+#include <iostream> // FIXME
+
 #include <OgreSkeleton.h>
 #include <OgreSkeletonManager.h>
 #include <OgreBone.h>
@@ -114,14 +116,24 @@ namespace NiBtOgre
 
         try
         {
+#if 1
             skeletonRoot = bInfo.model->getRef<NiNode>(bInfo.model->rootIndex()); // get NiNode
+            skeletonRoot->getNiNodeName();
+#else
+            skeletonRoot = bInfo.model->skeletonRoot(); // get NiNode
+            skeletonRoot->getNiNodeName(); // see if the pointer is good
+#endif
         }
         catch (...)
         {
             NiModelManager& modelManager = NiModelManager::getSingleton();
             NiModelPtr model = modelManager.getOrLoadByName(skel->getName(), skel->getGroup());
 
+#if 1
             skeletonRoot = model->getRef<NiNode>(model->rootIndex());
+#else
+            skeletonRoot = bInfo.model->skeletonRoot(); // get NiNode
+#endif
         }
 
         switch(bInfo.type)
@@ -144,6 +156,7 @@ namespace NiBtOgre
         skeletonRoot->addBones(pSkel, nullptr, mIndexToHandleMap);
     }
 
+    // deprecated
     void NiSkeletonLoader::loadFullSkeleton(Ogre::Skeleton* pSkel, NiNode *skeletonRoot)
     {
         skeletonRoot->addAllBones(pSkel, nullptr);

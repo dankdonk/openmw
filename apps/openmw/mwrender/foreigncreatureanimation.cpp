@@ -49,8 +49,10 @@ ForeignCreatureAnimation::ForeignCreatureAnimation(const MWWorld::Ptr &ptr, cons
     if(skeletonModel.empty())
         return;
 
-    setForeignObjectRootBase(skeletonModel);
-    //setObjectRoot(skeletonModel, /*baseOnly*/true);
+    std::string skeletonName = skeletonModel;
+    Misc::StringUtils::lowerCaseInPlace(skeletonName);
+
+    setForeignObjectRootBase(skeletonName);
     //setRenderProperties(mObjectRoot, RV_Actors, RQG_Main, RQG_Alpha);
 
     if (mObjectRoot->mForeignObj)
@@ -123,21 +125,42 @@ ForeignCreatureAnimation::ForeignCreatureAnimation(const MWWorld::Ptr &ptr, cons
 
     //if((ref->mBase->mFlags&ESM::Creature::Bipedal))
         //addAnimSource("meshes\\xbase_anim.nif");
-    addAnimSource(skeletonModel);
+    addAnimSource(skeletonName);
 
-    size_t pos = skeletonModel.find_last_of('\\');
-    std::string path = skeletonModel.substr(0, pos+1); // +1 for '\\'
+    size_t pos = skeletonName.find_last_of('\\');
+    std::string path = skeletonName.substr(0, pos+1); // +1 for '\\'
     std::string group("General");
 
-    for (unsigned int i = 0; i < ref->mBase->mNif.size(); ++i)
+    NiBtOgre::NiModelManager& modelManager = NiBtOgre::NiModelManager::getSingleton();
+    for (std::size_t i = 0; i < ref->mBase->mNif.size(); ++i)
     {
         //std::cout << ref->mBase->mNif[i] << std::endl;
+        std::string meshName = path+ref->mBase->mNif[i];
+        Misc::StringUtils::lowerCaseInPlace(meshName);
+
+        // initially assume a skinned model
+        NiModelPtr object = modelManager.getByName(skeletonName + "_" + meshName, group);
+        // if not found just create a non-skinned model to check
+        if (!object)
+        {
+            object = modelManager.getOrLoadByName(meshName, group);
+            if (object->buildData().mIsSkinned)
+            {
+                // was skinned after all
+                object.reset();
+                object = modelManager.createSkinnedModel(meshName, group, mObjectRoot->mForeignObj->mModel.get());
+            }
+        }
+
+        // create an instance of the model
         NifOgre::ObjectScenePtr scene
             = NifOgre::ObjectScenePtr (new NifOgre::ObjectScene(mInsert->getCreator()));
 
-        scene->mForeignObj = std::make_shared<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(mInsert->createChildSceneNode(), /*scene, */path+ref->mBase->mNif[i], group));
-        scene->mForeignObj->instantiate(mSkelBase->getMesh()->getSkeleton());
-
+        scene->mForeignObj = std::make_unique<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(object,
+                             mInsert->createChildSceneNode()));
+#if 1
+        scene->mForeignObj->instantiate(mInsert, mSkelBase);
+#else
         std::map<int32_t, Ogre::Entity*>::const_iterator it(scene->mForeignObj->mEntities.begin());
         for (; it != scene->mForeignObj->mEntities.end(); ++it)
         {
@@ -149,6 +172,7 @@ ForeignCreatureAnimation::ForeignCreatureAnimation(const MWWorld::Ptr &ptr, cons
             else
                 mSkelBase->attachObjectToBone(scene->mForeignObj->mTargetBone, it->second);
         }
+#endif
         mObjectParts.push_back(scene);
     }
 
@@ -166,24 +190,24 @@ ForeignCreatureAnimation::ForeignCreatureAnimation(const MWWorld::Ptr &ptr, cons
     mSkelBase->getSkeleton()->reset(true);
 }
 
-void ForeignCreatureAnimation::addAnimSource(const std::string &skeletonModel)
+void ForeignCreatureAnimation::addAnimSource(const std::string &skeletonName)
 {
-    size_t pos = skeletonModel.find_last_of('\\');
-    std::string path = skeletonModel.substr(0, pos+1); // +1 for '\\'
+    size_t pos = skeletonName.find_last_of('\\');
+    std::string path = skeletonName.substr(0, pos+1); // +1 for '\\'
 
     MWWorld::LiveCellRef<ESM4::Creature> *ref = mPtr.get<ESM4::Creature>();
 
     std::string animName;
-    addForeignAnimSource(skeletonModel, path + "castself.kf");
-    addForeignAnimSource(skeletonModel, path + "backward.kf");
-    addForeignAnimSource(skeletonModel, path + "idle.kf");
-    addForeignAnimSource(skeletonModel, path + "forward.kf");
-    //addForeignAnimSource(skeletonModel, path + "fastforward.kf");
+    addForeignAnimSource(skeletonName, path + "castself.kf");
+    addForeignAnimSource(skeletonName, path + "backward.kf");
+    addForeignAnimSource(skeletonName, path + "idle.kf");
+    addForeignAnimSource(skeletonName, path + "forward.kf");
+    //addForeignAnimSource(skeletonName, path + "fastforward.kf");
     for (unsigned int i = 0; i < ref->mBase->mKf.size(); ++i)
     {
         //std::cout << ref->mBase->mKf[i] << std::endl;
         animName = path + ref->mBase->mKf[i];
-        addForeignAnimSource(skeletonModel, animName);
+        addForeignAnimSource(skeletonName, animName);
     }
 }
 
@@ -192,11 +216,19 @@ void ForeignCreatureAnimation::addForeignAnimSource(const std::string& model, co
     // Check whether the kf file exists
     if (!Ogre::ResourceGroupManager::getSingleton().resourceExistsInAnyGroup(animName))
         return;
-
     std::string group("General"); // FIXME
+#if 0
     NiModelPtr creatureModel = NiBtOgre::NiModelManager::getSingleton().getOrLoadByName(model, group);
     //creatureModel->buildSkeleton(); // FIXME: hack
-    assert(!creatureModel.isNull() && "skeleton.nif should have been built already");
+#else
+
+    NiBtOgre::NiModelManager& modelManager = NiBtOgre::NiModelManager::getSingleton();
+    NiModelPtr skeleton = modelManager.getByName(model, "General");
+    if (!skeleton)
+        skeleton = modelManager.createSkeletonModel(model, "General");
+
+#endif
+    assert(!skeleton.isNull() && "skeleton.nif should have been built already");
     NiModelPtr anim = NiBtOgre::NiModelManager::getSingleton().getOrLoadByName(animName, group);
 
     // Animation::AnimSource : public Ogre::AnimationAlloc
@@ -204,7 +236,7 @@ void ForeignCreatureAnimation::addForeignAnimSource(const std::string& model, co
     //   (also has a vector of 4 Ogre real controllers)  TODO: check if 4 is enough
     Ogre::SharedPtr<AnimSource> animSource(OGRE_NEW AnimSource);
     std::vector<Ogre::Controller<Ogre::Real> > controllers;
-    anim->buildAnimation(mSkelBase, anim, animSource->mTextKeys, controllers, /*mObjectRoot->skeleton.get()*/creatureModel.get());
+    anim->buildAnimation(mSkelBase, anim, animSource->mTextKeys, controllers, /*mObjectRoot->skeleton.get()*/skeleton.get());
 
     if (animSource->mTextKeys.empty() || controllers.empty())
         return;

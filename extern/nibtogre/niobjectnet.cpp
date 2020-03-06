@@ -63,7 +63,7 @@ void NiBtOgre::NiObjectNET::build(Ogre::SceneNode *sceneNode, NiObject *parent)
 }
 
 // WARN: this only works from version 10.0.1.0
-std::string NiBtOgre::NiObjectNET::getExtraDataString(const std::string& name) const
+std::string NiBtOgre::NiObjectNET::getStringExtraData(const std::string& name) const
 {
     if (mExtraDataRefList.empty())
         return "";

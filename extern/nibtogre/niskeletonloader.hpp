@@ -63,7 +63,7 @@ namespace NiBtOgre
         struct ModelBuildInfo
         {
             ModelBuildType type;
-            const NiModel *model;
+            NiModel *model; // better if const but want to call skeletonRoot()
             //std::int32_t ninode;  // NiNodeRef
         };
 

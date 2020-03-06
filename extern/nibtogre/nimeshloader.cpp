@@ -58,7 +58,7 @@ namespace NiBtOgre
     }
 
     Ogre::MeshPtr NiMeshLoader::createMesh(const Ogre::String& name, const Ogre::String& group,
-            NiModel *model, std::int32_t ninode, const Ogre::String skeleton)
+            NiModel *model, std::int32_t ninodeIndex, const Ogre::String skeleton)
     {
         // Create manual model which calls back self to load
         Ogre::MeshPtr pMesh = createManual(name, group);
@@ -67,7 +67,7 @@ namespace NiBtOgre
         ModelBuildInfo bInfo;
         bInfo.type = (skeleton.empty() ?  MBT_Object : MBT_Skinned);
         bInfo.model = model;
-        bInfo.ninode = ninode;
+        bInfo.ninodeIndex = ninodeIndex;
         bInfo.skeleton = skeleton;
         sModelBuildInfoMap[pMesh.get()] = bInfo;
 
@@ -77,7 +77,7 @@ namespace NiBtOgre
     // WARN: must ensure that 'name' includes the NPC EditorID and 'model' must also be the NPC
     // specific one.
     Ogre::MeshPtr NiMeshLoader::createMorphedMesh(const Ogre::String& name, const Ogre::String& group,
-            const Ogre::String& morphedTexture, Ogre::ResourcePtr/*NiModel **/model, std::int32_t ninode)
+            const Ogre::String& morphedTexture, Ogre::ResourcePtr model, std::int32_t ninodeIndex)
     {
         // Create manual model which calls back self to load
         Ogre::MeshPtr pMesh = createManual(name, group);
@@ -86,7 +86,7 @@ namespace NiBtOgre
         ModelBuildInfo bInfo;
         bInfo.type = MBT_Morphed;
         bInfo.modelPtr = model;
-        bInfo.ninode = ninode;
+        bInfo.ninodeIndex = ninodeIndex;
         // FIXME: create an Ogre::Material but not yet load and store in bInfo?
         sModelBuildInfoMap[pMesh.get()] = bInfo;
 
@@ -132,7 +132,7 @@ namespace NiBtOgre
 
         try
         {
-            node = params.model->getRef<NiNode>(params.ninode);
+            node = params.model->getRef<NiNode>(params.ninodeIndex);
         }
         catch (...)
         {
@@ -149,7 +149,7 @@ namespace NiBtOgre
             NiModelManager& modelManager = NiModelManager::getSingleton();
             NiModelPtr model = modelManager.getOrLoadByName(modelName, pMesh->getGroup());
 
-            node = model->getRef<NiNode>(params.ninode);
+            node = model->getRef<NiNode>(params.ninodeIndex);
         }
 
         node->buildMesh(pMesh);
@@ -161,7 +161,7 @@ namespace NiBtOgre
 
         try
         {
-            node = params.model->getRef<NiNode>(params.ninode);
+            node = params.model->getRef<NiNode>(params.ninodeIndex);
         }
         catch (...)
         {
@@ -180,8 +180,9 @@ namespace NiBtOgre
             NiModelPtr model = modelManager.getByName(modelName, pMesh->getGroup());
 
             // FIXME: probably have to do something about the skeleton the mesh needs to use
+            //        (maybe create/load again?)
 
-            node = model->getRef<NiNode>(params.ninode);
+            node = model->getRef<NiNode>(params.ninodeIndex);
         }
 
         node->buildMesh(pMesh);
@@ -191,12 +192,13 @@ namespace NiBtOgre
     void NiMeshLoader::loadManualMorphedMesh(Ogre::Mesh* pMesh, const ModelBuildInfo& params)
     {
         NiModelPtr model = params.modelPtr.staticCast<NiModel>();
-        NiNode *node = model->getRef<NiNode>(params.ninode); // get NiNode
-        //NiNode *node = params.model->getRef<NiNode>(params.ninode); // get NiNode
+        NiNode *node = model->getRef<NiNode>(params.ninodeIndex); // get NiNode
 
         // FIXME
         // load material from params
         //Ogre::MaterialPtr mat =
-        //node->buildMesh(pMesh, mat);
+        //node->setMaterial(mat);
+
+        node->buildMesh(pMesh);
     }
 }

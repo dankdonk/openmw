@@ -122,8 +122,8 @@ private:
     bool createMorphedObject(ESM::PartReferenceType type, const std::string& meshName, const std::string& group,
         const ESM4::Npc *npc, const ESM4::Race *race, const Ogre::String& texture, NiModelPtr skeletonModel);
 
-    bool createObject(ESM::PartReferenceType type, Ogre::SceneNode *baseNode,
-        Ogre::Entity *skelBase, const std::string& meshName, const std::string& group, NiModelPtr skeletonModel);
+    bool createObject(ESM::PartReferenceType type,
+        const std::string& meshName, const std::string& group, NiModelPtr skeletonModel);
 
     ESM::PartReferenceType getPartType(std::uint32_t armorFlags);
 

@@ -89,23 +89,22 @@ NiBtOgre::BtOgreInst::~BtOgreInst()
 
 // FIXME: deprecated
 // for building body part models using the supplied creature/character skeleton for skinning.
-void NiBtOgre::BtOgreInst::instantiate(Ogre::SkeletonPtr skeleton, const std::string& meshExt)
-{
-    mTargetBone = mModel->buildBodyPart(skeleton);
-
-    // make a convenience copy
-    mIsSkinned = mModel->buildData().mIsSkinned;
-
-    buildEntities();
-    //copyControllers();
-}
+//void NiBtOgre::BtOgreInst::instantiate(Ogre::SkeletonPtr skeleton, const std::string& meshExt)
+//{
+//    mTargetBone = mModel->buildSkinnedModel(skeleton);
+//
+//    // make a convenience copy
+//    mIsSkinned = mModel->buildData().mIsSkinned;
+//
+//    buildEntities();
+//    //copyControllers();
+//}
 
 // for building body part models using the supplied creature/character skeleton for skinning.
 void NiBtOgre::BtOgreInst::instantiate(Ogre::SceneNode *baseNode, Ogre::Entity *skelBase)
 {
     // FIXME: skinned objects don't attach to a target bone?
-    // see if there is a target bone
-    //std::string targetBone = mModel->targetBone();
+    mTargetBone = mModel->targetBone(); // see if there is a target bone
 
     // make a convenience copy
     mIsSkinned = mModel->buildData().mIsSkinned;
@@ -115,27 +114,23 @@ void NiBtOgre::BtOgreInst::instantiate(Ogre::SceneNode *baseNode, Ogre::Entity *
     std::map<int32_t, Ogre::Entity*>::const_iterator iter(mEntities.begin());
     for (; iter != mEntities.end(); ++iter)
     {
-        // FIXME:
-        if (skelBase->getMesh()->getSkeleton() == iter->second->getMesh()->getSkeleton())
-            iter->second->shareSkeletonInstanceWith(skelBase);
-        else
-            std::cout << "no anim " << skelBase->getMesh()->getName() << " different skeleton to "
-                      << iter->second->getMesh()->getName() << std::endl;
+        if (mIsSkinned)
+        {
+            if (skelBase->getMesh()->getSkeleton() == iter->second->getMesh()->getSkeleton()) // FIXME:
+                iter->second->shareSkeletonInstanceWith(skelBase);
+            else
+                std::cout << "no anim " << skelBase->getMesh()->getName() << " different skeleton to "
+                          << iter->second->getMesh()->getName() << std::endl;
 
-        //if (targetBone == "")
             baseNode->attachObject(iter->second);
-        //else
-            //skelBase->attachObjectToBone(targetBone, iter->second);
+        }
+        else
+        {
+            if (mTargetBone != "")
+                skelBase->attachObjectToBone(mTargetBone, iter->second);
+        }
     }
 }
-
-// for building fg morphed mesh
-//void NiBtOgre::BtOgreInst::instantiate(Ogre::SkeletonPtr skeleton, const std::string& npcName,
-//        std::unique_ptr<std::vector<Ogre::Vector3> > morphedVertices)
-//{
-//    mModel->buildBodyPart(this, skeleton);
-//    mModel->buildMeshAndEntity(this, npcName, std::move(morphedVertices));
-//}
 
 void NiBtOgre::BtOgreInst::instantiate()
 {
@@ -180,6 +175,7 @@ void NiBtOgre::BtOgreInst::buildEntities()
 
     const BuildData& buildData = mModel->buildData();
 
+    const NiNode* skeletonRoot = mModel->skeletonRoot();
     const std::vector<std::pair<Ogre::MeshPtr, NiNode*> >& meshes = mModel->meshes();
     for (std::size_t i = 0; i < meshes.size(); ++i)
     {
@@ -198,16 +194,22 @@ void NiBtOgre::BtOgreInst::buildEntities()
         // set mSkelBase for Animation::isSkinned()
         if (meshes[i].first->hasSkeleton() && (mModel->blockType(meshes[i].second->selfRef()) == "NiNode")) // FIXME
         {
+#if 0
             std::string nodeName = meshes[i].second->getNiNodeName();
             if (meshes[i].second->selfRef() == 0)
             //if (nodeName == "Scene Root")
             {
                 mSkeletonRoot = entity;
             }
+#else
+            if (meshes[i].second == skeletonRoot)
+                mSkeletonRoot = entity;
+#endif
         }
         else if (meshes[i].first->hasSkeleton() && (mModel->blockType(meshes[i].second->selfRef()) == "BSFadeNode"))
         {
-            mSkeletonRoot = entity;
+            if (meshes[i].second == skeletonRoot)
+                mSkeletonRoot = entity;
         }
 
 
