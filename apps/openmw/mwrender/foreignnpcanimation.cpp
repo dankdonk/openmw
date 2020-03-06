@@ -570,21 +570,11 @@ void ForeignNpcAnimation::updateNpcBase()
     //
     // TODO: NPC scripts may disallow some items to be equipped (TODO: confirm this)
 
-    // FIXME: for testing only
-    MWWorld::InventoryStore& inv = mPtr.getClass().getInventoryStore(mPtr);
-    MWWorld::ContainerStoreIterator storeHelmet = inv.getSlot(MWWorld::InventoryStore::Slot_ForeignHair);
-    std::uint16_t slot;
-    for (size_t i = 0; i < mNpc->mInventory.size(); ++i)
-    {
-        // check flag for hide rings/amulet to skip
-    }
 
     bool isTES4 = true;
     bool isFemale = (mNpc->mBaseConfig.flags & 0x1) != 0;
     std::string meshName;
     std::string textureName;
-
-    FgLib::FgSam sam;
 
     const std::vector<float>& sRaceCoeff = mRace->mSymShapeModeCoefficients;
     const std::vector<float>& aRaceCoeff = mRace->mAsymShapeModeCoefficients;
@@ -594,18 +584,12 @@ void ForeignNpcAnimation::updateNpcBase()
     const std::vector<float>& sTCoeff = mNpc->mSymTextureModeCoefficients;
 
     // Hair is not considered as a "head part".
-    // check NiObjectNET::mExtraDataIndexList (NiStringExtraData) for bone to attach
-    if (storeHelmet == inv.end())
+    MWWorld::InventoryStore& inv = mPtr.getClass().getInventoryStore(mPtr);
+    MWWorld::ContainerStoreIterator invHeadGear = inv.getSlot(MWWorld::InventoryStore::Slot_ForeignHair);
+    if (invHeadGear == inv.end())
     {
         // FIXME: first check if the hair resource for this NPC has been created already
         // MeshManager and TextureManager or nimodelmanager?
-        modelName = mNpc->mEditorId + "_Hair";
-        //NiModelPtr hairModel = NiBtOgre::NiModelManager::getSingleton().getOrLoadByName(modelName, group);
-
-
-
-
-
 
         const MWWorld::ESMStore &store = MWBase::Environment::get().getWorld()->getStore();
         const ESM4::Hair *hair = store.getForeign<ESM4::Hair>().search(mNpc->mHair);
@@ -617,28 +601,15 @@ void ForeignNpcAnimation::updateNpcBase()
             if (!hair)
                 return;//throw std::runtime_error("Hair record not found.");
         }
-
         meshName = "meshes\\"+hair->mModel;
         textureName = "textures\\"+hair->mIcon;
-#if 0
-        std::unique_ptr<std::vector<Ogre::Vector3> > fgVertices // NOTE: ownership passed to the model
-            = std::make_unique<std::vector<Ogre::Vector3> >();
 
-        sam.getMorphedVertices(fgVertices.get(), meshName, sRaceCoeff, aRaceCoeff, sCoeff, aCoeff);
-
-        // FIXME
-        //sam.getMorphedTexture(xxx, meshName, sRaceCoeff, aRaceCoeff, sCoeff, aCoeff);
-
-        NifOgre::ObjectScenePtr sceneHair = NifOgre::ObjectScenePtr (new NifOgre::ObjectScene(mInsert->getCreator()));
-        sceneHair->mForeignObj = std::make_shared<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(mInsert->createChildSceneNode(), meshName, group));
-
-        //sceneHair->mForeignObj->instantiate(mSkelBase->getMesh()->getSkeleton(), mNpc->mEditorId, std::move(fgVertices));
-        sceneHair->mForeignObj->instantiate(mSkelBase->getMesh()->getSkeleton(), mNpc->mEditorId);
-#else
+        // check NiObjectNET::mExtraDataIndexList (NiStringExtraData) for bone to attach
 
         NiModelPtr model = modelManager.getByName(mNpc->mEditorId+"_"+meshName, group);
         if (!model)
-            model = modelManager.createMorphedModel(meshName, group, mNpc, mRace, textureName, mObjectRoot->mForeignObj->mModel.get());
+            model = modelManager.createMorphedModel(meshName,
+                    group, mNpc, mRace, textureName, mObjectRoot->mForeignObj->mModel.get());
 
         NifOgre::ObjectScenePtr sceneHair = NifOgre::ObjectScenePtr (new NifOgre::ObjectScene(mInsert->getCreator()));
         sceneHair->mForeignObj
@@ -647,20 +618,15 @@ void ForeignNpcAnimation::updateNpcBase()
 
         std::string targetBone = model->targetBone();
 
-#endif
-        Ogre::Bone *heBone = mSkelBase->getSkeleton()->getBone("Bip01 Head");
+        Ogre::Bone *heBone = mSkelBase->getSkeleton()->getBone(targetBone);
         Ogre::Quaternion heOrientation = heBone->getOrientation() *
                                Ogre::Quaternion(Ogre::Degree(90), Ogre::Vector3::UNIT_Y); // fix helmet issue
         //Ogre::Vector3 hePosition = Ogre::Vector3(/*up*/0.2f, /*forward*/1.7f, 0.f); // FIXME non-zero for FO3 to make hair fit better
-        //Ogre::Vector3 hePosition = Ogre::Vector3(0.5f, -0.2f, 0.f);
-        Ogre::Vector3 hePosition = Ogre::Vector3(0.f, -0.2f, 0.f);
+        Ogre::Vector3 hePosition = Ogre::Vector3(0.5f, -0.2f, 0.f);
+        //Ogre::Vector3 hePosition = Ogre::Vector3(0.f, -0.2f, 0.f);
         std::map<int32_t, Ogre::Entity*>::const_iterator it(sceneHair->mForeignObj->mEntities.begin());
         for (; it != sceneHair->mForeignObj->mEntities.end(); ++it)
         {
-
-
-
-#if 1
             Ogre::MaterialPtr mat = sceneHair->mMaterialControllerMgr.getWritableMaterial(it->second);
             Ogre::Material::TechniqueIterator techIter = mat->getTechniqueIterator();
             while(techIter.hasMoreElements())
@@ -674,7 +640,6 @@ void ForeignNpcAnimation::updateNpcBase()
                     //tex->setColourOperation(Ogre::LBO_ALPHA_BLEND);
                     //tex->setColourOperation(Ogre::LBO_REPLACE);
                     //tex->setBlank(); // FIXME: testing
-#if 1
                     Ogre::ColourValue ambient = pass->getAmbient();
                     ambient.r = (float)mNpc->mHairColour.red / 256.f;
                     ambient.g = (float)mNpc->mHairColour.green / 256.f;
@@ -683,22 +648,8 @@ void ForeignNpcAnimation::updateNpcBase()
                     pass->setSceneBlending(Ogre::SBT_REPLACE);
                     pass->setAmbient(ambient);
                     pass->setVertexColourTracking(pass->getVertexColourTracking() &~Ogre::TVC_AMBIENT);
-#endif
-#if 0
-                    Ogre::ColourValue diffuse = pass->getDiffuse();
-                    diffuse.r = float((float)mNpc->mHairColour.red / 256);
-                    diffuse.g = float((float)mNpc->mHairColour.green / 256);
-                    diffuse.b = float((float)mNpc->mHairColour.blue / 256);
-                    diffuse.a = 1.f;// (float)mNpc->mHairColour.custom / 256.f; //0.f;
-                    pass->setSceneBlending(Ogre::SBT_REPLACE);
-                    pass->setDiffuse(diffuse);
-                    pass->setVertexColourTracking(pass->getVertexColourTracking() &~Ogre::TVC_DIFFUSE);
-#endif
                 }
             }
-#endif
-
-
 
             if (targetBone != "")
                 mSkelBase->attachObjectToBone(targetBone, it->second, heOrientation, hePosition);
@@ -713,7 +664,7 @@ void ForeignNpcAnimation::updateNpcBase()
             continue;
 
         // skip ears if wearing a helmet - check for the head slot
-        if ((index == ESM4::Race::EarMale || index == ESM4::Race::EarFemale) && (storeHelmet != inv.end()))
+        if ((index == ESM4::Race::EarMale || index == ESM4::Race::EarFemale) && (invHeadGear != inv.end()))
             continue;
 
         // FIXME: skip mouth, teeth (upper/lower) and tongue for now
@@ -775,19 +726,19 @@ void ForeignNpcAnimation::updateNpcBase()
         {
             case(ESM4::Race::EarMale):
                 createMorphedObject(ESM::PRT_Neck,
-                        meshName, "General", mNpc, mRace, "", mObjectRoot->mForeignObj->mModel);
+                        meshName, "General", mNpc, mRace, textureName, mObjectRoot->mForeignObj->mModel);
                 break;
             case(ESM4::Race::EarFemale):
                 createMorphedObject(ESM::PRT_Neck,
-                        meshName, "General", mNpc, mRace, "", mObjectRoot->mForeignObj->mModel);
+                        meshName, "General", mNpc, mRace, textureName, mObjectRoot->mForeignObj->mModel);
                 break;
             case(ESM4::Race::EyeLeft):
                 createMorphedObject(ESM::PRT_LPauldron,
-                        meshName, "General", mNpc, mRace, "", mObjectRoot->mForeignObj->mModel);
+                        meshName, "General", mNpc, mRace, textureName, mObjectRoot->mForeignObj->mModel);
                 break;
             case(ESM4::Race::EyeRight):
                 createMorphedObject(ESM::PRT_RPauldron,
-                        meshName, "General", mNpc, mRace, "", mObjectRoot->mForeignObj->mModel);
+                        meshName, "General", mNpc, mRace, textureName, mObjectRoot->mForeignObj->mModel);
                 break;
         }
     }
@@ -1217,7 +1168,7 @@ void ForeignNpcAnimation::updateNpcBase()
         mInsert->attachObject(it->second);
     }
     mObjectParts[ESM::PRT_Head] = scene;
-
+#if 0
     if (mRace->mEditorId == "Imperial" || mRace->mEditorId == "Nord" ||
         mRace->mEditorId == "Breton"   || mRace->mEditorId == "Redguard" ||
         mRace->mEditorId == "HighElf"  || mRace->mEditorId == "DarkElf"  || mRace->mEditorId == "WoodElf")
@@ -1260,7 +1211,6 @@ void ForeignNpcAnimation::updateNpcBase()
         sceneL->mForeignObj = std::make_shared<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(mInsert->createChildSceneNode(), meshName, group));
         sceneL->mForeignObj->instantiate(mSkelBase->getMesh()->getSkeleton());
 #else
-        
             model.reset();
             model = modelManager.getByName(mNpc->mEditorId + "_" + meshName, group);
             if (!model)
@@ -1280,8 +1230,8 @@ void ForeignNpcAnimation::updateNpcBase()
                 mSkelBase->attachObjectToBone(targetBone, itL->second, heOrientation, hePosition);
             }
             mObjectParts[ESM::PRT_LPauldron] = scene2;
-        
     }
+#endif
 #if 0
     else if (mRace->mEditorId == "Argonian")
     {
@@ -2207,8 +2157,8 @@ bool ForeignNpcAnimation::createMorphedObject(ESM::PartReferenceType type,
         const std::string& meshName, const std::string& group,
         const ESM4::Npc *npc, const ESM4::Race *race, const Ogre::String& texture, NiModelPtr skeletonModel)
 {
-    if (type != ESM::PRT_Hair && type != ESM::PRT_Head)
-        return false;
+    //if (type != ESM::PRT_Hair && type != ESM::PRT_Head)
+        //return false;
 
 #if 0
     // Not sure why detach is needed
@@ -2229,28 +2179,45 @@ bool ForeignNpcAnimation::createMorphedObject(ESM::PartReferenceType type,
 
     // FIXME: probably needs a try/catch block here
 
-    NifOgre::ObjectScenePtr scene
-        = NifOgre::ObjectScenePtr (new NifOgre::ObjectScene(mInsert->getCreator()));
 
     NiBtOgre::NiModelManager& modelManager = NiBtOgre::NiModelManager::getSingleton();
-    NiModelPtr object = modelManager.getByName(npc->mEditorId+"_"+meshName, group);
+
+#if 1
+    NiModelPtr object = modelManager.getByName(npc->mEditorId + "_" + meshName, group);
     if (!object)
-        object = modelManager.createMorphedModel(meshName, group, npc, race, texture, skeletonModel.get());
+        object = modelManager.createMorphedModel(meshName, group, mNpc, mRace, texture, skeletonModel.get());
+#else
+    // initially assume a morphed model
+    NiModelPtr object = modelManager.getByName(npc->mEditorId + "_" + meshName, group);
+    // if not found just create a non-skinned model to check
+    if (!object)
+    {
+        object = modelManager.getOrLoadByName(meshName, group);
+        if (object->buildData().mIsSkinned)
+        {
+            // skinned, so go ahead and create a morphed model
+            object.reset();
+            object = modelManager.createMorphedModel(meshName, group, mNpc, mRace, texture, skeletonModel.get());
+        }
+    }
+#endif
+
+    // create an instance of the model
+    NifOgre::ObjectScenePtr scene
+        = NifOgre::ObjectScenePtr (new NifOgre::ObjectScene(mInsert->getCreator()));
 
     std::string targetBone = object->targetBone();
 
     // create an instance of the model
     scene->mForeignObj
         = std::make_unique<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(object, mInsert->createChildSceneNode()));
-#if 0
-    scene->mForeignObj
-        = std::make_unique<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(mInsert->createChildSceneNode(), meshName, group));
-#endif
 
-    if (targetBone == "") // skinned
+    //if (targetBone == "" && // skinned
+        //type != ESM::PRT_LPauldron && type != ESM::PRT_RPauldron) // FIXME: hack
+    if (object->buildData().mIsSkinned)
     {
-        if (!object->buildData().mIsSkinned) // double check just in case
-            std::cout << meshName << " does not have a target bone and not skinned" << std::endl;
+        //if (!object->buildData().mIsSkinned) // double check just in case
+            //std::cout << meshName << " does not have a target bone and not skinned" << std::endl;
 
         scene->mForeignObj->instantiate(mInsert, mSkelBase);
     }
@@ -2259,16 +2226,25 @@ bool ForeignNpcAnimation::createMorphedObject(ESM::PartReferenceType type,
         if (object->buildData().mIsSkinned) // double check just in case
             std::cout << meshName << " has a target bone even though skinned" << std::endl;
 
+        if (targetBone == "") // FIXME: hack
+            targetBone = "Bip01 Head";
+
         scene->mForeignObj->instantiate();
 
         Ogre::Bone *bone = mSkelBase->getSkeleton()->getBone(targetBone);
 
+        Ogre::Quaternion orientation = Ogre::Quaternion::IDENTITY;
+        Ogre::Vector3 position = Ogre::Vector3::ZERO; // some clipping near the back
         // fix helmet issue
-        Ogre::Quaternion orientation
-            = bone->getOrientation() * Ogre::Quaternion(Ogre::Degree(90), Ogre::Vector3::UNIT_Y);
-        //Ogre::Vector3 position = Ogre::Vector3::ZERO; // some clipping near the back
-        //Ogre::Vector3 position = bone->getPosition(); // this makes the helmet sit too high
-        Ogre::Vector3 position = Ogre::Vector3(0.f/*up*/, -0.4f/*forward*/, 0.f/*right*/);
+        if (/*type == ESM::PRT_Hair || */targetBone == "Bip01 Head")
+        {
+            orientation
+                = bone->getOrientation() * Ogre::Quaternion(Ogre::Degree(90), Ogre::Vector3::UNIT_Y);
+
+            //Ogre::Vector3 position = bone->getPosition(); // this makes the helmet sit too high
+            //Ogre::Vector3 position = Ogre::Vector3(0.f/*up*/, -0.4f/*forward*/, 0.f/*right*/);
+            position = Ogre::Vector3(0.45f/*up*/, -0.55f/*forward*/, 0.f/*right*/);
+        }
 
         std::map<int32_t, Ogre::Entity*>::const_iterator it(scene->mForeignObj->mEntities.begin());
         for (; it != scene->mForeignObj->mEntities.end(); ++it)

@@ -1735,15 +1735,26 @@ For skinned body parts for creatures we don't need to worry about the uniqueness
 
 ## FIXME 4
 
-TRI file exeption commented out
+  * TRI file exeption commented out
+  * Case folding for skeleton and object names are causing no end of troubles.  For now only fold skeleton names.
+  * The use of skeletonRoot() in NiSkeletonLoader is not working
 
-## FIXME 5
+## Head parts progress
 
-Case folding for skeleton and object names are causing no end of troubles
+It turns out that even helmets (not skinned) look better when morphed.  This will make the code a little simpler.
 
-## FIXME 6
+For some reason the parts that attach to `Bip01 Head` require postion and rotation adjustment.
 
-The use of skeletonRoot() in NiSkeletonLoader is not working
+```cpp
+if (targetBone == "Bip01 Head")
+{
+    orientation = bone->getOrientation() * Ogre::Quaternion(Ogre::Degree(90), Ogre::Vector3::UNIT_Y);
+    position = Ogre::Vector3(0.45f/*up*/, -0.55f/*forward*/, 0.f/*right*/);
+}
+
+```
+
+Some NIF files do not supply the target bone (e.g. eyes, ears).  They just have to be hard coded.
 
 
 [//]: # (/* spell spelllang=en_au syntax=cpp */)
