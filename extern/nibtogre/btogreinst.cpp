@@ -180,38 +180,28 @@ void NiBtOgre::BtOgreInst::buildEntities()
     for (std::size_t i = 0; i < meshes.size(); ++i)
     {
         Ogre::Entity *entity = mBaseSceneNode->getCreator()->createEntity(meshes[i].first);
+
         // FIXME: don't want skeleton.nif to be visible?
         entity->setVisible(true /*!(flags&Nif::NiNode::Flag_Hidden)*/); // FIXME not for newer NIF
 
-        // associate controllers to sub entities
+
+        // TODO: associate controllers to sub entities
         //
         // WARNING: Assumed that the sub entity order is the same as the order in which the
         //          sub-meshes are created in NiMeshLoader::loadResource
 
 
-
-        // FIXME: experimental - how to choose which one is mSkeletonRoot?
         // set mSkelBase for Animation::isSkinned()
         if (meshes[i].first->hasSkeleton() && (mModel->blockType(meshes[i].second->selfRef()) == "NiNode")) // FIXME
         {
-#if 0
-            std::string nodeName = meshes[i].second->getNiNodeName();
-            if (meshes[i].second->selfRef() == 0)
-            //if (nodeName == "Scene Root")
-            {
-                mSkeletonRoot = entity;
-            }
-#else
             if (meshes[i].second == skeletonRoot)
                 mSkeletonRoot = entity;
-#endif
         }
         else if (meshes[i].first->hasSkeleton() && (mModel->blockType(meshes[i].second->selfRef()) == "BSFadeNode"))
         {
             if (meshes[i].second == skeletonRoot)
                 mSkeletonRoot = entity;
         }
-
 
 
 

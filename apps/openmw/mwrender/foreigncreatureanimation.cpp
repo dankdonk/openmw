@@ -136,7 +136,7 @@ ForeignCreatureAnimation::ForeignCreatureAnimation(const MWWorld::Ptr &ptr, cons
     {
         //std::cout << ref->mBase->mNif[i] << std::endl;
         std::string meshName = path+ref->mBase->mNif[i];
-        Misc::StringUtils::lowerCaseInPlace(meshName);
+        //Misc::StringUtils::lowerCaseInPlace(meshName);
 
         // initially assume a skinned model
         NiModelPtr object = modelManager.getByName(skeletonName + "_" + meshName, group);

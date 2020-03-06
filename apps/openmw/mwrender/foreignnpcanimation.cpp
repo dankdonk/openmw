@@ -620,7 +620,7 @@ void ForeignNpcAnimation::updateNpcBase()
 
         meshName = "meshes\\"+hair->mModel;
         textureName = "textures\\"+hair->mIcon;
-
+#if 0
         std::unique_ptr<std::vector<Ogre::Vector3> > fgVertices // NOTE: ownership passed to the model
             = std::make_unique<std::vector<Ogre::Vector3> >();
 
@@ -633,8 +633,21 @@ void ForeignNpcAnimation::updateNpcBase()
         sceneHair->mForeignObj = std::make_shared<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(mInsert->createChildSceneNode(), meshName, group));
 
         //sceneHair->mForeignObj->instantiate(mSkelBase->getMesh()->getSkeleton(), mNpc->mEditorId, std::move(fgVertices));
-        //sceneHair->mForeignObj->instantiate(mSkelBase->getMesh()->getSkeleton(), mNpc->mEditorId);
+        sceneHair->mForeignObj->instantiate(mSkelBase->getMesh()->getSkeleton(), mNpc->mEditorId);
+#else
 
+        NiModelPtr model = modelManager.getByName(mNpc->mEditorId+"_"+meshName, group);
+        if (!model)
+            model = modelManager.createMorphedModel(meshName, group, mNpc, mRace, textureName, mObjectRoot->mForeignObj->mModel.get());
+
+        NifOgre::ObjectScenePtr sceneHair = NifOgre::ObjectScenePtr (new NifOgre::ObjectScene(mInsert->getCreator()));
+        sceneHair->mForeignObj
+            = std::make_unique<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(model, mInsert->createChildSceneNode()));
+        sceneHair->mForeignObj->instantiate();
+
+        std::string targetBone = model->targetBone();
+
+#endif
         Ogre::Bone *heBone = mSkelBase->getSkeleton()->getBone("Bip01 Head");
         Ogre::Quaternion heOrientation = heBone->getOrientation() *
                                Ogre::Quaternion(Ogre::Degree(90), Ogre::Vector3::UNIT_Y); // fix helmet issue
@@ -687,8 +700,8 @@ void ForeignNpcAnimation::updateNpcBase()
 
 
 
-
-            mSkelBase->attachObjectToBone("Bip01 Head", it->second, heOrientation, hePosition);
+            if (targetBone != "")
+                mSkelBase->attachObjectToBone(targetBone, it->second, heOrientation, hePosition);
         }
         mObjectParts[ESM::PRT_Hair] = sceneHair;
     }
@@ -903,12 +916,12 @@ void ForeignNpcAnimation::updateNpcBase()
 #endif
 
 
-
+#if 0
     std::unique_ptr<std::vector<Ogre::Vector3> > // NOTE: ownership passed to the head model
         fgVertices = std::make_unique<std::vector<Ogre::Vector3> >();
 
     sam.getMorphedVertices(fgVertices.get(), meshName, sRaceCoeff, aRaceCoeff, sCoeff, aCoeff);
-
+#endif
     // FIXME: need to be able to check other than oblivion.esm
     // mName = "textures\\faces\\oblivion.esm\\0001A117_0.dds"
     // SEBelmyneDreleth does not have a facegen texture
@@ -921,7 +934,7 @@ void ForeignNpcAnimation::updateNpcBase()
     }
     //else
         //std::cout << mNpc->mEditorId << " detail " << ESM4::formIdToString(mNpc->mFormId) << std::endl;
-
+#if 0
     NifOgre::ObjectScenePtr scene = NifOgre::ObjectScenePtr (new NifOgre::ObjectScene(mInsert->getCreator()));
     scene->mForeignObj = std::make_unique<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(mInsert->createChildSceneNode(), /*scene, */meshName, group));
 
@@ -934,8 +947,21 @@ void ForeignNpcAnimation::updateNpcBase()
 
     // TODO: is it possible to get the texture name here or should it be hard coded?
     //scene->mForeignObj->instantiate(mSkelBase->getMesh()->getSkeleton(), mNpc->mEditorId, std::move(fgVertices));
-    //scene->mForeignObj->instantiate(mSkelBase->getMesh()->getSkeleton(), mNpc->mEditorId);
+    scene->mForeignObj->instantiate(mSkelBase->getMesh()->getSkeleton(), mNpc->mEditorId);
+#else
 
+        NiModelPtr model = modelManager.getByName(mNpc->mEditorId+"_"+meshName, group);
+        if (!model)
+            model = modelManager.createMorphedModel(meshName, group, mNpc, mRace, textureName, mObjectRoot->mForeignObj->mModel.get());
+
+        NifOgre::ObjectScenePtr scene = NifOgre::ObjectScenePtr (new NifOgre::ObjectScene(mInsert->getCreator()));
+        scene->mForeignObj
+            = std::make_unique<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(model, mInsert->createChildSceneNode()));
+        scene->mForeignObj->instantiate();
+
+        std::string targetBone = model->targetBone();
+
+#endif
 
     // get the texture from mRace
     // FIXME: for now, get if from Ogre material
@@ -1192,17 +1218,31 @@ void ForeignNpcAnimation::updateNpcBase()
     }
     mObjectParts[ESM::PRT_Head] = scene;
 
-#if 0
     if (mRace->mEditorId == "Imperial" || mRace->mEditorId == "Nord" ||
         mRace->mEditorId == "Breton"   || mRace->mEditorId == "Redguard" ||
         mRace->mEditorId == "HighElf"  || mRace->mEditorId == "DarkElf"  || mRace->mEditorId == "WoodElf")
     {
         meshName = "meshes\\Characters\\Imperial\\eyerighthuman.nif";
+#if 0
         NifOgre::ObjectScenePtr scene = NifOgre::ObjectScenePtr (new NifOgre::ObjectScene(mInsert->getCreator()));
         scene->mForeignObj = std::make_shared<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(mInsert->createChildSceneNode(), meshName, group));
         scene->mForeignObj->instantiate(mSkelBase->getMesh()->getSkeleton());
+#else
 
-        Ogre::Bone *heBone = mSkelBase->getSkeleton()->getBone("Bip01 Head");
+        NiModelPtr model = modelManager.getByName(mNpc->mEditorId+"_"+meshName, group);
+        if (!model)
+            model = modelManager.createMorphedModel(meshName, group, mNpc, mRace, textureName, mObjectRoot->mForeignObj->mModel.get());
+
+        NifOgre::ObjectScenePtr scene = NifOgre::ObjectScenePtr (new NifOgre::ObjectScene(mInsert->getCreator()));
+        scene->mForeignObj
+            = std::make_unique<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(model, mInsert->createChildSceneNode()));
+        scene->mForeignObj->instantiate();
+
+        std::string targetBone = "Bip01 Head";
+
+#endif
+
+        Ogre::Bone *heBone = mSkelBase->getSkeleton()->getBone(targetBone);
         Ogre::Quaternion heOrientation = heBone->getOrientation() *
                                Ogre::Quaternion(Ogre::Degree(90), Ogre::Vector3::UNIT_Y); // fix helmet issue
         Ogre::Vector3 hePosition = Ogre::Vector3(0.4, -0.3, 0); // FIXME: make eyes fit better
@@ -1210,22 +1250,39 @@ void ForeignNpcAnimation::updateNpcBase()
         std::map<int32_t, Ogre::Entity*>::const_iterator it(scene->mForeignObj->mEntities.begin());
         for (; it != scene->mForeignObj->mEntities.end(); ++it)
         {
-            mSkelBase->attachObjectToBone("Bip01 Head", it->second, heOrientation, hePosition);
+            mSkelBase->attachObjectToBone(targetBone, it->second, heOrientation, hePosition);
         }
         mObjectParts[ESM::PRT_RPauldron] = scene;
 
         meshName = "meshes\\Characters\\Imperial\\eyelefthuman.nif";
+#if 0
         NifOgre::ObjectScenePtr sceneL = NifOgre::ObjectScenePtr (new NifOgre::ObjectScene(mInsert->getCreator()));
         sceneL->mForeignObj = std::make_shared<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(mInsert->createChildSceneNode(), meshName, group));
         sceneL->mForeignObj->instantiate(mSkelBase->getMesh()->getSkeleton());
+#else
+        
+            model.reset();
+            model = modelManager.getByName(mNpc->mEditorId + "_" + meshName, group);
+            if (!model)
+                model = modelManager.createMorphedModel(meshName, group, mNpc, mRace, textureName, mObjectRoot->mForeignObj->mModel.get());
 
-        std::map<int32_t, Ogre::Entity*>::const_iterator itL(sceneL->mForeignObj->mEntities.begin());
-        for (; itL != sceneL->mForeignObj->mEntities.end(); ++itL)
-        {
-            mSkelBase->attachObjectToBone("Bip01 Head", itL->second, heOrientation, hePosition);
-        }
-        mObjectParts[ESM::PRT_LPauldron] = sceneL;
+            NifOgre::ObjectScenePtr scene2 = NifOgre::ObjectScenePtr(new NifOgre::ObjectScene(mInsert->getCreator()));
+            scene2->mForeignObj
+                = std::make_unique<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(model, mInsert->createChildSceneNode()));
+            scene2->mForeignObj->instantiate();
+
+            targetBone = "Bip01 Head";
+
+#endif
+            std::map<int32_t, Ogre::Entity*>::const_iterator itL(scene2->mForeignObj->mEntities.begin());
+            for (; itL != scene2->mForeignObj->mEntities.end(); ++itL)
+            {
+                mSkelBase->attachObjectToBone(targetBone, itL->second, heOrientation, hePosition);
+            }
+            mObjectParts[ESM::PRT_LPauldron] = scene2;
+        
     }
+#if 0
     else if (mRace->mEditorId == "Argonian")
     {
         meshName = "meshes\\Characters\\Argonian\\eyerightargonian.nif";
@@ -2237,19 +2294,17 @@ bool ForeignNpcAnimation::createObject(ESM::PartReferenceType type,
     // initially assume a skinned model
     std::string skeletonName = skeletonModel->getModelName();
     Misc::StringUtils::lowerCaseInPlace(skeletonName);
-    std::string objectName = meshName;
-    Misc::StringUtils::lowerCaseInPlace(objectName);
-    NiModelPtr model = modelManager.getByName(skeletonName + "_" + objectName, group);
+    NiModelPtr model = modelManager.getByName(skeletonName + "_" + meshName, group);
 
     // if not found just create a non-skinned model to check
     if (!model)
     {
-        model = modelManager.getOrLoadByName(objectName, group);
+        model = modelManager.getOrLoadByName(meshName, group);
         if (model->buildData().mIsSkinned)
         {
             // was skinned after all
             model.reset();
-            model = modelManager.createSkinnedModel(objectName, group, skeletonModel.get());
+            model = modelManager.createSkinnedModel(meshName, group, skeletonModel.get());
         }
     }
 
@@ -2311,15 +2366,12 @@ void ForeignNpcAnimation::addAnimSource(const std::string &model)
     if (!mSkelBase)
         return; // FIXME: should throw here (or assert)
 
-    std::string lowerModel = model;
-    Misc::StringUtils::lowerCaseInPlace(lowerModel);
-
     // First find the kf file.  For TES3 the kf file has the same name as the nif file.
     // For TES4, different animations (e.g. idle, block) have different kf files.
-    size_t pos = lowerModel.find("skeleton.nif");
+    size_t pos = model.find("skeleton.nif");
     if (pos == std::string::npos)
     {
-        pos = lowerModel.find("skeletonbeast.nif");
+        pos = model.find("skeletonbeast.nif");
         if (pos == std::string::npos)
             return; // FIXME: should throw here
         // TODO: skeletonsesheogorath
@@ -2366,20 +2418,12 @@ void ForeignNpcAnimation::addForeignAnimSource(const std::string& model, const s
         return;
 
     std::string group("General"); // FIXME
-#if 0
-    NiModelPtr npcModel = NiBtOgre::NiModelManager::getSingleton().getOrLoadByName(model, group);
-    npcModel->buildSkeleton(true); // FIXME: hack
-#else
-
-    std::string lowerModel = model;
-    Misc::StringUtils::lowerCaseInPlace(lowerModel);
 
     NiBtOgre::NiModelManager& modelManager = NiBtOgre::NiModelManager::getSingleton();
-    NiModelPtr skeleton = modelManager.getByName(lowerModel, "General");
+    NiModelPtr skeleton = modelManager.getByName(model, group);
     if (!skeleton)
-        skeleton = modelManager.createSkeletonModel(lowerModel, "General");
+        skeleton = modelManager.createSkeletonModel(model, group);
 
-#endif
     assert(!skeleton.isNull() && "skeleton.nif should have been built already");
     NiModelPtr anim = NiBtOgre::NiModelManager::getSingleton().getOrLoadByName(animName, group);
 

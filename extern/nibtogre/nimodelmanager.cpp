@@ -125,38 +125,7 @@ namespace NiBtOgre
                      "Cannot find build parameters for " + name,
                      "NiModelManager::createImpl");
     }
-#if 0
-    // this method may create a skinned model instead if NiSkinInstance is found
-    NiModelPtr NiModelManager::createModel(const Ogre::String& nif, const Ogre::String& group,
-            NiModel *skeleton)
-    {
-        // check if existing - we may be attempting to auto-detect whether the model is skinned
-        NiModelPtr pModel = getByName(nif, group);
-        if (!pModel)
-            pModel = createManual(nif, group, nif, this);
 
-        // store parameters
-        ModelBuildInfo bInfo;
-        bInfo.type = MBT_Object;
-        bInfo.baseNif = nif;
-        bInfo.skel = skeleton;
-        if (skeleton)
-        {
-            bInfo.skelNif = skeleton->getModelName();
-            bInfo.skelGroup = skeleton->getOgreGroup();
-        }
-        else
-        {
-            bInfo.skelNif.clear();
-            bInfo.skelGroup.clear();
-        }
-        mModelBuildInfoMap[pModel.get()] = bInfo;
-
-        pModel->load(); // load immediately
-
-        return pModel;
-    }
-#endif
     NiModelPtr NiModelManager::createSkinnedModel(const Ogre::String& nif, const Ogre::String& group,
             NiModel *skeleton)
     {
@@ -277,46 +246,7 @@ namespace NiBtOgre
         switch(bInfo.type)
         {
             case MBT_Object:
-#if 0
-            {
-                bool isSkinned = model->buildData().mIsSkinned; // indicates the presence of NiSkinInstance
-
-                if (!isSkinned || bInfo.skel == nullptr)
-                {
-                    model->findBoneNodes(true);
-                    model->createMesh();
-                    model->buildModel();
-                }
-                else // skinned
-                {
-                    Ogre::SkeletonPtr skel;
-                    try
-                    {
-                        skel = bInfo.skel->getSkeleton();
-                    }
-                    catch (...)
-                    {
-                        NiModelPtr skelModel = getByName(bInfo.skelNif, bInfo.skelGroup);
-                        skel = skelModel->getSkeleton();
-                    }
-
-                    Ogre::String modelName = bInfo.skelNif+"_"+res->getName();
-                    NiModelPtr newModel = createManual(modelName, res->getGroup(), res->getName(), this);
-
-                    ModelBuildInfo newInfo = bInfo;
-                    newInfo.type = MBT_Skinned;
-                    mModelBuildInfoMap[newModel.get()] = newInfo;
-
-                    mModelBuildInfoMap.erase(it); // not sure if we need to erase this
-
-                    newModel->load();
-                }
-
                 break;
-            }
-#else
-                break;
-#endif
             case MBT_Skinned:
                 loadManualSkinnedModel(model, bInfo);
                 break;

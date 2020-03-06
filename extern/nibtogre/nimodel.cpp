@@ -183,13 +183,9 @@ void NiBtOgre::NiModel::findBoneNodes(bool buildObjectPalette, size_t rootIndex)
                 continue; // FIXME: morroblivion\flora\bushes\corkbulb01anim.nif, index 0x20
 
             node = getRef<NiNode>(index);
-#if 0
-            node->findBones(mRoots[0]); // FIXME: assumed only one root and skeleton root is the same
-#else
             NiNodeRef boneRoot = node->findBones(mRoots[rootIndex]);
             if (boneRoot != -1)
                 mBoneRootNode = getRef<NiNode>(boneRoot); // just overwrite the previous result
-#endif
 
             if (buildObjectPalette)
                 mObjectPalette[node->getNiNodeName()] = index;
@@ -264,7 +260,7 @@ void NiBtOgre::NiModel::createMesh(bool isMorphed, Ogre::SkeletonPtr skeleton)
                                "#" + std::to_string(iter->second->selfRef()) + // node index
                                "@" + iter->second->getNiNodeName();            // node name
 
-        Ogre::MeshPtr mesh = meshManager.getByName(boost::algorithm::to_lower_copy(meshName), mGroup);
+        Ogre::MeshPtr mesh = meshManager.getByName(/*boost::algorithm::to_lower_copy(meshName)*/meshName, mGroup);
         if (!mesh)
             mesh = meshLoader.createMesh(meshName, mGroup, this, iter->second->selfRef(), skelName);
 
@@ -453,7 +449,6 @@ NiBtOgre::NiTriBasedGeom *NiBtOgre::NiModel::fgGeometry() const
 
 NiBtOgre::NiNode *NiBtOgre::NiModel::skeletonRoot()
 {
-#if 1
     if (!mBoneRootNode)
     {
         // FIXME: not even sure why we're building skeletons for skinned models
@@ -473,7 +468,6 @@ NiBtOgre::NiNode *NiBtOgre::NiModel::skeletonRoot()
                 break; // more stupidity, won't search if there are any other bone roots
         }
     }
-#endif
 
     return mBoneRootNode;
 }

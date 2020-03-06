@@ -123,9 +123,6 @@ namespace NiBtOgre
 
         void loadResource(Ogre::Resource* res);
 
-        //NiModelPtr createModel(const Ogre::String& name, const Ogre::String& group,
-                //NiModel *skeleton = nullptr);
-
         NiModelPtr createSkinnedModel(const Ogre::String& name, const Ogre::String& group,
                 NiModel *skeleton);
 

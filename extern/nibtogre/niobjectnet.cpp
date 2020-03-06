@@ -70,7 +70,7 @@ std::string NiBtOgre::NiObjectNET::getStringExtraData(const std::string& name) c
 
     for (std::size_t i = 0; i < mExtraDataRefList.size(); ++i)
     {
-        if (mModel.blockType(mExtraDataRefList[i]) != "NiStringExtraData")
+        if (mExtraDataRefList[i] == -1 || mModel.blockType(mExtraDataRefList[i]) != "NiStringExtraData")
             continue;
 
         NiStringExtraData *extra = mModel.getRef<NiStringExtraData>(mExtraDataRefList[i]);
