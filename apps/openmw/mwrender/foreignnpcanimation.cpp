@@ -450,40 +450,7 @@ void ForeignNpcAnimation::updateNpcBase()
     // Ogre::Entity    *mSkelBase
     // Ogre::SceneNode *mInsert
     // ObjectScenePtr   mObjectRoot
-    // ?? reuse mInsert?
     std::string modelName;
-
-    // Slots for Bipid Object (from the Construction Set) - may occupy more than one slot (e.g. Robe)
-    // See Armor::mArmorFlags and Clothing::mClothingFlags.  There are total 16 slots.
-    //
-    //     Head
-    //     Hair
-    //     UpperBody
-    //     LowerBody
-    //     Hand
-    //     Foot
-    //     RightRing
-    //     LeftRing
-    //     Amulet
-    //     Weapon
-    //     BackWeapon
-    //     SideWeapon
-    //     Quiver
-    //     Shield
-    //     Torch
-    //     Tail
-    //
-    // Loop through to select the wearable items with the most value for a given slot.
-    // Probably only Armor, Clothing and Weapon.
-    //
-    // FIXME: not sure how to compare items that have more than one slot?
-    // One possibility might be to sort the inventory in value order and equip the items while
-    // checking for slot clashes.
-    //
-    // This item equipping algorithm should be encapsulated as it is likely to have a large bearing
-    // on the gameplay (and whether we emulate vanilla closely).
-    //
-    // TODO: NPC scripts may disallow some items to be equipped (TODO: confirm this)
 
 
     bool isTES4 = true;
@@ -566,7 +533,7 @@ void ForeignNpcAnimation::updateNpcBase()
             if (targetBone != "")
                 mSkelBase->attachObjectToBone(targetBone, it->second, heOrientation, hePosition);
         }
-        mObjectParts[0x02] = scene; // FIXME: use enum
+        mObjectParts[ESM4::Armor::TES4_Hair] = scene;
     }
 
     for (int index = ESM4::Race::Head; index < ESM4::Race::NumHeadParts; ++index)
@@ -578,8 +545,6 @@ void ForeignNpcAnimation::updateNpcBase()
         // skip ears if wearing a helmet - check for the head slot
         if ((index == ESM4::Race::EarMale || index == ESM4::Race::EarFemale) && (invHeadGear != inv.end()))
             continue;
-
-
 
         // FIXME: skip mouth, teeth (upper/lower) and tongue for now
         if (index >= ESM4::Race::Mouth && index <= ESM4::Race::Tongue)
@@ -648,115 +613,74 @@ void ForeignNpcAnimation::updateNpcBase()
                 createMorphedObject(meshName, "General", textureName, mObjectRoot->mForeignObj->mModel));
     }
 
-
-    // default meshes for hand/feet/upper/lower are in the same path as skeleton.nif
-    //
-    // FIXME: parameterise and make this a function call
+    // default meshes for upperbody /lower body/hands/feet are in the same directory as skeleton.nif
     const std::vector<ESM4::Race::BodyPart>& bodyParts = (isFemale ? mRace->mBodyPartsFemale : mRace->mBodyPartsMale);
     for (int index = ESM4::Race::UpperBody; index < ESM4::Race::NumBodyParts; ++index)
     {
         meshName = bodyParts[index].mesh;
-        textureName = "textures\\" + bodyParts[index].texture;
+        textureName = "textures\\" + bodyParts[index].texture; // TODO: can it be empty string?
 
         // need a mapping of body parts to equipment slot, which are different for each game
         // FIXME: for now just implement TES4
-        int type = 0;
-        if (isTES4)
-        {
-            switch (index)
-            {
-                case(ESM4::Race::UpperBody): type = ESM4::Armor::TES4_UpperBody; break;
-                case(ESM4::Race::LowerBody): type = ESM4::Armor::TES4_LowerBody; break;
-                case(ESM4::Race::Hands):     type = ESM4::Armor::TES4_Hands;     break;
-                case(ESM4::Race::Feet):      type = ESM4::Armor::TES4_Feet;      break;
-                case(ESM4::Race::Tail):      type = ESM4::Armor::TES4_Tail;      break;
-                default: break;
-            }
-        }
-        else
+        if (!isTES4)
             throw std::runtime_error("ForeignNpcAnimation: not TES4");
 
-        // FIXME: prob wrap this with a try/catch block
-        // FIXME: group "General"
-
-                removeIndividualPart((ESM::PartReferenceType)type);
+        int type = 0;
+        int invSlot = MWWorld::InventoryStore::Slots;
         switch (index)
         {
             case(ESM4::Race::UpperBody):
             {
-                MWWorld::ContainerStoreIterator invChest
-                    = inv.getSlot(MWWorld::InventoryStore::Slot_ForeignUpperBody);
-                if (invChest == inv.end())
-                {
-                    meshName = skeletonPath + (isFemale ? "female" : "") + "upperbody.nif";
-                    mObjectParts[type] =
-                    createObject(
-                        meshName, "General", textureName, mObjectRoot->mForeignObj->mModel);
-                }
-
+                type = ESM4::Armor::TES4_UpperBody;
+                invSlot = MWWorld::InventoryStore::Slot_ForeignUpperBody;
+                meshName = skeletonPath + (isFemale ? "female" : "") + "upperbody.nif";
                 break;
             }
             case(ESM4::Race::LowerBody):
             {
-                MWWorld::ContainerStoreIterator invLegs
-                    = inv.getSlot(MWWorld::InventoryStore::Slot_ForeignLowerBody);
-                if (invLegs == inv.end())
-                {
-                    meshName = skeletonPath + (isFemale ? "female" : "") + "lowerbody.nif";
-                    mObjectParts[type] =
-                    createObject(
-                        meshName, "General", textureName, mObjectRoot->mForeignObj->mModel);
-                }
-
+                type = ESM4::Armor::TES4_LowerBody;
+                invSlot = MWWorld::InventoryStore::Slot_ForeignLowerBody;
+                meshName = skeletonPath + (isFemale ? "female" : "") + "lowerbody.nif";
                 break;
             }
             case(ESM4::Race::Hands):
             {
-                MWWorld::ContainerStoreIterator invHand
-                    = inv.getSlot(MWWorld::InventoryStore::Slot_ForeignHands);
-                if (invHand == inv.end())
-                {
-                    meshName = skeletonPath + (isFemale ? "female" : "") + "hand.nif";
-                    mObjectParts[type] =
-                    createObject(
-                        meshName, "General", textureName, mObjectRoot->mForeignObj->mModel);
-                }
-
+                type = ESM4::Armor::TES4_Hands;
+                invSlot = MWWorld::InventoryStore::Slot_ForeignHands;
+                meshName = skeletonPath + (isFemale ? "female" : "") + "hand.nif";
                 break;
             }
             case(ESM4::Race::Feet):
             {
-                MWWorld::ContainerStoreIterator invFoot
-                    = inv.getSlot(MWWorld::InventoryStore::Slot_ForeignFeet);
-                if (invFoot == inv.end())
-                {
-                    meshName = skeletonPath + (isFemale ? "female" : "") + "foot.nif";
-                    mObjectParts[type] =
-                    createObject(
-                        meshName, "General", textureName, mObjectRoot->mForeignObj->mModel);
-                }
-
+                type = ESM4::Armor::TES4_Feet;
+                invSlot = MWWorld::InventoryStore::Slot_ForeignFeet;
+                meshName = skeletonPath + (isFemale ? "female" : "") + "foot.nif";
                 break;
             }
             case(ESM4::Race::Tail):
             {
-                MWWorld::ContainerStoreIterator invTail
-                    = inv.getSlot(MWWorld::InventoryStore::Slot_ForeignTail);
-                if (invTail == inv.end())
-                {
-                    if (meshName != "")
-                    mObjectParts[type] =
-                    createObject(
-                        "meshes\\" + meshName, "General", textureName, mObjectRoot->mForeignObj->mModel);
-                }
-
+                type = ESM4::Armor::TES4_Tail;
+                invSlot = MWWorld::InventoryStore::Slot_ForeignTail;
+                if (meshName != "") meshName = "meshes\\" + meshName;
                 break;
             }
+            default: break;
+        }
+
+        // FIXME: group "General"
+        MWWorld::ContainerStoreIterator invChest = inv.getSlot(invSlot);
+        if (invChest == inv.end()  // body part only if it is not occupied by some equipment
+                && meshName != "") // tail may be empty
+        {
+            removeIndividualPart((ESM::PartReferenceType)type);
+
+            mObjectParts[type] =
+                    createObject(meshName, "General", textureName, mObjectRoot->mForeignObj->mModel);
         }
     }
 
 
-    meshName = "meshes\\"+mRace->mHeadParts[0/*head*/].mesh;
+    meshName = "meshes\\" + mRace->mHeadParts[ESM4::Race::Head].mesh;
     if (meshName.empty())
     {
         if (mRace->mEditorId == "Imperial" || mRace->mEditorId == "Nord"     ||
@@ -836,46 +760,7 @@ void ForeignNpcAnimation::updateNpcBase()
 
     Ogre::Vector3 sym;
     Ogre::Vector3 asym;
-    // NiModel is an Ogre::Resource
-    //
-    // FIXME:
-    // - a resource may be unloaded, which means that it needs to be re-morphed when loaded again
-    // - also, each NPC's head model may be unique, which means they need to be managed separately
-    //   once morphed
-    // - a solution might be to have a "MorphedModelManager" which will call FgSam as required
-    //
-    // head, ears, eyes left, eyes right, hair, teethupper, teeth lower, tongue, mouth
-    // i.e. all the "head parts" and hair
-    //
-    // also, a few have egt but not egm (but these apply to all npcs in the same race?)
-    //
-#if 0
-    // getOrLoadByName calls getResourceByName
-    // mNpc is ESM4::Npc*
-    NiModelPtr headModel = NiBtOgre::NiModelManager::getSingleton().getOrLoadByName(meshName, "General", mNpc);
-    if (!headModel->hasMorphedVertices())
-    {
-        std::unique_ptr<std::vector<Ogre::Vector3> >
-                fgVertices = std::make_unique<std::vector<Ogre::Vector3> >();
-        sam.getMorphedVertices(fgVertices.get(), meshName, sRaceCoeff, aRaceCoeff, sCoeff, aCoeff);
 
-        headModel->setVertices(std::move(fgVertices));
-    }
-    else
-    {
-        // have another BtOgreInst ctor to pass the NiModelPtr to remove the need to search for the model
-        // WARN: assumed morphed texture is not possible without morphed vertices
-    }
-
-#endif
-
-
-#if 0
-    std::unique_ptr<std::vector<Ogre::Vector3> > // NOTE: ownership passed to the head model
-        fgVertices = std::make_unique<std::vector<Ogre::Vector3> >();
-
-    sam.getMorphedVertices(fgVertices.get(), meshName, sRaceCoeff, aRaceCoeff, sCoeff, aCoeff);
-#endif
     // FIXME: need to be able to check other than oblivion.esm
     // mName = "textures\\faces\\oblivion.esm\\0001A117_0.dds"
     // SEBelmyneDreleth does not have a facegen texture
@@ -888,34 +773,17 @@ void ForeignNpcAnimation::updateNpcBase()
     }
     //else
         //std::cout << mNpc->mEditorId << " detail " << ESM4::formIdToString(mNpc->mFormId) << std::endl;
-#if 0
+
+    NiModelPtr model = modelManager.getByName(mNpc->mEditorId + "_" + meshName, group);
+    if (!model)
+        model = modelManager.createMorphedModel(meshName, group, mNpc, mRace, textureName, mObjectRoot->mForeignObj->mModel.get());
+
     NifOgre::ObjectScenePtr scene = NifOgre::ObjectScenePtr (new NifOgre::ObjectScene(mInsert->getCreator()));
-    scene->mForeignObj = std::make_unique<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(mInsert->createChildSceneNode(), /*scene, */meshName, group));
+    scene->mForeignObj
+        = std::make_unique<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(model, mInsert->createChildSceneNode()));
+    scene->mForeignObj->instantiate();
 
-    // IDEA: manage morphed vertices as a resource? Similar to having morphed textures managed by
-    // Ogre::TextureManager.  That way if the same NPC is needed for another scene we don't need to
-    // re-create the morph.
-    //
-    // Alternatively, since the NiModel for that NPC's head should be managed already, we don't need
-    // to manage the vertices separately?
-
-    // TODO: is it possible to get the texture name here or should it be hard coded?
-    //scene->mForeignObj->instantiate(mSkelBase->getMesh()->getSkeleton(), mNpc->mEditorId, std::move(fgVertices));
-    scene->mForeignObj->instantiate(mSkelBase->getMesh()->getSkeleton(), mNpc->mEditorId);
-#else
-
-        NiModelPtr model = modelManager.getByName(mNpc->mEditorId+"_"+meshName, group);
-        if (!model)
-            model = modelManager.createMorphedModel(meshName, group, mNpc, mRace, textureName, mObjectRoot->mForeignObj->mModel.get());
-
-        NifOgre::ObjectScenePtr scene = NifOgre::ObjectScenePtr (new NifOgre::ObjectScene(mInsert->getCreator()));
-        scene->mForeignObj
-            = std::make_unique<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(model, mInsert->createChildSceneNode()));
-        scene->mForeignObj->instantiate();
-
-        std::string targetBone = model->targetBone();
-
-#endif
+    std::string targetBone = model->targetBone();
 
     // get the texture from mRace
     // FIXME: for now, get if from Ogre material
@@ -943,7 +811,7 @@ void ForeignNpcAnimation::updateNpcBase()
                 // From: http://wiki.ogre3d.org/Creating+dynamic+textures
                 // Create a target texture
                 Ogre::TexturePtr texFg = Ogre::TextureManager::getSingleton().getByName(
-                       "FaceGen"+mNpc->mEditorId, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+                       "FaceGen" + mNpc->mEditorId, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
                 if (texFg.isNull())
                 {
                     texFg = Ogre::TextureManager::getSingleton().createManual(
@@ -1196,10 +1064,11 @@ void ForeignNpcAnimation::updateNpcBase()
         //removeIndividualPart((ESM::PartReferenceType)i);
     //updateParts();
 
-
+    // FIXME: this section below should go to updateParts()
     std::vector<const ESM4::Clothing*> invCloth;
     std::vector<const ESM4::Armor*> invArmor;
     std::vector<const ESM4::Weapon*> invWeap;
+
     // check inventory
     //MWWorld::InventoryStore& inv = mPtr.getClass().getInventoryStore(mPtr);
     for(size_t i = 0; i < 35; ++i) // FIXME: 16 slots for TES4
@@ -1209,21 +1078,21 @@ void ForeignNpcAnimation::updateNpcBase()
         if(store == inv.end())
             continue;
 
+        // TODO: this method of handling inventory doen't suit TES4 very well because it is possible
+        //       for one part to occupy more than one slot; for now as a workaround just loop
+        //       through the slots to gather all the equipped parts and process them afterwards
+
         if(store->getTypeName() == typeid(ESM4::Clothing).name())
         {
-            //prio = ((slotlist[i].mBasePriority+1)<<1) + 0;
             const ESM4::Clothing *cloth = store->get<ESM4::Clothing>()->mBase;
             if (std::find(invCloth.begin(), invCloth.end(), cloth) == invCloth.end())
                 invCloth.push_back(cloth);
-            //addPartGroup(slotlist[i].mSlot, prio, clothes->mParts.mParts, enchantedGlow, &glowColor);
         }
         else if(store->getTypeName() == typeid(ESM4::Armor).name())
         {
-            //prio = ((slotlist[i].mBasePriority+1)<<1) + 1;
             const ESM4::Armor *armor = store->get<ESM4::Armor>()->mBase;
             if (std::find(invArmor.begin(), invArmor.end(), armor) == invArmor.end())
                 invArmor.push_back(armor);
-            //addPartGroup(slotlist[i].mSlot, prio, armor->mParts.mParts, enchantedGlow, &glowColor);
         }
         else if(store->getTypeName() == typeid(ESM4::Weapon).name())
         {
@@ -1231,22 +1100,13 @@ void ForeignNpcAnimation::updateNpcBase()
             if (std::find(invWeap.begin(), invWeap.end(), weap) == invWeap.end())
                 invWeap.push_back(weap);
         }
-
-        // TODO: this method of handling inventory doen't suit TES4 very well because it is possible
-        //       for one part to occupy more than one slot; for now as a workaround just loop
-        //       through the slots to gather all the equipped parts and process them afterwards
-
     }
 
     for (std::size_t i = 0; i < invCloth.size(); ++i)
-    {
         equipClothes(invCloth[i], isFemale);
-    }
 
     for (std::size_t i = 0; i < invArmor.size(); ++i)
-    {
         equipArmor(invArmor[i], isFemale);
-    }
 
     for (std::size_t i = 0; i < invWeap.size(); ++i)
     {
@@ -1263,278 +1123,6 @@ void ForeignNpcAnimation::updateNpcBase()
         mObjectParts[type] =
                 createObject(meshName, "General", "", mObjectRoot->mForeignObj->mModel);
     }
-
-    for (unsigned int i = 0; i < mNpc->mInventory.size(); ++i)
-    {
-        switch (store.find(mNpc->mInventory[i].item))
-        {
-            case MKTAG('A','A','P','P'): /*std::cout << "Apparatus" << std::endl;*/ break;
-            case MKTAG('O','A','R','M'):
-            {
-                const ESM4::Armor* armor
-                    = store.getForeign<ESM4::Armor>().search(mNpc->mInventory[i].item);
-                //if (armor)
-                    //equipArmor(armor, isFemale);
-                break;
-            }
-            case MKTAG('K','B','O','O'): /*std::cout << "Books" << std::endl;*/ break;
-            case MKTAG('T','C','L','O'): /*std::cout << "Clothes" << std::endl; break;*/
-            {
-                const ESM4::Clothing* cloth
-                    = store.getForeign<ESM4::Clothing>().search(mNpc->mInventory[i].item);
-                //if (cloth)
-                    //equipClothes(cloth, isFemale);
-                break;
-            }
-            case MKTAG('R','I','N','G'): /*std::cout << "Ingredients" << std::endl;*/ break;
-            case MKTAG('C','M','I','S'): /*std::cout << "MiscItems" << std::endl;*/ break;
-            case MKTAG('P','W','E','A'):
-            {
-                const ESM4::Weapon* weap
-                    = store.getForeign<ESM4::Weapon>().search(mNpc->mInventory[i].item);
-                if (weap)
-                {
-//                  std::cout << "Inventory " << weap->mEditorId << std::endl;
-//                  std::cout << "Inventory " << weap->mModel << std::endl;
-                }
-                break;
-            }
-            case MKTAG('O','A','M','M'): /*std::cout << "Ammos" << std::endl;*/ break;
-            case MKTAG('M','S','L','G'): /*std::cout << "SoulGems" << std::endl;*/ break;
-            case MKTAG('M','K','E','Y'): /*std::cout << "Keys" << std::endl;*/ break;
-            case MKTAG('H','A','L','C'): /*std::cout << "Potions" << std::endl;*/ break;
-            case MKTAG('T','S','G','S'): /*std::cout << "SigilStones" << std::endl;*/ break;
-            case MKTAG('E','N','O','T'): /*std::cout << "Notes" << std::endl;*/ break;
-            case MKTAG('I','L','V','L'):
-            {
-                const ESM4::LeveledItem* lvli
-                    = store.getForeign<ESM4::LeveledItem>().search(mNpc->mInventory[i].item);
-                if (!lvli)
-                {
-//                  std::cout << "LvlItems not found" << std::endl;
-                    break; // FIXME
-                }
-
-                for (size_t j = lvli->mLvlObject.size()-1; j < lvli->mLvlObject.size(); ++j)
-                {
-                    //std::cout << "LVLI " << lvli->mEditorId << " LVLO lev "
-                        //<< lvli->mLvlObject[j].level << ", item " << std::hex << lvli->mLvlObject[j].item
-                              //<< ", count " << lvli->mLvlObject[j].count << std::endl;
-                    switch (store.find(lvli->mLvlObject[lvli->mLvlObject.size()-1].item)) // FIXME
-                    {
-                        case MKTAG('A','A','P','P'): /*std::cout << "lvl Apparatus" << std::endl;*/ break;
-                        case MKTAG('I','L','V','L'):
-                        {
-                            //std::cout << "lvli again" << std::endl;
-                            const ESM4::LeveledItem* lvli2
-                                = store.getForeign<ESM4::LeveledItem>().search(lvli->mLvlObject[lvli->mLvlObject.size()-1].item);
-                for (size_t j = lvli2->mLvlObject.size()-1; j < lvli2->mLvlObject.size(); ++j)
-                {
-                    if (store.find(lvli2->mLvlObject[lvli2->mLvlObject.size()-1].item) == MKTAG('O','A','R','M'))
-                    {
-                            const ESM4::Armor* armor
-                                = store.getForeign<ESM4::Armor>().search(mNpc->mInventory[i].item);
-                            if (armor)
-                                std::cout << "found armor" << std::endl;
-                    }
-                }
-                            break;
-                        }
-                        case MKTAG('O','A','R','M'):
-                        {
-                            //std::cout << "lvl Armors" << std::endl; break;
-                            const ESM4::Armor* armor
-                                = store.getForeign<ESM4::Armor>().search(mNpc->mInventory[i].item);
-                            if (armor)
-                            {
-
-
-                    std::string meshName;
-        if (isFemale && !armor->mModelFemale.empty()) // female
-    meshName = "meshes\\"+armor->mModelFemale;
-        else
-    meshName = "meshes\\"+armor->mModelMale;
-
-        NifOgre::ObjectScenePtr scene = NifOgre::ObjectScenePtr (new NifOgre::ObjectScene(mInsert->getCreator()));
-        scene->mForeignObj = std::make_unique<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(mInsert->createChildSceneNode(), meshName, group));
-        //scene->mForeignObj->instantiate(mSkelBase->getMesh()->getSkeleton(), mBodyPartModelNameExt);
-
-        std::map<int32_t, Ogre::Entity*>::const_iterator it(scene->mForeignObj->mEntities.begin());
-        for (; it != scene->mForeignObj->mEntities.end(); ++it)
-        {
-            if ((armor->mArmorFlags & ESM4::Armor::TES4_Hair) == 0) // note helmets share hair slot
-            {
-                // FIXME:
-                if (mSkelBase->getMesh()->getSkeleton() == it->second->getMesh()->getSkeleton())
-                    it->second->shareSkeletonInstanceWith(mSkelBase);
-                else
-                    std::cout << "no anim " << mSkelBase->getMesh()->getName()
-                    << it->second->getMesh()->getName() << std::endl;
-            }
-            else
-                mInsert->attachObject(it->second);
-        }
-        if ((armor->mArmorFlags & ESM4::Armor::TES4_UpperBody) != 0)
-        {
-            if (!mObjectParts[ESM::PRT_Cuirass].isNull())
-                mObjectParts[ESM::PRT_Cuirass].reset();
-            mObjectParts[ESM::PRT_Cuirass] = scene;
-        }
-        else if ((armor->mArmorFlags & ESM4::Armor::TES4_LowerBody) != 0)
-        {
-            mObjectParts[ESM::PRT_Groin] = scene;
-        }
-        else if ((armor->mArmorFlags & ESM4::Armor::TES4_Feet) != 0)
-        {
-            mObjectParts[ESM::PRT_RFoot].reset();
-            mObjectParts[ESM::PRT_RFoot] = scene;
-        }
-                            }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                        }
-                        case MKTAG('K','B','O','O'): /*std::cout << "lvl Books" << std::endl;*/ break;
-                        case MKTAG('T','C','L','O'):
-                        {
-                            const ESM4::Clothing* cloth
-                                = store.getForeign<ESM4::Clothing>().search(lvli->mLvlObject[lvli->mLvlObject.size()-1].item);
-                            if (cloth)
-                            {
-                                //std::cout << "LVLI " << lvli->mEditorId << " LVLO lev "
-                                    //<< lvli->mLvlObject[j].level << std::endl;
-
-
-
-
-//#if 0
-                    std::string meshName;
-        if (isFemale && !cloth->mModelFemale.empty()) // female
-    meshName = "meshes\\"+cloth->mModelFemale;
-        else
-    meshName = "meshes\\"+cloth->mModelMale;
-
-        NifOgre::ObjectScenePtr scene = NifOgre::ObjectScenePtr (new NifOgre::ObjectScene(mInsert->getCreator()));
-        scene->mForeignObj = std::make_unique<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(mInsert->createChildSceneNode(), meshName, group));
-        //scene->mForeignObj->instantiate(mSkelBase->getMesh()->getSkeleton(), mBodyPartModelNameExt);
-
-        std::map<int32_t, Ogre::Entity*>::const_iterator it(scene->mForeignObj->mEntities.begin());
-        for (; it != scene->mForeignObj->mEntities.end(); ++it)
-        {
-            if ((cloth->mClothingFlags & ESM4::Armor::TES4_RightRing) == 0 &&
-                (cloth->mClothingFlags & ESM4::Armor::TES4_LeftRing) == 0)
-            {
-                // FIXME:
-                if (mSkelBase->getMesh()->getSkeleton() == it->second->getMesh()->getSkeleton())
-                    it->second->shareSkeletonInstanceWith(mSkelBase);
-                else
-                    std::cout << "no anim " << mSkelBase->getMesh()->getName() << std::endl;
-                mInsert->attachObject(it->second);
-            }
-            //else attach to bone?
-        }
-        if ((cloth->mClothingFlags & ESM4::Armor::TES4_UpperBody) != 0)
-        {
-            std::cout << std::hex << cloth->mClothingFlags << std::endl;
-            if (mObjectParts[ESM::PRT_Cuirass].isNull())
-            mObjectParts[ESM::PRT_Cuirass] = scene;
-        }
-        else if ((cloth->mClothingFlags & ESM4::Armor::TES4_LowerBody) != 0)
-        {
-            if (mObjectParts[ESM::PRT_Groin].isNull())
-            mObjectParts[ESM::PRT_Groin] = scene;
-        }
-        else if ((cloth->mClothingFlags & ESM4::Armor::TES4_Feet) != 0)
-        {
-            mObjectParts[ESM::PRT_RFoot].reset();
-            mObjectParts[ESM::PRT_RFoot] = scene;
-        }
-
-
-//#endif
-
-
-
-                            }
-                            break;
-                        }
-                        case MKTAG('R','I','N','G'): /*std::cout << "lvl Ingredients" << std::endl;*/ break;
-                        case MKTAG('C','M','I','S'):
-                        {
-                            const ESM4::MiscItem* misc
-                                = store.getForeign<ESM4::MiscItem>().search(lvli->mLvlObject[lvli->mLvlObject.size()-1].item);
-                            if (misc)
-                            {
-//                              std::cout << "LVLI " << lvli->mEditorId << " LVLO lev "
-//                                  << lvli->mLvlObject[j].level << " "
-//                                  << ESM4::formIdToString(lvli->mLvlObject[j].item) << std::endl;
-                            }
-                            break;
-                        }
-                        case MKTAG('P','W','E','A'): /*std::cout << "lvl Weapons" << std::endl;*/ break;
-                        case MKTAG('O','A','M','M'): /*std::cout << "lvl Ammos" << std::endl;*/ break;
-                        case MKTAG('M','S','L','G'): /*std::cout << "lvl SoulGems" << std::endl;*/ break;
-                        case MKTAG('M','K','E','Y'): /*std::cout << "lvl Keys" << std::endl;*/ break;
-                        case MKTAG('H','A','L','C'): /*std::cout << "lvl Potions" << std::endl;*/ break;
-                        case MKTAG('T','S','G','S'): /*std::cout << "lvl SigilStones" << std::endl;*/ break;
-                        case MKTAG('E','N','O','T'): /*std::cout << "lvl notes" << std::endl;*/ break;
-                        default: break;
-                    }
-                }
-                break;
-            }
-            default: /*std::cout << "unknown inventory" << std::endl;*/ break; // FIXME
-        }
-    }
-
-    if (mObjectParts[ESM::PRT_Cuirass].isNull())
-    {
-        if (isFemale)
-        meshName = "meshes\\characters\\_male\\femaleupperbody.nif";
-        else
-        meshName = "meshes\\characters\\_male\\upperbody.nif";
-        NifOgre::ObjectScenePtr scene = NifOgre::ObjectScenePtr (new NifOgre::ObjectScene(mInsert->getCreator()));
-        scene->mForeignObj = std::make_unique<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(mInsert->createChildSceneNode(), meshName, group));
-        //scene->mForeignObj->instantiate(mSkelBase->getMesh()->getSkeleton(), mBodyPartModelNameExt);
-
-        std::map<int32_t, Ogre::Entity*>::const_iterator it(scene->mForeignObj->mEntities.begin());
-        for (; it != scene->mForeignObj->mEntities.end(); ++it)
-        {
-            // FIXME:
-            if (mSkelBase->getMesh()->getSkeleton() == it->second->getMesh()->getSkeleton())
-                it->second->shareSkeletonInstanceWith(mSkelBase);
-            else
-                std::cout << "no anim " << mSkelBase->getMesh()->getName() << std::endl;
-            mInsert->attachObject(it->second);
-        }
-        mObjectParts[ESM::PRT_Cuirass] = scene;
-    }
-
-
-#if 0
-    // ESM::PRT_Count is 27, see loadarmo.hpp
-    // NifOgre::ObjectScenePtr mObjectParts[ESM::PRT_Count];
-
-    mHeadModel = "meshes\\characters\\imperial\\headhuman.nif";
-    mObjectParts[ESM::PRT_Head] = insertBoundedPart(mHeadModel, -1, "Bip01", "Head", false, 0);
-    addOrReplaceIndividualPart(ESM::PRT_RHand, -1, 1, "meshes\\characters\\_male\\hand.nif");
-#endif
 
     //if (mAccumRoot) mAccumRoot->setPosition(Ogre::Vector3());
 
@@ -1582,15 +1170,6 @@ std::string ForeignNpcAnimation::getSkeletonModel(const MWWorld::ESMStore& store
         return ""; // shouldn't happen
 }
 
-
-// LegionCuirass   Armor\Legion\M\Cuirass.NIF
-// LegionGauntlets Armor\Legion\M\Gauntlets.NIF
-// LegionGreaves   Armor\Legion\M\Greaves.NIF
-// LegionHelmet    Armor\LegionHorsebackGuard\Helmet.NIF
-// LegionShield    Armor\Legion\Shield.NIF
-//
-//                 Armor\Thief\M\Boots.NIF
-
 NifOgre::ObjectScenePtr ForeignNpcAnimation::createSkinnedObject(NifOgre::ObjectScenePtr scene,
         const std::string& meshName, const std::string& group, NiModelPtr skeletonModel)
 {
@@ -1598,7 +1177,7 @@ NifOgre::ObjectScenePtr ForeignNpcAnimation::createSkinnedObject(NifOgre::Object
     std::string skeletonName = skeletonModel->getModelName();
 
     NiBtOgre::NiModelManager& modelManager = NiBtOgre::NiModelManager::getSingleton();
-    NiModelPtr object = modelManager.getByName(skeletonName+"_"+meshName, group);
+    NiModelPtr object = modelManager.getByName(skeletonName + "_" + meshName, group);
     if (!object)
         object = modelManager.createSkinnedModel(meshName, group, skeletonModel.get());
 
@@ -1618,7 +1197,6 @@ NifOgre::ObjectScenePtr ForeignNpcAnimation::createMorphedObject(const std::stri
         const std::string& group, const std::string& texture, NiModelPtr skeletonModel)
 {
     // FIXME: probably needs a try/catch block here
-
 
     NiBtOgre::NiModelManager& modelManager = NiBtOgre::NiModelManager::getSingleton();
 
@@ -1755,18 +1333,17 @@ bool ForeignNpcAnimation::equipClothes(const ESM4::Clothing* cloth, bool isFemal
     std::string meshName;
 
     if (isFemale && !cloth->mModelFemale.empty())
-        meshName = "meshes\\"+cloth->mModelFemale;
+        meshName = "meshes\\" + cloth->mModelFemale;
     else
-        meshName = "meshes\\"+cloth->mModelMale;
+        meshName = "meshes\\" + cloth->mModelMale;
 
     // CLOT only in TES4
     int type = cloth->mClothingFlags & 0xffff; // remove general flags high bits
 
     removeIndividualPart((ESM::PartReferenceType)type);
 
-    // FIXME: prob wrap this with a try/catch block
     // FIXME: group "General"
-    if ((cloth->mClothingFlags & 0x02) != 0) // Hair slot
+    if ((cloth->mClothingFlags & ESM4::Armor::TES4_Hair) != 0) // Hair slot
         mObjectParts[type] =
             createMorphedObject(meshName, "General", "", mObjectRoot->mForeignObj->mModel);
     else
@@ -1781,9 +1358,9 @@ bool ForeignNpcAnimation::equipArmor(const ESM4::Armor* armor, bool isFemale)
     std::string meshName;
 
     if (isFemale && !armor->mModelFemale.empty())
-        meshName = "meshes\\"+armor->mModelFemale;
+        meshName = "meshes\\" + armor->mModelFemale;
     else
-        meshName = "meshes\\"+armor->mModelMale;
+        meshName = "meshes\\" + armor->mModelMale;
 
     int type = armor->mArmorFlags;
 
@@ -1793,8 +1370,7 @@ bool ForeignNpcAnimation::equipArmor(const ESM4::Armor* armor, bool isFemale)
     removeIndividualPart((ESM::PartReferenceType)type);
 
     // FIXME: group "General"
-    // FIXME: prob wrap this with a try/catch block
-    if ((armor->mArmorFlags & 0x02) != 0) // Hair slot
+    if ((armor->mArmorFlags & ESM4::Armor::TES4_Hair) != 0) // Hair slot
         mObjectParts[type] =
             createMorphedObject(meshName, "General", "", mObjectRoot->mForeignObj->mModel);
     else
@@ -2036,7 +1612,7 @@ void ForeignNpcAnimation::updateParts()
             continue;
 
         if(slotlist[i].mSlot == MWWorld::InventoryStore::Slot_ForeignHair)
-            removeIndividualPart((ESM::PartReferenceType)0x02/*ESM::PRT_Hair*/);
+            removeIndividualPart((ESM::PartReferenceType)ESM4::Armor::TES4_Hair);
 
         int prio = 1;
         //bool enchantedGlow = !store->getClass().getEnchantment(*store).empty();
@@ -2062,7 +1638,7 @@ void ForeignNpcAnimation::updateParts()
                 ESM::PRT_RForearm, ESM::PRT_LForearm
             };
             size_t parts_size = sizeof(parts)/sizeof(parts[0]);
-            for(size_t p = 0;p < parts_size;++p)
+            for(size_t p = 0; p < parts_size; ++p)
                 reserveIndividualPart(parts[p], slotlist[i].mSlot, prio);
         }
         else if(slotlist[i].mSlot == MWWorld::InventoryStore::Slot_Skirt)
@@ -2091,7 +1667,7 @@ void ForeignNpcAnimation::updateParts()
         {
             const ESM::Light *light = part.get<ESM::Light>()->mBase;
             addOrReplaceIndividualPart(ESM::PRT_Shield, MWWorld::InventoryStore::Slot_CarriedLeft,
-                                       1, "meshes\\"+light->mModel);
+                                       1, "meshes\\" + light->mModel);
             addExtraLight(mInsert->getCreator(), mObjectParts[ESM::PRT_Shield], light);
         }
     }

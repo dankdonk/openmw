@@ -354,6 +354,15 @@ void MWWorld::InventoryStore::autoEquipTES4 (const MWWorld::Ptr& actor)
                 Ptr old = *slots_.at (*iter2);
 
                 // check if the new equipment is more valuable than existing, etc
+                //
+                // not sure how to compare items that have more than one slot?
+                // One possibility might be to sort the inventory in value order and equip the
+                // items while checking for slot clashes.
+                //
+                // This item equipping algorithm should be encapsulated as it is likely to have
+                // a large bearing on the gameplay (and whether we emulate vanilla closely).
+                //
+                // TODO: NPC scripts may disallow some items to be equipped (TODO: confirm this)
                 if (old.getClass().getValue (old) >= test.getClass().getValue (test))
                 {
                     //std::cout << test.getClass().getName(test) << " is cheaper than "
