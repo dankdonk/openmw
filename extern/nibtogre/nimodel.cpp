@@ -166,6 +166,9 @@ void NiBtOgre::NiModel::createNiObjects()
         //throw std::runtime_error(mModelName + " has too many roots");
         // Creatures\Bear\forward.kf had 3 roots
         std::cout << "NOTE: " << mModelName << " has " << numRoots << " numRoots." << std::endl;
+
+    if (numRoots = 1)
+        mRootNode = getRef<NiNode>(mRoots[0]);
 }
 
 // find the bones, if any (i.e. prepare for the skeleton loader)
@@ -472,12 +475,9 @@ NiBtOgre::NiNode *NiBtOgre::NiModel::skeletonRoot()
     return mBoneRootNode;
 }
 
-NiBtOgre::NiNode *NiBtOgre::NiModel::rootNode()
+const Ogre::Quaternion NiBtOgre::NiModel::getBaseRotation() const
 {
-    if (!mRootNode)
-        mRootNode = getRef<NiNode>(rootIndex());
-
-    return mRootNode;
+    return rootNode()->getLocalRotation();
 }
 
 std::uint32_t NiBtOgre::NiModel::rootIndex() const

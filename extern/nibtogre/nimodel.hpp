@@ -33,6 +33,7 @@
 
 #include <OgreResource.h>
 #include <OgreController.h>
+#include <OgreQuaternion.h>
 
 #include "nistream.hpp"
 #include "niheader.hpp"
@@ -291,7 +292,7 @@ namespace NiBtOgre
 
         NiNode *skeletonRoot();          // returns nullptr if none found
 
-        NiNode *rootNode();              // returns the root NiNode of the model
+        inline const NiNode *rootNode() const { return mRootNode; }; // returns the root NiNode of the model
         std::uint32_t rootIndex() const; // WARN: will throw if there are more than one
         inline std::size_t numRootNodes() const { return mRoots.size(); }
 
@@ -345,6 +346,8 @@ namespace NiBtOgre
         std::string targetBone() const;
 
         void findBoneNodes(bool buildObjectPalette = false, std::size_t rootIndex = 0);
+
+        const Ogre::Quaternion getBaseRotation() const;
 
     private:
 

@@ -109,9 +109,6 @@ private:
     Ogre::Radian mHeadYaw;
     Ogre::Radian mHeadPitch;
 
-    // for adjusting body part model names for different skeleton types
-    std::string mBodyPartModelNameExt;
-
     void updateNpcBase();
 
     std::string getSkeletonModel(const MWWorld::ESMStore& store) const;
@@ -120,7 +117,7 @@ private:
             const std::string& meshName, const std::string& group, NiModelPtr skeletonModel);
 
     bool createMorphedObject(ESM::PartReferenceType type, const std::string& meshName, const std::string& group,
-        const ESM4::Npc *npc, const ESM4::Race *race, const Ogre::String& texture, NiModelPtr skeletonModel);
+        const Ogre::String& texture, NiModelPtr skeletonModel);
 
     bool createObject(ESM::PartReferenceType type,
         const std::string& meshName, const std::string& group, NiModelPtr skeletonModel);

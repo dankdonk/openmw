@@ -101,11 +101,9 @@ NiBtOgre::BtOgreInst::~BtOgreInst()
 //}
 
 // for building body part models using the supplied creature/character skeleton for skinning.
+// FIXME: skinned objects don't attach to a target bone?
 void NiBtOgre::BtOgreInst::instantiate(Ogre::SceneNode *baseNode, Ogre::Entity *skelBase)
 {
-    // FIXME: skinned objects don't attach to a target bone?
-    mTargetBone = mModel->targetBone(); // see if there is a target bone
-
     // make a convenience copy
     mIsSkinned = mModel->buildData().mIsSkinned;
 
@@ -116,7 +114,8 @@ void NiBtOgre::BtOgreInst::instantiate(Ogre::SceneNode *baseNode, Ogre::Entity *
     {
         if (mIsSkinned)
         {
-            if (skelBase->getMesh()->getSkeleton() == iter->second->getMesh()->getSkeleton()) // FIXME:
+            // FIXME: why do we need to check this?
+            if (skelBase->getMesh()->getSkeleton() == iter->second->getMesh()->getSkeleton())
                 iter->second->shareSkeletonInstanceWith(skelBase);
             else
                 std::cout << "no anim " << skelBase->getMesh()->getName() << " different skeleton to "
@@ -126,8 +125,11 @@ void NiBtOgre::BtOgreInst::instantiate(Ogre::SceneNode *baseNode, Ogre::Entity *
         }
         else
         {
-            if (mTargetBone != "")
-                skelBase->attachObjectToBone(mTargetBone, iter->second);
+            mTargetBone = mModel->targetBone(); // see if there is a target bone
+            if (mTargetBone == "")
+                mTargetBone = "Bip01 Head"; // FIXME: just a guess, likely wrong
+
+            skelBase->attachObjectToBone(mTargetBone, iter->second);
         }
     }
 }

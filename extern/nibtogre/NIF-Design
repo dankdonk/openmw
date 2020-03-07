@@ -919,10 +919,12 @@ Some of the hairs in the BSA files do not have a corresponding TRI file.  For th
 
 So the method of getting the files should be:
 
-  * get mHair and mEye from `NPC_`
+  * get mHair and mEyes from `NPC_`
   * find the mesh and texture file names from HAIR and EYES
     - if not found, get the default hair (male/female FormID) and eyes (left/right mesh) from the corresponding RACE
+    [07/03/20] RACE doesn't have default eyes, just some choices - possibly need to select a random one.
   * for EYES the mesh name is only in the RACE records (but not the texture nor the EYE FormID)
+    [07/03/20] this no longers makes sense - what was I thinking?
   * the corresponding EGM and TRI files should be in the same directory as the mesh (EGT not used?)
   * for some HAIR the corresponding TRI files are not present in the BSA - maybe try to get the vertices from the mesh
 
@@ -1755,6 +1757,22 @@ if (targetBone == "Bip01 Head")
 ```
 
 Some NIF files do not supply the target bone (e.g. eyes, ears).  They just have to be hard coded.
+
+# [07/03/2020] Continuing...
+
+Some ears do have the right rotation (e.g. earskhajiit.nif) and some don't (e.g. eyeslefthuman.nif). So above rotation hack with "Bip01 Head" needs to be further modified.
+
+```cpp
+if (targetBone == "Bip01 Head" && baseRotation == Ogre::Quaternion::IDENTITY)
+```
+
+## FIXME 5
+
+  * crash accessing nullptr (prob. NiModel) during animation
+  * no eyes Cludette Perrick (The Gilded Carafe) - her NPC record does not have mEyes so we need to use the race defaults instead
+  * one of the metal gates in the IC sewers doesn't move the collision shape (also the display cases)
+
+
 
 
 [//]: # (/* spell spelllang=en_au syntax=cpp */)

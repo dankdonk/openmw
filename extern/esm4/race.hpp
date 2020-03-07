@@ -131,7 +131,7 @@ namespace ESM4
         std::vector<BodyPart> mBodyPartsMale;   // see BodyPartIndex
         std::vector<BodyPart> mBodyPartsFemale; // see BodyPartIndex
 
-        std::vector<FormId> mEyeChoices;
+        std::vector<FormId> mEyeChoices;        // texture only
         std::vector<FormId> mHairChoices;
 
         float mFaceGenMainClamp;

@@ -109,6 +109,9 @@ namespace NiBtOgre
 
         //void setVertices(std::unique_ptr<std::vector<Ogre::Vector3> > morphedVertices);
         NiTriBasedGeom *getUniqueSubMeshChild(); // WARN: may throw
+
+        // an attempt to fix the head/ear/eyes rotation issue
+        const Ogre::Quaternion getLocalRotation() const { return Ogre::Quaternion(NiAVObject::mRotation); }
     };
 
     typedef NiNode AvoidNode;
