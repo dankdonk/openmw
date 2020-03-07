@@ -129,6 +129,15 @@ void NiBtOgre::BtOgreInst::instantiate(Ogre::SceneNode *baseNode, Ogre::Entity *
             if (mTargetBone == "")
                 mTargetBone = "Bip01 Head"; // FIXME: just a guess, likely wrong
 
+            // TODO: do we need to from foreignnpcanimation detach later like below?
+            //
+            // std::map<int32_t, Ogre::Entity*>::const_iterator it
+            //     = mObjectParts[type]->mForeignObj->mEntities.begin();
+            // for (; it != mObjectParts[type]->mForeignObj->mEntities.end(); ++it)
+            //     mSkelBase->detachObjectFromBone(it->second);
+            //
+            // mObjectParts[type]->mForeignObj.reset();
+            // mObjectParts[type].reset();
             skelBase->attachObjectToBone(mTargetBone, iter->second);
         }
     }

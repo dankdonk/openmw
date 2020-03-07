@@ -84,16 +84,14 @@ namespace MWClass
 
     std::string ForeignArmor::getName (const MWWorld::Ptr& ptr) const
     {
-        MWWorld::LiveCellRef<ESM4::Armor> *ref =
-            ptr.get<ESM4::Armor>();
+        MWWorld::LiveCellRef<ESM4::Armor> *ref = ptr.get<ESM4::Armor>();
 
         return ref->mBase->mFullName;
     }
 
     bool ForeignArmor::hasToolTip (const MWWorld::Ptr& ptr) const
     {
-        MWWorld::LiveCellRef<ESM4::Armor> *ref =
-            ptr.get<ESM4::Armor>();
+        MWWorld::LiveCellRef<ESM4::Armor> *ref = ptr.get<ESM4::Armor>();
 
         return (ref->mBase->mFullName != "");
     }
@@ -101,8 +99,7 @@ namespace MWClass
     // FIXME
     MWGui::ToolTipInfo ForeignArmor::getToolTipInfo (const MWWorld::Ptr& ptr) const
     {
-        MWWorld::LiveCellRef<ESM4::Armor> *ref =
-            ptr.get<ESM4::Armor>();
+        MWWorld::LiveCellRef<ESM4::Armor> *ref = ptr.get<ESM4::Armor>();
 
         MWGui::ToolTipInfo info;
 
@@ -140,8 +137,8 @@ namespace MWClass
             { ESM4::Armor::TES4_Hair,      MWWorld::InventoryStore::Slot_ForeignHair },
             { ESM4::Armor::TES4_UpperBody, MWWorld::InventoryStore::Slot_ForeignUpperBody },
             { ESM4::Armor::TES4_LowerBody, MWWorld::InventoryStore::Slot_ForeignLowerBody },
-            { ESM4::Armor::TES4_Hand,      MWWorld::InventoryStore::Slot_ForeignHand },
-            { ESM4::Armor::TES4_Foot,      MWWorld::InventoryStore::Slot_ForeignFoot },
+            { ESM4::Armor::TES4_Hands,     MWWorld::InventoryStore::Slot_ForeignHands },
+            { ESM4::Armor::TES4_Feet,      MWWorld::InventoryStore::Slot_ForeignFeet },
             { ESM4::Armor::TES4_Shield,    MWWorld::InventoryStore::Slot_ForeignShield },
             { ESM4::Armor::TES4_Tail,      MWWorld::InventoryStore::Slot_ForeignTail },
         };

@@ -116,7 +116,15 @@ namespace MWClass
 //      else
 //          slots_.push_back (int (MWWorld::InventoryStore::Slot_CarriedRight));
 
+        // FIXME: testing
+        slots_.push_back (int (MWWorld::InventoryStore::Slot_ForeignSideWeapon));
+
         return std::make_pair (slots_, stack);
+    }
+
+    std::pair<int, std::string> ForeignWeapon::canBeEquipped(const MWWorld::Ptr &ptr, const MWWorld::Ptr &npc) const
+    {
+        return std::make_pair(1,""); // FIXME: for testing alway equip
     }
 
     int ForeignWeapon::getValue (const MWWorld::Ptr& ptr) const

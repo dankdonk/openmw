@@ -66,8 +66,8 @@ namespace MWWorld
             static const int Slot_ForeignHair      = 20;
             static const int Slot_ForeignUpperBody = 21;
             static const int Slot_ForeignLowerBody = 22;
-            static const int Slot_ForeignHand      = 23;
-            static const int Slot_ForeignFoot      = 24;
+            static const int Slot_ForeignHands     = 23;
+            static const int Slot_ForeignFeet      = 24;
             static const int Slot_ForeignRightRing = 25;
             static const int Slot_ForeignLeftRing  = 26;
             static const int Slot_ForeignAmulet    = 27;

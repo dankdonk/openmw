@@ -38,15 +38,15 @@ namespace ESM4
 
     struct Armor
     {
-        // WARN: TES4 seems to have junk high bits
+        // WARN: TES4 Armorflags still has the general flags high bits
         enum ArmorFlags
         {
             TES4_Head        = 0x00000001,
             TES4_Hair        = 0x00000002,
             TES4_UpperBody   = 0x00000004,
             TES4_LowerBody   = 0x00000008,
-            TES4_Hand        = 0x00000010,
-            TES4_Foot        = 0x00000020,
+            TES4_Hands       = 0x00000010,
+            TES4_Feet        = 0x00000020,
             TES4_RightRing   = 0x00000040,
             TES4_LeftRing    = 0x00000080,
             TES4_Amulet      = 0x00000100,
@@ -77,7 +77,40 @@ namespace ESM4
             FO3_MouthObject  = 0x00010000,
             FO3_BodyAddOn1   = 0x00020000,
             FO3_BodyAddOn2   = 0x00040000,
-            FO3_BodyAddOn3   = 0x00080000
+            FO3_BodyAddOn3   = 0x00080000,
+            //
+            TES5_Head        = 0x00000001,
+            TES5_Hair        = 0x00000002,
+            TES5_Body        = 0x00000004,
+            TES5_Hands       = 0x00000008,
+            TES5_Forearms    = 0x00000010,
+            TES5_Amulet      = 0x00000020,
+            TES5_Ring        = 0x00000040,
+            TES5_Feet        = 0x00000080,
+            TES5_Calves      = 0x00000100,
+            TES5_Shield      = 0x00000200,
+            TES5_Tail        = 0x00000400,
+            TES5_LongHair    = 0x00000800,
+            TES5_Circlet     = 0x00001000,
+            TES5_Ears        = 0x00002000,
+            TES5_BodyAddOn3  = 0x00004000,
+            TES5_BodyAddOn4  = 0x00008000,
+            TES5_BodyAddOn5  = 0x00010000,
+            TES5_BodyAddOn6  = 0x00020000,
+            TES5_BodyAddOn7  = 0x00040000,
+            TES5_BodyAddOn8  = 0x00080000,
+            TES5_DecapHead   = 0x00100000,
+            TES5_Decapitate  = 0x00200000,
+            TES5_BodyAddOn9  = 0x00400000,
+            TES5_BodyAddOn10 = 0x00800000,
+            TES5_BodyAddOn11 = 0x01000000,
+            TES5_BodyAddOn12 = 0x02000000,
+            TES5_BodyAddOn13 = 0x04000000,
+            TES5_BodyAddOn14 = 0x08000000,
+            TES5_BodyAddOn15 = 0x10000000,
+            TES5_BodyAddOn16 = 0x20000000,
+            TES5_BodyAddOn17 = 0x40000000,
+            TES5_FX01        = 0x80000000
         };
 
         enum GeneralFlags

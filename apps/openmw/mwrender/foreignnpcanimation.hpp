@@ -73,8 +73,9 @@ private:
 
     bool mListenerDisabled;
 
-    // Bounded Parts
-    NifOgre::ObjectScenePtr mObjectParts[ESM::PRT_Count];
+    std::vector<NifOgre::ObjectScenePtr> mHeadParts;
+
+    std::map<std::uint32_t, NifOgre::ObjectScenePtr> mObjectParts; // TES4 has 16, FO3/FONV has 20 and TES5 has 32
     std::string mSoundIds[ESM::PRT_Count];
 
     const ESM4::Npc *mNpc;
@@ -116,15 +117,14 @@ private:
     NifOgre::ObjectScenePtr createSkinnedObject(NifOgre::ObjectScenePtr scene,
             const std::string& meshName, const std::string& group, NiModelPtr skeletonModel);
 
-    bool createMorphedObject(ESM::PartReferenceType type, const std::string& meshName, const std::string& group,
-        const Ogre::String& texture, NiModelPtr skeletonModel);
+    NifOgre::ObjectScenePtr createMorphedObject(const std::string& meshName,
+            const std::string& group, const Ogre::String& texture, NiModelPtr skeletonModel);
 
-    bool createObject(ESM::PartReferenceType type,
-        const std::string& meshName, const std::string& group, NiModelPtr skeletonModel);
-
-    ESM::PartReferenceType getPartType(std::uint32_t armorFlags);
+    NifOgre::ObjectScenePtr createObject(const std::string& meshName,
+            const std::string& group, const std::string& texture, NiModelPtr skeletonModel);
 
     bool equipArmor(const ESM4::Armor* armor, bool isFemale);
+    bool equipClothes(const ESM4::Clothing* cloth, bool isFemale);
 
     NifOgre::ObjectScenePtr insertBoundedPart(const std::string &model, int group, const std::string &bonename,
                                               const std::string &bonefilter,

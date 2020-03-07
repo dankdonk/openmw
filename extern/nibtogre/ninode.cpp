@@ -473,8 +473,11 @@ void NiBtOgre::NiNode::build(BuildData *data, NiObject* parent)
         if (mExtraDataRefList[i] == -1) // TODO: check if this ever happens (i.e. ref -1)
             continue;
 
-        const std::string& name
-            = mModel.indexToString(mModel.getRef<NiExtraData>((int32_t)mExtraDataRefList[i])->mName);
+        std::int32_t nameIndex = mModel.getRef<NiExtraData>((int32_t)mExtraDataRefList[i])->mName;
+        if (nameIndex == -1)
+            continue;
+
+        const std::string& name = mModel.indexToString(nameIndex);
 
         // BSX is handled elsewhere
         if (0)//name == "BSX") // TODO: only for root objects?

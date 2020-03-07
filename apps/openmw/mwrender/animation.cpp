@@ -1890,6 +1890,8 @@ void Animation::setForeignObjectRootBase(const std::string& skeletonModel)
     if (!skeleton)
         skeleton = modelManager.createSkeletonModel(skeletonModel, "General");
 
+    skeleton->load(); // we'll need this right away
+
     scene->mForeignObj
         = std::make_shared<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(skeleton, mInsert));
     scene->mForeignObj->instantiate();

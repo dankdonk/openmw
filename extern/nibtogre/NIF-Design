@@ -1768,9 +1768,25 @@ if (targetBone == "Bip01 Head" && baseRotation == Ogre::Quaternion::IDENTITY)
 
 ## FIXME 5
 
-  * crash accessing nullptr (prob. NiModel) during animation
-  * no eyes Cludette Perrick (The Gilded Carafe) - her NPC record does not have mEyes so we need to use the race defaults instead
+  * **FIXED** crash accessing nullptr (prob. NiModel) during animation - I think this was caused by animation trying to move skeletons but some body parts didn't have skeleton root - we use external skeletons so we don't need this code block that copies bone position/rotaions
+  * **FIXED** no eyes Cludette Perrick (The Gilded Carafe) - her NPC record does not have mEyes so we need to use the race defaults instead **TODO** need to remember the random selection so that we don't see a new texture each time.
   * one of the metal gates in the IC sewers doesn't move the collision shape (also the display cases)
+  * [ESM4::Npc] = {mFormId=0x0004ef6f mFlags=0x00040000 mEditorId="CheydinhalGuardCityPostNight03" ...}
+  * error during rendering: ItemIdentityException: Bone named '' not found. in Skeleton::getBone at C:\Users\cc9c\Dev\src\ogre\OgreMain\src\OgreSkeleton.cpp (line 515)
+
+## Design notes on body part handling
+
+TES4 allows 16 body parts, FO3/FONV allows 20 and TES5 allows 32 body parts.  The "ForeignNPC" code should be able to deal with all - but to do so it cannot have special handling for a particular body part (or at least, not very many).
+
+Note that the race body parts share the "slots" used by the armor/cloth body parts.  These will need to be translated depending on the game.
+
+Now mObjectParts in ForeignNpcAnimation is a map keyed by `ESM4::Armor::ArmorFlags`.  Note that the keys are not consequitive.  Body parts and weapons will need some translations to get the right keys.
+
+**NOTE:** TES4/TES5/FO3/FONV will each have different key values for the same slot, where they do have the same slot.  For example "Tail" slot between TES4 and TES5 are different.  However, the "Head" and "Hair" values are the same for all games.
+
+**TODO:** The inventorystore currently only supports TES4.  Its slot handling is not very well suited for TES4, etc, and will need some changes to make things more efficient.
+
+# [08/03/2020] Materials
 
 
 

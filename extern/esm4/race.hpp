@@ -93,8 +93,8 @@ namespace ESM4
         enum BodyPartIndex
         {
             UpperBody         = 0,
-            Legs              = 1,
-            Hands             = 2,
+            LowerBody         = 1,
+            Hands              = 2,
             Feet              = 3,
             Tail              = 4,
             NumBodyParts      = 5

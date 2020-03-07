@@ -344,7 +344,7 @@ Ogre::Vector3 ForeignCreatureAnimation::runAnimation(float timepassed)
                        * Ogre::Quaternion(Ogre::Degree(90), Ogre::Vector3::UNIT_Y)
                          ,Ogre::Node::TS_WORLD);
     }
-
+#if 0
     for(size_t i = 0; i < mObjectParts.size(); ++i)
     {
         std::vector<Ogre::Controller<Ogre::Real> >::iterator ctrl(mObjectParts[i]->mControllers.begin());
@@ -360,7 +360,7 @@ Ogre::Vector3 ForeignCreatureAnimation::runAnimation(float timepassed)
 
         mObjectParts[i]->mForeignObj->mSkeletonRoot->getAllAnimationStates()->_notifyDirty();
     }
-
+#endif
     return ret;
 }
 

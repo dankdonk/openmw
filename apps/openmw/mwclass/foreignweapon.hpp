@@ -31,6 +31,9 @@ namespace MWClass
 
             virtual std::pair<std::vector<int>, bool> getEquipmentSlots (const MWWorld::Ptr& ptr) const;
 
+            virtual std::pair<int, std::string> canBeEquipped(const MWWorld::Ptr &ptr,
+                    const MWWorld::Ptr &npc) const;
+
             virtual int getValue (const MWWorld::Ptr& ptr) const;
             ///< Return trade value of the object. Throws an exception, if the object can't be traded.
 

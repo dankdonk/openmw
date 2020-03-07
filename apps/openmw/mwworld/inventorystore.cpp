@@ -347,11 +347,19 @@ void MWWorld::InventoryStore::autoEquipTES4 (const MWWorld::Ptr& actor)
 
         // iter2 points to a slot number for this equipment
         std::vector<int>::const_iterator iter2 (itemsSlots.first.begin());
-        for (; iter2!=itemsSlots.first.end(); ++iter2)
+        for (; iter2 != itemsSlots.first.end(); ++iter2)
         {
             if (slots_.at (*iter2)!=end()) // equipment slot for the new equipment already occupied
             {
-                 // check if the new equipment is more valuable than existing, etc
+                Ptr old = *slots_.at (*iter2);
+
+                // check if the new equipment is more valuable than existing, etc
+                if (old.getClass().getValue (old) >= test.getClass().getValue (test))
+                {
+                    //std::cout << test.getClass().getName(test) << " is cheaper than "
+                        //<< old.getClass().getName(old) << std::endl;
+                    continue;
+                }
             }
 
             // canBeEquipped() - each class, e.g. ESM4::Clothing has its own logic
@@ -372,13 +380,13 @@ void MWWorld::InventoryStore::autoEquipTES4 (const MWWorld::Ptr& actor)
             }
 
             slots_[*iter2] = iter;
-            break;
+            //break;  // for TES4 an item can occupy more than one slot
         }
     }
 
     bool changed = false;
 
-    for (std::size_t i=0; i<slots_.size(); ++i)
+    for (std::size_t i = 0; i < slots_.size(); ++i)
     {
         if (slots_[i] != mSlots[i])
         {
