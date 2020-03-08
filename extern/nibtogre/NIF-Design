@@ -1674,7 +1674,9 @@ Index number looks wrong?
 
 ## FIXME 2
 
-handleToMesh keeps growing!!!
+handleToMesh keeps growing!!!  git blame says:
+
+    33fe80723c (Jason Hooks     2012-06-17 20:56:10 -0400)
 
 ```cpp
 void PhysicsSystem::addObject (const Ptr& ptr, const std::string& mesh, bool placeable)
@@ -1688,7 +1690,7 @@ void PhysicsSystem::addObject (const Ptr& ptr, const std::string& mesh, bool pla
 
 # [04/03/2020] Finding missing TrapLog
 
-CoC "ImperialDungeon05" and look for `Dungeons\Caves\Traps\CTrapLog01.NIF`.  Found it - it turns out that CollisoinType_World had to be added in th flags otherwise the physics shapes don't collide with the floor and sink through.
+COC "ImperialDungeon05" and look for `Dungeons\Caves\Traps\CTrapLog01.NIF`.  Found it - it turns out that CollisoinType_World had to be added in th flags otherwise the physics shapes don't collide with the floor and sink through.
 
 ```cpp
 if (!raycasting)
@@ -1786,7 +1788,74 @@ Now mObjectParts in ForeignNpcAnimation is a map keyed by `ESM4::Armor::ArmorFla
 
 **TODO:** The inventorystore currently only supports TES4.  Its slot handling is not very well suited for TES4, etc, and will need some changes to make things more efficient.
 
+# [08/03/2020] Testing resource management
+
+Looks like `getResourceByName()` does not retrieve existing resources.  `mResources.find(name)` returns `mResources.end()` even though I can see the resource in mResources using the debugger.
+
+```cpp
+ResourcePtr ResourceManager::getResourceByName(const String& name, const String& groupName /* = ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME */)
+{
+    OGRE_LOCK_AUTO_MUTEX;
+
+    // resource should be in global pool
+    bool isGlobal = ResourceGroupManager::getSingleton().isResourceGroupInGlobalPool(groupName);
+
+    if(isGlobal)
+    {
+        ResourceMap::iterator it = mResources.find(name);
+        if( it != mResources.end())
+        {
+            return it->second;
+        }
+    }
+```
+
+mResources is meant to be an Ogre defined vector type, StringVector which in turn is defined as:
+
+```cpp
+template <typename T, typename A = STLAllocator<T, GeneralAllocPolicy> >
+struct vector
+{
+    typedef typename std::vector<T, A> type;
+    typedef typename std::vector<T, A>::iterator iterator;
+    typedef typename std::vector<T, A>::const_iterator const_iterator;
+};
+```
+
+That leads to xhash in MSVC - does this mean it might be a compiler bug?
+
+```cpp
+_NODISCARD iterator find(const key_type& _Keyval)
+    {	// find an element in mutable hash table that matches _Keyval
+    return (lower_bound(_Keyval));
+    }
+```
+
+```cpp
+size_t first = str_hash(Ogre::String("BeggarICMarketsSimplicia_" + meshName));
+size_t second = str_hash(Ogre::String(mNpc->mEditorId + "_" + meshName));
+```
+
+    first   0x5f7b25ae61145ef8  unsigned __int64
+    second  0x5fb1324631bf5133  unsigned __int64
+
+Hmmm... this is rather embarassing - it turns out we had a false positive - I simply had mis-spelt the hard coded name for testing.
+
 # [08/03/2020] Materials
+
+## But first, physics issues
+
+  * **WONTFIX:** 0x000947B2 gate does not rotate on its edge (well it does, but not right at the edge - it could be just the way the NIF is done)
+  * **FIXED:** 0x0002A5C0 physics shape does not move, `dungeons\sewers\sewertunneldoor01.nif` - in `PhysicsSystem::rotateSubObject` only the parent object was checked for being static object when its child (children?) may not be.
+  * **FIXED:** 0003725e Architecture\ImperialCity\Interior\ICDoorInt01.NIF rotates on the center axis - this particular one turns out to be a static shape, so we can stop the physic shape rotating in rotateObject(), but how to stop the rendering to rotate as well? - resolved by adding a check in processDoors().  Places to test include:
+  - COC "KvatchChapelofAkatosh" - go down to the hall and see the wooden doors move
+  - COC "ImperialDungeon02" - various gates and doors
+  - COW "AnvilWorld" -46 -8 - check the stone wall gate
+  - COW "ICMarketDistrict" 8 16 - check the display case then go to the sewers and check the gates and doors
+  - COC "WeynonPrioryHouse" - nothing here
+  * worldimp::processDoors add collision test
+
+
 
 
 

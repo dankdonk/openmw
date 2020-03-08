@@ -2,7 +2,7 @@
 
 #include <memory>
 #include <iostream>
-#include <iomanip> // for debugging only setprecision
+#include <iomanip> // FIXME: for debugging only setprecision
 
 #include <OgreSceneManager.h>
 #include <OgreEntity.h>
@@ -493,6 +493,9 @@ void ForeignNpcAnimation::updateNpcBase()
         scene->mForeignObj->instantiate();
 
         std::string targetBone = model->targetBone();
+        // Characters\Hair\ArgonianSpines.NIF does not have a targetBone
+        if (targetBone == "")
+            targetBone = "Bip01 Head"; // HACK: give a guessed default
 
         Ogre::Bone *heBone = mSkelBase->getSkeleton()->getBone(targetBone);
         Ogre::Quaternion heOrientation // fix helmet issue
@@ -555,6 +558,20 @@ void ForeignNpcAnimation::updateNpcBase()
         if (index == ESM4::Race::Head)
             continue;
 
+        if (mRace->mHeadParts[index].mesh == "") // FIXME: horrible workaround
+        {
+            std::string missing;
+            switch (index)
+            {
+            case 1: missing = "Ear Male"; break;
+            case 2: missing = "Ear Female"; break;
+            default: break;
+            }
+            std::cout << mNpc->mEditorId <<", a " << (isFemale ? "female," : "male,")
+                << " does not have headpart \"" << missing <<"\"." << std::endl;
+
+            continue;
+        }
 
         // Get mesh and texture from RACE except eye textures which are specified in Npc::mEyes
         // (NOTE: Oblivion.esm NPC_ records all have valid mEyes formid if one exists)
@@ -951,7 +968,7 @@ void ForeignNpcAnimation::updateNpcBase()
 #if 0 // {{{
                     // Verify the byte order for PF_BYTE_RGBA using Ogre::PixelBox::getColourAt()
                     // NOTE: probably only works for this particular host (e.g. little endian)
-                    if (mNpc->mEditorId == "UrielSeptim") // CoC "ImperialDungeon01"
+                    if (mNpc->mEditorId == "UrielSeptim") // COC "ImperialDungeon01"
                     {
                         int ir = (int)i / 256;
                         int ic = i % 256;

@@ -10,7 +10,7 @@ namespace MWClass
     class ForeignDoor : public MWWorld::Class
     {
             void ensureCustomData (const MWWorld::Ptr& ptr) const;
-    
+
             virtual MWWorld::Ptr copyToCellImpl(const MWWorld::Ptr &ptr, MWWorld::CellStore &cell) const;
 
         public:

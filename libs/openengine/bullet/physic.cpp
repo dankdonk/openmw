@@ -681,7 +681,17 @@ namespace Physic
                 iter->second.first.decomposition(pos, nodeScale, rot);
 
                 if (body->getCollisionShape()->getUserIndex() == 4) // useFullTransform
+                {
                     adjustRigidBody(body, position, rotation, Ogre::Vector3(0.f) * scale, Ogre::Quaternion::IDENTITY);
+
+                    // FIXME: debugging dungeons\sewers\sewertunneldoor01.nif
+                    // I think below 3 lines were not applied since user index  of 4 means a
+                    // static object, but above door is not static?
+                    // see PhysicsSystem::rotateSubObject()
+                    //body->mBindingPosition = body->getWorldTransform().getOrigin();
+                    //body->mBindingOrientation = body->getWorldTransform().getRotation();
+                    //body->mTargetName = ci->mTargetNames[iter->first];
+                }
                 else
                 {
 #if 0

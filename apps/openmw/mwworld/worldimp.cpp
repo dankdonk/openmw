@@ -1607,6 +1607,10 @@ namespace MWWorld
             {
                 mDoorStates.erase(it++); // FIXME: hack to reset the doors (still not quite right, anyway)
             }
+            else if (isForeignDoor)
+            {
+                it++;
+            }
             else
             {
                 float oldRot = Ogre::Radian(it->first.getRefData().getLocalRotation().rot[2]).valueDegrees();

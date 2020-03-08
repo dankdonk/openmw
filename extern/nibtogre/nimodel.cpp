@@ -245,7 +245,7 @@ void NiBtOgre::NiModel::createMesh(bool isMorphed, Ogre::SkeletonPtr skeleton)
     for (iter = mBuildData.mMeshBuildList.begin(); iter != mBuildData.mMeshBuildList.end(); ++iter)
     {
         // skeleton name: only used for skinned meshes (same mesh used for different skeletons)
-        //   e.g. Armor\Thief\M\Boots.NIF, "CoW "Tamriel" 5 11" (TES4)
+        //   e.g. Armor\Thief\M\Boots.NIF, "COW "Tamriel" 5 11" (TES4)
         //   ShadySam (Breton, skeleton.nif) & DeadArgonianAgent (Argonian, SkeletonBeast.NIF)
         //
         // The model name and parent node name are concatenated for use with Ogre::MeshManager

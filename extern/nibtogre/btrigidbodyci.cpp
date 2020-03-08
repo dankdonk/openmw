@@ -79,12 +79,12 @@ void NiBtOgre::BtRigidBodyCI::loadImpl()
 //  NiModelPtr nimodel
 //      = NiBtOgre::NiModelManager::getSingleton().getByName(modelName.substr(0, modelNameSize), getGroup());
 
-    std::string modelName = getName(); // remove scale from the name
+    std::string modelName = getName(); // remove scale from the name (see -7 below)
     NiModelPtr nimodel
         = NiBtOgre::NiModelManager::getSingleton().getByName(modelName.substr(0, modelName.length()-7), getGroup());
 
     if (!nimodel) // shouldn't happen, since we need the Entities created already
-        throw std::runtime_error("NiModel not loaded");
+        throw std::runtime_error("BtRigidBodyCI: NiModel not loaded");
 
     //           target NiAVObject ref               bhkSerializable ref (e.g. bhkRigidBody)
     //                   |                                    |

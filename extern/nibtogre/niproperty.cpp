@@ -694,7 +694,7 @@ void NiBtOgre::NiTexturingProperty::applyMaterialProperty(OgreMaterial& material
     material.textureDescriptions = &mTextureDescriptions;
 
     // probably NiFlipController or NiTextureTransformController (ascensionparticles.nif)
-    // CoW "Tamriel" 2 13  (meshes/fire/firetorchlargesmoke.nif)
+    // COW "Tamriel" 2 13  (meshes/fire/firetorchlargesmoke.nif)
     NiTimeControllerRef controllerRef = NiObjectNET::mControllerRef;
     //while (controllerRef != -1)
     {

@@ -695,10 +695,10 @@ namespace MWWorld
             return;
         }
 
-        mEngine->createAndAdjustRigidBody(
-            mesh, node->getName(), ptr.getCellRef().getScale(), node->getPosition(), node->getOrientation(), 0, 0, false, placeable);
-        mEngine->createAndAdjustRigidBody(
-            mesh, node->getName(), ptr.getCellRef().getScale(), node->getPosition(), node->getOrientation(), 0, 0, true, placeable);
+        mEngine->createAndAdjustRigidBody(mesh, node->getName(), ptr.getCellRef().getScale(),
+                node->getPosition(), node->getOrientation(), 0, 0, false, placeable);
+        mEngine->createAndAdjustRigidBody(mesh, node->getName(), ptr.getCellRef().getScale(),
+                node->getPosition(), node->getOrientation(), 0, 0, true, placeable);
     }
 
     void PhysicsSystem::addActor (const Ptr& ptr, const std::string& mesh)
@@ -795,9 +795,9 @@ namespace MWWorld
             else
             {
                 Ogre::Quaternion rot;
-                if (body->getCollisionShape()->getUserIndex() == 4)
-                    body->getWorldTransform().setRotation(btQuaternion(rotation.x, rotation.y, rotation.z, rotation.w));
-                else
+                if (body->getCollisionShape()->getUserIndex() != 4)
+                    //body->getWorldTransform().setRotation(btQuaternion(rotation.x, rotation.y, rotation.z, rotation.w));
+                //else
                 {
                     rot = body->mLocalTransform.extractQuaternion();
                     rot = rotation * rot;
@@ -823,7 +823,7 @@ namespace MWWorld
 
             mEngine->mDynamicsWorld->updateSingleAabb(body);
         }
-        if (OEngine::Physic::RigidBody* body = mEngine->getRigidBody(handle, true))
+        if (OEngine::Physic::RigidBody* body = mEngine->getRigidBody(handle, true/*raycasting*/))
         {
             if (!body->mIsForeign)
             {
@@ -836,9 +836,9 @@ namespace MWWorld
             {
                 Ogre::Quaternion rot = body->mLocalTransform.extractQuaternion();
                 rot = rotation * rot;
-                if (body->getCollisionShape()->getUserIndex() == 4)
-                    body->getWorldTransform().setRotation(btQuaternion(rotation.x, rotation.y, rotation.z, rotation.w));
-                else
+                if (body->getCollisionShape()->getUserIndex() != 4)
+                    //body->getWorldTransform().setRotation(btQuaternion(rotation.x, rotation.y, rotation.z, rotation.w));
+                //else
                     body->getWorldTransform().setRotation(btQuaternion(rot.x, rot.y, rot.z, rot.w));
                 // FIXME: scale?
 
@@ -892,7 +892,7 @@ namespace MWWorld
             }
         }
 
-        if (OEngine::Physic::RigidBody* body = mEngine->getRigidBody(handle, true))
+        if (OEngine::Physic::RigidBody* body = mEngine->getRigidBody(handle, true/*raycasting*/))
         {
             // ignore static
             if (body->getCollisionShape()->getUserIndex() == 4)
@@ -929,44 +929,12 @@ namespace MWWorld
 
         if (OEngine::Physic::RigidBody* body = mEngine->getRigidBody(handle))
         {
-            // ignore static
-            if (body->getCollisionShape()->getUserIndex() == 4)
-                return;
+            // dungeons\sewers\sewertunneldoor01.nif has parent that is static but its child
+            // "Gate" is not
 
             // rotate parent
-            if (body->mTargetName == boneName)
-            {
-                body-> getWorldTransform().setRotation(
-                    body->mBindingOrientation/*.inverse()*/
-                    *
-                    btQuaternion(rotation.x, rotation.y, rotation.z, rotation.w)
-                    );
-
-                mEngine->mDynamicsWorld->updateSingleAabb(body);
-            }
-
-            // rotate children
-            std::map<std::string, OEngine::Physic::RigidBody*>::const_iterator iter = body->mChildren.find(boneName);
-            if (iter != body->mChildren.end())
-            {
-                iter->second->getWorldTransform().setRotation(
-                    iter->second->mBindingOrientation/*.inverse()*/
-                    *
-                    btQuaternion(rotation.x, rotation.y, rotation.z, rotation.w)
-                    );
-
-                mEngine->mDynamicsWorld->updateSingleAabb(iter->second);
-            }
-        }
-
-        if (OEngine::Physic::RigidBody* body = mEngine->getRigidBody(handle, true))
-        {
-            // ignore static
-            if (body->getCollisionShape()->getUserIndex() == 4)
-                return;
-
-            // rotate parent
-            if (body->mTargetName == boneName)
+            if (body->mTargetName == boneName
+                    && body->getCollisionShape()->getUserIndex() != 4) // ignore static shapes
             {
                 body-> getWorldTransform().setRotation(
                     body->mBindingOrientation/*.inverse()*/
@@ -981,7 +949,43 @@ namespace MWWorld
             std::map<std::string, OEngine::Physic::RigidBody*>::const_iterator iter
                 = body->mChildren.find(boneName);
 
-            if (iter != body->mChildren.end())
+            if (iter != body->mChildren.end()
+                    && iter->second->getCollisionShape()->getUserIndex() != 4) // ignore static shapes
+            {
+                iter->second->getWorldTransform().setRotation(
+                    iter->second->mBindingOrientation/*.inverse()*/
+                    *
+                    btQuaternion(rotation.x, rotation.y, rotation.z, rotation.w)
+                    );
+
+                mEngine->mDynamicsWorld->updateSingleAabb(iter->second);
+            }
+        }
+
+        if (OEngine::Physic::RigidBody* body = mEngine->getRigidBody(handle, true/*raycasting*/))
+        {
+            // dungeons\sewers\sewertunneldoor01.nif has parent that is static but its child
+            // "Gate" is not
+
+            // rotate parent
+            if (body->mTargetName == boneName
+                    && body->getCollisionShape()->getUserIndex() != 4) // ignore static shapes
+            {
+                body-> getWorldTransform().setRotation(
+                    body->mBindingOrientation/*.inverse()*/
+                    *
+                    btQuaternion(rotation.x, rotation.y, rotation.z, rotation.w)
+                    );
+
+                mEngine->mDynamicsWorld->updateSingleAabb(body);
+            }
+
+            // rotate children
+            std::map<std::string, OEngine::Physic::RigidBody*>::const_iterator iter
+                = body->mChildren.find(boneName);
+
+            if (iter != body->mChildren.end()
+                    && iter->second->getCollisionShape()->getUserIndex() != 4) // ignore static shapes
             {
                 iter->second->getWorldTransform().setRotation(
                     iter->second->mBindingOrientation/*.inverse()*/
@@ -1005,7 +1009,7 @@ namespace MWWorld
             model = Misc::ResourceHelpers::correctActorModelPath(model); // FIXME: scaling shouldn't require model
 
             bool placeable = false;
-            if (OEngine::Physic::RigidBody* body = mEngine->getRigidBody(handle,true))
+            if (OEngine::Physic::RigidBody* body = mEngine->getRigidBody(handle,true/*raycasting*/))
                 placeable = body->mPlaceable;
             else if (OEngine::Physic::RigidBody* body = mEngine->getRigidBody(handle,false))
                 placeable = body->mPlaceable;
