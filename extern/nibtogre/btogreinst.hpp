@@ -122,7 +122,7 @@ namespace NiBtOgre
         void instantiate();
 
         // for building body parts using the supplied skeleton
-        void instantiate(Ogre::SceneNode* baseNode, Ogre::Entity* skelBase);
+        void instantiateBodyPart(Ogre::SceneNode* baseNode, Ogre::Entity* skelBase);
 
         bool hasAnimation(const std::string& animName) const;
 

@@ -288,7 +288,11 @@ namespace NiBtOgre
     {
         pModel->findBoneNodes(true/*buildObjectPalette*/);
         pModel->buildSkeleton(true/*load*/);
-        pModel->createDummyMesh();
+        pModel->createMesh(false);
+        if (!pModel->buildData().mMeshBuildList.empty())
+        {
+            pModel->buildModel(); // this skeleton may have controllers
+        }
     }
 
     void NiModelManager::loadManualMorphedModel(NiModel* pModel, const ModelBuildInfo& bInfo)

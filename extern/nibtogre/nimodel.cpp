@@ -101,6 +101,10 @@ void NiBtOgre::NiModel::loadImpl()
 {
     createNiObjects();
     findBoneNodes(true); // not really needed, but this allows NiNode::addBones() to search for names
+    // objects being built may require the skeleton to exist, so load it now
+    buildSkeleton(true/*load*/);
+    //if (blockType(0) == "NiTriShape")
+        //return; // FIXME: morroblivion\environment\bittercoast\bcscum03.nif
     createMesh();
     buildModel();
 }
@@ -269,6 +273,8 @@ void NiBtOgre::NiModel::createMesh(bool isMorphed, Ogre::SkeletonPtr skeleton)
 
         if (skeleton)
             mesh->setSkeletonName(skelName);
+        else if (mBuildData.isSkeletonTES4() && mSkeleton) // FIXME: FO3, etc, but not yet tested
+            mesh->setSkeletonName(mSkeleton->getName()); // Storm Atronach skeleton.nif has its own mesh
 #if 0
         // FIXME: testing VGearDoor01.NIF
         if (mSkeleton && !mesh->hasSkeleton() && getModelName().find("geardoor") != std::string::npos)
@@ -281,42 +287,46 @@ void NiBtOgre::NiModel::createMesh(bool isMorphed, Ogre::SkeletonPtr skeleton)
         mMeshes.push_back(std::make_pair(mesh, iter->second));
     }
 
-
-
-
-// FIXME: scenario where the root node does not have a mesh (and hence entity)
-#if 0
-
-    // should have set mSkelBase by now - else there mustn't have been an entity at the root node
-    // FIXME: for ghost skeleton.nif where there is no entity at rootnode
-    //Ogre::MeshManager& meshManager = Ogre::MeshManager::getSingleton();
-    if (!inst->mSkeletonRoot &&
-        inst->mEntities.size() != 0 &&
-        (inst->mEntities.begin()->second->getMesh()->hasSkeleton()
-
-
-        || getModelName().find("geardoor") != std::string::npos) // FIXME: hack testing
-
-       )
-
+    // Create a dummy mesh if the root node does not have a mesh (and hence an Entity) to support
+    // the current implementation of MWRender::Animation, since it requires an entity at the root
+    // of the skeleton model. (see mObjectRoot->mSkelBase i.e. NifOgre::ObjectScene::mSkelBase)
+    //
+    // Most Skeleton.nif doesn't have any NiTriBasedGeom, and even Storm Atronach's skeleton
+    // doesn't have one at the root node.
+    //
+    // e.g. Characters\_Male\Skeleton.nif (no mesh)
+    // e.g. Creatures\StormAtronach\Skeleton.nif (also has normal mesh)
+    //
+    if (mBuildData.isSkeletonTES4()) // FIXME: may also be required for others, but not yet tested
     {
-        NiNode *rootNode = getRef<NiNode>(mRoots[0]);
-        std::string rootName = rootNode->getNiNodeName();
-        if (rootName == "Scene Root" || blockType(0) == "BSFadeNode") // FIXME: HACK not always "Scene Root"
-        {
-            std::string meshName = getModelName() + "#0@" + rootName;
-            NiMeshLoader& meshLoader = NiModelManager::getSingleton().meshLoader();
+        // FIXME: despite the name, maybe this should be "Scene Root" or "BSFadeNode" instead?
+        // mModelName != "meshes\\morroblivion\\creatures\\wildlife\\kagouti\\skeleton.nif") // FIXME
+#if 0
+        NiNode * rootNode = rootNode(); // WARN: maybe nullptr if there are multiple roots!
+#else
+        NiNode * rootNode = skeletonRoot();
+#endif
+        NiNodeRef rootIndex = rootNode->selfRef();
 
+        // only if it has not been built already
+        if (mBuildData.mMeshBuildList.find(rootIndex) == mBuildData.mMeshBuildList.end())
+        {
+            std::string meshName = getModelName() + "#0@" + rootNode->getNiNodeName();
             Ogre::MeshPtr mesh = meshManager.getByName(meshName);
             if (!mesh)
-                mesh = meshLoader.createMesh(meshName, mGroup, this, mRoots[0]);
+                mesh = meshLoader.createMesh(meshName, mGroup, this, rootIndex);
 
-            mesh->setSkeletonName(getModelName());
+            if (skeleton)
+                mesh->setSkeletonName(skelName);
+            else if (mSkeleton)
+                mesh->setSkeletonName(mSkeleton->getName());
+
+            mMeshes.push_back(std::make_pair(mesh, rootNode));
         }
     }
-#endif
 }
 
+// deprecated
 // skeleton.nif doesn't have any NiTriBasedGeom so no entities would have been created
 void NiBtOgre::NiModel::createDummyMesh()
 {
@@ -366,8 +376,13 @@ void NiBtOgre::NiModel::createDummyMesh()
 // for building body parts
 void NiBtOgre::NiModel::buildSkinnedModel(Ogre::SkeletonPtr skeleton)
 {
+    if (mSkeleton && skeleton)
+        throw std::logic_error("NiModel: overwriting its own skeleton");
+
     // for building body parts use the supplied skeleton
-    mSkeleton = skeleton;
+    // but don't overwrite an existing one (for Storm Atronach)
+    if (!mSkeleton)
+        mSkeleton = skeleton;
 
     mObjects[rootIndex()]->build(&mBuildData); // FIXME: what to do with other roots?
 }
@@ -375,12 +390,6 @@ void NiBtOgre::NiModel::buildSkinnedModel(Ogre::SkeletonPtr skeleton)
 // build the skeleton and node controllers
 void NiBtOgre::NiModel::buildModel()
 {
-    //if (blockType(0) == "NiTriShape")
-        //return; // FIXME: morroblivion\environment\bittercoast\bcscum03.nif
-
-    // objects being built may require the skeleton to exist, so load it now
-    buildSkeleton(true/*load*/);
-
     mObjects[rootIndex()]->build(&mBuildData); // FIXME: what to do with other roots?
 }
 

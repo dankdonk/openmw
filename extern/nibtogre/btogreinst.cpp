@@ -87,22 +87,9 @@ NiBtOgre::BtOgreInst::~BtOgreInst()
     mModel.reset();
 }
 
-// FIXME: deprecated
-// for building body part models using the supplied creature/character skeleton for skinning.
-//void NiBtOgre::BtOgreInst::instantiate(Ogre::SkeletonPtr skeleton, const std::string& meshExt)
-//{
-//    mTargetBone = mModel->buildSkinnedModel(skeleton);
-//
-//    // make a convenience copy
-//    mIsSkinned = mModel->buildData().mIsSkinned;
-//
-//    buildEntities();
-//    //copyControllers();
-//}
-
 // for building body part models using the supplied creature/character skeleton for skinning.
 // FIXME: skinned objects don't attach to a target bone?
-void NiBtOgre::BtOgreInst::instantiate(Ogre::SceneNode *baseNode, Ogre::Entity *skelBase)
+void NiBtOgre::BtOgreInst::instantiateBodyPart(Ogre::SceneNode *baseNode, Ogre::Entity *skelBase)
 {
     // make a convenience copy
     mIsSkinned = mModel->buildData().mIsSkinned;

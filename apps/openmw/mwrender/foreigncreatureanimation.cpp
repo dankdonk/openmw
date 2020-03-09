@@ -60,6 +60,8 @@ ForeignCreatureAnimation::ForeignCreatureAnimation(const MWWorld::Ptr &ptr, cons
         mObjectRoot->mSkelBase = mObjectRoot->mForeignObj->mSkeletonRoot;
         mSkelBase = mObjectRoot->mForeignObj->mSkeletonRoot;
     }
+    //if (mObjectRoot->mForeignObj->mModel->getModelName().find("torm") != std::string::npos)
+        //std::cout << "storm" << std::endl;
 
     if (mObjectRoot->mSkelBase == nullptr) // FIXME: FO3
         return;
@@ -158,7 +160,7 @@ ForeignCreatureAnimation::ForeignCreatureAnimation(const MWWorld::Ptr &ptr, cons
         scene->mForeignObj = std::make_unique<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(object,
                              mInsert->createChildSceneNode()));
 #if 1
-        scene->mForeignObj->instantiate(mInsert, mSkelBase);
+        scene->mForeignObj->instantiateBodyPart(mInsert, mSkelBase);
 #else
         std::map<int32_t, Ogre::Entity*>::const_iterator it(scene->mForeignObj->mEntities.begin());
         for (; it != scene->mForeignObj->mEntities.end(); ++it)

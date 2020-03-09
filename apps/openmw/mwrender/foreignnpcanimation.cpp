@@ -1202,7 +1202,7 @@ NifOgre::ObjectScenePtr ForeignNpcAnimation::createSkinnedObject(NifOgre::Object
     scene->mForeignObj
         = std::make_unique<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(object, mInsert->createChildSceneNode()));
 
-    scene->mForeignObj->instantiate(mInsert, mSkelBase);
+    scene->mForeignObj->instantiateBodyPart(mInsert, mSkelBase);
 
     return scene;
 }
@@ -1249,7 +1249,7 @@ NifOgre::ObjectScenePtr ForeignNpcAnimation::createMorphedObject(const std::stri
 
     if (object->buildData().mIsSkinned)
     {
-        scene->mForeignObj->instantiate(mInsert, mSkelBase);
+        scene->mForeignObj->instantiateBodyPart(mInsert, mSkelBase);
     }
     else // attach to bone
     {
@@ -1335,7 +1335,7 @@ NifOgre::ObjectScenePtr ForeignNpcAnimation::createObject(const std::string& mes
 #endif
         scene->mForeignObj
             = std::make_unique<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(model, mInsert->createChildSceneNode()));
-        scene->mForeignObj->instantiate(mInsert, mSkelBase);
+        scene->mForeignObj->instantiateBodyPart(mInsert, mSkelBase);
 #if 0
         std::map<int32_t, Ogre::Entity*>::const_iterator it(scene->mForeignObj->mEntities.begin());
         for (; it != scene->mForeignObj->mEntities.end(); ++it)
