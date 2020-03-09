@@ -328,15 +328,9 @@ namespace NiBtOgre
         inline const std::vector<std::pair<Ogre::MeshPtr, NiNode*> >& meshes() const { return mMeshes; }
 
         void createNiObjects();
-        // for skeleton.nif, etc, that requires an Entity for ObjectScene
-        void createDummyMesh();
+
         // supply skeleton for skinned objects
         void createMesh(bool isMorphed = false, Ogre::SkeletonPtr skeleton = Ogre::SkeletonPtr());
-
-        // FIXME: move out?
-        //void buildEntities(BtOgreInst *inst);
-        //void buildEntities(BtOgreInst *inst, const std::string& npcName,
-                //std::unique_ptr<std::vector<Ogre::Vector3> > morphedVertices);
 
         inline const BuildData& buildData() const { return mBuildData; }
 

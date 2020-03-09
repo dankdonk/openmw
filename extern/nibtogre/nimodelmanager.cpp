@@ -297,8 +297,6 @@ namespace NiBtOgre
 
     void NiModelManager::loadManualMorphedModel(NiModel* pModel, const ModelBuildInfo& bInfo)
     {
-        // FIXME: needs a try/catch block here
-
         const std::vector<float>& sRaceCoeff = bInfo.race->mSymShapeModeCoefficients;
         const std::vector<float>& aRaceCoeff = bInfo.race->mAsymShapeModeCoefficients;
         const std::vector<float>& sRaceTCoeff = bInfo.race->mSymTextureModeCoefficients;
@@ -309,53 +307,57 @@ namespace NiBtOgre
         // FIXME: no morphed vertices for upper body
         // if EGM and TRI both found, build morphed vertices
         FgLib::FgSam sam;
-        sam.buildMorphedVertices(pModel, bInfo.baseNif, sRaceCoeff, aRaceCoeff, sCoeff, aCoeff);
+        bool res = sam.buildMorphedVertices(pModel, bInfo.baseNif, sRaceCoeff, aRaceCoeff, sCoeff, aCoeff);
 
-        // special material for headhuman.dds
-        if (bInfo.bodyPart == 0/*head*/ && bInfo.baseNif.find("headhuman.nif") != std::string::npos)
+        // Some helmets do not have an associated EGM, e.g. "Armor\Daedric\M\Helmet.NIF"
+        if (res)
         {
-            bool isFemale = (bInfo.npc->mBaseConfig.flags & 0x1) != 0;
+            // special material for headhuman.dds
+            if (bInfo.bodyPart == 0/*head*/ && bInfo.baseNif.find("headhuman.nif") != std::string::npos)
+            {
+                bool isFemale = (bInfo.npc->mBaseConfig.flags & 0x1) != 0;
 
-            std::string detailTexture
-                = sam.getHeadHumanDetailTexture(sam.getAge(sRaceCoeff, sCoeff), isFemale);
+                std::string detailTexture
+                    = sam.getHeadHumanDetailTexture(sam.getAge(sRaceCoeff, sCoeff), isFemale);
 
-            size_t pos = detailTexture.find_last_of(".");
-            if (pos == std::string::npos)
-                return; // FIXME: should throw
+                size_t pos = detailTexture.find_last_of(".");
+                if (pos == std::string::npos)
+                    return; // FIXME: should throw
 
-            std::string normalTexture = detailTexture.substr(0, pos) + "_n.dds";
+                std::string normalTexture = detailTexture.substr(0, pos) + "_n.dds";
 
-            // FIXME: do stuff here including morphed textue
+                // FIXME: do stuff here including morphed textue
 
-            // FIXME: need to pass to shader FaceGen maps textures\faces\oblivion.esm\<formid>_[01].dds
+                // FIXME: need to pass to shader FaceGen maps textures\faces\oblivion.esm\<formid>_[01].dds
 
-        }
-        else if (bInfo.bodyPart == 10/*hair*/) // special material for hair
-        {
-            size_t pos = bInfo.baseTexture.find_last_of(".");
-            if (pos == std::string::npos)
-                return; // FIXME: should throw
+            }
+            else if (bInfo.bodyPart == 10/*hair*/) // special material for hair
+            {
+                size_t pos = bInfo.baseTexture.find_last_of(".");
+                if (pos == std::string::npos)
+                    return; // FIXME: should throw
 
-            std::string texture = bInfo.baseTexture.substr(0, pos);
-            std::string normalTexture = texture + "_n.dds";
-            std::string heightMap = texture + "_hh.dds";  // NOTE: apparently only the R channel needed?
-            std::string layerMap = texture + "_hl.dds";
+                std::string texture = bInfo.baseTexture.substr(0, pos);
+                std::string normalTexture = texture + "_n.dds";
+                std::string heightMap = texture + "_hh.dds";  // NOTE: apparently only the R channel needed?
+                std::string layerMap = texture + "_hl.dds";
 
-            // FIXME: how to extract the anisoMap from normal texture's alpha channel?
+                // FIXME: how to extract the anisoMap from normal texture's alpha channel?
 
-            // FIXME: do other stuff here (but no texture morphing since there aren't any EGT for hair)
+                // FIXME: do other stuff here (but no texture morphing since there aren't any EGT for hair)
 
-        }
-        else if (bInfo.bodyPart <= 2 || bInfo.bodyPart >= 9) // ears, upper body or other heads
-        {
-            // e.g. argonian, orc, khajiit
-            // FIXME: morphed texture
+            }
+            else if (bInfo.bodyPart <= 2 || bInfo.bodyPart >= 9) // ears, upper body or other heads
+            {
+                // e.g. argonian, orc, khajiit
+                // FIXME: morphed texture
 
-        }
-        else
-        {
-            // no special materials for eyes, mouth, teeth and tongue, just the base texture
+            }
+            else
+            {
+                // no special materials for eyes, mouth, teeth and tongue, just the base texture
 
+            }
         }
 
 

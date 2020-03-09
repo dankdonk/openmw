@@ -60,8 +60,6 @@ ForeignCreatureAnimation::ForeignCreatureAnimation(const MWWorld::Ptr &ptr, cons
         mObjectRoot->mSkelBase = mObjectRoot->mForeignObj->mSkeletonRoot;
         mSkelBase = mObjectRoot->mForeignObj->mSkeletonRoot;
     }
-    //if (mObjectRoot->mForeignObj->mModel->getModelName().find("torm") != std::string::npos)
-        //std::cout << "storm" << std::endl;
 
     if (mObjectRoot->mSkelBase == nullptr) // FIXME: FO3
         return;

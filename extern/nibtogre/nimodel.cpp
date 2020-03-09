@@ -326,53 +326,6 @@ void NiBtOgre::NiModel::createMesh(bool isMorphed, Ogre::SkeletonPtr skeleton)
     }
 }
 
-// deprecated
-// skeleton.nif doesn't have any NiTriBasedGeom so no entities would have been created
-void NiBtOgre::NiModel::createDummyMesh()
-{
-    Ogre::MeshManager& meshManager = Ogre::MeshManager::getSingleton();
-    NiMeshLoader& meshLoader = NiModelManager::getSingleton().meshLoader();
-
-#if 0
-    std::string rootType = blockType(rootIndex());
-    if (mBuildData.isSkeletonTES4() && (rootType == "NiNode" || rootType == "BSFadeNode"))
-        //&& mModelName != "meshes\\morroblivion\\creatures\\wildlife\\kagouti\\skeleton.nif") // FIXME
-    {
-        std::string rootName = rootNode()->getNiNodeName();
-        if (rootName == "Scene Root" || rootName == "skeleton.nif")
-        {
-            std::string meshName = getModelName() + "#0@" + rootName;
-
-            Ogre::MeshPtr mesh = meshManager.getByName(meshName);
-            if (!mesh)
-                mesh = meshLoader.createMesh(meshName, mGroup, this, rootIndex());
-
-            //if (!mesh)
-                //return; // FIXME: morroblivion\creatures\wildlife\kagouti\skeleton.nif
-
-            mesh->setSkeletonName(getModelName());
-
-            mMeshes.push_back(std::make_pair(mesh, rootNode()));
-        }
-    }
-#else
-    if (!mBuildData.isSkeletonTES4())
-        return;
-
-    std::string skelRootName = skeletonRoot()->getNiNodeName();
-    NiNodeRef skelRootIndex = skeletonRoot()->selfRef();
-
-    std::string meshName = getModelName() + "#0@" + skelRootName;
-    Ogre::MeshPtr mesh = meshManager.getByName(meshName);
-    if (!mesh)
-        mesh = meshLoader.createMesh(meshName, mGroup, this, skelRootIndex);
-
-    mesh->setSkeletonName(getModelName());
-
-    mMeshes.push_back(std::make_pair(mesh, skeletonRoot()));
-#endif
-}
-
 // for building body parts
 void NiBtOgre::NiModel::buildSkinnedModel(Ogre::SkeletonPtr skeleton)
 {

@@ -2079,7 +2079,27 @@ btRigdBody::m_angularFactor.setValue(0, 0, 0);
 
 ### Animation control
 
-# [09/03/2020] Materials
+# [10/03/2020] Bug Fixes
+
+## Storm Atronach missing entities
+
+  * video poste 12/02/19 ok
+  * 004a1d72985115fed43acd644f5da8ce2d90d302 15/02/20 ok
+  * ccaf2c520f93ea2726b40a73fb36f975b6445840 17/02/20 ok
+  * a98765fe96143a4bac7df424e4ccec183be32925 02/03/20 ok
+  * d0bd93a6cd0f5185be367f4fe45b9b0f35923fad 04/03/20 broken
+
+## EGM missing for Daedric Helmet
+
+resourceName "meshes\\armor\\daedric\\m\\helmet.egm" missing exeption
+
+Test by:
+
+    COC "OblivionMQKvatchCitadel"
+    COC "KvatchCapelOfAkatosh"
+    <F12> to take screenshots
+
+# [10/03/2020] Materials
 
 Some models require external texture to be supplied while others (e.g. head models) require the material to be crafted and supplied.
 
