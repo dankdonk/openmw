@@ -368,6 +368,8 @@ class ObjectAnimation : public Animation {
 public:
     ObjectAnimation(const MWWorld::Ptr& ptr, const std::string &model);
 
+    bool disableHavokAtStart() const;
+
     bool canBatch() const;
     void fillBatch(Ogre::StaticGeometry *sg);
     const std::map<std::int32_t, Ogre::SceneNode*>& getPhysicsNodeMap() const { return mPhysicsNodeMap; }

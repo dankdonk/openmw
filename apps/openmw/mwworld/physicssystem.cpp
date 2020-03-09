@@ -14,6 +14,7 @@
 
 #include <openengine/bullet/trace.h>
 #include <openengine/bullet/physic.hpp>
+//#include <openengine/bullet/BtOgrePG.h>
 #include <openengine/bullet/BtOgreExtras.h>
 #include <openengine/ogre/renderer.hpp>
 #include <openengine/bullet/BulletShapeLoader.h>
@@ -686,9 +687,28 @@ namespace MWWorld
         MWRender::ObjectAnimation *objAnim = dynamic_cast<MWRender::ObjectAnimation*>(anim);
         if (objAnim && !objAnim->getPhysicsNodeMap().empty())  // FIXME: this is such a bad hack
         {
-            mEngine->createAndAdjustRagdollBody(
+            OEngine::Physic::RigidBody * body = mEngine->createAndAdjustRagdollBody(
                 mesh, node->getName(), objAnim->getPhysicsNodeMap(), ptr.getCellRef().getScale(), node->getPosition(), node->getOrientation(), 0, 0, false, placeable);
 
+#if 0
+            if (objAnim->disableHavokAtStart())
+            {
+                //body->setLinearFactor(btVector3(0, 0, 0));
+                //body->setAngularFactor(btVector3(0, 0, 0));
+                // FIXME: save getInvInertiaDiagLocal() and getInvMass() for later?
+                //body->setMassProps(0.0, btVector3(0.f, 0.f, 0.f)); // this does not work
+                static_cast<BtOgre::RigidBodyState*>(body->getMotionState())->mEnabled = false;
+
+                std::map<std::string, OEngine::Physic::RigidBody*>::iterator it;
+                for (it = body->mChildren.begin(); it != body->mChildren.end(); ++it)
+                {
+                    //it->second->setLinearFactor(btVector3(0, 0, 0));
+                    //it->second->setAngularFactor(btVector3(0, 0, 0));
+                    //it->second->setMassProps(0.0, btVector3(0.f, 0.f, 0.f));
+                    static_cast<BtOgre::RigidBodyState*>(it->second->getMotionState())->mEnabled = false;
+                }
+            }
+#endif
             // FIXME: really want to get rid of doing this twice
             mEngine->createAndAdjustRagdollBody(
                 mesh, node->getName(), objAnim->getPhysicsNodeMap(), ptr.getCellRef().getScale(), node->getPosition(), node->getOrientation(), 0, 0, true, placeable);
@@ -808,9 +828,9 @@ namespace MWWorld
                 std::map<std::string, OEngine::Physic::RigidBody*>::iterator it;
                 for (it = body->mChildren.begin(); it != body->mChildren.end(); ++it)
                 {
-                    if (body->getCollisionShape()->getUserIndex() == 4)
-                        body->getWorldTransform().setRotation(btQuaternion(rotation.x, rotation.y, rotation.z, rotation.w));
-                    else
+                    if (body->getCollisionShape()->getUserIndex() != 4)
+                        //body->getWorldTransform().setRotation(btQuaternion(rotation.x, rotation.y, rotation.z, rotation.w));
+                    //else
                     {
                         rot = it->second->mLocalTransform.extractQuaternion();
                         rot = rotation * rot;
@@ -847,9 +867,9 @@ namespace MWWorld
                 {
                     rot = it->second->mLocalTransform.extractQuaternion();
                     rot = rotation * rot;
-                    if (body->getCollisionShape()->getUserIndex() == 4)
-                        body->getWorldTransform().setRotation(btQuaternion(rotation.x, rotation.y, rotation.z, rotation.w));
-                    else
+                    if (body->getCollisionShape()->getUserIndex() != 4)
+                        //body->getWorldTransform().setRotation(btQuaternion(rotation.x, rotation.y, rotation.z, rotation.w));
+                    //else
                         body->getWorldTransform().setRotation(btQuaternion(rot.x, rot.y, rot.z, rot.w));
 
                     mEngine->mDynamicsWorld->updateSingleAabb(it->second);

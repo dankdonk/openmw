@@ -910,7 +910,21 @@ namespace MWWorld
                     case MKTAG('S','E','Y','E'): std::cout << " eyes " << std::endl; break; // FIXME
                     case MKTAG('E','R','A','C'): std::cout << "race" << std::endl; break; // FIXME
                     case MKTAG('N','S','O','U'): mForeignSounds.load(record, deleted, store); break;
+#if 1
                     case MKTAG('I','A','C','T'): mForeignActivators.load(record, deleted, store); break;
+#else
+                    case MKTAG('I','A','C','T'):
+                    {
+                        const MWWorld::ForeignStore<ESM4::Activator>& actiStore
+                            = store.getForeign<ESM4::Activator>();
+                        const ESM4::Activator *acti = actiStore.search(record.mBaseObj);
+                        if (acti)
+                            std::cout << "activator " << acti->mEditorId << std::endl;
+
+                        mForeignActivators.load(record, deleted, store);
+                        break;
+                    }
+#endif
                     case MKTAG('A','A','P','P'): mForeignApparatus.load(record, deleted, store); break;
                     case MKTAG('O','A','R','M'): mForeignArmors.load(record, deleted, store); break;
                     case MKTAG('K','B','O','O'): mForeignBooks.load(record, deleted, store); break;

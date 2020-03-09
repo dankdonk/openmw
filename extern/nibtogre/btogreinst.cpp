@@ -159,22 +159,11 @@ void NiBtOgre::BtOgreInst::instantiate()
     buildEntities();
     //copyControllers();
 
-
-// FIXME: testing block from NiModel
-//  if (mBuildData.mBtShapeLoaders.size() > 1)
-//      std::cout << "more than 1 rigid body " << getModelName() << std::endl;
-
-//  std::map<std::int32_t, std::pair<std::string, std::unique_ptr<BtShapeLoader> > >::iterator iter;
-//  for (iter = mBuildData.mBtShapeLoaders.begin(); iter != mBuildData.mBtShapeLoaders.end(); ++iter)
-//  {
-//      std::cout << iter->second.first << std::endl;
-//  }
-
     // build any constraints that were deferred while building the rigid bodies
-//  for (size_t i = 0; i < inst->mbhkConstraints.size(); ++i)
-//  {
-//      //inst->mbhkConstraints[i].first->linkBodies(inst->mRigidBodies, inst->mbhkConstraints[i].second);
-//  }
+    //for (size_t i = 0; i < inst->mbhkConstraints.size(); ++i)
+    {
+        //inst->mbhkConstraints[i].first->linkBodies(inst->mRigidBodies, inst->mbhkConstraints[i].second);
+    }
 }
 
 void NiBtOgre::BtOgreInst::buildEntities()

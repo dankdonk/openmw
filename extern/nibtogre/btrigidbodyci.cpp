@@ -80,6 +80,10 @@ void NiBtOgre::BtRigidBodyCI::loadImpl()
 //      = NiBtOgre::NiModelManager::getSingleton().getByName(modelName.substr(0, modelNameSize), getGroup());
 
     std::string modelName = getName(); // remove scale from the name (see -7 below)
+
+    if (0)//modelName.find("idgate") != std::string::npos)
+        std::cout << modelName << std::endl;
+
     NiModelPtr nimodel
         = NiBtOgre::NiModelManager::getSingleton().getByName(modelName.substr(0, modelName.length()-7), getGroup());
 
@@ -112,7 +116,6 @@ void NiBtOgre::BtRigidBodyCI::loadImpl()
         // get the bullet shape with the target as a parameter
         // TODO: cloning pre-pade shape (e.g. bhkRigidBody via unique_ptr) may be faster?
         mBtCollisionShapeMap[targetRef] = std::make_pair(target->getWorldTransform(), bhk->getShape(*target));
-
     }
 }
 

@@ -188,6 +188,9 @@ NiBtOgre::bhkBallSocketConstraintChain::bhkBallSocketConstraintChain(uint32_t in
     }
 
     stream->read(mUnknownInt3);
+
+    if (!data.mHasBhkConstraint)
+        data.mHasBhkConstraint = true;
 }
 
 NiBtOgre::bhkOrientHingedBodyAction::bhkOrientHingedBodyAction(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
@@ -224,6 +227,9 @@ NiBtOgre::bhkConstraint::bhkConstraint(uint32_t index, NiStream *stream, const N
     }
 
     stream->read(mPriority);
+
+    if (!data.mHasBhkConstraint)
+        data.mHasBhkConstraint = true;
 }
 
 // Seen in NIF version 20.2.0.7

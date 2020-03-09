@@ -77,12 +77,13 @@ namespace NiBtOgre
     public:
 
         bool mIsSkinned;
+        NiNodeRef mSkeletonRoot;
         //bool mFlameNodesPresent;
         //bool mEditorMarkerPresent;
-        NiNodeRef mSkeletonRoot;
 
-        int32_t mBuildFlags;
+        int32_t mBuildFlags; // mainly from BSX flags
         inline bool havokEnabled()          const { return (mBuildFlags & Flag_EnableHavok)         != 0; }
+        inline bool animEnabled()           const { return (mBuildFlags & Flag_EnableAnimation)     != 0; }
         inline bool isSkeletonTES4()        const { return (mBuildFlags & Flag_IsSkeleton)          != 0; }
         inline bool flameNodesPresentTES4() const { return (mBuildFlags & Flag_FlameNodesPresent)   != 0; }
         inline bool editorMarkerPresent()   const { return (mBuildFlags & Flag_EditorMarkerPresent) != 0; }
@@ -99,6 +100,7 @@ namespace NiBtOgre
         // traverses till a skeleton root is found - the main objective is to filter out any
         // NiNodes that are not needed as bones (to minimise the number of bones)
         std::vector<NiNodeRef> mSkelLeafIndicies; // tempoarily used to find the bones
+
         // adds without checking
         // NiSkinInstance - bone refs
         // NiNode - flame nodes, attach light
@@ -106,22 +108,19 @@ namespace NiBtOgre
         // NiMultiTargetTransformController - extra target refs (what is this?)
         // NiTriBasedGeom - hack for testing animation of sub-mesh
         void addSkelLeafIndex(NiNodeRef leaf) { mSkelLeafIndicies.push_back(leaf); }
+
         // only adds if none found
         void addNewSkelLeafIndex(NiNodeRef leaf); // FIXME: not used?
-        //inline bool hasSkeleton() const { return !mSkeleton.isNull(); }
         bool hasBoneLeaf(NiNodeRef leaf) const; // FIXME: not used?
 
         //bool mIsSkeleton; // npc/creature
 
         // The btCollisionShape for btRigidBody corresponds to an Ogre::Entity whose Ogre::SceneNode
-        // may be controlled for Ragdoll animations.  So we just really need the Model name,
+        // may be controlled for Ragdoll animations.  So we just really need the NiModel name,
         // NiNode name (and maybe the NiNode block index) to be able to load the required info.
         //
-        // Maybe we only need one manual loader (per thread?) as long as we feed it the inputs?
-        // (but how to do that?)
-        //
-        // In any case, once the NiModel is "built", all the required info are ready to be
-        // simply collected and used.
+        // Once the NiModel is "built", all the required info are ready to be simply collected
+        // and used.
         //
         //      index = parent NiNode's block index
         //        |
@@ -129,8 +128,9 @@ namespace NiBtOgre
         //        |                    |
         //        v                    v
         std::map<NiNodeRef, /*std::pair<std::string,*/ int32_t/*>*/ > mBhkRigidBodyMap;
-
-        //Ogre::SkeletonPtr mSkeleton;
+        //std::vector<std::pair<bhkConstraint*, bhkEntity*> > mBhkConstraints;
+        bool mHasBhkConstraint;
+        inline bool hasBhkConstraint() const { return mHasBhkConstraint; }
 
         // FIXME: these needs to be vectors (there can be multiple) and the flame node editor
         // id needs to be extracted (without '@#N' where N is a number)
@@ -155,8 +155,6 @@ namespace NiBtOgre
             }
             else // None found, create one
             {
-                //std::vector<std::string> tmp;
-                //tmp.push_back(bone);
                 mMovingBoneNameMap.insert(lb, std::make_pair(anim, std::vector<std::string> { bone }));
             }
         }
@@ -168,10 +166,10 @@ namespace NiBtOgre
 
         BuildData(const NiModel& model)
             : mModel(model), mIsSkinned(false), mSkeletonRoot(0)
-            , /*mFlameNodesPresent(false), mEditorMarkerPresent(false) ,*/ mBuildFlags(0), mFlags(0)
+            , /*mFlameNodesPresent(false), mEditorMarkerPresent(false) ,*/ mBuildFlags(0)
+            , mHasBhkConstraint(false)
+            , mFlags(0)
         {
-            //mIsSkeleton = false; // FIXME: hack, does not belong here
-            //mSkeleton.setNull();
         }
     };
 
@@ -225,6 +223,11 @@ namespace NiBtOgre
         BuildData mBuildData;
         Ogre::SkeletonPtr mSkeleton;
         std::vector<std::pair<Ogre::MeshPtr, NiNode*> > mMeshes;
+
+        //      target NiNode ref     NiNode world transform
+        //              |                   |
+        //              v                   v
+        std::map<std::int32_t, std::pair<Ogre::Matrix4, btCollisionShape *> > mBtCollisionShapeMap;
 
         bool mShowEditorMarkers; // usually only for OpenCS
 
@@ -308,6 +311,8 @@ namespace NiBtOgre
         void buildSkinnedModel(Ogre::SkeletonPtr skeleton = Ogre::SkeletonPtr());
 
         void buildModel();
+
+        //void createCollisionshapes();
 
         void buildAnimation(Ogre::Entity *skelBase, NiModelPtr anim,
                 std::multimap<float, std::string>& textKeys,

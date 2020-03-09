@@ -1979,11 +1979,17 @@ ObjectAnimation::ObjectAnimation(const MWWorld::Ptr& ptr, const std::string &mod
         //if (model.find("RootHavok") != std::string::npos)
             //std::cout << "stop" << std::endl;
 
-        if (mObjectRoot->mForeignObj->havokEnabled()) // Havok enabled objects
+        // (COC "ImperialDungeon01") Dungeons\Chargen\IDGate01.NIF (0003665B)
+        // BSX flag reports both havok and animation enabled
+        if (mObjectRoot->mForeignObj->havokEnabled() // Havok enabled objects
+                // this is only a temporary workaround since some will have both animation and
+                // havok (e.g. Clutter\MinotaurHead.NIF in Jensine's "Good as New" Merchandise)
+                && mObjectRoot->mForeignObj->mModel->buildData().hasBhkConstraint())
+                //&&mObjectRoot->mForeignObj->mModel->buildData().mMovingBoneNameMap.empty())
         {
             // NOTE:
             //
-            // There isn't necessarily one mesh per btRigidBody e.g.  Dungeons\Misc\RootHavok06.NIF
+            // There isn't necessarily one NIF per btRigidBody e.g.  Dungeons\Misc\RootHavok06.NIF
             // So we need one SceneNode per target node (target bone in this case, since the
             // mesh is skinned).
             //
@@ -2072,6 +2078,13 @@ ObjectAnimation::ObjectAnimation(const MWWorld::Ptr& ptr, const std::string &mod
     }
 }
 
+bool ObjectAnimation::disableHavokAtStart() const
+{
+    // FIXME: there's probably a better way to do this
+    // disable havok if no constraints but has node animations (e.g. prison cell gate)
+    return !mObjectRoot->mForeignObj->mModel->buildData().hasBhkConstraint() &&
+           !mObjectRoot->mForeignObj->mModel->buildData().mMovingBoneNameMap.empty();
+}
 
 class FindEntityTransparency {
 public:

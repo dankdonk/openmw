@@ -474,7 +474,7 @@ namespace Physic
 
 
         // FIXME
-        if (lowerMesh.find("traplog") == std::string::npos)
+        if (0)//lowerMesh.find("traplog") == std::string::npos)
             return createAndAdjustRigidBody(mesh, name, scale, position, rotation, scaledBoxTranslation, boxRotation, raycasting, placeable);
 
 
@@ -618,7 +618,7 @@ namespace Physic
             ++numBodies;
         }
 
-        return 0;
+        return parentBody;
     }
 
     RigidBody* PhysicEngine::createAndAdjustRigidBody(const std::string &mesh, const std::string &name,
@@ -682,15 +682,8 @@ namespace Physic
 
                 if (body->getCollisionShape()->getUserIndex() == 4) // useFullTransform
                 {
+                    // see parent body of dungeons\sewers\sewertunneldoor01.nif
                     adjustRigidBody(body, position, rotation, Ogre::Vector3(0.f) * scale, Ogre::Quaternion::IDENTITY);
-
-                    // FIXME: debugging dungeons\sewers\sewertunneldoor01.nif
-                    // I think below 3 lines were not applied since user index  of 4 means a
-                    // static object, but above door is not static?
-                    // see PhysicsSystem::rotateSubObject()
-                    //body->mBindingPosition = body->getWorldTransform().getOrigin();
-                    //body->mBindingOrientation = body->getWorldTransform().getRotation();
-                    //body->mTargetName = ci->mTargetNames[iter->first];
                 }
                 else
                 {
@@ -743,7 +736,7 @@ namespace Physic
                 ++numBodies;
             }
 
-            return 0;
+            return parentBody;
         }
 
         //get the shape from the .nif

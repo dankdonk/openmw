@@ -76,20 +76,18 @@ namespace NiBtOgre
             std::map<std::uint32_t, std::vector<Ogre::Controller<float> > > mSubEntityControllers;
         };
 #endif
-        // Keep the model around in case Ogre wants to load the resource (i.e. Mesh) again
-        // FIXME: resources are no longer loaded from here, do we still need an auto_ptr?
+        // Keep the model around
         NiModelPtr mModel;
 
         Ogre::SceneNode *mBaseSceneNode;
         int mFlags; // some global properties
-        //NifOgre::ObjectScenePtr mObjectScene;
 
         std::string mTargetBone;
         bool mIsSkinned;
 
         inline bool havokEnabled() const { return mModel->buildData().havokEnabled(); }
 
-        std::vector<std::pair<bhkConstraint*, bhkEntity*> > mbhkConstraints;
+        //std::vector<std::pair<bhkConstraint*, bhkEntity*> > mbhkConstraints;
 
         // The key to the map is the block index of the parent NiNode; each child may add a mesh loader.
         // The first of the construction info is 'name' parameter in registerNiTriBasedGeom (see below).
@@ -116,22 +114,15 @@ namespace NiBtOgre
         std::vector<std::string> mFlameNodes;
         std::vector<std::string> mAttachLights;
 
-        BtOgreInst(Ogre::SceneNode *baseNode, /*NifOgre::ObjectScenePtr scene,*/ const std::string& name, const std::string& group);
+        BtOgreInst(Ogre::SceneNode *baseNode, const std::string& name, const std::string& group);
         BtOgreInst(NiModelPtr model, Ogre::SceneNode *baseNode);
         ~BtOgreInst();
 
         // register with bullet dynamics, make entities visible, etc
         void instantiate();
 
-        // deprecated
-        //void instantiate(Ogre::SkeletonPtr skeleton, const std::string& meshExt = "");
-        // FIXME: need a better name
         // for building body parts using the supplied skeleton
         void instantiate(Ogre::SceneNode* baseNode, Ogre::Entity* skelBase);
-
-        // for building fg morphed mesh
-        //void instantiate(Ogre::SkeletonPtr skeleton, const std::string& npcName,
-                //std::unique_ptr<std::vector<Ogre::Vector3> > morphedVertices);
 
         bool hasAnimation(const std::string& animName) const;
 

@@ -41,7 +41,6 @@ namespace Ogre
 
 namespace NiBtOgre
 {
-
     class BtRigidBodyCI: public Ogre::Resource
     {
         BtRigidBodyCI();

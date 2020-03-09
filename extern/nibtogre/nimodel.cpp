@@ -396,7 +396,35 @@ void NiBtOgre::NiModel::buildAnimation(Ogre::Entity *skelBase, NiModelPtr anim,
 {
     getRef<NiControllerSequence>(rootIndex())->build(skelBase, anim, textKeys, controllers, *skeleton, skeleton->getObjectPalette());
 }
+#if 0
+void NiBtOgre::NiModel::createCollisionshapes()
+{
+    const std::map<std::int32_t, /*std::pair<std::string,*/ int32_t/*>*/ >& rigidBodies = nimodel->getBhkRigidBodyMap();
+    std::map<std::int32_t, /*std::pair<std::string, */int32_t/*>*/ >::const_iterator iter(rigidBodies.begin());
+    for (; iter != rigidBodies.end(); ++iter)
+    {
+        //if (iter->second/*.second*/ == -1)
+            //continue;  // e.g. fire/firetorchlargesmoke.nif@DamageSphere
+        // FIXME: check for phantom
 
+        std::int32_t bhkRef = iter->second/*.second*/;
+        bhkSerializable *bhk = nimodel->getRef<bhkSerializable>(bhkRef);
+        std::int32_t targetRef = iter->first;
+        NiAVObject *target = nimodel->getRef<NiAVObject>(targetRef);
+
+        mTargetNames[targetRef] = nimodel->indexToString(target->getNameIndex());
+
+        // expectation is that each target has only one bhkRigidBody
+        if (mBtCollisionShapeMap.find(targetRef) != mBtCollisionShapeMap.end())
+            throw std::logic_error("target name collision "+nimodel->indexToString(targetRef));
+
+
+        // get the bullet shape with the target as a parameter
+        // TODO: cloning pre-pade shape (e.g. bhkRigidBody via unique_ptr) may be faster?
+        mBtCollisionShapeMap[targetRef] = std::make_pair(target->getWorldTransform(), bhk->getShape(*target));
+    }
+}
+#endif
 void NiBtOgre::NiModel::buildSkeleton(bool load)
 {
     if (mSkeleton)

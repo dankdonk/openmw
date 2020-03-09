@@ -570,7 +570,7 @@ One way of achieving this could be to derive from an `Ogre::ResourceManager`. e.
                   \         /              ^                     ^
                    \       /               |                     |
                  NiModelManager            |                     |
-                 ::createImpl()  .....  NiModel           ManualNiModelLoader
+                 ::createImpl()  . . .  NiModel           ManualNiModelLoader
                                         ::loadImpl()      ::loadResource()
                                         ::unloadImpl()    (NOTE: not implemented)
 
@@ -1639,7 +1639,7 @@ if (objAnim && !objAnim->getPhysicsNodeMap().empty())  // FIXME: this is such a 
 }
 ```
 
-## FIXME 1
+## FIXME #1
 
 Index number looks wrong?
 
@@ -1672,7 +1672,7 @@ Index number looks wrong?
     havok meshes\dungeons\caves\cdoor03.nif#37@Door
     havok meshes\dungeons\caves\cdoor03.nif#49@Door@#0 <- 48?
 
-## FIXME 2
+## FIXME #2
 
 handleToMesh keeps growing!!!  git blame says:
 
@@ -1683,7 +1683,7 @@ void PhysicsSystem::addObject (const Ptr& ptr, const std::string& mesh, bool pla
     handleToMesh[node->getName()] = mesh;
 ```
 
-## FIXME 3
+## FIXME #3
 
     // TODO: probably possible to optimise the use of the "group" parameter, e.g. per cell
 
@@ -1714,7 +1714,7 @@ if (lowerMesh.find("traplog") == std::string::npos)
     return createAndAdjustRigidBody(mesh, name, scale, position, rotation, scaledBoxTranslation, boxRotation,   raycasting, placeable);
 ```
 
-That might be due to the inability to determine whether the rigid bodies are ragdoll or not?
+That might be due to the inability to determine whether the rigid bodies are ragdoll or not? **NOTE: 08/03/20** most likely due to ragdoll being broken, other than the trap logs.
 
 # [05/03/2020] Making progress with NiModel
 
@@ -1737,7 +1737,7 @@ For skinned body parts for creatures we don't need to worry about the uniqueness
 
 # [06/03/2020] Continuing...
 
-## FIXME 4
+## FIXME #4
 
   * TRI file exeption commented out
   * Case folding for skeleton and object names are causing no end of troubles.  For now only fold skeleton names.
@@ -1768,13 +1768,13 @@ Some ears do have the right rotation (e.g. earskhajiit.nif) and some don't (e.g.
 if (targetBone == "Bip01 Head" && baseRotation == Ogre::Quaternion::IDENTITY)
 ```
 
-## FIXME 5
+## FIXME #5
 
   * **FIXED** crash accessing nullptr (prob. NiModel) during animation - I think this was caused by animation trying to move skeletons but some body parts didn't have skeleton root - we use external skeletons so we don't need this code block that copies bone position/rotaions
   * **FIXED** no eyes Cludette Perrick (The Gilded Carafe) - her NPC record does not have mEyes so we need to use the race defaults instead **TODO** need to remember the random selection so that we don't see a new texture each time.
-  * one of the metal gates in the IC sewers doesn't move the collision shape (also the display cases)
+  * **FIXED: 08/03/20** one of the metal gates in the IC sewers doesn't move the collision shape (also the display cases)
   * [ESM4::Npc] = {mFormId=0x0004ef6f mFlags=0x00040000 mEditorId="CheydinhalGuardCityPostNight03" ...}
-  * error during rendering: ItemIdentityException: Bone named '' not found. in Skeleton::getBone at C:\Users\cc9c\Dev\src\ogre\OgreMain\src\OgreSkeleton.cpp (line 515)
+  * **FIXED 08/03/20** error during rendering: ItemIdentityException: Bone named '' not found. in Skeleton::getBone at C:\Users\cc9c\Dev\src\ogre\OgreMain\src\OgreSkeleton.cpp (line 515) - no ears for Argonians so added a check
 
 ## Design notes on body part handling
 
@@ -1841,22 +1841,247 @@ size_t second = str_hash(Ogre::String(mNpc->mEditorId + "_" + meshName));
 
 Hmmm... this is rather embarassing - it turns out we had a false positive - I simply had mis-spelt the hard coded name for testing.
 
-# [08/03/2020] Materials
+# [08/03/2020] Physics issues
 
-## But first, physics issues
+## Doors
 
   * **WONTFIX:** 0x000947B2 gate does not rotate on its edge (well it does, but not right at the edge - it could be just the way the NIF is done)
   * **FIXED:** 0x0002A5C0 physics shape does not move, `dungeons\sewers\sewertunneldoor01.nif` - in `PhysicsSystem::rotateSubObject` only the parent object was checked for being static object when its child (children?) may not be.
   * **FIXED:** 0003725e Architecture\ImperialCity\Interior\ICDoorInt01.NIF rotates on the center axis - this particular one turns out to be a static shape, so we can stop the physic shape rotating in rotateObject(), but how to stop the rendering to rotate as well? - resolved by adding a check in processDoors().  Places to test include:
-  - COC "KvatchChapelofAkatosh" - go down to the hall and see the wooden doors move
-  - COC "ImperialDungeon02" - various gates and doors
-  - COW "AnvilWorld" -46 -8 - check the stone wall gate
-  - COW "ICMarketDistrict" 8 16 - check the display case then go to the sewers and check the gates and doors
-  - COC "WeynonPrioryHouse" - nothing here
+    - COC "KvatchChapelofAkatosh" - go down to the hall and see the wooden doors move
+    - COC "ImperialDungeon03" - various gates and doors
+    - COW "AnvilWorld" -46 -8 - check the stone wall gate
+    - COW "ICMarketDistrict" 8 16 - check the display case then go to the sewers and check the gates and doors
+    - COC "WeynonPrioryHouse" - nothing here
   * worldimp::processDoors add collision test
 
+The bone names between the physics system and Ogre are communicated using the NiNode/NiAVObject names.  BtRigidBodyCI:mTargetNames hold the strings, keyed by the indicies of the target nodes.  For non-static rigid bodies these target names are transferred to `OEngine::Physic::RigidBody::mTargetName`.
+
+Note that a model may have a number of rigid bodies (like entities) and there is a concept of parent/child to deal with the raycasting test (see the notes on 04/03/20).
+
+Now since the **Ogre::Bone names match the RigidBody target name**, the physics system can mimic the movements of the rendering system.
+
+## Ragdolls
+
+  * COC "ImperialDungeon05" and look for `Dungeons\Caves\Traps\CTrapLog01.NIF` to test.
+  * COC "ICMarketDistrictAFightingChance" for the CathedralCryptLight02.NIF and TargetHeavy01.NIF (but easier to get there from outside)
+  * COC "WellspringCave" to see the hanging roots (Dungeons\Misc\RootHavok06.NIF)
+
+The vines at Wellspring Cave look ok except:
+  * the physics shapes are not linked (i.e. constraints)
+  * the entities do not move with the physics shapes
+  * the scale is not right at all
+
+Ragdoll trap logs call stack
+
+    OEngine::Physic::PhysicEngine::stepSimulation()
+         ...
+        btDiscreteDynamicsWorld::stepSimulation
+              ...
+            btDiscreteDynamicsWorld::applyGravity
+              ...
+            btDiscreteDynamicsWorld::synchronizeMotionStates
+                  ...
+                btDiscreteDynamicsWorld::synchronizeSingleMotionState
+
+### mBhkRigidBodyMap
+
+`BtOgre::RigidBodyState` is setup and passed to btRigidBody during the call `PhysicEngine::createAndAdjustRagdollBody()`.  Note that it is not created in normal createAndAdjustRigidBody().  The key difference with createAndAdjustRagdollBody() is that it passes `const std::map<std::int32_t, Ogre::SceneNode*>& nodeMap` from `PhysicsSystem::addObject()` which in turn gets it from ObjectAnimation (the map is filled during ObjectAnimation's ctor).
+
+The info for the map ultimately comes from `NiModel::mBuildData::mBhkRigidBodyMap` which is filled by the constructor of bhkNiCollisionObject.  It knows the connection between the rigid body and the target node (which will eventually become an Ogre::Entity).
+
+It should be noted that btRigidBody keep pointers to collision shapes so we need to find a way to ensure the lifetime of the collision shapes.  These are currently maintained in BtRigidBodyCI::mBtCollisionShapeMap.
+
+**FIXME:** BtRigidBodyCI is an Ogre::Resource.  These resources can be unloaded by the resource manager, which will result in crashes due to the collision shape pointers being deleted...   There must be a way to link BtRigidBodyCI to the associated Ogre::Entity or keeping them in RigidBody (like motion state).
+
+###  mBhkConstraints
+
+A bhkRigidBody has a list of constraints for that rigid body.
+
+A ragdoll, in simple terms, the btRigidBody tells btMotionState of its movements and btMotionState then tells the associated Ogre::SceneNode to make corresponding movements.  When the SceneNode moves the attached Ogre::Entity moves as well.
+
+                                                   1
+      Ogre::Entity               btCollisionShape ----o btCollisionObject
+           |1                                                ^
+           |                                1                |       2
+        (attach)              btMotionState -----------o btRigidBody ----o btTypedConstraint
+           |                        ^                        ^
+           o         1              |                        |
+     Ogre::SceneNode ----o BtOgre::RigidBodyState     Physic::RigidBody
+           |n
+           |
+        (child)
+           |
+        mInsert
 
 
+### Lifetime
+
+Like Ogre::Entity, a btRigidBody in a cell should be destroyed once they are no longer needed.  The constraints should be deleted at the same time.  Physic::RigidBody can delete btMotionState and btCollisionShape in its destructor.
+
+Alternatively, it may be possible for Physic::RigidBody to keep a smart pointer to NiModel and use the collision shapes owned and stored there (by keeping a smart pointer we can ensure that NiModel won't go away).  That may save the need to create new btCollision shape for each btRigidBody.
+
+**TODO:** make it work similar to meshes?
+
+### Node animation comparison
+
+For node animation, The PhysicsSystem uses the SceneNode name as the key to find the RigidBody from PhysicEngine.  The RigidBody can then be moved, rotated, etc, based on the changes on the SceneNode.  The PhysicsSystem also uses the NIF name ("mesh") for scaling, etc, for older style (TES3) objects - this is possible because with the OpenMW implementation of TES3 there is only one RigidBody (and one Ogre::Entity) per NIF.
+
+TES4 RigidBody can have multiple btRigdBody within one NIF model.  But to get the existing system to work the RigidBody needs to return the "handle" (i.e. Ogre::SceneNode name) of the base RigidBody only.  Hence all its children have the same `mName` so that rayTest(), etc, can work as before.
+
+Multiple RigidBodies within one NIF model is managed by BtRigidBodyCI which uses the map of target node to collision shapes in the NiModel to provide the data for creating the base RigidBody and its children.
+
+                                                        1
+       Ptr . . . . . . . . . . . PhysicsSystem o--------- PhysicEngine
+        o                          ::handleToMesh[]         ::mCollisionObjectMap[]
+        |                                o   o                    o         o
+        |  Ogre::Node           key      |   |                    |         |
+        |    ^  ::mName -----------------+   |                    | value   | key
+        |    |                               |value               |         |
+     Ogre::SceneNode          NiModel        |            Physic::RigidBody |
+                               ::mModelName -+                 ::mName -----+
+                               ::map<target node,                (Ogre::SceneNode name)
+                                     collision shape>          ::mTargetName
+                                                                 (target node, parent)
+                                                               ::mChildren
+
+
+During `NiModel::buildModel()`, `NiMultiTargetTransformController` fills `NiModel::mBuildData::mMovingBoneNameMap`  (for FO3, `NiControllerSequence` does that instead). BtOgreInst then uses that to fill mSkeletonAnimEntities - unfortunately relying on the Ogre::Entity's Ogre::Mesh names to match the NiNode names.  Clearly this won't work with specialised meshes with skeleton or NPC's name prepended (but then they won't have any node animations, either).
+
+Whether `mSkeletonAnimEntities` has anything determines whether node animation wil be used (e.g. by doors).
+
+# [09/03/2020] Fixing bugs
+
+## Animated Havok objects
+
+The prison cell gate (COC "ImperialDungeon01", `Dungeons\Chargen\CGprisonCellGate01.NIF`) should not be a ragdoll implementation.  It's probably because of this line in the `ObjectAnimation` ctor:
+
+```cpp
+if (mObjectRoot->mForeignObj->havokEnabled())
+```
+
+That flag is set by `NiIntergerExtraData` using the "BSX" flags in the NIF file (e.g. `Dungeons\Chargen\IDGate01.NIF`, FormID 0x0003665B).  IDGate01 has BSX flag 0x0B which for TES4 includes "enable animation", "enable collision" and "enable havok".
+
+We may need to change the code to exclude the models with animation enabled?  But that disables ragdoll from others such as `Dungeons\Misc\RootHavok06.NIF`.  Maybe it will be necessary to capture the presence of constraints during the construction of the NiModel.  **FIXME:** Even so objects such as `Clutter\MinotaurHead.NIF` and `Dungeons\Caves\Traps\CTrapLog01.NIF` will have both animation and havok enabled, so some kind of control mechanism will need to be devised.
+
+CTrapLog01 animation, looking from the left of the pile from the top of the hill:
+
+                 Log05 =========
+              Log04 Log03 =========
+            Log  Log01 Log02 =========
+
+`NiTransformInterpolator` (block 8) rotates Log02 once manually triggered.  `NiBlendTransformInterpolator` (block 6) has a flag with value "MANAGER_CONTROLLED" which is probably how the vanilla engine implements this, through an activator.
+
+This object has a script. From the Construction Set:
+
+    scriptName CTrapLogs01SCRIPT                                      {{{)
+    
+    ; On activation havok will turn on and logs will roll if placed on an incline
+    ; Logs will continue to do damage for 6 seconds after activation
+    
+    short triggered
+    float timer
+    short next
+    ref mySelf
+    ref myParent
+    
+    float fTrapDamage
+    float fLevelledDamage
+    float fTrapPushBack
+    float fTrapMinVelocity
+    float fTrapDeathPushBack
+    short bTrapContinuous
+    
+    begin onActivate
+    
+        if triggered == 0
+    		set fTrapDamage to 30
+    		set fTrapPushBack to 100
+    		set fLevelledDamage to 1.5
+    		set fTrapDeathPushBack to 80
+    		set fTrapMinVelocity to 100
+    		set bTrapContinuous to 0
+    		playgroup unequip 1
+    		set triggered to 1
+    		set timer to 6
+    		setDestroyed 1
+    	endif
+    
+    end
+    
+    begin gameMode
+    
+    	;after 1 sec delay, activate parent (for daisy-chaining)
+    	if triggered == 1 && next == 0 && timer < 5.5
+    		set next to 1
+    		set myParent to getParentRef
+    		set mySelf to getSelf
+    		myParent.activate mySelf 1
+    	endif
+    
+    	if triggered == 1 && timer <= 0
+    		set fTrapDamage to 5
+    		set fTrapPushBack to 20
+    		set triggered to 2
+    	endif
+    
+    	if timer > 0
+    		set timer to timer - getSecondsPassed
+    	endif
+    
+    end
+    
+    begin onReset
+    
+    	reset3DState
+    	set triggered to 0
+    	setDestroyed 0
+    
+    end                                                               }}})
+
+In comparison MinotaurHead activates immediately (i.e. falls down from the wall) then when the animation completes Havok commences.
+
+How dow we distinguish objects that should begin havok upon the completion of the animation (e.g. trap log, minotaur head) and those that don't? (e.g. prison cell gate)
+
+In summary, we disable Havok at the start if:
+
+  1. Has no constraints; and
+  2. Has animations (node animations only?)
+
+There are no activators at Jensine's "Good as New" Merchandise. So it is still unclear how the MinotaurHead auto-plays the animation.  Maybe I am confused and in the vanilla game it does not fall at all?
+
+## How to communicate the controls?
+
+There are triggers, traps, sripts, etc, that require communications to the Entity and/or Rigidbody.  Also, there could be requests going out for playing sound effects, etc.
+
+### Ragdoll control
+
+Controlling ragdoll should be possible via `RigidBody::getMotionState()`.  Once cast into `BtOgre::RigidBodyState` we can control whether to move Ogre::SceneNode.  So the question will be how to get to RigidBody.  One way might be via `PhysicsSystem::handletoMesh`.
+
+So an object with Havok enabled as well as animation the default can be to disable ragdoll.
+
+Wait - doing above will simply stop the rendering updates.  Also we still need raycasting and collision.  We need another solution.
+
+Apparently it might be possible to do this with:
+
+
+```cpp
+setLinearFactor(btVector3(0, 0, 0));
+setAngularFactor(btVector3(0, 0, 0));
+```
+
+or if we can access the members directly:
+
+```cpp
+btRigdBody::m_linearFactor.setValue(0, 0, 0);
+btRigdBody::m_angularFactor.setValue(0, 0, 0);
+```
+
+### Animation control
+
+# [09/03/2020] Materials
+
+Some models require external texture to be supplied while others (e.g. head models) require the material to be crafted and supplied.
 
 
 
