@@ -674,7 +674,6 @@ namespace Physic
                     mAnimatedRaycastingShapes[body] = instance;
                 }
 #endif
-
                 Ogre::Vector3 pos;
                 Ogre::Vector3 nodeScale; // FIXME: apply scale?
                 Ogre::Quaternion rot;
@@ -687,26 +686,6 @@ namespace Physic
                 }
                 else
                 {
-#if 0 // does not work, moves the collision shapes to the wrong place
-                    //adjustRigidBody(body, position, rotation, pos * scale, rot);
-
-                    Ogre::Quaternion boxrot = rotation * rot;
-                    Ogre::Vector3 transrot = boxrot * pos * scale;
-                    Ogre::Vector3 newPos= transrot + position;
-                    std::cout << newPos.x << "," << newPos.y << "," << newPos.z << std::endl;
-
-                    btTransform bt(btQuaternion(boxrot.x,boxrot.y,boxrot.z,boxrot.w),
-                                   //btVector3(newPos.x, newPos.y, newPos.z));
-                                   btVector3(position.x, position.y, position.z));
-
-                    body->setWorldTransform(bt);
-
-                    // not sure if this is needed
-                    body->mBindingPosition = body->getCenterOfMassTransform().getOrigin();
-                    body->mBindingOrientation = body->getCenterOfMassTransform().getRotation();
-
-                    body->mTargetName = ci->mTargetNames[iter->first];
-#else
                     Ogre::Matrix4 t;
                     t.makeTransform(position, Ogre::Vector3(scale), rotation);
 
@@ -718,10 +697,12 @@ namespace Physic
                     btTransform bt(btQuaternion(q.x, q.y, q.z, q.w), btVector3(p.x, p.y, p.z));
 
                     body->setWorldTransform(bt);
+
+                    // keep binding pose for moving door collision shapes
                     body->mBindingPosition = btVector3(p.x, p.y, p.z);
                     body->mBindingOrientation = btQuaternion(q.x, q.y, q.z, q.w);
+                    // keep target node names (which should be the same as bone names) for doors
                     body->mTargetName = ci->mTargetNames[iter->first];
-#endif
                 }
 
                 // keep pointers around to delete later

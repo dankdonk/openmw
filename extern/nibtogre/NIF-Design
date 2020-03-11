@@ -2207,11 +2207,85 @@ I think we need to look at somewhere else for the bug - possibly `processDoors()
 
 **FIXED:** it turned out to be an issue in `PhysicsSystem::moveSubObject()` indeed.  The local movement of the `Ogre::Bone` was not being properly converted to the movement of the collision shape because it was not taking into accout of the binding orientation of the collision shape.  This took a whole day.
 
-There is still the issue of doors not remembering its open/closed state when leaving a cell then returning.
+**TODO:** There is still the issue of doors not remembering its open/closed state when leaving a cell then returning.
 
-Also, if you look away quickly before the collision shape had not completed its movement, it can get stuck.  Need to ensure that the movement is completed somehow.
+**TODO:** Also, if you look away quickly before the collision shape had not completed its movement, it can get stuck. (i.e. rendering and physics gets out of sync)  Need to ensure that the movement is completed somehow.
 
-# [11/03/2020] Materials
+Door activation is rather complicated (simplified shown below to get an idea):
+
+                            Interpreter  Foreign    Action                       Ogre::Animation
+        Engine     World       Context     Door      Door    Animation    Ogre::Entity  State
+          |          |           |          |         |        |              |          |
+          |          |           |          |  ctor   |        |              |          |
+          |          |         activateDoor |--+      |        |              |          |
+          |          |<---------------------|  |      |        |              |          |
+          |      mDoorStates[]   |          |<-+      |        |              |          |
+          |          |           |          |         |        |              |          |
+          :          :           :          :         :        :              :          :
+          :          :           :          :         :        :              :          :
+        ->| activate |           |          |         |        |              |          |
+          |--------->| activate  |          |         |        |              |          |
+          |          |---------->| activate |         |        |              |          |
+          |          |           |--------->|         |        |              |          |
+          |          |           |          | new     |        |              |          |
+          |          |           |          |-------->|        |              |          |
+          |          | executeActivation    |         |        |              |          |
+          |          |---------->|          |         |        |              |          |
+          |          |           | activate |         |        |              |          |
+          |          |           |------------------->|        |              |          |
+          |          |           |       activateDoor |        |              |          |
+          |          |<-------------------------------|        |              |          |
+          |          | hasAnimation("Open") |         |        |              |          |
+          |          |---------------------------------------->|              |          |
+          |          |           |          |         true     |              |          |
+          |          |<--------------------------------------->|              |          |
+          |          | activateAnimatedDoor |         |        |              |          |
+          |          |---------------------------------------->|              |          |
+          |          |           |          |         |        |              |          |
+          |          |           |  mSkeletonAnimEntities      |              |          |
+          |          |           |          |<-----------------|              |          |
+          |          |           |          | Ogre::Entity     |              |          |
+          |          |           |          |----------------->|              |          |
+          |          |           |          |         |        | getAnimationState       |
+          |          |           |          |         |        |------------->|          |
+          |          |           |          |         |        |AnimationState|          |
+          |          |           |          |         |        |<-------------|          |
+          |          |           |          |         |        | setEnabled   |          |
+          |          |           |          |         |        |------------------------>|
+          |          |           |          |         |        |              |          |
+
+
+The actual movement of collision shapes, again simplified:
+
+        World               Animation   PhysicsSystem    PhysicEngine   RigidBody
+          |                     |             |               |            |
+          | update              |             |               |            |
+          |  doPhysics          |             |               |            |
+          |   processDoors      |             |               |            |
+          |-------+             |             |               |            |
+          |   mDoorStates[]     |             |               |            |
+          |       |             |             |               |            |
+          |       | hasAnimation("Open")      |               |            |
+          |       |------------>|             |               |            |
+          |       |        true |             |               |            |
+          |       |<------------|             |               |            |
+          |       | addTime     |             |               |            |
+          |       |------------>|             |               |            |
+          |       |             |             |               |            |
+          |       |  rotateSubObject          |               |            |
+          |       |-------------------------->| getRigidBody  |            |
+          |       |             |             |-------------->|            |
+          |       |             |             |    RigidBody* |            |
+          |       |             |             |<--------------|            |
+          |       |             |             | setRotation   |            |
+          |       |             |             |--------------------------->|
+          |       |  moveSubObject            |               |            |
+          |       |-------------------------->| setOrigin     |            |
+          |<------+             |             |--------------------------->|
+          |                     |             |               |            |
+
+
+# [12/03/2020] Materials
 
 Some models require external texture to be supplied while others (e.g. head models) require the material to be crafted and supplied.
 

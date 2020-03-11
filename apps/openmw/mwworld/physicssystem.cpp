@@ -895,13 +895,10 @@ namespace MWWorld
             // move parent
             if (body->mTargetName == boneName)
             {
-
-
                 // rotation is the local rotation of the bone
                 // position is the local translation of the bone
-                // body->mBindingOrientation is the world orientation of the parent body
-                // body->mBindingPosition is the world position of the parent body
-
+                // body->mBindingOrientation is the world orientation of the body
+                // body->mBindingPosition is the world position of the body
                 btQuaternion qb = body->mBindingOrientation;
                 Ogre::Quaternion q(qb.w(), qb.x(), qb.y(), qb.z());
                 Ogre::Vector3 pos = q * position;
@@ -970,17 +967,15 @@ namespace MWWorld
         Ogre::SceneNode* node = ptr.getRefData().getBaseNode();
         const std::string &handle = node->getName();
 
+        // dungeons\sewers\sewertunneldoor01.nif has static parent but its child "Gate" is not
         if (OEngine::Physic::RigidBody* body = mEngine->getRigidBody(handle))
         {
-            // dungeons\sewers\sewertunneldoor01.nif has parent that is static but its child
-            // "Gate" is not
-
             // rotate parent
             if (body->mTargetName == boneName
                     && body->getCollisionShape()->getUserIndex() != 4) // ignore static shapes
             {
                 body-> getWorldTransform().setRotation(
-                    body->mBindingOrientation/*.inverse()*/
+                    body->mBindingOrientation
                     *
                     btQuaternion(rotation.x, rotation.y, rotation.z, rotation.w)
                     );
@@ -996,7 +991,7 @@ namespace MWWorld
                     && iter->second->getCollisionShape()->getUserIndex() != 4) // ignore static shapes
             {
                 iter->second->getWorldTransform().setRotation(
-                    iter->second->mBindingOrientation/*.inverse()*/
+                    iter->second->mBindingOrientation
                     *
                     btQuaternion(rotation.x, rotation.y, rotation.z, rotation.w)
                     );
@@ -1007,15 +1002,12 @@ namespace MWWorld
 
         if (OEngine::Physic::RigidBody* body = mEngine->getRigidBody(handle, true/*raycasting*/))
         {
-            // dungeons\sewers\sewertunneldoor01.nif has parent that is static but its child
-            // "Gate" is not
-
             // rotate parent
             if (body->mTargetName == boneName
                     && body->getCollisionShape()->getUserIndex() != 4) // ignore static shapes
             {
                 body-> getWorldTransform().setRotation(
-                    body->mBindingOrientation/*.inverse()*/
+                    body->mBindingOrientation
                     *
                     btQuaternion(rotation.x, rotation.y, rotation.z, rotation.w)
                     );
@@ -1031,7 +1023,7 @@ namespace MWWorld
                     && iter->second->getCollisionShape()->getUserIndex() != 4) // ignore static shapes
             {
                 iter->second->getWorldTransform().setRotation(
-                    iter->second->mBindingOrientation/*.inverse()*/
+                    iter->second->mBindingOrientation
                     *
                     btQuaternion(rotation.x, rotation.y, rotation.z, rotation.w)
                     );
