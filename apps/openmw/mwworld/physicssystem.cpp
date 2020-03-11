@@ -921,7 +921,7 @@ namespace MWWorld
                 Ogre::Vector3 pos = q * position;
 
                 iter->second->getWorldTransform().setOrigin(
-                    btVector3(pos.x, pos.y, pos.z) + body->mBindingPosition);
+                    btVector3(pos.x, pos.y, pos.z) + iter->second->mBindingPosition);
 
                 mEngine->mDynamicsWorld->updateSingleAabb(iter->second);
             }
@@ -957,7 +957,7 @@ namespace MWWorld
                 Ogre::Vector3 pos = q * position;
 
                 iter->second->getWorldTransform().setOrigin(
-                    btVector3(pos.x, pos.y, pos.z) + body->mBindingPosition);
+                    btVector3(pos.x, pos.y, pos.z) + iter->second->mBindingPosition);
 
                 mEngine->mDynamicsWorld->updateSingleAabb(iter->second);
             }

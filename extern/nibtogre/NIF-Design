@@ -2171,7 +2171,7 @@ Rather than doing nothing, we might be able to move the bone based on its parent
 
 To confirm that we have the issues that were observed before, check with NifSkope - using `Characters\_Male\Skeleton.nif` and anim `Laugh.kf` loaded, we can see NiTransformInterpolators with the block indicies 451 and 491 (updated after adding anim).  They are for the Controlled Blocks `Bip01 L ForeTwist` and `Bip01 R ForeTwist` as suspected.
 
-After some experimentation it dawned on me that doing nothing means the bone keeps its relative position and orientation against its parent already.  So the issue must be something else.  Maybe it 
+After some experimentation it dawned on me that doing nothing means the bone keeps its relative position and orientation against its parent already.  So the issue must be something else.
 
 ## Missing symmetric texture coefficients
 
@@ -2208,6 +2208,8 @@ I think we need to look at somewhere else for the bug - possibly `processDoors()
 **FIXED:** it turned out to be an issue in `PhysicsSystem::moveSubObject()` indeed.  The local movement of the `Ogre::Bone` was not being properly converted to the movement of the collision shape because it was not taking into accout of the binding orientation of the collision shape.  This took a whole day.
 
 There is still the issue of doors not remembering its open/closed state when leaving a cell then returning.
+
+Also, if you look away quickly before the collision shape had not completed its movement, it can get stuck.  Need to ensure that the movement is completed somehow.
 
 # [11/03/2020] Materials
 
