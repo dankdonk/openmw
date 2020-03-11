@@ -687,8 +687,25 @@ namespace Physic
                 }
                 else
                 {
-#if 0
-                    adjustRigidBody(body, position, rotation, pos * scale, rot);
+#if 0 // does not work, moves the collision shapes to the wrong place
+                    //adjustRigidBody(body, position, rotation, pos * scale, rot);
+
+                    Ogre::Quaternion boxrot = rotation * rot;
+                    Ogre::Vector3 transrot = boxrot * pos * scale;
+                    Ogre::Vector3 newPos= transrot + position;
+                    std::cout << newPos.x << "," << newPos.y << "," << newPos.z << std::endl;
+
+                    btTransform bt(btQuaternion(boxrot.x,boxrot.y,boxrot.z,boxrot.w),
+                                   //btVector3(newPos.x, newPos.y, newPos.z));
+                                   btVector3(position.x, position.y, position.z));
+
+                    body->setWorldTransform(bt);
+
+                    // not sure if this is needed
+                    body->mBindingPosition = body->getCenterOfMassTransform().getOrigin();
+                    body->mBindingOrientation = body->getCenterOfMassTransform().getRotation();
+
+                    body->mTargetName = ci->mTargetNames[iter->first];
 #else
                     Ogre::Matrix4 t;
                     t.makeTransform(position, Ogre::Vector3(scale), rotation);

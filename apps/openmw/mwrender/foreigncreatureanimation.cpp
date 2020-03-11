@@ -199,8 +199,8 @@ void ForeignCreatureAnimation::addAnimSource(const std::string &skeletonName)
     std::string animName;
     //addForeignAnimSource(skeletonName, path + "castself.kf");
     //addForeignAnimSource(skeletonName, path + "backward.kf");
-    addForeignAnimSource(skeletonName, path + "idle.kf");
     addForeignAnimSource(skeletonName, path + "forward.kf");
+    addForeignAnimSource(skeletonName, path + "idle.kf");
     //addForeignAnimSource(skeletonName, path + "fastforward.kf");  //10/03/20: Storm Atronach not working
     //addForeignAnimSource(skeletonName, path + "runforward.kf");  //10/03/20: Storm Atronach not working
     for (unsigned int i = 0; i < ref->mBase->mKf.size(); ++i)

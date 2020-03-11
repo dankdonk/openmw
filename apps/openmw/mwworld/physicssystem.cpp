@@ -895,8 +895,19 @@ namespace MWWorld
             // move parent
             if (body->mTargetName == boneName)
             {
-                body-> getWorldTransform().setOrigin(
-                    btVector3(position.x, position.y, position.z) + body->mBindingPosition);
+
+
+                // rotation is the local rotation of the bone
+                // position is the local translation of the bone
+                // body->mBindingOrientation is the world orientation of the parent body
+                // body->mBindingPosition is the world position of the parent body
+
+                btQuaternion qb = body->mBindingOrientation;
+                Ogre::Quaternion q(qb.w(), qb.x(), qb.y(), qb.z());
+                Ogre::Vector3 pos = q * position;
+
+                body->getWorldTransform().setOrigin(
+                    btVector3(pos.x, pos.y, pos.z) + body->mBindingPosition);
 
                 mEngine->mDynamicsWorld->updateSingleAabb(body);
             }
@@ -905,8 +916,12 @@ namespace MWWorld
             std::map<std::string, OEngine::Physic::RigidBody*>::const_iterator iter = body->mChildren.find(boneName);
             if (iter != body->mChildren.end())
             {
+                btQuaternion qb = iter->second->mBindingOrientation;
+                Ogre::Quaternion q(qb.w(), qb.x(), qb.y(), qb.z());
+                Ogre::Vector3 pos = q * position;
+
                 iter->second->getWorldTransform().setOrigin(
-                    btVector3(position.x, position.y, position.z) + iter->second->mBindingPosition);
+                    btVector3(pos.x, pos.y, pos.z) + body->mBindingPosition);
 
                 mEngine->mDynamicsWorld->updateSingleAabb(iter->second);
             }
@@ -921,8 +936,12 @@ namespace MWWorld
             // move parent
             if (body->mTargetName == boneName)
             {
-                body-> getWorldTransform().setOrigin(
-                    btVector3(position.x, position.y, position.z) + body->mBindingPosition);
+                btQuaternion qb = body->mBindingOrientation;
+                Ogre::Quaternion q(qb.w(), qb.x(), qb.y(), qb.z());
+                Ogre::Vector3 pos = q * position;
+
+                body->getWorldTransform().setOrigin(
+                    btVector3(pos.x, pos.y, pos.z) + body->mBindingPosition);
 
                 mEngine->mDynamicsWorld->updateSingleAabb(body);
             }
@@ -933,8 +952,12 @@ namespace MWWorld
 
             if (iter != body->mChildren.end())
             {
+                btQuaternion qb = iter->second->mBindingOrientation;
+                Ogre::Quaternion q(qb.w(), qb.x(), qb.y(), qb.z());
+                Ogre::Vector3 pos = q * position;
+
                 iter->second->getWorldTransform().setOrigin(
-                    btVector3(position.x, position.y, position.z) + iter->second->mBindingPosition);
+                    btVector3(pos.x, pos.y, pos.z) + body->mBindingPosition);
 
                 mEngine->mDynamicsWorld->updateSingleAabb(iter->second);
             }

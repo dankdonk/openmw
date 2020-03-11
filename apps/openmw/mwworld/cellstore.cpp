@@ -759,6 +759,9 @@ namespace MWWorld
         assert(mIsForeignCell);
         const ForeignCell *cell = static_cast<const ForeignCell*>(mCell);
 
+        if (!cell)
+            return; // probably spelling error from console
+
         // Load references from all plugins that do something with this cell.
         for (size_t i = 0; i < cell->mModList.size(); i++)
         {
