@@ -66,64 +66,52 @@ namespace NiBtOgre
     public:
         class Value : public NifOgre::NodeTargetValue<Ogre::Real>
         {
-    //      const Nif::QuaternionKeyMap* mRotations;
-    //      const Nif::FloatKeyMap* mXRotations;
-    //      const Nif::FloatKeyMap* mYRotations;
-    //      const Nif::FloatKeyMap* mZRotations;
-    //      const Nif::Vector3KeyMap* mTranslations;
-    //      const Nif::FloatKeyMap* mScales;
-
-    //      const std::vector<QuatKey<Ogre::Quaternion> >& mQuaternionKeys;
-
-    //      const KeyGroup<float>& mXRotations;
-    //      const KeyGroup<float>& mYRotations;
-    //      const KeyGroup<float>& mZRotations;
-
-    //      const KeyGroup<Ogre::Vector3>& mTranslations;
-    //      const KeyGroup<float>& mScales;
-
             const NiInterpolator* mInterpolator;
             const NiTransformData* mTransformData;
             NiModelPtr mModel; // Hold a SharedPtr to make sure key lists stay valid
+            int mInterpolatorType;
 
-            std::string boneName; // FIXME: debugging
+            std::string mBoneName; // FIXME: debugging
             bool isManual;
 
-            // FIXME: are these used?
-            int mLastRotate;
-            int mLastTranslate;
-            int mLastScale;
-
-            static Ogre::Quaternion interpQuatKey(const KeyGroup<Ogre::Quaternion>& keyGroup, uint32_t cycleType, float time);
+            static Ogre::Quaternion interpQuatKey(const KeyGroup<Ogre::Quaternion>& keyGroup,
+                    uint32_t cycleType, float time);
 
             Ogre::Quaternion getXYZRotation(float time) const;
 
         public:
             Value (Ogre::Node *target, const NiModelPtr& model, const NiInterpolator *interpolator)
-              : NodeTargetValue(target) , mInterpolator(interpolator) , mModel(model)
-              , boneName(target->getName()), isManual(static_cast<Ogre::Bone*>(target)->isManuallyControlled())
-              , mLastRotate(0) , mLastTranslate(0) , mLastScale(0)
+              : NodeTargetValue(target) , mInterpolator(interpolator) , mModel(model), mInterpolatorType(0)
+              , mBoneName(target->getName()), isManual(static_cast<Ogre::Bone*>(target)->isManuallyControlled())
             {
                 const NiTransformInterpolator* transInterp
                     = dynamic_cast<const NiTransformInterpolator*>(interpolator);
                 if (transInterp)
                 {
                     mTransformData = model->getRef<NiTransformData>(transInterp->mDataRef);
+                    mInterpolatorType = 1; // FIXME: make enum
+                }
+                else
+                {
+                    const NiBSplineCompTransformInterpolator* bsi
+                        = dynamic_cast<const NiBSplineCompTransformInterpolator*>(mInterpolator);
+                    if (bsi)
+                        mInterpolatorType = 2; // FIXME: make enum
                 }
 
-                if (boneName == "" || !isManual)
+                if (mBoneName == "" || !isManual)
                     throw std::runtime_error("empty bone name or not manual controlled");
             }
 
-            virtual Ogre::Quaternion getRotation(Ogre::Real time) const;// { return Ogre::Quaternion(); }
+            virtual Ogre::Quaternion getRotation(Ogre::Real time) const;
 
-            virtual Ogre::Vector3 getTranslation(Ogre::Real time) const;// { return Ogre::Vector3(); }
+            virtual Ogre::Vector3 getTranslation(Ogre::Real time) const;
 
-            virtual Ogre::Vector3 getScale(Ogre::Real time) const;// { return Ogre::Vector3(); }
+            virtual Ogre::Vector3 getScale(Ogre::Real time) const;
 
-            virtual Ogre::Real getValue() const;// { return 0.f; }
+            virtual Ogre::Real getValue() const;
 
-            virtual void setValue(Ogre::Real time);// {}
+            virtual void setValue(Ogre::Real time);
         };
 
         typedef DefaultFunction Function;

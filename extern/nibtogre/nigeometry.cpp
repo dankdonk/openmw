@@ -569,7 +569,7 @@ bool NiBtOgre::NiTriBasedGeom::buildSubMesh(Ogre::Mesh *mesh, BoundsFinder& boun
                 boneInf.weight = weights[j].weight;
 
 
-//#if 0 // FIXME: need to get node numbers
+#if 0 // FIXME: need to get node numbers
 
             if (nodeName == "Bip01 L ForeTwist")// || nodeName == "Bip01 R ForeTwist")
             {
@@ -588,7 +588,7 @@ bool NiBtOgre::NiTriBasedGeom::buildSubMesh(Ogre::Mesh *mesh, BoundsFinder& boun
             //else if (nodeName == "Bip01 R Sholder")
                 //boneInf.boneIndex = mModel.getSkeleton()->getBone("Bip01 R UpperArm")->getHandle();
 
-//#endif
+#endif
 
 
                 sub->addBoneAssignment(boneInf);

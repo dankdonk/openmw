@@ -217,7 +217,7 @@ namespace NiBtOgre
         Ogre::Vector3      mTranslation;
         Ogre::Quaternion   mRotation;
         float              mScale;
-        NiTransformDataRef mDataRef;
+        NiTransformDataRef mDataRef; // NOTE: typedef NiKeyframeData
 
         NiTransformInterpolator(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
     };

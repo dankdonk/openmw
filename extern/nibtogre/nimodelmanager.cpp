@@ -304,12 +304,11 @@ namespace NiBtOgre
         const std::vector<float>& aCoeff = bInfo.npc->mAsymShapeModeCoefficients;
         const std::vector<float>& sTCoeff = bInfo.npc->mSymTextureModeCoefficients;
 
-        // FIXME: no morphed vertices for upper body
-        // if EGM and TRI both found, build morphed vertices
         FgLib::FgSam sam;
         bool res = sam.buildMorphedVertices(pModel, bInfo.baseNif, sRaceCoeff, aRaceCoeff, sCoeff, aCoeff);
 
-        // Some helmets do not have an associated EGM, e.g. "Armor\Daedric\M\Helmet.NIF"
+        // if EGM and TRI both found, build morphed vertices
+        // NOTE: some helmets do not have an associated EGM, e.g. "Armor\Daedric\M\Helmet.NIF"
         if (res)
         {
             // special material for headhuman.dds

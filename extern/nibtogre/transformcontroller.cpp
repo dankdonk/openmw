@@ -256,7 +256,7 @@ bool bsplineinterpolate( T & value, int degree, float interval, unsigned int nct
 
     return true;
 }
-}
+} // anon namespace
 
 //      lastKey    interpolate value     nextKey
 //       value            :               value
@@ -267,9 +267,10 @@ bool bsplineinterpolate( T & value, int degree, float interval, unsigned int nct
 //        0.0f .......... x .............. 1.0f
 //
 
-Ogre::Quaternion NiBtOgre::TransformController::Value::interpQuatKey (const NiBtOgre::KeyGroup<Ogre::Quaternion>& keyGroup, uint32_t cycleType, float time)
+Ogre::Quaternion NiBtOgre::TransformController::Value::interpQuatKey (
+        const NiBtOgre::KeyGroup<Ogre::Quaternion>& keyGroup, uint32_t cycleType, float time)
 {
-    if(time <= keyGroup.indexMap.begin()->first)
+    if (time <= keyGroup.indexMap.begin()->first)
         return keyGroup.keys[keyGroup.indexMap.begin()->second].value;
 
     std::map<float, int>::const_iterator nextIt = keyGroup.indexMap.lower_bound(time); // >=
@@ -295,7 +296,13 @@ Ogre::Quaternion NiBtOgre::TransformController::Value::interpQuatKey (const NiBt
             const Ogre::Quaternion& v2 = keyGroup.keys[nextIt->second].value;
 
             if (1)
-                return Ogre::Quaternion::nlerp(x, v1, v2); // shortestPath = false
+            {
+                Ogre::Quaternion v3 = v1;
+                if (v1.Dot(v2) < 0)
+                    v3 = v1.Inverse();
+                return Ogre::Quaternion::nlerp(x, v3, v2, true/*shortestPath*/);
+                //return Ogre::Quaternion::Slerp(x, v3, v2); // TODO: test this
+            }
             else
             {
                 // FIXME: just experimenting
@@ -331,13 +338,12 @@ Ogre::Quaternion NiBtOgre::TransformController::Value::interpQuatKey (const NiBt
 
 Ogre::Quaternion NiBtOgre::TransformController::Value::getXYZRotation (float time) const
 {
-    const NiTransformInterpolator* transInterp = dynamic_cast<const NiTransformInterpolator*>(mInterpolator);
-    if (!transInterp)
+    if (mInterpolatorType != 1)
         return mNode->getOrientation();
 
-    float xrot = interpolate<float>(mTransformData->mXRotations, 2, time);
-    float yrot = interpolate<float>(mTransformData->mYRotations, 2, time);
-    float zrot = interpolate<float>(mTransformData->mZRotations, 2, time);
+    float xrot = interpolate<float>(mTransformData->mXRotations, 2/*CYCLE_CLAMP*/, time);
+    float yrot = interpolate<float>(mTransformData->mYRotations, 2/*CYCLE_CLAMP*/, time);
+    float zrot = interpolate<float>(mTransformData->mZRotations, 2/*CYCLE_CLAMP*/, time);
     Ogre::Quaternion xr(Ogre::Radian(xrot), Ogre::Vector3::UNIT_X);
     Ogre::Quaternion yr(Ogre::Radian(yrot), Ogre::Vector3::UNIT_Y);
     Ogre::Quaternion zr(Ogre::Radian(zrot), Ogre::Vector3::UNIT_Z);
@@ -367,126 +373,152 @@ NiBtOgre::TransformController::Value::Value (Ogre::Node *target, const NiModelPt
 #endif
 Ogre::Quaternion NiBtOgre::TransformController::Value::getRotation (Ogre::Real time) const
 {
-    const NiTransformInterpolator*
-        transInterp = dynamic_cast<const NiTransformInterpolator*>(mInterpolator);
-    if (transInterp)
+    if (mInterpolatorType == 1)
     {
-        //const NiTransformData* transData = transInterp->transformData.getPtr();
-//      if (!mTransformData)
-//          return mNode->getOrientation(); // shouldn't happen, already checked in NiControllerSequence
+        if (!mTransformData) // shouldn't happen, already checked in NiControllerSequence?!
+            return mNode->getOrientation(); // FIXME: log an erorr with mNode->getName()
 
         if (mTransformData->mQuaternionKeys.keys.size() > 0)
         {
-            //FIXME: other mRotationType
+// TODO: test other rotation types
+#if 0
             if (mTransformData->mRotationType != 1) // LINEAR_KEY
-                throw std::runtime_error("unsupported rotation type");
-
-            return interpQuatKey(mTransformData->mQuaternionKeys, 2, time);
+                throw std::runtime_error("TransformController: unsupported rotation type");
+#endif
+            return interpQuatKey(mTransformData->mQuaternionKeys, 2/*CYCLE_CLAMP*/, time);
         }
-        else if (!mTransformData->mXRotations.keys.empty() || !mTransformData->mYRotations.keys.empty() || !mTransformData->mZRotations.keys.empty())
+        else if (!mTransformData->mXRotations.keys.empty() ||
+                 !mTransformData->mYRotations.keys.empty() || !mTransformData->mZRotations.keys.empty())
         {
-            // FIXME: check mRotationType
-            std::cout << "TransformData.mRotationType " << mTransformData->mRotationType << std::endl;
+            // FIXME: check mRotationType (seems mostly type 4, XYZ_ROTATION_KEY?)
+            //std::cout << "TransformData.mRotationType " << mTransformData->mRotationType << std::endl;
             return getXYZRotation(time);
         }
 
-        return mNode->getOrientation(); // no change // FIXME: throw?
+        return mNode->getOrientation(); // no change
     }
-
-    const NiBSplineCompTransformInterpolator* bsi
-        = dynamic_cast<const NiBSplineCompTransformInterpolator*>(mInterpolator);
-    if (bsi)
+    else if (mInterpolatorType == 2)
     {
+        const NiBSplineCompTransformInterpolator* bsi
+                        = static_cast<const NiBSplineCompTransformInterpolator*>(mInterpolator);
+
         const NiBSplineData* sd = mModel->getRef<NiBSplineData>(bsi->mSplineDataRef);
         const NiBSplineBasisData* bd = mModel->getRef<NiBSplineBasisData>(bsi->mBasisDataRef);
-//      if (!sd || !bd)
-//          return mNode->getOrientation(); // shouldn't happen, already checked in NiControllerSequence
+        if (!sd || !bd) // shouldn't happen, already checked in NiControllerSequence?!
+            return mNode->getOrientation(); // FIXME: log an error with mNode->getName()
 
         unsigned int nCtrl = bd->mNumControlPoints;
         int degree = 3; // degree of the polynomial
         float interval
             = ( ( time - bsi->mStartTime ) / ( bsi->mStopTime - bsi->mStartTime ) ) * float(nCtrl - degree);
 
-        //Ogre::Quaternion q = Ogre::Quaternion();
-        Ogre::Quaternion q = mNode->getOrientation(); // FIXME which?
+        Ogre::Quaternion q = mNode->getOrientation(); // use the last (i.e. current) orientation
 
-        //if (bsi->mRotationHandle != USHRT_MAX && bsi->mRotationMultiplier != FLT_MAX && bsi->mRotationOffset != FLT_MAX)
-        bsplineinterpolate<Ogre::Quaternion>( q, degree, interval, nCtrl, sd->mShortControlPoints,
-                bsi->mRotationHandle, bsi->mRotationMultiplier, bsi->mRotationOffset );
+        if (bsi->mRotationMultiplier == FLT_MAX || bsi->mRotationOffset == FLT_MAX)
+            return mNode->getOrientation();
 
-        return q;
+// FIXME: testing SpiderDaedra
+//#if 0
+        if (mModel->getModelName().find("pider") != std::string::npos
+                &&
+                (
+                 mNode->getName() == "Bip01 R UpperArm" ||
+                 mNode->getName() == "Bip01 R Forearm" ||
+                 mNode->getName() == "Bip01 R Hand" ||
+                 mNode->getName() == "Bip01 L UpperArm"||
+                 mNode->getName() == "Bip01 L Forearm" ||
+                 mNode->getName() == "Bip01 L Hand"
+                )
+        )
+        {
+            return mNode->getInitialOrientation();
+        }
+//#endif
+        // bsplineinterpolate returns false if bsi->mRotatoinHandle == USHRT_MAX
+        if (bsplineinterpolate<Ogre::Quaternion>( q, degree, interval, nCtrl, sd->mShortControlPoints,
+                bsi->mRotationHandle, bsi->mRotationMultiplier, bsi->mRotationOffset ))
+            return q;
+
+        return mNode->getOrientation();
     }
-    else // float?
-        return mNode->getOrientation(); // FIXME float
+
+    return mNode->getOrientation(); // coudn't find an iterpolator
 }
 
 Ogre::Vector3 NiBtOgre::TransformController::Value::getTranslation (float time) const
 {
-    const NiTransformInterpolator*
-        transInterp = dynamic_cast<const NiTransformInterpolator*>(mInterpolator);
-    if (transInterp)
+    if (mInterpolatorType == 1)
     {
-//      const Nif::NiTransformData* transData = transInterp->transformData.getPtr();
-//      if (!transData)
-//          return mNode->getPosition();
+        if (!mTransformData) // shouldn't happen, already checked in NiControllerSequence?!
+            return mNode->getPosition(); // FIXME: log an erorr with mNode->getName()
 
+        //FIXME: other translation type
         if(mTransformData->mTranslations.keys.size() > 0)
-            return interpolate<Ogre::Vector3>(mTransformData->mTranslations, 2, time);
+            return interpolate<Ogre::Vector3>(mTransformData->mTranslations, 2/*CYCLE_CLAMP*/, time);
 
         return mNode->getPosition();
     }
-
-    const NiBSplineCompTransformInterpolator* bsi
-        = dynamic_cast<const NiBSplineCompTransformInterpolator*>(mInterpolator);
-    if (bsi)
+    else if (mInterpolatorType == 2)
     {
+        const NiBSplineCompTransformInterpolator* bsi
+                        = static_cast<const NiBSplineCompTransformInterpolator*>(mInterpolator);
+
+        // FIXME: check that time is b/w NiBSplineInterpolator::mStartTime and NiBSplineInterpolator::mStopTime
+        if (time > bsi->mStopTime)
+            std::cout << "TransformController::Value::getTranslation time " << time
+                      << " greater than mStopTime " << bsi->mStopTime << std::endl;
+
         const NiBSplineData* sd = mModel->getRef<NiBSplineData>(bsi->mSplineDataRef);
         const NiBSplineBasisData* bd = mModel->getRef<NiBSplineBasisData>(bsi->mBasisDataRef);
-//      if (!sd || !bd)
-//          return mNode->getOrientation(); // shouldn't happen, already checked in NiControllerSequence
+
+        if (!sd || !bd) // shouldn't happen, already checked in NiControllerSequence?!
+            return mNode->getPosition(); // FIXME: log an error with mNode->getName()
 
         unsigned int nCtrl = bd->mNumControlPoints;
         int degree = 3; // degree of the polynomial
         float interval
             = ( ( time - bsi->mStartTime ) / ( bsi->mStopTime - bsi->mStartTime ) ) * float(nCtrl - degree);
 
-        //Ogre::Vector3 v = Ogre::Vector3();
-        Ogre::Vector3 v = mNode->getPosition(); // FIXME which?
+        Ogre::Vector3 v = mNode->getPosition(); // use the last (i.e. current) position
 
-        //if (bsi->mTranslationHandle != USHRT_MAX && bsi->mTranslationMultiplier != FLT_MAX && bsi->mTranslationOffset != FLT_MAX)
-        bsplineinterpolate<Ogre::Vector3>( v, degree, interval, nCtrl, sd->mShortControlPoints,
-                bsi->mTranslationHandle, bsi->mTranslationMultiplier, bsi->mTranslationOffset );
+        if (bsi->mTranslationMultiplier == FLT_MAX || bsi->mTranslationOffset == FLT_MAX)
+            return mNode->getPosition(); // cannot interpolate, bail
 
-        return v;
+        // bsplineinterpolate returns false if bsi->mTranslationHandle == USHRT_MAX
+        if (bsplineinterpolate<Ogre::Vector3>( v, degree, interval, nCtrl, sd->mShortControlPoints,
+                bsi->mTranslationHandle, bsi->mTranslationMultiplier, bsi->mTranslationOffset ))
+            return v;
+
+        return mNode->getPosition(); // something went wrong, stay put
     }
-    else // float
-        return mNode->getPosition(); // FIXME float
+
+    return mNode->getPosition(); // don't have an interpolator
 }
 
 Ogre::Vector3 NiBtOgre::TransformController::Value::getScale (float time) const
 {
-    const NiTransformInterpolator*
-        transInterp = dynamic_cast<const NiTransformInterpolator*>(mInterpolator);
-    if (transInterp)
+    if (mInterpolatorType == 1)
     {
-//      const Nif::NiTransformData* transData = transInterp->transformData.getPtr();
-//      if (!transData)
-//          return mNode->getScale();
+        const NiTransformInterpolator* transInterp
+            = static_cast<const NiTransformInterpolator*>(mInterpolator);
+        // shouldn't happen, already checked in NiControllerSequence?!
+        if (!mTransformData || transInterp->mScale == FLT_MIN)
+            return mNode->getScale(); // FIXME: log an erorr with mNode->getName()
 
         if(mTransformData->mScales.keys.size() > 0)
-            return Ogre::Vector3(interpolate<float>(mTransformData->mScales, 2, time));
+            return Ogre::Vector3(interpolate<float>(mTransformData->mScales, 2/*CYCLE_CLAMP*/, time));
 
         return mNode->getScale();
     }
-
-    const NiBSplineCompTransformInterpolator* bsi
-        = dynamic_cast<const NiBSplineCompTransformInterpolator*>(mInterpolator);
-    if (bsi)
+    else if (mInterpolatorType == 2)
     {
+        const NiBSplineCompTransformInterpolator* bsi
+                        = static_cast<const NiBSplineCompTransformInterpolator*>(mInterpolator);
+
         const NiBSplineData* sd = mModel->getRef<NiBSplineData>(bsi->mSplineDataRef);
         const NiBSplineBasisData* bd = mModel->getRef<NiBSplineBasisData>(bsi->mBasisDataRef);
-//      if (!sd || !bd)
-//          return mNode->getOrientation(); // shouldn't happen, already checked in NiControllerSequence
+        if (!sd || !bd)
+            return mNode->getScale(); // shouldn't happen, already checked in NiControllerSequence?!
 
         unsigned int nCtrl = bd->mNumControlPoints;
         int degree = 3; // degree of the polynomial
@@ -494,18 +526,20 @@ Ogre::Vector3 NiBtOgre::TransformController::Value::getScale (float time) const
             = ((time - bsi->mStartTime) / (bsi->mStopTime - bsi->mStartTime)) * float(nCtrl - degree);
         float scale;
 
-        //Ogre::Vector3 s = Ogre::Vector3();
-        Ogre::Vector3 s = mNode->getScale(); // FIXME which?
-        scale = s.x; // FIXME: assume uniform scaling
+        Ogre::Vector3 s = mNode->getScale();
 
-        //if (bsi->mScaleHandle != USHRT_MAX && bsi->mScaleMultiplier != FLT_MAX && bsi->mScaleOffset != FLT_MAX)
+        if (bsi->mScaleMultiplier == FLT_MAX || bsi->mScaleOffset == FLT_MAX)
+            return mNode->getScale(); // cannot interpolate, bail
+
+        scale = s.x; // FIXME: assume uniform scaling
+        // bsplineinterpolate returns false if bsi->mScaleHandle == USHRT_MAX
         bsplineinterpolate<float>( scale, degree, interval, nCtrl, sd->mShortControlPoints,
                 bsi->mScaleHandle, bsi->mScaleMultiplier, bsi->mScaleOffset );
 
         return Ogre::Vector3(scale, scale, scale); // assume uniform scaling
     }
-    else // float
-        return mNode->getScale(); // FIXME float
+
+    return mNode->getScale();
 }
 
 Ogre::Real NiBtOgre::TransformController::Value::getValue () const
@@ -520,6 +554,7 @@ Ogre::Real NiBtOgre::TransformController::Value::getValue () const
 // Ogre::Controller<Ogre::Real>::update()
 void NiBtOgre::TransformController::Value::setValue (Ogre::Real time)
 {
+#if 0
     if (0)//mNode->getName() == "Bip01 R Calf")
         //throw std::runtime_error("mNode lost name");
         std::cout << "setValue : bone handle " << static_cast<Ogre::Bone*>(mNode)->getHandle() << std::endl;
@@ -528,32 +563,34 @@ void NiBtOgre::TransformController::Value::setValue (Ogre::Real time)
         std::cout << "not manually controlled " << mNode->getName() << std::endl;
         static_cast<Ogre::Bone*>(mNode)->setManuallyControlled(true);
     }
-    if (0)//boneName == "Bip01 L Hand")// || boneName == "Bip01 R Hand")
+    if (0)//mBoneName == "Bip01 L Hand")// || mBoneName == "Bip01 R Hand")
     {
-        std::cout << mModel->getModelName() << " " << boneName << " time " << time << std::endl;
+        std::cout << mModel->getModelName() << " " << mBoneName << " time " << time << std::endl;
         //return;
     }
 
-    // FIXME: do away with all this dynamic casting
-    const NiTransformInterpolator*
-        transInterp = dynamic_cast<const NiTransformInterpolator*>(mInterpolator);
-    if (transInterp)
+    if (mInterpolatorType == 1)
     {
-//      const Nif::NiTransformData* transData = transInterp->transformData.getPtr();
-//      if (!transData)
-//          return;
-
+#   if 1
         Ogre::Quaternion nonaccumq;
         // FIXME: try not to update rotation to Bip01 (but doesn't work...)
         if(mTransformData && mTransformData->mQuaternionKeys.keys.size() > 0 /*&& mNode->getName() != "Bip01"*/)
         {
-            Ogre::Quaternion q = interpQuatKey(mTransformData->mQuaternionKeys, 2, time);
+            //Ogre::Quaternion q = interpQuatKey(mTransformData->mQuaternionKeys, 2, time);
+
             //if (transInterp->mRotation.x < -5000) // some small value
-            if (q.isNaN() || q == Ogre::Quaternion::ZERO) // FIXME: does this happen?
-            throw std::runtime_error("transInterp quaternion nan or zero");
-            if (boneName != "Bip01 NonAccum") // HACK
+            //if (q.isNaN() || q == Ogre::Quaternion::ZERO) // FIXME: does this happen?
+                //throw std::runtime_error("transInterp quaternion nan or zero");
+
+            if (mBoneName == "Bip01 NonAccum") // HACK
             {
-                if (0)//boneName == "Bip01 L Hand")// || boneName == "Bip01 R Hand")
+                mNode->setOrientation(mNode->getOrientation());
+                nonaccumq = interpQuatKey(mTransformData->mQuaternionKeys, 2, time);
+            }
+            else
+            {
+#if 0
+                if (0)//mBoneName == "Bip01 L Hand")// || mBoneName == "Bip01 R Hand")
                 {
                     //Ogre::Quaternion h = q * Ogre::Quaternion(Ogre::Degree(90), Ogre::Vector3::UNIT_X);
                     Ogre::Quaternion h = mNode->getOrientation();
@@ -566,43 +603,58 @@ void NiBtOgre::TransformController::Value::setValue (Ogre::Real time)
                     mNode->setOrientation(q);
                 }
                 else
-                    mNode->setOrientation(q);
+#endif
+                    mNode->setOrientation(interpQuatKey(mTransformData->mQuaternionKeys, 2, time));
 
 
-                if (0)//boneName == "Bip01 L Finger3")
+                if (0)//mBoneName == "Bip01 L Finger3")
                     std::cout << /*"parent dist^2 "*/ mNode->getParent()->getName() << " " << mNode->getParent()->_getDerivedPosition().squaredDistance(mNode->_getDerivedPosition()) << std::endl;
 
 
 
 
             }
-            else
-                nonaccumq = q;
             //else
                 //mNode->setOrientation(transInterp->mRotation.Inverse() * q);
         }
         else if (mTransformData && /*mNode->getName() != "Bip01" && */
                 (!mTransformData->mXRotations.keys.empty() || !mTransformData->mYRotations.keys.empty() || !mTransformData->mZRotations.keys.empty()))
         {
-            if (boneName != "Bip01 NonAccum") // HACK
-            mNode->setOrientation(getXYZRotation(time));
-            else
+            if (mBoneName == "Bip01 NonAccum") // HACK
+            {
+                mNode->setOrientation(mNode->getOrientation());
                 nonaccumq = getXYZRotation(time);
+            }
+            else
+                mNode->setOrientation(getXYZRotation(time));
         }
-        //else
+        else if (!mTransformData)
+        {
             //mNode->setOrientation(transInterp->mRotation);
             //mNode->setOrientation(mNode->getOrientation());
+            Ogre::Node *parent = mNode->getParent();
+            if (parent)
+            {
+                //mNode->setOrientation(transInterp->mRotation * parent->_getDerivedOrientation());
+                //mNode->setOrientation(transInterp->mRotation * parent->getOrientation());
+                //mNode->setOrientation(parent->getOrientation());
+                //mNode->setOrientation(parent->getOrientation() * transInterp->mRotation);
+                //mNode->setOrientation(Ogre::Quaternion::ZERO);//transInterp->mRotation);
+                Ogre::Quaternion test = mNode->getInitialOrientation();
+                mNode->setOrientation(test);
+            }
+        }
 
         //Ogre::Vector3 old = mNode->getPosition(); // FIXME: debug only
         if(mTransformData && mTransformData->mTranslations.keys.size() > 0)
         {
             //float dist;
-            Ogre::Vector3 pos = interpolate<Ogre::Vector3>(mTransformData->mTranslations, 2, time);
+            Ogre::Vector3 pos = interpolate<Ogre::Vector3>(mTransformData->mTranslations, 2/*CYCLE_CLAMP*/, time);
             //pos = -transInterp->mTranslation + pos;
 
             // FIXME: hack
             //if ((dist = old.squaredDistance(pos)) < 10)
-            if (boneName != "Bip01 NonAccum") // HACK
+            if (mBoneName != "Bip01 NonAccum") // HACK
                 mNode->setPosition(pos);
             else
             {
@@ -616,24 +668,55 @@ void NiBtOgre::TransformController::Value::setValue (Ogre::Real time)
 //          //else
                 //std::cout << "tr " << mNode->getName() << " dist " << dist << ", time " << time << std::endl;
         }
-        //else
+        else if (!mTransformData)
+        {
             //mNode->setPosition(transInterp->mTranslation);
             //mNode->setPosition(mNode->getPosition());
+            Ogre::Node *parent = mNode->getParent();
+            if (parent)
+            {
+                //mNode->setPosition(parent->_getDerivedPosition() + transInterp->mTranslation);
+                //mNode->setPosition(parent->getPosition());
+                //mNode->setPosition(parent->getPosition() + transInterp->mTranslation);
+                //mNode->setPosition(parent->_getFullTransform() * transInterp->mTranslation);
+                //mNode->setPosition(Ogre::Vector3(0.f, 0.f, 0.f));//transInterp->mTranslation);
+                Ogre::Vector3 test = mNode->getInitialPosition();
+                mNode->setPosition(test);
+            }
+        }
 
         if(mTransformData && mTransformData->mScales.keys.size() > 0)
-            mNode->setScale(Ogre::Vector3(interpolate<float>(mTransformData->mScales, 2, time)));
+            mNode->setScale(Ogre::Vector3(interpolate<float>(mTransformData->mScales, 2/*CYCLE_CLAMP*/, time)));
 
         return;
-    }
-
-    const NiBSplineCompTransformInterpolator* bsi
-        = dynamic_cast<const NiBSplineCompTransformInterpolator*>(mInterpolator);
-    if (bsi)
+#   else
+    if (mBoneName == "Bip01 NonAccum") // HACK
     {
+        mNode->setOrientation(mNode->getOrientation()); // nochange
+
+        Ogre::Quaternion non_accum_q;
+        non_accum_q = getRotation(time);
+        mNode->setPosition(non_accum_q.Inverse() * getTranslation(time));
+    }
+    else
+    {
+        mNode->setOrientation(getRotation(time));
+        mNode->setPosition(getTranslation(time));
+    }
+    mNode->setScale(getScale(time));
+#   endif
+    }
+    else if (mInterpolatorType == 2)
+    {
+        const NiBSplineCompTransformInterpolator* bsi
+                        = static_cast<const NiBSplineCompTransformInterpolator*>(mInterpolator);
+        //if (mModel->getModelName().find("pider") != std::string::npos && mNode->getName() == "Bip01 R UpperArm")
+            //std::cout << "spider" << std::endl;
+
         const NiBSplineData* sd = mModel->getRef<NiBSplineData>(bsi->mSplineDataRef);
         const NiBSplineBasisData* bd = mModel->getRef<NiBSplineBasisData>(bsi->mBasisDataRef);
-        //      if (!sd || !bd)
-        //          return mNode->getOrientation(); // shouldn't happen, already checked in NiControllerSequence
+        if (!sd || !bd)
+            return;// mNode->getOrientation(); // shouldn't happen, already checked in NiControllerSequence
 
         unsigned int nCtrl = bd->mNumControlPoints;
         int degree = 3; // degree of the polynomial TODO why is it 3?
@@ -658,12 +741,27 @@ void NiBtOgre::TransformController::Value::setValue (Ogre::Real time)
         if (bsplineinterpolate<Ogre::Quaternion>(q, degree, interval, nCtrl, sd->mShortControlPoints,
             bsi->mRotationHandle, bsi->mRotationMultiplier, bsi->mRotationOffset))
         {
+        if (0)//mModel->getModelName().find("pider") != std::string::npos && mNode->getName() == "Bip01 R UpperArm")
+            //std::cout << "R UpperArm, q " << q.x << " " << q.y << " " << q.z << " " << q.w
+            std::cout << "R UpperArm, q " << q.getRoll() << " " << q.getPitch() << " " << q.getYaw() << " " << time
+                << ", interval " << interval << std::endl;
+
             //if (bsi->mRotation.x < -5000) // some small value
-            if (boneName != "Bip01 NonAccum") // HACK
-                if (!q.isNaN() && q != Ogre::Quaternion::ZERO) // FIXME: why does this happen?
-                    mNode->setOrientation(q);
+            if (mBoneName != "Bip01 NonAccum") // HACK
+            {
+                if (!(mModel->getModelName().find("pider") != std::string::npos && (mNode->getName() == "Bip01 R UpperArm"
+                    || mNode->getName() == "Bip01 R Forearm"
+                    || mNode->getName() == "Bip01 R Hand"
+                    || mNode->getName() == "Bip01 L UpperArm")))
+                {
+                    if (!q.isNaN() && q != Ogre::Quaternion::ZERO) // FIXME: why does this happen?
+                            mNode->setOrientation(q);
+                    else
+                        std::cout << "q " << q.x << " " << q.y << " " << q.z << " " << q.w << std::endl;
+                }
                 else
-                    std::cout << "q " << q.x << " " << q.y << " " << q.z << " " << q.w << std::endl;
+                    mNode->setOrientation(mNode->getInitialOrientation());
+            }
             if (q == Ogre::Quaternion::ZERO)
                 std::cout << "zero q" << std::endl;
             if (q.isNaN())
@@ -684,8 +782,14 @@ void NiBtOgre::TransformController::Value::setValue (Ogre::Real time)
         {
             float dist;
             //if ((dist = old.squaredDistance(mNode->getPosition())) < 10) // FIXME: debug only
-            if ((dist = old.squaredDistance(v)) < 10000) // FIXME: debug only, horrible hack
+            //if ((dist = old.squaredDistance(v)) < 10000) // FIXME: debug only, horrible hack
+            if (0)//!(mModel->getModelName().find("pider") != std::string::npos && (mNode->getName() == "Bip01 L UpperArm"
+                 //       || mNode->getName() == "Bip01 R Forearm"
+                   //     || mNode->getName() == "Bip01 R UpperArm"
+                     //   || mNode->getName() == "Bip01 L Forearm")))
                 mNode->setPosition(/*-bsi->mTranslation +*/ v);
+            else if (1)
+                mNode->setPosition(mNode->getInitialPosition());
             else if (0)
             {
                 bool res = bsplineinterpolate<Ogre::Vector3>(old, degree, interval, nCtrl, sd->mShortControlPoints,
@@ -709,17 +813,34 @@ void NiBtOgre::TransformController::Value::setValue (Ogre::Real time)
     }
 
     // FIXME float
+#else
+    // HACK: without this, animations move sideways
+    if (mBoneName == "Bip01 NonAccum")
+    {
+        mNode->setOrientation(mNode->getOrientation()); // nochange
+#if 1
+        // FIXME: without multiplying by the inverse of the Bip01 NonAccum rotation, some
+        //        creatures sink half way into the floor/ground.
+        mNode->setPosition(getRotation(time).Inverse() * getTranslation(time));
+#else
+        // doesn't work for some creatures
+        mNode->setPosition(mNode->getOrientation().Inverse() * getTranslation(time));
+#endif
+    }
+    else
+    {
+        mNode->setOrientation(getRotation(time));
+        mNode->setPosition(getTranslation(time));
+    }
+
+    mNode->setScale(getScale(time));
+#endif
 }
 
-
-
-
-
-
-
-Ogre::Quaternion NiBtOgre::MultiTargetTransformController::Value::interpQuatKey (const NiBtOgre::KeyGroup<Ogre::Quaternion>& keyGroup, uint32_t cycleType, float time)
+Ogre::Quaternion NiBtOgre::MultiTargetTransformController::Value::interpQuatKey (
+        const NiBtOgre::KeyGroup<Ogre::Quaternion>& keyGroup, uint32_t cycleType, float time)
 {
-    if(time <= keyGroup.indexMap.begin()->first)
+    if (time <= keyGroup.indexMap.begin()->first)
         return keyGroup.keys[keyGroup.indexMap.begin()->second].value;
 
     std::map<float, int>::const_iterator nextIt = keyGroup.indexMap.lower_bound(time); // >=
@@ -745,7 +866,13 @@ Ogre::Quaternion NiBtOgre::MultiTargetTransformController::Value::interpQuatKey 
             const Ogre::Quaternion& v2 = keyGroup.keys[nextIt->second].value;
 
             if (1)
-                return Ogre::Quaternion::nlerp(x, v1, v2); // shortestPath = false
+            {
+                Ogre::Quaternion v3 = v1;
+                if (v1.Dot(v2) < 0)
+                    v3 = v1.Inverse();
+                //return Ogre::Quaternion::nlerp(x, v3, v2, true/*shortestPath*/);
+                return Ogre::Quaternion::Slerp(x, v3, v2);
+            }
             else
             {
                 // FIXME: just experimenting
@@ -779,7 +906,8 @@ Ogre::Quaternion NiBtOgre::MultiTargetTransformController::Value::interpQuatKey 
     }
 }
 
-Ogre::Quaternion NiBtOgre::MultiTargetTransformController::Value::getXYZRotation (float time, Ogre::Bone *bone, const NiInterpolator *interpolator) const
+Ogre::Quaternion NiBtOgre::MultiTargetTransformController::Value::getXYZRotation (
+        float time, Ogre::Bone *bone, const NiInterpolator *interpolator) const
 {
     const NiTransformInterpolator* transInterp = dynamic_cast<const NiTransformInterpolator*>(interpolator);
     if (!transInterp)
@@ -787,9 +915,9 @@ Ogre::Quaternion NiBtOgre::MultiTargetTransformController::Value::getXYZRotation
 
     NiTransformData *mTransformData = mModel->getRef<NiTransformData>(transInterp->mDataRef);
 
-    float xrot = interpolate<float>(mTransformData->mXRotations, 2, time);
-    float yrot = interpolate<float>(mTransformData->mYRotations, 2, time);
-    float zrot = interpolate<float>(mTransformData->mZRotations, 2, time);
+    float xrot = interpolate<float>(mTransformData->mXRotations, 2/*CYCLE_CLAMP*/, time);
+    float yrot = interpolate<float>(mTransformData->mYRotations, 2/*CYCLE_CLAMP*/, time);
+    float zrot = interpolate<float>(mTransformData->mZRotations, 2/*CYCLE_CLAMP*/, time);
     Ogre::Quaternion xr(Ogre::Radian(xrot), Ogre::Vector3::UNIT_X);
     Ogre::Quaternion yr(Ogre::Radian(yrot), Ogre::Vector3::UNIT_Y);
     Ogre::Quaternion zr(Ogre::Radian(zrot), Ogre::Vector3::UNIT_Z);
@@ -818,11 +946,12 @@ Ogre::Quaternion NiBtOgre::MultiTargetTransformController::Value::getRotation (O
         {
             //FIXME: other mRotationType
             //if (mTransformData->mRotationType != 1) // LINEAR_KEY
-                //throw std::runtime_error("unsupported rotation type");
+                //throw std::runtime_error("MultiTargetTransformController: unsupported rotation type");
 
             return interpQuatKey(mTransformData->mQuaternionKeys, 2, time);
         }
-        else if (!mTransformData->mXRotations.keys.empty() || !mTransformData->mYRotations.keys.empty() || !mTransformData->mZRotations.keys.empty())
+        else if (!mTransformData->mXRotations.keys.empty() ||
+                 !mTransformData->mYRotations.keys.empty() || !mTransformData->mZRotations.keys.empty())
         {
             // FIXME: check mRotationType
             //std::cout << "TransformData.mRotationType " << mTransformData->mRotationType << std::endl;
@@ -872,7 +1001,7 @@ Ogre::Vector3 NiBtOgre::MultiTargetTransformController::Value::getTranslation (f
 //          return bone->getPosition();
 
         if(mTransformData->mTranslations.keys.size() > 0)
-            return interpolate<Ogre::Vector3>(mTransformData->mTranslations, 2, time);
+            return interpolate<Ogre::Vector3>(mTransformData->mTranslations, 2/*CYCLE_CLAMP*/, time);
 
         return bone->getPosition();
     }
@@ -912,12 +1041,11 @@ Ogre::Vector3 NiBtOgre::MultiTargetTransformController::Value::getScale (float t
     {
         NiTransformData *mTransformData = mModel->getRef<NiTransformData>(transInterp->mDataRef);
 
-//      const Nif::NiTransformData* transData = transInterp->transformData.getPtr();
-//      if (!transData)
-//          return bone->getScale();
+        if (!mTransformData || transInterp->mScale == FLT_MIN)
+            return bone->getScale();
 
         if(mTransformData->mScales.keys.size() > 0)
-            return Ogre::Vector3(interpolate<float>(mTransformData->mScales, 2, time));
+            return Ogre::Vector3(interpolate<float>(mTransformData->mScales, 2/*CYCLE_CLAMP*/, time));
 
         return bone->getScale();
     }
@@ -928,8 +1056,8 @@ Ogre::Vector3 NiBtOgre::MultiTargetTransformController::Value::getScale (float t
     {
         const NiBSplineData* sd = mModel->getRef<NiBSplineData>(bsi->mSplineDataRef);
         const NiBSplineBasisData* bd = mModel->getRef<NiBSplineBasisData>(bsi->mBasisDataRef);
-//      if (!sd || !bd)
-//          return bone->getOrientation(); // shouldn't happen, already checked in NiControllerSequence
+        if (!sd || !bd)
+            return bone->getScale(); // shouldn't happen, already checked in NiControllerSequence
 
         unsigned int nCtrl = bd->mNumControlPoints;
         int degree = 3; // degree of the polynomial

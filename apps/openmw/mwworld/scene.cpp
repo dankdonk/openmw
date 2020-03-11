@@ -36,6 +36,8 @@ namespace
 
         //if (model == "")
             //return;
+        if (model.find("nim") != std::string::npos)
+            std::cout << "citadel door" << std::endl;
 
         rendering.addObject(ptr, model);
         ptr.getClass().insertObject (ptr, model, physics);

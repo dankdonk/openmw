@@ -923,8 +923,9 @@ void ForeignNpcAnimation::updateNpcBase()
                     //        even though it is clear that for shapes they are needed
                     // sum all the symmetric texture modes for a given pixel i
                     sym = Ogre::Vector3::ZERO; // WARN: sym reused
+                    // CheydinhalGuardCityPostNight03 does not have any symmetric texture coeff
                     for (size_t j = 0; j < 50/*mNumSymTextureModes*/; ++j)
-                        sym += (sRaceTCoeff[j] + sTCoeff[j]) * symTextureModes[50*i + j];
+                        sym += (sRaceTCoeff[j] + (sTCoeff.empty() ? 0.f : sTCoeff[j])) * symTextureModes[50*i + j];
 
                     // Detail texture is applied after reconstruction of the colour map from the SCM.
                     // Using an average of the 3 colors makes the resulting texture less blotchy. Also see:

@@ -2095,13 +2095,99 @@ resourceName "meshes\\armor\\daedric\\m\\helmet.egm" missing exeption
 
 Test by:
 
-    COC "OblivionMQKvatchCitadel"
+    COC "OblivionMqKvatchCitadel"
     COC "KvatchCapelOfAkatosh"
     <F12> to take screenshots
 
-# [10/03/2020] Materials
+## Rotated RigidBody in Citadel door
+
+Only sometimes!?
+
+    (COC "OblivionMqKvatchCitadelHall01" or COW "MS13CheydinhalOblivionWorld" 1 -1)
+    Oblivion\Architecture\Citadel\Interior\CitadelHall\CitadelHallDoor01Anim.NIF (000182E8)
+
+## Missing bone for animation
+
+Call stack for creating Ogre::Controller
+
+>	openmw.exe!NiBtOgre::NiControllerSequence::build() Line 419	C++
+>	openmw.exe!NiBtOgre::NiModel::buildAnimation() Line 359	C++
+>	openmw.exe!MWRender::ForeignNpcAnimation::addForeignAnimSource() Line 1474	C++
+
+>	openmw.exe!NiBtOgre::NiMultiTargetTransformController::build() Line 518	C++
+>	openmw.exe!NiBtOgre::NiControllerSequence::build() Line 299	C++
+>	openmw.exe!NiBtOgre::NiControllerManager::build() Line 410	C++
+>	openmw.exe!NiBtOgre::NiNode::build() Line 641	C++
+
+FO3 Characters\_Male\Skeleton.nif
+
+Bip01 L Forearm has 2 children:
+
+  * Bip01 L ForeTwist
+  * Bip01 L Hand
+
+Forum notes from 18/02/19:
+
+> I had created this to ask for help in technical forums (e.g. Ogre) as I was getting nowhere and getting desperate. But once I made the video I figured out the issue. I don't have a solution yet but at least I know why it happens. Basically some of the skinned meshes specify weighting against a bone that is not specified in the animation. The code does not create a controller for bones not mentioned in the animation file, so it probably goes to random places (or maybe the binding pose)
+
+So, it must be the first call stack above that I need to investigate.  It might be this section of the code:
+
+```cpp
+else if (ctlrTypeName == "NiTransformController")
+{
+    if (mModel.blockType(interpolatorRef) != "NiTransformInterpolator" &&
+        mModel.blockType(interpolatorRef) != "NiBSplineCompTransformInterpolator")
+        throw std::runtime_error("unsupported interpolator: "+mModel.blockType(interpolatorRef));
+
+    // NOTE: Some interpolators do not have any data!  Ignore these controlled blocks.
+    NiInterpolator *interpolator;
+    if (mModel.blockType(interpolatorRef) == "NiTransformInterpolator")
+    {
+        interpolator = mModel.getRef<NiTransformInterpolator>(interpolatorRef);
+        if (0)//static_cast<NiTransformInterpolator*>(interpolator)->mDataIndex < 0) // -1
+            continue;
+    }
+```
+
+Well, that particular `continue;` never happens, but given the comments regarding interpolators without any data let's see further down the code.
+
+Looks like we end up creating the controllers but later do nothing if there is no data.  See below (removed some stuff for clarity):
+
+```cpp
+void NiBtOgre::TransformController::Value::setValue (Ogre::Real time)
+{
+    const NiTransformInterpolator*
+        transInterp = dynamic_cast<const NiTransformInterpolator*>(mInterpolator);
+
+    if (transInterp)
+    {
+        Ogre::Quaternion nonaccumq;
+        if(mTransformData && mTransformData->mQuaternionKeys.keys.size() > 0)
+        {
+
+```
+
+Rather than doing nothing, we might be able to move the bone based on its parent and its local transform.
+
+To confirm that we have the issues that were observed before, check with NifSkope - using `Characters\_Male\Skeleton.nif` and anim `Laugh.kf` loaded, we can see NiTransformInterpolators with the block indicies 451 and 491 (updated after adding anim).  They are for the Controlled Blocks `Bip01 L ForeTwist` and `Bip01 R ForeTwist` as suspected.
+
+After some experimentation it dawned on me that doing nothing means the bone keeps its relative position and orientation against its parent already.  So the issue must be something else.  Maybe it 
+
+## Missing symmetric texture coefficients
+
+Some don't have any symmetric texture coefficients, e.g.:
+
+    [ESM4::Npc] = {mFormId=0x0004ef6f mFlags=0x00040000 mEditorId="CheydinhalGuardCityPostNight03" ...}
+
+## Strange warnings from OpenAL
+
+    AL lib: (EE) `anonymous-namespace'::ALCwasapiPlayback_mixerProc: WaitForSingleObjectEx error: 0x102
+
+# [11/03/2020] Materials
 
 Some models require external texture to be supplied while others (e.g. head models) require the material to be crafted and supplied.
+
+
 
 
 

@@ -416,6 +416,10 @@ void NiBtOgre::NiControllerSequence::build(Ogre::Entity *skelBase, NiModelPtr an
         std::vector<Ogre::Controller<float> >& controllers,
         const NiModel& targetModel, const std::map<std::string, NiAVObjectRef>& objRefMap)
 {
+
+// find "Accum Root Name" (mTargetNameIndex) and ensure that there is a corresponding node in
+// the supplied skeleton
+
     const NiTextKeyExtraData *data = mModel.getRef<NiTextKeyExtraData>(mTextKeysRef);
     for (unsigned int i = 0; i < data->mTextKeys.size(); ++i)
     {
@@ -502,12 +506,13 @@ void NiBtOgre::NiControllerSequence::build(Ogre::Entity *skelBase, NiModelPtr an
                 mModel.blockType(interpolatorRef) != "NiBSplineCompTransformInterpolator")
                 throw std::runtime_error("unsupported interpolator: "+mModel.blockType(interpolatorRef));
 
-            // NOTE: Some interpolators do not have any data!  Ignore these controlled blocks.
+            // NOTE: Some interpolators do not have any data!
+            //       go ahead and build the controllers but they'll take no action
             NiInterpolator *interpolator;
             if (mModel.blockType(interpolatorRef) == "NiTransformInterpolator")
             {
                 interpolator = mModel.getRef<NiTransformInterpolator>(interpolatorRef);
-                if (0)//static_cast<NiTransformInterpolator*>(interpolator)->mDataIndex < 0) // -1
+                if (0)//static_cast<NiTransformInterpolator*>(interpolator)->mDataRef < 0) // -1
                     continue;
             }
             else if (mModel.blockType(interpolatorRef) == "NiBSplineCompTransformInterpolator")
@@ -547,7 +552,8 @@ void NiBtOgre::NiControllerSequence::build(Ogre::Entity *skelBase, NiModelPtr an
 
             Ogre::Bone *bone = skeleton->getBone(targetName);
 
-            Ogre::ControllerValueRealPtr srcval;
+            // FIXME: test if we need to supply this
+            Ogre::ControllerValueRealPtr srcval;// = Ogre::ControllerManager::getSingleton().getFrameTimeSource();
             Ogre::ControllerValueRealPtr dstval(OGRE_NEW TransformController::Value(bone, anim, interpolator));
             Ogre::ControllerFunctionRealPtr func(OGRE_NEW TransformController::Function(this, false));
 
