@@ -321,7 +321,7 @@ void NiBtOgre::NiNode::addBones(Ogre::Skeleton *skeleton,
     }
 
     // FIXME
-    //if (mModel.getModelName().find("geardoor") != std::string::npos)
+    //if (mModel.getName().find("geardoor") != std::string::npos)
         //bone->setManuallyControlled(true);
 
     for (std::size_t i = 0; i < mChildBoneNodes.size(); ++i)
@@ -387,7 +387,7 @@ void NiBtOgre::NiNode::buildObjectPalette(std::map<std::string, NiAVObjectRef>& 
         {
             std::string upb = childNode->getStringExtraData("UPB");
             if (upb.find("BoneRoot") == std::string::npos)
-                std::cout << mModel.getModelName() + ":" + mNodeName + " is not \"BoneRoot\"" << std::endl;
+                std::cout << mModel.getName() + ":" + mNodeName + " is not \"BoneRoot\"" << std::endl;
         }
     }
 }
@@ -448,7 +448,7 @@ void NiBtOgre::NiNode::build(BuildData *data, NiObject* parent)
     //   target
     //   targetsafezone
     //
-    // Maybe none of the files in the root Mesh directory should be rendered? Use mModel.getModelName()
+    // Maybe none of the files in the root Mesh directory should be rendered? Use mModel.getName()
     //
     // inst->mFlags should indicate whether editor markers should be ignored (default to
     // ignore)
@@ -582,7 +582,7 @@ void NiBtOgre::NiNode::build(BuildData *data, NiObject* parent)
     {
         //mModel.getRef<NiObject>((int32_t)mCollisionObjectRef)->build(inst, data, this);
 //      data->mBhkRigidBodyMap[NiObject::selfRef()]
-//          = std::make_pair(mModel.getModelName()+"@"+mNodeName,
+//          = std::make_pair(mModel.getName()+"@"+mNodeName,
 //                           mModel.getRef<bhkCollisionObject>(mCollisionObjectRef)->getBodyIndex());
     }
 

@@ -256,7 +256,7 @@ namespace NiBtOgre
         ~NiModel();
 
         const std::string& getOgreGroup() const { return mGroup; }
-        const std::string& getModelName() const { return mModelName; }
+        const std::string& getName() const { return mModelName; }
 
         template<class T>
         inline T *getRef(std::int32_t index) const {

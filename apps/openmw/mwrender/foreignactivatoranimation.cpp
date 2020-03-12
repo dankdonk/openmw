@@ -42,7 +42,7 @@ namespace MWRender
             if (!mObjectRoot->mSkelBase)
                 return;
 
-            //if (mObjectRoot->mForeignObj->mModel->getModelName().find("geardoor") == std::string::npos)
+            //if (mObjectRoot->mForeignObj->mModel->getName().find("geardoor") == std::string::npos)
                 //return;
 
             skelinst = mObjectRoot->mSkelBase->getSkeleton();

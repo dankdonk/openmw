@@ -118,10 +118,10 @@ namespace NiBtOgre
         {
 #if 1
             skeletonRoot = bInfo.model->getRef<NiNode>(bInfo.model->rootIndex()); // get NiNode
-            skeletonRoot->getNiNodeName();
+            skeletonRoot->getName();
 #else
             skeletonRoot = bInfo.model->skeletonRoot(); // get NiNode
-            skeletonRoot->getNiNodeName(); // see if the pointer is good
+            skeletonRoot->getName(); // see if the pointer is good
 #endif
         }
         catch (...)

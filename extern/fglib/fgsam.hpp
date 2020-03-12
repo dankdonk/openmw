@@ -59,15 +59,7 @@ namespace FgLib
                                 const std::vector<float>& raceAsymCoeff,
                                 const std::vector<float>& npcSymCoeff,
                                 const std::vector<float>& npcAsymCoeff) const;
-#if 0
-        // WARN: deprecated
-        bool getMorphedVertices(std::vector<Ogre::Vector3> *fgVertices,
-                                const std::string& mesh,
-                                const std::vector<float>& raceSymCoeff,
-                                const std::vector<float>& raceAsymCoeff,
-                                const std::vector<float>& npcSymCoeff,
-                                const std::vector<float>& npcAsymCoeff) const;
-#endif
+
         // populates fgTexture
         // returns true if EGT file is either found in the map or loaded from disk *and*
         //              fgTexture is in the correct format & dimensions

@@ -400,7 +400,7 @@ Ogre::Quaternion NiBtOgre::TransformController::Value::getRotation (Ogre::Real t
 
 // FIXME: testing SpiderDaedra
 //#if 0
-        if (mModel->getModelName().find("pider") != std::string::npos
+        if (mModel->getName().find("pider") != std::string::npos
                 &&
                 (
                  //mNode->getName() == "Bip01 R UpperArm" ||
@@ -420,7 +420,7 @@ Ogre::Quaternion NiBtOgre::TransformController::Value::getRotation (Ogre::Real t
         if (bsi->mRotationHandle >= sd->mShortControlPoints.size())
         {
             //throw std::runtime_error("TransformController::Value::getRotation vector offset issue");
-            std::cout << "TransformController::Value::getRotation " << mModel->getModelName() <<
+            std::cout << "TransformController::Value::getRotation " << mModel->getName() <<
                 ", index " << bsi->mTranslationHandle << ", size " << sd->mShortControlPoints.size() << std::endl;
         }
 //#endif

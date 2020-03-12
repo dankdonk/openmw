@@ -1803,7 +1803,7 @@ btCollisionShape *NiBtOgre::bhkRigidBody::getShape(const NiAVObject& target) con
     else // userIndex == -1            // no transform applied, e.g. btBoxShape
     {
 //      if (pos.x > SIMD_EPSILON || pos.y > SIMD_EPSILON || pos.z > SIMD_EPSILON)
-//          std::cout << "primitive: " << mModel.getModelName() << std::endl;
+//          std::cout << "primitive: " << mModel.getName() << std::endl;
 
         // rigidbody.setWorldTransform(SceneNodeTrans * transform);
         btCompoundShape *compoundShape = new btCompoundShape();
@@ -1895,12 +1895,12 @@ void NiBtOgre::bhkRigidBody::build(BuildData *data, NiObject* parentNiNode)
 
     // FIXME: testing only
     // bhkRigidBodyT, bhkConvexVerticesShape
-    if (mModel.getModelName() == "meshes\\architecture\\imperialcity\\icsigncopious01.nif")
+    if (mModel.getName() == "meshes\\architecture\\imperialcity\\icsigncopious01.nif")
     {
         Ogre::Vector3 nodeTrans = inst->mBaseNode->_getDerivedPosition();
         Ogre::Quaternion nodeRot = inst->mBaseNode->_getDerivedOrientation();
 
-        std::cout << mModel.getModelName() << std::endl;
+        std::cout << mModel.getName() << std::endl;
     }
     // FIXME: end testing
 #endif
@@ -1941,7 +1941,7 @@ NiBtOgre::bhkSimpleShapePhantom::bhkSimpleShapePhantom(uint32_t index, NiStream 
 // e.g. dungeons/misc/triggers/trigzone02.nif (coc "vilverin")
 btCollisionShape *NiBtOgre::bhkSimpleShapePhantom::getShape(const NiAVObject& target) const
 {
-    std::cout << "phantom: " << mModel.getModelName() << std::endl;
+    std::cout << "phantom: " << mModel.getName() << std::endl;
     return 0;
 }
 

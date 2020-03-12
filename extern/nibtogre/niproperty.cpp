@@ -52,7 +52,7 @@ void NiBtOgre::NiProperty::applyMaterialProperty(OgreMaterial& material,
                                                  std::vector<Ogre::Controller<float> >& controllers)
 {
 #if 0
-    //std::cerr << "property not implemented: " << NiObject::mModel.getModelName() << std::endl;
+    //std::cerr << "property not implemented: " << NiObject::mModel.getName() << std::endl;
     std::cerr << "unhandled property "
         << NiObject::mModel.indexToString(NiObjectNET::getNameIndex()) << std::endl;
 
@@ -725,7 +725,7 @@ void NiBtOgre::NiVertexColorProperty::applyMaterialProperty(OgreMaterial& materi
                                                             std::vector<Ogre::Controller<float> >& controllers)
 {
     // mFlags?
-    if (mModel.getModelName().find("air") == std::string::npos)
+    if (mModel.getName().find("air") == std::string::npos)
     material.vertMode = mVertexMode;
     else
         material.vertMode = 0;

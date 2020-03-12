@@ -116,7 +116,7 @@ void NiBtOgre::NiModel::createNiObjects()
 
     //if (mModelName.find("smeltermarker") != std::string::npos)/*fxambwatersalmon02b*/
         //std::cout << mModelName << std::endl;
-    //if (getModelName().find("vgeardoor01") != std::string::npos)
+    //if (getName().find("vgeardoor01") != std::string::npos)
         //std::cout << "door" << std::endl;
 
     mObjects.resize(mHeader->numBlocks());
@@ -195,7 +195,7 @@ void NiBtOgre::NiModel::findBoneNodes(bool buildObjectPalette, size_t rootIndex)
                 mBoneRootNode = getRef<NiNode>(boneRoot); // just overwrite the previous result
 
             if (buildObjectPalette)
-                mObjectPalette[node->getNiNodeName()] = index;
+                mObjectPalette[node->getName()] = index;
         }
     }
 }
@@ -248,9 +248,9 @@ void NiBtOgre::NiModel::createMesh(bool isMorphed, Ogre::SkeletonPtr skeleton)
 
     std::string modelName;
     if (isMorphed || !skeleton)
-        modelName = getModelName(); // WARN: morphed must have Npc::mEditorId + "_" in getModelName()
+        modelName = getName(); // WARN: morphed must have Npc::mEditorId + "_" in getName()
     else
-        modelName = skelName + "_" + getModelName(); // getModelName() should return NIF name
+        modelName = skelName + "_" + getName(); // getName() should return NIF name
 
     // iterate through the mesh build map
     //
@@ -277,7 +277,7 @@ void NiBtOgre::NiModel::createMesh(bool isMorphed, Ogre::SkeletonPtr skeleton)
         // FIXME: consider the use of a hash (possibly the same as BSA) + block number for performance
         std::string meshName = modelName +
                                "#" + std::to_string(iter->second->selfRef()) + // node index
-                               "@" + iter->second->getNiNodeName();            // node name
+                               "@" + iter->second->getName();            // node name
 
         Ogre::MeshPtr mesh = meshManager.getByName(/*boost::algorithm::to_lower_copy(meshName)*/meshName, mGroup);
         if (!mesh)
@@ -289,9 +289,9 @@ void NiBtOgre::NiModel::createMesh(bool isMorphed, Ogre::SkeletonPtr skeleton)
             mesh->setSkeletonName(mSkeleton->getName()); // Storm Atronach skeleton.nif has its own mesh
 #if 0
         // FIXME: testing VGearDoor01.NIF
-        if (mSkeleton && !mesh->hasSkeleton() && getModelName().find("geardoor") != std::string::npos)
+        if (mSkeleton && !mesh->hasSkeleton() && getName().find("geardoor") != std::string::npos)
         {
-            mesh->setSkeletonName(getModelName());
+            mesh->setSkeletonName(getName());
         }
 #endif
         mesh->setAutoBuildEdgeLists(false);
@@ -323,7 +323,7 @@ void NiBtOgre::NiModel::createMesh(bool isMorphed, Ogre::SkeletonPtr skeleton)
         // only if it has not been built already
         if (mBuildData.mMeshBuildList.find(rootIndex) == mBuildData.mMeshBuildList.end())
         {
-            std::string meshName = getModelName() + "#0@" + rootNode->getNiNodeName();
+            std::string meshName = getName() + "#0@" + rootNode->getName();
             Ogre::MeshPtr mesh = meshManager.getByName(meshName);
             if (!mesh)
                 mesh = meshLoader.createMesh(meshName, mGroup, this, rootIndex);
@@ -406,11 +406,11 @@ void NiBtOgre::NiModel::buildSkeleton(bool load)
 
     if (mBuildData.mSkelLeafIndicies.size() > 1)
     {
-        mSkeleton = Ogre::SkeletonManager::getSingleton().getByName(getModelName(), mGroup);
+        mSkeleton = Ogre::SkeletonManager::getSingleton().getByName(getName(), mGroup);
         if (!mSkeleton)
         {
             NiSkeletonLoader& skeletonLoader = NiModelManager::getSingleton().skeletonLoader();
-            mSkeleton = skeletonLoader.createSkeleton(getModelName(), mGroup, this);
+            mSkeleton = skeletonLoader.createSkeleton(getName(), mGroup, this);
         }
 
         if (load)
@@ -517,7 +517,7 @@ void NiBtOgre::BuildData::setNiNodeParent(NiAVObjectRef child, NiNode *parent)
     else
     {
         //throw std::logic_error("NiNode parent map: parent not found");
-        std::cerr << mModel.getModelName() << " : NiNode parent not found - " << child << std::endl;
+        std::cerr << mModel.getName() << " : NiNode parent not found - " << child << std::endl;
         // FIXME: it turns out that some parents have higher index than children (i.e. occurs
         // later in the file) - to fix this properly quite a bit a change will be required
         // - although it might be possible to post process before mParent and transforms are

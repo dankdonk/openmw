@@ -1205,7 +1205,7 @@ NifOgre::ObjectScenePtr ForeignNpcAnimation::createSkinnedObject(NifOgre::Object
         const std::string& meshName, const std::string& group, NiModelPtr skeletonModel)
 {
     // get or create a skinned model with this NPC's skeleton
-    std::string skeletonName = skeletonModel->getModelName();
+    std::string skeletonName = skeletonModel->getName();
 
     NiBtOgre::NiModelManager& modelManager = NiBtOgre::NiModelManager::getSingleton();
     NiModelPtr object = modelManager.getByName(skeletonName + "_" + meshName, group);
@@ -1318,7 +1318,7 @@ NifOgre::ObjectScenePtr ForeignNpcAnimation::createObject(const std::string& mes
         raceName = mRace->mEditorId + "$";
 
     // initially assume a skinned model
-    std::string skeletonName = skeletonModel->getModelName();
+    std::string skeletonName = skeletonModel->getName();
     Misc::StringUtils::lowerCaseInPlace(skeletonName);
     NiModelPtr model = modelManager.getByName(raceName + skeletonName + "_" + meshName, group);
 

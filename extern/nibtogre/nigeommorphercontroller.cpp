@@ -207,7 +207,7 @@ NiBtOgre::NiTimeControllerRef NiBtOgre::NiGeomMorpherController::build(Ogre::Mes
 
         // NOTE multiple poses are created for the same 'target' (i.e. sub-mesh)
         Ogre::Pose* pose = mesh->createPose(subMeshIndex + 1, // target is user defined (for us subMeshIndex+1)
-                mModel.getModelName()+
+                mModel.getName()+
                 "block_"+std::to_string(NiObject::selfRef())+"_morph_"+std::to_string(i));  // mSelfRef+morph
         for (unsigned int v = 0; v < morphs[i].mVectors.size(); ++v)
             pose->addVertex(v, morphs[i].mVectors[v]);

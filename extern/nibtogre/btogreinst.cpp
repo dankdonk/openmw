@@ -155,9 +155,9 @@ void NiBtOgre::BtOgreInst::instantiate()
 
 void NiBtOgre::BtOgreInst::buildEntities()
 {
-    //if (mModel.getModelName().find("marker") != std::string::npos)
+    //if (mModel.getName().find("marker") != std::string::npos)
         //return; // FIXME: testing oil puddle
-    //if (mModel.getModelName().find("vgeardoor01") != std::string::npos)
+    //if (mModel.getName().find("vgeardoor01") != std::string::npos)
         //std::cout << "door" << std::endl;
 
     const BuildData& buildData = mModel->buildData();
@@ -297,14 +297,14 @@ void NiBtOgre::BtOgreInst::buildEntities()
     // FIXME: maybe just have pointers to the vectors rather than copying all the content?
     for (size_t i = 0; i < buildData.mFlameNodes.size(); ++i)
     {
-        mFlameNodes.push_back(buildData.mFlameNodes[i]->getNiNodeName());
-        //std::cout << "flame " << getModelName() << " " << inst->mFlameNodes.back() << std::endl;
+        mFlameNodes.push_back(buildData.mFlameNodes[i]->getName());
+        //std::cout << "flame " << getName() << " " << inst->mFlameNodes.back() << std::endl;
     }
 
     for (size_t i = 0; i < buildData.mAttachLights.size(); ++i)
     {
-        mAttachLights.push_back(buildData.mAttachLights[i]->getNiNodeName());
-        //std::cout << "light " << getModelName() << " " << inst->mAttachLights.back() << std::endl;
+        mAttachLights.push_back(buildData.mAttachLights[i]->getName());
+        //std::cout << "light " << getName() << " " << inst->mAttachLights.back() << std::endl;
     }
 
 #if 0

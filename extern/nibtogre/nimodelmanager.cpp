@@ -148,7 +148,7 @@ namespace NiBtOgre
     NiModelPtr NiModelManager::createSkinnedModel(const Ogre::String& nif, const Ogre::String& group,
             NiModel *skeleton, const Ogre::String& raceName, const Ogre::String& texture)
     {
-        std::string skelName = boost::to_lower_copy(skeleton->getModelName());
+        std::string skelName = boost::to_lower_copy(skeleton->getName());
         // Create manual model which calls back self to load
         NiModelPtr pModel = createManual(raceName+skelName+"_"+nif, group, nif, this); // raceName has "$"
 
@@ -159,7 +159,7 @@ namespace NiBtOgre
         bInfo.skel = skeleton; // TODO: throw exeption if no skeleton?
         bInfo.raceName = raceName;
         bInfo.baseTexture = texture;
-        bInfo.skelNif = skeleton->getModelName();
+        bInfo.skelNif = skeleton->getName();
         bInfo.skelGroup = skeleton->getOgreGroup();
         mModelBuildInfoMap[pModel.get()] = bInfo;
 
@@ -202,7 +202,7 @@ namespace NiBtOgre
         bInfo.skel = skeleton;
         if (skeleton)
         {
-            bInfo.skelNif = skeleton->getModelName();
+            bInfo.skelNif = skeleton->getName();
             bInfo.skelGroup = skeleton->getOgreGroup();
         }
         else

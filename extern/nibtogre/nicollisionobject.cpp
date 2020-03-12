@@ -102,7 +102,7 @@ NiBtOgre::bhkNiCollisionObject::bhkNiCollisionObject(uint32_t index, NiStream *s
 
     // make an entry for loading BtRigidBodyCI (for building physics shapes)
     data.mBhkRigidBodyMap[mTargetRef]
-        = /*std::make_pair(model.getModelName()+"@"+ model.getRef<NiNode>(mTargetRef)->getNodeName(), */mBodyRef/*)*/;
+        = /*std::make_pair(model.getName()+"@"+ model.getRef<NiNode>(mTargetRef)->getNodeName(), */mBodyRef/*)*/;
 }
 
 // build the 'body' to the 'target'

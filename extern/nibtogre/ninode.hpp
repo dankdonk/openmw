@@ -91,7 +91,7 @@ namespace NiBtOgre
         virtual void build(BuildData *data, NiObject *parentNiNode = nullptr);
 
         // For NiGeometry children (e.g. NiTriStrips)
-        virtual const std::string& getNiNodeName() const { return mNodeName; }
+        virtual const std::string& getName() const { return mNodeName; }
         virtual const NiNode& getParentNiNode() const { return *mParent; }
 
         //

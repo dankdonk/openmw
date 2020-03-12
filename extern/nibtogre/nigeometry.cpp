@@ -63,7 +63,7 @@ NiBtOgre::NiGeometry::NiGeometry(uint32_t index, NiStream *stream, const NiModel
     // objects to cast shadows
     if ((mFlags & 0x40) != 0) // FIXME: testing only, 67 == 0x43, 69 = 0x45
     {
-        std::cout << "Shadow : " << model.getModelName() << " : " << model.indexToString(mName) << std::endl;
+        std::cout << "Shadow : " << model.getName() << " : " << model.indexToString(mName) << std::endl;
     }
 #endif
     stream->read(mDataRef);
@@ -265,7 +265,7 @@ std::string NiBtOgre::NiTriBasedGeom::getMaterial()
     // NOTE: needs a unique name (in case of creation) for Ogre MaterialManager
     // TODO: probably don't need the parent node name, commented out for now
     return mOgreMaterial.getOrCreateMaterial((useExt ? skinTexture+"_" : "")+
-                                             mModel.getModelName()+
+                                             mModel.getName()+
                                              "@"+/*mParent->getNodeName()+":"+*/
                                              mModel.indexToString(NiObjectNET::getNameIndex()));
 }
@@ -365,7 +365,7 @@ bool NiBtOgre::NiTriBasedGeom::buildSubMesh(Ogre::Mesh *mesh, BoundsFinder& boun
     //if (!isStatic)
     if (mSkinInstanceRef != -1) // using the local transform doesn't seem to do much
         transform = mParent.getLocalTransform() * mLocalTransform;
-    //else if (mModel.getModelName().find("geardoor") != std::string::npos)
+    //else if (mModel.getName().find("geardoor") != std::string::npos)
         //transform = mParent.getLocalTransform() * mLocalTransform;
     else
         transform = mParent.getWorldTransform() * mLocalTransform;
@@ -459,7 +459,7 @@ bool NiBtOgre::NiTriBasedGeom::buildSubMesh(Ogre::Mesh *mesh, BoundsFinder& boun
         {
 #if 0
             Ogre::ColourValue clr(colors[i][0], colors[i][1], colors[i][2], colors[i][3]);
-            if (mModel.getModelName().find("air") != std::string::npos)
+            if (mModel.getName().find("air") != std::string::npos)
             {
                 Ogre::Vector3 col(colors[i][0], colors[i][1], colors[i][2]);
                 col += Ogre::Vector3(110/256, 110/256, 110/256);
@@ -581,8 +581,8 @@ bool NiBtOgre::NiTriBasedGeom::buildSubMesh(Ogre::Mesh *mesh, BoundsFinder& boun
         for(size_t i = 0; i < skinInstance->mBoneRefs.size(); ++i)
         {
             //Ogre::VertexBoneAssignment boneInf;
-            //std::string nodeName = mModel.getRef<NiNode>(skinInstance->mBones[i])->getNiNodeName();
-            //std::cout << mModel.getModelName() << " " << nodeName << std::endl;
+            //std::string nodeName = mModel.getRef<NiNode>(skinInstance->mBones[i])->getName();
+            //std::cout << mModel.getName() << " " << nodeName << std::endl;
             //if (nodeName == "Bip01 R ForeTwist")
                 //foreRTwist = i;
             //else if (nodeName == "Bip01 L ForeTwist")
@@ -598,7 +598,7 @@ bool NiBtOgre::NiTriBasedGeom::buildSubMesh(Ogre::Mesh *mesh, BoundsFinder& boun
         for(size_t i = 0; i < skinInstance->mBoneRefs.size(); ++i)
         {
             Ogre::VertexBoneAssignment boneInf;
-            std::string nodeName = mModel.getRef<NiNode>(skinInstance->mBoneRefs[i])->getNiNodeName();
+            std::string nodeName = mModel.getRef<NiNode>(skinInstance->mBoneRefs[i])->getName();
 
 #if 0
             if (nodeName == "Bip01 L Finger0" || nodeName == "Bip01 R Finger0" ||
@@ -653,11 +653,11 @@ bool NiBtOgre::NiTriBasedGeom::buildSubMesh(Ogre::Mesh *mesh, BoundsFinder& boun
         }
     } // mSkinInstanceRef != -1
     else if (mModel.hasSkeleton()
-        && mModel.getSkeleton()->getName() == mModel.getModelName() // hack to avoid body parts
-        && mModel.getSkeleton()->hasBone(mParent.getNiNodeName())
-        //&& (mModel.nifVer() < 0x14020007 || mParent.getNiNodeName() == "HeadAnims") // not FO3 onwards
+        && mModel.getSkeleton()->getName() == mModel.getName() // hack to avoid body parts
+        && mModel.getSkeleton()->hasBone(mParent.getName())
+        //&& (mModel.nifVer() < 0x14020007 || mParent.getName() == "HeadAnims") // not FO3 onwards
 
-        //&& mModel.getModelName().find("geardoor") == std::string::npos
+        //&& mModel.getName().find("geardoor") == std::string::npos
         )
     {
         // FIXME: for some reason this block is needed for npc animations to work but it
@@ -671,20 +671,20 @@ bool NiBtOgre::NiTriBasedGeom::buildSubMesh(Ogre::Mesh *mesh, BoundsFinder& boun
         // Architecture\Anvil\BenirusDoor01.NIF (0001D375)
         // COC "AnvilBenirusManorBasement"
         //
-        //if (mParent.getNiNodeName() != "gear 13")
+        //if (mParent.getName() != "gear 13")
         {
 
 
         // FIXME: I have no idea why "HeadAnims" is needed, but without it the NPCs don't show up
-        //std::cout << "mystery " << mModel.getModelName() << " " << mParent.getNiNodeName() << std::endl;
+        //std::cout << "mystery " << mModel.getName() << " " << mParent.getName() << std::endl;
 
 
 
 
-        mesh->setSkeletonName(mModel.getModelName()); // FIXME: not the best place from a SubMesh?
+        mesh->setSkeletonName(mModel.getName()); // FIXME: not the best place from a SubMesh?
 
         Ogre::VertexBoneAssignment boneInf;
-        boneInf.boneIndex = mModel.getSkeleton()->getBone(/*"#"+std::to_string(mParent.selfRef())+"@"+*/mParent.getNiNodeName())->getHandle();
+        boneInf.boneIndex = mModel.getSkeleton()->getBone(/*"#"+std::to_string(mParent.selfRef())+"@"+*/mParent.getName())->getHandle();
 
         for (unsigned int j = 0; j < vertices.size(); ++j)
         {

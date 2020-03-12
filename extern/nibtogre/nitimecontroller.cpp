@@ -388,7 +388,7 @@ NiBtOgre::NiTimeControllerRef NiBtOgre::NiControllerManager::build(std::multimap
     const NiDefaultAVObjectPalette* objects = mModel.getRef<NiDefaultAVObjectPalette>(mObjectPaletteRef);
 
     //if (mModel.nifVer() >= 0x14020007) // FO3 onwards
-    if (0)//mModel.getModelName().find("geardoor") != std::string::npos)
+    if (0)//mModel.getName().find("geardoor") != std::string::npos)
     {
         //if (mNextControllerRef != -1 && mModel.blockType(mNextControllerRef) == "NiMultiTargetTransformeController")
         //{
@@ -487,7 +487,7 @@ NiBtOgre::NiTimeControllerRef NiBtOgre::NiMultiTargetTransformController::build(
         return mNextControllerRef; // FIXME: must have implemented the required controller yet
 
     Ogre::SharedPtr<NiModel> model
-        = NiBtOgre::NiModelManager::getSingleton().getByName(mModel.getModelName(), "General");
+        = NiBtOgre::NiModelManager::getSingleton().getByName(mModel.getName(), "General");
 
     Ogre::ControllerValueRealPtr srcval;
     Ogre::ControllerValueRealPtr dstval(OGRE_NEW MultiTargetTransformController::Value(model, mTargetInterpolators));
