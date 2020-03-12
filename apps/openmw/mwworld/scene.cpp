@@ -580,7 +580,7 @@ namespace MWWorld
         loadingListener->setLabel(loadingExteriorText);
 
         // TODO: For TES4/5 we should double this value? (cells are smaller)
-        const int halfGridSize = Settings::Manager::getInt("exterior grid size", "Cells") / 1.5;
+        const int halfGridSize = Settings::Manager::getInt("exterior grid size", "Cells") / 2;
         if (worldId != currentWorldId)
         {
             int current = 0;
@@ -734,6 +734,9 @@ namespace MWWorld
     void Scene::changeToInteriorCell (const std::string& cellName, const ESM::Position& position)
     {
         CellStore *cell = MWBase::Environment::get().getWorld()->getInterior(cellName);
+        if (!cell)
+            return; // probably spelling error from console
+
         bool loadcell = (mCurrentCell == NULL);
         if(!loadcell)
             loadcell = *mCurrentCell != *cell;
