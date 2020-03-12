@@ -107,9 +107,9 @@ namespace NiBtOgre
         std::map<std::string, std::vector<Ogre::Entity*> > mSkeletonAnimEntities;
 
         //std::multimap<float, std::string> mTextKeys;
-        const std::multimap<float, std::string>& modelTextKeys() const { return mModel->textKeys(); }
+        const std::multimap<float, std::string>& modelTextKeys() const { return mModel->getTextKeys(); }
         //std::vector<Ogre::Controller<Ogre::Real> > mControllers;
-        const std::vector<Ogre::Controller<Ogre::Real> >& modelControllers() const { return mModel->controllers(); }
+        const std::vector<Ogre::Controller<Ogre::Real> >& modelControllers() const { return mModel->getControllers(); }
 
         std::vector<std::string> mFlameNodes;
         std::vector<std::string> mAttachLights;

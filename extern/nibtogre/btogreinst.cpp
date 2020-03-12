@@ -112,7 +112,7 @@ void NiBtOgre::BtOgreInst::instantiateBodyPart(Ogre::SceneNode *baseNode, Ogre::
         }
         else
         {
-            mTargetBone = mModel->targetBone(); // see if there is a target bone
+            mTargetBone = mModel->getTargetBone(); // see if there is a target bone
             if (mTargetBone == "")
                 mTargetBone = "Bip01 Head"; // FIXME: just a guess, likely wrong
 
@@ -262,9 +262,9 @@ void NiBtOgre::BtOgreInst::buildEntities()
     if (mSkeletonRoot/*buildData.isSkeletonTES4()*/
             &&
             (
-             mModel->blockType(mModel->rootIndex()) == "NiNode"
+             mModel->blockType(mModel->getRootIndex()) == "NiNode"
              ||
-             mModel->blockType(mModel->rootIndex()) == "BSFadeNode"
+             mModel->blockType(mModel->getRootIndex()) == "BSFadeNode"
             )
        )//&& mModelName != "meshes\\morroblivion\\creatures\\wildlife\\kagouti\\skeleton.nif") // FIXME
     {

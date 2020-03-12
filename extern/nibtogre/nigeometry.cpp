@@ -31,8 +31,6 @@
 #include <stdexcept>
 #include <iostream> // FIXME: debugging only
 
-#include <boost/algorithm/string.hpp>
-
 #include <OgreMesh.h>
 #include <OgreSubMesh.h>
 #include <OgreHardwareBufferManager.h>
@@ -208,41 +206,25 @@ std::string NiBtOgre::NiTriBasedGeom::getMaterial()
         }
     }
 
-    // if an external texture was supplied overwrite texture property
-    // but only if it is an exposed skin - currently not aware of an easy way of identifying
-    // such texture, so we have to resort to a text search
+    // if an external texture was supplied, overwrite texture property but only if it is an exposed skin
     std::string skinTexture = mParent.getSkinTexture();
     bool useExt = false;
     if (!skinTexture.empty() &&
         mOgreMaterial.texName.find(NiTexturingProperty::Texture_Base) != mOgreMaterial.texName.end())
     {
         // WARN: we rely on getMaterial() being called *after* the sub-meshes have been built
-        if (mSkinInstanceRef == -1 && mData.mMeshBuildList.size() == 1 && mParent.numSubMeshChildren() == 1)
+        if (mSkinInstanceRef == -1 && mData.mMeshBuildList.size() == 1 && mParent.getNumSubMeshChildren() == 1)
         {
-            // if we're the only one then force replace
-            // FIXME: this does not work for Clothing\MiddleClass\04\M\Pants.NIF
-            //        we need to force only for body/head parts
-            //        NOTE: eyes, ears, hair are not skinned (but head is)
+            // If we're the only sub-mesh then force replace but this does not work for
+            // Clothing\MiddleClass\04\M\Pants.NIF.  We need to force only for body/head parts.
+            // NOTE: eyes, ears, hair are not skinned (but head is)
             mOgreMaterial.setExternalTexture(skinTexture); // TODO: ears need morphing
             useExt = true;
         }
-        else if (mSkinInstanceRef != -1) // other clothes should all be skinned?
+        else if (mSkinInstanceRef != -1) // skin showing clothes/armor should all be skinned?
         {
-            // replace only if the base texture "look" like a skin
-            std::string texture = mOgreMaterial.texName[NiTexturingProperty::Texture_Base];
-            boost::to_lower(texture);
-#if 0
-            // surely there is a beter way?  most unlikely to work with texture replacement MODS
-            if (texture.find("imperial") != std::string::npos &&
-                (texture.find("upperbody") != std::string::npos || // TODO: need morphing
-                 texture.find("hand") != std::string::npos ||
-                 texture.find("foot") != std::string::npos ||
-                 texture.find("leg") != std::string::npos || // TODO: need morphing
-                 texture.find("head") != std::string::npos || // FIXME: will be moved to material
-                 texture.find("lowerbody") != std::string::npos)
-            )
-#else
-            bool hasVisibleSkin = false; // for visible skin sub-mesh (pants, neck area, etc)
+            // loop again here rather than check the name of every property in the loop above
+            bool hasVisibleSkin = false;
             for (std::size_t i = 0; i < NiAVObject::mProperty.size(); ++i)
             {
                 NiProperty* property = mModel.getRef<NiProperty>(NiAVObject::mProperty[i]);
@@ -253,7 +235,6 @@ std::string NiBtOgre::NiTriBasedGeom::getMaterial()
             }
 
             if (hasVisibleSkin)
-#endif
             {
                 mOgreMaterial.setExternalTexture(skinTexture);
                 useExt = true;

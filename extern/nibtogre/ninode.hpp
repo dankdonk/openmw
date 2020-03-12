@@ -112,7 +112,7 @@ namespace NiBtOgre
         //void setVertices(std::unique_ptr<std::vector<Ogre::Vector3> > morphedVertices);
         NiTriBasedGeom *getUniqueSubMeshChild(); // WARN: may throw
 
-        std::size_t numSubMeshChildren() const { return mSubMeshChildren.size(); }
+        std::size_t getNumSubMeshChildren() const { return mSubMeshChildren.size(); }
 
         void setSkinTexture(const std::string& texture) { mSkinTexture = texture; }
         inline const std::string& getSkinTexture() const { return mSkinTexture; }

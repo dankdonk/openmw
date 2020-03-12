@@ -314,7 +314,7 @@ void NiBtOgre::NiModel::createMesh(bool isMorphed, Ogre::SkeletonPtr skeleton)
         // FIXME: despite the name, maybe this should be "Scene Root" or "BSFadeNode" instead?
         // mModelName != "meshes\\morroblivion\\creatures\\wildlife\\kagouti\\skeleton.nif") // FIXME
 #if 0
-        NiNode * rootNode = rootNode(); // WARN: maybe nullptr if there are multiple roots!
+        NiNode * rootNode = getRootNode(); // WARN: maybe nullptr if there are multiple roots!
 #else
         NiNode * rootNode = skeletonRoot();
 #endif
@@ -349,13 +349,13 @@ void NiBtOgre::NiModel::buildSkinnedModel(Ogre::SkeletonPtr skeleton)
     if (!mSkeleton)
         mSkeleton = skeleton;
 
-    mObjects[rootIndex()]->build(&mBuildData); // FIXME: what to do with other roots?
+    mObjects[getRootIndex()]->build(&mBuildData); // FIXME: what to do with other roots?
 }
 
 // build the skeleton and node controllers
 void NiBtOgre::NiModel::buildModel()
 {
-    mObjects[rootIndex()]->build(&mBuildData); // FIXME: what to do with other roots?
+    mObjects[getRootIndex()]->build(&mBuildData); // FIXME: what to do with other roots?
 }
 
 // NOTE: 'model' should be updated each time a weapon (e.g. bow) is equipped or unequipped
@@ -368,7 +368,7 @@ void NiBtOgre::NiModel::buildAnimation(Ogre::Entity *skelBase, NiModelPtr anim,
         std::vector<Ogre::Controller<Ogre::Real> >& controllers,
         NiModel *skeleton, NiModel *bow)
 {
-    getRef<NiControllerSequence>(rootIndex())->build(skelBase, anim, textKeys, controllers, *skeleton, skeleton->getObjectPalette());
+    getRef<NiControllerSequence>(getRootIndex())->build(skelBase, anim, textKeys, controllers, *skeleton, skeleton->getObjectPalette());
 }
 #if 0
 void NiBtOgre::NiModel::createCollisionshapes()
@@ -419,9 +419,9 @@ void NiBtOgre::NiModel::buildSkeleton(bool load)
 }
 
 // for non-skinned parts
-std::string NiBtOgre::NiModel::targetBone() const
+std::string NiBtOgre::NiModel::getTargetBone() const
 {
-    NiBtOgre::NiNode *rootNode = getRef<NiBtOgre::NiNode>(rootIndex());
+    NiBtOgre::NiNode *rootNode = getRef<NiBtOgre::NiNode>(getRootIndex());
     return rootNode->getStringExtraData("Prn");
 }
 
@@ -447,7 +447,7 @@ NiBtOgre::NiTriBasedGeom *NiBtOgre::NiModel::fgGeometry() const
     if (mObjects.empty())
         throw std::logic_error("NiModel attempting to retrieve an object that is not yet built.");
 
-    NiNode *ninode = getRef<NiNode>(rootIndex());
+    NiNode *ninode = getRef<NiNode>(getRootIndex());
 
     return ninode->getUniqueSubMeshChild();
 }
@@ -479,12 +479,12 @@ NiBtOgre::NiNode *NiBtOgre::NiModel::skeletonRoot()
 
 const Ogre::Quaternion NiBtOgre::NiModel::getBaseRotation() const
 {
-    return rootNode()->getLocalRotation();
+    return getRootNode()->getLocalRotation();
 }
 
-std::uint32_t NiBtOgre::NiModel::rootIndex() const
+std::uint32_t NiBtOgre::NiModel::getRootIndex() const
 {
-    if (numRootNodes() > 1)
+    if (getNumRootNodes() > 1)
         throw std::logic_error("NiNode parent map: multiple parents");
 
     return mRoots[0];

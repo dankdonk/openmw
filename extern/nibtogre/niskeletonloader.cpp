@@ -117,7 +117,7 @@ namespace NiBtOgre
         try
         {
 #if 1
-            skeletonRoot = bInfo.model->getRef<NiNode>(bInfo.model->rootIndex()); // get NiNode
+            skeletonRoot = bInfo.model->getRef<NiNode>(bInfo.model->getRootIndex()); // get NiNode
             skeletonRoot->getName();
 #else
             skeletonRoot = bInfo.model->skeletonRoot(); // get NiNode
@@ -130,7 +130,7 @@ namespace NiBtOgre
             NiModelPtr model = modelManager.getOrLoadByName(skel->getName(), skel->getGroup());
 
 #if 1
-            skeletonRoot = model->getRef<NiNode>(model->rootIndex());
+            skeletonRoot = model->getRef<NiNode>(model->getRootIndex());
 #else
             skeletonRoot = bInfo.model->skeletonRoot(); // get NiNode
 #endif

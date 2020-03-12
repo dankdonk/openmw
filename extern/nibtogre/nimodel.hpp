@@ -295,16 +295,16 @@ namespace NiBtOgre
 
         NiNode *skeletonRoot();          // returns nullptr if none found
 
-        inline const NiNode *rootNode() const { return mRootNode; }; // returns the root NiNode of the model
-        std::uint32_t rootIndex() const; // WARN: will throw if there are more than one
-        inline std::size_t numRootNodes() const { return mRoots.size(); }
+        inline const NiNode *getRootNode() const { return mRootNode; }; // returns the root NiNode of the model
+        std::uint32_t getRootIndex() const; // WARN: will throw if there are more than one
+        inline std::size_t getNumRootNodes() const { return mRoots.size(); }
 
         typedef std::int32_t NiNodeRef;
         const std::map<NiNodeRef, /*std::pair<std::string,*/ int32_t/*>*/ >&
             getBhkRigidBodyMap() const { return mBuildData.mBhkRigidBodyMap; }
 
-        const std::multimap<float, std::string>& textKeys() const { return mBuildData.mTextKeys; }
-        const std::vector<Ogre::Controller<Ogre::Real> >& controllers() const { return mBuildData.mControllers; }
+        const std::multimap<float, std::string>& getTextKeys() const { return mBuildData.mTextKeys; }
+        const std::vector<Ogre::Controller<Ogre::Real> >& getControllers() const { return mBuildData.mControllers; }
 
         //const std::map<NiNodeRef, int32_t>& getBhkRigidBodyMap() const { return mBuildData.mBhkRigidBocyMap; }
 
@@ -343,9 +343,9 @@ namespace NiBtOgre
         // used by FgSam to populate the morphed vertices
         std::vector<Ogre::Vector3>& fgMorphVertices();
 
-        void useFgMorphVertices();
+        void useFgMorphVertices(); // used by FgSam to indicate vertices have been morphed
 
-        std::string targetBone() const;
+        std::string getTargetBone() const;
 
         void findBoneNodes(bool buildObjectPalette = false, std::size_t rootIndex = 0);
 

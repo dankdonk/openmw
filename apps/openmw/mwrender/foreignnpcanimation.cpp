@@ -492,7 +492,7 @@ void ForeignNpcAnimation::updateNpcBase()
             = std::make_unique<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(model, mInsert->createChildSceneNode()));
         scene->mForeignObj->instantiate();
 
-        std::string targetBone = model->targetBone();
+        std::string targetBone = model->getTargetBone();
         // Characters\Hair\ArgonianSpines.NIF does not have a targetBone
         if (targetBone == "")
             targetBone = "Bip01 Head"; // HACK: give a guessed default
@@ -811,7 +811,7 @@ void ForeignNpcAnimation::updateNpcBase()
         = std::make_unique<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(model, mInsert->createChildSceneNode()));
     scene->mForeignObj->instantiate();
 
-    std::string targetBone = model->targetBone();
+    std::string targetBone = model->getTargetBone();
 
     // get the texture from mRace
     // FIXME: for now, get if from Ogre material
@@ -1256,7 +1256,7 @@ NifOgre::ObjectScenePtr ForeignNpcAnimation::createMorphedObject(const std::stri
     NifOgre::ObjectScenePtr scene
         = NifOgre::ObjectScenePtr (new NifOgre::ObjectScene(mInsert->getCreator()));
 
-    std::string targetBone = object->targetBone();
+    std::string targetBone = object->getTargetBone();
 
     // create an instance of the model
     scene->mForeignObj
