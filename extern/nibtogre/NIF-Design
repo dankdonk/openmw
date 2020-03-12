@@ -2289,6 +2289,19 @@ The actual movement of collision shapes, again simplified:
 
 Some models require external texture to be supplied while others (e.g. head models) require the material to be crafted and supplied.
 
+Actual selection of the material for a sub-mesh is done by `NiTriBasedGeom::getMaterial()`.  Each sub-mesh has its own material, but for head parts and body parts there's only one mesh and texture. So we can create a member to indicate that `NiTriBasedGeom` has an external texture/material and `getMaterial()` can use them if they exist.
+
+## Complications with clothes
+
+Some clothes (and maybe armor as well?) that show exposed skin.  The textures for these sub-meshes will need to be changed with those specified in the RACE records.
+
+Another issue is that we need a unique name for the material if we used a different external texture, since the same model could be used for a number of different races.
+
+## More bugs
+
+Just noticed that Baurus stopped wearing his armor from around 06/03/20. **FIXED:** Blades armor have zero value - had to compare Armor Rating before comparing value.  **NOTE:** For now weapon ratings (e.g. damage) are ignored.
+
+
 
 [//]: # (/* spell spelllang=en_au syntax=cpp */)
 [//]: # (/* vim: set ft=markdown tw=0 lbr bri fen fdm=marker fdl=0: */)

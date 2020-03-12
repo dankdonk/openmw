@@ -329,6 +329,9 @@ namespace NiBtOgre
 
         void createNiObjects();
 
+        // will throw if built the mesh already
+        void setSkinTexture(const std::string& texture);
+
         // supply skeleton for skinned objects
         void createMesh(bool isMorphed = false, Ogre::SkeletonPtr skeleton = Ogre::SkeletonPtr());
 

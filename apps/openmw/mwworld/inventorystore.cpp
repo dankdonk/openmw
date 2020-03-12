@@ -362,12 +362,36 @@ void MWWorld::InventoryStore::autoEquipTES4 (const MWWorld::Ptr& actor)
                 // This item equipping algorithm should be encapsulated as it is likely to have
                 // a large bearing on the gameplay (and whether we emulate vanilla closely).
                 //
+                // NOTE: Baurus's BladesGauntlets have value of 0, so simply comparing value
+                // won't work.  Use Armor rating as a priority, then use value only if AR
+                // values are equal.
+                //
                 // TODO: NPC scripts may disallow some items to be equipped (TODO: confirm this)
-                if (old.getClass().getValue (old) >= test.getClass().getValue (test))
+                //
+                // FIXME: still to check for item health, etc
+                if(old.getTypeName() == typeid(ESM4::Weapon).name()
+                        || test.getTypeName() == typeid(ESM4::Weapon).name())
                 {
-                    //std::cout << test.getClass().getName(test) << " is cheaper than "
-                        //<< old.getClass().getName(old) << std::endl;
+                    // FIXME: probably should check weapon damage, health, value, etc
+                    if (old.getClass().getValue(old) >= test.getClass().getValue(test))
+                    {
+                        //std::cout << test.getClass().getName(test) << " is cheaper than "
+                            //<< old.getClass().getName(old) << std::endl;
+                        continue;
+                    }
+                }
+                else if (old.getClass().getArmorRating(old) > test.getClass().getArmorRating(test))
+                {
                     continue;
+                }
+                else if (old.getClass().getArmorRating (old) == test.getClass().getArmorRating(test))
+                {
+                    if (old.getClass().getValue(old) >= test.getClass().getValue(test))
+                    {
+                        //std::cout << test.getClass().getName(test) << " is cheaper than "
+                            //<< old.getClass().getName(old) << std::endl;
+                        continue;
+                    }
                 }
             }
 

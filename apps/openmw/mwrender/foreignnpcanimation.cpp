@@ -484,7 +484,7 @@ void ForeignNpcAnimation::updateNpcBase()
         NiModelPtr model = modelManager.getByName(mNpc->mEditorId+"_"+meshName, group);
         if (!model)
             model = modelManager.createMorphedModel(meshName,
-                    group, mNpc, mRace, textureName, mObjectRoot->mForeignObj->mModel.get());
+                    group, mNpc, mRace, mObjectRoot->mForeignObj->mModel.get(), textureName);
 
         NifOgre::ObjectScenePtr scene
             = NifOgre::ObjectScenePtr (new NifOgre::ObjectScene(mInsert->getCreator()));
@@ -627,11 +627,16 @@ void ForeignNpcAnimation::updateNpcBase()
         // TODO: to save unnecessary searches for the resources, these info should be persisted
 
         mHeadParts.push_back(
-                createMorphedObject(meshName, "General", textureName, mObjectRoot->mForeignObj->mModel));
+                createMorphedObject(meshName, "General", mObjectRoot->mForeignObj->mModel, textureName));
     }
 
+    //if (mNpc->mEditorId.find("alen") != std::string::npos)
+        //std::cout << "hands" << std::endl;
+
     // default meshes for upperbody /lower body/hands/feet are in the same directory as skeleton.nif
-    const std::vector<ESM4::Race::BodyPart>& bodyParts = (isFemale ? mRace->mBodyPartsFemale : mRace->mBodyPartsMale);
+    const std::vector<ESM4::Race::BodyPart>& bodyParts
+        = (isFemale ? mRace->mBodyPartsFemale : mRace->mBodyPartsMale);
+
     for (int index = ESM4::Race::UpperBody; index < ESM4::Race::NumBodyParts; ++index)
     {
         meshName = bodyParts[index].mesh;
@@ -692,7 +697,7 @@ void ForeignNpcAnimation::updateNpcBase()
             removeIndividualPart((ESM::PartReferenceType)type);
 
             mObjectParts[type] =
-                    createObject(meshName, "General", textureName, mObjectRoot->mForeignObj->mModel);
+                    createObject(meshName, "General", mObjectRoot->mForeignObj->mModel, textureName);
         }
     }
 
@@ -767,6 +772,8 @@ void ForeignNpcAnimation::updateNpcBase()
         }
     }
 
+    textureName = "textures\\" + mRace->mHeadParts[ESM4::Race::Head].texture;
+
     // deprecated
     const std::vector<float>& sRaceCoeff = mRace->mSymShapeModeCoefficients;
     const std::vector<float>& aRaceCoeff = mRace->mAsymShapeModeCoefficients;
@@ -793,7 +800,8 @@ void ForeignNpcAnimation::updateNpcBase()
 
     NiModelPtr model = modelManager.getByName(mNpc->mEditorId + "_" + meshName, group);
     if (!model)
-        model = modelManager.createMorphedModel(meshName, group, mNpc, mRace, textureName, mObjectRoot->mForeignObj->mModel.get());
+        model = modelManager.createMorphedModel(meshName, group, mNpc, mRace,
+                                                mObjectRoot->mForeignObj->mModel.get(), textureName);
 
     NifOgre::ObjectScenePtr scene = NifOgre::ObjectScenePtr (new NifOgre::ObjectScene(mInsert->getCreator()));
     scene->mForeignObj
@@ -808,6 +816,7 @@ void ForeignNpcAnimation::updateNpcBase()
     std::map<int32_t, Ogre::Entity*>::const_iterator it(scene->mForeignObj->mEntities.begin());
     for (; it != scene->mForeignObj->mEntities.end(); ++it)
     {
+#if 0
         Ogre::MaterialPtr mat = scene->mMaterialControllerMgr.getWritableMaterial(it->second);
         Ogre::Material::TechniqueIterator techIter = mat->getTechniqueIterator();
         while(techIter.hasMoreElements())
@@ -1052,6 +1061,7 @@ void ForeignNpcAnimation::updateNpcBase()
 
             } // while pass
         } // while technique
+#endif
 
         it->second->shareSkeletonInstanceWith(mSkelBase);
         mInsert->attachObject(it->second);
@@ -1139,7 +1149,7 @@ void ForeignNpcAnimation::updateNpcBase()
         // FIXME: group "General"
         // FIXME: prob wrap this with a try/catch block
         mObjectParts[type] =
-                createObject(meshName, "General", "", mObjectRoot->mForeignObj->mModel);
+                createObject(meshName, "General", mObjectRoot->mForeignObj->mModel);
     }
 
     //if (mAccumRoot) mAccumRoot->setPosition(Ogre::Vector3());
@@ -1197,7 +1207,7 @@ NifOgre::ObjectScenePtr ForeignNpcAnimation::createSkinnedObject(NifOgre::Object
     NiBtOgre::NiModelManager& modelManager = NiBtOgre::NiModelManager::getSingleton();
     NiModelPtr object = modelManager.getByName(skeletonName + "_" + meshName, group);
     if (!object)
-        object = modelManager.createSkinnedModel(meshName, group, skeletonModel.get());
+        object = modelManager.createSkinnedModel(meshName, group, skeletonModel.get(),""/*FIXME*/);
 
     // create an instance of the model
     scene->mForeignObj
@@ -1212,7 +1222,7 @@ NifOgre::ObjectScenePtr ForeignNpcAnimation::createSkinnedObject(NifOgre::Object
 // NOTE: Some Helmet, Hood and Hair are not skinned (mostly not)
 //       Skinned models no not return a target bone (e.g. Clothes\RobeMage\M\Hood.NIF)
 NifOgre::ObjectScenePtr ForeignNpcAnimation::createMorphedObject(const std::string& meshName,
-        const std::string& group, const std::string& texture, NiModelPtr skeletonModel)
+        const std::string& group, NiModelPtr skeletonModel, const std::string& texture)
 {
     // FIXME: probably needs a try/catch block here
 
@@ -1221,7 +1231,7 @@ NifOgre::ObjectScenePtr ForeignNpcAnimation::createMorphedObject(const std::stri
 #if 1
     NiModelPtr object = modelManager.getByName(mNpc->mEditorId + "_" + meshName, group);
     if (!object)
-        object = modelManager.createMorphedModel(meshName, group, mNpc, mRace, texture, skeletonModel.get());
+        object = modelManager.createMorphedModel(meshName, group, mNpc, mRace, skeletonModel.get(), texture);
 #else
     // initially assume a morphed model
     NiModelPtr object = modelManager.getByName(npc->mEditorId + "_" + meshName, group);
@@ -1233,7 +1243,7 @@ NifOgre::ObjectScenePtr ForeignNpcAnimation::createMorphedObject(const std::stri
         {
             // skinned, so go ahead and create a morphed model
             object.reset();
-            object = modelManager.createMorphedModel(meshName, group, mNpc, mRace, texture, skeletonModel.get());
+            object = modelManager.createMorphedModel(meshName, group, mNpc, mRace, skeletonModel.get(), texture);
         }
     }
 #endif
@@ -1284,28 +1294,47 @@ NifOgre::ObjectScenePtr ForeignNpcAnimation::createMorphedObject(const std::stri
     return scene;
 }
 
-// uses mInsert, mSkelbase, mObjectRoot (or skeletonModel)
+// uses mRace, mInsert, mSkelbase, mObjectRoot (or skeletonModel)
+//
+// NOTE: We make an assumption that if texture is not empty it must be for a particular race.
+//       To make this work we need to add mRace->mEditorId to the model name, otherwise the same
+//       object for different race, e.g. hands, can't be distinguished.
+//
+//       The object may or may not be skinned (head, clothes are skinned while eyes, ears, hair are
+//       not skinned).  That means race name needs to be added in addition to the skeleton name.
 NifOgre::ObjectScenePtr ForeignNpcAnimation::createObject(const std::string& meshName,
-        const std::string& group, const std::string& texture, NiModelPtr skeletonModel)
+        const std::string& group, NiModelPtr skeletonModel, const std::string& raceTexture)
 {
     // FIXME: probably needs a try/catch block here
 
     NiBtOgre::NiModelManager& modelManager = NiBtOgre::NiModelManager::getSingleton();
 
+    std::string raceName = "";
+    if (!raceTexture.empty())
+        raceName = mRace->mEditorId + "$";
+
     // initially assume a skinned model
     std::string skeletonName = skeletonModel->getModelName();
     Misc::StringUtils::lowerCaseInPlace(skeletonName);
-    NiModelPtr model = modelManager.getByName(skeletonName + "_" + meshName, group);
+    NiModelPtr model = modelManager.getByName(raceName + skeletonName + "_" + meshName, group);
 
     // if not found just create a non-skinned model to check
     if (!model)
     {
+        // create a vanilla model to test
         model = modelManager.getOrLoadByName(meshName, group);
+
         if (model->buildData().mIsSkinned)
         {
             // was skinned after all
             model.reset();
-            model = modelManager.createSkinnedModel(meshName, group, skeletonModel.get());
+            model = modelManager.createSkinnedModel(meshName, group, skeletonModel.get(), raceName, raceTexture);
+        }
+        else if (!raceName.empty())
+        {
+            // not skinned but still need a race variant (e.g. hands)
+            model.reset();
+            model = modelManager.createManualModel(meshName, group, raceName, raceTexture);
         }
     }
 
@@ -1358,15 +1387,43 @@ bool ForeignNpcAnimation::equipClothes(const ESM4::Clothing* cloth, bool isFemal
     // CLOT only in TES4
     int type = cloth->mClothingFlags & 0xffff; // remove general flags high bits
 
+    // Some clothes show exposed skin - these textures need to be repladed with appropriate textures
+    // from the RACE records.  Unfortunately it is not possible to know in advance whether a replace
+    // ment will be required.
+    //
+    // An alternative solution would be to get the texture while building the material.  To do so
+    // we'll need to supply a pointer to mRace.  This is not ideal since some clothes may be shared
+    // across many different races.
+    //
+    // NOTE: Assumed that the default textures in the NIF files are in textures\characters\imperial
+    //
+    // FIXME: only support TES4 for now
+    // FIXME: not sure if there can be more than one, e.g. upper body *and* hands
+    const std::vector<ESM4::Race::BodyPart>& bodyParts
+        = (isFemale ? mRace->mBodyPartsFemale : mRace->mBodyPartsMale);
+    int index = -1;
+    std::string raceTexture = "";
+    if ((cloth->mClothingFlags & ESM4::Armor::TES4_UpperBody) != 0)
+        index = ESM4::Race::UpperBody;
+    else if ((cloth->mClothingFlags & ESM4::Armor::TES4_LowerBody) != 0)
+        index = ESM4::Race::LowerBody;
+    else if ((cloth->mClothingFlags & ESM4::Armor::TES4_Hands) != 0)
+        index = ESM4::Race::Hands;
+    else if ((cloth->mClothingFlags & ESM4::Armor::TES4_Feet) != 0)
+        index = ESM4::Race::Feet;
+
+    if (index != -1)
+        raceTexture = "textures\\" + bodyParts[index].texture;
+
     removeIndividualPart((ESM::PartReferenceType)type);
 
     // FIXME: group "General"
-    if ((cloth->mClothingFlags & ESM4::Armor::TES4_Hair) != 0) // Hair slot
+    if ((cloth->mClothingFlags & ESM4::Armor::TES4_Hair) != 0) // Hair slot, e.g. hoods
         mObjectParts[type] =
-            createMorphedObject(meshName, "General", "", mObjectRoot->mForeignObj->mModel);
+            createMorphedObject(meshName, "General", mObjectRoot->mForeignObj->mModel);
     else
         mObjectParts[type] =
-            createObject(meshName, "General", "", mObjectRoot->mForeignObj->mModel);
+            createObject(meshName, "General", mObjectRoot->mForeignObj->mModel, raceTexture);
 
     return true;
 }
@@ -1385,15 +1442,31 @@ bool ForeignNpcAnimation::equipArmor(const ESM4::Armor* armor, bool isFemale)
     if ((armor->mGeneralFlags & ESM4::Armor::TYPE_TES4) != 0)
         type = armor->mArmorFlags & 0xffff; // remove general flags high bits
 
+    const std::vector<ESM4::Race::BodyPart>& bodyParts
+        = (isFemale ? mRace->mBodyPartsFemale : mRace->mBodyPartsMale);
+    int index = -1;
+    std::string raceTexture = "";
+    if ((armor->mArmorFlags & ESM4::Armor::TES4_UpperBody) != 0)
+        index = ESM4::Race::UpperBody;
+    else if ((armor->mArmorFlags & ESM4::Armor::TES4_LowerBody) != 0)
+        index = ESM4::Race::LowerBody;
+    else if ((armor->mArmorFlags & ESM4::Armor::TES4_Hands) != 0)
+        index = ESM4::Race::Hands;
+    else if ((armor->mArmorFlags & ESM4::Armor::TES4_Feet) != 0)
+        index = ESM4::Race::Feet;
+
+    if (index != -1)
+        raceTexture = "textures\\" + bodyParts[index].texture;
+
     removeIndividualPart((ESM::PartReferenceType)type);
 
     // FIXME: group "General"
     if ((armor->mArmorFlags & ESM4::Armor::TES4_Hair) != 0) // Hair slot
         mObjectParts[type] =
-            createMorphedObject(meshName, "General", "", mObjectRoot->mForeignObj->mModel);
+            createMorphedObject(meshName, "General", mObjectRoot->mForeignObj->mModel);
     else
         mObjectParts[type] =
-            createObject(meshName, "General", "", mObjectRoot->mForeignObj->mModel);
+            createObject(meshName, "General", mObjectRoot->mForeignObj->mModel, raceTexture);
 
     return true;
 }

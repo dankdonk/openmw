@@ -126,18 +126,39 @@ namespace NiBtOgre
                      "NiModelManager::createImpl");
     }
 
+    NiModelPtr NiModelManager::createManualModel(const Ogre::String& nif, const Ogre::String& group,
+            const Ogre::String& raceName, const Ogre::String& texture)
+    {
+        // Create manual model which calls back self to load
+        NiModelPtr pModel = createManual(raceName+nif, group, nif, this); // raceName has "$" postpended
+
+        // store parameters
+        ModelBuildInfo bInfo;
+        bInfo.type = MBT_Skinned;
+        bInfo.baseNif = nif;
+        bInfo.baseTexture = texture;
+        bInfo.raceName = raceName;
+        mModelBuildInfoMap[pModel.get()] = bInfo;
+
+        pModel->load(); // load immediately
+
+        return pModel;
+    }
+
     NiModelPtr NiModelManager::createSkinnedModel(const Ogre::String& nif, const Ogre::String& group,
-            NiModel *skeleton)
+            NiModel *skeleton, const Ogre::String& raceName, const Ogre::String& texture)
     {
         std::string skelName = boost::to_lower_copy(skeleton->getModelName());
         // Create manual model which calls back self to load
-        NiModelPtr pModel = createManual(skelName+"_"+nif, group, nif, this);
+        NiModelPtr pModel = createManual(raceName+skelName+"_"+nif, group, nif, this); // raceName has "$"
 
         // store parameters
         ModelBuildInfo bInfo;
         bInfo.type = MBT_Skinned;
         bInfo.baseNif = nif;
         bInfo.skel = skeleton; // TODO: throw exeption if no skeleton?
+        bInfo.raceName = raceName;
+        bInfo.baseTexture = texture;
         bInfo.skelNif = skeleton->getModelName();
         bInfo.skelGroup = skeleton->getOgreGroup();
         mModelBuildInfoMap[pModel.get()] = bInfo;
@@ -164,7 +185,7 @@ namespace NiBtOgre
     }
 
     NiModelPtr NiModelManager::createMorphedModel(const Ogre::String& nif, const Ogre::String& group,
-            const ESM4::Npc *npc, const ESM4::Race *race, const Ogre::String& texture, NiModel *skeleton)
+            const ESM4::Npc *npc, const ESM4::Race *race, NiModel *skeleton, const Ogre::String& texture)
     {
         // Create manual model which calls back self to load
         NiModelPtr pModel = createManual(npc->mEditorId + "_" + nif, group, nif, this);
@@ -246,6 +267,7 @@ namespace NiBtOgre
         switch(bInfo.type)
         {
             case MBT_Object:
+                loadManualModel(model, bInfo);
                 break;
             case MBT_Skinned:
                 loadManualSkinnedModel(model, bInfo);
@@ -266,6 +288,14 @@ namespace NiBtOgre
         }
     }
 
+    void NiModelManager::loadManualModel(NiModel* pModel, const ModelBuildInfo& bInfo)
+    {
+        if (!bInfo.baseTexture.empty())
+            pModel->setSkinTexture(bInfo.baseTexture);
+        pModel->createMesh(false/*isMorphed*/);
+        pModel->buildModel();
+    }
+
     void NiModelManager::loadManualSkinnedModel(NiModel* pModel, const ModelBuildInfo& bInfo)
     {
         Ogre::SkeletonPtr skel;
@@ -280,6 +310,8 @@ namespace NiBtOgre
             skel = skelModel->getSkeleton();
         }
 
+        if (!bInfo.baseTexture.empty())
+            pModel->setSkinTexture(bInfo.baseTexture);
         pModel->createMesh(false, skel);
         pModel->buildSkinnedModel(skel);
     }
@@ -288,7 +320,7 @@ namespace NiBtOgre
     {
         pModel->findBoneNodes(true/*buildObjectPalette*/);
         pModel->buildSkeleton(true/*load*/);
-        pModel->createMesh(false);
+        pModel->createMesh(false/*isMorphed*/);
         if (!pModel->buildData().mMeshBuildList.empty())
         {
             pModel->buildModel(); // this skeleton may have controllers
@@ -305,11 +337,10 @@ namespace NiBtOgre
         const std::vector<float>& sTCoeff = bInfo.npc->mSymTextureModeCoefficients;
 
         FgLib::FgSam sam;
-        bool res = sam.buildMorphedVertices(pModel, bInfo.baseNif, sRaceCoeff, aRaceCoeff, sCoeff, aCoeff);
-
+        std::string normalTexture;
         // if EGM and TRI both found, build morphed vertices
         // NOTE: some helmets do not have an associated EGM, e.g. "Armor\Daedric\M\Helmet.NIF"
-        if (res)
+        if (sam.buildMorphedVertices(pModel, bInfo.baseNif, sRaceCoeff, aRaceCoeff, sCoeff, aCoeff))
         {
             // special material for headhuman.dds
             if (bInfo.bodyPart == 0/*head*/ && bInfo.baseNif.find("headhuman.nif") != std::string::npos)
@@ -323,7 +354,7 @@ namespace NiBtOgre
                 if (pos == std::string::npos)
                     return; // FIXME: should throw
 
-                std::string normalTexture = detailTexture.substr(0, pos) + "_n.dds";
+                /*std::string*/ normalTexture = detailTexture.substr(0, pos) + "_n.dds";
 
                 // FIXME: do stuff here including morphed textue
 
@@ -337,7 +368,7 @@ namespace NiBtOgre
                     return; // FIXME: should throw
 
                 std::string texture = bInfo.baseTexture.substr(0, pos);
-                std::string normalTexture = texture + "_n.dds";
+                /*std::string*/ normalTexture = texture + "_n.dds";
                 std::string heightMap = texture + "_hh.dds";  // NOTE: apparently only the R channel needed?
                 std::string layerMap = texture + "_hl.dds";
 
@@ -383,6 +414,8 @@ namespace NiBtOgre
         //if (pModel->targetBone() != "") // this should also work
         if (!pModel->buildData().mIsSkinned)
         {
+            if (!bInfo.baseTexture.empty())
+                pModel->setSkinTexture(bInfo.baseTexture);
             pModel->createMesh(true/*isMorphed*/);
             pModel->buildModel();
         }
@@ -399,6 +432,10 @@ namespace NiBtOgre
                 NiModelPtr skelModel = getByName(bInfo.skelNif, bInfo.skelGroup);
                 skel = skelModel->getSkeleton();
             }
+
+            // FIXME: temp for testing only, we should create a material instead
+            if (!bInfo.baseTexture.empty())
+                pModel->setSkinTexture(bInfo.baseTexture);
 
             pModel->createMesh(true/*isMorphed*/, skel);
             pModel->buildSkinnedModel(skel);

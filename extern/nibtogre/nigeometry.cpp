@@ -31,6 +31,8 @@
 #include <stdexcept>
 #include <iostream> // FIXME: debugging only
 
+#include <boost/algorithm/string.hpp>
+
 #include <OgreMesh.h>
 #include <OgreSubMesh.h>
 #include <OgreHardwareBufferManager.h>
@@ -206,10 +208,52 @@ std::string NiBtOgre::NiTriBasedGeom::getMaterial()
         }
     }
 
+    // if an external texture was supplied overwrite texture property
+    // but only if it is an exposed skin - currently not aware of an easy way of identifying
+    // such texture, so we have to resort to a text search
+    std::string skinTexture = mParent.getSkinTexture();
+    bool useExt = false;
+    if (!skinTexture.empty() &&
+        mOgreMaterial.texName.find(NiTexturingProperty::Texture_Base) != mOgreMaterial.texName.end())
+    {
+        // WARN: we rely on getMaterial() being called *after* the sub-meshes have been built
+        if (mSkinInstanceRef == -1 && mData.mMeshBuildList.size() == 1 && mParent.numSubMeshChildren() == 1)
+        {
+            // if we're the only one then force replace
+            // FIXME: this does not work for Clothing\MiddleClass\04\M\Pants.NIF
+            //        we need to force only for body/head parts
+            //        NOTE: eyes, ears, hair are not skinned (but head is)
+            mOgreMaterial.setExternalTexture(skinTexture); // TODO: ears need morphing
+            useExt = true;
+        }
+        else if (mSkinInstanceRef != -1) // other clothes should all be skinned?
+        {
+            // replace only if the base texture "look" like a skin
+            std::string texture = mOgreMaterial.texName[NiTexturingProperty::Texture_Base];
+            boost::to_lower(texture);
+
+            // surely there is a beter way?  most unlikely to work with texture replacement MODS
+            if (texture.find("imperial") != std::string::npos &&
+                (texture.find("upperbody") != std::string::npos || // TODO: need morphing
+                 texture.find("hand") != std::string::npos ||
+                 texture.find("foot") != std::string::npos ||
+                 texture.find("leg") != std::string::npos || // TODO: need morphing
+                 texture.find("head") != std::string::npos || // FIXME: will be moved to material
+                 texture.find("lowerbody") != std::string::npos)
+            )
+            {
+                mOgreMaterial.setExternalTexture(skinTexture);
+                useExt = true;
+            }
+        }
+    }
+
     // now the sub-mesh knows about *all* the properties, retrieve or create a material
     // NOTE: needs a unique name (in case of creation) for Ogre MaterialManager
     // TODO: probably don't need the parent node name, commented out for now
-    return mOgreMaterial.getOrCreateMaterial(mModel.getModelName()+"@"+/*mParent->getNodeName()+":"+*/
+    return mOgreMaterial.getOrCreateMaterial((useExt ? skinTexture+"_" : "")+
+                                             mModel.getModelName()+
+                                             "@"+/*mParent->getNodeName()+":"+*/
                                              mModel.indexToString(NiObjectNET::getNameIndex()));
 }
 

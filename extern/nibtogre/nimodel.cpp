@@ -200,6 +200,23 @@ void NiBtOgre::NiModel::findBoneNodes(bool buildObjectPalette, size_t rootIndex)
     }
 }
 
+void NiBtOgre::NiModel::setSkinTexture(const std::string& texture)
+{
+    // see if we built the meshes already
+    if (!mMeshes.empty())
+        throw std::logic_error("NiModel: too late to set the texture to build the mesh");
+
+    // NOTE: the texture may be used to replace the exposed skin
+    // validate that there is only one sub-mesh for the texture
+    //if (mBuildData.mMeshBuildList.size() != 1)
+        //throw std::logic_error("NiModel: tooo many NiTriBasedGeom to set the texture");
+
+    // do it for all meshes just in case - unfortunately can't predict which ones will need it
+    std::map<NiNodeRef, NiNode*>::iterator iter;
+    for (iter = mBuildData.mMeshBuildList.begin(); iter != mBuildData.mMeshBuildList.end(); ++iter)
+        iter->second->setSkinTexture(texture);
+}
+
 // There are several types of NIFs that have more than one Mesh/Entity:
 //
 // 1. Skinned with a Skeleton

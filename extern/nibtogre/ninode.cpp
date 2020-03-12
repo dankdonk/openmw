@@ -62,7 +62,7 @@ NiBtOgre::BSFadeNode::BSFadeNode(uint32_t index, NiStream *stream, const NiModel
 // Bipeds seems to have a predefined list of bones. See: meshes/armor/legion/m/cuirass.nif
 NiBtOgre::NiNode::NiNode(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiAVObject(index, stream, model, data)
-    , mNodeName(model.indexToString(NiObjectNET::mNameIndex)), mData(data)
+    , mNodeName(model.indexToString(NiObjectNET::mNameIndex)), mData(data), mSkinTexture("")
 {
     //stream->readVector<NiAVObjectRef>(mChildren);
     std::uint32_t numChildren = 0;

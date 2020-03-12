@@ -59,6 +59,8 @@ namespace NiBtOgre
         {
         }
 
+        void setExternalTexture(const std::string& texture);
+
         std::string getOrCreateMaterial(const std::string& name);
 
         bool needTangents() const { return mNeedTangents; }

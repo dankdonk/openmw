@@ -118,10 +118,10 @@ private:
             const std::string& meshName, const std::string& group, NiModelPtr skeletonModel);
 
     NifOgre::ObjectScenePtr createMorphedObject(const std::string& meshName,
-            const std::string& group, const Ogre::String& texture, NiModelPtr skeletonModel);
+            const std::string& group, NiModelPtr skeletonModel, const Ogre::String& texture = "");
 
     NifOgre::ObjectScenePtr createObject(const std::string& meshName,
-            const std::string& group, const std::string& texture, NiModelPtr skeletonModel);
+            const std::string& group , NiModelPtr skeletonModel, const std::string& texture = "");
 
     bool equipArmor(const ESM4::Armor* armor, bool isFemale);
     bool equipClothes(const ESM4::Clothing* cloth, bool isFemale);

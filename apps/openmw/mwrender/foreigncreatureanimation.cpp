@@ -147,7 +147,8 @@ ForeignCreatureAnimation::ForeignCreatureAnimation(const MWWorld::Ptr &ptr, cons
             {
                 // was skinned after all
                 object.reset();
-                object = modelManager.createSkinnedModel(meshName, group, mObjectRoot->mForeignObj->mModel.get());
+                object = modelManager.createSkinnedModel(meshName,
+                    group, mObjectRoot->mForeignObj->mModel.get(),""/*no race for creatures?*/);
             }
         }
 

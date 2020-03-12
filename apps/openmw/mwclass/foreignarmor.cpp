@@ -152,14 +152,20 @@ namespace MWClass
 
     int ForeignArmor::getValue (const MWWorld::Ptr& ptr) const
     {
-        MWWorld::LiveCellRef<ESM4::Armor> *ref =
-            ptr.get<ESM4::Armor>();
+        MWWorld::LiveCellRef<ESM4::Armor> *ref = ptr.get<ESM4::Armor>();
 
         int value = ref->mBase->mData.value;
         if (ptr.getCellRef().getGoldValue() > 1 && ptr.getRefData().getCount() == 1)
             value = ptr.getCellRef().getGoldValue();
 
         return value;
+    }
+
+    float ForeignArmor::getArmorRating (const MWWorld::Ptr& ptr) const
+    {
+        MWWorld::LiveCellRef<ESM4::Armor> *ref = ptr.get<ESM4::Armor>();
+
+        return ref->mBase->mData.armor / 100;
     }
 
     void ForeignArmor::registerSelf()

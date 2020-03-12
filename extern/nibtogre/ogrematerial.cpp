@@ -29,6 +29,7 @@
 #include <boost/functional/hash.hpp>
 
 #include <OgreMaterialManager.h>
+#include <OgreResourceGroupManager.h>
 
 #include <extern/shiny/Main/Factory.hpp>
 
@@ -103,6 +104,19 @@ static void setTextureProperties(sh::MaterialInstance* material,
 namespace NiBtOgre
 {
 std::map<size_t, std::string> OgreMaterial::sMaterialMap;
+
+void NiBtOgre::OgreMaterial::setExternalTexture(const std::string& texture)
+{
+    texName[NiTexturingProperty::Texture_Base] = texture;
+
+    size_t pos = texture.find_last_of(".");
+    if (pos == std::string::npos)
+        return; // FIXME: should throw
+
+    std::string normalTexture = texture.substr(0, pos) + "_n.dds";
+    if (Ogre::ResourceGroupManager::getSingleton().resourceExistsInAnyGroup(normalTexture))
+        texName[NiTexturingProperty::Texture_BumpMap] = normalTexture;
+}
 
 //
 //

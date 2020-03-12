@@ -160,6 +160,11 @@ namespace MWClass
         return value;
     }
 
+    float ForeignClothing::getArmorRating (const MWWorld::Ptr& ptr) const
+    {
+        return 0;
+    }
+
     void ForeignClothing::registerSelf()
     {
         boost::shared_ptr<Class> instance (new ForeignClothing);

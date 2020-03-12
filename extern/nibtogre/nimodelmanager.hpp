@@ -89,6 +89,7 @@ namespace NiBtOgre
             Ogre::String skelNif;
             Ogre::String skelGroup;
             ModelBodyPart bodyPart;
+            Ogre::String raceName; // TODO: derive from race instead? (then we need race)
             Ogre::String baseNif;
             Ogre::String baseTexture;
         };
@@ -98,6 +99,7 @@ namespace NiBtOgre
         NiSkeletonLoader mSkeletonLoader;
         NiMeshLoader mMeshLoader;
 
+        void loadManualModel(NiModel* pModel, const ModelBuildInfo& params);
         void loadManualSkinnedModel(NiModel* pModel, const ModelBuildInfo& params);
         void loadManualSkeletonModel(NiModel* pModel, const ModelBuildInfo& params);
         void loadManualMorphedModel(NiModel* pModel, const ModelBuildInfo& params);
@@ -123,13 +125,16 @@ namespace NiBtOgre
 
         void loadResource(Ogre::Resource* res);
 
+        NiModelPtr createManualModel(const Ogre::String& name, const Ogre::String& group,
+                const Ogre::String& raceName, const Ogre::String& texture = "");
+
         NiModelPtr createSkinnedModel(const Ogre::String& name, const Ogre::String& group,
-                NiModel *skeleton);
+                NiModel *skeleton, const Ogre::String& raceName, const Ogre::String& texture = "");
 
         NiModelPtr createSkeletonModel(const Ogre::String& name, const Ogre::String& group);
 
         NiModelPtr createMorphedModel(const Ogre::String& nif, const Ogre::String& group,
-                const ESM4::Npc *npc, const ESM4::Race *race, const Ogre::String& texture, NiModel *skeleton);
+                const ESM4::Npc *npc, const ESM4::Race *race, NiModel *skeleton, const Ogre::String& texture = "");
 
         NiModelPtr createAnimModel(const Ogre::String& name, const Ogre::String& group,
                 NiModel *skeleton);

@@ -34,6 +34,8 @@ namespace MWClass
             virtual int getValue (const MWWorld::Ptr& ptr) const;
             ///< Return trade value of the object. Throws an exception, if the object can't be traded.
 
+            virtual float getArmorRating (const MWWorld::Ptr& ptr) const;
+
             static void registerSelf();
 
             virtual std::pair<int, std::string> canBeEquipped(const MWWorld::Ptr &ptr, const MWWorld::Ptr &npc) const;
