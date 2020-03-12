@@ -206,11 +206,6 @@ void NiBtOgre::NiModel::setSkinTexture(const std::string& texture)
     if (!mMeshes.empty())
         throw std::logic_error("NiModel: too late to set the texture to build the mesh");
 
-    // NOTE: the texture may be used to replace the exposed skin
-    // validate that there is only one sub-mesh for the texture
-    //if (mBuildData.mMeshBuildList.size() != 1)
-        //throw std::logic_error("NiModel: tooo many NiTriBasedGeom to set the texture");
-
     // do it for all meshes just in case - unfortunately can't predict which ones will need it
     std::map<NiNodeRef, NiNode*>::iterator iter;
     for (iter = mBuildData.mMeshBuildList.begin(); iter != mBuildData.mMeshBuildList.end(); ++iter)

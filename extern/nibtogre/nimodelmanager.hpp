@@ -56,6 +56,24 @@ namespace NiBtOgre
     class NiModelManager
         : public Ogre::ResourceManager, public Ogre::Singleton<NiModelManager>, public Ogre::ManualResourceLoader
     {
+    public:
+        enum ModelBodyPart
+        {
+            BP_Head        = 0,
+            BP_EarMale     = 1,
+            BP_EarFemale   = 2,
+            BP_Mouth       = 3,
+            BP_TeethLower  = 4,
+            BP_TeethUpper  = 5,
+            BP_Tongue      = 6,
+            BP_EyeLeft     = 7,
+            BP_EyeRight    = 8, // NOTE: up to here the same as ESM4::Race::HeadPartIndex
+            BP_UpperBody   = 9,
+            BP_LowerBody   = 10,
+            BP_Hair        = 11
+        };
+
+    private:
         enum ModelBuildType
         {
             MBT_Object,
@@ -63,21 +81,6 @@ namespace NiBtOgre
             MBT_Skeleton,
             MBT_Morphed,
             MBT_Anim
-        };
-
-        enum ModelBodyPart
-        {
-            Head        = 0,
-            EarMale     = 1,
-            EarFemale   = 2,
-            Mouth       = 3,
-            TeethLower  = 4,
-            TeethUpper  = 5,
-            Tongue      = 6,
-            EyeLeft     = 7,
-            EyeRight    = 8, // NOTE: up to here the same as ESM4::Race::HeadPartIndex
-            UpperBody   = 9,
-            Hair        = 10
         };
 
         struct ModelBuildInfo
@@ -134,7 +137,8 @@ namespace NiBtOgre
         NiModelPtr createSkeletonModel(const Ogre::String& name, const Ogre::String& group);
 
         NiModelPtr createMorphedModel(const Ogre::String& nif, const Ogre::String& group,
-                const ESM4::Npc *npc, const ESM4::Race *race, NiModel *skeleton, const Ogre::String& texture = "");
+                const ESM4::Npc *npc, const ESM4::Race *race, NiModel *skeleton, const Ogre::String& texture,
+                ModelBodyPart bodyPart);
 
         NiModelPtr createAnimModel(const Ogre::String& name, const Ogre::String& group,
                 NiModel *skeleton);

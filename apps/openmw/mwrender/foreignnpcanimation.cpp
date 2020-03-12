@@ -484,7 +484,7 @@ void ForeignNpcAnimation::updateNpcBase()
         NiModelPtr model = modelManager.getByName(mNpc->mEditorId+"_"+meshName, group);
         if (!model)
             model = modelManager.createMorphedModel(meshName,
-                    group, mNpc, mRace, mObjectRoot->mForeignObj->mModel.get(), textureName);
+                    group, mNpc, mRace, mObjectRoot->mForeignObj->mModel.get(), textureName, NiBtOgre::NiModelManager::BP_Hair);
 
         NifOgre::ObjectScenePtr scene
             = NifOgre::ObjectScenePtr (new NifOgre::ObjectScene(mInsert->getCreator()));
@@ -545,6 +545,7 @@ void ForeignNpcAnimation::updateNpcBase()
         if ((isFemale && index == ESM4::Race::EarMale) || (!isFemale && index == ESM4::Race::EarFemale))
             continue;
 
+        // FIXME: ears need texture morphing
         // skip ears if wearing a helmet - check for the head slot
         if ((index == ESM4::Race::EarMale || index == ESM4::Race::EarFemale) && (invHeadGear != inv.end()))
             continue;
@@ -653,6 +654,7 @@ void ForeignNpcAnimation::updateNpcBase()
         {
             case(ESM4::Race::UpperBody):
             {
+                // FIXME: human upperbody need texture morphing
                 type = ESM4::Armor::TES4_UpperBody;
                 invSlot = MWWorld::InventoryStore::Slot_ForeignUpperBody;
                 meshName = skeletonPath + (isFemale ? "female" : "") + "upperbody.nif";
@@ -660,6 +662,7 @@ void ForeignNpcAnimation::updateNpcBase()
             }
             case(ESM4::Race::LowerBody):
             {
+                // FIXME: human lowerbody need texture morphing
                 type = ESM4::Armor::TES4_LowerBody;
                 invSlot = MWWorld::InventoryStore::Slot_ForeignLowerBody;
                 meshName = skeletonPath + (isFemale ? "female" : "") + "lowerbody.nif";
@@ -801,7 +804,7 @@ void ForeignNpcAnimation::updateNpcBase()
     NiModelPtr model = modelManager.getByName(mNpc->mEditorId + "_" + meshName, group);
     if (!model)
         model = modelManager.createMorphedModel(meshName, group, mNpc, mRace,
-                                                mObjectRoot->mForeignObj->mModel.get(), textureName);
+                                                mObjectRoot->mForeignObj->mModel.get(), textureName, NiBtOgre::NiModelManager::BP_Head);
 
     NifOgre::ObjectScenePtr scene = NifOgre::ObjectScenePtr (new NifOgre::ObjectScene(mInsert->getCreator()));
     scene->mForeignObj
@@ -1231,7 +1234,8 @@ NifOgre::ObjectScenePtr ForeignNpcAnimation::createMorphedObject(const std::stri
 #if 1
     NiModelPtr object = modelManager.getByName(mNpc->mEditorId + "_" + meshName, group);
     if (!object)
-        object = modelManager.createMorphedModel(meshName, group, mNpc, mRace, skeletonModel.get(), texture);
+        object = modelManager.createMorphedModel(meshName, group, mNpc, mRace, skeletonModel.get(),
+                                                 texture, NiBtOgre::NiModelManager::BP_Mouth); // FIXME
 #else
     // initially assume a morphed model
     NiModelPtr object = modelManager.getByName(npc->mEditorId + "_" + meshName, group);

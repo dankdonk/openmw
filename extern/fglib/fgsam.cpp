@@ -164,7 +164,7 @@ namespace FgLib
 
         return texture;
     }
-
+#if 0
     // FIXME: deprecated
     bool FgSam::getMorphedVertices(std::vector<Ogre::Vector3>* fgMorphVertices,
         const std::string& nif,
@@ -280,7 +280,7 @@ namespace FgLib
 
         return true;
     }
-
+#endif
     bool FgSam::getMorphedTexture(Ogre::TexturePtr fgTexture,
                                     const std::string& mesh,
                                     const std::string& npcName, // FIXME: for debugging only

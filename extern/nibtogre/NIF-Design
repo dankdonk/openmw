@@ -2297,6 +2297,8 @@ Some clothes (and maybe armor as well?) that show exposed skin.  The textures fo
 
 Another issue is that we need a unique name for the material if we used a different external texture, since the same model could be used for a number of different races.
 
+On top of that those external textures, such as for a human Upper Body, could be morphed based on the `RACE` and `NPC_` coefficients.
+
 ## More bugs
 
 Just noticed that Baurus stopped wearing his armor from around 06/03/20. **FIXED:** Blades armor have zero value - had to compare Armor Rating before comparing value.  **NOTE:** For now weapon ratings (e.g. damage) are ignored.

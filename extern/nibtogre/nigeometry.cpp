@@ -158,7 +158,7 @@ std::string NiBtOgre::NiTriBasedGeom::getMaterial()
     mOgreMaterial.vertexColor = (data->mVertexColors.size() != 0);
 
     // NiGeometry is derived from NiAVObject, so it has its own transform and properties (like NiNode)
-    for (unsigned int i = 0; i < NiAVObject::mProperty.size(); ++i)
+    for (std::size_t i = 0; i < NiAVObject::mProperty.size(); ++i)
     {
         NiProperty* property = mModel.getRef<NiProperty>(NiAVObject::mProperty[i]);
 
@@ -231,7 +231,7 @@ std::string NiBtOgre::NiTriBasedGeom::getMaterial()
             // replace only if the base texture "look" like a skin
             std::string texture = mOgreMaterial.texName[NiTexturingProperty::Texture_Base];
             boost::to_lower(texture);
-
+#if 0
             // surely there is a beter way?  most unlikely to work with texture replacement MODS
             if (texture.find("imperial") != std::string::npos &&
                 (texture.find("upperbody") != std::string::npos || // TODO: need morphing
@@ -241,6 +241,19 @@ std::string NiBtOgre::NiTriBasedGeom::getMaterial()
                  texture.find("head") != std::string::npos || // FIXME: will be moved to material
                  texture.find("lowerbody") != std::string::npos)
             )
+#else
+            bool hasVisibleSkin = false; // for visible skin sub-mesh (pants, neck area, etc)
+            for (std::size_t i = 0; i < NiAVObject::mProperty.size(); ++i)
+            {
+                NiProperty* property = mModel.getRef<NiProperty>(NiAVObject::mProperty[i]);
+
+                std::string propertyName = mModel.indexToString(property->getNameIndex());
+                if (propertyName == "skin" || propertyName == "Skin")
+                    hasVisibleSkin = true;
+            }
+
+            if (hasVisibleSkin)
+#endif
             {
                 mOgreMaterial.setExternalTexture(skinTexture);
                 useExt = true;

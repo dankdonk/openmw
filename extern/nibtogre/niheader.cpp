@@ -182,7 +182,7 @@ std::int32_t NiBtOgre::NiHeader::searchStrings(const std::string& str) const
     for (std::size_t i = 0; i < mStrings.size(); ++i)
     {
         if (mStrings[i].find(str) != std::string::npos)
-            return i;
+            return (std::int32_t)i; // compiler warning
     }
 
     return -1;
