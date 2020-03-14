@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2016, 2018, 2019 cc9cii
+  Copyright (C) 2019 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -24,45 +24,36 @@
   trial & error.  See http://en.uesp.net/wiki for details.
 
 */
-#ifndef ESM4_APPA_H
-#define ESM4_APPA_H
+#ifndef ESM4_TXST_H
+#define ESM4_TXST_H
 
 #include <string>
-#include <cstdint>
+
+#include "common.hpp"
 
 namespace ESM4
 {
     class Reader;
     class Writer;
-    typedef std::uint32_t FormId;
 
-    struct Apparatus
+    struct TextureSet
     {
-        struct Data
-        {
-            std::uint8_t  type;  // 0 = Mortar and Pestle, 1 = Alembic, 2 = Calcinator, 3 = Retort
-            std::uint32_t value; // gold
-            float         weight;
-            float         quality;
-        };
-
         FormId mFormId;       // from the header
         std::uint32_t mFlags; // from the header, see enum type RecordFlag for details
 
         std::string mEditorId;
-        std::string mFullName;
-        std::string mModel;
-        std::string mText;
-        std::string mIcon; // inventory
 
-        float mBoundRadius;
+        std::string mColorMap;
+        std::string mNormalMap;
+        std::string mEnvMask;
+        std::string mToneMap;
+        std::string mDetailMap;
+        std::string mEnvMap;
+        std::string mUnknown;
+        std::string mSpecular;
 
-        FormId mScript;
-
-        Data mData;
-
-        Apparatus();
-        virtual ~Apparatus();
+        TextureSet();
+        virtual ~TextureSet();
 
         virtual void load(ESM4::Reader& reader);
         //virtual void save(ESM4::Writer& writer) const;
@@ -71,4 +62,4 @@ namespace ESM4
     };
 }
 
-#endif // ESM4_APPA_H
+#endif // ESM4_TXST_H

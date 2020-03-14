@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2016, 2018 cc9cii
+  Copyright (C) 2016, 2018, 2019 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -36,6 +36,7 @@ ESM4::Ammo::Ammo() : mFormId(0), mFlags(0), mBoundRadius(0.f)
     mEditorId.clear();
     mFullName.clear();
     mModel.clear();
+    mText.clear();
     mIcon.clear();
 }
 
@@ -106,11 +107,24 @@ void ESM4::Ammo::load(ESM4::Reader& reader)
             case ESM4::SUB_ANAM: reader.get(mEnchantmentPoints); break;
             case ESM4::SUB_ENAM: reader.getFormId(mEnchantment); break;
             case ESM4::SUB_MODB: reader.get(mBoundRadius);  break;
+            case ESM4::SUB_DESC:
+            {
+                if (reader.hasLocalizedStrings())
+                {
+                    std::uint32_t formid;
+                    reader.get(formid);
+                    if (formid)
+                        reader.getLocalizedString(formid, mText);
+                }
+                else if (!reader.getZString(mText))
+                    throw std::runtime_error ("AMMO DESC data read error");
+
+                break;
+            }
             case ESM4::SUB_MODT:
             case ESM4::SUB_OBND:
             case ESM4::SUB_YNAM:
             case ESM4::SUB_ZNAM:
-            case ESM4::SUB_DESC:
             case ESM4::SUB_KSIZ:
             case ESM4::SUB_KWDA:
             case ESM4::SUB_MICO: // FO3

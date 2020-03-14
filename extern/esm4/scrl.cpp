@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2016, 2018, 2019 cc9cii
+  Copyright (C) 2019 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -24,32 +24,30 @@
   trial & error.  See http://en.uesp.net/wiki for details.
 
 */
-#include "appa.hpp"
+#include "scrl.hpp"
 
 #include <stdexcept>
+//#include <iostream> // FIXME: testing only
 
 #include "reader.hpp"
 //#include "writer.hpp"
 
-ESM4::Apparatus::Apparatus() : mFormId(0), mFlags(0), mBoundRadius(0.f), mScript(0)
+ESM4::Scroll::Scroll() : mFormId(0), mFlags(0)
 {
     mEditorId.clear();
     mFullName.clear();
     mModel.clear();
     mText.clear();
-    mIcon.clear();
 
-    mData.type = 0;
     mData.value = 0;
     mData.weight = 0.f;
-    mData.quality = 0.f;
 }
 
-ESM4::Apparatus::~Apparatus()
+ESM4::Scroll::~Scroll()
 {
 }
 
-void ESM4::Apparatus::load(ESM4::Reader& reader)
+void ESM4::Scroll::load(ESM4::Reader& reader)
 {
     mFormId = reader.hdr().record.id;
     reader.adjustFormId(mFormId);
@@ -66,30 +64,10 @@ void ESM4::Apparatus::load(ESM4::Reader& reader)
                 if (reader.hasLocalizedStrings())
                     reader.getLocalizedString(mFullName);
                 else if (!reader.getZString(mFullName))
-                    throw std::runtime_error ("APPA FULL data read error");
+                    throw std::runtime_error ("SCRL FULL data read error");
 
                 break;
             }
-            case ESM4::SUB_DATA:
-            {
-                if (reader.esmVersion() == ESM4::VER_094 || reader.esmVersion() == ESM4::VER_170)
-                {
-                    reader.get(mData.value);
-                    reader.get(mData.weight);
-                }
-                else
-                {
-                    reader.get(mData.type);
-                    reader.get(mData.value);
-                    reader.get(mData.weight);
-                    reader.get(mData.quality);
-                }
-                break;
-            }
-            case ESM4::SUB_ICON: reader.getZString(mIcon);  break;
-            case ESM4::SUB_MODL: reader.getZString(mModel); break;
-            case ESM4::SUB_SCRI: reader.getFormId(mScript); break;
-            case ESM4::SUB_MODB: reader.get(mBoundRadius);  break;
             case ESM4::SUB_DESC:
             {
                 if (reader.hasLocalizedStrings())
@@ -100,28 +78,43 @@ void ESM4::Apparatus::load(ESM4::Reader& reader)
                         reader.getLocalizedString(formid, mText);
                 }
                 else if (!reader.getZString(mText))
-                    throw std::runtime_error ("APPA DESC data read error");
+                    throw std::runtime_error ("SCRL DESC data read error");
 
                 break;
             }
-            case ESM4::SUB_MODT:
-            case ESM4::SUB_OBND:
-            case ESM4::SUB_QUAL:
+            case ESM4::SUB_DATA:
             {
-                //std::cout << "APPA " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
+                reader.get(mData.value);
+                reader.get(mData.weight);
+                break;
+            }
+            case ESM4::SUB_MODL: reader.getZString(mModel); break;
+            //case ESM4::SUB_MODB: reader.get(mBoundRadius);  break;
+            case ESM4::SUB_OBND:
+            case ESM4::SUB_CTDA:
+            case ESM4::SUB_EFID:
+            case ESM4::SUB_EFIT:
+            case ESM4::SUB_ETYP:
+            case ESM4::SUB_KSIZ:
+            case ESM4::SUB_KWDA:
+            case ESM4::SUB_MDOB:
+            case ESM4::SUB_MODT:
+            case ESM4::SUB_SPIT:
+            {
+                //std::cout << "SCRL " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
                 reader.skipSubRecordData();
                 break;
             }
             default:
-                throw std::runtime_error("ESM4::APPA::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
+                throw std::runtime_error("ESM4::SCRL::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
         }
     }
 }
 
-//void ESM4::Apparatus::save(ESM4::Writer& writer) const
+//void ESM4::Scroll::save(ESM4::Writer& writer) const
 //{
 //}
 
-//void ESM4::Apparatus::blank()
+//void ESM4::Scroll::blank()
 //{
 //}

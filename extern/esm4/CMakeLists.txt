@@ -1,5 +1,5 @@
 #
-#  Copyright (C) 2016-2018 cc9cii
+#  Copyright (C) 2016-2019 cc9cii
 #
 #  This software is provided 'as-is', without any express or implied
 #  warranty.  In no event will the authors be held liable for any damages
@@ -69,6 +69,18 @@ set(ESM4_SOURCE_FILES
     sbsp.cpp
     race.cpp
     clas.cpp
+    lvln.cpp
+    idlm.cpp
+    mstt.cpp
+    txst.cpp
+    scrl.cpp
+    arma.cpp
+    hdpt.cpp
+    term.cpp
+    tact.cpp
+    note.cpp
+    bptd.cpp
+    scpt.cpp
     formid.cpp
     reader.cpp
 )

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2016, 2018, 2020 cc9cii
+  Copyright (C) 2019 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -24,33 +24,30 @@
   trial & error.  See http://en.uesp.net/wiki for details.
 
 */
-#include "hair.hpp"
+#include "idlm.hpp"
 
 #include <stdexcept>
-//#include <iostream> // FIXME: for debugging only
+//#include <iostream> // FIXME: testing only
 
 #include "reader.hpp"
 //#include "writer.hpp"
 
-ESM4::Hair::Hair() : mFormId(0), mFlags(0), mBoundRadius(0.f)
+ESM4::IdleMarker::IdleMarker() : mFormId(0), mFlags(0), mIdleFlags(0), mIdleCount(0), mIdleTimer(0.f), mIdleAnim(0)
 {
     mEditorId.clear();
-    mFullName.clear();
-    mModel.clear();
-    mIcon.clear();
-
-    mData.flags = 0;
 }
 
-ESM4::Hair::~Hair()
+ESM4::IdleMarker::~IdleMarker()
 {
 }
 
-void ESM4::Hair::load(ESM4::Reader& reader)
+void ESM4::IdleMarker::load(ESM4::Reader& reader)
 {
     mFormId = reader.hdr().record.id;
     reader.adjustFormId(mFormId);
     mFlags  = reader.hdr().record.flags;
+
+    std::uint32_t esmVer = reader.esmVersion();
 
     while (reader.getSubRecordHeader())
     {
@@ -58,27 +55,48 @@ void ESM4::Hair::load(ESM4::Reader& reader)
         switch (subHdr.typeId)
         {
             case ESM4::SUB_EDID: reader.getZString(mEditorId); break;
-            case ESM4::SUB_FULL: reader.getZString(mFullName); break;
-            case ESM4::SUB_MODL: reader.getZString(mModel); break;
-            case ESM4::SUB_ICON: reader.getZString(mIcon);  break;
-            case ESM4::SUB_DATA: reader.get(mData);         break;
-            case ESM4::SUB_MODB: reader.get(mBoundRadius);  break;
-            case ESM4::SUB_MODT:
+            case ESM4::SUB_IDLF: reader.get(mIdleFlags);       break;
+            case ESM4::SUB_IDLC:
             {
-                //std::cout << "HAIR " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
+                if (subHdr.dataSize != 1) // FO3 can have 4?
+                {
+                    reader.skipSubRecordData();
+                    break;
+                }
+
+                reader.get(mIdleCount);
+                break;
+            }
+            case ESM4::SUB_IDLT: reader.get(mIdleTimer);       break;
+            case ESM4::SUB_IDLA:
+            {
+                if (esmVer == ESM4::VER_094) // FO3? 4 or 8 bytes
+                {
+                    reader.skipSubRecordData();
+                    break;
+                }
+
+                mIdleAnim.resize(mIdleCount);
+                for (unsigned int i = 0; i < static_cast<unsigned int>(mIdleCount); ++i)
+                    reader.get(mIdleAnim.at(i));
+                break;
+            }
+            case ESM4::SUB_OBND: // object bounds
+            {
+                //std::cout << "IDLM " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
                 reader.skipSubRecordData();
                 break;
             }
             default:
-                throw std::runtime_error("ESM4::HAIR::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
+                throw std::runtime_error("ESM4::IDLM::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
         }
     }
 }
 
-//void ESM4::Hair::save(ESM4::Writer& writer) const
+//void ESM4::IdleMarker::save(ESM4::Writer& writer) const
 //{
 //}
 
-//void ESM4::Hair::blank()
+//void ESM4::IdleMarker::blank()
 //{
 //}

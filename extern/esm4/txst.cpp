@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2016, 2018, 2020 cc9cii
+  Copyright (C) 2019 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -24,29 +24,32 @@
   trial & error.  See http://en.uesp.net/wiki for details.
 
 */
-#include "hair.hpp"
+#include "txst.hpp"
 
 #include <stdexcept>
-//#include <iostream> // FIXME: for debugging only
+#include <iostream> // FIXME: testing only
 
 #include "reader.hpp"
 //#include "writer.hpp"
 
-ESM4::Hair::Hair() : mFormId(0), mFlags(0), mBoundRadius(0.f)
+ESM4::TextureSet::TextureSet() : mFormId(0), mFlags(0)
 {
     mEditorId.clear();
-    mFullName.clear();
-    mModel.clear();
-    mIcon.clear();
-
-    mData.flags = 0;
+    mColorMap.clear();
+    mNormalMap.clear();
+    mEnvMask.clear();
+    mToneMap.clear();
+    mDetailMap.clear();
+    mEnvMap.clear();
+    mUnknown.clear();
+    mSpecular.clear();
 }
 
-ESM4::Hair::~Hair()
+ESM4::TextureSet::~TextureSet()
 {
 }
 
-void ESM4::Hair::load(ESM4::Reader& reader)
+void ESM4::TextureSet::load(ESM4::Reader& reader)
 {
     mFormId = reader.hdr().record.id;
     reader.adjustFormId(mFormId);
@@ -58,27 +61,32 @@ void ESM4::Hair::load(ESM4::Reader& reader)
         switch (subHdr.typeId)
         {
             case ESM4::SUB_EDID: reader.getZString(mEditorId); break;
-            case ESM4::SUB_FULL: reader.getZString(mFullName); break;
-            case ESM4::SUB_MODL: reader.getZString(mModel); break;
-            case ESM4::SUB_ICON: reader.getZString(mIcon);  break;
-            case ESM4::SUB_DATA: reader.get(mData);         break;
-            case ESM4::SUB_MODB: reader.get(mBoundRadius);  break;
-            case ESM4::SUB_MODT:
+            case ESM4::SUB_TX00: reader.getZString(mColorMap); break;
+            case ESM4::SUB_TX01: reader.getZString(mNormalMap); break;
+            case ESM4::SUB_TX02: reader.getZString(mEnvMask); break;
+            case ESM4::SUB_TX03: reader.getZString(mToneMap); break;
+            case ESM4::SUB_TX04: reader.getZString(mDetailMap); break;
+            case ESM4::SUB_TX05: reader.getZString(mEnvMap); break;
+            case ESM4::SUB_TX06: reader.getZString(mUnknown); break;
+            case ESM4::SUB_TX07: reader.getZString(mSpecular); break;
+            case ESM4::SUB_DNAM:
+            case ESM4::SUB_DODT:
+            case ESM4::SUB_OBND: // object bounds
             {
-                //std::cout << "HAIR " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
+                //std::cout << "TXST " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
                 reader.skipSubRecordData();
                 break;
             }
             default:
-                throw std::runtime_error("ESM4::HAIR::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
+                throw std::runtime_error("ESM4::TXST::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
         }
     }
 }
 
-//void ESM4::Hair::save(ESM4::Writer& writer) const
+//void ESM4::TextureSet::save(ESM4::Writer& writer) const
 //{
 //}
 
-//void ESM4::Hair::blank()
+//void ESM4::TextureSet::blank()
 //{
 //}

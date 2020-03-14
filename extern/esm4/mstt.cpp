@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2016, 2018, 2020 cc9cii
+  Copyright (C) 2019 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -24,29 +24,25 @@
   trial & error.  See http://en.uesp.net/wiki for details.
 
 */
-#include "hair.hpp"
+#include "mstt.hpp"
 
 #include <stdexcept>
-//#include <iostream> // FIXME: for debugging only
+//#include <iostream> // FIXME: testing only
 
 #include "reader.hpp"
 //#include "writer.hpp"
 
-ESM4::Hair::Hair() : mFormId(0), mFlags(0), mBoundRadius(0.f)
+ESM4::MovableStatic::MovableStatic() : mFormId(0), mFlags(0), mData(0), mLoopingSound(0)
 {
     mEditorId.clear();
-    mFullName.clear();
     mModel.clear();
-    mIcon.clear();
-
-    mData.flags = 0;
 }
 
-ESM4::Hair::~Hair()
+ESM4::MovableStatic::~MovableStatic()
 {
 }
 
-void ESM4::Hair::load(ESM4::Reader& reader)
+void ESM4::MovableStatic::load(ESM4::Reader& reader)
 {
     mFormId = reader.hdr().record.id;
     reader.adjustFormId(mFormId);
@@ -58,27 +54,34 @@ void ESM4::Hair::load(ESM4::Reader& reader)
         switch (subHdr.typeId)
         {
             case ESM4::SUB_EDID: reader.getZString(mEditorId); break;
-            case ESM4::SUB_FULL: reader.getZString(mFullName); break;
-            case ESM4::SUB_MODL: reader.getZString(mModel); break;
-            case ESM4::SUB_ICON: reader.getZString(mIcon);  break;
-            case ESM4::SUB_DATA: reader.get(mData);         break;
-            case ESM4::SUB_MODB: reader.get(mBoundRadius);  break;
-            case ESM4::SUB_MODT:
+            case ESM4::SUB_MODL: reader.getZString(mModel);    break;
+            case ESM4::SUB_DATA: reader.get(mData);            break;
+            case ESM4::SUB_SNAM: reader.get(mLoopingSound);    break;
+            case ESM4::SUB_DEST: // destruction data
+            case ESM4::SUB_OBND: // object bounds
+            case ESM4::SUB_MODT: // model texture data
+            case ESM4::SUB_DMDL:
+            case ESM4::SUB_DMDT:
+            case ESM4::SUB_DSTD:
+            case ESM4::SUB_DSTF:
+            case ESM4::SUB_MODS:
+            case ESM4::SUB_FULL:
+            case ESM4::SUB_MODB:
             {
-                //std::cout << "HAIR " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
+                //std::cout << "MSTT " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
                 reader.skipSubRecordData();
                 break;
             }
             default:
-                throw std::runtime_error("ESM4::HAIR::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
+                throw std::runtime_error("ESM4::MSTT::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
         }
     }
 }
 
-//void ESM4::Hair::save(ESM4::Writer& writer) const
+//void ESM4::MovableStatic::save(ESM4::Writer& writer) const
 //{
 //}
 
-//void ESM4::Hair::blank()
+//void ESM4::MovableStatic::blank()
 //{
 //}

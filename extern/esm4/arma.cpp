@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2016, 2018, 2020 cc9cii
+  Copyright (C) 2019 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -24,29 +24,24 @@
   trial & error.  See http://en.uesp.net/wiki for details.
 
 */
-#include "hair.hpp"
+#include "arma.hpp"
 
 #include <stdexcept>
-//#include <iostream> // FIXME: for debugging only
+//#include <iostream> // FIXME: testing only
 
 #include "reader.hpp"
 //#include "writer.hpp"
 
-ESM4::Hair::Hair() : mFormId(0), mFlags(0), mBoundRadius(0.f)
+ESM4::ArmorAddon::ArmorAddon() : mFormId(0), mFlags(0)
 {
     mEditorId.clear();
-    mFullName.clear();
-    mModel.clear();
-    mIcon.clear();
-
-    mData.flags = 0;
 }
 
-ESM4::Hair::~Hair()
+ESM4::ArmorAddon::~ArmorAddon()
 {
 }
 
-void ESM4::Hair::load(ESM4::Reader& reader)
+void ESM4::ArmorAddon::load(ESM4::Reader& reader)
 {
     mFormId = reader.hdr().record.id;
     reader.adjustFormId(mFormId);
@@ -58,27 +53,52 @@ void ESM4::Hair::load(ESM4::Reader& reader)
         switch (subHdr.typeId)
         {
             case ESM4::SUB_EDID: reader.getZString(mEditorId); break;
-            case ESM4::SUB_FULL: reader.getZString(mFullName); break;
-            case ESM4::SUB_MODL: reader.getZString(mModel); break;
-            case ESM4::SUB_ICON: reader.getZString(mIcon);  break;
-            case ESM4::SUB_DATA: reader.get(mData);         break;
-            case ESM4::SUB_MODB: reader.get(mBoundRadius);  break;
-            case ESM4::SUB_MODT:
+            case ESM4::SUB_RNAM:
+            case ESM4::SUB_BODT:
+            case ESM4::SUB_DNAM:
+            case ESM4::SUB_MO2S:
+            case ESM4::SUB_MO2T:
+            case ESM4::SUB_MO3S:
+            case ESM4::SUB_MO3T:
+            case ESM4::SUB_MO4S:
+            case ESM4::SUB_MO4T:
+            case ESM4::SUB_MO5T:
+            case ESM4::SUB_MOD2:
+            case ESM4::SUB_MOD3:
+            case ESM4::SUB_MOD4:
+            case ESM4::SUB_MOD5:
+            case ESM4::SUB_MODL:
+            case ESM4::SUB_NAM0:
+            case ESM4::SUB_NAM1:
+            case ESM4::SUB_NAM2:
+            case ESM4::SUB_NAM3:
+            case ESM4::SUB_SNDD:
+            case ESM4::SUB_BMDT: // FO3
+            case ESM4::SUB_DATA: // FO3
+            case ESM4::SUB_ETYP: // FO3
+            case ESM4::SUB_FULL: // FO3
+            case ESM4::SUB_ICO2: // FO3
+            case ESM4::SUB_ICON: // FO3
+            case ESM4::SUB_MODD: // FO3
+            case ESM4::SUB_MODS: // FO3
+            case ESM4::SUB_MODT: // FO3
+            case ESM4::SUB_MOSD: // FO3
+            case ESM4::SUB_OBND: // FO3
             {
-                //std::cout << "HAIR " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
+                //std::cout << "ARMA " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
                 reader.skipSubRecordData();
                 break;
             }
             default:
-                throw std::runtime_error("ESM4::HAIR::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
+                throw std::runtime_error("ESM4::ARMA::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
         }
     }
 }
 
-//void ESM4::Hair::save(ESM4::Writer& writer) const
+//void ESM4::ArmorAddon::save(ESM4::Writer& writer) const
 //{
 //}
 
-//void ESM4::Hair::blank()
+//void ESM4::ArmorAddon::blank()
 //{
 //}

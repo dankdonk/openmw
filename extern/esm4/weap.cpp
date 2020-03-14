@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2016, 2018 cc9cii
+  Copyright (C) 2016, 2018, 2019 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -37,6 +37,7 @@ ESM4::Weapon::Weapon() : mFormId(0), mFlags(0), mBoundRadius(0.f), mScript(0),
     mEditorId.clear();
     mFullName.clear();
     mModel.clear();
+    mText.clear();
     mIcon.clear();
 }
 
@@ -103,13 +104,26 @@ void ESM4::Weapon::load(ESM4::Reader& reader)
             case ESM4::SUB_ANAM: reader.get(mEnchantmentPoints); break;
             case ESM4::SUB_ENAM: reader.getFormId(mEnchantment); break;
             case ESM4::SUB_MODB: reader.get(mBoundRadius);  break;
+            case ESM4::SUB_DESC:
+            {
+                if (reader.hasLocalizedStrings())
+                {
+                    std::uint32_t formid;
+                    reader.get(formid);
+                    if (formid)
+                        reader.getLocalizedString(formid, mText);
+                }
+                else if (!reader.getZString(mText))
+                    throw std::runtime_error ("WEAP DESC data read error");
+
+                break;
+            }
             case ESM4::SUB_MODT:
             case ESM4::SUB_BAMT:
             case ESM4::SUB_BIDS:
             case ESM4::SUB_INAM:
             case ESM4::SUB_CNAM:
             case ESM4::SUB_CRDT:
-            case ESM4::SUB_DESC:
             case ESM4::SUB_DNAM:
             case ESM4::SUB_EAMT:
             case ESM4::SUB_EITM:
@@ -173,7 +187,7 @@ void ESM4::Weapon::load(ESM4::Reader& reader)
             case ESM4::SUB_WNM5: // FONV
             case ESM4::SUB_WNM6: // FONV
             case ESM4::SUB_WNM7: // FONV
-            case MKTAG('E','F','S','D'): // FONV DeadMoney
+            case ESM4::SUB_EFSD: // FONV DeadMoney
             {
                 //std::cout << "WEAP " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
                 reader.skipSubRecordData();

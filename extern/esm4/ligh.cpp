@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2016, 2018 cc9cii
+  Copyright (C) 2016, 2018, 2020 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -69,6 +69,7 @@ void ESM4::Light::load(ESM4::Reader& reader)
             }
             case ESM4::SUB_DATA:
             {
+                // FIXME: TES4 might be uint32 as well, need to check
                 if (isFONV || (esmVer == ESM4::VER_094 && subHdr.dataSize == 32)/*FO3*/)
                 {
                     reader.get(mData.time);     // uint32
@@ -89,7 +90,7 @@ void ESM4::Light::load(ESM4::Reader& reader)
                     reader.get(mData.intensityAmplitude);
                     reader.get(mData.movementAmplitude);
                 }
-                else if (subHdr.dataSize == 32)
+                else if (subHdr.dataSize == 32) // TES4
                 {
                     reader.get(mData.falloff);
                     reader.get(mData.FOV);

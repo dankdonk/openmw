@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2016, 2018 cc9cii
+  Copyright (C) 2016, 2018-2020 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -44,6 +44,17 @@ namespace ESM4
             float         duration;
             std::uint32_t radius;
             std::uint32_t colour; // RGBA
+            // flags:
+            // 0x00000001 = Dynamic
+            // 0x00000002 = Can be Carried
+            // 0x00000004 = Negative
+            // 0x00000008 = Flicker
+            // 0x00000020 = Off By Default
+            // 0x00000040 = Flicker Slow
+            // 0x00000080 = Pulse
+            // 0x00000100 = Pulse Slow
+            // 0x00000200 = Spot Light
+            // 0x00000400 = Spot Shadow
             std::int32_t  flags;
             float         falloff;
             float         FOV;

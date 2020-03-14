@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2016-2018 cc9cii
+  Copyright (C) 2016-2020 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -27,21 +27,31 @@
 #include "npc_.hpp"
 
 #include <stdexcept>
+#include <iostream> // NOTE: for testing only
+#include <iomanip>  // NOTE: for testing only
 
+#include "formid.hpp" // NOTE: for testing only
 #include "reader.hpp"
 //#include "writer.hpp"
 
-ESM4::Npc::Npc() : mFormId(0), mFlags(0), mRace(0), mClass(0), mHair(0), mEyes(0), mDeathItem(0),
+ESM4::Npc::Npc() : mFormId(0), mFlags(0), mRace(0), mClass(0), mHair(0), mEyes(0), mHairLength(0.f),
+                   mDeathItem(0),
                    mScript(0), mCombatStyle(0), mSoundBase(0), mSound(0), mSoundChance(0),
-                   mFootWeight(0.f), mBoundRadius(0.f)
+                   mFootWeight(0.f), mBoundRadius(0.f), mBaseTemplate(0), mWornArmor(0), mFgRace(0)
 {
     mEditorId.clear();
     mFullName.clear();
     mModel.clear();
 
+    mHairColour.red = 0;
+    mHairColour.green = 0;
+    mHairColour.blue = 0;
+    mHairColour.custom = 0;
+
     std::memset(&mAIData, 0, sizeof(AIData));
     std::memset(&mData, 0, sizeof(Data));
     std::memset(&mBaseConfig, 0, sizeof(ActorBaseConfig));
+    std::memset(&mActorBaseConfig, 0, sizeof(ACBS));
     std::memset(&mFaction, 0, sizeof(ActorFaction));
 }
 
@@ -147,8 +157,14 @@ void ESM4::Npc::load(ESM4::Reader& reader)
             case ESM4::SUB_CSCR: reader.getFormId(mSoundBase);   break;
             case ESM4::SUB_CSDI: reader.getFormId(mSound);       break;
             case ESM4::SUB_CSDC: reader.get(mSoundChance); break;
-            case ESM4::SUB_WNAM: reader.get(mFootWeight);  break;
-            //
+            case ESM4::SUB_WNAM:
+            {
+                if (reader.esmVersion() == ESM4::VER_094 || reader.esmVersion() == ESM4::VER_170)
+                    reader.get(mWornArmor);
+                else
+                    reader.get(mFootWeight);
+                break;
+            }
             case ESM4::SUB_MODB: reader.get(mBoundRadius); break;
             case ESM4::SUB_KFFZ:
             {
@@ -167,12 +183,48 @@ void ESM4::Npc::load(ESM4::Reader& reader)
 
                 break;
             }
-            case ESM4::SUB_LNAM:
+            case ESM4::SUB_LNAM: reader.get(mHairLength); break;
             case ESM4::SUB_HCLR:
+            {
+                reader.get(mHairColour.red);
+                reader.get(mHairColour.green);
+                reader.get(mHairColour.blue);
+                reader.get(mHairColour.custom);
+
+                break;
+            }
+            case ESM4::SUB_TPLT: reader.get(mBaseTemplate); break;
             case ESM4::SUB_FGGS:
+            {
+                mSymShapeModeCoefficients.resize(50);
+                for (std::size_t i = 0; i < 50; ++i)
+                    reader.get(mSymShapeModeCoefficients.at(i));
+
+                break;
+            }
             case ESM4::SUB_FGGA:
+            {
+                mAsymShapeModeCoefficients.resize(30);
+                for (std::size_t i = 0; i < 30; ++i)
+                    reader.get(mAsymShapeModeCoefficients.at(i));
+
+                break;
+            }
             case ESM4::SUB_FGTS:
+            {
+                mSymTextureModeCoefficients.resize(50);
+                for (std::size_t i = 0; i < 50; ++i)
+                    reader.get(mSymTextureModeCoefficients.at(i));
+
+                break;
+            }
             case ESM4::SUB_FNAM:
+            {
+                reader.get(mFgRace);
+                //std::cout << "race " << mEditorId << " " << mRace << std::endl; // FIXME
+                //std::cout << "fg race " << mEditorId << " " << mFgRace << std::endl; // FIXME
+                break;
+            }
             case ESM4::SUB_ATKR:
             case ESM4::SUB_COCT:
             case ESM4::SUB_CRIF:
@@ -188,7 +240,7 @@ void ESM4::Npc::load(ESM4::Reader& reader)
             case ESM4::SUB_DSTD:
             case ESM4::SUB_DSTF:
             case ESM4::SUB_FTST:
-            case ESM4::SUB_HCLF:
+            case ESM4::SUB_HCLF: // hair colour?
             case ESM4::SUB_KSIZ:
             case ESM4::SUB_KWDA:
             case ESM4::SUB_NAM5:
@@ -208,7 +260,6 @@ void ESM4::Npc::load(ESM4::Reader& reader)
             case ESM4::SUB_TINC:
             case ESM4::SUB_TINI:
             case ESM4::SUB_TINV:
-            case ESM4::SUB_TPLT:
             case ESM4::SUB_VMAD:
             case ESM4::SUB_VTCK:
             case ESM4::SUB_GNAM:
