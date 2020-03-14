@@ -1231,9 +1231,20 @@ void ForeignNpcAnimation::updateNpcBase()
                 //const Ogre::PixelBox& pixelBoxSrc = pixelBufferSrc->getCurrentLock();
 
 
-
-
-
+                Ogre::TexturePtr detailTexture = Ogre::TextureManager::getSingleton().getByName(
+                       mNpc->mEditorId+"_"+faceDetailFile,
+                       Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+                if (!detailTexture)
+                {
+                    detailTexture = Ogre::TextureManager::getSingleton().createManual(
+                        mNpc->mEditorId+"_"+faceDetailFile,
+                        Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
+                        Ogre::TEX_TYPE_2D,
+                        egt->numRows(), egt->numColumns(),
+                        0,
+                        Ogre::PF_BYTE_RGBA,
+                        Ogre::TU_DEFAULT);
+                }
                 // FIXME: this one should be passed to a shader, along with the "_1" variant
                 Ogre::TexturePtr faceDetailTexture = Ogre::TextureManager::getSingleton().getByName(
                         faceDetailFile, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
@@ -1243,8 +1254,17 @@ void ForeignNpcAnimation::updateNpcBase()
                         faceDetailFile, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
                     faceDetailTexture->load();
                 }
+                Ogre::HardwarePixelBufferSharedPtr pixelBufferDetail = detailTexture->getBuffer();
+                pixelBufferDetail->unlock(); // prepare for blit()
+                Ogre::HardwarePixelBufferSharedPtr pixelBufferDetailSrc
+                    = Ogre::static_pointer_cast<Ogre::Texture>(faceDetailTexture)->getBuffer();
+                pixelBufferDetailSrc->unlock(); // prepare for blit()
+                // if source and destination dimensions don't match, scaling is done
+                pixelBufferDetail->blit(pixelBufferDetailSrc); // FIXME: can't we just use the src?
 
-                //pixelBufferDetail->lock(Ogre::HardwareBuffer::HBL_NORMAL);
+                pixelBufferDetail->lock(Ogre::HardwareBuffer::HBL_NORMAL);
+                const Ogre::PixelBox& pixelBoxDetail = pixelBufferDetail->getCurrentLock();
+                uint8_t* pDetail = static_cast<uint8_t*>(pixelBoxDetail.data);
 
 
 
@@ -1294,10 +1314,15 @@ void ForeignNpcAnimation::updateNpcBase()
                         fb = 1.f;
                     }
 
+#if 0
                     *(pDest+0) = std::min(int((*(pDest+0)+sym.x) * fr), 255);
                     *(pDest+1) = std::min(int((*(pDest+1)+sym.y) * fg), 255);
                     *(pDest+2) = std::min(int((*(pDest+2)+sym.z) * fb), 255);
-
+#else
+                    *(pDest+0) = std::min(int(std::min(int((*(pDest+0)+sym.x)), 255)* fr * 2.f * *(pDetail+0)/255.f), 255);
+                    *(pDest+1) = std::min(int(std::min(int((*(pDest+1)+sym.y)), 255)* fg * 2.f * *(pDetail+1)/255.f), 255);
+                    *(pDest+2) = std::min(int(std::min(int((*(pDest+2)+sym.z)), 255)* fb * 2.f * *(pDetail+2)/255.f), 255);
+#endif
                     pDest += 4;
                     if (hasAgedTexture)
                         pAge += 4;

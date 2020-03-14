@@ -113,13 +113,30 @@ void NiBtOgre::BtOgreInst::instantiateBodyPart(Ogre::SceneNode *baseNode, Ogre::
         else
         {
             mTargetBone = mModel->getTargetBone(); // see if there is a target bone
-            if (mTargetBone == "SideWeapon")
-                mTargetBone = "Weapon"; // FIXME: a temporary hack to allow creatures to hold weapons
-            else if (mTargetBone == "BackWeapon")
-                mTargetBone = "Weapon";
-            else if (mTargetBone == "")
+#if 1
+            // FIXME: a temporary hack to allow creatures to hold weapons
+            if (skelBase->hasSkeleton())
+            {
+                if (mTargetBone == "SideWeapon" && !skelBase->getSkeleton()->hasBone("SideWeapon"))
+                    mTargetBone = "Weapon";
+                else if (mTargetBone == "BackWeapon" && !skelBase->getSkeleton()->hasBone("BackWeapon"))
+                    mTargetBone = "Weapon";
+            }
+
+            if (mTargetBone == "")
                 mTargetBone = "Bip01 Head"; // FIXME: just a guess, likely wrong
 
+            // hack to show weapon for goblins
+            if (mModel->getRef<NiNode>(iter->first)->getName() == "Scb"
+               && skelBase->hasSkeleton()
+               && skelBase->getSkeleton()->getName().find("haracter") == std::string::npos)
+            {
+                continue;
+            }
+#else
+            if (mTargetBone == "")
+                mTargetBone = "Bip01 Head"; // FIXME: just a guess, likely wrong
+#endif
             // TODO: do we need to from foreignnpcanimation detach later like below?
             //
             // std::map<int32_t, Ogre::Entity*>::const_iterator it
