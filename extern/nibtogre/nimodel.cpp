@@ -452,6 +452,20 @@ NiBtOgre::NiTriBasedGeom *NiBtOgre::NiModel::fgGeometry() const
     return ninode->getUniqueSubMeshChild();
 }
 
+void NiBtOgre::NiModel::fillSkinIndicies(std::map<std::string, std::vector<std::size_t> >& skinIndiciesMap) const
+{
+    std::vector<std::size_t> skinIndicies;
+
+    std::map<NiNodeRef, NiNode*>::const_iterator iter;
+    for (iter = mBuildData.mMeshBuildList.begin(); iter != mBuildData.mMeshBuildList.end(); ++iter)
+    {
+        skinIndicies.clear();
+        iter->second->getSkinIndicies(skinIndicies);
+        if (!skinIndicies.empty())
+            skinIndiciesMap.insert(std::make_pair(iter->second->getName(), skinIndicies));
+    }
+}
+
 NiBtOgre::NiNode *NiBtOgre::NiModel::skeletonRoot()
 {
     if (!mBoneRootNode)

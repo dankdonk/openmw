@@ -74,6 +74,11 @@ private:
     bool mListenerDisabled;
 
     std::vector<NifOgre::ObjectScenePtr> mHeadParts;
+    Ogre::TexturePtr mTextureHead;      // humans only
+    Ogre::TexturePtr mTextureUpperBody; // humans only
+    Ogre::TexturePtr mTextureLowerBody; // humans only
+    Ogre::TexturePtr mTextureEars;
+    std::map<Ogre::SubEntity*, Ogre::MaterialPtr> mClonedMaterials;
 
     std::map<std::uint32_t, NifOgre::ObjectScenePtr> mObjectParts; // TES4 has 16, FO3/FONV has 20 and TES5 has 32
     std::string mSoundIds[ESM::PRT_Count];
@@ -125,11 +130,16 @@ private:
 
     bool equipArmor(const ESM4::Armor* armor, bool isFemale);
     bool equipClothes(const ESM4::Clothing* cloth, bool isFemale);
+    void replaceMeshTexture(NifOgre::ObjectScenePtr scene, const std::string& npcTextureName);
+    void replaceSkinTexture(NifOgre::ObjectScenePtr scene, const std::string& npcTextureName);
+    Ogre::MaterialPtr createClonedMaterials(Ogre::SubEntity *subEntity);
+    void deleteClonedMaterials();
 
     NifOgre::ObjectScenePtr insertBoundedPart(const std::string &model, int group, const std::string &bonename,
                                               const std::string &bonefilter,
                                           bool enchantedGlow, Ogre::Vector3* glowColor=NULL);
 
+    void removeParts(ESM::PartReferenceType type);
     void removeIndividualPart(ESM::PartReferenceType type);
     void reserveIndividualPart(ESM::PartReferenceType type, int group, int priority);
 

@@ -18,6 +18,7 @@
 #include <OgreTexturemanager.h>
 #include <OgrePixelFormat.h>
 #include <OgreCommon.h> // Ogre::Box
+#include <OgreMaterialManager.h>
 
 #include <extern/shiny/Main/Factory.hpp>
 
@@ -238,6 +239,8 @@ const ForeignNpcAnimation::PartBoneMap ForeignNpcAnimation::sPartList = createPa
 
 ForeignNpcAnimation::~ForeignNpcAnimation()
 {
+    deleteClonedMaterials();
+
     if (!mListenerDisabled
             // No need to getInventoryStore() to reset, if none exists
             // This is to avoid triggering the listener via ensureCustomData()->autoEquip()->fireEquipmentChanged()
@@ -312,6 +315,17 @@ void ForeignNpcAnimation::rebuild()
 // relevant slot is already occupied by the equipped items.
 void ForeignNpcAnimation::updateNpcBase()
 {
+    // create and store morphed parts here
+    // * head is always needed
+    // * upper body & lower body textures may be used for exposed skin areas of clothes/armor
+    // * ears' textures need to be morphed
+    //
+    // eyes/hands/feet textures are not morphed - just use those specified in the RACE records
+    //
+    // hair textures?
+    //
+    // remember to destroy any cloned materials
+
     if (!mNpc || !mRace)
         return;
 
@@ -627,12 +641,23 @@ void ForeignNpcAnimation::updateNpcBase()
         //
         // TODO: to save unnecessary searches for the resources, these info should be persisted
 
-        mHeadParts.push_back(
+        if (index == 1 || index == 2) // ears use morphed textures
+        {
+            mHeadParts.push_back(
+                createMorphedObject(meshName, "General", mObjectRoot->mForeignObj->mModel));
+
+            FgLib::FgSam sam;
+            if (sam.getMorphedTexture(mTextureEars, meshName, textureName, mNpc->mEditorId,
+                                      mRace->mSymTextureModeCoefficients,
+                                      mNpc->mSymTextureModeCoefficients))
+            {
+                replaceMeshTexture(mHeadParts.back(), mTextureEars->getName());
+            }
+        }
+        else
+            mHeadParts.push_back(
                 createMorphedObject(meshName, "General", mObjectRoot->mForeignObj->mModel, textureName));
     }
-
-    //if (mNpc->mEditorId.find("alen") != std::string::npos)
-        //std::cout << "hands" << std::endl;
 
     // default meshes for upperbody /lower body/hands/feet are in the same directory as skeleton.nif
     const std::vector<ESM4::Race::BodyPart>& bodyParts
@@ -694,7 +719,44 @@ void ForeignNpcAnimation::updateNpcBase()
 
         // FIXME: group "General"
         MWWorld::ContainerStoreIterator invChest = inv.getSlot(invSlot);
-        if (invChest == inv.end()  // body part only if it is not occupied by some equipment
+        if (index == ESM4::Race::UpperBody || index == ESM4::Race::LowerBody) // build always
+        {
+            removeIndividualPart((ESM::PartReferenceType)type);
+
+            Ogre::TexturePtr& bodyTexturePtr
+                = ((index == ESM4::Race::UpperBody) ?  mTextureUpperBody : mTextureLowerBody);
+
+            // morphed texture only for humans which we detect by whether we're using headhuman.nif
+            std::string headMeshName = mRace->mHeadParts[ESM4::Race::Head].mesh;
+            Misc::StringUtils::lowerCaseInPlace(headMeshName);
+            if (headMeshName.find("headhuman") != std::string::npos)
+            {
+                mObjectParts[type] = createObject(meshName, "General", mObjectRoot->mForeignObj->mModel);
+
+                FgLib::FgSam sam;
+                std::string npcTextureName;
+                if (sam.getMorphedBodyTexture(bodyTexturePtr, meshName, textureName, mNpc->mEditorId,
+                                          mRace->mSymTextureModeCoefficients,
+                                          mNpc->mSymTextureModeCoefficients))
+                {
+                    npcTextureName = bodyTexturePtr->getName();
+                    replaceMeshTexture(mObjectParts[type], npcTextureName);
+                }
+            }
+            else // probably argonian or khajiit
+            {
+                mObjectParts[type] =
+                        createObject(meshName, "General", mObjectRoot->mForeignObj->mModel, textureName);
+
+                Ogre::ResourcePtr baseTexture = Ogre::TextureManager::getSingleton().createOrRetrieve(
+                       textureName, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME).first;
+                if (!baseTexture)
+                    return; // FIXME: throw?
+
+                bodyTexturePtr = Ogre::static_pointer_cast<Ogre::Texture>(baseTexture);
+            }
+        }
+        else if (invChest == inv.end()  // body part only if it is not occupied by some equipment
                 && meshName != "") // tail may be empty
         {
             removeIndividualPart((ESM::PartReferenceType)type);
@@ -779,39 +841,48 @@ void ForeignNpcAnimation::updateNpcBase()
 
     // deprecated
     const std::vector<float>& sRaceCoeff = mRace->mSymShapeModeCoefficients;
-    const std::vector<float>& aRaceCoeff = mRace->mAsymShapeModeCoefficients;
+    //const std::vector<float>& aRaceCoeff = mRace->mAsymShapeModeCoefficients;
     const std::vector<float>& sRaceTCoeff = mRace->mSymTextureModeCoefficients;
     const std::vector<float>& sCoeff = mNpc->mSymShapeModeCoefficients;
-    const std::vector<float>& aCoeff = mNpc->mAsymShapeModeCoefficients;
+    //const std::vector<float>& aCoeff = mNpc->mAsymShapeModeCoefficients;
     const std::vector<float>& sTCoeff = mNpc->mSymTextureModeCoefficients;
 
+    FgLib::FgSam sam;
     Ogre::Vector3 sym;
-    Ogre::Vector3 asym;
+    //Ogre::Vector3 asym;
 
-    // FIXME: need to be able to check other than oblivion.esm
-    // mName = "textures\\faces\\oblivion.esm\\0001A117_0.dds"
-    // SEBelmyneDreleth does not have a facegen texture
-    std::string textureFile = "textures\\faces\\oblivion.esm\\"+ESM4::formIdToString(mNpc->mFormId)+"_0.dds";
-    if (!Ogre::ResourceGroupManager::getSingleton().resourceExistsInAnyGroup(textureFile))
+    // aged texture only for humans which we detect by whether we're using headhuman.nif
+    std::string headMeshName = mRace->mHeadParts[ESM4::Race::Head].mesh;
+    Misc::StringUtils::lowerCaseInPlace(headMeshName);
+    bool hasAgedTexture = headMeshName.find("headhuman") != std::string::npos;
+
+    std::string ageTextureFile;
+    if (hasAgedTexture)
     {
-        std::cout << mNpc->mEditorId << " does not have a facegen texture" << std::endl;
+        ageTextureFile
+            = sam.getHeadHumanDetailTexture(meshName, sam.getAge(sRaceCoeff, sCoeff), isFemale);
 
-        return; // FIXME: a bit drastic
+        // find the corresponding normal texture
+        /*std::size_t*/ pos = ageTextureFile.find_last_of(".");
+        if (pos == std::string::npos)
+            return; // FIXME: should throw
     }
-    //else
-        //std::cout << mNpc->mEditorId << " detail " << ESM4::formIdToString(mNpc->mFormId) << std::endl;
+
+    std::string faceDetailFile
+        = sam.getNpcDetailTexture_0(ESM4::formIdToString(mNpc->mFormId));
+
 
     NiModelPtr model = modelManager.getByName(mNpc->mEditorId + "_" + meshName, group);
     if (!model)
         model = modelManager.createMorphedModel(meshName, group, mNpc, mRace,
-                                                mObjectRoot->mForeignObj->mModel.get(), textureName, NiBtOgre::NiModelManager::BP_Head);
+                        mObjectRoot->mForeignObj->mModel.get(), textureName, NiBtOgre::NiModelManager::BP_Head);
 
     NifOgre::ObjectScenePtr scene = NifOgre::ObjectScenePtr (new NifOgre::ObjectScene(mInsert->getCreator()));
     scene->mForeignObj
         = std::make_unique<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(model, mInsert->createChildSceneNode()));
     scene->mForeignObj->instantiate();
 
-    std::string targetBone = model->getTargetBone();
+    //std::string targetBone = model->getTargetBone();
 
     // get the texture from mRace
     // FIXME: for now, get if from Ogre material
@@ -819,7 +890,8 @@ void ForeignNpcAnimation::updateNpcBase()
     std::map<int32_t, Ogre::Entity*>::const_iterator it(scene->mForeignObj->mEntities.begin());
     for (; it != scene->mForeignObj->mEntities.end(); ++it)
     {
-#if 0
+        if (mRace->mEditorId != "Dremora") // don't morph Dremora textures
+        {
         Ogre::MaterialPtr mat = scene->mMaterialControllerMgr.getWritableMaterial(it->second);
         Ogre::Material::TechniqueIterator techIter = mat->getTechniqueIterator();
         while(techIter.hasMoreElements())
@@ -830,8 +902,9 @@ void ForeignNpcAnimation::updateNpcBase()
             while(passes.hasMoreElements())
             {
                 Ogre::Pass *pass = passes.getNext();
-                Ogre::TextureUnitState *tus = pass->getTextureUnitState(0);
 
+#if 0
+                Ogre::TextureUnitState *tus = pass->getTextureUnitState(0);
                 Ogre::PixelFormat pixelFormat = tus->_getTexturePtr()->getFormat();
 
                 FgLib::FgFile<FgLib::FgEgt> egtFile;
@@ -868,7 +941,7 @@ void ForeignNpcAnimation::updateNpcBase()
                         Ogre::TU_DEFAULT);  // usage; should be TU_DYNAMIC_WRITE_ONLY_DISCARDABLE for
                                             // textures updated very often (e.g. each frame)
                 }
-
+                std::string textureFile = "textures\\faces\\oblivion.esm\\" + ESM4::formIdToString(mNpc->mFormId) + "_0.dds";
                 if (mNpc->mEditorId == "UrielSeptim")
                     textureFile = "textures\\characters\\imperial\\headhumanm60.dds"; // male
                 else if (mNpc->mEditorId == "Rohssan")
@@ -1060,11 +1133,188 @@ void ForeignNpcAnimation::updateNpcBase()
                 pixelBuffer2->unlock();
 
                 pass->removeTextureUnitState(0);
-                Ogre::TextureUnitState *newTUS = pass->createTextureUnitState("FaceGen" + mNpc->mEditorId);
+                Ogre::TextureUnitState *newTUS = pass->createTextureUnitState("FaceGen"+mNpc->mEditorId);
+#else
+#    if 1
+                FgLib::FgFile<FgLib::FgEgt> egtFile;
+                const FgLib::FgEgt *egt = egtFile.getOrLoadByName(meshName);
+
+                if (egt == nullptr)
+                    return; // FIXME: throw?
+
+                // try to regtrieve previously created morph texture
+                Ogre::TexturePtr morphTexture = Ogre::TextureManager::getSingleton().getByName(
+                       mNpc->mEditorId+"_"+textureName,
+                       Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+                if (!morphTexture)
+                {
+                    // create a blank one
+                    morphTexture = Ogre::TextureManager::getSingleton().createManual(
+                        mNpc->mEditorId+"_"+textureName, // name
+                        Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
+                        Ogre::TEX_TYPE_2D,  // type
+                        egt->numRows(), egt->numColumns(), // width & height
+                        0,                  // number of mipmaps; FIXME: should be 2? or 1?
+                        Ogre::PF_BYTE_RGBA,
+                        Ogre::TU_DEFAULT);  // usage; should be TU_DYNAMIC_WRITE_ONLY_DISCARDABLE for
+                                            // textures updated very often (e.g. each frame)
+                }
+
+                // we need the base texture
+                Ogre::ResourcePtr baseTexture = Ogre::TextureManager::getSingleton().createOrRetrieve(
+                       textureName, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME).first;
+                if (!baseTexture)
+                    return; // FIXME: throw?
+
+                // dest: usually 256x256 (egt.numRows()*egt.numColumns())
+                Ogre::HardwarePixelBufferSharedPtr pixelBuffer = morphTexture->getBuffer();
+                pixelBuffer->unlock(); // prepare for blit()
+                // src: can be 128x128
+                //Ogre::HardwarePixelBufferSharedPtr pixelBufferSrc = tus->_getTexturePtr()->getBuffer();
+                Ogre::HardwarePixelBufferSharedPtr pixelBufferSrc
+                    = Ogre::static_pointer_cast<Ogre::Texture>(baseTexture)->getBuffer();
+                pixelBufferSrc->unlock(); // prepare for blit()
+                // if source and destination dimensions don't match, scaling is done
+                pixelBuffer->blit(pixelBufferSrc);
+
+                pixelBuffer->lock(Ogre::HardwareBuffer::HBL_NORMAL); // for best performance use HBL_DISCARD!
+                const Ogre::PixelBox& pixelBox = pixelBuffer->getCurrentLock();
+                uint8_t *pDest = static_cast<uint8_t*>(pixelBox.data);
+
+                uint8_t *pAge;
+                Ogre::HardwarePixelBufferSharedPtr pixelBufferAge;
+                if (hasAgedTexture)
+                {
+                    // the age detail modulation texture
+                    Ogre::TexturePtr ageTexture = Ogre::TextureManager::getSingleton().getByName(
+                           mNpc->mEditorId+"_"+ageTextureFile,
+                           Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+                    if (!ageTexture)
+                    {
+                        ageTexture = Ogre::TextureManager::getSingleton().createManual(
+                            mNpc->mEditorId+"_"+ageTextureFile,
+                            Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
+                            Ogre::TEX_TYPE_2D,
+                            egt->numRows(), egt->numColumns(),
+                            0,
+                            Ogre::PF_BYTE_RGBA,
+                            Ogre::TU_DEFAULT);
+                    }
+
+                    // we need the age texture src
+                    Ogre::ResourcePtr ageTextureSrc = Ogre::TextureManager::getSingleton().createOrRetrieve(
+                           ageTextureFile, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME).first;
+                    if (!ageTextureSrc)
+                        return; // FIXME: throw?
+
+                    // age dest:
+                    pixelBufferAge = ageTexture->getBuffer();
+                    pixelBufferAge->unlock(); // prepare for blit()
+                    // age src:
+                    Ogre::HardwarePixelBufferSharedPtr pixelBufferAgeSrc
+                        = Ogre::static_pointer_cast<Ogre::Texture>(ageTextureSrc)->getBuffer();
+                    //if (!pixelBufferAgeSrc)
+                        //std::cout << "detail texture null" << std::endl;
+                    pixelBufferAgeSrc->unlock(); // prepare for blit()
+                    // if source and destination dimensions don't match, scaling is done
+                    pixelBufferAge->blit(pixelBufferAgeSrc); // FIXME: can't we just use the src?
+
+                    pixelBufferAge->lock(Ogre::HardwareBuffer::HBL_NORMAL);
+                    const Ogre::PixelBox& pixelBoxAge = pixelBufferAge->getCurrentLock();
+                    pAge = static_cast<uint8_t*>(pixelBoxAge.data);
+                    if (!pAge)
+                        std::cout << "null age detail" << std::endl;
+                }
+
+                // Lock the pixel buffer and get a pixel box
+                //pixelBufferSrc->lock(Ogre::HardwareBuffer::HBL_NORMAL); // for best performance use HBL_DISCARD!
+                //const Ogre::PixelBox& pixelBoxSrc = pixelBufferSrc->getCurrentLock();
+
+
+
+
+
+                // FIXME: this one should be passed to a shader, along with the "_1" variant
+                Ogre::TexturePtr faceDetailTexture = Ogre::TextureManager::getSingleton().getByName(
+                        faceDetailFile, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+                if (faceDetailTexture.isNull())
+                {
+                    faceDetailTexture = Ogre::TextureManager::getSingleton().create(
+                        faceDetailFile, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+                    faceDetailTexture->load();
+                }
+
+                //pixelBufferDetail->lock(Ogre::HardwareBuffer::HBL_NORMAL);
+
+
+
+
+
+
+                Ogre::Vector3 sym;
+                const std::vector<Ogre::Vector3>& symTextureModes = egt->symTextureModes();
+
+                // update the pixels with SCM and detail texture
+                // NOTE: mSymTextureModes is assumed to have the image pixels in row-major order
+                for (size_t i = 0; i < egt->numRows()*egt->numColumns(); ++i) // height*width, should be 256*256
+                {
+                    // FIXME: for some reason adding the race coefficients makes it look worse
+                    //        even though it is clear that for shapes they are needed
+                    // sum all the symmetric texture modes for a given pixel i
+                    sym = Ogre::Vector3::ZERO; // WARN: sym reused
+                    // CheydinhalGuardCityPostNight03 does not have any symmetric texture coeff
+                    for (size_t j = 0; j < 50/*mNumSymTextureModes*/; ++j)
+                        sym += (sRaceTCoeff[j] + (sTCoeff.empty() ? 0.f : sTCoeff[j])) * symTextureModes[50*i + j];
+
+                    float fr, fg, fb;
+                    if (hasAgedTexture)
+                    {
+                        // Detail texture is applied after reconstruction of the colour map from the SCM.
+                        // Using an average of the 3 colors makes the resulting texture less blotchy. Also see:
+                        // "Each such factor is coded as a single unsigned byte in the range [0,255]..."
+                        int t = *(pAge+0) + *(pAge+1) + *(pAge+2);
+                        float ft = t/192.f; // 64 * 3 = 192
+                        int r = *(pAge+0);
+                        fr = r/64.f;
+                        //fr = ft; // use average
+                        //fr = 1.f; // ignore age for now
+                        int g = *(pAge+1);
+                        fg = g/64.f;
+                        //fg = ft; // use average
+                        //fg = 1.f; // ignore age for now
+                        int b = *(pAge+2);
+                        fb = b/64.f;
+                        //fb = ft; // use average
+                        //fb = 1.f; // ignore age for now
+                    }
+                    else
+                    {
+                        fr = 1.f;
+                        fg = 1.f;
+                        fb = 1.f;
+                    }
+
+                    *(pDest+0) = std::min(int((*(pDest+0)+sym.x) * fr), 255);
+                    *(pDest+1) = std::min(int((*(pDest+1)+sym.y) * fg), 255);
+                    *(pDest+2) = std::min(int((*(pDest+2)+sym.z) * fb), 255);
+
+                    pDest += 4;
+                    if (hasAgedTexture)
+                        pAge += 4;
+                }
+
+                // Unlock the pixel buffers
+                pixelBuffer->unlock();
+                if (hasAgedTexture)
+                    pixelBufferAge->unlock();
+#     endif
+                pass->removeTextureUnitState(0);
+                Ogre::TextureUnitState *newTUS = pass->createTextureUnitState(mNpc->mEditorId+"_"+textureName);
+#endif
 
             } // while pass
         } // while technique
-#endif
+        }
 
         it->second->shareSkeletonInstanceWith(mSkelBase);
         mInsert->attachObject(it->second);
@@ -1419,15 +1669,34 @@ bool ForeignNpcAnimation::equipClothes(const ESM4::Clothing* cloth, bool isFemal
     if (index != -1)
         raceTexture = "textures\\" + bodyParts[index].texture;
 
-    removeIndividualPart((ESM::PartReferenceType)type);
+    removeParts((ESM::PartReferenceType)type);
+    //removeIndividualPart((ESM::PartReferenceType)type);
 
     // FIXME: group "General"
     if ((cloth->mClothingFlags & ESM4::Armor::TES4_Hair) != 0) // Hair slot, e.g. hoods
+    {
         mObjectParts[type] =
             createMorphedObject(meshName, "General", mObjectRoot->mForeignObj->mModel);
+    }
+    else if (index == ESM4::Race::UpperBody || index == ESM4::Race::LowerBody)
+    {
+        NifOgre::ObjectScenePtr scene =
+                createObject(meshName, "General", mObjectRoot->mForeignObj->mModel);
+
+        std::string npcTextureName;
+        if (index = ESM4::Race::UpperBody)
+            npcTextureName = mTextureUpperBody->getName();
+        else if (index = ESM4::Race::LowerBody)
+            npcTextureName = mTextureLowerBody->getName();
+
+        replaceSkinTexture(scene, npcTextureName); // does nothing if none found
+
+        mObjectParts[type] = scene;
+    }
     else
         mObjectParts[type] =
             createObject(meshName, "General", mObjectRoot->mForeignObj->mModel, raceTexture);
+
 
     return true;
 }
@@ -1462,17 +1731,139 @@ bool ForeignNpcAnimation::equipArmor(const ESM4::Armor* armor, bool isFemale)
     if (index != -1)
         raceTexture = "textures\\" + bodyParts[index].texture;
 
-    removeIndividualPart((ESM::PartReferenceType)type);
+    removeParts((ESM::PartReferenceType)type);
+    //removeIndividualPart((ESM::PartReferenceType)type);
 
     // FIXME: group "General"
     if ((armor->mArmorFlags & ESM4::Armor::TES4_Hair) != 0) // Hair slot
+    {
         mObjectParts[type] =
             createMorphedObject(meshName, "General", mObjectRoot->mForeignObj->mModel);
-    else
+    }
+    else if (index == ESM4::Race::UpperBody || index == ESM4::Race::LowerBody)
+    {
+        NifOgre::ObjectScenePtr scene =
+                createObject(meshName, "General", mObjectRoot->mForeignObj->mModel);
+
+        std::string npcTextureName;
+        if (index = ESM4::Race::UpperBody)
+            npcTextureName = mTextureUpperBody->getName();
+        else if (index = ESM4::Race::LowerBody)
+            npcTextureName = mTextureLowerBody->getName();
+
+        replaceSkinTexture(scene, npcTextureName); // does nothing if none found
+
+        mObjectParts[type] = scene;
+    }
+    else // hands, feet
         mObjectParts[type] =
             createObject(meshName, "General", mObjectRoot->mForeignObj->mModel, raceTexture);
 
+
     return true;
+}
+
+void ForeignNpcAnimation::replaceMeshTexture(NifOgre::ObjectScenePtr scene, const std::string& npcTextureName)
+{
+    std::map<int32_t, Ogre::Entity*>::const_iterator it(scene->mForeignObj->mEntities.begin());
+    for (; it != scene->mForeignObj->mEntities.end(); ++it)
+    {
+        Ogre::MaterialPtr mat = scene->mMaterialControllerMgr.getWritableMaterial(it->second);
+        Ogre::Material::TechniqueIterator techIter = mat->getTechniqueIterator();
+        while(techIter.hasMoreElements())
+        {
+            Ogre::Technique *tech = techIter.getNext();
+            Ogre::Technique::PassIterator passes = tech->getPassIterator();
+            while(passes.hasMoreElements())
+            {
+                Ogre::Pass *pass = passes.getNext();
+                pass->removeTextureUnitState(0);
+                Ogre::TextureUnitState *newTUS = pass->createTextureUnitState(npcTextureName);
+            }
+        }
+    }
+}
+
+void ForeignNpcAnimation::replaceSkinTexture(NifOgre::ObjectScenePtr scene, const std::string& npcTextureName)
+{
+    std::map<std::string, std::vector<std::size_t> > visibleSkinMap;
+    scene->mForeignObj->mModel->fillSkinIndicies(visibleSkinMap);
+
+    if (visibleSkinMap.empty())
+        return;
+
+    // assumed that there is only one mesh with visible skin sub-meshes
+    std::map<int32_t, Ogre::Entity*>::const_iterator it(scene->mForeignObj->mEntities.begin());
+    for (; it != scene->mForeignObj->mEntities.end(); ++it)
+    {
+        // find the coresponding NiNode
+        std::string meshName = it->second->getMesh()->getName();
+        std::size_t pos = meshName.find_last_of('@');
+        if (pos == std::string::npos)
+            continue; // shouldn't happen, throw?
+
+        std::string nodeName = meshName.substr(pos+1);
+        std::map<std::string, std::vector<std::size_t> >::iterator lb = visibleSkinMap.lower_bound(nodeName);
+        if (lb != visibleSkinMap.end() && !(visibleSkinMap.key_comp()(nodeName, lb->first)))
+        {
+            const std::vector<std::size_t>& skinIndicies = lb->second;
+            for (std::size_t i = 0; i < skinIndicies.size(); ++i)
+            {
+                Ogre::MaterialPtr mat = createClonedMaterials(it->second->getSubEntity(skinIndicies[i]));
+
+                Ogre::Material::TechniqueIterator techIter = mat->getTechniqueIterator();
+                while(techIter.hasMoreElements())
+                {
+                    Ogre::Technique *tech = techIter.getNext();
+                    Ogre::Technique::PassIterator passes = tech->getPassIterator();
+                    while(passes.hasMoreElements())
+                    {
+                        Ogre::Pass *pass = passes.getNext();
+                        pass->removeTextureUnitState(0); // hopefully this is the correct one
+                        Ogre::TextureUnitState *newTUS = pass->createTextureUnitState(npcTextureName);
+                    }
+                }
+            }
+        }
+        else // None found
+        {
+            continue; // shouldn't happen, throw?
+        }
+    }
+}
+
+Ogre::MaterialPtr ForeignNpcAnimation::createClonedMaterials(Ogre::SubEntity *subEntity)
+{
+    if (mClonedMaterials.find(subEntity) != mClonedMaterials.end())
+    {
+        return mClonedMaterials[subEntity];
+    }
+    else
+    {
+        Ogre::MaterialPtr mat = subEntity->getMaterial();
+
+        static int count = 0;
+        Ogre::String newName = mat->getName() + Ogre::StringConverter::toString(count++);
+        sh::Factory::getInstance().createMaterialInstance(newName, mat->getName());
+
+        // Make sure techniques are created
+        sh::Factory::getInstance()._ensureMaterial(newName, "Default");
+        mat = Ogre::MaterialManager::getSingleton().getByName(newName);
+
+        mClonedMaterials[subEntity] = mat;
+        subEntity->setMaterial(mat);
+
+        return mat;
+    }
+}
+
+void ForeignNpcAnimation::deleteClonedMaterials()
+{
+    for (std::map<Ogre::SubEntity*, Ogre::MaterialPtr>::iterator it
+            = mClonedMaterials.begin(); it != mClonedMaterials.end(); ++it)
+    {
+        sh::Factory::getInstance().destroyMaterialInstance(it->second->getName());
+    }
 }
 
 void ForeignNpcAnimation::addAnimSource(const std::string &model)
@@ -2040,6 +2431,18 @@ void ForeignNpcAnimation::removeIndividualPart(ESM::PartReferenceType type)
     {
         MWBase::Environment::get().getSoundManager()->stopSound3D(mPtr, mSoundIds[type]);
         mSoundIds[type].clear();
+    }
+}
+
+void ForeignNpcAnimation::removeParts(ESM::PartReferenceType type)
+{
+    std::uint32_t part = 0x00000001;
+    for (std::size_t i = 0; i < 32; ++i)
+    {
+        if ((type & part) != 0)
+            removeIndividualPart((ESM::PartReferenceType)part);
+
+        part <<= 1;
     }
 }
 

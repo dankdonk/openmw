@@ -117,6 +117,8 @@ namespace NiBtOgre
         void setSkinTexture(const std::string& texture) { mSkinTexture = texture; }
         inline const std::string& getSkinTexture() const { return mSkinTexture; }
 
+        void NiNode::getSkinIndicies(std::vector<std::size_t>& skinIndicies) const;
+
         // an attempt to fix the head/ear/eyes rotation issue
         const Ogre::Quaternion getLocalRotation() const { return Ogre::Quaternion(NiAVObject::mRotation); }
     };

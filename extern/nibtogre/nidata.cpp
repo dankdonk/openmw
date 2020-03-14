@@ -358,7 +358,8 @@ NiBtOgre::NiIntegerExtraData::NiIntegerExtraData(uint32_t index, NiStream *strea
 
     // FIXME: this probably doesn't belong here
     //        used by NiNode and NiTriBasedGeom
-    if (model.indexToString(mName) == "BSX")
+    // clutter\magesguild\mageguildrugcircle01.nif has mName = -1
+    if (mName != -1 && model.indexToString(mName) == "BSX")
     {
 #if 0
         if ((mIntegerData & 0x20) != 0)

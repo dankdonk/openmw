@@ -200,8 +200,8 @@ void ForeignCreatureAnimation::addAnimSource(const std::string &skeletonName)
     std::string animName;
     //addForeignAnimSource(skeletonName, path + "castself.kf");
     //addForeignAnimSource(skeletonName, path + "backward.kf");
-    addForeignAnimSource(skeletonName, path + "forward.kf");
     addForeignAnimSource(skeletonName, path + "idle.kf");
+    addForeignAnimSource(skeletonName, path + "forward.kf");
     //addForeignAnimSource(skeletonName, path + "fastforward.kf");  //10/03/20: Storm Atronach not working
     //addForeignAnimSource(skeletonName, path + "runforward.kf");  //10/03/20: Storm Atronach not working
     for (unsigned int i = 0; i < ref->mBase->mKf.size(); ++i)
@@ -327,6 +327,99 @@ void ForeignCreatureAnimation::addForeignAnimSource(const std::string& model, co
         if (!mObjectRoot->mControllers[i].getSource())
             mObjectRoot->mControllers[i].setSource(mAnimationTimePtr[0]);
     }
+
+    // check inventory
+    //std::vector<const ESM4::Clothing*> invCloth;
+    //std::vector<const ESM4::Armor*> invArmor;
+    std::vector<const ESM4::Weapon*> invWeap;
+    MWWorld::InventoryStore& inv = mPtr.getClass().getInventoryStore(mPtr);
+    for(size_t i = 0; i < 35; ++i) // FIXME: 16 slots for TES4
+    {
+        MWWorld::ContainerStoreIterator store = inv.getSlot(i);
+
+        if(store == inv.end())
+            continue;
+
+        // TODO: this method of handling inventory doen't suit TES4 very well because it is possible
+        //       for one part to occupy more than one slot; for now as a workaround just loop
+        //       through the slots to gather all the equipped parts and process them afterwards
+
+        /*if(store->getTypeName() == typeid(ESM4::Clothing).name())
+        {
+            const ESM4::Clothing *cloth = store->get<ESM4::Clothing>()->mBase;
+            if (std::find(invCloth.begin(), invCloth.end(), cloth) == invCloth.end())
+                invCloth.push_back(cloth);
+        }
+        else if(store->getTypeName() == typeid(ESM4::Armor).name())
+        {
+            const ESM4::Armor *armor = store->get<ESM4::Armor>()->mBase;
+            if (std::find(invArmor.begin(), invArmor.end(), armor) == invArmor.end())
+                invArmor.push_back(armor);
+        }
+        else */if(store->getTypeName() == typeid(ESM4::Weapon).name())
+        {
+            const ESM4::Weapon *weap = store->get<ESM4::Weapon>()->mBase;
+            if (std::find(invWeap.begin(), invWeap.end(), weap) == invWeap.end())
+                invWeap.push_back(weap);
+        }
+    }
+
+    /*for (std::size_t i = 0; i < invCloth.size(); ++i)
+        equipClothes(invCloth[i], isFemale);
+
+    for (std::size_t i = 0; i < invArmor.size(); ++i)
+        equipArmor(invArmor[i], isFemale);*/
+
+    for (std::size_t i = 0; i < invWeap.size(); ++i)
+    {
+        std::string meshName;
+
+        meshName = "meshes\\"+invWeap[i]->mModel;
+
+        int type = ESM4::Armor::TES4_Weapon;
+
+        // FIXME: group "General"
+        // FIXME: prob wrap this with a try/catch block
+        mObjectParts.push_back(
+                createObject(meshName, "General", mObjectRoot->mForeignObj->mModel));
+    }
+}
+
+NifOgre::ObjectScenePtr ForeignCreatureAnimation::createObject(const std::string& meshName,
+        const std::string& group, NiModelPtr skeletonModel)
+{
+    // FIXME: probably needs a try/catch block here
+
+    NiBtOgre::NiModelManager& modelManager = NiBtOgre::NiModelManager::getSingleton();
+
+    // initially assume a skinned model
+    std::string skeletonName = skeletonModel->getName();
+    Misc::StringUtils::lowerCaseInPlace(skeletonName);
+    NiModelPtr model = modelManager.getByName(skeletonName + "_" + meshName, group);
+
+    // if not found just create a non-skinned model to check
+    if (!model)
+    {
+        // create a vanilla model to test
+        model = modelManager.getOrLoadByName(meshName, group);
+
+        if (model->buildData().mIsSkinned)
+        {
+            // was skinned after all
+            model.reset();
+            model = modelManager.createSkinnedModel(meshName, group, skeletonModel.get(), "");
+        }
+    }
+
+    // create an instance of the model
+    NifOgre::ObjectScenePtr scene
+        = NifOgre::ObjectScenePtr (new NifOgre::ObjectScene(mInsert->getCreator()));
+
+        scene->mForeignObj
+            = std::make_unique<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(model, mInsert->createChildSceneNode()));
+        scene->mForeignObj->instantiateBodyPart(mInsert, mSkelBase);
+
+    return scene;
 }
 
 Ogre::Vector3 ForeignCreatureAnimation::runAnimation(float timepassed)

@@ -46,7 +46,11 @@ namespace FgLib
         // returns the age of the NPC based on the NPC and Race FGGS coefficients
         float getAge(const std::vector<float>& raceSymCoeff, const std::vector<float>& npcSymCoeff) const;
 
-        std::string getHeadHumanDetailTexture(float age, bool isFemale) const;
+        // returns the age based detail modulation texture for headhuman.dds
+        std::string getHeadHumanDetailTexture(const std::string& mesh, float age, bool isFemale) const;
+
+        // returns the npc specific face detail texture
+        std::string getNpcDetailTexture_0(const std::string& npcFormIdString) const;
 
         // returns true if TRI and EGM files are found (or loaded) to build the morphed vertices
         //
@@ -67,22 +71,28 @@ namespace FgLib
         // fgTexture must be in Ogre::PF_BYTE_RGBA format
         // fgTexture must be type Ogre::TEX_TYPE_2D
         // fgTexture dimensions must match the corresponding EGT file
-        bool getMorphedTexture(Ogre::TexturePtr fgTexture,
+        bool getMorphedTexture(Ogre::TexturePtr& morphTexture,
                                const std::string& mesh,
-                               const std::string& npcName, // FIXME: for debugging only
+                               const std::string& texture,
+                               const std::string& npcName,
                                const std::vector<float>& raceSymCoeff,
-                               const std::vector<float>& raceAsymCoeff,
-                               const std::vector<float>& npcSymCoeff,
-                               const std::vector<float>& npcAsymCoeff) const;
+                               const std::vector<float>& npcSymCoeff) const;
+
+        // convineence method for human bodies only
+        bool getMorphedBodyTexture(Ogre::TexturePtr& morphTexture,
+                               const std::string& mesh,
+                               const std::string& texture,
+                               const std::string& npcName,
+                               const std::vector<float>& raceSymCoeff,
+                               const std::vector<float>& npcSymCoeff) const;
 
     private:
-        bool getMorphedTexture(Ogre::TexturePtr fgTexture,
+        bool getMorphedTexture(Ogre::TexturePtr& morphTexture,
                                const FgEgt *egt,
-                               const std::string& npcName, // FIXME: for debugging only
+                               const std::string& texture,
+                               const std::string& npcName,
                                const std::vector<float>& raceSymCoeff,
-                               const std::vector<float>& raceAsymCoeff,
-                               const std::vector<float>& npcSymCoeff,
-                               const std::vector<float>& npcAsymCoeff) const;
+                               const std::vector<float>& npcSymCoeff) const;
     };
 }
 

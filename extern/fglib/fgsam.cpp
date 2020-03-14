@@ -28,6 +28,11 @@
 #include <stdexcept>
 #include <iostream> // FIXME: for debugging only
 
+#include <boost/algorithm/string.hpp>
+
+#include <OgrePixelFormat.h>
+#include <OgreHardwarePixelBuffer.h>
+#include <OgreCommon.h> // Ogre::Box
 #include <OgreTextureManager.h>       // FIXME: for debugging only
 
 #include <extern/nibtogre/nimodel.hpp>
@@ -129,7 +134,7 @@ namespace FgLib
     float FgSam::getAge(const std::vector<float>& raceSymCoeff, const std::vector<float>& npcSymCoeff) const
     {
         FgFile<FgCtl> ctlFile;
-        const FgCtl *ctl = ctlFile.getOrLoadByName("facegen\\si.ctl");
+        const FgCtl *ctl = ctlFile.getOrLoadByName("facegen\\si.ctl"); // WARN: hard-coded path
         const std::vector<std::pair<std::vector<float>, float> >& allPrtOffsetLinearControls
             = ctl->allPrtOffsetCtl();
 
@@ -150,28 +155,45 @@ namespace FgLib
     // then be derived)
     //
     // FIXME: not sure if we're meant to interpolate the textures or simply pick the bottom one
-    // TODO: choose the closest one?   i.e. if age is 56 choose 60
-    std::string FgSam::getHeadHumanDetailTexture(float age, bool isFemale) const
+    // TODO: choose the closest one instead?   i.e. if age is 56 choose 60 rather than 50
+    std::string FgSam::getHeadHumanDetailTexture(const std::string& mesh, float age, bool isFemale) const
     {
         // TODO: should scan the Textures\Characters\Imperial directory and get the list of
-        //       detail textures rather than hard coding them here
+        //       detail textures rather than hard coding the age 10 them here
+        // NecromancerMaleHighElf4 has age of 8.7744 in the construction set
         if (age < 10)
-            throw std::runtime_error("SAM: NPC age less than 10");
+            age = 10;
+            //throw std::runtime_error("SAM: NPC age less than 10");
+
+        std::size_t pos = mesh.find_last_of(".");
+        if (pos == std::string::npos)
+            return "";
 
         int val = int(age) / 10;
-        std::string texture = "textures\\characters\\imperial\\headhuman";
+        std::string texture = "textures" + mesh.substr(6, pos - 6); // 6 to take away "meshes"
         texture += (isFemale ? "f" : "m") + std::to_string(val) + "0.dds";
 
         return texture;
     }
 
-    bool FgSam::getMorphedTexture(Ogre::TexturePtr fgTexture,
+    std::string FgSam::getNpcDetailTexture_0(const std::string& npcFormIdString) const
+    {
+        // FIXME: need to be able to check other than oblivion.esm - can this hard-coded path change?
+        std::string textureFile = "textures\\faces\\oblivion.esm\\"+npcFormIdString+"_0.dds";
+        if (Ogre::ResourceGroupManager::getSingleton().resourceExistsInAnyGroup(textureFile))
+            return textureFile;
+
+        // mName = "textures\\faces\\oblivion.esm\\0001A117_0.dds"
+        // SEBelmyneDreleth does not have a facegen texture
+        return "";
+    }
+
+    bool FgSam::getMorphedTexture(Ogre::TexturePtr& morphTexture,
                                     const std::string& mesh,
-                                    const std::string& npcName, // FIXME: for debugging only
+                                    const std::string& texture,
+                                    const std::string& npcName,
                                     const std::vector<float>& raceSymCoeff,
-                                    const std::vector<float>& raceAsymCoeff,
-                                    const std::vector<float>& npcSymCoeff,
-                                    const std::vector<float>& npcAsymCoeff) const
+                                    const std::vector<float>& npcSymCoeff) const
     {
         FgFile<FgEgt> egtFile;
         const FgEgt *egt = egtFile.getOrLoadByName(mesh);
@@ -179,32 +201,116 @@ namespace FgLib
         if (egt == nullptr)
             return false; // texture morph not possible
 
-        return getMorphedTexture(fgTexture, egt, npcName, raceSymCoeff, raceAsymCoeff, npcSymCoeff, npcAsymCoeff);
+        return getMorphedTexture(morphTexture, egt, texture, npcName, raceSymCoeff, npcSymCoeff);
     }
 
-    bool FgSam::getMorphedTexture(Ogre::TexturePtr fgTexture,
-                                    const FgEgt *egt,
-                                    const std::string& npcName, // FIXME: for debugging only
+    bool FgSam::getMorphedBodyTexture(Ogre::TexturePtr& morphTexture,
+                                    const std::string& mesh,
+                                    const std::string& texture,
+                                    const std::string& npcName,
                                     const std::vector<float>& raceSymCoeff,
-                                    const std::vector<float>& raceAsymCoeff,
-                                    const std::vector<float>& npcSymCoeff,
-                                    const std::vector<float>& npcAsymCoeff) const
+                                    const std::vector<float>& npcSymCoeff) const
     {
-//      // based on http://wiki.ogre3d.org/Creating+dynamic+textures
-//      Ogre::TexturePtr texFg = Ogre::TextureManager::getSingleton().getByName(
-//             "FaceGen"+npcName, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
-//      if (texFg.isNull())
-//      {
-//          texFg = Ogre::TextureManager::getSingleton().createManual(
-//              "FaceGen"+npcName, // name
-//              Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
-//              Ogre::TEX_TYPE_2D, // type
-//              fgFiles->egt.numRows(), fgFiles->egt.numColumns(), // width & height
-//              0,                 // number of mipmaps; FIXME: should be 2? or 1?
-//              Ogre::PF_BYTE_RGBA,
-//              Ogre::TU_DEFAULT); // usage; should be TU_DYNAMIC_WRITE_ONLY_DISCARDABLE for
-//                                 // textures updated very often (e.g. each frame)
-//      }
-        return false;
+        std::string meshName = boost::to_lower_copy(mesh);
+        //bool isFemale = meshName.find("female") != std::string::npos;
+
+        // femaleupperbody.nif -> upperbodyhumanfemale.egt
+        // femalelowerbody.nif -> body.egt
+        // upperbody.nif       -> upperbodyhumanmale.egt
+        // lowerbody.nif       -> body.egt
+        std::size_t pos = mesh.find_last_of(".");
+        if (pos == std::string::npos)
+            return false; // should throw?
+
+        if (meshName.find("femaleupperbody") != std::string::npos)
+            meshName = mesh.substr(0, pos-15) + "upperbodyhumanfemale.nif";
+        else if (meshName.find("femalelowerbody") != std::string::npos)
+            meshName = mesh.substr(0, pos-15) + "body.nif";
+        else if (meshName.find("upperbody") != std::string::npos)
+            meshName = mesh.substr(0, pos-9) + "upperbodyhumanmale.nif";
+        else if (meshName.find("lowerbody") != std::string::npos)
+            meshName = mesh.substr(0, pos-9) + "body.nif";
+        else
+            return false; // should throw?
+
+        FgFile<FgEgt> egtFile;
+        const FgEgt *egt = egtFile.getOrLoadByName(meshName);
+
+        if (egt == nullptr)
+            return false; // texture morph not possible
+
+        return getMorphedTexture(morphTexture, egt, texture, npcName, raceSymCoeff, npcSymCoeff);
+    }
+
+    bool FgSam::getMorphedTexture(Ogre::TexturePtr& morphTexture,
+                                    const FgEgt *egt,
+                                    const std::string& texture,
+                                    const std::string& npcName,
+                                    const std::vector<float>& raceSymCoeff,
+                                    const std::vector<float>& npcSymCoeff) const
+    {
+        // try to regtrieve previously created morph texture
+        morphTexture = Ogre::TextureManager::getSingleton().getByName(
+               npcName + "_" + texture,
+               Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+        if (!morphTexture)
+        {
+            // create a blank one
+            morphTexture = Ogre::TextureManager::getSingleton().createManual(
+                npcName + "_" + texture, // name
+                Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
+                Ogre::TEX_TYPE_2D,  // type
+                egt->numRows(), egt->numColumns(), // width & height
+                0,                  // number of mipmaps; FIXME: should be 2? or 1?
+                Ogre::PF_BYTE_RGBA,
+                Ogre::TU_DEFAULT);  // usage; should be TU_DYNAMIC_WRITE_ONLY_DISCARDABLE for
+                                    // textures updated very often (e.g. each frame)
+        }
+
+        // we need the base texture
+        Ogre::ResourcePtr baseTexture = Ogre::TextureManager::getSingleton().createOrRetrieve(
+               texture, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME).first;
+        if (!baseTexture)
+            return false; // FIXME: throw?
+
+        // dest: usually 256x256 (egt.numRows()*egt.numColumns())
+        Ogre::HardwarePixelBufferSharedPtr pixelBuffer = morphTexture->getBuffer();
+        pixelBuffer->unlock(); // prepare for blit()
+        // src: can be 128x128
+        Ogre::HardwarePixelBufferSharedPtr pixelBufferSrc
+            = Ogre::static_pointer_cast<Ogre::Texture>(baseTexture)->getBuffer();
+        pixelBufferSrc->unlock(); // prepare for blit()
+        // if source and destination dimensions don't match, scaling is done
+        pixelBuffer->blit(pixelBufferSrc);
+
+        pixelBuffer->lock(Ogre::HardwareBuffer::HBL_NORMAL); // for best performance use HBL_DISCARD!
+        const Ogre::PixelBox& pixelBox = pixelBuffer->getCurrentLock();
+        uint8_t *pDest = static_cast<uint8_t*>(pixelBox.data);
+
+        Ogre::Vector3 sym;
+        const std::vector<Ogre::Vector3>& symTextureModes = egt->symTextureModes();
+        std::size_t numSymTextureModes = egt->numSymTextureModes();
+
+        // update the pixels with SCM and detail texture
+        // NOTE: mSymTextureModes is assumed to have the image pixels in row-major order
+        for (size_t i = 0; i < egt->numRows()*egt->numColumns(); ++i) // height*width, should be 256*256
+        {
+            // FIXME: for some reason adding the race coefficients makes it look worse
+            //        even though it is clear that for shapes they are needed
+            // sum all the symmetric texture modes for a given pixel i
+            sym = Ogre::Vector3::ZERO;
+            for (size_t j = 0; j < numSymTextureModes; ++j)
+                sym += (raceSymCoeff[j] + npcSymCoeff[j]) * symTextureModes[numSymTextureModes * i + j];
+
+            *(pDest+0) = std::min(int(*(pDest+0)+sym.x), 255);
+            *(pDest+1) = std::min(int(*(pDest+1)+sym.y), 255);
+            *(pDest+2) = std::min(int(*(pDest+2)+sym.z), 255);
+            pDest += 4;
+        }
+
+        // Unlock the pixel buffer
+        pixelBuffer->unlock();
+
+        return true;
     }
 }

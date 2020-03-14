@@ -332,6 +332,13 @@ namespace NiBtOgre
         // will throw if built the mesh already
         void setSkinTexture(const std::string& texture);
 
+        // for replacing visible skin textures
+        // mesh name and sub-mesh indicies
+        std::map<std::string, std::vector<std::size_t> > mSkinIndicies;
+
+        // fills a map of NiTriBasedGeom name and visible skin sub-mesh indicies
+        void fillSkinIndicies(std::map<std::string, std::vector<std::size_t> >&) const;
+
         // supply skeleton for skinned objects
         void createMesh(bool isMorphed = false, Ogre::SkeletonPtr skeleton = Ogre::SkeletonPtr());
 

@@ -373,7 +373,7 @@ void MWWorld::InventoryStore::autoEquipTES4 (const MWWorld::Ptr& actor)
                         || test.getTypeName() == typeid(ESM4::Weapon).name())
                 {
                     // FIXME: probably should check weapon damage, health, value, etc
-                    if (old.getClass().getValue(old) >= test.getClass().getValue(test))
+                    if (old.getClass().getValue(old) > test.getClass().getValue(test))
                     {
                         //std::cout << test.getClass().getName(test) << " is cheaper than "
                             //<< old.getClass().getName(old) << std::endl;

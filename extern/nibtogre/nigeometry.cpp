@@ -116,8 +116,8 @@ NiBtOgre::NiTriBasedGeom::NiTriBasedGeom(uint32_t index, NiStream *stream, const
     : NiGeometry(index, stream, model, data)
     , mUseMorphed(false)
     , mData(data) // for accessing mSkeleton later
+    , mSubMeshIndex(0)
 {
-    //mMorphedVertices.reset();
     mMorphVertices.clear();
 
     mLocalTransform.makeTransform(mTranslation, Ogre::Vector3(mScale), Ogre::Quaternion(mRotation));
@@ -135,6 +135,27 @@ NiBtOgre::NiTriBasedGeom::NiTriBasedGeom(uint32_t index, NiStream *stream, const
 //  if (data.mSkelLeafIndicies.size() > 0 && (model.blockType(mParent.selfRef()) == "NiNode" ||
 //              model.blockType(mParent.selfRef()) == "BSFadeNode")) // FIXME
 //      data.addSkelLeafIndex(mParent.selfRef()); // may attempt to add bones already added
+}
+
+// workaround to identify the sub-mesh with visible skin
+bool NiBtOgre::NiTriBasedGeom::hasVisibleSkin() const
+{
+    for (std::size_t i = 0; i < NiAVObject::mProperty.size(); ++i)
+    {
+        NiProperty* property = mModel.getRef<NiProperty>(NiAVObject::mProperty[i]);
+        if (!property)
+            continue;
+
+        std::int32_t nameIndex = property->getNameIndex();
+        if (nameIndex == -1)
+            continue;
+
+        std::string propertyName = mModel.indexToString(nameIndex);
+        if (propertyName == "skin" || propertyName == "Skin")
+            return true;
+    }
+
+    return false;
 }
 
 // Can't remember why I wanted SubEntityController (a base class maybe?)
@@ -224,17 +245,9 @@ std::string NiBtOgre::NiTriBasedGeom::getMaterial()
         else if (mSkinInstanceRef != -1) // skin showing clothes/armor should all be skinned?
         {
             // loop again here rather than check the name of every property in the loop above
-            bool hasVisibleSkin = false;
-            for (std::size_t i = 0; i < NiAVObject::mProperty.size(); ++i)
-            {
-                NiProperty* property = mModel.getRef<NiProperty>(NiAVObject::mProperty[i]);
-
-                std::string propertyName = mModel.indexToString(property->getNameIndex());
-                if (propertyName == "skin" || propertyName == "Skin")
-                    hasVisibleSkin = true;
-            }
-
-            if (hasVisibleSkin)
+            if (hasVisibleSkin()
+                ||
+                skinTexture.find("Dremora") != std::string::npos) // HACK for Dremora head
             {
                 mOgreMaterial.setExternalTexture(skinTexture);
                 useExt = true;
@@ -400,6 +413,7 @@ bool NiBtOgre::NiTriBasedGeom::buildSubMesh(Ogre::Mesh *mesh, BoundsFinder& boun
     int nextBuf = 0;
 
     Ogre::SubMesh *sub = mesh->createSubMesh(/*mModel.indexToString(NiObjectNET::mNameIndex)*/);
+    mSubMeshIndex = mesh->getNumSubMeshes() - 1; // FIXME: this is not guaranteed to be right
 
     // Add vertices
     sub->useSharedVertices = false;

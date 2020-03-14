@@ -187,6 +187,15 @@ void NiBtOgre::NiNode::buildMesh(Ogre::Mesh *mesh)
     }
 }
 
+void NiBtOgre::NiNode::getSkinIndicies(std::vector<std::size_t>& skinIndicies) const
+{
+    for (size_t i = 0; i < mSubMeshChildren.size(); ++i)
+    {
+        if (mSubMeshChildren.at(i)->hasVisibleSkin())
+            skinIndicies.push_back(mSubMeshChildren.at(i)->getSubMeshIndex());
+    }
+}
+
 // build a hierarchy of bones (i.e. mChildBoneNodes) so that a skeleton can be built, hopefully
 // a much smaller subset of the NiNode hierarchy
 //

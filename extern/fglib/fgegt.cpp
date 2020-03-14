@@ -75,10 +75,10 @@ namespace FgLib
             for (std::size_t c = 0; c < mNumColumns; ++c)
                 flip[index++] = (mNumRows -1 -r) * mNumColumns + c;
 
-        mSymTextureModeScales.resize(50/*mNumSymTextureModes*/);
+        mSymTextureModeScales.resize(mNumSymTextureModes);
         mSymTextureModes.resize(size);
 
-        for (std::size_t j = 0; j < 50/*mNumSymTextureModes*/; ++j)
+        for (std::size_t j = 0; j < mNumSymTextureModes; ++j)
         {
             egt.read(mSymTextureModeScales.at(j)); // scale for symmetric texture mode j
 
@@ -104,7 +104,7 @@ namespace FgLib
                 b = rgb[j*3*imgSize + i + 2*imgSize];
 
                 // convert i to row-major order starting top left
-                mSymTextureModes[j + flip[i] * 50/*mNumSymTextureModes*/]
+                mSymTextureModes[j + flip[i] * mNumSymTextureModes]
                     = Ogre::Vector3(float(r), float(g), float(b)) * mSymTextureModeScales[j];
             }
         }

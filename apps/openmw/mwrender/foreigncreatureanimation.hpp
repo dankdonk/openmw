@@ -16,6 +16,8 @@ namespace MWRender
     {
         std::vector<NifOgre::ObjectScenePtr> mObjectParts;
         void addForeignAnimSource(const std::string& model, const std::string &animName);
+        NifOgre::ObjectScenePtr createObject(const std::string& meshName,
+            const std::string& group, NiModelPtr skeletonModel);
     public:
         ForeignCreatureAnimation(const MWWorld::Ptr& ptr, const std::string &model);
         virtual ~ForeignCreatureAnimation() {}

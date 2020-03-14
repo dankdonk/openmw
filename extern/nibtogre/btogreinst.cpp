@@ -113,7 +113,11 @@ void NiBtOgre::BtOgreInst::instantiateBodyPart(Ogre::SceneNode *baseNode, Ogre::
         else
         {
             mTargetBone = mModel->getTargetBone(); // see if there is a target bone
-            if (mTargetBone == "")
+            if (mTargetBone == "SideWeapon")
+                mTargetBone = "Weapon"; // FIXME: a temporary hack to allow creatures to hold weapons
+            else if (mTargetBone == "BackWeapon")
+                mTargetBone = "Weapon";
+            else if (mTargetBone == "")
                 mTargetBone = "Bip01 Head"; // FIXME: just a guess, likely wrong
 
             // TODO: do we need to from foreignnpcanimation detach later like below?

@@ -76,7 +76,6 @@ namespace NiBtOgre
 
     struct NiTriBasedGeom : public NiGeometry
     {
-        //std::unique_ptr<std::vector<Ogre::Vector3> > mMorphedVertices;
         std::vector<Ogre::Vector3> mMorphVertices;
         bool mUseMorphed;
 
@@ -85,8 +84,10 @@ namespace NiBtOgre
         // NiTriStrips builds differently to NiTriShapes only in that the data are different
         bool buildSubMesh(Ogre::Mesh *mesh, BoundsFinder& bounds); // returns true if tangents needed
 
-        //void setVertices(std::unique_ptr<std::vector<Ogre::Vector3> > morphedVertices);
         const std::vector<Ogre::Vector3>& getVertices(bool morphed = false);
+
+        bool hasVisibleSkin() const;
+        std::size_t getSubMeshIndex() const { return mSubMeshIndex; }
 
     private:
 
@@ -95,6 +96,8 @@ namespace NiBtOgre
         std::string getMaterial();
 
         OgreMaterial mOgreMaterial;
+
+        std::size_t mSubMeshIndex;
     };
 
     typedef NiTriBasedGeom NiTriShape;
