@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2016, 2018 cc9cii
+  Copyright (C) 2016, 2018, 2020 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -46,8 +46,15 @@ namespace ESM4
         FormId      mScript;
         FormId      mTemplate;
         std::int8_t mChanceNone;
+
+        bool mHasLvlCreaFlags;
         std::uint8_t mLvlCreaFlags;
+
         std::vector<LVLO> mLvlObject;
+
+        bool calcAllLvlLessThanPlayer() const;
+        bool calcEachItemInCount() const;
+        std::int8_t chanceNone() const;
 
         LeveledCreature();
         virtual ~LeveledCreature();

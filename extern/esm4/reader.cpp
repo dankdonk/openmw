@@ -26,6 +26,7 @@
 #include <stdexcept>
 #include <unordered_map>
 #include <iostream>
+#include <iomanip> // for debugging
 
 #include <boost/algorithm/string.hpp>
 #include <boost/filesystem/path.hpp>

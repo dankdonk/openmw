@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2016, 2018, 2019 cc9cii
+  Copyright (C) 2016, 2018-2020 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -51,9 +51,14 @@ namespace ESM4
 
         std::string mEditorId;
         std::string mFullName;
-        std::string mModel;
-        std::string mIconMale;   // inventory
-        std::string mIconFemale; // inventory
+        std::string mModelMale;
+        std::string mModelMaleWorld;
+        std::string mModelFemale;
+        std::string mModelFemaleWorld;
+        std::string mIconMale;   // texture
+        std::string mIconFemale; // texture
+
+        std::string mModel; // FIXME: for OpenCS
 
         float mBoundRadius;
 

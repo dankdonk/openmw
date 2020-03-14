@@ -120,6 +120,7 @@ target_link_libraries(openmw
     ${ESM4_LIBRARIES}
     ${BSAOPTHASH_LIBRARIES}
     ${ZLIB_LIBRARY}
+    ${FGLIB_LIBRARIES}
     ${OPENAL_LIBRARY}
     ${SOUND_INPUT_LIBRARY}
     ${BULLET_LIBRARIES}

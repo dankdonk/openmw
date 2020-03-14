@@ -27,6 +27,7 @@
 #include "clot.hpp"
 
 #include <stdexcept>
+//#include <iostream> // FIXME: for debugging only
 
 #include "reader.hpp"
 //#include "writer.hpp"
@@ -36,7 +37,10 @@ ESM4::Clothing::Clothing() : mFormId(0), mFlags(0), mBoundRadius(0.f), mClothing
 {
     mEditorId.clear();
     mFullName.clear();
-    mModel.clear();
+    mModelMale.clear();
+    mModelMaleWorld.clear();
+    mModelFemale.clear();
+    mModelFemaleWorld.clear();
     mIconMale.clear();
     mIconFemale.clear();
 
@@ -61,19 +65,19 @@ void ESM4::Clothing::load(ESM4::Reader& reader)
         {
             case ESM4::SUB_EDID: reader.getZString(mEditorId); break;
             case ESM4::SUB_FULL: reader.getZString(mFullName); break;
-            case ESM4::SUB_MODL: reader.getZString(mModel);    break;
-            case ESM4::SUB_ICON: reader.getZString(mIconMale); break;
-            case ESM4::SUB_ICO2: reader.getZString(mIconFemale); break;
             case ESM4::SUB_DATA: reader.get(mData);            break;
             case ESM4::SUB_BMDT: reader.get(mClothingFlags);   break;
             case ESM4::SUB_SCRI: reader.getFormId(mScript);      break;
             case ESM4::SUB_ENAM: reader.getFormId(mEnchantment); break;
             case ESM4::SUB_ANAM: reader.get(mEnchantmentPoints); break;
             case ESM4::SUB_MODB: reader.get(mBoundRadius);     break;
+            case ESM4::SUB_MODL: reader.getZString(mModelMale); break;
+            case ESM4::SUB_MOD2: reader.getZString(mModelMaleWorld); break;
+            case ESM4::SUB_MOD3: reader.getZString(mModelFemale); break;
+            case ESM4::SUB_MOD4: reader.getZString(mModelFemaleWorld); break;
+            case ESM4::SUB_ICON: reader.getZString(mIconMale); break;
+            case ESM4::SUB_ICO2: reader.getZString(mIconFemale); break;
             case ESM4::SUB_MODT:
-            case ESM4::SUB_MOD2:
-            case ESM4::SUB_MOD3:
-            case ESM4::SUB_MOD4:
             case ESM4::SUB_MO2B:
             case ESM4::SUB_MO3B:
             case ESM4::SUB_MO4B:
@@ -89,6 +93,8 @@ void ESM4::Clothing::load(ESM4::Reader& reader)
                 throw std::runtime_error("ESM4::CLOT::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
         }
     }
+    //if ((mClothingFlags&0xffff) == 0x02) // only hair
+        //std::cout << "only hair " << mEditorId << std::endl;
 }
 
 //void ESM4::Clothing::save(ESM4::Writer& writer) const

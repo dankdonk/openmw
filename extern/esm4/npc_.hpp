@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2016, 2018, 2019 cc9cii
+  Copyright (C) 2016, 2018-2020 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -139,7 +139,7 @@ namespace ESM4
 
         std::string mEditorId;
         std::string mFullName;
-        std::string mModel;
+        std::string mModel;  // skeleton model
 
         FormId mRace;
         FormId mClass;
@@ -172,6 +172,11 @@ namespace ESM4
 
         FormId mBaseTemplate; // TES5 only
         FormId mWornArmor;    // TES5 only
+
+        std::vector<float> mSymShapeModeCoefficients;    // should be 50
+        std::vector<float> mAsymShapeModeCoefficients;   // should be 30
+        std::vector<float> mSymTextureModeCoefficients;  // should be 50
+        std::int16_t mFgRace;
 
         Npc();
         virtual ~Npc();

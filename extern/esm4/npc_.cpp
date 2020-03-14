@@ -1,5 +1,6 @@
 /*
-  Copyright (C) 2016-2019 cc9cii
+
+  Copyright (C) 2016-2020 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -27,14 +28,17 @@
 #include "npc_.hpp"
 
 #include <stdexcept>
+#include <iostream> // NOTE: for testing only
+#include <iomanip>  // NOTE: for testing only
 
+#include "formid.hpp" // NOTE: for testing only
 #include "reader.hpp"
 //#include "writer.hpp"
 
 ESM4::Npc::Npc() : mFormId(0), mFlags(0), mRace(0), mClass(0), mHair(0), mEyes(0), mHairLength(0.f),
                    mDeathItem(0),
                    mScript(0), mCombatStyle(0), mSoundBase(0), mSound(0), mSoundChance(0),
-                   mFootWeight(0.f), mBoundRadius(0.f), mBaseTemplate(0), mWornArmor(0)
+                   mFootWeight(0.f), mBoundRadius(0.f), mBaseTemplate(0), mWornArmor(0), mFgRace(0)
 {
     mEditorId.clear();
     mFullName.clear();
@@ -192,9 +196,36 @@ void ESM4::Npc::load(ESM4::Reader& reader)
             }
             case ESM4::SUB_TPLT: reader.get(mBaseTemplate); break;
             case ESM4::SUB_FGGS:
+            {
+                mSymShapeModeCoefficients.resize(50);
+                for (std::size_t i = 0; i < 50; ++i)
+                    reader.get(mSymShapeModeCoefficients.at(i));
+
+                break;
+            }
             case ESM4::SUB_FGGA:
+            {
+                mAsymShapeModeCoefficients.resize(30);
+                for (std::size_t i = 0; i < 30; ++i)
+                    reader.get(mAsymShapeModeCoefficients.at(i));
+
+                break;
+            }
             case ESM4::SUB_FGTS:
+            {
+                mSymTextureModeCoefficients.resize(50);
+                for (std::size_t i = 0; i < 50; ++i)
+                    reader.get(mSymTextureModeCoefficients.at(i));
+
+                break;
+            }
             case ESM4::SUB_FNAM:
+            {
+                reader.get(mFgRace);
+                //std::cout << "race " << mEditorId << " " << mRace << std::endl; // FIXME
+                //std::cout << "fg race " << mEditorId << " " << mFgRace << std::endl; // FIXME
+                break;
+            }
             case ESM4::SUB_ATKR:
             case ESM4::SUB_COCT:
             case ESM4::SUB_CRIF:
@@ -210,7 +241,7 @@ void ESM4::Npc::load(ESM4::Reader& reader)
             case ESM4::SUB_DSTD:
             case ESM4::SUB_DSTF:
             case ESM4::SUB_FTST:
-            case ESM4::SUB_HCLF:
+            case ESM4::SUB_HCLF: // hair colour?
             case ESM4::SUB_KSIZ:
             case ESM4::SUB_KWDA:
             case ESM4::SUB_NAM5:

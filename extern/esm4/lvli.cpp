@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2016, 2018, 2019 cc9cii
+  Copyright (C) 2016, 2018-2020 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -32,7 +32,8 @@
 #include "reader.hpp"
 //#include "writer.hpp"
 
-ESM4::LeveledItem::LeveledItem() : mFormId(0), mFlags(0), mChanceNone(0), mLvlItemFlags(0), mData(0)
+ESM4::LeveledItem::LeveledItem() : mFormId(0), mFlags(0), mChanceNone(0), mHasLvlItemFlags(false),
+    mLvlItemFlags(0), mData(0)
 {
     mEditorId.clear();
 }
@@ -53,9 +54,9 @@ void ESM4::LeveledItem::load(ESM4::Reader& reader)
         switch (subHdr.typeId)
         {
             case ESM4::SUB_EDID: reader.getZString(mEditorId); break;
-            case ESM4::SUB_LVLD: reader.get(mChanceNone);   break;
-            case ESM4::SUB_LVLF: reader.get(mLvlItemFlags); break;
-            case ESM4::SUB_DATA: reader.get(mData);         break;
+            case ESM4::SUB_LVLD: reader.get(mChanceNone); break;
+            case ESM4::SUB_LVLF: reader.get(mLvlItemFlags); mHasLvlItemFlags = true; break;
+            case ESM4::SUB_DATA: reader.get(mData); break;
             case ESM4::SUB_LVLO:
             {
                 static LVLO lvlo;
@@ -94,6 +95,30 @@ void ESM4::LeveledItem::load(ESM4::Reader& reader)
                 throw std::runtime_error("ESM4::LVLI::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
         }
     }
+}
+
+bool ESM4::LeveledItem::calcAllLvlLessThanPlayer() const
+{
+    if (mHasLvlItemFlags)
+        return (mLvlItemFlags & 0x01) != 0;
+    else
+        return (mChanceNone & 0x80) != 0; // FIXME: 0x80 is just a guess
+}
+
+bool ESM4::LeveledItem::calcEachItemInCount() const
+{
+    if (mHasLvlItemFlags)
+        return (mLvlItemFlags & 0x02) != 0;
+    else
+        return mData != 0;
+}
+
+std::int8_t ESM4::LeveledItem::chanceNone() const
+{
+    if (mHasLvlItemFlags)
+        return mChanceNone;
+    else
+        return (mChanceNone & 0x7f); // FIXME: 0x80 is just a guess
 }
 
 //void ESM4::LeveledItem::save(ESM4::Writer& writer) const

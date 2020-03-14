@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2016, 2018 cc9cii
+  Copyright (C) 2016, 2018, 2020 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -94,6 +94,30 @@ void ESM4::LeveledCreature::load(ESM4::Reader& reader)
                 throw std::runtime_error("ESM4::LVLC::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
         }
     }
+}
+
+bool ESM4::LeveledCreature::calcAllLvlLessThanPlayer() const
+{
+    if (mHasLvlCreaFlags)
+        return (mLvlCreaFlags & 0x01) != 0;
+    else
+        return (mChanceNone & 0x80) != 0; // FIXME: 0x80 is just a guess
+}
+
+bool ESM4::LeveledCreature::calcEachItemInCount() const
+{
+    if (mHasLvlCreaFlags)
+        return (mLvlCreaFlags & 0x02) != 0;
+    else
+        return true; // FIXME: just a guess
+}
+
+std::int8_t ESM4::LeveledCreature::chanceNone() const
+{
+    if (mHasLvlCreaFlags)
+        return mChanceNone;
+    else
+        return (mChanceNone & 0x7f); // FIXME: 0x80 is just a guess
 }
 
 //void ESM4::LeveledCreature::save(ESM4::Writer& writer) const

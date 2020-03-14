@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2016, 2018 cc9cii
+  Copyright (C) 2016, 2018, 2020 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -29,7 +29,7 @@
 
 #include <vector>
 
-#include "common.hpp"
+#include "common.hpp" // LVLO
 
 namespace ESM4
 {
@@ -44,12 +44,20 @@ namespace ESM4
         std::string mEditorId;
 
         std::int8_t mChanceNone;
+
+        bool mHasLvlItemFlags;
         std::uint8_t mLvlItemFlags;
+
         std::uint8_t mData;
+
         std::vector<LVLO> mLvlObject;
 
         LeveledItem();
         virtual ~LeveledItem();
+
+        bool calcAllLvlLessThanPlayer() const;
+        bool calcEachItemInCount() const;
+        std::int8_t chanceNone() const;
 
         virtual void load(ESM4::Reader& reader);
         //virtual void save(ESM4::Writer& writer) const;
