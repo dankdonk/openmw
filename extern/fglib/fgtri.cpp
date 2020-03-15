@@ -33,16 +33,17 @@
 #include <OgreVector3.h>
 #include <OgreException.h>
 
-// FIXME: commented out until we have NIF code available in this branch
-//#include <extern/nibtogre/nimodel.hpp>
-
 #include "fgstream.hpp"
 
 namespace FgLib
 {
-    FgTri::FgTri(const std::string& name)
+    FgTri::FgTri(const std::string& name) : mNeedsNifVertices(false)
     {
-        if (Ogre::ResourceGroupManager::getSingleton().resourceExistsInAnyGroup(name))
+        if (!Ogre::ResourceGroupManager::getSingleton().resourceExistsInAnyGroup(name))
+        {
+            mNeedsNifVertices = true;
+        }
+        else
         {
             FgStream tri(name);
 
@@ -189,55 +190,37 @@ namespace FgLib
             }
 #endif
         }
-// FIXME: commented out until we have NIF code available in this branch
-#if 0
-        else
+    }
+
+    FgTri::FgTri(const std::vector<Ogre::Vector3>& nifVerts)
+    {
+        // Some meshes don't have an associated TRI file.  E.g. all the ears and some hair:
+        //
+        // Characters\Hair\Blindfold.NIF
+        // Characters\Hair\Emperor.NIF
+        // Characters\Hair\KhajiitEarrings.NIF
+        // Characters\Hair\Style07.NIF
+
+        mFileType                  = 0;
+        mNumVertices = (std::uint32_t)nifVerts.size();
+        mNumTriangles              = 0;
+        mNumQuads                  = 0;
+        mNumLabelledVertices       = 0;
+        mNumLabelledSurfacePoints  = 0;
+        mNumTextureCoordinates     = 0;
+        mExtensionInfo             = 0;
+        mNumLabelledDiffMorphs     = 0;
+        mNumLabelledStatMorphs     = 0;
+        mNumTotalStatMorphVertices = 0;
+
+        boost::scoped_array<float> vertices(new float[3 * (mNumVertices + mNumTotalStatMorphVertices)]);
+        for (std::size_t i = 0; i < mNumVertices; ++i)
         {
-            // Some meshes don't have an associated TRI file.  E.g. all the ears and some hair:
-            //
-            // Characters\Hair\Blindfold.NIF
-            // Characters\Hair\Emperor.NIF
-            // Characters\Hair\KhajiitEarrings.NIF
-            // Characters\Hair\Style07.NIF
-
-            // NOTE: Armor\Blades\M\Helmet.NIF or Armor\LegionHorsebackGuard\Helmet.NIF clips
-            //       if the "fake" TRI vertices are used.  Maybe it is better not to morph?
-            //OGRE_EXCEPT(Ogre::Exception::ERR_FILE_NOT_FOUND, "Cannot locate resource "+name +".", "FgTri::ctor");
-
-            // try to construct one from the mesh (vertices only)
-            size_t pos = name.find_last_of(".");
-            // mimic Ogre exeption
-            if (pos == std::string::npos || name.substr(pos+1) != "tri")
-                OGRE_EXCEPT(Ogre::Exception::ERR_FILE_NOT_FOUND, "Cannot locate resource "+name +".", "FgTri::ctor");
-
-            std::string mesh = name.substr(0, pos+1)+"nif";
-            NiModelPtr model = NiBtOgre::NiModelManager::getSingleton().getOrLoadByName(mesh, "General");
-
-            // WARN: throws if more than one NiTriBasedGeom in the model
-            const std::vector<Ogre::Vector3>& nifVerts = model->fgVertices();
-
-            mFileType                  = 0;
-            mNumVertices = (std::uint32_t)nifVerts.size();
-            mNumTriangles              = 0;
-            mNumQuads                  = 0;
-            mNumLabelledVertices       = 0;
-            mNumLabelledSurfacePoints  = 0;
-            mNumTextureCoordinates     = 0;
-            mExtensionInfo             = 0;
-            mNumLabelledDiffMorphs     = 0;
-            mNumLabelledStatMorphs     = 0;
-            mNumTotalStatMorphVertices = 0;
-
-            boost::scoped_array<float> vertices(new float[3 * (mNumVertices + mNumTotalStatMorphVertices)]);
-            for (std::size_t i = 0; i < mNumVertices; ++i)
-            {
-                vertices[3*i + 0] = nifVerts[i].x;
-                vertices[3*i + 1] = nifVerts[i].y;
-                vertices[3*i + 2] = nifVerts[i].z;
-            }
-            mVertices.swap(vertices);
+            vertices[3*i + 0] = nifVerts[i].x;
+            vertices[3*i + 1] = nifVerts[i].y;
+            vertices[3*i + 2] = nifVerts[i].z;
         }
-#endif
+        mVertices.swap(vertices);
     }
 
     FgTri::~FgTri()

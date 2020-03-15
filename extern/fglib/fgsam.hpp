@@ -57,12 +57,13 @@ namespace FgLib
         // NOTE: some NIF don't have associated TRI file; e.g. emperor.nif and emperor.egm
         // exists but no emperor.tri in such cases the vertices from the NIF are used
         // (which are a little different to the vertices in the TRI file but they'll have to do)
-        bool buildMorphedVertices(NiBtOgre::NiModel *model,
-                                const std::string& nif,
-                                const std::vector<float>& raceSymCoeff,
-                                const std::vector<float>& raceAsymCoeff,
-                                const std::vector<float>& npcSymCoeff,
-                                const std::vector<float>& npcAsymCoeff) const;
+        bool buildMorphedVertices(std::vector<Ogre::Vector3>& fgMorphVertices,
+                                  const std::vector<Ogre::Vector3>& fgVertices,
+                                  const std::string& nif,
+                                  const std::vector<float>& raceSymCoeff,
+                                  const std::vector<float>& raceAsymCoeff,
+                                  const std::vector<float>& npcSymCoeff,
+                                  const std::vector<float>& npcAsymCoeff) const;
 
         // populates fgTexture
         // returns true if EGT file is either found in the map or loaded from disk *and*

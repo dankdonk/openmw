@@ -35,9 +35,6 @@
 #include <OgreCommon.h> // Ogre::Box
 #include <OgreTextureManager.h>       // FIXME: for debugging only
 
-// FIXME: commented out until we have NIF code available in this branch
-//#include <extern/nibtogre/nimodel.hpp>
-
 #include "fgfile.hpp"
 #include "fgtri.hpp"
 #include "fgegm.hpp"
@@ -46,18 +43,32 @@
 
 namespace FgLib
 {
-    bool FgSam::buildMorphedVertices(NiBtOgre::NiModel *model,
-                                   const std::string& nif,
-                                   const std::vector<float>& raceSymCoeff,
-                                   const std::vector<float>& raceAsymCoeff,
-                                   const std::vector<float>& npcSymCoeff,
-                                   const std::vector<float>& npcAsymCoeff) const
+    bool FgSam::buildMorphedVertices(std::vector<Ogre::Vector3>& fgMorphVertices,
+                                     const std::vector<Ogre::Vector3>& fgVertices,
+                                     const std::string& nif,
+                                     const std::vector<float>& raceSymCoeff,
+                                     const std::vector<float>& raceAsymCoeff,
+                                     const std::vector<float>& npcSymCoeff,
+                                     const std::vector<float>& npcAsymCoeff) const
     {
         FgFile<FgTri> triFile;
         const FgTri *tri = triFile.getOrLoadByName(nif);
 
         if (tri == nullptr)
             return false; // not possible to recover
+
+        if (tri->needsNifVertices())
+        {
+            std::string name = nif;
+            boost::algorithm::to_lower_copy(name);
+            size_t pos = nif.find_last_of(".");
+            if (pos != std::string::npos && nif.substr(pos+1) == "nif")
+            {
+                name = nif.substr(0, pos+1)+"tri";
+            }
+
+            tri = triFile.addOrReplaceFile(name, std::make_unique<FgTri>(fgVertices));
+        }
 
         FgFile<FgEgm> egmFile;
         const FgEgm *egm = egmFile.getOrLoadByName(nif);
@@ -76,10 +87,6 @@ namespace FgLib
         if (egm->numVertices() != (numVertices + numMorphVertices))
             throw std::runtime_error("SAM: Number of EGM vertices does not match that of TRI");
 
-// FIXME: commented out until we have NIF code available in this branch
-#if 0
-        // WARN: throws if more than one NiTriBasedGeom in the model
-        std::vector<Ogre::Vector3>& fgMorphVertices = model->fgMorphVertices();
         fgMorphVertices.resize(numVertices);
 
         const boost::scoped_array<float>& symMorphModeScales = egm->symMorphModeScales();
@@ -128,8 +135,6 @@ namespace FgLib
 
         // FIXME: update normals, tangents and bitangents?
 
-        model->useFgMorphVertices();
-#endif
         return true;
     }
 
@@ -172,7 +177,7 @@ namespace FgLib
         if (pos == std::string::npos)
             return "";
 
-        int val = int(age) / 10;
+        int val = std::min(int(age / 10), 6); // max age detail is 60
         std::string texture = "textures" + mesh.substr(6, pos - 6); // 6 to take away "meshes"
         texture += (isFemale ? "f" : "m") + std::to_string(val) + "0.dds";
 
