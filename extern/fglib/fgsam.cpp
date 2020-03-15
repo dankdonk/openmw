@@ -193,6 +193,11 @@ namespace FgLib
 
         // mName = "textures\\faces\\oblivion.esm\\0001A117_0.dds"
         // SEBelmyneDreleth does not have a facegen texture
+        //
+        // there are others:
+        //
+        // mEditorId = "SESfara"          mFormId = 0x0001a116
+        // mEditorId = "SE01GaiusPrentus" mFormId = 0x000133be
         return "";
     }
 
@@ -308,7 +313,12 @@ namespace FgLib
             // sum all the symmetric texture modes for a given pixel i
             sym = Ogre::Vector3::ZERO;
             for (size_t j = 0; j < numSymTextureModes; ++j)
-                sym += (raceSymCoeff[j] + npcSymCoeff[j]) * symTextureModes[numSymTextureModes * i + j];
+            {
+                // CheydinhalGuardCityPostNight03 does not have any symmetric texture coeff
+                sym += (raceSymCoeff[j] + (npcSymCoeff.empty() ? 0.f : npcSymCoeff[j]))
+                                          *
+                                          symTextureModes[numSymTextureModes * i + j];
+            }
 
             *(pDest+0) = std::min(int(*(pDest+0)+sym.x), 255);
             *(pDest+1) = std::min(int(*(pDest+1)+sym.y), 255);
