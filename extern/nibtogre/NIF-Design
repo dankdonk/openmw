@@ -2303,6 +2303,18 @@ On top of that those external textures, such as for a human Upper Body, could be
 
 Just noticed that Baurus stopped wearing his armor from around 06/03/20. **FIXED:** Blades armor have zero value - had to compare Armor Rating before comparing value.  **NOTE:** For now weapon ratings (e.g. damage) are ignored.
 
+# [15/03/2020] Bugs, bugs, bugs
+
+## NPC face detail texture missing
+
+mNpc = 0x000001d69794ace0 {mFormId=0x0001a117 mFlags=0x00040400 mEditorId="SEBelmyneDreleth" ...}
+mFormId = 0x0001a117
+
+mEditorId = "SESfara"
+mFormId = 0x0001a116
+
+mEditorId = "SE01GaiusPrentus"
+mFormId = 0x000133be
 
 
 [//]: # (/* spell spelllang=en_au syntax=cpp */)

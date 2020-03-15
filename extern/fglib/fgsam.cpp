@@ -35,8 +35,6 @@
 #include <OgreCommon.h> // Ogre::Box
 #include <OgreTextureManager.h>       // FIXME: for debugging only
 
-#include <extern/nibtogre/nimodel.hpp>
-
 #include "fgfile.hpp"
 #include "fgtri.hpp"
 #include "fgegm.hpp"
@@ -53,7 +51,6 @@ namespace FgLib
                                      const std::vector<float>& npcSymCoeff,
                                      const std::vector<float>& npcAsymCoeff) const
     {
-
         FgFile<FgTri> triFile;
         const FgTri *tri = triFile.getOrLoadByName(nif);
 
@@ -196,6 +193,11 @@ namespace FgLib
 
         // mName = "textures\\faces\\oblivion.esm\\0001A117_0.dds"
         // SEBelmyneDreleth does not have a facegen texture
+        //
+        // there are others:
+        //
+        // mEditorId = "SESfara"          mFormId = 0x0001a116
+        // mEditorId = "SE01GaiusPrentus" mFormId = 0x000133be
         return "";
     }
 
@@ -310,8 +312,17 @@ namespace FgLib
             //        even though it is clear that for shapes they are needed
             // sum all the symmetric texture modes for a given pixel i
             sym = Ogre::Vector3::ZERO;
-            for (size_t j = 0; j < numSymTextureModes; ++j)
-                sym += (raceSymCoeff[j] + npcSymCoeff[j]) * symTextureModes[numSymTextureModes * i + j];
+            if (npcSymCoeff.empty())
+            {
+                // CheydinhalGuardCityPostNight03 does not have any symmetric texture coeff
+                for (size_t j = 0; j < numSymTextureModes; ++j)
+                    sym += raceSymCoeff[j] * symTextureModes[numSymTextureModes * i + j];
+            }
+            else
+            {
+                for (size_t j = 0; j < numSymTextureModes; ++j)
+                    sym += (raceSymCoeff[j] + npcSymCoeff[j]) * symTextureModes[numSymTextureModes * i + j];
+            }
 
             *(pDest+0) = std::min(int(*(pDest+0)+sym.x), 255);
             *(pDest+1) = std::min(int(*(pDest+1)+sym.y), 255);

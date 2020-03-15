@@ -1230,46 +1230,45 @@ void ForeignNpcAnimation::updateNpcBase()
                 //pixelBufferSrc->lock(Ogre::HardwareBuffer::HBL_NORMAL); // for best performance use HBL_DISCARD!
                 //const Ogre::PixelBox& pixelBoxSrc = pixelBufferSrc->getCurrentLock();
 
-
-                Ogre::TexturePtr detailTexture = Ogre::TextureManager::getSingleton().getByName(
-                       mNpc->mEditorId+"_"+faceDetailFile,
-                       Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
-                if (!detailTexture)
+                uint8_t* pDetail;
+                Ogre::HardwarePixelBufferSharedPtr pixelBufferDetail;
+                if (!faceDetailFile.empty())
                 {
-                    detailTexture = Ogre::TextureManager::getSingleton().createManual(
-                        mNpc->mEditorId+"_"+faceDetailFile,
-                        Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
-                        Ogre::TEX_TYPE_2D,
-                        egt->numRows(), egt->numColumns(),
-                        0,
-                        Ogre::PF_BYTE_RGBA,
-                        Ogre::TU_DEFAULT);
+                    Ogre::TexturePtr detailTexture = Ogre::TextureManager::getSingleton().getByName(
+                           mNpc->mEditorId+"_"+faceDetailFile,
+                           Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+                    if (!detailTexture)
+                    {
+                        detailTexture = Ogre::TextureManager::getSingleton().createManual(
+                            mNpc->mEditorId+"_"+faceDetailFile,
+                            Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
+                            Ogre::TEX_TYPE_2D,
+                            egt->numRows(), egt->numColumns(),
+                            0,
+                            Ogre::PF_BYTE_RGBA,
+                            Ogre::TU_DEFAULT);
+                    }
+                    // FIXME: this one should be passed to a shader, along with the "_1" variant
+                    Ogre::TexturePtr faceDetailTexture = Ogre::TextureManager::getSingleton().getByName(
+                            faceDetailFile, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+                    if (faceDetailTexture.isNull())
+                    {
+                        faceDetailTexture = Ogre::TextureManager::getSingleton().create(
+                            faceDetailFile, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+                        faceDetailTexture->load();
+                    }
+                    pixelBufferDetail = detailTexture->getBuffer();
+                    pixelBufferDetail->unlock(); // prepare for blit()
+                    Ogre::HardwarePixelBufferSharedPtr pixelBufferDetailSrc
+                        = Ogre::static_pointer_cast<Ogre::Texture>(faceDetailTexture)->getBuffer();
+                    pixelBufferDetailSrc->unlock(); // prepare for blit()
+                    // if source and destination dimensions don't match, scaling is done
+                    pixelBufferDetail->blit(pixelBufferDetailSrc); // FIXME: can't we just use the src?
+
+                    pixelBufferDetail->lock(Ogre::HardwareBuffer::HBL_NORMAL);
+                    const Ogre::PixelBox& pixelBoxDetail = pixelBufferDetail->getCurrentLock();
+                    pDetail = static_cast<uint8_t*>(pixelBoxDetail.data);
                 }
-                // FIXME: this one should be passed to a shader, along with the "_1" variant
-                Ogre::TexturePtr faceDetailTexture = Ogre::TextureManager::getSingleton().getByName(
-                        faceDetailFile, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
-                if (faceDetailTexture.isNull())
-                {
-                    faceDetailTexture = Ogre::TextureManager::getSingleton().create(
-                        faceDetailFile, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
-                    faceDetailTexture->load();
-                }
-                Ogre::HardwarePixelBufferSharedPtr pixelBufferDetail = detailTexture->getBuffer();
-                pixelBufferDetail->unlock(); // prepare for blit()
-                Ogre::HardwarePixelBufferSharedPtr pixelBufferDetailSrc
-                    = Ogre::static_pointer_cast<Ogre::Texture>(faceDetailTexture)->getBuffer();
-                pixelBufferDetailSrc->unlock(); // prepare for blit()
-                // if source and destination dimensions don't match, scaling is done
-                pixelBufferDetail->blit(pixelBufferDetailSrc); // FIXME: can't we just use the src?
-
-                pixelBufferDetail->lock(Ogre::HardwareBuffer::HBL_NORMAL);
-                const Ogre::PixelBox& pixelBoxDetail = pixelBufferDetail->getCurrentLock();
-                uint8_t* pDetail = static_cast<uint8_t*>(pixelBoxDetail.data);
-
-
-
-
-
 
                 Ogre::Vector3 sym;
                 const std::vector<Ogre::Vector3>& symTextureModes = egt->symTextureModes();
@@ -1282,36 +1281,65 @@ void ForeignNpcAnimation::updateNpcBase()
                     //        even though it is clear that for shapes they are needed
                     // sum all the symmetric texture modes for a given pixel i
                     sym = Ogre::Vector3::ZERO; // WARN: sym reused
-                    // CheydinhalGuardCityPostNight03 does not have any symmetric texture coeff
-                    for (size_t j = 0; j < 50/*mNumSymTextureModes*/; ++j)
-                        sym += (sRaceTCoeff[j] + (sTCoeff.empty() ? 0.f : sTCoeff[j])) * symTextureModes[50*i + j];
+                    if (sTCoeff.empty())
+                    {
+                        // CheydinhalGuardCityPostNight03 does not have any symmetric texture coeff
+                        for (size_t j = 0; j < 50/*mNumSymTextureModes*/; ++j)
+                            sym += sRaceTCoeff[j] * symTextureModes[50/*mNumSymTextureModes*/ * i + j];
+                    }
+                    else
+                    {
+                        for (size_t j = 0; j < 50/*mNumSymTextureModes*/; ++j)
+                            sym += (sRaceTCoeff[j] + sTCoeff[j]) * symTextureModes[50/*mNumSymTextureModes*/ * i + j];
+                    }
 
-                    float fr, fg, fb;
+                    float ar, ag, ab;
                     if (hasAgedTexture)
                     {
                         // Detail texture is applied after reconstruction of the colour map from the SCM.
                         // Using an average of the 3 colors makes the resulting texture less blotchy. Also see:
                         // "Each such factor is coded as a single unsigned byte in the range [0,255]..."
+                        int r = *(pAge+0);
+                        int g = *(pAge+1);
+                        int b = *(pAge+2);
+#if 0
+                        ar = r/64.f;
+                        ag = g/64.f;
+                        ab = b/64.f;
+#else
                         int t = *(pAge+0) + *(pAge+1) + *(pAge+2);
                         float ft = t/192.f; // 64 * 3 = 192
-                        int r = *(pAge+0);
-                        fr = r/64.f;
-                        //fr = ft; // use average
-                        //fr = 1.f; // ignore age for now
-                        int g = *(pAge+1);
-                        fg = g/64.f;
-                        //fg = ft; // use average
-                        //fg = 1.f; // ignore age for now
-                        int b = *(pAge+2);
-                        fb = b/64.f;
-                        //fb = ft; // use average
-                        //fb = 1.f; // ignore age for now
+                        ar = ft; // use average
+                        ag = ft; // use average
+                        ab = ft; // use average
+#endif
+                        //ar = 1.f; // ignore age for now
+                        //ag = 1.f; // ignore age for now
+                        //ab = 1.f; // ignore age for now
+
+                        pAge += 4;
                     }
                     else
                     {
-                        fr = 1.f;
-                        fg = 1.f;
-                        fb = 1.f;
+                        ar = 1.f;
+                        ag = 1.f;
+                        ab = 1.f;
+                    }
+
+                    float dr, dg, db;
+                    if (!faceDetailFile.empty())
+                    {
+                        dr = 2.f * *(pDetail+0)/255.f;
+                        dg = 2.f * *(pDetail+1)/255.f;
+                        db = 2.f * *(pDetail+2)/255.f;
+
+                        pDetail += 4;
+                    }
+                    else
+                    {
+                        dr = 1.f;
+                        dg = 1.f;
+                        db = 1.f;
                     }
 
 #if 0
@@ -1319,19 +1347,19 @@ void ForeignNpcAnimation::updateNpcBase()
                     *(pDest+1) = std::min(int((*(pDest+1)+sym.y) * fg), 255);
                     *(pDest+2) = std::min(int((*(pDest+2)+sym.z) * fb), 255);
 #else
-                    *(pDest+0) = std::min(int(std::min(int((*(pDest+0)+sym.x)), 255)* fr * 2.f * *(pDetail+0)/255.f), 255);
-                    *(pDest+1) = std::min(int(std::min(int((*(pDest+1)+sym.y)), 255)* fg * 2.f * *(pDetail+1)/255.f), 255);
-                    *(pDest+2) = std::min(int(std::min(int((*(pDest+2)+sym.z)), 255)* fb * 2.f * *(pDetail+2)/255.f), 255);
+                    *(pDest+0) = std::min(int(std::min(int((*(pDest+0)+sym.x)), 255) * ar * dr), 255);
+                    *(pDest+1) = std::min(int(std::min(int((*(pDest+1)+sym.y)), 255) * ag * dg), 255);
+                    *(pDest+2) = std::min(int(std::min(int((*(pDest+2)+sym.z)), 255) * ab * db), 255);
 #endif
                     pDest += 4;
-                    if (hasAgedTexture)
-                        pAge += 4;
                 }
 
                 // Unlock the pixel buffers
                 pixelBuffer->unlock();
                 if (hasAgedTexture)
                     pixelBufferAge->unlock();
+                if (!faceDetailFile.empty())
+                    pixelBufferDetail->unlock();
 #     endif
                 pass->removeTextureUnitState(0);
                 Ogre::TextureUnitState *newTUS = pass->createTextureUnitState(mNpc->mEditorId+"_"+textureName);

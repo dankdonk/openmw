@@ -33,8 +33,6 @@
 #include <OgreVector3.h>
 #include <OgreException.h>
 
-#include <extern/nibtogre/nimodel.hpp>
-
 #include "fgstream.hpp"
 
 namespace FgLib
