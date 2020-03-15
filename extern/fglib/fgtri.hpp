@@ -25,8 +25,14 @@
 
 #include <string>
 #include <cstdint>
+#include <vector>
 
 #include <boost/scoped_array.hpp>
+
+namespace Ogre
+{
+    class Vector3;
+}
 
 namespace FgLib
 {
@@ -48,6 +54,8 @@ namespace FgLib
         boost::scoped_array<std::int32_t> mTriangleIndicies;
         boost::scoped_array<std::int32_t> mQuadIndicies;
 
+        bool mNeedsNifVertices;
+
         // default, copy and assignment not allowed
         FgTri();
         FgTri(const FgTri& other);
@@ -57,12 +65,15 @@ namespace FgLib
         // The parameter 'name' refers to those in the Ogre::ResourceGroupManager
         // e.g. full path from the directory/BSA added in Bsa::registerResources(), etc
         FgTri(const std::string& name);
+        FgTri(const std::vector<Ogre::Vector3>& nifVerts); // for creating a dummy
         ~FgTri();
 
         inline const std::uint32_t numVertices() const { return mNumVertices; }
         inline const std::uint32_t numMorphVertices() const { return mNumTotalStatMorphVertices; }
 
         inline const boost::scoped_array<float>& vertices() const { return mVertices; }
+
+        inline const bool needsNifVertices() const { return mNeedsNifVertices; }
     };
 }
 

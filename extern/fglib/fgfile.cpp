@@ -56,6 +56,13 @@ namespace FgLib
         return getOrLoadByName(boost::algorithm::to_lower_copy(name), "");
     }
 
+    template<>
+    const FgTri *FgFile<FgTri>::addOrReplaceFile(const std::string& name, std::unique_ptr<FgTri> fgFile) const
+    {
+        return sFgFileMap.insert(
+            std::map<std::string, std::unique_ptr<FgTri> >::value_type(name, std::move(fgFile))).first->second.get();
+    }
+
     std::map<std::string, std::unique_ptr<FgTri> > FgFile<FgTri>::sFgFileMap;
     std::map<std::string, std::unique_ptr<FgEgm> > FgFile<FgEgm>::sFgFileMap;
     std::map<std::string, std::unique_ptr<FgEgt> > FgFile<FgEgt>::sFgFileMap;

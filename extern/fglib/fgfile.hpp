@@ -32,11 +32,6 @@
 
 namespace FgLib
 {
-    //class FgTri;
-    //class FgEgm;
-    //class FgEgt;
-    //class FgCtl;
-
     template<typename T>
     class FgFile
     {
@@ -55,6 +50,8 @@ namespace FgLib
         ~FgFile() {}
 
         const T* getOrLoadByName(const std::string& base) const;
+
+        const T* addOrReplaceFile(const std::string& name, std::unique_ptr<T> fgFile) const;
     };
 
     template<typename T>

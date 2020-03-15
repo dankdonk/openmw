@@ -352,8 +352,12 @@ namespace NiBtOgre
 
         // if EGM and TRI both found, build morphed vertices
         // NOTE: some helmets do not have an associated EGM, e.g. "Armor\Daedric\M\Helmet.NIF"
-        if (sam.buildMorphedVertices(pModel, bInfo.baseNif, sRaceCoeff, aRaceCoeff, sCoeff, aCoeff))
+        // WARN: fgMorphVertices() throws if more than one NiTriBasedGeom in the model
+        if (sam.buildMorphedVertices(pModel->fgMorphVertices(), pModel->fgVertices(),
+                                     bInfo.baseNif, sRaceCoeff, aRaceCoeff, sCoeff, aCoeff))
         {
+            pModel->useFgMorphVertices();
+
             // special material for headhuman.dds
             // FIXME: case sensitive!
             if (bInfo.bodyPart == BP_Head && bInfo.baseNif.find("HeadHuman.nif") != std::string::npos)

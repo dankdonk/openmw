@@ -269,12 +269,6 @@ void ESM4::Npc::load(ESM4::Reader& reader)
             case ESM4::SUB_NAM4: // FO3
             case ESM4::SUB_COED: // FO3
             {
-// NOTE: for testing only
-//              if (mEditorId == "UrielSeptim")
-//              {
-//                  std::cout << "NPC_ " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
-//                  std::cout << "dataSize " << subHdr.dataSize << std::endl;
-//              }
                 //std::cout << "NPC_ " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
                 reader.skipSubRecordData();
                 break;
