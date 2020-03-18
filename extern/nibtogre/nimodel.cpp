@@ -57,7 +57,7 @@ NiBtOgre::NiModel::NiModel(Ogre::ResourceManager *creator, const Ogre::String& n
     , mBuildData(*this)
     , mShowEditorMarkers(false/*showEditorMarkers*/)
 {
-    mObjects.clear();
+    mNiObjects.clear();
     mSkeleton.reset();
 }
 
@@ -69,12 +69,12 @@ NiBtOgre::NiModel::~NiModel()
 void NiBtOgre::NiModel::prepareImpl()
 {
     mNiStream = std::make_unique<NiBtOgre::NiStream>(mNif); // WARN: may throw
-    mHeader = std::make_unique<NiBtOgre::NiHeader>(mNiStream.get());
+    mNiHeader = std::make_unique<NiBtOgre::NiHeader>(mNiStream.get());
 }
 
 void NiBtOgre::NiModel::unprepareImpl()
 {
-    mHeader.reset();
+    mNiHeader.reset();
     mNiStream.reset();
 }
 
@@ -111,7 +111,7 @@ void NiBtOgre::NiModel::loadImpl()
 
 void NiBtOgre::NiModel::createNiObjects()
 {
-    if (!mObjects.empty())
+    if (!mNiObjects.empty())
         return; // don't create the objects again
 
     //if (mModelName.find("smeltermarker") != std::string::npos)/*fxambwatersalmon02b*/
@@ -119,10 +119,10 @@ void NiBtOgre::NiModel::createNiObjects()
     //if (getName().find("vgeardoor01") != std::string::npos)
         //std::cout << "door" << std::endl;
 
-    mObjects.resize(mHeader->numBlocks());
+    mNiObjects.resize(mNiHeader->numBlocks());
     if (mNiStream->nifVer() >= 0x0a000100) // from 10.0.1.0
     {
-        for (std::uint32_t i = 0; i < mHeader->numBlocks(); ++i)
+        for (std::uint32_t i = 0; i < mNiHeader->numBlocks(); ++i)
         {
             mCurrIndex = i; // FIXME: debugging only
 #if 0
@@ -130,12 +130,12 @@ void NiBtOgre::NiModel::createNiObjects()
                 return; // FIXME: morroblivion\environment\bittercoast\bcscum03.nif
 #endif
             // From ver 10.0.1.0 (i.e. TES4) we already know the object types from the header.
-            mObjects[i] = NiObject::create(mHeader->blockType(i), i, mNiStream.get(), *this, mBuildData);
+            mNiObjects[i] = NiObject::create(mNiHeader->blockType(i), i, mNiStream.get(), *this, mBuildData);
         }
     }
     else
     {
-        for (std::uint32_t i = 0; i < mHeader->numBlocks(); ++i)
+        for (std::uint32_t i = 0; i < mNiHeader->numBlocks(); ++i)
         {
             mCurrIndex = i; // FIXME: debugging only
 #if 0
@@ -145,15 +145,15 @@ void NiBtOgre::NiModel::createNiObjects()
             if (blockName == "AvoidNode")
                 std::cout << name << " : " << "AvoidNode" << std::endl;
             //std::cout << name << " : " << "BoundingBox" << std::endl;
-            mObjects[i] = NiObject::create(blockName, i, mNiStream.get(), *this, mBuildData);
+            mNiObjects[i] = NiObject::create(blockName, i, mNiStream.get(), *this, mBuildData);
 #else
             // For TES3, the object type string is read first to determine the type.
-            mObjects[i] = NiObject::create(mNiStream->readString(), i, mNiStream.get(), *this, mBuildData);
+            mNiObjects[i] = NiObject::create(mNiStream->readString(), i, mNiStream.get(), *this, mBuildData);
 #endif
         }
     }
 
-    // TODO: should assert that the first object, i.e. mObjects[0], is either a NiNode (TES3/TES4)
+    // TODO: should assert that the first object, i.e. mNiObjects[0], is either a NiNode (TES3/TES4)
     //       or BSFadeNode (TES5)
 
     // read the footer to check for root nodes
@@ -349,13 +349,13 @@ void NiBtOgre::NiModel::buildSkinnedModel(Ogre::SkeletonPtr skeleton)
     if (!mSkeleton)
         mSkeleton = skeleton;
 
-    mObjects[getRootIndex()]->build(&mBuildData); // FIXME: what to do with other roots?
+    mNiObjects[getRootIndex()]->build(&mBuildData); // FIXME: what to do with other roots?
 }
 
 // build the skeleton and node controllers
 void NiBtOgre::NiModel::buildModel()
 {
-    mObjects[getRootIndex()]->build(&mBuildData); // FIXME: what to do with other roots?
+    mNiObjects[getRootIndex()]->build(&mBuildData); // FIXME: what to do with other roots?
 }
 
 // NOTE: 'model' should be updated each time a weapon (e.g. bow) is equipped or unequipped
@@ -427,24 +427,24 @@ std::string NiBtOgre::NiModel::getTargetBone() const
 
 void NiBtOgre::NiModel::useFgMorphVertices()
 {
-    fgGeometry()->mUseMorphed = true;
+    getUniqueNiTriBasedGeom()->mUseMorphed = true;
 }
 
 const std::vector<Ogre::Vector3>& NiBtOgre::NiModel::fgVertices() const
 {
-    return fgGeometry()->getVertices(false/*morphed*/);
+    return getUniqueNiTriBasedGeom()->getVertices(false/*morphed*/);
 }
 
 std::vector<Ogre::Vector3>& NiBtOgre::NiModel::fgMorphVertices()
 {
-    return fgGeometry()->mMorphVertices;
+    return getUniqueNiTriBasedGeom()->mMorphVertices;
 }
 
 // WARN: returns the vertices from the first NiTriBasedGeom child of the root NiNode
 //       (this can be used to get around the lack of TRI files for certain NIF models)
-NiBtOgre::NiTriBasedGeom *NiBtOgre::NiModel::fgGeometry() const
+NiBtOgre::NiTriBasedGeom *NiBtOgre::NiModel::getUniqueNiTriBasedGeom() const
 {
-    if (mObjects.empty())
+    if (mNiObjects.empty())
         throw std::logic_error("NiModel attempting to retrieve an object that is not yet built.");
 
     NiNode *ninode = getRef<NiNode>(getRootIndex());
@@ -550,6 +550,7 @@ void NiBtOgre::BuildData::setNiNodeParent(NiAVObjectRef child, NiNode *parent)
     }
 }
 
+#if 0
 void NiBtOgre::BuildData::addNewSkelLeafIndex(NiNodeRef leaf)
 {
     if (std::find(mSkelLeafIndicies.begin(), mSkelLeafIndicies.end(), leaf) == mSkelLeafIndicies.end())
@@ -560,3 +561,4 @@ bool NiBtOgre::BuildData::hasBoneLeaf(NiNodeRef leaf) const
 {
      return std::find(mSkelLeafIndicies.begin(), mSkelLeafIndicies.end(), leaf) != mSkelLeafIndicies.end();
 }
+#endif

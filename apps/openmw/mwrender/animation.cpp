@@ -2083,7 +2083,7 @@ bool ObjectAnimation::disableHavokAtStart() const
     // FIXME: there's probably a better way to do this
     // disable havok if no constraints but has node animations (e.g. prison cell gate)
     return !mObjectRoot->mForeignObj->mModel->buildData().hasBhkConstraint() &&
-           !mObjectRoot->mForeignObj->mModel->buildData().mMovingBoneNameMap.empty();
+            mObjectRoot->mForeignObj->mModel->hasNodeAnimation();
 }
 
 class FindEntityTransparency {

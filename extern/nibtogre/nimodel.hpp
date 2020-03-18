@@ -110,10 +110,8 @@ namespace NiBtOgre
         void addSkelLeafIndex(NiNodeRef leaf) { mSkelLeafIndicies.push_back(leaf); }
 
         // only adds if none found
-        void addNewSkelLeafIndex(NiNodeRef leaf); // FIXME: not used?
-        bool hasBoneLeaf(NiNodeRef leaf) const; // FIXME: not used?
-
-        //bool mIsSkeleton; // npc/creature
+        //void addNewSkelLeafIndex(NiNodeRef leaf); // FIXME: not used?
+        //bool hasBoneLeaf(NiNodeRef leaf) const; // FIXME: not used?
 
         // The btCollisionShape for btRigidBody corresponds to an Ogre::Entity whose Ogre::SceneNode
         // may be controlled for Ragdoll animations.  So we just really need the NiModel name,
@@ -142,20 +140,20 @@ namespace NiBtOgre
         //       animation name  bone name
         //            |            |
         //            v            v
-        std::map<std::string, std::vector<std::string> > mMovingBoneNameMap;
+        std::map<std::string, std::vector<std::string> > mAnimBonesMap;
 
         void setAnimBoneName(const std::string& anim, const std::string& bone)
         {
             std::map<std::string, std::vector<std::string> >::iterator lb
-                = mMovingBoneNameMap.lower_bound(anim);
+                = mAnimBonesMap.lower_bound(anim);
 
-            if (lb != mMovingBoneNameMap.end() && !(mMovingBoneNameMap.key_comp()(anim, lb->first)))
+            if (lb != mAnimBonesMap.end() && !(mAnimBonesMap.key_comp()(anim, lb->first)))
             {
                 lb->second.push_back(bone);
             }
             else // None found, create one
             {
-                mMovingBoneNameMap.insert(lb, std::make_pair(anim, std::vector<std::string> { bone }));
+                mAnimBonesMap.insert(lb, std::make_pair(anim, std::vector<std::string> { bone }));
             }
         }
 
@@ -205,11 +203,11 @@ namespace NiBtOgre
     class NiModel : public Ogre::Resource
     {
         std::unique_ptr<NiStream> mNiStream; // NOTE: the initialisation order of NiStream and NiHeader
-        std::unique_ptr<NiHeader> mHeader;
+        std::unique_ptr<NiHeader> mNiHeader;
 
         const std::string mGroup;  // Ogre group
 
-        std::vector<std::unique_ptr<NiObject> > mObjects;
+        std::vector<std::unique_ptr<NiObject> > mNiObjects;
         std::vector<std::uint32_t> mRoots;
 
         int mCurrIndex; // FIXME: for debugging Ptr
@@ -262,7 +260,7 @@ namespace NiBtOgre
         inline T *getRef(std::int32_t index) const {
 #if 0
             try {
-                return static_cast<T*>(mObjects[index].get());
+                return static_cast<T*>(mNiObjects[index].get());
             }
             catch (...) {
                 return nullptr;
@@ -271,24 +269,24 @@ namespace NiBtOgre
             if (index >= 0 && (index > mCurrIndex)) // FIXME: for debugging Ptr
                 throw std::runtime_error("Ptr");
 
-            return (index < 0) ? nullptr : static_cast<T*>(mObjects[index].get());
+            return (index < 0) ? nullptr : static_cast<T*>(mNiObjects[index].get());
 #endif
         }
 
         // returns NiObject type name
         const std::string& blockType(std::uint32_t index) const {
-            return mHeader->blockType(index);
+            return mNiHeader->blockType(index);
         }
 
         // needed for the NIF version and strings (TES5)
-        inline std::uint32_t nifVer() const { return mHeader->nifVer(); }
+        inline std::uint32_t nifVer() const { return mNiHeader->nifVer(); }
 
         inline const std::string& indexToString(std::int32_t index) const {
-            return mHeader->indexToString(index);
+            return mNiHeader->indexToString(index);
         }
 
         inline std::int32_t searchStrings(const std::string& str) const {
-            return mHeader->searchStrings(str);
+            return mNiHeader->searchStrings(str);
         }
 
         inline bool hideEditorMarkers() const { return !mShowEditorMarkers; }
@@ -320,6 +318,8 @@ namespace NiBtOgre
                 NiModel *skeleton,
                 NiModel *bow = nullptr);
         const std::map<std::string, NiAVObjectRef>& getObjectPalette() const { return mObjectPalette; }
+
+        inline bool hasNodeAnimation() const { return !mBuildData.mAnimBonesMap.empty(); }
 
         Ogre::SkeletonPtr getSkeleton() const { return mSkeleton; }
         inline bool hasSkeleton() const { return !mSkeleton.isNull(); }
@@ -362,7 +362,7 @@ namespace NiBtOgre
 
         // access to NiGeometryData for generating a FaceGen TRI file or to populate morphed vertices
         // WARN: may throw
-        NiTriBasedGeom *fgGeometry() const;
+        NiTriBasedGeom *getUniqueNiTriBasedGeom() const;
     };
 }
 

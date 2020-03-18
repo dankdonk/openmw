@@ -238,8 +238,8 @@ void NiBtOgre::BtOgreInst::buildEntities()
         {
             // iterate through all the skeletal animations in the NIF
             std::map<std::string, std::vector<std::string> >::const_iterator it
-                = buildData.mMovingBoneNameMap.begin();
-            for (; it != buildData.mMovingBoneNameMap.end(); ++it)
+                = buildData.mAnimBonesMap.begin();
+            for (; it != buildData.mAnimBonesMap.end(); ++it)
             {
                 // find all the bones for the animation (the same NiNode name is used as the Bone name)
                 //
