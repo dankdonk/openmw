@@ -734,7 +734,7 @@ namespace MWWorld
     void Scene::changeToInteriorCell (const std::string& cellName, const ESM::Position& position)
     {
         CellStore *cell = MWBase::Environment::get().getWorld()->getInterior(cellName);
-        if (!cell)
+        if (!cell || !cell->getCell())
             return; // probably spelling error from console
 
         bool loadcell = (mCurrentCell == NULL);

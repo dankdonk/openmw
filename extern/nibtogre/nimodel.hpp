@@ -49,6 +49,11 @@ namespace Ogre
     class SkeletonInstance;
 }
 
+namespace FgLib
+{
+    class FgTri;
+}
+
 namespace NiBtOgre
 {
     class NiObject;
@@ -351,6 +356,8 @@ namespace NiBtOgre
         std::vector<Ogre::Vector3>& fgMorphVertices();
 
         void useFgMorphVertices(); // used by FgSam to indicate vertices have been morphed
+
+        void buildFgPoses(const FgLib::FgTri *tri);
 
         std::string getTargetBone() const;
 

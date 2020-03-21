@@ -1107,8 +1107,8 @@ void Animation::play(const std::string &groupname, int priority, int groups, boo
     {
         // If the animation state is not playing, we need to manually apply the accumulation
         // (see updatePosition, which would be called if the animation was playing)
-    if(mPtr.getTypeName() != typeid(ESM4::Creature).name()) // FIXME
-        mAccumRoot->setPosition(-mNonAccumCtrl->getTranslation(state.mTime)*mAccumulate);
+        if(mPtr.getTypeName() != typeid(ESM4::Creature).name()) // FIXME
+            mAccumRoot->setPosition(-mNonAccumCtrl->getTranslation(state.mTime)*mAccumulate);
     }
 }
 

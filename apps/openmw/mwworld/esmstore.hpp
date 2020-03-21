@@ -51,6 +51,9 @@
 #include <extern/esm4/regn.hpp>
 #include <extern/esm4/land.hpp>
 #include <extern/esm4/anio.hpp>
+#include <extern/esm4/dial.hpp>
+#include <extern/esm4/info.hpp>
+#include <extern/esm4/qust.hpp>
 
 #include <components/esm/records.hpp>
 #include "store.hpp"
@@ -133,6 +136,9 @@ namespace MWWorld
         ForeignStore<ESM4::Sound>      mForeignSounds;
         ForeignStore<ESM4::LandTexture> mForeignLandTextures;
         ForeignStore<ESM4::Script>     mForeignScripts;
+        ForeignStore<ESM4::Dialog>     mForeignDialogs;
+        ForeignStore<ESM4::DialogInfo> mForeignDialogInfos;
+        ForeignStore<ESM4::Quest>      mForeignQuests;
         // Foreign referenceables
         ForeignStore<ESM4::Activator>  mForeignActivators;
         ForeignStore<ESM4::Apparatus>  mForeignApparatuses;

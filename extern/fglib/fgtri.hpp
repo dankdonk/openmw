@@ -26,6 +26,7 @@
 #include <string>
 #include <cstdint>
 #include <vector>
+#include <map>
 
 #include <boost/scoped_array.hpp>
 
@@ -54,6 +55,9 @@ namespace FgLib
         boost::scoped_array<std::int32_t> mTriangleIndicies;
         boost::scoped_array<std::int32_t> mQuadIndicies;
 
+        std::vector<std::string> mLabelledDiffMorphs; // names
+        std::map<std::string, std::pair<float, std::vector<std::int16_t> > > mLabelledDiffMorphsMap;
+
         bool mNeedsNifVertices;
 
         // default, copy and assignment not allowed
@@ -68,12 +72,20 @@ namespace FgLib
         FgTri(const std::vector<Ogre::Vector3>& nifVerts); // for creating a dummy
         ~FgTri();
 
+        // used by FgSam
         inline const std::uint32_t numVertices() const { return mNumVertices; }
-        inline const std::uint32_t numMorphVertices() const { return mNumTotalStatMorphVertices; }
-
         inline const boost::scoped_array<float>& vertices() const { return mVertices; }
+        inline const std::uint32_t numStatMorphVertices() const { return mNumTotalStatMorphVertices; }
 
+        // simply means that the TRI file corresponding to the NIF was not found
         inline const bool needsNifVertices() const { return mNeedsNifVertices; }
+
+        // number of emotions, lip sync
+        inline const std::uint32_t numDiffMorphs() const { return mNumLabelledDiffMorphs; }
+        inline const std::vector<std::string>& diffMorphs() const { return mLabelledDiffMorphs; }
+        const std::pair<float, std::vector<std::int16_t> >& diffMorphVertices(const std::string& label) const;
+
+        bool hasDiffMorph(const std::string& label) const;
     };
 }
 

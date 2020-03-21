@@ -39,6 +39,9 @@
 #include <OgreSkeletonManager.h>
 #include <OgreSkeleton.h>
 #include <OgreBone.h>
+#include <OgreKeyframe.h>
+
+#include <extern/fglib/fgtri.hpp>
 
 #include "nistream.hpp"
 #include "nimodel.hpp"
@@ -380,6 +383,55 @@ bool NiBtOgre::NiTriBasedGeom::buildSubMesh(Ogre::Mesh *mesh, BoundsFinder& boun
         vertUsage = Ogre::HardwareBuffer::HBU_DYNAMIC_WRITE_ONLY;
         vertShadowBuffer = true;
     }
+    std::string skelName = "";
+    if (mModel.hasSkeleton())
+        skelName = mModel.getSkeleton()->getName();
+
+    if (0)//mSkinInstanceRef != -1)// && skelName.find("character") != std::string::npos
+                               //&& mModel.getName().find("hand") != std::string::npos
+                               //|| mModel.getName().find("foot") != std::string::npos)
+                               //&& skelName.find("skeleton") != std::string::npos)
+    {
+        const NiSkinInstance *skinInstance = mModel.getRef<NiSkinInstance>(mSkinInstanceRef);
+        const NiSkinData *skinData = mModel.getRef<NiSkinData>(skinInstance->mDataRef);
+
+        NiBtOgre::NiModelManager& modelManager = NiBtOgre::NiModelManager::getSingleton();
+        NiModelPtr skelModel = modelManager.getByName(skelName, "General");
+
+        for(size_t i = 0; i < skinInstance->mBoneRefs.size(); ++i)
+        {
+            std::string nodeName = mModel.getRef<NiNode>(skinInstance->mBoneRefs[i])->getName();
+            const std::map<std::string, NiAVObjectRef>& objPalette = skelModel->getObjectPalette();
+            std::map<std::string, NiAVObjectRef>::const_iterator it = objPalette.find(nodeName);
+            if (it == objPalette.end())
+                throw std::runtime_error("NiTriBasedGeom: missing bone "+nodeName);
+
+            Ogre::Matrix4 skelNodeTransform = skelModel->getRef<NiNode>(it->second)->getWorldTransform();
+            Ogre::Matrix4 mat;
+            mat.makeTransform(skinData->mBoneList[i].skinTransform.translation,
+                              Ogre::Vector3(skinData->mBoneList[i].skinTransform.scale),
+                              skinData->mBoneList[i].skinTransform.rotation);
+            mat = skelNodeTransform * mat;
+
+            Ogre::Vector3 skelPos, shapePos;
+            Ogre::Quaternion skelRot, shapeRot;
+            Ogre::Vector3 skelScale, shapeScale;
+
+            mat.decomposition(skelPos, skelScale, skelRot);
+            transform.decomposition(shapePos, shapeScale, shapeRot);
+
+            float l = (skelPos - shapePos).length();
+            if (l > 3.f)
+                std::cout << mModel.getName() << ":" << nodeName << " pos " << l << std::endl;
+
+            Ogre::Quaternion a = skelRot * shapeRot;
+            Ogre::Degree d;
+            Ogre::Vector3 axis;
+            a.ToAngleAxis(d, axis);
+            if (d.valueDegrees() > 10)
+                std::cout << mModel.getName() << ":" << nodeName << " rot " << d.valueDegrees() << std::endl;
+        }
+    }
 
     // transform the vertices and normals into position.
     for (size_t i = 0;i < vertices.size();i++)
@@ -412,8 +464,16 @@ bool NiBtOgre::NiTriBasedGeom::buildSubMesh(Ogre::Mesh *mesh, BoundsFinder& boun
     Ogre::VertexDeclaration *decl;
     int nextBuf = 0;
 
-    Ogre::SubMesh *sub = mesh->createSubMesh(/*mModel.indexToString(NiObjectNET::mNameIndex)*/);
-    mSubMeshIndex = mesh->getNumSubMeshes() - 1; // FIXME: this is not guaranteed to be right
+    std::string subMeshName = mModel.indexToString(NiObjectNET::mNameIndex); // TODO: are the names unique?
+    Ogre::SubMesh *sub = mesh->createSubMesh(subMeshName);
+
+    // get the correct subMesh index
+    const Ogre::Mesh::SubMeshNameMap& subMeshNameMap = mesh->getSubMeshNameMap();
+    Ogre::Mesh::SubMeshNameMap::const_iterator it = subMeshNameMap.find(subMeshName);
+    if (it != subMeshNameMap.end())
+        mSubMeshIndex = it->second;
+    else
+        throw std::runtime_error("NiTriBasedGeom: SubMesh index not found"); // shouldn't happen
 
     // Add vertices
     sub->useSharedVertices = false;
@@ -700,7 +760,7 @@ bool NiBtOgre::NiTriBasedGeom::buildSubMesh(Ogre::Mesh *mesh, BoundsFinder& boun
     if(materialName.length() > 0)
         sub->setMaterialName(materialName);
     else
-        throw std::runtime_error("NiGeometry: subMesh has no material");
+        throw std::runtime_error("NiTriBasedGeom: subMesh has no material");
 
     // End of code copied from components/nifogre/mesh.cpp
 
@@ -715,6 +775,59 @@ bool NiBtOgre::NiTriBasedGeom::buildSubMesh(Ogre::Mesh *mesh, BoundsFinder& boun
 
     // if required build tangents at the mesh level
     return mOgreMaterial.needTangents();
+}
+
+void NiBtOgre::NiTriBasedGeom::buildFgPoses(Ogre::Mesh *mesh, const FgLib::FgTri *tri)
+{
+    const std::vector<Ogre::Vector3>& vertices = getVertices(true/*morphed*/); // most head models are
+    float endTime = 0.1f;
+    unsigned short poseIndex = (unsigned short)mesh->getPoseCount()-1; // FIXME
+
+    const std::vector<std::string>& diffMorphs = tri->diffMorphs();
+    for (std::size_t i = 0; i < diffMorphs.size(); ++i)
+    {
+        // need an animation for each emotion, and make the length configurable?
+        Ogre::Animation *animation = mesh->createAnimation(diffMorphs[i], endTime/*totalAnimLength*/);
+        Ogre::VertexAnimationTrack* track = animation->createVertexTrack(mSubMeshIndex+1, Ogre::VAT_POSE);
+
+        // ------------------------- Base ------------------------
+        Ogre::Pose* pose = mesh->createPose(mSubMeshIndex + 1, "Base");
+        for (std::size_t v = 0; v < vertices.size(); ++v) // vertices in headhuman.nif, etc
+            pose->addVertex(v, Ogre::Vector3::ZERO);
+
+        // see the comments on animation length above
+        Ogre::VertexPoseKeyFrame* keyframe = track->createVertexPoseKeyFrame(0.f/*time*/);
+        // influence value may require some experiments - maybe for lip sync go up to 1 but for others less?
+        keyframe->addPoseReference(poseIndex + 2*i + 0, 0.5f/*influence*/);
+
+        keyframe = track->createVertexPoseKeyFrame(endTime); // WARN: keyframe reused
+        keyframe->addPoseReference(poseIndex + 2*i + 0, 0.5f/*influence*/);
+
+        // --------------- pose, e.g. "Happy" --------------------
+        const std::pair<float, std::vector<std::int16_t> >& diffMorphVertices
+            = tri->diffMorphVertices(diffMorphs[i]);
+
+        if (vertices.size()*3 != diffMorphVertices.second.size())
+            throw std::runtime_error("NiTriBasedGeom: number of vertices in a pose differ to SubMesh");
+
+        //std::cout << "pose created " << mModel.getName() << ": " << diffMorphs[i] << std::endl; // FIXME
+
+        pose = mesh->createPose(mSubMeshIndex + 1, diffMorphs[i]); // WARN: pose reused
+        for (std::size_t v = 0; v < vertices.size(); ++v) // vertices in headhuman.nif, etc
+        {
+            float scale = diffMorphVertices.first;
+            Ogre::Vector3 delta(scale * diffMorphVertices.second[v * 3 + 0],
+                                scale * diffMorphVertices.second[v * 3 + 1],
+                                scale * diffMorphVertices.second[v * 3 + 2]);
+            pose->addVertex(v, delta);
+        }
+
+        keyframe = track->createVertexPoseKeyFrame(0.f/*time*/); // WARN: keyframe reused
+        keyframe->addPoseReference(poseIndex + 2*i + 1, 0.5f/*influence*/);
+
+        keyframe = track->createVertexPoseKeyFrame(endTime); // WARN: keyframe reused
+        keyframe->addPoseReference(poseIndex + 2*i + 1, 0.5f/*influence*/);
+    }
 }
 
 // Seen in NIF version 20.2.0.7

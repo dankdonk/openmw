@@ -61,6 +61,7 @@ namespace FgLib
 
             tri.skip(16); // Reserved
 
+            // NOTE: StatMorphVertices are also read into mVertices
             boost::scoped_array<float> vertices(new float[3 * (mNumVertices + mNumTotalStatMorphVertices)]);
             for (std::size_t i = 0; i < 3 * (mNumVertices + mNumTotalStatMorphVertices); ++i)
                 tri.read(vertices[i]);
@@ -79,15 +80,18 @@ namespace FgLib
 
             mQuadIndicies.swap(quadIndicies);
 
-            // FIXME the rest of the file (dummy reads)
+            std::cout << "TRI: " << name << std::endl; // FIXME: for testing only
+
             for (std::size_t i = 0; i < mNumLabelledVertices; ++i)
             {
                 std::int32_t stringIndex;
                 tri.read(stringIndex); // FIXME: not sure if there is an int here
 
                 std::string label = tri.readString();
-                std::cout << label << std::endl; // FIXME: for testing only
+                std::cout << "LV: " << label << std::endl; // FIXME: for testing only
             }
+
+            // FIXME the rest of the file (dummy reads)
 
             for (std::size_t i = 0; i < mNumLabelledSurfacePoints; ++i)
             {
@@ -100,6 +104,7 @@ namespace FgLib
                 tri.read(dummy);
 
                 std::string label = tri.readString();
+                std::cout << "LS: " << label << std::endl; // FIXME: for testing only
             }
 
             if (mNumTextureCoordinates == 0 && (mExtensionInfo & 0x01) != 0)
@@ -140,6 +145,8 @@ namespace FgLib
                 }
             }
 
+            // anger, fear, happy, sad, etc
+            std::vector<std::int16_t> diffMorphs; // TODO: array instead?
             for (std::size_t md = 0; md < mNumLabelledDiffMorphs; ++md)
             {
                 std::string label = tri.readString();
@@ -148,26 +155,29 @@ namespace FgLib
                 tri.read(scale);
                 //std::cout << "\"" << label << "\" " <<
                     //std::fixed << std::setprecision(6) << scale << std::endl; // FIXME: for testing only
-                for (std::size_t i = 0; i < mNumVertices; ++i)
-                {
-                    std::int16_t dummy;
-                    tri.read(dummy); // X
-                    tri.read(dummy); // Y
-                    tri.read(dummy); // Z
-                }
+
+                diffMorphs.resize(3 * mNumVertices);
+                for (std::size_t i = 0; i < 3 * mNumVertices; ++i)
+                    tri.read(diffMorphs[i]);
+
+                mLabelledDiffMorphs.push_back(label);
+                mLabelledDiffMorphsMap.insert(std::make_pair(label, // name of the diff morph
+                                                             std::make_pair(scale, // for the diff morphs
+                                                                            std::move(diffMorphs))));
             }
 
+            // blink, look up/down, squint
             for (std::size_t ms = 0; ms < mNumLabelledStatMorphs; ++ms)
             {
                 std::string label = tri.readString();
                 std::int32_t numAffectedVertices;
-                tri.read(numAffectedVertices);
+                tri.read(numAffectedVertices); // sum of numAffectedVertices == mNumTotalStatMorphVertices
 
                 //std::cout << "\"" << label << "\" " << numAffectedVertices << std::endl; // FIXME
                 for (std::size_t i = 0; i < numAffectedVertices; ++i)
                 {
                     std::int32_t dummy;
-                    tri.read(dummy);
+                    tri.read(dummy); // vertex indicies, should be < mNumVertices
                 }
             }
 
@@ -225,5 +235,23 @@ namespace FgLib
 
     FgTri::~FgTri()
     {
+    }
+
+    bool FgTri::hasDiffMorph(const std::string& label) const
+    {
+        return mLabelledDiffMorphsMap.find(label) != mLabelledDiffMorphsMap.end();
+    }
+
+    const std::pair<float, std::vector<std::int16_t> >& FgTri::diffMorphVertices(const std::string& label) const
+    {
+        std::map<std::string, std::pair<float, std::vector<std::int16_t> > >::const_iterator lb
+            = mLabelledDiffMorphsMap.lower_bound(label);
+
+        if (lb != mLabelledDiffMorphsMap.end() && !(mLabelledDiffMorphsMap.key_comp()(label, lb->first)))
+        {
+            return lb->second;
+        }
+        else // none found
+            throw std::runtime_error("FgTri: not found label " + label);
     }
 }

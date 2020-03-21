@@ -20,7 +20,7 @@ EsmLoader::EsmLoader(MWWorld::ESMStore& store, std::vector<std::vector<ESM::ESMR
 void EsmLoader::load(const boost::filesystem::path& filepath, std::vector<std::vector<std::string> >& contentFiles)
 {
     int tesVerIndex = 0; // FIXME: hard coded, 0 = MW
-    int index = contentFiles[tesVerIndex].size();
+    int index = (int) contentFiles[tesVerIndex].size(); // compiler warning
 
     ContentLoader::load(filepath.filename(), contentFiles); // set the label on the loading bar
 
@@ -39,7 +39,7 @@ void EsmLoader::load(const boost::filesystem::path& filepath, std::vector<std::v
         ESM::ESM4Reader *esm = new ESM::ESM4Reader(isTes4); // NOTE: TES4 headers are 4 bytes shorter
         esm->setEncoder(mEncoder);
         tesVerIndex = isTes4 ? 1 : 2; // FIXME: hard coded, 2 = TES5
-        index = contentFiles[tesVerIndex].size();
+        index = (int) contentFiles[tesVerIndex].size(); // compiler warning
         contentFiles[tesVerIndex].push_back(filepath.filename().string());
         esm->setIndex(index);
         esm->reader().setModIndex(index);

@@ -1,0 +1,427 @@
+OpenMW version 0.36.0 (revision dbc4202507)
+Loading config file: C:\Users\cc9c\Documents\My Games\OpenMW/openmw.cfg... done.
+Loading config file: ./openmw.cfg... done.
+Using default (English) font encoding.
+Data dir C:\Program Files\OpenMW/data
+Data dir C:\Program Files (x86)\GOG Games\Morrowind\Data Files
+Data dir C:/Program Files (x86)/GOG Games/Oblivion/Data
+Data dir C:/Program Files (x86)/GOG Games/Oblivion/NewData
+Data dir C:/Program Files (x86)/GOG Games/Morrowind/Data Files
+Data dir C:\Program Files (x86)\GOG Games\Morrowind\Data Files
+Data dir data
+Data dir ./data
+Adding BSA archive C:\Program Files (x86)\GOG Games\Morrowind\Data Files\Morrowind.bsa
+Adding BSA archive C:\Program Files (x86)\GOG Games\Morrowind\Data Files\Tribunal.bsa
+Adding BSA archive C:\Program Files (x86)\GOG Games\Morrowind\Data Files\Bloodmoon.bsa
+Adding BSA archive C:/Program Files (x86)/GOG Games/Oblivion/Data\Oblivion - Meshes.bsa
+Adding BSA archive C:/Program Files (x86)/GOG Games/Oblivion/Data\Oblivion - Textures - Compressed.bsa
+Adding BSA archive C:/Program Files (x86)/GOG Games/Oblivion/Data\Oblivion - Misc.bsa
+Adding BSA archive C:/Program Files (x86)/GOG Games/Oblivion/Data\Oblivion - Sounds.bsa
+Adding BSA archive C:/Program Files (x86)/GOG Games/Oblivion/Data\Oblivion - Voices1.bsa
+Adding BSA archive C:/Program Files (x86)/GOG Games/Oblivion/Data\Oblivion - Voices2.bsa
+Adding BSA archive C:/Program Files (x86)/GOG Games/Oblivion/Data\DLCShiveringIsles - Meshes.bsa
+Adding BSA archive C:/Program Files (x86)/GOG Games/Oblivion/Data\DLCShiveringIsles - Sounds.bsa
+Adding BSA archive C:/Program Files (x86)/GOG Games/Oblivion/Data\DLCShiveringIsles - Textures.bsa
+Adding BSA archive C:/Program Files (x86)/GOG Games/Oblivion/Data\DLCShiveringIsles - Voices.bsa
+Sound output: OpenAL
+Sound decoder: FFmpeg
+Enumerated output devices:
+  OpenAL Soft on Speaker/HP (2- Realtek(R) Audio)
+Opened "OpenAL Soft on Speaker/HP (2- Realtek(R) Audio)"
+Loading content file Morrowind.esm
+Loading content file Tribunal.esm
+Loading content file Bloodmoon.esm
+Loading content file Oblivion.esm
+QUST SEHaskillSummonQuest:  @ 
+QUST SEHillSuicides:  @ 
+QUST SE01Fin:  @ 
+QUST SESacellum: Sacellum Speeches @ 
+QUST SE46: The Great Divide @ Quests\iconSEMisc.dds
+QUST SE39Fin:  @ Quests\iconSEMisc.dds
+QUST SE07Fin:  @ Quests\iconSE07.dds
+QUST SE40: Falling Awake @ Quests\iconSEMisc.dds
+QUST SEStartUp:  @ 
+QUST SE45: The Fork of Horripilation @ Quests\iconSEMisc.dds
+QUST SE44: The Coming Storm @ Quests\iconSEMisc.dds
+QUST SE42: Work is Never Done @ Quests\iconSEMisc.dds
+QUST SE43: Ushnar's Terror @ Quests\iconSEMisc.dds
+QUST SEMiscQuestsFIN:  @ 
+QUST SE41: A Liquid Solution @ Quests\iconSEMisc.dds
+QUST SE03Fin:  @ Quests\iconSE03.dds
+QUST SE34: To Help A Hero @ Quests\iconSEMisc.dds
+QUST SEObelisks:  @ Quests\iconSEMisc.dds
+QUST SE36: Final Resting @ Quests\iconSEMisc.dds
+QUST SENQDGeneric:  @ 
+QUST SE11FIN: SE11 Post-Quest @ Quests\iconSE11.dds
+QUST SE08FIN: SE08 Post-Quest @ Quests\iconSE08.dds
+QUST SEBed: SE Bed Rental @ 
+QUST SE14Rez:  @ Quests\iconSEMisc.dds
+QUST SE04Shell: Understanding Madness @ Quests\iconSE04.dds
+QUST SE09Misc: Holds infos for scripted experiment scene @ Quests\iconSE09.dds
+QUST SE04Fin: SE04 Post Quest @ Quests\iconSE04.dds
+QUST SECrime: SE Crime dialogue @ 
+QUST SE37: Taxonomy of Obsession @ Quests\iconSEMisc.dds
+QUST SE35: Brithaur @ Quests\iconSEMisc.dds
+QUST SE38: The Museum of Oddities @ Quests\iconSEMisc.dds
+QUST SE39: Everything In Its Place @ Quests\iconSEMisc.dds
+QUST SENQDWilderness: SE Wilderness NQD @ 
+QUST SE14: The Prince of Madness @ Quests\iconSEMisc.dds
+QUST SENQDDementia: SE Dementia NQD @ 
+QUST SENQDMania: SE Mania NQD @ 
+QUST SE08Xed:  @ Quests\iconSE08.dds
+QUST SE02Conv:  @ Quests\iconSE02.dds
+QUST SE06Battle: Cylarne battle @ Quests\iconSE06.dds
+QUST SE00: SE main story general @ Quests\iconSE01.dds
+QUST SE03A: Baiting the Trap @ Quests\iconSE03.dds
+QUST SE13: The End of Order @ Quests\iconSE13.dds
+QUST SE30: The Antipodean Hammer @ Quests\iconSEMisc.dds
+QUST SE05Conversations:  @ Quests\iconSE05.dds
+QUST SE12: The Roots of Madness @ Quests\iconSE12.dds
+QUST SE11b: The Trial of Reflection @ Quests\iconSE11.dds
+QUST SE11a: The Liturgy of Vision @ Quests\iconSE11.dds
+QUST SE07B: Ritual of Mania @ Quests\iconSE07.dds
+QUST SE07A: Ritual of Dementia @ Quests\iconSE07.dds
+QUST SE03: A Better Mousetrap @ Quests\iconSE03.dds
+QUST SE08: Retaking The Fringe @ Quests\iconSE08.dds
+QUST SE11: Symbols of Office @ Quests\iconSE11.dds
+QUST SE09: Rebuilding the Gatekeeper @ Quests\iconSE09.dds
+QUST SE10: The Helpless Army @ Quests\iconSE10.dds
+QUST SE05: The Lady of Paranoia @ Quests\iconSE05.dds
+QUST SE01Door: A Door in Niben Bay @ Quests\iconSE01.dds
+QUST SE04: Addiction @ Quests\iconSE04.dds
+QUST SEConversations:  @ 
+QUST SE07: Ritual of Accession @ Quests\iconSE07.dds
+QUST SE06: The Cold Flame of Agnon @ Quests\iconSE06.dds
+QUST SE32: Ghosts of Vitharn @ Quests\iconSEMisc.dds
+QUST SE02: Through the Fringe of Madness @ Quests\iconSE02.dds
+QUST lyndacarter: for mtv promo @ 
+QUST TGGrayCowlBlocker: Gray Cowl Dialogue @ 
+QUST Tutorials:  @ 
+QUST MS13Alt:  @ 
+QUST TG10BloodPrice: Blood Price @ Quest\icon_thieves_guild.dds
+QUST TG03BloodPrice: Blood Price @ Quest\icon_thieves_guild.dds
+QUST TG09BloodPrice: Blood Price @ Quest\icon_thieves_guild.dds
+QUST TG08BloodPrice: Blood Price @ Quest\icon_thieves_guild.dds
+QUST TG01BloodPrice: Blood Price @ Quest\icon_thieves_guild.dds
+QUST TG07BloodPrice: Blood Price @ Quest\icon_thieves_guild.dds
+QUST TG02BloodPrice: Blood Price @ Quest\icon_thieves_guild.dds
+QUST TG06BloodPrice: Blood Price @ Quest\icon_thieves_guild.dds
+QUST TG05BloodPrice: Blood Price @ Quest\icon_thieves_guild.dds
+QUST TG04BloodPrice: Blood Price @ Quest\icon_thieves_guild.dds
+QUST DASkullofCorruption:  @ 
+QUST MQDragonArmor: Imperial Dragon Armor @ Quest\icon_tiber_septim's_armor.dds
+QUST DASanguineRoseQuest:  @ 
+QUST FGD00PostQuest: FG PostQuest @ 
+QUST MageConvSystem: Mages Conversation System @ 
+QUST BladesMartinConvSystem: Martin's Conversations with the Blades @ 
+QUST TGQuestTalk:  @ Quest\icon_thieves_guild.dds
+QUST NPCAdventurer:  @ 
+QUST GenericWoodElf:  @ 
+QUST GenericRedguard:  @ 
+QUST GenericOrc:  @ 
+QUST GenericNord:  @ 
+QUST GenericKhajiit:  @ 
+QUST GenericHighElf:  @ 
+QUST GenericDarkElf:  @ 
+QUST GenericBreton:  @ 
+QUST NQDUpperClass:  @ 
+QUST MQInfoGeneral: MQ info general (separate for priority) @ 
+QUST BladesConvSystem: Blades Dynamic Conversations @ 
+QUST NQDWilderness: NQD Wilderness @ 
+QUST TrainingSpeechcraft: Speechcraft Training @ Quest\icon_master_trainer.dds
+QUST TrainingSneak: Sneak Training @ Quest\icon_master_trainer.dds
+QUST TrainingSecurity: Security Training @ Quest\icon_master_trainer.dds
+QUST TrainingRestoration: Restoration Training @ Quest\icon_master_trainer.dds
+QUST TrainingMysticism: Mysticism Training @ Quest\icon_master_trainer.dds
+QUST TrainingMercantile: Mercantile Training @ Quest\icon_master_trainer.dds
+QUST TrainingLightArmor: Light Armor Training @ Quest\icon_master_trainer.dds
+QUST TrainingIllusion: Illusion Training @ Quest\icon_master_trainer.dds
+QUST TrainingHandtoHand: Hand to Hand Training @ Quest\icon_master_trainer.dds
+QUST TrainingConjuration: Conjuration Training @ Quest\icon_master_trainer.dds
+QUST TrainingBlunt: Blunt Training @ Quest\icon_master_trainer.dds
+QUST TrainingBlock: Block Training @ Quest\icon_master_trainer.dds
+QUST TrainingBlade: Blade Training @ Quest\icon_master_trainer.dds
+QUST TrainingAthletics: Athletics Training @ Quest\icon_master_trainer.dds
+QUST TrainingArmorer: Armorer Training @ Quest\icon_master_trainer.dds
+QUST TrainingAlteration: Alteration Training @ Quest\icon_master_trainer.dds
+QUST TrainingAcrobatics: Acrobatics Training @ Quest\icon_master_trainer.dds
+QUST TrainingAlchemy: Alchemy Training @ Quest\icon_master_trainer.dds
+QUST TrainingHeavyArmor: Heavy Armor Training @ Quest\icon_master_trainer.dds
+QUST TrainingDestruction: Destruction Training @ Quest\icon_master_trainer.dds
+QUST ImperialLegionDialogue:  @ 
+QUST SQ10: When the Vow Breaks @ Quest\icon_settlements_quest_icon.dds
+QUST SQ09: Go Fish @ Quest\icon_settlements_quest_icon.dds
+QUST SQ08: A Venerable Vintage @ Quest\icon_settlements_quest_icon.dds
+QUST SQ07: The Sunken One @ Quest\icon_settlements_quest_icon.dds
+QUST SQ06: Bear Season @ Quest\icon_settlements_quest_icon.dds
+QUST SQ05: The Gravefinder's Repose @ Quest\icon_settlements_quest_icon.dds
+QUST SQ04: No Stone Unturned @ Quest\icon_settlements_quest_icon.dds
+QUST SQ03: Revenge Served Cold @ Quest\icon_settlements_quest_icon.dds
+QUST SQ02: Raid on Greyland @ Quest\icon_settlements_quest_icon.dds
+QUST SQFIN:  @ 
+QUST SQ01: The Potato Snatcher @ Quest\icon_settlements_quest_icon.dds
+QUST MSFIN:  @ 
+QUST ArenaDialogue: The Arena @ Quest\icon_arena.dds
+QUST HouseServant: Helping Hands @ Quest\icon_miscellaneous.dds
+QUST HouseSkingradQuest: The Rosethorn Cache @ Quest\icon_miscellaneous.dds
+QUST DAGeneric: Generic Daedric Quest Dialog @ 
+QUST MG19Alchemy: Alchemy Acquisitions @ Quest\icon_mages_guild.dds
+QUST MS94: Attack on Fort Sutch @ 
+QUST MS93: The Ghost Ship of Anvil @ Quest\icon_miscellaneous.dds
+QUST GenericArgonian: Argonian Race Dialogue @ 
+QUST GenericImperial: Imperial Race Based Dialogue @ 
+QUST MS92FIN: MS92FIN @ 
+QUST GenericFodderCombat: NPC Fodder combat dialogue @ 
+QUST MS91FIN: MS91FIN @ 
+QUST MS92: Knights of the White Stallion @ Quest\icon_miscellaneous.dds
+QUST MS91: Mazoga the Orc @ Quest\icon_miscellaneous.dds
+QUST HouseImperialCity: Buy a house in the Imperial City @ Quest\icon_miscellaneous.dds
+QUST HouseSkingrad: Buying a house in Skingrad @ Quest\icon_miscellaneous.dds
+QUST HouseCheydinhal: Buying a house in Cheydinhal @ Quest\icon_miscellaneous.dds
+QUST HouseChorrol: Buying a house in Chorrol @ Quest\icon_miscellaneous.dds
+QUST HouseBruma: Buying a house in Bruma @ Quest\icon_miscellaneous.dds
+QUST HouseBravil: Buying a house in Bravil @ Quest\icon_miscellaneous.dds
+QUST HouseLeyawiin: Buying a house in Leyawiin @ Quest\icon_miscellaneous.dds
+QUST NQDImperialCityNPC: NQDImperialCityNPC @ 
+QUST E3: E3 Demo quest @ 
+QUST FGInterimConversation:  @ 
+QUST MS43: Whom Gods Annoy @ Quest\icon_miscellaneous.dds
+QUST MS39: Seeking Your Roots @ Quest\icon_miscellaneous.dds
+QUST Horses:  @ Quest\icon_miscellaneous.dds
+QUST DarkVamp: Darkness Eternal @ Quest\icon_dark_brotherhood.dds
+QUST NQDImperialCity: NQDImperialCity @ 
+QUST MS40: Vampire Cure @ Quest\icon_miscellaneous.dds
+QUST GenericDremora: Generic Dremora dialogue @ 
+QUST TrainingMarksman: Marksman Training @ Quest\icon_master_trainer.dds
+QUST TestVoiceBudget: Export this quest to see race/sex for each city @ 
+QUST ArenaICGrandChampion: Arena Grand Champion Match Control Script @ Quest\icon_arena.dds
+QUST NQDAnvilNPC: NQD Anvil NPC @ 
+QUST NQDAnvil: NQD Anvil @ 
+QUST NQDBravilNPC: NQDBravil NPC @ 
+QUST NQDBravil: NQDBravil @ 
+QUST NQDBrumaNPC: NQD Bruma NPC @ 
+QUST NQDBruma: NQD Bruma @ 
+QUST NQDLeyawiinNPC: NQDLeyawiin NPC @ 
+QUST NQDKvatchNPC: NQD Kvatch NPC @ 
+QUST NQDCheydinhalNPC: NQD Cheydinhal NPC @ 
+QUST MS04: The Siren's Deception @ Quest\icon_miscellaneous.dds
+QUST BedRental: Bed Rental @ 
+QUST MS52: Origin of the Gray Prince @ Quest\icon_miscellaneous.dds
+QUST ArenaIC: The Imperial City Arena @ Quest\icon_arena.dds
+QUST TGDirections: Directions from Beggars @ Quest\icon_thieves_guild.dds
+QUST MS26: Imperial Corruption @ Quest\icon_miscellaneous.dds
+QUST DarkConvSystem: Dark Brotherhood Dynamic Conversations @ Quest\icon_dark_brotherhood.dds
+QUST MS06: The Forlorn Watchman @ Quest\icon_miscellaneous.dds
+QUST FGGeneric: FG Dialogue said to Player @ 
+QUST MGNecroAnchorites: Necromancer Anchorites @ 
+QUST MSMisc: Misc Quest Starter @ 
+QUST MS13: The Wayward Knight @ Quest\icon_miscellaneous.dds
+QUST FG00Expulsion: Expelled from the Fighters Guild @ Quest\icon_fighters_guild.dds
+QUST MS29: Unfriendly Competition @ Quest\icon_miscellaneous.dds
+QUST DarkExile3: Eternal Exile @ Quest\icon_dark_brotherhood.dds
+QUST DarkExileControl: Dark Exile Control Script @ Quest\icon_dark_brotherhood.dds
+QUST DarkExile2: Another Dark Exile @ Quest\icon_dark_brotherhood.dds
+QUST DarkExile: A Dark Exile @ Quest\icon_dark_brotherhood.dds
+QUST DAWabbajack: Wabbajack quest @ 
+QUST DAConversations:  @ Quest\icon_daedra.dds
+QUST MGExpulsion02: Mages Guild Second Suspension @ Quest\icon_mages_guild.dds
+QUST MGExpulsion01: Mages Guild Suspension @ Quest\icon_mages_guild.dds
+QUST MS37: Tears of the Savior @ Quest\icon_miscellaneous.dds
+QUST ArenaDisqualification: Arena Disqualification Control Script @ Quest\icon_arena.dds
+QUST Mg09Test: Test @ 
+QUST MQConversations: Main quest scripted conversations @ 
+QUST MS08: Caught in the Hunt @ Quest\icon_miscellaneous.dds
+QUST TGStolenGoods: Independent Thievery @ Quest\icon_thieves_guild.dds
+QUST TGExpelled: Cast out of the Thieves Guild @ Quest\icon_thieves_guild.dds
+QUST MQ14: Great Gate @ Quest\icon_oblivion_gate.dds
+QUST MQ13: Defense of Bruma @ Quest\icon_oblivion_gate.dds
+QUST MQ12: Miscarcand @ Quest\icon_miscarcand.dds
+QUST MQ11: Allies for Bruma @ Quest\icon_bruma.dds
+QUST MQ10: Bruma Gate @ Quest\icon_oblivion_gate.dds
+QUST MQ09: Blood of the Divines @ Quest\icon_tiber_septim's_armor.dds
+QUST MQ08: Blood of the Daedra @ Quest\icon_daedra.dds
+QUST MQ07: Spies @ Quest\icon_bruma.dds
+QUST MQ06: Dagon Shrine @ Quest\icon_mythic_dawn.dds
+QUST MQ05: The Path of Dawn @ Quest\icon_imperial_city.dds
+QUST MQ04: Weynon Priory @ Quest\icon_weynon_priory.dds
+QUST MQ03: Find the Heir @ Quest\icon_kvatch.dds
+QUST MQ02: Deliver the Amulet @ Quest\icon_amulet_of_king.dds
+QUST MQ01: Tutorial @ Quest\icon_miscellaneous.dds
+QUST MQ00: Main Quest general @ 
+QUST ArenaSpectatorCombatant: Arena Combatants Control Script @ Quest\icon_arena.dds
+QUST ArenaAggression: Arena Aggression Control Script @ Quest\icon_arena.dds
+QUST ArenaAnnouncer: Arena Announcer Speech @ Quest\icon_arena.dds
+QUST MS23: Order of the Virtuous Blood @ Quest\icon_miscellaneous.dds
+QUST MS11: A Brotherhood Betrayed @ Quest\icon_miscellaneous.dds
+QUST MS10: Corruption and Conscience @ Quest\icon_miscellaneous.dds
+QUST MS09: Two Sides of the Coin @ Quest\icon_miscellaneous.dds
+QUST MS12: Lifting the Vale @ Quest\icon_miscellaneous.dds
+QUST MS14: A Brush with Death @ Quest\icon_miscellaneous.dds
+QUST TGInfo: Thieves Guild Rules & Information @ Quest\icon_thieves_guild.dds
+QUST NQDBeggars: Beggars @ 
+QUST DAMolagBal: Molag Bal @ Quest\icon_daedra.dds
+QUST DAHermaeusMora: Hermaeus Mora @ Quest\icon_daedra.dds
+QUST DAVaermina: Vaermina @ Quest\icon_daedra.dds
+QUST DASheogorath: Sheogorath @ Quest\icon_daedra.dds
+QUST DASanguine: Sanguine @ Quest\icon_daedra.dds
+QUST DAPeryite: Peryite @ Quest\icon_daedra.dds
+QUST DANocturnal: Nocturnal @ Quest\icon_daedra.dds
+QUST DANamira: Namira @ Quest\icon_daedra.dds
+QUST DAMeridia: Meridia @ Quest\icon_daedra.dds
+QUST DAMephala: Mephala @ Quest\icon_daedra.dds
+QUST DAMalacath: Malacath @ Quest\icon_daedra.dds
+QUST DAHircine: Hircine @ Quest\icon_daedra.dds
+QUST DAClavicusVile: Clavicus Vile @ Quest\icon_daedra.dds
+QUST DABoethia: Boethia @ Quest\icon_daedra.dds
+QUST DAAzura: Azura @ Quest\icon_daedra.dds
+QUST MQ15: Paradise @ Quest\icon_paradise.dds
+QUST MS31: An Unexpected Voyage @ Quest\icon_miscellaneous.dds
+QUST MG18KingofWorms: Confront the King @ Quest\icon_mages_guild.dds
+QUST MG17Ambush: Ambush @ Quest\icon_mages_guild.dds
+QUST MG16Amulet: The Necromancer's Amulet @ Quest\icon_mages_guild.dds
+QUST MG15Helm: The Bloodworm Helm @ Quest\icon_mages_guild.dds
+QUST MG14Plot: A Plot Revealed @ Quest\icon_mages_guild.dds
+QUST MG13Information: Information at a Price @ Quest\icon_mages_guild.dds
+QUST MG12Gate: Liberation or Apprehension? @ Quest\icon_mages_guild.dds
+QUST FGC03Flagon: Newheim's Flagon @ Quest\icon_fighters_guild.dds
+QUST MS02: Where Spirits Have Lease @ Quest\icon_miscellaneous.dds
+QUST TG11Heist: The Ultimate Heist @ Quest\icon_thieves_guild.dds
+QUST TG10Boots: Boots of Springheel Jak @ Quest\icon_thieves_guild.dds
+QUST TG09Arrow: Arrow of Extrication @ Quest\icon_thieves_guild.dds
+QUST TG08Blind: Turning a Blind Eye @ Quest\icon_thieves_guild.dds
+QUST TG07Lex: Taking Care of Lex @ Quest\icon_thieves_guild.dds
+QUST TG06Atonement: Lost Histories @ Quest\icon_thieves_guild.dds
+QUST TG05Misdirection: Misdirection @ Quest\icon_thieves_guild.dds
+QUST MG11NecroMoon: Necromancer's Moon @ Quest\icon_mages_guild.dds
+QUST MG10Vahtacen: Vahtacen's Secret @ Quest\icon_mages_guild.dds
+QUST TG04Mistake: Ahdarji's Heirloom @ Quest\icon_thieves_guild.dds
+QUST FGC10Swamp: Mystery at Harlun's Watch @ Quest\icon_fighters_guild.dds
+QUST FGC09Ogres: The Noble's Daughter @ Quest\icon_fighters_guild.dds
+QUST FGC08Prison: The Fugitives @ Quest\icon_fighters_guild.dds
+QUST FGC07Heirloom: Amelion's Debt @ Quest\icon_fighters_guild.dds
+QUST FGC05Stone: The Stone of St. Alessia @ Quest\icon_fighters_guild.dds
+QUST FGC04Scholar: The Wandering Scholar @ Quest\icon_fighters_guild.dds
+QUST FGC03Thieves: Den of Thieves @ Quest\icon_fighters_guild.dds
+QUST FGC02Protect: The Unfortunate Shopkeeper @ Quest\icon_fighters_guild.dds
+QUST FGC01Rats: A Rat Problem @ Quest\icon_fighters_guild.dds
+QUST FGD09Hist: The Hist @ Quest\icon_fighters_guild.dds
+QUST FGD08Infiltration: Infiltration @ Quest\icon_fighters_guild.dds
+QUST FGD07Kidnap: Information Gathering @ Quest\icon_fighters_guild.dds
+QUST MG09Motives: Ulterior Motives @ Quest\icon_mages_guild.dds
+QUST TG01BestThief: May the Best Thief Win @ Quest\icon_thieves_guild.dds
+QUST TG00FindThievesGuild: Finding the Thieves Guild @ Quest\icon_thieves_guild.dds
+QUST MSShadowscale: The Renegade Shadowscale @ Quest\icon_dark_brotherhood.dds
+QUST TG03Elven: The Elven Maiden @ Quest\icon_thieves_guild.dds
+QUST MG08MagesStaff: A Mage's Staff @ Quest\icon_mages_guild.dds
+QUST TG02taxes: Untaxing the Poor @ Quest\icon_thieves_guild.dds
+QUST NQDLeyawiin: NQDLeyawiin @ 
+QUST MG07Leyawiin: Leyawiin Recommendation @ Quest\icon_mages_guild.dds
+QUST MS51: Canvas the Castle @ Quest\icon_miscellaneous.dds
+QUST MS46FIN: MS46 FIN @ 
+QUST GoblinWarsQuest: Gobin Wars quest @ 
+QUST MG06Bruma: Bruma Recommendation @ Quest\icon_mages_guild.dds
+QUST Dark10SpecialWizard: Affairs of a Wizard @ Quest\icon_dark_brotherhood.dds
+QUST MS46: Goblin Trouble @ Quest\icon_miscellaneous.dds
+QUST Dark10SanctuaryFIN: The Dead Drop @ Quest\icon_dark_brotherhood.dds
+QUST MS47FIN: MS47 FIN @ 
+QUST Dark19Whispers: Whispers of Death @ Quest\icon_dark_brotherhood.dds
+QUST Dark18Mother: Honor Thy Mother @ Quest\icon_dark_brotherhood.dds
+QUST Dark17Following: Following a Lead @ Quest\icon_dark_brotherhood.dds
+QUST Dark11Kin: Next of Kin @ Quest\icon_dark_brotherhood.dds
+QUST Dark16Kiss: A Kiss Before Dying @ Quest\icon_dark_brotherhood.dds
+QUST Dark15Coldest: The Coldest Sleep @ Quest\icon_dark_brotherhood.dds
+QUST Dark14Honor: A Matter of Honor @ Quest\icon_dark_brotherhood.dds
+QUST Dark13Justice: Final Justice @ Quest\icon_dark_brotherhood.dds
+QUST Dark12Harem: Broken Vows @ Quest\icon_dark_brotherhood.dds
+QUST Dark10Sanctuary: The Purification @ Quest\icon_dark_brotherhood.dds
+QUST MS47: Zero Visibility @ Quest\icon_settlements_quest_icon.dds
+QUST MG04Restore: Anvil Recommendation @ Quest\icon_mages_guild.dds
+QUST MG00General: Mages Guild Non-Quest Dialogue and Conv @ 
+QUST DarkConversations: Dark Brotherhood Scripted Conversations @ Quest\icon_dark_brotherhood.dds
+QUST MS27: Secrets of the Ayleids @ Quest\icon_miscellaneous.dds
+QUST MG03Illusion: Bravil Recommendation @ Quest\icon_mages_guild.dds
+QUST MGConversation: Mages Guild Quest Conversations @ 
+QUST NQDKvatch: NQDKvatch @ 
+QUST MG02Alter: Cheydinhal Recommendation @ Quest\icon_mages_guild.dds
+QUST FGD06DeadViranus: Trolls of Forsaken Mine @ Quest\icon_fighters_guild.dds
+QUST FGD05Oreyn: Azani Blackheart @ Quest\icon_fighters_guild.dds
+QUST FGD04Defector: More Unfinished Business @ Quest\icon_fighters_guild.dds
+QUST MG01Destruct: Skingrad Recommendation @ Quest\icon_mages_guild.dds
+QUST FGD03Viranus: The Master's Son @ Quest\icon_fighters_guild.dds
+QUST MG00Join: Join the Mages Guild @ Quest\icon_mages_guild.dds
+QUST MS05: Through A Nightmare, Darkly @ Quest\icon_miscellaneous.dds
+QUST MS22Fin: MS22 FIN @ 
+QUST SleepingTalk:  @ 
+QUST FGConversations:  @ 
+QUST MS49: The Battle for Castle Kvatch @ Quest\icon_miscellaneous.dds
+QUST EmfridDEMO: EmfridDEMO @ 
+QUST ArenaSpectator: Arena Spectators @ Quest\icon_arena.dds
+QUST MS16B: Sins of the Father @ Quest\icon_miscellaneous.dds
+QUST MS16A: Legacy Lost @ Quest\icon_miscellaneous.dds
+QUST NQDSkingradNPC: NQD Skingrad NPC @ 
+QUST NQDChorrolNPC: NQD Chorrol NPC @ 
+QUST NQDGuard: NQD Guard @ 
+QUST MarkNDeleteMe:  @ 
+QUST MS22: Nothing You Can Possess  @ Quest\icon_miscellaneous.dds
+QUST MS21: The Collector @ Quest\icon_miscellaneous.dds
+QUST MS38FIN:  @ 
+QUST DispositionBlockers:  @ 
+QUST GenericCurrentEvents: Generic Current Events @ 
+QUST GenericLore: Generic Lore @ 
+QUST MSConversations: Misc Quest Conversations @ 
+QUST NQDSkingrad: NQD Skingrad @ 
+QUST MS38: Paranoia @ Quest\icon_miscellaneous.dds
+QUST MG05A: Fingers of the Mountain, Part II @ Quest\icon_mages_guild.dds
+QUST NQDHackdirt: NQD Hackdirt @ 
+QUST MQEndgame: Main Quest Finished @ 
+QUST MQ16: Light the Dragonfires @ Quest\icon_dragonfires.dds
+QUST Arena: The Arena @ Quest\icon_miscellaneous.dds
+QUST MS45FIN:  @ 
+QUST TestQA: this is for QA testing @ 
+QUST TestToddQuest: Todd's Test Adventure @ 
+QUST FGC06Courier: The Desolate Mine @ Quest\icon_fighters_guild.dds
+QUST Crime: Player being arrested or trespassing @ 
+QUST MS45: A Shadow Over Hackdirt @ Quest\icon_miscellaneous.dds
+QUST Charactergen:  @ 
+QUST MarkTestCase: Dialogue Test @ 
+QUST Generic: Quest and Location Independent Dialogue @ 
+QUST StartupQuest:  @ 
+QUST Dark09RetirementFIN: Of Secret And Shadow @ Quest\icon_dark_brotherhood.dds
+QUST Dark09Retirement: Permanent Retirement @ Quest\icon_dark_brotherhood.dds
+QUST Dark08WhodunitFIN: The Assassin's Gambit @ Quest\icon_dark_brotherhood.dds
+QUST Dark08Whodunit: Whodunit? @ Quest\icon_dark_brotherhood.dds
+QUST Dark07MedicineFIN: The Night Mother's Child @ Quest\icon_dark_brotherhood.dds
+QUST Dark07Medicine: Bad Medicine @ Quest\icon_dark_brotherhood.dds
+QUST Dark06WandererFIN: Enter the Eliminator @ Quest\icon_dark_brotherhood.dds
+QUST Dark06Wanderer: The Lonely Wanderer @ Quest\icon_dark_brotherhood.dds
+QUST Dark05AssassinatedFIN: My Brother's Keeper @ Quest\icon_dark_brotherhood.dds
+QUST Dark05Assassinated: The Assassinated Man @ Quest\icon_dark_brotherhood.dds
+QUST Dark03AccidentsPost: Dark03Accidents Post Quest Dialogue @ Quest\icon_dark_brotherhood.dds
+QUST Disease: Hellos to player when diseased @ 
+QUST Dark00GeneralNPC: Dark Brotherhood Quest NPC Dialogue @ Quest\icon_dark_brotherhood.dds
+QUST Dark01KnifePost: Dark01Knife Post Quest Dialogue @ Quest\icon_dark_brotherhood.dds
+QUST NQDCheydinhal: NQD Cheydinhal @ 
+QUST MG05FIN:  @ 
+QUST MS17FIN:  @ 
+QUST FGD02DandD: Drunk and Disorderly @ Quest\icon_fighters_guild.dds
+QUST Vampire: what NPCs say to you when you are vampire @ 
+QUST FGD00JoinFG: Join the Fighters Guild @ Quest\icon_fighters_guild.dds
+QUST FGD01Default: Unfinished Business @ Quest\icon_fighters_guild.dds
+QUST Dark04ExecutionFIN: To Serve Sithis @ Quest\icon_dark_brotherhood.dds
+QUST Dark04Execution: Scheduled for Execution @ Quest\icon_dark_brotherhood.dds
+QUST Dark03AccidentsFIN: No Rest for the Wicked @ Quest\icon_dark_brotherhood.dds
+QUST Dark03Accidents: Accidents Happen @ Quest\icon_dark_brotherhood.dds
+QUST Dark02WateryFIN: Blood of the Damned @ Quest\icon_dark_brotherhood.dds
+QUST Dark02Watery: A Watery Grave @ Quest\icon_dark_brotherhood.dds
+QUST MS16: Separated at Birth @ Quest\icon_miscellaneous.dds
+QUST Dark00General: The Dark Brotherhood @ Quest\icon_dark_brotherhood.dds
+QUST Dark01KnifeFIN: Welcome to the Family @ Quest\icon_dark_brotherhood.dds
+QUST Dark01Knife: A Knife in the Dark @ Quest\icon_dark_brotherhood.dds
+QUST MG05Fingers: Fingers of the Mountain @ Quest\icon_mages_guild.dds
+QUST MS48: Breaking the Siege of Kvatch @ Quest\icon_oblivion_gate.dds
+QUST MS17:  @ 
+QUST MS18: The Killing Field @ Quest\icon_miscellaneous.dds
+QUST NQDChorrol: NQD Chorrol @ 
+Playing music/explore/mx_explore_2.mp3
+Playing Music/Special/morrowind title.mp3
+Quitting peacefully.

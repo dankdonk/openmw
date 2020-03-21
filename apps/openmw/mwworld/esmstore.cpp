@@ -238,7 +238,9 @@ void ESMStore::loadTes4Group (ESM::ESMReader &esm)
                 hdr.group.label.value == ESM4::REC_SCRL || hdr.group.label.value == ESM4::REC_ARMA ||
                 hdr.group.label.value == ESM4::REC_HDPT || hdr.group.label.value == ESM4::REC_TERM ||
                 hdr.group.label.value == ESM4::REC_TACT || hdr.group.label.value == ESM4::REC_NOTE ||
-                hdr.group.label.value == ESM4::REC_BPTD || hdr.group.label.value == /*ESM4::REC_SCPT*/ MKTAG('S','C','P','T')
+                hdr.group.label.value == ESM4::REC_BPTD || hdr.group.label.value == ESM4::REC_SCPT ||
+                hdr.group.label.value == ESM4::REC_DIAL || hdr.group.label.value == ESM4::REC_QUST ||
+                hdr.group.label.value == ESM4::REC_INFO
                 )
             {
                 reader.saveGroupStatus();
@@ -247,8 +249,8 @@ void ESMStore::loadTes4Group (ESM::ESMReader &esm)
             else
             {
                 // Skip groups that are of no interest (for now).
-                //  GMST GLOB CLAS FACT SKIL MGEF ENCH SPEL BSGN WTHR CLMT DIAL
-                //  QUST PACK CSTY LSCR LVSP WATR EFSH
+                //  GMST GLOB CLAS FACT SKIL MGEF ENCH SPEL BSGN WTHR CLMT
+                //  PACK CSTY LSCR LVSP WATR EFSH
 
                 // FIXME: The label field of a group is not reliable, so we will need to check here as well
                 //std::cout << "skipping group... " << ESM4::printLabel(hdr.group.label, hdr.group.type) << std::endl;
@@ -331,8 +333,9 @@ void ESMStore::loadTes4Record (ESM::ESMReader& esm)
         case ESM4::REC_EYES: reader.getRecordData(); mForeignEyesSet.load(esm); break;
         case ESM4::REC_RACE: reader.getRecordData(); mForeignRaces.load(esm); break;
         case ESM4::REC_SOUN: reader.getRecordData(); mForeignSounds.load(esm); break;
-		// SKIL, MGEF, SCPT
+		// SKIL, MGEF
         case ESM4::REC_LTEX: reader.getRecordData(); mForeignLandTextures.load(esm); break;
+        case ESM4::REC_SCPT: reader.getRecordData(); mForeignScripts.load(esm); break;
 		// ENCH, SPEL, BSGN
         // ---- referenceables start
         case ESM4::REC_ACTI: reader.getRecordData(); mForeignActivators.load(esm); break;
@@ -374,7 +377,6 @@ void ESMStore::loadTes4Record (ESM::ESMReader& esm)
         case ESM4::REC_TACT: reader.getRecordData(); mForeignTalkingActivators.load(esm); break;
         case ESM4::REC_NOTE: reader.getRecordData(); mForeignNotes.load(esm); break;
         case ESM4::REC_BPTD: reader.getRecordData(); mForeignBodyParts.load(esm); break;
-        case /*ESM4::REC_SCPT*/MKTAG('S','C','P','T'): reader.getRecordData(); mForeignScripts.load(esm); break;
         // ---- referenceables end
         // WTHR, CLMT
         //case ESM4::REC_REGN: reader.getRecordData(); mForeignRegions.load(esm); break;
@@ -399,7 +401,21 @@ void ESMStore::loadTes4Record (ESM::ESMReader& esm)
             // will be followed by another CELL or a Cell Child GRUP
             break;
         }
-        // DIAL, QUST
+        case ESM4::REC_DIAL:
+        {
+            reader.getRecordData(); mForeignDialogs.load(esm);
+            break;
+        }
+        case ESM4::REC_INFO:
+        {
+            reader.getRecordData(); mForeignDialogInfos.load(esm);
+            break;
+        }
+        case ESM4::REC_QUST:
+        {
+            reader.getRecordData(); mForeignQuests.load(esm);
+            break;
+        }
         // IDLE
         // PACK, CSTY, LSCR, LVSP
         case ESM4::REC_ANIO: reader.getRecordData(); mForeignAnimObjs.load(esm); break;

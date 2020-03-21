@@ -33,6 +33,8 @@
 #include <OgreSkeletonManager.h>
 #include <OgreSkeleton.h>
 
+#include <extern/fglib/fgtri.hpp>
+
 #include "niobject.hpp"
 #include "bhkrefobject.hpp" // bhkConstraint
 #include "btogreinst.hpp"
@@ -425,11 +427,6 @@ std::string NiBtOgre::NiModel::getTargetBone() const
     return rootNode->getStringExtraData("Prn");
 }
 
-void NiBtOgre::NiModel::useFgMorphVertices()
-{
-    getUniqueNiTriBasedGeom()->mUseMorphed = true;
-}
-
 const std::vector<Ogre::Vector3>& NiBtOgre::NiModel::fgVertices() const
 {
     return getUniqueNiTriBasedGeom()->getVertices(false/*morphed*/);
@@ -438,6 +435,26 @@ const std::vector<Ogre::Vector3>& NiBtOgre::NiModel::fgVertices() const
 std::vector<Ogre::Vector3>& NiBtOgre::NiModel::fgMorphVertices()
 {
     return getUniqueNiTriBasedGeom()->mMorphVertices;
+}
+
+void NiBtOgre::NiModel::useFgMorphVertices()
+{
+    getUniqueNiTriBasedGeom()->mUseMorphed = true;
+}
+
+void NiBtOgre::NiModel::buildFgPoses(const FgLib::FgTri *tri)
+{
+    NiTriBasedGeom *subMesh = getUniqueNiTriBasedGeom(); // head models, etc, should all be unique
+
+    std::vector<std::pair<Ogre::MeshPtr, NiNode*> >::iterator it = mMeshes.begin();
+    for (; it != mMeshes.end(); ++it)
+    {
+        if (it->second == &subMesh->mParent)
+        {
+            subMesh->buildFgPoses(it->first.get(), tri);
+            return;
+        }
+    }
 }
 
 // WARN: returns the vertices from the first NiTriBasedGeom child of the root NiNode

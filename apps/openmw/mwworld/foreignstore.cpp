@@ -335,6 +335,9 @@ template class MWWorld::ForeignStore<ESM4::ActorCreature>;
 template class MWWorld::ForeignStore<ESM4::Sound>;
 template class MWWorld::ForeignStore<ESM4::LandTexture>;
 template class MWWorld::ForeignStore<ESM4::Script>;
+template class MWWorld::ForeignStore<ESM4::Dialog>;
+template class MWWorld::ForeignStore<ESM4::DialogInfo>;
+template class MWWorld::ForeignStore<ESM4::Quest>;
 // Foreign Referenceables
 template class MWWorld::ForeignStore<ESM4::Activator>;
 template class MWWorld::ForeignStore<ESM4::Apparatus>;

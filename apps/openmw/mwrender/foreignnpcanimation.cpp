@@ -30,6 +30,7 @@
 #include <extern/fglib/fgsam.hpp>
 #include <extern/fglib/fgfile.hpp>
 #include <extern/fglib/fgegt.hpp>
+#include <extern/fglib/fgtri.hpp>
 
 #include <components/misc/rng.hpp>
 #include <components/misc/stringops.hpp>
@@ -564,10 +565,12 @@ void ForeignNpcAnimation::updateNpcBase()
         if ((index == ESM4::Race::EarMale || index == ESM4::Race::EarFemale) && (invHeadGear != inv.end()))
             continue;
 
+        // FIXME: mouth, lower teeth and tongue can have FaceGen emotions e.g. Surprise, Fear
+#if 0
         // FIXME: skip mouth, teeth (upper/lower) and tongue for now
         if (index >= ESM4::Race::Mouth && index <= ESM4::Race::Tongue)
             continue;
-
+#endif
         // FIXME: we do head elsewhere for now
         // FIXME: if we retrieve a morphed head the morphing is no longer present!
         if (index == ESM4::Race::Head)
@@ -596,10 +599,9 @@ void ForeignNpcAnimation::updateNpcBase()
         if (index == ESM4::Race::EyeLeft || index == ESM4::Race::EyeRight)
         {
             const ESM4::Eyes* eyes = store.getForeign<ESM4::Eyes>().search(mNpc->mEyes);
-            if (!eyes)
+            if (!eyes) // "ClaudettePerrick" does not have an eye record
             {
-                // NOTE: "ClaudettePerrick" does not have an eye record, for example
-                // FIXME: we should remember our random selection?
+                // FIXME: how to remember our random selection?
                 int eyeChoice = Misc::Rng::rollDice(int(mRace->mEyeChoices.size()-1));
                 eyes = store.getForeign<ESM4::Eyes>().search(mRace->mEyeChoices[eyeChoice]);
 
@@ -643,6 +645,7 @@ void ForeignNpcAnimation::updateNpcBase()
 
         if (index == 1 || index == 2) // ears use morphed textures
         {
+            // FIXME: Khajiit ears have FaceGen emotions - so we should build the poses
             mHeadParts.push_back(
                 createMorphedObject(meshName, "General", mObjectRoot->mForeignObj->mModel));
 
@@ -841,15 +844,12 @@ void ForeignNpcAnimation::updateNpcBase()
 
     // deprecated
     const std::vector<float>& sRaceCoeff = mRace->mSymShapeModeCoefficients;
-    //const std::vector<float>& aRaceCoeff = mRace->mAsymShapeModeCoefficients;
     const std::vector<float>& sRaceTCoeff = mRace->mSymTextureModeCoefficients;
     const std::vector<float>& sCoeff = mNpc->mSymShapeModeCoefficients;
-    //const std::vector<float>& aCoeff = mNpc->mAsymShapeModeCoefficients;
     const std::vector<float>& sTCoeff = mNpc->mSymTextureModeCoefficients;
 
     FgLib::FgSam sam;
     Ogre::Vector3 sym;
-    //Ogre::Vector3 asym;
 
     // aged texture only for humans which we detect by whether we're using headhuman.nif
     std::string headMeshName = mRace->mHeadParts[ESM4::Race::Head].mesh;
@@ -866,6 +866,8 @@ void ForeignNpcAnimation::updateNpcBase()
         /*std::size_t*/ pos = ageTextureFile.find_last_of(".");
         if (pos == std::string::npos)
             return; // FIXME: should throw
+
+        // FIXME: use the normal
     }
 
     std::string faceDetailFile
@@ -874,8 +876,19 @@ void ForeignNpcAnimation::updateNpcBase()
 
     NiModelPtr model = modelManager.getByName(mNpc->mEditorId + "_" + meshName, group);
     if (!model)
+    {
         model = modelManager.createMorphedModel(meshName, group, mNpc, mRace,
                         mObjectRoot->mForeignObj->mModel.get(), textureName, NiBtOgre::NiModelManager::BP_Head);
+
+        // add the poses for the head mesh before the Ogre::Entity is created
+        FgLib::FgFile<FgLib::FgTri> triFile;
+        const FgLib::FgTri *tri = triFile.getOrLoadByName(meshName);
+
+        if (!tri || tri->numDiffMorphs() == 0)
+            throw std::runtime_error(mNpc->mEditorId + " missing head mesh poses.");
+
+        model->buildFgPoses(tri);
+    }
 
     NifOgre::ObjectScenePtr scene = NifOgre::ObjectScenePtr (new NifOgre::ObjectScene(mInsert->getCreator()));
     scene->mForeignObj
@@ -1341,7 +1354,6 @@ void ForeignNpcAnimation::updateNpcBase()
                         dg = 1.f;
                         db = 1.f;
                     }
-
 #if 0
                     *(pDest+0) = std::min(int((*(pDest+0)+sym.x) * fr), 255);
                     *(pDest+1) = std::min(int((*(pDest+1)+sym.y) * fg), 255);
@@ -1369,9 +1381,27 @@ void ForeignNpcAnimation::updateNpcBase()
         } // while technique
         }
 
-        it->second->shareSkeletonInstanceWith(mSkelBase);
+        it->second->shareSkeletonInstanceWith(mSkelBase); // NOTE: removes all vertex anim from the entity
         mInsert->attachObject(it->second);
     }
+
+    if (scene->mForeignObj)
+    {
+        std::map<std::int32_t, Ogre::Entity*>::iterator it = scene->mForeignObj->mEntities.begin();
+        if (it != scene->mForeignObj->mEntities.end())
+        {
+            if (it->second->hasVertexAnimation())
+                std::cout << scene->mForeignObj->mModel->getName() << " has Vertex Animation" << std::endl;
+
+            mAset = it->second->getAllAnimationStates();
+            //it->second->getMesh()->_initAnimationState(mAset);
+            const Ogre::AnimationStateMap& map = mAset->getAnimationStates();
+            std::cout << it->second << " size " << map.size() << std::endl;
+
+            scene->mSkelBase = it->second;
+        }
+    }
+    //mHead = scene; // FIXME: temp testing
     mHeadParts.push_back(scene);
 
 #if 0
@@ -1407,7 +1437,7 @@ void ForeignNpcAnimation::updateNpcBase()
     //MWWorld::InventoryStore& inv = mPtr.getClass().getInventoryStore(mPtr);
     for(size_t i = 0; i < 35; ++i) // FIXME: 16 slots for TES4
     {
-        MWWorld::ContainerStoreIterator store = inv.getSlot(i);
+        MWWorld::ContainerStoreIterator store = inv.getSlot(int(i)); // compiler warning
 
         if(store == inv.end())
             continue;
@@ -2446,6 +2476,23 @@ Ogre::Vector3 ForeignNpcAnimation::runAnimation(float timepassed)
         }
     }
 //#endif
+#if 0
+    if (mAset)
+    {
+        Ogre::AnimationStateIterator asiter = mAset->getAnimationStateIterator();
+        while(asiter.hasMoreElements())
+        {
+            Ogre::AnimationState *state = asiter.getNext();
+            //state->setEnabled(false);
+            state->setLoop(false);
+            if (state->getAnimationName() == "BigAah")
+            {
+                state->setEnabled(true);
+                state->addTime(timepassed);
+            }
+        }
+    }
+#endif
     mFirstPersonOffset = 0.f; // reset the X, Y, Z offset for the next frame.
 
     // FIXME: it looks like that in TES3 skinned object parts retain their own skeleton

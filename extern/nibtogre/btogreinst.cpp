@@ -222,10 +222,17 @@ void NiBtOgre::BtOgreInst::buildEntities()
             {
                 Ogre::AnimationState *state = i.getNext();
                 if (state->getAnimationName() == "Idle" || state->getAnimationName() == "SpecialIdle")
+                {
                     state->setEnabled(true);
+                    state->setLoop(true); // FIXME: enable looping for all while testing only
+                }
+                else if (0) // FIXME
+                {
+                    state->setEnabled(true);
+                    state->setLoop(false);
+                }
                 else
                     state->setEnabled(false);
-                state->setLoop(true); // FIXME: enable looping for all while testing only
             }
         }
 
@@ -276,6 +283,19 @@ void NiBtOgre::BtOgreInst::buildEntities()
         }
 
         mEntities[meshes[i].second->selfRef()] = entity;
+//#if 0
+        if (entity->hasVertexAnimation())
+        {
+            std::cout << mModel->getName() << " has Vertex Animation" << std::endl;
+
+            Ogre::AnimationStateSet *mAset = entity->getAllAnimationStates();
+            if (mAset)
+            {
+                const Ogre::AnimationStateMap& map = mAset->getAnimationStates();
+                std::cout << entity << " size " << map.size() << std::endl;
+            }
+        }
+//#endif
     }
 
     // FIXME: experimental

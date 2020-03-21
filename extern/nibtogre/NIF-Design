@@ -2316,6 +2316,142 @@ mFormId = 0x0001a116
 mEditorId = "SE01GaiusPrentus"
 mFormId = 0x000133be
 
+## No collision shapes for NPC and Creature skeletons
+
+    void PhysicsSystem::addActor (const Ptr& ptr, const std::string& mesh)
+    void PhysicEngine::addCharacter(const std::string &name, const std::string &mesh,
+
+At the moment nothing is creating OEngine::Physic::ForeignActor.
+
+Defer working on this until we have better performance.
+
+# [16/03/2020] Spider Daedra
+
+## Bone positions
+
+Comparing the two, the rotations look ok.
+
+Bip01 L UpperArm
+
+NifSkope
+
+    MultiTargetTransformController::updateTime: Bip01 L UpperArm, time 0.0410088
+    rotation before 0.688776,0.426225,0.518234,-0.272996
+    rotation after 0.688401,0.426182,0.518556,-0.27351
+    MultiTargetTransformController::updateTime: Bip01 L UpperArm, time 3.03465
+    rotation before 0.717999,0.364717,0.539053,-0.245285
+    rotation after 0.718049,0.363883,0.539909,-0.244403
+
+OpenMW
+
+    time 0.04
+    rotation before 0.688624,0.426435,0.518775,-0.273537
+    rotation after 0.688397,0.426191,0.518558,-0.273502
+    time 3.03299
+    rotation before 0.717472,0.365636,0.539447,-0.246051
+    rotation after 0.718025,0.363927,0.53989,-0.244446
+
+Bip01 L Forearm
+
+NifSkope
+
+time 3.032998561859131
+0.765064,-1.31466e-08,-1.56515e-08,-0.643555
+0.765085,-1.33251e-08,-1.69428e-08,-0.64353
+
+OpenMW
+
+time 3.03699
+0.764884,-1.32995e-08,-1.66789e-08,-0.644169
+0.764893,-1.33795e-08,-1.72582e-08,-0.644157
+
+Added some objects to the bones to visualise where things were going wrong and surprise, surprise - the bones are in the right place after all.  It looks like the skin weighting issue.
+
+Looking at the code in `NiTriBasedGeom::buildSubMesh` the bone offset transform for skinned meshes are being ignored.  Tried using the implementation in TES3 but for some reason the renders are corrupted.
+
+Use `Gdiff c5840fe5f7d76ae0a049913bfe9724353a875ae9` for comparison.
+
+# [17/03/2020] Skins
+
+Looked into adding bones to simulate the "offset", but that would potentially result in far too many bones being added.  For now, go back to investigating if the vertices of the sub-meshes can be offset instead.
+
+# [18/03/2020] Skins cont.
+
+## Modifying skin vertices
+
+Examinining `Clothes\LowerClass\05\M\Pants.NIF`:
+
+There are two sub-meshes, the leg skin (01) and the pants (15), both children of `Scene Root`.  Confusingly, they are both named 'LowerBody'.  The corresponding transforms:
+
+    index                    | 01                             | 15
+    -------------------------|--------------------------------|---------------------------------
+    material property        | skin                           | pants
+    parent index             | 0                              | 0
+    parent transform         | Identity                       | Identity
+    local transform          | Identity                       | translation only (0.039, -0.937, 44.528)
+    skin transform           | Identity                       | translation only (-0.039, -.937, -44.528)
+    bones                    | 10, 11, 12, 13, 14             | 10, 12, 26, 13, 14, 27, 28
+    bone 10 tm in NiSkinData | rotation and translation       | rotation and translation
+       translation           | 33.087, 6.049, 7.273           | -10.755, -1.758, 6.552
+    bone 10 local transform  | rotation and translation       | (same)
+       translation           | -6.699, -0.664, 34.001         | (same)
+    bone 10 world tm *       | -0.00001,-0.000002,0.253017    | 0.0393686,-0.937018,44.7806
+    bone 10 tm in NiSkinData | (almost the same as parent tm  | (almost the same as parent tm * local tm)
+                             |  * local tm)                   |
+    as above but using skel  | 0, 0.000016, 0.0000038         | 0.039, -0.937, 44.528
+    bone 10                  | (better than using model bone) | (better than using model bone)
+
+The challenge is to figure out how the per-bone offest transformations will change the affected vertices and normals.
+
+Bone at index 10 is "Bip01 L Calf".  Its offset transform for each of the two sub-meshes are different!  This means the idea of adding bones will mean even more bones than originally anticipated (i.e. even more impractical).
+
+So, we can get the new "effective position" for the bone using the per-bone Skin Transform in NiSkinData - but how do we now modify the vertices?
+
+## Adding bones
+
+Tried adding extra bones - but it is very difficult to do it.  By the time the skin NiModel is created the skeleton is already loaded - to try to modify it the whole process has to start again.  It is also impractical to scan the possible additional bones required since there can be so many, e.g. shirts, pants.  Maybe if we restrict it to some known problematic creatures?  I would be rather reluctant to hard-code that.
+
+# [19/03/2020] Skins cont.
+
+## Modifying Ogre
+
+Had a quick look at modifying Ogre to do extra transform at the point of Software Vertex Blend - but that code is optimised and it won't be easy to modify that.
+
+## Modifying bone transform
+
+Trying yet another idea - this time to add the addtional transform to the affected bones themselves.  This means anything else that requires the bone's original (i.e. correct) transform will need to take that into account.
+
+The trouble with modifying bone translations and orientations is that they have parent/child relationships.  i.e. modifying one bone may affect many other bones.
+
+# [20/03/2020] FaceGen emotions and lip synch
+
+Rough outline of the code (pseudocode):
+
+```cpp
+    // need an animation for each emotion, and make the length configurable?
+    animation = mesh->createAnimation(animationId, totalAnimLength);
+    Ogre::VertexAnimationTrack* track = animation->createVertexTrack(subMeshIndex+1, Ogre::VAT_POSE);
+
+    // with only 2 in the loop we can unroll
+    for (unsigned int i = 0; i < 2; ++i) // we only have "Base" and the pose, e.g. "Happy"
+    {
+        Ogre::Pose* pose = mesh->createPose(subMeshIndex + 1, poseName);
+
+        for (std::size_t v = 0; v < vertices.size(); ++v) // vertices in headhuman.nif, etc
+            pose->addVertex(v, vertices[v]);
+
+        // with only 2 in the loop we can unroll
+        for (std::size_t k = 0; k < 2; ++k) // only 2 keyframes for us? (start and end)
+        {
+            // see the comments on animation length above
+            Ogre::VertexPoseKeyFrame* keyframe = track->createVertexPoseKeyFrame(morphKeys->at(k).time);
+            // influence value may require some experiments - maybe for lip sync go up to 1 but for others less?
+            keyframe->addPoseReference(poseIndex + i, morphKeys->at(k).value);
+        }
+    }
+```
+
+
 
 [//]: # (/* spell spelllang=en_au syntax=cpp */)
 [//]: # (/* vim: set ft=markdown tw=0 lbr bri fen fdm=marker fdl=0: */)
