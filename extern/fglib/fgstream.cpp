@@ -104,6 +104,6 @@ namespace FgLib
             for(unsigned int j = 0; j < 3; ++j)
                 mStream->read(&a[i][j], sizeof(float));
         }
-        value = Ogre::Matrix3(a); // FIXME: is it possible to avoid assignment here?
+        value = std::move(Ogre::Matrix3(a));
     }
 }

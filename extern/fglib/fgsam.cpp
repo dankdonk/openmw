@@ -35,6 +35,8 @@
 #include <OgreCommon.h> // Ogre::Box
 #include <OgreTextureManager.h>       // FIXME: for debugging only
 
+#include <components/misc/rng.hpp> // FIXME: temp while playing with happy/sad/etc
+
 #include "fgfile.hpp"
 #include "fgtri.hpp"
 #include "fgegm.hpp"
@@ -81,10 +83,10 @@ namespace FgLib
         //       and the number of morph vertices are 0x1CD.
         //       (these are most likely used for poses such as lip sync and facial expressions)
         std::size_t numVertices = tri->numVertices();
-        std::size_t numMorphVertices = tri->numMorphVertices();
+        std::size_t numStatMorphVertices = tri->numStatMorphVertices();
 
         // TODO: maybe just return false rather than throw?
-        if (egm->numVertices() != (numVertices + numMorphVertices))
+        if (egm->numVertices() != (numVertices + numStatMorphVertices))
             throw std::runtime_error("SAM: Number of EGM vertices does not match that of TRI");
 
         fgMorphVertices.resize(numVertices);
@@ -108,7 +110,7 @@ namespace FgLib
                 coeff = raceSymCoeff[j] + npcSymCoeff[j];
                 scale = symMorphModeScales[j];
                 // source has all the vertices for a given mode in a group
-                index = 3 * ((numVertices + numMorphVertices) * j + i);
+                index = 3 * ((numVertices + numStatMorphVertices) * j + i);
 
                 xMorph += coeff * scale * symMorphModes[index + 0];
                 yMorph += coeff * scale * symMorphModes[index + 1];
@@ -120,7 +122,7 @@ namespace FgLib
                 // WARN: coeff, scale and index reused
                 coeff = raceAsymCoeff[k] + npcAsymCoeff[k];
                 scale = asymMorphModeScales[k];
-                index = 3 * ((numVertices + numMorphVertices) * k + i);
+                index = 3 * ((numVertices + numStatMorphVertices) * k + i);
 
                 xMorph += coeff * scale * asymMorphModes[index + 0];
                 yMorph += coeff * scale * asymMorphModes[index + 1];
@@ -132,6 +134,36 @@ namespace FgLib
             fgMorphVertices[i].y = vertices[index + 1] + yMorph;
             fgMorphVertices[i].z = vertices[index + 2] + zMorph;
         }
+
+// FIXME: testing diff morphs
+#if 0
+        if (tri->hasDiffMorph("Happy")) // if it has "Happy" it will have others
+        {
+            int emo = Misc::Rng::rollDice(5);
+
+            const std::pair<float, std::vector<std::int16_t> > *diffMorphs = &tri->diffMorphVertices("Happy");
+
+            switch (emo)
+            {
+                case 0: diffMorphs = &tri->diffMorphVertices("Sad"); break;
+                case 1: diffMorphs = &tri->diffMorphVertices("Anger"); break;
+                case 2: diffMorphs = &tri->diffMorphVertices("Fear"); break;
+                case 3: diffMorphs = &tri->diffMorphVertices("Surprise"); break;
+                case 4: break; // Happy
+                default: diffMorphs = &tri->diffMorphVertices("BigAah"); break;
+            }
+
+            std::size_t index;
+            for (std::size_t i = 0; i < numVertices; ++i)
+            {
+                // TODO: prob. room for optimisation
+                index = 3 * i;
+                fgMorphVertices[i].x += diffMorphs->first * diffMorphs->second[index + 0];
+                fgMorphVertices[i].y += diffMorphs->first * diffMorphs->second[index + 1];
+                fgMorphVertices[i].z += diffMorphs->first * diffMorphs->second[index + 2];
+            }
+        }
+#endif
 
         // FIXME: update normals, tangents and bitangents?
 
@@ -312,12 +344,16 @@ namespace FgLib
             //        even though it is clear that for shapes they are needed
             // sum all the symmetric texture modes for a given pixel i
             sym = Ogre::Vector3::ZERO;
-            for (size_t j = 0; j < numSymTextureModes; ++j)
+            if (npcSymCoeff.empty())
             {
                 // CheydinhalGuardCityPostNight03 does not have any symmetric texture coeff
-                sym += (raceSymCoeff[j] + (npcSymCoeff.empty() ? 0.f : npcSymCoeff[j]))
-                                          *
-                                          symTextureModes[numSymTextureModes * i + j];
+                for (size_t j = 0; j < numSymTextureModes; ++j)
+                    sym += raceSymCoeff[j] * symTextureModes[numSymTextureModes * i + j];
+            }
+            else
+            {
+                for (size_t j = 0; j < numSymTextureModes; ++j)
+                    sym += (raceSymCoeff[j] + npcSymCoeff[j]) * symTextureModes[numSymTextureModes * i + j];
             }
 
             *(pDest+0) = std::min(int(*(pDest+0)+sym.x), 255);
