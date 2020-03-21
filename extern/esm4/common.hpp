@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015-2018, 2019 cc9cii
+  Copyright (C) 2015-2020 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -154,6 +154,7 @@ namespace ESM4
         REC_RFCT = MKTAG('R','F','C','T'), // Visual Effect
         REC_SBSP = MKTAG('S','B','S','P'), // Subspace (TES4 only?)
         REC_SCEN = MKTAG('S','C','E','N'), // Scene
+        REC_SCPT = MKTAG('S','C','P','T'), // Script
         REC_SCRL = MKTAG('S','C','R','L'), // Scroll
         REC_SGST = MKTAG('S','G','S','T'), // Sigil Stone
         REC_SHOU = MKTAG('S','H','O','U'), // Shout
@@ -510,6 +511,18 @@ namespace ESM4
         SUB_BPNI = MKTAG('B','P','N','I'),
         SUB_RAGA = MKTAG('R','A','G','A'),
 
+        SUB_QSTI = MKTAG('Q','S','T','I'),
+        SUB_QSTR = MKTAG('Q','S','T','R'),
+        SUB_QSDT = MKTAG('Q','S','D','T'),
+        SUB_SCDA = MKTAG('S','C','D','A'),
+        SUB_SCRO = MKTAG('S','C','R','O'),
+        SUB_QSTA = MKTAG('Q','S','T','A'),
+        SUB_CTDT = MKTAG('C','T','D','T'),
+        SUB_SCHD = MKTAG('S','C','H','D'),
+        SUB_TCLF = MKTAG('T','C','L','F'),
+        SUB_TCLT = MKTAG('T','C','L','T'),
+        SUB_TRDT = MKTAG('T','R','D','T'),
+
         SUB_XHLT = MKTAG('X','H','L','T'), // Unofficial Oblivion Patch
         SUB_XCHG = MKTAG('X','C','H','G'), // thievery.exp
 
@@ -540,8 +553,6 @@ namespace ESM4
         SUB_XRAD = MKTAG('X','R','A','D'), // FO3
         SUB_XORD = MKTAG('X','O','R','D'), // FO3
         SUB_XCLP = MKTAG('X','C','L','P'), // FO3
-        SUB_SCDA = MKTAG('S','C','D','A'), // FO3
-        SUB_SCRO = MKTAG('S','C','R','O'), // FO3
         SUB_IMPS = MKTAG('I','M','P','S'), // FO3 Anchorage
         SUB_IMPF = MKTAG('I','M','P','F'), // FO3 Anchorage
 
