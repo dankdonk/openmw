@@ -442,7 +442,7 @@ void NiBtOgre::NiModel::useFgMorphVertices()
     getUniqueNiTriBasedGeom()->mUseMorphed = true;
 }
 
-void NiBtOgre::NiModel::buildFgPoses(const FgLib::FgTri *tri)
+void NiBtOgre::NiModel::buildFgPoses(const FgLib::FgTri *tri, bool rotate)
 {
     NiTriBasedGeom *subMesh = getUniqueNiTriBasedGeom(); // head models, etc, should all be unique
 
@@ -451,7 +451,7 @@ void NiBtOgre::NiModel::buildFgPoses(const FgLib::FgTri *tri)
     {
         if (it->second == &subMesh->mParent)
         {
-            subMesh->buildFgPoses(it->first.get(), tri);
+            subMesh->buildFgPoses(it->first.get(), tri, rotate);
             return;
         }
     }

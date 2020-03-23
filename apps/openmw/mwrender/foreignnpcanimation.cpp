@@ -4,6 +4,8 @@
 #include <iostream>
 #include <iomanip> // FIXME: for debugging only setprecision
 
+//#include <boost/thread/recursive_mutex.hpp>
+
 #include <OgreSceneManager.h>
 #include <OgreEntity.h>
 #include <OgreParticleSystem.h>
@@ -19,6 +21,8 @@
 #include <OgrePixelFormat.h>
 #include <OgreCommon.h> // Ogre::Box
 #include <OgreMaterialManager.h>
+//#include <OgreThreadDefines.h>
+#include <OgreAnimationState.h>
 
 #include <extern/shiny/Main/Factory.hpp>
 
@@ -658,8 +662,40 @@ void ForeignNpcAnimation::updateNpcBase()
             }
         }
         else
-            mHeadParts.push_back(
-                createMorphedObject(meshName, "General", mObjectRoot->mForeignObj->mModel, textureName));
+        {
+            NifOgre::ObjectScenePtr scene
+                = createMorphedObject(meshName, "General", mObjectRoot->mForeignObj->mModel, textureName);
+
+            // FIXME: these are not skinned, how to do the animation?
+            if (scene->mForeignObj)
+            {
+                std::map<std::int32_t, Ogre::Entity*>::iterator it = scene->mForeignObj->mEntities.begin();
+                if (it != scene->mForeignObj->mEntities.end())
+                {
+                    if (index == ESM4::Race::Mouth)
+                    {
+                        mMouthASSet = it->second->getAllAnimationStates();
+                        //it->second->getMesh()->_initAnimationState(mMouthASSet);
+                    }
+                    else if (index == ESM4::Race::Tongue)
+                    {
+                        mTongueASSet = it->second->getAllAnimationStates();
+                        //it->second->getMesh()->_initAnimationState(mTongueASSet);
+                    }
+                    else if (index == ESM4::Race::TeethLower)
+                    {
+                        mTeethLASSet = it->second->getAllAnimationStates();
+                        //it->second->getMesh()->_initAnimationState(mTeethLASSet);
+                        //if (it->second->hasVertexAnimation())
+                            //std::cout << scene->mForeignObj->mModel->getName() << " has Vertex Animation" << std::endl;
+                    }
+
+                    scene->mSkelBase = it->second;
+                }
+            }
+
+            mHeadParts.push_back(scene);
+        }
     }
 
     // default meshes for upperbody /lower body/hands/feet are in the same directory as skeleton.nif
@@ -1390,18 +1426,18 @@ void ForeignNpcAnimation::updateNpcBase()
         std::map<std::int32_t, Ogre::Entity*>::iterator it = scene->mForeignObj->mEntities.begin();
         if (it != scene->mForeignObj->mEntities.end())
         {
-            if (it->second->hasVertexAnimation())
-                std::cout << scene->mForeignObj->mModel->getName() << " has Vertex Animation" << std::endl;
+            //if (it->second->hasVertexAnimation())
+                //std::cout << scene->mForeignObj->mModel->getName() << " has Vertex Animation" << std::endl;
 
-            mAset = it->second->getAllAnimationStates();
-            //it->second->getMesh()->_initAnimationState(mAset);
-            const Ogre::AnimationStateMap& map = mAset->getAnimationStates();
-            std::cout << it->second << " size " << map.size() << std::endl;
+            mHeadASSet = it->second->getAllAnimationStates();
+            it->second->getMesh()->_initAnimationState(mHeadASSet);
+            const Ogre::AnimationStateMap& map = mHeadASSet->getAnimationStates();
+            //std::cout << it->second << " size " << map.size() << std::endl;
 
             scene->mSkelBase = it->second;
         }
     }
-    //mHead = scene; // FIXME: temp testing
+
     mHeadParts.push_back(scene);
 
 #if 0
@@ -1567,8 +1603,26 @@ NifOgre::ObjectScenePtr ForeignNpcAnimation::createMorphedObject(const std::stri
 #if 1
     NiModelPtr object = modelManager.getByName(mNpc->mEditorId + "_" + meshName, group);
     if (!object)
+    {
         object = modelManager.createMorphedModel(meshName, group, mNpc, mRace, skeletonModel.get(),
                                                  texture, NiBtOgre::NiModelManager::BP_Mouth); // FIXME
+
+        // FIXME: add the poses for mouth, teeth and tongue only
+
+        // add the poses for the head mesh before the Ogre::Entity is created
+        FgLib::FgFile<FgLib::FgTri> triFile;
+        const FgLib::FgTri *tri = triFile.getOrLoadByName(meshName);
+
+        if (tri && tri->numDiffMorphs() != 0)
+        {
+            // FIXME: this check does not work for some reason, force it for now
+            //const Ogre::Quaternion baseRotation = object->getBaseRotation();
+            //if (baseRotation == Ogre::Quaternion::IDENTITY)
+                object->buildFgPoses(tri, true/*rotate*/);
+            //else
+                //object->buildFgPoses(tri);
+        }
+    }
 #else
     // initially assume a morphed model
     NiModelPtr object = modelManager.getByName(npc->mEditorId + "_" + meshName, group);
@@ -1949,6 +2003,7 @@ void ForeignNpcAnimation::deleteClonedMaterials()
     }
 }
 
+// FIXME: these animations need to be added to the skeleton just once, not everytime a character is created!
 void ForeignNpcAnimation::addAnimSource(const std::string &model)
 {
     OgreAssert(mInsert, "Object is missing a root!");
@@ -2476,23 +2531,79 @@ Ogre::Vector3 ForeignNpcAnimation::runAnimation(float timepassed)
         }
     }
 //#endif
-#if 0
-    if (mAset)
+//#if 0
+    if (mHeadASSet && mHeadASSet->hasAnimationState("Happy")) // if "Happy" exists so should others
     {
-        Ogre::AnimationStateIterator asiter = mAset->getAnimationStateIterator();
-        while(asiter.hasMoreElements())
+        mPoseDuration += timepassed;
+        if (mPoseDuration > 3.f) // FIXME: arbitrary number for testing
         {
-            Ogre::AnimationState *state = asiter.getNext();
+            mPoseDuration = 0;
+            if (mCurrentAnim != "" && mCurrentAnimState)
+                mCurrentAnimState->setEnabled(false);
+
+            if (mCurrentAnim == "")
+                mCurrentAnim = "Happy";
+            else if (mCurrentAnim == "Happy")
+                mCurrentAnim = "Anger";
+            else if (mCurrentAnim == "Anger")
+                mCurrentAnim = "Fear";
+            else if (mCurrentAnim == "Fear")
+                mCurrentAnim = "Surprise";
+            else if (mCurrentAnim == "Surprise")
+                mCurrentAnim = "Sad";
+            else if (mCurrentAnim == "Sad")
+                mCurrentAnim = "BigAah";
+            else if (mCurrentAnim == "BigAah")
+                mCurrentAnim = "Happy";
+        }
+
+        //Ogre::AnimationStateIterator asiter = mHeadASSet->getAnimationStateIterator();
+        //while(asiter.hasMoreElements())
+        //OGRE_LOCK_MUTEX(mHeadASSet->OGRE_AUTO_MUTEX_NAME);
+        //mHeadASSet->OGRE_AUTO_MUTEX_NAME;
+        if (mHeadASSet && mHeadASSet->hasAnimationState(mCurrentAnim))
+        {
+            //Ogre::AnimationState *state = asiter.getNext();
+            Ogre::AnimationState *state = mHeadASSet->getAnimationState(mCurrentAnim);
             //state->setEnabled(false);
-            state->setLoop(false);
-            if (state->getAnimationName() == "BigAah")
-            {
-                state->setEnabled(true);
+            state->setLoop(false); // FIXME: this should be done only once
+            //if (state->getAnimationName() == mCurrentAnim)
+            //{
+                state->setEnabled(true); // FIXME: do this only once
+                mCurrentAnimState = state;
                 state->addTime(timepassed);
-            }
+            //}
+        }
+
+        //OGRE_LOCK_MUTEX(mMouthASSet->OGRE_AUTO_MUTEX_NAME);
+        if (mMouthASSet && mMouthASSet->hasAnimationState(mCurrentAnim))
+        {
+            Ogre::AnimationState *state = mMouthASSet->getAnimationState(mCurrentAnim);
+            state->setLoop(false); // FIXME: this should be done only once
+            state->setEnabled(true); // FIXME: do this only once
+            state->addTime(timepassed);
+        }
+
+        //OGRE_LOCK_MUTEX(mTongueASSet->OGRE_AUTO_MUTEX_NAME);
+        if (mTongueASSet && mTongueASSet->hasAnimationState(mCurrentAnim))
+        {
+            Ogre::AnimationState *state = mTongueASSet->getAnimationState(mCurrentAnim);
+            state->setLoop(false); // FIXME: this should be done only once
+            state->setEnabled(true); // FIXME: do this only once
+            state->addTime(timepassed);
+        }
+
+        //OGRE_LOCK_MUTEX(mTeethLASSet->OGRE_AUTO_MUTEX_NAME);
+        if (mTeethLASSet && mTeethLASSet->hasAnimationState(mCurrentAnim))
+        {
+            // FIXME: teeth moves sideways?
+            Ogre::AnimationState *state = mTeethLASSet->getAnimationState(mCurrentAnim);
+            state->setLoop(false); // FIXME: this should be done only once
+            state->setEnabled(true); // FIXME: do this only once
+            state->addTime(timepassed);
         }
     }
-#endif
+//#endif
     mFirstPersonOffset = 0.f; // reset the X, Y, Z offset for the next frame.
 
     // FIXME: it looks like that in TES3 skinned object parts retain their own skeleton

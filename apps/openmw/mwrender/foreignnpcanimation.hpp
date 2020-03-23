@@ -73,8 +73,14 @@ private:
 
     bool mListenerDisabled;
 
-    //NifOgre::ObjectScenePtr mHead; // FIXME: temp testing
-    Ogre::AnimationStateSet *mAset;
+    Ogre::AnimationStateSet *mHeadASSet; // FIXME: temp testing
+    Ogre::AnimationStateSet *mTongueASSet; // FIXME: temp testing
+    Ogre::AnimationStateSet *mMouthASSet; // FIXME: temp testing
+    Ogre::AnimationStateSet *mTeethLASSet; // FIXME: temp testing
+    float mPoseDuration; // FIXME: temp testing
+    Ogre::AnimationState *mCurrentAnimState; // FIXME: temp testing
+    std::string mCurrentAnim; // FIXME: temp testing
+
     std::vector<NifOgre::ObjectScenePtr> mHeadParts;
     Ogre::TexturePtr mTextureHead;      // humans only
     Ogre::TexturePtr mTextureUpperBody; // humans only

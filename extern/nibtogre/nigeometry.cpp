@@ -777,11 +777,11 @@ bool NiBtOgre::NiTriBasedGeom::buildSubMesh(Ogre::Mesh *mesh, BoundsFinder& boun
     return mOgreMaterial.needTangents();
 }
 
-void NiBtOgre::NiTriBasedGeom::buildFgPoses(Ogre::Mesh *mesh, const FgLib::FgTri *tri)
+void NiBtOgre::NiTriBasedGeom::buildFgPoses(Ogre::Mesh *mesh, const FgLib::FgTri *tri, bool rotate)
 {
     const std::vector<Ogre::Vector3>& vertices = getVertices(true/*morphed*/); // most head models are
     float endTime = 0.1f;
-    unsigned short poseIndex = (unsigned short)mesh->getPoseCount()-1; // FIXME
+    unsigned short poseIndex = (unsigned short)mesh->getPoseCount(); // FIXME
 
     const std::vector<std::string>& diffMorphs = tri->diffMorphs();
     for (std::size_t i = 0; i < diffMorphs.size(); ++i)
@@ -792,16 +792,17 @@ void NiBtOgre::NiTriBasedGeom::buildFgPoses(Ogre::Mesh *mesh, const FgLib::FgTri
 
         // ------------------------- Base ------------------------
         Ogre::Pose* pose = mesh->createPose(mSubMeshIndex + 1, "Base");
+        //pose->clearVertices();
         for (std::size_t v = 0; v < vertices.size(); ++v) // vertices in headhuman.nif, etc
             pose->addVertex(v, Ogre::Vector3::ZERO);
 
         // see the comments on animation length above
         Ogre::VertexPoseKeyFrame* keyframe = track->createVertexPoseKeyFrame(0.f/*time*/);
         // influence value may require some experiments - maybe for lip sync go up to 1 but for others less?
-        keyframe->addPoseReference(poseIndex + 2*i + 0, 0.5f/*influence*/);
+        keyframe->addPoseReference(poseIndex + 2*i + 0, 0.f/*influence*/);
 
         keyframe = track->createVertexPoseKeyFrame(endTime); // WARN: keyframe reused
-        keyframe->addPoseReference(poseIndex + 2*i + 0, 0.5f/*influence*/);
+        keyframe->addPoseReference(poseIndex + 2*i + 1, 1.f/*influence*/);
 
         // --------------- pose, e.g. "Happy" --------------------
         const std::pair<float, std::vector<std::int16_t> >& diffMorphVertices
@@ -813,20 +814,39 @@ void NiBtOgre::NiTriBasedGeom::buildFgPoses(Ogre::Mesh *mesh, const FgLib::FgTri
         //std::cout << "pose created " << mModel.getName() << ": " << diffMorphs[i] << std::endl; // FIXME
 
         pose = mesh->createPose(mSubMeshIndex + 1, diffMorphs[i]); // WARN: pose reused
+        //pose->clearVertices();
         for (std::size_t v = 0; v < vertices.size(); ++v) // vertices in headhuman.nif, etc
         {
             float scale = diffMorphVertices.first;
-            Ogre::Vector3 delta(scale * diffMorphVertices.second[v * 3 + 0],
-                                scale * diffMorphVertices.second[v * 3 + 1],
-                                scale * diffMorphVertices.second[v * 3 + 2]);
+            Ogre::Vector3 delta;
+            if (rotate)
+            {
+                // x and z swapped
+                delta = Ogre::Vector3(scale * diffMorphVertices.second[v * 3 + 2],
+                                      scale * diffMorphVertices.second[v * 3 + 1],
+                                      scale * diffMorphVertices.second[v * 3 + 0]);
+            }
+            else
+            {
+                delta = Ogre::Vector3(scale * diffMorphVertices.second[v * 3 + 0],
+                                      scale * diffMorphVertices.second[v * 3 + 1],
+                                      scale * diffMorphVertices.second[v * 3 + 2]);
+
+                if (0)//rotate) // FIXME: doesn't work, use swapping as per above
+                {
+                    Ogre::Quaternion rotation(Ogre::Degree(90), Ogre::Vector3::UNIT_Y);
+                    delta = rotation * delta;
+                }
+            }
+
             pose->addVertex(v, delta);
         }
 
         keyframe = track->createVertexPoseKeyFrame(0.f/*time*/); // WARN: keyframe reused
-        keyframe->addPoseReference(poseIndex + 2*i + 1, 0.5f/*influence*/);
+        keyframe->addPoseReference(poseIndex + 2*i + 2, 0.f/*influence*/);
 
         keyframe = track->createVertexPoseKeyFrame(endTime); // WARN: keyframe reused
-        keyframe->addPoseReference(poseIndex + 2*i + 1, 0.5f/*influence*/);
+        keyframe->addPoseReference(poseIndex + 2*i + 3, 1.f/*influence*/);
     }
 }
 

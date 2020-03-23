@@ -357,7 +357,7 @@ namespace NiBtOgre
 
         void useFgMorphVertices(); // used by FgSam to indicate vertices have been morphed
 
-        void buildFgPoses(const FgLib::FgTri *tri);
+        void buildFgPoses(const FgLib::FgTri *tri, bool rotate = false);
 
         std::string getTargetBone() const;
 

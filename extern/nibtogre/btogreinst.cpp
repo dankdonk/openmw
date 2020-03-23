@@ -283,7 +283,8 @@ void NiBtOgre::BtOgreInst::buildEntities()
         }
 
         mEntities[meshes[i].second->selfRef()] = entity;
-//#if 0
+// FIXME: testing only
+#if 0
         if (entity->hasVertexAnimation())
         {
             std::cout << mModel->getName() << " has Vertex Animation" << std::endl;
@@ -295,7 +296,7 @@ void NiBtOgre::BtOgreInst::buildEntities()
                 std::cout << entity << " size " << map.size() << std::endl;
             }
         }
-//#endif
+#endif
     }
 
     // FIXME: experimental

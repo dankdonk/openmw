@@ -90,7 +90,7 @@ namespace NiBtOgre
         // NiTriStrips builds differently to NiTriShapes only in that the data are different
         bool buildSubMesh(Ogre::Mesh *mesh, BoundsFinder& bounds); // returns true if tangents needed
 
-        void buildFgPoses(Ogre::Mesh *mesh, const FgLib::FgTri *tri);
+        void buildFgPoses(Ogre::Mesh *mesh, const FgLib::FgTri *tri, bool rotate = false);
 
         const std::vector<Ogre::Vector3>& getVertices(bool morphed = false);
 

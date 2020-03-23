@@ -148,7 +148,6 @@ NiBtOgre::NiTimeControllerRef NiBtOgre::NiGeomMorpherController::build(Ogre::Mes
 
     assert(mesh->getNumSubMeshes() != 0); // should be at least 1
     std::uint32_t subMeshIndex = (std::uint32_t)mesh->getNumSubMeshes()-1;
-    unsigned short poseIndex = (unsigned short)mesh->getPoseCount()-1;
 
     // NOTE: 'handle' is set to subMeshIndex+1 to locate the correct sub-entity vertices when
     //       Ogre::Animation::apply() is called
@@ -215,6 +214,7 @@ NiBtOgre::NiTimeControllerRef NiBtOgre::NiGeomMorpherController::build(Ogre::Mes
         //const Ogre::Pose::VertexOffsetMap& map = pose->getVertexOffsets();
         //std::cout << pose->getName() << " size " << map.size() << std::endl;
 
+        unsigned short poseIndex = (unsigned short)mesh->getPoseCount()-1;
         for (unsigned int k = 0; k < morphKeys->size(); ++k)
         {
             Ogre::VertexPoseKeyFrame* keyframe = track->createVertexPoseKeyFrame(morphKeys->at(k).time);
@@ -313,7 +313,6 @@ NiBtOgre::NiTimeControllerRef NiBtOgre::NiGeomMorpherController::setupTES3Animat
 
     assert(mesh->getNumSubMeshes() != 0); // should be at least 1
     std::uint32_t subMeshIndex = (std::uint32_t)mesh->getNumSubMeshes()-1;
-    unsigned short poseIndex = (unsigned short)mesh->getPoseCount()-1;
 
     // NOTE: 'handle' is set to subMeshIndex+1 to locate the correct sub-entity vertices when
     //       Ogre::Animation::apply() is called
@@ -333,6 +332,7 @@ NiBtOgre::NiTimeControllerRef NiBtOgre::NiGeomMorpherController::setupTES3Animat
         for (unsigned int v = 0; v < morphs[i].mVectors.size(); ++v)
             pose->addVertex(v, morphs[i].mVectors[v]);
 
+        unsigned short poseIndex = (unsigned short)mesh->getPoseCount()-1;
         for (unsigned int k = 0; k < morphs[i].mKeys.size(); ++k)
         {
             Ogre::VertexPoseKeyFrame* keyframe = track->createVertexPoseKeyFrame(morphs[i].mKeys[k].time);

@@ -2451,6 +2451,9 @@ Rough outline of the code (pseudocode):
     }
 ```
 
+# [23/03/2020] Vertex Pose animation
+
+For some reason mouth, teeth and tongue has to have the x and z parts of the vertex delta swapped.  Probably something to do with the head rotation issue.
 
 
 [//]: # (/* spell spelllang=en_au syntax=cpp */)
