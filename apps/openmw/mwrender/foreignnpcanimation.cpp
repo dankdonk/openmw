@@ -258,6 +258,7 @@ ForeignNpcAnimation::~ForeignNpcAnimation()
 ForeignNpcAnimation::ForeignNpcAnimation(const MWWorld::Ptr& ptr, Ogre::SceneNode* node, int visibilityFlags, bool disableListener, bool disableSounds, ViewMode viewMode)
   : Animation(ptr, node),
     mListenerDisabled(disableListener),
+    mPoseDuration(0.f),
     mViewMode(viewMode),
     mShowWeapons(false),
     mShowCarriedLeft(true),
@@ -666,29 +667,17 @@ void ForeignNpcAnimation::updateNpcBase()
             NifOgre::ObjectScenePtr scene
                 = createMorphedObject(meshName, "General", mObjectRoot->mForeignObj->mModel, textureName);
 
-            // FIXME: these are not skinned, how to do the animation?
             if (scene->mForeignObj)
             {
                 std::map<std::int32_t, Ogre::Entity*>::iterator it = scene->mForeignObj->mEntities.begin();
                 if (it != scene->mForeignObj->mEntities.end())
                 {
                     if (index == ESM4::Race::Mouth)
-                    {
                         mMouthASSet = it->second->getAllAnimationStates();
-                        //it->second->getMesh()->_initAnimationState(mMouthASSet);
-                    }
                     else if (index == ESM4::Race::Tongue)
-                    {
                         mTongueASSet = it->second->getAllAnimationStates();
-                        //it->second->getMesh()->_initAnimationState(mTongueASSet);
-                    }
                     else if (index == ESM4::Race::TeethLower)
-                    {
                         mTeethLASSet = it->second->getAllAnimationStates();
-                        //it->second->getMesh()->_initAnimationState(mTeethLASSet);
-                        //if (it->second->hasVertexAnimation())
-                            //std::cout << scene->mForeignObj->mModel->getName() << " has Vertex Animation" << std::endl;
-                    }
 
                     scene->mSkelBase = it->second;
                 }
@@ -1426,13 +1415,8 @@ void ForeignNpcAnimation::updateNpcBase()
         std::map<std::int32_t, Ogre::Entity*>::iterator it = scene->mForeignObj->mEntities.begin();
         if (it != scene->mForeignObj->mEntities.end())
         {
-            //if (it->second->hasVertexAnimation())
-                //std::cout << scene->mForeignObj->mModel->getName() << " has Vertex Animation" << std::endl;
-
             mHeadASSet = it->second->getAllAnimationStates();
             it->second->getMesh()->_initAnimationState(mHeadASSet);
-            const Ogre::AnimationStateMap& map = mHeadASSet->getAnimationStates();
-            //std::cout << it->second << " size " << map.size() << std::endl;
 
             scene->mSkelBase = it->second;
         }
@@ -2531,19 +2515,69 @@ Ogre::Vector3 ForeignNpcAnimation::runAnimation(float timepassed)
         }
     }
 //#endif
+
+// FIXME: demo code for vertex pose animation
 //#if 0
     if (mHeadASSet && mHeadASSet->hasAnimationState("Happy")) // if "Happy" exists so should others
     {
         mPoseDuration += timepassed;
+
+        if (mCurrentAnim == "")
+            mCurrentAnim = "Happy";
+
+        if (mHeadASSet && mHeadASSet->hasAnimationState(mCurrentAnim))
+        {
+            Ogre::AnimationState *state = mHeadASSet->getAnimationState(mCurrentAnim);
+            state->setLoop(false); // FIXME: this should be done only once
+            state->setEnabled(true); // FIXME: do this only once
+
+            if (mPoseDuration > 3.f) // FIXME: arbitrary number for testing
+                state->setTimePosition(0.f);
+            else
+                state->addTime(timepassed);
+        }
+
+        if (mMouthASSet && mMouthASSet->hasAnimationState(mCurrentAnim))
+        {
+            Ogre::AnimationState *state = mMouthASSet->getAnimationState(mCurrentAnim);
+            state->setLoop(false); // FIXME: this should be done only once
+            state->setEnabled(true); // FIXME: do this only once
+
+            if (mPoseDuration > 3.f) // FIXME: arbitrary number for testing
+                state->setTimePosition(0.f);
+            else
+                state->addTime(timepassed);
+        }
+
+        if (mTongueASSet && mTongueASSet->hasAnimationState(mCurrentAnim))
+        {
+            Ogre::AnimationState *state = mTongueASSet->getAnimationState(mCurrentAnim);
+            state->setLoop(false); // FIXME: this should be done only once
+            state->setEnabled(true); // FIXME: do this only once
+
+            if (mPoseDuration > 3.f) // FIXME: arbitrary number for testing
+                state->setTimePosition(0.f);
+            else
+                state->addTime(timepassed);
+        }
+
+        if (mTeethLASSet && mTeethLASSet->hasAnimationState(mCurrentAnim))
+        {
+            Ogre::AnimationState *state = mTeethLASSet->getAnimationState(mCurrentAnim);
+            state->setLoop(false); // FIXME: this should be done only once
+            state->setEnabled(true); // FIXME: do this only once
+
+            if (mPoseDuration > 3.f) // FIXME: arbitrary number for testing
+                state->setTimePosition(0.f);
+            else
+                state->addTime(timepassed);
+        }
+
         if (mPoseDuration > 3.f) // FIXME: arbitrary number for testing
         {
             mPoseDuration = 0;
-            if (mCurrentAnim != "" && mCurrentAnimState)
-                mCurrentAnimState->setEnabled(false);
 
-            if (mCurrentAnim == "")
-                mCurrentAnim = "Happy";
-            else if (mCurrentAnim == "Happy")
+            if (mCurrentAnim == "Happy")
                 mCurrentAnim = "Anger";
             else if (mCurrentAnim == "Anger")
                 mCurrentAnim = "Fear";
@@ -2555,52 +2589,6 @@ Ogre::Vector3 ForeignNpcAnimation::runAnimation(float timepassed)
                 mCurrentAnim = "BigAah";
             else if (mCurrentAnim == "BigAah")
                 mCurrentAnim = "Happy";
-        }
-
-        //Ogre::AnimationStateIterator asiter = mHeadASSet->getAnimationStateIterator();
-        //while(asiter.hasMoreElements())
-        //OGRE_LOCK_MUTEX(mHeadASSet->OGRE_AUTO_MUTEX_NAME);
-        //mHeadASSet->OGRE_AUTO_MUTEX_NAME;
-        if (mHeadASSet && mHeadASSet->hasAnimationState(mCurrentAnim))
-        {
-            //Ogre::AnimationState *state = asiter.getNext();
-            Ogre::AnimationState *state = mHeadASSet->getAnimationState(mCurrentAnim);
-            //state->setEnabled(false);
-            state->setLoop(false); // FIXME: this should be done only once
-            //if (state->getAnimationName() == mCurrentAnim)
-            //{
-                state->setEnabled(true); // FIXME: do this only once
-                mCurrentAnimState = state;
-                state->addTime(timepassed);
-            //}
-        }
-
-        //OGRE_LOCK_MUTEX(mMouthASSet->OGRE_AUTO_MUTEX_NAME);
-        if (mMouthASSet && mMouthASSet->hasAnimationState(mCurrentAnim))
-        {
-            Ogre::AnimationState *state = mMouthASSet->getAnimationState(mCurrentAnim);
-            state->setLoop(false); // FIXME: this should be done only once
-            state->setEnabled(true); // FIXME: do this only once
-            state->addTime(timepassed);
-        }
-
-        //OGRE_LOCK_MUTEX(mTongueASSet->OGRE_AUTO_MUTEX_NAME);
-        if (mTongueASSet && mTongueASSet->hasAnimationState(mCurrentAnim))
-        {
-            Ogre::AnimationState *state = mTongueASSet->getAnimationState(mCurrentAnim);
-            state->setLoop(false); // FIXME: this should be done only once
-            state->setEnabled(true); // FIXME: do this only once
-            state->addTime(timepassed);
-        }
-
-        //OGRE_LOCK_MUTEX(mTeethLASSet->OGRE_AUTO_MUTEX_NAME);
-        if (mTeethLASSet && mTeethLASSet->hasAnimationState(mCurrentAnim))
-        {
-            // FIXME: teeth moves sideways?
-            Ogre::AnimationState *state = mTeethLASSet->getAnimationState(mCurrentAnim);
-            state->setLoop(false); // FIXME: this should be done only once
-            state->setEnabled(true); // FIXME: do this only once
-            state->addTime(timepassed);
         }
     }
 //#endif

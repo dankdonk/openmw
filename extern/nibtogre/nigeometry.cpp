@@ -781,7 +781,7 @@ void NiBtOgre::NiTriBasedGeom::buildFgPoses(Ogre::Mesh *mesh, const FgLib::FgTri
 {
     const std::vector<Ogre::Vector3>& vertices = getVertices(true/*morphed*/); // most head models are
     float endTime = 0.1f;
-    unsigned short poseIndex = (unsigned short)mesh->getPoseCount(); // FIXME
+    unsigned short poseIndex = (unsigned short)mesh->getPoseCount(); // FIXME: is there a better way?
 
     const std::vector<std::string>& diffMorphs = tri->diffMorphs();
     for (std::size_t i = 0; i < diffMorphs.size(); ++i)
@@ -792,7 +792,6 @@ void NiBtOgre::NiTriBasedGeom::buildFgPoses(Ogre::Mesh *mesh, const FgLib::FgTri
 
         // ------------------------- Base ------------------------
         Ogre::Pose* pose = mesh->createPose(mSubMeshIndex + 1, "Base");
-        //pose->clearVertices();
         for (std::size_t v = 0; v < vertices.size(); ++v) // vertices in headhuman.nif, etc
             pose->addVertex(v, Ogre::Vector3::ZERO);
 
@@ -811,14 +810,12 @@ void NiBtOgre::NiTriBasedGeom::buildFgPoses(Ogre::Mesh *mesh, const FgLib::FgTri
         if (vertices.size()*3 != diffMorphVertices.second.size())
             throw std::runtime_error("NiTriBasedGeom: number of vertices in a pose differ to SubMesh");
 
-        //std::cout << "pose created " << mModel.getName() << ": " << diffMorphs[i] << std::endl; // FIXME
-
         pose = mesh->createPose(mSubMeshIndex + 1, diffMorphs[i]); // WARN: pose reused
-        //pose->clearVertices();
         for (std::size_t v = 0; v < vertices.size(); ++v) // vertices in headhuman.nif, etc
         {
             float scale = diffMorphVertices.first;
             Ogre::Vector3 delta;
+
             if (rotate)
             {
                 // x and z swapped
@@ -831,12 +828,6 @@ void NiBtOgre::NiTriBasedGeom::buildFgPoses(Ogre::Mesh *mesh, const FgLib::FgTri
                 delta = Ogre::Vector3(scale * diffMorphVertices.second[v * 3 + 0],
                                       scale * diffMorphVertices.second[v * 3 + 1],
                                       scale * diffMorphVertices.second[v * 3 + 2]);
-
-                if (0)//rotate) // FIXME: doesn't work, use swapping as per above
-                {
-                    Ogre::Quaternion rotation(Ogre::Degree(90), Ogre::Vector3::UNIT_Y);
-                    delta = rotation * delta;
-                }
             }
 
             pose->addVertex(v, delta);

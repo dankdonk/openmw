@@ -135,36 +135,6 @@ namespace FgLib
             fgMorphVertices[i].z = vertices[index + 2] + zMorph;
         }
 
-// FIXME: testing diff morphs
-#if 0
-        if (tri->hasDiffMorph("Happy")) // if it has "Happy" it will have others
-        {
-            int emo = Misc::Rng::rollDice(5);
-
-            const std::pair<float, std::vector<std::int16_t> > *diffMorphs = &tri->diffMorphVertices("Happy");
-
-            switch (emo)
-            {
-                case 0: diffMorphs = &tri->diffMorphVertices("Sad"); break;
-                case 1: diffMorphs = &tri->diffMorphVertices("Anger"); break;
-                case 2: diffMorphs = &tri->diffMorphVertices("Fear"); break;
-                case 3: diffMorphs = &tri->diffMorphVertices("Surprise"); break;
-                case 4: break; // Happy
-                default: diffMorphs = &tri->diffMorphVertices("BigAah"); break;
-            }
-
-            std::size_t index;
-            for (std::size_t i = 0; i < numVertices; ++i)
-            {
-                // TODO: prob. room for optimisation
-                index = 3 * i;
-                fgMorphVertices[i].x += diffMorphs->first * diffMorphs->second[index + 0];
-                fgMorphVertices[i].y += diffMorphs->first * diffMorphs->second[index + 1];
-                fgMorphVertices[i].z += diffMorphs->first * diffMorphs->second[index + 2];
-            }
-        }
-#endif
-
         // FIXME: update normals, tangents and bitangents?
 
         return true;
