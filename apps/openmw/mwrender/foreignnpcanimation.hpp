@@ -76,6 +76,7 @@ private:
 // FIXME: temp testing
 //#if 0
     float mPoseDuration;
+    float mStartTimer;
     std::string mCurrentAnim;
     Ogre::AnimationStateSet *mHeadASSet;
     Ogre::AnimationStateSet *mTongueASSet;

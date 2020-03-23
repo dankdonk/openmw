@@ -779,7 +779,7 @@ bool NiBtOgre::NiTriBasedGeom::buildSubMesh(Ogre::Mesh *mesh, BoundsFinder& boun
 
 void NiBtOgre::NiTriBasedGeom::buildFgPoses(Ogre::Mesh *mesh, const FgLib::FgTri *tri, bool rotate)
 {
-    const std::vector<Ogre::Vector3>& vertices = getVertices(true/*morphed*/); // most head models are
+    const std::vector<Ogre::Vector3>& vertices = getVertices(true/*morphedIfAvailable*/);
     float endTime = 0.1f;
     unsigned short poseIndex = (unsigned short)mesh->getPoseCount(); // FIXME: is there a better way?
 
@@ -796,7 +796,7 @@ void NiBtOgre::NiTriBasedGeom::buildFgPoses(Ogre::Mesh *mesh, const FgLib::FgTri
             pose->addVertex(v, Ogre::Vector3::ZERO);
 
         // see the comments on animation length above
-        Ogre::VertexPoseKeyFrame* keyframe = track->createVertexPoseKeyFrame(0.f/*time*/);
+        Ogre::VertexPoseKeyFrame* keyframe = track->createVertexPoseKeyFrame(0.f/*startTime*/);
         // influence value may require some experiments - maybe for lip sync go up to 1 but for others less?
         keyframe->addPoseReference(poseIndex + 2*i + 0, 0.f/*influence*/);
 
@@ -833,7 +833,7 @@ void NiBtOgre::NiTriBasedGeom::buildFgPoses(Ogre::Mesh *mesh, const FgLib::FgTri
             pose->addVertex(v, delta);
         }
 
-        keyframe = track->createVertexPoseKeyFrame(0.f/*time*/); // WARN: keyframe reused
+        keyframe = track->createVertexPoseKeyFrame(0.f/*startTime*/); // WARN: keyframe reused
         keyframe->addPoseReference(poseIndex + 2*i + 2, 0.f/*influence*/);
 
         keyframe = track->createVertexPoseKeyFrame(endTime); // WARN: keyframe reused

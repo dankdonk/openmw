@@ -125,6 +125,9 @@ void NiBtOgre::NiGeomMorpherController::setInterpolator(NiControllerSequence *se
     mControlledBlockInterpolators[frameName] = interpolator;
 }
 
+// for mainmast02.nif there is one animation ("Idle")
+// the animation has one track with handle subMeshIndex+1
+// the mesh has two poses both with target subMeshIndex+1
 NiBtOgre::NiTimeControllerRef NiBtOgre::NiGeomMorpherController::build(Ogre::Mesh *mesh)
 {
     if ((NiTimeController::mFlags & 0x8) == 0) // not active
@@ -146,12 +149,18 @@ NiBtOgre::NiTimeControllerRef NiBtOgre::NiGeomMorpherController::build(Ogre::Mes
         animation = mesh->createAnimation(animationId, mControllerSequence->getTotalAnimLength());
     //animation->setInterpolationMode(Ogre::Animation::IM_SPLINE); // not any better...
 
+    //std::cout << "animation " << animation->getName() << std::endl;
+
     assert(mesh->getNumSubMeshes() != 0); // should be at least 1
-    std::uint32_t subMeshIndex = (std::uint32_t)mesh->getNumSubMeshes()-1;
+    std::uint32_t subMeshIndex = (std::uint32_t)mesh->getNumSubMeshes()-1; // FIXME
+    unsigned short poseIndex = (unsigned short)mesh->getPoseCount();
+    //std::cout << "poseIndex " << poseIndex << std::endl; // FIXME
 
     // NOTE: 'handle' is set to subMeshIndex+1 to locate the correct sub-entity vertices when
     //       Ogre::Animation::apply() is called
     Ogre::VertexAnimationTrack* track = animation->createVertexTrack(subMeshIndex+1, Ogre::VAT_POSE);
+
+    //std::cout << "track handle " << subMeshIndex+1 << std::endl;
 
     // NOTE: assume that NiControllerManager and NiControllerSequence is built already
     //assert(mNiControllerSequeceBuilt == true); // throw instead?
@@ -177,8 +186,15 @@ NiBtOgre::NiTimeControllerRef NiBtOgre::NiGeomMorpherController::build(Ogre::Mes
     NiMorphData* morphData = mModel.getRef<NiMorphData>(mDataRef);
     const std::vector<NiMorphData::Morph>& morphs = morphData->mMorphs;
     // FIXME: ignore base? or create a base pose with a keyframe at time 0 and PoseRef influence of 1.f?
-    for (unsigned int i = 0/*1*/; i < morphs.size(); ++i)
+    for (unsigned int i = 0; i < morphs.size(); ++i)
     {
+        // NOTE multiple poses are created for the same 'target' (i.e. sub-mesh)
+        Ogre::Pose* pose = mesh->createPose(subMeshIndex + 1, // target is user defined (for us subMeshIndex+1)
+                mModel.getName()+
+                "block_"+std::to_string(NiObject::selfRef())+"_morph_"+std::to_string(i));  // mSelfRef+morph
+
+        //std::cout << "pose " << pose->getName() << " target " << subMeshIndex+1 << std::endl; // FIXME
+
         const std::vector<Key<float> > *morphKeys;
         if (NiObject::mModel.nifVer() > 0x0a010000)
         {
@@ -201,26 +217,23 @@ NiBtOgre::NiTimeControllerRef NiBtOgre::NiGeomMorpherController::build(Ogre::Mes
         else
             morphKeys = &morphs[i].mKeys; // use the values in NiMorphData
 
-        if (morphKeys->size() == 0)
+        if (morphKeys->size() == 0) // probably "Base"
             continue; // NOTE: ignore morphs that have no keys (i.e. tracks with no keyframes)
 
-        // NOTE multiple poses are created for the same 'target' (i.e. sub-mesh)
-        Ogre::Pose* pose = mesh->createPose(subMeshIndex + 1, // target is user defined (for us subMeshIndex+1)
-                mModel.getName()+
-                "block_"+std::to_string(NiObject::selfRef())+"_morph_"+std::to_string(i));  // mSelfRef+morph
         for (unsigned int v = 0; v < morphs[i].mVectors.size(); ++v)
             pose->addVertex(v, morphs[i].mVectors[v]);
 
         //const Ogre::Pose::VertexOffsetMap& map = pose->getVertexOffsets();
         //std::cout << pose->getName() << " size " << map.size() << std::endl;
 
-        unsigned short poseIndex = (unsigned short)mesh->getPoseCount()-1;
         for (unsigned int k = 0; k < morphKeys->size(); ++k)
         {
             Ogre::VertexPoseKeyFrame* keyframe = track->createVertexPoseKeyFrame(morphKeys->at(k).time);
             //std::cout << "time " << morphKeys.at(k).time <<
                 //", influence " << morphKeys.at(k).value << std::endl;
             keyframe->addPoseReference(poseIndex + i, morphKeys->at(k).value);
+
+            //std::cout << "keyframe ref " << poseIndex + i << " influence " << morphKeys->at(k).value << std::endl;
 
 #if 0
             // FIXME: set custom interpolation code for a derived track here?
@@ -312,7 +325,8 @@ NiBtOgre::NiTimeControllerRef NiBtOgre::NiGeomMorpherController::setupTES3Animat
     Ogre::Animation *animation = mesh->createAnimation(animationId, totalAnimationLength);
 
     assert(mesh->getNumSubMeshes() != 0); // should be at least 1
-    std::uint32_t subMeshIndex = (std::uint32_t)mesh->getNumSubMeshes()-1;
+    std::uint32_t subMeshIndex = (std::uint32_t)mesh->getNumSubMeshes()-1; // FIXME
+    unsigned short poseIndex = (unsigned short)mesh->getPoseCount();
 
     // NOTE: 'handle' is set to subMeshIndex+1 to locate the correct sub-entity vertices when
     //       Ogre::Animation::apply() is called
@@ -321,18 +335,18 @@ NiBtOgre::NiTimeControllerRef NiBtOgre::NiGeomMorpherController::setupTES3Animat
     // create a pose & track for each Morph
     NiMorphData* morphData = mModel.getRef<NiMorphData>(mDataRef);
     const std::vector<NiMorphData::Morph>& morphs = morphData->mMorphs;
-    // FIXME: ignore base? or create a base pose with a keyframe at time 0 and PoseRef influence of 1.f?
-    for (unsigned int i = 1; i < morphs.size(); ++i)
+    // FIXME: ignore base? or create a base pose with a keyframe at time 0 and PoseRef influence of 0.f?
+    for (unsigned int i = 0; i < morphs.size(); ++i)
     {
+        // NOTE multiple poses are created for the same 'target' (i.e. sub-mesh)
+        Ogre::Pose* pose = mesh->createPose(subMeshIndex+1); // target is user defined (for us subMeshIndex+1)
+
         if (morphs[i].mKeys.size() == 0)
             continue; // NOTE: ignore morphs that have no keys (i.e. tracks with no keyframes)
 
-        // NOTE multiple poses are created for the same 'target' (i.e. sub-mesh)
-        Ogre::Pose* pose = mesh->createPose(subMeshIndex+1); // target is user defined (for us subMeshIndex+1)
         for (unsigned int v = 0; v < morphs[i].mVectors.size(); ++v)
             pose->addVertex(v, morphs[i].mVectors[v]);
 
-        unsigned short poseIndex = (unsigned short)mesh->getPoseCount()-1;
         for (unsigned int k = 0; k < morphs[i].mKeys.size(); ++k)
         {
             Ogre::VertexPoseKeyFrame* keyframe = track->createVertexPoseKeyFrame(morphs[i].mKeys[k].time);

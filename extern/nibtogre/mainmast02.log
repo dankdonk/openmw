@@ -1,0 +1,209 @@
+poseIndex 0
+track handle 1
+pose meshes\architecture\ships\mainmast02.nifblock_7_morph_0 target 1
+pose meshes\architecture\ships\mainmast02.nifblock_7_morph_1 target 1
+keyframe ref 1 influence 0.000824074
+keyframe ref 1 influence 1
+keyframe ref 1 influence 0
+keyframe ref 1 influence 0.7
+keyframe ref 1 influence 0
+keyframe ref 1 influence 0.7
+keyframe ref 1 influence 0
+pose meshes\architecture\ships\mainmast02.nifblock_7_morph_2 target 1
+keyframe ref 2 influence 0
+keyframe ref 2 influence 0
+keyframe ref 2 influence 0.05
+keyframe ref 2 influence 1
+keyframe ref 2 influence 0
+keyframe ref 2 influence 0.65
+keyframe ref 2 influence 0
+keyframe ref 2 influence 0
+animation Idle
+poseIndex 3
+track handle 2
+pose meshes\architecture\ships\mainmast02.nifblock_18_morph_0 target 2
+pose meshes\architecture\ships\mainmast02.nifblock_18_morph_1 target 2
+keyframe ref 4 influence 0.000824074
+keyframe ref 4 influence 1
+keyframe ref 4 influence 0
+keyframe ref 4 influence 0.7
+keyframe ref 4 influence 0
+keyframe ref 4 influence 0.7
+keyframe ref 4 influence 0
+pose meshes\architecture\ships\mainmast02.nifblock_18_morph_2 target 2
+keyframe ref 5 influence 0
+keyframe ref 5 influence 0
+keyframe ref 5 influence 0.05
+keyframe ref 5 influence 1
+keyframe ref 5 influence 0
+keyframe ref 5 influence 0.65
+keyframe ref 5 influence 0
+keyframe ref 5 influence 0
+animation Idle
+poseIndex 6
+track handle 3
+pose meshes\architecture\ships\mainmast02.nifblock_28_morph_0 target 3
+pose meshes\architecture\ships\mainmast02.nifblock_28_morph_1 target 3
+keyframe ref 7 influence 0.000824074
+keyframe ref 7 influence 1
+keyframe ref 7 influence 0
+keyframe ref 7 influence 0.7
+keyframe ref 7 influence 0
+keyframe ref 7 influence 0.7
+keyframe ref 7 influence 0
+pose meshes\architecture\ships\mainmast02.nifblock_28_morph_2 target 3
+keyframe ref 8 influence 0
+keyframe ref 8 influence 0
+keyframe ref 8 influence 0.05
+keyframe ref 8 influence 1
+keyframe ref 8 influence 0
+keyframe ref 8 influence 0.65
+keyframe ref 8 influence 0
+keyframe ref 8 influence 0
+animation Idle
+poseIndex 9
+track handle 4
+pose meshes\architecture\ships\mainmast02.nifblock_38_morph_0 target 4
+pose meshes\architecture\ships\mainmast02.nifblock_38_morph_1 target 4
+keyframe ref 10 influence 0.000824074
+keyframe ref 10 influence 1
+keyframe ref 10 influence 0
+keyframe ref 10 influence 0.7
+keyframe ref 10 influence 0
+keyframe ref 10 influence 0.7
+keyframe ref 10 influence 0
+pose meshes\architecture\ships\mainmast02.nifblock_38_morph_2 target 4
+keyframe ref 11 influence 0
+keyframe ref 11 influence 0
+keyframe ref 11 influence 0.05
+keyframe ref 11 influence 1
+keyframe ref 11 influence 0
+keyframe ref 11 influence 0.65
+keyframe ref 11 influence 0
+keyframe ref 11 influence 0
+animation Idle
+poseIndex 12
+track handle 5
+pose meshes\architecture\ships\mainmast02.nifblock_48_morph_0 target 5
+pose meshes\architecture\ships\mainmast02.nifblock_48_morph_1 target 5
+keyframe ref 13 influence 0.000824074
+keyframe ref 13 influence 1
+keyframe ref 13 influence 0
+keyframe ref 13 influence 0.7
+keyframe ref 13 influence 0
+keyframe ref 13 influence 0.7
+keyframe ref 13 influence 0
+pose meshes\architecture\ships\mainmast02.nifblock_48_morph_2 target 5
+keyframe ref 14 influence 0
+keyframe ref 14 influence 0
+keyframe ref 14 influence 0.05
+keyframe ref 14 influence 1
+keyframe ref 14 influence 0
+keyframe ref 14 influence 0.65
+keyframe ref 14 influence 0
+keyframe ref 14 influence 0
+animation Idle
+poseIndex 15
+track handle 6
+pose meshes\architecture\ships\mainmast02.nifblock_58_morph_0 target 6
+pose meshes\architecture\ships\mainmast02.nifblock_58_morph_1 target 6
+keyframe ref 16 influence 0.000824074
+keyframe ref 16 influence 1
+keyframe ref 16 influence 0
+keyframe ref 16 influence 0.7
+keyframe ref 16 influence 0
+keyframe ref 16 influence 0.7
+keyframe ref 16 influence 0
+pose meshes\architecture\ships\mainmast02.nifblock_58_morph_2 target 6
+keyframe ref 17 influence 0
+keyframe ref 17 influence 0
+keyframe ref 17 influence 0.05
+keyframe ref 17 influence 1
+keyframe ref 17 influence 0
+keyframe ref 17 influence 0.65
+keyframe ref 17 influence 0
+keyframe ref 17 influence 0
+animation Idle
+poseIndex 18
+track handle 7
+pose meshes\architecture\ships\mainmast02.nifblock_68_morph_0 target 7
+pose meshes\architecture\ships\mainmast02.nifblock_68_morph_1 target 7
+keyframe ref 19 influence 0.000824074
+keyframe ref 19 influence 1
+keyframe ref 19 influence 0
+keyframe ref 19 influence 0.7
+keyframe ref 19 influence 0
+keyframe ref 19 influence 0.7
+keyframe ref 19 influence 0
+pose meshes\architecture\ships\mainmast02.nifblock_68_morph_2 target 7
+keyframe ref 20 influence 0
+keyframe ref 20 influence 0
+keyframe ref 20 influence 0.05
+keyframe ref 20 influence 1
+keyframe ref 20 influence 0
+keyframe ref 20 influence 0.65
+keyframe ref 20 influence 0
+keyframe ref 20 influence 0
+animation Idle
+poseIndex 21
+track handle 8
+pose meshes\architecture\ships\mainmast02.nifblock_78_morph_0 target 8
+pose meshes\architecture\ships\mainmast02.nifblock_78_morph_1 target 8
+keyframe ref 22 influence 0.000824074
+keyframe ref 22 influence 1
+keyframe ref 22 influence 0
+keyframe ref 22 influence 0.7
+keyframe ref 22 influence 0
+keyframe ref 22 influence 0.7
+keyframe ref 22 influence 0
+pose meshes\architecture\ships\mainmast02.nifblock_78_morph_2 target 8
+keyframe ref 23 influence 0
+keyframe ref 23 influence 0
+keyframe ref 23 influence 0.05
+keyframe ref 23 influence 1
+keyframe ref 23 influence 0
+keyframe ref 23 influence 0.65
+keyframe ref 23 influence 0
+keyframe ref 23 influence 0
+animation Idle
+poseIndex 24
+track handle 9
+pose meshes\architecture\ships\mainmast02.nifblock_88_morph_0 target 9
+pose meshes\architecture\ships\mainmast02.nifblock_88_morph_1 target 9
+keyframe ref 25 influence 0.000824074
+keyframe ref 25 influence 1
+keyframe ref 25 influence 0
+keyframe ref 25 influence 0.7
+keyframe ref 25 influence 0
+keyframe ref 25 influence 0.7
+keyframe ref 25 influence 0
+pose meshes\architecture\ships\mainmast02.nifblock_88_morph_2 target 9
+keyframe ref 26 influence 0
+keyframe ref 26 influence 0
+keyframe ref 26 influence 0.05
+keyframe ref 26 influence 1
+keyframe ref 26 influence 0
+keyframe ref 26 influence 0.65
+keyframe ref 26 influence 0
+keyframe ref 26 influence 0
+animation Idle
+poseIndex 27
+track handle 10
+pose meshes\architecture\ships\mainmast02.nifblock_98_morph_0 target 10
+pose meshes\architecture\ships\mainmast02.nifblock_98_morph_1 target 10
+keyframe ref 28 influence 0.000824074
+keyframe ref 28 influence 1
+keyframe ref 28 influence 0
+keyframe ref 28 influence 0.7
+keyframe ref 28 influence 0
+keyframe ref 28 influence 0.7
+keyframe ref 28 influence 0
+pose meshes\architecture\ships\mainmast02.nifblock_98_morph_2 target 10
+keyframe ref 29 influence 0
+keyframe ref 29 influence 0
+keyframe ref 29 influence 0.05
+keyframe ref 29 influence 1
+keyframe ref 29 influence 0
+keyframe ref 29 influence 0.65
+keyframe ref 29 influence 0
+keyframe ref 29 influence 0

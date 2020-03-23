@@ -285,6 +285,7 @@ ForeignNpcAnimation::ForeignNpcAnimation(const MWWorld::Ptr& ptr, Ogre::SceneNod
     }
 
     mHeadParts.clear();
+    mStartTimer = 3.f + Misc::Rng::rollDice(15); // make the vertex pose demo start somewhat random
 
     updateNpcBase();
 
@@ -1658,7 +1659,8 @@ NifOgre::ObjectScenePtr ForeignNpcAnimation::createMorphedObject(const std::stri
             if (baseRotation == Ogre::Quaternion::IDENTITY)
                 orientation = bone->getOrientation() * Ogre::Quaternion(Ogre::Degree(90), Ogre::Vector3::UNIT_Y);
 
-            position = Ogre::Vector3(0.45f/*up*/, -0.55f/*forward*/, 0.f/*right*/);
+            //position = Ogre::Vector3(0.45f/*up*/, -0.55f/*forward*/, 0.f/*right*/); // better for eyes
+            position = Ogre::Vector3(0.45f/*up*/, -0.2f/*forward*/, 0.f/*right*/); // best for orc teeth
         }
 
         std::map<int32_t, Ogre::Entity*>::const_iterator it(scene->mForeignObj->mEntities.begin());
@@ -2518,9 +2520,13 @@ Ogre::Vector3 ForeignNpcAnimation::runAnimation(float timepassed)
 
 // FIXME: demo code for vertex pose animation
 //#if 0
+    if (mStartTimer > 1)
+        mStartTimer -= timepassed;
+
     if (mHeadASSet && mHeadASSet->hasAnimationState("Happy")) // if "Happy" exists so should others
     {
-        mPoseDuration += timepassed;
+        if (mStartTimer <= 1)
+            mPoseDuration += timepassed;
 
         if (mCurrentAnim == "")
             mCurrentAnim = "Happy";
