@@ -80,7 +80,7 @@ namespace FgLib
 
             mQuadIndicies.swap(quadIndicies);
 
-            std::cout << "TRI: " << name << std::endl; // FIXME: for testing only
+            //std::cout << "TRI: " << name << std::endl; // FIXME: for testing only
 
             for (std::size_t i = 0; i < mNumLabelledVertices; ++i)
             {
@@ -156,6 +156,7 @@ namespace FgLib
                 //std::cout << "\"" << label << "\" " <<
                     //std::fixed << std::setprecision(6) << scale << std::endl; // FIXME: for testing only
 
+                diffMorphs.clear();
                 diffMorphs.resize(3 * mNumVertices);
                 for (std::size_t i = 0; i < 3 * mNumVertices; ++i)
                     tri.read(diffMorphs[i]);
@@ -244,12 +245,12 @@ namespace FgLib
 
     const std::pair<float, std::vector<std::int16_t> >& FgTri::diffMorphVertices(const std::string& label) const
     {
-        std::map<std::string, std::pair<float, std::vector<std::int16_t> > >::const_iterator lb
-            = mLabelledDiffMorphsMap.lower_bound(label);
+        std::map<std::string, std::pair<float, std::vector<std::int16_t> > >::const_iterator it
+            = mLabelledDiffMorphsMap.find(label);
 
-        if (lb != mLabelledDiffMorphsMap.end() && !(mLabelledDiffMorphsMap.key_comp()(label, lb->first)))
+        if (it != mLabelledDiffMorphsMap.end())
         {
-            return lb->second;
+            return it->second;
         }
         else // none found
             throw std::runtime_error("FgTri: not found label " + label);
