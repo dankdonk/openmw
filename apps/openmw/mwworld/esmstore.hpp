@@ -54,6 +54,7 @@
 #include <extern/esm4/dial.hpp>
 #include <extern/esm4/info.hpp>
 #include <extern/esm4/qust.hpp>
+#include <extern/esm4/pack.hpp>
 
 #include <components/esm/records.hpp>
 #include "store.hpp"
@@ -139,6 +140,7 @@ namespace MWWorld
         ForeignStore<ESM4::Dialog>     mForeignDialogs;
         ForeignStore<ESM4::DialogInfo> mForeignDialogInfos;
         ForeignStore<ESM4::Quest>      mForeignQuests;
+        ForeignStore<ESM4::AIPackage>  mForeignAIPackages;
         // Foreign referenceables
         ForeignStore<ESM4::Activator>  mForeignActivators;
         ForeignStore<ESM4::Apparatus>  mForeignApparatuses;

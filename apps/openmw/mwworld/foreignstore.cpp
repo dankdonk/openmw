@@ -338,6 +338,7 @@ template class MWWorld::ForeignStore<ESM4::Script>;
 template class MWWorld::ForeignStore<ESM4::Dialog>;
 template class MWWorld::ForeignStore<ESM4::DialogInfo>;
 template class MWWorld::ForeignStore<ESM4::Quest>;
+template class MWWorld::ForeignStore<ESM4::AIPackage>;
 // Foreign Referenceables
 template class MWWorld::ForeignStore<ESM4::Activator>;
 template class MWWorld::ForeignStore<ESM4::Apparatus>;

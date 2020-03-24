@@ -240,7 +240,7 @@ void ESMStore::loadTes4Group (ESM::ESMReader &esm)
                 hdr.group.label.value == ESM4::REC_TACT || hdr.group.label.value == ESM4::REC_NOTE ||
                 hdr.group.label.value == ESM4::REC_BPTD || hdr.group.label.value == ESM4::REC_SCPT ||
                 hdr.group.label.value == ESM4::REC_DIAL || hdr.group.label.value == ESM4::REC_QUST ||
-                hdr.group.label.value == ESM4::REC_INFO
+                hdr.group.label.value == ESM4::REC_INFO || hdr.group.label.value == ESM4::REC_PACK
                 )
             {
                 reader.saveGroupStatus();
@@ -250,7 +250,7 @@ void ESMStore::loadTes4Group (ESM::ESMReader &esm)
             {
                 // Skip groups that are of no interest (for now).
                 //  GMST GLOB CLAS FACT SKIL MGEF ENCH SPEL BSGN WTHR CLMT
-                //  PACK CSTY LSCR LVSP WATR EFSH
+                //  CSTY LSCR LVSP WATR EFSH
 
                 // FIXME: The label field of a group is not reliable, so we will need to check here as well
                 //std::cout << "skipping group... " << ESM4::printLabel(hdr.group.label, hdr.group.type) << std::endl;
@@ -401,24 +401,13 @@ void ESMStore::loadTes4Record (ESM::ESMReader& esm)
             // will be followed by another CELL or a Cell Child GRUP
             break;
         }
-        case ESM4::REC_DIAL:
-        {
-            reader.getRecordData(); mForeignDialogs.load(esm);
-            break;
-        }
-        case ESM4::REC_INFO:
-        {
-            reader.getRecordData(); mForeignDialogInfos.load(esm);
-            break;
-        }
-        case ESM4::REC_QUST:
-        {
-            reader.getRecordData(); mForeignQuests.load(esm);
-            break;
-        }
+        case ESM4::REC_DIAL: reader.getRecordData(); mForeignDialogs.load(esm);     break;
+        case ESM4::REC_INFO: reader.getRecordData(); mForeignDialogInfos.load(esm); break;
+        case ESM4::REC_QUST: reader.getRecordData(); mForeignQuests.load(esm);      break;
         // IDLE
-        // PACK, CSTY, LSCR, LVSP
-        case ESM4::REC_ANIO: reader.getRecordData(); mForeignAnimObjs.load(esm); break;
+        // CSTY, LSCR, LVSP
+        case ESM4::REC_PACK: reader.getRecordData(); mForeignAIPackages.load(esm);  break;
+        case ESM4::REC_ANIO: reader.getRecordData(); mForeignAnimObjs.load(esm);    break;
         // WATR, EFSH
         case ESM4::REC_REFR:
         {
@@ -510,6 +499,7 @@ void ESMStore::loadTes4Record (ESM::ESMReader& esm)
             break;
         }
 		//
+        // PGRD is handled in CellStore::loadTes4Record()
         case ESM4::REC_PGRD: // Oblivion only?
 		//
         case ESM4::REC_IDLE:
@@ -525,7 +515,6 @@ void ESMStore::loadTes4Record (ESM::ESMReader& esm)
         }
 #endif
         case ESM4::REC_REGN:
-        case ESM4::REC_PGRD:
         case ESM4::REC_PHZD: case ESM4::REC_PGRE: // Skyrim only?
         case ESM4::REC_ROAD: case ESM4::REC_LAND: case ESM4::REC_NAVM: case ESM4::REC_NAVI:
         case ESM4::REC_IDLE:

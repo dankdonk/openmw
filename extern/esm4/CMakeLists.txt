@@ -84,6 +84,8 @@ set(ESM4_SOURCE_FILES
     dial.cpp
     qust.cpp
     info.cpp
+    pgrd.cpp
+    pack.cpp
     formid.cpp
     reader.cpp
 )

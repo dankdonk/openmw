@@ -8,6 +8,7 @@
 #include <extern/esm4/refr.hpp>
 #include <extern/esm4/achr.hpp>
 #include <extern/esm4/acre.hpp>
+#include <extern/esm4/pgrd.hpp>
 
 #include <components/esm/cellstate.hpp>
 #include <components/esm/cellid.hpp>
@@ -1175,6 +1176,14 @@ namespace MWWorld
                 break;
             }
             case ESM4::REC_PGRD: // Oblivion only?
+            {
+                //std::cout << ESM4::printName(hdr.record.typeId) << " skipping..." << std::endl;
+                //reader.skipRecordData();
+                reader.getRecordData();
+                ESM4::Pathgrid record;
+                record.load(reader);
+                break;
+            }
             case ESM4::REC_ROAD: // Oblivion only?
             case ESM4::REC_NAVM:
             {

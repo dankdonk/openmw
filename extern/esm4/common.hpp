@@ -523,6 +523,16 @@ namespace ESM4
         SUB_TCLT = MKTAG('T','C','L','T'),
         SUB_TRDT = MKTAG('T','R','D','T'),
 
+        SUB_PKDT = MKTAG('P','K','D','T'),
+        SUB_PSDT = MKTAG('P','S','D','T'),
+        SUB_PLDT = MKTAG('P','L','D','T'),
+        SUB_PTDT = MKTAG('P','T','D','T'),
+        SUB_PGRP = MKTAG('P','G','R','P'),
+        SUB_PGRR = MKTAG('P','G','R','R'),
+        SUB_PGRI = MKTAG('P','G','R','I'),
+        SUB_PGRL = MKTAG('P','G','R','L'),
+        SUB_PGAG = MKTAG('P','G','A','G'),
+
         SUB_XHLT = MKTAG('X','H','L','T'), // Unofficial Oblivion Patch
         SUB_XCHG = MKTAG('X','C','H','G'), // thievery.exp
 
