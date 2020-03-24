@@ -1177,17 +1177,25 @@ namespace MWWorld
             }
             case ESM4::REC_PGRD: // Oblivion only?
             {
+#if 0
                 //std::cout << ESM4::printName(hdr.record.typeId) << " skipping..." << std::endl;
                 //reader.skipRecordData();
+#else
+                std::string padding = "";
+                padding.insert(0, reader.getContext().groupStack.size()*2, ' ');
+                std::cout << padding << "PGRD: about to load" << std::endl;
                 reader.getRecordData();
                 ESM4::Pathgrid record;
                 record.load(reader);
+#endif
                 break;
             }
             case ESM4::REC_ROAD: // Oblivion only?
             case ESM4::REC_NAVM:
             {
-                //std::cout << ESM4::printName(hdr.record.typeId) << " skipping..." << std::endl;
+                std::string padding = "";
+                padding.insert(0, reader.getContext().groupStack.size()*2, ' ');
+                std::cout << padding << ESM4::printName(hdr.record.typeId) << " skipping..." << std::endl;
                 reader.skipRecordData();
                 break;
             }

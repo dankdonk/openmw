@@ -209,6 +209,8 @@ void ESMStore::loadTes4Group (ESM::ESMReader &esm)
     if (hdr.record.typeId != ESM4::REC_GRUP)
         return loadTes4Record(esm);
 
+    //std::cout << ESM4::printLabel(hdr.group.label, hdr.group.type) << std::endl;
+
     switch (hdr.group.type)
     {
         case ESM4::Grp_RecordType:
@@ -253,7 +255,7 @@ void ESMStore::loadTes4Group (ESM::ESMReader &esm)
                 //  CSTY LSCR LVSP WATR EFSH
 
                 // FIXME: The label field of a group is not reliable, so we will need to check here as well
-                //std::cout << "skipping group... " << ESM4::printLabel(hdr.group.label, hdr.group.type) << std::endl;
+                std::cout << "skipping group... " << ESM4::printLabel(hdr.group.label, hdr.group.type) << std::endl;
                 reader.skipGroup();
                 return;
             }
@@ -278,6 +280,11 @@ void ESMStore::loadTes4Group (ESM::ESMReader &esm)
             if (!esm.hasMoreRecs())
                 return; // may have been an empty group followed by EOF
 
+            // If hdr.group.type == ESM4::Grp_CellPersistentChild, we are about to
+            // partially load the persistent records such as REFR, ACHR and ACRE, if any.
+            // (well, actually only examining for doors for the moment)
+            //
+            // The records from other groups are skipped as per below.
             loadTes4Group(esm);
 
             break;
@@ -312,7 +319,7 @@ void ESMStore::loadTes4Group (ESM::ESMReader &esm)
             break;
         }
         default:
-            std::cout << "unknown group..." << std::endl; // FIXME
+            std::cout << "unknown group..." << std::endl; // FIXME, should throw?
             reader.skipGroup();
             break;
     }
@@ -411,10 +418,15 @@ void ESMStore::loadTes4Record (ESM::ESMReader& esm)
         // WATR, EFSH
         case ESM4::REC_REFR:
         {
+            // this REFR must be in "Cell Persistent Child" group
             ESM4::Reference record;
 
             reader.getRecordData();
             record.load(reader);
+            std::string padding = "";
+            padding.insert(0, reader.getContext().groupStack.size()*2, ' ');
+            if (!record.mEditorId.empty())
+                std::cout << padding << ESM4::printName(hdr.record.typeId) << ": " << record.mEditorId << std::endl; // FIXME
 
             // FIXME: loading *all* references just to check for doors is highly inefficient
             if (record.mDoor.destDoor != 0)
@@ -429,13 +441,16 @@ void ESMStore::loadTes4Record (ESM::ESMReader& esm)
         }
         case ESM4::REC_ACHR:
         {
-#if 0
+            // this ACHR must be in "Cell Persistent Child" group
+#if 1
             ESM4::ActorCharacter record;
 
             reader.getRecordData();
             record.load(reader);
-            //if (!record.mEditorId.empty())
-                //std::cout << ESM4::printName(hdr.record.typeId) << ": " << record.mEditorId << std::endl; // FIXME
+            std::string padding = "";
+            padding.insert(0, reader.getContext().groupStack.size()*2, ' ');
+            if (!record.mEditorId.empty())
+                std::cout << padding << ESM4::printName(hdr.record.typeId) << ": " << record.mEditorId << std::endl; // FIXME
 #else
             reader.skipRecordData();
 #endif
@@ -469,12 +484,24 @@ void ESMStore::loadTes4Record (ESM::ESMReader& esm)
         }
         case ESM4::REC_ACRE: // Oblivion only?
         {
+            // this ACHE must be in "Cell Persistent Child" group
+#if 1
+            ESM4::ActorCreature record;
+
+            reader.getRecordData();
+            record.load(reader);
+            std::string padding = "";
+            padding.insert(0, reader.getContext().groupStack.size()*2, ' ');
+            if (!record.mEditorId.empty())
+                std::cout << padding << ESM4::printName(hdr.record.typeId) << ": " << record.mEditorId << std::endl; // FIXME
+#else
             reader.skipRecordData();
-            //std::cout << "unexpected ACHR/ACRE in persistent child" << std::endl;
+#endif
             break;
         }
-        // NOTE: LAND records are loaded later (for now) - see CellStore
 #if 0
+        // NOTE: LAND records are loaded later (for now) - see CellStore
+        // not loaded here since LAND is in "Cell Temporary Child" group
         // TODO: verify LTEX formIds exist
         case ESM4::REC_LAND: reader.getRecordData(); mForeignLands.load(esm, mForeignCells); break;
         case ESM4::REC_NAVI: reader.getRecordData(); mNavigation.load(esm); break;
@@ -500,6 +527,7 @@ void ESMStore::loadTes4Record (ESM::ESMReader& esm)
         }
 		//
         // PGRD is handled in CellStore::loadTes4Record()
+        // not loaded here since PGRD is in "Cell Temporary Child" group
         case ESM4::REC_PGRD: // Oblivion only?
 		//
         case ESM4::REC_IDLE:
@@ -516,7 +544,7 @@ void ESMStore::loadTes4Record (ESM::ESMReader& esm)
 #endif
         case ESM4::REC_REGN:
         case ESM4::REC_PHZD: case ESM4::REC_PGRE: // Skyrim only?
-        case ESM4::REC_ROAD: case ESM4::REC_LAND: case ESM4::REC_NAVM: case ESM4::REC_NAVI:
+        case ESM4::REC_ROAD: case ESM4::REC_NAVM: case ESM4::REC_NAVI:
         case ESM4::REC_IDLE:
         case ESM4::REC_MATO:
         {

@@ -73,81 +73,44 @@ void ESM4::Pathgrid::load(ESM4::Reader& reader)
                 {
                     reader.get(mNodes.at(i));
                 }
-                //std::cout << "numNodes " << numNodes << std::endl;
 
                 break;
             }
             case ESM4::SUB_PGRR:
             {
-                //std::size_t numLinks = subHdr.dataSize / sizeof(PGRR);
-                //if (subHdr.dataSize % sizeof(PGRR) != 0)
-                //{
-                //std::cout << "remaining " << subHdr.dataSize % sizeof(PGRR) << std::endl; // always 2
-#if 0
-                unsigned char mDataBuf[4096/*bufSize*/];
-                reader.get(&mDataBuf[0], subHdr.dataSize);
+                std::int32_t remaining = subHdr.dataSize;
+                static PGRR link;
 
-                std::ostringstream ss;
-                ss << ESM4::printName(subHdr.typeId) << ":size " << subHdr.dataSize << "\n";
-                for (unsigned int i = 0; i < subHdr.dataSize; ++i)
+                // FIXME: skip all 0xffff (just a guess)
+                bool first = true;
+                while (remaining > 0)
                 {
-                    //if (mDataBuf[i] > 64 && mDataBuf[i] < 91)
-                        //ss << (char)(mDataBuf[i]) << " ";
-                    //else
-                        ss << std::setfill('0') << std::setw(2) << std::hex << (int)(mDataBuf[i]);
-                    if ((i & 0x000f) == 0xf)
-                        ss << "\n";
-                    else if (i < 4096/*bufSize*/-1)
-                        ss << " ";
-                }
-                std::cout << ss.str() << std::endl;
-#endif
-                //}
-                //else
-                {
-#if 1
-                    std::int32_t remaining = subHdr.dataSize;
-                    static PGRR link;
-
-                    // FIXME: skip all 0xffff (just a guess)
-                    bool first = true;
-                    while (remaining > 0)
+                    if (first)
                     {
-                        if (first)
-                        {
-                            reader.get(link.startNode);
-                            //
-                            if (remaining == 2) std::cout << "last PG node " << link.startNode << std::endl; // FIXME
-                            //
-                            remaining -= sizeof(link.startNode);
+                        reader.get(link.startNode);
+                        //
+                        if (remaining == 2) std::cout << "last PG node " << link.startNode << std::endl; // FIXME
+                        //
+                        remaining -= sizeof(link.startNode);
 
-                            if (link.startNode == -1)
-                                continue; // FIXME: skip 0xffff, just guessing here
-
-                            first = false;
-                        }
-
-                        if (remaining <= 0)
-                            throw std::runtime_error("ESM4::PGRD::load PGRR logic error");
-
-                        reader.get(link.endNode);
-                        remaining -= sizeof(link.endNode);
-
-                        if (link.endNode == -1)
+                        if (link.startNode == -1)
                             continue; // FIXME: skip 0xffff, just guessing here
 
-                        mLinks.push_back(link);
-                        first = true;
-                        //std::cout << link.startNode << " " << link.endNode << std::endl; //FIXME
+                        first = false;
                     }
-#else
-                    mLinks.resize(numLinks);
-                    for (std::size_t i = 0; i < numLinks; ++i)
-                    {
-                        reader.get(mLinks.at(i));
-                    }
-                    //std::cout << "numLinks " << numLinks << std::endl; // FIXME
-#endif
+
+                    if (remaining <= 0)
+                        throw std::runtime_error("ESM4::PGRD::load PGRR logic error");
+
+                    reader.get(link.endNode);
+                    remaining -= sizeof(link.endNode);
+
+                    if (link.endNode == -1)
+                        continue; // FIXME: skip 0xffff, just guessing here
+
+                    mLinks.push_back(link);
+                    first = true;
+                    //std::cout << link.startNode << " " << link.endNode << std::endl; //FIXME
                 }
 
                 break;
@@ -208,10 +171,7 @@ void ESM4::Pathgrid::load(ESM4::Reader& reader)
                 break;
             }
             default:
-                std::cout << "PGRD " << ESM4::printName(subHdr.typeId) << " skipping..."
-                        << subHdr.dataSize << std::endl;
-                reader.skipSubRecordData();
-                //throw std::runtime_error("ESM4::PGRD::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
+                throw std::runtime_error("ESM4::PGRD::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
         }
     }
 }

@@ -2307,14 +2307,14 @@ Just noticed that Baurus stopped wearing his armor from around 06/03/20. **FIXED
 
 ## NPC face detail texture missing
 
-mNpc = 0x000001d69794ace0 {mFormId=0x0001a117 mFlags=0x00040400 mEditorId="SEBelmyneDreleth" ...}
-mFormId = 0x0001a117
+    mNpc = 0x000001d69794ace0 {mFormId=0x0001a117 mFlags=0x00040400 mEditorId="SEBelmyneDreleth" ...}
+    mFormId = 0x0001a117
 
-mEditorId = "SESfara"
-mFormId = 0x0001a116
+    mEditorId = "SESfara"
+    mFormId = 0x0001a116
 
-mEditorId = "SE01GaiusPrentus"
-mFormId = 0x000133be
+    mEditorId = "SE01GaiusPrentus"
+    mFormId = 0x000133be
 
 ## No collision shapes for NPC and Creature skeletons
 
@@ -2331,7 +2331,7 @@ Defer working on this until we have better performance.
 
 Comparing the two, the rotations look ok.
 
-Bip01 L UpperArm
+### Bip01 L UpperArm
 
 NifSkope
 
@@ -2351,19 +2351,19 @@ OpenMW
     rotation before 0.717472,0.365636,0.539447,-0.246051
     rotation after 0.718025,0.363927,0.53989,-0.244446
 
-Bip01 L Forearm
+### Bip01 L Forearm
 
 NifSkope
 
-time 3.032998561859131
-0.765064,-1.31466e-08,-1.56515e-08,-0.643555
-0.765085,-1.33251e-08,-1.69428e-08,-0.64353
+    time 3.032998561859131
+    0.765064,-1.31466e-08,-1.56515e-08,-0.643555
+    0.765085,-1.33251e-08,-1.69428e-08,-0.64353
 
 OpenMW
 
-time 3.03699
-0.764884,-1.32995e-08,-1.66789e-08,-0.644169
-0.764893,-1.33795e-08,-1.72582e-08,-0.644157
+    time 3.03699
+    0.764884,-1.32995e-08,-1.66789e-08,-0.644169
+    0.764893,-1.33795e-08,-1.72582e-08,-0.644157
 
 Added some objects to the bones to visualise where things were going wrong and surprise, surprise - the bones are in the right place after all.  It looks like the skin weighting issue.
 
@@ -2477,6 +2477,16 @@ Looking at the flags, though, they range from 0x01 to 0x09.  The most frequent o
 
 
 But from the CS I can only see one blue node?
+
+## Side note on performance and dummy cell
+
+Loading the dummy cell in `Scene::changeWorldCellGrid()` results in a huge performance hit.  But without that `ForeignDoor::activate()` won't work - I think all the doors are in the dummy cell.  We will need to figure out how to selectively insert doors based on their location.
+
+I think calling `insertCell()` in Scene::loadForeignCell()` results in everything in the dummy cell to be inserted into the scene.  We will need a new method.
+
+But first, why does the dummy cell have that many references, anyway?
+
+
 
 
 [//]: # (/* spell spelllang=en_au syntax=cpp */)

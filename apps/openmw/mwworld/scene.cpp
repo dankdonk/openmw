@@ -580,7 +580,7 @@ namespace MWWorld
         loadingListener->setLabel(loadingExteriorText);
 
         // TODO: For TES4/5 we should double this value? (cells are smaller)
-        const int halfGridSize = Settings::Manager::getInt("exterior grid size", "Cells") / 2;
+        const int halfGridSize = Settings::Manager::getInt("exterior grid size", "Cells") / 1.5;
         if (worldId != currentWorldId)
         {
             int current = 0;
