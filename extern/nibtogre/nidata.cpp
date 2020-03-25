@@ -223,7 +223,9 @@ NiBtOgre::NiColorData::NiColorData(uint32_t index, NiStream *stream, const NiMod
 NiBtOgre::NiExtraData::NiExtraData(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiObject(index, stream, model, data)
 {
-    if (stream->nifVer() == 0x0a01006a) // GOG dungeons\misc\skydome01.nif (userVer=10, userVer2=5)
+    if (stream->nifVer() == 0x0a000100) // GOG Clutter\Farm\Oar01.nif
+        stream->skip(sizeof(std::int32_t));
+    else if (stream->nifVer() == 0x0a01006a) // GOG dungeons\misc\skydome01.nif (userVer=10, userVer2=5)
         stream->skip(sizeof(std::int32_t));
 
     if (stream->nifVer() >= 0x0a000100) // from 10.0.1.0

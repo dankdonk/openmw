@@ -80,11 +80,6 @@ NiBtOgre::NiNode::NiNode(uint32_t index, NiStream *stream, const NiModel& model,
 
     stream->readVector<NiDynamicEffectRef>(mEffects);
 
-    // HACK: oar01.nif suggests that 10.0.1.0 reads one entry even if there is none?
-    // check for version 10.1.0.106 doesn't work for GOG dungeons\misc\cobweb05.nif (userVer=10, userVer2=5)
-    if ((stream->nifVer() == 0x0a000100 && mEffects.empty()) /*|| stream->nifVer() == 0x0a01006a*/)
-        stream->skip(sizeof(NiDynamicEffectRef));
-
     /* ---------------------------------------------------------------------- */
     // HACK: should check for root node?
     mParent = (NiObject::mSelfRef == 0) ? nullptr : &data.getNiNodeParent((NiAVObjectRef)NiObject::mSelfRef);

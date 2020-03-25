@@ -27,7 +27,7 @@
 
 #include <cassert>
 #include <stdexcept>
-#include <iostream> // FIXME: debugging only
+//#include <iostream> // FIXME: debugging only
 
 #include <OgreSkeleton.h>
 #include <OgreKeyFrame.h>
