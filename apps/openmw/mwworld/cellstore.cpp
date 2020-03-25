@@ -1054,11 +1054,12 @@ namespace MWWorld
                     case 0: std::cerr << "Cell refr " + ESM4::formIdToString(record.mBaseObj) + " not found!\n"; break;
 
                     default:
-                        std::cerr
-                            << "WARNING: Ignoring reference '" << ESM4::formIdToString(record.mBaseObj) << "' of unhandled type\n";
+                        std::cerr << "WARNING: Ignoring reference '"
+                                  << ESM4::formIdToString(record.mBaseObj) << "' of unhandled type\n";
                 }
 
-                // FIXME: testing only
+// FIXME: testing only
+#if 0
                 if (record.mEsp.parent != 0)
                 {
                     uint32_t baseType = store.find(record.mBaseObj);
@@ -1067,6 +1068,7 @@ namespace MWWorld
                               << " parent formid " << ESM4::formIdToString(record.mEsp.parent) << std::endl;
                     // parent type appears to be REFR
                 }
+#endif
                 break;
             }
             case ESM4::REC_ACHR:
@@ -1177,25 +1179,20 @@ namespace MWWorld
             }
             case ESM4::REC_PGRD: // Oblivion only?
             {
-#if 0
-                //std::cout << ESM4::printName(hdr.record.typeId) << " skipping..." << std::endl;
-                //reader.skipRecordData();
-#else
-                std::string padding = "";
-                padding.insert(0, reader.getContext().groupStack.size()*2, ' ');
-                std::cout << padding << "PGRD: about to load" << std::endl;
+                //std::string padding = "";
+                //padding.insert(0, reader.getContext().groupStack.size()*2, ' ');
+                //std::cout << padding << "PGRD: about to load" << std::endl;
                 reader.getRecordData();
                 ESM4::Pathgrid record;
                 record.load(reader);
-#endif
                 break;
             }
             case ESM4::REC_ROAD: // Oblivion only?
             case ESM4::REC_NAVM:
             {
-                std::string padding = "";
-                padding.insert(0, reader.getContext().groupStack.size()*2, ' ');
-                std::cout << padding << ESM4::printName(hdr.record.typeId) << " skipping..." << std::endl;
+                //std::string padding = "";
+                //padding.insert(0, reader.getContext().groupStack.size()*2, ' ');
+                //std::cout << padding << ESM4::printName(hdr.record.typeId) << " skipping..." << std::endl;
                 reader.skipRecordData();
                 break;
             }

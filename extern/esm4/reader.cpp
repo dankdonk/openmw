@@ -120,6 +120,7 @@ bool ESM4::Reader::skipNextGroupCellChild()
 std::size_t ESM4::Reader::openTes4File(const std::string& name)
 {
     mCtx.filename = name;
+    // NOTE: Ogre::SharedPtr<DataStream> provides implicit destruction
     mStream = Ogre::DataStreamPtr(new Ogre::FileStreamDataStream(
                     OGRE_NEW_T(std::ifstream(name.c_str(), std::ios_base::binary),
                     Ogre::MEMCATEGORY_GENERAL), /*freeOnClose*/true));
@@ -304,19 +305,19 @@ void ESM4::Reader::updateModIndicies(const std::vector<std::string>& files)
 
 void ESM4::Reader::saveGroupStatus()
 {
-//#if 0
+#if 0
     std::string padding = ""; // FIXME: debugging only
     padding.insert(0, mCtx.groupStack.size()*2, ' ');
     std::cout << padding << "Starting record group "
               << ESM4::printLabel(mRecordHeader.group.label, mRecordHeader.group.type) << std::endl;
-//#endif
+#endif
     if (mRecordHeader.group.groupSize == (std::uint32_t)mCtx.recHeaderSize)
     {
-//#if 0
+#if 0
         std::cout << padding << "Igorning record group " // FIXME: debugging only
             << ESM4::printLabel(mRecordHeader.group.label, mRecordHeader.group.type)
             << " (empty)" << std::endl;
-//#endif
+#endif
         if (!mCtx.groupStack.empty()) // top group may be empty (e.g. HAIR in Skyrim)
         {
             // don't put on the stack, checkGroupStatus() may not get called before recursing into this method
@@ -348,22 +349,22 @@ void ESM4::Reader::checkGroupStatus()
 
         uint32_t groupSize = mCtx.groupStack.back().first.groupSize;
         mCtx.groupStack.pop_back();
-//#if 0
+#if 0
         std::string padding = ""; // FIXME: debugging only
         padding.insert(0, mCtx.groupStack.size()*2, ' ');
         std::cout << padding << "Finished record group " << ESM4::printLabel(grp.label, grp.type) << std::endl;
-//#endif
+#endif
         // Check if the previous group was the final one
         if (mCtx.groupStack.empty())
             return;
 
         //assert (mCtx.groupStack.back().second >= groupSize && "Read more records than available");
-//#if 0
+#if 0
         if (mCtx.groupStack.back().second < groupSize) // FIXME: debugging only
             std::cerr << ESM4::printLabel(mCtx.groupStack.back().first.label,
                                           mCtx.groupStack.back().first.type)
                       << " read more records than available" << std::endl;
-//#endif
+#endif
         mCtx.groupStack.back().second -= groupSize;
     }
 }
@@ -493,12 +494,12 @@ bool ESM4::Reader::getZString(std::string& str, Ogre::DataStreamPtr filestream)
 // Assumes that saveGroupStatus() is not called before this (hence we don't update mCtx.groupStack)
 void ESM4::Reader::skipGroup()
 {
-//#if 0
+#if 0
     std::string padding = ""; // FIXME: debugging only
     padding.insert(0, mCtx.groupStack.size()*2, ' ');
     std::cout << padding << "Skipping record group "
               << ESM4::printLabel(mRecordHeader.group.label, mRecordHeader.group.type) << std::endl;
-//#endif
+#endif
     // Note: subtract the size of header already read before skipping
     mStream->skip(mRecordHeader.group.groupSize - (std::uint32_t)mCtx.recHeaderSize);
 

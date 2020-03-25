@@ -2476,7 +2476,9 @@ Looking at the flags, though, they range from 0x01 to 0x09.  The most frequent o
    9   |  2
 
 
-But from the CS I can only see one blue node?
+**TODO:** But from the CS I can only see one blue node?
+
+Pathgrids are in "Cell Temporary Child" group and loaded from `CellStore::loadTes4Record()`.  **NOTE:** they are not loaded from `ESMStore::loadTes4Record()` because the cells are preloaded and only the persistent records are (partially) loaded from `ESMStore`.
 
 ## Side note on performance and dummy cell
 
@@ -2484,8 +2486,26 @@ Loading the dummy cell in `Scene::changeWorldCellGrid()` results in a huge perfo
 
 I think calling `insertCell()` in Scene::loadForeignCell()` results in everything in the dummy cell to be inserted into the scene.  We will need a new method.
 
-But first, why does the dummy cell have that many references, anyway?
+But first, why does the dummy cell have that many references, anyway? (at least for Tamriel, 0x0000003c)
 
+For some insight into the sequence of the loading, see `persistent-child-preload.log` which was created with some extra loggin on commit 3c411e8a1276e173484455617d13b1760d84f27b.
+
+# [25/03/2020] Animation groups
+
+`MWRender::Animation::play()` uses the concept of "animation group".  `MWRender::Animation::runAnimation()` is called from `CharacterController::update()` and ctor.  It runs animations in mStates and any controllers in mObjectRoot.
+
+`mStates` contains `Ogre::SharedPtr<AnimSource>` and start time, etc.  It is populated by `play()` and keyed by the animation `groupname`.  It is selected from `AnimSourceList` based on the textKeys matching the `groupname`.  The `groupname` is a parameter in play() - despite what the name suggests, it is really just the animation name, e.g. "Idle". (in TES3 AIWander they are "idle2", "idle3", etc)
+
+Most likely we will have to create TES4 versions of these methods since the way animations are implemented are different.
+
+Note that in TES4 NiBSBoneLODController has NodeGroups that might be analogous to the "animation groups" in TES3.  However it is not immediately clear how they are meant to be used.
+
+## Quick note on object lifecycle
+
+  * Most use Ogre::SharedPtr which provides implicit destruction.
+  * The vertexData created using `new` for Ogre::SubMesh is owned by Ogre::SubMesh and its dtor will `delete` it.
+  * The shapes created by "bhk" methods are owned by `BtOgre::RigidBody` but PhysicEngine manages the deletion of the shapes.
+  * There are some uses of unique_ptr and boost::scoped_array but they should be ok already.
 
 
 

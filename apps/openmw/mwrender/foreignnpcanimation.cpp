@@ -2041,6 +2041,7 @@ void ForeignNpcAnimation::addAnimSource(const std::string &model)
     addForeignAnimSource(model, animName);
 }
 
+// based on Animation::addAnimSource()
 void ForeignNpcAnimation::addForeignAnimSource(const std::string& model, const std::string &animName)
 {
     // Check whether the kf file exists
@@ -2059,7 +2060,7 @@ void ForeignNpcAnimation::addForeignAnimSource(const std::string& model, const s
 
     // Animation::AnimSource : public Ogre::AnimationAlloc
     //   (has a) std::multimap<float, std::string> mTextKeys
-    //   (also has a vector of 4 Ogre real controllers)  TODO: check if 4 is enough
+    //   (also has a vector of 4 Ogre real controllers)  TODO: check if 4 is enough (sNumGroups)
     Ogre::SharedPtr<AnimSource> animSource(OGRE_NEW AnimSource);
     std::vector<Ogre::Controller<Ogre::Real> > controllers;
     anim->buildAnimation(mSkelBase, anim, animSource->mTextKeys, controllers, /*mObjectRoot->skeleton.get()*/skeleton.get()); // no bow
@@ -2069,12 +2070,28 @@ void ForeignNpcAnimation::addForeignAnimSource(const std::string& model, const s
 
     mAnimSources.push_back(animSource);
 
+    // assign each of the controllers from the animation to one of the four in "animation group"
+    // (this really only works for TES3, probably it allows separate animations for these groups)
+    //
+    // NOTE: TES4 has similar concept in skeleton.nif - there are 6 Node Groups in NiBSBoneLODController
+    //       (at least one of which is empty, 2nd one) - but the animations (.kf) do not refer to these
+    //
+    //       each of the nodes, however, usually has an NiStringExtraData "UPB" with a string such as
+    //       "BSBoneLOD#Bone#5#" - these match the Node Groups in NiBSBoneLODController (at least
+    //       for vanilla, mod ones may not)
+    //
+    // "", /* Lower body / character root */
+    // "Bip01 Spine1", /* Torso */
+    // "Bip01 L Clavicle", /* Left arm */
+    // "Bip01 R Clavicle", /* Right arm */
     std::vector<Ogre::Controller<Ogre::Real> > *grpctrls = animSource->mControllers;
     for (size_t i = 0; i < controllers.size(); i++)
     {
         NifOgre::NodeTargetValue<Ogre::Real> *dstval;
         dstval = static_cast<NifOgre::NodeTargetValue<Ogre::Real>*>(controllers[i].getDestination().get());
 
+        // there should be a controller for each bone
+        // look for a match by checking the node and its parents up to the root node
         size_t grp = detectAnimGroup(dstval->getNode());
 
         if (!mAccumRoot && grp == 0)
@@ -2088,6 +2105,7 @@ void ForeignNpcAnimation::addForeignAnimSource(const std::string& model, const s
             }
         }
 
+        //if (grp == 0 && (dstval->getNode()->getName() == "Bip01" || dstval->getNode()->getName() == "Root Bone"))
         if (grp == 0 && (dstval->getNode()->getName() == "Bip01 NonAccum"))
         {
             mNonAccumRoot = dstval->getNode();
@@ -2103,7 +2121,7 @@ void ForeignNpcAnimation::addForeignAnimSource(const std::string& model, const s
         grpctrls[grp].push_back(controllers[i]);
     }
 
-    // FIXME: debugging
+    // FIXME: debugging -------------------------------
     NifOgre::NodeTargetValue<Ogre::Real> *dstval;
     dstval = static_cast<NifOgre::NodeTargetValue<Ogre::Real>*>(controllers[0].getDestination().get());
     Ogre::Node *node = dstval->getNode();
@@ -2120,7 +2138,7 @@ void ForeignNpcAnimation::addForeignAnimSource(const std::string& model, const s
 
     if (mNonAccumRoot->getName() != "Bip01 NonAccum" || mAccumRoot->getName() != "Bip01")
         std::cout << mAccumRoot->getName() << std::endl;
-    // end debugging
+    // end debugging -------------------------------
 
     for (unsigned int i = 0; i < mObjectRoot->mControllers.size(); ++i)
     {

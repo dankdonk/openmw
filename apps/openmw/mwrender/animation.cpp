@@ -715,7 +715,8 @@ void Animation::updatePosition(float oldtime, float newtime, Ogre::Vector3 &posi
 
 bool Animation::reset(AnimState &state, const NifOgre::TextKeyMap &keys, const std::string &groupname, const std::string &start, const std::string &stop, float startpoint, bool loopfallback)
 {
-    // FIXME This is a hack
+    // FIXME This is a hack for foreign npc/creature
+    // FIXME: start foreign ------------------------------------------
     if(mPtr.getTypeName() == typeid(ESM4::Npc).name() || mPtr.getTypeName() == typeid(ESM4::Creature).name())
     {
         NifOgre::TextKeyMap::const_iterator it(keys.begin());
@@ -750,6 +751,7 @@ bool Animation::reset(AnimState &state, const NifOgre::TextKeyMap &keys, const s
 
         return true;
     }
+    // FIXME: end foreign ------------------------------------------
 
     // Look for text keys in reverse. This normally wouldn't matter, but for some reason undeadwolf_2.nif has two
     // separate walkforward keys, and the last one is supposed to be used.
@@ -1252,10 +1254,6 @@ void Animation::disable(const std::string &groupname)
 
 Ogre::Vector3 Animation::runAnimation(float duration)
 {
-    // FIXME: FO3
-    if (!mObjectRoot)
-        return Ogre::Vector3();
-
     Ogre::Vector3 movement(0.0f);
     AnimStateMap::iterator stateiter = mStates.begin();
     while(stateiter != mStates.end())
@@ -1342,6 +1340,7 @@ Ogre::Vector3 Animation::runAnimation(float duration)
             const Ogre::SharedPtr<AnimSource> &src = stateiter->second.mSource;
             for(size_t i = 0;i < src->mControllers[grp].size();i++)
             {
+                // FIXME: foreign start --------------------------
 #if 0
                 // FIXME: testing only
                 if(mPtr.getTypeName() == typeid(ESM4::Npc).name() && (i == 2 || i == 13) &&
@@ -1361,6 +1360,9 @@ Ogre::Vector3 Animation::runAnimation(float duration)
                 // the controlled blocks in NiControllerSequence.
                 //
                 // Bip01 Spine is the third controlled block i.e. #2, not sure why Bip01 Tail1 is 13
+
+                // FIXME: foreign end --------------------------
+
                 src->mControllers[grp][i].update();
             }
         }
@@ -1373,6 +1375,7 @@ Ogre::Vector3 Animation::runAnimation(float duration)
         mSkelBase->getAllAnimationStates()->_notifyDirty();
     }
 
+    // FIXME: start foreign --------------------------
     // FIXME: need to clean up below
     if (mObjectRoot->mForeignObj && mObjectRoot->mForeignObj->mVertexAnimEntities.size() > 0)
     {
@@ -1397,13 +1400,14 @@ Ogre::Vector3 Animation::runAnimation(float duration)
             }
         }
     }
+    // FIXME: end foreign --------------------------
 
     updateEffects(duration);
 
     return movement;
 }
 
-// this is a hack to get animated doors to work
+// this is a hack to get foreign animated doors to work
 bool Animation::addTime(const std::string& anim, float duration)
 {
     if (mObjectRoot->mForeignObj && mObjectRoot->mForeignObj->mSkeletonAnimEntities.size() > 0)
@@ -1588,8 +1592,6 @@ public:
 
 void Animation::enableLights(bool enable)
 {
-    if (!mObjectRoot)
-        return;  // FIXME: FO3
     std::for_each(mObjectRoot->mLights.begin(), mObjectRoot->mLights.end(), ToggleLight(enable));
 }
 
@@ -2070,6 +2072,8 @@ ObjectAnimation::ObjectAnimation(const MWWorld::Ptr& ptr, const std::string &mod
                 }
             }
         }
+
+        // ----------------  end of  Foreign Object processing ------------------
     }
     else
     {

@@ -209,8 +209,6 @@ void ESMStore::loadTes4Group (ESM::ESMReader &esm)
     if (hdr.record.typeId != ESM4::REC_GRUP)
         return loadTes4Record(esm);
 
-    //std::cout << ESM4::printLabel(hdr.group.label, hdr.group.type) << std::endl;
-
     switch (hdr.group.type)
     {
         case ESM4::Grp_RecordType:
@@ -423,10 +421,6 @@ void ESMStore::loadTes4Record (ESM::ESMReader& esm)
 
             reader.getRecordData();
             record.load(reader);
-            std::string padding = "";
-            padding.insert(0, reader.getContext().groupStack.size()*2, ' ');
-            if (!record.mEditorId.empty())
-                std::cout << padding << ESM4::printName(hdr.record.typeId) << ": " << record.mEditorId << std::endl; // FIXME
 
             // FIXME: loading *all* references just to check for doors is highly inefficient
             if (record.mDoor.destDoor != 0)
@@ -442,61 +436,13 @@ void ESMStore::loadTes4Record (ESM::ESMReader& esm)
         case ESM4::REC_ACHR:
         {
             // this ACHR must be in "Cell Persistent Child" group
-#if 1
-            ESM4::ActorCharacter record;
-
-            reader.getRecordData();
-            record.load(reader);
-            std::string padding = "";
-            padding.insert(0, reader.getContext().groupStack.size()*2, ' ');
-            if (!record.mEditorId.empty())
-                std::cout << padding << ESM4::printName(hdr.record.typeId) << ": " << record.mEditorId << std::endl; // FIXME
-#else
             reader.skipRecordData();
-#endif
-
-#if 0
-//          RecordId id = mForeignACharacters.load(esm);
-//          if (!id.mId.empty())
-//              std::cout << "ACHR " << id.mId << std::endl;
-
-            bool deleted = (reader.hdr().record.flags & ESM4::Rec_Deleted) != 0;
-            reader.getRecordData();
-            ESM4::ActorCharacter record;
-            record.load(reader);
-            if (!record.mEditorId.empty())
-                std::cout << ESM4::printName(hdr.record.typeId) << ": " << record.mEditorId << std::endl; // FIXME
-
-            switch (store.find(record.mBaseObj))
-            {
-                case MKTAG('R','H','A','I'): std::cout << " achr hair " << std::endl; break; // FIXME
-                case MKTAG('S','E','Y','E'): std::cout << " achr eyes " << std::endl; break; // FIXME
-                case MKTAG('_','N','P','C'): mForeignNpcs.load(record, deleted, store); break;
-
-                case 0: std::cerr << "Cell achr " + ESM4::formIdToString(record.mBaseObj) + " not found!\n"; break;
-
-                default:
-                    std::cerr
-                        << "WARNING: Ignoring achr '" << ESM4::formIdToString(record.mBaseObj) << "' of unhandled type\n";
-            }
-#endif
             break;
         }
         case ESM4::REC_ACRE: // Oblivion only?
         {
             // this ACHE must be in "Cell Persistent Child" group
-#if 1
-            ESM4::ActorCreature record;
-
-            reader.getRecordData();
-            record.load(reader);
-            std::string padding = "";
-            padding.insert(0, reader.getContext().groupStack.size()*2, ' ');
-            if (!record.mEditorId.empty())
-                std::cout << padding << ESM4::printName(hdr.record.typeId) << ": " << record.mEditorId << std::endl; // FIXME
-#else
             reader.skipRecordData();
-#endif
             break;
         }
 #if 0

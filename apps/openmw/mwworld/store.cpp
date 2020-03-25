@@ -1297,20 +1297,14 @@ namespace MWWorld
             = mCells.insert(std::make_pair(cell->mCell->mFormId, cell));
         if (!res.second) // cell exists
             throw std::runtime_error("Store<ForeignCell>::preload memory leak");
-            //std::cout << "Cell updated, formId " << ESM4::formIdToString(cell->mCell->mFormId) << std::endl; // FIXME
         if (cell->mHasChildren)
             res.first->second->addFileContext(ctx);
 
         // FIXME: cleanup the mess of logic below, may need to refactor using a function or two
-        std::string padding = "";
-        padding.insert(0, reader.getContext().groupStack.size()*2, ' ');
 
         // verify group label and update maps
         if (groupType == ESM4::Grp_ExteriorSubCell) // exterior cell, has grid
         {
-            std::cout << padding << "CELL preload: Grp_ExteriorSubCell, formId "
-                      << ESM4::formIdToString(cell->mCell->mFormId) << std::endl; // FIXME
-
             ESM4::FormId worldId = reader.currWorld();
             ForeignWorld *world = worlds.getWorld(worldId);
             if (!world)
@@ -1351,9 +1345,6 @@ namespace MWWorld
         }
         else if (groupType == ESM4::Grp_WorldChild) // exterior dummy cell
         {
-            std::cout << padding << "CELL preload: Grp_WorldChild, formId "
-                      << ESM4::formIdToString(cell->mCell->mFormId) << std::endl; // FIXME
-
             ESM4::FormId worldId = reader.currWorld();
             ForeignWorld *world = worlds.getWorld(worldId);
             if (!world)
@@ -1374,9 +1365,13 @@ namespace MWWorld
         }
         else if (groupType == ESM4::Grp_InteriorSubCell) // interior cell
         {
-            std::cout << padding << "CELL preload: Grp_InteriorSubCell, formId "
-                      << ESM4::formIdToString(cell->mCell->mFormId) << std::endl; // FIXME
             // group label is sub block number (not sure of its purpose?)
+#if 0
+            std::string padding = "";
+            padding.insert(0, reader.getContext().groupStack.size()*2, ' ');
+            std::cout << padding << "CELL preload: Grp_InteriorSubCell, formId "
+                      << ESM4::formIdToString(cell->mCell->mFormId) << std::endl;
+#endif
         }
         else
             throw std::runtime_error("Cell record found in an unexpected group");

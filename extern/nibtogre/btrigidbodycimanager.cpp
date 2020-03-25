@@ -77,6 +77,7 @@ namespace NiBtOgre
         return Ogre::static_pointer_cast<BtRigidBodyCI>(createResource(name, group, isManual, loader, createParams));
     }
 
+    // NOTE: Ogre::SharedPtr<NiBtOgre::BtRigidBodyCI> provides implicit destruction
     Ogre::Resource* BtRigidBodyCIManager::createImpl(const Ogre::String& name,
             Ogre::ResourceHandle handle, const Ogre::String& group, bool isManual,
             Ogre::ManualResourceLoader* loader, const Ogre::NameValuePairList* createParams)
