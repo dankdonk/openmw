@@ -251,7 +251,7 @@ void ForeignCreatureAnimation::addForeignAnimSource(const std::string& model, co
         dstval = static_cast<NifOgre::NodeTargetValue<Ogre::Real>*>(controllers[i].getDestination().get());
 
         size_t grp = detectAnimGroup(dstval->getNode());
-
+#if 0
         if (!mAccumRoot && grp == 0)
         {
             mNonAccumRoot = dstval->getNode();
@@ -273,10 +273,18 @@ void ForeignCreatureAnimation::addForeignAnimSource(const std::string& model, co
                 mNonAccumRoot = NULL;
             }
         }
-
+#else
+        if (!mAccumRoot && grp == 0 && (dstval->getNode()->getName() == "Bip01 NonAccum"))
+        {
+            mNonAccumRoot = dstval->getNode();
+            mAccumRoot = mNonAccumRoot->getParent();
+        }
+#endif
         controllers[i].setSource(mAnimationTimePtr[grp]);
         grpctrls[grp].push_back(controllers[i]);
     }
+    if (!mAccumRoot)
+        throw std::runtime_error(model + ": could not find NonAccum root");
 
     // FIXME: debugging
     NifOgre::NodeTargetValue<Ogre::Real> *dstval;

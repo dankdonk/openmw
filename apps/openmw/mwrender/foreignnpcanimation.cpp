@@ -346,7 +346,7 @@ void ForeignNpcAnimation::updateNpcBase()
     Misc::StringUtils::lowerCaseInPlace(skeletonModel);
     size_t pos = skeletonModel.find_last_of('\\');
     if (pos == std::string::npos)
-        throw std::runtime_error(mNpc->mEditorId + "NPC skeleton.nif path could not be derived.");
+        throw std::runtime_error(mNpc->mEditorId + " NPC skeleton.nif path could not be derived.");
 
     std::string skeletonPath = skeletonModel.substr(0, pos+1); // +1 is for '\\'
     bool isFemale = (mNpc->mBaseConfig.flags & 0x1) != 0; // FIXME: move to constructor?
@@ -2078,7 +2078,10 @@ void ForeignNpcAnimation::addForeignAnimSource(const std::string& model, const s
     //
     //       each of the nodes, however, usually has an NiStringExtraData "UPB" with a string such as
     //       "BSBoneLOD#Bone#5#" - these match the Node Groups in NiBSBoneLODController (at least
-    //       for vanilla, mod ones may not)
+    //       for vanilla, mod ones do not always match e.g. wings)
+    //
+    //       the node groups don't align to a single parent, either;  however the bone hierarchy
+    //       does align to the same bones as TES3, except that Bip01 is not the NonAccum root
     //
     // "", /* Lower body / character root */
     // "Bip01 Spine1", /* Torso */
@@ -2094,8 +2097,12 @@ void ForeignNpcAnimation::addForeignAnimSource(const std::string& model, const s
         // look for a match by checking the node and its parents up to the root node
         size_t grp = detectAnimGroup(dstval->getNode());
 
+#if 0
+        // not sure why this was done in Animation::addAnimSource, since we know the bones in
+        // advance we can just provide a lookup map? (maybe to allow mods to move bones around?)
         if (!mAccumRoot && grp == 0)
         {
+            // if we're here, we have the first node in lower body group
             mNonAccumRoot = dstval->getNode();
             mAccumRoot = mNonAccumRoot->getParent();
             if (!mAccumRoot)
@@ -2105,21 +2112,29 @@ void ForeignNpcAnimation::addForeignAnimSource(const std::string& model, const s
             }
         }
 
-        //if (grp == 0 && (dstval->getNode()->getName() == "Bip01" || dstval->getNode()->getName() == "Root Bone"))
-        if (grp == 0 && (dstval->getNode()->getName() == "Bip01 NonAccum"))
+        if (grp == 0 && (dstval->getNode()->getName() == "Bip01" || dstval->getNode()->getName() == "Root Bone"))
         {
             mNonAccumRoot = dstval->getNode();
-            mAccumRoot = mNonAccumRoot->getParent(); // should be "Bip01"
+            mAccumRoot = mNonAccumRoot->getParent();
             if (!mAccumRoot)
             {
                 std::cerr << "Non-Accum root for " << mPtr.getCellRef().getRefId() << " is skeleton root??" << std::endl;
                 mNonAccumRoot = NULL;
             }
         }
+#else
+        if (!mAccumRoot && grp == 0 && (dstval->getNode()->getName() == "Bip01 NonAccum"))
+        {
+            mNonAccumRoot = dstval->getNode();
+            mAccumRoot = mNonAccumRoot->getParent();
+        }
+#endif
 
         controllers[i].setSource(mAnimationTimePtr[grp]);
         grpctrls[grp].push_back(controllers[i]);
     }
+    if (!mAccumRoot)
+        throw std::runtime_error(mNpc->mEditorId + ": could not find NonAccum root");
 
     // FIXME: debugging -------------------------------
     NifOgre::NodeTargetValue<Ogre::Real> *dstval;
@@ -2447,8 +2462,13 @@ void ForeignNpcAnimation::play(const std::string &groupname, int priority, int g
               float speedmult, const std::string &start, const std::string &stop,
               float startpoint, size_t loops, bool loopfallback)
 {
-    //Animation::play(groupname, priority, groups, true/*autodisable*/, speedmult, start, stop, startpoint, 3/*loops*/, false/*loopfallback*/);
+#if 0
+    Animation::play(groupname, priority, groups, true/*autodisable*/, speedmult, start, stop, startpoint, 3/*loops*/, false/*loopfallback*/);
+#else
+    // play the animation 'groupname' with 'start' and 'stop' text keys and other options
+    // (note: groups are bit flag enums defined in the Animation class header)
     Animation::play(groupname, priority, groups, autodisable, speedmult, start, stop, startpoint, loops, loopfallback);
+#endif
 }
 
 void ForeignNpcAnimation::addFirstPersonOffset(const Ogre::Vector3 &offset)

@@ -713,6 +713,11 @@ void Animation::updatePosition(float oldtime, float newtime, Ogre::Vector3 &posi
     mAccumRoot->setPosition(-off);
 }
 
+// * find 'groupname' in 'keys'
+// * then look for the textmap keys 'groupname'+': '+'start' and 'groupname'+': '+'stop'
+// * update 'state' start/stop time with those of the found keys
+// * update 'state' mTime with 'startpoint'
+// * update 'state' loop start/stop time as requied
 bool Animation::reset(AnimState &state, const NifOgre::TextKeyMap &keys, const std::string &groupname, const std::string &start, const std::string &stop, float startpoint, bool loopfallback)
 {
     // FIXME This is a hack for foreign npc/creature
@@ -1067,6 +1072,7 @@ void Animation::play(const std::string &groupname, int priority, int groups, boo
             }
 #endif
 
+            // find the text key for the current time then handle it
             NifOgre::TextKeyMap::const_iterator textkey(textkeys.lower_bound(state.mTime));
             if (state.mPlaying)
             {
@@ -1081,6 +1087,7 @@ void Animation::play(const std::string &groupname, int priority, int groups, boo
                 //std::cout << groupname << std::endl;
             }
 
+            // count down the number of specified loops
             if(state.mTime >= state.mLoopStopTime && state.mLoopCount > 0)
             {
                 state.mLoopCount--;

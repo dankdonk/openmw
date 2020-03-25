@@ -2507,6 +2507,40 @@ Note that in TES4 NiBSBoneLODController has NodeGroups that might be analogous t
   * The shapes created by "bhk" methods are owned by `BtOgre::RigidBody` but PhysicEngine manages the deletion of the shapes.
   * There are some uses of unique_ptr and boost::scoped_array but they should be ok already.
 
+# [26/03/2020] Animation cont.
+
+Noticed that TES4 skeleton has 6 node groups while TES5 has 8.
+
+```cpp
+Ogre::Node *Animation::mAccumRoot;
+Ogre::Node *Animation::mNonAccumRoot;
+NifOgre::NodeTargetValue<Ogre::Real> *Animation::mNonAccumCtrl;
+Ogre::Vector3 Animation::mAccumulate;
+```
+
+`mAccumRoot` is used for actually moving the skeleton. (probably Bip01)
+`mNonAccumRoot` (probably Bip01 NonAccum)
+`mNonAccumCtrl` is the controller for `mNonAccumRoot` and probably used for calculating the skeleton's position.
+`mAccumulate` is set by `CharacterController`, probably a movement request.
+
+Subset of TES4 skeleton (Shivering Isle) hierarchy, kinda inverted:
+
+                      0 Scene Root
+                           |
+                        3 Bip01         (UPB: BoneRoot)
+                           |
+                    8 Bip01 NonAccum
+                           |
+                    14 Bip01 Pelvis
+                    /      |      \ 
+                   /       |       \ 
+                  /  18 Bip01 Spine \
+                 /         |         \
+        330 Bip01 R Thigh  |    299 Bip01 L Thigh
+                |          |          |
+                     27 Bip01 Spine1
+
+
 
 
 [//]: # (/* spell spelllang=en_au syntax=cpp */)
