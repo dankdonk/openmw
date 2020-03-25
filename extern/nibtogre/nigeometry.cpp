@@ -70,11 +70,6 @@ NiBtOgre::NiGeometry::NiGeometry(uint32_t index, NiStream *stream, const NiModel
     stream->read(mDataRef);
     stream->read(mSkinInstanceRef);
 
-    if (stream->nifVer() == 0x0a000100)     // HACK: not sure why this is needed
-        stream->skip(sizeof(std::int32_t)); // e.g. clutter/farm/oar01.nif version 10.0.1.0
-    else if (stream->nifVer() == 0x0a01006a)
-        stream->skip(sizeof(std::int32_t)); // e.g. creatures/horse/bridle.nif version 10.1.0.106
-
     if (stream->nifVer() >= 0x14020007) // from 20.2.0.7 (TES5)
     {
         std::uint32_t numMaterials;
@@ -94,6 +89,7 @@ NiBtOgre::NiGeometry::NiGeometry(uint32_t index, NiStream *stream, const NiModel
         stream->skip(sizeof(std::int32_t)); // active material?
     }
 
+    // apparently for userVer2 < 100
     if (stream->nifVer() >= 0x0a000100 && stream->nifVer() <= 0x14010003)
     {
         if (mHasShader = stream->getBool())
@@ -477,7 +473,7 @@ bool NiBtOgre::NiTriBasedGeom::buildSubMesh(Ogre::Mesh *mesh, BoundsFinder& boun
 
     // Add vertices
     sub->useSharedVertices = false;
-    sub->vertexData = new Ogre::VertexData();
+    sub->vertexData = new Ogre::VertexData(); // NOTE: Ogre::SubMesh owns vertexData and will delete in dtor
     sub->vertexData->vertexStart = 0;
     sub->vertexData->vertexCount = vertices.size();
 

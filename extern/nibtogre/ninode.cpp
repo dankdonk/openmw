@@ -79,8 +79,10 @@ NiBtOgre::NiNode::NiNode(uint32_t index, NiStream *stream, const NiModel& model,
     }
 
     stream->readVector<NiDynamicEffectRef>(mEffects);
+
     // HACK: oar01.nif suggests that 10.0.1.0 reads one entry even if there is none?
-    if (stream->nifVer() == 0x0a000100 || stream->nifVer() == 0x0a01006a)
+    // check for version 10.1.0.106 doesn't work for GOG dungeons\misc\cobweb05.nif (userVer=10, userVer2=5)
+    if ((stream->nifVer() == 0x0a000100 && mEffects.empty()) /*|| stream->nifVer() == 0x0a01006a*/)
         stream->skip(sizeof(NiDynamicEffectRef));
 
     /* ---------------------------------------------------------------------- */
@@ -317,6 +319,15 @@ void NiBtOgre::NiNode::addBones(Ogre::Skeleton *skeleton,
 
     if (bone)
     {
+// FIXME: for testing only
+#if 0
+        std::string boneLOD = getBoneLOD(*this);
+        if (mModel.getName().find("male") != std::string::npos && mNodeName == "Bip01")
+            std::cout << mModel.getName() << std::endl;
+
+        if (boneLOD != "" && mModel.getName().find("male") != std::string::npos)
+            std::cout << boneLOD << " \"" << mNodeName << "\" " << std::to_string(mSelfRef) << std::endl;
+#endif
         // not used
         //indexToHandle[NiObject::selfRef()] = bone->getHandle();
 
@@ -338,6 +349,44 @@ void NiBtOgre::NiNode::addBones(Ogre::Skeleton *skeleton,
         NiNode* childNode = mModel.getRef<NiNode>(mChildBoneNodes[i]);
         childNode->addBones(skeleton, bone, indexToHandle);
     }
+}
+
+std::string NiBtOgre::NiNode::getBoneLOD(const NiNode& node) const
+{
+    for (std::size_t i = 0; i < node.mExtraDataRefList.size(); ++i)
+    {
+        if (mExtraDataRefList[i] == -1)
+            continue;
+
+        std::int32_t nameIndex = mModel.getRef<NiExtraData>((int32_t)mExtraDataRefList[i])->mName;
+        if (nameIndex == -1)
+            continue;
+
+        const std::string& name = mModel.indexToString(nameIndex);
+
+        if (name == "UPB")
+        {
+            StringIndex stringIndex
+                = mModel.getRef<NiStringExtraData>((int32_t)mExtraDataRefList[i])->mStringData;
+
+            const std::string& upb = NiObject::mModel.indexToString(stringIndex);
+            //                            012345678#Bone#
+            std::size_t start = upb.find("BSBoneLOD");
+            if (start == std::string::npos)
+                continue;
+
+            if (upb.find("BoneRoot") != std::string::npos) // Bip01
+                continue;
+
+            std::size_t end = upb.find_first_of('#', start+15);
+            if (end == std::string::npos)
+                continue;
+
+            return upb.substr(start+15, end-start-15);
+        }
+    }
+
+    return "";
 }
 
 void NiBtOgre::NiNode::addAllBones(Ogre::Skeleton *skeleton, Ogre::Bone *parentBone)

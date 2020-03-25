@@ -190,7 +190,8 @@ NiBtOgre::NiPSysEmitter::NiPSysEmitter(uint32_t index, NiStream *stream, const N
     stream->read(mPlanarAngleVariation);
     stream->read(mInitialColor);
     stream->read(mInitialRadius);
-    stream->read(mRadiusVariation); // from 10.4.0.1
+    if (stream->nifVer() >= 0x0a040001)
+        stream->read(mRadiusVariation); // from 10.4.0.1
     stream->read(mLifeSpan);
     stream->read(mLifeSpanVariation);
 }
@@ -213,7 +214,8 @@ NiBtOgre::NiPSysVolumeEmitter::NiPSysVolumeEmitter(uint32_t index, NiStream *str
     //stream->getPtr<NiNode>(mEmitterObject, model.objects());
     std::int32_t rIndex = -1;
     stream->read(rIndex);
-    mEmitterObject = model.getRef<NiNode>(rIndex); // from 10.1.0.0
+    if (stream->nifVer() >= 0x0a010000)
+        mEmitterObject = model.getRef<NiNode>(rIndex); // from 10.1.0.0
 }
 
 // Seen in NIF ver 20.0.0.4, 20.0.0.5

@@ -148,6 +148,9 @@ NiBtOgre::NiBoolInterpolator::NiBoolInterpolator(uint32_t index, NiStream *strea
 NiBtOgre::NiFloatInterpolator::NiFloatInterpolator(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiInterpolator(index, stream, model, data)
 {
+    if (stream->nifVer() == 0x0a01006a) // 10.1.0.106
+        stream->skip(sizeof(int32_t)); // e.g. creatures/horse/bridle.nif version 10.1.0.106
+
     stream->read(mFloatValue);
     stream->read(mDataRef);
 

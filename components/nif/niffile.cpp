@@ -139,6 +139,7 @@ static std::set<unsigned int> makeGoodVersions()
     versions.insert(0x04000002); // Morrowind NIF version
 	versions.insert(0x0a000100); // TES4 old
     versions.insert(0x0a020000); // TES4 old
+    versions.insert(0x0a01006a); // TES4 GOG
     versions.insert(0x14000004);
     versions.insert(0x14000005); // Oblivion
     versions.insert(0x14020007); // Skyrim

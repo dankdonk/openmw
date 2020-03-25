@@ -145,7 +145,8 @@ NiBtOgre::NiDynamicEffect::NiDynamicEffect(uint32_t index, NiStream *stream, con
     if (stream->nifVer() >= 0x0a01006a) // from 10.1.0.106
         mSwitchState = stream->getBool();
     // TODO: how to decode the pointers in ver 4.0.0.2
-    stream->readVector<NiAVObjectRef>(mAffectedNodes);
+    if (stream->nifVer() >= 0x0a010000) // GOG Characters\Imperial\EarsHuman.nif
+        stream->readVector<NiAVObjectRef>(mAffectedNodes);
 }
 
 NiBtOgre::NiLight::NiLight(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)

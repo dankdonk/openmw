@@ -252,6 +252,10 @@ bool interpolate( T & value, const NiBtOgre::KeyGroup<T>& keyGroup, float time, 
 NiBtOgre::NiTimeController::NiTimeController(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiObject(index, stream, model, data)
 {
+    // GOG Creatures\Goblin\GoblinHead.NIF
+    if (stream->nifVer() == 0x0a01006a && stream->userVer() == 10 && stream->userVer2() == 5)
+        stream->skip(sizeof(std::int32_t)); // unknown integer
+
     stream->read(mNextControllerRef);
     stream->read(mFlags);
     stream->read(mFrequency);

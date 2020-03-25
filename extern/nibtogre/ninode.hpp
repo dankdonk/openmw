@@ -77,6 +77,7 @@ namespace NiBtOgre
         //void buildTES3(Ogre::SceneNode *sceneNode, BtOgreInst *inst, NiObject *parentNiNode = nullptr);
 
         bool isBSBone(const NiNode *node) const;
+        std::string getBoneLOD(const NiNode& node) const;
 
     protected:
         std::vector<NiAVObjectRef>      mChildren;
