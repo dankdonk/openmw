@@ -82,6 +82,7 @@ namespace MWRender
         Ogre::ManualObject *createPathgridPoints(const ESM::Pathgrid *pathgrid);
 
         Ogre::ManualObject *createTES4PathgridLines(const ESM4::Pathgrid *pathgrid);
+        Ogre::ManualObject *createTES4PathgridConnections(const ESM4::Pathgrid *pathgrid);
         Ogre::ManualObject *createTES4PathgridPoints(const ESM4::Pathgrid *pathgrid);
     public:
         Debugging(Ogre::SceneNode* root, OEngine::Physic::PhysicEngine *engine);

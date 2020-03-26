@@ -34,6 +34,7 @@ namespace MWRender
 
 static const std::string PATHGRID_POINT_MATERIAL = "pathgridPointMaterial";
 static const std::string PATHGRID_LINE_MATERIAL = "pathgridLineMaterial";
+static const std::string PATHGRID_ALT_LINE_MATERIAL = "pathgridAltLineMaterial";
 static const std::string DEBUGGING_GROUP = "debugging";
 static const float POINT_MESH_BASE = 35.f;
 
@@ -49,6 +50,16 @@ void Debugging::createGridMaterials()
         lineMatPtr->getTechnique(0)->getPass(0)->setDiffuse(1,1,0,0);
         lineMatPtr->getTechnique(0)->getPass(0)->setAmbient(1,1,0);
         lineMatPtr->getTechnique(0)->getPass(0)->setSelfIllumination(1,1,0);
+    }
+
+    if (!MaterialManager::getSingleton().getByName(PATHGRID_ALT_LINE_MATERIAL, DEBUGGING_GROUP))
+    {
+        MaterialPtr lineMatPtr = MaterialManager::getSingleton().create(PATHGRID_ALT_LINE_MATERIAL, DEBUGGING_GROUP);
+        lineMatPtr->setReceiveShadows(false);
+        lineMatPtr->getTechnique(0)->setLightingEnabled(true);
+        lineMatPtr->getTechnique(0)->getPass(0)->setDiffuse(1,0.45,0,0);
+        lineMatPtr->getTechnique(0)->getPass(0)->setAmbient(1,0.45,0);
+        lineMatPtr->getTechnique(0)->getPass(0)->setSelfIllumination(1,0.45,0);
     }
 
     if (!MaterialManager::getSingleton().getByName(PATHGRID_POINT_MATERIAL, DEBUGGING_GROUP))
@@ -169,19 +180,40 @@ Ogre::ManualObject *Debugging::createTES4PathgridLines(const ESM4::Pathgrid *pat
         const ESM4::Pathgrid::PGRP& p1 = nodes[links[i].startNode];
         const ESM4::Pathgrid::PGRP& p2 = nodes[links[i].endNode];
 
-        Ogre::Vector3 start(p1.x, p1.y, p1.z);
-        Ogre::Vector3 end(p2.x, p2.y, p2.z);
+        Ogre::Vector3 start(p1.x, p1.y, p1.z+10.f);  // raise a little for visibility
+        Ogre::Vector3 end(p2.x, p2.y, p2.z+10.f);    // raise a little for visibility
 
-        Ogre::Vector3 direction = end - start;
-        Vector3 lineDisplacement = direction.crossProduct(Vector3::UNIT_Z).normalisedCopy();
-        lineDisplacement = lineDisplacement * POINT_MESH_BASE + Vector3(0.f, 0.f, 10.f);
-
-        result->position(start + lineDisplacement);
-        result->position(end + lineDisplacement);
+        result->position(start);
+        result->position(end);
     }
 
     result->end();
+    result->setVisibilityFlags (RV_Debug);
 
+    return result;
+}
+
+Ogre::ManualObject *Debugging::createTES4PathgridConnections(const ESM4::Pathgrid *pathgrid)
+{
+    Ogre::ManualObject *result = mSceneMgr->createManualObject();
+
+    result->begin(PATHGRID_ALT_LINE_MATERIAL, RenderOperation::OT_LINE_LIST);
+
+    std::vector<ESM4::Pathgrid::PGRP> nodes = pathgrid->mNodes;
+    std::vector<ESM4::Pathgrid::PGRI> conns = pathgrid->mForeign;
+
+    for (std::size_t i = 0; i < conns.size(); ++i)
+    {
+        const ESM4::Pathgrid::PGRP& p1 = nodes[conns[i].localNode];
+
+        Ogre::Vector3 start(p1.x, p1.y, p1.z+10.f);                 // raise a little for visibility
+        Ogre::Vector3 end(conns[i].x, conns[i].y, conns[i].z+10.f); // raise a little for visibility
+
+        result->position(start);
+        result->position(end);
+    }
+
+    result->end();
     result->setVisibilityFlags (RV_Debug);
 
     return result;
@@ -237,7 +269,6 @@ Ogre::ManualObject *Debugging::createTES4PathgridPoints(const ESM4::Pathgrid *pa
     }
 
     result->end();
-
     result->setVisibilityFlags (RV_Debug);
 
     return result;
@@ -335,6 +366,7 @@ void Debugging::enableCellPathgrid(MWWorld::CellStore *store)
         SceneNode *cellPathGrid = mPathGridRoot->createChildSceneNode(cellPathGridPos);
         cellPathGrid->attachObject(createTES4PathgridPoints(pathgrid));
         cellPathGrid->attachObject(createTES4PathgridLines(pathgrid));
+        cellPathGrid->attachObject(createTES4PathgridConnections(pathgrid));
 
         mInteriorPathgridNode = cellPathGrid;
 

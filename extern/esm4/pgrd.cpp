@@ -72,45 +72,36 @@ void ESM4::Pathgrid::load(ESM4::Reader& reader)
                 for (std::size_t i = 0; i < numNodes; ++i)
                 {
                     reader.get(mNodes.at(i));
+#if 0
+                    //if (mFormId == 0x000C8A6B)
+                    if (mFormId == 0x0001C2C8)
+                    {
+                        std::bitset<16> out(mNodes.at(i).unknown2);
+                        std::cout << i << "," << std::to_string(mNodes.at(i).numLinks)
+                            << "," << mNodes.at(i).unknown1
+                            << "," << out << std::endl;
+                    }
+#endif
                 }
 
                 break;
             }
             case ESM4::SUB_PGRR:
             {
-                std::int32_t remaining = subHdr.dataSize;
                 static PGRR link;
 
-                // FIXME: skip all 0xffff (just a guess)
-                bool first = true;
-                while (remaining > 0)
+                for (std::size_t i = 0; i < mData; ++i)
                 {
-                    if (first)
+                    for (std::size_t j = 0; j < mNodes[i].numLinks; ++j)
                     {
-                        reader.get(link.startNode);
-                        //
-                        if (remaining == 2) std::cout << "last PG node " << link.startNode << std::endl; // FIXME
-                        //
-                        remaining -= sizeof(link.startNode);
+                        link.startNode = i;
 
-                        if (link.startNode == -1)
-                            continue; // FIXME: skip 0xffff, just guessing here
+                        reader.get(link.endNode);
+                        if (link.endNode == 0xffff)
+                            continue;
 
-                        first = false;
+                        mLinks.push_back(link);
                     }
-
-                    if (remaining <= 0)
-                        throw std::runtime_error("ESM4::PGRD::load PGRR logic error");
-
-                    reader.get(link.endNode);
-                    remaining -= sizeof(link.endNode);
-
-                    if (link.endNode == -1)
-                        continue; // FIXME: skip 0xffff, just guessing here
-
-                    mLinks.push_back(link);
-                    first = true;
-                    //std::cout << link.startNode << " " << link.endNode << std::endl; //FIXME
                 }
 
                 break;
@@ -122,8 +113,8 @@ void ESM4::Pathgrid::load(ESM4::Reader& reader)
                 for (std::size_t i = 0; i < numForeign; ++i)
                 {
                     reader.get(mForeign.at(i));
+                    mForeign.at(i).localNode &= 0xffff; // some have junk high bits (maybe flags?)
                 }
-                //std::cout << "numForeign " << numForeign << std::endl; // FIXME
 
                 break;
             }
@@ -136,9 +127,7 @@ void ESM4::Pathgrid::load(ESM4::Reader& reader)
 
                 objLink.linkedNodes.resize(numNodes);
                 for (std::size_t i = 0; i < numNodes; ++i)
-                {
                     reader.get(objLink.linkedNodes.at(i));
-                }
 
                 mObjects.push_back(objLink);
 
@@ -164,10 +153,11 @@ void ESM4::Pathgrid::load(ESM4::Reader& reader)
                         ss << " ";
                 }
                 std::cout << ss.str() << std::endl;
-#endif
+#else
                 //std::cout << "PGRD " << ESM4::printName(subHdr.typeId) << " skipping..."
                         //<< subHdr.dataSize << std::endl;
                 reader.skipSubRecordData();
+#endif
                 break;
             }
             default:

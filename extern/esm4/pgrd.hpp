@@ -45,9 +45,9 @@ namespace ESM4
             float x;
             float y;
             float z;
-            std::uint8_t  flags;
-            std::uint8_t  unknown1; // probably padding
-            std::uint16_t unknown2; // probably padding
+            std::uint8_t  numLinks;
+            std::uint8_t  unknown1;
+            std::uint16_t unknown2;
         };
 
         struct PGRR
