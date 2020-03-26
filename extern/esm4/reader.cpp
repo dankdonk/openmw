@@ -120,7 +120,6 @@ bool ESM4::Reader::skipNextGroupCellChild()
 std::size_t ESM4::Reader::openTes4File(const std::string& name)
 {
     mCtx.filename = name;
-    // NOTE: Ogre::SharedPtr<DataStream> provides implicit destruction
     mStream = Ogre::DataStreamPtr(new Ogre::FileStreamDataStream(
                     OGRE_NEW_T(std::ifstream(name.c_str(), std::ios_base::binary),
                     Ogre::MEMCATEGORY_GENERAL), /*freeOnClose*/true));
@@ -377,7 +376,7 @@ const ESM4::GroupTypeHeader& ESM4::Reader::grp(std::size_t pos) const
     return (*(mCtx.groupStack.end()-pos-1)).first;
 }
 
-void ESM4::Reader::getRecordData(bool dump)
+void ESM4::Reader::getRecordData()
 {
     std::uint32_t bufSize = 0;
 
@@ -416,9 +415,7 @@ void ESM4::Reader::getRecordData(bool dump)
         assert(ret == Z_OK || ret == Z_STREAM_END);
 
     // For debugging only
-//#if 0
-if (dump)
-{
+#if 0
         std::ostringstream ss;
         for (unsigned int i = 0; i < bufSize; ++i)
         {
@@ -432,8 +429,7 @@ if (dump)
                 ss << " ";
         }
         std::cout << ss.str() << std::endl;
-}
-//#endif
+#endif
         inflateEnd(&strm);
 
         mSavedStream = mStream;

@@ -180,7 +180,7 @@ namespace ESM4
 
         // Get the data part of a record
         // Note: assumes the header was read correctly and nothing else was read
-        void getRecordData(bool dump = false);
+        void getRecordData();
 
         // Skip the data part of a record
         // Note: assumes the header was read correctly and nothing else was read

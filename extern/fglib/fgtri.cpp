@@ -245,17 +245,6 @@ namespace FgLib
 
     const std::pair<float, std::vector<std::int16_t> >& FgTri::diffMorphVertices(const std::string& label) const
     {
-#if 0
-        std::map<std::string, std::pair<float, std::vector<std::int16_t> > >::const_iterator lb
-            = mLabelledDiffMorphsMap.lower_bound(label);
-
-        if (lb != mLabelledDiffMorphsMap.end() && !(mLabelledDiffMorphsMap.key_comp()(label, lb->first)))
-        {
-            return lb->second;
-        }
-        else // none found
-            throw std::runtime_error("FgTri: not found label " + label);
-#else
         std::map<std::string, std::pair<float, std::vector<std::int16_t> > >::const_iterator it
             = mLabelledDiffMorphsMap.find(label);
 
@@ -265,6 +254,5 @@ namespace FgLib
         }
         else // none found
             throw std::runtime_error("FgTri: not found label " + label);
-#endif
     }
 }
