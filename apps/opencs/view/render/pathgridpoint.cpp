@@ -36,7 +36,7 @@ namespace CSVRender
     }
 
     // FIXME: Is there a way to identify the pathgrid point other than via the index?
-    // ESM::Pathgrid::Edge itself uses the indicies so any change (add/delete) must be
+    // ESM::Pathgrid::Edge itself uses the indices so any change (add/delete) must be
     // propagated everywhere.
     std::pair<std::string, int> PathgridPoint::getIdAndIndex(const std::string &name)
     {

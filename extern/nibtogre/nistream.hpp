@@ -87,7 +87,7 @@ namespace NiBtOgre
         void readSizedString(std::string& str);
         void readShortString(std::string& str);
         // FIXME: does not check for duplicate strings
-        // - can keep a map of indicies but is it worth the trouble to save some memory?
+        // - can keep a map of indices but is it worth the trouble to save some memory?
         void readLongString(std::uint32_t& index); // store string in header and set index
 
         bool getBool();

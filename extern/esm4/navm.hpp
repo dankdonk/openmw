@@ -86,7 +86,7 @@ namespace ESM4
             float maxX;
             float maxY;
             float maxZ;
-            // there are divisor^2 segments, each segment is a vector of triangle indicies
+            // there are divisor^2 segments, each segment is a vector of triangle indices
             std::vector<std::vector<std::uint16_t> >  triSegments;
 
             void load(ESM4::Reader& esm);

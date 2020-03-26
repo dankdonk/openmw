@@ -97,7 +97,7 @@ namespace NiBtOgre
     //       Ogre probably needs the bone handles to be contiguous, anyway.
     //
     // That also means we have to maintain a separate lookup map of bone handles and node
-    // indicies/names.
+    // indices/names.
     void NiSkeletonLoader::loadResource(Ogre::Resource *res)
     {
         Ogre::Skeleton *skel = static_cast<Ogre::Skeleton*>(res);

@@ -1855,7 +1855,7 @@ Hmmm... this is rather embarassing - it turns out we had a false positive - I si
     - COC "WeynonPrioryHouse" - nothing here
   * worldimp::processDoors add collision test
 
-The bone names between the physics system and Ogre are communicated using the NiNode/NiAVObject names.  BtRigidBodyCI:mTargetNames hold the strings, keyed by the indicies of the target nodes.  For non-static rigid bodies these target names are transferred to `OEngine::Physic::RigidBody::mTargetName`.
+The bone names between the physics system and Ogre are communicated using the NiNode/NiAVObject names.  BtRigidBodyCI:mTargetNames hold the strings, keyed by the indices of the target nodes.  For non-static rigid bodies these target names are transferred to `OEngine::Physic::RigidBody::mTargetName`.
 
 Note that a model may have a number of rigid bodies (like entities) and there is a concept of parent/child to deal with the raycasting test (see the notes on 04/03/20).
 
@@ -2169,7 +2169,7 @@ void NiBtOgre::TransformController::Value::setValue (Ogre::Real time)
 
 Rather than doing nothing, we might be able to move the bone based on its parent and its local transform.
 
-To confirm that we have the issues that were observed before, check with NifSkope - using `Characters\_Male\Skeleton.nif` and anim `Laugh.kf` loaded, we can see NiTransformInterpolators with the block indicies 451 and 491 (updated after adding anim).  They are for the Controlled Blocks `Bip01 L ForeTwist` and `Bip01 R ForeTwist` as suspected.
+To confirm that we have the issues that were observed before, check with NifSkope - using `Characters\_Male\Skeleton.nif` and anim `Laugh.kf` loaded, we can see NiTransformInterpolators with the block indices 451 and 491 (updated after adding anim).  They are for the Controlled Blocks `Bip01 L ForeTwist` and `Bip01 R ForeTwist` as suspected.
 
 After some experimentation it dawned on me that doing nothing means the bone keeps its relative position and orientation against its parent already.  So the issue must be something else.
 

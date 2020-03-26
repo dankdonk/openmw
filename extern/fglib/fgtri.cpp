@@ -178,7 +178,7 @@ namespace FgLib
                 for (std::size_t i = 0; i < numAffectedVertices; ++i)
                 {
                     std::int32_t dummy;
-                    tri.read(dummy); // vertex indicies, should be < mNumVertices
+                    tri.read(dummy); // vertex indices, should be < mNumVertices
                 }
             }
 

@@ -2935,7 +2935,7 @@ namespace MWWorld
     }
 
     // The aim is to allow loading various types of TES files in any combination, as long as
-    // the dependent files are loaded first.  To achieve this, separate indicies for each TES
+    // the dependent files are loaded first.  To achieve this, separate indices for each TES
     // versions are required.
     //
     // The trouble is that until the file is opened by an ESM reader to check the version from
@@ -2954,9 +2954,9 @@ namespace MWWorld
         // FIXME: should this be a member?  Also, use enums?
         std::vector<std::vector<std::string> > contentFiles;
         contentFiles.resize(3);
-        //indicies[0] = 0; // MW
-        //indicies[1] = 0; // TES4
-        //indicies[2] = 0; // TES5
+        //indices[0] = 0; // MW
+        //indices[1] = 0; // TES4
+        //indices[2] = 0; // TES5
 
         std::vector<std::string>::const_iterator it(content.begin());
         std::vector<std::string>::const_iterator end(content.end());

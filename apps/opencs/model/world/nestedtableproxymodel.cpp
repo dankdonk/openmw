@@ -102,7 +102,7 @@ QVariant CSMWorld::NestedTableProxyModel::data(const QModelIndex& index, int rol
 }
 
 // NOTE: Due to mapToSouce(index) the dataChanged() signal resulting from setData() will have the
-// source model's index values.  The indicies need to be converted to the proxy space values.
+// source model's index values.  The indices need to be converted to the proxy space values.
 // See forwardDataChanged()
 bool CSMWorld::NestedTableProxyModel::setData (const QModelIndex & index, const QVariant & value, int role)
 {

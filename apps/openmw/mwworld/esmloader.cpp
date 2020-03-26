@@ -16,7 +16,7 @@ EsmLoader::EsmLoader(MWWorld::ESMStore& store, std::vector<std::vector<ESM::ESMR
 {
 }
 
-// increment indicies for each game version
+// increment indices for each game version
 void EsmLoader::load(const boost::filesystem::path& filepath, std::vector<std::vector<std::string> >& contentFiles)
 {
     int tesVerIndex = 0; // FIXME: hard coded, 0 = MW

@@ -136,9 +136,9 @@ namespace NiBtOgre
             std::uint16_t unknown1;
             std::uint16_t transformIndex;
             std::vector<std::uint16_t> vertices;
-            std::vector<std::uint16_t> indicies;
+            std::vector<std::uint16_t> indices;
             std::vector<std::uint16_t> strips;
-            std::vector<std::uint16_t> indicies2;
+            std::vector<std::uint16_t> indices2;
 
             void read(NiStream *stream);
         };

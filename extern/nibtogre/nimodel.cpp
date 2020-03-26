@@ -362,7 +362,7 @@ void NiBtOgre::NiModel::buildModel()
 
 // NOTE: 'model' should be updated each time a weapon (e.g. bow) is equipped or unequipped
 //       since that will affect the object palette.  But the object palette in its current form
-//       returns object index based on a text string name.  The indicies from another model
+//       returns object index based on a text string name.  The indices from another model
 //       (e.g.  bow) won't be useful.  i.e. we need a different solution.
 //       TODO: check if the object names can clash
 void NiBtOgre::NiModel::buildAnimation(Ogre::Entity *skelBase, NiModelPtr anim,

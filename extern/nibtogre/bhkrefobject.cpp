@@ -78,9 +78,9 @@ void NiBtOgre::bhkCompressedMeshShapeData::bhkCMSDChunk::read(NiStream *stream)
     stream->read(transformIndex);
 
     stream->readVector<std::uint16_t>(vertices);
-    stream->readVector<std::uint16_t>(indicies);
+    stream->readVector<std::uint16_t>(indices);
     stream->readVector<std::uint16_t>(strips);
-    stream->readVector<std::uint16_t>(indicies2); // welding info
+    stream->readVector<std::uint16_t>(indices2); // welding info
 }
 
 // Seen in NIF version 20.2.0.7
@@ -853,16 +853,16 @@ btCollisionShape *NiBtOgre::bhkCompressedMeshShape::buildShape(const btTransform
         chunkTransform = transform * chunkTransform;
 
         size_t numStrips = triData->mChunks[i].strips.size();
-        const std::vector<std::uint16_t>& indicies = triData->mChunks[i].indicies;
+        const std::vector<std::uint16_t>& indices = triData->mChunks[i].indices;
 
         for (size_t j = 0; j < numStrips; ++j)
         {
             for (size_t k = 0; k < triData->mChunks[i].strips[j] - 2; ++k)
             {
                 Ogre::Vector4 a, b, c;
-                a = chunkVerts[indicies[offset+k+0]];
-                b = chunkVerts[indicies[offset+k+1]];
-                c = chunkVerts[indicies[offset+k+2]];
+                a = chunkVerts[indices[offset+k+0]];
+                b = chunkVerts[indices[offset+k+1]];
+                c = chunkVerts[indices[offset+k+2]];
 
                 mesh->addTriangle(chunkTransform * btVector3(a.x, a.y, a.z),
                                   chunkTransform * btVector3(b.x, b.y, b.z),
@@ -873,12 +873,12 @@ btCollisionShape *NiBtOgre::bhkCompressedMeshShape::buildShape(const btTransform
         }
 
         // non-stripped
-        for (size_t j = 0; j < indicies.size() - offset; j += 3)
+        for (size_t j = 0; j < indices.size() - offset; j += 3)
         {
             Ogre::Vector4 a, b, c;
-            a = chunkVerts[indicies[offset+j+0]];
-            b = chunkVerts[indicies[offset+j+1]];
-            c = chunkVerts[indicies[offset+j+2]];
+            a = chunkVerts[indices[offset+j+0]];
+            b = chunkVerts[indices[offset+j+1]];
+            c = chunkVerts[indices[offset+j+2]];
 
             mesh->addTriangle(chunkTransform * btVector3(a.x, a.y, a.z),
                               chunkTransform * btVector3(b.x, b.y, b.z),
@@ -1062,7 +1062,7 @@ NiBtOgre::bhkNiTriStripsShape::bhkNiTriStripsShape(uint32_t index, NiStream *str
 //
 // Notes:
 //
-// It seems Bullet only keeps pointers?  Which means vertices and indicies must be kept around.
+// It seems Bullet only keeps pointers?  Which means vertices and indices must be kept around.
 //
 // How does transforms affect this, especially for OL_CLUTTER which is probably havok enabled?
 //

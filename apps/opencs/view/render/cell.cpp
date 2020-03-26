@@ -511,7 +511,7 @@ void CSVRender::Cell::pathgridPointRemoved(const std::string &name)
     int numToDelete = pathgrid.mPoints[index].mConnectionNum * 2; // for sanity check later
     int deletedEdgeCount = 0;
 
-    // update edge indicies to account for the deleted pathgrid point
+    // update edge indices to account for the deleted pathgrid point
     std::vector<ESM::Pathgrid::Edge>::iterator iter = pathgrid.mEdges.begin();
     for (; iter != pathgrid.mEdges.end();)
     {

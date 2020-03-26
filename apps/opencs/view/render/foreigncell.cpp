@@ -580,7 +580,7 @@ bool CSVRender::ForeignCell::referenceDataChanged (const QModelIndex& topLeft,
     // list IDs in cell
     std::map<ESM4::FormId, bool> ids; // id, deleted state
 
-    // NOTE: these are foreign references table indicies
+    // NOTE: these are foreign references table indices
     for (int row = topLeft.row(); row <= bottomRight.row(); ++row)
     {
         std::string cell = Misc::StringUtils::lowerCase (references.data (
@@ -884,7 +884,7 @@ void CSVRender::ForeignCell::pathgridPointRemoved(const std::string &name)
     int numToDelete = pathgrid.mPoints[index].mConnectionNum * 2; // for sanity check later
     int deletedEdgeCount = 0;
 
-    // update edge indicies to account for the deleted pathgrid point
+    // update edge indices to account for the deleted pathgrid point
     std::vector<ESM::Pathgrid::Edge>::iterator iter = pathgrid.mEdges.begin();
     for (; iter != pathgrid.mEdges.end();)
     {

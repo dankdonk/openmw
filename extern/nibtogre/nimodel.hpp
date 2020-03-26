@@ -338,10 +338,10 @@ namespace NiBtOgre
         void setSkinTexture(const std::string& texture);
 
         // for replacing visible skin textures
-        // mesh name and sub-mesh indicies
+        // mesh name and sub-mesh indices
         std::map<std::string, std::vector<std::size_t> > mSkinIndicies;
 
-        // fills a map of NiTriBasedGeom name and visible skin sub-mesh indicies
+        // fills a map of NiTriBasedGeom name and visible skin sub-mesh indices
         void fillSkinIndicies(std::map<std::string, std::vector<std::size_t> >&) const;
 
         // supply skeleton for skinned objects

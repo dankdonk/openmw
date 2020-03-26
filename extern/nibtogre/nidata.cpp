@@ -758,7 +758,7 @@ NiBtOgre::NiTriStripsData::NiTriStripsData(uint32_t index, NiStream *stream, con
         }
     }
 
-    // there are (N-2)*3 vertex indicies for triangles
+    // there are (N-2)*3 vertex indices for triangles
     // where N = stripLengths[stripIndex]
     //
     // e.g. strip length = 150

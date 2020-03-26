@@ -409,7 +409,7 @@ bool CSVDoc::ViewManager::removeDocument (CSVDoc::View *view)
         return false;
     else
     {
-        // don't bother closing views or updating indicies, but remove from mViews
+        // don't bother closing views or updating indices, but remove from mViews
         CSMDoc::Document * document = view->getDocument();
         std::vector<View *> remainingViews;
         std::vector<View *>::const_iterator iter = mViews.begin();

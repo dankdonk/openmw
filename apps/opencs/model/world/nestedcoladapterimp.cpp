@@ -280,7 +280,7 @@ namespace CSMWorld
         if (rowToRemove < 0 || rowToRemove >= static_cast<int> (reactions.size()))
             throw std::runtime_error ("index out of range");
 
-        // FIXME: how to ensure that the map entries correspond to table indicies?
+        // FIXME: how to ensure that the map entries correspond to table indices?
         // WARNING: Assumed that the table view has the same order as std::map
         std::map<std::string, int>::iterator iter = reactions.begin();
         for(int i = 0; i < rowToRemove; ++i)
@@ -317,7 +317,7 @@ namespace CSMWorld
         if (subRowIndex < 0 || subRowIndex >= static_cast<int> (reactions.size()))
             throw std::runtime_error ("index out of range");
 
-        // FIXME: how to ensure that the map entries correspond to table indicies?
+        // FIXME: how to ensure that the map entries correspond to table indices?
         // WARNING: Assumed that the table view has the same order as std::map
         std::map<std::string, int>::const_iterator iter = reactions.begin();
         for(int i = 0; i < subRowIndex; ++i)
@@ -340,7 +340,7 @@ namespace CSMWorld
         if (subRowIndex < 0 || subRowIndex >= static_cast<int> (reactions.size()))
             throw std::runtime_error ("index out of range");
 
-        // FIXME: how to ensure that the map entries correspond to table indicies?
+        // FIXME: how to ensure that the map entries correspond to table indices?
         // WARNING: Assumed that the table view has the same order as std::map
         std::map<std::string, int>::iterator iter = reactions.begin();
         for(int i = 0; i < subRowIndex; ++i)
