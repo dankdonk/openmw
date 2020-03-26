@@ -2518,10 +2518,10 @@ NifOgre::NodeTargetValue<Ogre::Real> *Animation::mNonAccumCtrl;
 Ogre::Vector3 Animation::mAccumulate;
 ```
 
-`mAccumRoot` is used for actually moving the skeleton. (probably Bip01)
-`mNonAccumRoot` (probably Bip01 NonAccum)
-`mNonAccumCtrl` is the controller for `mNonAccumRoot` and probably used for calculating the skeleton's position.
-`mAccumulate` is set by `CharacterController`, probably a movement request.
+  * `mAccumRoot` is used for actually moving the skeleton. (probably Bip01)
+  * `mNonAccumRoot` (probably Bip01 NonAccum)
+  * `mNonAccumCtrl` is the controller for `mNonAccumRoot` and probably used for calculating the skeleton's position.  This is set by `Animation::resetActiveGroups()`.
+  * `mAccumulate` is set by `CharacterController`, probably a movement request.
 
 Subset of TES4 skeleton (Shivering Isle) hierarchy, kinda inverted:
 
@@ -2540,6 +2540,14 @@ Subset of TES4 skeleton (Shivering Isle) hierarchy, kinda inverted:
                 |          |          |
                      27 Bip01 Spine1
 
+
+# [26/03/2020] Back to Pathgrid
+
+In TES3 Pathgrid records are loaded  in `ESMStore::load()` then the connected graph created in `CellStore::load()`.
+
+In TES4 we can't take the same approach since we skip "Cell Temporary Child" group while in `ESMStore::loadTes4Record()`.
+
+To draw the points and links, will need to add a method similar to `Debugging::enableCellPathgrid(MWWorld::CellStore *store)`.  We need to either modify it or create a different method since LAND_SIZE, etc, will be different for TES4.  It also uses ESMStore to find the pathgrids which won't be the case for TES4.
 
 
 

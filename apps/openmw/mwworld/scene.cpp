@@ -342,6 +342,7 @@ namespace MWWorld
         /// \todo rescale depending on the state of a new GMST
         insertCell (*cell, true, loadingListener);
 
+        // NOTE: this also calls Debugging to add active cells for Pathgrids
         mRendering.cellAdded (cell); // calls mTerrain->loadCell()
 
         bool waterEnabled = cell->getCell()->hasWater() || cell->isExterior();

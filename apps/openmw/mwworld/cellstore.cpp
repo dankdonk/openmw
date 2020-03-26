@@ -1183,8 +1183,7 @@ namespace MWWorld
                 //padding.insert(0, reader.getContext().groupStack.size()*2, ' ');
                 //std::cout << padding << "PGRD: about to load" << std::endl;
                 reader.getRecordData();
-                ESM4::Pathgrid record;
-                record.load(reader);
+                mForeignPathgrids.load(esm);
                 break;
             }
             case ESM4::REC_ROAD: // Oblivion only?
@@ -1204,6 +1203,21 @@ namespace MWWorld
         }
 
         return;
+    }
+
+    const ESM4::Pathgrid *CellStore::getTES4Pathgrid() const
+    {
+        // FIXME: this won't work, since cellId is not what we want - we need the Pathgrid FormId
+        //ESM4::FormId cellId = static_cast<const MWWorld::ForeignCell*>(mCell)->mCell->mFormId;
+
+        // FIXME: can there be more than one? if not why do we need a ForeignStore?
+        // Is there a way to store these in ESMStore? (we only get a const reference)
+        std::vector<ESM4::FormId> list;
+        mForeignPathgrids.listForeignIdentifier(list);
+        if (list.size())
+            return mForeignPathgrids.search(list[0]);
+        else
+            return nullptr;
     }
 
     bool CellStore::isExterior() const

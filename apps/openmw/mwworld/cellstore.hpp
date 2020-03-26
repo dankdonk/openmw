@@ -41,6 +41,7 @@
 #include <extern/esm4/land.hpp>
 #include <extern/esm4/anio.hpp>
 #include <extern/esm4/note.hpp>
+#include <extern/esm4/pgrd.hpp>
 
 #include "livecellref.hpp"
 #include "cellreflist.hpp"
@@ -50,6 +51,7 @@
 
 #include "../mwmechanics/pathgrid.hpp"  // TODO: maybe belongs in mwworld
 
+#include "foreignstore.hpp"
 #include "timestamp.hpp"
 
 namespace ESM4
@@ -149,6 +151,8 @@ namespace MWWorld
             CellRefList<ESM4::SigilStone>       mForeignSigilStones;
             CellRefList<ESM4::LeveledItem>      mForeignLvlItems;
             CellRefList<ESM4::Note>             mForeignNotes;
+
+            ForeignStore<ESM4::Pathgrid>        mForeignPathgrids;
 
             void loadTes4Group (const MWWorld::ESMStore &store, ESM::ESMReader& esm);
             void loadTes4Record (const MWWorld::ESMStore &store, ESM::ESMReader& esm);
@@ -306,6 +310,8 @@ namespace MWWorld
             bool isPointConnected(const int start, const int end) const;
 
             std::list<ESM::Pathgrid::Point> aStarSearch(const int start, const int end) const;
+
+            const ESM4::Pathgrid *getTES4Pathgrid() const;
 
         private:
 

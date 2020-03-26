@@ -15,6 +15,8 @@
 #include <components/esm/loadstat.hpp>
 #include <components/esm/loadpgrd.hpp>
 
+#include <extern/esm4/pgrd.hpp>
+
 #include "../mwbase/world.hpp" // these includes can be removed once the static-hack is gone
 #include "../mwbase/environment.hpp"
 
@@ -154,6 +156,93 @@ ManualObject *Debugging::createPathgridPoints(const ESM::Pathgrid *pathgrid)
     return result;
 }
 
+Ogre::ManualObject *Debugging::createTES4PathgridLines(const ESM4::Pathgrid *pathgrid)
+{
+    Ogre::ManualObject *result = mSceneMgr->createManualObject();
+
+    result->begin(PATHGRID_LINE_MATERIAL, RenderOperation::OT_LINE_LIST);
+
+    std::vector<ESM4::Pathgrid::PGRP> nodes = pathgrid->mNodes;
+    std::vector<ESM4::Pathgrid::PGRR> links = pathgrid->mLinks;
+    for (std::size_t i = 0; i < links.size(); ++i)
+    {
+        const ESM4::Pathgrid::PGRP& p1 = nodes[links[i].startNode];
+        const ESM4::Pathgrid::PGRP& p2 = nodes[links[i].endNode];
+
+        Ogre::Vector3 start(p1.x, p1.y, p1.z);
+        Ogre::Vector3 end(p2.x, p2.y, p2.z);
+
+        Ogre::Vector3 direction = end - start;
+        Vector3 lineDisplacement = direction.crossProduct(Vector3::UNIT_Z).normalisedCopy();
+        lineDisplacement = lineDisplacement * POINT_MESH_BASE + Vector3(0.f, 0.f, 10.f);
+
+        result->position(start + lineDisplacement);
+        result->position(end + lineDisplacement);
+    }
+
+    result->end();
+
+    result->setVisibilityFlags (RV_Debug);
+
+    return result;
+}
+
+Ogre::ManualObject *Debugging::createTES4PathgridPoints(const ESM4::Pathgrid *pathgrid)
+{
+    Ogre::ManualObject *result = mSceneMgr->createManualObject();
+    const float height = POINT_MESH_BASE * sqrtf(2);
+
+    result->begin(PATHGRID_POINT_MATERIAL, RenderOperation::OT_TRIANGLE_STRIP);
+
+    bool first = true;
+    uint32 startIndex = 0;
+    std::vector<ESM4::Pathgrid::PGRP> nodes = pathgrid->mNodes;
+    for (std::size_t i = 0; i < nodes.size(); ++i, startIndex += 6)
+    {
+        Ogre::Vector3 pointPos(nodes[i].x, nodes[i].y, nodes[i].z);
+        if (!first)
+        {
+            // degenerate triangle from previous octahedron
+            result->index(startIndex - 4); // 2nd point of previous octahedron
+            result->index(startIndex); // start point of current octahedron
+        }
+
+        Ogre::Real pointMeshBase = static_cast<Ogre::Real>(POINT_MESH_BASE);
+
+        result->position(pointPos + Vector3(             0,              0,  height)); // 0
+        result->position(pointPos + Vector3(-pointMeshBase, -pointMeshBase,       0)); // 1
+        result->position(pointPos + Vector3( pointMeshBase, -pointMeshBase,       0)); // 2
+        result->position(pointPos + Vector3( pointMeshBase,  pointMeshBase,       0)); // 3
+        result->position(pointPos + Vector3(-pointMeshBase,  pointMeshBase,       0)); // 4
+        result->position(pointPos + Vector3(             0,              0, -height)); // 5
+
+        result->index(startIndex + 0);
+        result->index(startIndex + 1);
+        result->index(startIndex + 2);
+        result->index(startIndex + 5);
+        result->index(startIndex + 3);
+        result->index(startIndex + 4);
+        // degenerates
+        result->index(startIndex + 4);
+        result->index(startIndex + 5);
+        result->index(startIndex + 5);
+        // end degenerates
+        result->index(startIndex + 1);
+        result->index(startIndex + 4);
+        result->index(startIndex + 0);
+        result->index(startIndex + 3);
+        result->index(startIndex + 2);
+
+        first = false;
+    }
+
+    result->end();
+
+    result->setVisibilityFlags (RV_Debug);
+
+    return result;
+}
+
 Debugging::Debugging(SceneNode *root, OEngine::Physic::PhysicEngine *engine) :
     mEngine(engine), mSceneMgr(root->getCreator()),
     mPathgridEnabled(false),
@@ -234,6 +323,24 @@ void Debugging::togglePathgrid()
 
 void Debugging::enableCellPathgrid(MWWorld::CellStore *store)
 {
+    if (store->isForeignCell())
+    {
+        // FIXME: there can be more than one?
+        const ESM4::Pathgrid *pathgrid = store->getTES4Pathgrid();
+        if (!pathgrid) return;
+
+        Vector3 cellPathGridPos(0, 0, 0);
+        // FIXME: ignore exterior for the moment
+
+        SceneNode *cellPathGrid = mPathGridRoot->createChildSceneNode(cellPathGridPos);
+        cellPathGrid->attachObject(createTES4PathgridPoints(pathgrid));
+        cellPathGrid->attachObject(createTES4PathgridLines(pathgrid));
+
+        mInteriorPathgridNode = cellPathGrid;
+
+        return;
+    }
+
     MWBase::World* world = MWBase::Environment::get().getWorld();
     const ESM::Pathgrid *pathgrid =
         world->getStore().get<ESM::Pathgrid>().search(*store->getCell());

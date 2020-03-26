@@ -6,6 +6,7 @@
 
 #include <components/loadinglistener/loadinglistener.hpp>
 
+#include <extern/esm4/pgrd.hpp> // this one is not in esmstore
 #include <extern/esm4/formid.hpp>
 
 #include <components/misc/rng.hpp>
@@ -339,6 +340,7 @@ template class MWWorld::ForeignStore<ESM4::Dialog>;
 template class MWWorld::ForeignStore<ESM4::DialogInfo>;
 template class MWWorld::ForeignStore<ESM4::Quest>;
 template class MWWorld::ForeignStore<ESM4::AIPackage>;
+template class MWWorld::ForeignStore<ESM4::Pathgrid>;
 // Foreign Referenceables
 template class MWWorld::ForeignStore<ESM4::Activator>;
 template class MWWorld::ForeignStore<ESM4::Apparatus>;
