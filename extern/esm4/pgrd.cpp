@@ -94,10 +94,10 @@ void ESM4::Pathgrid::load(ESM4::Reader& reader)
                 {
                     for (std::size_t j = 0; j < mNodes[i].numLinks; ++j)
                     {
-                        link.startNode = i;
+                        link.startNode = std::int16_t(i);
 
                         reader.get(link.endNode);
-                        if (link.endNode == 0xffff)
+                        if (link.endNode == -1)
                             continue;
 
                         mLinks.push_back(link);
