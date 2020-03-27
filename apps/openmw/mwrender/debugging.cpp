@@ -1,6 +1,7 @@
 #include "debugging.hpp"
 
 #include <cassert>
+#include <iostream> // FIXME
 
 #include <OgreNode.h>
 #include <OgreSceneManager.h>
@@ -15,6 +16,8 @@
 #include <components/esm/loadstat.hpp>
 #include <components/esm/loadpgrd.hpp>
 
+//#include <extern/esm4/land.hpp>
+#include <extern/esm4/cell.hpp>
 #include <extern/esm4/pgrd.hpp>
 
 #include "../mwbase/world.hpp" // these includes can be removed once the static-hack is gone
@@ -22,6 +25,7 @@
 
 #include "../mwworld/ptr.hpp"
 #include "../mwworld/cellstore.hpp"
+#include "../mwworld/foreigncell.hpp"
 #include "../mwworld/esmstore.hpp"
 #include "../mwmechanics/pathfinding.hpp"
 
@@ -178,6 +182,35 @@ Ogre::ManualObject *Debugging::createTES4PathgridLines(const ESM4::Pathgrid *pat
     for (std::size_t i = 0; i < links.size(); ++i)
     {
         const ESM4::Pathgrid::PGRP& p1 = nodes[links[i].startNode];
+        const ESM4::Pathgrid::PGRP& p2 = nodes[links[i].endNode];
+
+        Ogre::Vector3 start(p1.x, p1.y, p1.z+10.f);  // raise a little for visibility
+        Ogre::Vector3 end(p2.x, p2.y, p2.z+10.f);    // raise a little for visibility
+
+        result->position(start);
+        result->position(end);
+    }
+
+    result->end();
+    result->setVisibilityFlags (RV_Debug);
+
+    return result;
+}
+
+Ogre::ManualObject *Debugging::createTES4PathgridLines(const ESM4::Pathgrid *pathgrid,
+        std::uint16_t index, std::size_t start, std::size_t count)
+{
+    Ogre::ManualObject *result = mSceneMgr->createManualObject();
+
+    result->begin(PATHGRID_LINE_MATERIAL, RenderOperation::OT_LINE_LIST);
+
+    std::vector<ESM4::Pathgrid::PGRP> nodes = pathgrid->mNodes;
+    std::vector<ESM4::Pathgrid::PGRR> links = pathgrid->mLinks;
+    for (std::size_t i = start; i < start+count; ++i)
+    {
+        const ESM4::Pathgrid::PGRP& p1 = nodes[links[i].startNode];
+        if (index != links[i].startNode)
+            std::cout << "stop" << std::endl;
         const ESM4::Pathgrid::PGRP& p2 = nodes[links[i].endNode];
 
         Ogre::Vector3 start(p1.x, p1.y, p1.z+10.f);  // raise a little for visibility
@@ -356,19 +389,59 @@ void Debugging::enableCellPathgrid(MWWorld::CellStore *store)
 {
     if (store->isForeignCell())
     {
-        // FIXME: there can be more than one?
+        // TODO: there can be more than one?
         const ESM4::Pathgrid *pathgrid = store->getTES4Pathgrid();
         if (!pathgrid) return;
 
-        Vector3 cellPathGridPos(0, 0, 0);
-        // FIXME: ignore exterior for the moment
 
+        Ogre::Vector3 cellPathGridPos = Ogre::Vector3::ZERO;
+        std::int32_t gridX, gridY;
+        if (store->getCell()->isExterior())
+        {
+            gridX = static_cast<const MWWorld::ForeignCell*>(store->getCell())->mCell->mX;
+            gridY = static_cast<const MWWorld::ForeignCell*>(store->getCell())->mCell->mX;
+
+            // NOTE: since the pathgrid points are already in world space, no need to convert them
+            //cellPathGridPos.x = Ogre::Real(gridX * ESM4::Land::REAL_SIZE);
+            //cellPathGridPos.y = Ogre::Real(gridY * ESM4::Land::REAL_SIZE);
+        }
         SceneNode *cellPathGrid = mPathGridRoot->createChildSceneNode(cellPathGridPos);
         cellPathGrid->attachObject(createTES4PathgridPoints(pathgrid));
+#if 0
         cellPathGrid->attachObject(createTES4PathgridLines(pathgrid));
+#else
+        //std::vector<ESM4::Pathgrid::PGRP> nodes = pathgrid->mNodes;
+        std::vector<ESM4::Pathgrid::PGRR> links = pathgrid->mLinks;
+        std::uint16_t index = links[0].startNode;
+        std::size_t start = 0;
+        std::size_t count = 0;
+        for (std::size_t i = 0; i < links.size(); ++i)
+        {
+            if (links[i].startNode == index || i == links.size()-1)
+            {
+                count++;
+                continue;
+            }
+            else
+            {
+                cellPathGrid->attachObject(createTES4PathgridLines(pathgrid, index, start, count));
+                index = links[i].startNode;
+                start = i;
+                count = 1;
+            }
+        }
+#endif
         cellPathGrid->attachObject(createTES4PathgridConnections(pathgrid));
 
-        mInteriorPathgridNode = cellPathGrid;
+        if (store->getCell()->isExterior())
+        {
+            // FIXME: this won't work with worldspaces and will be overwritten
+            mExteriorPathgridNodes[std::make_pair(gridX, gridY)] = cellPathGrid;
+        }
+        else
+        {
+            mInteriorPathgridNode = cellPathGrid;
+        }
 
         return;
     }
