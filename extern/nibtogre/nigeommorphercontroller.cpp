@@ -114,8 +114,18 @@ NiBtOgre::NiGeomMorpherController::NiGeomMorpherController(uint32_t index, NiStr
                 stream->read(mUnknownInts.at(i));
         }
 
+        // GOG creatures\mudcrab\Mud Crbeye L00.NIF
+        if (stream->nifVer() == 0x0a020000 && stream->userVer() == 10 && stream->userVer2() == 11)
+        {
+            std::uint32_t numUnknownInts;
+            stream->read(numUnknownInts);
+            mUnknownInts.resize(numUnknownInts);
+            for (unsigned int i = 0; i < numUnknownInts; ++i)
+                stream->read(mUnknownInts.at(i));
+        }
+
         if (stream->nifVer() == 0x0a01006a) // 10.1.0.106
-            stream->skip(sizeof(int32_t)); // e.g. creatures/horse/bridle.nif version 10.1.0.106
+            stream->skip(sizeof(int32_t));  // e.g. creatures/horse/Bridle.NIF version 10.1.0.106
     }
 }
 

@@ -473,6 +473,9 @@ NiBtOgre::NiVertWeightsExtraData::NiVertWeightsExtraData(uint32_t index, NiStrea
 NiBtOgre::NiFloatData::NiFloatData(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiObject(index, stream, model, data)
 {
+    if (stream->nifVer() == 0x0a01006a) // 10.1.0.106
+        stream->skip(sizeof(int32_t)); // e.g. creatures/horse/Bridle.NIF version 10.1.0.106
+
     mData.read(stream);
 }
 
@@ -482,7 +485,7 @@ NiBtOgre::NiGeometryData::NiGeometryData(uint32_t index, NiStream *stream, const
     if (stream->nifVer() == 0x0a000100)     // HACK: not sure why this is needed
         stream->skip(sizeof(std::int32_t)); // e.g. clutter/farm/oar01.nif version 10.0.1.0
     else if (stream->nifVer() == 0x0a01006a)
-        stream->skip(sizeof(std::int32_t)); // e.g. creatures/horse/bridle.nif version 10.1.0.106
+        stream->skip(sizeof(std::int32_t)); // e.g. creatures/horse/Bridle.NIF version 10.1.0.106
 
     if (stream->nifVer() >= 0x0a020000) // from 10.2.0.0
     {
@@ -906,7 +909,11 @@ NiBtOgre::NiMorphData::NiMorphData(uint32_t index, NiStream *stream, const NiMod
         }
 
         if (stream->nifVer() >= 0x0a01006a && stream->nifVer() <= 0x0a020000)
-            stream->skip(sizeof(std::uint32_t));
+        {
+            // don't skip for GOG creatures\mudcrab\Mud Crbeye L00.NIF
+            if (!(stream->nifVer() == 0x0a020000 && stream->userVer() == 10 && stream->userVer2() == 11))
+                stream->skip(sizeof(std::uint32_t));
+        }
 
         if (stream->nifVer() >= 0x14000004 && stream->nifVer() <= 0x14000005 && stream->userVer() == 0)
             stream->skip(sizeof(std::uint32_t));

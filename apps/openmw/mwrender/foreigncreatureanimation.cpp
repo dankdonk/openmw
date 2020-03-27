@@ -274,7 +274,8 @@ void ForeignCreatureAnimation::addForeignAnimSource(const std::string& model, co
             }
         }
 #else
-        if (!mAccumRoot && grp == 0 && (dstval->getNode()->getName() == "Bip01 NonAccum"))
+        if (!mAccumRoot && grp == 0 && ((dstval->getNode()->getName() == "Bip01 NonAccum")
+                                     || (dstval->getNode()->getName() == "Bip02 NonAccum"))) // horse
         {
             mNonAccumRoot = dstval->getNode();
             mAccumRoot = mNonAccumRoot->getParent();

@@ -515,8 +515,8 @@ const Ogre::Quaternion NiBtOgre::NiModel::getBaseRotation() const
 
 std::uint32_t NiBtOgre::NiModel::getRootIndex() const
 {
-    if (getNumRootNodes() > 1)
-        throw std::logic_error("NiNode parent map: multiple parents");
+    //if (getNumRootNodes() > 1) // FIXME: bear\forward.kf
+        //throw std::logic_error("NiNode parent map: multiple parents");
 
     return mRoots[0];
 }

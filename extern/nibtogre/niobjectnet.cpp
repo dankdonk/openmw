@@ -45,7 +45,7 @@ NiBtOgre::NiObjectNET::NiObjectNET(uint32_t index, NiStream *stream, const NiMod
     if (stream->nifVer() == 0x0a000100)     // HACK not sure about this one
         stream->skip(sizeof(std::int32_t)); // e.g. clutter/farm/oar01.nif version 10.0.1.0
     else if (stream->nifVer() == 0x0a01006a)
-        stream->skip(sizeof(std::int32_t)); // e.g. creatures/horse/bridle.nif version 10.1.0.106
+        stream->skip(sizeof(std::int32_t)); // e.g. creatures/horse/Bridle.NIF version 10.1.0.106
 
     stream->readLongString(mNameIndex);
 
