@@ -94,12 +94,17 @@ void ESM4::Pathgrid::load(ESM4::Reader& reader)
                 {
                     for (std::size_t j = 0; j < mNodes[i].numLinks; ++j)
                     {
-                        link.startNode = i;
+                        link.startNode = std::int16_t(i);
 
                         reader.get(link.endNode);
-                        if (link.endNode == 0xffff)
+                        if (link.endNode == -1)
                             continue;
 
+                        // ICMarketDistrictTheBestDefenseBasement doesn't have a PGRR
+                        // CELL formId 00049E2A
+                        // PGRD formId 000304B7
+                        //if (mFormId == 0x000304b7)
+                            //std::cout << link.startNode << "," << link.endNode << std::endl;
                         mLinks.push_back(link);
                     }
                 }
@@ -164,6 +169,8 @@ void ESM4::Pathgrid::load(ESM4::Reader& reader)
                 throw std::runtime_error("ESM4::PGRD::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
         }
     }
+    //if (mFormId == 0x000304b7)
+        //std::cout << "PGRR" << std::endl;
 }
 
 //void ESM4::Pathgrid::save(ESM4::Writer& writer) const

@@ -1209,6 +1209,10 @@ namespace MWWorld
     {
         // NOTE: cellId is not what we want - we need the Pathgrid FormId
         ESM4::FormId cellId = static_cast<const MWWorld::ForeignCell*>(mCell)->mCell->mFormId;
+        //std::string editorId = static_cast<const MWWorld::ForeignCell*>(mCell)->mCell->mEditorId;
+
+        //const MWWorld::ESMStore& store = MWBase::Environment::get().getWorld()->getStore();
+        //const MWWorld::ForeignCell *cell = store.get<MWWorld::ForeignCell>().find(cellId);
 
         // FIXME: can there be more than one? if not why do we need a ForeignStore?
         // Is there a way to store these in ESMStore? (we only get a const reference)
@@ -1216,6 +1220,8 @@ namespace MWWorld
         mForeignPathgrids.listForeignIdentifier(list);
         if (list.size())
         {
+            //std::cout << "CELL formId " << ESM4::formIdToString(cellId) << std::endl;
+            //std::cout << "PGRD formId " << ESM4::formIdToString(list[0]) << std::endl;
             if (list.size() > 1)
                 std::cout << cellId << " cellid Pathgrid more than one " << list.size() << std::endl;
 

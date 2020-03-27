@@ -82,8 +82,6 @@ namespace MWRender
         Ogre::ManualObject *createPathgridPoints(const ESM::Pathgrid *pathgrid);
 
         Ogre::ManualObject *createTES4PathgridLines(const ESM4::Pathgrid *pathgrid);
-        Ogre::ManualObject *createTES4PathgridLines(const ESM4::Pathgrid *pathgrid,
-                std::uint16_t index, std::size_t start, std::size_t count);
         Ogre::ManualObject *createTES4PathgridConnections(const ESM4::Pathgrid *pathgrid);
         Ogre::ManualObject *createTES4PathgridPoints(const ESM4::Pathgrid *pathgrid);
     public:

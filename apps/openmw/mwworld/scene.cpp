@@ -581,7 +581,7 @@ namespace MWWorld
         loadingListener->setLabel(loadingExteriorText);
 
         // TODO: For TES4/5 we should double this value? (cells are smaller)
-        const int halfGridSize = Settings::Manager::getInt("exterior grid size", "Cells") / 1.5;
+        const int halfGridSize = Settings::Manager::getInt("exterior grid size", "Cells") / 2;
         if (worldId != currentWorldId)
         {
             int current = 0;
@@ -617,6 +617,7 @@ namespace MWWorld
                 unloadCell(active++); // discard cells thare are no longer in the grid (or internal)
             }
         }
+
         int refsToLoad = 0;
         // get the number of refs to load (for loading bar progress display)
         for (int x = X-halfGridSize; x <= X+halfGridSize; ++x)
@@ -625,6 +626,8 @@ namespace MWWorld
             {
                 CellStoreCollection::iterator iter = mActiveCells.begin();
 
+                // FIXME: the logic here is broken for the scenario where we chanced worlds, since
+                // there are no active cells at all
                 while (iter != mActiveCells.end())
                 {
                     assert ((*iter)->getCell()->isExterior());
@@ -636,7 +639,8 @@ namespace MWWorld
                     ++iter;
                 }
 
-                // FIXME: add a worldspace param to getExterior?
+                // FIXME: add a worldspace param to getExterior?  currently returns some count
+                // from a TES3 cell
                 if (iter == mActiveCells.end())
                     refsToLoad += MWBase::Environment::get().getWorld()->getExterior(x, y)->count();
             }

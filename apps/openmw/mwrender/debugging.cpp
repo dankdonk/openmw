@@ -197,35 +197,6 @@ Ogre::ManualObject *Debugging::createTES4PathgridLines(const ESM4::Pathgrid *pat
     return result;
 }
 
-Ogre::ManualObject *Debugging::createTES4PathgridLines(const ESM4::Pathgrid *pathgrid,
-        std::uint16_t index, std::size_t start, std::size_t count)
-{
-    Ogre::ManualObject *result = mSceneMgr->createManualObject();
-
-    result->begin(PATHGRID_LINE_MATERIAL, RenderOperation::OT_LINE_LIST);
-
-    std::vector<ESM4::Pathgrid::PGRP> nodes = pathgrid->mNodes;
-    std::vector<ESM4::Pathgrid::PGRR> links = pathgrid->mLinks;
-    for (std::size_t i = start; i < start+count; ++i)
-    {
-        const ESM4::Pathgrid::PGRP& p1 = nodes[links[i].startNode];
-        if (index != links[i].startNode)
-            std::cout << "stop" << std::endl;
-        const ESM4::Pathgrid::PGRP& p2 = nodes[links[i].endNode];
-
-        Ogre::Vector3 start(p1.x, p1.y, p1.z+10.f);  // raise a little for visibility
-        Ogre::Vector3 end(p2.x, p2.y, p2.z+10.f);    // raise a little for visibility
-
-        result->position(start);
-        result->position(end);
-    }
-
-    result->end();
-    result->setVisibilityFlags (RV_Debug);
-
-    return result;
-}
-
 Ogre::ManualObject *Debugging::createTES4PathgridConnections(const ESM4::Pathgrid *pathgrid)
 {
     Ogre::ManualObject *result = mSceneMgr->createManualObject();
@@ -407,30 +378,8 @@ void Debugging::enableCellPathgrid(MWWorld::CellStore *store)
         }
         SceneNode *cellPathGrid = mPathGridRoot->createChildSceneNode(cellPathGridPos);
         cellPathGrid->attachObject(createTES4PathgridPoints(pathgrid));
-#if 0
+        // FIXME: The Best Defence basement doesn't have any links?
         cellPathGrid->attachObject(createTES4PathgridLines(pathgrid));
-#else
-        //std::vector<ESM4::Pathgrid::PGRP> nodes = pathgrid->mNodes;
-        std::vector<ESM4::Pathgrid::PGRR> links = pathgrid->mLinks;
-        std::uint16_t index = links[0].startNode;
-        std::size_t start = 0;
-        std::size_t count = 0;
-        for (std::size_t i = 0; i < links.size(); ++i)
-        {
-            if (links[i].startNode == index || i == links.size()-1)
-            {
-                count++;
-                continue;
-            }
-            else
-            {
-                cellPathGrid->attachObject(createTES4PathgridLines(pathgrid, index, start, count));
-                index = links[i].startNode;
-                start = i;
-                count = 1;
-            }
-        }
-#endif
         cellPathGrid->attachObject(createTES4PathgridConnections(pathgrid));
 
         if (store->getCell()->isExterior())

@@ -2547,8 +2547,18 @@ In TES3 Pathgrid records are loaded  in `ESMStore::load()` then the connected gr
 
 In TES4 we can't take the same approach since we skip "Cell Temporary Child" group while in `ESMStore::loadTes4Record()`.
 
-To draw the points and links, will need to add a method similar to `Debugging::enableCellPathgrid(MWWorld::CellStore *store)`.  We need to either modify it or create a different method since LAND_SIZE, etc, will be different for TES4.  It also uses ESMStore to find the pathgrids which won't be the case for TES4.
+To draw the points and links, will need to add a method similar to `Debugging::enableCellPathgrid(MWWorld::CellStore \*store)`.  We need to either modify it or create a different method since LAND_SIZE, etc, will be different for TES4.  It also uses ESMStore to find the pathgrids which won't be the case for TES4.
 
+# [27/03/2020] Pathgrid still
+
+The PGRR record turned out to be similar to TES3, i.e. they are indices for the "end node" for number of links specified for each pathgrid point.
+
+ICMarketDistrictTheBestDefenseBasement doesn't have a PGRR.  Maybe some links need to be auto-generated?  We may need a dummy physics shape so that a line-of sight test can be done.
+
+    CELL formId 00049E2A
+    PGRD formId 000304B7
+
+**FIXME:** Noticed that some pathgrid points are floating in the air - again, a dummy physics shape can be used to "snap" to ground.
 
 
 [//]: # (/* spell spelllang=en_au syntax=cpp */)
