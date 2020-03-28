@@ -1179,6 +1179,14 @@ namespace MWWorld
             }
             case ESM4::REC_PGRD: // Oblivion only?
             {
+                // FIXME: maybe a try/catch block is better
+                ESM4::FormId cellId = static_cast<const MWWorld::ForeignCell*>(mCell)->mCell->mFormId;
+                if (cellId == 0x000132b1) // SEtestGateRoom in Oblivion.esm has broken PGRD sub-record
+                {
+                    reader.skipRecordData();
+                    break;
+                }
+
                 //std::string padding = "";
                 //padding.insert(0, reader.getContext().groupStack.size()*2, ' ');
                 //std::cout << padding << "PGRD: about to load" << std::endl;
