@@ -72,7 +72,7 @@ namespace FgLib
             for (std::size_t i = 0; i < 3 * mNumTriangles; ++i)
                 tri.read(triangleIndices[i]);
 
-            mTriangleIndices.swap(triangleIndiceas);
+            mTriangleIndices.swap(triangleIndices);
 
             boost::scoped_array<std::int32_t> quadIndices(new std::int32_t[3 * mNumQuads]);
             for (std::size_t i = 0; i < 3 * mNumQuads; ++i)
