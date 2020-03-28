@@ -29,8 +29,9 @@
 #include <stdexcept>
 #include <iostream> // FIXME: for debugging only
 #include <iomanip>  // FIXME: for debugging only
+#include <boost/scoped_array.hpp> // FIXME
 
-#include "formid.hpp" // FIXME: for workaround
+#include "formid.hpp" // FIXME: for mEditorId workaround
 #include "reader.hpp"
 //#include "writer.hpp"
 
@@ -72,16 +73,11 @@ void ESM4::Pathgrid::load(ESM4::Reader& reader)
                 for (std::size_t i = 0; i < numNodes; ++i)
                 {
                     reader.get(mNodes.at(i));
-#if 0
-                    //if (mFormId == 0x000C8A6B)
-                    if (mFormId == 0x0001C2C8)
-                    {
-                        std::bitset<16> out(mNodes.at(i).unknown2);
-                        std::cout << i << "," << std::to_string(mNodes.at(i).numLinks)
-                            << "," << mNodes.at(i).unknown1
-                            << "," << out << std::endl;
-                    }
-#endif
+
+                    if (int(mNodes.at(i).z) % 2 == 0)
+                        mNodes.at(i).priority = 0;
+                    else
+                        mNodes.at(i).priority = 1;
                 }
 
                 break;
@@ -113,7 +109,7 @@ void ESM4::Pathgrid::load(ESM4::Reader& reader)
                 for (std::size_t i = 0; i < numForeign; ++i)
                 {
                     reader.get(mForeign.at(i));
-                    mForeign.at(i).localNode &= 0xffff; // some have junk high bits (maybe flags?)
+                    mForeign.at(i).localNode;// &= 0xffff; // some have junk high bits (maybe flags?)
                 }
 
                 break;
@@ -136,20 +132,20 @@ void ESM4::Pathgrid::load(ESM4::Reader& reader)
             case ESM4::SUB_PGAG:
             {
 #if 0
-                unsigned char mDataBuf[256/*bufSize*/];
+                boost::scoped_array<unsigned char> mDataBuf(new unsigned char[subHdr.dataSize]);
                 reader.get(&mDataBuf[0], subHdr.dataSize);
 
                 std::ostringstream ss;
-                ss << ESM4::printName(subHdr.typeId) << ":size " << subHdr.dataSize << "\n";
-                for (unsigned int i = 0; i < subHdr.dataSize; ++i)
+                ss << mEditorId << " " << ESM4::printName(subHdr.typeId) << ":size " << subHdr.dataSize << "\n";
+                for (std::size_t i = 0; i < subHdr.dataSize; ++i)
                 {
-                    //if (mDataBuf[i] > 64 && mDataBuf[i] < 91)
+                    //if (mDataBuf[i] > 64 && mDataBuf[i] < 91) // looks like printable ascii char
                         //ss << (char)(mDataBuf[i]) << " ";
                     //else
                         ss << std::setfill('0') << std::setw(2) << std::hex << (int)(mDataBuf[i]);
-                    if ((i & 0x000f) == 0xf)
+                    if ((i & 0x000f) == 0xf) // wrap around
                         ss << "\n";
-                    else if (i < 256/*bufSize*/-1)
+                    else if (i < subHdr.dataSize-1)
                         ss << " ";
                 }
                 std::cout << ss.str() << std::endl;
