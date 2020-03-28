@@ -120,6 +120,7 @@ bool ESM4::Reader::skipNextGroupCellChild()
 std::size_t ESM4::Reader::openTes4File(const std::string& name)
 {
     mCtx.filename = name;
+    // NOTE: Ogre::SharedPtr<DataStream> provides implicit destruction
     mStream = Ogre::DataStreamPtr(new Ogre::FileStreamDataStream(
                     OGRE_NEW_T(std::ifstream(name.c_str(), std::ios_base::binary),
                     Ogre::MEMCATEGORY_GENERAL), /*freeOnClose*/true));
@@ -266,10 +267,10 @@ bool ESM4::Reader::getSubRecordHeader()
 }
 
 // NOTE: the parameter 'files' must have the file names in the loaded order
-void ESM4::Reader::updateModIndicies(const std::vector<std::string>& files)
+void ESM4::Reader::updateModIndices(const std::vector<std::string>& files)
 {
     if (files.size() >= 0xff)
-        throw std::runtime_error("ESM4::Reader::updateModIndicies too many files"); // 0xff is reserved
+        throw std::runtime_error("ESM4::Reader::updateModIndices too many files"); // 0xff is reserved
 
     // NOTE: this map is rebuilt each time this method is called (i.e. each time a file is loaded)
     // Perhaps there is an opportunity to optimize this by saving the result somewhere.
@@ -281,7 +282,7 @@ void ESM4::Reader::updateModIndicies(const std::vector<std::string>& files)
     for (size_t i = 0; i < files.size(); ++i) // ATTENTION: assumes current file is not included
         fileIndex[boost::to_lower_copy<std::string>(files[i])] = i;
 
-    mHeader.mModIndicies.resize(mHeader.mMaster.size());
+    mHeader.mModIndices.resize(mHeader.mMaster.size());
     for (unsigned int i = 0; i < mHeader.mMaster.size(); ++i)
     {
         // locate the position of the dependency in already loaded files
@@ -289,17 +290,17 @@ void ESM4::Reader::updateModIndicies(const std::vector<std::string>& files)
             = fileIndex.find(boost::to_lower_copy<std::string>(mHeader.mMaster[i].name));
 
         if (it != fileIndex.end())
-            mHeader.mModIndicies[i] = (std::uint32_t)((it->second << 24) & 0xff000000);
+            mHeader.mModIndices[i] = (std::uint32_t)((it->second << 24) & 0xff000000);
         else
-            throw std::runtime_error("ESM4::Reader::updateModIndicies required dependency file not loaded");
+            throw std::runtime_error("ESM4::Reader::updateModIndices required dependency file not loaded");
 #if 0
         std::cout << "Master Mod: " << mHeader.mMaster[i].name << ", " // FIXME: debugging only
-                  << ESM4::formIdToString(mHeader.mModIndicies[i]) << std::endl;
+                  << ESM4::formIdToString(mHeader.mModIndices[i]) << std::endl;
 #endif
     }
 
-    if (!mHeader.mModIndicies.empty() &&  mHeader.mModIndicies[0] != 0)
-        throw std::runtime_error("ESM4::Reader::updateModIndicies base modIndex is not zero");
+    if (!mHeader.mModIndices.empty() &&  mHeader.mModIndices[0] != 0)
+        throw std::runtime_error("ESM4::Reader::updateModIndices base modIndex is not zero");
 }
 
 void ESM4::Reader::saveGroupStatus()
@@ -532,20 +533,20 @@ void ESM4::Reader::skipSubRecordData(std::uint32_t size)
 
 // ModIndex adjusted formId according to master file dependencies
 // (see http://www.uesp.net/wiki/Tes4Mod:FormID_Fixup)
-// NOTE: need to update modindex to mModIndicies.size() before saving
+// NOTE: need to update modindex to mModIndices.size() before saving
 //
 // FIXME: probably should add a parameter to check for mHeader::mOverrides
 //        (ACHR, LAND, NAVM, PGRE, PHZD, REFR), but not sure what exactly overrides mean
 //        i.e. use the modindx of its master?
 void ESM4::Reader::adjustFormId(FormId& id)
 {
-    if (mHeader.mModIndicies.empty())
+    if (mHeader.mModIndices.empty())
         return;
 
     unsigned int index = (id >> 24) & 0xff;
 
-    if (index < mHeader.mModIndicies.size())
-        id = mHeader.mModIndicies[index] | (id & 0x00ffffff);
+    if (index < mHeader.mModIndices.size())
+        id = mHeader.mModIndices[index] | (id & 0x00ffffff);
     else
         id = mCtx.modIndex | (id & 0x00ffffff);
 }

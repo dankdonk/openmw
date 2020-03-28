@@ -68,17 +68,17 @@ namespace FgLib
 
             mVertices.swap(vertices);
 
-            boost::scoped_array<std::int32_t> triangleIndicies(new std::int32_t[3 * mNumTriangles]);
+            boost::scoped_array<std::int32_t> triangleIndices(new std::int32_t[3 * mNumTriangles]);
             for (std::size_t i = 0; i < 3 * mNumTriangles; ++i)
-                tri.read(triangleIndicies[i]);
+                tri.read(triangleIndices[i]);
 
-            mTriangleIndicies.swap(triangleIndicies);
+            mTriangleIndices.swap(triangleIndices);
 
-            boost::scoped_array<std::int32_t> quadIndicies(new std::int32_t[3 * mNumQuads]);
+            boost::scoped_array<std::int32_t> quadIndices(new std::int32_t[3 * mNumQuads]);
             for (std::size_t i = 0; i < 3 * mNumQuads; ++i)
-                tri.read(quadIndicies[i]);
+                tri.read(quadIndices[i]);
 
-            mQuadIndicies.swap(quadIndicies);
+            mQuadIndices.swap(quadIndices);
 
             //std::cout << "TRI: " << name << std::endl; // FIXME: for testing only
 

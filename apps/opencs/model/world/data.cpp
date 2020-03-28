@@ -954,7 +954,7 @@ int CSMWorld::Data::startLoading (const boost::filesystem::path& path, bool base
         mReader->setIndex(mReaderIndex-1); // use the same index
         static_cast<ESM::ESM4Reader*>(mReader)->reader().setModIndex(mReaderIndex-1);
         static_cast<ESM::ESM4Reader*>(mReader)->openTes4File(path.string());
-        static_cast<ESM::ESM4Reader*>(mReader)->reader().updateModIndicies(mLoadedFiles);
+        static_cast<ESM::ESM4Reader*>(mReader)->reader().updateModIndices(mLoadedFiles);
     }
     mLoadedFiles.push_back(path.filename().string());
 

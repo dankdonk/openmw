@@ -52,8 +52,8 @@ namespace FgLib
         std::uint32_t mNumTotalStatMorphVertices;
 
         boost::scoped_array<float> mVertices;
-        boost::scoped_array<std::int32_t> mTriangleIndicies;
-        boost::scoped_array<std::int32_t> mQuadIndicies;
+        boost::scoped_array<std::int32_t> mTriangleIndices;
+        boost::scoped_array<std::int32_t> mQuadIndices;
 
         std::vector<std::string> mLabelledDiffMorphs; // names
         std::map<std::string, std::pair<float, std::vector<std::int16_t> > > mLabelledDiffMorphsMap;
