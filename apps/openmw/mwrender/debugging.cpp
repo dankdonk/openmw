@@ -38,6 +38,7 @@ namespace MWRender
 
 static const std::string PATHGRID_POINT_MATERIAL = "pathgridPointMaterial";
 static const std::string PATHGRID_LINE_MATERIAL = "pathgridLineMaterial";
+static const std::string PATHGRID_ALT_POINT_MATERIAL = "pathgridPriorityPointMaterial";
 static const std::string PATHGRID_ALT_LINE_MATERIAL = "pathgridAltLineMaterial";
 static const std::string DEBUGGING_GROUP = "debugging";
 static const float POINT_MESH_BASE = 35.f;
@@ -74,6 +75,16 @@ void Debugging::createGridMaterials()
         pointMatPtr->getTechnique(0)->getPass(0)->setDiffuse(1,0,0,0);
         pointMatPtr->getTechnique(0)->getPass(0)->setAmbient(1,0,0);
         pointMatPtr->getTechnique(0)->getPass(0)->setSelfIllumination(1,0,0);
+    }
+
+    if (!MaterialManager::getSingleton().getByName(PATHGRID_ALT_POINT_MATERIAL, DEBUGGING_GROUP))
+    {
+        MaterialPtr pointMatPtr = MaterialManager::getSingleton().create(PATHGRID_ALT_POINT_MATERIAL, DEBUGGING_GROUP);
+        pointMatPtr->setReceiveShadows(false);
+        pointMatPtr->getTechnique(0)->setLightingEnabled(true);
+        pointMatPtr->getTechnique(0)->getPass(0)->setDiffuse(0,0,1,0);
+        pointMatPtr->getTechnique(0)->getPass(0)->setAmbient(0,0,1);
+        pointMatPtr->getTechnique(0)->getPass(0)->setSelfIllumination(0,0,1);
     }
     mGridMatsCreated = true;
 }
@@ -208,7 +219,7 @@ Ogre::ManualObject *Debugging::createTES4PathgridConnections(const ESM4::Pathgri
 
     for (std::size_t i = 0; i < conns.size(); ++i)
     {
-        const ESM4::Pathgrid::PGRP& p1 = nodes[conns[i].localNode];
+        const ESM4::Pathgrid::PGRP& p1 = nodes[(conns[i].localNode & 0xffff)]; // sometimes junk bits
 
         Ogre::Vector3 start(p1.x, p1.y, p1.z+10.f);                 // raise a little for visibility
         Ogre::Vector3 end(conns[i].x, conns[i].y, conns[i].z+10.f); // raise a little for visibility
@@ -228,13 +239,44 @@ Ogre::ManualObject *Debugging::createTES4PathgridPoints(const ESM4::Pathgrid *pa
     Ogre::ManualObject *result = mSceneMgr->createManualObject();
     const float height = POINT_MESH_BASE * sqrtf(2);
 
-    result->begin(PATHGRID_POINT_MATERIAL, RenderOperation::OT_TRIANGLE_STRIP);
-
+    bool priority = false;
     bool first = true;
     uint32 startIndex = 0;
     std::vector<ESM4::Pathgrid::PGRP> nodes = pathgrid->mNodes;
     for (std::size_t i = 0; i < nodes.size(); ++i, startIndex += 6)
     {
+        if (first)
+        {
+            if (nodes[i].priority == 1)
+            {
+                result->begin(PATHGRID_ALT_POINT_MATERIAL, RenderOperation::OT_TRIANGLE_STRIP);
+                priority = true;
+            }
+            else
+                result->begin(PATHGRID_POINT_MATERIAL, RenderOperation::OT_TRIANGLE_STRIP);
+        }
+        else
+        {
+            if (priority && nodes[i].priority == 0) // changed
+            {
+                result->end();
+
+                result->begin(PATHGRID_POINT_MATERIAL, RenderOperation::OT_TRIANGLE_STRIP);
+                priority = false;
+                first = true;
+                startIndex = 0;
+            }
+            else if (!priority && nodes[i].priority == 1) // changed
+            {
+                result->end();
+
+                result->begin(PATHGRID_ALT_POINT_MATERIAL, RenderOperation::OT_TRIANGLE_STRIP);
+                priority = true;
+                first = true;
+                startIndex = 0;
+            }
+        }
+
         Ogre::Vector3 pointPos(nodes[i].x, nodes[i].y, nodes[i].z);
         if (!first)
         {

@@ -2560,6 +2560,8 @@ ICMarketDistrictTheBestDefenseBasement doesn't have a PGRR.  Maybe some links ne
 
 **FIXME:** Noticed that some pathgrid points are floating in the air - again, a dummy physics shape can be used to "snap" to ground.
 
+We also need a way to find paths to adjacent cells as well as far away destinations.  And we still don't know which nodes are the "blue" priority ones.
+
 
 [//]: # (/* spell spelllang=en_au syntax=cpp */)
 [//]: # (/* vim: set ft=markdown tw=0 lbr bri fen fdm=marker fdl=0: */)
