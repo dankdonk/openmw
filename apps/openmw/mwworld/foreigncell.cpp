@@ -61,7 +61,7 @@ void MWWorld::ForeignCell::preload (ESM4::Reader& reader)
     if (reader.grp().type == ESM4::Grp_InteriorSubCell)
         mIsInterior = true;
 
-    mCell = new ESM4::Cell;
+    mCell = new ESM4::Cell; // deleted in dtor
 
     mHasChildren = mCell->preload(reader);
 

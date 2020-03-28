@@ -463,7 +463,7 @@ namespace MWWorld
     {
     private:
 
-        std::map<ESM4::FormId, ForeignCell*> mCells;
+        std::map<std::uint64_t, ForeignCell*> mCells;
 
         std::map<std::string, ESM4::FormId> mEditorIdMap;
 

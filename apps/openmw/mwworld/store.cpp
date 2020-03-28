@@ -1221,14 +1221,22 @@ namespace MWWorld
         bool isDeleted = false;
 
         record->load(esm, isDeleted);
-
+#if 0
         std::pair<std::map<ESM4::FormId, MWWorld::ForeignWorld*>::iterator, bool> ret
             = mWorlds.insert(std::make_pair(record->mFormId, record));
         // Try to overwrite existing record
         // FIXME: should this be merged instead?
         if (!ret.second)
             ret.first->second = record;
-
+#else
+        std::map<ESM4::FormId, MWWorld::ForeignWorld*>::iterator lb = mWorlds.lower_bound(record->mFormId);
+        if (lb != mWorlds.end() && !(mWorlds.key_comp()(record->mFormId, lb->first)))
+        {
+            // FIXME: how to merge? are there anything to merge or update?
+        }
+        else
+            mWorlds.insert(lb, std::make_pair(record->mFormId, record));
+#endif
         //std::cout << "World: " << ESM4::formIdToString(record->mFormId) << std::endl; // FIXME: debug
 
         return RecordId(ESM4::formIdToString(record->mFormId), ((record->mFlags & ESM4::Rec_Deleted) != 0));
@@ -1236,7 +1244,7 @@ namespace MWWorld
 
     Store<MWWorld::ForeignCell>::~Store()
     {
-        std::map<ESM4::FormId, MWWorld::ForeignCell*>::iterator it = mCells.begin();
+        std::map<std::uint64_t, MWWorld::ForeignCell*>::iterator it = mCells.begin();
         for (; it != mCells.end(); ++it)
             delete it->second;
     }
@@ -1286,19 +1294,64 @@ namespace MWWorld
         int32_t groupType = grp.type;
         ESM4::GroupLabel groupLabel = grp.label;
 
-        // partially load cell record
-        // FIXME: the logic here is badly broken, since a new foreign cell is created each time
-        // Should check if it exists already
-        MWWorld::ForeignCell *cell = new MWWorld::ForeignCell();
         reader.getRecordData();
-        cell->preload(reader);
 
+        // check for deleted record? does it matter if it is the base or a mod?
+        std::uint32_t flags  = reader.hdr().record.flags;
+        if ((reader.hdr().record.flags & ESM4::Rec_Deleted) != 0)
+        {
+            std::cout << "some CELL deleted message" << std::endl; // FIXME
+            return;
+        }
+
+        // FIXME: need to merge CELL records
+        // Pathgrid.esp
+		// cell->mCell->mFormId	0x0001BD1F ICMarketDistrict01 PGRD FormId 0x0001C2C7
+		// cell->mCell->mFormId	0x0001BD21 ICMarketDistrict04 PGRD FormId 0x0001C2C8
+		// cell->mCell->mFormId	0x00165F2C                    PGRD FormId 0x00175BCA
+		// cell->mCell->mFormId	0x0001BD1E ICMarketDistrict02 PGRD FormId 0x0001C2C9
+		// cell->mCell->mFormId	0x0001BD20 ICMarketDistrict03 PGRD FormId 0x0001C2CA
+#if 0
         std::pair<std::map<ESM4::FormId, MWWorld::ForeignCell*>::iterator, bool> res
             = mCells.insert(std::make_pair(cell->mCell->mFormId, cell));
         if (!res.second) // cell exists
-            throw std::runtime_error("Store<ForeignCell>::preload memory leak");
-        if (cell->mHasChildren)
-            res.first->second->addFileContext(ctx);
+            std::cout << "merge!" << std::endl;
+            //throw std::runtime_error("Store<ForeignCell>::preload memory leak");
+#else
+        MWWorld::ForeignCell *cell = new MWWorld::ForeignCell(); // deleted in dtor
+
+        ESM4::FormId id = reader.hdr().record.id;
+        std::map<std::uint64_t, MWWorld::ForeignCell*>::iterator lb = mCells.lower_bound(id);
+        if (lb != mCells.end() && !(mCells.key_comp()(id, lb->first)))
+        {
+            std::cout << "CELL modified " << ESM4::formIdToString(id) << std::endl; // FIXME: for testing
+
+            // HACK: need to store these somehow, so add the mod index the FormId to
+            // differentiate it from the base that is being modified
+            std::uint64_t modId(ctx.modIndex);
+            modId <<= 8;
+            modId |= id;
+
+            lb->second->addFileContext(ctx);
+
+            // no need to preload but how to skip?
+            cell->preload(reader);
+
+            mCells.insert(lb, std::make_pair(modId, cell));
+
+            return;
+        }
+        else // none found
+        {
+            // partially load cell record
+            cell->preload(reader);
+
+            mCells.insert(lb, std::make_pair(std::uint64_t(id), cell));
+
+            if (cell->mHasChildren)
+                cell->addFileContext(ctx);
+        }
+#endif
 
         // FIXME: cleanup the mess of logic below, may need to refactor using a function or two
 
@@ -1339,6 +1392,10 @@ namespace MWWorld
                 std::cout << "Cell grid mismatch, x " << std::dec << cell->mCell->mX << ", y " << cell->mCell->mY
                           << " label x " << groupLabel.grid[1] << ", y " << groupLabel.grid[0]
                           << std::endl; // FIXME: debug only
+
+
+            if (cell->mCell->mFormId == 0x0001BD1F)
+                std::cout << "insert to world " << std::endl;
 
             world->insertCellGridMap(cell->mCell->mX, cell->mCell->mY, cell->mCell->mFormId);
             // FIXME: what to do if one already exists?
@@ -1392,7 +1449,7 @@ namespace MWWorld
     void Store<MWWorld::ForeignCell>::testPreload(ESM::ESMReader &esm)
     {
         //FIXME below is for testing only
-        std::map<ESM4::FormId, MWWorld::ForeignCell*>::iterator it = mCells.find(mLastPreloadedCell);
+        std::map<std::uint64_t, MWWorld::ForeignCell*>::iterator it = mCells.find(mLastPreloadedCell);
         if (it != mCells.end())
             it->second->testPreload(esm);
         else
@@ -1451,7 +1508,7 @@ namespace MWWorld
     {
         ForeignCell *cell = 0;
 
-        std::map<ESM4::FormId, MWWorld::ForeignCell*>::const_iterator it = mCells.begin();
+        std::map<std::uint64_t, MWWorld::ForeignCell*>::const_iterator it = mCells.begin();
         for (;it != mCells.end(); ++it)
         {
             if (!it->second->mIsInterior && Misc::StringUtils::ciEqual(it->second->mCell->mEditorId, name))
@@ -1493,7 +1550,7 @@ namespace MWWorld
 
     const MWWorld::ForeignCell *Store<MWWorld::ForeignCell>::find(ESM4::FormId formId) const
     {
-        std::map<ESM4::FormId, MWWorld::ForeignCell*>::const_iterator it = mCells.find(formId);
+        std::map<std::uint64_t, MWWorld::ForeignCell*>::const_iterator it = mCells.find(std::uint64_t(formId));
         if (it != mCells.end())
             return it->second;
 

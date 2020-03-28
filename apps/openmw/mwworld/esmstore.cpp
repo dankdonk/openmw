@@ -484,7 +484,10 @@ void ESMStore::loadTes4Record (ESM::ESMReader& esm)
         case ESM4::REC_ROAD: // Oblivion only?
         {
             //std::cout << ESM4::printName(hdr.record.typeId) << " skipping..." << std::endl;
-            reader.skipRecordData();
+            //reader.skipRecordData();
+            reader.getRecordData();
+            ESM4::Road record;
+            record.load(reader); // FIXME not stored yet
             break;
         }
 #endif
