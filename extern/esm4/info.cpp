@@ -69,6 +69,8 @@ void ESM4::DialogInfo::load(ESM4::Reader& reader)
             case ESM4::SUB_TCLF: // FormId
             case ESM4::SUB_SCTX: // result script source
             case ESM4::SUB_SCRO: // FormId GLOB reference
+            case ESM4::SUB_PNAM: // TES4 DLC
+            case ESM4::SUB_TPIC: // TES4 DLC
             {
                 //std::cout << "INFO " << ESM4::printName(subHdr.typeId) << " skipping..."
                         //<< subHdr.dataSize << std::endl;

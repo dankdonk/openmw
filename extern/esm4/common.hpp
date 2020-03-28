@@ -522,6 +522,7 @@ namespace ESM4
         SUB_TCLF = MKTAG('T','C','L','F'),
         SUB_TCLT = MKTAG('T','C','L','T'),
         SUB_TRDT = MKTAG('T','R','D','T'),
+        SUB_TPIC = MKTAG('T','P','I','C'),
 
         SUB_PKDT = MKTAG('P','K','D','T'),
         SUB_PSDT = MKTAG('P','S','D','T'),
