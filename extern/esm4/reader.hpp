@@ -148,7 +148,7 @@ namespace ESM4
         // The object setting up this reader needs to supply the file's load order index
         // so that the formId's in this file can be adjusted with the file (i.e. mod) index.
         void setModIndex(int index) { mCtx.modIndex = (index << 24) & 0xff000000; }
-        void updateModIndicies(const std::vector<std::string>& files);
+        void updateModIndices(const std::vector<std::string>& files);
 
         // Maybe should throw an exception if called when not valid?
         const CellGrid& currCellGrid() const;

@@ -180,13 +180,13 @@ void NiBtOgre::NiModel::createNiObjects()
 // find the bones, if any (i.e. prepare for the skeleton loader)
 void NiBtOgre::NiModel::findBoneNodes(bool buildObjectPalette, size_t rootIndex)
 {
-    if (mBuildData.mSkelLeafIndicies.size() > 1) // TODO: should we allow skeleton with a single bone?
+    if (mBuildData.mSkelLeafIndices.size() > 1) // TODO: should we allow skeleton with a single bone?
     {
         int32_t index;
         NiNode *node;
-        for (std::size_t i = 0; i < mBuildData.mSkelLeafIndicies.size(); ++i)
+        for (std::size_t i = 0; i < mBuildData.mSkelLeafIndices.size(); ++i)
         {
-            index = mBuildData.mSkelLeafIndicies[i];
+            index = mBuildData.mSkelLeafIndices[i];
             // dungeons\ayleidruins\exterior\arwellgrate01.nif has a NiBillboardNode target
             if (blockType(index) != "NiNode" && blockType(index) != "NiBillboardNode")
                 continue; // FIXME: morroblivion\flora\bushes\corkbulb01anim.nif, index 0x20
@@ -406,7 +406,7 @@ void NiBtOgre::NiModel::buildSkeleton(bool load)
     if (mSkeleton)
         return; // we may already have an externally supplied skeleton
 
-    if (mBuildData.mSkelLeafIndicies.size() > 1)
+    if (mBuildData.mSkelLeafIndices.size() > 1)
     {
         mSkeleton = Ogre::SkeletonManager::getSingleton().getByName(getName(), mGroup);
         if (!mSkeleton)
@@ -469,17 +469,17 @@ NiBtOgre::NiTriBasedGeom *NiBtOgre::NiModel::getUniqueNiTriBasedGeom() const
     return ninode->getUniqueSubMeshChild();
 }
 
-void NiBtOgre::NiModel::fillSkinIndicies(std::map<std::string, std::vector<std::size_t> >& skinIndiciesMap) const
+void NiBtOgre::NiModel::fillSkinIndices(std::map<std::string, std::vector<std::size_t> >& skinIndicesMap) const
 {
-    std::vector<std::size_t> skinIndicies;
+    std::vector<std::size_t> skinIndices;
 
     std::map<NiNodeRef, NiNode*>::const_iterator iter;
     for (iter = mBuildData.mMeshBuildList.begin(); iter != mBuildData.mMeshBuildList.end(); ++iter)
     {
-        skinIndicies.clear();
-        iter->second->getSkinIndicies(skinIndicies);
-        if (!skinIndicies.empty())
-            skinIndiciesMap.insert(std::make_pair(iter->second->getName(), skinIndicies));
+        skinIndices.clear();
+        iter->second->getSkinIndices(skinIndices);
+        if (!skinIndices.empty())
+            skinIndicesMap.insert(std::make_pair(iter->second->getName(), skinIndices));
     }
 }
 
@@ -570,12 +570,12 @@ void NiBtOgre::BuildData::setNiNodeParent(NiAVObjectRef child, NiNode *parent)
 #if 0
 void NiBtOgre::BuildData::addNewSkelLeafIndex(NiNodeRef leaf)
 {
-    if (std::find(mSkelLeafIndicies.begin(), mSkelLeafIndicies.end(), leaf) == mSkelLeafIndicies.end())
-        mSkelLeafIndicies.push_back(leaf);
+    if (std::find(mSkelLeafIndices.begin(), mSkelLeafIndices.end(), leaf) == mSkelLeafIndices.end())
+        mSkelLeafIndices.push_back(leaf);
 }
 
 bool NiBtOgre::BuildData::hasBoneLeaf(NiNodeRef leaf) const
 {
-     return std::find(mSkelLeafIndicies.begin(), mSkelLeafIndicies.end(), leaf) != mSkelLeafIndicies.end();
+     return std::find(mSkelLeafIndices.begin(), mSkelLeafIndices.end(), leaf) != mSkelLeafIndices.end();
 }
 #endif

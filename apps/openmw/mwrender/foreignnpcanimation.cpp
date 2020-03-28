@@ -1910,7 +1910,7 @@ void ForeignNpcAnimation::replaceMeshTexture(NifOgre::ObjectScenePtr scene, cons
 void ForeignNpcAnimation::replaceSkinTexture(NifOgre::ObjectScenePtr scene, const std::string& npcTextureName)
 {
     std::map<std::string, std::vector<std::size_t> > visibleSkinMap;
-    scene->mForeignObj->mModel->fillSkinIndicies(visibleSkinMap);
+    scene->mForeignObj->mModel->fillSkinIndices(visibleSkinMap);
 
     if (visibleSkinMap.empty())
         return;
@@ -1929,10 +1929,10 @@ void ForeignNpcAnimation::replaceSkinTexture(NifOgre::ObjectScenePtr scene, cons
         std::map<std::string, std::vector<std::size_t> >::iterator lb = visibleSkinMap.lower_bound(nodeName);
         if (lb != visibleSkinMap.end() && !(visibleSkinMap.key_comp()(nodeName, lb->first)))
         {
-            const std::vector<std::size_t>& skinIndicies = lb->second;
-            for (std::size_t i = 0; i < skinIndicies.size(); ++i)
+            const std::vector<std::size_t>& skinIndices = lb->second;
+            for (std::size_t i = 0; i < skinIndices.size(); ++i)
             {
-                Ogre::MaterialPtr mat = createClonedMaterials(it->second->getSubEntity(skinIndicies[i]));
+                Ogre::MaterialPtr mat = createClonedMaterials(it->second->getSubEntity(skinIndices[i]));
 
                 Ogre::Material::TechniqueIterator techIter = mat->getTechniqueIterator();
                 while(techIter.hasMoreElements())

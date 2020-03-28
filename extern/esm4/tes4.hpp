@@ -74,7 +74,7 @@ namespace ESM4
 
         // position in the vector = mod index of master files above
         // value = adjusted mod index based on all the files loaded so far
-        std::vector<std::uint32_t> mModIndicies;
+        std::vector<std::uint32_t> mModIndices;
 
         void load (Reader& reader);
         //void save (Writer& writer);

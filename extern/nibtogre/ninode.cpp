@@ -184,12 +184,12 @@ void NiBtOgre::NiNode::buildMesh(Ogre::Mesh *mesh)
     }
 }
 
-void NiBtOgre::NiNode::getSkinIndicies(std::vector<std::size_t>& skinIndicies) const
+void NiBtOgre::NiNode::getSkinIndices(std::vector<std::size_t>& skinIndices) const
 {
     for (size_t i = 0; i < mSubMeshChildren.size(); ++i)
     {
         if (mSubMeshChildren.at(i)->hasVisibleSkin())
-            skinIndicies.push_back(mSubMeshChildren.at(i)->getSubMeshIndex());
+            skinIndices.push_back(mSubMeshChildren.at(i)->getSubMeshIndex());
     }
 }
 
@@ -295,13 +295,13 @@ void NiBtOgre::NiNode::addBones(Ogre::Skeleton *skeleton,
     {
 #if 0
         std::size_t i = 0;
-        for (; i < mData.mSkelLeafIndicies.size(); ++i)
+        for (; i < mData.mSkelLeafIndices.size(); ++i)
         {
-            if (NiObject::selfRef()  == mData.mSkelLeafIndicies[i])
+            if (NiObject::selfRef()  == mData.mSkelLeafIndices[i])
                 break;
         }
 
-        if (i < mData.mSkelLeafIndicies.size())
+        if (i < mData.mSkelLeafIndices.size())
 #else
         // this only works if mObjectPalette was built
         const std::map<std::string, NiAVObjectRef>& objPalette = mModel.getObjectPalette();

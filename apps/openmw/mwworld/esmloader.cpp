@@ -44,7 +44,7 @@ void EsmLoader::load(const boost::filesystem::path& filepath, std::vector<std::v
         esm->setIndex(index);
         esm->reader().setModIndex(index);
         esm->openTes4File(filepath.string());
-        esm->reader().updateModIndicies(contentFiles[tesVerIndex]);
+        esm->reader().updateModIndices(contentFiles[tesVerIndex]);
         // FIXME: this does not work well (copies the base class pointer)
         //i.e. have to check TES4/TES5 versions each time before use within EsmStore::load,
         //static casting as required

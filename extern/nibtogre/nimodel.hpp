@@ -104,7 +104,7 @@ namespace NiBtOgre
         // these are then used as the starting points for NiNode::findBones which recursively
         // traverses till a skeleton root is found - the main objective is to filter out any
         // NiNodes that are not needed as bones (to minimise the number of bones)
-        std::vector<NiNodeRef> mSkelLeafIndicies; // tempoarily used to find the bones
+        std::vector<NiNodeRef> mSkelLeafIndices; // tempoarily used to find the bones
 
         // adds without checking
         // NiSkinInstance - bone refs
@@ -112,7 +112,7 @@ namespace NiBtOgre
         // NiKeyframeController - target refs
         // NiMultiTargetTransformController - extra target refs (what is this?)
         // NiTriBasedGeom - hack for testing animation of sub-mesh
-        void addSkelLeafIndex(NiNodeRef leaf) { mSkelLeafIndicies.push_back(leaf); }
+        void addSkelLeafIndex(NiNodeRef leaf) { mSkelLeafIndices.push_back(leaf); }
 
         // only adds if none found
         //void addNewSkelLeafIndex(NiNodeRef leaf); // FIXME: not used?
@@ -339,10 +339,10 @@ namespace NiBtOgre
 
         // for replacing visible skin textures
         // mesh name and sub-mesh indices
-        std::map<std::string, std::vector<std::size_t> > mSkinIndicies;
+        std::map<std::string, std::vector<std::size_t> > mSkinIndices;
 
         // fills a map of NiTriBasedGeom name and visible skin sub-mesh indices
-        void fillSkinIndicies(std::map<std::string, std::vector<std::size_t> >&) const;
+        void fillSkinIndices(std::map<std::string, std::vector<std::size_t> >&) const;
 
         // supply skeleton for skinned objects
         void createMesh(bool isMorphed = false, Ogre::SkeletonPtr skeleton = Ogre::SkeletonPtr());

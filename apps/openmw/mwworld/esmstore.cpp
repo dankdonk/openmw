@@ -102,7 +102,7 @@ void ESMStore::load(ESM::ESMReader& esm, Loading::Listener* listener)
     }
 
     // FIXME: for TES4/TES5 whether a dependent file is loaded is already checked in
-    // ESM4::Reader::updateModIndicies() which is called in EsmLoader::load() before this
+    // ESM4::Reader::updateModIndices() which is called in EsmLoader::load() before this
     if (!(isTes4 || isTes5 || isFONV)) // MW only
     {
         /// \todo Move this to somewhere else. ESMReader?
