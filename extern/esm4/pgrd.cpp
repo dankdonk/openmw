@@ -27,9 +27,10 @@
 #include "pgrd.hpp"
 
 #include <stdexcept>
-#include <iostream> // FIXME: for debugging only
-#include <iomanip>  // FIXME: for debugging only
-#include <boost/scoped_array.hpp> // FIXME
+//#include <iostream> // FIXME: for debugging only
+//#include <iomanip>  // FIXME: for debugging only
+
+//#include <boost/scoped_array.hpp> // FIXME for debugging only
 
 #include "formid.hpp" // FIXME: for mEditorId workaround
 #include "reader.hpp"
@@ -78,15 +79,6 @@ void ESM4::Pathgrid::load(ESM4::Reader& reader)
                         mNodes.at(i).priority = 0;
                     else
                         mNodes.at(i).priority = 1;
-#if 0
-                    if (mFormId == 0x0001C2C8)
-                    {
-                        std::bitset<8> out1(mNodes.at(i).priority);
-                        std::bitset<16> out2(mNodes.at(i).unknown);
-                        std::cout << i << "," << std::to_string(mNodes.at(i).numLinks)
-                            << "," << out1 << "," << out2 << std::endl;
-                    }
-#endif
                 }
 
                 break;
@@ -105,7 +97,7 @@ void ESM4::Pathgrid::load(ESM4::Reader& reader)
                         if (link.endNode == -1)
                             continue;
 
-                        // ICMarketDistrictTheBestDefenseBasement doesn't have a PGRR
+                        // ICMarketDistrictTheBestDefenseBasement doesn't have a PGRR sub-record
                         // CELL formId 00049E2A
                         // PGRD formId 000304B7
                         //if (mFormId == 0x0001C2C8)

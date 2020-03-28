@@ -153,6 +153,8 @@ namespace MWWorld
             CellRefList<ESM4::Note>             mForeignNotes;
 
             ForeignStore<ESM4::Pathgrid>        mForeignPathgrids;
+            ESM::Pathgrid mPathgrid; // FIXME: just a quick workaround
+            void buildTES3Pathgrid();
 
             void loadTes4Group (const MWWorld::ESMStore &store, ESM::ESMReader& esm);
             void loadTes4Record (const MWWorld::ESMStore &store, ESM::ESMReader& esm);
@@ -312,6 +314,7 @@ namespace MWWorld
             std::list<ESM::Pathgrid::Point> aStarSearch(const int start, const int end) const;
 
             const ESM4::Pathgrid *getTES4Pathgrid() const;
+            const ESM::Pathgrid *getTES3Pathgrid() const;
 
         private:
 

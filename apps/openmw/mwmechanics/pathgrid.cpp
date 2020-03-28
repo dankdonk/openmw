@@ -106,10 +106,14 @@ namespace MWMechanics
 
         mCell = cell->getCell();
         mIsExterior = cell->getCell()->isExterior();
-        mPathgrid = MWBase::Environment::get().getWorld()->getStore().get<ESM::Pathgrid>().search(*cell->getCell());
+        if (cell->isForeignCell())
+            mPathgrid = cell->getTES3Pathgrid();
+        else
+            mPathgrid
+                = MWBase::Environment::get().getWorld()->getStore().get<ESM::Pathgrid>().search(*cell->getCell());
+
         if(!mPathgrid)
             return false;
-
 
         mGraph.resize(mPathgrid->mPoints.size());
         for(int i = 0; i < static_cast<int> (mPathgrid->mEdges.size()); i++)
