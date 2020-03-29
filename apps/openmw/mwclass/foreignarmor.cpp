@@ -165,7 +165,7 @@ namespace MWClass
     {
         MWWorld::LiveCellRef<ESM4::Armor> *ref = ptr.get<ESM4::Armor>();
 
-        return ref->mBase->mData.armor / 100;
+        return ref->mBase->mData.armor / 100.f;
     }
 
     void ForeignArmor::registerSelf()

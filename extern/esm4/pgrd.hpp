@@ -50,12 +50,6 @@ namespace ESM4
             std::uint16_t unknown;  // probably padding
         };
 
-        struct PGRR
-        {
-            std::int16_t startNode;
-            std::int16_t endNode;
-        };
-
         struct PGRI
         {
             std::int32_t localNode;
@@ -63,13 +57,19 @@ namespace ESM4
             float y; // foreign
             float z; // foreign
         };
+#pragma pack(pop)
+
+        struct PGRR
+        {
+            std::int16_t startNode;
+            std::int16_t endNode;
+        };
 
         struct PGRL
         {
             FormId object;
             std::vector<std::int32_t> linkedNodes;
         };
-#pragma pack(pop)
 
         FormId mFormId;       // from the header
         std::uint32_t mFlags; // from the header, see enum type RecordFlag for details

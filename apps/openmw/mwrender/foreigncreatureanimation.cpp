@@ -109,7 +109,9 @@ ForeignCreatureAnimation::ForeignCreatureAnimation(const MWWorld::Ptr &ptr, cons
     }
     else if (mObjectRoot->mSkelBase->getSkeleton()->hasBone("Bip02"))
     {
-    std::cout << ref->mBase->mEditorId << " Bip02 " << ref->mBase->mFullName << std::endl;
+        // FIXME: just testing which creatures have this; looks like mainly horses
+        //std::cout << ref->mBase->mEditorId << " Bip02 " << ref->mBase->mFullName << std::endl;
+
         Ogre::Bone* b2 = mObjectRoot->mSkelBase->getSkeleton()->getBone("Bip02");
         Ogre::Bone* bna2 = mObjectRoot->mSkelBase->getSkeleton()->getBone("Bip02 NonAccum");
         if (b2 && bna2)

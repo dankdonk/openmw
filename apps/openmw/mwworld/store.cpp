@@ -1393,10 +1393,6 @@ namespace MWWorld
                           << " label x " << groupLabel.grid[1] << ", y " << groupLabel.grid[0]
                           << std::endl; // FIXME: debug only
 
-
-            if (cell->mCell->mFormId == 0x0001BD1F)
-                std::cout << "insert to world " << std::endl;
-
             world->insertCellGridMap(cell->mCell->mX, cell->mCell->mY, cell->mCell->mFormId);
             // FIXME: what to do if one already exists?
         }

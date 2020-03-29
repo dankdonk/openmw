@@ -62,9 +62,9 @@ void Debugging::createGridMaterials()
         MaterialPtr lineMatPtr = MaterialManager::getSingleton().create(PATHGRID_ALT_LINE_MATERIAL, DEBUGGING_GROUP);
         lineMatPtr->setReceiveShadows(false);
         lineMatPtr->getTechnique(0)->setLightingEnabled(true);
-        lineMatPtr->getTechnique(0)->getPass(0)->setDiffuse(1,0.45,0,0);
-        lineMatPtr->getTechnique(0)->getPass(0)->setAmbient(1,0.45,0);
-        lineMatPtr->getTechnique(0)->getPass(0)->setSelfIllumination(1,0.45,0);
+        lineMatPtr->getTechnique(0)->getPass(0)->setDiffuse(1.f,0.45f,0.f,0.f);
+        lineMatPtr->getTechnique(0)->getPass(0)->setAmbient(1.f,0.45f,0.f);
+        lineMatPtr->getTechnique(0)->getPass(0)->setSelfIllumination(1.f,0.45f,0.f);
     }
 
     if (!MaterialManager::getSingleton().getByName(PATHGRID_POINT_MATERIAL, DEBUGGING_GROUP))
@@ -82,9 +82,9 @@ void Debugging::createGridMaterials()
         MaterialPtr pointMatPtr = MaterialManager::getSingleton().create(PATHGRID_ALT_POINT_MATERIAL, DEBUGGING_GROUP);
         pointMatPtr->setReceiveShadows(false);
         pointMatPtr->getTechnique(0)->setLightingEnabled(true);
-        pointMatPtr->getTechnique(0)->getPass(0)->setDiffuse(0,0,1,0);
-        pointMatPtr->getTechnique(0)->getPass(0)->setAmbient(0,0,1);
-        pointMatPtr->getTechnique(0)->getPass(0)->setSelfIllumination(0,0,1);
+        pointMatPtr->getTechnique(0)->getPass(0)->setDiffuse(0.f,0.f,1.f,0.f);
+        pointMatPtr->getTechnique(0)->getPass(0)->setAmbient(0.f,0.f,1.f);
+        pointMatPtr->getTechnique(0)->getPass(0)->setSelfIllumination(0.f,0.f,1.f);
     }
     mGridMatsCreated = true;
 }
