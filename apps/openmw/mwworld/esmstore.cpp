@@ -268,7 +268,7 @@ void ESMStore::loadTes4Group (ESM::ESMReader &esm)
             reader.adjustGRUPFormId();  // not needed or even shouldn't be done? (only labels anyway)
             reader.saveGroupStatus();
 //#if 0
-            // Below test shows that Oblivion.esm does not have any persistent cell child
+            // This test shows that Oblivion.esm does not have any persistent cell child
             // groups under exterior world sub-block group.  Haven't checked other files yet.
              if (reader.grp(0).type == ESM4::Grp_CellPersistentChild &&
                  reader.grp(1).type == ESM4::Grp_CellChild &&
@@ -288,8 +288,24 @@ void ESMStore::loadTes4Group (ESM::ESMReader &esm)
             break;
         }
         case ESM4::Grp_CellTemporaryChild:
+        {
+            reader.skipGroup(); // FIXME: testing
+            break;
+        }
         case ESM4::Grp_CellVisibleDistChild:
         {
+            if (0)//hdr.group.type == ESM4::Grp_CellVisibleDistChild)
+            {
+                int stackSize = reader.stackSize();
+                std::cout << "Cell Visible Distant Child group" << std::endl;
+                std::cout << "    Parent group "
+                    << ESM4::printLabel(reader.grp(stackSize-1).label, reader.grp(stackSize-1).type) << std::endl;
+                std::cout << "        Parent group "
+                    << ESM4::printLabel(reader.grp(stackSize-2).label, reader.grp(stackSize-2).type) << std::endl;
+                std::cout << "            Parent group "
+                    << ESM4::printLabel(reader.grp(stackSize-3).label, reader.grp(stackSize-3).type) << std::endl;
+            }
+
             // NOTE: preload strategy and persistent records
             //
             // Current strategy defers loading of "temporary" or "visible when distant"
@@ -303,7 +319,9 @@ void ESMStore::loadTes4Group (ESM::ESMReader &esm)
             // For worldspaces the persistent records are usully (always?) stored in a dummy
             // cell under a "world child" group.  It may be possible to skip the whole "cell
             // child" group without scanning for persistent records.  See above short test.
-            reader.skipGroup();
+            //reader.skipGroup();
+            reader.saveGroupStatus();
+            loadTes4Group(esm);
             break;
         }
         case ESM4::Grp_ExteriorCell:
@@ -338,10 +356,10 @@ void ESMStore::loadTes4Record (ESM::ESMReader& esm)
         case ESM4::REC_EYES: reader.getRecordData(); mForeignEyesSet.load(esm); break;
         case ESM4::REC_RACE: reader.getRecordData(); mForeignRaces.load(esm); break;
         case ESM4::REC_SOUN: reader.getRecordData(); mForeignSounds.load(esm); break;
-		// SKIL, MGEF
+        // SKIL, MGEF
         case ESM4::REC_LTEX: reader.getRecordData(); mForeignLandTextures.load(esm); break;
         case ESM4::REC_SCPT: reader.getRecordData(); mForeignScripts.load(esm); break;
-		// ENCH, SPEL, BSGN
+        // ENCH, SPEL, BSGN
         // ---- referenceables start
         case ESM4::REC_ACTI: reader.getRecordData(); mForeignActivators.load(esm); break;
         case ESM4::REC_APPA: reader.getRecordData(); mForeignApparatuses.load(esm); break;
@@ -387,6 +405,8 @@ void ESMStore::loadTes4Record (ESM::ESMReader& esm)
         //case ESM4::REC_REGN: reader.getRecordData(); mForeignRegions.load(esm); break;
         case ESM4::REC_CELL:
         {
+            //std::cout << "about to preload, stackSize " << reader.stackSize() << std::endl; // FIXME
+
             // do not load and just save context
             mForeignCells.preload(esm, mForeignWorlds);
             // FIXME: deal with deleted recods
@@ -416,6 +436,9 @@ void ESMStore::loadTes4Record (ESM::ESMReader& esm)
         // WATR, EFSH
         case ESM4::REC_REFR:
         {
+            if (hdr.group.type == ESM4::Grp_CellVisibleDistChild)
+                std::cout << "visible distant refr" << std::endl;
+
             // this REFR must be in "Cell Persistent Child" group
             ESM4::Reference record;
 
@@ -435,12 +458,18 @@ void ESMStore::loadTes4Record (ESM::ESMReader& esm)
         }
         case ESM4::REC_ACHR:
         {
+            if (hdr.group.type == ESM4::Grp_CellVisibleDistChild)
+                std::cout << "visible distant achr" << std::endl;
+
             // this ACHR must be in "Cell Persistent Child" group
             reader.skipRecordData();
             break;
         }
         case ESM4::REC_ACRE: // Oblivion only?
         {
+            if (hdr.group.type == ESM4::Grp_CellVisibleDistChild)
+                std::cout << "visible distant acre" << std::endl;
+
             // this ACHE must be in "Cell Persistent Child" group
             reader.skipRecordData();
             break;
@@ -471,14 +500,14 @@ void ESMStore::loadTes4Record (ESM::ESMReader& esm)
             mNavMesh.load(esm);
             break;
         }
-		//
+        //
         // PGRD is handled in CellStore::loadTes4Record()
         // not loaded here since PGRD is in "Cell Temporary Child" group
         case ESM4::REC_PGRD: // Oblivion only?
-		//
+        //
         case ESM4::REC_IDLE:
         case ESM4::REC_MATO:
-		//
+        //
         case ESM4::REC_PHZD:
         case ESM4::REC_PGRE:
         case ESM4::REC_ROAD: // Oblivion only?
