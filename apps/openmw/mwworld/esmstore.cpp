@@ -288,24 +288,8 @@ void ESMStore::loadTes4Group (ESM::ESMReader &esm)
             break;
         }
         case ESM4::Grp_CellTemporaryChild:
-        {
-            reader.skipGroup(); // FIXME: testing
-            break;
-        }
         case ESM4::Grp_CellVisibleDistChild:
         {
-            if (0)//hdr.group.type == ESM4::Grp_CellVisibleDistChild)
-            {
-                int stackSize = reader.stackSize();
-                std::cout << "Cell Visible Distant Child group" << std::endl;
-                std::cout << "    Parent group "
-                    << ESM4::printLabel(reader.grp(stackSize-1).label, reader.grp(stackSize-1).type) << std::endl;
-                std::cout << "        Parent group "
-                    << ESM4::printLabel(reader.grp(stackSize-2).label, reader.grp(stackSize-2).type) << std::endl;
-                std::cout << "            Parent group "
-                    << ESM4::printLabel(reader.grp(stackSize-3).label, reader.grp(stackSize-3).type) << std::endl;
-            }
-
             // NOTE: preload strategy and persistent records
             //
             // Current strategy defers loading of "temporary" or "visible when distant"
@@ -319,9 +303,7 @@ void ESMStore::loadTes4Group (ESM::ESMReader &esm)
             // For worldspaces the persistent records are usully (always?) stored in a dummy
             // cell under a "world child" group.  It may be possible to skip the whole "cell
             // child" group without scanning for persistent records.  See above short test.
-            //reader.skipGroup();
-            reader.saveGroupStatus();
-            loadTes4Group(esm);
+            reader.skipGroup();
             break;
         }
         case ESM4::Grp_ExteriorCell:
@@ -405,8 +387,6 @@ void ESMStore::loadTes4Record (ESM::ESMReader& esm)
         //case ESM4::REC_REGN: reader.getRecordData(); mForeignRegions.load(esm); break;
         case ESM4::REC_CELL:
         {
-            //std::cout << "about to preload, stackSize " << reader.stackSize() << std::endl; // FIXME
-
             // do not load and just save context
             mForeignCells.preload(esm, mForeignWorlds);
             // FIXME: deal with deleted recods
@@ -436,9 +416,6 @@ void ESMStore::loadTes4Record (ESM::ESMReader& esm)
         // WATR, EFSH
         case ESM4::REC_REFR:
         {
-            if (hdr.group.type == ESM4::Grp_CellVisibleDistChild)
-                std::cout << "visible distant refr" << std::endl;
-
             // this REFR must be in "Cell Persistent Child" group
             ESM4::Reference record;
 
@@ -458,18 +435,12 @@ void ESMStore::loadTes4Record (ESM::ESMReader& esm)
         }
         case ESM4::REC_ACHR:
         {
-            if (hdr.group.type == ESM4::Grp_CellVisibleDistChild)
-                std::cout << "visible distant achr" << std::endl;
-
             // this ACHR must be in "Cell Persistent Child" group
             reader.skipRecordData();
             break;
         }
         case ESM4::REC_ACRE: // Oblivion only?
         {
-            if (hdr.group.type == ESM4::Grp_CellVisibleDistChild)
-                std::cout << "visible distant acre" << std::endl;
-
             // this ACHE must be in "Cell Persistent Child" group
             reader.skipRecordData();
             break;

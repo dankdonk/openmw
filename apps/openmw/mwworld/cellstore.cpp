@@ -862,10 +862,6 @@ namespace MWWorld
         {
             case ESM4::REC_REFR:
             {
-                // FIXME: just trying to find which ones are in this group
-                if (hdr.group.type == ESM4::Grp_CellVisibleDistChild)
-                    std::cout << "Cell Visible Distant Child group" << std::endl;
-
                 // FIXME: testing WhiteRun
                 if ((reader.hdr().record.flags & ESM4::Rec_Disabled) != 0)
                 {
