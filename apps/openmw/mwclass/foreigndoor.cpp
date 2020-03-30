@@ -60,14 +60,21 @@ namespace MWClass
     {
         MWWorld::LiveCellRef<ESM4::Door> *ref = ptr.get<ESM4::Door>();
 
-        if (!model.empty()) {
+        if ((ref->mBase->mDoorFlags & ESM4::Door::Flag_Hidden) != 0)
+            std::cout << "DOOR " << ref->mBase->mEditorId << " is hidden" << std::endl;
+
+        // disable Oblivion gates for now, we'll enable them later
+        if ((ref->mBase->mDoorFlags & ESM4::Door::Flag_OblivionGate) == 0 && (!model.empty())) {
             renderingInterface.getObjects().insertModel(ptr, model/*, !ref->mBase->mPersistent*/); // FIXME
         }
     }
 
     void ForeignDoor::insertObject(const MWWorld::Ptr& ptr, const std::string& model, MWWorld::PhysicsSystem& physics) const
     {
-        if(!model.empty())
+        MWWorld::LiveCellRef<ESM4::Door> *ref = ptr.get<ESM4::Door>();
+
+        // disable Oblivion gates for now, we'll enable them later
+        if ((ref->mBase->mDoorFlags & ESM4::Door::Flag_OblivionGate) == 0 && (!model.empty()))
             physics.addObject(ptr, model);
 
         // Resume the door's opening/closing animation if it wasn't finished
