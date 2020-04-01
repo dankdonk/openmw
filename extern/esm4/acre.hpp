@@ -48,8 +48,9 @@ namespace ESM4
         FormId   mGlobal;
         std::uint32_t mFactionRank;
 
-        bool mDisabled;
-        EnableParent mEsp;    // TODO may need to check mFlags & 0x800 (initially disabled)
+        bool mInitiallyDisabled; // TODO may need to check mFlags & 0x800 (initially disabled)
+
+        EnableParent mEsp;
 
         ActorCreature();
         virtual ~ActorCreature();

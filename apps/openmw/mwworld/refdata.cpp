@@ -58,10 +58,11 @@ namespace MWWorld
     }
 
     RefData::RefData (const ESM4::Reference& cellRef)
-    : mBaseNode(0), mDeleted(false),  mHasLocals (false), mEnabled (true),
+    : mBaseNode(0), mDeleted(false),  mHasLocals (false),
+      mEnabled ((cellRef.mFlags & ESM4::Rec_Disabled) == 0),
       mCount (1),
       mCustomData (0),
-      mChanged(false) // Loading from ESM/ESP files -> assume unchanged
+      mChanged(false) // Loading from ESM/ESP files FIXME: assume unchanged for now
     {
         mPosition.pos[0] = cellRef.mPosition.pos.x;
         mPosition.pos[1] = cellRef.mPosition.pos.y;
@@ -76,10 +77,11 @@ namespace MWWorld
     }
 
     RefData::RefData (const ESM4::ActorCreature& cellRef)
-    : mBaseNode(0), mDeleted(false),  mHasLocals (false), mEnabled (true),
+    : mBaseNode(0), mDeleted(false),  mHasLocals (false),
+      mEnabled ((cellRef.mFlags & ESM4::Rec_Disabled) == 0),
       mCount (1),
       mCustomData (0),
-      mChanged(false) // Loading from ESM/ESP files -> assume unchanged
+      mChanged(false) // Loading from ESM/ESP files FIXME: assume unchanged for now
     {
         mPosition.pos[0] = cellRef.mPosition.pos.x;
         mPosition.pos[1] = cellRef.mPosition.pos.y;
@@ -94,10 +96,11 @@ namespace MWWorld
     }
 
     RefData::RefData (const ESM4::ActorCharacter& cellRef)
-    : mBaseNode(0), mDeleted(false),  mHasLocals (false), mEnabled (true),
+    : mBaseNode(0), mDeleted(false),  mHasLocals (false),
+      mEnabled ((cellRef.mFlags & ESM4::Rec_Disabled) == 0),
       mCount (1),
       mCustomData (0),
-      mChanged(false) // Loading from ESM/ESP files -> assume unchanged
+      mChanged(false) // Loading from ESM/ESP files FIXME: assume unchanged for now
     {
         mPosition.pos[0] = cellRef.mPosition.pos.x;
         mPosition.pos[1] = cellRef.mPosition.pos.y;

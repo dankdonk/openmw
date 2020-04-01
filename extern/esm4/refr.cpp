@@ -34,8 +34,8 @@
 #include "reader.hpp"
 //#include "writer.hpp"
 
-ESM4::Reference::Reference() : mFormId(0), mFlags(0), mDisabled(false), mBaseObj(0), mScale(1.f),
-                               mOwner(0), mGlobal(0), mFactionRank(0), mCount(1)
+ESM4::Reference::Reference() : mFormId(0), mFlags(0), mInitiallyDisabled(false), mIsMapMarker(false), mMapMarker(0),
+                               mBaseObj(0), mScale(1.f), mOwner(0), mGlobal(0), mFactionRank(0), mCount(1)
 {
     mEditorId.clear();
     mFullName.clear();
@@ -56,7 +56,7 @@ void ESM4::Reference::load(ESM4::Reader& reader)
     reader.adjustFormId(mFormId);
     mFlags  = reader.hdr().record.flags;
     // TODO: Let the engine apply this? Saved games?
-    //mDisabled = ((mFlags & ESM4::Rec_Disabled) != 0) ? true : false;
+    //mInitiallyDisabled = ((mFlags & ESM4::Rec_Disabled) != 0) ? true : false;
     std::uint32_t esmVer = reader.esmVersion();
     bool isFONV = esmVer == ESM4::VER_132 || esmVer == ESM4::VER_133 || esmVer == ESM4::VER_134;
 
@@ -137,9 +137,9 @@ void ESM4::Reference::load(ESM4::Reader& reader)
                 // 12 bytes
                 if (subHdr.dataSize == 12)
                 {
-                    uint32_t data = reader.get(data);
-                    uint32_t data2 = reader.get(data);
-                    uint32_t data3 = reader.get(data);
+                    float data = reader.get(data);
+                    float data2 = reader.get(data2);
+                    float data3 = reader.get(data3);
                     //std::cout << "REFR XLOD " << std::hex << (int)data << " " << (int)data2 << " " << (int)data3 << std::endl;
                     break;
                 }
@@ -163,9 +163,35 @@ void ESM4::Reference::load(ESM4::Reader& reader)
             // seems like another ref, e.g. 00064583 has base object 00000034 which is "XMarkerHeading"
             case ESM4::SUB_XRTM: // formId
             {
+                // seems like another ref, e.g. 00064583 has base object 00000034 which is "XMarkerHeading"
+                // e.g. some are doors (prob. quest related)
+                //    MS94OblivionGateRef XRTM : 00097C88
+                //    MQ11SkingradGate    XRTM : 00064583
+                //    MQ11ChorrolGate     XRTM : 00188770
+                //    MQ11LeyawiinGate    XRTM : 0018AD7C
+                //    MQ11AnvilGate       XRTM : 0018D452
+                //    MQ11BravilGate      XRTM : 0018AE1B
+                // e.g. some are XMarkerHeading
+                //    XRTM : 000A4DD7 in OblivionRDCavesMiddleA05 (maybe spawn points?)
+                FormId marker;
+                reader.get(marker);
+                //std::cout << "REFR " << mEditorId << " XRTM : " << formIdToString(marker) << std::endl;// FIXME
+                break;
+            }
+            case ESM4::SUB_TNAM: reader.get(mMapMarker); break;
+            case ESM4::SUB_XMRK: mIsMapMarker = true; break; // all have mBaseObj 0x00000010 "MapMarker"
+            case ESM4::SUB_FNAM:
+            {
+                //std::cout << "REFR " << ESM4::printName(subHdr.typeId) << " skipping..."
+                        //<< subHdr.dataSize << std::endl;
+                reader.skipSubRecordData();
+                break;
+            }
+            case ESM4::SUB_XTRG: // formId
+            {
                 FormId id;
                 reader.get(id);
-                //std::cout << "REFR XRTM : " << formIdToString(id) << std::endl;// FIXME
+                //std::cout << "REFR XRTG : " << formIdToString(id) << std::endl;// FIXME
                 break;
             }
             // lighting
@@ -178,13 +204,9 @@ void ESM4::Reference::load(ESM4::Reader& reader)
             case ESM4::SUB_XALP: // alpha cutoff
             //
             case ESM4::SUB_XLOC: // formId
-            case ESM4::SUB_XMRK:
-            case ESM4::SUB_FNAM:
-            case ESM4::SUB_XTRG: // formId
             case ESM4::SUB_XPCI: // formId
             case ESM4::SUB_XLCM:
             case ESM4::SUB_XCNT:
-            case ESM4::SUB_TNAM:
             case ESM4::SUB_ONAM:
             case ESM4::SUB_VMAD:
             case ESM4::SUB_XPRM:
