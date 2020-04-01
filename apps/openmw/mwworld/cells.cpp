@@ -161,7 +161,7 @@ MWWorld::CellStore *MWWorld::Cells::getCell (const ESM::CellId& id)
 }
 
 // in line with COE to COW
-MWWorld::CellStore *MWWorld::Cells::getForeignWorld (const std::string& world, int x, int y)
+MWWorld::CellStore *MWWorld::Cells::getWorldCell (const std::string& worldName, int x, int y)
 {
 #if 0
     // -- start of tests
@@ -192,37 +192,70 @@ MWWorld::CellStore *MWWorld::Cells::getForeignWorld (const std::string& world, i
     }
     // -- end of tests
 #endif
-    ESM4::FormId formId = mStore.get<ForeignWorld>().getFormId(world);
-    return getForeignWorld(formId, x, y);
+    ESM4::FormId worldId = mStore.get<ForeignWorld>().getFormId(worldName);
+
+    return getWorldCell(worldId, x, y);
 }
 
-MWWorld::CellStore *MWWorld::Cells::getForeignWorld (ESM4::FormId worldId, int x, int y)
+void MWWorld::Cells::initNewWorld(const ForeignWorld *world)
 {
-    typedef std::map<std::pair<int, int>, CellStore> CellStoreIndex;
+    // sanity check: find the world for the given form i
+    // check if a dummy cell exists
+    // FIXME: this logic needs to change since a new world may be inserted from another
+    // place
+    const ForeignCell *dummyCell = mStore.get<ForeignCell>().find(world->mDummyCell);
+    if (dummyCell)
+    {
+        std::pair<std::map<ESM4::FormId, CellStore>::iterator, bool> res =
+            mForeignDummys.insert({ world->mFormId, CellStore(dummyCell, true, true) });
 
+        if (res.second)
+            res.first->second.load(mStore, mReader);
+    }
+
+    // visibly distant
+    // FIXME: this cell won't be found from mStore, need to create one
+    // Also, mFormId is probably already used by the dummy cell
+    const ForeignCell *distCell = mStore.get<ForeignCell>().find(world->mFormId);
+    if (distCell)
+    {
+        std::pair<std::map<ESM4::FormId, CellStore>::iterator, bool> res =
+            mForeignVisibleDist.insert({ world->mFormId, CellStore(distCell, true, false) });
+
+        if (res.second)
+            res.first->second.load(mStore, mReader);
+    }
+}
+
+MWWorld::CellStore *MWWorld::Cells::getWorldCell(ESM4::FormId worldId, int x, int y)
+{
     // find the world for the given form id
     const ForeignWorld *world = mStore.get<ForeignWorld>().find(worldId);
     if (!world)
-        return 0;// FIXME: maybe exception?
+        return nullptr;// FIXME: maybe exception?
 
     // now find the cell's formid for the given x, y
     std::map<std::pair<int, int>, ESM4::FormId>::const_iterator it = world->mCells.find(std::make_pair(x, y));
     if (it == world->mCells.end())
-        return 0; // FIXME: maybe exception?
+        return nullptr; // FIXME: maybe exception?
 
     // get the cell given the formid
     const ForeignCell *cell = mStore.get<ForeignCell>().find(it->second);
     if (!cell)
-        return 0; // FIXME: maybe exception?
+        return nullptr; // FIXME: maybe exception?
 
-    // insert into the map
+    typedef std::map<std::pair<int, int>, CellStore> CellStoreIndex;
+    CellStore *cellStore;
+
+    // does the world exist?
     std::map<ESM4::FormId, CellStoreIndex>::iterator lb = mForeignWorlds.lower_bound(worldId);
-
     if (lb != mForeignWorlds.end() && !(mForeignWorlds.key_comp()(worldId, lb->first)))
     {
         // found world
         std::pair<CellStoreIndex::iterator, bool> res
             = lb->second.insert({ std::pair<int, int>(x, y), CellStore(cell, true) });
+
+        cellStore = &res.first->second;
 
         // There may be a CellStore already at that location!
         // This can happen if a mod updates the record, just overwrite it for now // FIXME
@@ -233,27 +266,21 @@ MWWorld::CellStore *MWWorld::Cells::getForeignWorld (ESM4::FormId worldId, int x
     }
     else // insert a new world
     {
-        mForeignWorlds.insert(lb, std::map<ESM4::FormId, CellStoreIndex>::value_type(worldId,
+        initNewWorld(world);
+
+        mForeignWorlds.insert(lb, std::map<ESM4::FormId, CellStoreIndex>::value_type(world->mFormId,
             { {std::pair<int, int>(x, y), CellStore(cell, true) } }));
 
-        // check if a dummy cell exists
-        const ForeignCell *dummyCell = mStore.get<ForeignCell>().find(world->mDummyCell);
-        if (dummyCell)
-        {
-            std::pair<std::map<ESM4::FormId, CellStore>::iterator, bool> res =
-                mForeignDummys.insert({ worldId, CellStore(dummyCell, true, true) });
-
-            if (res.second)
-                res.first->second.load(mStore, mReader);
-        }
+        CellStoreIndex::iterator iter = mForeignWorlds[worldId].find(std::pair<int, int>(x, y));
+        cellStore = &iter->second;
     }
 
-    // FIXME: do we have an iterator already to avoid calling find() again?
-    CellStoreIndex::iterator result = mForeignWorlds[worldId].find(std::pair<int, int>(x, y));
-    if (result->second.getState() != CellStore::State_Loaded)
+    if (cellStore->getState() != CellStore::State_Loaded)
     {
         // Multiple plugin support for landscape data is much easier than for references. The last plugin wins.
-        result->second.load(mStore, mReader);
+        cellStore->load(mStore, mReader);
+
+        // FIXME: update loade state?
 
         // inherit parent world's land?
         // save context
@@ -265,10 +292,10 @@ MWWorld::CellStore *MWWorld::Cells::getForeignWorld (ESM4::FormId worldId, int x
         // FIXME: TODO weather, etc
     }
 
-    return &result->second;
+    return cellStore;
 }
 
-MWWorld::CellStore *MWWorld::Cells::getForeignWorldDummy (ESM4::FormId worldId)
+MWWorld::CellStore *MWWorld::Cells::getWorldDummyCell (ESM4::FormId worldId)
 {
     std::map<ESM4::FormId, CellStore>::iterator it = mForeignDummys.find(worldId);
     if (it != mForeignDummys.end())

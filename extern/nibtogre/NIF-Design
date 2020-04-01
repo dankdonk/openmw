@@ -717,7 +717,7 @@ So we can "cheat" by using the class as an access path to get to the rendering i
 
   * EGT A binary file format containing texture statistics data for each pixel for each mode.
 
-  * SCM The mean colour map is a 24-bit RGB colour image. Each mode is stored as a signed RGB8 map, along with a floating point scaling factor. Vertex UV coordinates do not change.
+  * SCM The mean colour map is a 24-bit RGB colour image. Each mode is stored as a signed RGB8 map, along with a floating point scaling factor. Vertex UV co-ordinates do not change.
 
     DXGI_FORMAT_BC3_UNORM
     8 bits per pixel
@@ -1975,25 +1975,25 @@ CTrapLog01 animation, looking from the left of the pile from the top of the hill
 This object has a script. From the Construction Set:
 
     scriptName CTrapLogs01SCRIPT                                      {{{)
-    
+
     ; On activation havok will turn on and logs will roll if placed on an incline
     ; Logs will continue to do damage for 6 seconds after activation
-    
+
     short triggered
     float timer
     short next
     ref mySelf
     ref myParent
-    
+
     float fTrapDamage
     float fLevelledDamage
     float fTrapPushBack
     float fTrapMinVelocity
     float fTrapDeathPushBack
     short bTrapContinuous
-    
+
     begin onActivate
-    
+
         if triggered == 0
     		set fTrapDamage to 30
     		set fTrapPushBack to 100
@@ -2006,11 +2006,11 @@ This object has a script. From the Construction Set:
     		set timer to 6
     		setDestroyed 1
     	endif
-    
+
     end
-    
+
     begin gameMode
-    
+
     	;after 1 sec delay, activate parent (for daisy-chaining)
     	if triggered == 1 && next == 0 && timer < 5.5
     		set next to 1
@@ -2018,25 +2018,25 @@ This object has a script. From the Construction Set:
     		set mySelf to getSelf
     		myParent.activate mySelf 1
     	endif
-    
+
     	if triggered == 1 && timer <= 0
     		set fTrapDamage to 5
     		set fTrapPushBack to 20
     		set triggered to 2
     	endif
-    
+
     	if timer > 0
     		set timer to timer - getSecondsPassed
     	endif
-    
+
     end
-    
+
     begin onReset
-    
+
     	reset3DState
     	set triggered to 0
     	setDestroyed 0
-    
+
     end                                                               }}})
 
 In comparison MinotaurHead activates immediately (i.e. falls down from the wall) then when the animation completes Havok commences.
@@ -2095,8 +2095,8 @@ resourceName "meshes\\armor\\daedric\\m\\helmet.egm" missing exeption
 
 Test by:
 
-    COC "OblivionMqKvatchCitadel"
-    COC "KvatchCapelOfAkatosh"
+    COC "OblivionMQKvatchCitadel"
+    COC "KvatchChapelOfAkatosh"
     <F12> to take screenshots
 
 ## Rotated RigidBody in Citadel door
@@ -2484,7 +2484,7 @@ Pathgrids are in "Cell Temporary Child" group and loaded from `CellStore::loadTe
 
 Loading the dummy cell in `Scene::changeWorldCellGrid()` results in a huge performance hit.  But without that `ForeignDoor::activate()` won't work - I think all the doors are in the dummy cell.  We will need to figure out how to selectively insert doors based on their location.
 
-I think calling `insertCell()` in Scene::loadForeignCell()` results in everything in the dummy cell to be inserted into the scene.  We will need a new method.
+I think calling `insertCell()` in `Scene::loadForeignCell()` results in everything in the dummy cell to be inserted into the scene.  We will need a new method.
 
 But first, why does the dummy cell have that many references, anyway? (at least for Tamriel, 0x0000003c)
 
@@ -2532,8 +2532,8 @@ Subset of TES4 skeleton (Shivering Isle) hierarchy, kinda inverted:
                     8 Bip01 NonAccum
                            |
                     14 Bip01 Pelvis
-                    /      |      \ 
-                   /       |       \ 
+                    /      |      \
+                   /       |       \
                   /  18 Bip01 Spine \
                  /         |         \
         330 Bip01 R Thigh  |    299 Bip01 L Thigh
@@ -2547,7 +2547,7 @@ In TES3 Pathgrid records are loaded  in `ESMStore::load()` then the connected gr
 
 In TES4 we can't take the same approach since we skip "Cell Temporary Child" group while in `ESMStore::loadTes4Record()`.
 
-To draw the points and links, will need to add a method similar to `Debugging::enableCellPathgrid(MWWorld::CellStore \*store)`.  We need to either modify it or create a different method since LAND_SIZE, etc, will be different for TES4.  It also uses ESMStore to find the pathgrids which won't be the case for TES4.
+To draw the points and links, will need to add a method similar to `Debugging::enableCellPathgrid()`.  We need to either modify it or create a different method since LAND_SIZE, etc, will be different for TES4.  It also uses ESMStore to find the pathgrids which won't be the case for TES4.
 
 # [27/03/2020] Pathgrid still
 
@@ -2560,7 +2560,227 @@ ICMarketDistrictTheBestDefenseBasement doesn't have a PGRR.  Maybe some links ne
 
 **FIXME:** Noticed that some pathgrid points are floating in the air - again, a dummy physics shape can be used to "snap" to ground.
 
-We also need a way to find paths to adjacent cells as well as far away destinations.  And we still don't know which nodes are the "blue" priority ones.
+We also need a way to find paths to adjacent cells as well as far away destinations.  And we still don't know which nodes are the blue "priority" ones. **FIXED:** turns out that odd values in z poition indicates "priority".
+
+# [29/03/2020 - 30/03/2020] LOD
+
+From [a short description on TES5 LOD](https://en.uesp.net/wiki/Tes5Mod:LOD_Settings_File_Format):
+
+    struct {
+      signed short left;
+      signed short top;
+      signed int stride_pow2;
+      signed int lowestsize_lod;
+      signed int highestsize_lod;
+    } lodsetting;
+
+## `.lod` and `.cmp` files
+
+xxd `icmarketdistrict_7_16.lod` which is from TES4:
+
+    00000000: 0100 0000 7c0b 0000 0300 0000 00d0 fd46  ....|..........F
+    00000010: 004b 8447 85af 6045 00fa ee46 002a 8747  .K.G..`E...F.*.G
+    00000020: 85bf 6045 0060 ec46 804c 8747 85df 6045  ..`E.`.F.L.G..`E
+    00000030: 0000 0000 0000 0000 0000 0000 0000 0000  ................
+    00000040: 0000 0000 0000 0000 0000 0000 0000 0000  ................
+    00000050: 0000 0000 a4f0 b542 a4f0 e542 a4f0 c142  .......B...B...B
+
+So, if I use long instead of short we get what appears to be some point vectors?
+
+    0x0001 (32bit int)  // no of REFR? (**NOTE: 30/03/20** these are # of sections)
+    0x0b7c (32bit int)  // if this is a REFR baseObj, then tree\TreeEnglishOakYoungSU.spt
+    0x0003 (32bit int)  // qty = 3? (**NOTE: 30/03/20** these are # of obj in this section)
+
+    32488, 67734, 3594.97 // there is an entry of the tree in CELL #7, 16
+    30589, 69204, 3595.97 // there is an entry of the tree in CELL #7, 16
+    30256, 69273, 3597.97 // there is an entry of the tree in CELL #7, 16
+    0, 0, 0               // rotation
+    0, 0, 0               // rotation
+    0, 0, 0               // rotation
+    90.97, 114.97, 96.97  // scale for each
+
+And `icmarketdistrict_8_16.lod` has below.
+
+    0x0001 (32bit int)    // 1 REFR (**NOTE: 30/03/20** 1 section)
+    0x0b7c (32bit int)    // base Object ID
+    0x0001 (32bit int)    // qty
+
+    32985, 67787, 3597.97 // there is an entry of the tree in CELL #8, 16
+    0, 0, 0               // rotation
+    96.97                 // scale
+
+There are indeed 4 trees (2 near BeggarICMarketsSimplicia and 2 near the entry into the sewers).  The ".cmp" file probably indicates the distance to these REFR?  icmarketdistrict.cmp has:
+
+    00000000: 0700 0000                                ....
+
+However anvilworld.cmp has:
+
+    00000000: f7ff d2ff f9ff d2ff f7ff d3ff f8ff d3ff  ................
+    00000010: f9ff d3ff f8ff cfff f8ff d0ff f9ff d0ff  ................
+    00000020: f7ff d1ff f8ff d1ff f9ff d1ff 0700 0000  ................
+
+So these look like `std::int16_t` CELL co-ordinates.  But these look back to front?  -45, -8, for example, is AnvilExteriorA.  But then 0, 7 does not make sense.  There is no CELL in AnvilWorld with such co-ordinates.  In Tamriel, 0, 7 is VindaselExterior which is too far from Anvil.
+
+                -9  -46   -7  -46   -9  -45   -8  -45
+                -7  -45   -8  -49   -8  -48   -7  -48
+                -9  -47   -8  -47   -7  -47    7    0
+
+Let's look at another one from Bravil.  We have 15, -8 and 0, 7.  The CELL 15, -8 is just outside one of the walls in Bravil and it doesn't contain the tall cathedral, either.
+
+    00000000: f8ff 0f00 0700 0000                      ........
+
+`bravilworld_15_-8.lod` refers to a couple of trees and a static 0x000018FF CastleWall01 (`Architecture\Castle\CastleWall01.NIF`)
+
+**TODO:** So, what are we meant to do when we encounter these trees or static objects?  What's in the '.lod' files are clear enough, but what do the cell co-oridnates in the '.cmp' files mean?
+
+## LOD NIF files
+
+Maybe some clue from the file names?  Is there a LAND or CELL with FormId 0x00113463? (Not according to OpenCS)  The NIF files are just NiTriStrips with NiTriStripsData without any materials info.  However there are corresponding textures, so maybe they are meant to be manually put together?
+
+    meshes\landscape\lod\113463.00.00.32.nif
+    meshes\landscape\lod\113463.00.-32.32.nif
+    meshes\landscape\lod\113463.-32.00.32.nif
+    meshes\landscape\lod\113463.-32.-32.32.nif
+
+So, the texture 60.00.00.32.dds matches what OpenCS shows on cells 0,0 (bottom left), 0,31 (top left), 31,31 (top right), and 31,0 (bottom right).  Similarly, -31,0 (bottom left), -31,31 (top left), 0,31 (top right), and 0,0 (bottom right) matches 60.-32.00.32.dds.  So the file names must be (except that some have 00 left and -32 right?):
+
+    <world id in decimal>.<cell x left>.<cell x right>.<y cells height>
+
+These are the ones in meshes\landscape\lod directory (Oblivion.esm), note that not all worlds have LOD mesh(s):
+
+  prefix | FormId     | World EditorId | World FullName
+  -------|------------|----------------|---------------
+  60     | 0x0000003c | Tamriel        |
+  113463 | 0x0001bb37 | MS14World      | The Painted World
+  118972 | 0x0001d0bc | OblivionMQKvatch | Plane of Oblivion
+  154411 | 0x00025b2b | MS37World      | Frostfire Glade
+  181496 | 0x0002c4f8 | MS13CheydinhalOblivionWorld | Realm of Oblivion
+  181732 | 0x0002c5e4 | OblivionRD004  | Wastes of Oblivion
+  248431 | 0x0003ca6f | DAPeryiteRealm | Realm of Peryite
+  255242 | 0x0003e50a | OblivionRD001  | Wastes of Oblivion
+  259409 | 0x0003f551 | OblivionRD002  | Wastes of Oblivion
+  305567 | 0x0004a99f | OblivionRD003  | Wastes of Oblivion
+  326381 | 0x0004faed | OblivionRD005  | Wastes of Oblivion
+  336426 | 0x0005222a | OblivionRD006  | Wastes of Oblivion
+  346632 | 0x00054a08 | MQ10BrumaOblivionGate | Plane of Oblivion
+  545529 | 0x000852f9 | PalePassWorld  | Pale Pass
+  629781 | 0x00099c15 | OblivionRD007  | Wastes of Oblivion
+  97393  | 0x00017c71 | CamoranParadise | Camoran's Paradise
+
+It's interesting that decimal is used here while hex is used for FaceGen - must have been a programmer preference or something. There are other entries in meshes\architecture directory:
+
+    bravil\bravilhouselod.nif
+    bravil\bravilhouselod_far.nif
+    bruma\brumahouselod.nif
+    bruma\brumahouselod_far.nif
+    cheydinhal\cheydinhalhouselod.nif
+    cheydinhal\cheydinhalhouselod_far.nif
+    chorrol\chorrollodhouse01.nif            // why different naming convention?
+    chorrol\chorrollodhouselod01_far.nif
+    skingrad\skhouselower01lod.nif           // why yet another different naming convention?
+    skingrad\skhouselower01lod_far.nif
+
+Now the files in distantlod directory make sense a little.  They might be an indicator to use an LOD mesh, depending on which cell the character is in.
+
+## Viewing Distance defaults
+
+    [Viewing distance]
+    fog end factor = 1.0
+    fog start factor = 0.5
+    limit small object distance = false
+    max viewing distance = 5600
+    small object distance = 3500
+    small object size = 250
+    viewing distance = 4600
+
+## Oblivion Gates
+
+The Oblivion gates are visible from distance (at least it feels that way) so let's check the records.  There seems to be many different types, one of which is door with FormId 0x00051925.  The first REFR with the mBaseObj that matches is:
+
+    FormId   0x00091ca2
+    Flags    0x00000400 (persistent reference) // note that it doesn't have disable initially
+    DestDoor 0x00000000 // no destination FormId, must be controlled by a script on the base object
+    BaseObj  0x00051925 Oblivion\Gate\OblivionArchGate01.NIF
+
+# [31/03/2020] LOD cont.
+
+Looking at the '.cmp' file again.  tamriel.cmp has 152 co-ordinates plus 0,7.  But there are 9347 tamriel '.lod' files.
+
+Maybe these are reference points for the generation of the LOD mesh and textures?
+
+# [31/03/2020] Visible when distant
+
+We probably need to load these records, along with persistent records, for each world space.  But do we do that at the beginning or when we enter a world for the first time?
+
+Either way, we need a special case of CellStore that holds these records (and change only when the worldspace changes).
+
+        ESMStore         Store<ForeignCell> ForeignCell  ESM4::Cell
+           |                     |             |            |
+           | loadTes4Group()     |             |            |
+           |--+                  |             |            |
+           |  | loadTes4Record() |             |            |
+           |  |--+               |             |            |
+           |  |  | CELL          |             |            |
+           |  |  | preload()     |             |            |
+           |  |  |-------------->| new         |            |
+           |  |<-+               |------------>|            |
+           |  |                  | preload()   |            |
+           |<-+                  |------------>| new        |
+           |                     |             |----------->|
+           |                     |             | preload()  |
+           |                     |             |----------->|
+           |                     |             |            |
+           |                     |[if Grp_WorldChild]       |
+           |                     | setDummyCell()           |
+           |                     |------------>|            |
+           |                     |             |            |
+
+
+**TODO:** getForeignWorld() should be changed to getWorldCell()
+
+        Scene       MWWorld::World   MWWorld::Cells     ESMStore  CellStore
+          |                |              |               |          |
+          | changeWorldCellGrid()         |               |          |
+          |--+             |              |               |          |
+          |  |             |              |               |          |
+          |  |             | getWorldCell()               |          |
+          |  |------------>|------------->|               |          |
+          |  |             |              | find()        |          |
+          |  |             |              |-------------->|          |
+          |  |             |              | ForeignWorld* |          |
+          |  |             |              |<--------------|          |
+          |  |             |              | find()        |          |
+          |  |             |              |-------------->|          |
+          |  |             |              | ForeignCell*  |          |
+          |  |             |              |<--------------|          |
+          |  |             |              | ctor          |          |
+          |  |             |              |------------------------->|
+          |  |             |              |<-------------------------|
+          |  |             |              | load()        |          |
+          |  |             |              |------------------------->| loadForeignRefs()
+          |  |             |              |               |          |--+
+          |  |             |              |               |          |  | loadTes4Group()
+          |  |             |              |               |          |  |--+
+          |  |             |              |               |          |  |  | loadTes4Record()
+          |  |             |              |               |          |  |<-+
+          |  |             |              |               |          |  |
+          |  |             |              |               |          |<-+
+          |  |             | CellStore*   |<-------------------------|
+          |  |<------------|<-------------|               |          |
+          |  |             |              |               |          |
+          |  | loadForeignCell()          |               |          |
+          |  |--+          |              |               |          |
+          |  |  | insertCell()            |               |          |
+          |  |  |--+       |              |               |          |
+          |  |  |  |       |              |               |          |
+
+
+The loading of the REFR, ACHR and ACRE occurs in `CellStore::loadTes4Record()` and the creation of the rendering and physics shapes are initiated from `Scene::insertCell()`.
+
+`MWWorld::Cells` stores ForeignCells and it's probably the best place to keep a dummy cell for visibly distant REFRs.
+
+There are a couple of options on where to load the records - either initiate the call from ESMStore (when first scanning the ESM/ESPs or from Cells (when a new world is accessed for the first time).  I suspect that the former is going to be simpler, since it will have all the base and mods being scanned.  With the latter approach, WRLD context needs to be saved so that we can go back and scan all the CELLs that belong in the world, also all the mods that modifies the CELLS, REFRs, etc.  The only trouble with the former approach is the lack of access to MWWorld::Cells.  We may need to add a method to WorldImp.
+
 
 
 [//]: # (/* spell spelllang=en_au syntax=cpp */)

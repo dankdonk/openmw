@@ -1304,7 +1304,7 @@ namespace MWWorld
             return;
         }
 
-        // FIXME: need to merge CELL records
+        // FIXME: need to merge CELL records ??
         // Pathgrid.esp
 		// cell->mCell->mFormId	0x0001BD1F ICMarketDistrict01 PGRD FormId 0x0001C2C7
 		// cell->mCell->mFormId	0x0001BD21 ICMarketDistrict04 PGRD FormId 0x0001C2C8
@@ -1326,8 +1326,8 @@ namespace MWWorld
         {
             std::cout << "CELL modified " << ESM4::formIdToString(id) << std::endl; // FIXME: for testing
 
-            // HACK: need to store these somehow, so add the mod index the FormId to
-            // differentiate it from the base that is being modified
+            // HACK: need to store these cells from MODs somehow, so add the mod index the
+            // FormId to differentiate it from the base that is being modified
             std::uint64_t modId(ctx.modIndex);
             modId <<= 8;
             modId |= id;
@@ -1393,7 +1393,7 @@ namespace MWWorld
                           << " label x " << groupLabel.grid[1] << ", y " << groupLabel.grid[0]
                           << std::endl; // FIXME: debug only
 
-            world->insertCellGridMap(cell->mCell->mX, cell->mCell->mY, cell->mCell->mFormId);
+            world->updateCellGridMap(cell->mCell->mX, cell->mCell->mY, cell->mCell->mFormId);
             // FIXME: what to do if one already exists?
         }
         else if (groupType == ESM4::Grp_WorldChild) // exterior dummy cell
@@ -1412,9 +1412,12 @@ namespace MWWorld
                 std::cout << "Cell parent formid mismatch, " << std::hex << worldId
                           << " label " << groupLabel.value << std::endl;
 
-            if (!world->insertDummyCell(cell->mCell->mFormId))
-                std::cout << "CELL preload: existing dummy cell "
-                          << ESM4::formIdToString(cell->mCell->mFormId) << std::endl;
+            if (!world->setDummyCell(cell->mCell->mFormId))
+            {
+                std::ostringstream msg;
+                msg << "CELL preload: existing dummy cell " << ESM4::formIdToString(cell->mCell->mFormId);
+                throw std::runtime_error(msg.str());
+            }
         }
         else if (groupType == ESM4::Grp_InteriorSubCell) // interior cell
         {
@@ -1452,6 +1455,45 @@ namespace MWWorld
             std::cout << "CELL preload: cell not found" << std::endl;
     }
 
+    void Store<MWWorld::ForeignCell>::updateRefrEstimate(ESM::ESMReader &esm)
+    {
+        ESM4::Reader& reader = static_cast<ESM::ESM4Reader*>(&esm)->reader();
+        const ESM4::GroupTypeHeader hdr = reader.hdr().group;
+
+        const ESM4::FormId currCell = reader.getContext().currCell;
+        std::uint64_t modId(reader.getContext().modIndex);
+        modId <<= 8;
+        modId |= currCell;
+        std::map<std::uint64_t, MWWorld::ForeignCell*>::iterator it = mCells.find(modId);
+        if (it == mCells.end())
+            return;
+
+        MWWorld::ForeignCell *cell = it->second;
+
+        static int magic = 100; // FIXME: just a guess
+        std::uint32_t estimate = hdr.groupSize / magic;
+        cell->setRefrEstimate(hdr.type, estimate);
+    }
+
+    // FIXME: this is rather inefficient
+    // - probably worth caching the current ForegnCell in ESMStore instead
+    void Store<MWWorld::ForeignCell>::incrementRefrCount(ESM::ESMReader &esm)
+    {
+        ESM4::Reader& reader = static_cast<ESM::ESM4Reader*>(&esm)->reader();
+
+        const ESM4::FormId currCell = reader.getContext().currCell;
+        std::uint64_t modId(reader.getContext().modIndex);
+        modId <<= 8;
+        modId |= currCell;
+        std::map<std::uint64_t, MWWorld::ForeignCell*>::iterator it = mCells.find(modId);
+        if (it == mCells.end())
+            return;
+
+        MWWorld::ForeignCell* cell = it->second;
+
+        cell->incrementRefrCount(reader.hdr().group.type);
+    }
+
     // FIXME: Is there a more efficient way than calling Store<ForeignWorld>::find() each time?
     RecordId Store<MWWorld::ForeignCell>::load(ESM::ESMReader &esm, Store<ForeignWorld>& worlds)
     {
@@ -1484,7 +1526,7 @@ namespace MWWorld
             ForeignWorld *world = worlds.find(record->mParent);
 
             if (world)
-                world->insertCellGridMap(record->mX, record->mY, record->mFormId);
+                world->updateCellGridMap(record->mX, record->mY, record->mFormId);
 
 // FIXME: debug
             std::cout << "Exterior Cell, world: " << ESM4::formIdToString(record->mParent)

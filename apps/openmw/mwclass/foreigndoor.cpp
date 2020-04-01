@@ -64,7 +64,10 @@ namespace MWClass
             std::cout << "DOOR " << ref->mBase->mEditorId << " is hidden" << std::endl;
 
         // disable Oblivion gates for now, we'll enable them later
-        if ((ref->mBase->mDoorFlags & ESM4::Door::Flag_OblivionGate) == 0 && (!model.empty())) {
+        //   mEditorId = "OblivionGatetoOblivion" mFormId = 00091C9C
+        //   the REFR with this mBaseObj does not have the initially disabled flag
+        //   if (ref->mData.isEnabled() && !model.empty())
+        if ((ref->mBase->mDoorFlags & ESM4::Door::Flag_OblivionGate) == 0 && !model.empty()) {
             renderingInterface.getObjects().insertModel(ptr, model/*, !ref->mBase->mPersistent*/); // FIXME
         }
     }

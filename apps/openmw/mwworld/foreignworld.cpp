@@ -27,7 +27,7 @@ void MWWorld::ForeignWorld::load(ESM::ESMReader& esm, bool isDeleted)
     //mName = mFullName;
 }
 
-bool MWWorld::ForeignWorld::insertCellGridMap(int x, int y, ESM4::FormId id)
+bool MWWorld::ForeignWorld::updateCellGridMap(int x, int y, ESM4::FormId id)
 {
     std::pair<std::map<std::pair<int, int>, ESM4::FormId>::iterator, bool> ret
         = mCells.insert (std::make_pair(std::make_pair(x, y), id));
@@ -35,7 +35,7 @@ bool MWWorld::ForeignWorld::insertCellGridMap(int x, int y, ESM4::FormId id)
     return ret.second;
 }
 
-bool MWWorld::ForeignWorld::insertDummyCell(ESM4::FormId id)
+bool MWWorld::ForeignWorld::setDummyCell(ESM4::FormId id)
 {
     if (mDummyCell)
         return false;

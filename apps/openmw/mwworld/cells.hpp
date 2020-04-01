@@ -28,6 +28,7 @@ namespace Loading
 namespace MWWorld
 {
     class ESMStore;
+    class ForeignWorld;
 
     /// \brief Cell container
     class Cells
@@ -42,7 +43,8 @@ namespace MWWorld
             // Fortunately, all of TES4 worlds have EditorIds but others may not.
             //mutable std::map<std::string, std::map<std::pair<int, int>, CellStore> > mForeignWorlds;
             std::map<ESM4::FormId, std::map<std::pair<int, int>, CellStore> > mForeignWorlds;
-            std::map<ESM4::FormId, CellStore> mForeignDummys;
+            std::map<ESM4::FormId, CellStore> mForeignDummys;      // key is ForeignWorld FormId
+            std::map<ESM4::FormId, CellStore> mForeignVisibleDist; // key is ForeignWorld FormId
 
             std::vector<std::pair<std::string, CellStore *> > mIdCache;
             std::size_t mIdCacheIndex;
@@ -68,9 +70,10 @@ namespace MWWorld
 
             CellStore *getCell (const ESM::CellId& id);
 
-            CellStore *getForeignWorld (const std::string& world, int x, int y);
-            CellStore *getForeignWorld (ESM4::FormId world, int x, int y);
-            CellStore *getForeignWorldDummy (ESM4::FormId worldId);
+            CellStore *getWorldCell (const std::string& world, int x, int y);
+            CellStore *getWorldCell (ESM4::FormId worldId, int x, int y);
+            void initNewWorld(const ForeignWorld *world);
+            CellStore *getWorldDummyCell (ESM4::FormId worldId);
 
             CellStore *getForeignInterior (const std::string& name);
 

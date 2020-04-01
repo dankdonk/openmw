@@ -290,10 +290,12 @@ void ESMStore::loadTes4Group (ESM::ESMReader &esm)
         case ESM4::Grp_CellTemporaryChild:
         case ESM4::Grp_CellVisibleDistChild:
         {
+            mForeignCells.updateRefrEstimate(esm); // for loading bar
+
             // NOTE: preload strategy and persistent records
             //
-            // Current strategy defers loading of "temporary" or "visible when distant"
-            // references and other records (land and pathgrid) until they are needed.
+            // Current strategy defers loading of "temporary" references and other records
+            // (land and pathgrid) until they are needed.
             //
             // The "persistent" records need to be loaded up front, however.  This is to allow,
             // for example, doors to work.  A door reference will have a FormId of the
@@ -430,6 +432,8 @@ void ESMStore::loadTes4Record (ESM::ESMReader& esm)
 
                 // FIXME: detect duplicates?
             }
+
+            mForeignCells.incrementRefrCount(esm);
 
             break;
         }

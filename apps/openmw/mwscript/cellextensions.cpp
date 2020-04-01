@@ -82,7 +82,7 @@ namespace MWScript
                         if (!world->findInteriorPosition(cell, pos))
                             if (world->findForeignInteriorPosition(cell, pos))
                                 world->changeToForeignInteriorCell(cell, pos);
-                        
+
                         world->changeToInteriorCell(cell, pos);
                     }
                 }

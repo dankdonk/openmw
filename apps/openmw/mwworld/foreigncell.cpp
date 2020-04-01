@@ -82,6 +82,36 @@ void MWWorld::ForeignCell::addFileContext(const ESM4::ReaderContext& ctx)
     mModList.push_back(ctx);
 }
 
+void MWWorld::ForeignCell::setRefrEstimate(std::int32_t groupType, std::uint32_t estimate)
+{
+    mRefrEstimates[groupType] = estimate;
+}
+
+std::uint32_t MWWorld::ForeignCell::getRefrEstimate(std::int32_t groupType) const
+{
+    std::map<std::int32_t, std::uint32_t>::const_iterator it = mRefrEstimates.find(groupType);
+
+    if (it != mRefrEstimates.end())
+        return it->second;
+
+    return 0;
+}
+
+void MWWorld::ForeignCell::incrementRefrCount(std::int32_t groupType)
+{
+    mRefrCounts[groupType] += 1;
+}
+
+std::uint32_t MWWorld::ForeignCell::getPersistentRefrCount() const
+{
+    std::map<std::int32_t, std::uint32_t>::const_iterator it = mRefrCounts.find(ESM4::Grp_CellPersistentChild);
+
+    if (it != mRefrCounts.end())
+        return it->second;
+
+    return 0;
+}
+
 std::string MWWorld::ForeignCell::getDescription() const
 {
     if (mIsInterior)

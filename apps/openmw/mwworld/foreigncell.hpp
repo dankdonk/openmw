@@ -2,6 +2,7 @@
 #define OPENMW_MWWORLD_FOREIGNCELL_H
 
 #include <string>
+#include <map>
 
 #include <extern/esm4/reader.hpp>
 
@@ -33,7 +34,7 @@ namespace MWWorld
     //             |
     //             +--(has a)-- ESM4::Cell
     //
-    // Used to have separate methods (ctor's, getCell vs getForeignCell, etc)
+    // The old design used to have separate methods (ctor's, getCell vs getForeignCell, etc)
     //
     //         ESM4::Cell      ESM:::Cell
     //             ^
@@ -48,6 +49,9 @@ namespace MWWorld
 
         ESM4::Cell *mCell; // created in preload() and destroyed in dtor
         bool mHasChildren;
+
+        std::map<std::int32_t, std::uint32_t> mRefrEstimates;
+        std::map<std::int32_t, std::uint32_t> mRefrCounts;
 
         ForeignCell();
         ~ForeignCell();
@@ -78,6 +82,11 @@ namespace MWWorld
         int getGridX() const;
         int getGridY() const;
         ESM::CellId getCellId() const;
+
+        void setRefrEstimate(std::int32_t groupType, std::uint32_t estimate);
+        std::uint32_t getRefrEstimate(std::int32_t groupType) const;
+        void incrementRefrCount(std::int32_t groupType);
+        std::uint32_t getPersistentRefrCount() const;
 
         void blank(); // FIXME: is this needed?
 

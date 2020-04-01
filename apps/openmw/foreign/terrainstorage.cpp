@@ -39,7 +39,7 @@ namespace Foreign
 #endif
         if (!(cellX == 6 && cellY == -65) && !(cellX == 7 && cellY == -65)) // FIXME
         {
-            MWWorld::CellStore *cell = MWBase::Environment::get().getWorld()->getForeignWorld(mWorld, cellX, cellY);
+            MWWorld::CellStore *cell = MWBase::Environment::get().getWorld()->getWorldCell(mWorld, cellX, cellY);
 
             // The cell isn't guaranteed to have Land. This is because the terrain implementation
             // has to wrap the vertices of the last row and column to the next cell, which may be a nonexisting cell

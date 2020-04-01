@@ -88,7 +88,7 @@ namespace MWWorld
                     int cellX;
                     int cellY;
                     world->positionToIndex(mPosition.pos[0], mPosition.pos[1], cellX, cellY);
-                    world->moveObject(actor,world->getForeignWorld(worldId, cellX, cellY),
+                    world->moveObject(actor,world->getWorldCell(worldId, cellX, cellY),
                         mPosition.pos[0], mPosition.pos[1], mPosition.pos[2]);
                 }
             }

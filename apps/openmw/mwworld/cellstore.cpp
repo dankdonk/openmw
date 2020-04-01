@@ -622,6 +622,39 @@ namespace MWWorld
             + mNpcs.mList.size();
     }
 
+    // FIXME: deprecated
+#if 0
+    int CellStore::estimateForeignRefs() const
+    {
+        assert(mIsForeignCell);
+        const ForeignCell *cell = static_cast<const ForeignCell*>(mCell);
+
+        std::size_t total = 0;
+        std::size_t magic = 1000; // FIXME: just a guess
+        for (std::size_t i = 0; i < cell->mModList.size(); ++i)
+        {
+            total += cell->mModList[i].groupStack.back().first.groupSize;
+        }
+
+        return int(total/magic);
+    }
+#endif
+    int CellStore::getRefrEstimate(std::int32_t groupType) const
+    {
+        assert(mIsForeignCell);
+        const ForeignCell *cell = static_cast<const ForeignCell*>(mCell);
+
+        return (int)cell->getRefrEstimate(groupType);
+    }
+
+    int CellStore::getPersistentRefrCount() const
+    {
+        assert(mIsForeignCell);
+        const ForeignCell *cell = static_cast<const ForeignCell*>(mCell);
+
+        return (int)cell->getPersistentRefrCount();
+    }
+
     void CellStore::load (const MWWorld::ESMStore &store, std::vector<std::vector<ESM::ESMReader*> > &esm)
     {
         if (!mIsForeignCell)
@@ -651,7 +684,7 @@ namespace MWWorld
 
                 mState = State_Loaded;
 
-                // Foreign::TerrainStorage::getLand() calls MWWorld::Cells::getForeignWorld()
+                // Foreign::TerrainStorage::getLand() calls MWWorld::Cells::getWorldCell()
                 // which could mean a lot of unnecessary loading - build PathgridGraph later
                 // (but then again the cell would be empty and the overhead won't be much anyway?)
             }
@@ -799,7 +832,7 @@ namespace MWWorld
             if (world->mParent != 0)
             {
                 CellStore * parentCell
-                    = MWBase::Environment::get().getWorld()->getForeignWorld(world->mParent,
+                    = MWBase::Environment::get().getWorld()->getWorldCell(world->mParent,
                         mCell->getGridX(),
                         mCell->getGridY());
                 // FIXME

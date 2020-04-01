@@ -555,6 +555,7 @@ namespace MWWorld
         //const ForeignCell *cell
                 //ESM4::FormId parentWorldId
                     //= static_cast<const MWWorld::ForeignCell*>(mCurrentCell->getCell())->mCell->mParent;
+        // TODO: check if the LOD mesh can do the job instead
 
         ESM4::FormId currentWorldId = 0;
         if (mCurrentCell->isForeignCell())
@@ -565,7 +566,7 @@ namespace MWWorld
                 currentWorldId = static_cast<const MWWorld::ForeignCell*>(mCurrentCell->getCell())->mCell->mFormId;
         }
 
-        CellStore* current = MWBase::Environment::get().getWorld()->getForeignWorld(worldId, X, Y);
+        CellStore* current = MWBase::Environment::get().getWorld()->getWorldCell(worldId, X, Y);
         if (!current) // FIXME
             return;
 
@@ -585,6 +586,8 @@ namespace MWWorld
                 unloadCell(active++);
                 ++current;
             }
+
+            // FIXME: need to unload dummy and visible distant
         }
         else
         {
@@ -594,7 +597,7 @@ namespace MWWorld
                 if ((*active)->getCell()->isExterior() && // FIXME: should this be an assert instead?
                     (*active)->isForeignCell())
                 {
-                    if ((*active)->isDummyCell())
+                    if ((*active)->isDummyCell()) // FIXME: also keep visible distant
                     {
                         ++active;
                         continue;
@@ -620,8 +623,7 @@ namespace MWWorld
             {
                 CellStoreCollection::iterator iter = mActiveCells.begin();
 
-                // FIXME: the logic here is broken for the scenario where we chanced worlds, since
-                // there are no active cells at all
+                // there will be no active cells for the scenario where we chanced worlds
                 while (iter != mActiveCells.end())
                 {
                     assert ((*iter)->getCell()->isExterior());
@@ -633,12 +635,23 @@ namespace MWWorld
                     ++iter;
                 }
 
-                // FIXME: add a worldspace param to getExterior?  currently returns some count
-                // from a TES3 cell
+                // the counting of refs does not work for TES4, since we don't know how many refs exist
+                // until they are loaded - we may need to estimate by looking at the size of
+                // the group and dividing by some factor
                 if (iter == mActiveCells.end())
-                    refsToLoad += MWBase::Environment::get().getWorld()->getExterior(x, y)->count();
+                {
+                    // this creates the CellStore and associated ForeignCell
+                    CellStore* cell = MWBase::Environment::get().getWorld()->getWorldCell(worldId, x, y);
+
+                    if (cell)
+                        refsToLoad += cell->getRefrEstimate(ESM4::Grp_CellTemporaryChild);
+                }
             }
         }
+
+        CellStore *dummy = MWBase::Environment::get().getWorld()->getWorldDummyCell(worldId);
+        if (dummy)
+            refsToLoad += dummy->getPersistentRefrCount();
 
         loadingListener->setProgressRange(refsToLoad);
 
@@ -663,7 +676,7 @@ namespace MWWorld
 
                 if (iter == mActiveCells.end()) // only load cells that are not already active
                 {
-                    CellStore* cell = MWBase::Environment::get().getWorld()->getForeignWorld(worldId, x, y);
+                    CellStore* cell = MWBase::Environment::get().getWorld()->getWorldCell(worldId, x, y);
 
                     if (cell)
                     {
@@ -674,19 +687,26 @@ namespace MWWorld
                     }
                     else
                     {
-                       // FIXME: create dynamic cells instead?  See getForeignWorld in cells.c
+                       // FIXME: create dynamic cells instead?  See getWorldCell in cells.c
                         //std::cout << "no cell at " << x << ", " << y << std::endl;
                     }
                 }
             }
         }
 
+        // A dummy cell for the world formid store in:
+        //     Store<MWWorld::ForeignCell>::preload()
+        // A dummy cell is created in:
+        //     MWWorld::Cells::getWorldCell(ESM4::FormId worldId, int x, int y)
+
+        // FIXME: also check the visibly distant
+
         // check for dummy cell
         // FIXME: having the dummy cell results in *all* the doors being rendered!  Need to be
         // able to limit rendering based on the ref's position
         if (!mActiveCells.empty())
         {
-            CellStore *dummy = MWBase::Environment::get().getWorld()->getForeignWorldDummy(worldId);
+            CellStore *dummy = MWBase::Environment::get().getWorld()->getWorldDummyCell(worldId);
             if (dummy)
             {
                 std::pair<CellStoreCollection::iterator, bool> result = mActiveCells.insert(dummy);
@@ -843,7 +863,7 @@ namespace MWWorld
             ++current;
         }
 
-        int refsToLoad = cell->count();
+        int refsToLoad = cell->getRefrEstimate(ESM4::Grp_CellTemporaryChild);
         loadingListener->setProgressRange(refsToLoad);
 
         // Load cell.
@@ -896,7 +916,7 @@ namespace MWWorld
 
         changeWorldCellGrid(worldId, x, y);
 
-        CellStore* current = MWBase::Environment::get().getWorld()->getForeignWorld(worldId, x, y); // FIXME
+        CellStore* current = MWBase::Environment::get().getWorld()->getWorldCell(worldId, x, y); // FIXME
         if (!current)
             return; // FIXME
 

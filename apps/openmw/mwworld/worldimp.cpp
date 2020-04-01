@@ -544,20 +544,20 @@ namespace MWWorld
             return getInterior (id.mWorldspace);
     }
 
-    CellStore *World::getForeignWorld (const std::string& world, int x, int y)
+    CellStore *World::getWorldCell (const std::string& world, int x, int y)
     {
         ESM4::FormId worldId = mStore.get<ForeignWorld>().getFormId(world);
-        return mCells.getForeignWorld (worldId, x, y);
+        return mCells.getWorldCell (worldId, x, y);
     }
 
-    CellStore *World::getForeignWorld (ESM4::FormId worldId, int x, int y)
+    CellStore *World::getWorldCell (ESM4::FormId worldId, int x, int y)
     {
-        return mCells.getForeignWorld (worldId, x, y);
+        return mCells.getWorldCell (worldId, x, y);
     }
 
-    CellStore *World::getForeignWorldDummy (ESM4::FormId worldId)
+    CellStore *World::getWorldDummyCell (ESM4::FormId worldId)
     {
-        return mCells.getForeignWorldDummy (worldId);
+        return mCells.getWorldDummyCell (worldId);
     }
 
     ESM4::FormId World::loadForeignLand (ESM::ESMReader& esm)
@@ -1307,7 +1307,7 @@ namespace MWWorld
                 cellY = static_cast<int>(std::floor(y / cellSize));
 
                 ESM4::FormId worldId = static_cast<const MWWorld::ForeignCell*>(cell->getCell())->mCell->mParent;
-                cell = getForeignWorld (worldId, cellX, cellY);
+                cell = getWorldCell (worldId, cellX, cellY);
             }
         }
 
@@ -2710,7 +2710,7 @@ namespace MWWorld
                 int x, y;
                 ESM::Position doorDest = it->mRef.getDoorDest(); // FIXME
                 positionToIndex(doorDest.pos[0], doorDest.pos[1], x, y);
-                //source = getForeignWorld(xxx, x, y); // FIXME
+                //source = getWorldCell(xxx, x, y); // FIXME
             }
             else // door to interior
             {

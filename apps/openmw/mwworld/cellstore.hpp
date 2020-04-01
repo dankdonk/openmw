@@ -199,6 +199,8 @@ namespace MWWorld
 
             int count() const;
             ///< Return total number of references, including deleted ones.
+            int getRefrEstimate(std::int32_t groupType) const;
+            int getPersistentRefrCount() const;
 
             void load (const MWWorld::ESMStore &store, std::vector<std::vector<ESM::ESMReader*> > &esm);
             ///< Load references from content file.
