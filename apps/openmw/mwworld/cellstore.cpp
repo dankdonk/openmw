@@ -927,7 +927,23 @@ namespace MWWorld
                         break;
                     }
                 }
+#if 0
+                if ((record.mFlags & ESM4::Rec_DistVis) != 0 && reader.getContext().groupStack.back().first.type != ESM4::Grp_CellVisibleDistChild)
+                {
+                    std::string padding = ""; // FIXME: debugging only
+                    padding.insert(0, reader.getContext().groupStack.size()*2, ' ');
+                    std::cout << padding << "CellStore REFR " << record.mEditorId << " "
+                              << ESM4::formIdToString(record.mFormId) << " visible dist" << std::endl;
+                }
 
+                if ((record.mFlags & ESM4::Rec_DistVis) == 0 && reader.getContext().groupStack.back().first.type == ESM4::Grp_CellVisibleDistChild)
+                {
+                    std::string padding = ""; // FIXME: debugging only
+                    padding.insert(0, reader.getContext().groupStack.size()*2, ' ');
+                    std::cout << padding << "CellStore REFR " << record.mEditorId << " "
+                              << ESM4::formIdToString(record.mFormId) << " NOT visible dist" << std::endl;
+                }
+#endif
                 switch (store.find(record.mBaseObj))
                 {
                     case MKTAG('R','H','A','I'): std::cout << " hair " << std::endl; break; // FIXME
@@ -958,7 +974,19 @@ namespace MWWorld
                     case MKTAG('R','I','N','G'): mForeignIngredients.load(record, deleted, store); break;
                     case MKTAG('H','L','I','G'): mForeignLights.load(record, deleted, store); break;
                     case MKTAG('C','M','I','S'): mForeignMiscItems.load(record, deleted, store); break;
-                    case MKTAG('T','S','T','A'): mForeignStatics.load(record, deleted, store); break;
+                    case MKTAG('T','S','T','A'):
+                                                 mForeignStatics.load(record, deleted, store);
+#if 0
+                if (reader.getContext().currWorld == 0x0001D0BC && reader.getContext().groupStack.back().first.type == ESM4::Grp_CellVisibleDistChild)
+                {
+                    std::string padding = ""; // FIXME: debugging only
+                    padding.insert(0, reader.getContext().groupStack.size()*2, ' ');
+                    std::cout << padding << "CellStore REFR " << record.mEditorId << " "
+                              << ESM4::formIdToString(reader.getContext().currCell) << " visible dist "
+                              << ESM4::formIdToString(record.mBaseObj) << std::endl;
+                }
+#endif
+                                                 break;
                     case MKTAG('S','G','R','A'): mForeignGrasses.load(record, deleted, store); break;
                     //case MKTAG('E','T','R','E'): mForeignTrees.load(record, deleted, store); break;
                     case MKTAG('R','F','L','O'): mForeignFloras.load(record, deleted, store); break;

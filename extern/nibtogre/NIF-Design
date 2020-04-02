@@ -2796,6 +2796,128 @@ Just outside Vilverin approx 1.2M triangles with exterior grid size of 3 - singl
 
 **TODO:** WRLD has a flag "no LOD water"
 
+## Revisit `.lod` and `.cmp` files
+
+Examining the out put of `xxd distantlod\oblivionmqkvatch.cmp`:
+
+    00000000: 0300 ffff 0400 ffff 0300 0000 0000 0100  ................
+    00000010: 0100 feff 0700 0000                      ........
+
+Each of the co-ordinates in the `.cmp` file has statics in visibly distant cell child group:
+
+     Grid | CELL FormId | REFR FormId | BaseObj FormId | BaseObj EditorId
+    ------|-------------|-------------|----------------|------------------------------
+    -1, 3 | 00021079    | 00034264    | 000314D2       | CitadelTowerSmall02
+          |             | 000221FA    | 0003487B       | CitadelTowerBridgeLong01
+    -1, 4 | 00021078    | 0002209E    | 000314CF       | CitadelTowerSmall01
+     0, 3 | 00021072    | 00034263    | 000314CF       | CitadelTowerSmall01
+          |             | 000221F9    | 0000A010       | CitadelTowerBridgeExtraLong01
+          |             | 0002109D    | 0002D3E9       | CitadelTowerCenterPiece
+     1, 0 | 0002106D    | 0002209F    | 000314D2       | CitadelTowerSmall02
+    -2, 1 | 00021084    | 000221B3    | 000314CF       | CitadelTowerSmall01
+
+OblivionMQKvatch has 5 `.lod` files, which correspond to above (I wonder if they all match that?).
+
+    oblivionmqkvatch_0_3.lod
+    oblivionmqkvatch_1_0.lod
+    oblivionmqkvatch_-1_3.lod
+    oblivionmqkvatch_-1_4.lod
+    oblivionmqkvatch_-2_1.lod
+
+Examining `distantlod\oblivionmqkvatch_0_3.lod`:
+
+    000314CF qty 1, pos 45720000, 464b6000, 45905fc3, rot 00000000, 80000000, 3f48efba, scale 42c9f0a4
+    0002D3E9 qty 1, pos ...
+    0000A010 qty 1, pos ...
+
+So, these might be look-ups to quickly locate the visibly distant statics and their grid locations.  **Or, maybe they provide enough details so that the ESM/ESP files don't have to be scanned at all.**
+
+Still, the question is when to load them, i.e. all the time when in the OblivionMQKvatch world or only when in certain cells?
+
+Well, all that work to create the VisibleDistCell has been for nothing!  Maybe it can be salvaged (swapped out when the "real" one gets loaded?).
+
+Each of the objects have a `_far` variant in the same directory:
+
+    meshes\oblivion\architecture\citadel\exterior\maintowers\towercenterpiece_far.nif
+    meshes\oblivion\architecture\citadel\exterior\subtowers\towersmall01_far.nif
+    meshes\oblivion\architecture\citadel\exterior\subtowers\towersmall02_far.nif
+    meshes\oblivion\architecture\citadel\exterior\walkways\towerbridgelong01_far.nif
+    meshes\oblivion\architecture\citadel\exterior\walkways\towerbridgeextralong01_far.nif
+
+## `Oblivion.ini`
+
+We will need a lightweight class (in comparison to Ptr) to represent LOD trees.  The vanilla implementation renders *a lot* of trees.  Maybe a 2D tree using billboard effect?
+
+    [General]
+    uGridDistantTreeRange=15
+    uGridDistantCount=25
+    uGridsToLoad=5
+    uGridDistantTreeRangeCity=4
+    uGridDistantCountCity=4
+
+    [LOD]
+    fLodDistance=500.0000
+    bUseFaceGenLOD=0
+    iLODTextureTiling=2
+    iLODTextureSizePow2=8
+    fLODNormalTextureBlend=0.5000
+    bDisplayLODLand=1
+    bDisplayLODBuildings=1
+    bDisplayLODTrees=1
+    bLODPopTrees=0
+    bLODPopActors=0
+    bLODPopItems=0
+    bLODPopObjects=0
+    fLODFadeOutMultActors=5.0000
+    fLODFadeOutMultItems=2.0000
+    fLODFadeOutMultObjects=5.0000
+    fLODMultLandscape=1.0000
+    fLODMultTrees=1.3000
+    fLODMultActors=7.0000
+    fLODMultItems=7.0000
+    fLODMultObjects=7.0000
+    iFadeNodeMinNearDistance=400
+    fLODFadeOutPercent=0.9000
+    fLODBoundRadiusMult=3.0000
+    fTalkingDistance=2000.0000
+
+    fTreeLODMax=2.0000
+    fTreeLODMin=0.0200
+    fTreeLODDefault=1.2000
+    fObjectLODMax=15.0000
+    fObjectLODMin=1.0000
+    fObjectLODDefault=5.0000
+    fItemLODMax=15.0000
+    fItemLODMin=1.0000
+    fItemLODDefault=2.0000
+    fActorLODMax=15.0000
+    fActorLODMin=2.0000
+    fActorLODDefault=5.0000
+    bLODUseCombinedLandNormalMaps=1
+    bForceHideLODLand=0
+    fLODQuadMinLoadDistance=65536.0000
+    fLODFadeOutActorMultInterior=1.0000
+    fLODFadeOutItemMultInterior=1.0000
+    fLODFadeOutObjectMultInterior=1.0000
+    fLODFadeOutActorMultCity=1.0000
+    fLODFadeOutItemMultCity=1.0000
+    fLODFadeOutObjectMultCity=1.0000
+    fLODFadeOutActorMultComplex=1.0000
+    fLODFadeOutItemMultComplex=1.0000
+    fLODFadeOutObjectMultComplex=1.0000
+    fLODLandVerticalBias=0.0000
+
+## LOD strategy outline
+
+  * Scan the `meshes\landscape\lod` directory and build a map of low-poly land meshes for some of the worlds.  They seem to be (mostly) in 32 x 32 cells in size.  There are some odd ones in Tamriel - they might be larger ones.
+  * Scan the `distantlod` directory and build a map of visibly distant objects (statics and trees, not sure if there is anything else).  The `.cmp` file has the list of the cell grid positions for the world.  The `.lod` files have the details of the objects, enough to make a REFR, for the cells.  There should be a `_far` variant of these objects.
+  * The number of cells loaded for visible distant child groups are larger than the cells with everything loaded. When the REFR from the visibly distant child groups are loaded, they should replace the low-poly versions.
+  * When a player enters a world cell grid(x, y), cells around that grid needs to be loaded.  A larger group for visibly distant and a smaller group for everything.
+  * Not so sure how to treat the REFR in the dummy cell, especially the doors. i.e. how to decide when to render it?
+
+The low-poly land meshes only have NiTriStrips and NiTriStripsData blocks.  In order to use the existing codebase, a dummy NiNode will need to be inserted at the root.
+
+
 
 [//]: # (/* spell spelllang=en_au syntax=cpp */)
 [//]: # (/* vim: set ft=markdown tw=0 lbr bri fen fdm=marker fdl=0: */)
