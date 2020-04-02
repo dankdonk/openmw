@@ -18,6 +18,7 @@
 namespace ESM4
 {
     typedef uint32_t FormId;
+    class Reader;
 }
 
 namespace ESM
@@ -34,6 +35,14 @@ namespace Loading
 namespace MWWorld
 {
     class ESMStore;
+
+    struct ForeignId
+    {
+        ESM4::FormId mId;
+        bool mIsDeleted;
+
+        ForeignId(ESM4::FormId id = 0, bool isDeleted = false);
+    };
 
     template <class T>
     class ForeignStore : public StoreBase
@@ -94,9 +103,10 @@ namespace MWWorld
         bool erase(const std::string &id);
         bool erase(const T &item);
 
-        RecordId load(ESM::ESMReader &esm);
-        void write(ESM::ESMWriter& writer, Loading::Listener& progress) const;
-        RecordId read(ESM::ESMReader& reader);
+        virtual RecordId load(ESM::ESMReader& esm);
+        ForeignId loadTes4(ESM4::Reader& reader);
+        virtual void write(ESM::ESMWriter& writer, Loading::Listener& progress) const;
+        virtual RecordId read(ESM::ESMReader& reader);
     };
 
 } //end namespace

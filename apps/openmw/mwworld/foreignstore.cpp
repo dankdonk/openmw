@@ -15,6 +15,10 @@
 
 namespace MWWorld
 {
+    ForeignId::ForeignId(ESM4::FormId formId, bool isDeleted)
+        : mId(formId), mIsDeleted(isDeleted)
+    {}
+
     template<typename T>
     ForeignStore<T>::ForeignStore()
     {
@@ -147,7 +151,7 @@ namespace MWWorld
         return ptr;
     }
     template<typename T>
-    RecordId ForeignStore<T>::load(ESM::ESMReader &esm)
+    RecordId ForeignStore<T>::load(ESM::ESMReader& esm)
     {
         T record;
         bool isDeleted = false;
@@ -169,6 +173,26 @@ namespace MWWorld
             inserted.first->second = record;
 
         return RecordId(id, isDeleted);
+    }
+    template<typename T>
+    ForeignId ForeignStore<T>::loadTes4(ESM4::Reader& reader)
+    {
+        T record;
+        record.load(reader);
+
+        std::string id;
+        ESM4::formIdToString(record.mFormId, id);
+        Misc::StringUtils::lowerCaseInPlace(id);
+
+        bool isDeleted = (record.mFlags & ESM4::Rec_Deleted) != 0;
+
+        std::pair<typename Static::iterator, bool> inserted = mStatic.insert(std::make_pair(id, record));
+        if (inserted.second)
+            mShared.push_back(&inserted.first->second);
+        else
+            inserted.first->second = record;
+
+        return ForeignId(record.mFormId, isDeleted);
     }
     template<typename T>
     void ForeignStore<T>::setUp()

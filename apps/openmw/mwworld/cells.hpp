@@ -44,7 +44,9 @@ namespace MWWorld
             //mutable std::map<std::string, std::map<std::pair<int, int>, CellStore> > mForeignWorlds;
             std::map<ESM4::FormId, std::map<std::pair<int, int>, CellStore> > mForeignWorlds;
             std::map<ESM4::FormId, CellStore> mForeignDummys;      // key is ForeignWorld FormId
+            // FIXME: probably need to be for each cell rather than each world
             std::map<ESM4::FormId, CellStore> mForeignVisibleDist; // key is ForeignWorld FormId
+            void initNewWorld(const ForeignWorld *world);
 
             std::vector<std::pair<std::string, CellStore *> > mIdCache;
             std::size_t mIdCacheIndex;
@@ -72,9 +74,8 @@ namespace MWWorld
 
             CellStore *getWorldCell (const std::string& world, int x, int y);
             CellStore *getWorldCell (ESM4::FormId worldId, int x, int y);
-            void initNewWorld(const ForeignWorld *world);
             CellStore *getWorldDummyCell (ESM4::FormId worldId);
-
+            CellStore *getWorldVisibleDistCell (ESM4::FormId worldId);
             CellStore *getForeignInterior (const std::string& name);
 
             Ptr getPtr (const std::string& name, CellStore& cellStore, bool searchInContainers = false);

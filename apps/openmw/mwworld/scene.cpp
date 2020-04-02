@@ -1,5 +1,7 @@
 #include "scene.hpp"
 
+#include <stdexcept>
+
 #include <OgreSceneNode.h>
 
 #include <extern/esm4/land.hpp>
@@ -310,6 +312,12 @@ namespace MWWorld
         float verts = ESM4::Land::VERTS_PER_SIDE; // number of vertices per side
         float worldsize = ESM4::Land::REAL_SIZE;  // cell terrain size in world coords
 
+        if (cell->isDummyCell() || cell->isVisibleDistCell())
+        {
+            insertCell (*cell, true, loadingListener);
+            return;
+        }
+
         // Load terrain physics first...
         if (cell->getCell()->isExterior())
         {
@@ -339,9 +347,9 @@ namespace MWWorld
         // NOTE: this also calls Debugging to add active cells for Pathgrids
         mRendering.cellAdded (cell); // calls mTerrain->loadCell()
 
-        bool waterEnabled = cell->getCell()->hasWater() || cell->isExterior();
+        bool waterEnabled = cell->getCell()->hasWater()/* || cell->isExterior()*/;
         mRendering.setWaterEnabled(waterEnabled);
-        float waterLevel = cell->isExterior() ? -1.f : cell->getWaterLevel();
+        float waterLevel = /*cell->isExterior() ? -1.f : */cell->getWaterLevel();
         if (waterEnabled)
         {
             mPhysics->enableWater(waterLevel);
@@ -354,6 +362,13 @@ namespace MWWorld
 
         // register local scripts
         MWBase::Environment::get().getWorld()->getLocalScripts().addCell (cell); // FIXME
+    }
+
+    void Scene::loadVisibleDist (CellStore *cell, Loading::Listener* loadingListener)
+    {
+        //std::cout << "loading visible distant " << cell->getCell()->getDescription() << std::endl;
+
+        insertCell (*cell, true, loadingListener);
     }
 
     void Scene::changeToVoid()
@@ -391,7 +406,7 @@ namespace MWWorld
         {
             // FIXME: indexToPosition needs to be worldspace-aware
             MWBase::Environment::get().getWorld()->indexToWorldPosition("", cellX, cellY, centerX, centerY, true);
-            const float maxDistance = (8192/2 + 1024)/2; // 1/2 cell size + threshold
+            const float maxDistance = (4096/2 + 512)/2; // 1/2 cell size + threshold
             float distance = std::max(std::abs(centerX-pos.x), std::abs(centerY-pos.y));
             if (distance > maxDistance)
             {
@@ -411,7 +426,7 @@ namespace MWWorld
                 ESM4::FormId worldId
                     = static_cast<const MWWorld::ForeignCell*>(mCurrentCell->getCell())->mCell->mParent;
 
-                changeWorldCellGrid(worldId, newX, newY);
+                updateWorldCellsOnGrid(worldId, newX, newY);
                 mRendering.updateTerrain();
             }
         }
@@ -419,9 +434,12 @@ namespace MWWorld
 
     void Scene::changeCellGrid (int X, int Y)
     {
-        // FIXME: testing only
+// FIXME: testing only
+//#if 0
         if(mCurrentCell && mCurrentCell->isForeignCell())
-            std::cout << "Error: changeCellGrid called from a foreign cell" << std::endl;
+            throw std::runtime_error("Scene::changeCellGrid used for TES4");
+            //std::cout << "Error: changeCellGrid called from a foreign cell" << std::endl;
+//#endif
 
         Loading::Listener* loadingListener = MWBase::Environment::get().getWindowManager()->getLoadingScreen();
         Loading::ScopedLoad load(loadingListener);
@@ -515,7 +533,12 @@ namespace MWWorld
 
     void Scene::changePlayerCell(CellStore *cell, const ESM::Position &pos, bool adjustPlayerPos)
     {
-        mCurrentCell = cell; // FIXME: maybe CellStore can keep the worldspace formId?
+        if (mCurrentCell && mCurrentCell == cell) // mCurrentCell can be nullptr (at the start only?)
+            return;
+
+        // NOTE: we can detect the change of world space here
+
+        mCurrentCell = cell; // if cell->isForeignCell(), mCell->mParent is the world FormId
 
         MWBase::World *world = MWBase::Environment::get().getWorld();
         MWWorld::Ptr old = world->getPlayerPtr();
@@ -546,7 +569,7 @@ namespace MWWorld
 
     // loads cells and associated references to mActiveCells as required, based on exterior
     // grid size and player position (cellstore contains cell pointer and refs)
-    void Scene::changeWorldCellGrid (ESM4::FormId worldId, int X, int Y)
+    CellStore *Scene::updateWorldCellsOnGrid (ESM4::FormId worldId, int X, int Y)
     {
         Loading::Listener* loadingListener = MWBase::Environment::get().getWindowManager()->getLoadingScreen();
         Loading::ScopedLoad load(loadingListener);
@@ -568,17 +591,21 @@ namespace MWWorld
 
         CellStore* current = MWBase::Environment::get().getWorld()->getWorldCell(worldId, X, Y);
         if (!current) // FIXME
-            return;
+            return nullptr;
 
         mRendering.enableTerrain(true, worldId);
 
         std::string loadingExteriorText = "#{sLoadingMessage3}";
         loadingListener->setLabel(loadingExteriorText);
 
+        bool worldChanged = false;
+
         // TODO: For TES4/5 we should double this value? (cells are smaller)
         const int halfGridSize = Settings::Manager::getInt("exterior grid size", "Cells") / 2;
         if (worldId != currentWorldId)
         {
+            worldChanged = true;
+
             int current = 0;
             CellStoreCollection::iterator active = mActiveCells.begin();
             while (active != mActiveCells.end())
@@ -597,7 +624,7 @@ namespace MWWorld
                 if ((*active)->getCell()->isExterior() && // FIXME: should this be an assert instead?
                     (*active)->isForeignCell())
                 {
-                    if ((*active)->isDummyCell()) // FIXME: also keep visible distant
+                    if ((*active)->isDummyCell() || (*active)->isVisibleDistCell())
                     {
                         ++active;
                         continue;
@@ -629,12 +656,13 @@ namespace MWWorld
                     assert ((*iter)->getCell()->isExterior());
 
                     if (x == (*iter)->getCell()->getGridX() &&
-                        y == (*iter)->getCell()->getGridY())
+                        y == (*iter)->getCell()->getGridY() &&
+                        !(*iter)->isDummyCell() &&
+                        !(*iter)->isVisibleDistCell())
                         break;
 
                     ++iter;
                 }
-
                 // the counting of refs does not work for TES4, since we don't know how many refs exist
                 // until they are loaded - we may need to estimate by looking at the size of
                 // the group and dividing by some factor
@@ -668,7 +696,9 @@ namespace MWWorld
                     assert ((*iter)->getCell()->isExterior());
 
                     if (x == (*iter)->getCell()->getGridX() &&
-                        y == (*iter)->getCell()->getGridY())
+                        y == (*iter)->getCell()->getGridY() &&
+                        !(*iter)->isDummyCell() &&
+                        !(*iter)->isVisibleDistCell())
                         break;
 
                     ++iter;
@@ -699,12 +729,10 @@ namespace MWWorld
         // A dummy cell is created in:
         //     MWWorld::Cells::getWorldCell(ESM4::FormId worldId, int x, int y)
 
-        // FIXME: also check the visibly distant
-
         // check for dummy cell
         // FIXME: having the dummy cell results in *all* the doors being rendered!  Need to be
         // able to limit rendering based on the ref's position
-        if (!mActiveCells.empty())
+        if (worldChanged && !mActiveCells.empty())
         {
             CellStore *dummy = MWBase::Environment::get().getWorld()->getWorldDummyCell(worldId);
             if (dummy)
@@ -719,6 +747,20 @@ namespace MWWorld
             else // create a new one
             {
             }
+//#if 0
+            // FIXME: having one visible distant per world is not going to work, especially
+            // with trees
+            CellStore *dist = MWBase::Environment::get().getWorld()->getWorldVisibleDistCell(worldId);
+            if (dist)
+            {
+                std::pair<CellStoreCollection::iterator, bool> result = mActiveCells.insert(dist);
+                if (result.second)
+                {
+//                  std::cout << "dist " << std::endl;
+                    loadVisibleDist(dist, loadingListener);
+                }
+            }
+//#endif
         }
 
         MWBase::Environment::get().getWindowManager()->changeCell(current);
@@ -728,6 +770,8 @@ namespace MWWorld
         // Delay the map update until scripts have been given a chance to run.
         // If we don't do this, objects that should be disabled will still appear on the map.
         mNeedMapUpdate = true;
+
+        return current;
     }
 
     //We need the ogre renderer and a scene node.
@@ -898,14 +942,18 @@ namespace MWWorld
         changeCellGrid(x, y);
 
         CellStore* current = MWBase::Environment::get().getWorld()->getExterior(x, y);
+// FIXME: testing
+//#if 0
+        if (mCurrentCell && mCurrentCell->isForeignCell() && !current->isForeignCell())
+            throw std::runtime_error("Scene::changeToExteriorCell from TES4 to Morrowind");
+//#endif
         changePlayerCell(current, position, adjustPlayerPos);
 
         mRendering.updateTerrain();
     }
 
-    void Scene::changeToForeignWorldCell (ESM4::FormId worldId, const ESM::Position& position, bool adjustPlayerPos)
+    void Scene::changeToWorldCell (ESM4::FormId worldId, const ESM::Position& position, bool adjustPlayerPos)
     {
-        // FIXME: CellStore needs to support TES4 and worldspace
         // FIXME: How to handle TES4 style terrain?  Add updateTES4Terrain() method to RenderingManager?
         int x = 0;
         int y = 0;
@@ -914,9 +962,7 @@ namespace MWWorld
         x = static_cast<int>(std::floor(position.pos[0] / cellSize));
         y = static_cast<int>(std::floor(position.pos[1] / cellSize));
 
-        changeWorldCellGrid(worldId, x, y);
-
-        CellStore* current = MWBase::Environment::get().getWorld()->getWorldCell(worldId, x, y); // FIXME
+        CellStore *current = updateWorldCellsOnGrid(worldId, x, y);
         if (!current)
             return; // FIXME
 

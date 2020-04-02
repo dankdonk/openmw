@@ -65,7 +65,8 @@ namespace MWWorld
             // Load and unload cells as necessary to create a cell grid with "X" and "Y" in the center
             void changeCellGrid (int X, int Y);
 
-            void changeWorldCellGrid (ESM4::FormId worldId, int X, int Y);
+            // returns the current CellStore for grid x, y
+            CellStore *updateWorldCellsOnGrid (ESM4::FormId worldId, int x, int y);
 
             void getGridCenter(int& cellX, int& cellY);
 
@@ -80,6 +81,7 @@ namespace MWWorld
             void loadCell (CellStore *cell, Loading::Listener* loadingListener);
 
             void loadForeignCell (CellStore *cell, Loading::Listener* loadingListener);
+            void loadVisibleDist (CellStore *cell, Loading::Listener* loadingListener);
 
             void playerMoved (const Ogre::Vector3& pos);
 
@@ -98,7 +100,7 @@ namespace MWWorld
 
             void changeToExteriorCell (const ESM::Position& position, bool adjustPlayerPos);
             ///< Move to exterior cell.
-            void changeToForeignWorldCell (ESM4::FormId worldId, const ESM::Position& position, bool adjustPlayerPos);
+            void changeToWorldCell (ESM4::FormId worldId, const ESM::Position& position, bool adjustPlayerPos);
 
             void changeToVoid();
             ///< Change into a void

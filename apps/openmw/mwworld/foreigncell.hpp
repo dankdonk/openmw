@@ -73,20 +73,21 @@ namespace MWWorld
         void preload (ESM4::Reader& reader);
         void addFileContext (const ESM4::ReaderContext& ctx);
 
-        // methods to behave like an ESM::Cell
-        void load (ESM::ESMReader& esm, bool isDeleted = false);
-        void save (ESM::ESMWriter& esm, bool isDeleted = false) const {} // FIXME: TODO
-
-        std::string getDescription() const;
-        bool isExterior() const { return !mIsInterior; }
-        int getGridX() const;
-        int getGridY() const;
-        ESM::CellId getCellId() const;
-
         void setRefrEstimate(std::int32_t groupType, std::uint32_t estimate);
         std::uint32_t getRefrEstimate(std::int32_t groupType) const;
         void incrementRefrCount(std::int32_t groupType);
         std::uint32_t getPersistentRefrCount() const;
+
+        // these are from ESM::Cell but not virtual
+        void load (ESM::ESMReader& esm, bool isDeleted = false);
+        void save (ESM::ESMWriter& esm, bool isDeleted = false) const {} // FIXME: TODO
+
+        // methods to behave like an ESM::Cell
+        virtual std::string getDescription() const;
+        virtual bool isExterior() const { return !mIsInterior; }
+        virtual int getGridX() const;
+        virtual int getGridY() const;
+        virtual ESM::CellId getCellId() const;
 
         void blank(); // FIXME: is this needed?
 

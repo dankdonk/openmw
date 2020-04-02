@@ -98,8 +98,15 @@ int CSMForeign::CellCollection::load (ESM4::Reader& reader, bool base)
     // reader.currCellGrid() is set during the load, i.e. loadRecord (sub record XCLC for an exterior cell)
     if (reader.hasCellGrid())
     {
+#if 0
         assert((reader.grp().type == ESM4::Grp_ExteriorSubCell ||
                 reader.grp().type == ESM4::Grp_WorldChild) && "Unexpected group while loading cell");
+#else
+        // DLCFrostcrag.esp has Grp_CellTemporaryChild here
+        if ((reader.grp().type != ESM4::Grp_ExteriorSubCell &&
+                reader.grp().type != ESM4::Grp_WorldChild))
+            std::cout << "unexpected group " << reader.grp().type << std::endl;
+#endif
 
         ESM4::FormId worldId = reader.currWorld();
         std::map<ESM4::FormId, CoordinateIndex>::iterator lb = mPositionIndex.lower_bound(worldId);
@@ -155,10 +162,12 @@ int CSMForeign::CellCollection::load (ESM4::Reader& reader, bool base)
         //
         // TestRender, EmptyCell, OblivionMQKvatchBridge, thehill, Hawkhaven02, 000009bf, 0000169f,
         // etc, etc, are in Grp_ExteriorSubCell but witout any grids
+#if 0
         assert((reader.grp().type == ESM4::Grp_ExteriorSubCell ||
                 reader.grp().type == ESM4::Grp_InteriorSubCell ||
                 reader.grp().type == ESM4::Grp_WorldChild) && "Unexpected group while loading cell");
-#if 0
+#else
+        // DLCFrostcrag.esp has Grp_CellTemporaryChild here
         if ((reader.grp().type != ESM4::Grp_ExteriorSubCell &&
                 reader.grp().type != ESM4::Grp_InteriorSubCell &&
                 reader.grp().type != ESM4::Grp_WorldChild))

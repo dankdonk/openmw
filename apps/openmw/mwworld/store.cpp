@@ -15,6 +15,8 @@
 #include <stdexcept>
 #include <sstream>
 
+#include "cellstore.hpp"
+
 namespace
 {
     template<typename T>
@@ -1283,7 +1285,7 @@ namespace MWWorld
     // Similarly, loading ForeignLand, foreignPathgrid and various references need to update
     // ESM4::CellGroup (or ForeignCell).
     //
-    void Store<MWWorld::ForeignCell>::preload(ESM::ESMReader &esm, Store<ForeignWorld>& worlds)
+    void Store<MWWorld::ForeignCell>::preload(ESM::ESMReader& esm, Store<ForeignWorld>& worlds)
     {
         ESM4::Reader& reader = static_cast<ESM::ESM4Reader*>(&esm)->reader();
 
@@ -1306,11 +1308,11 @@ namespace MWWorld
 
         // FIXME: need to merge CELL records ??
         // Pathgrid.esp
-		// cell->mCell->mFormId	0x0001BD1F ICMarketDistrict01 PGRD FormId 0x0001C2C7
-		// cell->mCell->mFormId	0x0001BD21 ICMarketDistrict04 PGRD FormId 0x0001C2C8
-		// cell->mCell->mFormId	0x00165F2C                    PGRD FormId 0x00175BCA
-		// cell->mCell->mFormId	0x0001BD1E ICMarketDistrict02 PGRD FormId 0x0001C2C9
-		// cell->mCell->mFormId	0x0001BD20 ICMarketDistrict03 PGRD FormId 0x0001C2CA
+        // cell->mCell->mFormId 0x0001BD1F ICMarketDistrict01 PGRD FormId 0x0001C2C7
+        // cell->mCell->mFormId 0x0001BD21 ICMarketDistrict04 PGRD FormId 0x0001C2C8
+        // cell->mCell->mFormId 0x00165F2C                    PGRD FormId 0x00175BCA
+        // cell->mCell->mFormId 0x0001BD1E ICMarketDistrict02 PGRD FormId 0x0001C2C9
+        // cell->mCell->mFormId 0x0001BD20 ICMarketDistrict03 PGRD FormId 0x0001C2CA
 #if 0
         std::pair<std::map<ESM4::FormId, MWWorld::ForeignCell*>::iterator, bool> res
             = mCells.insert(std::make_pair(cell->mCell->mFormId, cell));
@@ -1445,7 +1447,7 @@ namespace MWWorld
         mLastPreloadedCell = cell->mCell->mFormId; // FIXME for testing only, delete later
     }
 
-    void Store<MWWorld::ForeignCell>::testPreload(ESM::ESMReader &esm)
+    void Store<MWWorld::ForeignCell>::testPreload(ESM::ESMReader& esm)
     {
         //FIXME below is for testing only
         std::map<std::uint64_t, MWWorld::ForeignCell*>::iterator it = mCells.find(mLastPreloadedCell);
@@ -1455,7 +1457,65 @@ namespace MWWorld
             std::cout << "CELL preload: cell not found" << std::endl;
     }
 
-    void Store<MWWorld::ForeignCell>::updateRefrEstimate(ESM::ESMReader &esm)
+    void Store<MWWorld::ForeignCell>::loadVisibleDist(ESMStore& store, ESM::ESMReader& esm, CellStore *cell)
+    {
+        while(esm.hasMoreRecs()) // FIXME: need to stop after Grp_VisibleDistChild
+        {
+            ESM4::Reader& reader = static_cast<ESM::ESM4Reader*>(&esm)->reader();
+
+            reader.checkGroupStatus();
+            if (reader.getContext().groupStack.back().first.type != ESM4::Grp_CellVisibleDistChild)
+                return; // must have popped
+
+            loadTes4Group(store, esm, cell);
+            //listener->setProgress(static_cast<size_t>(esm.getFileOffset() / (float)esm.getFileSize() * 1000));
+        }
+    }
+
+    // FIXME: this is the 3rd time the same code (almost) is being repeated, not even counting
+    // OpenCS. Here, ESMStore and CellStore.  Need to move them out to something like ESMLoader.
+    void Store<MWWorld::ForeignCell>::loadTes4Group(ESMStore& store, ESM::ESMReader& esm, CellStore *cell)
+    {
+        ESM4::Reader& reader = static_cast<ESM::ESM4Reader*>(&esm)->reader();
+
+        reader.getRecordHeader();
+        const ESM4::RecordHeader& hdr = reader.hdr();
+
+        if (hdr.record.typeId != ESM4::REC_GRUP)
+            return cell->loadTes4Record(store, esm);
+            //return loadTes4Record(esm, worlds); // FIXME: call CellStore::loadTes4Record instead?
+
+        // should not happen, throw?
+        std::cout << "Store<ForeignCell>::loadTes4Group unexpected group" << std::endl;
+    }
+
+#if 0
+    // FIXME: deprecated
+    void Store<MWWorld::ForeignCell>::loadTes4Record(ESM::ESMReader& esm, Store<MWWorld::ForeignWorld>& worlds)
+    {
+        ESM4::Reader& reader = static_cast<ESM::ESM4Reader*>(&esm)->reader();
+        const ESM4::RecordHeader& hdr = reader.hdr();
+
+        switch (hdr.record.typeId)
+        {
+            case ESM4::REC_REFR:
+            case ESM4::REC_ACRE:
+            case ESM4::REC_ACHR:
+            {
+                reader.skipRecordData();
+                break;
+            }
+            default:
+            {
+                std::cout << "Store<ForeignCell> Unexpected TES4 record type: " + ESM4::printName(hdr.record.typeId)
+                          << std::endl;
+                reader.skipRecordData();
+                break;
+            }
+        }
+    }
+#endif
+    void Store<MWWorld::ForeignCell>::updateRefrEstimate(ESM::ESMReader& esm)
     {
         ESM4::Reader& reader = static_cast<ESM::ESM4Reader*>(&esm)->reader();
         const ESM4::GroupTypeHeader hdr = reader.hdr().group;
@@ -1477,7 +1537,7 @@ namespace MWWorld
 
     // FIXME: this is rather inefficient
     // - probably worth caching the current ForegnCell in ESMStore instead
-    void Store<MWWorld::ForeignCell>::incrementRefrCount(ESM::ESMReader &esm)
+    void Store<MWWorld::ForeignCell>::incrementRefrCount(ESM::ESMReader& esm)
     {
         ESM4::Reader& reader = static_cast<ESM::ESM4Reader*>(&esm)->reader();
 
@@ -1495,7 +1555,7 @@ namespace MWWorld
     }
 
     // FIXME: Is there a more efficient way than calling Store<ForeignWorld>::find() each time?
-    RecordId Store<MWWorld::ForeignCell>::load(ESM::ESMReader &esm, Store<ForeignWorld>& worlds)
+    RecordId Store<MWWorld::ForeignCell>::load(ESM::ESMReader& esm, Store<ForeignWorld>& worlds)
     {
         ESM4::Reader& reader = static_cast<ESM::ESM4Reader*>(&esm)->reader();
 

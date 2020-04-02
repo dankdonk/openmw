@@ -203,7 +203,7 @@ void MWWorld::Cells::initNewWorld(const ForeignWorld *world)
     // check if a dummy cell exists
     // FIXME: this logic needs to change since a new world may be inserted from another
     // place
-    const ForeignCell *dummyCell = mStore.get<ForeignCell>().find(world->mDummyCell);
+    const ForeignCell *dummyCell = mStore.get<ForeignCell>().find(world->getDummyCell());
     if (dummyCell)
     {
         std::pair<std::map<ESM4::FormId, CellStore>::iterator, bool> res =
@@ -212,18 +212,23 @@ void MWWorld::Cells::initNewWorld(const ForeignWorld *world)
         if (res.second)
             res.first->second.load(mStore, mReader);
     }
-
+#if 0
     // visibly distant
     // FIXME: this cell won't be found from mStore, need to create one
     // Also, mFormId is probably already used by the dummy cell
-    const ForeignCell *distCell = mStore.get<ForeignCell>().find(world->mFormId);
+    ForeignWorld *wrld = mStore.get<ForeignWorld>().getWorld(world->mFormId); // get a non-const ptr
+    if (!wrld)
+        return; // FIXME: maybe exception?
+#endif
+    CellStore *distCell = world->getVisibleDistCell();
     if (distCell)
     {
         std::pair<std::map<ESM4::FormId, CellStore>::iterator, bool> res =
-            mForeignVisibleDist.insert({ world->mFormId, CellStore(distCell, true, false) });
+            mForeignVisibleDist.insert({ world->mFormId, *distCell });
 
-        if (res.second)
-            res.first->second.load(mStore, mReader);
+        // loaded already?
+        //if (res.second)
+            //res.first->second.load(mStore, mReader);
     }
 }
 
@@ -232,11 +237,12 @@ MWWorld::CellStore *MWWorld::Cells::getWorldCell(ESM4::FormId worldId, int x, in
     // find the world for the given form id
     const ForeignWorld *world = mStore.get<ForeignWorld>().find(worldId);
     if (!world)
-        return nullptr;// FIXME: maybe exception?
+        return nullptr; // FIXME: maybe exception?
 
     // now find the cell's formid for the given x, y
-    std::map<std::pair<int, int>, ESM4::FormId>::const_iterator it = world->mCells.find(std::make_pair(x, y));
-    if (it == world->mCells.end())
+    const std::map<std::pair<int, int>, ESM4::FormId>& cellGridMap = world->getCellGridMap();
+    std::map<std::pair<int, int>, ESM4::FormId>::const_iterator it = cellGridMap.find(std::make_pair(x, y));
+    if (it == cellGridMap.end())
         return nullptr; // FIXME: maybe exception?
 
     // get the cell given the formid
@@ -278,9 +284,7 @@ MWWorld::CellStore *MWWorld::Cells::getWorldCell(ESM4::FormId worldId, int x, in
     if (cellStore->getState() != CellStore::State_Loaded)
     {
         // Multiple plugin support for landscape data is much easier than for references. The last plugin wins.
-        cellStore->load(mStore, mReader);
-
-        // FIXME: update loade state?
+        cellStore->load(mStore, mReader); // load() updates State_Loaded
 
         // inherit parent world's land?
         // save context
@@ -299,6 +303,15 @@ MWWorld::CellStore *MWWorld::Cells::getWorldDummyCell (ESM4::FormId worldId)
 {
     std::map<ESM4::FormId, CellStore>::iterator it = mForeignDummys.find(worldId);
     if (it != mForeignDummys.end())
+        return &it->second;
+
+    return 0;
+}
+
+MWWorld::CellStore *MWWorld::Cells::getWorldVisibleDistCell (ESM4::FormId worldId)
+{
+    std::map<ESM4::FormId, CellStore>::iterator it = mForeignVisibleDist.find(worldId);
+    if (it != mForeignVisibleDist.end())
         return &it->second;
 
     return 0;

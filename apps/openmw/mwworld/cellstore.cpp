@@ -286,7 +286,7 @@ namespace MWWorld
 
     CellStore::CellStore (const ESM::Cell *cell, bool isForeignCell, bool isDummyCell)
       : mCell (cell), mState (State_Unloaded), mHasState (false), mLastRespawn(0,0),
-        mIsForeignCell(isForeignCell), mIsDummyCell(isDummyCell), mForeignLand(0)
+        mIsForeignCell(isForeignCell), mIsDummyCell(isDummyCell), mIsVisibleDistCell(false), mForeignLand(0)
     {
         if (!mIsForeignCell)
             mWaterLevel = cell->mWater;
@@ -622,23 +622,6 @@ namespace MWWorld
             + mNpcs.mList.size();
     }
 
-    // FIXME: deprecated
-#if 0
-    int CellStore::estimateForeignRefs() const
-    {
-        assert(mIsForeignCell);
-        const ForeignCell *cell = static_cast<const ForeignCell*>(mCell);
-
-        std::size_t total = 0;
-        std::size_t magic = 1000; // FIXME: just a guess
-        for (std::size_t i = 0; i < cell->mModList.size(); ++i)
-        {
-            total += cell->mModList[i].groupStack.back().first.groupSize;
-        }
-
-        return int(total/magic);
-    }
-#endif
     int CellStore::getRefrEstimate(std::int32_t groupType) const
     {
         assert(mIsForeignCell);
@@ -792,7 +775,7 @@ namespace MWWorld
     }
 
     // FIXME: this can be optimised by checking if a cell has any refs - see ForeignCell::mHasChildren
-    void CellStore::loadForeignRefs(const MWWorld::ESMStore &store, std::vector<std::vector<ESM::ESMReader*> > &esm)
+    void CellStore::loadForeignRefs(const MWWorld::ESMStore& store, std::vector<std::vector<ESM::ESMReader*> >& esm)
     {
         assert(mIsForeignCell);
         const ForeignCell *cell = static_cast<const ForeignCell*>(mCell);
@@ -843,7 +826,7 @@ namespace MWWorld
         }
     }
 
-    void CellStore::loadTes4Group (const MWWorld::ESMStore &store, ESM::ESMReader &esm)
+    void CellStore::loadTes4Group (const MWWorld::ESMStore& store, ESM::ESMReader& esm)
     {
         ESM4::Reader& reader = static_cast<ESM::ESM4Reader*>(&esm)->reader();
 
@@ -885,7 +868,7 @@ namespace MWWorld
         return;
     }
 
-    void CellStore::loadTes4Record (const MWWorld::ESMStore &store, ESM::ESMReader& esm)
+    void CellStore::loadTes4Record (const MWWorld::ESMStore& store, ESM::ESMReader& esm)
     {
         // Assumes that the reader has just read the record header only.
         ESM4::Reader& reader = static_cast<ESM::ESM4Reader*>(&esm)->reader();
@@ -977,7 +960,7 @@ namespace MWWorld
                     case MKTAG('C','M','I','S'): mForeignMiscItems.load(record, deleted, store); break;
                     case MKTAG('T','S','T','A'): mForeignStatics.load(record, deleted, store); break;
                     case MKTAG('S','G','R','A'): mForeignGrasses.load(record, deleted, store); break;
-                    case MKTAG('E','T','R','E'): mForeignTrees.load(record, deleted, store); break;
+                    //case MKTAG('E','T','R','E'): mForeignTrees.load(record, deleted, store); break;
                     case MKTAG('R','F','L','O'): mForeignFloras.load(record, deleted, store); break;
                     case MKTAG('N','F','U','R'): mForeignFurnitures.load(record, deleted, store); break;
                     case MKTAG('P','W','E','A'): mForeignWeapons.load(record, deleted, store); break;
@@ -1076,6 +1059,7 @@ namespace MWWorld
                     case MKTAG('I','L','V','L'): mForeignLvlItems.load(record, deleted, store); break;
                     case MKTAG('E','N','O','T'): mForeignNotes.load(record, deleted, store); break;
 
+                    case MKTAG('E','T','R','E'): //mForeignTrees.load(record, deleted, store); break;
                     case MKTAG('N','L','V','L'): // Leveled NPC
                     case MKTAG('M','I','D','L'): // Idle Marker
                     case MKTAG('T','M','S','T'): // Movable Static
@@ -1091,7 +1075,7 @@ namespace MWWorld
                     case 0: std::cerr << "Cell refr " + ESM4::formIdToString(record.mBaseObj) + " not found!\n"; break;
 
                     default:
-                        std::cerr << "WARNING: Ignoring reference '"
+                        std::cerr << "WARNING: Ignoring TES4 reference '"
                                   << ESM4::formIdToString(record.mBaseObj) << "' of unhandled type\n";
                 }
 
@@ -1203,6 +1187,8 @@ namespace MWWorld
                 // pointer or reference to the ESMStore...
                 //
                 // HACK: Workaround by going through a method in World
+                //
+                // TODO: try getModifiable()
                 //
                 //ESM4::FormId worldId = mCell->mCell->mParent;
                 //ESM4::FormId cellId  = mCell->mCell->mFormId;

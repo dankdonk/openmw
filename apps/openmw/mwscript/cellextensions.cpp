@@ -108,13 +108,12 @@ namespace MWScript
                     world->getPlayer().setTeleported(true);
                     world->indexToWorldPosition (worldspace, x, y, pos.pos[0], pos.pos[1], false/*center*/);
                     pos.pos[2] = 0;
-
                     pos.rot[0] = pos.rot[1] = pos.rot[2] = 0;
 
                     std::cout << worldspace << ", x: " << std::dec << x << ", y: " << y << std::endl; // FIXME
 
                     world->changeToForeignWorldCell (worldspace, pos);
-                    //world->fixPosition(world->getPlayerPtr());
+                    world->fixPosition(world->getPlayerPtr()); // avoid being trapped within a mesh
                 }
         };
 

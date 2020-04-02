@@ -560,6 +560,11 @@ namespace MWWorld
         return mCells.getWorldDummyCell (worldId);
     }
 
+    CellStore *World::getWorldVisibleDistCell (ESM4::FormId worldId)
+    {
+        return mCells.getWorldVisibleDistCell (worldId);
+    }
+
     ESM4::FormId World::loadForeignLand (ESM::ESMReader& esm)
     {
         RecordId id = mStore.getModifiable<ForeignLand>().load(esm);
@@ -1065,14 +1070,14 @@ namespace MWWorld
     {
         mPhysics->clearQueuedMovement();
 
-        // FIXME: should check if actually changed (need to store current worldspace formid?
-        mRendering->notifyWorldSpaceChanged();
+        mRendering->notifyWorldSpaceChanged(); // just clears effects and water ripples
 
         removeContainerScripts(getPlayerPtr());
 
         ESM4::FormId worldId = mStore.get<ForeignWorld>().getFormId(world);
+        // FIXME: should check if actually changed (need to store current worldspace formid?
         // FIXME: check for worldId == 0 here? Can happen if openmw.cfg does not load Oblivion.esm for example
-        mWorldScene->changeToForeignWorldCell(worldId, position, true);
+        mWorldScene->changeToWorldCell(worldId, position, true);
 
         addContainerScripts(getPlayerPtr(), getPlayerPtr().getCell());
     }
@@ -1217,7 +1222,16 @@ namespace MWWorld
                     if (mWorldScene->isCellActive(*newCell))
                         mWorldScene->changePlayerCell(newCell, pos, false);
                     else
-                        mWorldScene->changeToExteriorCell(pos, false);
+                    {
+                        if (newCell->isForeignCell())
+                        {
+                            ESM4::FormId worldId
+                                = static_cast<const MWWorld::ForeignCell*>(newCell->getCell())->mCell->mParent;
+                            mWorldScene->changeToWorldCell(worldId, pos, false);
+                        }
+                        else
+                            mWorldScene->changeToExteriorCell(pos, false);
+                    }
                 }
                 addContainerScripts (getPlayerPtr(), newCell);
                 newPtr = getPlayerPtr();
@@ -1293,13 +1307,7 @@ namespace MWWorld
         {
             int cellX, cellY;
 
-            if (!cell->isForeignCell())
-            {
-                positionToIndex(x, y, cellX, cellY);
-
-                cell = getExterior(cellX, cellY);
-            }
-            else // ForeignCell
+            if (cell->isForeignCell())
             {
                 const int cellSize = 4096;
 
@@ -1307,7 +1315,15 @@ namespace MWWorld
                 cellY = static_cast<int>(std::floor(y / cellSize));
 
                 ESM4::FormId worldId = static_cast<const MWWorld::ForeignCell*>(cell->getCell())->mCell->mParent;
-                cell = getWorldCell (worldId, cellX, cellY);
+                CellStore *newCell = getWorldCell (worldId, cellX, cellY);
+                if (newCell)
+                    cell = newCell;
+            }
+            else
+            {
+                positionToIndex(x, y, cellX, cellY);
+
+                cell = getExterior(cellX, cellY);
             }
         }
 

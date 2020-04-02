@@ -99,6 +99,7 @@ namespace MWWorld
             //
             bool mIsForeignCell;
             bool mIsDummyCell;
+            bool mIsVisibleDistCell;
             ESM4::FormId mForeignLand; // ForeignCell only, can't store in mCell due to const ptr
 
             MWWorld::TimeStamp mLastRespawn;
@@ -156,8 +157,7 @@ namespace MWWorld
             ESM::Pathgrid mPathgrid; // FIXME: just a quick workaround
             void buildTES3Pathgrid();
 
-            void loadTes4Group (const MWWorld::ESMStore &store, ESM::ESMReader& esm);
-            void loadTes4Record (const MWWorld::ESMStore &store, ESM::ESMReader& esm);
+            void loadTes4Group (const MWWorld::ESMStore& store, ESM::ESMReader& esm);
 
         public:
 
@@ -166,8 +166,11 @@ namespace MWWorld
             const ESM::Cell *getCell() const;
             inline const bool isForeignCell() const { return mIsForeignCell; }
             inline const bool isDummyCell() const { return mIsDummyCell; }
+            inline const bool isVisibleDistCell() const { return mIsVisibleDistCell; }
+            void setVisibleDistCell() { mIsVisibleDistCell = true; }
 
             inline ESM4::FormId getForeignLandId() const { return mForeignLand; }
+            void loadTes4Record (const MWWorld::ESMStore& store, ESM::ESMReader& esm);
 
             State getState() const;
 

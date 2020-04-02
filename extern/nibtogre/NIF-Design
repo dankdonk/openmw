@@ -2708,7 +2708,9 @@ Looking at the '.cmp' file again.  tamriel.cmp has 152 co-ordinates plus 0,7.  B
 
 Maybe these are reference points for the generation of the LOD mesh and textures?
 
-# [31/03/2020] Visible when distant
+# [31/03/2020 - 02/04/2020] Visible when distant
+
+## Initial attempt
 
 We probably need to load these records, along with persistent records, for each world space.  But do we do that at the beginning or when we enter a world for the first time?
 
@@ -2781,6 +2783,18 @@ The loading of the REFR, ACHR and ACRE occurs in `CellStore::loadTes4Record()` a
 
 There are a couple of options on where to load the records - either initiate the call from ESMStore (when first scanning the ESM/ESPs or from Cells (when a new world is accessed for the first time).  I suspect that the former is going to be simpler, since it will have all the base and mods being scanned.  With the latter approach, WRLD context needs to be saved so that we can go back and scan all the CELLs that belong in the world, also all the mods that modifies the CELLS, REFRs, etc.  The only trouble with the former approach is the lack of access to MWWorld::Cells.  We may need to add a method to WorldImp.
 
+## Redesign needed
+
+Having one cell to hold all the visibly distant REFR won't work.  In Tamriel there are way too many trees.  The performance becomes worse than a slide-show.  There must be some alogorithm in vanilla to decide which ones to load, similar to cells - however it must be more than the number of cells being loaded?  Otherwise why bother grouping them as "visibly distant"?
+
+Just outside Vilverin approx 1.2M triangles with exterior grid size of 3 - single digit FPS sometimes going down to 0.
+
+**TODO:** Not very happy with having to add methods in MBase::World.  Need to look for alternatives.
+**TODO:** Not happy with ForeignWorld storign dummy cell FormId but visibly distant CellStore (inconsistent).  We just need to ensure that it is created when the world is first accessed.  However, if we were to load *all* the REFRs for the WRLD, which may have many CELLs, we had to load them in ESMStore and at that point nothing would be accessing any worlds.
+
+**FIXME:** Sometimes Morrowind cells get loaded?  I think this might be due to OpenMW using `getExterior(x, y)` which can confuse things.  We may need to keep the current world somewhere (player?) and change only when explicigly changing worlds.
+
+**TODO:** WRLD has a flag "no LOD water"
 
 
 [//]: # (/* spell spelllang=en_au syntax=cpp */)

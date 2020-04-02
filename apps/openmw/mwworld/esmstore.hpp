@@ -222,6 +222,7 @@ namespace MWWorld
             return it->second;
         }
 
+        // NOTE: returns TES4::RecordTypes
         int find(ESM4::FormId formId) const
         {
             std::map<ESM4::FormId, int>::const_iterator it = mForeignIds.find(formId);
@@ -294,6 +295,10 @@ namespace MWWorld
             mStores[MKTAG('N','S','O','U')] = &mForeignSounds;
             mStores[MKTAG('X','L','T','E')] = &mForeignLandTextures;
             mStores[MKTAG('T','S','C','P')] = &mForeignScripts;
+            mStores[MKTAG('L','D','I','A')] = &mForeignDialogs;
+            mStores[MKTAG('O','I','N','F')] = &mForeignDialogInfos;
+            mStores[MKTAG('T','Q','U','S')] = &mForeignQuests;
+            mStores[MKTAG('K','P','A','C')] = &mForeignAIPackages;
 
             mStores[MKTAG('I','A','C','T')] = &mForeignActivators;
             mStores[MKTAG('A','A','P','P')] = &mForeignApparatuses;
@@ -724,8 +729,33 @@ namespace MWWorld
     }
 
     template <>
+    inline const ForeignStore<ESM4::LandTexture>& ESMStore::getForeign<ESM4::LandTexture>() const {
+        return mForeignLandTextures;
+    }
+
+    template <>
     inline const ForeignStore<ESM4::Script>& ESMStore::getForeign<ESM4::Script>() const {
         return mForeignScripts;
+    }
+
+    template <>
+    inline const ForeignStore<ESM4::Dialog>& ESMStore::getForeign<ESM4::Dialog>() const {
+        return mForeignDialogs;
+    }
+
+    template <>
+    inline const ForeignStore<ESM4::DialogInfo>& ESMStore::getForeign<ESM4::DialogInfo>() const {
+        return mForeignDialogInfos;
+    }
+
+    template <>
+    inline const ForeignStore<ESM4::Quest>& ESMStore::getForeign<ESM4::Quest>() const {
+        return mForeignQuests;
+    }
+
+    template <>
+    inline const ForeignStore<ESM4::AIPackage>& ESMStore::getForeign<ESM4::AIPackage>() const {
+        return mForeignAIPackages;
     }
 
     template <>

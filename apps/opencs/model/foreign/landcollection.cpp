@@ -47,13 +47,15 @@ int CSMForeign::LandCollection::load (ESM4::Reader& reader, bool base)
     // check if parent cell left some bread crumbs
     if (reader.hasCellGrid())
     {
+//#if 0
+        // FIXME DLCFrostcrag.esp triggers this
         // LAND records should only occur in a exterior cell.
         assert(reader.grp(3).type == ESM4::Grp_ExteriorCell &&
                reader.grp(2).type == ESM4::Grp_ExteriorSubCell &&
                reader.grp(1).type == ESM4::Grp_CellChild &&
                reader.grp(0).type == ESM4::Grp_CellTemporaryChild &&
                "LAND record found in an unexpected group heirarchy");
-
+//#endif
         ESM4::FormId worldId = reader.currWorld();
         std::map<ESM4::FormId, CoordinateIndex>::iterator lb = mPositionIndex.lower_bound(worldId);
 

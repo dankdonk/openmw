@@ -315,6 +315,74 @@ namespace MWClass
                 data->mNpcStats.setReputation(iAutoRepFacMod * (rank+1) + iAutoRepLevMod * (data->mNpcStats.getLevel()-1));
             }
 #endif
+            //const ESM4::Npc *npc = ptr.get<ESM4::Npc>()->mBase;
+            const MWWorld::ESMStore &store = MWBase::Environment::get().getWorld()->getStore();
+            const ESM4::Npc* npc = ref->mBase;
+            std::vector<ESM::AIPackage> aiPackages;
+            for (std::size_t i = 0; i < npc->mAIPackages.size(); ++i)
+            {
+                const ESM4::AIPackage* pack = store.getForeign<ESM4::AIPackage>().search(npc->mAIPackages[i]);
+                if (pack)
+                {
+                    ESM::AIPackage aiPackage;
+                    aiPackage.mCellName = "";
+
+                    // eat, sleep, etc not yet supported
+                    switch (pack->mData.type)
+                    {
+                        case 1:
+                        {
+                            aiPackage.mType = ESM::AI_Follow;
+                            //aiPackages.push_back(aiPackage);
+                            break;
+                        }
+                        case 2:
+                        {
+                            aiPackage.mType = ESM::AI_Escort;
+                            //aiPackage.mTarget = ""
+        //float   mX, mY, mZ;
+        //short   mDuration;
+        //NAME32  mId;
+        //short   mUnk;
+                            aiPackage.mCellName = ""; // FIXME
+                            //aiPackages.push_back(aiPackage);
+                            break;
+                        }
+                        case 5:
+                        {
+                            aiPackage.mType = ESM::AI_Wander;
+                            //aiPackage.mWander.mDistance = // short
+                            //aiPackage.mWander.mDuration = // short
+                            //aiPackage.mWander.mTimeOfDay = // uchar
+                            //aiPackage.mWander.mIdle[0] = // uchar
+                            //aiPackage.mWander.mShouldRepeat = // uchar
+
+                            //aiPackages.push_back(aiPackage);
+                            break;
+                        }
+                        case 6:
+                        {
+                            aiPackage.mType = ESM::AI_Travel;
+                            //aiPackage.mTravel =
+        //float   mX, mY, mZ;
+        //int     mUnk;
+                            //aiPackages.push_back(aiPackage);
+                            break;
+                        }
+                        case 9:
+                        {
+                            aiPackage.mType = ESM::AI_Activate;
+                            //aiPackage.mActivate =
+        //NAME32 mName;
+        //unsigned char mUnk;
+                            //aiPackages.push_back(aiPackage);
+                            break;
+                        }
+                        default:
+                            break;
+                    }
+                }
+            }
 #if 0
             data->mNpcStats.getAiSequence().fill(ref->mBase->mAiPackage);
 
