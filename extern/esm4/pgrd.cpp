@@ -27,10 +27,10 @@
 #include "pgrd.hpp"
 
 #include <stdexcept>
-#include <iostream> // FIXME: for debugging only
-#include <iomanip>  // FIXME: for debugging only
+//#include <iostream> // FIXME: for debugging only
+//#include <iomanip>  // FIXME: for debugging only
 
-#include <boost/scoped_array.hpp> // FIXME for debugging only
+//#include <boost/scoped_array.hpp> // FIXME for debugging only
 
 #include "formid.hpp" // FIXME: for mEditorId workaround
 #include "reader.hpp"

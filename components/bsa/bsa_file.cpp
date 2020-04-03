@@ -199,16 +199,6 @@ int BSAFile::getIndex(const char *str) const
         return 0; // NOTE: this is a bit of a hack, exists() only checks for '-1'
     else
         return -1;
-
-#if 0
-    Lookup::const_iterator it = lookup.find(str);
-    if(it == lookup.end())
-        return -1;
-
-    int res = it->second;
-    assert(res >= 0 && (size_t)res < files.size());
-    return res;
-#endif
 }
 
 /// Open an archive file.
@@ -232,13 +222,4 @@ Ogre::DataStreamPtr BSAFile::getFile(const char *file)
         return openConstrainedFileDataStream (filename.c_str (), fs.offset, fs.fileSize);
     }
         fail("File not found: " + string(file));
-
-#if 0
-    int i = getIndex(file);
-    if(i == -1)
-        fail("File not found: " + string(file));
-
-    const FileStruct &fs = files[i];
-    return openConstrainedFileDataStream (filename.c_str (), fs.offset, fs.fileSize);
-#endif
 }
