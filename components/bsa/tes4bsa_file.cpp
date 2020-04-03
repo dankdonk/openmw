@@ -38,6 +38,10 @@
 
 #undef TEST_UNIQUE_HASH
 
+#ifdef TEST_UNIQUE_HASH
+#include <iostream>
+#endif
+
 namespace
 {
     void getBZString(std::string& str, boost::filesystem::ifstream& filestream)
@@ -144,6 +148,9 @@ void TES4BSAFile::readHeader()
     // file record blocks
     std::uint64_t fileHash;
     FileRecord file;
+    std::size_t filenameIndex = 0;
+    std::vector<std::pair<FolderRecord*, FileRecord*> > files;
+    files.resize(fileCount);
 
     std::string folder("");
     std::uint64_t folderHash;
@@ -157,29 +164,57 @@ void TES4BSAFile::readHeader()
 
         folderHash = GenOBHash(folder, std::string(""));
 
-        std::map<std::uint64_t, FolderRecord>::iterator iter = mFolders.find(folderHash);
-        if (iter == mFolders.end())
+        std::map<std::uint64_t, FolderRecord>::iterator itFolder = mFolders.find(folderHash);
+        if (itFolder == mFolders.end())
             fail("Archive folder name hash not found");
 
-        for (std::uint32_t j = 0; j < iter->second.count; ++j)
+        itFolder->second.folderName = folder; // used below
+
+        for (std::uint32_t j = 0; j < itFolder->second.count; ++j)
         {
             input.read(reinterpret_cast<char*>(&fileHash), 8);
             input.read(reinterpret_cast<char*>(&file.size), 4);
             input.read(reinterpret_cast<char*>(&file.offset), 4);
 
-            std::map<std::uint64_t, FileRecord>::const_iterator lb = iter->second.files.lower_bound(fileHash);
-            if (lb != iter->second.files.end() && !(iter->second.files.key_comp()(fileHash, lb->first)))
+            std::map<std::uint64_t, FileRecord>::iterator lb = itFolder->second.files.lower_bound(fileHash);
+            if (lb != itFolder->second.files.end() && !(itFolder->second.files.key_comp()(fileHash, lb->first)))
                 fail("Archive found duplicate file name hash");
 
-            iter->second.files.insert(lb, std::pair<std::uint64_t, FileRecord>(fileHash, file));
+            std::map<std::uint64_t, FileRecord>::iterator itFile =
+                itFolder->second.files.insert(lb, std::pair<std::uint64_t, FileRecord>(fileHash, file));
+
+            files.at(filenameIndex++)
+                = std::make_pair<FolderRecord*, FileRecord*>(&(itFolder->second), &(itFile->second));
         }
     }
 
     // file record blocks
     if ((archiveFlags & 0x2) != 0)
     {
-        mStringBuf.resize(totalFileNameLength);
-        input.read(&mStringBuf[0], mStringBuf.size()); // TODO: maybe useful in building a lookup map?
+        boost::scoped_array<char> stringBuf(new char[totalFileNameLength]);
+        input.read(&stringBuf[0], totalFileNameLength);
+
+        filenameIndex = 0; // reset to beginning
+        const char* p = &stringBuf[0];
+        do
+        {
+            std::string fileName(p);
+            std::string folderName = files.at(filenameIndex).first->folderName;
+
+            std::uint64_t hash = GenOBHash(folderName, fileName);
+
+            FileRecord rec;
+            rec.size = files.at(filenameIndex).second->size;
+            rec.offset = files.at(filenameIndex).second->offset;
+            rec.fileName = folderName + "\\" + fileName;
+
+            files.at(filenameIndex).second->fileName = rec.fileName; // for testing TEST_UNIQUE_HASH
+
+            mFiles.insert(std::pair<std::uint64_t, FileRecord>(hash, rec));
+
+            p += fileName.size() + 1;
+            filenameIndex++;
+        } while (filenameIndex < fileCount);
     }
 
     // TODO: more checks for BSA file corruption
@@ -196,49 +231,43 @@ TES4BSAFile::FileRecord TES4BSAFile::getFileRecord(const std::string& str) const
     p.remove_filename();
 
     std::string folder = p.string();
-    // GenOBHash already converts to lowercase and replaces file separators but not for path
+    // GenOBHash converts to lowercase and replaces the file separators but not for path
     boost::algorithm::to_lower(folder);
     std::replace(folder.begin(), folder.end(), '/', '\\');
 
+#if defined (TEST_UNIQUE_HASH)
     std::uint64_t folderHash = GenOBHash(folder, std::string(""));
 
-    std::map<std::uint64_t, FolderRecord>::const_iterator it = mFolders.find(folderHash);
-    if (it == mFolders.end())
+    std::map<std::uint64_t, FolderRecord>::const_iterator itFolder = mFolders.find(folderHash);
+    if (itFolder == mFolders.end())
         return FileRecord(); // folder not found, return default which has offset of -1
 
     boost::algorithm::to_lower(stem);
     boost::algorithm::to_lower(ext);
     std::uint64_t fileHash = GenOBHashPair(stem, ext);
-    std::map<std::uint64_t, FileRecord>::const_iterator iter = it->second.files.find(fileHash);
-    if (iter == it->second.files.end())
+    std::map<std::uint64_t, FileRecord>::const_iterator itFile = itFolder->second.files.find(fileHash);
+    if (itFile == itFolder->second.files.end())
         return FileRecord(); // file not found, return default which has offset of -1
+#endif
 
-    // cache for next time
     std::uint64_t hash = GenOBHash(folder, filename);
 
-#if defined (TEST_UNIQUE_HASH)
     FileList::const_iterator lb = mFiles.lower_bound(hash);
     if (lb != mFiles.end() && !(mFiles.key_comp()(hash, lb->first)))
     {
-        // found, check if same filename
-        if (lb->second.fileName == str)
-            return iter->second; // same name, should not have got here!!
-        else
+#if defined (TEST_UNIQUE_HASH)
+        // found hash, check if same filename
+        if (lb->second.fileName != itFile->second.fileName)
         {
             // different filename, hash is not unique!
-            std::cerr << "BSA hash collision: " << str << std::hex << "0x" << hash << std::endl;
-
-            return iter->second; // return without cashing
+            std::cerr << "BSA hash collision: " << str << " " << lb->second.fileName << " "
+                      << std::hex << "0x" << hash << std::endl;
         }
+#endif
+        return lb->second;
     }
 
-    // not found, cache for later
-    const_cast<FileList&>(mFiles).insert(lb, std::pair<std::uint64_t, FileRecord>(hash, iter->second));
-    const_cast<FileList&>(mFiles)[hash].fileName = str;
-#else
-    const_cast<FileList&>(mFiles)[hash] = iter->second; // NOTE: const hack
-#endif
-    return iter->second;
+    return FileRecord(); // str not found in this archive
 }
 
 bool TES4BSAFile::exists(const std::string& str) const
@@ -249,7 +278,7 @@ bool TES4BSAFile::exists(const std::string& str) const
     p.remove_filename();
 
     std::string folder = p.string();
-    // GenOBHash already converts to lowercase and replaces file separators but not for path
+    // GenOBHash converts to lowercase and replaces the file separators but not for path
     boost::algorithm::to_lower(folder);
     std::replace(folder.begin(), folder.end(), '/', '\\');
 
@@ -274,7 +303,7 @@ void TES4BSAFile::open(const std::string& file)
 
 Ogre::DataStreamPtr TES4BSAFile::getFile(const std::string& file)
 {
-    assert(file);
+    //assert(file); // FIXME: makes no sense to assert a const reference
 
     FileRecord fileRec = getFileRecord(file);
     if(fileRec.offset == -1)

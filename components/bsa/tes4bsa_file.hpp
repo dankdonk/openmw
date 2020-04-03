@@ -44,15 +44,13 @@ namespace Bsa
             std::uint32_t size;
             std::uint32_t offset;
 
-            std::string fileName; // NOTE: for testing hash collision only, see TEST_UNIQUE_HASH
+            std::string fileName; // NOTE: for testing hash collision, see TEST_UNIQUE_HASH
 
-            FileRecord() : size(0), offset(-1) {}
+            FileRecord() : size(0), offset(-1), fileName("") {}
         };
+        typedef std::map<std::uint64_t, FileRecord> FileList;
 
     private:
-        /// Filenames string buffer
-        std::vector<char> mStringBuf;
-
         /// True when an archive has been loaded
         bool isLoaded;
 
@@ -60,12 +58,12 @@ namespace Bsa
         bool mEmbeddedFileNames;
 
         std::map<std::uint64_t, FileRecord> mFiles;
-        typedef std::map<std::uint64_t, FileRecord> FileList;
 
         struct FolderRecord
         {
             std::uint32_t count;
             std::uint32_t offset;
+            std::string folderName;
             std::map<std::uint64_t, FileRecord> files;
         };
         std::map<std::uint64_t, FolderRecord> mFolders;
@@ -95,8 +93,7 @@ namespace Bsa
         Ogre::DataStreamPtr getFile(const std::string& file);
 
         /// Get a list of all files
-        const FileList &getList() const // FIXME
-        { return mFiles; }
+        const FileList &getList() const { return mFiles; }
     };
 }
 

@@ -442,21 +442,71 @@ public:
 
 class TES4BSAArchive : public BSAArchive
 {
-  Bsa::TES4BSAFile arc;
+    Bsa::TES4BSAFile arc;
 
 public:
-  TES4BSAArchive::TES4BSAArchive(const String& name) : BSAArchive(name, "TES4BSA") { arc.open(name); }
+    TES4BSAArchive::TES4BSAArchive(const String& name) : BSAArchive(name, "TES4BSA") { arc.open(name); }
 
-  virtual DataStreamPtr open(const String& filename, bool readonly = true) const
-  {
-    Bsa::TES4BSAFile *narc = const_cast<Bsa::TES4BSAFile*>(&arc);
-    return narc->getFile(filename.c_str());
-  }
+    virtual DataStreamPtr open(const String& filename, bool readonly = true) const
+    {
+      Bsa::TES4BSAFile *narc = const_cast<Bsa::TES4BSAFile*>(&arc);
+      return narc->getFile(filename.c_str());
+    }
 
-  virtual bool exists(const String& filename) const
-  {
-    return arc.exists(filename);
-  }
+    virtual bool exists(const String& filename) const
+    {
+      return arc.exists(filename);
+    }
+
+    virtual StringVectorPtr find(const String& pattern, bool recursive = true,
+                         bool dirs = false) const
+    {
+        std::string normalizedPattern = normalize_path(pattern.begin(), pattern.end());
+        const Bsa::TES4BSAFile::FileList &filelist = arc.getList();
+        StringVectorPtr ptr = StringVectorPtr(new StringVector());
+
+        for(Bsa::TES4BSAFile::FileList::const_iterator iter = filelist.begin();iter != filelist.end();++iter)
+        {
+            std::string ent = normalize_path(iter->second.fileName.c_str(),
+                    iter->second.fileName.c_str()+std::strlen(iter->second.fileName.c_str()));
+            if(Ogre::StringUtil::match(ent, normalizedPattern) ||
+               (recursive && Ogre::StringUtil::match(ent, "*/"+normalizedPattern)))
+                ptr->push_back(iter->second.fileName);
+        }
+        return ptr;
+    }
+#if 0 // no use for this currently
+    virtual FileInfoListPtr findFileInfo(const String& pattern, bool recursive = true,
+                                bool dirs = false) const
+    {
+        std::string normalizedPattern = normalize_path(pattern.begin(), pattern.end());
+        FileInfoListPtr ptr = FileInfoListPtr(new FileInfoList());
+        const Bsa::TES4BSAFile::FileList &filelist = arc.getList();
+
+        for(Bsa::TES4BSAFile::FileList::const_iterator iter = filelist.begin();iter != filelist.end();++iter)
+        {
+            std::string ent = normalize_path(iter->second.fileName.c_str(),
+                    iter->second.fileName.c_str()+std::strlen(iter->second.fileName.c_str()));
+            if(Ogre::StringUtil::match(ent, normalizedPattern) ||
+                (recursive && Ogre::StringUtil::match(ent, "*/"+normalizedPattern)))
+            {
+                std::string::size_type pt = ent.rfind('/');
+                if(pt == std::string::npos)
+                    pt = 0;
+
+                FileInfo fi;
+                fi.archive = const_cast<TES4BSAArchive*>(this);
+                fi.path = std::string(iter->second.fileName, pt);
+                fi.filename = std::string(iter->second.fileName.c_str() + ((ent[pt]=='/') ? pt+1 : pt));
+                fi.compressedSize = fi.uncompressedSize = iter->second.size;
+
+                ptr->push_back(fi);
+            }
+        }
+
+        return ptr;
+    }
+#endif
 };
 
 // An archive factory for BSA archives
