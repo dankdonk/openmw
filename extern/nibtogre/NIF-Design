@@ -1886,19 +1886,19 @@ Ragdoll trap logs call stack
 
 ### mBhkRigidBodyMap
 
-`BtOgre::RigidBodyState` is setup and passed to btRigidBody during the call `PhysicEngine::createAndAdjustRagdollBody()`.  Note that it is not created in normal createAndAdjustRigidBody().  The key difference with createAndAdjustRagdollBody() is that it passes `const std::map<std::int32_t, Ogre::SceneNode*>& nodeMap` from `PhysicsSystem::addObject()` which in turn gets it from ObjectAnimation (the map is filled during ObjectAnimation's ctor).
+`BtOgre::RigidBodyState` is setup and passed to `btRigidBody` during the call `PhysicEngine::createAndAdjustRagdollBody()`.  Note that it is not created in normal createAndAdjustRigidBody().  The key difference with createAndAdjustRagdollBody() is that it passes `const std::map<std::int32_t, Ogre::SceneNode*>& nodeMap` from `PhysicsSystem::addObject()` which in turn gets it from `ObjectAnimation` (the map is filled during ObjectAnimation's ctor).
 
 The info for the map ultimately comes from `NiModel::mBuildData::mBhkRigidBodyMap` which is filled by the constructor of bhkNiCollisionObject.  It knows the connection between the rigid body and the target node (which will eventually become an Ogre::Entity).
 
-It should be noted that btRigidBody keep pointers to collision shapes so we need to find a way to ensure the lifetime of the collision shapes.  These are currently maintained in BtRigidBodyCI::mBtCollisionShapeMap.
+It should be noted that `btRigidBody` keep pointers to collision shapes so we need to find a way to ensure the lifetime of the collision shapes.  These are currently maintained in `BtRigidBodyCI::mBtCollisionShapeMap`.
 
 **FIXME:** BtRigidBodyCI is an Ogre::Resource.  These resources can be unloaded by the resource manager, which will result in crashes due to the collision shape pointers being deleted...   There must be a way to link BtRigidBodyCI to the associated Ogre::Entity or keeping them in RigidBody (like motion state).
 
 ###  mBhkConstraints
 
-A bhkRigidBody has a list of constraints for that rigid body.
+A `bhkRigidBody` has a list of constraints for that rigid body.
 
-A ragdoll, in simple terms, the btRigidBody tells btMotionState of its movements and btMotionState then tells the associated Ogre::SceneNode to make corresponding movements.  When the SceneNode moves the attached Ogre::Entity moves as well.
+A ragdoll, in simple terms, the `btRigidBody` tells `btMotionState` of its movements and `btMotionState` then tells the associated `Ogre::SceneNode` to make corresponding movements.  When the `SceneNode` moves the attached `Ogre::Entity` moves as well.
 
                                                    1
       Ogre::Entity               btCollisionShape ----o btCollisionObject
@@ -1917,9 +1917,9 @@ A ragdoll, in simple terms, the btRigidBody tells btMotionState of its movements
 
 ### Lifetime
 
-Like Ogre::Entity, a btRigidBody in a cell should be destroyed once they are no longer needed.  The constraints should be deleted at the same time.  Physic::RigidBody can delete btMotionState and btCollisionShape in its destructor.
+Like `Ogre::Entity`, a `btRigidBody` in a cell should be destroyed once they are no longer needed.  The constraints should be deleted at the same time.  `Physic::RigidBody` can delete `btMotionState` and `btCollisionShape` in its destructor.
 
-Alternatively, it may be possible for Physic::RigidBody to keep a smart pointer to NiModel and use the collision shapes owned and stored there (by keeping a smart pointer we can ensure that NiModel won't go away).  That may save the need to create new btCollision shape for each btRigidBody.
+Alternatively, it may be possible for `Physic::RigidBody` to keep a smart pointer to NiModel and use the collision shapes owned and stored there (by keeping a smart pointer we can ensure that NiModel won't go away).  That may save the need to create new `btCollisionShape` for each `btRigidBody`.
 
 **TODO:** make it work similar to meshes?
 
@@ -1929,7 +1929,7 @@ For node animation, The PhysicsSystem uses the SceneNode name as the key to find
 
 TES4 RigidBody can have multiple btRigdBody within one NIF model.  But to get the existing system to work the RigidBody needs to return the "handle" (i.e. Ogre::SceneNode name) of the base RigidBody only.  Hence all its children have the same `mName` so that rayTest(), etc, can work as before.
 
-Multiple RigidBodies within one NIF model is managed by BtRigidBodyCI which uses the map of target node to collision shapes in the NiModel to provide the data for creating the base RigidBody and its children.
+Multiple RigidBodies within one NIF model is managed by `BtRigidBodyCI` which uses the map of target node to collision shapes in the NiModel to provide the data for creating the base RigidBody and its children.
 
                                                         1
        Ptr . . . . . . . . . . . PhysicsSystem o--------- PhysicEngine
@@ -1946,7 +1946,7 @@ Multiple RigidBodies within one NIF model is managed by BtRigidBodyCI which uses
                                                                ::mChildren
 
 
-During `NiModel::buildModel()`, `NiMultiTargetTransformController` fills `NiModel::mBuildData::mMovingBoneNameMap`  (for FO3, `NiControllerSequence` does that instead). BtOgreInst then uses that to fill mSkeletonAnimEntities - unfortunately relying on the Ogre::Entity's Ogre::Mesh names to match the NiNode names.  Clearly this won't work with specialised meshes with skeleton or NPC's name prepended (but then they won't have any node animations, either).
+During `NiModel::buildModel()`, `NiMultiTargetTransformController` fills `NiModel::mBuildData::mMovingBoneNameMap`  (for FO3, `NiControllerSequence` does that instead). `BtOgreInst` then uses that to fill `mSkeletonAnimEntities` - unfortunately relying on the `Ogre::Entity`'s `Ogre::Mesh` names to match the `NiNode` names.  Clearly this won't work with specialised meshes with skeleton or NPC's name prepended (but then they won't have any node animations, either).
 
 Whether `mSkeletonAnimEntities` has anything determines whether node animation wil be used (e.g. by doors).
 
@@ -1960,7 +1960,7 @@ The prison cell gate (COC "ImperialDungeon01", `Dungeons\Chargen\CGprisonCellGat
 if (mObjectRoot->mForeignObj->havokEnabled())
 ```
 
-That flag is set by `NiIntergerExtraData` using the "BSX" flags in the NIF file (e.g. `Dungeons\Chargen\IDGate01.NIF`, FormID 0x0003665B).  IDGate01 has BSX flag 0x0B which for TES4 includes "enable animation", "enable collision" and "enable havok".
+That flag is set by `NiIntergerExtraData` using the `BSX` flags in the NIF file (e.g. `Dungeons\Chargen\IDGate01.NIF`, FormID 0x0003665B).  `IDGate01` has `BSX` flag 0x0B which for TES4 includes "enable animation", "enable collision" and "enable havok".
 
 We may need to change the code to exclude the models with animation enabled?  But that disables ragdoll from others such as `Dungeons\Misc\RootHavok06.NIF`.  Maybe it will be necessary to capture the presence of constraints during the construction of the NiModel.  **FIXME:** Even so objects such as `Clutter\MinotaurHead.NIF` and `Dungeons\Caves\Traps\CTrapLog01.NIF` will have both animation and havok enabled, so some kind of control mechanism will need to be devised.
 
@@ -1970,7 +1970,7 @@ CTrapLog01 animation, looking from the left of the pile from the top of the hill
               Log04 Log03 =========
             Log  Log01 Log02 =========
 
-`NiTransformInterpolator` (block 8) rotates Log02 once manually triggered.  `NiBlendTransformInterpolator` (block 6) has a flag with value "MANAGER_CONTROLLED" which is probably how the vanilla engine implements this, through an activator.
+`NiTransformInterpolator` (block 8) rotates Log02 once manually triggered.  `NiBlendTransformInterpolator` (block 6) has a flag with value `MANAGER_CONTROLLED` which is probably how the vanilla engine implements this, through an activator.
 
 This object has a script. From the Construction Set:
 
@@ -2048,7 +2048,7 @@ In summary, we disable Havok at the start if:
   1. Has no constraints; and
   2. Has animations (node animations only?)
 
-There are no activators at Jensine's "Good as New" Merchandise. So it is still unclear how the MinotaurHead auto-plays the animation.  Maybe I am confused and in the vanilla game it does not fall at all?
+There are no activators at Jensine's "Good as New" Merchandise. So it is still unclear how the `MinotaurHead` auto-plays the animation.  Maybe I am confused and in the vanilla game it does not fall at all?
 
 ## How to communicate the controls?
 
@@ -2083,7 +2083,7 @@ btRigdBody::m_angularFactor.setValue(0, 0, 0);
 
 ## Storm Atronach missing entities
 
-  * video poste 12/02/19 ok
+  * video posted 12/02/19 ok
   * 004a1d72985115fed43acd644f5da8ce2d90d302 15/02/20 ok
   * ccaf2c520f93ea2726b40a73fb36f975b6445840 17/02/20 ok
   * a98765fe96143a4bac7df424e4ccec183be32925 02/03/20 ok
@@ -2123,8 +2123,8 @@ FO3 Characters\_Male\Skeleton.nif
 
 Bip01 L Forearm has 2 children:
 
-  * Bip01 L ForeTwist
-  * Bip01 L Hand
+  * `Bip01 L ForeTwist`
+  * `Bip01 L Hand`
 
 Forum notes from 18/02/19:
 
@@ -2201,7 +2201,7 @@ Two different world positions, same transform, but different rotations
 
 Using `adjustRigidBody()` for user index != 4 does not work, just moves the collsion shapes in the wrong place.  However, that allowed me to observe what is happening when the doors move.  It looks like for one of the doors the movement is in the opposite direction!
 
-Using the target's local rotation (i.e. "rot") as the binding orientation makes the citadel doors to work properly at `OblivionMqKvatchCitadelHall01` (`Oblivion\Architecture\Citadel\Interior\CitadelHall\CitadelHallDoor01Anim.NIF`) but breaks other rotating doors.
+Using the target's local rotation (i.e. `rot`) as the binding orientation makes the citadel doors to work properly at `OblivionMqKvatchCitadelHall01` (`Oblivion\Architecture\Citadel\Interior\CitadelHall\CitadelHallDoor01Anim.NIF`) but breaks other rotating doors.
 
 I think we need to look at somewhere else for the bug - possibly `processDoors()`.  Somehow we need to take into account of the world rotation.  Or maybe `PhysicsSystem::moveSubObject()`.
 
@@ -2321,7 +2321,7 @@ Just noticed that Baurus stopped wearing his armor from around 06/03/20. **FIXED
     void PhysicsSystem::addActor (const Ptr& ptr, const std::string& mesh)
     void PhysicEngine::addCharacter(const std::string &name, const std::string &mesh,
 
-At the moment nothing is creating OEngine::Physic::ForeignActor.
+At the moment nothing is creating `OEngine::Physic::ForeignActor`.
 
 Defer working on this until we have better performance.
 
@@ -2403,9 +2403,9 @@ There are two sub-meshes, the leg skin (01) and the pants (15), both children of
 
 The challenge is to figure out how the per-bone offest transformations will change the affected vertices and normals.
 
-Bone at index 10 is "Bip01 L Calf".  Its offset transform for each of the two sub-meshes are different!  This means the idea of adding bones will mean even more bones than originally anticipated (i.e. even more impractical).
+Bone at index 10 is `Bip01 L Calf`.  Its offset transform for each of the two sub-meshes are different!  This means the idea of adding bones will mean even more bones than originally anticipated (i.e. even more impractical).
 
-So, we can get the new "effective position" for the bone using the per-bone Skin Transform in NiSkinData - but how do we now modify the vertices?
+So, we can get the new "effective position" for the bone using the per-bone Skin Transform in `NiSkinData` - but how do we now modify the vertices?
 
 ## Adding bones
 
@@ -2494,7 +2494,7 @@ For some insight into the sequence of the loading, see `persistent-child-preload
 
 `MWRender::Animation::play()` uses the concept of "animation group".  `MWRender::Animation::runAnimation()` is called from `CharacterController::update()` and ctor.  It runs animations in mStates and any controllers in mObjectRoot.
 
-`mStates` contains `Ogre::SharedPtr<AnimSource>` and start time, etc.  It is populated by `play()` and keyed by the animation `groupname`.  It is selected from `AnimSourceList` based on the textKeys matching the `groupname`.  The `groupname` is a parameter in play() - despite what the name suggests, it is really just the animation name, e.g. "Idle". (in TES3 AIWander they are "idle2", "idle3", etc)
+`mStates` contains `Ogre::SharedPtr<AnimSource>` and start time, etc.  It is populated by `play()` and keyed by the animation `groupname`.  It is selected from `AnimSourceList` based on the textKeys matching the `groupname`.  The `groupname` is a parameter in play() - despite what the name suggests, it is really just the animation name, e.g. "Idle". (in TES3 `AIWander` they are "idle2", "idle3", etc)
 
 Most likely we will have to create TES4 versions of these methods since the way animations are implemented are different.
 
@@ -2502,10 +2502,10 @@ Note that in TES4 NiBSBoneLODController has NodeGroups that might be analogous t
 
 ## Quick note on object lifecycle
 
-  * Most use Ogre::SharedPtr which provides implicit destruction.
-  * The vertexData created using `new` for Ogre::SubMesh is owned by Ogre::SubMesh and its dtor will `delete` it.
+  * Most use `Ogre::SharedPtr` which provides implicit destruction.
+  * The `vertexData` created using `new` for `Ogre::SubMesh` is owned by `Ogre::SubMesh` and its dtor will delete it.
   * The shapes created by "bhk" methods are owned by `BtOgre::RigidBody` but PhysicEngine manages the deletion of the shapes.
-  * There are some uses of unique_ptr and boost::scoped_array but they should be ok already.
+  * There are some uses of `unique_ptr` and `boost::scoped_array` but they should be ok already.
 
 # [26/03/2020] Animation cont.
 
@@ -2631,7 +2631,7 @@ Let's look at another one from Bravil.  We have 15, -8 and 0, 7.  The CELL 15, -
 
 `bravilworld_15_-8.lod` refers to a couple of trees and a static 0x000018FF CastleWall01 (`Architecture\Castle\CastleWall01.NIF`)
 
-**TODO:** So, what are we meant to do when we encounter these trees or static objects?  What's in the '.lod' files are clear enough, but what do the cell co-oridnates in the '.cmp' files mean?
+**TODO:** So, what are we meant to do when we encounter these trees or static objects?  What's in the `.lod` files are clear enough, but what do the cell co-oridnates in the `.cmp` files mean?
 
 ## LOD NIF files
 
@@ -2646,7 +2646,7 @@ So, the texture 60.00.00.32.dds matches what OpenCS shows on cells 0,0 (bottom l
 
     <world id in decimal>.<cell x left>.<cell x right>.<y cells height>
 
-These are the ones in meshes\landscape\lod directory (Oblivion.esm), note that not all worlds have LOD mesh(s):
+These are the ones in `meshes\landscape\lod` directory (Oblivion.esm), note that not all worlds have LOD mesh(s):
 
   prefix | FormId     | World EditorId | World FullName
   -------|------------|----------------|---------------
@@ -2704,7 +2704,7 @@ The Oblivion gates are visible from distance (at least it feels that way) so let
 
 # [31/03/2020] LOD cont.
 
-Looking at the '.cmp' file again.  tamriel.cmp has 152 co-ordinates plus 0,7.  But there are 9347 tamriel '.lod' files.
+Looking at the `.cmp` file again.  tamriel.cmp has 152 co-ordinates plus 0,7.  But there are 9347 tamriel `.lod` files.
 
 Maybe these are reference points for the generation of the LOD mesh and textures?
 
@@ -2738,7 +2738,7 @@ Either way, we need a special case of CellStore that holds these records (and ch
            |                     |             |            |
 
 
-**TODO:** getForeignWorld() should be changed to getWorldCell()
+**TODO:** getForeignWorld() should be changed to getWorldCell() **DONE**
 
         Scene       MWWorld::World   MWWorld::Cells     ESMStore  CellStore
           |                |              |               |          |
@@ -2779,9 +2779,9 @@ Either way, we need a special case of CellStore that holds these records (and ch
 
 The loading of the REFR, ACHR and ACRE occurs in `CellStore::loadTes4Record()` and the creation of the rendering and physics shapes are initiated from `Scene::insertCell()`.
 
-`MWWorld::Cells` stores ForeignCells and it's probably the best place to keep a dummy cell for visibly distant REFRs.
+`MWWorld::Cells` stores `ForeignCell`s and it's probably the best place to keep a dummy cell for visibly distant REFRs.
 
-There are a couple of options on where to load the records - either initiate the call from ESMStore (when first scanning the ESM/ESPs or from Cells (when a new world is accessed for the first time).  I suspect that the former is going to be simpler, since it will have all the base and mods being scanned.  With the latter approach, WRLD context needs to be saved so that we can go back and scan all the CELLs that belong in the world, also all the mods that modifies the CELLS, REFRs, etc.  The only trouble with the former approach is the lack of access to MWWorld::Cells.  We may need to add a method to WorldImp.
+There are a couple of options on where to load the records - either initiate the call from `ESMStore` (when first scanning the ESM/ESPs or from Cells (when a new world is accessed for the first time).  I suspect that the former is going to be simpler, since it will have all the base and mods being scanned.  With the latter approach, WRLD context needs to be saved so that we can go back and scan all the CELLs that belong in the world, also all the mods that modifies the CELLS, REFRs, etc.  The only trouble with the former approach is the lack of access to `MWWorld::Cells`.  We may need to add a method to `WorldImp`.
 
 ## Redesign needed
 
@@ -2790,7 +2790,7 @@ Having one cell to hold all the visibly distant REFR won't work.  In Tamriel the
 Just outside Vilverin approx 1.2M triangles with exterior grid size of 3 - single digit FPS sometimes going down to 0.
 
 **TODO:** Not very happy with having to add methods in MBase::World.  Need to look for alternatives.
-**TODO:** Not happy with ForeignWorld storign dummy cell FormId but visibly distant CellStore (inconsistent).  We just need to ensure that it is created when the world is first accessed.  However, if we were to load *all* the REFRs for the WRLD, which may have many CELLs, we had to load them in ESMStore and at that point nothing would be accessing any worlds.
+**TODO:** Not happy with ForeignWorld storing dummy cell FormId but visibly distant `CellStore` (inconsistent).  We just need to ensure that it is created when the world is first accessed.  However, if we were to load *all* the REFRs for the WRLD, which may have many CELLs, we had to load them in ESMStore and at that point nothing would be accessing any worlds.
 
 **FIXME:** Sometimes Morrowind cells get loaded?  I think this might be due to OpenMW using `getExterior(x, y)` which can confuse things.  We may need to keep the current world somewhere (player?) and change only when explicigly changing worlds.
 
@@ -2816,7 +2816,7 @@ Each of the co-ordinates in the `.cmp` file has statics in visibly distant cell 
      1, 0 | 0002106D    | 0002209F    | 000314D2       | CitadelTowerSmall02
     -2, 1 | 00021084    | 000221B3    | 000314CF       | CitadelTowerSmall01
 
-OblivionMQKvatch has 5 `.lod` files, which correspond to above (I wonder if they all match that?).
+OblivionMQKvatch has 5 `.lod` files, which correspond to above (I wonder if they all match like that?).
 
     oblivionmqkvatch_0_3.lod
     oblivionmqkvatch_1_0.lod
@@ -2909,13 +2909,14 @@ We will need a lightweight class (in comparison to Ptr) to represent LOD trees. 
 
 ## LOD strategy outline
 
-  * Scan the `meshes\landscape\lod` directory and build a map of low-poly land meshes for some of the worlds.  They seem to be (mostly) in 32 x 32 cells in size.  There are some odd ones in Tamriel - they might be larger ones.
+  * Load the ESM/ESP files but don't load any references.
+  * Scan the `meshes\landscape\lod` directory and build a map of low-poly land meshes for the worlds that has them.  They seem to be (mostly) in 32 x 32 cells in size.  There are some odd ones in Tamriel - they might be larger ones.
   * Scan the `distantlod` directory and build a map of visibly distant objects (statics and trees, not sure if there is anything else).  The `.cmp` file has the list of the cell grid positions for the world.  The `.lod` files have the details of the objects, enough to make a REFR, for the cells.  There should be a `_far` variant of these objects.
   * The number of cells loaded for visible distant child groups are larger than the cells with everything loaded. When the REFR from the visibly distant child groups are loaded, they should replace the low-poly versions.
-  * When a player enters a world cell grid(x, y), cells around that grid needs to be loaded.  A larger group for visibly distant and a smaller group for everything.
-  * Not so sure how to treat the REFR in the dummy cell, especially the doors. i.e. how to decide when to render it?
+  * When a player enters a world cell grid(x, y), cells around that grid needs to be loaded (but not using `Scene::insertCell()`).  A larger group for visibly distant and a smaller group for everything.
+  * **TODO:** Not so sure how to treat the REFR in the dummy cell, especially the doors. i.e. how to decide when to render it?
 
-The low-poly land meshes only have NiTriStrips and NiTriStripsData blocks.  In order to use the existing codebase, a dummy NiNode will need to be inserted at the root.
+The low-poly land meshes only have `NiTriStrips` and `NiTriStripsData` blocks.  In order to use the existing codebase, a dummy `NiNode` will need to be inserted at the root.
 
 
 
