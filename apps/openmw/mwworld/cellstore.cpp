@@ -781,7 +781,7 @@ namespace MWWorld
         const ForeignCell *cell = static_cast<const ForeignCell*>(mCell);
 
         if (!cell)
-            return; // probably spelling error from console
+            return; // FIXME: probably spelling error from console
 
         // Load references from all plugins that do something with this cell.
         for (size_t i = 0; i < cell->mModList.size(); i++)
@@ -810,7 +810,7 @@ namespace MWWorld
             const ForeignWorld *world
                 = MWBase::Environment::get().getWorld()->getStore().get<ForeignWorld>().find(static_cast<const ForeignCell*>(mCell)->mCell->mParent);
             if (!world)
-                continue;// FIXME: maybe exception?
+                continue;
 
             if (world->mParent != 0)
             {
@@ -818,7 +818,7 @@ namespace MWWorld
                     = MWBase::Environment::get().getWorld()->getWorldCell(world->mParent,
                         mCell->getGridX(),
                         mCell->getGridY());
-                // FIXME
+
                 if (parentCell)
                     mForeignLand = parentCell->getForeignLandId();
             }
@@ -852,6 +852,16 @@ namespace MWWorld
 
                 break;
             }
+#if 0 // FIXME: temporary testing only
+            case ESM4::Grp_CellPersistentChild:
+            case ESM4::Grp_CellVisibleDistChild:
+            {
+                //if (hdr.group.type == ESM4::Grp_CellPersistentChild)
+                    std::cout << ESM4::printLabel(reader.hdr().group.label, reader.hdr().group.type) << std::endl;
+                reader.skipGroup();
+                break;
+            }
+#endif
             case ESM4::Grp_RecordType:
             case ESM4::Grp_WorldChild:
             case ESM4::Grp_TopicChild:
@@ -1122,6 +1132,11 @@ namespace MWWorld
             }
             case ESM4::REC_ACHR:
             {
+                if (0)//(reader.hdr().record.flags & ESM4::Rec_Disabled) != 0)
+                {
+                    reader.skipRecordData();
+                    break;
+                }
 
                 bool deleted = (reader.hdr().record.flags & ESM4::Rec_Deleted) != 0;
                 reader.getRecordData();
@@ -1182,6 +1197,11 @@ namespace MWWorld
             }
             case ESM4::REC_ACRE: // Oblivion only?
             {
+                if (0)//(reader.hdr().record.flags & ESM4::Rec_Disabled) != 0)
+                {
+                    reader.skipRecordData();
+                    break;
+                }
 
                 bool deleted = (reader.hdr().record.flags & ESM4::Rec_Deleted) != 0;
                 reader.getRecordData();
@@ -1206,6 +1226,7 @@ namespace MWWorld
             }
             case ESM4::REC_LAND:
             {
+
                 // Can't store land record in CellStore if we want to keep it around rather
                 // than loading it each time like references.  But then, how do we keep it
                 // growing too large?  Need some way of keeping track of "recently accessed"
@@ -1216,8 +1237,6 @@ namespace MWWorld
                 //
                 // HACK: Workaround by going through a method in World
                 //
-                // TODO: try getModifiable()
-                //
                 //ESM4::FormId worldId = mCell->mCell->mParent;
                 //ESM4::FormId cellId  = mCell->mCell->mFormId;
 
@@ -1226,6 +1245,23 @@ namespace MWWorld
 
                 // Load land, note may not be used
                 mForeignLand = MWBase::Environment::get().getWorld()->loadForeignLand(esm);
+
+                // load parent world's land; but that triggers Tamriel to be loaded, is there another way?
+#if 0
+                const ForeignCell *cell = static_cast<const ForeignCell*>(mCell);
+                const ForeignWorld *world = store.get<ForeignWorld>().find(cell->mCell->mParent);
+
+                if (world && world->mParent != 0)
+                {
+                    CellStore * parentCell
+                        = MWBase::Environment::get().getWorld()->getWorldCell(world->mParent,
+                            mCell->getGridX(),
+                            mCell->getGridY());
+
+                    if (parentCell)
+                        mForeignLand = parentCell->getForeignLandId();
+                }
+#endif
                 break;
             }
             case ESM4::REC_PGRD: // TES4 only

@@ -347,7 +347,7 @@ namespace MWWorld
         // NOTE: this also calls Debugging to add active cells for Pathgrids
         mRendering.cellAdded (cell); // calls mTerrain->loadCell()
 
-        bool waterEnabled = cell->getCell()->hasWater()/* || cell->isExterior()*/;
+        bool waterEnabled = cell->getCell()->hasWater() || cell->isExterior();
         mRendering.setWaterEnabled(waterEnabled);
         float waterLevel = /*cell->isExterior() ? -1.f : */cell->getWaterLevel();
         if (waterEnabled)

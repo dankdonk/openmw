@@ -78,10 +78,7 @@ void ESM4::DialogInfo::load(ESM4::Reader& reader)
                 break;
             }
             default:
-                std::cout << "INFO " << ESM4::printName(subHdr.typeId) << " skipping..."
-                        << subHdr.dataSize << std::endl;
-                reader.skipSubRecordData();
-                //throw std::runtime_error("ESM4::INFO::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
+                throw std::runtime_error("ESM4::INFO::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
         }
     }
 }
