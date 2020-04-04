@@ -2918,6 +2918,36 @@ We will need a lightweight class (in comparison to Ptr) to represent LOD trees. 
 
 The low-poly land meshes only have `NiTriStrips` and `NiTriStripsData` blocks.  In order to use the existing codebase, a dummy `NiNode` will need to be inserted at the root.
 
+# [04/04/2020] LOD cont.
+
+## Parent World
+
+Worlds such as ICMarketDistrict seems to require the parent world's LAND.  It also needs the parent world's visibly distant REFR such as the White-Gold Tower (possibly the low-poly version).
+
+**TODO:** `Cells::getWorldCell()` needs to change as it is auto-loading any new `CellStore` and also calling `initWorld()`.  This results in unnecessarily loading parent world's dummy cell when just the land and visibly distant statics may be required.  See the interaction diagram circa [31/03/2020 - 02/04/2020].
+
+## When to parse the `.lod` and `.cmp` files
+
+Basically 2 options here:
+
+  * parse for all worlds when the game loads
+  * parse for each world
+
+The first implementation will parse and create the lookup maps for all at the beginning but load the visibly distant REFR separately for each world.
+
+## Dummy Cell and partial insert
+
+OpenMW doesn't have a concept of having references that are not rendered and without physics.  In order to be able to switch from visibly distant objects to "real" objects, we'll need some way of implementing this.
+
+## `tamriel.cmp` and the grid positions
+
+There are 153 grid positions in `tamriel.cmp`, excluding (0,7) at the end.  But there are 9,347 `.lod` files.  This is different to `oblivionmqkvatch.cmp` where the number of grid positions and the number of `.lod` files were the same.
+
+## Observations on loading times
+
+For some strange reason Shivering Isles `.lod` files (and maybe others?) take much longer to load than from `Oblivion - Meshes.bsa`.
+
+The file loading does take quite a while.
 
 
 [//]: # (/* spell spelllang=en_au syntax=cpp */)

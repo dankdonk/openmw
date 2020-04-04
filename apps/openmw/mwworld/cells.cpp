@@ -1,5 +1,10 @@
 #include "cells.hpp"
 
+#include <iostream> // FIXME: for testing only
+#include <stdexcept>
+
+#include <OgreResourceGroupManager.h>
+
 #include <extern/esm4/common.hpp>
 #include <extern/esm4/formid.hpp>
 
@@ -199,6 +204,169 @@ MWWorld::CellStore *MWWorld::Cells::getWorldCell (const std::string& worldName, 
 
 void MWWorld::Cells::initNewWorld(const ForeignWorld *world)
 {
+    std::vector<std::string> locations;
+    std::vector<std::string> files;
+
+    const Ogre::ResourceGroupManager& groupMgr = Ogre::ResourceGroupManager::getSingleton();
+    const Ogre::StringVector groups = groupMgr.getResourceGroups();
+    Ogre::StringVector::const_iterator it = groups.begin();
+    for (; it != groups.end(); ++it)
+    {
+        // FIXME: this probably ignores loose files
+        if ((*it).find("TES4BSA") != std::string::npos)
+            locations.push_back(*it);
+    }
+
+    for (std::size_t i = 0; i < locations.size(); ++i)
+    {
+        std::string worldIdDecimal = std::to_string(unsigned int(world->mFormId));
+
+        const Ogre::StringVectorPtr res
+            //= groupMgr.findResourceNames(locations[i], "meshes\\landscape\\lod\\"+worldIdDecimal+"*");
+            = groupMgr.findResourceNames(locations[i], "meshes\\landscape\\lod\\*");
+        Ogre::StringVector::const_iterator it = res->begin();
+        for (; it != res->end(); ++it)
+        {
+#if 0
+            std::size_t pos = (*it).find_first_of(".");
+            if (pos == std::string::npos)
+                continue;
+
+            std::int32_t wrld = std::stoi((*it).substr(21, pos-21), nullptr, 10);
+
+            std::size_t pos2 = (*it).find_first_of(".", pos+1);
+
+            std::int16_t left = std::stoi((*it).substr(pos+1, pos2-pos-1), nullptr, 10);
+
+            std::size_t pos3 = (*it).find_first_of(".", pos2+1);
+
+            std::int16_t right = std::stoi((*it).substr(pos2+1, pos3-pos2-1), nullptr, 10);
+
+            std::size_t pos4 = (*it).find_first_of(".", pos3+1);
+
+            std::int16_t height = std::stoi((*it).substr(pos3+1, pos4-pos3-1), nullptr, 10);
+
+            if (wrld != 0x3c)
+            {
+                //std::cout << test << std::endl;
+                std::cout << ESM4::formIdToString(wrld) << std::endl;
+                std::cout << left << "," << right << "," << height << std::endl;
+            }
+#else
+            std::int32_t lod[4];
+            std::size_t next = 21; // 'meshes\landscape\lod\'
+            std::size_t pos = 0;
+            for (std::size_t j = 0; j < 4; ++j)
+            {
+                pos = (*it).find_first_of(".", next);
+                if (pos == std::string::npos)
+                    break; // j
+
+                lod[j] = std::stoi((*it).substr(next, pos-(next)), nullptr, 10);
+                next = pos+1;
+            }
+
+            if (1)//lod[0] != 0x3c)
+            {
+                std::cout << ESM4::formIdToString(lod[0]) << std::endl;
+                std::cout << lod[1] << "," << lod[2] << "," << lod[3] << std::endl;
+            }
+#endif
+        }
+
+        const Ogre::StringVectorPtr res2
+            //= groupMgr.findResourceNames(locations[i], "distantlod\\"+world->mEditorId+"*");
+            = groupMgr.findResourceNames(locations[i], "distantlod\\*");
+        Ogre::StringVector::const_iterator it2 = res2->begin();
+        for (; it2 != res2->end(); ++it2)
+        {
+            if ((*it2).find(".cmp") != std::string::npos)
+            {
+                std::cout << locations[i] << " " << *it2 << std::endl;
+
+                Ogre::DataStreamPtr file = groupMgr.openResource(*it2);
+
+                while (!file->eof())
+                {
+                    std::int16_t x, y;
+                    file->read(&y, sizeof(y));
+                    file->read(&x, sizeof(x));
+                    std::cout << "(" << x << "," << y << ")" << std::endl;
+                }
+            }
+            else
+            {
+//#if 0
+                if ((*it2).find(".lod") == std::string::npos) // FIXME: for testing only
+                    throw std::runtime_error ("unknown file type in distantlod");
+//#endif
+                std::size_t pos = (*it2).find_first_of("_");
+                if (pos == std::string::npos)
+                    continue; // it2
+
+                std::string editorId = (*it2).substr(11, pos-11); // 'distantlod\'
+
+                std::int32_t lod[2];
+                //std::size_t next = 11+world->mEditorId.size()+1;
+                std::size_t next = 11+editorId.size()+1;
+                for (std::size_t j = 0; j < 2; ++j)
+                {
+                    pos = (*it2).find_first_of("_.", next);
+                    if (pos == std::string::npos)
+                        break; // probably should throw
+
+                    lod[j] = std::stoi((*it2).substr(next, pos-(next)), nullptr, 10);
+                    next = pos+1;
+                }
+#if 0
+                struct Refr
+                {
+                    ESM4::FormId baseObj;
+
+                    // these should be a vector as there can be many instances
+                    float posX;
+                    float posY;
+                    float posZ;
+                    float rotX;
+                    float rotY;
+                    float rotZ;
+                    float scale;
+                };
+
+                Ogre::DataStreamPtr file = groupMgr.openResource(*it2);
+
+                std::uint32_t numObj;
+                file->read(&numObj, sizeof(numObj));
+                for (std::size_t j = 0; j < numObj; ++j)
+                {
+                    Refr r;
+                    file->read(&(r.baseObj), sizeof(ESM4::FormId));
+
+                    std::uint32_t numInst;
+                    file->read(&numInst, sizeof(numInst));
+                    for (std::size_t k = 0; k < numInst; ++k)
+                    {
+                        file->read(&(r.posX), sizeof(float));
+                        file->read(&(r.posY), sizeof(float));
+                        file->read(&(r.posZ), sizeof(float));
+                    }
+                    for (std::size_t k = 0; k < numInst; ++k)
+                    {
+                        file->read(&(r.rotX), sizeof(float));
+                        file->read(&(r.rotY), sizeof(float));
+                        file->read(&(r.rotZ), sizeof(float));
+                    }
+                    for (std::size_t k = 0; k < numInst; ++k)
+                    {
+                        file->read(&(r.scale), sizeof(float));
+                    }
+                }
+                //std::cout << "lod " << *it2 << " " << numObj << std::endl;
+#endif
+            }
+        }
+    }
+
     // sanity check: find the world for the given form i
     // check if a dummy cell exists
     // FIXME: this logic needs to change since a new world may be inserted from another
