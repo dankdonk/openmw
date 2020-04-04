@@ -33,10 +33,23 @@ void Bsa::registerResources (const Files::Collections& collections,
     {
         if (collections.doesExist(*archive))
         {
+// FIXME: experimenting with Resource locations, not sure if it will be useful
+#if 0
+            Ogre::ResourceGroupManager& rgManager = Ogre::ResourceGroupManager::getSingleton();
+
+            // Last BSA has the highest priority
+            std::string groupName
+                = (isTes4 ? "TES4BSA"
+                          : "DataBSA" + Ogre::StringConverter::toString(archives.size()-i, 8, '0'));
+
+            if (!rgManager.resourceGroupExists(groupName))
+                rgManager.createResourceGroup (groupName);
+#else
             // Last BSA has the highest priority
             std::string groupName = (isTes4 ? "TES4BSA" : "DataBSA") + Ogre::StringConverter::toString(archives.size()-i, 8, '0');
 
             Ogre::ResourceGroupManager::getSingleton ().createResourceGroup (groupName);
+#endif
 
             const std::string archivePath = collections.getPath(*archive).string();
             std::cout << "Adding BSA archive " << archivePath << std::endl;

@@ -328,6 +328,8 @@ Ogre::DataStreamPtr TES4BSAFile::getFile(const std::string& file)
         Ogre::MemoryDataStream *outBuf = new Ogre::MemoryDataStream(bufSize);
         Ogre::SharedPtr<Ogre::DataStream> streamPtr(outBuf);
 
+// FIXME: doesn't always produce the right out for very small files e.g. icmarketdistrict.cmp
+#if 0
         int ret;
         z_stream strm;
         strm.zalloc = Z_NULL;
@@ -354,6 +356,10 @@ Ogre::DataStreamPtr TES4BSAFile::getFile(const std::string& file)
         }
         assert(ret == Z_OK || ret == Z_STREAM_END);
         inflateEnd(&strm);
+#else
+        uLongf outBufSize = bufSize;
+        uncompress((Bytef*)outBuf->getPtr(), (uLongf*)&outBufSize, (const Bytef*)&inBuf[0], fileRec.size-4);
+#endif
 
         return streamPtr;
     }
