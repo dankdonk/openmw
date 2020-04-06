@@ -544,6 +544,26 @@ NiBtOgre::NiTexturingProperty::NiTexturingProperty(uint32_t index, NiStream *str
     : NiProperty(index, stream, model, data), mFlags(0), mApplyMode(/* APPLY_MODULATE */2)/*, mHasNormalTexture(false),
       mHasUnknown2Texture(false), mHasDecal1Texture(false), mHasDecal2Texture(false), mHasDecal3Texture(false)*/
 {
+    if (!stream) // must be a dummy block being inserted
+    {
+        mTextureCount = 7;
+
+        TexDesc td;
+        NiObject *tex
+            = const_cast<NiModel&>(model).insertDummyBlock<NiSourceTexture>("NiSourceTexture"); // const hack
+        td.mSourceRef = tex->selfRef();
+
+        // FIXME: find suitable default values
+        td.clampMode = 3;
+        td.filterMode = 2;
+        td.uvSet = 0;
+        td.hasTextureTransform = false;
+
+        mTextureDescriptions[Texture_Base] = td;
+
+        return;
+    }
+
     if (stream->nifVer() <= 0x0a000102 || stream->nifVer() >= 0x14010003) // up to 10.0.1.2 or from 20.1.0.3
         stream->read(mFlags);
 

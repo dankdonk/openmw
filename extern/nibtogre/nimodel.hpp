@@ -96,7 +96,7 @@ namespace NiBtOgre
         // helper to get pointer to parent NiNode
         std::map<NiAVObjectRef, NiNode*> mNiNodeMap;
         void setNiNodeParent(NiAVObjectRef child, NiNode *parent);
-        /*const*/ NiNode& getNiNodeParent(NiAVObjectRef child) const;
+        NiNode *getNiNodeParent(NiAVObjectRef child) const;
 
         std::map<NiNodeRef, NiNode*> mMeshBuildList;
 
@@ -330,7 +330,7 @@ namespace NiBtOgre
         inline bool hasSkeleton() const { return !mSkeleton.isNull(); }
         void buildSkeleton(bool load = false);
 
-        inline const std::vector<std::pair<Ogre::MeshPtr, NiNode*> >& meshes() const { return mMeshes; }
+        inline const std::vector<std::pair<Ogre::MeshPtr, NiNode*> >& getMeshes() const { return mMeshes; }
 
         void createNiObjects();
 
@@ -365,12 +365,32 @@ namespace NiBtOgre
 
         const Ogre::Quaternion getBaseRotation() const;
 
+        template<class T>
+        T *insertDummyBlock(const std::string& blockType); // for landscape LOD meshes
+        inline std::uint32_t addString(const std::string& str) { return mNiHeader->addString(str); }
+
     private:
 
         // access to NiGeometryData for generating a FaceGen TRI file or to populate morphed vertices
         // WARN: may throw
         NiTriBasedGeom *getUniqueNiTriBasedGeom() const;
     };
+
+    template<typename T>
+    T *NiModel::insertDummyBlock(const std::string& blockType)
+    {
+        // do this before adding the new block to get the right index
+        std::uint32_t nextBlock = mNiHeader->numBlocks();
+
+        // update NiHeader (mBlockTypes, mBlockTypeIndex, mStrings)
+        mNiHeader->addBlockType(blockType);
+
+        // insert the dummy
+        mNiObjects.resize(nextBlock+1);
+        mNiObjects.at(nextBlock) = NiObject::create(blockType, nextBlock, nullptr, *this, mBuildData);
+
+        return static_cast<T*>(mNiObjects[nextBlock].get());
+    }
 }
 
 #endif // NIBTOGRE_NIMODEL_H

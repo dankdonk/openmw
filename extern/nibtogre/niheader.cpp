@@ -188,6 +188,46 @@ std::int32_t NiBtOgre::NiHeader::searchStrings(const std::string& str) const
     return -1;
 }
 
+void NiBtOgre::NiHeader::addBlockType(const std::string& blockType)
+{
+    if (searchStrings(blockType) == -1)
+    {
+        // return string index?
+        //std::uint32_t index = std::uint32_t(mStrings.size());
+        mStrings.push_back(blockType);
+    }
+
+    std::uint32_t blockTypeIndex = 0;
+    std::vector<std::string>::iterator it = std::find(mBlockTypes.begin(), mBlockTypes.end(), blockType);
+    if (it != mBlockTypes.end())
+    {
+        // unexpected but found one
+        blockTypeIndex = std::uint32_t(it - mBlockTypes.begin());
+    }
+    else
+    {
+        blockTypeIndex = std::uint32_t(mBlockTypes.size());
+        mBlockTypes.push_back(blockType);
+    }
+
+    mBlockTypeIndex.push_back(blockTypeIndex);
+
+    mNumBlocks++;
+}
+
+std::uint32_t NiBtOgre::NiHeader::addString(const std::string& str)
+{
+    std::uint32_t index = -1;
+    if (searchStrings(str) == -1)
+    {
+        index = std::uint32_t(mStrings.size());
+        mStrings.push_back(str);
+    }
+    // FIXME: else
+
+    return index;
+}
+
 //void NiBtOgre::NiHeader::getNiSkinInstances(std::vector<NiSkinInstance*>& skins,
 //                                            std::vector<std::unique_ptr<NiObject> >& objects)
 //{

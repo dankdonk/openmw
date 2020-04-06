@@ -110,7 +110,6 @@ namespace NiBtOgre
 
         virtual const std::vector<NiAVObjectRef>& getChildren() const { return mChildren; }
 
-        //void setVertices(std::unique_ptr<std::vector<Ogre::Vector3> > morphedVertices);
         NiTriBasedGeom *getUniqueSubMeshChild(); // WARN: may throw
 
         std::size_t getNumSubMeshChildren() const { return mSubMeshChildren.size(); }

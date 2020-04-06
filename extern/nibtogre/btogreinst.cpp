@@ -184,7 +184,7 @@ void NiBtOgre::BtOgreInst::buildEntities()
     const BuildData& buildData = mModel->buildData();
 
     const NiNode* skeletonRoot = mModel->skeletonRoot();
-    const std::vector<std::pair<Ogre::MeshPtr, NiNode*> >& meshes = mModel->meshes();
+    const std::vector<std::pair<Ogre::MeshPtr, NiNode*> >& meshes = mModel->getMeshes();
     for (std::size_t i = 0; i < meshes.size(); ++i)
     {
         Ogre::Entity *entity = mBaseSceneNode->getCreator()->createEntity(meshes[i].first);

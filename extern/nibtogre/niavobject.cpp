@@ -41,6 +41,19 @@ NiBtOgre::NiAVObject::NiAVObject(uint32_t index, NiStream *stream, const NiModel
     : NiObjectNET(index, stream, model, data), mHasBoundingBox(false)//, mHasAnim(false)
       //, mWorldTransform(Ogre::Matrix4::IDENTITY)
 {
+    if (!stream) // must be a dummy block being inserted
+    {
+        mFlags = 0;
+        mTranslation = Ogre::Vector3::ZERO;
+        mRotation = Ogre::Matrix3::IDENTITY;
+        mScale = 1.f;
+
+        mProperty.clear();
+        mCollisionObjectRef = -1;
+
+        return;
+    }
+
     stream->read(mFlags);
 
     if (stream->nifVer() >= 0x14020007 && (stream->userVer() >= 11 && stream->userVer2() > 26)) // from 20.2.0.7

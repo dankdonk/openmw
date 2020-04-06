@@ -124,13 +124,11 @@ void NiBtOgre::NiModel::createNiObjects()
     mNiObjects.resize(mNiHeader->numBlocks());
     if (mNiStream->nifVer() >= 0x0a000100) // from 10.0.1.0
     {
-        for (std::uint32_t i = 0; i < mNiHeader->numBlocks(); ++i)
+        std::uint32_t numBlocks = mNiHeader->numBlocks(); // make a copy since it can increase inside the loop
+        for (std::uint32_t i = 0; i < numBlocks; ++i)
         {
             mCurrIndex = i; // FIXME: debugging only
-#if 0
-            if (blockType(0) == "NiTriShape")
-                return; // FIXME: morroblivion\environment\bittercoast\bcscum03.nif
-#endif
+
             // From ver 10.0.1.0 (i.e. TES4) we already know the object types from the header.
             mNiObjects[i] = NiObject::create(mNiHeader->blockType(i), i, mNiStream.get(), *this, mBuildData);
         }
@@ -173,8 +171,25 @@ void NiBtOgre::NiModel::createNiObjects()
         // Creatures\Bear\forward.kf had 3 roots
         std::cout << "NOTE: " << mModelName << " has " << numRoots << " numRoots." << std::endl;
 
-    if (numRoots = 1)
+    if (numRoots == 1)
+    {
+        std::string type = blockType(mRoots[0]);
+        if (type == "NiTriStrips" || type == "NiTriShape")
+        {
+            // HACK: assume we added a dummy NiNode
+            std::size_t i = 0;
+            for (; i < mNiObjects.size(); ++i)
+                if (blockType(i) == "NiNode")
+                    break;
+
+            if (mCurrIndex < mNiObjects.size()-1)
+                mCurrIndex = mNiObjects.size()-1; // cheat
+
+            mRoots[0] = i;
+        }
+
         mRootNode = getRef<NiNode>(mRoots[0]);
+    }
 }
 
 // find the bones, if any (i.e. prepare for the skeleton loader)
@@ -449,7 +464,7 @@ void NiBtOgre::NiModel::buildFgPoses(const FgLib::FgTri *tri, bool rotate)
     std::vector<std::pair<Ogre::MeshPtr, NiNode*> >::iterator it = mMeshes.begin();
     for (; it != mMeshes.end(); ++it)
     {
-        if (it->second == &subMesh->mParent)
+        if (it->second == subMesh->mParent)
         {
             subMesh->buildFgPoses(it->first.get(), tri, rotate);
             return;
@@ -538,12 +553,12 @@ void NiBtOgre::BuildData::setNiNodeParent(NiAVObjectRef child, NiNode *parent)
         mNiNodeMap.insert(lb, std::make_pair(child, parent)); // None found, create one
 }
 
-/*const*/ NiBtOgre::NiNode& NiBtOgre::BuildData::getNiNodeParent(NiAVObjectRef child) const
+NiBtOgre::NiNode *NiBtOgre::BuildData::getNiNodeParent(NiAVObjectRef child) const
 {
     std::map<NiAVObjectRef, NiNode*>::const_iterator it = mNiNodeMap.find(child);
     if (it != mNiNodeMap.cend())
     {
-        return *it->second;
+        return it->second;
     }
     else
     {
@@ -563,7 +578,7 @@ void NiBtOgre::BuildData::setNiNodeParent(NiAVObjectRef child, NiNode *parent)
         // architecture\arena\arenaspectatorf01.nif : NiNode parent not found - 208
         // architecture\arena\arenaspectatorf01.nif : NiNode parent not found - 218
         // architecture\arena\arenaspectatorf01.nif : NiNode parent not found - 220
-        return *mModel.getRef<NiNode>(0);
+        return mModel.getRef<NiNode>(0);
     }
 }
 

@@ -75,7 +75,7 @@ namespace NiBtOgre
         bool mDirtyFlag;
         std::vector<NiPropertyRef> mBSProperties;
 
-        NiNode& mParent;         // cached here
+        NiNode *mParent;         // cached here
 
         NiGeometry(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
     };

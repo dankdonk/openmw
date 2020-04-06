@@ -98,6 +98,11 @@ namespace NiBtOgre
 
         // returns -1 if none found
         std::int32_t searchStrings(const std::string& str) const;
+
+        // for inserting dummy blocks (landscape LOD mesh)
+        void addBlockType(const std::string& blockType);
+
+        std::uint32_t addString(const std::string& str);
     };
 }
 

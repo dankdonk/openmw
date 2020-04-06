@@ -62,8 +62,27 @@ NiBtOgre::BSFadeNode::BSFadeNode(uint32_t index, NiStream *stream, const NiModel
 // Bipeds seems to have a predefined list of bones. See: meshes/armor/legion/m/cuirass.nif
 NiBtOgre::NiNode::NiNode(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiAVObject(index, stream, model, data)
-    , mNodeName(model.indexToString(NiObjectNET::mNameIndex)), mData(data), mSkinTexture("")
+    //, mNodeName((NiObjectNET::mNameIndex == -1) ? std::to_string(index) : model.indexToString(mNameIndex))
+    , mData(data), mSkinTexture("")
 {
+    if (!stream) // must be a dummy block being inserted
+    {
+        mNameIndex = const_cast<NiModel&>(model).addString("NiNode"+std::to_string(index)); // const hack
+
+        mEffects.clear();
+
+        mParent = nullptr; // TODO: is there a use case where a parent is present?
+        mLocalTransform.makeTransform(mTranslation, Ogre::Vector3(mScale), Ogre::Quaternion(mRotation));
+        mWorldTransform = mLocalTransform;
+
+        // WARN: this is updated later when NiGeometry registers to create a mesh
+        mChildren.clear();
+
+        return;
+    }
+
+    mNodeName = model.indexToString(NiObjectNET::mNameIndex);
+
     //stream->readVector<NiAVObjectRef>(mChildren);
     std::uint32_t numChildren = 0;
     stream->read(numChildren);
@@ -82,7 +101,7 @@ NiBtOgre::NiNode::NiNode(uint32_t index, NiStream *stream, const NiModel& model,
 
     /* ---------------------------------------------------------------------- */
     // HACK: should check for root node?
-    mParent = (NiObject::mSelfRef == 0) ? nullptr : &data.getNiNodeParent((NiAVObjectRef)NiObject::mSelfRef);
+    mParent = (NiObject::mSelfRef == 0) ? nullptr : data.getNiNodeParent((NiAVObjectRef)NiObject::mSelfRef);
 
     if (mCollisionObjectRef != -1 || mChildren.size() > 0) // build only if it will be used
     {
@@ -119,6 +138,11 @@ NiBtOgre::NiNode::NiNode(uint32_t index, NiStream *stream, const NiModel& model,
 
 void NiBtOgre::NiNode::registerSubMesh(NiTriBasedGeom* geom)
 {
+    if (mChildren.empty()) // must be a dummy block being inserted
+    {
+        mChildren.push_back(geom->selfRef());
+    }
+
     // FIXME: TES5 can have EditorMarker at NiTriStrips, etc
     if (mModel.hideEditorMarkers() &&
         mData.editorMarkerPresent() &&
@@ -139,23 +163,9 @@ NiBtOgre::NiTriBasedGeom *NiBtOgre::NiNode::getUniqueSubMeshChild()
         throw std::logic_error("NiNode: NiTriBasedGeom on a Root NiNode is not unique");
 }
 
-// if a pre-morphed vertices are supplied there should be just one in mSubMeshChildren
-//void NiBtOgre::NiNode::setVertices(std::unique_ptr<std::vector<Ogre::Vector3> > morphedVertices)
-//{
-    //if (mSubMeshChildren.size() > 1)
-        //std::cout << "unexpected sub mesh" << std::endl; // FIXME: should throw
-
-    //mSubMeshChildren[0]->setVertices(std::move(morphedVertices));
-//}
-
 //  Some of the Ogre code in this method is based on v0.36 of OpenMW. (including boundsfinder.hpp)
 void NiBtOgre::NiNode::buildMesh(Ogre::Mesh *mesh)
 {
-//  if (mNodeName.find("C_Pudd") != std::string::npos || // FIXME
-//      mNodeName.find("Box01") != std::string::npos || // FIXME
-//      mNodeName.find("Inner01") != std::string::npos) // FIXME
-//      return;
-
     BoundsFinder bounds;
     bool needTangents = false;
 
@@ -175,7 +185,6 @@ void NiBtOgre::NiNode::buildMesh(Ogre::Mesh *mesh)
             mesh->buildTangentVectors(Ogre::VES_TANGENT, src, dest);
     }
 
-    // for skeleton.nif an empty mesh is created
     if (mSubMeshChildren.size())
     {
         mesh->_setBounds(Ogre::AxisAlignedBox(bounds.minX()-0.5f, bounds.minY()-0.5f, bounds.minZ()-0.5f,

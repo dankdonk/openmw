@@ -109,6 +109,22 @@ NiBtOgre::NiGeometry::NiGeometry(uint32_t index, NiStream *stream, const NiModel
             stream->read(mBSProperties.at(1));
         }
     }
+
+    // special case for landscape LOD mesh
+    if (!mParent && NiObject::selfRef() == 0)
+    {
+        if (mNameIndex == -1)
+            mNameIndex = const_cast<NiModel&>(model).addString("NiGeom"+std::to_string(index)); // const hack
+        mParent = const_cast<NiModel&>(model).insertDummyBlock<NiNode>("NiNode"); // WARN: const hack
+
+        // add NiTexturingProperty and NiSourceTexture blocks
+        if (NiAVObject::mProperty.empty())
+        {
+            NiObject *prop
+                = const_cast<NiModel&>(model).insertDummyBlock<NiTexturingProperty>("NiTexturingProperty");
+            mProperty.push_back(prop->selfRef());
+        }
+    }
 }
 
 NiBtOgre::NiTriBasedGeom::NiTriBasedGeom(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
@@ -125,9 +141,9 @@ NiBtOgre::NiTriBasedGeom::NiTriBasedGeom(uint32_t index, NiStream *stream, const
     //  Furniture\MiddleClass\BearSkinRug01.NIF (0001C7CA)
     //  COC "ICMarketDistrictJensinesGoodasNewMerchandise"
     if (mCollisionObjectRef != -1)
-        NiAVObject::mWorldTransform = NiGeometry::mParent.getWorldTransform() * mLocalTransform;
+        NiAVObject::mWorldTransform = NiGeometry::mParent->getWorldTransform() * mLocalTransform;
 
-    mParent.registerSubMesh(this);
+    mParent->registerSubMesh(this);
 
     // if there is node animation in the model include any sub-mesh to be part of the animation
     // FIXME: HACK for testing; may add bones that are not necessary
@@ -227,13 +243,13 @@ std::string NiBtOgre::NiTriBasedGeom::getMaterial()
     }
 
     // if an external texture was supplied, overwrite texture property but only if it is an exposed skin
-    std::string skinTexture = mParent.getSkinTexture();
+    std::string skinTexture = mParent->getSkinTexture();
     bool useExt = false;
     if (!skinTexture.empty() &&
         mOgreMaterial.texName.find(NiTexturingProperty::Texture_Base) != mOgreMaterial.texName.end())
     {
         // WARN: we rely on getMaterial() being called *after* the sub-meshes have been built
-        if (mSkinInstanceRef == -1 && mData.mMeshBuildList.size() == 1 && mParent.getNumSubMeshChildren() == 1)
+        if (mSkinInstanceRef == -1 && mData.mMeshBuildList.size() == 1 && mParent->getNumSubMeshChildren() == 1)
         {
             // If we're the only sub-mesh then force replace but this does not work for
             // Clothing\MiddleClass\04\M\Pants.NIF.  We need to force only for body/head parts.
@@ -357,11 +373,11 @@ bool NiBtOgre::NiTriBasedGeom::buildSubMesh(Ogre::Mesh *mesh, BoundsFinder& boun
     Ogre::Matrix4 transform = Ogre::Matrix4(Ogre::Matrix4::IDENTITY);
     //if (!isStatic)
     if (mSkinInstanceRef != -1) // using the local transform doesn't seem to do much
-        transform = mParent.getLocalTransform() * mLocalTransform;
+        transform = mParent->getLocalTransform() * mLocalTransform;
     //else if (mModel.getName().find("geardoor") != std::string::npos)
-        //transform = mParent.getLocalTransform() * mLocalTransform;
+        //transform = mParent->getLocalTransform() * mLocalTransform;
     else
-        transform = mParent.getWorldTransform() * mLocalTransform;
+        transform = mParent->getWorldTransform() * mLocalTransform;
 
     // NOTE: below code copied from components/nifogre/mesh.cpp (OpenMW)
 
@@ -705,7 +721,7 @@ bool NiBtOgre::NiTriBasedGeom::buildSubMesh(Ogre::Mesh *mesh, BoundsFinder& boun
     } // mSkinInstanceRef != -1
     else if (mModel.hasSkeleton()
         && mModel.getSkeleton()->getName() == mModel.getName() // hack to avoid body parts
-        && mModel.getSkeleton()->hasBone(mParent.getName())
+        && mModel.getSkeleton()->hasBone(mParent->getName())
         //&& (mModel.nifVer() < 0x14020007 || mParent.getName() == "HeadAnims") // not FO3 onwards
 
         //&& mModel.getName().find("geardoor") == std::string::npos
@@ -735,7 +751,7 @@ bool NiBtOgre::NiTriBasedGeom::buildSubMesh(Ogre::Mesh *mesh, BoundsFinder& boun
         mesh->setSkeletonName(mModel.getName()); // FIXME: not the best place from a SubMesh?
 
         Ogre::VertexBoneAssignment boneInf;
-        boneInf.boneIndex = mModel.getSkeleton()->getBone(/*"#"+std::to_string(mParent.selfRef())+"@"+*/mParent.getName())->getHandle();
+        boneInf.boneIndex = mModel.getSkeleton()->getBone(/*"#"+std::to_string(mParent.selfRef())+"@"+*/mParent->getName())->getHandle();
 
         for (unsigned int j = 0; j < vertices.size(); ++j)
         {

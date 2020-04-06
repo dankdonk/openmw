@@ -34,6 +34,16 @@ NiBtOgre::NiObjectNET::NiObjectNET(uint32_t index, NiStream *stream, const NiMod
     : NiObject(index, stream, model, data), mIsBSLightingShaderProperty(isBSLightingShaderProperty)
   //, mControllerRef(-1)
 {
+    if (!stream) // must be a dummy block being inserted
+    {
+        mNameIndex = -1;
+        mExtraDataRef = -1;
+        mExtraDataRefList.clear();
+        mControllerRef = -1;
+
+        return;
+    }
+
     if (mIsBSLightingShaderProperty)
     {
         if (stream->userVer() >= 12)
@@ -83,9 +93,34 @@ std::string NiBtOgre::NiObjectNET::getStringExtraData(const std::string& name) c
     return ""; // none found
 }
 
+// FIXME: what to do with normal textures? (*_fn.dds)
 NiBtOgre::NiSourceTexture::NiSourceTexture(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiTexture(index, stream, model, data), mDirectRender(false), mPersistRenderData(false)
 {
+    if (!stream) // must be a dummy block being inserted
+    {
+        mUseExternal = true;
+
+        std::string nif = model.getName();
+        std::size_t pos = nif.find_last_of("\\");
+        if (pos != std::string::npos)
+        {
+            std::string tex = "textures\\landscapelod\\generated"+nif.substr(pos, nif.size()-3-pos)+"dds";
+            mFileName = const_cast<NiModel&>(model).addString(tex); // const hack
+        }
+        else
+            mFileName = -1;
+
+        // FIXME: find suitable default values
+        mPixelLayout = 6;
+        mUseMipmaps = 1;
+        mAlphaFormat = 3;
+        mIsStatic = true;
+        mDirectRender = true;
+
+        return;
+    }
+
     stream->read(mUseExternal);
 
     if (mUseExternal != 0)
