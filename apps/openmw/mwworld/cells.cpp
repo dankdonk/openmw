@@ -204,6 +204,7 @@ MWWorld::CellStore *MWWorld::Cells::getWorldCell (const std::string& worldName, 
 
 void MWWorld::Cells::initNewWorld(const ForeignWorld *world)
 {
+//#if 0
     std::vector<std::string> locations;
     std::vector<std::string> files;
 
@@ -213,7 +214,7 @@ void MWWorld::Cells::initNewWorld(const ForeignWorld *world)
     for (; it != groups.end(); ++it)
     {
         // FIXME: this probably ignores loose files
-        if ((*it).find("TES4BSA") != std::string::npos)
+        if (1)//(*it).find("TES4BSA") != std::string::npos)
             locations.push_back(*it);
     }
 
@@ -227,32 +228,6 @@ void MWWorld::Cells::initNewWorld(const ForeignWorld *world)
         Ogre::StringVector::const_iterator it = res->begin();
         for (; it != res->end(); ++it)
         {
-#if 0
-            std::size_t pos = (*it).find_first_of(".");
-            if (pos == std::string::npos)
-                continue;
-
-            std::int32_t wrld = std::stoi((*it).substr(21, pos-21), nullptr, 10);
-
-            std::size_t pos2 = (*it).find_first_of(".", pos+1);
-
-            std::int16_t left = std::stoi((*it).substr(pos+1, pos2-pos-1), nullptr, 10);
-
-            std::size_t pos3 = (*it).find_first_of(".", pos2+1);
-
-            std::int16_t right = std::stoi((*it).substr(pos2+1, pos3-pos2-1), nullptr, 10);
-
-            std::size_t pos4 = (*it).find_first_of(".", pos3+1);
-
-            std::int16_t height = std::stoi((*it).substr(pos3+1, pos4-pos3-1), nullptr, 10);
-
-            if (wrld != 0x3c)
-            {
-                //std::cout << test << std::endl;
-                std::cout << ESM4::formIdToString(wrld) << std::endl;
-                std::cout << left << "," << right << "," << height << std::endl;
-            }
-#else
             std::int32_t lod[4];
             std::size_t next = 21; // 'meshes\landscape\lod\'
             std::size_t pos = 0;
@@ -268,10 +243,9 @@ void MWWorld::Cells::initNewWorld(const ForeignWorld *world)
 
             if (1)//lod[0] != 0x3c)
             {
-                std::cout << ESM4::formIdToString(lod[0]) << std::endl;
-                std::cout << lod[1] << "," << lod[2] << "," << lod[3] << std::endl;
+                std::cout << ESM4::formIdToString(lod[0]) << " "
+                          << lod[1] << "," << lod[2] << "," << lod[3] << std::endl;
             }
-#endif
         }
 
         const Ogre::StringVectorPtr res2
@@ -284,12 +258,12 @@ void MWWorld::Cells::initNewWorld(const ForeignWorld *world)
             {
                 std::cout << locations[i] << " " << *it2 << std::endl;
 
-                Ogre::DataStreamPtr file = groupMgr.openResource(*it2);
+                Ogre::DataStreamPtr file = groupMgr.openResource(*it2, locations[i]);
 
                 while (!file->eof())
                 {
                     std::int16_t x, y;
-                    file->read(&y, sizeof(y));
+                    file->read(&y, sizeof(y)); // NOTE: that y comes before x
                     file->read(&x, sizeof(x));
                     std::cout << "(" << x << "," << y << ")" << std::endl;
                 }
@@ -306,7 +280,7 @@ void MWWorld::Cells::initNewWorld(const ForeignWorld *world)
 
                 std::string editorId = (*it2).substr(11, pos-11); // 'distantlod\'
 
-                std::int32_t lod[2];
+                std::int32_t lod[2]; // lod[0] is x and lod[1] is y
                 //std::size_t next = 11+world->mEditorId.size()+1;
                 std::size_t next = 11+editorId.size()+1;
                 for (std::size_t j = 0; j < 2; ++j)
@@ -333,7 +307,7 @@ void MWWorld::Cells::initNewWorld(const ForeignWorld *world)
                     float scale;
                 };
 
-                Ogre::DataStreamPtr file = groupMgr.openResource(*it2);
+                Ogre::DataStreamPtr file = groupMgr.openResource(*it2, locations[i]);
 
                 std::uint32_t numObj;
                 file->read(&numObj, sizeof(numObj));
@@ -366,6 +340,7 @@ void MWWorld::Cells::initNewWorld(const ForeignWorld *world)
             }
         }
     }
+//#endif
 
     // sanity check: find the world for the given form i
     // check if a dummy cell exists

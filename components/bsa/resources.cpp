@@ -34,6 +34,7 @@ void Bsa::registerResources (const Files::Collections& collections,
         if (collections.doesExist(*archive))
         {
 // FIXME: experimenting with Resource locations, not sure if it will be useful
+//        also need to test if the right priority is being observed
 #if 0
             Ogre::ResourceGroupManager& rgManager = Ogre::ResourceGroupManager::getSingleton();
 

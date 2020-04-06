@@ -301,6 +301,11 @@ void RenderingManager::rotateObject(const MWWorld::Ptr &ptr)
     ptr.getRefData().getBaseNode()->setOrientation(newo);
 }
 
+void RenderingManager::addLandscape(const std::string& model)
+{
+    mObjects->insertLandscapeModel(model);
+}
+
 void
 RenderingManager::updateObjectCell(const MWWorld::Ptr &old, const MWWorld::Ptr &cur)
 {

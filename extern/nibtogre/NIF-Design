@@ -921,9 +921,9 @@ So the method of getting the files should be:
 
   * get mHair and mEyes from `NPC_`
   * find the mesh and texture file names from HAIR and EYES
-    - if not found, get the default hair (male/female FormID) and eyes (left/right mesh) from the corresponding RACE
+    - if not found, get the default hair (male/female `FormId`) and eyes (left/right mesh) from the corresponding RACE
     [07/03/20] RACE doesn't have default eyes, just some choices - possibly need to select a random one.
-  * for EYES the mesh name is only in the RACE records (but not the texture nor the EYE FormID)
+  * for EYES the mesh name is only in the RACE records (but not the texture nor the EYE `FormId`)
     [07/03/20] this no longers makes sense - what was I thinking?
   * the corresponding EGM and TRI files should be in the same directory as the mesh (EGT not used?)
   * for some HAIR the corresponding TRI files are not present in the BSA - maybe try to get the vertices from the mesh
@@ -1035,7 +1035,7 @@ The typical way to get a `NiModel` is to call `NiModelManager::getOrLoadByName()
 
 The materials used in NIF models are not loaded from material scripts and are most likely (always?) manually loaded.  `NiMaterialManager` can inherit from `Ogre::MaterialManager` and `Ogre::ManualResourceLoader`.
 
-One possibility is to pass on the FormID of the resource in a string so that the manual resource loader can get the required details for the resource.  But this means the resource loader will need to know about the implementation of the asset store (tight coupling).  Perhaps the class can be further specialised to provide implementations to pure virtual functions?  e.g. `findFromStore()`
+One possibility is to pass on the `FormId` of the resource in a string so that the manual resource loader can get the required details for the resource.  But this means the resource loader will need to know about the implementation of the asset store (tight coupling).  Perhaps the class can be further specialised to provide implementations to pure virtual functions?  e.g. `findFromStore()`
 
 # [28/02/2020] What FaceGen resource management do we need?
 
@@ -1960,7 +1960,7 @@ The prison cell gate (COC "ImperialDungeon01", `Dungeons\Chargen\CGprisonCellGat
 if (mObjectRoot->mForeignObj->havokEnabled())
 ```
 
-That flag is set by `NiIntergerExtraData` using the `BSX` flags in the NIF file (e.g. `Dungeons\Chargen\IDGate01.NIF`, FormID 0x0003665B).  `IDGate01` has `BSX` flag 0x0B which for TES4 includes "enable animation", "enable collision" and "enable havok".
+That flag is set by `NiIntergerExtraData` using the `BSX` flags in the NIF file (e.g. `Dungeons\Chargen\IDGate01.NIF`, `FormId` 0x0003665B).  `IDGate01` has `BSX` flag 0x0B which for TES4 includes "enable animation", "enable collision" and "enable havok".
 
 We may need to change the code to exclude the models with animation enabled?  But that disables ragdoll from others such as `Dungeons\Misc\RootHavok06.NIF`.  Maybe it will be necessary to capture the presence of constraints during the construction of the NiModel.  **FIXME:** Even so objects such as `Clutter\MinotaurHead.NIF` and `Dungeons\Caves\Traps\CTrapLog01.NIF` will have both animation and havok enabled, so some kind of control mechanism will need to be devised.
 
@@ -2185,7 +2185,7 @@ Some don't have any symmetric texture coefficients, e.g.:
 
 # [11/03/2020] Citadel Hall door
 
-Citadel hall door - both have the same FormID 0x000182e8
+Citadel hall door - both have the same `FormId` 0x000182e8
 
     left (18) 2092, 1280, 768
     ((std::_Tree_node<std::pair<int const ,std::pair<Ogre::Matrix4,btCollisionShape *> >,void *>*)0x000002b10cce3280)->_Myval.second.first.m[0x00000000],view(MapHelper) 0x000002b10cce32a8 {5.36441803e-07, 0.000000000, -0.999999881, 210.856628}
@@ -2547,16 +2547,16 @@ In TES3 Pathgrid records are loaded  in `ESMStore::load()` then the connected gr
 
 In TES4 we can't take the same approach since we skip "Cell Temporary Child" group while in `ESMStore::loadTes4Record()`.
 
-To draw the points and links, will need to add a method similar to `Debugging::enableCellPathgrid()`.  We need to either modify it or create a different method since LAND_SIZE, etc, will be different for TES4.  It also uses ESMStore to find the pathgrids which won't be the case for TES4.
+To draw the points and links, will need to add a method similar to `Debugging::enableCellPathgrid()`.  We need to either modify it or create a different method since `LAND_SIZE`, etc, will be different for TES4.  It also uses ESMStore to find the pathgrids which won't be the case for TES4.
 
 # [27/03/2020] Pathgrid still
 
 The PGRR record turned out to be similar to TES3, i.e. they are indices for the "end node" for number of links specified for each pathgrid point.
 
-ICMarketDistrictTheBestDefenseBasement doesn't have a PGRR.  Maybe some links need to be auto-generated?  We may need a dummy physics shape so that a line-of sight test can be done.
+`ICMarketDistrictTheBestDefenseBasement` doesn't have a PGRR.  Maybe some links need to be auto-generated?  We may need a dummy physics shape so that a line-of sight test can be done.
 
-    CELL formId 00049E2A
-    PGRD formId 000304B7
+    CELL FormId 00049E2A
+    PGRD FormId 000304B7
 
 **FIXME:** Noticed that some pathgrid points are floating in the air - again, a dummy physics shape can be used to "snap" to ground.
 
@@ -2609,7 +2609,7 @@ And `icmarketdistrict_8_16.lod` has below.
     0, 0, 0               // rotation
     96.97                 // scale
 
-There are indeed 4 trees (2 near BeggarICMarketsSimplicia and 2 near the entry into the sewers).  The ".cmp" file probably indicates the distance to these REFR?  icmarketdistrict.cmp has:
+There are indeed 4 trees (2 near BeggarICMarketsSimplicia and 2 near the entry into the sewers).  The `.cmp` file probably indicates the distance to these REFR?  icmarketdistrict.cmp has:
 
     00000000: 0700 0000                                ....
 
@@ -2635,7 +2635,7 @@ Let's look at another one from Bravil.  We have 15, -8 and 0, 7.  The CELL 15, -
 
 ## LOD NIF files
 
-Maybe some clue from the file names?  Is there a LAND or CELL with FormId 0x00113463? (Not according to OpenCS)  The NIF files are just NiTriStrips with NiTriStripsData without any materials info.  However there are corresponding textures, so maybe they are meant to be manually put together?
+Maybe some clue from the file names?  Is there a LAND or CELL with `FormId` 0x00113463? (Not according to OpenCS)  The NIF files are just NiTriStrips with NiTriStripsData without any materials info.  However there are corresponding textures, so maybe they are meant to be manually put together?
 
     meshes\landscape\lod\113463.00.00.32.nif
     meshes\landscape\lod\113463.00.-32.32.nif
@@ -2644,7 +2644,7 @@ Maybe some clue from the file names?  Is there a LAND or CELL with FormId 0x0011
 
 So, the texture 60.00.00.32.dds matches what OpenCS shows on cells 0,0 (bottom left), 0,31 (top left), 31,31 (top right), and 31,0 (bottom right).  Similarly, -31,0 (bottom left), -31,31 (top left), 0,31 (top right), and 0,0 (bottom right) matches 60.-32.00.32.dds.  So the file names must be (except that some have 00 left and -32 right?):
 
-    <world id in decimal>.<cell x left>.<cell x right>.<y cells height>
+    <world id in decimal>.<grid x left>.<grid x right>.<y grid height>
 
 These are the ones in `meshes\landscape\lod` directory (Oblivion.esm), note that not all worlds have LOD mesh(s):
 
@@ -2695,7 +2695,7 @@ Now the files in distantlod directory make sense a little.  They might be an ind
 
 ## Oblivion Gates
 
-The Oblivion gates are visible from distance (at least it feels that way) so let's check the records.  There seems to be many different types, one of which is door with FormId 0x00051925.  The first REFR with the mBaseObj that matches is:
+The Oblivion gates are visible from distance (at least it feels that way) so let's check the records.  There seems to be many different types, one of which is door with `FormId` 0x00051925.  The first REFR with the `mBaseObj` that matches is:
 
     FormId   0x00091ca2
     Flags    0x00000400 (persistent reference) // note that it doesn't have disable initially
@@ -2704,9 +2704,9 @@ The Oblivion gates are visible from distance (at least it feels that way) so let
 
 # [31/03/2020] LOD cont.
 
-Looking at the `.cmp` file again.  tamriel.cmp has 152 co-ordinates plus 0,7.  But there are 9347 tamriel `.lod` files.
+Looking at the `.cmp` file again.  `tamriel.cmp` has 153 co-ordinates plus 0,7.  But there are 9347 tamriel `.lod` files.
 
-Maybe these are reference points for the generation of the LOD mesh and textures?
+Maybe these are reference points for the generation of the LOD mesh and textures? **EDIT: 05/04/20** The `.cmp` files have grids where visibly distant statics are located and the `.lod` files have the base object `FormId` and position/orientation/scale of the visibly distant statics and trees.
 
 # [31/03/2020 - 02/04/2020] Visible when distant
 
@@ -2738,7 +2738,7 @@ Either way, we need a special case of CellStore that holds these records (and ch
            |                     |             |            |
 
 
-**TODO:** getForeignWorld() should be changed to getWorldCell() **DONE**
+**TODO:** `getForeignWorld()` should be changed to `getWorldCell()` **DONE**
 
         Scene       MWWorld::World   MWWorld::Cells     ESMStore  CellStore
           |                |              |               |          |
@@ -2790,7 +2790,7 @@ Having one cell to hold all the visibly distant REFR won't work.  In Tamriel the
 Just outside Vilverin approx 1.2M triangles with exterior grid size of 3 - single digit FPS sometimes going down to 0.
 
 **TODO:** Not very happy with having to add methods in MBase::World.  Need to look for alternatives.
-**TODO:** Not happy with ForeignWorld storing dummy cell FormId but visibly distant `CellStore` (inconsistent).  We just need to ensure that it is created when the world is first accessed.  However, if we were to load *all* the REFRs for the WRLD, which may have many CELLs, we had to load them in ESMStore and at that point nothing would be accessing any worlds.
+**TODO:** Not happy with ForeignWorld storing dummy cell `FormId` but visibly distant `CellStore` (inconsistent).  We just need to ensure that it is created when the world is first accessed.  However, if we were to load *all* the REFRs for the WRLD, which may have many CELLs, we had to load them in ESMStore and at that point nothing would be accessing any worlds.
 
 **FIXME:** Sometimes Morrowind cells get loaded?  I think this might be due to OpenMW using `getExterior(x, y)` which can confuse things.  We may need to keep the current world somewhere (player?) and change only when explicigly changing worlds.
 
@@ -2843,6 +2843,43 @@ Each of the objects have a `_far` variant in the same directory:
     meshes\oblivion\architecture\citadel\exterior\subtowers\towersmall02_far.nif
     meshes\oblivion\architecture\citadel\exterior\walkways\towerbridgelong01_far.nif
     meshes\oblivion\architecture\citadel\exterior\walkways\towerbridgeextralong01_far.nif
+
+## Tamriel `.lod` (from 05/04/20)
+
+Grid 0,0 is not in `tamriel.cmp` and only has trees
+
+    distantlod\tamriel_0_0.lod
+    000232D8 \TreeWhitePineForest01.spt
+    000237EE \TreeWillowOakForest01SU.spt
+    0000089B \TreeSugarMapleForestSU.spt
+    000232D9 \TreeSilverBirchForest01SU.spt
+    00000B7D \TreeWhitePineForest.spt
+    000009FE \TreeSilverBirchForestSU.spt
+
+Grid 0,7 is in `tamriel.cmp`- but still only has trees.  But maybe a poor choice of grid since it is the "back marker".  Also the numbering maybe Y, X?
+
+    distantlod\tamriel_0_7.lod
+    00017F9E \TreeGreyPoplarForestSU.spt
+    00000BC6 \TreeWillowOakFreeSU.spt
+    00017F98 \TreeYewForest.spt
+
+Grid -18, 1 is in `Tamriel.cmp`, but still no static.
+
+    distantlod\tamriel_1_-18.lod
+    00000BC6 \TreeWillowOakFreeSU.spt
+
+Try again and bingo!  **So it appears that the `.cmp` files have grids that have visible distant statics.** Also the filename structure is `<EditorId>_<grid x>_<grid y>.lod`.
+
+    distantlod\tamriel_-18_1.lod
+    000232DB \ShrubVineMapleSU.spt
+    00000BC9 \TreeWillowOakYoungSU.spt
+    00009EFE Architecture\Skingrad\SkHouseLower01LOD.NIF SkHouseLower01LOD
+    00000B7C \TreeEnglishOakYoungSU.spt
+    00028773 Architecture\Skingrad\SkingradCastleWall01.NIF SkingradCastleWall01
+    00035C32 Architecture\Castle\Skingrad\SkCastleWallGate01.NIF SkCastleWallGate01
+    000232D6 \TreeEnglishOakForest01SU.spt
+    000019DA \TreeSugarMapleFreeSU.spt
+    000286CF Architecture\Skingrad\SkinGradCastleTower01.NIF SkinGradCastleTower01
 
 ## `Oblivion.ini`
 
@@ -2926,7 +2963,7 @@ Worlds such as ICMarketDistrict seems to require the parent world's LAND.  It al
 
 **TODO:** `Cells::getWorldCell()` needs to change as it is auto-loading any new `CellStore` and also calling `initWorld()`.  This results in unnecessarily loading parent world's dummy cell when just the land and visibly distant statics may be required.  See the interaction diagram circa [31/03/2020 - 02/04/2020].
 
-## When to parse the `.lod` and `.cmp` files
+## When to parse and load the `.lod` and `.cmp` files
 
 Basically 2 options here:
 
@@ -2941,13 +2978,93 @@ OpenMW doesn't have a concept of having references that are not rendered and wit
 
 ## `tamriel.cmp` and the grid positions
 
-There are 153 grid positions in `tamriel.cmp`, excluding (0,7) at the end.  But there are 9,347 `.lod` files.  This is different to `oblivionmqkvatch.cmp` where the number of grid positions and the number of `.lod` files were the same.
+There are 153 grid positions in `tamriel.cmp`, excluding (0,7) at the end.  But there are 9347 `.lod` files.  This is different to `oblivionmqkvatch.cmp` where the number of grid positions and the number of `.lod` files were the same.
+
+**EDIT: 05/04/20** The `.cmp` file only has grids where visibly distant statics are located.
 
 ## Observations on loading times
 
-For some strange reason Shivering Isles `.lod` files (and maybe others?) take much longer to load than from `Oblivion - Meshes.bsa`.
+For some strange reason Shivering Isles `.lod` files (and maybe others?) take much longer to load than from `Oblivion - Meshes.bsa`.  It might have something to do with the archive.  **TODO:** try with loose files
 
-The file loading does take quite a while.
+The file loading for all the `.lod` files does take quite a while.
+
+# [05/04/2020] LOD meshes
+
+`MWRender::Objects::insertModel()` has the ability to deal with static geometry.  However it still relies on each object being a `Ptr`.
+
+In order to add an `Ogre::Entity` or an `Ogre::StaticGeometry` we need access to an `Ogre::SceneNode`.  The root node is held by `MWRender::Objects`.
+
+        MWWorld::    MWRender::          MWClass::       MWRender::  MWRender::       Static
+        Scene        RenderingManager    ForeignBook     Objects     ObjectAnimation  Geometry
+          |                |                |               |             |              |
+          |                | setRootNode()  |               |             |              |
+          |                |------------------------------->|             |              |
+          |                |                |               |             |              |
+          :                :                :               :             :              :
+          :                :                :               :             :              :
+          | InsertFunctor  |                |               |             |              |
+          |--+             |                |               |             |              |
+          |  | addObject() |                |               |             |              |
+          |  |------------>|                |               |             |              |
+          |  |             | insertObjectRendering()        |             |              |
+          |  |             |--------------->|               |             |              |
+          |  |             |                | insertModel() |             |              |
+          |  |             |                |-------------->|             |              |
+          |  |             |                |               | new         |              |
+          |  |             |                |               |------------>|              |
+          |  |             |                |               | canBatch()  |              |
+          |  |             |                |               |------------>|              |
+          |  |             |                |               | fillBatch() |              |
+          |  |             |                |               |------------>|              |
+          |  |             |                |               |             | addEntity()  |
+          |  |             |                |               |             |------------->|
+          |<-+             |                |               |             |              |
+          |                |                |               |             |              |
+
+
+`ObjectAnimation::canBatch()` looks for the lack of particle effects, lights, animation, etc.
+
+The places where we add LOD objects are shown below.  But `MWWorld::Scene` does not have access to a `SceneNode`.  It will need to go via the `Rendering Manager` - which means we'll probably have to add a method (or two).
+
+  method                            | LOD
+  ----------------------------------|------------------------
+  `Scene::changeToWorldCell()`      | landscape low-poly mesh
+  `Scene::updateWorldCellsOnGrid()` | visibly distant
+
+
+        MWWorld::    MWRender::          MWClass::       MWRender::  MWRender::       Static
+        Scene        RenderingManager    ForeignBook     Objects     ObjectAnimation  Geometry
+          |                |                |               |             |              |
+          |                |                |               |             |              |
+          | addLandscape() |                |               |             |              |
+          |--------------->|                |               |             |              |
+          |                | insertLandscapeModel()         |             |              |
+          |                |------------------------------->|             |              |
+          |                |                |               | addEntity() |              |
+          |                |                |               |--------------------------->|
+          |                |                |               |             |              |
+
+
+# [06/04/2020] LOD meshes with only `NiTriStrips` and `NiTriStripsData`
+
+There are a couple of impementation possibilities:
+
+  * Option 1: Insert dummy `NiNode`, etc.  This will require quite a lot of work - there are no default constructors for `NiNode`, `NiAVObject`, `NiObjectNET`, `NiObject`, `NiTexturingProperty`, `NiSourceTexture`, etc.
+  * Option 2: Modify the mesh building code and add a specil create method in `NiModelManager`.  This might be even more work and most likely to be more complicated.
+
+## Bugs 1
+
+**FIXME:** `NiTexturingPropery` has below code which is hiding a problem in `ForeignNpcAnimation::createMorphedObject()` where the proper texture was not being passed.
+
+```
+// FIXME: testing
+if (material.texName[iter->first].find("EarsHuman") != std::string::npos)
+    material.texName[iter->first] = "textures\\characters\\imperial\\earshuman.dds";
+```
+
+## Bugs 2
+
+Need to look into `TES4BSAFile::getFile()` where it is extremely slow in reading one of the archives.
 
 
 [//]: # (/* spell spelllang=en_au syntax=cpp */)

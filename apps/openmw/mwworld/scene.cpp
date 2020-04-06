@@ -312,6 +312,7 @@ namespace MWWorld
         float verts = ESM4::Land::VERTS_PER_SIDE; // number of vertices per side
         float worldsize = ESM4::Land::REAL_SIZE;  // cell terrain size in world coords
 
+        // FIXME: these shouldn't be Refs and needs to move near LOD landscape below
         if (cell->isDummyCell() || cell->isVisibleDistCell())
         {
             insertCell (*cell, true, loadingListener);
@@ -338,7 +339,7 @@ namespace MWWorld
                 std::cerr << "Heightmap for " << cell->getCell()->getDescription() << " not found" << std::endl;
         }
 
-        cell->respawn();
+        cell->respawn(); // FIXME: needs respawnTes4()
 
         // ... then references. This is important for adjustPosition to work correctly.
         /// \todo rescale depending on the state of a new GMST
@@ -683,6 +684,8 @@ namespace MWWorld
 
         loadingListener->setProgressRange(refsToLoad);
 
+        // FIXME: load visibly distant REFR here?
+
         // Load cells
         for (int x = X-halfGridSize; x <= X+halfGridSize; ++x)
         {
@@ -962,6 +965,15 @@ namespace MWWorld
         x = static_cast<int>(std::floor(position.pos[0] / cellSize));
         y = static_cast<int>(std::floor(position.pos[1] / cellSize));
 
+        // FIXME: add landscape LOD mesh here?
+        // first, get a list of applicable grid positions based on the player's current grid
+        // but what if the current grid is at the edge of the landscape LOD mesh?
+        // in extreme case right at the corner?  do we then load 4?
+        //
+        // maybe keep loading at half way point, e.g. -48, -16, 16, 48
+        mRendering.addLandscape("meshes\\landscape\\lod\\60.00.00.32.nif"); // FIXME: just for testing
+
+        // objects
         CellStore *current = updateWorldCellsOnGrid(worldId, x, y);
         if (!current)
             return; // FIXME

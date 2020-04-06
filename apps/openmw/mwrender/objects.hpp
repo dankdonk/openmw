@@ -11,6 +11,11 @@ namespace Ogre
     class SceneNode;
 }
 
+namespace NiBtOgre
+{
+    class BtOgreInst;
+}
+
 namespace MWWorld
 {
     class Ptr;
@@ -33,6 +38,7 @@ class Objects{
     PtrAnimationMap mObjects;
 
     Ogre::SceneNode* mRootNode;
+    NiBtOgre::BtOgreInst *mLandscape; // FIXME: temp testing
 
     static int uniqueID;
 
@@ -43,11 +49,14 @@ class Objects{
 public:
     Objects(OEngine::Render::OgreRenderer &renderer)
         : mRenderer(renderer)
-        , mRootNode(NULL)
+        , mRootNode(NULL), mLandscape(nullptr)
     {}
-    ~Objects(){}
+    ~Objects(){ if (mLandscape) delete mLandscape; }
     //void insertModel(const MWWorld::Ptr& ptr, const std::string &model, bool batch=false);
     const std::map<std::int32_t, Ogre::SceneNode*> *insertModel(const MWWorld::Ptr& ptr, const std::string &model, bool batch=false);
+    void insertLandscapeModel(const std::string &mesh);
+    void deleteLandscapeModel(const std::string &mesh);
+
     void insertLight(const MWWorld::Ptr& ptr);
 
     ObjectAnimation* getAnimation(const MWWorld::Ptr &ptr);

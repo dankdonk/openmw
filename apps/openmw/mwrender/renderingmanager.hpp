@@ -125,6 +125,8 @@ public:
     /// Updates an object's rotation
     void rotateObject (const MWWorld::Ptr& ptr);
 
+    void addLandscape(const std::string& model);
+
     void setWaterHeight(float height);
     void setWaterEnabled(bool enabled);
     bool toggleWater();
