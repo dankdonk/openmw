@@ -1460,17 +1460,17 @@ Simplified create and load interactions of NiMeshLoader:
 
   * Mesh and Material creation parts from NiModel should be moved to the loading stage.  i.e. at least create the meshes during NiModel load stage - currently the meshes are created during instantiation
 
-  * Need to fix SkeletonLoader and BtRigidBodyCIManager.
+  * Need to fix `SkeletonLoader` and `BtRigidBodyCIManager`.
 
 # [01/03/2020] Material
 
 ## FaceGenMap in shaders
 
-Looking at the decompiled [shaders](https://github.com/Alenett/TES-Shaders) again and noticed that all of the ones with FaceGenMap have 2 of them.  Most of them are numbered 0 and 1, e.g. FaceGenMap0, FaceGenMap1.  One of them must be the NPC specific detail map in `textures\faces\oblivion.esm`.  But what is the other one?  It must be either the second, smaller detail map in the same directory (DXGI_FORMAT_BC3_UNORM, 32x32 only) or the age-based detail texture for headhuman.dds (DXGI_FORMAT_BC1_UNORM, 256x256).
+Looking at the decompiled [shaders](https://github.com/Alenett/TES-Shaders) again and noticed that all of the ones with FaceGenMap have 2 of them.  Most of them are numbered 0 and 1, e.g. FaceGenMap0, FaceGenMap1.  One of them must be the NPC specific detail map in `textures\faces\oblivion.esm`.  But what is the other one?  It must be either the second, smaller detail map in the same directory (`DXGI_FORMAT_BC3_UNORM`, 32x32 only) or the age-based detail texture for headhuman.dds (`DXGI_FORMAT_BC1_UNORM`, 256x256).
 
 Either way, still need to figure out how to determine the NPC's age just by examininig their FGGS and/or FGTS.  See previous notes from 09/09/2019.
 
-The normal map for headhuman.dds must be age-based as well? (i.e. replace, not merge with headhuman_n.dds)
+The normal map for `headhuman.dds` must be age-based as well? (i.e. replace, not merge with `headhuman_n.dds`)
 **TODO:** experiement and compare the in-game visuals
 
 ## NPC Age
@@ -1482,11 +1482,11 @@ Figured out how to get the NPC age value.
   * equipment slot handling as per OpenMW's implementation
   * moved FaceGen code to extern/fglib
   * FaceGen NPC age
-  * redesigned resource management for NiModel and NiMesh (still to fix Skeleton and BtRigidBodyCI)
+  * redesigned resource management for `NiModel` and `NiMesh` (still to fix `Skeleton` and `BtRigidBodyCI`)
 
 ## SkeletonLoader
 
-Make SkeletonLoader work the same way as NiMeshLoader.  Not too happy about creating so many singletons, however.  Is there another way to ensure the skeleton manual loader to hang around?
+Make `SkeletonLoader` work the same way as NiMeshLoader.  Not too happy about creating so many singletons, however.  Is there another way to ensure the skeleton manual loader to hang around?
 
 There are 3 different use cases for skeletons.
 
@@ -1500,7 +1500,7 @@ There are 3 different use cases for skeletons.
 
 # [03/03/2020] Skeletons
 
-Manual creation for a skeleton NiModel:
+Manual creation for a skeleton `NiModel`:
 
         application    NiModelManager       NiModel        NiNode    NiSkeletonLoader  Ogre::Skeleton
           |               |                   |              |               |                |
@@ -1540,9 +1540,9 @@ Manual creation for a skeleton NiModel:
           |               |                   |              |               |                |
 
 
-Creation for a normal NiModel:
-**NOTE:** createSkeleton is currently triggered by build() which seems too late
-**NOTE:** `createSkeleton()/addBones()` uses `NiNode::mChildBoneNodes` whereas `createFullSkeleton()/addAllBones()` uses `NiNode::mChildren`
+Creation for a normal `NiModel`:
+**NOTE:** `createSkeleton()` is currently triggered by build() which seems too late
+**NOTE:** `createSkeleton()`/`addBones()` uses `NiNode::mChildBoneNodes` whereas `createFullSkeleton()`/`addAllBones()` uses `NiNode::mChildren`
 
         application    NiModelManager    NiModel            NiNode   NiSkeletonLoader  Ogre::Skeleton
           |               |                |                  |              |                |
@@ -1690,7 +1690,7 @@ void PhysicsSystem::addObject (const Ptr& ptr, const std::string& mesh, bool pla
 
 # [04/03/2020] Finding missing TrapLog
 
-COC "ImperialDungeon05" and look for `Dungeons\Caves\Traps\CTrapLog01.NIF`.  Found it - it turns out that CollisoinType_World had to be added in th flags otherwise the collision shapes don't collide with the floor and sink through.
+COC "ImperialDungeon05" and look for `Dungeons\Caves\Traps\CTrapLog01.NIF`.  Found it - it turns out that `CollisoinType_World` had to be added in th flags otherwise the collision shapes don't collide with the floor and sink through.
 
 ```cpp
 if (!raycasting)
@@ -1706,7 +1706,7 @@ if (!raycasting)
 
 **The activator is not working, however.**  Activation results in some weird rotation of the logs.
 
-**Also, there a strange piece of code:**
+**Also, there is this strange piece of code:**
 
 ```cpp
 // FIXME
@@ -3029,7 +3029,7 @@ The places where we add LOD objects are shown below.  But `MWWorld::Scene` does 
   method                            | LOD
   ----------------------------------|------------------------
   `Scene::changeToWorldCell()`      | landscape low-poly mesh
-  `Scene::updateWorldCellsOnGrid()` | visibly distant
+  `Scene::updateWorldCellsAtGrid()` | visibly distant
 
 
         MWWorld::    MWRender::          MWClass::       MWRender::  MWRender::       Static
@@ -3052,9 +3052,139 @@ There are a couple of impementation possibilities:
   * Option 1: Insert dummy `NiNode`, etc.  This will require quite a lot of work - there are no default constructors for `NiNode`, `NiAVObject`, `NiObjectNET`, `NiObject`, `NiTexturingProperty`, `NiSourceTexture`, etc.
   * Option 2: Modify the mesh building code and add a specil create method in `NiModelManager`.  This might be even more work and most likely to be more complicated.
 
+## When do we render the mesh
+
+    |                              |                              |
+    | (-32,32)                     | (0,32)                       | (32,32)
+    +------------------------------+------------------------------+--------
+    |                              |                              |
+    |                              |                              |
+    |                              |                              |
+    |                              |       ^                      |
+    |                              |       |                      |
+    |               x            +-------+ |       x              |
+    |                            | |     | |                      |
+    |                            | | @1  |                        |
+    |                            | |     |                        |
+    |                            +-------+                        |
+    |                              |                              |
+    | (-32,0)                      | (0,0)                        | (32,0)
+    +------------------------------+------------------------------+--------
+    |                              |                              |
+    |                   (-14,-6)   |                              |
+    |                  +           |                    +-------+ |
+    |                              |                    |       | |
+    |                              |                    |   @2  | |
+    |               x              |               x    |       | |
+    |                              |                    +-------+ |
+    |                              |                              |
+    |                              |                              |
+    |                              |                              |
+    |                              |                              |
+    | (-32,-32)                    | (0,-32)                      | (32,-32)
+    +------------------------------+------------------------------+--------
+
+There are 36 files for Tamriel.  The pair of numbers represent the bottom left corner grid of the block.  i.e. `<formid in dec>.<x bottom left><y bottom left><width/height of the square block>.nif`
+
+    (-96, 64) (-64, 64) (-32, 64) (00, 64) (32, 64) (64, 64)
+    (-96, 32) (-64, 32) (-32, 32) (00, 32) (32, 32) (64, 32)
+    (-96, 00) (-64, 00) (-32, 00) (00, 00) (32, 00) (64, 00)
+    (-96,-32) (-64,-32) (-32,-32) (00,-32) (32,-32) (64,-32)
+    (-96,-64) (-64,-64) (-32,-64) (00,-64) (32,-64) (64,-64)
+    (-96,-96) (-64,-96) (-32,-96) (00,-96) (32,-96) (64,-96)
+
+In the game file, the bottom left cell is (-64,-40) and the top right cell is (59,69).  These don't have any CELL data.  The bottom left cell with any data is (-59,-28) and top right (69,47) - even these are LOD regions. (see the region map for 0x0000003C in OpenCS)  So the low-poly mesh extends far beyond the boundary of the cells the player character can go.
+
+Looking at the diagram, the character `@1` will see all 4 blocks (-32,0), (0,0), (-32,-32) and (0,-32).  As the character travels up past the mid-points (marked by 'x'), the blocks (-32,-32) and (0,-32) will no longer be rendered and new blocks (-32,32) and (0,32) will be rendered instead.
+
+Alternatively, if we find the overhead of having the LOD meshes is a problem, we can wait till the character gets closer to the edge.  However, in a pathological case, e.g. at (0,0), there will be 4 blocks being rendered.  So we may as well get used to rendering 4 at a time at all times.
+
+## Algorithm
+
+If the mid-point of the LOD landscape block is less than or equal to the size of the block distance to the player character's cell, then render the block.
+
+i.e.
+
+Subtract `block size / 2` from the current (x,y) - in the diagram above roughly (2,10) - (16,16) = (-14,-6)
+The capture area then is:
+
+    trigger point | add block distance | divide by block size
+    --------------|------------------------------------------
+    x left        |  -14 + -32 = -36   | -46/32 = -1 + -14/32
+    x right       |  -14 +  32 =  18   |  18/32 =  0 +  18/32
+    y bottom      |   -6 + -32 = -38   | -38/32 = -1 +  -6/32
+    y top         |   -6 +  32 =  26   |  26/32 =  0 +  26/32
+
+So 4 combinations (-1,-1), (-1,0), (0,0), (0,-1) in blocks, or multiply by 32 to get cell grid numbers.
+
+```cpp
+xLeft  = int((x - 16 - 32) / 32) * 32; // = int((x - 48) / 32) * 32
+xRight = int((x - 16 + 32) / 32) * 32; // = int((x + 16) / 32) * 32
+```
+
+### Hysteresis
+
+For loading cells, visibly distant objects and LOD landscape, hysteresis should be introduced to stop constant loading/unloading at specific points in the map.  i.e. loading and unloading occurs at different points
+
+In order to avoid keeping an unreasonable number of blocks around (again, in pathological cases), we can make the unloading happen *before* loading. i.e. (2,10) - (14,14) = (-12,-4)  As the player character goes up the map, the player will reach ((2,15).  At that point y bottom for unloading will be (15 -14 -32)/32 = 0 -31/32.
+
+Testing for (0,0), unloading:
+
+    trigger point | add block distance | divide by block size
+    --------------|------------------------------------------
+    x left        |  -14 + -32 = -36   | -46/32 = -1 + -14/32
+    x right       |  -14 +  32 =  18   |  18/32 =  0 +  18/32
+    y bottom      |  -14 + -32 = -36   | -46/32 = -1 + -14/32
+    y top         |  -14 +  32 =  18   |  18/32 =  0 +  18/32
+
+Which results in the same set of blocks for loading.  i.e. unloading before loading may not work?
+
+    |                              |                              |
+    | (-32,32)                     | (0,32)                       | (32,32)
+    +------------------------------+------------------------------+--------
+    |                              |                              |
+    |                              |                              |
+    |                              |                              |
+    |           +--------------------------------------+          |
+    |           |////////////////+-------+/////////////|          |
+    |           |///x////////////| |     |/////////x///|          |
+    |           |//////+---------| | @1  |-----+///////|          |
+    |           |//////|         | |     |     |///////|          |
+    |           |//////|      ^  +-------+     |///////|          |
+    |           |//////|      |    |           |///////|          |
+    |           |//////|      |    |           |///////|          |
+    | (-32,0)   |//////|           | (0,0)     |///////|          | (32,0)
+    +-----------|//////|-----------+-----------|///////|----------+--------
+    |           |//////|           |           |///////|          |
+    |           |//////|           |           |///////|          |
+    |           |//////|           |           |///////|          |
+    |           |//////|           |           |///////|          |
+    |           |//////+-----------------------+///////|          |
+    |           |///x//////////////////////////////x///|          |
+    |           |//////////////////////////////////////|          |
+    |           +--------------------------------------+          |
+    |                              |                              |
+    |                              |                              |
+    |                              |                              |
+    | (-32,-32)                    | (0,-32)                      | (32,-32)
+    +------------------------------+------------------------------+--------
+
+Here the character is travelling up.  If we implemented unload before load, then the blocks (-32,-32) and (0,-32) would be unloaded at this point but the blocks (-32,32) and (0,32) are not yet loaded.  So it seems like it will work?
+
+Testing for (2,15), unloading:
+
+    trigger point | add block distance | divide by block size
+    --------------|------------------------------------------
+    x left        |  -12 + -32 = -44   | -44/32 = -1 + -12/32
+    x right       |  -12 +  32 =  20   |  20/32 =  0 +  20/32
+    y bottom      |    1 + -32 = -31   | -31/32 =  0 + -31/32
+    y top         |    1 +  32 =  33   |  33/32 =  1 +   1/32
+
+Not quite right, we lose the bottom two blocks but gain two from the top?  Maybe use this to unload from the list of currently loaded blocks?  This way while the character is inside the coloured section only 1 - 2 blocks are loaded. **NOTE: that the diagram assumes the loading point was also changed, say (x,y) - (18,18)**
+
 ## Bugs 1
 
-**FIXME:** `NiTexturingPropery` has below code which is hiding a problem in `ForeignNpcAnimation::createMorphedObject()` where the proper texture was not being passed.
+**FIXME:** `NiTexturingPropery` has below test code which is hiding a problem in `ForeignNpcAnimation::createMorphedObject()` where the proper texture was not being passed.
 
 ```
 // FIXME: testing
@@ -3064,7 +3194,7 @@ if (material.texName[iter->first].find("EarsHuman") != std::string::npos)
 
 ## Bugs 2
 
-Need to look into `TES4BSAFile::getFile()` where it is extremely slow in reading one of the archives.
+Need to look into `TES4BSAFile::getFile()` where it is extremely slow in reading one of the archives (Shivering Isles - Meshes)
 
 
 [//]: # (/* spell spelllang=en_au syntax=cpp */)

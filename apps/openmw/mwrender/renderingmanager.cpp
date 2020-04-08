@@ -301,9 +301,9 @@ void RenderingManager::rotateObject(const MWWorld::Ptr &ptr)
     ptr.getRefData().getBaseNode()->setOrientation(newo);
 }
 
-void RenderingManager::addLandscape(const std::string& model)
+void RenderingManager::addLandscape(ESM4::FormId id, int x, int y, const std::string& model)
 {
-    mObjects->insertLandscapeModel(model);
+    mObjects->insertLandscapeModel(id, x, y, model);
 }
 
 void

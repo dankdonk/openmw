@@ -6,6 +6,8 @@
 
 #include <openengine/ogre/renderer.hpp>
 
+#include <extern/esm4/formid.hpp>
+
 namespace Ogre
 {
     class SceneNode;
@@ -34,11 +36,13 @@ class Objects{
     std::map<MWWorld::CellStore*,Ogre::SceneNode*> mCellSceneNodes;
     std::map<MWWorld::CellStore*,Ogre::StaticGeometry*> mStaticGeometry;
     std::map<MWWorld::CellStore*,Ogre::StaticGeometry*> mStaticGeometrySmall;
+    std::map<ESM4::FormId, std::map<std::pair<int, int>, Ogre::StaticGeometry*> > mStaticGeometryLandscape;
     std::map<MWWorld::CellStore*,Ogre::AxisAlignedBox> mBounds;
     PtrAnimationMap mObjects;
 
     Ogre::SceneNode* mRootNode;
-    NiBtOgre::BtOgreInst *mLandscape; // FIXME: temp testing
+    //std::map<ESM4::FormId, std::map<std::pair<int, int>, NiBtOgre::BtOgreInst *> > mLandscapes;
+    std::vector<NiBtOgre::BtOgreInst*> mLandscapes; // FIXME: temp testing
 
     static int uniqueID;
 
@@ -49,13 +53,13 @@ class Objects{
 public:
     Objects(OEngine::Render::OgreRenderer &renderer)
         : mRenderer(renderer)
-        , mRootNode(NULL), mLandscape(nullptr)
+        , mRootNode(NULL)
     {}
-    ~Objects(){ if (mLandscape) delete mLandscape; }
+    ~Objects();
     //void insertModel(const MWWorld::Ptr& ptr, const std::string &model, bool batch=false);
     const std::map<std::int32_t, Ogre::SceneNode*> *insertModel(const MWWorld::Ptr& ptr, const std::string &model, bool batch=false);
-    void insertLandscapeModel(const std::string &mesh);
-    void deleteLandscapeModel(const std::string &mesh);
+    void insertLandscapeModel(ESM4::FormId worldId, int x, int y, const std::string &mesh);
+    void deleteLandscapeModel(ESM4::FormId worldId, int x, int y, const std::string &mesh);
 
     void insertLight(const MWWorld::Ptr& ptr);
 

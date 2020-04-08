@@ -125,7 +125,8 @@ public:
     /// Updates an object's rotation
     void rotateObject (const MWWorld::Ptr& ptr);
 
-    void addLandscape(const std::string& model);
+    void addLandscape(ESM4::FormId worldId, int x, int y, const std::string& model);
+    void removeLandscape(ESM4::FormId worldId, int x, int y, const std::string& model);
 
     void setWaterHeight(float height);
     void setWaterEnabled(bool enabled);

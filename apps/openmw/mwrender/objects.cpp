@@ -6,6 +6,7 @@
 #include <OgreSceneNode.h>
 #include <OgreSceneManager.h>
 #include <OgreEntity.h>
+#include <OgreNode.h>
 #include <OgreLight.h>
 #include <OgreSubEntity.h>
 #include <OgreParticleSystem.h>
@@ -33,6 +34,15 @@
 using namespace MWRender;
 
 int Objects::uniqueID = 0;
+
+Objects::~Objects()
+{
+    // FIXME: delete landscape
+    for (std::size_t i = 0; i < mLandscapes.size(); ++i)
+    {
+        delete mLandscapes[i];
+    }
+}
 
 void Objects::setRootNode(Ogre::SceneNode* root)
 {
@@ -192,7 +202,7 @@ const std::map<std::int32_t, Ogre::SceneNode*> *Objects::insertModel(const MWWor
         return nullptr;
 }
 
-void Objects::insertLandscapeModel(/*ESM4::FormId worldId, int x, int y,*/ const std::string &mesh)
+void Objects::insertLandscapeModel(ESM4::FormId worldId, int x, int y, const std::string &mesh)
 {
     // FIXME: need something similar to mObjects to keep track of SceneNodes, etc
     Ogre::SceneNode* root = mRootNode;
@@ -211,15 +221,35 @@ void Objects::insertLandscapeModel(/*ESM4::FormId worldId, int x, int y,*/ const
         //landscape = modelManager.createLandscapeModel(mesh, "General");
 
     // Ogre::SceneManager needed to destroy created Ogre::Entity
-    //NifOgre::ObjectScenePtr scene
-        //= NifOgre::ObjectScenePtr (new NifOgre::ObjectScene(insert->getCreator()));
-    if (!mLandscape)
-        mLandscape = new NiBtOgre::BtOgreInst(landscape, insert->createChildSceneNode()); // great grandchild for sub-object
-    mLandscape->instantiate(); //need a special version?
-    std::map<int32_t, Ogre::Entity*>::const_iterator it(mLandscape->mEntities.begin());
-    for (; it != mLandscape->mEntities.end(); ++it)
+    //if (!mLandscape)
+        mLandscapes.push_back(new NiBtOgre::BtOgreInst(landscape, insert->createChildSceneNode())); // great grandchild for sub-object
+    mLandscapes.back()->instantiate();
+    std::map<int32_t, Ogre::Entity*>::iterator it(mLandscapes.back()->mEntities.begin());
+    for (; it != mLandscapes.back()->mEntities.end(); ++it)
     {
+#if 0
         insert->attachObject(it->second);
+#else
+        uniqueID = uniqueID+1;
+        Ogre::StaticGeometry *sg = mRenderer.getScene()->createStaticGeometry("sg" + Ogre::StringConverter::toString(uniqueID));
+        sg->setOrigin(Ogre::Vector3::ZERO);
+        std::map<std::pair<int, int>, Ogre::StaticGeometry*> lodMap;
+        lodMap[std::pair<int,int>(x,y)] = sg;
+        mStaticGeometryLandscape[worldId] = lodMap;
+
+        sg->setRegionDimensions(Ogre::Vector3(2048,2048,2048));
+        sg->setVisibilityFlags(RV_Statics);
+        sg->setCastShadows(true);
+        sg->setRenderQueueGroup(RQG_Main);
+
+        Ogre::Node *node = (it->second)->getParentNode();
+        //if ((it->second)->isVisible())
+            //sg->addEntity(it->second, node->_getDerivedPosition(), node->_getDerivedOrientation(), node->_getDerivedScale());
+            sg->addEntity(it->second, Ogre::Vector3::ZERO);
+        sg->build();
+
+        //insert->getCreator()->destroyEntity(it->second);
+#endif
     }
 
     // add to Ogre::StaticGeometry here
@@ -227,7 +257,7 @@ void Objects::insertLandscapeModel(/*ESM4::FormId worldId, int x, int y,*/ const
 
 // IDEA: put world in a FIFO and keep the last one (so that if one pops into a store to offload
 // some loot and come back out we don't have to reload all the landscape for that world)
-void Objects::deleteLandscapeModel(/*ESM4::FormId worldId, int x, int y,*/ const std::string &mesh)
+void Objects::deleteLandscapeModel(ESM4::FormId worldId, int x, int y, const std::string &mesh)
 {
     // FIXME: need something other than mesh name?
 }

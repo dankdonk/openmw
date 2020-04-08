@@ -66,7 +66,7 @@ namespace MWWorld
             void changeCellGrid (int X, int Y);
 
             // returns the current CellStore for grid x, y
-            CellStore *updateWorldCellsOnGrid (ESM4::FormId worldId, int x, int y);
+            CellStore *updateWorldCellsAtGrid (ESM4::FormId worldId, int x, int y);
 
             void getGridCenter(int& cellX, int& cellY);
 

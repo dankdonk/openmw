@@ -319,6 +319,8 @@ namespace MWWorld
             return;
         }
 
+        // FIXME: some detailed terrain without physics for LOD should be loaded
+
         // Load terrain physics first...
         if (cell->getCell()->isExterior())
         {
@@ -427,7 +429,7 @@ namespace MWWorld
                 ESM4::FormId worldId
                     = static_cast<const MWWorld::ForeignCell*>(mCurrentCell->getCell())->mCell->mParent;
 
-                updateWorldCellsOnGrid(worldId, newX, newY);
+                updateWorldCellsAtGrid(worldId, newX, newY);
                 mRendering.updateTerrain();
             }
         }
@@ -570,7 +572,7 @@ namespace MWWorld
 
     // loads cells and associated references to mActiveCells as required, based on exterior
     // grid size and player position (cellstore contains cell pointer and refs)
-    CellStore *Scene::updateWorldCellsOnGrid (ESM4::FormId worldId, int X, int Y)
+    CellStore *Scene::updateWorldCellsAtGrid (ESM4::FormId worldId, int X, int Y)
     {
         Loading::Listener* loadingListener = MWBase::Environment::get().getWindowManager()->getLoadingScreen();
         Loading::ScopedLoad load(loadingListener);
@@ -971,10 +973,62 @@ namespace MWWorld
         // in extreme case right at the corner?  do we then load 4?
         //
         // maybe keep loading at half way point, e.g. -48, -16, 16, 48
-        mRendering.addLandscape("meshes\\landscape\\lod\\60.00.00.32.nif"); // FIXME: just for testing
+        //
+        // Looks like it's <formid dec>.<x bottom left><y bottom left><size>.nif
+        //
+        //0,0 : 32,0 : 0,32 : 32,32
+        //mRendering.addLandscape(worldId, x, y, "meshes\\landscape\\lod\\60.00.00.32.nif");
+        // 0,32: 32,32: 0,59: 32,59
+        //mRendering.addLandscape(worldId, x, y, "meshes\\landscape\\lod\\60.00.32.32.nif");
+        // -64,32 : -64:59 : -32:32 : -32,59
+        //mRendering.addLandscape(worldId, x, y, "meshes\\landscape\\lod\\60.-64.32.32.nif");
+
+        int xLeft   = int((x - 16 - 32) / 32) * 32; // = int((x - 48) / 32) * 32
+        int xRight  = int((x - 16 + 32) / 32) * 32; // = int((x + 16) / 32) * 32
+        int yBottom = int((y - 16 - 32) / 32) * 32; // = int((y - 48) / 32) * 32
+        int yTop    = int((y - 16 + 32) / 32) * 32; // = int((y + 16) / 32) * 32
+
+        //std::stringstream ss;
+        //ss << std::setw(2) << std::setfill('0') << i;
+        //std::string mesh = ss.str();
+        std::vector<std::string> lodFiles;
+        std::string mesh = "meshes\\landscape\\lod\\"+std::to_string(worldId)
+                            +"."+((xLeft==0)? "0":"")+std::to_string(xLeft)+"."+((yBottom==0)? "0":"")+std::to_string(yBottom)+".32.nif";
+        std::cout << mesh << std::endl;
+        if (Ogre::ResourceGroupManager::getSingleton().resourceExistsInAnyGroup(mesh))
+        {
+            lodFiles.push_back(mesh);
+            mRendering.addLandscape(worldId, x, y, lodFiles.back());
+        }
+
+        mesh = "meshes\\landscape\\lod\\"+std::to_string(worldId)
+                            +"."+((xLeft==0)? "0":"")+std::to_string(xLeft)+"."+((yTop==0)? "0":"")+std::to_string(yTop)+".32.nif";
+        std::cout << mesh << std::endl;
+        if (Ogre::ResourceGroupManager::getSingleton().resourceExistsInAnyGroup(mesh))
+        {
+            lodFiles.push_back(mesh);
+            mRendering.addLandscape(worldId, x, y, lodFiles.back());
+        }
+
+        mesh = "meshes\\landscape\\lod\\"+std::to_string(worldId)
+                            +"."+((xRight==0)? "0":"")+std::to_string(xRight)+"."+((yBottom==0)? "0":"")+std::to_string(yBottom)+".32.nif";
+        std::cout << mesh << std::endl;
+        if (Ogre::ResourceGroupManager::getSingleton().resourceExistsInAnyGroup(mesh))
+        {
+            lodFiles.push_back(mesh);
+            mRendering.addLandscape(worldId, x, y, lodFiles.back());
+        }
+        mesh = "meshes\\landscape\\lod\\"+std::to_string(worldId)
+                            +"."+((xRight==0)? "0":"")+std::to_string(xRight)+"."+((yTop==0)? "0":"")+std::to_string(yTop)+".32.nif";
+        std::cout << mesh << std::endl;
+        if (Ogre::ResourceGroupManager::getSingleton().resourceExistsInAnyGroup(mesh))
+        {
+            lodFiles.push_back(mesh);
+            mRendering.addLandscape(worldId, x, y, lodFiles.back());
+        }
 
         // objects
-        CellStore *current = updateWorldCellsOnGrid(worldId, x, y);
+        CellStore *current = updateWorldCellsAtGrid(worldId, x, y);
         if (!current)
             return; // FIXME
 

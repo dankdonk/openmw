@@ -57,7 +57,7 @@
 
 NiBtOgre::NiGeometry::NiGeometry(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiAVObject(index, stream, model, data), mHasShader(false), mDirtyFlag(false)
-    , mParent(data.getNiNodeParent((NiAVObjectRef)NiObject::mSelfRef))
+    , mParent(nullptr)
 {
 #if 0
     // Some NiTriShapes are "Shadow", possibly simplified mesh for animated (i.e. non-static)
@@ -111,7 +111,7 @@ NiBtOgre::NiGeometry::NiGeometry(uint32_t index, NiStream *stream, const NiModel
     }
 
     // special case for landscape LOD mesh
-    if (!mParent && NiObject::selfRef() == 0)
+    if (NiObject::selfRef() == 0)
     {
         if (mNameIndex == -1)
             mNameIndex = const_cast<NiModel&>(model).addString("NiGeom"+std::to_string(index)); // const hack
@@ -125,6 +125,9 @@ NiBtOgre::NiGeometry::NiGeometry(uint32_t index, NiStream *stream, const NiModel
             mProperty.push_back(prop->selfRef());
         }
     }
+
+    if (!mParent)
+        mParent = data.getNiNodeParent((NiAVObjectRef)NiObject::mSelfRef);
 }
 
 NiBtOgre::NiTriBasedGeom::NiTriBasedGeom(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
