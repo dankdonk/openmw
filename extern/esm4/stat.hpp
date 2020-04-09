@@ -37,8 +37,6 @@ namespace ESM4
     class Writer;
     typedef std::uint32_t FormId;
 
-    // Unlike TES3, multiple cells can have the same exterior co-ordinates.
-    // The cells need to be organised under world spaces.
     struct Static
     {
         FormId mFormId;       // from the header

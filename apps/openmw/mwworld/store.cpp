@@ -1414,12 +1414,14 @@ namespace MWWorld
                 std::cout << "Cell parent formid mismatch, " << std::hex << worldId
                           << " label " << groupLabel.value << std::endl;
 
+#if 0
             if (!world->setDummyCell(cell->mCell->mFormId))
             {
                 std::ostringstream msg;
                 msg << "CELL preload: existing dummy cell " << ESM4::formIdToString(cell->mCell->mFormId);
                 throw std::runtime_error(msg.str());
             }
+#endif
         }
         else if (groupType == ESM4::Grp_InteriorSubCell) // interior cell
         {
@@ -1459,7 +1461,7 @@ namespace MWWorld
 
     void Store<MWWorld::ForeignCell>::loadVisibleDist(ESMStore& store, ESM::ESMReader& esm, CellStore *cell)
     {
-        while(esm.hasMoreRecs()) // FIXME: need to stop after Grp_VisibleDistChild
+        while(esm.hasMoreRecs())
         {
             ESM4::Reader& reader = static_cast<ESM::ESM4Reader*>(&esm)->reader();
 
@@ -1470,6 +1472,37 @@ namespace MWWorld
             loadTes4Group(store, esm, cell);
             //listener->setProgress(static_cast<size_t>(esm.getFileOffset() / (float)esm.getFileSize() * 1000));
         }
+    }
+
+    void Store<MWWorld::ForeignCell>::loadDummy(ESMStore& store, ESM::ESMReader& esm, CellStore *cell)
+    {
+        if (cell->getState() != CellStore::State_Loaded)
+        {
+            while (esm.hasMoreRecs())
+            {
+                ESM4::Reader& reader = static_cast<ESM::ESM4Reader*>(&esm)->reader();
+
+                reader.checkGroupStatus();
+                if (reader.getContext().groupStack.back().first.type != ESM4::Grp_CellPersistentChild)
+                {
+                    // must have popped groupStack
+                    cell->setLoadedState();
+
+                    return;
+                }
+
+                reader.getRecordHeader();
+
+                cell->loadTes4Record(store, esm);
+                //loadTes4Group(store, esm, cell);
+                //listener->setProgress(static_cast<size_t>(esm.getFileOffset() / (float)esm.getFileSize() * 1000));
+            }
+
+            //cell->setLoadedState(); // should never get here
+            throw std::runtime_error ("Store<ForeignCell>::loadDummy: logic error");
+        }
+        else
+            std::cout << "attempt to load 2nd time" << std::endl;
     }
 
     // FIXME: this is the 3rd time the same code (almost) is being repeated, not even counting
@@ -1518,7 +1551,7 @@ namespace MWWorld
     void Store<MWWorld::ForeignCell>::updateRefrEstimate(ESM::ESMReader& esm)
     {
         ESM4::Reader& reader = static_cast<ESM::ESM4Reader*>(&esm)->reader();
-        const ESM4::GroupTypeHeader hdr = reader.hdr().group;
+        const ESM4::GroupTypeHeader grp = reader.grp();
 
         const ESM4::FormId currCell = reader.getContext().currCell;
         std::uint64_t modId(reader.getContext().modIndex);
@@ -1531,8 +1564,8 @@ namespace MWWorld
         MWWorld::ForeignCell *cell = it->second;
 
         static int magic = 100; // FIXME: just a guess
-        std::uint32_t estimate = hdr.groupSize / magic;
-        cell->setRefrEstimate(hdr.type, estimate);
+        std::uint32_t estimate = grp.groupSize / magic;
+        cell->setRefrEstimate(grp.type, estimate);
     }
 
     // FIXME: this is rather inefficient
@@ -1551,7 +1584,7 @@ namespace MWWorld
 
         MWWorld::ForeignCell* cell = it->second;
 
-        cell->incrementRefrCount(reader.hdr().group.type);
+        cell->incrementRefrCount(reader.grp().type);
     }
 
     // FIXME: Is there a more efficient way than calling Store<ForeignWorld>::find() each time?

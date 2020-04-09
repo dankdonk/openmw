@@ -46,6 +46,7 @@ namespace MWWorld
             std::map<ESM4::FormId, CellStore> mForeignDummys;      // key is ForeignWorld FormId
             // FIXME: probably need to be for each cell rather than each world
             std::map<ESM4::FormId, CellStore> mForeignVisibleDist; // key is ForeignWorld FormId
+            std::map<std::string, std::vector<std::pair<std::int16_t, std::int16_t> > > mVisibleDistStatics;
             void initNewWorld(const ForeignWorld *world);
 
             std::vector<std::pair<std::string, CellStore *> > mIdCache;

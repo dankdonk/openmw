@@ -363,7 +363,7 @@ Ogre::DataStreamPtr TES4BSAFile::getFile(const std::string& file)
 
         return streamPtr;
     }
-    else // not compressed TODO: not tested
+    else // not compressed e.g. font files
     {
         Ogre::MemoryDataStream *outBuf = new Ogre::MemoryDataStream(fileRec.size);
         Ogre::SharedPtr<Ogre::DataStream> streamPtr(outBuf);

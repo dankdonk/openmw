@@ -2684,12 +2684,10 @@ namespace MWWorld
         return false;
     }
 
+    // currently only used by MWScript::Cell::opCOC()
+    // NOTE: since CellRef ctor no longer populates mDestCell, getDestCell() will always return ""
     bool World::findForeignInteriorPosition(const std::string &name, ESM::Position &pos)
     {
-#if 0
-        pos.rot[0] = pos.rot[1] = pos.rot[2] = 0;
-        return true;
-#else
         typedef MWWorld::CellRefList<ESM4::Door>::List DoorList;
         typedef MWWorld::CellRefList<ESM4::Static>::List StaticList;
 
@@ -2697,7 +2695,6 @@ namespace MWWorld
         pos.pos[0] = pos.pos[1] = pos.pos[2] = 0;
 
         MWWorld::CellStore *cellStore = getForeignInterior(name);
-
         if (!cellStore)
             return false;
 
@@ -2708,59 +2705,107 @@ namespace MWWorld
             if (iter->mBase->mEditorId == "MarkerTeleport")
             {
                 pos = iter->mRef.getPosition(); // FIXME find the closest one instead?
+                std::cout << "MarkerTeleport" << std::endl; // FIXME: does this ever occur?
+
                 return true;
             }
         }
 
+        // try to find the door that connects to an external cell
+        const MWWorld::ESMStore& store = MWBase::Environment::get().getWorld()->getStore();
         const DoorList &doors = cellStore->getReadOnly<ESM4::Door>().mList;
         for (DoorList::const_iterator it = doors.begin(); it != doors.end(); ++it)
         {
-            if (!it->mRef.getTeleport()) // FIXME
+            if (!it->mRef.getTeleport())
+                continue; // some doors do not teleport (e.g. animated)
+
+            const ESM4::FormId cellId = store.getDoorCellId(it->mRef.getDestDoorId());
+            const MWWorld::ForeignCell *cell = store.get<MWWorld::ForeignCell>().find(cellId);
+            if (!cell || !cell->isExterior())
                 continue;
 
-            MWWorld::CellStore *source = 0;
+            // in TES4 all external cell doors are in the dummy cell
+            const ForeignWorld *world = store.get<ForeignWorld>().find(cell->mCell->mParent);
+            if (!world)
+                throw std::runtime_error ("findForeignInteriorPosition: cannot find external world");
 
-            // door to exterior
-            if (it->mRef.getDestCell().empty()) // FIXME
-            {
-                int x, y;
-                ESM::Position doorDest = it->mRef.getDoorDest(); // FIXME
-                positionToIndex(doorDest.pos[0], doorDest.pos[1], x, y);
-                //source = getWorldCell(xxx, x, y); // FIXME
-            }
-            else // door to interior
-            {
-                //source = getForeignInterior(it->mRef.getDestCell()); // FIXME
-            }
+            MWWorld::CellStore *dummy = world->getDummyCell();
+            if (!dummy)
+                throw std::runtime_error ("findForeignInteriorPosition: world does not have a dummy cell");
 
-            if (source)
+            // find a door leading to our current cell and use its destination as the position
+            const DoorList &doors = dummy->getReadOnly<ESM4::Door>().mList;
+            for (DoorList::const_reverse_iterator jt = doors.rbegin(); jt != doors.rend(); ++jt)
             {
-                // Find door leading to our current teleport door
-                // and use it destination to position inside cell.
-                const DoorList &doors = source->get<ESM4::Door>().mList;
-                for (DoorList::const_iterator jt = doors.begin(); jt != doors.end(); ++jt)
+                if (!it->mRef.getTeleport())
+                    continue;
+
+                const ESM4::FormId cellId = store.getDoorCellId(jt->mRef.getDestDoorId());
+                const MWWorld::ForeignCell *cell = store.get<MWWorld::ForeignCell>().find(cellId);
+                if (!cell)
+                    continue;
+
+                if (Misc::StringUtils::ciEqual(name, cell->mCell->mEditorId))
                 {
-                    if (it->mRef.getTeleport() && // FIXME
-                        Misc::StringUtils::ciEqual(name, jt->mRef.getDestCell())) // FIXME
-                    {
-                        /// \note Using _any_ door pointed to the interior,
-                        /// not the one pointed to current door.
-                        pos = jt->mRef.getDoorDest(); // FIXME
-                        return true;
-                    }
+                    /// \note Using _any_ door pointed to this interior,
+                    /// not necessarily the one pointed to current door.
+                    // e.g. WellspringCave has two entries from Tamriel
+                    pos = jt->mRef.getDoorDest();
+
+                    return true;
                 }
             }
         }
-        // Fall back to the first static location.
-        //const StaticList &statics = cellStore->get<ESM4::Static>().mList;
+
+        // must be from another internal cell, see if there is a matching name
+        for (DoorList::const_iterator it = doors.begin(); it != doors.end(); ++it)
+        {
+            if (!it->mRef.getTeleport())
+                continue; // some doors do not teleport (e.g. animated)
+
+            const ESM4::FormId cellId = store.getDoorCellId(it->mRef.getDestDoorId());
+            const MWWorld::ForeignCell *cell = store.get<MWWorld::ForeignCell>().find(cellId);
+            if (!cell || cell->isExterior())
+                continue;
+
+            std::size_t length = cell->mCell->mEditorId.size();
+            if (!Misc::StringUtils::ciEqual(name.substr(0, length), cell->mCell->mEditorId))
+                continue;
+
+            // find a door leading to our current cell and use its destination as the position
+            MWWorld::CellStore *source = getForeignInterior(cell->mCell->mEditorId);
+            const DoorList &doors = source->getReadOnly<ESM4::Door>().mList;
+            for (DoorList::const_iterator jt = doors.begin(); jt != doors.end(); ++jt)
+            {
+                if (!it->mRef.getTeleport())
+                    continue;
+
+                const ESM4::FormId cellId = store.getDoorCellId(jt->mRef.getDestDoorId());
+                const MWWorld::ForeignCell *cell = store.get<MWWorld::ForeignCell>().find(cellId);
+                if (!cell)
+                    continue;
+
+                if (Misc::StringUtils::ciEqual(name, cell->mCell->mEditorId))
+                {
+                    /// \note Using _any_ door pointed to this interior,
+                    /// not necessarily the one pointed to current door.
+                    pos = jt->mRef.getDoorDest();
+
+                    return true;
+                }
+            }
+        }
+
+        // can't find a door from an external cell or from a related internal cell;
+        // fallback to the first static location
         if ( statics.begin() != statics.end() )
         {
-            pos = statics.begin()->mRef.getPosition(); // FIXME
+            pos = statics.begin()->mRef.getPosition();
+
             return true;
         }
 
         return false;
-#endif
     }
 
     bool World::findExteriorPosition(const std::string &name, ESM::Position &pos)

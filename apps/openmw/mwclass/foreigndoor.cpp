@@ -190,9 +190,9 @@ namespace MWClass
             {
                 //std::cout << "open door" << std::endl;
                 const MWWorld::ESMStore& store = MWBase::Environment::get().getWorld()->getStore();
-                const ESM4::FormId cellId = store.getDoorCell(ptr.getCellRef().getDestDoor());
+                const ESM4::FormId cellId = store.getDoorCellId(ptr.getCellRef().getDestDoorId());
                 const MWWorld::ForeignCell *cell = store.get<MWWorld::ForeignCell>().find(cellId);
-                // FIXME check cell is not null
+
                 boost::shared_ptr<MWWorld::Action> action(new MWWorld::ActionTeleportForeign(
                             cell->mCell->mEditorId,
                             cellId,
@@ -295,6 +295,8 @@ namespace MWClass
         const MWWorld::ESMStore& store = MWBase::Environment::get().getWorld()->getStore();
 
         std::string dest;
+// since we load the persistent REFR in ESMStore getDestCell will always be ""
+#if 0
         if (door.mRef.getDestCell() != "")
         {
             // door leads to an interior, use interior name as tooltip
@@ -302,17 +304,27 @@ namespace MWClass
             dest = door.mRef.getDestCell();
         }
         else
+#endif
         {
-            // use world name if exists
-            const ESM4::FormId cellId = store.getDoorCell(door.mRef.getDestDoor());
+            const ESM4::FormId cellId = store.getDoorCellId(door.mRef.getDestDoorId());
             const MWWorld::ForeignCell *cell = store.get<MWWorld::ForeignCell>().find(cellId);
 
             if (cell)
             {
-                ESM4::FormId worldId = cell->mCell->mParent;
-                const MWWorld::ForeignWorld * world = store.get<MWWorld::ForeignWorld>().find(worldId);
-                if (!world->mFullName.empty())
-                    dest = world->mFullName;
+                if (!cell->mCell->mFullName.empty())
+                    dest = cell->mCell->mFullName; // use full name if possible
+                else if (!cell->mCell->mEditorId.empty())
+                    dest = cell->mCell->mEditorId; // fallback to EditorId
+                else
+                {
+                    // use world name if exists (should it be region?)
+                    ESM4::FormId worldId = cell->mCell->mParent;
+                    const MWWorld::ForeignWorld * world = store.get<MWWorld::ForeignWorld>().find(worldId);
+                    if (!world->mFullName.empty())
+                        dest = world->mFullName;
+                    else if (!world->mEditorId.empty())
+                        dest = world->mEditorId;
+                }
             }
         }
 

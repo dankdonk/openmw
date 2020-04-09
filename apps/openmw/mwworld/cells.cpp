@@ -21,6 +21,9 @@
 #include "containerstore.hpp"
 #include "cellstore.hpp"
 
+#undef LANDSCAPE_LOD_TEST
+#undef DISTANT_LOD_TEST
+
 MWWorld::CellStore *MWWorld::Cells::getCellStore (const ESM::Cell *cell)
 {
     if (cell->mData.mFlags & ESM::Cell::Interior)
@@ -220,6 +223,7 @@ void MWWorld::Cells::initNewWorld(const ForeignWorld *world)
 
     for (std::size_t i = 0; i < locations.size(); ++i)
     {
+#ifdef LANDSCAPE_LOD_TEST
         std::string worldIdDecimal = std::to_string(unsigned int(world->mFormId));
 
         const Ogre::StringVectorPtr res
@@ -247,25 +251,55 @@ void MWWorld::Cells::initNewWorld(const ForeignWorld *world)
                           << lod[1] << "," << lod[2] << "," << lod[3] << std::endl;
             }
         }
-
+#endif // LANDSCAPE_LOD_TEST
+        // FIXME: this initialises *all* worlds, not just the parameter 'world'
         const Ogre::StringVectorPtr res2
             //= groupMgr.findResourceNames(locations[i], "distantlod\\"+world->mEditorId+"*");
             = groupMgr.findResourceNames(locations[i], "distantlod\\*");
         Ogre::StringVector::const_iterator it2 = res2->begin();
         for (; it2 != res2->end(); ++it2)
         {
-            if ((*it2).find(".cmp") != std::string::npos)
+            std::size_t pos = (*it2).find(".cmp");
+            if (pos != std::string::npos)
             {
-                std::cout << locations[i] << " " << *it2 << std::endl;
+                std::string worldEditorId = (*it2).substr(11, pos-11); // 11 for 'distantlod\'
+
+                //std::cout << locations[i] << " " << *it2 << std::endl;
 
                 Ogre::DataStreamPtr file = groupMgr.openResource(*it2, locations[i]);
 
-                while (!file->eof())
+                std::map<std::string, std::vector<std::pair<std::int16_t, std::int16_t> > >::iterator lb
+                    = mVisibleDistStatics.lower_bound(worldEditorId);
+
+                if (lb != mVisibleDistStatics.end() && !(mVisibleDistStatics.key_comp()(worldEditorId, lb->first)))
                 {
-                    std::int16_t x, y;
-                    file->read(&y, sizeof(y)); // NOTE: that y comes before x
-                    file->read(&x, sizeof(x));
-                    std::cout << "(" << x << "," << y << ")" << std::endl;
+#if 0
+                    while (!file->eof())
+                    {
+                        std::int16_t x, y;
+                        file->read(&y, sizeof(y)); // NOTE: that y comes before x
+                        file->read(&x, sizeof(x));
+                        lb->second.push_back(std::pair<std::int16_t, std::int16_t>(x, y));
+                        //std::cout << "(" << x << "," << y << ")" << std::endl;
+                    }
+#else
+                    //throw std::runtime_error ("initNewWorld repeat");  // FIXME: redesign so that it doesn't get called many times
+#endif
+                }
+                else // world EditorId not found, create an entry
+                {
+                    std::vector<std::pair<std::int16_t, std::int16_t> > grid;
+                    while (!file->eof())
+                    {
+                        std::int16_t x, y;
+                        file->read(&y, sizeof(y)); // NOTE: that y comes before x
+                        file->read(&x, sizeof(x));
+                        grid.push_back(std::pair<std::int16_t, std::int16_t>(x, y));
+                        //std::cout << "(" << x << "," << y << ")" << std::endl;
+                    }
+                    // FIXME: either don't bother with the last entry or do something with it
+                    std::cout << worldEditorId << std::endl;
+                    mVisibleDistStatics.insert(lb, std::make_pair(worldEditorId, grid));
                 }
             }
             else
@@ -278,7 +312,7 @@ void MWWorld::Cells::initNewWorld(const ForeignWorld *world)
                 if (pos == std::string::npos)
                     continue; // it2
 
-                std::string editorId = (*it2).substr(11, pos-11); // 'distantlod\'
+                std::string editorId = (*it2).substr(11, pos-11); // 11 for 'distantlod\'
 
                 std::int32_t lod[2]; // lod[0] is x and lod[1] is y
                 //std::size_t next = 11+world->mEditorId.size()+1;
@@ -292,7 +326,7 @@ void MWWorld::Cells::initNewWorld(const ForeignWorld *world)
                     lod[j] = std::stoi((*it2).substr(next, pos-(next)), nullptr, 10);
                     next = pos+1;
                 }
-#if 0
+#ifdef DISTANT_LOD_TEST
                 struct Refr
                 {
                     ESM4::FormId baseObj;
@@ -335,13 +369,22 @@ void MWWorld::Cells::initNewWorld(const ForeignWorld *world)
                         file->read(&(r.scale), sizeof(float));
                     }
                 }
-                //std::cout << "lod " << *it2 << " " << numObj << std::endl;
-#endif
+                std::cout << "lod " << *it2 << " " << numObj << std::endl;
+#endif // DISTANT_LOD_TEST
             }
         }
     }
-//#endif
 
+    CellStore *dummyCell = const_cast<ForeignWorld*>(world)->getDummyCell();
+    if (dummyCell)
+    {
+        std::pair<std::map<ESM4::FormId, CellStore>::iterator, bool> res =
+            mForeignDummys.insert({ world->mFormId, *dummyCell });
+
+        //if (res.second)
+            //res.first->second.load(mStore, mReader);
+    }
+#if 0
     // sanity check: find the world for the given form i
     // check if a dummy cell exists
     // FIXME: this logic needs to change since a new world may be inserted from another
@@ -362,6 +405,7 @@ void MWWorld::Cells::initNewWorld(const ForeignWorld *world)
     ForeignWorld *wrld = mStore.get<ForeignWorld>().getWorld(world->mFormId); // get a non-const ptr
     if (!wrld)
         return; // FIXME: maybe exception?
+#endif
 #endif
     CellStore *distCell = world->getVisibleDistCell();
     if (distCell)

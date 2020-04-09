@@ -58,8 +58,6 @@ namespace ESM4
         std::uint32_t flags; // 0x01 no alarm (only in TES5)
     };
 
-    // Unlike TES3, multiple cells can have the same exterior co-ordinates.
-    // The cells need to be organised under world spaces.
     struct Reference
     {
         FormId mFormId;       // from the header

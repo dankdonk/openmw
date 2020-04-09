@@ -919,6 +919,29 @@ namespace MWWorld
                 record.load(reader);
                 //if (!record.mEditorId.empty())
                     //std::cout << "REFR: " << record.mEditorId << std::endl; // FIXME
+
+#if 0
+                if (reader.grp().type == ESM4::Grp_CellPersistentChild)
+                    //if (record.mIsMapMarker)
+                    std::cout << "Persistent REFR: " << record.mEditorId << " 0x"
+                        << ESM4::formIdToString(record.mFormId) << std::endl;
+#endif
+                const int cellSize = 4096;
+
+                int newX = static_cast<int>(std::floor(record.mPosition.pos.x / cellSize));
+                int newY = static_cast<int>(std::floor(record.mPosition.pos.y / cellSize));
+
+
+
+
+                // FIXME: for temp testing
+                //if (newX < (5-16) || newX > (5+16) || newY < (12-16) || newY > (12+16))
+                    //break;
+
+
+
+
+
                 if (record.mEsp.parent != 0)
                 {
                     int res = store.find(record.mEsp.parent);
@@ -980,19 +1003,30 @@ namespace MWWorld
                     case MKTAG('K','B','O','O'): mForeignBooks.load(record, deleted, store); break;
                     case MKTAG('T','C','L','O'): mForeignClothes.load(record, deleted, store); break;
                     case MKTAG('T','C','O','N'): mForeignContainers.load(record, deleted, store); break;
-                    case MKTAG('R','D','O','O'): mForeignDoors.load(record, deleted, store); break;
+                    case MKTAG('R','D','O','O'):
+                    {
+                        mForeignDoors.load(record, deleted, store);
+                        store.setDoorCell(record.mFormId, reader.currCell());
+                        break;
+                    }
                     case MKTAG('R','I','N','G'): mForeignIngredients.load(record, deleted, store); break;
                     case MKTAG('H','L','I','G'): mForeignLights.load(record, deleted, store); break;
                     case MKTAG('C','M','I','S'): mForeignMiscItems.load(record, deleted, store); break;
                     case MKTAG('T','S','T','A'):
                                                  mForeignStatics.load(record, deleted, store);
+                                                 if (record.mEditorId == "DoorMarker")
+                                                     std::cout << "DoorMarker: " << " 0x"
+                                                         << ESM4::formIdToString(record.mFormId) << std::endl;
 #if 0
-                if (reader.getContext().currWorld == 0x0001D0BC && reader.getContext().groupStack.back().first.type == ESM4::Grp_CellVisibleDistChild)
+                //if (reader.getContext().currWorld == 0x0001D0BC && reader.getContext().groupStack.back().first.type == ESM4::Grp_CellVisibleDistChild)
+                if (reader.getContext().currWorld == 0x0000003C &&
+                        reader.getContext().groupStack.back().first.type == ESM4::Grp_CellPersistentChild)
                 {
                     std::string padding = ""; // FIXME: debugging only
                     padding.insert(0, reader.getContext().groupStack.size()*2, ' ');
                     std::cout << padding << "CellStore REFR " << record.mEditorId << " "
-                              << ESM4::formIdToString(reader.getContext().currCell) << " visible dist "
+                              //<< ESM4::formIdToString(reader.getContext().currCell) << " visible dist "
+                              << ESM4::formIdToString(reader.getContext().currCell) << " persistent "
                               << ESM4::formIdToString(record.mBaseObj) << std::endl;
                 }
 #endif
@@ -1132,7 +1166,7 @@ namespace MWWorld
             }
             case ESM4::REC_ACHR:
             {
-                if (0)//(reader.hdr().record.flags & ESM4::Rec_Disabled) != 0)
+                if (0)//(reader.hdr().record.flags & ESM4::Rec_Disabled) != 0) // FIXME: temp testing
                 {
                     reader.skipRecordData();
                     break;
@@ -1197,7 +1231,7 @@ namespace MWWorld
             }
             case ESM4::REC_ACRE: // Oblivion only?
             {
-                if (0)//(reader.hdr().record.flags & ESM4::Rec_Disabled) != 0)
+                if (0)//(reader.hdr().record.flags & ESM4::Rec_Disabled) != 0) // FIXME: temp testing
                 {
                     reader.skipRecordData();
                     break;
@@ -1302,6 +1336,20 @@ namespace MWWorld
         }
 
         return;
+    }
+
+    void CellStore::setLoadedState()
+    {
+        if (mState!=State_Loaded)
+        {
+            // first create a grid index
+
+
+
+            mState = State_Loaded;
+        }
+        else
+            throw std::runtime_error ("CellStore: unexpected call to setLoadedState");
     }
 
     // used by MWRender::Debugging

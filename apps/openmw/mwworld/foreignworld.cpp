@@ -11,12 +11,19 @@
 
 unsigned int MWWorld::ForeignWorld::sRecordId = ESM4::REC_WRLD;
 
-MWWorld::ForeignWorld::ForeignWorld() : mDummyCell(0), mVisibleDistCell(nullptr), mVisibleDistCellStore(nullptr)
+MWWorld::ForeignWorld::ForeignWorld() : /*mDummyCell(0), */mVisibleDistCell(nullptr), mVisibleDistCellStore(nullptr)
+                                      , mDummyCell(nullptr), mDummyCellStore(nullptr)
 {
 }
 
 MWWorld::ForeignWorld::~ForeignWorld()
 {
+    if (mDummyCellStore)
+        delete mDummyCellStore;
+
+    if (mDummyCell)
+        delete mDummyCell;
+
     if (mVisibleDistCellStore)
         delete mVisibleDistCellStore;
 
@@ -49,6 +56,7 @@ const std::map<std::pair<int, int>, ESM4::FormId>& MWWorld::ForeignWorld::getCel
     return mCellGridMap;
 }
 
+#if 0
 bool MWWorld::ForeignWorld::setDummyCell(ESM4::FormId id)
 {
     if (mDummyCell)
@@ -57,11 +65,13 @@ bool MWWorld::ForeignWorld::setDummyCell(ESM4::FormId id)
     mDummyCell = id;
     return true;
 }
+#endif
 
 MWWorld::CellStore *MWWorld::ForeignWorld::getVisibleDistCell()
 {
     if (!mVisibleDistCell)
     {
+        // FIXME: if we add a new ctor to CellStore we don't need a ForeignCell?
         mVisibleDistCell = new ForeignCell(); // deleted in dtor
         mVisibleDistCell->mCell = new  ESM4::Cell();
 
@@ -79,6 +89,30 @@ MWWorld::CellStore *MWWorld::ForeignWorld::getVisibleDistCell()
 MWWorld::CellStore *MWWorld::ForeignWorld::getVisibleDistCell() const
 {
     return mVisibleDistCellStore;
+}
+
+MWWorld::CellStore *MWWorld::ForeignWorld::getDummyCell()
+{
+    if (!mDummyCell)
+    {
+        // FIXME: if we add a new ctor to CellStore we don't need a ForeignCell?
+        mDummyCell = new ForeignCell(); // deleted in dtor
+        mDummyCell->mCell = new  ESM4::Cell();
+
+        // TODO: populate it with some other dummy entries?
+        mDummyCell->mCell->mX = 0;
+        mDummyCell->mCell->mY = 0;
+
+        mDummyCellStore = new  CellStore(mDummyCell, true/*isForeignCell*/, true/*isDummy*/);
+        //mDummyCellStore->setVisibleDistCell();
+    }
+
+    return mDummyCellStore;
+}
+
+MWWorld::CellStore *MWWorld::ForeignWorld::getDummyCell() const
+{
+    return mDummyCellStore;
 }
 
 void MWWorld::ForeignWorld::blank()

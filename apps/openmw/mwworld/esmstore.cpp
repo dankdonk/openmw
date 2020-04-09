@@ -263,6 +263,15 @@ void ESMStore::loadTes4Group (ESM::ESMReader &esm)
         case ESM4::Grp_CellChild:
         case ESM4::Grp_WorldChild:
         case ESM4::Grp_TopicChild:
+        {
+            reader.saveGroupStatus();
+            if (!esm.hasMoreRecs())
+                return; // may have been an empty group followed by EOF
+
+            loadTes4Group(esm);
+
+            break;
+        }
         case ESM4::Grp_CellPersistentChild:
         {
             reader.adjustGRUPFormId();  // not needed or even shouldn't be done? (only labels anyway)
@@ -275,16 +284,28 @@ void ESMStore::loadTes4Group (ESM::ESMReader &esm)
                  !(reader.grp(2).type == ESM4::Grp_WorldChild || reader.grp(2).type == ESM4::Grp_InteriorSubCell))
                  std::cout << "Unexpected persistent child group in exterior subcell" << std::endl;
 //#endif
-            if (!esm.hasMoreRecs())
-                return; // may have been an empty group followed by EOF
-
+#if 0
             // If hdr.group.type == ESM4::Grp_CellPersistentChild, we are about to
             // partially load the persistent records such as REFR, ACHR and ACRE, if any.
             // (well, actually only examining for doors for the moment)
             //
             // The records from other groups are skipped as per below.
             loadTes4Group(esm);
+#else
+            // do we have a dummy CellStore for this world?  if not create one
+            ESM4::FormId worldId = reader.getContext().currWorld;
+            ForeignWorld *world = mForeignWorlds.getWorld(worldId); // get a non-const ptr
+            if (!worldId || !world)
+            {
+                loadTes4Group(esm); // interior
+                break;
+            }
 
+            CellStore *cell = world->getDummyCell();
+
+            // must load the whole group or else we'll lose track of where we are
+            mForeignCells.loadDummy(*this, esm, cell);
+#endif
             break;
         }
         case ESM4::Grp_CellVisibleDistChild:

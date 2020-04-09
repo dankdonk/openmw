@@ -171,6 +171,7 @@ namespace MWWorld
 
             inline ESM4::FormId getForeignLandId() const { return mForeignLand; }
             void loadTes4Record (const MWWorld::ESMStore& store, ESM::ESMReader& esm);
+            void setLoadedState();
 
             State getState() const;
 

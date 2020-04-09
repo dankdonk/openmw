@@ -3196,6 +3196,80 @@ if (material.texName[iter->first].find("EarsHuman") != std::string::npos)
 
 Need to look into `TES4BSAFile::getFile()` where it is extremely slow in reading one of the archives (Shivering Isles - Meshes)
 
+# [07/04/2020 - 08/04/2020] Where to store LOD data
+
+`MWWorld::Cells` might be a possibility.  Or `MWWorld::Scene`.  But `MWWorld::CellStore` is not, since much of the LOD data is not focused on a single cell.
+
+Currently `Scene` only keeps active cells and uses `World` to retrieve  the required cells from `Cells`.  That makes sense, but the LOD data are not really cells and storing them in `Cells` doesn't seem to quite fit.  Much of the data are really simplified REFR and they are normally loaded into CellStore from ESMStore (except in this case they are loaded from either BSA or loose files).
+
+So maybe keep the LOD data in `ESMStore`?  Or a separate one altogether?  If in `ESMStore` when to trigger the loading?  Anyway, the data is not in an ESM so this feels wrong, too.
+
+How about storing them in `ForeignWorld`?  We can still trigger the loading somehow in `ESMStore`, for example when the first group world child block is encountered.
+
+## Dummy cell
+
+Tamriel has 0x7B9 = 1977 REFR in its dummy cell.  There would also be ACRE and ACHR in the dummy cell. Currently all these are inserted into the scene, resulting in a major FPS drop.  **NOTE:** another test suggest 1509 including ACHR/ACRE so further tests are needed - but the point is still valid, there are *a lot*.
+
+Can't quite remember why the cell persistent children are read for door cells in ESMStore.  That was done back in 2016.  I think it is because if we leave that until we load a world or a cell, then there is a possibility that we haven't yet loaded a destination door to find out in which cell it is located. (i.e. because the cell in which a door is located is implied in the group structure, not explicitly stated anywhere)
+
+## `MWWorld::Ptr` and `MWWorld::CellRef`
+
+We many need to introduce some changes here in order to deal with LOD data.  Currently we pretend to be a TES3 `ESM::CellRef` by copying similar data across.  Using ESM::Door as an example:
+
+              mRef
+        Ptr o------------------------------------------------ LiveCellRefBase*
+          o                                                        ^
+          | mCell             mDoors                    mList      |
+          +------ CellStore* o------ CellRefList<Door> o----- LiveCellRef<Door>
+
+
+A `Ptr` has an implicit understanding of to which cell it belongs.  Can we still use `Ptr` for the objects in the dummy cell?  The objects in the dummy cell can have positions in different actual cells (at least for exterior dummy cells).
+
+Also, `CellStore::forEachImp()` converts everything in its `CellRefList` stores into `Ptr` before inserting them into the scene.  **We need a way to selectively disable the rendering/animation/physics.  In case of doors, we would like to add them to the scene based on their positions, similarly with visibly distant statics and trees.**
+
+                          mRef                   mCellRef
+        LiveCellRefBase o------------- CellRef o---------- ESM::CellRef
+              ^     o o                    o o
+              |     | | mClass             | | mFormId
+              |     | +------ Class*       | +------------ ESM4::FormId  (REFR/ACHR/ACRE)
+              |     |  mData               |   mDestDoorId
+              |     +-------- RefData      +-------------- ESM4::FormId  (DOOR)
+              |                o o o
+        LiveCellRef<Door>      | | |
+                               | | +-- (current position/rotation/etc)
+                               | +---- Ogre::SceneNode*
+                               +------ CustomData*
+                                           ^
+                                           |
+                                      DoorCustomData
+
+
+**FIXME:** not happy having mDestDoorId in CellRef, need to move it to somewhere else
+**TODO:** not sure of the original intent / design to use `std::list` in `CellRefList` - might have to investigate (might be because iterators don't become invalid as new items get inserted/erased?)
+
+## Initial design
+
+  * Consider inheriting from `CellStore` to create `ForeignCellStore` or something similar.
+  * Load *all* REFR/ACHR/ACRE in Cell Persistent Child group from `ESMStore`.  Store them in a `CellStore` as usual but keep a map of their grid locations (at least for external dummy cell).
+  * Load the visibly distant REFR from BSA and store them in a `CellStore`, similar to the dummy one.
+  * These special `CellStore`s should be kept in their respective `ForeignWorld`, at least for external ones.
+  * Modify (or create a similar one) `Scene::insertCell()` so that objects can be inserted selectively, based on location, class, etc.
+
+**TODO:** Fix the interaction diagram from 31/09/20
+
+## `CellStore` user cases
+
+Keeping a map of grid positions turns out to be difficult for dummy cell, since all the data are held in `std::list`.  Had a quick look at various accesses to `CellRefList` but can't really see too many insertions/deletions except at loading time and even then it's mostly `push_back()`.
+
+So maybe there might be some performance improvements if `std::list` was replaced with `std::vector`.
+
+## Rethinking the dummy cells and grid map
+
+Maybe keeping indices isn't the optial solution, anyway?  Perhaps keep a "Persistent" section on each `CellStore`?  But doing so will result in 3 of each type of object - e.g. persistent static, temporary static and visually distant static.
+
+Or just brute-force by searching with x/y range each time?
+
+
 
 [//]: # (/* spell spelllang=en_au syntax=cpp */)
 [//]: # (/* vim: set ft=markdown tw=0 lbr bri fen fdm=marker fdl=0: */)

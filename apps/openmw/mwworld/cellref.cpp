@@ -285,9 +285,10 @@ namespace MWWorld
             mCellRef.mDoorDest.rot[2] = ref.mDoor.destPos.rot.z;
 
             mDestDoorId = ref.mDoor.destDoor;
-
+// while loading doors from CellStore, MWBase::World is not yet fully constructed
+#if 0
             const MWWorld::ESMStore& store = MWBase::Environment::get().getWorld()->getStore();
-            const ESM4::FormId cellId = store.getDoorCell(ref.mDoor.destDoor);
+            const ESM4::FormId cellId = store.getDoorCellId(ref.mDoor.destDoor);
             const MWWorld::ForeignCell *cell = store.get<MWWorld::ForeignCell>().find(cellId);
             if (cell && !cell->mCell->mFullName.empty())
                 mCellRef.mDestCell = cell->mCell->mFullName;
@@ -295,6 +296,7 @@ namespace MWWorld
                 mCellRef.mDestCell = cell->mCell->mEditorId;
             else
                 mCellRef.mDestCell = "";
+#endif
         }
         else
             mCellRef.mDestCell = "";
@@ -343,7 +345,7 @@ namespace MWWorld
         return mFormId;
     }
 
-    ESM4::FormId CellRef::getDestDoor () const
+    ESM4::FormId CellRef::getDestDoorId () const
     {
         return mDestDoorId;
     }

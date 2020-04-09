@@ -15,7 +15,7 @@ namespace Ogre
 
 namespace NiBtOgre
 {
-    class BtOgreInst;
+    struct BtOgreInst;
 }
 
 namespace MWWorld

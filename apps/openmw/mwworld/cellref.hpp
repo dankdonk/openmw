@@ -40,7 +40,7 @@ namespace MWWorld
         ESM4::FormId getFormId() const;
 
         // teleport destination door
-        ESM4::FormId getDestDoor() const;
+        ESM4::FormId getDestDoorId() const;
 
         // Set RefNum to its default state.
         void unsetRefNum();

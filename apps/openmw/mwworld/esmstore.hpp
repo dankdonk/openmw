@@ -190,7 +190,7 @@ namespace MWWorld
 
         // Unlike TES3, the destination cell is not specified in the reference record.
         // Need a lookup map to work around this issue.
-        std::map<ESM4::FormId, ESM4::FormId> mDoorDestCell;
+        mutable std::map<ESM4::FormId, ESM4::FormId> mDoorDestCell;
 
         ESM::NPC mPlayerTemplate;
 
@@ -232,7 +232,7 @@ namespace MWWorld
                 return it->second;
         }
 
-        ESM4::FormId getDoorCell(ESM4::FormId doorId) const
+        ESM4::FormId getDoorCellId(ESM4::FormId doorId) const
         {
             std::map<ESM4::FormId, ESM4::FormId>::const_iterator it
                 = mDoorDestCell.find(doorId);
@@ -241,6 +241,14 @@ namespace MWWorld
                 return it->second;
 
             return 0;
+        }
+
+        bool setDoorCell(ESM4::FormId doorId, ESM4::FormId cellId) const
+        {
+            std::pair<std::map<ESM4::FormId, ESM4::FormId>::iterator, bool> result
+                = mDoorDestCell.insert({ doorId, cellId }); // mutable
+
+            return result.second;
         }
 
         ESMStore()

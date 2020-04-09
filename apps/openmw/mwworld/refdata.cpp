@@ -98,6 +98,7 @@ namespace MWWorld
     RefData::RefData (const ESM4::ActorCharacter& cellRef)
     : mBaseNode(0), mDeleted(false),  mHasLocals (false),
       mEnabled ((cellRef.mFlags & ESM4::Rec_Disabled) == 0),
+      //mEnabled (true), // FIXME: temp testing only (e.g. Zahrasha)
       mCount (1),
       mCustomData (0),
       mChanged(false) // Loading from ESM/ESP files FIXME: assume unchanged for now

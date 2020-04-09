@@ -25,9 +25,11 @@ namespace MWWorld
         // Store<ForeignWorld> can have a search method to find a cell's formId
         // (NOTE: we don't do the same for interior cells since they are not part of a world record)
         std::map<std::pair<int, int>, ESM4::FormId> mCellGridMap;
-        ESM4::FormId mDummyCell;
+        //ESM4::FormId mDummyCell;
         ForeignCell *mVisibleDistCell;
         CellStore *mVisibleDistCellStore;
+        ForeignCell *mDummyCell;
+        CellStore *mDummyCellStore;
 
         // Rather than using ESM4::WorldGroup, keep some variables here
         // (assumed only one per world)
@@ -43,14 +45,16 @@ namespace MWWorld
 
         // returns false if insert fails (e.g. index already exists)
         bool updateCellGridMap(int x, int y, ESM4::FormId id);
-        bool setDummyCell(ESM4::FormId id);
+        //bool setDummyCell(ESM4::FormId id);
 
         const std::map<std::pair<int, int>, ESM4::FormId>& getCellGridMap() const;
 
         CellStore *getVisibleDistCell();
         CellStore *getVisibleDistCell() const;
 
-        ESM4::FormId getDummyCell() const { return mDummyCell; }
+        CellStore *getDummyCell();
+        CellStore *getDummyCell() const;
+        //ESM4::FormId getDummyCell() const { return mDummyCell; }
 
         void load (ESM::ESMReader& esm, bool isDeleted = false);
         void save (ESM::ESMWriter& esm, bool isDeleted = false) const {} // FIXME: TODO
