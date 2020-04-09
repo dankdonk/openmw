@@ -1,7 +1,7 @@
 #include "objects.hpp"
 
 #include <cmath>
-//#include <iostream> // FIXME: testing only
+#include <iostream> // FIXME: testing only
 
 #include <OgreSceneNode.h>
 #include <OgreSceneManager.h>
@@ -12,6 +12,9 @@
 #include <OgreParticleSystem.h>
 #include <OgreParticleEmitter.h>
 #include <OgreStaticGeometry.h>
+#include <OgreTechnique.h>
+#include <OgreHardwarePixelBuffer.h>
+#include <OgreTexturemanager.h>
 
 #include <extern/esm4/formid.hpp> // mainly for debugging
 #include <extern/nibtogre/btogreinst.hpp>
@@ -20,7 +23,7 @@
 #include <components/esm/loadligh.hpp>
 #include <components/esm/loadstat.hpp>
 
-#include <components/nifogre/ogrenifloader.hpp>
+//#include <components/nifogre/ogrenifloader.hpp>
 #include <components/settings/settings.hpp>
 
 #include "../mwworld/ptr.hpp"
@@ -220,13 +223,98 @@ void Objects::insertLandscapeModel(ESM4::FormId worldId, int x, int y, const std
     //if (!landscape)
         //landscape = modelManager.createLandscapeModel(mesh, "General");
 
+#if 0
     // Ogre::SceneManager needed to destroy created Ogre::Entity
     //if (!mLandscape)
         mLandscapes.push_back(new NiBtOgre::BtOgreInst(landscape, insert->createChildSceneNode())); // great grandchild for sub-object
     mLandscapes.back()->instantiate();
-    std::map<int32_t, Ogre::Entity*>::iterator it(mLandscapes.back()->mEntities.begin());
-    for (; it != mLandscapes.back()->mEntities.end(); ++it)
+#else
+    NifOgre::ObjectScenePtr scene
+        = NifOgre::ObjectScenePtr (new NifOgre::ObjectScene(insert->getCreator()));
+
+    scene->mForeignObj
+        = std::make_unique<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(landscape, insert->createChildSceneNode()));
+    scene->mForeignObj->instantiate();
+#endif
+
+    std::map<int32_t, Ogre::Entity*>::iterator it(scene->mForeignObj->mEntities.begin());
+    for (; it != scene->mForeignObj->mEntities.end(); ++it)
     {
+        Ogre::MaterialPtr mat = scene->mMaterialControllerMgr.getWritableMaterial(it->second);
+        Ogre::Material::TechniqueIterator techIter = mat->getTechniqueIterator();
+        while(techIter.hasMoreElements())
+        {
+            Ogre::Technique *tech = techIter.getNext();
+            Ogre::Technique::PassIterator passes = tech->getPassIterator();
+            while(passes.hasMoreElements())
+            {
+                Ogre::Pass *pass = passes.getNext();
+                // actually means alpha value less than 192 will be rejected (confusing)
+                pass->setAlphaRejectSettings(Ogre::CMPF_GREATER_EQUAL, 0xC0/*192*/, true);
+
+                Ogre::TextureUnitState *tex = pass->getTextureUnitState(0);
+                std::string texName = tex->getTextureName();
+
+                // base texture
+                Ogre::TexturePtr texAlpha = Ogre::TextureManager::getSingleton().getByName(
+                       texName, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+
+                // the original texture, e.g. 60.00.00.32.dds seems to have an alpha channel
+                //if (texAlpha->hasAlpha())
+                //    std::cout << texName << " has alpha" << std::endl;
+                //else
+                //    std::cout << texName << " no alpha" << std::endl;
+
+                // try to retrieve previously created texture
+                Ogre::TexturePtr alphaTexture = Ogre::TextureManager::getSingleton().getByName(
+                       "alpha_" + texName,
+                       Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+                if (!alphaTexture)
+                {
+                    // create a blank one
+                    alphaTexture = Ogre::TextureManager::getSingleton().createManual(
+                        "alpha_" + texName, // name
+                        Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
+                        Ogre::TEX_TYPE_2D,  // type
+                        texAlpha->getWidth(), texAlpha->getHeight(), // width & height
+                        0,                  // number of mipmaps; FIXME: should be 2? or 1?
+                        Ogre::PF_BYTE_RGBA,
+                        Ogre::TU_DEFAULT);  // usage; should be TU_DYNAMIC_WRITE_ONLY_DISCARDABLE for
+                                            // textures updated very often (e.g. each frame)
+                }
+
+                // dest
+                Ogre::HardwarePixelBufferSharedPtr pixelBuffer = alphaTexture->getBuffer();
+                pixelBuffer->unlock(); // prepare for blit()
+                // src
+                Ogre::HardwarePixelBufferSharedPtr pixelBufferSrc
+                    = Ogre::static_pointer_cast<Ogre::Texture>(texAlpha)->getBuffer();
+                pixelBufferSrc->unlock(); // prepare for blit()
+                // if source and destination dimensions don't match, scaling is done
+                pixelBuffer->blit(pixelBufferSrc);
+
+                pixelBuffer->lock(Ogre::HardwareBuffer::HBL_NORMAL); // for best performance use HBL_DISCARD!
+                const Ogre::PixelBox& pixelBox = pixelBuffer->getCurrentLock();
+                uint8_t *pDest = static_cast<uint8_t*>(pixelBox.data);
+
+                std::size_t pixPerCell = texAlpha->getWidth() / 32; // should be 32
+                for (size_t i = 0; i < texAlpha->getWidth(); ++i) // y
+                {
+                    for (size_t j = 0; j < texAlpha->getHeight(); ++j) // x
+                    {
+                        // testing blanking cell (12, 1), remembering we have 32x32 block
+                        if (i > 0 * 32 && i < 3 * 32 && j > 11 * 32 && j < 14 * 32)
+                            *(pDest+3) = 5;//*(pDest+3);
+
+                        pDest += 4;
+                    }
+                }
+
+                pass->removeTextureUnitState(0);
+                Ogre::TextureUnitState *newTUS = pass->createTextureUnitState("alpha_"+texName);
+                tex->setColourOperation(Ogre::LBO_ALPHA_BLEND);
+            }
+        }
 #if 0
         insert->attachObject(it->second);
 #else
@@ -237,6 +325,7 @@ void Objects::insertLandscapeModel(ESM4::FormId worldId, int x, int y, const std
         lodMap[std::pair<int,int>(x,y)] = sg;
         mStaticGeometryLandscape[worldId] = lodMap;
 
+        // TODO: test with different values
         sg->setRegionDimensions(Ogre::Vector3(2048,2048,2048));
         sg->setVisibilityFlags(RV_Statics);
         sg->setCastShadows(true);
@@ -252,7 +341,7 @@ void Objects::insertLandscapeModel(ESM4::FormId worldId, int x, int y, const std
 #endif
     }
 
-    // add to Ogre::StaticGeometry here
+    mLandscapeScene.push_back(scene);
 }
 
 // IDEA: put world in a FIFO and keep the last one (so that if one pops into a store to offload

@@ -3269,6 +3269,15 @@ Maybe keeping indices isn't the optial solution, anyway?  Perhaps keep a "Persis
 
 Or just brute-force by searching with x/y range each time?
 
+# [09/04/2020] LOD meshes clipping with terrain
+
+I think this issue may be resolved by having a manual alpha map and using alpha rejection in the LOD mesh materail. There are a lot of questions about how to actually implement it, however.  For example, what exactly is an alpha map?  Is it a texture itself?  If so does it have to be the same size as the other texture? (in this case 1024x1024) How does one create an area where alpha values are transparent?
+
+With regards to the size of the texture, it appears that alpha rejection is done per pixel basis.  Which also means that when a cell becomes "active" or "inactive" the corresponding pixels of the alpha map needs to be updated.
+
+The `StaticGeometry` will need to be updated with the new material and built again each time terrain is updated.
+
+
 
 
 [//]: # (/* spell spelllang=en_au syntax=cpp */)

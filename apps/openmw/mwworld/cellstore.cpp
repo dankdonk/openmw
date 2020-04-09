@@ -1100,10 +1100,10 @@ namespace MWWorld
 
 
                             const ESM4::Npc* npc = store.getForeign<ESM4::Npc>().search(record.mBaseObj);
-                            if (npc && npc->mModel.empty()/* && npc->mBaseTemplate != 0*/)
-                                std::cout << npc->mEditorId << std::endl;
-                            else
-                                std::cout << "  " << npc->mEditorId << std::endl;
+                            if (npc && npc->mModel.empty()/* && npc->mBaseTemplate != 0*/) // FIXME:
+                                std::cout << "npc_ empty model " << npc->mEditorId << std::endl;
+                            //else
+                                //std::cout << "npc_ has model " << npc->mEditorId << std::endl;
 
 
 

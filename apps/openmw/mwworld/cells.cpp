@@ -298,7 +298,7 @@ void MWWorld::Cells::initNewWorld(const ForeignWorld *world)
                         //std::cout << "(" << x << "," << y << ")" << std::endl;
                     }
                     // FIXME: either don't bother with the last entry or do something with it
-                    std::cout << worldEditorId << std::endl;
+                    //std::cout << worldEditorId << std::endl;
                     mVisibleDistStatics.insert(lb, std::make_pair(worldEditorId, grid));
                 }
             }

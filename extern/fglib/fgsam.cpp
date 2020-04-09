@@ -264,7 +264,7 @@ namespace FgLib
                                     const std::vector<float>& raceSymCoeff,
                                     const std::vector<float>& npcSymCoeff) const
     {
-        // try to regtrieve previously created morph texture
+        // try to retrieve previously created morph texture
         morphTexture = Ogre::TextureManager::getSingleton().getByName(
                npcName + "_" + texture,
                Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);

@@ -6,6 +6,8 @@
 
 #include <openengine/ogre/renderer.hpp>
 
+#include <components/nifogre/ogrenifloader.hpp>
+
 #include <extern/esm4/formid.hpp>
 
 namespace Ogre
@@ -43,6 +45,7 @@ class Objects{
     Ogre::SceneNode* mRootNode;
     //std::map<ESM4::FormId, std::map<std::pair<int, int>, NiBtOgre::BtOgreInst *> > mLandscapes;
     std::vector<NiBtOgre::BtOgreInst*> mLandscapes; // FIXME: temp testing
+    std::vector<NifOgre::ObjectScenePtr> mLandscapeScene;
 
     static int uniqueID;
 
