@@ -32,7 +32,8 @@ void EsmLoader::load(const boost::filesystem::path& filepath, std::vector<std::v
     int esmVer = lEsm->getVer();
     bool isTes4 = esmVer == ESM::VER_080 || esmVer == ESM::VER_100;
     bool isTes5 = esmVer == ESM::VER_094 || esmVer == ESM::VER_17;
-    if (isTes4 || isTes5)
+    bool isFONV = esmVer == ESM4::VER_132 || esmVer == ESM4::VER_133 || esmVer == ESM4::VER_134;
+    if (isTes4 || isTes5 || isFONV)
     {
         lEsm->close();
         delete lEsm;

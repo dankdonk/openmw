@@ -75,6 +75,7 @@ void ESM4::TalkingActivator::load(ESM4::Reader& reader)
             case ESM4::SUB_FNAM:
             case ESM4::SUB_PNAM:
             case ESM4::SUB_OBND:
+            case ESM4::SUB_INAM: // FONV
             {
                 //std::cout << "TACT " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
                 reader.skipSubRecordData();

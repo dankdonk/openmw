@@ -188,7 +188,8 @@ void ESM4::Reader::getLocalizedString(std::string& str)
 {
     std::uint32_t stringId;
     get(stringId);
-    getLocalizedString(stringId, str);
+    if (stringId) // TES5 FoxRace
+        getLocalizedString(stringId, str);
 }
 
 // FIXME: very messy and probably slow/inefficient
@@ -227,7 +228,7 @@ void ESM4::Reader::getLocalizedString(const FormId stringId, std::string& str)
         filestream->seek(it->second.offset);
         getZString(str, filestream);
     }
-    else // FIXME: stringId might be null? (FoxRace)
+    else
         throw std::runtime_error("ESM4::Reader::getLocalizedString localized string not found");
 }
 
