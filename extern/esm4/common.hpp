@@ -551,7 +551,6 @@ namespace ESM4
         SUB_CITC = MKTAG('C','I','T','C'), // TES5
         SUB_CIS1 = MKTAG('C','I','S','1'), // TES5
         SUB_CIS2 = MKTAG('C','I','S','2'), // TES5
-        SUB_TPIC = MKTAG('T','P','I','C'), // TES5
         SUB_TIFC = MKTAG('T','I','F','C'), // TES5
         SUB_ALCA = MKTAG('A','L','C','A'), // TES5
         SUB_ALCL = MKTAG('A','L','C','L'), // TES5

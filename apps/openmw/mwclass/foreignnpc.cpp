@@ -13,7 +13,7 @@
 #include "../mwworld/physicssystem.hpp"
 #include "../mwworld/cellstore.hpp"
 #include "../mwworld/customdata.hpp"
-#include "../mwworld/inventorystore.hpp"
+#include "../mwworld/inventorystoretes4.hpp"
 #include "../mwworld/esmstore.hpp"
 
 #include "../mwmechanics/npcstats.hpp"
@@ -30,7 +30,7 @@ namespace
     {
         MWMechanics::NpcStats mNpcStats;
         MWMechanics::Movement mMovement;
-        MWWorld::InventoryStore mInventoryStore;
+        MWWorld::InventoryStoreTES4 mInventoryStore;
 
         virtual MWWorld::CustomData *clone() const;
     };
@@ -138,6 +138,13 @@ namespace MWClass
     }
 
     MWWorld::InventoryStore& ForeignNpc::getInventoryStore (const MWWorld::Ptr& ptr) const
+    {
+        ensureCustomData (ptr);
+
+        return dynamic_cast<ForeignNpcCustomData&> (*ptr.getRefData().getCustomData()).mInventoryStore;
+    }
+
+    MWWorld::InventoryStoreTES4& ForeignNpc::getInventoryStoreTES4 (const MWWorld::Ptr& ptr) const
     {
         ensureCustomData (ptr);
 
@@ -430,7 +437,7 @@ namespace MWClass
             ptr.getRefData().setCustomData (data.release());
 
             // assign some of the inventory to the equipment "slots"
-            getInventoryStore(ptr).autoEquipTES4(ptr);
+            static_cast<MWWorld::InventoryStoreTES4&>(getInventoryStore(ptr)).autoEquip(ptr);
         }
     }
 

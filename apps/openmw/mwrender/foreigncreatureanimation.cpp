@@ -18,6 +18,9 @@
 
 #include "../mwworld/class.hpp"
 #include "../mwworld/ptr.hpp"
+#include "../mwworld/inventorystoretes4.hpp"
+
+#include "../mwclass/foreigncreature.hpp"
 
 #include "../mwmechanics/creaturestats.hpp"
 
@@ -343,8 +346,8 @@ void ForeignCreatureAnimation::addForeignAnimSource(const std::string& model, co
     //std::vector<const ESM4::Clothing*> invCloth;
     //std::vector<const ESM4::Armor*> invArmor;
     std::vector<const ESM4::Weapon*> invWeap;
-    MWWorld::InventoryStore& inv = mPtr.getClass().getInventoryStore(mPtr);
-    for(size_t i = 0; i < 35; ++i) // FIXME: 16 slots for TES4
+    MWWorld::InventoryStoreTES4& inv = static_cast<const MWClass::ForeignCreature&>(mPtr.getClass()).getInventoryStoreTES4(mPtr);
+    for(size_t i = 0; i < inv.getNumSlots(); ++i)
     {
         MWWorld::ContainerStoreIterator store = inv.getSlot(i);
 

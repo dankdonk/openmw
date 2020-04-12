@@ -3,6 +3,11 @@
 
 #include "../mwworld/class.hpp"
 
+namespace MWWorld
+{
+    class InventoryStoreTES4;
+}
+
 namespace MWClass
 {
     class ForeignCreature : public MWWorld::Class
@@ -22,6 +27,8 @@ namespace MWClass
             virtual std::string getName (const MWWorld::Ptr& ptr) const;
             ///< \return name (the one that is to be presented to the user; not the internal one);
             /// can return an empty string.
+
+            MWWorld::InventoryStoreTES4& getInventoryStoreTES4 (const MWWorld::Ptr& ptr) const;
 
             static void registerSelf();
 

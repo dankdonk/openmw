@@ -11,7 +11,7 @@
 #include "../mwworld/ptr.hpp"
 #include "../mwworld/physicssystem.hpp"
 #include "../mwworld/cellstore.hpp"
-#include "../mwworld/inventorystore.hpp"
+#include "../mwworld/inventorystoretes4.hpp"
 
 #include "../mwrender/objects.hpp"
 #include "../mwrender/renderinginterface.hpp"
@@ -117,7 +117,7 @@ namespace MWClass
 //          slots_.push_back (int (MWWorld::InventoryStore::Slot_CarriedRight));
 
         // FIXME: testing
-        slots_.push_back (int (MWWorld::InventoryStore::Slot_ForeignSideWeapon));
+        slots_.push_back (int (MWWorld::InventoryStoreTES4::Slot_TES4_SideWeapon));
 
         return std::make_pair (slots_, stack);
     }

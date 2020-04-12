@@ -11,7 +11,7 @@
 #include "../mwworld/physicssystem.hpp"
 #include "../mwworld/cellstore.hpp"
 #include "../mwworld/customdata.hpp"
-#include "../mwworld/inventorystore.hpp"
+#include "../mwworld/inventorystoretes4.hpp"
 
 #include "../mwrender/actors.hpp"
 #include "../mwrender/renderinginterface.hpp"
@@ -25,7 +25,7 @@ namespace
     {
         MWMechanics::CreatureStats mCreatureStats;
         MWMechanics::Movement mMovement;
-        MWWorld::InventoryStore mInventoryStore;
+        MWWorld::InventoryStoreTES4 mInventoryStore;
 
         virtual MWWorld::CustomData *clone() const;
     };
@@ -93,6 +93,13 @@ namespace MWClass
         }
         return "";
 #endif
+    }
+
+    MWWorld::InventoryStoreTES4& ForeignCreature::getInventoryStoreTES4 (const MWWorld::Ptr& ptr) const
+    {
+        ensureCustomData (ptr);
+
+        return dynamic_cast<ForeignCreatureCustomData&> (*ptr.getRefData().getCustomData()).mInventoryStore;
     }
 
     std::string ForeignCreature::getName (const MWWorld::Ptr& ptr) const
@@ -229,7 +236,7 @@ namespace MWClass
             // store
             ptr.getRefData().setCustomData (data.release());
 
-            getInventoryStore(ptr).autoEquipTES4(ptr);
+            static_cast<MWWorld::InventoryStoreTES4&>(getInventoryStore(ptr)).autoEquip(ptr);
         }
     }
 

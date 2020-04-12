@@ -7,7 +7,7 @@
 #include "../mwworld/ptr.hpp"
 #include "../mwworld/physicssystem.hpp"
 #include "../mwworld/cellstore.hpp"
-#include "../mwworld/inventorystore.hpp"
+#include "../mwworld/inventorystoretes4.hpp"
 
 #include "../mwrender/objects.hpp"
 #include "../mwrender/renderinginterface.hpp"
@@ -68,7 +68,7 @@ namespace MWClass
         std::vector<int> slots_;
 
         if ((ref->mBase->mData.flags & 0x0002/*can be carried*/) != 0)
-            slots_.push_back (int (MWWorld::InventoryStore::Slot_ForeignTorch));
+            slots_.push_back (int (MWWorld::InventoryStoreTES4::Slot_TES4_Torch));
 
         return std::make_pair (slots_, false);
     }

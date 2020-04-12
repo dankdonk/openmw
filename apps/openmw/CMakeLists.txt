@@ -73,6 +73,7 @@ add_openmw_dir (mwworld
     esmstore store recordcmp fallback actionrepair actionsoulgem livecellref actiondoor
     contentloader esmloader actiontrap cellreflist projectilemanager cellref mwstore
     foreignworld foreigncell foreignland foreignstore storebase actionteleportforeign
+    inventorystoretes4
     )
 
 add_openmw_dir (mwclass

@@ -669,7 +669,11 @@ CharacterController::CharacterController(const MWWorld::Ptr &ptr, MWRender::Anim
 
         if (cls.hasInventoryStore(mPtr))
         {
-            getActiveWeapon(cls.getCreatureStats(mPtr), cls.getInventoryStore(mPtr), &mWeaponType);
+            if (mPtr.getTypeName() == typeid(ESM4::Npc).name())
+                mWeaponType = WeapType_OneHand; // FIXME: TES4 and others have different weapon types
+            else
+                getActiveWeapon(cls.getCreatureStats(mPtr), cls.getInventoryStore(mPtr), &mWeaponType);
+
             if (mWeaponType != WeapType_None)
             {
                 mUpperBodyState = UpperCharState_WeapEquiped;
@@ -905,7 +909,11 @@ bool CharacterController::updateWeaponState()
     if (mPtr.getClass().hasInventoryStore(mPtr))
     {
         MWWorld::InventoryStore &inv = cls.getInventoryStore(mPtr);
-        MWWorld::ContainerStoreIterator weapon = getActiveWeapon(stats, inv, &weaptype);
+        MWWorld::ContainerStoreIterator weapon = inv.end();
+        if (mPtr.getTypeName() == typeid(ESM4::Npc).name())
+            weapon = inv.end(); // FIXME: TES4 and others
+        else
+            weapon = getActiveWeapon(stats, inv, &weaptype);
         if(weapon != inv.end() && !(weaptype == WeapType_None && mWeaponType == WeapType_Spell))
         {
             soundid = (weaptype == WeapType_None) ?
@@ -984,7 +992,7 @@ bool CharacterController::updateWeaponState()
     bool ammunition = true;
     bool isWeapon = false;
     float weapSpeed = 1.f;
-    if (mPtr.getClass().hasInventoryStore(mPtr))
+    if (mPtr.getClass().hasInventoryStore(mPtr) && mPtr.getTypeName() != typeid(ESM4::Npc).name())
     {
         MWWorld::InventoryStore &inv = cls.getInventoryStore(mPtr);
         MWWorld::ContainerStoreIterator weapon = getActiveWeapon(stats, inv, &weaptype);
@@ -1332,7 +1340,7 @@ bool CharacterController::updateWeaponState()
         }
     }
 
-    if (mPtr.getClass().hasInventoryStore(mPtr))
+    if (mPtr.getClass().hasInventoryStore(mPtr) && mPtr.getTypeName() != typeid(ESM4::Npc).name())
     {
         MWWorld::InventoryStore& inv = mPtr.getClass().getInventoryStore(mPtr);
         MWWorld::ContainerStoreIterator torch = inv.getSlot(MWWorld::InventoryStore::Slot_CarriedLeft);

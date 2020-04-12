@@ -61,25 +61,7 @@ namespace MWWorld
             static const int Slot_CarriedLeft = 17;
             static const int Slot_Ammunition = 18;
 
-            // No separate shirt/pants/skirt/belt/pauldrons slots for TES4, etc.
-            static const int Slot_ForeignHead      = 19;
-            static const int Slot_ForeignHair      = 20;
-            static const int Slot_ForeignUpperBody = 21;
-            static const int Slot_ForeignLowerBody = 22;
-            static const int Slot_ForeignHands     = 23;
-            static const int Slot_ForeignFeet      = 24;
-            static const int Slot_ForeignRightRing = 25;
-            static const int Slot_ForeignLeftRing  = 26;
-            static const int Slot_ForeignAmulet    = 27;
-            static const int Slot_ForeignWeapon    = 28;
-            static const int Slot_ForeignBackWeapon = 29;
-            static const int Slot_ForeignSideWeapon = 30;
-            static const int Slot_ForeignQuiver    = 31;
-            static const int Slot_ForeignShield    = 32;
-            static const int Slot_ForeignTorch     = 33;
-            static const int Slot_ForeignTail      = 34;
-
-            static const int Slots = 35;
+            static const int Slots = 19;
 
             static const int Slot_NoSlot = -1;
 
@@ -89,9 +71,11 @@ namespace MWWorld
 
             InventoryStoreListener* mListener;
 
+        protected:
             // Enables updates of magic effects and actor model whenever items are equipped or unequipped.
             // This is disabled during autoequip to avoid excessive updates
             bool mUpdatesEnabled;
+        private:
 
             bool mFirstAutoEquip;
 
@@ -111,7 +95,10 @@ namespace MWWorld
 
             typedef std::vector<ContainerStoreIterator> TSlots;
 
+        protected:
             TSlots mSlots;
+            virtual int getNumSlots() const { return Slots; }
+        private:
 
             // selected magic item (for using enchantments of type "Cast once" or "Cast when used")
             ContainerStoreIterator mSelectedEnchantItem;
@@ -124,7 +111,9 @@ namespace MWWorld
 
             void copySlots (const InventoryStore& store);
 
+        protected:
             void initSlots (TSlots& slots_);
+        private:
 
             void updateMagicEffects(const Ptr& actor);
             void updateRechargingItems();
@@ -176,8 +165,7 @@ namespace MWWorld
             void unequipAll(const MWWorld::Ptr& actor);
             ///< Unequip all currently equipped items.
 
-            void autoEquip (const MWWorld::Ptr& actor);
-            void autoEquipTES4 (const MWWorld::Ptr& actor);
+            virtual void autoEquip (const MWWorld::Ptr& actor);
             ///< Auto equip items according to stats and item value.
 
             const MWMechanics::MagicEffects& getMagicEffects() const;

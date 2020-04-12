@@ -3,6 +3,11 @@
 
 #include "../mwworld/class.hpp"
 
+namespace MWWorld
+{
+    class InventoryStoreTES4;
+}
+
 namespace MWClass
 {
     class ForeignNpc : public MWWorld::Class
@@ -42,6 +47,7 @@ namespace MWClass
             ///< @return the content of the tool tip to be displayed. raises exception if the object has no tooltip.
 
             virtual MWWorld::InventoryStore& getInventoryStore (const MWWorld::Ptr& ptr) const;
+            MWWorld::InventoryStoreTES4& getInventoryStoreTES4 (const MWWorld::Ptr& ptr) const;
             ///< Return inventory store
 
             virtual MWMechanics::Movement& getMovementSettings (const MWWorld::Ptr& ptr) const;

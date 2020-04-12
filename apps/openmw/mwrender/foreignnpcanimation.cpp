@@ -43,8 +43,10 @@
 #include <components/nifogre/ogrenifloader.hpp> // ObjectScenePtr
 
 #include "../mwworld/esmstore.hpp"
-#include "../mwworld/inventorystore.hpp"
+#include "../mwworld/inventorystoretes4.hpp"
 #include "../mwworld/class.hpp"
+
+#include "../mwclass/foreignnpc.hpp"
 
 #include "../mwmechanics/npcstats.hpp"
 
@@ -478,8 +480,8 @@ void ForeignNpcAnimation::updateNpcBase()
     std::string meshName;
     std::string textureName;
 
-    MWWorld::InventoryStore& inv = mPtr.getClass().getInventoryStore(mPtr);
-    MWWorld::ContainerStoreIterator invHeadGear = inv.getSlot(MWWorld::InventoryStore::Slot_ForeignHair);
+    MWWorld::InventoryStoreTES4& inv = static_cast<const MWClass::ForeignNpc&>(mPtr.getClass()).getInventoryStoreTES4(mPtr);
+    MWWorld::ContainerStoreIterator invHeadGear = inv.getSlot(MWWorld::InventoryStoreTES4::Slot_TES4_Hair);
     if (invHeadGear == inv.end())
     {
         const MWWorld::ESMStore &store = MWBase::Environment::get().getWorld()->getStore();
@@ -710,7 +712,7 @@ void ForeignNpcAnimation::updateNpcBase()
             {
                 // FIXME: human upperbody need texture morphing
                 type = ESM4::Armor::TES4_UpperBody;
-                invSlot = MWWorld::InventoryStore::Slot_ForeignUpperBody;
+                invSlot = MWWorld::InventoryStoreTES4::Slot_TES4_UpperBody;
                 meshName = skeletonPath + (isFemale ? "female" : "") + "upperbody.nif";
                 break;
             }
@@ -718,28 +720,28 @@ void ForeignNpcAnimation::updateNpcBase()
             {
                 // FIXME: human lowerbody need texture morphing
                 type = ESM4::Armor::TES4_LowerBody;
-                invSlot = MWWorld::InventoryStore::Slot_ForeignLowerBody;
+                invSlot = MWWorld::InventoryStoreTES4::Slot_TES4_LowerBody;
                 meshName = skeletonPath + (isFemale ? "female" : "") + "lowerbody.nif";
                 break;
             }
             case(ESM4::Race::Hands):
             {
                 type = ESM4::Armor::TES4_Hands;
-                invSlot = MWWorld::InventoryStore::Slot_ForeignHands;
+                invSlot = MWWorld::InventoryStoreTES4::Slot_TES4_Hands;
                 meshName = skeletonPath + (isFemale ? "female" : "") + "hand.nif";
                 break;
             }
             case(ESM4::Race::Feet):
             {
                 type = ESM4::Armor::TES4_Feet;
-                invSlot = MWWorld::InventoryStore::Slot_ForeignFeet;
+                invSlot = MWWorld::InventoryStoreTES4::Slot_TES4_Feet;
                 meshName = skeletonPath + (isFemale ? "female" : "") + "foot.nif";
                 break;
             }
             case(ESM4::Race::Tail):
             {
                 type = ESM4::Armor::TES4_Tail;
-                invSlot = MWWorld::InventoryStore::Slot_ForeignTail;
+                invSlot = MWWorld::InventoryStoreTES4::Slot_TES4_Tail;
                 if (meshName != "") meshName = "meshes\\" + meshName;
                 break;
             }
@@ -1456,7 +1458,7 @@ void ForeignNpcAnimation::updateNpcBase()
 
     // check inventory
     //MWWorld::InventoryStore& inv = mPtr.getClass().getInventoryStore(mPtr);
-    for(size_t i = 0; i < 35; ++i) // FIXME: 16 slots for TES4
+    for(size_t i = 0; i < inv.getNumSlots(); ++i)
     {
         MWWorld::ContainerStoreIterator store = inv.getSlot(int(i)); // compiler warning
 
@@ -2209,36 +2211,22 @@ void ForeignNpcAnimation::updateParts()
         int mBasePriority;
     } slotlist[] = {
         // FIXME: Priority is based on the number of reserved slots. There should be a better way.
-        { MWWorld::InventoryStore::Slot_Robe,         12 },
-        { MWWorld::InventoryStore::Slot_Skirt,         3 },
-        { MWWorld::InventoryStore::Slot_Helmet,        0 },
-        { MWWorld::InventoryStore::Slot_Cuirass,       0 },
-        { MWWorld::InventoryStore::Slot_Greaves,       0 },
-        { MWWorld::InventoryStore::Slot_LeftPauldron,  0 },
-        { MWWorld::InventoryStore::Slot_RightPauldron, 0 },
-        { MWWorld::InventoryStore::Slot_Boots,         0 },
-        { MWWorld::InventoryStore::Slot_LeftGauntlet,  0 },
-        { MWWorld::InventoryStore::Slot_RightGauntlet, 0 },
-        { MWWorld::InventoryStore::Slot_Shirt,         0 },
-        { MWWorld::InventoryStore::Slot_Pants,         0 },
-        { MWWorld::InventoryStore::Slot_CarriedLeft,   0 },
-        { MWWorld::InventoryStore::Slot_CarriedRight,  0 },
-        { MWWorld::InventoryStore::Slot_ForeignHead,      0 },
-        { MWWorld::InventoryStore::Slot_ForeignHair,      0 },
-        { MWWorld::InventoryStore::Slot_ForeignUpperBody, 0 },
-        { MWWorld::InventoryStore::Slot_ForeignLowerBody, 0 },
-        { MWWorld::InventoryStore::Slot_ForeignHands,     0 },
-        { MWWorld::InventoryStore::Slot_ForeignFeet,      0 },
-        { MWWorld::InventoryStore::Slot_ForeignRightRing, 0 },
-        { MWWorld::InventoryStore::Slot_ForeignLeftRing,  0 },
-        { MWWorld::InventoryStore::Slot_ForeignAmulet,    0 },
-        { MWWorld::InventoryStore::Slot_ForeignWeapon,    0 },
-        { MWWorld::InventoryStore::Slot_ForeignBackWeapon,0 },
-        { MWWorld::InventoryStore::Slot_ForeignSideWeapon,0 },
-        { MWWorld::InventoryStore::Slot_ForeignQuiver,    0 },
-        { MWWorld::InventoryStore::Slot_ForeignShield,    0 },
-        { MWWorld::InventoryStore::Slot_ForeignTorch,     0 },
-        { MWWorld::InventoryStore::Slot_ForeignTail,      0 }
+        { MWWorld::InventoryStoreTES4::Slot_TES4_Head,      0 },
+        { MWWorld::InventoryStoreTES4::Slot_TES4_Hair,      0 },
+        { MWWorld::InventoryStoreTES4::Slot_TES4_UpperBody, 0 },
+        { MWWorld::InventoryStoreTES4::Slot_TES4_LowerBody, 0 },
+        { MWWorld::InventoryStoreTES4::Slot_TES4_Hands,     0 },
+        { MWWorld::InventoryStoreTES4::Slot_TES4_Feet,      0 },
+        { MWWorld::InventoryStoreTES4::Slot_TES4_RightRing, 0 },
+        { MWWorld::InventoryStoreTES4::Slot_TES4_LeftRing,  0 },
+        { MWWorld::InventoryStoreTES4::Slot_TES4_Amulet,    0 },
+        { MWWorld::InventoryStoreTES4::Slot_TES4_Weapon,    0 },
+        { MWWorld::InventoryStoreTES4::Slot_TES4_BackWeapon,0 },
+        { MWWorld::InventoryStoreTES4::Slot_TES4_SideWeapon,0 },
+        { MWWorld::InventoryStoreTES4::Slot_TES4_Quiver,    0 },
+        { MWWorld::InventoryStoreTES4::Slot_TES4_Shield,    0 },
+        { MWWorld::InventoryStoreTES4::Slot_TES4_Torch,     0 },
+        { MWWorld::InventoryStoreTES4::Slot_TES4_Tail,      0 }
     };
     static const size_t slotlistsize = sizeof(slotlist)/sizeof(slotlist[0]);
 
@@ -2254,7 +2242,7 @@ void ForeignNpcAnimation::updateParts()
         if(store == inv.end())
             continue;
 
-        if(slotlist[i].mSlot == MWWorld::InventoryStore::Slot_ForeignHair)
+        if(slotlist[i].mSlot == MWWorld::InventoryStoreTES4::Slot_TES4_Hair)
             removeIndividualPart((ESM::PartReferenceType)ESM4::Armor::TES4_Hair);
 
         int prio = 1;
@@ -2862,14 +2850,14 @@ void ForeignNpcAnimation::showWeapons(bool showWeapon)
     if(showWeapon)
     {
         MWWorld::InventoryStore& inv = mPtr.getClass().getInventoryStore(mPtr);
-        MWWorld::ContainerStoreIterator weapon = inv.getSlot(MWWorld::InventoryStore::Slot_CarriedRight);
+        MWWorld::ContainerStoreIterator weapon = inv.getSlot(MWWorld::InventoryStoreTES4::Slot_TES4_Weapon);
         if(weapon != inv.end())
         {
             Ogre::Vector3 glowColor = getEnchantmentColor(*weapon);
             std::string mesh = weapon->getClass().getModel(*weapon);
-            addOrReplaceIndividualPart(ESM::PRT_Weapon, MWWorld::InventoryStore::Slot_CarriedRight, 1,
+            addOrReplaceIndividualPart(ESM::PRT_Weapon, MWWorld::InventoryStoreTES4::Slot_TES4_Weapon, 1,
                                        mesh, !weapon->getClass().getEnchantment(*weapon).empty(), &glowColor);
-
+#if 0
             // Crossbows start out with a bolt attached
             if (weapon->getTypeName() == typeid(ESM::Weapon).name() &&
                     weapon->get<ESM::Weapon>()->mBase->mData.mType == ESM::Weapon::MarksmanCrossbow)
@@ -2882,6 +2870,7 @@ void ForeignNpcAnimation::showWeapons(bool showWeapon)
             }
             else
                 mAmmunition.reset();
+#endif
         }
     }
     else

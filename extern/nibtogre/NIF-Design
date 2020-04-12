@@ -1784,7 +1784,7 @@ Note that the race body parts share the "slots" used by the armor/cloth body par
 
 Now mObjectParts in ForeignNpcAnimation is a map keyed by `ESM4::Armor::ArmorFlags`.  Note that the keys are not consequitive.  Body parts and weapons will need some translations to get the right keys.
 
-**NOTE:** TES4/TES5/FO3/FONV will each have different key values for the same slot, where they do have the same slot.  For example "Tail" slot between TES4 and TES5 are different.  However, the "Head" and "Hair" values are the same for all games.
+**NOTE:** TES4/TES5/FO3/FONV can each have different key values for the same slot, where they do have the same slot.  For example "Tail" slot key values between TES4 and TES5 are different.  On the other hand, the "Head" and "Hair" slot key values are the same for all games.
 
 **TODO:** The inventorystore currently only supports TES4.  Its slot handling is not very well suited for TES4, etc, and will need some changes to make things more efficient.
 
@@ -2698,7 +2698,7 @@ Now the files in distantlod directory make sense a little.  They might be an ind
 The Oblivion gates are visible from distance (at least it feels that way) so let's check the records.  There seems to be many different types, one of which is door with `FormId` 0x00051925.  The first REFR with the `mBaseObj` that matches is:
 
     FormId   0x00091ca2
-    Flags    0x00000400 (persistent reference) // note that it doesn't have disable initially
+    Flags    0x00000400 (persistent reference) // note that it doesn't have the disable initially flag
     DestDoor 0x00000000 // no destination FormId, must be controlled by a script on the base object
     BaseObj  0x00051925 Oblivion\Gate\OblivionArchGate01.NIF
 
@@ -3269,6 +3269,8 @@ Maybe keeping indices isn't the optial solution, anyway?  Perhaps keep a "Persis
 
 Or just brute-force by searching with x/y range each time?
 
+**TODO:** The references in "Persistent" cell child group may potentially be used for some performance gains since most of them do not move?
+
 # [09/04/2020] LOD meshes clipping with terrain
 
 I think this issue may be resolved by having a manual alpha map and using alpha rejection in the LOD mesh materail. There are a lot of questions about how to actually implement it, however.  For example, what exactly is an alpha map?  Is it a texture itself?  If so does it have to be the same size as the other texture? (in this case 1024x1024) How does one create an area where alpha values are transparent?
@@ -3277,7 +3279,176 @@ With regards to the size of the texture, it appears that alpha rejection is done
 
 The `StaticGeometry` will need to be updated with the new material and built again each time terrain is updated.
 
+# [10/04/2020] Terrain
 
+Alpha rejection does work, but results in ugly seams at the boundaries (in hindsight it had to happen due to the low-poly mesh having less vertices and at different positions).  I recall reading something about Oblivion LOD and alpha blending a long time ago - so went looking to see if I could find that article again.  I didn't find that particular one, but [this page](http://testg.wikidot.com/oblivion:lods) seems to have some good info.
+
+Also, the current terrain will need to change to *finally* use the proper materials.  [This Ogre wiki](https://wiki.ogre3d.org/Terrain+Alpha+Splatting) might be a good starting point.  With LOD landscapes we are unlikely to be having many cells & associated terrain at a time (maybe 3 x 3 or 4 x 4).  Maybe we can get away with a simpler terrain system.
+
+## Back-porting to OpenMW
+
+If the Oblivion-like LOD was to be used for OpenMW, there are a number of things that may need to change:
+
+  * Terrain - not sure how the latest terrain in OpenMW works, but some kind of alpha blending of textures will need to be introduced (prob. using shaders).
+  * Terrain, object and actor insertion - I suspect they are currently tied to cell insertion. If so, more fine-grain control is needed, especially statics and trees (for visibly distant rendering without physics).  Most likely changes in `MWWorld::Scene` and others.
+  * A mechanism to render the same object with different LOD levels. e.g. the `_far` variant of a static object.  Most likely changes in `MWRender::Objects` and others.
+  * A mechanism to selectively display certain statics (e.g. Ghost Fence or an Oblivion Gate) based on a quest progress or some other conditions.  This will require either the NIF model to have non-standard attribute (non-standard for a vanilla Morrowind perspective, anyway) such as adding NiSwitchNode to existing NIF models.  Alternatively we can achieve the same result by adding an XESP sub-record to REFR like Oblivion (this way existing NIF models won't require any changes, but it does require selective rendering as per above bullet point).
+  * A set of additional config to control the distance of rendering various LOD elements, including actor fading distance, etc. (this is optional but most likely will be beneficial)
+
+There are also some new things that will need to be introduced:
+
+  * Add the ability to parse and load simple landscape LOD NIF models.  These have only 2 blocks, NiTriStrips and NiTriStripsData. (we can probably use NiTriShape/NiTriShapeData instead for OpenMW, depends on the tool generating these)
+  * A tool to generate low-poly landscape LOD mesh, if we decide not to use the Construction Set.
+  * Landscape LOD meshes and textures themselves.  These can be part of a MOD.
+  * Low-poly models of the visibly distant statics and trees. These can be part of the same MOD.  (if we want to be fancy, we can have multiple levels of complexity like Skyrim)
+  * The `.cmp` and `.lod` files to indicate where to place the visibly distant statics and trees.  Again part of the same MOD.  These are needed so that we know where to place them *before* the cells are read from the ESM/ESP/save files.  Unfortunately the formats of `.lod` files probably will need to differ from TES4 since there is no concept of FormId in OpenMW.
+
+## Landscape LOD mesh - Fallout 3, Fallout NV and Skyrim
+
+Each of these also have LOD meshes but their naming convensions are a little different.  Skyrim also has different size blocks, 16 x 16 as well as 4 x 4.  Some Fallout meshes have "level4" and "level8" in their names - might have something to do with the player level.
+
+**TODO:** If we're going to deal with each of these in one engine, we'll need something like an "interface" pattern with an abstract base class.
+
+# [11/04/2020] Terrain cont.
+
+Some notes from way back in January 2016:
+
+        Texture       mTextures[4]; // 0 = bottom left. 1 = bottom right. 2 = upper-left. 3 = upper-right
+       
+         33 +----------------+-----------------+
+         32 |                |                 |
+         31 |                |                 |
+            |                |                 |
+          . |                |                 |
+          . |       2        |        3        |
+          . |                |                 |
+          . |                |                 |
+            |                |                 |
+            +----------------+-----------------+
+         16 |                |                 |
+         15 |                |                 |
+          . |                |                 |
+          . |                |                 |
+          . |       0        |        1        |
+          . |                |                 |
+          2 |                |                 |
+          1 |                |                 |
+          0 +----------------+-----------------+
+                          111                333
+            0123  ......  456      .....     123
+
+
+Existing implementation:
+
+        MWWorld::  MWRender::        Terrain::       ESM4Terrain::
+        Scene      RenderingManager  TerrainGrid     Storage
+          |              |               |              |
+          | cellAdded()  |               |              |
+          |------------->|               |              |
+          |              | loadCell()    |              |
+          |              |-------------->|              |
+          |              |               | fillVertexBuffers()
+          |              |               |------------->|
+          |              |               | getBlendMapsImpl()
+          |              |               |------------->|
+          |              |               |              |
+          |              |               |              |
+
+
+# [11/04/2020 - 12/04/2020] FO3, FONV and Skyrim
+
+## TES5 issues
+
+Whiterun:
+
+    mName = "meshes\\architecture\\whiterun\\wrdrawbridge01.nif#51@WRDrawBridge01"
+
+Tamriel:
+
+    clutter\\mehrunesdagonaltar\\mehrunesdagonaltar01.nif
+
+    mName = "meshes\\furniture\\clutter\\leveranimatingmetal.nif#4@RuinsLever"
+
+## Hair - Hat and NoHat
+
+### FaceGen hair differences
+
+The hair EGM files for FO3/FONV have these variants (haircurly as an example):
+
+    meshes\characters\hair\haircurly.nif
+    meshes\characters\hair\haircurlyhat.egm
+    meshes\characters\hair\haircurlynohat.egm
+    meshes\characters\hair\haircurlyf.nif
+    meshes\characters\hair\haircurlyfhat.egm
+    meshes\characters\hair\haircurlyfnohat.egm
+
+Skyrim doesn't seem to have EGM or EGT for hair (or anything else) at all?  Only TRI files exist.
+
+### NIF hair differences
+
+The hair NIF files now have two `NiTriBasedGeom` - one named "Hat" and the other "NoHat".
+
+## NPC model
+
+### No FaceGen coefficients
+
+Some don't have any symmetric or asymmetric coefficients.
+
+### No skeleton for some
+
+Some NPC have `marker_creature.nif` as their model (should normally be a skeleton).  These seem to be some kind of place marker for a random generated NPC.
+
+### No `CREA` or `ACRE` in Skyrim
+
+The creatures are now considered "Actors".  The game logic handling creatures will need to change since we can no longer assume an NPC will have a skeleton with certain face parts and body parts, etc.
+
+### BaseConfig
+
+The size and content of the `ACBS` sub-record are different between games.  It would have been good to have a method wihin the `Npc` class to provide an interface, but there doesn't seem to be a reliable detection within `NPC` sub-records for the game.  For now we'll have to build a helper class to do this.
+
+### Body and head parts in `RACE`
+
+Each game differs on what body and head parts are used for an NPC.  Similar to `BaseConfig` this should be abstracted to an interface class.
+
+### `BSDismemberskinInstance` partitions in NIF files
+
+The visibility of body parts can be selected in FO3/FONV/TES5 NIF files.  It is no longer feasible to have all the permuations created and have them ready in a `ResourceManager`.
+
+How this is done in real-time is uncertain.  **One idea is to have a map of availabile options and have the sub-entity visibilty to be controlled.**  That might mean the naming of the sub-mesh and sub-entity may need to be carefully designed.
+
+**TODO:** what to do with the ragdoll physics of dismembered parts?  I noticed that `BPTD` records indicate bones and nodes so maybe they have some info that can be used.
+
+### Inventory
+
+Different types of items can be carried.  Currently the inventory slots are hard-coded based on the `BMDT` sub-record flags of `ARMO` record (see below).
+
+Not sure how to approach this.  It might be worth implementing a separate inventory class for each game type.  Having a bunch of if/else statements is not going to be workable.
+
+The use of `MWMechanics/InventoryStore` is pervasive in OpenMW - so unless we're prpared to re-write a whole lot of new code everywhere we may be forced to sub-class `InventoryStore`.  Note that eventually we may still be forced to re-write all the code.  Not sure yet.
+
+## No `CLOT` in FO3/FONV/TES5
+
+Only `ARMO` records are present in FO3/FONV/TES5.  The `BMDT` sub-record contents are different (although FO3 and FONV share the same flag values).
+
+See some notes back in 07/03/2020 regarding body part handling.
+
+## FO3/FONV font textures
+
+For FO3/FONV the font textures have LOD levels, although there is only one level provided. e.g.
+
+    textures\fonts\fixedsys_comp_uniform_width.fnt
+    textures\fonts\fixedsys_comp_uniform_width_0_lod_a.tex
+    textures\fonts\fixedsys_comp_uniform_width_0_lod_a.dds
+
+## Detection of TES4, TES5, FO3 and FONV
+
+A combination of info from `NPC_` and `RACE` may be required to reliably detect which game.  The main issue is with FO3 which uses ESM version 094 (0x3f70a3d7) which Skyrim also uses. This means we can't just use the ESM version to detect which game.  As a workaround we use the size of the sub-record `DATA` in `RACE` to determine if the ESM is from Skyrim.
+
+**Note that in future we need to be careful of which ESP version is allowed.** e.g. if a Skyrim verision of ESP is used for a MOD in FONV it will mess up the logic in the code.
+
+## Skeleton and `BSX` flags
+
+TES4 versions of NIF has a flag to indicate that it was a skeleton.  Later games doesn't have this flag.  **TODO:** how to reliably detect a `skeleton.nif` without comparing the filename?
 
 
 [//]: # (/* spell spelllang=en_au syntax=cpp */)

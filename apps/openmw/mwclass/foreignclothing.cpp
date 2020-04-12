@@ -13,7 +13,7 @@
 #include "../mwworld/ptr.hpp"
 #include "../mwworld/physicssystem.hpp"
 #include "../mwworld/cellstore.hpp"
-#include "../mwworld/inventorystore.hpp"
+#include "../mwworld/inventorystoretes4.hpp"
 
 #include "../mwrender/objects.hpp"
 #include "../mwrender/renderinginterface.hpp"
@@ -129,16 +129,16 @@ namespace MWClass
 
         static const int sMapping[size][2] =
         {
-            { ESM4::Armor::TES4_Head,      MWWorld::InventoryStore::Slot_ForeignHead },
-            { ESM4::Armor::TES4_Hair,      MWWorld::InventoryStore::Slot_ForeignHair },
-            { ESM4::Armor::TES4_UpperBody, MWWorld::InventoryStore::Slot_ForeignUpperBody },
-            { ESM4::Armor::TES4_LowerBody, MWWorld::InventoryStore::Slot_ForeignLowerBody },
-            { ESM4::Armor::TES4_Hands,     MWWorld::InventoryStore::Slot_ForeignHands },
-            { ESM4::Armor::TES4_Feet,      MWWorld::InventoryStore::Slot_ForeignFeet },
-            { ESM4::Armor::TES4_RightRing, MWWorld::InventoryStore::Slot_ForeignRightRing },
-            { ESM4::Armor::TES4_LeftRing,  MWWorld::InventoryStore::Slot_ForeignLeftRing },
-            { ESM4::Armor::TES4_Amulet,    MWWorld::InventoryStore::Slot_ForeignAmulet },
-            { ESM4::Armor::TES4_Tail,      MWWorld::InventoryStore::Slot_ForeignTail }, // ??
+            { ESM4::Armor::TES4_Head,      MWWorld::InventoryStoreTES4::Slot_TES4_Head },
+            { ESM4::Armor::TES4_Hair,      MWWorld::InventoryStoreTES4::Slot_TES4_Hair },
+            { ESM4::Armor::TES4_UpperBody, MWWorld::InventoryStoreTES4::Slot_TES4_UpperBody },
+            { ESM4::Armor::TES4_LowerBody, MWWorld::InventoryStoreTES4::Slot_TES4_LowerBody },
+            { ESM4::Armor::TES4_Hands,     MWWorld::InventoryStoreTES4::Slot_TES4_Hands },
+            { ESM4::Armor::TES4_Feet,      MWWorld::InventoryStoreTES4::Slot_TES4_Feet },
+            { ESM4::Armor::TES4_RightRing, MWWorld::InventoryStoreTES4::Slot_TES4_RightRing },
+            { ESM4::Armor::TES4_LeftRing,  MWWorld::InventoryStoreTES4::Slot_TES4_LeftRing },
+            { ESM4::Armor::TES4_Amulet,    MWWorld::InventoryStoreTES4::Slot_TES4_Amulet },
+            { ESM4::Armor::TES4_Tail,      MWWorld::InventoryStoreTES4::Slot_TES4_Tail }, // ??
         };
 
         for (int i=0; i<size; ++i)
