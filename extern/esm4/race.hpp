@@ -94,7 +94,7 @@ namespace ESM4
         {
             UpperBody         = 0,
             LowerBody         = 1,
-            Hands              = 2,
+            Hands             = 2,
             Feet              = 3,
             Tail              = 4,
             NumBodyParts      = 5
