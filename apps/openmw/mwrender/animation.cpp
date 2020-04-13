@@ -2056,7 +2056,7 @@ ObjectAnimation::ObjectAnimation(const MWWorld::Ptr& ptr, const std::string &mod
 
                 const MWWorld::ESMStore& store = MWBase::Environment::get().getWorld()->getStore();
                 const MWWorld::ForeignStore<ESM4::Static>& statStore = store.getForeign<ESM4::Static>();
-                size_t pos = boneName.find_last_of('@');
+                size_t pos = boneName.find_last_of('%');
                 std::string flameNodeName = boneName.substr(0, pos);
 
                 const ESM4::Static *fire = statStore.search(flameNodeName); // FlameNode1 FormId = 0x0000001f

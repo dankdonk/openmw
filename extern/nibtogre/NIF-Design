@@ -3466,6 +3466,7 @@ Key places where the mesh naming convention is used:
   * `ForeignActivatorAnimation` ctor - to check against `BtOgreInst::mSkeletonAnimEntities`.
   * `Animation::getBones()` - to check against `BtOgreInst::mSkeletonAnimEntities`.
   * `Animation::activateAnimatedDoor()` - not currently used
+  * `ObjectAnimation` ctor - adding `FlameNode` to bone
   * `ForeignNpcAnimation::replaceSkinTexture()` - to find the corresponding `NiNode` name to check against the results from `NiModel::fillSkinIndices()`.
   * `mBhkRigidBodyMap` - not currently used
 
