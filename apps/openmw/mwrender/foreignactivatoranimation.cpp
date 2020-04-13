@@ -65,7 +65,7 @@ namespace MWRender
 
                     std::string meshName = iter->second[i]->getMesh()->getName();
                     //size_t pos = meshName.find_first_of('#');
-                    size_t pos = meshName.find_last_of('@');
+                    size_t pos = meshName.find_last_of('%');
                     meshName = meshName.substr(pos+1); // same as bone name
 
                     mSkelBase->attachObjectToBone(meshName, iter->second[i]);

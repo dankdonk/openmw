@@ -1474,7 +1474,7 @@ std::vector<Ogre::Bone*> Animation::getBones(const std::string& animation) const
         {
             std::string meshName = entityList[i]->getMesh()->getName();
             //size_t pos = meshName.find_first_of('#');
-            size_t pos = meshName.find_last_of('@');
+            size_t pos = meshName.find_last_of('%');
             meshName = meshName.substr(pos+1);
             if (skel->hasBone(meshName))
             {
@@ -1509,7 +1509,7 @@ void Animation::activateAnimatedDoor(const std::string& animation, bool activate
                 if (!activate)
                 {
 //                  std::string meshName = it->second[i]->getMesh()->getName();
-//                  size_t pos = meshName.find_last_of('@');
+//                  size_t pos = meshName.find_last_of('%');
 //                  meshName = meshName.substr(pos+1);
 //                  if (it->second[i]->getSkeleton()->hasBone(meshName))
 //                      it->second[i]->getSkeleton()->getBone(meshName)->reset();

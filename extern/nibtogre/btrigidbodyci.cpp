@@ -69,9 +69,9 @@ NiBtOgre::BtRigidBodyCI::~BtRigidBodyCI()
 // only called if this resource is not being loaded from a ManualResourceLoader
 void NiBtOgre::BtRigidBodyCI::loadImpl()
 {
-//  // mName looks like meshes\\architecture\\imperialcity\\icwalltower01.nif@ICWallTower01
+//  // mName looks like meshes\\architecture\\imperialcity\\icwalltower01.nif%ICWallTower01
 //  std::string modelName = getName();
-//  size_t modelNameSize = modelName.find_first_of('@');
+//  size_t modelNameSize = modelName.find_first_of('%');
 
 //  if (modelNameSize == std::string::npos)
 //      throw std::runtime_error(modelName + " is of unexpected format");
@@ -98,7 +98,7 @@ void NiBtOgre::BtRigidBodyCI::loadImpl()
     for (; iter != rigidBodies.end(); ++iter)
     {
         //if (iter->second/*.second*/ == -1)
-            //continue;  // e.g. fire/firetorchlargesmoke.nif@DamageSphere
+            //continue;  // e.g. fire/firetorchlargesmoke.nif%DamageSphere
         // FIXME: check for phantom
 
         std::int32_t bhkRef = iter->second/*.second*/;

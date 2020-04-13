@@ -3314,7 +3314,7 @@ Each of these also have LOD meshes but their naming convensions are a little dif
 Some notes from way back in January 2016:
 
         Texture       mTextures[4]; // 0 = bottom left. 1 = bottom right. 2 = upper-left. 3 = upper-right
-       
+
          33 +----------------+-----------------+
          32 |                |                 |
          31 |                |                 |
@@ -3449,6 +3449,32 @@ A combination of info from `NPC_` and `RACE` may be required to reliably detect 
 ## Skeleton and `BSX` flags
 
 TES4 versions of NIF has a flag to indicate that it was a skeleton.  Later games doesn't have this flag.  **TODO:** how to reliably detect a `skeleton.nif` without comparing the filename?
+
+# [13/04/2020] Debugging
+
+## FO3 Door not moving
+
+There is a door in `zBethOffice01` with NIF model `Dungeons\Office\Doors\OffDoorSml02.NIF`.  There are two problems with this door.
+
+First, it has a `NiControllerSequence` target node with name "OffDoorSmL02@#0".  The name has the '@' character which we were using to identify node names in a mesh.  One obvious solution is to change it to another character, say '%', but that results in *a lot* of changes and it is not easy to confirm that all the changes were done correctly.
+
+Key places where the mesh naming convention is used:
+
+  * `NiModel::createMesh()` - creating a mesh with a unique name
+  * `NiTriBasedGeom::getMaterial()` - creating a unique name for a material (currently NiNode name is *not* used, but it may be used in future).
+  * `BtOgreInst::buildEntities()` - check `NiModel::mBuildData::mAnimBonesMap` to see if an `Ogre::Entity` should be inserted into `BtOgreInst::mSkeletonAnimEntities` (which is used in many places).
+  * `ForeignActivatorAnimation` ctor - to check against `BtOgreInst::mSkeletonAnimEntities`.
+  * `Animation::getBones()` - to check against `BtOgreInst::mSkeletonAnimEntities`.
+  * `Animation::activateAnimatedDoor()` - not currently used
+  * `ForeignNpcAnimation::replaceSkinTexture()` - to find the corresponding `NiNode` name to check against the results from `NiModel::fillSkinIndices()`.
+  * `mBhkRigidBodyMap` - not currently used
+
+Nest, the moving collision shape is `bhkPackedNiTriStripsShape` - this shape is considered "static" and therefore `PhysicsSystem::rotateSubObject` ignores it.  Not only that, this shape has the world transform baked in (since it is static) and can't rotate with the parent node (i.e. bone).
+
+One solution might be to somehow let the shape know that it is a target of a transform controller and build it as non-static.  The trouble is that currently `btBvhTriangleMeshShape` is used which can only be a static shape.  So some work will be required.
+
+Another solution might be to supply a MOD that "corrects" the mesh, especially if there are only a few of these.  But doing so will mean that the "hole" in the mesh may be "filled".
+
 
 
 [//]: # (/* spell spelllang=en_au syntax=cpp */)

@@ -63,7 +63,7 @@ namespace NiBtOgre
         struct EntityConstructionInfo
         {
             // A unique name for the mesh.  Uniqueness is needed by the Ogre 1.x MeshManager,
-            // possibly Ogre 2.x as well. Concatenation of model name, "@", parent NiNode name.
+            // possibly Ogre 2.x as well. Concatenation of model name, "%", parent NiNode name.
             // (e.g. meshes\\architecture\\imperialcity\\icwalltower01.nif:ICWallTower01)
             std::string                 mMeshAndNodeName;
 

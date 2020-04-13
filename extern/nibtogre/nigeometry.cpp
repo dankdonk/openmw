@@ -278,7 +278,7 @@ std::string NiBtOgre::NiTriBasedGeom::getMaterial()
     // TODO: probably don't need the parent node name, commented out for now
     return mOgreMaterial.getOrCreateMaterial((useExt ? skinTexture+"_" : "")+
                                              mModel.getName()+
-                                             "@"+/*mParent->getNodeName()+":"+*/
+                                             "%"+/*mParent->getNodeName()+":"+*/
                                              mModel.indexToString(NiObjectNET::getNameIndex()));
 }
 
@@ -687,7 +687,7 @@ bool NiBtOgre::NiTriBasedGeom::buildSubMesh(Ogre::Mesh *mesh, BoundsFinder& boun
                 continue;
 
 
-            boneInf.boneIndex = mModel.getSkeleton()->getBone(/*"#"+std::to_string(skinInstance->mBoneRefs[i])+"@"+*/nodeName)->getHandle();
+            boneInf.boneIndex = mModel.getSkeleton()->getBone(/*"#"+std::to_string(skinInstance->mBoneRefs[i])+"%"+*/nodeName)->getHandle();
 
             const std::vector<NiSkinData::SkinData::SkinWeight> &weights = skinData->mBoneList[i].vertexWeights;
             for(size_t j = 0; j < weights.size(); ++j)
@@ -754,7 +754,7 @@ bool NiBtOgre::NiTriBasedGeom::buildSubMesh(Ogre::Mesh *mesh, BoundsFinder& boun
         mesh->setSkeletonName(mModel.getName()); // FIXME: not the best place from a SubMesh?
 
         Ogre::VertexBoneAssignment boneInf;
-        boneInf.boneIndex = mModel.getSkeleton()->getBone(/*"#"+std::to_string(mParent.selfRef())+"@"+*/mParent->getName())->getHandle();
+        boneInf.boneIndex = mModel.getSkeleton()->getBone(/*"#"+std::to_string(mParent.selfRef())+"%"+*/mParent->getName())->getHandle();
 
         for (unsigned int j = 0; j < vertices.size(); ++j)
         {

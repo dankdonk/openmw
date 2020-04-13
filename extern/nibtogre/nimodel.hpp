@@ -127,7 +127,7 @@ namespace NiBtOgre
         //
         //      index = parent NiNode's block index
         //        |
-        //        |                  name  = concatenation of model, "@" and parent NiNode name
+        //        |                  name  = concatenation of model, "%" and parent NiNode name
         //        |                    |
         //        v                    v
         std::map<NiNodeRef, /*std::pair<std::string,*/ int32_t/*>*/ > mBhkRigidBodyMap;

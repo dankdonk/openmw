@@ -1923,7 +1923,7 @@ void ForeignNpcAnimation::replaceSkinTexture(NifOgre::ObjectScenePtr scene, cons
     {
         // find the coresponding NiNode
         std::string meshName = it->second->getMesh()->getName();
-        std::size_t pos = meshName.find_last_of('@');
+        std::size_t pos = meshName.find_last_of('%');
         if (pos == std::string::npos)
             continue; // shouldn't happen, throw?
 

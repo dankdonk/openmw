@@ -283,7 +283,7 @@ void NiBtOgre::NiModel::createMesh(bool isMorphed, Ogre::SkeletonPtr skeleton)
         //
         // The model name and parent node name are concatenated for use with Ogre::MeshManager
         // without triggering exeptions due to duplicates.
-        // e.g. meshes\\architecture\\imperialcity\\icwalltower01.nif@ICWallTower01
+        // e.g. meshes\\architecture\\imperialcity\\icwalltower01.nif%ICWallTower01
         //
         // NiNode index: some NIF files have the NiNode name for different nodes in the same NIF
         //   e.g. Architecture\Solitude\SolitudeBase.nif (TES5)
@@ -294,7 +294,7 @@ void NiBtOgre::NiModel::createMesh(bool isMorphed, Ogre::SkeletonPtr skeleton)
         // FIXME: consider the use of a hash (possibly the same as BSA) + block number for performance
         std::string meshName = modelName +
                                "#" + std::to_string(iter->second->selfRef()) + // node index
-                               "@" + iter->second->getName();            // node name
+                               "%" + iter->second->getName();            // node name
 
         Ogre::MeshPtr mesh = meshManager.getByName(/*boost::algorithm::to_lower_copy(meshName)*/meshName, mGroup);
         if (!mesh)
@@ -395,7 +395,7 @@ void NiBtOgre::NiModel::createCollisionshapes()
     for (; iter != rigidBodies.end(); ++iter)
     {
         //if (iter->second/*.second*/ == -1)
-            //continue;  // e.g. fire/firetorchlargesmoke.nif@DamageSphere
+            //continue;  // e.g. fire/firetorchlargesmoke.nif%DamageSphere
         // FIXME: check for phantom
 
         std::int32_t bhkRef = iter->second/*.second*/;

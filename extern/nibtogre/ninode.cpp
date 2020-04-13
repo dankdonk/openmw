@@ -281,7 +281,7 @@ void NiBtOgre::NiNode::addBones(Ogre::Skeleton *skeleton,
     // However, Lights\Chandelier01.NIF has "FlameNode0", "FlameNode0@#0", "FlameNode0@#1" and
     // "FlameNode0@#2".
     //
-    // (NOTE: Architecture\Solitude\SolitudeBase.nif (TES5) also has "Avenuesdetached" 3 times,
+    // (NOTE: TES5 Architecture\Solitude\SolitudeBase.nif (TES5) also has "Avenuesdetached" 3 times,
     // although it does not need skeleton/bones)
     //
     // One way to solve this is to add the node index to the bone name, e.g. "#8@FlameNode0"
@@ -294,7 +294,7 @@ void NiBtOgre::NiNode::addBones(Ogre::Skeleton *skeleton,
     // names can be changed similar to Chandelier01.NIF.
     //
     // FIXME: too much overhead to search each time
-    if (skeleton->hasBone(/*"#" + selfRef + "@" + */mNodeName))
+    if (skeleton->hasBone(/*"#" + selfRef + "%" + */mNodeName))
         return; // FIXME: just a hack for now
 
     Ogre::Bone *bone = nullptr;
@@ -316,10 +316,10 @@ void NiBtOgre::NiNode::addBones(Ogre::Skeleton *skeleton,
         const std::map<std::string, NiAVObjectRef>& objPalette = mModel.getObjectPalette();
         if (objPalette.find(mNodeName) != objPalette.end())
 #endif
-            bone = skeleton->createBone(/*"#" + selfRef + "@" + */mNodeName); // found, create
+            bone = skeleton->createBone(/*"#" + selfRef + "%" + */mNodeName); // found, create
     }
     else if (mNodeName != "")
-        bone = skeleton->createBone(/*"#" + selfRef + "@" + */mNodeName);
+        bone = skeleton->createBone(/*"#" + selfRef + "%" + */mNodeName);
 
     if (bone)
     {
@@ -399,7 +399,7 @@ void NiBtOgre::NiNode::addAllBones(Ogre::Skeleton *skeleton, Ogre::Bone *parentB
     if (mNodeName == "")
         bone = skeleton->createBone(); // let Ogre assign a generated name
     else
-        bone = skeleton->createBone(/*"#" + selfRef + "@" + */mNodeName);
+        bone = skeleton->createBone(/*"#" + selfRef + "%" + */mNodeName);
 
     if (parentBone)
         parentBone->addChild(bone);
@@ -644,7 +644,7 @@ void NiBtOgre::NiNode::build(BuildData *data, NiObject* parent)
     {
         //mModel.getRef<NiObject>((int32_t)mCollisionObjectRef)->build(inst, data, this);
 //      data->mBhkRigidBodyMap[NiObject::selfRef()]
-//          = std::make_pair(mModel.getName()+"@"+mNodeName,
+//          = std::make_pair(mModel.getName()+"%"+mNodeName,
 //                           mModel.getRef<bhkCollisionObject>(mCollisionObjectRef)->getBodyIndex());
     }
 
