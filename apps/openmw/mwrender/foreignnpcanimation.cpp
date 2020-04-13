@@ -44,6 +44,8 @@
 
 #include "../mwworld/esmstore.hpp"
 #include "../mwworld/inventorystoretes4.hpp"
+#include "../mwworld/inventorystorefo3.hpp"
+#include "../mwworld/inventorystoretes5.hpp"
 #include "../mwworld/class.hpp"
 
 #include "../mwclass/foreignnpc.hpp"
@@ -705,7 +707,7 @@ void ForeignNpcAnimation::updateNpcBase()
             throw std::runtime_error("ForeignNpcAnimation: not TES4");
 
         int type = 0;
-        int invSlot = MWWorld::InventoryStore::Slots;
+        int invSlot = MWWorld::InventoryStoreTES4::TES4_Slots;
         switch (index)
         {
             case(ESM4::Race::UpperBody):
@@ -749,7 +751,8 @@ void ForeignNpcAnimation::updateNpcBase()
         }
 
         // FIXME: group "General"
-        MWWorld::ContainerStoreIterator invChest = inv.getSlot(invSlot);
+        MWWorld::ContainerStoreIterator invChest
+            = static_cast<MWWorld::InventoryStoreTES4&>(inv).getSlot(invSlot);
         if (index == ESM4::Race::UpperBody || index == ESM4::Race::LowerBody) // build always
         {
             removeIndividualPart((ESM::PartReferenceType)type);

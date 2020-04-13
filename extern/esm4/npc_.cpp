@@ -34,8 +34,8 @@
 #include "reader.hpp"
 //#include "writer.hpp"
 
-ESM4::Npc::Npc() : mFormId(0), mFlags(0), mRace(0), mClass(0), mHair(0), mEyes(0), mHairLength(0.f),
-                   mDeathItem(0),
+ESM4::Npc::Npc() : mFormId(0), mFlags(0), mIsTES4(false), mIsFONV(false), mRace(0), mClass(0), mHair(0),
+                   mEyes(0), mHairLength(0.f), mDeathItem(0),
                    mScript(0), mCombatStyle(0), mSoundBase(0), mSound(0), mSoundChance(0),
                    mFootWeight(0.f), mBoundRadius(0.f), mBaseTemplate(0), mWornArmor(0), mFgRace(0)
 {
@@ -63,8 +63,11 @@ void ESM4::Npc::load(ESM4::Reader& reader)
     mFormId = reader.hdr().record.id;
     reader.adjustFormId(mFormId);
     mFlags  = reader.hdr().record.flags;
+
     std::uint32_t esmVer = reader.esmVersion();
-    bool isFONV = esmVer == ESM4::VER_132 || esmVer == ESM4::VER_133 || esmVer == ESM4::VER_134;
+    mIsTES4 = esmVer == ESM4::VER_080 || esmVer == ESM4::VER_100;
+    mIsFONV = esmVer == ESM4::VER_132 || esmVer == ESM4::VER_133 || esmVer == ESM4::VER_134;
+    //mIsTES5 = esmVer == ESM4::VER_094 || esmVer == ESM4::VER_170; // WARN: FO3 is also VER_094
 
     while (reader.getSubRecordHeader())
     {
@@ -120,18 +123,18 @@ void ESM4::Npc::load(ESM4::Reader& reader)
             //
             case ESM4::SUB_AIDT:
             {
-                if (esmVer == ESM4::VER_094 || esmVer == ESM4::VER_170 || isFONV)
+                if (esmVer == ESM4::VER_094 || esmVer == ESM4::VER_170 || mIsFONV)
                 {
                     reader.skipSubRecordData(); // FIXME: process the subrecord rather than skip
                     break;
                 }
 
-                reader.get(mAIData);
+                reader.get(mAIData); // TES4
                 break;
             }
             case ESM4::SUB_ACBS:
             {
-                //if (esmVer == ESM4::VER_094 || esmVer == ESM4::VER_170 || isFONV)
+                //if (esmVer == ESM4::VER_094 || esmVer == ESM4::VER_170 || mIsFONV)
                 if (subHdr.dataSize == 24)
                     reader.get(mBaseConfig);
                 else
@@ -141,7 +144,7 @@ void ESM4::Npc::load(ESM4::Reader& reader)
             }
             case ESM4::SUB_DATA:
             {
-                if (esmVer == ESM4::VER_094 || esmVer == ESM4::VER_170 || isFONV)
+                if (esmVer == ESM4::VER_094 || esmVer == ESM4::VER_170 || mIsFONV)
                 {
                     if (subHdr.dataSize != 0) // FIXME FO3
                         reader.skipSubRecordData();

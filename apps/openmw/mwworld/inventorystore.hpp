@@ -97,6 +97,7 @@ namespace MWWorld
 
         protected:
             TSlots mSlots;
+        public:
             virtual int getNumSlots() const { return Slots; }
         private:
 

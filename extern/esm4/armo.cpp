@@ -32,7 +32,8 @@
 #include "reader.hpp"
 //#include "writer.hpp"
 
-ESM4::Armor::Armor() : mFormId(0), mFlags(0), mBoundRadius(0.f), mArmorFlags(0), mGeneralFlags(0), mARMA(0)
+ESM4::Armor::Armor() : mFormId(0), mFlags(0), mIsTES4(false), mIsFO3(false), mIsFONV(false),
+                       mBoundRadius(0.f), mArmorFlags(0), mGeneralFlags(0), mARMA(0)
 {
     mEditorId.clear();
     mFullName.clear();
@@ -60,7 +61,7 @@ void ESM4::Armor::load(ESM4::Reader& reader)
     reader.adjustFormId(mFormId);
     mFlags  = reader.hdr().record.flags;
     std::uint32_t esmVer = reader.esmVersion();
-    bool isFONV = esmVer == ESM4::VER_132 || esmVer == ESM4::VER_133 || esmVer == ESM4::VER_134;
+    bool mIsFONV = esmVer == ESM4::VER_132 || esmVer == ESM4::VER_133 || esmVer == ESM4::VER_134;
 
     while (reader.getSubRecordHeader())
     {
@@ -84,15 +85,19 @@ void ESM4::Armor::load(ESM4::Reader& reader)
                 {
                     reader.get(mData.value);
                     reader.get(mData.weight);
+                    mIsFO3 = true;
                 }
-                else if (isFONV || subHdr.dataSize == 12)
+                else if (mIsFONV || subHdr.dataSize == 12)
                 {
                     reader.get(mData.value);
                     reader.get(mData.health);
                     reader.get(mData.weight);
                 }
                 else
+                {
                     reader.get(mData); // TES4
+                    mIsTES4 = true;
+                }
 
                 break;
             }

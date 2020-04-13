@@ -6,6 +6,8 @@
 namespace MWWorld
 {
     class InventoryStoreTES4;
+    class InventoryStoreFO3;
+    class InventoryStoreTES5;
 }
 
 namespace MWClass
@@ -48,6 +50,8 @@ namespace MWClass
 
             virtual MWWorld::InventoryStore& getInventoryStore (const MWWorld::Ptr& ptr) const;
             MWWorld::InventoryStoreTES4& getInventoryStoreTES4 (const MWWorld::Ptr& ptr) const;
+            MWWorld::InventoryStoreFO3& getInventoryStoreFO3 (const MWWorld::Ptr& ptr) const;
+            MWWorld::InventoryStoreTES5& getInventoryStoreTES5 (const MWWorld::Ptr& ptr) const;
             ///< Return inventory store
 
             virtual MWMechanics::Movement& getMovementSettings (const MWWorld::Ptr& ptr) const;

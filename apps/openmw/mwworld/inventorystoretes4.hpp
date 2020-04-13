@@ -39,6 +39,8 @@ namespace MWWorld
             virtual void autoEquip (const MWWorld::Ptr& actor);
 
             virtual int getNumSlots() const { return TES4_Slots; }
+
+            virtual InventoryStore* clone() { return new InventoryStoreTES4(*this); }
     };
 }
 

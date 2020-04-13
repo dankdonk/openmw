@@ -14,6 +14,8 @@
 #include "../mwworld/physicssystem.hpp"
 #include "../mwworld/cellstore.hpp"
 #include "../mwworld/inventorystoretes4.hpp"
+#include "../mwworld/inventorystorefo3.hpp"
+#include "../mwworld/inventorystoretes5.hpp"
 
 #include "../mwrender/objects.hpp"
 #include "../mwrender/renderinginterface.hpp"
@@ -130,9 +132,11 @@ namespace MWClass
 
         std::vector<int> slots_;
 
-        const int size = 7;
+        const int sizeTES4 = 7;
+        const int sizeFO3 = 17; // ?
+        const int sizeTES5 = 29; // ?
 
-        static const int sMapping[size][2] =
+        static const int sMappingTES4[sizeTES4][2] =
         {
             { ESM4::Armor::TES4_Hair,      MWWorld::InventoryStoreTES4::Slot_TES4_Hair },
             { ESM4::Armor::TES4_UpperBody, MWWorld::InventoryStoreTES4::Slot_TES4_UpperBody },
@@ -143,7 +147,81 @@ namespace MWClass
             { ESM4::Armor::TES4_Tail,      MWWorld::InventoryStoreTES4::Slot_TES4_Tail },
         };
 
-        for (int i=0; i<size; ++i)
+        static const int sMappingFO3[sizeFO3][2] =
+        {
+            { ESM4::Armor::FO3_Hair,        MWWorld::InventoryStoreFO3::Slot_FO3_Hair },
+            { ESM4::Armor::FO3_UpperBody,   MWWorld::InventoryStoreFO3::Slot_FO3_UpperBody },
+            { ESM4::Armor::FO3_LeftHand,    MWWorld::InventoryStoreFO3::Slot_FO3_LeftHand },
+            { ESM4::Armor::FO3_RightHand,   MWWorld::InventoryStoreFO3::Slot_FO3_RightHand },
+            { ESM4::Armor::FO3_PipBoy,      MWWorld::InventoryStoreFO3::Slot_FO3_PipBoy },
+            { ESM4::Armor::FO3_Backpack,    MWWorld::InventoryStoreFO3::Slot_FO3_Backpack },
+            { ESM4::Armor::FO3_Necklace,    MWWorld::InventoryStoreFO3::Slot_FO3_Necklace },
+            { ESM4::Armor::FO3_Headband,    MWWorld::InventoryStoreFO3::Slot_FO3_Headband },
+            { ESM4::Armor::FO3_Hat,         MWWorld::InventoryStoreFO3::Slot_FO3_Hat },
+            { ESM4::Armor::FO3_EyeGlasses,  MWWorld::InventoryStoreFO3::Slot_FO3_EyeGlasses },
+            { ESM4::Armor::FO3_NoseRing,    MWWorld::InventoryStoreFO3::Slot_FO3_NoseRing },
+            { ESM4::Armor::FO3_Earrings,    MWWorld::InventoryStoreFO3::Slot_FO3_Earrings },
+            { ESM4::Armor::FO3_Mask,        MWWorld::InventoryStoreFO3::Slot_FO3_Mask },
+            { ESM4::Armor::FO3_MouthObject, MWWorld::InventoryStoreFO3::Slot_FO3_MouthObject },
+            { ESM4::Armor::FO3_BodyAddOn1,  MWWorld::InventoryStoreFO3::Slot_FO3_BodyAddOn1 }, //?
+            { ESM4::Armor::FO3_BodyAddOn2,  MWWorld::InventoryStoreFO3::Slot_FO3_BodyAddOn2 }, //?
+            { ESM4::Armor::FO3_BodyAddOn3,  MWWorld::InventoryStoreFO3::Slot_FO3_BodyAddOn3 }, //?
+        };
+
+        static const int sMappingTES5[sizeTES5][2] =
+        {
+            { ESM4::Armor::TES5_Hair,        MWWorld::InventoryStoreTES5::Slot_TES5_Hair },
+            { ESM4::Armor::TES5_Body,        MWWorld::InventoryStoreTES5::Slot_TES5_Body },
+            { ESM4::Armor::TES5_Hands,       MWWorld::InventoryStoreTES5::Slot_TES5_Hands },
+            { ESM4::Armor::TES5_Forearms,    MWWorld::InventoryStoreTES5::Slot_TES5_Forearms },
+            { ESM4::Armor::TES5_Amulet,      MWWorld::InventoryStoreTES5::Slot_TES5_Amulet },
+            { ESM4::Armor::TES5_Ring,        MWWorld::InventoryStoreTES5::Slot_TES5_Ring },
+            { ESM4::Armor::TES5_Feet,        MWWorld::InventoryStoreTES5::Slot_TES5_Feet },
+            { ESM4::Armor::TES5_Calves,      MWWorld::InventoryStoreTES5::Slot_TES5_Calves },
+            { ESM4::Armor::TES5_Shield,      MWWorld::InventoryStoreTES5::Slot_TES5_Shield },
+            { ESM4::Armor::TES5_Tail,        MWWorld::InventoryStoreTES5::Slot_TES5_Tail },
+            { ESM4::Armor::TES5_LongHair,    MWWorld::InventoryStoreTES5::Slot_TES5_LongHair }, //?
+            { ESM4::Armor::TES5_Circlet,     MWWorld::InventoryStoreTES5::Slot_TES5_Circlet },
+            { ESM4::Armor::TES5_Ears,        MWWorld::InventoryStoreTES5::Slot_TES5_Ears },
+            { ESM4::Armor::TES5_BodyAddOn3,  MWWorld::InventoryStoreTES5::Slot_TES5_BodyAddOn3 }, //?
+            { ESM4::Armor::TES5_BodyAddOn4,  MWWorld::InventoryStoreTES5::Slot_TES5_BodyAddOn4 }, //?
+            { ESM4::Armor::TES5_BodyAddOn5,  MWWorld::InventoryStoreTES5::Slot_TES5_BodyAddOn5 }, //?
+            { ESM4::Armor::TES5_BodyAddOn6,  MWWorld::InventoryStoreTES5::Slot_TES5_BodyAddOn6 }, //?
+            { ESM4::Armor::TES5_BodyAddOn7,  MWWorld::InventoryStoreTES5::Slot_TES5_BodyAddOn7 }, //?
+            { ESM4::Armor::TES5_BodyAddOn8,  MWWorld::InventoryStoreTES5::Slot_TES5_BodyAddOn8 }, //?
+            { ESM4::Armor::TES5_BodyAddOn9,  MWWorld::InventoryStoreTES5::Slot_TES5_BodyAddOn9 }, //?
+            { ESM4::Armor::TES5_BodyAddOn10, MWWorld::InventoryStoreTES5::Slot_TES5_BodyAddOn10 }, //?
+            { ESM4::Armor::TES5_BodyAddOn11, MWWorld::InventoryStoreTES5::Slot_TES5_BodyAddOn11 }, //?
+            { ESM4::Armor::TES5_BodyAddOn12, MWWorld::InventoryStoreTES5::Slot_TES5_BodyAddOn12 }, //?
+            { ESM4::Armor::TES5_BodyAddOn13, MWWorld::InventoryStoreTES5::Slot_TES5_BodyAddOn13 }, //?
+            { ESM4::Armor::TES5_BodyAddOn14, MWWorld::InventoryStoreTES5::Slot_TES5_BodyAddOn14 }, //?
+            { ESM4::Armor::TES5_BodyAddOn15, MWWorld::InventoryStoreTES5::Slot_TES5_BodyAddOn15 }, //?
+            { ESM4::Armor::TES5_BodyAddOn16, MWWorld::InventoryStoreTES5::Slot_TES5_BodyAddOn16 }, //?
+            { ESM4::Armor::TES5_BodyAddOn17, MWWorld::InventoryStoreTES5::Slot_TES5_BodyAddOn17 }, //?
+            //TES5_DecapHead
+            //TES5_Decapitate
+            //TES5_FX01
+        };
+
+        const int (*sMapping)[2];
+        std::size_t size;
+        if (ref->mBase->mIsTES4)
+        {
+            sMapping = &sMappingTES4[0];
+            size = sizeTES4;
+        }
+        else if (ref->mBase->mIsFO3 || ref->mBase->mIsFONV)
+        {
+            sMapping = &sMappingFO3[0];
+            size = sizeFO3;
+        }
+        else
+        {
+            sMapping = &sMappingTES5[0];
+            size = sizeTES5;
+        }
+
+        for (std::size_t i = 0; i < size; ++i)
             if ((sMapping[i][0] & ref->mBase->mArmorFlags) != 0)
                 slots_.push_back (int (sMapping[i][1]));
 

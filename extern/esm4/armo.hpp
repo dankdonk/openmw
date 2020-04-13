@@ -149,6 +149,10 @@ namespace ESM4
         FormId mFormId;       // from the header
         std::uint32_t mFlags; // from the header, see enum type RecordFlag for details
 
+        bool mIsTES4; // TODO: check that these match the general flags
+        bool mIsFO3;
+        bool mIsFONV;
+
         std::string mEditorId;
         std::string mFullName;
         std::string mModelMale;

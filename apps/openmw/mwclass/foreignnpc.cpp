@@ -14,6 +14,8 @@
 #include "../mwworld/cellstore.hpp"
 #include "../mwworld/customdata.hpp"
 #include "../mwworld/inventorystoretes4.hpp"
+#include "../mwworld/inventorystorefo3.hpp"
+#include "../mwworld/inventorystoretes5.hpp"
 #include "../mwworld/esmstore.hpp"
 
 #include "../mwmechanics/npcstats.hpp"
@@ -30,14 +32,56 @@ namespace
     {
         MWMechanics::NpcStats mNpcStats;
         MWMechanics::Movement mMovement;
-        MWWorld::InventoryStoreTES4 mInventoryStore;
+        MWWorld::InventoryStore *mInventoryStore;
+        int mGameType; // FIXME: make enum
+
+        ForeignNpcCustomData(const ESM4::Npc& npc)
+        {
+            bool isTES5 = false;
+            const MWWorld::ESMStore &store = MWBase::Environment::get().getWorld()->getStore();
+            const ESM4::Race *race = store.getForeign<ESM4::Race>().search(npc.mRace);
+            if (race)
+                isTES5 = race->mIsTES5;
+
+            if (npc.mIsTES4)
+            {
+                mGameType = 0;
+                mInventoryStore = new MWWorld::InventoryStoreTES4();
+            }
+            else if (isTES5)
+            {
+                mGameType = 2;
+                mInventoryStore = new MWWorld::InventoryStoreTES5();
+            }
+            else// if (npc.mIsFONV)
+            {
+                mGameType = 1;
+                mInventoryStore = new MWWorld::InventoryStoreFO3();
+            }
+
+        }
+
+        ~ForeignNpcCustomData()
+        {
+            if (mInventoryStore)
+                delete mInventoryStore;
+        }
 
         virtual MWWorld::CustomData *clone() const;
     };
 
     MWWorld::CustomData *ForeignNpcCustomData::clone() const
     {
-        return new ForeignNpcCustomData (*this);
+        ForeignNpcCustomData *clone = new ForeignNpcCustomData (*this);
+        switch (mGameType)
+        {
+            case 0: clone->mInventoryStore = new MWWorld::InventoryStoreTES4(); break;
+            case 1: clone->mInventoryStore = new MWWorld::InventoryStoreFO3(); break;
+            case 2: clone->mInventoryStore = new MWWorld::InventoryStoreTES5(); break;
+            default: break;
+        }
+
+        return clone;
     }
 }
 
@@ -134,21 +178,35 @@ namespace MWClass
     {
         ensureCustomData (ptr);
 
-        return dynamic_cast<ForeignNpcCustomData&> (*ptr.getRefData().getCustomData()).mInventoryStore;
+        return *(dynamic_cast<ForeignNpcCustomData&> (*ptr.getRefData().getCustomData()).mInventoryStore);
     }
 
     MWWorld::InventoryStore& ForeignNpc::getInventoryStore (const MWWorld::Ptr& ptr) const
     {
         ensureCustomData (ptr);
 
-        return dynamic_cast<ForeignNpcCustomData&> (*ptr.getRefData().getCustomData()).mInventoryStore;
+        return *(dynamic_cast<ForeignNpcCustomData&> (*ptr.getRefData().getCustomData()).mInventoryStore);
     }
 
     MWWorld::InventoryStoreTES4& ForeignNpc::getInventoryStoreTES4 (const MWWorld::Ptr& ptr) const
     {
         ensureCustomData (ptr);
 
-        return dynamic_cast<ForeignNpcCustomData&> (*ptr.getRefData().getCustomData()).mInventoryStore;
+        return dynamic_cast<MWWorld::InventoryStoreTES4&>(*(dynamic_cast<ForeignNpcCustomData&> (*ptr.getRefData().getCustomData()).mInventoryStore));
+    }
+
+    MWWorld::InventoryStoreFO3& ForeignNpc::getInventoryStoreFO3 (const MWWorld::Ptr& ptr) const
+    {
+        ensureCustomData (ptr);
+
+        return dynamic_cast<MWWorld::InventoryStoreFO3&>(*(dynamic_cast<ForeignNpcCustomData&> (*ptr.getRefData().getCustomData()).mInventoryStore));
+    }
+
+    MWWorld::InventoryStoreTES5& ForeignNpc::getInventoryStoreTES5 (const MWWorld::Ptr& ptr) const
+    {
+        ensureCustomData (ptr);
+
+        return dynamic_cast<MWWorld::InventoryStoreTES5&>(*(dynamic_cast<ForeignNpcCustomData&> (*ptr.getRefData().getCustomData()).mInventoryStore));
     }
 
     bool ForeignNpc::hasToolTip (const MWWorld::Ptr& ptr) const
@@ -218,10 +276,11 @@ namespace MWClass
     {
         if (!ptr.getRefData().getCustomData())
         {
-            std::auto_ptr<ForeignNpcCustomData> data(new ForeignNpcCustomData);
-
             MWWorld::LiveCellRef<ESM4::Npc> *ref = ptr.get<ESM4::Npc>();
 
+            std::auto_ptr<ForeignNpcCustomData> data(new ForeignNpcCustomData(*ref->mBase));
+
+            // FIXME: only for TES4 at the momemnt
             // creature stats
             int gold = 0;
             if ((ref->mBase->mBaseConfig.tes4.flags & ESM4::Npc::TES4_AutoCalcStats) == 0)
@@ -431,15 +490,22 @@ namespace MWClass
             }
 
             // this "fills" the inventory with iterators for quick access?
-            data->mInventoryStore.fill(inventory, getId(ptr));
+            data->mInventoryStore->fill(inventory, getId(ptr));
 
             data->mNpcStats.setGoldPool(gold);
+
+            int gameType = data->mGameType;
 
             // store the data
             ptr.getRefData().setCustomData (data.release());
 
             // assign some of the inventory to the equipment "slots"
-            static_cast<MWWorld::InventoryStoreTES4&>(getInventoryStore(ptr)).autoEquip(ptr);
+            if (gameType == 0)
+                static_cast<MWWorld::InventoryStoreTES4&>(getInventoryStore(ptr)).autoEquip(ptr);
+            else if (gameType == 1)
+                static_cast<MWWorld::InventoryStoreFO3&>(getInventoryStore(ptr)).autoEquip(ptr);
+            else
+                static_cast<MWWorld::InventoryStoreTES5&>(getInventoryStore(ptr)).autoEquip(ptr);
         }
     }
 
