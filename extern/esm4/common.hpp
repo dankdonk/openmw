@@ -988,45 +988,53 @@ namespace ESM4
         std::uint8_t  luck;
     };
 
-    struct ActorBaseConfig
+    struct ACBS_TES4
     {
-#if 0
-        enum ACBS_NPC
-        {
-            ACBS_Female               = 0x000001,
-            ACBS_Essential            = 0x000002,
-            ACBS_Respawn              = 0x000008,
-            ACBS_Autocalcstats        = 0x000010,
-            ACBS_PCLevelOffset        = 0x000080,
-            ACBS_NoLowLevelProcessing = 0x000200,
-            ACBS_NoRumors             = 0x002000,
-            ACBS_Summonable           = 0x004000,
-            ACBS_NoPersuasion         = 0x008000, // different meaning to crea
-            ACBS_CanCorpseCheck       = 0x100000  // opposite of crea
-        };
-
-        enum ACBS_CREA
-        {
-            ACBS_Essential            = 0x000002,
-            ACBS_WeapAndShield        = 0x000004,
-            ACBS_Respawn              = 0x000008,
-            ACBS_PCLevelOffset        = 0x000080,
-            ACBS_NoLowLevelProcessing = 0x000200,
-            ACBS_NoHead               = 0x008000, // different meaning to npc_
-            ACBS_NoRightArm           = 0x010000,
-            ACBS_NoLeftArm            = 0x020000,
-            ACBS_NoCombatWater        = 0x040000,
-            ACBS_NoShadow             = 0x080000,
-            ACBS_NoCorpseCheck        = 0x100000  // opposite of npc_
-        };
-#endif
         std::uint32_t flags;
-        std::uint16_t baseSpell;  // Base spell points
-        std::uint16_t fatigue;    // Fatigue
-        std::uint16_t barterGold; // Barter gold
-        std::int16_t  level;      // Level/Offset level
-        std::uint16_t calcMin;    // Calc Min
-        std::uint16_t calcMax;    // Calc Max
+        std::uint16_t baseSpell;
+        std::uint16_t fatigue;
+        std::uint16_t barterGold;
+        std::int16_t  levelOrOffset;
+        std::uint16_t calcMin;
+        std::uint16_t calcMax;
+        std::uint32_t padding1;
+        std::uint32_t padding2;
+    };
+
+    struct ACBS_FO3
+    {
+        std::uint32_t flags;
+        std::uint16_t fatigue;
+        std::uint16_t barterGold;
+        std::int16_t  levelOrMult;
+        std::uint16_t calcMinlevel;
+        std::uint16_t calcMaxlevel;
+        std::uint16_t speedMultiplier;
+        float         karma;
+        std::int16_t  dispositionBase;
+        std::uint16_t templateFlags;
+    };
+
+    struct ACBS_TES5
+    {
+        std::uint32_t flags;
+        std::uint16_t magickaOffset;
+        std::uint16_t staminaOffset;
+        std::uint16_t levelOrMult;     // TODO: check if int16_t
+        std::uint16_t calcMinlevel;
+        std::uint16_t calcMaxlevel;
+        std::uint16_t speedMultiplier;
+        std::uint16_t dispositionBase; // TODO: check if int16_t
+        std::uint16_t templateFlags;
+        std::uint16_t healthOffset;
+        std::uint16_t bleedoutOverride;
+    };
+
+    union ActorBaseConfig
+    {
+        ACBS_TES4 tes4;
+        ACBS_FO3  fo3;
+        ACBS_TES5 tes5;
     };
 
     struct ActorFaction

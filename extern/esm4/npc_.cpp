@@ -51,7 +51,6 @@ ESM4::Npc::Npc() : mFormId(0), mFlags(0), mRace(0), mClass(0), mHair(0), mEyes(0
     std::memset(&mAIData, 0, sizeof(AIData));
     std::memset(&mData, 0, sizeof(Data));
     std::memset(&mBaseConfig, 0, sizeof(ActorBaseConfig));
-    std::memset(&mActorBaseConfig, 0, sizeof(ACBS));
     std::memset(&mFaction, 0, sizeof(ActorFaction));
 }
 
@@ -132,13 +131,12 @@ void ESM4::Npc::load(ESM4::Reader& reader)
             }
             case ESM4::SUB_ACBS:
             {
-                if (esmVer == ESM4::VER_094 || esmVer == ESM4::VER_170 || isFONV)
-                {
-                    reader.skipSubRecordData(); // FIXME: process the subrecord rather than skip
-                    break;
-                }
+                //if (esmVer == ESM4::VER_094 || esmVer == ESM4::VER_170 || isFONV)
+                if (subHdr.dataSize == 24)
+                    reader.get(mBaseConfig);
+                else
+                    reader.get(&mBaseConfig, 16); // TES4
 
-                reader.get(mBaseConfig);
                 break;
             }
             case ESM4::SUB_DATA:

@@ -28,14 +28,13 @@ namespace MWClass
             ///< \return name (the one that is to be presented to the user; not the internal one);
             /// can return an empty string.
 
-            MWWorld::InventoryStoreTES4& getInventoryStoreTES4 (const MWWorld::Ptr& ptr) const;
-
             static void registerSelf();
 
             virtual std::string getModel(const MWWorld::Ptr &ptr) const;
 
             void ensureCustomData (const MWWorld::Ptr& ptr) const;
             MWWorld::InventoryStore& getInventoryStore (const MWWorld::Ptr& ptr) const;
+            MWWorld::InventoryStoreTES4& getInventoryStoreTES4 (const MWWorld::Ptr& ptr) const;
             MWMechanics::CreatureStats& getCreatureStats (const MWWorld::Ptr& ptr) const;
             MWMechanics::Movement& getMovementSettings (const MWWorld::Ptr& ptr) const;
     };

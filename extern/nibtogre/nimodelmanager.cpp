@@ -362,7 +362,7 @@ namespace NiBtOgre
             // FIXME: case sensitive!
             if (bInfo.bodyPart == BP_Head && bInfo.baseNif.find("HeadHuman.nif") != std::string::npos)
             {
-                bool isFemale = (bInfo.npc->mBaseConfig.flags & 0x1) != 0;
+                bool isFemale = (bInfo.npc->mBaseConfig.tes4.flags & 0x1) != 0;
 
                 std::string ageTextureFile
                     = sam.getHeadHumanDetailTexture(bInfo.baseNif, sam.getAge(sRaceCoeff, sCoeff), isFemale);

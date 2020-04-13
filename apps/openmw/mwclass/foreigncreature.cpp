@@ -95,13 +95,6 @@ namespace MWClass
 #endif
     }
 
-    MWWorld::InventoryStoreTES4& ForeignCreature::getInventoryStoreTES4 (const MWWorld::Ptr& ptr) const
-    {
-        ensureCustomData (ptr);
-
-        return dynamic_cast<ForeignCreatureCustomData&> (*ptr.getRefData().getCustomData()).mInventoryStore;
-    }
-
     std::string ForeignCreature::getName (const MWWorld::Ptr& ptr) const
     {
         return "";
@@ -129,93 +122,25 @@ namespace MWClass
 
             MWWorld::LiveCellRef<ESM4::Creature> *ref = ptr.get<ESM4::Creature>();
 
-            // creature stats
-            int gold = 0;
-            if ((ref->mBase->mBaseConfig.flags & /*ACBS_Autocalcstats*/0x000010) != 0)
-            {
-                gold = ref->mBase->mBaseConfig.barterGold;
+            // creature stats (no autocalc)
+            int gold = ref->mBase->mBaseConfig.tes4.barterGold;
 
-                data->mCreatureStats.setAttribute(ESM::Attribute::Strength, ref->mBase->mData.attribs.strength);
-                data->mCreatureStats.setAttribute(ESM::Attribute::Intelligence, ref->mBase->mData.attribs.intelligence);
-                data->mCreatureStats.setAttribute(ESM::Attribute::Willpower, ref->mBase->mData.attribs.willpower);
-                data->mCreatureStats.setAttribute(ESM::Attribute::Agility, ref->mBase->mData.attribs.agility);
-                data->mCreatureStats.setAttribute(ESM::Attribute::Speed, ref->mBase->mData.attribs.speed);
-                data->mCreatureStats.setAttribute(ESM::Attribute::Endurance, ref->mBase->mData.attribs.endurance);
-                data->mCreatureStats.setAttribute(ESM::Attribute::Personality, ref->mBase->mData.attribs.personality);
-                data->mCreatureStats.setAttribute(ESM::Attribute::Luck, ref->mBase->mData.attribs.luck);
+            data->mCreatureStats.setAttribute(ESM::Attribute::Strength, ref->mBase->mData.attribs.strength);
+            data->mCreatureStats.setAttribute(ESM::Attribute::Intelligence, ref->mBase->mData.attribs.intelligence);
+            data->mCreatureStats.setAttribute(ESM::Attribute::Willpower, ref->mBase->mData.attribs.willpower);
+            data->mCreatureStats.setAttribute(ESM::Attribute::Agility, ref->mBase->mData.attribs.agility);
+            data->mCreatureStats.setAttribute(ESM::Attribute::Speed, ref->mBase->mData.attribs.speed);
+            data->mCreatureStats.setAttribute(ESM::Attribute::Endurance, ref->mBase->mData.attribs.endurance);
+            data->mCreatureStats.setAttribute(ESM::Attribute::Personality, ref->mBase->mData.attribs.personality);
+            data->mCreatureStats.setAttribute(ESM::Attribute::Luck, ref->mBase->mData.attribs.luck);
 
-                data->mCreatureStats.setHealth (/*ref->mBase->mData.health*/ 50); // FIXME: uint32 to float
-                data->mCreatureStats.setMagicka (ref->mBase->mBaseConfig.baseSpell);
-                data->mCreatureStats.setFatigue (ref->mBase->mBaseConfig.fatigue);
+            data->mCreatureStats.setHealth (/*float(ref->mBase->mData.health)*/ 50.f); // FIXME: temp testing
+            data->mCreatureStats.setMagicka (ref->mBase->mBaseConfig.tes4.baseSpell);
+            data->mCreatureStats.setFatigue (/*ref->mBase->mBaseConfig.tes4.fatigue*/ 20); // FIXME: for testing
 
-                data->mCreatureStats.setLevel(ref->mBase->mBaseConfig.level);
+            data->mCreatureStats.setLevel(ref->mBase->mBaseConfig.tes4.levelOrOffset);
 
-                data->mCreatureStats.setNeedRecalcDynamicStats(false);
-            }
-            else // FIXME autocalc
-            {
-                gold = ref->mBase->mBaseConfig.barterGold;
-
-                data->mCreatureStats.setHealth (/*ref->mBase->mData.health*/ 50); // FIXME: uint32 to float
-                data->mCreatureStats.setMagicka (ref->mBase->mBaseConfig.baseSpell);
-                data->mCreatureStats.setFatigue (ref->mBase->mBaseConfig.fatigue);
-
-                for (int i=0; i<3; ++i)
-                    data->mCreatureStats.setDynamic (i, 10);
-
-                data->mCreatureStats.setLevel(ref->mBase->mBaseConfig.level);
-
-                //autoCalculateAttributes(ref->mBase, data->mCreatureStats);
-                //autoCalculateSkills(ref->mBase, data->mCreatureStats, ptr);
-
-                data->mCreatureStats.setNeedRecalcDynamicStats(true);
-            }
-#if 0
-            // race powers
-            const ESM::Race *race = MWBase::Environment::get().getWorld()->getStore().get<ESM::Race>().find(ref->mBase->mRace);
-            for (std::vector<std::string>::const_iterator iter (race->mPowers.mList.begin());
-                iter!=race->mPowers.mList.end(); ++iter)
-            {
-                if (const ESM::Spell* spell = MWBase::Environment::get().getWorld()->getStore().get<ESM::Spell>().search(*iter))
-                    data->mCreatureStats.getSpells().add (spell);
-                else
-                    std::cerr << "Warning: ignoring nonexistent race power '" << *iter << "' on NPC '" << ref->mBase->mId << "'" << std::endl;
-            }
-
-#endif
-#if 0
-            if (!ref->mBase->mFaction.empty())
-            {
-                static const int iAutoRepFacMod = MWBase::Environment::get().getWorld()->getStore().get<ESM::GameSetting>()
-                        .find("iAutoRepFacMod")->getInt();
-                static const int iAutoRepLevMod = MWBase::Environment::get().getWorld()->getStore().get<ESM::GameSetting>()
-                        .find("iAutoRepLevMod")->getInt();
-                int rank = ref->mBase->getFactionRank();
-
-                data->mCreatureStats.setReputation(iAutoRepFacMod * (rank+1) + iAutoRepLevMod * (data->mCreatureStats.getLevel()-1));
-            }
-#endif
-#if 0
-            data->mCreatureStats.getAiSequence().fill(ref->mBase->mAiPackage);
-
-            data->mCreatureStats.setAiSetting (MWMechanics::CreatureStats::AI_Hello, ref->mBase->mAiData.mHello);
-            data->mCreatureStats.setAiSetting (MWMechanics::CreatureStats::AI_Fight, ref->mBase->mAiData.mFight);
-            data->mCreatureStats.setAiSetting (MWMechanics::CreatureStats::AI_Flee, ref->mBase->mAiData.mFlee);
-            data->mCreatureStats.setAiSetting (MWMechanics::CreatureStats::AI_Alarm, ref->mBase->mAiData.mAlarm);
-
-            // spells
-            for (std::vector<std::string>::const_iterator iter (ref->mBase->mSpells.mList.begin());
-                iter!=ref->mBase->mSpells.mList.end(); ++iter)
-            {
-                if (const ESM::Spell* spell = MWBase::Environment::get().getWorld()->getStore().get<ESM::Spell>().search(*iter))
-                    data->mCreatureStats.getSpells().add (spell);
-                else
-                {
-                    /// \todo add option to make this a fatal error message pop-up, but default to warning for vanilla compatibility
-                    std::cerr << "Warning: ignoring nonexistent spell '" << *iter << "' on NPC '" << ref->mBase->mId << "'" << std::endl;
-                }
-            }
-#endif
+            data->mCreatureStats.setNeedRecalcDynamicStats(false);
 
             // inventory
             // setting ownership is used to make the NPC auto-equip his initial equipment only, and not bartered items
@@ -241,6 +166,13 @@ namespace MWClass
     }
 
     MWWorld::InventoryStore& ForeignCreature::getInventoryStore (const MWWorld::Ptr& ptr) const
+    {
+        ensureCustomData (ptr);
+
+        return dynamic_cast<ForeignCreatureCustomData&> (*ptr.getRefData().getCustomData()).mInventoryStore;
+    }
+
+    MWWorld::InventoryStoreTES4& ForeignCreature::getInventoryStoreTES4 (const MWWorld::Ptr& ptr) const
     {
         ensureCustomData (ptr);
 

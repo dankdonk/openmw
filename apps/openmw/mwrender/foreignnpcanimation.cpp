@@ -351,7 +351,7 @@ void ForeignNpcAnimation::updateNpcBase()
         throw std::runtime_error(mNpc->mEditorId + " NPC skeleton.nif path could not be derived.");
 
     std::string skeletonPath = skeletonModel.substr(0, pos+1); // +1 is for '\\'
-    bool isFemale = (mNpc->mBaseConfig.flags & 0x1) != 0; // FIXME: move to constructor?
+    bool isFemale = (mNpc->mBaseConfig.tes4.flags & 0x1) != 0; // FIXME: move to constructor?
 
     NiBtOgre::NiModelManager& modelManager = NiBtOgre::NiModelManager::getSingleton();
     std::string group("General");
@@ -451,7 +451,7 @@ void ForeignNpcAnimation::updateNpcBase()
     }
     else
     {
-        bool isFemale = (mNpc->mBaseConfig.flags & 0x000001) != 0; // 0x1 means female
+        bool isFemale = (mNpc->mBaseConfig.tes4.flags & 0x000001) != 0; // 0x1 means female
 #if 0
         if(isWerewolf)
             addAnimSource(skeletonModel);
@@ -815,7 +815,7 @@ void ForeignNpcAnimation::updateNpcBase()
         else if (0) // FO3
         {
             isTES4 = false;
-            isFemale = (mNpc->mActorBaseConfig.flags & 0x1) != 0;
+            isFemale = (mNpc->mBaseConfig.tes5.flags & 0x1) != 0;
 
             // FIXME: can be female, ghoul, child, old, etc
             if (mRace->mEditorId.find("Old") != std::string::npos)
@@ -1527,7 +1527,7 @@ std::string ForeignNpcAnimation::getSkeletonModel(const MWWorld::ESMStore& store
 
         if (type == MKTAG('_', 'N', 'P', 'C'))
         {
-            if ((mNpc->mActorBaseConfig.flags & 0x1) != 0) // female
+            if ((mNpc->mBaseConfig.tes5.flags & 0x1) != 0) // female
                 return  "meshes\\" + mRace->mModelFemale; // TODO: check if this can be empty
             else
                 return "meshes\\" + mRace->mModelMale;
@@ -2805,7 +2805,7 @@ void ForeignNpcAnimation::addPartGroup(int group, int priority, const std::vecto
     for(;part != parts.end();++part)
     {
         const ESM::BodyPart *bodypart = 0;
-        bool isFemale = (mNpc->mBaseConfig.flags & 0x000001) != 0; // 0x1 means female
+        bool isFemale = (mNpc->mBaseConfig.tes4.flags & 0x000001) != 0; // 0x1 means female
         if(isFemale && !part->mFemale.empty())
         {
             bodypart = partStore.search(part->mFemale+ext);

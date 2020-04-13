@@ -224,9 +224,9 @@ namespace MWClass
 
             // creature stats
             int gold = 0;
-            if ((ref->mBase->mBaseConfig.flags & /*ACBS_Autocalcstats*/0x000010) != 0)
+            if ((ref->mBase->mBaseConfig.tes4.flags & ESM4::Npc::TES4_AutoCalcStats) == 0)
             {
-                gold = ref->mBase->mBaseConfig.barterGold;
+                gold = ref->mBase->mBaseConfig.tes4.barterGold;
 
                 data->mNpcStats.getSkill (ESM::Skill::Block).setBase (ref->mBase->mData.skills.block);
                 data->mNpcStats.getSkill (ESM::Skill::Armorer).setBase (ref->mBase->mData.skills.armorer);
@@ -266,11 +266,12 @@ namespace MWClass
                 data->mNpcStats.setAttribute(ESM::Attribute::Personality, ref->mBase->mData.attribs.personality);
                 data->mNpcStats.setAttribute(ESM::Attribute::Luck, ref->mBase->mData.attribs.luck);
 
-                data->mNpcStats.setHealth (ref->mBase->mData.health); // FIXME: uint32 to float
-                data->mNpcStats.setMagicka (ref->mBase->mBaseConfig.baseSpell);
-                data->mNpcStats.setFatigue (ref->mBase->mBaseConfig.fatigue);
+                // FIXME: for testing
+                data->mNpcStats.setHealth (/*(float)ref->mBase->mData.health*/50.f); // uint32 to float
+                data->mNpcStats.setMagicka (ref->mBase->mBaseConfig.tes4.baseSpell);
+                data->mNpcStats.setFatigue (/*ref->mBase->mBaseConfig.tes4.fatigue*/ 20);
 
-                data->mNpcStats.setLevel(ref->mBase->mBaseConfig.level);
+                data->mNpcStats.setLevel(ref->mBase->mBaseConfig.tes4.levelOrOffset);
                 data->mNpcStats.setBaseDisposition(0); // see http://www.uesp.net/wiki/Oblivion:Disposition
                 // Fame is probably a global (GLOB)
                 data->mNpcStats.setReputation(0); // see http://www.uesp.net/wiki/Oblivion:Fame
@@ -279,16 +280,17 @@ namespace MWClass
             }
             else // FIXME autocalc
             {
-                gold = ref->mBase->mBaseConfig.barterGold;
+                gold = ref->mBase->mBaseConfig.tes4.barterGold;
 
-                data->mNpcStats.setHealth (/*ref->mBase->mData.health*/ 50); // FIXME: uint32 to float
-                data->mNpcStats.setMagicka (ref->mBase->mBaseConfig.baseSpell);
-                data->mNpcStats.setFatigue (ref->mBase->mBaseConfig.fatigue);
+                // FIXME: for testing
+                data->mNpcStats.setHealth (/*ref->mBase->mData.health*/ 50.f); // FIXME: uint32 to float
+                data->mNpcStats.setMagicka (ref->mBase->mBaseConfig.tes4.baseSpell);
+                data->mNpcStats.setFatigue (/*ref->mBase->mBaseConfig.tes4.fatigue*/ 20);
 
                 for (int i=0; i<3; ++i)
                     data->mNpcStats.setDynamic (i, 10);
 
-                data->mNpcStats.setLevel(ref->mBase->mBaseConfig.level);
+                data->mNpcStats.setLevel(ref->mBase->mBaseConfig.tes4.levelOrOffset);
                 data->mNpcStats.setBaseDisposition(0);
                 data->mNpcStats.setReputation(0);
 

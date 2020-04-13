@@ -119,10 +119,11 @@ void ESM4::Creature::load(ESM4::Reader& reader)
             }
             case ESM4::SUB_ACBS:
             {
-                if (subHdr.dataSize == 24) // FO3
-                    reader.skipSubRecordData();
-                else
+                //if (esmVer == ESM4::VER_094 || esmVer == ESM4::VER_170 || mIsFONV)
+                if (subHdr.dataSize == 24)
                     reader.get(mBaseConfig);
+                else
+                    reader.get(&mBaseConfig, 16); // TES4
                 break;
             }
             case ESM4::SUB_DATA:
