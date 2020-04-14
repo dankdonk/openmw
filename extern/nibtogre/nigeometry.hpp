@@ -95,6 +95,7 @@ namespace NiBtOgre
         const std::vector<Ogre::Vector3>& getVertices(bool morphed = false);
 
         bool hasVisibleSkin() const;
+        void fillBodyParts(std::vector<std::uint16_t>&) const;
         std::size_t getSubMeshIndex() const { return mSubMeshIndex; }
 
     private:

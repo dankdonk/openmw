@@ -521,6 +521,20 @@ void NiBtOgre::NiModel::fillSkinIndices(std::map<std::string, std::vector<std::s
     }
 }
 
+void NiBtOgre::NiModel::fillDismemberParts(std::map<std::int32_t, std::vector<std::vector<std::uint16_t> > >& dismemberMap) const
+{
+    std::vector<std::vector<std::uint16_t> > bodyParts;
+
+    std::map<NiNodeRef, NiNode*>::const_iterator iter;
+    for (iter = mBuildData.mMeshBuildList.begin(); iter != mBuildData.mMeshBuildList.end(); ++iter)
+    {
+        bodyParts.clear();
+        iter->second->getDismemberParts(bodyParts);
+        if (!bodyParts.empty())
+            dismemberMap.insert(std::make_pair(iter->first, bodyParts));
+    }
+}
+
 NiBtOgre::NiNode *NiBtOgre::NiModel::skeletonRoot()
 {
     if (!mBoneRootNode)

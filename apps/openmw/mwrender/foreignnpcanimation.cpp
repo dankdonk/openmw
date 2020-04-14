@@ -1845,6 +1845,7 @@ void ForeignNpcAnimation::updateFO3NpcBase()
                 = std::make_unique<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(model, mInsert->createChildSceneNode()));
             scene->mForeignObj->instantiateBodyPart(mInsert, mSkelBase);
 
+            hideDismember(scene);
             mObjectParts[type] = scene;
 
             // FIXME: FO3 has textures\characters\bodymods\fallout3.esm\<formid>modbody(fe)male.dds
@@ -2648,11 +2649,12 @@ bool ForeignNpcAnimation::equipArmor(const ESM4::Armor* armor, bool isFemale)
             mObjectParts[type] =
                 createObject(meshName, "General", mObjectRoot->mForeignObj->mModel, raceTexture);
         }
+
+        hideDismember(mObjectParts[type]);
     }
     else // hands, feet
         mObjectParts[type] =
             createObject(meshName, "General", mObjectRoot->mForeignObj->mModel, raceTexture);
-
 
     return true;
 }
@@ -2722,6 +2724,49 @@ void ForeignNpcAnimation::replaceSkinTexture(NifOgre::ObjectScenePtr scene, cons
         else // None found
         {
             continue; // shouldn't happen, throw?
+        }
+    }
+}
+
+void ForeignNpcAnimation::hideDismember(NifOgre::ObjectScenePtr scene)
+{
+    if (!scene->mForeignObj->mModel->buildData().mIsSkinned)
+        return;
+
+    std::map<std::int32_t, std::vector<std::vector<std::uint16_t> > > dismemberBodyPartMap;
+    scene->mForeignObj->mModel->fillDismemberParts(dismemberBodyPartMap);
+
+    // we need the vector of Dismember BodyPart (where the vector index is the sub-mesh
+    // index which hopefully matches with sub-entity index)
+    if (!dismemberBodyPartMap.empty())
+    {
+        std::map<std::int32_t, Ogre::Entity*>::iterator it = scene->mForeignObj->mEntities.begin();
+        for (; it != scene->mForeignObj->mEntities.end(); ++it)
+        {
+            // it->first is NiNodeRef
+            std::map<std::int32_t, std::vector<std::vector<std::uint16_t> > >::iterator it2
+                = dismemberBodyPartMap.find(it->first);
+            if (it2 != dismemberBodyPartMap.end())
+            {
+                // it2->first should equal it->first
+                if (it->first != it2->first)
+                    throw std::runtime_error(scene->mForeignObj->mModel->getName() + " node mismatch");
+
+                const std::vector < std::vector<std::uint16_t> >& subMeshes = it2->second;
+                for (std::size_t i = 0; i < subMeshes.size(); ++i) // i == SubMesh index
+                {
+                    bool dismember = false;
+                    for (std::size_t j = 0; j < subMeshes[i].size(); ++j) // all the parts
+                    {
+                        std::uint16_t part = subMeshes[i][j];
+                        if (part > 13/*BP_BRAIN*/ && part < 1000/*BP_TORSOSECTION_HEAD*/)
+                            dismember = true;
+                    }
+
+                    if (dismember)
+                        it->second->getSubEntity(i)->setVisible(false);
+                }
+            }
         }
     }
 }

@@ -148,6 +148,7 @@ private:
     bool equipClothes(const ESM4::Clothing* cloth, bool isFemale);
     void replaceMeshTexture(NifOgre::ObjectScenePtr scene, const std::string& npcTextureName);
     void replaceSkinTexture(NifOgre::ObjectScenePtr scene, const std::string& npcTextureName);
+    void hideDismember(NifOgre::ObjectScenePtr scene);
     Ogre::MaterialPtr createClonedMaterials(Ogre::SubEntity *subEntity);
     void deleteClonedMaterials();
 

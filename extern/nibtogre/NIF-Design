@@ -3369,7 +3369,7 @@ Tamriel:
 
     mName = "meshes\\furniture\\clutter\\leveranimatingmetal.nif#4@RuinsLever"
 
-## Hair - Hat and NoHat
+## FO3/FONV Hair - Hat and NoHat
 
 ### FaceGen hair differences
 
@@ -3486,6 +3486,10 @@ Decided that the door meshes are not really "static" in terms of Bullet definiti
     meshes\dungeons\office\doors\offdoorsml02.nif
     meshes\dungeons\caves\lamplight\lamplightlamp.nif
     meshes\dungeons\caves\lamplight\lamplightlamp.nif
+
+## FO3 Dismember body parts
+
+Need a way to control visibility at runtime.  Maybe keep a map of `Ogre::SubEntity*` and `BSDismemberSkinInstance::BodyPartList` in `BtOgreInst`.  Not sure if there is a reliable way to get the sub-entity index, however. Hopefully they are the same as sub-mesh index, which we already have.
 
 
 [//]: # (/* spell spelllang=en_au syntax=cpp */)

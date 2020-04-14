@@ -176,6 +176,16 @@ bool NiBtOgre::NiTriBasedGeom::hasVisibleSkin() const
     return false;
 }
 
+void NiBtOgre::NiTriBasedGeom::fillBodyParts(std::vector<std::uint16_t>& bodyParts) const
+{
+    if (mSkinInstanceRef == -1)
+        return;
+
+    const BSDismemberSkinInstance *skinInstance = mModel.getRef<BSDismemberSkinInstance>(mSkinInstanceRef);
+    for (std::size_t i = 0; i < skinInstance->mPartitions.size(); ++i)
+        bodyParts.push_back(skinInstance->mPartitions[i].bodyPart);
+}
+
 // Can't remember why I wanted SubEntityController (a base class maybe?)
 // But it can be useful (map with sub-entity index) for BtOgreInst to associate them later.
 // Should keep such a map in the NiModel tree somewhere so that a retrieved one from the cache

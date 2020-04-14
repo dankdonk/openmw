@@ -219,6 +219,21 @@ void NiBtOgre::NiNode::getSkinIndices(std::vector<std::size_t>& skinIndices) con
     }
 }
 
+void NiBtOgre::NiNode::getDismemberParts(std::vector<std::vector<std::uint16_t> >& bodyParts) const
+{
+    // WARN: the order is important
+    bodyParts.resize(mSubMeshChildren.size());
+    for (size_t i = 0; i < mSubMeshChildren.size(); ++i)
+    {
+        if (mModel.blockType(mSubMeshChildren[i]->mSkinInstanceRef) == "BSDismemberSkinInstance")
+        {
+            std::vector<std::uint16_t> parts;
+            mSubMeshChildren[i]->fillBodyParts(parts);
+            bodyParts[mSubMeshChildren[i]->getSubMeshIndex()] = std::move(parts);
+        }
+    }
+}
+
 // build a hierarchy of bones (i.e. mChildBoneNodes) so that a skeleton can be built, hopefully
 // a much smaller subset of the NiNode hierarchy
 //

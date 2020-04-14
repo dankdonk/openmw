@@ -347,6 +347,8 @@ namespace NiBtOgre
         // fills a map of NiTriBasedGeom name and visible skin sub-mesh indices
         void fillSkinIndices(std::map<std::string, std::vector<std::size_t> >&) const;
 
+        void fillDismemberParts(std::map<std::int32_t, std::vector<std::vector<std::uint16_t> > >&) const;
+
         // supply skeleton for skinned objects
         void createMesh(bool isMorphed = false, Ogre::SkeletonPtr skeleton = Ogre::SkeletonPtr());
 
