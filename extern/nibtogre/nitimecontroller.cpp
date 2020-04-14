@@ -264,6 +264,9 @@ NiBtOgre::NiTimeController::NiTimeController(uint32_t index, NiStream *stream, c
     stream->read(mStopTime);
 
     stream->read(mTargetRef);
+
+    if (mTargetRef != -1) //FO3 dungeons\office\doors\offdoormetalsml01.nif has only 1 valid ExtraTargetRef
+        data.addSkelLeafIndex(mTargetRef);
 }
 
 // baseclass does nothing?

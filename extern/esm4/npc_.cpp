@@ -226,6 +226,14 @@ void ESM4::Npc::load(ESM4::Reader& reader)
                 //std::cout << "fg race " << mEditorId << " " << mFgRace << std::endl; // FIXME
                 break;
             }
+            case ESM4::SUB_PNAM: // FO3/FONV/TES5
+            {
+                FormId headPart;
+                reader.get(headPart);
+                mHeadParts.push_back(headPart);
+
+                break;
+            }
             case ESM4::SUB_ATKR:
             case ESM4::SUB_COCT:
             case ESM4::SUB_CRIF:
@@ -251,7 +259,6 @@ void ESM4::Npc::load(ESM4::Reader& reader)
             case ESM4::SUB_NAM9:
             case ESM4::SUB_NAMA:
             case ESM4::SUB_OBND:
-            case ESM4::SUB_PNAM:
             case ESM4::SUB_PRKR:
             case ESM4::SUB_PRKZ:
             case ESM4::SUB_QNAM:

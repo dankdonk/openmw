@@ -304,6 +304,8 @@ void NiBtOgre::NiModel::createMesh(bool isMorphed, Ogre::SkeletonPtr skeleton)
             mesh->setSkeletonName(skelName);
         else if (mBuildData.isSkeletonTES4() && mSkeleton) // FIXME: FO3, etc, but not yet tested
             mesh->setSkeletonName(mSkeleton->getName()); // Storm Atronach skeleton.nif has its own mesh
+        else if (mSkeleton && getName() == "meshes\\characters\\_male\\skeleton.nif") // FIXME: FO3
+            mesh->setSkeletonName(mSkeleton->getName());
 #if 0
         // FIXME: testing VGearDoor01.NIF
         if (mSkeleton && !mesh->hasSkeleton() && getName().find("geardoor") != std::string::npos)
@@ -326,7 +328,8 @@ void NiBtOgre::NiModel::createMesh(bool isMorphed, Ogre::SkeletonPtr skeleton)
     // e.g. Characters\_Male\Skeleton.nif (no mesh)
     // e.g. Creatures\StormAtronach\Skeleton.nif (also has normal mesh)
     //
-    if (mBuildData.isSkeletonTES4()) // FIXME: may also be required for others, but not yet tested
+    if (mBuildData.isSkeletonTES4() // FIXME: may also be required for others, but not yet tested
+        || getName() == "meshes\\characters\\_male\\skeleton.nif") // FIXME: FO3
     {
         // FIXME: despite the name, maybe this should be "Scene Root" or "BSFadeNode" instead?
         // mModelName != "meshes\\morroblivion\\creatures\\wildlife\\kagouti\\skeleton.nif") // FIXME

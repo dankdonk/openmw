@@ -263,6 +263,7 @@ ForeignNpcAnimation::ForeignNpcAnimation(const MWWorld::Ptr& ptr, Ogre::SceneNod
   : Animation(ptr, node),
     mListenerDisabled(disableListener),
     mPoseDuration(0.f),
+    mIsTES4(false), mIsFO3(false), mIsFONV(false), mIsTES5(false),
     mViewMode(viewMode),
     mShowWeapons(false),
     mShowCarriedLeft(true),
@@ -291,7 +292,10 @@ ForeignNpcAnimation::ForeignNpcAnimation(const MWWorld::Ptr& ptr, Ogre::SceneNod
     mHeadParts.clear();
     mStartTimer = 3.f + Misc::Rng::rollDice(15); // make the vertex pose demo start somewhat random
 
-    updateNpcBase();
+    mIsTES4 = mNpc->mIsTES4;
+    mIsFONV = mNpc->mIsFONV;
+    mIsTES5 = mRace->mIsTES5;
+    mIsFO3 = !mIsTES4 && !mIsTES5 && !mIsFONV;
 
     if (!disableListener)
         mPtr.getClass().getInventoryStore(mPtr).setListener(this, mPtr);
@@ -353,7 +357,7 @@ void ForeignNpcAnimation::updateNpcBase()
         throw std::runtime_error(mNpc->mEditorId + " NPC skeleton.nif path could not be derived.");
 
     std::string skeletonPath = skeletonModel.substr(0, pos+1); // +1 is for '\\'
-    bool isFemale = (mNpc->mBaseConfig.tes4.flags & 0x1) != 0; // FIXME: move to constructor?
+    bool isFemale = (mNpc->mBaseConfig.tes4.flags & ESM4::Npc::TES4_Female) != 0; // FIXME: move to constructor?
 
     NiBtOgre::NiModelManager& modelManager = NiBtOgre::NiModelManager::getSingleton();
     std::string group("General");
@@ -453,7 +457,7 @@ void ForeignNpcAnimation::updateNpcBase()
     }
     else
     {
-        bool isFemale = (mNpc->mBaseConfig.tes4.flags & 0x000001) != 0; // 0x1 means female
+        bool isFemale = (mNpc->mBaseConfig.tes4.flags & ESM4::Npc::TES4_Female) != 0;
 #if 0
         if(isWerewolf)
             addAnimSource(skeletonModel);
@@ -476,9 +480,6 @@ void ForeignNpcAnimation::updateNpcBase()
     // Ogre::SceneNode *mInsert
     // ObjectScenePtr   mObjectRoot
     std::string modelName;
-
-
-    bool isTES4 = true;
     std::string meshName;
     std::string textureName;
 
@@ -703,7 +704,7 @@ void ForeignNpcAnimation::updateNpcBase()
 
         // need a mapping of body parts to equipment slot, which are different for each game
         // FIXME: for now just implement TES4
-        if (!isTES4)
+        if (!mIsTES4)
             throw std::runtime_error("ForeignNpcAnimation: not TES4");
 
         int type = 0;
@@ -817,8 +818,8 @@ void ForeignNpcAnimation::updateNpcBase()
             meshName = "meshes\\Characters\\Khajiit\\headkhajiit.nif";
         else if (0) // FO3
         {
-            isTES4 = false;
-            isFemale = (mNpc->mBaseConfig.tes5.flags & 0x1) != 0;
+            mIsTES4 = false;
+            isFemale = (mNpc->mBaseConfig.fo3.flags & ESM4::Npc::FO3_Female) != 0;
 
             // FIXME: can be female, ghoul, child, old, etc
             if (mRace->mEditorId.find("Old") != std::string::npos)
@@ -1530,7 +1531,7 @@ std::string ForeignNpcAnimation::getSkeletonModel(const MWWorld::ESMStore& store
 
         if (type == MKTAG('_', 'N', 'P', 'C'))
         {
-            if ((mNpc->mBaseConfig.tes5.flags & 0x1) != 0) // female
+            if ((mNpc->mBaseConfig.tes5.flags & ESM4::Npc::TES5_Female) != 0)
                 return  "meshes\\" + mRace->mModelFemale; // TODO: check if this can be empty
             else
                 return "meshes\\" + mRace->mModelMale;
@@ -1549,8 +1550,11 @@ std::string ForeignNpcAnimation::getSkeletonModel(const MWWorld::ESMStore& store
             throw std::runtime_error(mNpc->mEditorId + " TES5 NPC unknown BaseTemplate type");
 
     }
-    else if (!mNpc->mModel.empty()) // TES4
+    else if (!mNpc->mModel.empty()) // TES4/FO3/FONV
     {
+        if (mNpc->mModel == "marker_creature.nif")
+            return ""; // FIXME FO3/FONV
+
         // Characters\_Male\skeleton.nif
         // Characters\_Male\skeletonbeast.nif
         // Characters\_Male\skeletonsesheogorath.nif
@@ -1847,14 +1851,26 @@ bool ForeignNpcAnimation::equipArmor(const ESM4::Armor* armor, bool isFemale)
         = (isFemale ? mRace->mBodyPartsFemale : mRace->mBodyPartsMale);
     int index = -1;
     std::string raceTexture = "";
-    if ((armor->mArmorFlags & ESM4::Armor::TES4_UpperBody) != 0)
-        index = ESM4::Race::UpperBody;
-    else if ((armor->mArmorFlags & ESM4::Armor::TES4_LowerBody) != 0)
-        index = ESM4::Race::LowerBody;
-    else if ((armor->mArmorFlags & ESM4::Armor::TES4_Hands) != 0)
-        index = ESM4::Race::Hands;
-    else if ((armor->mArmorFlags & ESM4::Armor::TES4_Feet) != 0)
-        index = ESM4::Race::Feet;
+    if (mIsTES4)
+    {
+        if ((armor->mArmorFlags & ESM4::Armor::TES4_UpperBody) != 0)
+            index = ESM4::Race::UpperBody;
+        else if ((armor->mArmorFlags & ESM4::Armor::TES4_LowerBody) != 0)
+            index = ESM4::Race::LowerBody;
+        else if ((armor->mArmorFlags & ESM4::Armor::TES4_Hands) != 0)
+            index = ESM4::Race::Hands;
+        else if ((armor->mArmorFlags & ESM4::Armor::TES4_Feet) != 0)
+            index = ESM4::Race::Feet;
+    }
+    else if (mIsFO3 || mIsFONV) // FIXME: the visible skin is done with shaders
+    {
+        if ((armor->mArmorFlags & ESM4::Armor::FO3_UpperBody) != 0)
+            index = 0;
+        else if ((armor->mArmorFlags & ESM4::Armor::FO3_LeftHand)  != 0)
+            index = 1;
+        else if ((armor->mArmorFlags & ESM4::Armor::FO3_RightHand) != 0)
+            index = 2;
+    }
 
     if (index != -1)
         raceTexture = "textures\\" + bodyParts[index].texture;
@@ -1863,12 +1879,12 @@ bool ForeignNpcAnimation::equipArmor(const ESM4::Armor* armor, bool isFemale)
     //removeIndividualPart((ESM::PartReferenceType)type);
 
     // FIXME: group "General"
-    if ((armor->mArmorFlags & ESM4::Armor::TES4_Hair) != 0) // Hair slot
+    if (mIsTES4 && ((armor->mArmorFlags & ESM4::Armor::TES4_Hair) != 0)) // Hair slot
     {
         mObjectParts[type] =
             createMorphedObject(meshName, "General", mObjectRoot->mForeignObj->mModel);
     }
-    else if (index == ESM4::Race::UpperBody || index == ESM4::Race::LowerBody)
+    else if (mIsTES4 && (index == ESM4::Race::UpperBody || index == ESM4::Race::LowerBody))
     {
         NifOgre::ObjectScenePtr scene =
                 createObject(meshName, "General", mObjectRoot->mForeignObj->mModel);
@@ -2511,8 +2527,11 @@ Ogre::Vector3 ForeignNpcAnimation::runAnimation(float timepassed)
 {
     Ogre::Vector3 ret = Animation::runAnimation(timepassed);
 
+    if (!mSkelBase)
+        return Ogre::Vector3::ZERO; // FIXME: FO3
+
     mHeadAnimationTime->update(timepassed);
-//#if 0
+#if 0 // FIXME: FO3 head rotation
     if (mSkelBase)
     {
         Ogre::SkeletonInstance *baseinst = mSkelBase->getSkeleton();
@@ -2545,7 +2564,7 @@ Ogre::Vector3 ForeignNpcAnimation::runAnimation(float timepassed)
                              ,Ogre::Node::TS_WORLD);
         }
     }
-//#endif
+#endif
 
 // FIXME: demo code for vertex pose animation
 //#if 0
@@ -2808,7 +2827,7 @@ void ForeignNpcAnimation::addPartGroup(int group, int priority, const std::vecto
     for(;part != parts.end();++part)
     {
         const ESM::BodyPart *bodypart = 0;
-        bool isFemale = (mNpc->mBaseConfig.tes4.flags & 0x000001) != 0; // 0x1 means female
+        bool isFemale = (mNpc->mBaseConfig.tes4.flags & ESM4::Npc::TES4_Female) != 0;
         if(isFemale && !part->mFemale.empty())
         {
             bodypart = partStore.search(part->mFemale+ext);

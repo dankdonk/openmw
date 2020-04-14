@@ -182,7 +182,15 @@ void ESM4::Reference::load(ESM4::Reader& reader)
                 //std::cout << "REFR " << mEditorId << " XRTM : " << formIdToString(marker) << std::endl;// FIXME
                 break;
             }
-            case ESM4::SUB_TNAM: reader.get(mMapMarker); break;
+            case ESM4::SUB_TNAM: //reader.get(mMapMarker); break;
+            {
+                if (subHdr.dataSize != sizeof(mMapMarker))
+                    reader.skipSubRecordData(); // FIXME: FO3
+                else
+                    reader.get(mMapMarker); // TES4
+
+                break;
+            }
             case ESM4::SUB_XMRK: mIsMapMarker = true; break; // all have mBaseObj 0x00000010 "MapMarker"
             case ESM4::SUB_FNAM:
             {

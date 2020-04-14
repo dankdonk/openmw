@@ -1261,6 +1261,9 @@ void Animation::disable(const std::string &groupname)
 
 Ogre::Vector3 Animation::runAnimation(float duration)
 {
+    if (!mObjectRoot) // FIXME: FO3 mEditorId = "LvlTurretCeiling768Raider"
+        return Ogre::Vector3::ZERO;
+
     Ogre::Vector3 movement(0.0f);
     AnimStateMap::iterator stateiter = mStates.begin();
     while(stateiter != mStates.end())
@@ -1599,6 +1602,8 @@ public:
 
 void Animation::enableLights(bool enable)
 {
+    if (!mObjectRoot)
+        return; // FIXME FO3
     std::for_each(mObjectRoot->mLights.begin(), mObjectRoot->mLights.end(), ToggleLight(enable));
 }
 

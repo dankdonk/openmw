@@ -212,6 +212,11 @@ namespace Gui
 
         // Create the font texture
         std::string bitmapFilename = "Fonts/" + std::string(name) + ".tex";
+
+        // FIXME: FO3 needs "_0_lod_a.tex"
+        if (!Ogre::ResourceGroupManager::getSingleton().resourceExistsInAnyGroup(bitmapFilename))
+            return;
+
         Ogre::DataStreamPtr bitmapFile = Ogre::ResourceGroupManager::getSingleton().openResource(bitmapFilename);
 
         int width, height;

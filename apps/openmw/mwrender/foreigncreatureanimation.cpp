@@ -55,6 +55,9 @@ ForeignCreatureAnimation::ForeignCreatureAnimation(const MWWorld::Ptr &ptr, cons
     std::string skeletonName = skeletonModel;
     Misc::StringUtils::lowerCaseInPlace(skeletonName);
 
+    if (skeletonName.find("marker_creature") != std::string::npos)
+        return; // FIXME: FO3 mEditorId="LvlTurretCeiling768Raider
+
     setForeignObjectRootBase(skeletonName);
     //setRenderProperties(mObjectRoot, RV_Actors, RQG_Main, RQG_Alpha);
 

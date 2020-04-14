@@ -83,6 +83,10 @@ private:
     Ogre::AnimationStateSet *mMouthASSet;
     Ogre::AnimationStateSet *mTeethLASSet;
 //#endif
+    bool mIsTES4;
+    bool mIsFO3;
+    bool mIsFONV;
+    bool mIsTES5;
 
     std::vector<NifOgre::ObjectScenePtr> mHeadParts;
     Ogre::TexturePtr mTextureHead;      // humans only

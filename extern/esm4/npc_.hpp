@@ -149,7 +149,7 @@ namespace ESM4
             std::uint8_t red;
             std::uint8_t green;
             std::uint8_t blue;
-            std::uint8_t custom; // ?
+            std::uint8_t custom; // alpha?
         };
 
         struct Data
@@ -175,6 +175,8 @@ namespace ESM4
         FormId mClass;
         FormId mHair;
         FormId mEyes;
+
+        std::vector<FormId> mHeadParts; // FO3/FONV
 
         float mHairLength;
         HairColour mHairColour;
