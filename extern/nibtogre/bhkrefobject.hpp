@@ -101,7 +101,7 @@ namespace NiBtOgre
     {
         bhkSerializable(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
 
-        virtual btCollisionShape *getShape(const NiAVObject& target) const;
+        virtual btCollisionShape *getShape(const NiAVObject& target, bool dynamic = false) const;
     };
 //#endif
 
@@ -720,7 +720,7 @@ namespace NiBtOgre
 
         bhkRigidBody(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
 
-        btCollisionShape *getShape(const NiAVObject& target) const;
+        btCollisionShape *getShape(const NiAVObject& target, bool dynamic = false) const;
     };
 
     // NOTE: the rigidbody type can be differentiated by calling NiBtOgre::NiModel::blockType
@@ -737,7 +737,7 @@ namespace NiBtOgre
 
         bhkSimpleShapePhantom(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
 
-        btCollisionShape *getShape(const NiAVObject& target) const;
+        btCollisionShape *getShape(const NiAVObject& target, bool dynamic = false) const;
     };
 }
 

@@ -65,7 +65,7 @@ NiBtOgre::bhkSerializable::bhkSerializable(uint32_t index, NiStream *stream, con
 }
 //#endif
 
-btCollisionShape *NiBtOgre::bhkSerializable::getShape(const NiAVObject& target) const
+btCollisionShape *NiBtOgre::bhkSerializable::getShape(const NiAVObject& target, bool dynamic) const
 {
     throw std::logic_error("bhkSerializable::getShape called from base class");
 }
@@ -1700,7 +1700,7 @@ NiBtOgre::bhkRigidBody::bhkRigidBody(uint32_t index, NiStream *stream, const NiM
 
 // NOTE: ownership of the btCollisionShape and any subshapes are passed to the caller
 //       remember to delete them!
-btCollisionShape *NiBtOgre::bhkRigidBody::getShape(const NiAVObject& target) const
+btCollisionShape *NiBtOgre::bhkRigidBody::getShape(const NiAVObject& target, bool dynamic) const
 {
     if (mShapeRef == -1) // nothing to build
         return nullptr;
@@ -1775,7 +1775,16 @@ btCollisionShape *NiBtOgre::bhkRigidBody::getShape(const NiAVObject& target) con
             transform.setIdentity();
     }
 
-    btCollisionShape *btShape = shape->buildShape(transform);
+    btCollisionShape *btShape;
+    if (dynamic && useFullTransform)
+    {
+        btTransform identity;
+        identity.setIdentity();
+        btShape = shape->buildShape(identity);
+    }
+    else
+        btShape = shape->buildShape(transform);
+
     if (!btShape)
         return nullptr;
 
@@ -1792,12 +1801,18 @@ btCollisionShape *NiBtOgre::bhkRigidBody::getShape(const NiAVObject& target) con
         btCompoundShape *compoundShape = new btCompoundShape();
         compoundShape->addChildShape(transform * shape->transform(), btShape);
         compoundShape->setUserIndex(useFullTransform ? 4 : 0);
+        if (dynamic && useFullTransform)
+            std::cout << mModel.getName() << " dynamic & fullTransform unexpected, UserIndex 1" << std::endl;
         return compoundShape;
     }
     else if (userIndex == 0)           // transform applied
     {
         // rigidbody.setWorldTransform(SceneNodeTrans);
-        btShape->setUserIndex(useFullTransform ? 4 : 0);
+        if (!(dynamic && useFullTransform))
+            btShape->setUserIndex(useFullTransform ? 4 : 0);
+        //else
+            //std::cout << "dynamic and fullTransform " << mModel.getName() << std::endl;
+
         return btShape; // nothing futher to do
     }
     else // userIndex == -1            // no transform applied, e.g. btBoxShape
@@ -1939,7 +1954,7 @@ NiBtOgre::bhkSimpleShapePhantom::bhkSimpleShapePhantom(uint32_t index, NiStream 
 
 // Called from bhkSPCollisionObject
 // e.g. dungeons/misc/triggers/trigzone02.nif (coc "vilverin")
-btCollisionShape *NiBtOgre::bhkSimpleShapePhantom::getShape(const NiAVObject& target) const
+btCollisionShape *NiBtOgre::bhkSimpleShapePhantom::getShape(const NiAVObject& target, bool dynamic) const
 {
     std::cout << "phantom: " << mModel.getName() << std::endl;
     return 0;

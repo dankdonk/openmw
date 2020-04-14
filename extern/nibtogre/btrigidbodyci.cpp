@@ -81,14 +81,16 @@ void NiBtOgre::BtRigidBodyCI::loadImpl()
 
     std::string modelName = getName(); // remove scale from the name (see -7 below)
 
-    if (0)//modelName.find("idgate") != std::string::npos)
-        std::cout << modelName << std::endl;
+    //if (modelName.find("idgate") != std::string::npos)
+        //std::cout << modelName << std::endl;
 
     NiModelPtr nimodel
         = NiBtOgre::NiModelManager::getSingleton().getByName(modelName.substr(0, modelName.length()-7), getGroup());
 
     if (!nimodel) // shouldn't happen, since we need the Entities created already
         throw std::runtime_error("BtRigidBodyCI: NiModel not loaded");
+
+    const std::vector<NiNodeRef>&  ctlrTargets = nimodel->getControllerTargets();
 
     //           target NiAVObject ref               bhkSerializable ref (e.g. bhkRigidBody)
     //                   |                                    |
@@ -106,16 +108,20 @@ void NiBtOgre::BtRigidBodyCI::loadImpl()
         std::int32_t targetRef = iter->first;
         NiAVObject *target = nimodel->getRef<NiAVObject>(targetRef);
 
+        bool dynamic = std::find(ctlrTargets.begin(), ctlrTargets.end(), targetRef) != ctlrTargets.end();
+
         mTargetNames[targetRef] = nimodel->indexToString(target->getNameIndex());
 
         // expectation is that each target has only one bhkRigidBody
         if (mBtCollisionShapeMap.find(targetRef) != mBtCollisionShapeMap.end())
             throw std::logic_error("target name collision "+nimodel->indexToString(targetRef));
 
+        // FIXME: add a method in NiModel to get a list of NiMultiTargetTransformController
+        // target refs and if it matches then build a shape as non-static
 
         // get the bullet shape with the target as a parameter
         // TODO: cloning pre-pade shape (e.g. bhkRigidBody via unique_ptr) may be faster?
-        mBtCollisionShapeMap[targetRef] = std::make_pair(target->getWorldTransform(), bhk->getShape(*target));
+        mBtCollisionShapeMap[targetRef] = std::make_pair(target->getWorldTransform(), bhk->getShape(*target, dynamic));
     }
 }
 

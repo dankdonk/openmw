@@ -265,8 +265,11 @@ NiBtOgre::NiTimeController::NiTimeController(uint32_t index, NiStream *stream, c
 
     stream->read(mTargetRef);
 
-    if (mTargetRef != -1) //FO3 dungeons\office\doors\offdoormetalsml01.nif has only 1 valid ExtraTargetRef
+    if (mTargetRef != -1) // FO3 Dungeons\Office\Doors\OffDoorMetalSmL01.NIF has only 1 valid ExtraTargetRef
+    {
         data.addSkelLeafIndex(mTargetRef);
+        data.addControllerTargetIndex(mTargetRef); // FO3 Dungeons\Office\Doors\OffDoorSmL02.NIF
+    }
 }
 
 // baseclass does nothing?
@@ -435,7 +438,10 @@ NiBtOgre::NiMultiTargetTransformController::NiMultiTargetTransformController(uin
         // checking for NiNode children not possible since most are yet to be created
 #if 1
         if (mExtraTargetRefs.at(i) != -1) // Furniture\FXspiderWebKitDoorSpecial.nif (TES5 BleakFallsBarrow)
+        {
             data.addSkelLeafIndex(mExtraTargetRefs.at(i));
+            data.addControllerTargetIndex(mExtraTargetRefs.at(i)); // FO3 Dungeons\Office\Doors\OffDoorSmL02.NIF
+        }
 #else
         // FIXME: is there a better way than doing a string comparison each time?
         if (mExtraTargetRefs.at(i) != -1 && model.blockType(mExtraTargetRefs.at(i)) == "NiNode")
@@ -524,6 +530,10 @@ void NiBtOgre::NiMultiTargetTransformController::registerTarget(const NiControll
 void NiBtOgre::NiMultiTargetTransformController::build(int32_t nameIndex, NiAVObject* target, NiTransformInterpolator *interpolator, float startTime, float stopTime)
 {
     if ((NiTimeController::mFlags & 0x8) == 0) // not active
+        return;
+
+    // FIXME: TES5 clutter\ruins\ruins_smallchest.nif does not have a skeleton
+    if (!mModel.hasSkeleton())
         return;
 
     // NOTE: assume that NiControllerManager and NiControllerSequence is built already

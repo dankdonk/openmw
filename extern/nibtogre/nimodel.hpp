@@ -114,6 +114,9 @@ namespace NiBtOgre
         // NiTriBasedGeom - hack for testing animation of sub-mesh
         void addSkelLeafIndex(NiNodeRef leaf) { mSkelLeafIndices.push_back(leaf); }
 
+        std::vector<NiNodeRef> mControllerTargetIndices; // for detecting dynamic collision shapes
+        void addControllerTargetIndex(NiNodeRef target) { mControllerTargetIndices.push_back(target); }
+
         // only adds if none found
         //void addNewSkelLeafIndex(NiNodeRef leaf); // FIXME: not used?
         //bool hasBoneLeaf(NiNodeRef leaf) const; // FIXME: not used?
@@ -366,6 +369,8 @@ namespace NiBtOgre
         void findBoneNodes(bool buildObjectPalette = false, std::size_t rootIndex = 0);
 
         const Ogre::Quaternion getBaseRotation() const;
+
+        const std::vector<NiNodeRef>&  getControllerTargets() const { return mBuildData.mControllerTargetIndices; }
 
         template<class T>
         T *insertDummyBlock(const std::string& blockType); // for landscape LOD meshes

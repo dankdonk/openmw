@@ -183,8 +183,8 @@ void NiBtOgre::BtOgreInst::buildEntities()
 
     const BuildData& buildData = mModel->buildData();
 
-    // NOTE: FO3 characters\_male\skeleton.nif block 134 ("HeadAnims") has a small NiTriShape
-    //           and NiTriShapeData which results in the skeleton having a mesh
+    // FIXME: FO3 characters\_male\skeleton.nif block 134 ("HeadAnims") has a small NiTriShape
+    //            and NiTriShapeData which results in the skeleton having a mesh
     const NiNode* skeletonRoot = mModel->skeletonRoot();
     const std::vector<std::pair<Ogre::MeshPtr, NiNode*> >& meshes = mModel->getMeshes();
     for (std::size_t i = 0; i < meshes.size(); ++i)
