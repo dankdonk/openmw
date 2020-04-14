@@ -297,6 +297,13 @@ ForeignNpcAnimation::ForeignNpcAnimation(const MWWorld::Ptr& ptr, Ogre::SceneNod
     mIsTES5 = mRace->mIsTES5;
     mIsFO3 = !mIsTES4 && !mIsTES5 && !mIsFONV;
 
+    if (mIsTES4)
+        updateTES4NpcBase();
+    else if (mIsFO3 || mIsFONV)
+        updateFO3NpcBase();
+    //else
+        //updateTES5NpcBase();
+
     if (!disableListener)
         mPtr.getClass().getInventoryStore(mPtr).setListener(this, mPtr);
 }
@@ -313,7 +320,7 @@ void ForeignNpcAnimation::setViewMode(ForeignNpcAnimation::ViewMode viewMode)
 
 void ForeignNpcAnimation::rebuild()
 {
-    updateNpcBase();
+    updateTES4NpcBase(); // FIXME: FO3, TES5
 
     MWBase::Environment::get().getMechanicsManager()->forceStateUpdate(mPtr);
 }
@@ -328,7 +335,7 @@ void ForeignNpcAnimation::rebuild()
 // NOTE: maybe updateParts needs to come before updating the NPC models - this is due to the high
 // cost of updating FaceGen models for head, hair, eyes, ears, etc.  Or at least consider if the
 // relevant slot is already occupied by the equipped items.
-void ForeignNpcAnimation::updateNpcBase()
+void ForeignNpcAnimation::updateTES4NpcBase()
 {
     // create and store morphed parts here
     // * head is always needed
@@ -509,8 +516,10 @@ void ForeignNpcAnimation::updateNpcBase()
 
         NiModelPtr model = modelManager.getByName(mNpc->mEditorId+"_"+meshName, group);
         if (!model)
-            model = modelManager.createMorphedModel(meshName,
-                    group, mNpc, mRace, mObjectRoot->mForeignObj->mModel.get(), textureName, NiBtOgre::NiModelManager::BP_Hair);
+        {
+            model = modelManager.createMorphedModel(meshName, group, mNpc, mRace,
+                    mObjectRoot->mForeignObj->mModel.get(), textureName, NiBtOgre::NiModelManager::BP_Hair);
+        }
 
         NifOgre::ObjectScenePtr scene
             = NifOgre::ObjectScenePtr (new NifOgre::ObjectScene(mInsert->getCreator()));
@@ -524,11 +533,9 @@ void ForeignNpcAnimation::updateNpcBase()
             targetBone = "Bip01 Head"; // HACK: give a guessed default
 
         Ogre::Bone *heBone = mSkelBase->getSkeleton()->getBone(targetBone);
-        Ogre::Quaternion heOrientation // fix helmet issue
+        Ogre::Quaternion heOrientation // fix rotation issue
             = heBone->getOrientation() * Ogre::Quaternion(Ogre::Degree(90), Ogre::Vector3::UNIT_Y);
 
-        // FIXME non-zero for FO3 to make hair fit better
-        //Ogre::Vector3 hePosition = Ogre::Vector3(/*up*/0.2f, /*forward*/1.7f, 0.f);
         Ogre::Vector3 hePosition = Ogre::Vector3(0.5f, -0.2f, 0.f);
         //Ogre::Vector3 hePosition = Ogre::Vector3(0.f, -0.2f, 0.f);
 
@@ -770,7 +777,7 @@ void ForeignNpcAnimation::updateNpcBase()
 
                 FgLib::FgSam sam;
                 std::string npcTextureName;
-                if (sam.getMorphedBodyTexture(bodyTexturePtr, meshName, textureName, mNpc->mEditorId,
+                if (sam.getMorphedTES4BodyTexture(bodyTexturePtr, meshName, textureName, mNpc->mEditorId,
                                           mRace->mSymTextureModeCoefficients,
                                           mNpc->mSymTextureModeCoefficients))
                 {
@@ -843,29 +850,7 @@ void ForeignNpcAnimation::updateNpcBase()
                 else
                     meshName = "meshes\\Characters\\head\\headhuman.nif";
             }
-            // FO3 races
-            // CaucasianOldAged
-            // AfricanAmericanOldAged
-            // AsianOldAged
-            // HispanicOldAged
-            // AfricanAmericanRaider
-            // AsianRaider
-            // HispanicRaider
-            // CaucasianRaider
-            // TestQACaucasian
-            // HispanicOld
-            // HispanicChild
-            // CaucasianOld
-            // CaucasianChild
-            // AsianOld
-            // AsianChild
-            // AfricanAmericanOld
-            // AfricanAmericanChild
-            // AfricanAmerican
-            // Ghoul
-            // Asian
-            // Hispanic
-            // Caucasian
+
             //std::cout << "missing head " << mRace->mEditorId << std::endl;
             //else
                 //return;
@@ -903,7 +888,7 @@ void ForeignNpcAnimation::updateNpcBase()
     }
 
     std::string faceDetailFile
-        = sam.getNpcDetailTexture_0(ESM4::formIdToString(mNpc->mFormId));
+        = sam.getTES4NpcDetailTexture_0(ESM4::formIdToString(mNpc->mFormId));
 
 
     NiModelPtr model = modelManager.getByName(mNpc->mEditorId + "_" + meshName, group);
@@ -914,7 +899,7 @@ void ForeignNpcAnimation::updateNpcBase()
 
         // add the poses for the head mesh before the Ogre::Entity is created
         FgLib::FgFile<FgLib::FgTri> triFile;
-        const FgLib::FgTri *tri = triFile.getOrLoadByName(meshName);
+        const FgLib::FgTri *tri = triFile.getOrLoadByMeshName(meshName);
 
         if (!tri || tri->numDiffMorphs() == 0)
             throw std::runtime_error(mNpc->mEditorId + " missing head mesh poses.");
@@ -930,7 +915,7 @@ void ForeignNpcAnimation::updateNpcBase()
     //std::string targetBone = model->getTargetBone();
 
     // get the texture from mRace
-    // FIXME: for now, get if from Ogre material
+    // FIXME: for now, get it from Ogre material
 
     std::map<int32_t, Ogre::Entity*>::const_iterator it(scene->mForeignObj->mEntities.begin());
     for (; it != scene->mForeignObj->mEntities.end(); ++it)
@@ -953,7 +938,7 @@ void ForeignNpcAnimation::updateNpcBase()
                 Ogre::PixelFormat pixelFormat = tus->_getTexturePtr()->getFormat();
 
                 FgLib::FgFile<FgLib::FgEgt> egtFile;
-                const FgLib::FgEgt *egt = egtFile.getOrLoadByName(meshName);
+                const FgLib::FgEgt *egt = egtFile.getOrLoadByMeshName(meshName);
 
                 // From: http://wiki.ogre3d.org/Creating+dynamic+textures
                 // Create a target texture
@@ -1182,7 +1167,7 @@ void ForeignNpcAnimation::updateNpcBase()
 #else
 #    if 1
                 FgLib::FgFile<FgLib::FgEgt> egtFile;
-                const FgLib::FgEgt *egt = egtFile.getOrLoadByName(meshName);
+                const FgLib::FgEgt *egt = egtFile.getOrLoadByMeshName(meshName);
 
                 if (egt == nullptr)
                     return; // FIXME: throw?
@@ -1520,11 +1505,719 @@ void ForeignNpcAnimation::updateNpcBase()
     mWeaponAnimationTime->updateStartTime();
 }
 
+void ForeignNpcAnimation::updateFO3NpcBase()
+{
+    if (!mNpc || !mRace)
+        return;
+
+    clearAnimSources(); // clears *all* animations
+
+    const MWWorld::ESMStore &store = MWBase::Environment::get().getWorld()->getStore();
+    std::string skeletonModel = getSkeletonModel(store);
+    if (skeletonModel.empty())
+        return; // FIXME: perhaps should log an error first
+
+    Misc::StringUtils::lowerCaseInPlace(skeletonModel);
+    size_t pos = skeletonModel.find_last_of('\\');
+    if (pos == std::string::npos)
+        throw std::runtime_error(mNpc->mEditorId + " NPC skeleton.nif path could not be derived.");
+
+    std::string skeletonPath = skeletonModel.substr(0, pos+1); // +1 is for '\\'
+
+     bool isFemale = (mNpc->mBaseConfig.fo3.flags & ESM4::Npc::FO3_Female) != 0; // FIXME: move to constructor?
+
+    NiBtOgre::NiModelManager& modelManager = NiBtOgre::NiModelManager::getSingleton();
+    std::string group("General");
+
+    if (mInsert->getScale().x != 1.0f) // WARN: assumed uniform scaling
+        std::cout << "scale not 1.0 " << skeletonModel << std::endl;
+
+    setForeignObjectRootBase(skeletonModel); // create the skeleton
+    if (mObjectRoot->mForeignObj)
+    {
+        mObjectRoot->mSkelBase = mObjectRoot->mForeignObj->mSkeletonRoot; // Ogre::Entity*
+        mSkelBase = mObjectRoot->mForeignObj->mSkeletonRoot;
+    }
+
+    if (mSkelBase == nullptr) // FIXME: FO3
+        return;
+
+    mSkelBase->getSkeleton()->reset(true); // seems to fix the twisted torso
+    Ogre::Bone* b = mObjectRoot->mSkelBase->getSkeleton()->getBone("Bip01");
+    Ogre::Bone* bna = mObjectRoot->mSkelBase->getSkeleton()->getBone("Bip01 NonAccum");
+    if (b && bna)
+    {
+        // FIXME: all the skinned meshes seems to be offset by this, probably something to do
+        // with the binding position
+        Ogre::Vector3 vb = b->getPosition();
+        Ogre::Vector3 vbna = bna->getPosition();
+        Ogre::Vector3 ins = mInsert->getPosition();
+
+        b->setPosition(vbna+ Ogre::Vector3(0,0,0.f)); // TEMP testing for FO3
+    }
+
+    if(mViewMode != VM_FirstPerson)
+    {
+        addAnimSource(skeletonModel);
+    }
+    else
+    {
+        bool isFemale = (mNpc->mBaseConfig.fo3.flags & ESM4::Npc::FO3_Female) != 0;
+    }
+
+    std::string modelName;
+    std::string meshName;
+    std::string textureName;
+
+    MWWorld::InventoryStoreFO3& inv
+        = static_cast<const MWClass::ForeignNpc&>(mPtr.getClass()).getInventoryStoreFO3(mPtr);
+    MWWorld::ContainerStoreIterator invHeadGear = inv.getSlot(MWWorld::InventoryStoreTES4::Slot_TES4_Hair);
+
+    { //----------------------------------------------------------------------
+
+    const ESM4::Hair *hair = store.getForeign<ESM4::Hair>().search(mNpc->mHair);
+    if (!hair)
+    {
+        // try to use the Race defaults
+        hair = store.getForeign<ESM4::Hair>().search(mRace->mDefaultHair[isFemale ? 1 : 0]);
+        if (!hair)
+        {
+            // FIXME: we should remember our random selection?
+            int hairChoice = Misc::Rng::rollDice(int(mRace->mHairChoices.size()-1));
+            hair = store.getForeign<ESM4::Hair>().search(mRace->mHairChoices[hairChoice]);
+
+            if (!hair)
+                throw std::runtime_error(mNpc->mEditorId + " - cannot find the hair.");
+        }
+    }
+
+    meshName = "meshes\\" + hair->mModel;
+    textureName = "textures\\" + hair->mIcon;
+
+    // FO3/FONV allows 2 hair models depending on whether a hat is equipped.
+    NiModelPtr model;
+    if (invHeadGear == inv.end())
+        model = modelManager.getByName(mNpc->mEditorId+"_NoHat_"+meshName, group);
+    else
+        model = modelManager.getByName(mNpc->mEditorId+"_Hat_"+meshName, group);
+
+    if (!model)
+    {
+        model = modelManager.createMorphedHair(meshName, group, mNpc, mRace,
+                mObjectRoot->mForeignObj->mModel.get(), textureName, NiBtOgre::NiModelManager::BP_Hair,
+                invHeadGear != inv.end()); // true means Hat
+    }
+
+    NifOgre::ObjectScenePtr scene
+        = NifOgre::ObjectScenePtr (new NifOgre::ObjectScene(mInsert->getCreator()));
+    scene->mForeignObj
+        = std::make_unique<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(model, mInsert->createChildSceneNode()));
+    scene->mForeignObj->instantiate();
+
+    std::string targetBone = model->getTargetBone();
+    // Characters\Hair\ArgonianSpines.NIF does not have a targetBone
+    if (targetBone == "")
+        targetBone = "Bip01 Head"; // HACK: give a guessed default
+
+    Ogre::Bone *heBone = mSkelBase->getSkeleton()->getBone(targetBone);
+    Ogre::Quaternion heOrientation // fix rotation issue
+        = heBone->getOrientation() * Ogre::Quaternion(Ogre::Degree(90), Ogre::Vector3::UNIT_Y);
+
+    // FIXME non-zero for FO3 to make hair fit better
+    Ogre::Vector3 hePosition = Ogre::Vector3(/*up*/0.2f, /*forward*/1.7f, 0.f);
+    //Ogre::Vector3 hePosition = Ogre::Vector3(0.5f, -0.2f, 0.f);
+    //Ogre::Vector3 hePosition = Ogre::Vector3(0.f, -0.2f, 0.f);
+
+    std::map<int32_t, Ogre::Entity*>::const_iterator it(scene->mForeignObj->mEntities.begin());
+    for (; it != scene->mForeignObj->mEntities.end(); ++it)
+    {
+        Ogre::MaterialPtr mat = scene->mMaterialControllerMgr.getWritableMaterial(it->second);
+        Ogre::Material::TechniqueIterator techIter = mat->getTechniqueIterator();
+        while(techIter.hasMoreElements())
+        {
+            Ogre::Technique *tech = techIter.getNext();
+            Ogre::Technique::PassIterator passes = tech->getPassIterator();
+            while(passes.hasMoreElements())
+            {
+                Ogre::Pass *pass = passes.getNext();
+                //Ogre::TextureUnitState *tex = pass->getTextureUnitState(0);
+                //tex->setColourOperation(Ogre::LBO_ALPHA_BLEND);
+                //tex->setColourOperation(Ogre::LBO_REPLACE);
+                //tex->setBlank(); // FIXME: testing
+                Ogre::ColourValue ambient = pass->getAmbient();
+                ambient.r = (float)mNpc->mHairColour.red / 256.f;
+                ambient.g = (float)mNpc->mHairColour.green / 256.f;
+                ambient.b = (float)mNpc->mHairColour.blue / 256.f;
+                ambient.a = 1.f;
+                pass->setSceneBlending(Ogre::SBT_REPLACE);
+                pass->setAmbient(ambient);
+                pass->setVertexColourTracking(pass->getVertexColourTracking() &~Ogre::TVC_AMBIENT);
+            }
+        }
+
+        if (targetBone != "")
+            mSkelBase->attachObjectToBone(targetBone, it->second, heOrientation, hePosition);
+    }
+    mObjectParts[ESM4::Armor::TES4_Hair] = scene;
+    } //----------------------------------------------------------------------
+
+    { //------------------------- Head Parts ---------------------------------
+
+    for (int index = ESM4::Race::Head; index < 8; ++index) // FIXME: 8 head parts in FO3/FONV
+    {
+        // FIXME: ears need texture morphing
+        // skip ears if wearing a helmet - check for the head slot
+        if (index == 1/*Ears*/ && (invHeadGear != inv.end()))
+            continue;
+
+        // mouth, lower teeth and tongue can have FaceGen emotions e.g. Surprise, Fear
+
+        // FIXME: we do head elsewhere for now
+        // FIXME: if we retrieve a morphed head the morphing is no longer present!
+        if (index == ESM4::Race::Head)
+            continue;
+
+        if (mRace->mHeadParts[index].mesh == "")
+        {
+            std::string missing;
+            switch (index)
+            {
+            //case 1: missing = "Ears"; break; // FIXME: only texture?
+            case 2: missing = "Mouth"; break;
+            case 3: missing = "Teeth Lower"; break;
+            case 4: missing = "Teeth Upper"; break;
+            case 5: missing = "Tongue"; break;
+            case 6: missing = "Left Eye"; break;
+            case 7: missing = "Right Eye"; break;
+            default: break;
+            }
+            if (index != 1) // only texture for ears
+                std::cout << mNpc->mEditorId <<", a " << (isFemale ? "female," : "male,")
+                          << " does not have headpart \"" << missing <<"\"." << std::endl;
+
+            continue;
+        }
+
+        // Get mesh and texture from RACE except eye textures which are specified in Npc::mEyes
+        meshName = "meshes\\" + mRace->mHeadParts[index].mesh;
+
+        if (index == 6/*EyeLeft*/ || index == 7/*EyeRight*/)
+        {
+            const ESM4::Eyes* eyes = store.getForeign<ESM4::Eyes>().search(mNpc->mEyes);
+            if (!eyes)
+            {
+                // FIXME: how to remember our random selection?
+                int eyeChoice = Misc::Rng::rollDice(int(mRace->mEyeChoices.size()-1));
+                eyes = store.getForeign<ESM4::Eyes>().search(mRace->mEyeChoices[eyeChoice]);
+
+                if (!eyes)
+                    throw std::runtime_error(mNpc->mEditorId + " - cannot find the eye texture.");
+            }
+
+            textureName = "textures\\" + eyes->mIcon;
+        }
+        else
+            textureName = "textures\\" + mRace->mHeadParts[index].texture;
+
+        // TODO: if the texture doesn't exist, then grab it from the mesh (but shouldn't happen, so
+        // log an error before proceeding with the fallback)
+
+        if (index == 1) // there doesn't seem to be any ear mesh in FO3 (so why specify textures?)
+        {
+            continue;
+#if 0
+            mHeadParts.push_back(
+                createMorphedObject(meshName, "General", mObjectRoot->mForeignObj->mModel));
+
+            FgLib::FgSam sam;
+            if (sam.getMorphedTexture(mTextureEars, meshName, textureName, mNpc->mEditorId,
+                                      mRace->mSymTextureModeCoefficients,
+                                      mNpc->mSymTextureModeCoefficients))
+            {
+                replaceMeshTexture(mHeadParts.back(), mTextureEars->getName());
+            }
+#endif
+        }
+        else
+        {
+            NifOgre::ObjectScenePtr scene
+                = createMorphedObject(meshName, "General", mObjectRoot->mForeignObj->mModel, textureName);
+
+            if (scene->mForeignObj)
+            {
+                std::map<std::int32_t, Ogre::Entity*>::iterator it = scene->mForeignObj->mEntities.begin();
+                if (it != scene->mForeignObj->mEntities.end())
+                {
+                    if (index == 2/*Mouth*/)
+                        mMouthASSet = it->second->getAllAnimationStates();
+                    else if (index == 5/*Tongue*/)
+                        mTongueASSet = it->second->getAllAnimationStates();
+                    else if (index == 3/*TeethLower*/)
+                        mTeethLASSet = it->second->getAllAnimationStates();
+
+                    scene->mSkelBase = it->second;
+                }
+            }
+
+            mHeadParts.push_back(scene);
+        }
+    }
+    } //----------------------------------------------------------------------
+
+    { //----------------------------------------------------------------------
+
+    // default meshes for upperbody /lower body/hands/feet are in the same directory as skeleton.nif
+    const std::vector<ESM4::Race::BodyPart>& bodyParts
+        = (isFemale ? mRace->mBodyPartsFemale : mRace->mBodyPartsMale);
+
+    std::string bodyMeshName = "";
+    std::string bodyTextureName = "";
+    int numBodyParts = 4; // FIXME make enum
+    for (int index = ESM4::Race::UpperBody; index < numBodyParts; ++index)
+    {
+        meshName = "meshes\\" + bodyParts[index].mesh;
+        textureName = "textures\\" + bodyParts[index].texture;
+
+        int type = 0;
+        int invSlot = MWWorld::InventoryStoreFO3::FO3_Slots;
+        switch (index)
+        {
+            case(0):
+            {
+                // FIXME: human upperbody need texture morphing
+                type = ESM4::Armor::FO3_UpperBody;
+                invSlot = MWWorld::InventoryStoreFO3::Slot_FO3_UpperBody;
+                bodyMeshName = meshName;
+                bodyTextureName = textureName;
+                break;
+            }
+            case(1):
+            {
+                type = ESM4::Armor::FO3_LeftHand;
+                invSlot = MWWorld::InventoryStoreFO3::Slot_FO3_LeftHand;
+                break;
+            }
+            case(2):
+            {
+                type = ESM4::Armor::FO3_RightHand;
+                invSlot = MWWorld::InventoryStoreFO3::Slot_FO3_RightHand;
+                break;
+            }
+            case(3):
+            {
+                invSlot = MWWorld::InventoryStoreFO3::Slot_FO3_UpperBody;
+                // [0x00000003] = {mesh="Characters\\_Male\\UpperBodyHumanMale.egt" texture="" }
+                //std::string texture = "textures\\" + bodyParts[index].mesh;
+                //std::cout << "FO3 " << mNpc->mEditorId << " " << texture << std::endl;
+                break;
+            }
+            default: break;
+        }
+
+        // FIXME: group "General"
+        MWWorld::ContainerStoreIterator invPart
+            = static_cast<MWWorld::InventoryStoreFO3&>(inv).getSlot(invSlot);
+        if (index == 0)
+        {
+            continue; //  wait till we get EGT detail at index 3
+        }
+        else if (index == 3)
+        {
+            removeIndividualPart((ESM::PartReferenceType)type);
+
+            // initially assume a skinned model
+            std::string skeletonName = mObjectRoot->mForeignObj->mModel->getName();
+            Misc::StringUtils::lowerCaseInPlace(skeletonName);
+            NiModelPtr model = modelManager.getByName(/*raceName + */skeletonName + "_" + bodyMeshName, group);
+
+            if (!model)
+                model = modelManager.createSkinnedModel(bodyMeshName,
+                        "General", mObjectRoot->mForeignObj->mModel.get(), ""/*raceName, raceTexture*/);
+
+            // FIXME: confirm skinned
+            //if (model->buildData().mIsSkinned)
+
+            // create an instance of the model
+            NifOgre::ObjectScenePtr scene
+                = NifOgre::ObjectScenePtr (new NifOgre::ObjectScene(mInsert->getCreator()));
+
+            scene->mForeignObj
+                = std::make_unique<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(model, mInsert->createChildSceneNode()));
+            scene->mForeignObj->instantiateBodyPart(mInsert, mSkelBase);
+
+            mObjectParts[type] = scene;
+
+            // FIXME: FO3 has textures\characters\bodymods\fallout3.esm\<formid>modbody(fe)male.dds
+            //        Not sure how to apply them
+
+            Ogre::TexturePtr& bodyTexturePtr = mTextureUpperBody;
+            FgLib::FgSam sam;
+
+            FgLib::FgFile<FgLib::FgEgt> egtFile;
+            const FgLib::FgEgt *egt = egtFile.getOrLoadByMeshName(meshName);
+
+            if (egt == nullptr)
+                continue; // texture morph not possible (should throw?)
+
+            if (sam.getMorphedTexture(bodyTexturePtr, egt, bodyTextureName, mNpc->mEditorId,
+                                      mRace->mSymTextureModeCoefficients,
+                                      mNpc->mSymTextureModeCoefficients))
+            {
+                std::string npcTextureName = bodyTexturePtr->getName();
+                replaceMeshTexture(mObjectParts[type], npcTextureName);
+            }
+        }
+        else if (invPart == inv.end()) // body part only if it is not occupied by some equipment
+        {
+            removeIndividualPart((ESM::PartReferenceType)type);
+
+            mObjectParts[type] =
+                    createObject(meshName, "General", mObjectRoot->mForeignObj->mModel, textureName);
+        }
+    }
+    } //----------------------------------------------------------------------
+
+    meshName = "meshes\\" + mRace->mHeadParts[ESM4::Race::Head].mesh;
+    if (meshName.empty())
+    {
+        isFemale = (mNpc->mBaseConfig.fo3.flags & ESM4::Npc::FO3_Female) != 0;
+
+        // FIXME: can be female, ghoul, child, old, etc
+        if (mRace->mEditorId.find("Old") != std::string::npos)
+        {
+            if (isFemale)
+                meshName = "meshes\\Characters\\head\\headold.nif";
+            else
+                meshName = "meshes\\Characters\\head\\headoldfemale.nif";
+        }
+        else if (mRace->mEditorId.find("Child") != std::string::npos)
+        {
+            if (isFemale)
+                meshName = "meshes\\Characters\\head\\headchildfemale.nif";
+            else
+                meshName = "meshes\\Characters\\head\\headchild.nif";
+        }
+        else
+        {
+            if (isFemale)
+                meshName = "meshes\\Characters\\head\\headhumanfemale.nif";
+            else
+                meshName = "meshes\\Characters\\head\\headhuman.nif";
+        }
+        // FO3 races
+        // CaucasianOldAged
+        // AfricanAmericanOldAged
+        // AsianOldAged
+        // HispanicOldAged
+        // AfricanAmericanRaider
+        // AsianRaider
+        // HispanicRaider
+        // CaucasianRaider
+        // TestQACaucasian
+        // HispanicOld
+        // HispanicChild
+        // CaucasianOld
+        // CaucasianChild
+        // AsianOld
+        // AsianChild
+        // AfricanAmericanOld
+        // AfricanAmericanChild
+        // AfricanAmerican
+        // Ghoul
+        // Asian
+        // Hispanic
+        // Caucasian
+        //std::cout << "missing head " << mRace->mEditorId << std::endl;
+        //else
+            //return;
+    }
+
+    textureName = "textures\\" + mRace->mHeadParts[ESM4::Race::Head].texture;
+
+    // deprecated
+    const std::vector<float>& sRaceCoeff = mRace->mSymShapeModeCoefficients;
+    const std::vector<float>& sRaceTCoeff = mRace->mSymTextureModeCoefficients;
+    const std::vector<float>& sCoeff = mNpc->mSymShapeModeCoefficients;
+    const std::vector<float>& sTCoeff = mNpc->mSymTextureModeCoefficients;
+
+    FgLib::FgSam sam;
+    Ogre::Vector3 sym;
+
+    // FO3 doesn't seem to have aged texture?
+
+    std::string faceDetailFile
+        = sam.getFO3NpcDetailTexture_0(ESM4::formIdToString(mNpc->mFormId));
+
+    NiModelPtr model = modelManager.getByName(mNpc->mEditorId + "_" + meshName, group);
+    if (!model)
+    {
+        model = modelManager.createMorphedModel(meshName, group, mNpc, mRace,
+                        mObjectRoot->mForeignObj->mModel.get(), textureName, NiBtOgre::NiModelManager::BP_Head);
+
+        // add the poses for the head mesh before the Ogre::Entity is created
+        FgLib::FgFile<FgLib::FgTri> triFile;
+        const FgLib::FgTri *tri = triFile.getOrLoadByMeshName(meshName);
+
+        if (!tri || tri->numDiffMorphs() == 0)
+            throw std::runtime_error(mNpc->mEditorId + " missing head mesh poses.");
+
+        model->buildFgPoses(tri);
+    }
+
+    NifOgre::ObjectScenePtr scene = NifOgre::ObjectScenePtr (new NifOgre::ObjectScene(mInsert->getCreator()));
+    scene->mForeignObj
+        = std::make_unique<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(model, mInsert->createChildSceneNode()));
+    scene->mForeignObj->instantiate();
+
+    //std::string targetBone = model->getTargetBone();
+
+    // get the texture from mRace
+    // FIXME: for now, get it from Ogre material
+
+    std::map<int32_t, Ogre::Entity*>::const_iterator it(scene->mForeignObj->mEntities.begin());
+    for (; it != scene->mForeignObj->mEntities.end(); ++it)
+    {
+        Ogre::MaterialPtr mat = scene->mMaterialControllerMgr.getWritableMaterial(it->second);
+        Ogre::Material::TechniqueIterator techIter = mat->getTechniqueIterator();
+        while(techIter.hasMoreElements())
+        {
+            Ogre::Technique *tech = techIter.getNext();
+            //tech->removeAllPasses();
+            Ogre::Technique::PassIterator passes = tech->getPassIterator();
+            while(passes.hasMoreElements())
+            {
+                Ogre::Pass *pass = passes.getNext();
+
+                FgLib::FgFile<FgLib::FgEgt> egtFile;
+                const FgLib::FgEgt *egt = egtFile.getOrLoadByMeshName(meshName);
+
+                if (egt == nullptr)
+                    return; // FIXME: throw?
+
+                // try to regtrieve previously created morph texture
+                Ogre::TexturePtr morphTexture = Ogre::TextureManager::getSingleton().getByName(
+                       mNpc->mEditorId+"_"+textureName,
+                       Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+                if (!morphTexture)
+                {
+                    // create a blank one
+                    morphTexture = Ogre::TextureManager::getSingleton().createManual(
+                        mNpc->mEditorId+"_"+textureName, // name
+                        Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
+                        Ogre::TEX_TYPE_2D,  // type
+                        egt->numRows(), egt->numColumns(), // width & height
+                        0,                  // number of mipmaps; FIXME: should be 2? or 1?
+                        Ogre::PF_BYTE_RGBA,
+                        Ogre::TU_DEFAULT);  // usage; should be TU_DYNAMIC_WRITE_ONLY_DISCARDABLE for
+                                            // textures updated very often (e.g. each frame)
+                }
+
+                // we need the base texture
+                Ogre::ResourcePtr baseTexture = Ogre::TextureManager::getSingleton().createOrRetrieve(
+                       textureName, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME).first;
+                if (!baseTexture)
+                    return; // FIXME: throw?
+
+                // dest: usually 256x256 (egt.numRows()*egt.numColumns())
+                Ogre::HardwarePixelBufferSharedPtr pixelBuffer = morphTexture->getBuffer();
+                pixelBuffer->unlock(); // prepare for blit()
+                // src: can be 128x128
+                //Ogre::HardwarePixelBufferSharedPtr pixelBufferSrc = tus->_getTexturePtr()->getBuffer();
+                Ogre::HardwarePixelBufferSharedPtr pixelBufferSrc
+                    = Ogre::static_pointer_cast<Ogre::Texture>(baseTexture)->getBuffer();
+                pixelBufferSrc->unlock(); // prepare for blit()
+                // if source and destination dimensions don't match, scaling is done
+                pixelBuffer->blit(pixelBufferSrc);
+
+                pixelBuffer->lock(Ogre::HardwareBuffer::HBL_NORMAL); // for best performance use HBL_DISCARD!
+                const Ogre::PixelBox& pixelBox = pixelBuffer->getCurrentLock();
+                uint8_t *pDest = static_cast<uint8_t*>(pixelBox.data);
+
+                // Lock the pixel buffer and get a pixel box
+                //pixelBufferSrc->lock(Ogre::HardwareBuffer::HBL_NORMAL); // for best performance use HBL_DISCARD!
+                //const Ogre::PixelBox& pixelBoxSrc = pixelBufferSrc->getCurrentLock();
+
+                uint8_t* pDetail;
+                Ogre::HardwarePixelBufferSharedPtr pixelBufferDetail;
+                if (!faceDetailFile.empty())
+                {
+                    Ogre::TexturePtr detailTexture = Ogre::TextureManager::getSingleton().getByName(
+                           mNpc->mEditorId+"_"+faceDetailFile,
+                           Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+                    if (!detailTexture)
+                    {
+                        detailTexture = Ogre::TextureManager::getSingleton().createManual(
+                            mNpc->mEditorId+"_"+faceDetailFile,
+                            Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
+                            Ogre::TEX_TYPE_2D,
+                            egt->numRows(), egt->numColumns(),
+                            0,
+                            Ogre::PF_BYTE_RGBA,
+                            Ogre::TU_DEFAULT);
+                    }
+                    // FIXME: this one should be passed to a shader, along with the "_1" variant
+                    Ogre::TexturePtr faceDetailTexture = Ogre::TextureManager::getSingleton().getByName(
+                            faceDetailFile, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+                    if (faceDetailTexture.isNull())
+                    {
+                        faceDetailTexture = Ogre::TextureManager::getSingleton().create(
+                            faceDetailFile, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+                        faceDetailTexture->load();
+                    }
+                    pixelBufferDetail = detailTexture->getBuffer();
+                    pixelBufferDetail->unlock(); // prepare for blit()
+                    Ogre::HardwarePixelBufferSharedPtr pixelBufferDetailSrc
+                        = Ogre::static_pointer_cast<Ogre::Texture>(faceDetailTexture)->getBuffer();
+                    pixelBufferDetailSrc->unlock(); // prepare for blit()
+                    // if source and destination dimensions don't match, scaling is done
+                    pixelBufferDetail->blit(pixelBufferDetailSrc); // FIXME: can't we just use the src?
+
+                    pixelBufferDetail->lock(Ogre::HardwareBuffer::HBL_NORMAL);
+                    const Ogre::PixelBox& pixelBoxDetail = pixelBufferDetail->getCurrentLock();
+                    pDetail = static_cast<uint8_t*>(pixelBoxDetail.data);
+                }
+
+                Ogre::Vector3 sym;
+                const std::vector<Ogre::Vector3>& symTextureModes = egt->symTextureModes();
+
+                // update the pixels with SCM and detail texture
+                // NOTE: mSymTextureModes is assumed to have the image pixels in row-major order
+                for (size_t i = 0; i < egt->numRows()*egt->numColumns(); ++i) // height*width, should be 256*256
+                {
+                    // FIXME: for some reason adding the race coefficients makes it look worse
+                    //        even though it is clear that for shapes they are needed
+                    // sum all the symmetric texture modes for a given pixel i
+                    sym = Ogre::Vector3::ZERO; // WARN: sym reused
+                    if (sTCoeff.empty())
+                    {
+                        // CheydinhalGuardCityPostNight03 does not have any symmetric texture coeff
+                        for (size_t j = 0; j < 50/*mNumSymTextureModes*/; ++j)
+                            sym += sRaceTCoeff[j] * symTextureModes[50/*mNumSymTextureModes*/ * i + j];
+                    }
+                    else
+                    {
+                        for (size_t j = 0; j < 50/*mNumSymTextureModes*/; ++j)
+                            sym += (sRaceTCoeff[j] + sTCoeff[j]) * symTextureModes[50/*mNumSymTextureModes*/ * i + j];
+                    }
+
+                    float ar, ag, ab;
+                    ar = 1.f;
+                    ag = 1.f;
+                    ab = 1.f;
+
+                    float dr, dg, db;
+                    if (!faceDetailFile.empty())
+                    {
+                        dr = 2.f * *(pDetail+0)/255.f;
+                        dg = 2.f * *(pDetail+1)/255.f;
+                        db = 2.f * *(pDetail+2)/255.f;
+
+                        pDetail += 4;
+                    }
+                    else
+                    {
+                        dr = 1.f;
+                        dg = 1.f;
+                        db = 1.f;
+                    }
+
+                    *(pDest+0) = std::min(int(std::min(int((*(pDest+0)+sym.x)), 255) * ar * dr), 255);
+                    *(pDest+1) = std::min(int(std::min(int((*(pDest+1)+sym.y)), 255) * ag * dg), 255);
+                    *(pDest+2) = std::min(int(std::min(int((*(pDest+2)+sym.z)), 255) * ab * db), 255);
+                    pDest += 4;
+                }
+
+                // Unlock the pixel buffers
+                pixelBuffer->unlock();
+                if (!faceDetailFile.empty())
+                    pixelBufferDetail->unlock();
+
+                pass->removeTextureUnitState(0);
+                Ogre::TextureUnitState *newTUS = pass->createTextureUnitState(mNpc->mEditorId+"_"+textureName);
+
+            } // while pass
+        } // while technique
+
+        it->second->shareSkeletonInstanceWith(mSkelBase); // NOTE: removes all vertex anim from the entity
+        mInsert->attachObject(it->second);
+    }
+
+    if (scene->mForeignObj)
+    {
+        std::map<std::int32_t, Ogre::Entity*>::iterator it = scene->mForeignObj->mEntities.begin();
+        if (it != scene->mForeignObj->mEntities.end())
+        {
+            mHeadASSet = it->second->getAllAnimationStates();
+            it->second->getMesh()->_initAnimationState(mHeadASSet);
+
+            scene->mSkelBase = it->second;
+        }
+    }
+
+    mHeadParts.push_back(scene);
+
+    // FIXME: this section below should go to updateParts()
+    std::vector<const ESM4::Clothing*> invCloth;
+    std::vector<const ESM4::Armor*> invArmor;
+    std::vector<const ESM4::Weapon*> invWeap;
+
+    // check inventory
+    for(size_t i = 0; i < inv.getNumSlots(); ++i)
+    {
+        MWWorld::ContainerStoreIterator store = inv.getSlot(int(i)); // compiler warning
+
+        if(store == inv.end())
+            continue;
+
+        // TODO: this method of handling inventory doen't suit FO3 very well because it is possible
+        //       for one part to occupy more than one slot; for now as a workaround just loop
+        //       through the slots to gather all the equipped parts and process them afterwards
+        else if(store->getTypeName() == typeid(ESM4::Armor).name())
+        {
+            const ESM4::Armor *armor = store->get<ESM4::Armor>()->mBase;
+            if (std::find(invArmor.begin(), invArmor.end(), armor) == invArmor.end())
+                invArmor.push_back(armor);
+        }
+        else if(store->getTypeName() == typeid(ESM4::Weapon).name())
+        {
+            const ESM4::Weapon *weap = store->get<ESM4::Weapon>()->mBase;
+            if (std::find(invWeap.begin(), invWeap.end(), weap) == invWeap.end())
+                invWeap.push_back(weap);
+        }
+        else if(store->getTypeName() == typeid(ESM4::Clothing).name())
+            std::cout << "Found CLOT in FO3/FONV" << std::endl;
+    }
+
+    //for (std::size_t i = 0; i < invCloth.size(); ++i)
+        //equipClothes(invCloth[i], isFemale);
+
+    for (std::size_t i = 0; i < invArmor.size(); ++i)
+        equipArmor(invArmor[i], isFemale);
+
+    for (std::size_t i = 0; i < invWeap.size(); ++i)
+    {
+        // FIXME: group "General"
+        // FIXME: prob wrap this with a try/catch block
+        std::string meshName = /*meshes\\"+*/invWeap[i]->mModel;
+        if (meshName != "") // FIXME: mIcon = "Interface\\Icons\\PipboyImages\\Weapons\\weapons_brass_knuckles.dds"
+        {
+            int type = ESM4::Armor::FO3_Weapon;
+            removeIndividualPart((ESM::PartReferenceType)type);
+            mObjectParts[type] = createObject("meshes\\"+meshName, "General", mObjectRoot->mForeignObj->mModel);
+        }
+    }
+
+    //if (mAccumRoot) mAccumRoot->setPosition(Ogre::Vector3());
+
+    mWeaponAnimationTime->updateStartTime();
+}
+
 // needs: mNpc, mRace
 std::string ForeignNpcAnimation::getSkeletonModel(const MWWorld::ESMStore& store) const
 {
     std::string skeletonModel;
 
+    // FIXME: FO3/FONV some NPCs have mModel = marker_creature.nif
     if (mNpc->mModel.empty() && mNpc->mBaseTemplate != 0) // TES5
     {
         uint32_t type = store.find(mNpc->mBaseTemplate);
@@ -1599,13 +2292,13 @@ NifOgre::ObjectScenePtr ForeignNpcAnimation::createMorphedObject(const std::stri
     if (!object)
     {
         object = modelManager.createMorphedModel(meshName, group, mNpc, mRace, skeletonModel.get(),
-                                                 texture, NiBtOgre::NiModelManager::BP_Mouth); // FIXME
+                                                 texture, NiBtOgre::NiModelManager::BP_Mouth); // FIXME: hard coded to BP_Mouth
 
         // FIXME: add the poses for mouth, teeth and tongue only
 
         // add the poses for the head mesh before the Ogre::Entity is created
         FgLib::FgFile<FgLib::FgTri> triFile;
-        const FgLib::FgTri *tri = triFile.getOrLoadByName(meshName);
+        const FgLib::FgTri *tri = triFile.getOrLoadByMeshName(meshName);
 
         if (tri && tri->numDiffMorphs() != 0)
         {
@@ -1668,8 +2361,11 @@ NifOgre::ObjectScenePtr ForeignNpcAnimation::createMorphedObject(const std::stri
             if (baseRotation == Ogre::Quaternion::IDENTITY)
                 orientation = bone->getOrientation() * Ogre::Quaternion(Ogre::Degree(90), Ogre::Vector3::UNIT_Y);
 
-            //position = Ogre::Vector3(0.45f/*up*/, -0.55f/*forward*/, 0.f/*right*/); // better for eyes
-            position = Ogre::Vector3(0.45f/*up*/, -0.2f/*forward*/, 0.f/*right*/); // best for orc teeth
+            if (mIsTES4)
+                //position = Ogre::Vector3(0.45f/*up*/, -0.55f/*forward*/, 0.f/*right*/); // better for eyes
+                position = Ogre::Vector3(0.45f/*up*/, -0.2f/*forward*/, 0.f/*right*/); // best for orc teeth
+            else // FO3
+                position = Ogre::Vector3(0.f/*up*/, -0.2f/*forward*/, 0.f/*right*/); // for eyes
         }
 
         std::map<int32_t, Ogre::Entity*>::const_iterator it(scene->mForeignObj->mEntities.begin());
@@ -1751,7 +2447,45 @@ NifOgre::ObjectScenePtr ForeignNpcAnimation::createObject(const std::string& mes
 #endif
         scene->mForeignObj
             = std::make_unique<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(model, mInsert->createChildSceneNode()));
+
+    if(model->buildData().mIsSkinned) // test if the model is skinned
+    {
         scene->mForeignObj->instantiateBodyPart(mInsert, mSkelBase);
+    }
+    else
+    {
+        scene->mForeignObj->instantiate();
+
+        std::string targetBone = model->getTargetBone();
+
+        if (targetBone == "") // FIXME: hack
+            targetBone = "Bip01 Head";
+
+        Ogre::Bone *bone = mSkelBase->getSkeleton()->getBone(targetBone);
+
+        // fix helmet issue
+        Ogre::Quaternion orientation = Ogre::Quaternion::IDENTITY;
+        Ogre::Vector3 position = Ogre::Vector3::ZERO;
+
+
+        if (targetBone == "Bip01 Head")
+        {
+            // some models already have the rotation in their base node :-(
+            const Ogre::Quaternion baseRotation = scene->mForeignObj->mModel->getBaseRotation();
+            // FIXME: temp testing
+            //if (meshName.find("ockey") != std::string::npos)
+                //std::cout << "stop" << std::endl;
+            if (baseRotation == Ogre::Quaternion::IDENTITY || (baseRotation.x < 0.0001 && baseRotation.y < 0.000001 && baseRotation.z < 0.00001))
+                orientation = bone->getOrientation() * Ogre::Quaternion(Ogre::Degree(90), Ogre::Vector3::UNIT_Y);
+
+            //position = Ogre::Vector3(0.45f/*up*/, -0.55f/*forward*/, 0.f/*right*/);
+            position = Ogre::Vector3(0.f/*up*/, -0.f/*forward*/, 0.f/*right*/);
+        }
+
+        std::map<int32_t, Ogre::Entity*>::const_iterator it(scene->mForeignObj->mEntities.begin());
+        for (; it != scene->mForeignObj->mEntities.end(); ++it)
+            mSkelBase->attachObjectToBone(targetBone, it->second, orientation, position);
+    }
 #if 0
         std::map<int32_t, Ogre::Entity*>::const_iterator it(scene->mForeignObj->mEntities.begin());
         for (; it != scene->mForeignObj->mEntities.end(); ++it)
@@ -1899,6 +2633,22 @@ bool ForeignNpcAnimation::equipArmor(const ESM4::Armor* armor, bool isFemale)
 
         mObjectParts[type] = scene;
     }
+    else if (mIsFO3)
+    {
+        size_t pos = meshName.find_last_of(".");
+        //std::cout << meshName.substr(0, pos+1) << "egm" << std::endl;
+        if (pos != std::string::npos && meshName.substr(pos+1) == "nif" &&
+            Ogre::ResourceGroupManager::getSingleton().resourceExistsInAnyGroup(meshName.substr(0, pos+1)+"egm"))
+        {
+            mObjectParts[type] =
+                createMorphedObject(meshName, "General", mObjectRoot->mForeignObj->mModel);
+        }
+        else
+        {
+            mObjectParts[type] =
+                createObject(meshName, "General", mObjectRoot->mForeignObj->mModel, raceTexture);
+        }
+    }
     else // hands, feet
         mObjectParts[type] =
             createObject(meshName, "General", mObjectRoot->mForeignObj->mModel, raceTexture);
@@ -2030,8 +2780,8 @@ void ForeignNpcAnimation::addAnimSource(const std::string &model)
 
     // FIXME: for testing just load idle
     std::string animName = model.substr(0, pos) + "handtohandattackleft_jab.kf";
-
     addForeignAnimSource(model, animName);
+
     //animName = model.substr(0, pos) + "handtohandattackright_hook.kf";
     //addForeignAnimSource(model, animName);
     //animName = model.substr(0, pos) + "blockidle.kf";
@@ -2040,10 +2790,10 @@ void ForeignNpcAnimation::addAnimSource(const std::string &model)
     //addForeignAnimSource(model, animName);
     //animName = model.substr(0, pos) + "walkforward.kf";
     //addForeignAnimSource(model, animName);
-    animName = model.substr(0, pos) + "twohandidle.kf";
-    addForeignAnimSource(model, animName);
-    animName = model.substr(0, pos) + "castself.kf";
-    addForeignAnimSource(model, animName);
+    //animName = model.substr(0, pos) + "twohandidle.kf";
+    //addForeignAnimSource(model, animName);
+    //animName = model.substr(0, pos) + "castself.kf";
+    //addForeignAnimSource(model, animName);
     //animName = model.substr(0, pos) + "swimfastforward.kf";
     //animName = model.substr(0, pos) + "walkfastforward.kf";
     //animName = model.substr(0, pos) + "swimbackward.kf";
@@ -2051,15 +2801,22 @@ void ForeignNpcAnimation::addAnimSource(const std::string &model)
     //animName = model.substr(0, pos) + "idleanims\\cheer01.kf";
     //animName = model.substr(0, pos) + "idleanims\\talk_armscrossed_motion.kf";
     //animName = model.substr(0, pos) + "castselfalt.kf";
-    //animName = model.substr(0, pos) + "idleanims\\umpa_disco.kf";
-    animName = model.substr(0, pos) + "walkforward.kf";
-    animName = model.substr(0, pos) + "idle.kf";
-    //
-    //animName = model.substr(0, pos) + "idleanims\\talk_relaxed.kf";
-    //animName = model.substr(0, pos) + "idleanims\\bdaycheera.kf";
-    //animName = model.substr(0, pos) + "idleanims\\laugha.kf";
-    //animName = model.substr(0, pos) + "locomotion\\male\\mtforward.kf";
-    addForeignAnimSource(model, animName);
+    if (mIsTES4)
+    {
+        animName = model.substr(0, pos) + "idleanims\\umpa_disco.kf";
+        //animName = model.substr(0, pos) + "idleanims\\umpa_sexy_walk.kf";
+        //animName = model.substr(0, pos) + "walkforward.kf";
+        animName = model.substr(0, pos) + "idle.kf";
+        addForeignAnimSource(model, animName);
+    }
+    else if (mIsFO3 || mIsFONV)
+    {
+        //animName = model.substr(0, pos) + "idleanims\\talk_relaxed.kf";
+        //animName = model.substr(0, pos) + "idleanims\\bdaycheera.kf";
+        animName = model.substr(0, pos) + "idleanims\\laugha.kf";
+        animName = model.substr(0, pos) + "idleanims\\lookingaround.kf";
+        addForeignAnimSource(model, animName);
+    }
 }
 
 // based on Animation::addAnimSource()
@@ -2869,35 +3626,104 @@ void ForeignNpcAnimation::addPartGroup(int group, int priority, const std::vecto
 void ForeignNpcAnimation::showWeapons(bool showWeapon)
 {
     mShowWeapons = showWeapon;
-    if(showWeapon)
+    if (mIsTES4)
     {
-        MWWorld::InventoryStore& inv = mPtr.getClass().getInventoryStore(mPtr);
-        MWWorld::ContainerStoreIterator weapon = inv.getSlot(MWWorld::InventoryStoreTES4::Slot_TES4_Weapon);
-        if(weapon != inv.end())
+        int type = ESM4::Armor::TES4_Weapon;
+        if(showWeapon)
         {
-            Ogre::Vector3 glowColor = getEnchantmentColor(*weapon);
-            std::string mesh = weapon->getClass().getModel(*weapon);
-            addOrReplaceIndividualPart(ESM::PRT_Weapon, MWWorld::InventoryStoreTES4::Slot_TES4_Weapon, 1,
-                                       mesh, !weapon->getClass().getEnchantment(*weapon).empty(), &glowColor);
+            MWWorld::InventoryStoreTES4& inv
+                = static_cast<const MWClass::ForeignNpc&>(mPtr.getClass()).getInventoryStoreTES4(mPtr);
 #if 0
-            // Crossbows start out with a bolt attached
-            if (weapon->getTypeName() == typeid(ESM::Weapon).name() &&
-                    weapon->get<ESM::Weapon>()->mBase->mData.mType == ESM::Weapon::MarksmanCrossbow)
+            for(size_t i = 0; i < inv.getNumSlots(); ++i)
             {
-                MWWorld::ContainerStoreIterator ammo = inv.getSlot(MWWorld::InventoryStore::Slot_Ammunition);
-                if (ammo != inv.end() && ammo->get<ESM::Weapon>()->mBase->mData.mType == ESM::Weapon::Bolt)
-                    attachArrow();
-                else
-                    mAmmunition.reset();
+                MWWorld::ContainerStoreIterator store = inv.getSlot(int(i)); // compiler warning
+
+                if(store == inv.end())
+                    continue;
+
+                // TODO: this method of handling inventory doen't suit TES4 very well because it is possible
+                //       for one part to occupy more than one slot; for now as a workaround just loop
+                //       through the slots to gather all the equipped parts and process them afterwards
+                if(store->getTypeName() == typeid(ESM4::Weapon).name())
+                {
+                    const ESM4::Weapon *weap = store->get<ESM4::Weapon>()->mBase;
+                    if (std::find(invWeap.begin(), invWeap.end(), weap) == invWeap.end())
+                        invWeap.push_back(weap);
+                }
+            }
+
+            for (std::size_t i = 0; i < invWeap.size(); ++i)
+            {
+                std::string meshName;
+
+                meshName = "meshes\\"+invWeap[i]->mModel;
+
+                int type = ESM4::Armor::TES4_Weapon;
+
+                removeIndividualPart((ESM::PartReferenceType)type);
+
+                // FIXME: group "General"
+                // FIXME: prob wrap this with a try/catch block
+                mObjectParts[type] =
+                        createObject(meshName, "General", mObjectRoot->mForeignObj->mModel);
+            }
+#else
+            // TODO: can weapons be in another slot?
+            MWWorld::ContainerStoreIterator weapStore = inv.getSlot(MWWorld::InventoryStoreTES4::Slot_TES4_Weapon);
+            if(weapStore != inv.end())
+            {
+                if(weapStore->getTypeName() == typeid(ESM4::Weapon).name())
+                {
+                    removeIndividualPart((ESM::PartReferenceType)type);
+
+                    const ESM4::Weapon *weap = weapStore->get<ESM4::Weapon>()->mBase;
+                    std::string meshName = "meshes\\"+weap->mModel;
+                    mObjectParts[type] =
+                            createObject(meshName, "General", mObjectRoot->mForeignObj->mModel);
+                }
             }
             else
-                mAmmunition.reset();
+                removeIndividualPart((ESM::PartReferenceType)type);
 #endif
         }
+        else
+            removeIndividualPart((ESM::PartReferenceType)type);
     }
-    else
+    else if (mIsFO3 || mIsFONV)
     {
-        removeIndividualPart(ESM::PRT_Weapon);
+        int type = ESM4::Armor::FO3_Weapon;
+        if(showWeapon)
+        {
+            MWWorld::InventoryStoreFO3& inv
+                = static_cast<const MWClass::ForeignNpc&>(mPtr.getClass()).getInventoryStoreFO3(mPtr);
+            MWWorld::ContainerStoreIterator weapStore = inv.getSlot(MWWorld::InventoryStoreFO3::Slot_FO3_Weapon);
+            if(weapStore != inv.end())
+            {
+                if(weapStore->getTypeName() == typeid(ESM4::Weapon).name())
+                {
+                    removeIndividualPart((ESM::PartReferenceType)type);
+
+                    const ESM4::Weapon *weap = weapStore->get<ESM4::Weapon>()->mBase;
+                    std::string meshName = "meshes\\"+weap->mModel;
+                    mObjectParts[type] =
+                            createObject(meshName, "General", mObjectRoot->mForeignObj->mModel);
+                }
+            }
+            //else
+                //removeIndividualPart((ESM::PartReferenceType)type);
+        }
+        //else
+            //removeIndividualPart((ESM::PartReferenceType)type);
+    }
+    else // TES5
+    {
+        MWWorld::InventoryStoreTES5& inv
+            = static_cast<const MWClass::ForeignNpc&>(mPtr.getClass()).getInventoryStoreTES5(mPtr);
+        // FIXME: not sure which slot is weapon in TES5
+        //MWWorld::ContainerStoreIterator weapon = inv.getSlot(MWWorld::InventoryStoreTES5::Slot_TES5_Weapon);
+        //if(weapon != inv.end())
+        //{
+        //}
     }
     mAlpha = 1.f;
 }

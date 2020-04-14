@@ -36,9 +36,21 @@ namespace NiBtOgre
 namespace FgLib
 {
     class FgEgt;
+    class FgEgm;
+    class FgTri;
 
     class FgSam
     {
+        static std::vector<float> mDefaultNpcSymCoeff;
+        static std::vector<float> mDefaultNpcAsymCoeff;
+
+        bool buildMorphedVerticesImpl(std::vector<Ogre::Vector3>& fgMorphVertices,
+                                      const FgEgm *egm,
+                                      const FgTri *tri,
+                                      const std::vector<float>& raceSymCoeff,
+                                      const std::vector<float>& raceAsymCoeff,
+                                      const std::vector<float>& npcSymCoeff,
+                                      const std::vector<float>& npcAsymCoeff) const;
     public:
         FgSam() {}
         ~FgSam() {}
@@ -50,7 +62,9 @@ namespace FgLib
         std::string getHeadHumanDetailTexture(const std::string& mesh, float age, bool isFemale) const;
 
         // returns the npc specific face detail texture
-        std::string getNpcDetailTexture_0(const std::string& npcFormIdString) const;
+        std::string getTES4NpcDetailTexture_0(const std::string& npcFormIdString) const;
+        std::string getFO3NpcDetailTexture_0(const std::string& npcFormIdString) const;
+        std::string getFONVNpcDetailTexture_0(const std::string& npcFormIdString) const;
 
         // returns true if TRI and EGM files are found (or loaded) to build the morphed vertices
         //
@@ -64,6 +78,16 @@ namespace FgLib
                                   const std::vector<float>& raceAsymCoeff,
                                   const std::vector<float>& npcSymCoeff,
                                   const std::vector<float>& npcAsymCoeff) const;
+
+        // for FO3/FONV hair
+        bool buildMorphedVertices(std::vector<Ogre::Vector3>& fgMorphVertices,
+                                  const std::vector<Ogre::Vector3>& fgVertices,
+                                  const std::string& nif,
+                                  const std::vector<float>& raceSymCoeff,
+                                  const std::vector<float>& raceAsymCoeff,
+                                  const std::vector<float>& npcSymCoeff,
+                                  const std::vector<float>& npcAsymCoeff,
+                                  bool hat) const;
 
         // populates fgTexture
         // returns true if EGT file is either found in the map or loaded from disk *and*
@@ -79,15 +103,14 @@ namespace FgLib
                                const std::vector<float>& raceSymCoeff,
                                const std::vector<float>& npcSymCoeff) const;
 
-        // convineence method for human bodies only
-        bool getMorphedBodyTexture(Ogre::TexturePtr& morphTexture,
+        // convenience method for TES4 human bodies only
+        bool getMorphedTES4BodyTexture(Ogre::TexturePtr& morphTexture,
                                const std::string& mesh,
                                const std::string& texture,
                                const std::string& npcName,
                                const std::vector<float>& raceSymCoeff,
                                const std::vector<float>& npcSymCoeff) const;
 
-    private:
         bool getMorphedTexture(Ogre::TexturePtr& morphTexture,
                                const FgEgt *egt,
                                const std::string& texture,

@@ -225,6 +225,40 @@ namespace NiBtOgre
         return pModel;
     }
 
+    NiModelPtr NiModelManager::createMorphedHair(const Ogre::String& nif, const Ogre::String& group,
+            const ESM4::Npc *npc, const ESM4::Race *race, NiModel *skeleton, const Ogre::String& texture,
+            ModelBodyPart bodyPart, bool hat)
+    {
+        // Create manual model which calls back self to load
+        NiModelPtr pModel = createManual(npc->mEditorId + (hat ? "_Hat_" : "_NoHat_") + nif, group, nif, this);
+
+        // store parameters
+        ModelBuildInfo bInfo;
+        bInfo.type = MBT_FO_Hair;
+        bInfo.npc = npc;
+        bInfo.race = race;
+        bInfo.baseNif = nif;
+        bInfo.baseTexture = texture;
+        bInfo.bodyPart = bodyPart;
+        bInfo.skel = skeleton;
+        bInfo.hat = hat;
+        if (skeleton)
+        {
+            bInfo.skelNif = skeleton->getName();
+            bInfo.skelGroup = skeleton->getOgreGroup();
+        }
+        else
+        {
+            bInfo.skelNif.clear();
+            bInfo.skelGroup.clear();
+        }
+        mModelBuildInfoMap[pModel.get()] = bInfo;
+
+        pModel->load(); // load immediately
+
+        return pModel;
+    }
+
     NiModelPtr NiModelManager::createAnimModel(const Ogre::String& nif, const Ogre::String& group,
             NiModel *skeleton)
     {
@@ -287,6 +321,9 @@ namespace NiBtOgre
                 break;
             case MBT_Morphed:
                 loadManualMorphedModel(model, bInfo);
+                break;
+            case MBT_FO_Hair:
+                loadManualHairModel(model, bInfo);
                 break;
             case MBT_Anim:
                 loadManualAnimModel(model, bInfo);
@@ -358,11 +395,11 @@ namespace NiBtOgre
         {
             pModel->useFgMorphVertices();
 
-            // special material for headhuman.dds
+            // special material for headhuman.dds // FIXME: TES4 only
             // FIXME: case sensitive!
             if (bInfo.bodyPart == BP_Head && bInfo.baseNif.find("HeadHuman.nif") != std::string::npos)
             {
-                bool isFemale = (bInfo.npc->mBaseConfig.tes4.flags & 0x1) != 0;
+                bool isFemale = (bInfo.npc->mBaseConfig.tes4.flags & 0x1) != 0; // FIXME: depends on the game
 
                 std::string ageTextureFile
                     = sam.getHeadHumanDetailTexture(bInfo.baseNif, sam.getAge(sRaceCoeff, sCoeff), isFemale);
@@ -382,7 +419,7 @@ namespace NiBtOgre
                 // FIXME: need to pass to shader FaceGen maps textures\faces\oblivion.esm\<formid>_[01].dds
 
                 std::string faceDetailFile
-                    = sam.getNpcDetailTexture_0(ESM4::formIdToString(bInfo.npc->mFormId));
+                    = sam.getTES4NpcDetailTexture_0(ESM4::formIdToString(bInfo.npc->mFormId));
 //#if 0
                 if (faceDetailFile.empty())
                     std::cout << bInfo.npc->mEditorId << " does not have a facegen npc detail texture" << std::endl;
@@ -397,7 +434,7 @@ namespace NiBtOgre
 
 
                 FgLib::FgFile<FgLib::FgEgt> egtFile;
-                const FgLib::FgEgt *egt = egtFile.getOrLoadByName(bInfo.baseNif);
+                const FgLib::FgEgt *egt = egtFile.getOrLoadByMeshName(bInfo.baseNif);
 
                 if (egt == nullptr)
                     return; // FIXME: throw?
@@ -592,7 +629,7 @@ namespace NiBtOgre
         if (bInfo.bodyPart == BP_EarMale || bInfo.bodyPart == BP_EarFemale)
         {
             FgLib::FgFile<FgLib::FgEgt> egtFile;
-            const FgLib::FgEgt *egt = egtFile.getOrLoadByName(bInfo.baseNif);
+            const FgLib::FgEgt *egt = egtFile.getOrLoadByMeshName(bInfo.baseNif);
 
             if (egt == nullptr)
                 return; // FIXME: throw?
@@ -717,6 +754,58 @@ namespace NiBtOgre
             pModel->createMesh(true/*isMorphed*/, skel);
             pModel->buildSkinnedModel(skel);
         }
+    }
+
+    void NiModelManager::loadManualHairModel(NiModel* pModel, const ModelBuildInfo& bInfo)
+    {
+        const std::vector<float>& sRaceCoeff = bInfo.race->mSymShapeModeCoefficients;
+        const std::vector<float>& aRaceCoeff = bInfo.race->mAsymShapeModeCoefficients;
+        const std::vector<float>& sRaceTCoeff = bInfo.race->mSymTextureModeCoefficients;
+        const std::vector<float>& sCoeff = bInfo.npc->mSymShapeModeCoefficients;
+        const std::vector<float>& aCoeff = bInfo.npc->mAsymShapeModeCoefficients;
+        const std::vector<float>& sTCoeff = bInfo.npc->mSymTextureModeCoefficients;
+
+        FgLib::FgSam sam;
+        std::string normalTexture;
+        std::string skinTexture = bInfo.baseTexture;
+
+        // if EGM and TRI both found, build morphed vertices
+        // WARN: fgMorphVertices() throws if more than one NiTriBasedGeom in the model
+        // FIXME: FO3 mModelName = "Raider1GunAAFTEMPLATE_meshes\\Characters\\Hair\\HairRaiderFCat.NIF"
+        //        has 2, "NoHat" and "Hat" which means we have to check the currently equipped inventory
+        //        and let the model know which one to choose
+        if (sam.buildMorphedVertices(pModel->fgMorphVerticesFO3(bInfo.hat), pModel->fgVerticesFO3(bInfo.hat),
+                                     bInfo.baseNif, sRaceCoeff, aRaceCoeff, sCoeff, aCoeff, bInfo.hat))
+        {
+            pModel->useFgMorphVertices();
+
+            if (bInfo.bodyPart == BP_Hair) // special material for hair
+            {
+                size_t pos = bInfo.baseTexture.find_last_of(".");
+                if (pos == std::string::npos)
+                    return; // FIXME: should throw
+
+                std::string texture = bInfo.baseTexture.substr(0, pos);
+                /*std::string*/ normalTexture = texture + "_n.dds";
+                std::string heightMap = texture + "_hh.dds";  // NOTE: apparently only the R channel needed?
+                std::string layerMap = texture + "_hl.dds";
+
+                // FIXME: how to extract the anisoMap from normal texture's alpha channel?
+
+                // FIXME: do other stuff here (but no texture morphing since there aren't any EGT for hair)
+
+            }
+        }
+
+        if (!pModel->buildData().mIsSkinned)
+        {
+            if (!bInfo.baseTexture.empty())
+                pModel->setSkinTexture(skinTexture);
+            pModel->createMesh(true/*isMorphed*/);
+            pModel->buildModel();
+        }
+        else // skinned, need skeleton
+            std::cout << bInfo.npc->mEditorId << " has skinned hair?" << std::endl;
     }
 
     void NiModelManager::loadManualAnimModel(NiModel* pModel, const ModelBuildInfo& bInfo)

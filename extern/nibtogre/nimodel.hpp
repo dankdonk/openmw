@@ -351,9 +351,11 @@ namespace NiBtOgre
 
         // used to generate a FaceGen TRI file, returns the vertices of the first NiTriBasedGeom
         const std::vector<Ogre::Vector3>& fgVertices() const;
+        const std::vector<Ogre::Vector3>& fgVerticesFO3(bool hat) const;
 
         // used by FgSam to populate the morphed vertices
         std::vector<Ogre::Vector3>& fgMorphVertices();
+        std::vector<Ogre::Vector3>& fgMorphVerticesFO3(bool hat);
 
         void useFgMorphVertices(); // used by FgSam to indicate vertices have been morphed
 
@@ -374,6 +376,7 @@ namespace NiBtOgre
         // access to NiGeometryData for generating a FaceGen TRI file or to populate morphed vertices
         // WARN: may throw
         NiTriBasedGeom *getUniqueNiTriBasedGeom() const;
+        NiTriBasedGeom *getNiTriBasedGeom(bool hat) const;
     };
 
     template<typename T>

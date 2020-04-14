@@ -130,7 +130,8 @@ private:
     Ogre::Radian mHeadYaw;
     Ogre::Radian mHeadPitch;
 
-    void updateNpcBase();
+    void updateTES4NpcBase();
+    void updateFO3NpcBase();
 
     std::string getSkeletonModel(const MWWorld::ESMStore& store) const;
 

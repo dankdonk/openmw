@@ -450,9 +450,19 @@ const std::vector<Ogre::Vector3>& NiBtOgre::NiModel::fgVertices() const
     return getUniqueNiTriBasedGeom()->getVertices(false/*morphed*/);
 }
 
+const std::vector<Ogre::Vector3>& NiBtOgre::NiModel::fgVerticesFO3(bool hat) const
+{
+    return getNiTriBasedGeom(hat)->getVertices(false/*morphed*/);
+}
+
 std::vector<Ogre::Vector3>& NiBtOgre::NiModel::fgMorphVertices()
 {
     return getUniqueNiTriBasedGeom()->mMorphVertices;
+}
+
+std::vector<Ogre::Vector3>& NiBtOgre::NiModel::fgMorphVerticesFO3(bool hat)
+{
+    return getNiTriBasedGeom(hat)->mMorphVertices;
 }
 
 void NiBtOgre::NiModel::useFgMorphVertices()
@@ -485,6 +495,16 @@ NiBtOgre::NiTriBasedGeom *NiBtOgre::NiModel::getUniqueNiTriBasedGeom() const
     NiNode *ninode = getRef<NiNode>(getRootIndex());
 
     return ninode->getUniqueSubMeshChild();
+}
+
+NiBtOgre::NiTriBasedGeom *NiBtOgre::NiModel::getNiTriBasedGeom(bool hat) const
+{
+    if (mNiObjects.empty())
+        throw std::logic_error("NiModel attempting to retrieve an object that is not yet built.");
+
+    NiNode *ninode = getRef<NiNode>(getRootIndex());
+
+    return ninode->getSubMeshChildFO3(hat);
 }
 
 void NiBtOgre::NiModel::fillSkinIndices(std::map<std::string, std::vector<std::size_t> >& skinIndicesMap) const

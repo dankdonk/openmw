@@ -45,6 +45,56 @@
 
 namespace FgLib
 {
+    std::vector<float> FgSam::mDefaultNpcSymCoeff = [] {
+        std::vector<float> v;
+        v.resize(50, 1.f);
+        return std::move(v);
+    } ();
+
+    std::vector<float> FgSam::mDefaultNpcAsymCoeff = [] {
+        std::vector<float> v;
+        v.resize(30, 1.f);
+        return std::move(v);
+    } ();
+
+
+    bool FgSam::buildMorphedVertices(std::vector<Ogre::Vector3>& fgMorphVertices,
+                                     const std::vector<Ogre::Vector3>& fgVertices,
+                                     const std::string& nif,
+                                     const std::vector<float>& raceSymCoeff,
+                                     const std::vector<float>& raceAsymCoeff,
+                                     const std::vector<float>& npcSymCoeff,
+                                     const std::vector<float>& npcAsymCoeff,
+                                     bool hat) const
+    {
+        FgFile<FgTri> triFile;
+        const FgTri *tri = triFile.getOrLoadByMeshName(nif);
+
+        if (tri == nullptr)
+            return false; // not possible to recover
+
+        std::string name = nif;
+        boost::algorithm::to_lower_copy(name);
+        size_t pos = nif.find_last_of(".");
+        if (pos == std::string::npos || nif.substr(pos+1) != "nif")
+            return false;
+
+        if (tri->needsNifVertices())
+        {
+            name = nif.substr(0, pos+1)+"tri";
+            tri = triFile.addOrReplaceFile(name, std::make_unique<FgTri>(fgVertices));
+        }
+
+        FgFile<FgEgm> egmFile;
+        const FgEgm *egm = egmFile.getOrLoadByName(nif.substr(0, pos) + (hat ? "hat.egm" : "nohat.egm"));
+
+        if (egm == nullptr)
+            return false; // not possible to recover
+
+        return buildMorphedVerticesImpl(fgMorphVertices,
+                egm, tri, raceSymCoeff, raceAsymCoeff, npcSymCoeff, npcAsymCoeff);
+    }
+
     bool FgSam::buildMorphedVertices(std::vector<Ogre::Vector3>& fgMorphVertices,
                                      const std::vector<Ogre::Vector3>& fgVertices,
                                      const std::string& nif,
@@ -54,7 +104,7 @@ namespace FgLib
                                      const std::vector<float>& npcAsymCoeff) const
     {
         FgFile<FgTri> triFile;
-        const FgTri *tri = triFile.getOrLoadByName(nif);
+        const FgTri *tri = triFile.getOrLoadByMeshName(nif);
 
         if (tri == nullptr)
             return false; // not possible to recover
@@ -73,11 +123,23 @@ namespace FgLib
         }
 
         FgFile<FgEgm> egmFile;
-        const FgEgm *egm = egmFile.getOrLoadByName(nif);
+        const FgEgm *egm = egmFile.getOrLoadByMeshName(nif);
 
         if (egm == nullptr)
             return false; // not possible to recover
 
+        return buildMorphedVerticesImpl(fgMorphVertices,
+                egm, tri, raceSymCoeff, raceAsymCoeff, npcSymCoeff, npcAsymCoeff);
+    }
+
+    bool FgSam::buildMorphedVerticesImpl(std::vector<Ogre::Vector3>& fgMorphVertices,
+                                     const FgEgm *egm,
+                                     const FgTri *tri,
+                                     const std::vector<float>& raceSymCoeff,
+                                     const std::vector<float>& raceAsymCoeff,
+                                     const std::vector<float>& npcSymCoeff,
+                                     const std::vector<float>& npcAsymCoeff) const
+    {
         // NOTE: Not sure what to do with "Stat Morph Vertices". (see TRI in "fileformats")
         //       For headhuman.nif, the number of vertices are 0x4FB, which equals tri.numVertices(),
         //       and the number of morph vertices are 0x1CD.
@@ -98,6 +160,11 @@ namespace FgLib
 
         const boost::scoped_array<float>& vertices = tri->vertices();
 
+        // e.g. FO3 [ESM4::Npc] = {mFormId=0x00045ab7 mFlags=0x00040000 mEditorId="BarnScavenger" ...}
+        //      usually just outside the door from COC "zBethOffice01"
+        const std::vector<float>& npcSymCoeffRef = (npcSymCoeff.empty() ? mDefaultNpcSymCoeff : npcSymCoeff);
+        const std::vector<float>& npcAsymCoeffRef = (npcAsymCoeff.empty() ? mDefaultNpcAsymCoeff : npcAsymCoeff);
+
         std::size_t index;
         float coeff, scale, xMorph, yMorph, zMorph;
         for (std::size_t i = 0; i < numVertices; ++i)
@@ -107,7 +174,7 @@ namespace FgLib
             {
                 // NOTE: just guessed that the race and npc coefficients should be added
                 //       (see Thoronir-without-race-coeff.png, looks bad without the race coefficients)
-                coeff = raceSymCoeff[j] + npcSymCoeff[j];
+                coeff = raceSymCoeff[j] + npcSymCoeffRef[j];
                 scale = symMorphModeScales[j];
                 // source has all the vertices for a given mode in a group
                 index = 3 * ((numVertices + numStatMorphVertices) * j + i);
@@ -120,7 +187,7 @@ namespace FgLib
             for (std::size_t k = 0; k < 30; ++k) // for TES4 always 30 asym modes
             {
                 // WARN: coeff, scale and index reused
-                coeff = raceAsymCoeff[k] + npcAsymCoeff[k];
+                coeff = raceAsymCoeff[k] + npcAsymCoeffRef[k];
                 scale = asymMorphModeScales[k];
                 index = 3 * ((numVertices + numStatMorphVertices) * k + i);
 
@@ -186,7 +253,7 @@ namespace FgLib
         return texture;
     }
 
-    std::string FgSam::getNpcDetailTexture_0(const std::string& npcFormIdString) const
+    std::string FgSam::getTES4NpcDetailTexture_0(const std::string& npcFormIdString) const
     {
         // FIXME: need to be able to check other than oblivion.esm - can this hard-coded path change?
         std::string textureFile = "textures\\faces\\oblivion.esm\\"+npcFormIdString+"_0.dds";
@@ -203,6 +270,24 @@ namespace FgLib
         return "";
     }
 
+    std::string FgSam::getFO3NpcDetailTexture_0(const std::string& npcFormIdString) const
+    {
+        std::string textureFile = "textures\\characters\\facemods\\fallout3.esm\\"+npcFormIdString+"_0.dds";
+        if (Ogre::ResourceGroupManager::getSingleton().resourceExistsInAnyGroup(textureFile))
+            return textureFile;
+
+        return "";
+    }
+
+    std::string FgSam::getFONVNpcDetailTexture_0(const std::string& npcFormIdString) const
+    {
+        std::string textureFile = "textures\\characters\\facemods\\falloutnv.esm\\"+npcFormIdString+"_0.dds";
+        if (Ogre::ResourceGroupManager::getSingleton().resourceExistsInAnyGroup(textureFile))
+            return textureFile;
+
+        return "";
+    }
+
     bool FgSam::getMorphedTexture(Ogre::TexturePtr& morphTexture,
                                     const std::string& mesh,
                                     const std::string& texture,
@@ -211,7 +296,7 @@ namespace FgLib
                                     const std::vector<float>& npcSymCoeff) const
     {
         FgFile<FgEgt> egtFile;
-        const FgEgt *egt = egtFile.getOrLoadByName(mesh);
+        const FgEgt *egt = egtFile.getOrLoadByMeshName(mesh);
 
         if (egt == nullptr)
             return false; // texture morph not possible
@@ -219,7 +304,7 @@ namespace FgLib
         return getMorphedTexture(morphTexture, egt, texture, npcName, raceSymCoeff, npcSymCoeff);
     }
 
-    bool FgSam::getMorphedBodyTexture(Ogre::TexturePtr& morphTexture,
+    bool FgSam::getMorphedTES4BodyTexture(Ogre::TexturePtr& morphTexture,
                                     const std::string& mesh,
                                     const std::string& texture,
                                     const std::string& npcName,
@@ -249,7 +334,7 @@ namespace FgLib
             return false; // should throw?
 
         FgFile<FgEgt> egtFile;
-        const FgEgt *egt = egtFile.getOrLoadByName(meshName);
+        const FgEgt *egt = egtFile.getOrLoadByMeshName(meshName);
 
         if (egt == nullptr)
             return false; // texture morph not possible

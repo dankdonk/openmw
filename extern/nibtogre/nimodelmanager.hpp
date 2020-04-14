@@ -80,6 +80,7 @@ namespace NiBtOgre
             MBT_Skinned,
             MBT_Skeleton,
             MBT_Morphed,
+            MBT_FO_Hair,
             MBT_Anim
         };
 
@@ -95,6 +96,7 @@ namespace NiBtOgre
             Ogre::String raceName; // TODO: derive from race instead? (then we need race)
             Ogre::String baseNif;
             Ogre::String baseTexture;
+            bool hat;
         };
 
         std::map<Ogre::Resource*, ModelBuildInfo> mModelBuildInfoMap;
@@ -106,6 +108,7 @@ namespace NiBtOgre
         void loadManualSkinnedModel(NiModel* pModel, const ModelBuildInfo& params);
         void loadManualSkeletonModel(NiModel* pModel, const ModelBuildInfo& params);
         void loadManualMorphedModel(NiModel* pModel, const ModelBuildInfo& params);
+        void loadManualHairModel(NiModel* pModel, const ModelBuildInfo& params);
         void loadManualAnimModel(NiModel* pModel, const ModelBuildInfo& params);
 
     public:
@@ -139,6 +142,10 @@ namespace NiBtOgre
         NiModelPtr createMorphedModel(const Ogre::String& nif, const Ogre::String& group,
                 const ESM4::Npc *npc, const ESM4::Race *race, NiModel *skeleton, const Ogre::String& texture,
                 ModelBodyPart bodyPart);
+
+        NiModelPtr createMorphedHair(const Ogre::String& nif, const Ogre::String& group,
+                const ESM4::Npc *npc, const ESM4::Race *race, NiModel *skeleton, const Ogre::String& texture,
+                ModelBodyPart bodyPart, bool hat);
 
         NiModelPtr createAnimModel(const Ogre::String& name, const Ogre::String& group,
                 NiModel *skeleton);

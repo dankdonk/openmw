@@ -111,6 +111,7 @@ namespace NiBtOgre
         virtual const std::vector<NiAVObjectRef>& getChildren() const { return mChildren; }
 
         NiTriBasedGeom *getUniqueSubMeshChild(); // WARN: may throw
+        NiTriBasedGeom *getSubMeshChildFO3(bool hat); // WARN: may throw
 
         std::size_t getNumSubMeshChildren() const { return mSubMeshChildren.size(); }
 

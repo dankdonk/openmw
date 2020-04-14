@@ -163,6 +163,23 @@ NiBtOgre::NiTriBasedGeom *NiBtOgre::NiNode::getUniqueSubMeshChild()
         throw std::logic_error("NiNode: NiTriBasedGeom on a Root NiNode is not unique");
 }
 
+NiBtOgre::NiTriBasedGeom *NiBtOgre::NiNode::getSubMeshChildFO3(bool hat)
+{
+    if (mSubMeshChildren.size() == 1)
+        return mSubMeshChildren.back();
+
+    for (std::size_t i = 0; i < mSubMeshChildren.size(); ++i)
+    {
+        std::int32_t nameIndex = mSubMeshChildren[i]->getNameIndex();
+        std::string name = mModel.indexToString(nameIndex);
+
+        if ((hat && (name == "Hat")) || (!hat && (name == "NoHat")))
+            return mSubMeshChildren[i];
+    }
+
+    throw std::logic_error("NiNode: NiTriBasedGeom name does not match \"Hat\" nor \"NoHat\"");
+}
+
 //  Some of the Ogre code in this method is based on v0.36 of OpenMW. (including boundsfinder.hpp)
 void NiBtOgre::NiNode::buildMesh(Ogre::Mesh *mesh)
 {
