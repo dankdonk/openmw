@@ -33,27 +33,21 @@
 namespace FgLib
 {
     template<>
-    const FgTri *FgFile<FgTri>::getOrLoadByName(const std::string& mesh) const
+    const FgTri *FgFile<FgTri>::getOrLoadByMeshName(const std::string& mesh) const
     {
-        return getOrLoadByName(boost::algorithm::to_lower_copy(mesh), "tri");
+        return getOrLoadByMeshName(boost::algorithm::to_lower_copy(mesh), "tri");
     }
 
     template<>
-    const FgEgm *FgFile<FgEgm>::getOrLoadByName(const std::string& mesh) const
+    const FgEgm *FgFile<FgEgm>::getOrLoadByMeshName(const std::string& mesh) const
     {
-        return getOrLoadByName(boost::algorithm::to_lower_copy(mesh), "egm");
+        return getOrLoadByMeshName(boost::algorithm::to_lower_copy(mesh), "egm");
     }
 
     template<>
-    const FgEgt *FgFile<FgEgt>::getOrLoadByName(const std::string& mesh) const
+    const FgEgt *FgFile<FgEgt>::getOrLoadByMeshName(const std::string& mesh) const
     {
-        return getOrLoadByName(boost::algorithm::to_lower_copy(mesh), "egt");
-    }
-
-    template<>
-    const FgCtl *FgFile<FgCtl>::getOrLoadByName(const std::string& name) const
-    {
-        return getOrLoadByName(boost::algorithm::to_lower_copy(name), "");
+        return getOrLoadByMeshName(boost::algorithm::to_lower_copy(mesh), "egt");
     }
 
     template<>

@@ -27,7 +27,7 @@
 #include "info.hpp"
 
 #include <stdexcept>
-#include <iostream> // FIXME: for debugging only
+//#include <iostream> // FIXME: for debugging only
 
 #include "reader.hpp"
 #include "formid.hpp" // FIXME: for debugging only
@@ -71,6 +71,29 @@ void ESM4::DialogInfo::load(ESM4::Reader& reader)
             case ESM4::SUB_SCRO: // FormId GLOB reference
             case ESM4::SUB_PNAM: // TES4 DLC
             case ESM4::SUB_TPIC: // TES4 DLC
+            case ESM4::SUB_NAM3: // FO3
+            case ESM4::SUB_ANAM: // FO3
+            case ESM4::SUB_DNAM: // FO3
+            case ESM4::SUB_KNAM: // FO3
+            case ESM4::SUB_NEXT: // FO3
+            case ESM4::SUB_SNDD: // FO3
+            case ESM4::SUB_LNAM: // FONV
+            case ESM4::SUB_TCFU: // FONV
+            case ESM4::SUB_SLSD: // FONV
+            case ESM4::SUB_SCRV: // FONV
+            case ESM4::SUB_SCVR: // FONV
+            case ESM4::SUB_TIFC: // TES5
+            case ESM4::SUB_TWAT: // TES5
+            case ESM4::SUB_CIS2: // TES5
+            case ESM4::SUB_CNAM: // TES5
+            case ESM4::SUB_ENAM: // TES5
+            case ESM4::SUB_EDID: // TES5
+            case ESM4::SUB_VMAD: // TES5
+            case ESM4::SUB_BNAM: // TES5
+            case ESM4::SUB_SNAM: // TES5
+            case ESM4::SUB_ONAM: // TES5
+            case ESM4::SUB_QNAM: // TES5
+            case ESM4::SUB_RNAM: // TES5
             {
                 //std::cout << "INFO " << ESM4::printName(subHdr.typeId) << " skipping..."
                         //<< subHdr.dataSize << std::endl;

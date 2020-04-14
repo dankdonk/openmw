@@ -34,7 +34,7 @@
 #include "reader.hpp"
 //#include "writer.hpp"
 
-ESM4::Race::Race() : mFormId(0), mFlags(0)
+ESM4::Race::Race() : mFormId(0), mFlags(0), mIsTES5(false)
                    , mHeightMale(1.f), mHeightFemale(1.f), mWeightMale(1.f), mWeightFemale(1.f)
                    , mRaceFlags(0), mFaceGenMainClamp(0.f), mFaceGenFaceClamp(0.f), mNumKeywords(0)
 {
@@ -154,7 +154,7 @@ void ESM4::Race::load(ESM4::Reader& reader)
                 }
                 std::cout << ss.str() << std::endl;
 #else
-                if (subHdr.dataSize == 36) // TES4
+                if (subHdr.dataSize == 36) // TES4/FO3/FONV
                 {
                     std::uint8_t skill;
                     std::uint8_t bonus;
@@ -172,6 +172,8 @@ void ESM4::Race::load(ESM4::Reader& reader)
                 }
                 else if (subHdr.dataSize >= 128 && subHdr.dataSize <= 164) // TES5
                 {
+                    mIsTES5 = true;
+
                     std::uint8_t skill;
                     std::uint8_t bonus;
                     for (unsigned int i = 0; i < 7; ++i)

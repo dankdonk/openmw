@@ -40,7 +40,9 @@ namespace FgLib
         // NOTE: No fancy hashing of the std::string keys, either.
         static std::map<std::string, std::unique_ptr<T> > sFgFileMap;
 
-        const T* getOrLoadByName(const std::string& name, const std::string& ext) const;
+        const T *getOrLoadByMeshName(const std::string& name, const std::string& ext) const;
+
+        const T *getOrLoadByNameImpl(const std::string& base) const;
 
         FgFile(const FgFile& other);
         FgFile& operator=(const FgFile& other);
@@ -49,25 +51,32 @@ namespace FgLib
         FgFile() {}
         ~FgFile() {}
 
-        const T* getOrLoadByName(const std::string& base) const;
+        const T* getOrLoadByMeshName(const std::string& base) const;
+        const T *getOrLoadByName(const std::string& name) const;
 
         const T* addOrReplaceFile(const std::string& name, std::unique_ptr<T> fgFile) const;
     };
 
     template<typename T>
-    const T *FgFile<T>::getOrLoadByName(const std::string& mesh, const std::string& ext) const
+    const T *FgFile<T>::getOrLoadByMeshName(const std::string& mesh, const std::string& ext) const
     {
         std::string name = mesh;
         size_t pos = mesh.find_last_of(".");
         if (pos != std::string::npos && name.substr(pos+1) == "nif")
-        {
             name = mesh.substr(0, pos+1)+ext;
-        }
-        else if (name != "facegen\\si.ctl")
-        {
-            return nullptr;
-        }
 
+        return getOrLoadByNameImpl(name);
+    }
+
+    template<typename T>
+    const T *FgFile<T>::getOrLoadByName(const std::string& name) const
+    {
+        return getOrLoadByNameImpl(boost::algorithm::to_lower_copy(name));
+    }
+
+    template<typename T>
+    const T *FgFile<T>::getOrLoadByNameImpl(const std::string& name) const
+    {
         std::map<std::string, std::unique_ptr<T> >::iterator lb = sFgFileMap.lower_bound(name);
         if (lb != sFgFileMap.end() && !(sFgFileMap.key_comp()(name, lb->first)))
         {

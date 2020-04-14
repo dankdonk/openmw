@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015-2016, 2018 cc9cii
+  Copyright (C) 2015-2016, 2018, 2020 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -37,8 +37,6 @@ namespace ESM4
     class Writer;
     typedef std::uint32_t FormId;
 
-    // Unlike TES3, multiple cells can have the same exterior co-ordinates.
-    // The cells need to be organised under world spaces.
     struct Static
     {
         FormId mFormId;       // from the header

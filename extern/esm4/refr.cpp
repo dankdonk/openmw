@@ -140,6 +140,10 @@ void ESM4::Reference::load(ESM4::Reader& reader)
                     float data = reader.get(data);
                     float data2 = reader.get(data2);
                     float data3 = reader.get(data3);
+                    bool hasVisibleWhenDistantFlag = (mFlags & 0x00008000) != 0;
+                    // some are trees, e.g. 000E03B6, mBaseObj 00022F32, persistent, visible when distant
+                    // some are doors, e.g. 000270F7, mBaseObj 000CD338, persistent, initially disabled
+                    // (this particular one is an Oblivion Gate)
                     //std::cout << "REFR XLOD " << std::hex << (int)data << " " << (int)data2 << " " << (int)data3 << std::endl;
                     break;
                 }
@@ -178,7 +182,15 @@ void ESM4::Reference::load(ESM4::Reader& reader)
                 //std::cout << "REFR " << mEditorId << " XRTM : " << formIdToString(marker) << std::endl;// FIXME
                 break;
             }
-            case ESM4::SUB_TNAM: reader.get(mMapMarker); break;
+            case ESM4::SUB_TNAM: //reader.get(mMapMarker); break;
+            {
+                if (subHdr.dataSize != sizeof(mMapMarker))
+                    reader.skipSubRecordData(); // FIXME: FO3
+                else
+                    reader.get(mMapMarker); // TES4
+
+                break;
+            }
             case ESM4::SUB_XMRK: mIsMapMarker = true; break; // all have mBaseObj 0x00000010 "MapMarker"
             case ESM4::SUB_FNAM:
             {

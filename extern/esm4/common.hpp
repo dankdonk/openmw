@@ -542,6 +542,42 @@ namespace ESM4
         SUB_MOD5 = MKTAG('M','O','D','5'),
         SUB_MDOB = MKTAG('M','D','O','B'),
         SUB_SPIT = MKTAG('S','P','I','T'),
+        SUB_PTDA = MKTAG('P','T','D','A'), // TES5
+        SUB_PFOR = MKTAG('P','F','O','R'), // TES5
+        SUB_PFO2 = MKTAG('P','F','O','2'), // TES5
+        SUB_PRCB = MKTAG('P','R','C','B'), // TES5
+        SUB_PKCU = MKTAG('P','K','C','U'), // TES5
+        SUB_PKC2 = MKTAG('P','K','C','2'), // TES5
+        SUB_CITC = MKTAG('C','I','T','C'), // TES5
+        SUB_CIS1 = MKTAG('C','I','S','1'), // TES5
+        SUB_CIS2 = MKTAG('C','I','S','2'), // TES5
+        SUB_TIFC = MKTAG('T','I','F','C'), // TES5
+        SUB_ALCA = MKTAG('A','L','C','A'), // TES5
+        SUB_ALCL = MKTAG('A','L','C','L'), // TES5
+        SUB_ALCO = MKTAG('A','L','C','O'), // TES5
+        SUB_ALDN = MKTAG('A','L','D','N'), // TES5
+        SUB_ALEA = MKTAG('A','L','E','A'), // TES5
+        SUB_ALED = MKTAG('A','L','E','D'), // TES5
+        SUB_ALEQ = MKTAG('A','L','E','Q'), // TES5
+        SUB_ALFA = MKTAG('A','L','F','A'), // TES5
+        SUB_ALFC = MKTAG('A','L','F','C'), // TES5
+        SUB_ALFD = MKTAG('A','L','F','D'), // TES5
+        SUB_ALFE = MKTAG('A','L','F','E'), // TES5
+        SUB_ALFI = MKTAG('A','L','F','I'), // TES5
+        SUB_ALFL = MKTAG('A','L','F','L'), // TES5
+        SUB_ALFR = MKTAG('A','L','F','R'), // TES5
+        SUB_ALID = MKTAG('A','L','I','D'), // TES5
+        SUB_ALLS = MKTAG('A','L','L','S'), // TES5
+        SUB_ALNA = MKTAG('A','L','N','A'), // TES5
+        SUB_ALNT = MKTAG('A','L','N','T'), // TES5
+        SUB_ALPC = MKTAG('A','L','P','C'), // TES5
+        SUB_ALRT = MKTAG('A','L','R','T'), // TES5
+        SUB_ALSP = MKTAG('A','L','S','P'), // TES5
+        SUB_ALST = MKTAG('A','L','S','T'), // TES5
+        SUB_ALUA = MKTAG('A','L','U','A'), // TES5
+        SUB_FLTR = MKTAG('F','L','T','R'), // TES5
+        SUB_QTGL = MKTAG('Q','T','G','L'), // TES5
+        SUB_TWAT = MKTAG('T','W','A','T'), // TES5
         SUB_XIBS = MKTAG('X','I','B','S'), // FO3
         SUB_REPL = MKTAG('R','E','P','L'), // FO3
         SUB_BIPL = MKTAG('B','I','P','L'), // FO3
@@ -564,10 +600,31 @@ namespace ESM4
         SUB_XRAD = MKTAG('X','R','A','D'), // FO3
         SUB_XORD = MKTAG('X','O','R','D'), // FO3
         SUB_XCLP = MKTAG('X','C','L','P'), // FO3
+        SUB_NEXT = MKTAG('N','E','X','T'), // FO3
+        SUB_QOBJ = MKTAG('Q','O','B','J'), // FO3
+        SUB_POBA = MKTAG('P','O','B','A'), // FO3
+        SUB_POCA = MKTAG('P','O','C','A'), // FO3
+        SUB_POEA = MKTAG('P','O','E','A'), // FO3
+        SUB_PKDD = MKTAG('P','K','D','D'), // FO3
+        SUB_PKD2 = MKTAG('P','K','D','2'), // FO3
+        SUB_PKPT = MKTAG('P','K','P','T'), // FO3
+        SUB_PKED = MKTAG('P','K','E','D'), // FO3
+        SUB_PKE2 = MKTAG('P','K','E','2'), // FO3
+        SUB_PKAM = MKTAG('P','K','A','M'), // FO3
+        SUB_PUID = MKTAG('P','U','I','D'), // FO3
+        SUB_PKW3 = MKTAG('P','K','W','3'), // FO3
+        SUB_PTD2 = MKTAG('P','T','D','2'), // FO3
+        SUB_PLD2 = MKTAG('P','L','D','2'), // FO3
+        SUB_PKFD = MKTAG('P','K','F','D'), // FO3
+        SUB_IDLB = MKTAG('I','D','L','B'), // FO3
         SUB_IMPS = MKTAG('I','M','P','S'), // FO3 Anchorage
         SUB_IMPF = MKTAG('I','M','P','F'), // FO3 Anchorage
 
         SUB_XATO = MKTAG('X','A','T','O'), // FONV
+        SUB_INFC = MKTAG('I','N','F','C'), // FONV
+        SUB_INFX = MKTAG('I','N','F','X'), // FONV
+        SUB_TDUM = MKTAG('T','D','U','M'), // FONV
+        SUB_TCFU = MKTAG('T','C','F','U'), // FONV
         SUB_DAT2 = MKTAG('D','A','T','2'), // FONV
         SUB_RCIL = MKTAG('R','C','I','L'), // FONV
         SUB_MMRK = MKTAG('M','M','R','K'), // FONV
@@ -931,45 +988,53 @@ namespace ESM4
         std::uint8_t  luck;
     };
 
-    struct ActorBaseConfig
+    struct ACBS_TES4
     {
-#if 0
-        enum ACBS_NPC
-        {
-            ACBS_Female               = 0x000001,
-            ACBS_Essential            = 0x000002,
-            ACBS_Respawn              = 0x000008,
-            ACBS_Autocalcstats        = 0x000010,
-            ACBS_PCLevelOffset        = 0x000080,
-            ACBS_NoLowLevelProcessing = 0x000200,
-            ACBS_NoRumors             = 0x002000,
-            ACBS_Summonable           = 0x004000,
-            ACBS_NoPersuasion         = 0x008000, // different meaning to crea
-            ACBS_CanCorpseCheck       = 0x100000  // opposite of crea
-        };
-
-        enum ACBS_CREA
-        {
-            ACBS_Essential            = 0x000002,
-            ACBS_WeapAndShield        = 0x000004,
-            ACBS_Respawn              = 0x000008,
-            ACBS_PCLevelOffset        = 0x000080,
-            ACBS_NoLowLevelProcessing = 0x000200,
-            ACBS_NoHead               = 0x008000, // different meaning to npc_
-            ACBS_NoRightArm           = 0x010000,
-            ACBS_NoLeftArm            = 0x020000,
-            ACBS_NoCombatWater        = 0x040000,
-            ACBS_NoShadow             = 0x080000,
-            ACBS_NoCorpseCheck        = 0x100000  // opposite of npc_
-        };
-#endif
         std::uint32_t flags;
-        std::uint16_t baseSpell;  // Base spell points
-        std::uint16_t fatigue;    // Fatigue
-        std::uint16_t barterGold; // Barter gold
-        std::int16_t  level;      // Level/Offset level
-        std::uint16_t calcMin;    // Calc Min
-        std::uint16_t calcMax;    // Calc Max
+        std::uint16_t baseSpell;
+        std::uint16_t fatigue;
+        std::uint16_t barterGold;
+        std::int16_t  levelOrOffset;
+        std::uint16_t calcMin;
+        std::uint16_t calcMax;
+        std::uint32_t padding1;
+        std::uint32_t padding2;
+    };
+
+    struct ACBS_FO3
+    {
+        std::uint32_t flags;
+        std::uint16_t fatigue;
+        std::uint16_t barterGold;
+        std::int16_t  levelOrMult;
+        std::uint16_t calcMinlevel;
+        std::uint16_t calcMaxlevel;
+        std::uint16_t speedMultiplier;
+        float         karma;
+        std::int16_t  dispositionBase;
+        std::uint16_t templateFlags;
+    };
+
+    struct ACBS_TES5
+    {
+        std::uint32_t flags;
+        std::uint16_t magickaOffset;
+        std::uint16_t staminaOffset;
+        std::uint16_t levelOrMult;     // TODO: check if int16_t
+        std::uint16_t calcMinlevel;
+        std::uint16_t calcMaxlevel;
+        std::uint16_t speedMultiplier;
+        std::uint16_t dispositionBase; // TODO: check if int16_t
+        std::uint16_t templateFlags;
+        std::uint16_t healthOffset;
+        std::uint16_t bleedoutOverride;
+    };
+
+    union ActorBaseConfig
+    {
+        ACBS_TES4 tes4;
+        ACBS_FO3  fo3;
+        ACBS_TES5 tes5;
     };
 
     struct ActorFaction

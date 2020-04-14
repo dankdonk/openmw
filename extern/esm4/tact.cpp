@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019 cc9cii
+  Copyright (C) 2019, 2020 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -75,6 +75,7 @@ void ESM4::TalkingActivator::load(ESM4::Reader& reader)
             case ESM4::SUB_FNAM:
             case ESM4::SUB_PNAM:
             case ESM4::SUB_OBND:
+            case ESM4::SUB_INAM: // FONV
             {
                 //std::cout << "TACT " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
                 reader.skipSubRecordData();

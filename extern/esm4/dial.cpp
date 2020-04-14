@@ -56,10 +56,26 @@ void ESM4::Dialog::load(ESM4::Reader& reader)
         {
             case ESM4::SUB_EDID: reader.getZString(mEditorId);  break;
             case ESM4::SUB_FULL: reader.getZString(mTopicName); break;
-            case ESM4::SUB_DATA: reader.get(mData); break;
-            case ESM4::SUB_QSTI: reader.get(mQuestId); break;
+            case ESM4::SUB_DATA:
+            {
+                if (subHdr.dataSize != sizeof(mData))
+                    reader.skipSubRecordData(); // FIXME: FO3
+                else
+                    reader.get(mData); // TES4
+
+                break;
+            }
+            case ESM4::SUB_QSTI: reader.get(mQuestId); break; // FIXME: for FO3 this seems to be a vector
             case ESM4::SUB_QSTR: reader.get(mQuestUnknown); break;
             case ESM4::SUB_SCRI:
+            case ESM4::SUB_INFC: // FONV
+            case ESM4::SUB_INFX: // FONV
+            case ESM4::SUB_TDUM: // FONV
+            case ESM4::SUB_PNAM: // FO3
+            case ESM4::SUB_QNAM: // TES5
+            case ESM4::SUB_BNAM: // TES5
+            case ESM4::SUB_SNAM: // TES5
+            case ESM4::SUB_TIFC: // TES5
             {
                 //std::cout << "DIAL " << ESM4::printName(subHdr.typeId) << " skipping..."
                         //<< subHdr.dataSize << std::endl;
@@ -67,9 +83,6 @@ void ESM4::Dialog::load(ESM4::Reader& reader)
                 break;
             }
             default:
-                //std::cout << "DIAL " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
-                //reader.skipSubRecordData();
-                //break;
                 throw std::runtime_error("ESM4::DIAL::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
         }
     }

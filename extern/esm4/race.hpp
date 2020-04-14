@@ -76,7 +76,7 @@ namespace ESM4
             Skill_Unknown     = 0x00
         };
 
-        enum HeadPartIndex
+        enum HeadPartIndex // TES4
         {
             Head              = 0,
             EarMale           = 1,
@@ -90,11 +90,11 @@ namespace ESM4
             NumHeadParts      = 9
         };
 
-        enum BodyPartIndex
+        enum BodyPartIndex // TES4
         {
             UpperBody         = 0,
             LowerBody         = 1,
-            Hands              = 2,
+            Hands             = 2,
             Feet              = 3,
             Tail              = 4,
             NumBodyParts      = 5
@@ -108,6 +108,8 @@ namespace ESM4
 
         FormId mFormId;       // from the header
         std::uint32_t mFlags; // from the header, see enum type RecordFlag for details
+
+        bool mIsTES5;
 
         std::string mEditorId;
         std::string mFullName;
