@@ -57,6 +57,7 @@ namespace ESM4
 
         bool calcAllLvlLessThanPlayer() const;
         bool calcEachItemInCount() const;
+        bool useAll() const;
         std::int8_t chanceNone() const;
 
         virtual void load(ESM4::Reader& reader);
