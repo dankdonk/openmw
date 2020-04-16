@@ -465,14 +465,17 @@ void MWWorld::ContainerStore::addInitialItem (const std::string& id, const std::
         }
         else
         {
-            std::string id
-                = MWMechanics::getTES4LevelledItem(ref.getPtr().get<ESM4::LeveledItem>()->mBase);
+            std::vector<std::string> ids;
+            MWMechanics::getTES4LevelledItem(ids, ref.getPtr().get<ESM4::LeveledItem>()->mBase);
 
-            if (id.empty())
-                return; // RNG not kind today :-(
+            for (std::size_t i = 0; i < ids.size(); ++i)
+            {
+                if (ids[i].empty())
+                    return; // RNG not kind today :-(
 
-            addInitialItem(id, owner, count, false, // NOTE: new id from getTES4LevelledItem
-                           ESM4::formIdToString(ref.getPtr().get<ESM4::LeveledItem>()->mBase->mFormId));
+                addInitialItem(ids[i], owner, count, false,
+                               ESM4::formIdToString(ref.getPtr().get<ESM4::LeveledItem>()->mBase->mFormId));
+            }
         }
     }
     else

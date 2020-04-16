@@ -88,7 +88,7 @@ namespace MWMechanics
         const MWWorld::Ptr& player = MWBase::Environment::get().getWorld()->getPlayerPtr();
         int playerLevel = player.getClass().getCreatureStats(player).getLevel();
 
-        if (Misc::Rng::roll0to99() < failChance)
+        if (Misc::Rng::roll0to99() < int(failChance)) // TODO: maybe uint8_t wasn't the best choice
             return std::string();
 
         std::vector<std::string> candidates;
@@ -107,6 +107,12 @@ namespace MWMechanics
                 candidates.push_back(ESM4::formIdToString(it->item));
                 if (it->level >= highest.first)
                     highest = std::make_pair(it->level, ESM4::formIdToString(it->item));
+#if 0
+                // FIXME
+                MWWorld::ManualRef ref(MWBase::Environment::get().getWorld()->getStore(), ESM4::formIdToString(it->item), 1);
+                if (ref.getPtr().getTypeName() == typeid(ESM4::LeveledItem).name()) // only print LVLI
+                    std::cout << "candidate " << ref.getPtr().get<ESM4::LeveledItem>()->mBase->mEditorId << std::endl;
+#endif
             }
         }
 
@@ -116,40 +122,52 @@ namespace MWMechanics
         return candidates[Misc::Rng::rollDice(candidates.size())];
     }
 
-    inline std::string getTES4LevelledItem(const ESM4::LeveledItem* levItem, uint8_t failChance = 0)
+    inline void getTES4LevelledItem(std::vector<std::string>& ids, const ESM4::LeveledItem* levItem, uint8_t failChance = 0)
     {
         const std::vector<ESM4::LVLO>& items = levItem->mLvlObject;
         bool allLevels = levItem->calcAllLvlLessThanPlayer();
         failChance += levItem->chanceNone();
-
-        std::string item = getLeveledObject(items, failChance, allLevels);
-
-        if (item.empty())
-            return std::string();
-
-        // copy Morrowind behaviour for now
-        if (!MWBase::Environment::get().getWorld()->getStore().find(ESM4::stringToFormId(item)))
+        bool useAll = levItem->useAll();
+        if (useAll)
         {
-            std::cerr << "Warning: ignoring nonexistent item '" << item << "' in levelled list '" <<
-                ESM4::formIdToString(levItem->mFormId) << "'" << std::endl;
-
-            return std::string();
-        }
-
-        MWWorld::ManualRef ref(MWBase::Environment::get().getWorld()->getStore(), item, 1);
-
-        if (ref.getPtr().getTypeName() != typeid(ESM4::LeveledItem).name())
-        {
-            return item;
+            for (std::size_t i = 0; i < items.size(); ++i)
+            {
+                std::string itemId = ESM4::formIdToString(items[i].item);
+                MWWorld::ManualRef ref(MWBase::Environment::get().getWorld()->getStore(), itemId, 1);
+                if (ref.getPtr().getTypeName() == typeid(ESM4::LeveledItem).name())
+                {
+                    getTES4LevelledItem(ids, ref.getPtr().get<ESM4::LeveledItem>()->mBase, failChance);
+                }
+                else
+                    ids.push_back(itemId);
+            }
         }
         else
         {
+            std::string itemId = getLeveledObject(items, failChance, allLevels);
+            if (itemId.empty())
+                return;
+
+            // copy Morrowind behaviour for now
+            if (!MWBase::Environment::get().getWorld()->getStore().find(ESM4::stringToFormId(itemId)))
+            {
+                std::cerr << "Warning: ignoring nonexistent item '" << itemId << "' in levelled list '" <<
+                    ESM4::formIdToString(levItem->mFormId) << "'" << std::endl;
+
+                return;
+            }
+
+            MWWorld::ManualRef ref(MWBase::Environment::get().getWorld()->getStore(), itemId, 1);
+
             if (ref.getPtr().getTypeName() == typeid(ESM4::LeveledItem).name())
             {
-                return getTES4LevelledItem(ref.getPtr().get<ESM4::LeveledItem>()->mBase, failChance);
+#if 0
+                std::cout << ref.getPtr().get<ESM4::LeveledItem>()->mBase->mEditorId << std::endl; // FIXME:
+#endif
+                getTES4LevelledItem(ids, ref.getPtr().get<ESM4::LeveledItem>()->mBase, failChance);
             }
             else
-                return std::string();
+                ids.push_back(itemId);
         }
     }
 

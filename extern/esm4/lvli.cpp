@@ -82,9 +82,9 @@ void ESM4::LeveledItem::load(ESM4::Reader& reader)
                 break;
             }
             case ESM4::SUB_LLCT:
-            case ESM4::SUB_OBND: // FO3
-            case ESM4::SUB_COED: // FO3
-            case ESM4::SUB_LVLG: // FO3
+            case ESM4::SUB_OBND: // FO3/FONV
+            case ESM4::SUB_COED: // FO3/FONV
+            case ESM4::SUB_LVLG: // FO3/FONV
             {
 
                 //std::cout << "LVLI " << ESM4::printName(subHdr.typeId) << " skipping..." << subHdr.dataSize << std::endl;
@@ -119,6 +119,14 @@ std::int8_t ESM4::LeveledItem::chanceNone() const
         return mChanceNone;
     else
         return (mChanceNone & 0x7f); // FIXME: 0x80 is just a guess
+}
+
+bool ESM4::LeveledItem::useAll() const
+{
+    if (mHasLvlItemFlags)
+        return (mLvlItemFlags & 0x04) != 0;
+    else
+        return false;
 }
 
 //void ESM4::LeveledItem::save(ESM4::Writer& writer) const

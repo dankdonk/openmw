@@ -1770,8 +1770,8 @@ if (targetBone == "Bip01 Head" && baseRotation == Ogre::Quaternion::IDENTITY)
 
 ## FIXME #5
 
-  * **FIXED** crash accessing nullptr (prob. NiModel) during animation - I think this was caused by animation trying to move skeletons but some body parts didn't have skeleton root - we use external skeletons so we don't need this code block that copies bone position/rotaions
-  * **FIXED** no eyes Cludette Perrick (The Gilded Carafe) - her NPC record does not have mEyes so we need to use the race defaults instead **TODO** need to remember the random selection so that we don't see a new texture each time.
+  * **FIXED:** crash accessing nullptr (prob. NiModel) during animation - I think this was caused by animation trying to move skeletons but some body parts didn't have skeleton root - we use external skeletons so we don't need this code block that copies bone position/rotaions
+  * **FIXED:** no eyes Cludette Perrick (The Gilded Carafe) - her NPC record does not have mEyes so we need to use the race defaults instead **TODO** need to remember the random selection so that we don't see a new texture each time.
   * **FIXED: 08/03/20** one of the metal gates in the IC sewers doesn't move the collision shape (also the display cases)
   * [ESM4::Npc] = {mFormId=0x0004ef6f mFlags=0x00040000 mEditorId="CheydinhalGuardCityPostNight03" ...}
   * **FIXED 08/03/20** error during rendering: ItemIdentityException: Bone named '' not found. in Skeleton::getBone at C:\Users\cc9c\Dev\src\ogre\OgreMain\src\OgreSkeleton.cpp (line 515) - no ears for Argonians so added a check
@@ -3450,7 +3450,7 @@ A combination of info from `NPC_` and `RACE` may be required to reliably detect 
 
 TES4 versions of NIF has a flag to indicate that it was a skeleton.  Later games doesn't have this flag.  **TODO:** how to reliably detect a `skeleton.nif` without comparing the filename?
 
-# [13/04/2020 - 14/04/2020] Debugging
+# [13/04/2020 - 16/04/2020] Debugging
 
 ## FO3 Door not moving
 
@@ -3476,7 +3476,7 @@ One solution might be to somehow let the shape know that it is a target of a tra
 
 Another solution might be to supply a MOD that "corrects" the mesh, especially if there are only a few of these.  But doing so will mean that the "hole" in the mesh may be "filled".
 
-Decided that the door meshes are not really "static" in terms of Bullet definition, since we're moving them via `updateSingleAabb()` anyway.  So the final solution is to selectively apply full world transform depending on whether the `bhkRigidBody` target was a `NiMultiTargetTransformController` target.  These are the ones in `zBethOffice01`:
+**FIXED:** Decided that the door meshes are not really "static" in terms of Bullet definition, since we're moving them via `updateSingleAabb()` anyway.  So the final solution is to selectively apply full world transform depending on whether the `bhkRigidBody` target was a `NiMultiTargetTransformController` target.  These are the ones in `zBethOffice01`:
 
     meshes\clutter\health\firstaidkit01.nif
     meshes\furniture\officeruined\filingcabinetbunch04.nif
@@ -3489,7 +3489,159 @@ Decided that the door meshes are not really "static" in terms of Bullet definiti
 
 ## FO3 Dismember body parts
 
-Need a way to control visibility at runtime.  Maybe keep a map of `Ogre::SubEntity*` and `BSDismemberSkinInstance::BodyPartList` in `BtOgreInst`.  Not sure if there is a reliable way to get the sub-entity index, however. Hopefully they are the same as sub-mesh index, which we already have.
+Need a way to control visibility at runtime.  Maybe keep a map of `Ogre::SubEntity*` and `BSDismemberSkinInstance::BodyPartList` in `BtOgreInst`.  Not sure if there is a reliable way to get the sub-entity index, however. Hopefully they are the same as sub-mesh index, which we already have. **FIXED**
+
+## FO3 Inventory
+
+Maybe the Armor flags in FO3 don't work like TES4? A Hockey Mask has ArmorFlags 0x00004E00 which has these:
+
+    FO3_Headband     = 0x00000200
+    FO3_Hat          = 0x00000400
+    FO3_EyeGlasses   = 0x00000800
+    FO3_Mask         = 0x00004000
+
+Which means wearing a Hockey Mask will take any hat or eye glasses off.  Whereas `HelmetRaider02` has  ArmorFlags 0x00004200:
+
+    FO3_Headband     = 0x00000200
+    FO3_Mask         = 0x00004000
+
+Sometimes (often?) the `LVLI` selection returns just a helmet.  **FIXED:** had to observe `LVLI` "use all" flag
+
+**FIXME:** ManualRef create() just puts dummy values
+
+## FO3 Gnd and Go
+
+We need a special handling for FO3.  **FIXED**
+
+    ForeignArmor Armor\EnclaveScientist\OutfitM_gnd.nif
+    ESM          Armor\EnclaveScientist\GO.NIF"
+    BSA          armor\enclavescientist\go.nif
+
+## FO3 NPC with model `marker_creature.nif`
+
+**FIXED:** These seem to work like ACHR (similarly with ACRE for Creatures). e.g.
+
+    mEditorId = "FFHitSquadDCTalonLeader"
+    mBaseTemplate = 0x0003d9c5
+
+## FO3 Land level
+
+The ground level just outside `OurLadyHope01` is too low.
+
+## Always female
+
+At `zBethOffice01` only female raiders spawn, e.g:
+
+    mEditorId = "Raider1GunAAFTEMPLATE"
+    mBaseConfig.flags = 0x00000219
+
+    FO3_Female         = 0x00000001
+    FO3_Respawn        = 0x00000008
+    FO3_AutoCalcStats  = 0x00000010
+    FO3_NoLowLevelProc = 0x00000200
+
+## FO3 Utility door not working
+
+The troublesome door is:
+
+    mModel = "Dungeons\\Utility\\Rooms\\UtlDoor01.NIF"
+
+It seems like the children of node 180 `IKTrainMain` don't move down.   Maybe the bones are not there for those nodes because the `NiMultiTargetTransformController` doesn't refer to them directly?  If so we may be able to work around it by adding bones to the children of the controller targets, but what about the `NiTriStrips` children such as `UtlDoor01:13@#5`?  Also, shouldn't the children of the node move along with the parent?  Maybe they are inserted to the root rather than the parent?
+
+### Option 1: Parent/Child nodes
+
+If we have to have proper parent/child node structure for NIF models that may be quite a change to the existing codebase.  Currently each of the meshes are created with full world transform as if they're all static and the corresponding `Ogre::Entity` are inserted to the root `SceneNode` (see `BtOgreInst::buildEntities()`)
+
+To change this without too many changes we may need to restrict it to animated models only.
+
+### Option 2: Add Bones
+
+Or maybe just add bones?  To do that we will probably have to hack `NiNode::addBones()` to add bones to the children (and their children, etc) of controller target nodes. The controller targets were added only yesterday to deal with `Dungeons\Office\Doors\OffDoorSmL02.NIF`.  See `BtRigidBodyCI::loadImpl()`:
+
+```cpp
+const std::vector<NiNodeRef>&  ctlrTargets = nimodel->getControllerTargets();
+bool dynamic = std::find(ctlrTargets.begin(), ctlrTargets.end(), targetRef) != ctlrTargets.end();
+```
+
+But what would be the point of adding the bones?  There aren't any controllers moving them, so unless they are linked to another bone they won't be moving, anyway.  So this option may end up being similar to the other option.
+
+### VGearDoor01
+
+The issue we had with `Dungeons\Vault\RoomU\VGearDoor01.NIF` may be due to similar issue?  One controller target node is block 350 `VGearDrill01e01` which has several children including `VGearDrill01e` (which has a child node tree of its own) and `VGearDrill01e:2`.  Note that some of the children *are* being controlled - which means we can't just add bones willy-nilly.   The sub-tree looks like below.
+
+    350 VGearDrill01e01 - has rendering only
+           |
+    351 VGearDrill01e   - has rendering only
+           |
+    352 VGearDrill01d   - has collision
+           |
+    359 VGearDrill01a   - has collision and rendering
+           | |
+           | +- 430 VGearDrillb - has rendering only
+           |
+           +--- 364 VGearDrill  - has collision and rendering
+
+Each of these are controller targets. That implies the issue may be different to `UtlDoor01`.
+
+### VDoor01
+
+The issue with `Dungeons\Vault\Halls\VDoor01.NIF` may be the same.  It looks like the controller targets should *not* have world transform baked in.  Looking at one of the sub-trees:
+
+    69 VDoorHinge01 - has rendering only
+           |
+    70 VDoorHinge02 - has collision and rendering
+           |
+    75 VDoorHinge03 - has rendering only
+           |
+    76 VDoorDoor01  - has collision and rendering
+         | | |
+         | | +- 81 VDoorGear01
+         | +--- 93 VDoorGear02
+         +----- 98 VDoorLock01
+          ...  103 VDoorLock02
+          ...  108 VDoorBolt03
+          ...  113 VDoorBolt02
+          ...  118 VDoorBolt01
+          ...  123 VDoorBolt04
+          ...  128 VDoorHandle01
+
+### Node tree alternative
+
+We may be able to work around the issue (hack?) by using the inverse of derived position/rotation of the parent nodes.  But then, doing so might be even more complicated.
+
+### More collision issues
+
+    mModel = "Dungeons\\Office\\Doors\\OffDoorBigMetal01.NIF"
+
+### FONV issues
+
+Added some NiObjects:
+
+    BSRefractionFirePeriodController trees\prickly_pear_cactus\nv_pricklypearcactus.nif
+    NiBSplineCompPoint3Interpolator  creatures\nvsecuritron\mtidle.kf
+    BSRefractionFirePeriodController characters\_male\locomotion\mtidle.kf (also FO3)
+    NiFloatInterpController          characters\_male\locomotion\mtidle.kf (also FO3)
+
+Manny Vargas's 1st Recon Beret has an issue with TRI file - it dosn't exit (only EGM exists), so the code should be trying to create one from the mesh.  The issue is that the "dummy" TRI file does not get built properly. **FIXED:** There were two issues - first, when it got built the second time the "name" parameter was not folded to lower case.  Next, there was an incorrect use of `std::map::insert()`.
+
+    Novac is at "WastelandNV" 5 -8
+    (Repconn is at "WastelandNV" -2 -8)
+    mEditorId = "HatNCR1stReconBeret"
+    NIF = "meshes\\armor\\headgear\\red beret\\red_beret.nif"
+    EGM = "meshes\\armor\\headgear\\red beret\\red_beret.egm"
+
+There are missing meshes.  **WONTFIX:** Not sure if there is a fix - maybe the original devs didn't clean up properly?
+
+    resourceName = "meshes\\architecture\\novac\\novac_motel03.nif"
+    resourceName = "meshes\\architecture\\novac\\novac_motel02.nif"
+    resourceName = "meshes\\architecture\\novac\\novac_bungalow03.nif"
+    resourceName = "meshes\\architecture\\novac\\novac_bungalow02.nif"
+
+Missing texture `grey.dds` (shouldn't it be `grey.bmp`?) - it's just a thin strip under the door:
+
+    mName = "meshes\\dungeons\\caves\\lamplight\\lamplightsouvenirdoor.nif#0%LamplightSouvenirDoor"
+
+
 
 
 [//]: # (/* spell spelllang=en_au syntax=cpp */)
