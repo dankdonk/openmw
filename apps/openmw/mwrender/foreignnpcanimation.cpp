@@ -1623,12 +1623,12 @@ void ForeignNpcAnimation::updateFO3NpcBase()
 
     Ogre::Bone *heBone = mSkelBase->getSkeleton()->getBone(targetBone);
     Ogre::Quaternion heOrientation // fix rotation issue
-        = heBone->getOrientation() * Ogre::Quaternion(Ogre::Degree(90), Ogre::Vector3::UNIT_Y);
+        = heBone->getOrientation() * Ogre::Quaternion(Ogre::Degree(90), Ogre::Vector3::UNIT_Y)
+                                   * Ogre::Quaternion(Ogre::Degree(-15), Ogre::Vector3::UNIT_X);
 
     // FIXME non-zero for FO3 to make hair fit better
-    Ogre::Vector3 hePosition = Ogre::Vector3(/*up*/0.2f, /*forward*/1.7f, 0.f);
+    Ogre::Vector3 hePosition = Ogre::Vector3(/*up*/0.5f, /*forward*/0.15f, 0.f);
     //Ogre::Vector3 hePosition = Ogre::Vector3(0.5f, -0.2f, 0.f);
-    //Ogre::Vector3 hePosition = Ogre::Vector3(0.f, -0.2f, 0.f);
 
     std::map<int32_t, Ogre::Entity*>::const_iterator it(scene->mForeignObj->mEntities.begin());
     for (; it != scene->mForeignObj->mEntities.end(); ++it)
@@ -2162,7 +2162,6 @@ void ForeignNpcAnimation::updateFO3NpcBase()
     } //---------------------------------------------------------------------- }}}
 
     // FIXME: this section below should go to updateParts()
-    std::vector<const ESM4::Clothing*> invCloth;
     std::vector<const ESM4::Armor*> invArmor;
     std::vector<const ESM4::Weapon*> invWeap;
 
@@ -2180,21 +2179,18 @@ void ForeignNpcAnimation::updateFO3NpcBase()
         else if(store->getTypeName() == typeid(ESM4::Armor).name())
         {
             const ESM4::Armor *armor = store->get<ESM4::Armor>()->mBase;
-            if (std::find(invArmor.begin(), invArmor.end(), armor) == invArmor.end())
+            if (std::find(invArmor.begin(), invArmor.end(), armor) == invArmor.end()) // avoid duplicates
                 invArmor.push_back(armor);
         }
         else if(store->getTypeName() == typeid(ESM4::Weapon).name())
         {
             const ESM4::Weapon *weap = store->get<ESM4::Weapon>()->mBase;
-            if (std::find(invWeap.begin(), invWeap.end(), weap) == invWeap.end())
+            if (std::find(invWeap.begin(), invWeap.end(), weap) == invWeap.end()) // avoid duplicates
                 invWeap.push_back(weap);
         }
         else if(store->getTypeName() == typeid(ESM4::Clothing).name())
-            std::cout << "Found CLOT in FO3/FONV" << std::endl;
+            throw std::runtime_error("Found CLOT in FO3/FONV");
     }
-
-    //for (std::size_t i = 0; i < invCloth.size(); ++i)
-        //equipClothes(invCloth[i], isFemale);
 
     for (std::size_t i = 0; i < invArmor.size(); ++i)
         equipArmor(invArmor[i], isFemale);
@@ -2363,14 +2359,34 @@ NifOgre::ObjectScenePtr ForeignNpcAnimation::createMorphedObject(const std::stri
         {
             // some models already have the rotation in their base node :-(
             const Ogre::Quaternion baseRotation = scene->mForeignObj->mModel->getBaseRotation();
-            if (baseRotation == Ogre::Quaternion::IDENTITY)
-                orientation = bone->getOrientation() * Ogre::Quaternion(Ogre::Degree(90), Ogre::Vector3::UNIT_Y);
-
             if (mIsTES4)
+            {
+                if (baseRotation == Ogre::Quaternion::IDENTITY)
+                    orientation = bone->getOrientation() * Ogre::Quaternion(Ogre::Degree(90), Ogre::Vector3::UNIT_Y);
+
                 //position = Ogre::Vector3(0.45f/*up*/, -0.55f/*forward*/, 0.f/*right*/); // better for eyes
                 position = Ogre::Vector3(0.45f/*up*/, -0.2f/*forward*/, 0.f/*right*/); // best for orc teeth
+            }
             else // FO3
-                position = Ogre::Vector3(0.f/*up*/, -0.2f/*forward*/, 0.f/*right*/); // for eyes
+            {
+                if (baseRotation == Ogre::Quaternion::IDENTITY
+                    ||
+                   (baseRotation.x < 0.0001 && baseRotation.y < 0.000001 && baseRotation.z < 0.00001))
+                {
+                    if (meshName.find("armor") != std::string::npos)
+                    {
+                        orientation = bone->getOrientation() * Ogre::Quaternion(Ogre::Degree(90), Ogre::Vector3::UNIT_Y)
+                        * Ogre::Quaternion(Ogre::Degree(-15), Ogre::Vector3::UNIT_X);
+                    }
+                    else
+                        orientation = bone->getOrientation() * Ogre::Quaternion(Ogre::Degree(90), Ogre::Vector3::UNIT_Y);
+                }
+
+                if (meshName.find("armor") != std::string::npos)
+                    position = Ogre::Vector3(0.f/*up*/, -0.2f/*forward*/, 0.f/*right*/);
+                else
+                    position = Ogre::Vector3(0.f/*up*/, -0.3f/*forward*/, 0.f/*right*/); // for eyes
+            }
         }
 
         std::map<int32_t, Ogre::Entity*>::const_iterator it(scene->mForeignObj->mEntities.begin());
@@ -2457,14 +2473,19 @@ NifOgre::ObjectScenePtr ForeignNpcAnimation::createObject(const std::string& mes
     {
         scene->mForeignObj->instantiateBodyPart(mInsert, mSkelBase);
     }
-    else
+    else // should only be FO3/FONV TODO: validate
     {
         scene->mForeignObj->instantiate();
 
         std::string targetBone = model->getTargetBone();
 
         if (targetBone == "") // FIXME: hack
-            targetBone = "Bip01 Head";
+        {
+            if (meshName.find("eapon") != std::string::npos)
+                targetBone = "Weapon";
+            else
+                targetBone = "Bip01 Head";
+        }
 
         Ogre::Bone *bone = mSkelBase->getSkeleton()->getBone(targetBone);
 
@@ -2480,11 +2501,16 @@ NifOgre::ObjectScenePtr ForeignNpcAnimation::createObject(const std::string& mes
             // FIXME: temp testing
             //if (meshName.find("ockey") != std::string::npos)
                 //std::cout << "stop" << std::endl;
-            if (baseRotation == Ogre::Quaternion::IDENTITY || (baseRotation.x < 0.0001 && baseRotation.y < 0.000001 && baseRotation.z < 0.00001))
-                orientation = bone->getOrientation() * Ogre::Quaternion(Ogre::Degree(90), Ogre::Vector3::UNIT_Y);
+            if (baseRotation == Ogre::Quaternion::IDENTITY
+                ||
+               (baseRotation.x < 0.0001 && baseRotation.y < 0.000001 && baseRotation.z < 0.00001))
+            {
+                orientation = bone->getOrientation() * Ogre::Quaternion(Ogre::Degree(90), Ogre::Vector3::UNIT_Y)
+                    * Ogre::Quaternion(Ogre::Degree(-15), Ogre::Vector3::UNIT_X);
+            }
 
             //position = Ogre::Vector3(0.45f/*up*/, -0.55f/*forward*/, 0.f/*right*/);
-            position = Ogre::Vector3(0.f/*up*/, -0.f/*forward*/, 0.f/*right*/);
+            position = Ogre::Vector3(0.f/*up*/, -0.1f/*forward*/, 0.f/*right*/); // FONV only?
         }
 
         std::map<int32_t, Ogre::Entity*>::const_iterator it(scene->mForeignObj->mEntities.begin());
