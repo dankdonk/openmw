@@ -93,6 +93,24 @@ std::string NiBtOgre::NiObjectNET::getStringExtraData(const std::string& name) c
     return ""; // none found
 }
 
+bool NiBtOgre::NiObjectNET::hasIntegerExtraData(const std::string& name) const
+{
+    if (mExtraDataRefList.empty())
+        return false;
+
+    for (std::size_t i = 0; i < mExtraDataRefList.size(); ++i)
+    {
+        if (mExtraDataRefList[i] == -1 || mModel.blockType(mExtraDataRefList[i]) != "NiIntegerExtraData")
+            continue;
+
+        NiStringExtraData *extra = mModel.getRef<NiStringExtraData>(mExtraDataRefList[i]);
+        if (mModel.indexToString(extra->mName) == name)
+          return true;
+    }
+
+    return false; // none found
+}
+
 // FIXME: what to do with normal textures? (*_fn.dds)
 NiBtOgre::NiSourceTexture::NiSourceTexture(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiTexture(index, stream, model, data), mDirectRender(false), mPersistRenderData(false)

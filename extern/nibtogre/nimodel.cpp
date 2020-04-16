@@ -329,7 +329,9 @@ void NiBtOgre::NiModel::createMesh(bool isMorphed, Ogre::SkeletonPtr skeleton)
     // e.g. Creatures\StormAtronach\Skeleton.nif (also has normal mesh)
     //
     if (mBuildData.isSkeletonTES4() // FIXME: may also be required for others, but not yet tested
-        || getName() == "meshes\\characters\\_male\\skeleton.nif") // FIXME: FO3
+        || (getName().find("skeleton.nif") != std::string::npos) && // FIXME: FO3
+            //getName() == mNif) // HACK: FO3 avoid being triggerd by skinned model with skeleton name in front
+            getRef<NiObjectNET>(getRootIndex())->hasIntegerExtraData("SkeletonID")) // FO3 triggers too often on its own :-(
     {
         // FIXME: despite the name, maybe this should be "Scene Root" or "BSFadeNode" instead?
         // mModelName != "meshes\\morroblivion\\creatures\\wildlife\\kagouti\\skeleton.nif") // FIXME

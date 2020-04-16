@@ -249,6 +249,7 @@ NiBtOgre::NiNodeRef NiBtOgre::NiNode::findBones(const NiNodeRef targetRef, const
 #if 0
             return ;
 #else
+            // FIXME: only TES4 has "UPB" with bond info
             // most likely that one of the children of mRoots[0] is the skeleton root
             std::string upb = mModel.getRef<NiNode>(childNode)->getStringExtraData("UPB");
             if (upb.find("BoneRoot") != std::string::npos)
@@ -261,6 +262,8 @@ NiBtOgre::NiNodeRef NiBtOgre::NiNode::findBones(const NiNodeRef targetRef, const
                 upb = getStringExtraData("UPB");
                 if (upb.find("BoneRoot") != std::string::npos)
                     return targetRef;
+                else if (getName() == "Scene Root")
+                    return targetRef; // FO3 workaround
                 else
                     return -1;
             }
@@ -476,6 +479,7 @@ void NiBtOgre::NiNode::buildObjectPalette(std::map<std::string, NiAVObjectRef>& 
         NiNode* childNode = mModel.getRef<NiNode>(mChildren[i]);
         childNode->buildObjectPalette(objectPalette);
 
+        // FIXME: FO3 skeltons don't have "UPB"
         // FIXME: just some testing
         if (first)
         {

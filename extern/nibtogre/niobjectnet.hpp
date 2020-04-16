@@ -66,6 +66,7 @@ namespace NiBtOgre
         inline StringIndex getNameIndex() const { return mNameIndex; }
 
         std::string getStringExtraData(const std::string& name) const;
+        bool hasIntegerExtraData(const std::string& name) const;
 
         virtual void build(Ogre::SceneNode *sceneNode, NiObject *parent = nullptr);
     };

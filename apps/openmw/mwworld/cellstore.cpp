@@ -1187,7 +1187,12 @@ namespace MWWorld
                     {
                         // this might be a leveled actor (e.g. FO3) - check if the model is empty
                         const ESM4::Npc* npc = store.getForeign<ESM4::Npc>().search(record.mBaseObj);
-                        if (npc && npc->mModel.empty() && npc->mBaseTemplate != 0)
+                        //
+                        //if ((npc->mBaseConfig.fo3.flags & 0x1) == 0) // FIXME: temp testing
+                            //std::cout << npc->mEditorId << " male" << std::endl;
+                        //
+                        if (npc && npc->mBaseTemplate != 0
+                                && (npc->mModel.empty() || npc->mModel == "marker_creature.nif"))
                         {
                             ESM4::FormId id = npc->mBaseTemplate;
                             uint32_t type = store.find(id);
@@ -1225,7 +1230,7 @@ namespace MWWorld
 
                     default:
                         std::cerr
-                            << "WARNING: Ignoring achr '" << ESM4::formIdToString(record.mBaseObj) << "' of unhandled type\n";
+                            << "WARNING: Ignoring ACHR '" << ESM4::formIdToString(record.mBaseObj) << "' of unhandled type\n";
                 }
                 break;
             }
@@ -1248,13 +1253,49 @@ namespace MWWorld
                 {
                     case MKTAG('R','H','A','I'): std::cout << " crea hair " << std::endl; break; // FIXME
                     case MKTAG('S','E','Y','E'): std::cout << " crea eyes " << std::endl; break; // FIXME
-                    case MKTAG('A','C','R','E'): mForeignCreatures.load(record, deleted, store); break;
+                    case MKTAG('A','C','R','E'):
+                    {
+                        // this might be a leveled creature (e.g. FO3) - check if the model is empty
+                        const ESM4::Creature* crea = store.getForeign<ESM4::Creature>().search(record.mBaseObj);
+                        if (crea && crea->mBaseTemplate != 0
+                                 && (crea->mModel.empty() || crea->mModel == "marker_creature.nif"))
+                        {
+                            ESM4::FormId id = crea->mBaseTemplate;
+                            uint32_t type = store.find(id);
+                            bool found = false;
+
+                            while (!found) {
+                                if (type == MKTAG('A', 'C', 'R', 'E'))
+                                {
+                                    record.mBaseObj = id;
+                                    found = true;
+                                }
+                                else if (type == MKTAG('C', 'L', 'V', 'L'))
+                                {
+                                    const ESM4::LeveledCreature* lvlCrea
+                                        = store.getForeign<ESM4::LeveledCreature>().search(id);
+
+                                    if (lvlCrea && lvlCrea->mLvlObject.size() != 0)
+                                    {
+                                        // FIXME: this should be based on player's level, etc
+                                        id = lvlCrea->mLvlObject[0].item;
+                                        type = store.find(id);
+                                    }
+                                    else
+                                        throw std::runtime_error ("leveled creature not found!");
+                                }
+                            }
+                        }
+
+                        mForeignCreatures.load(record, deleted, store);
+                        break;
+                    }
 
                     case 0: std::cerr << "Cell acre " + ESM4::formIdToString(record.mBaseObj) + " not found!\n"; break;
 
                     default:
                         std::cerr
-                            << "WARNING: Ignoring acre '" << ESM4::formIdToString(record.mBaseObj) << "' of unhandled type\n";
+                            << "WARNING: Ignoring ACRE '" << ESM4::formIdToString(record.mBaseObj) << "' of unhandled type\n";
                 }
                 break;
             }
