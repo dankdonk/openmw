@@ -2860,6 +2860,7 @@ void ForeignNpcAnimation::addAnimSource(const std::string &model)
         //animName = model.substr(0, pos) + "idleanims\\bdaycheera.kf";
         animName = model.substr(0, pos) + "idleanims\\laugha.kf";
         animName = model.substr(0, pos) + "idleanims\\lookingaround.kf";
+        animName = model.substr(0, pos) + "locomotion\\mtidle.kf";
         addForeignAnimSource(model, animName);
     }
 }
@@ -3333,7 +3334,7 @@ Ogre::Vector3 ForeignNpcAnimation::runAnimation(float timepassed)
         return Ogre::Vector3::ZERO; // FIXME: FO3
 
     mHeadAnimationTime->update(timepassed);
-#if 0 // FIXME: FO3 head rotation
+//#if 0 // FIXME: FO3 head rotation
     if (mSkelBase)
     {
         Ogre::SkeletonInstance *baseinst = mSkelBase->getSkeleton();
@@ -3366,7 +3367,7 @@ Ogre::Vector3 ForeignNpcAnimation::runAnimation(float timepassed)
                              ,Ogre::Node::TS_WORLD);
         }
     }
-#endif
+//#endif
 
 // FIXME: demo code for vertex pose animation
 //#if 0
@@ -3436,6 +3437,7 @@ Ogre::Vector3 ForeignNpcAnimation::runAnimation(float timepassed)
             if (mCurrentAnim == "Happy")
                 mCurrentAnim = "Anger";
             else if (mCurrentAnim == "Anger")
+#if 0
                 mCurrentAnim = "Fear";
             else if (mCurrentAnim == "Fear")
                 mCurrentAnim = "Surprise";
@@ -3444,6 +3446,7 @@ Ogre::Vector3 ForeignNpcAnimation::runAnimation(float timepassed)
             else if (mCurrentAnim == "Sad")
                 mCurrentAnim = "BigAah";
             else if (mCurrentAnim == "BigAah")
+#endif
                 mCurrentAnim = "Happy";
         }
     }

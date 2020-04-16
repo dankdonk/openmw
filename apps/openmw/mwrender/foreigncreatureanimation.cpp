@@ -13,6 +13,7 @@
 #include <extern/nibtogre/btogreinst.hpp>
 
 #include <components/esm/loadcrea.hpp>
+#include <components/misc/rng.hpp>
 
 #include "../mwbase/world.hpp"
 //#include "../mwbase/environment.hpp"
@@ -68,7 +69,7 @@ ForeignCreatureAnimation::ForeignCreatureAnimation(const MWWorld::Ptr &ptr, cons
         mSkelBase = mObjectRoot->mForeignObj->mSkeletonRoot;
     }
 
-    if (mObjectRoot->mSkelBase == nullptr) // FIXME: FO3
+    if (mObjectRoot->mSkelBase == nullptr) // FIXME: FONV
         return;
 
     if (mObjectRoot->mSkelBase->getSkeleton()->hasBone("Bip01"))
@@ -251,18 +252,62 @@ void ForeignCreatureAnimation::addAnimSource(const std::string &skeletonName)
 
     MWWorld::LiveCellRef<ESM4::Creature> *ref = mPtr.get<ESM4::Creature>();
 
+    // seems to be for robots only in FO3/FONV
     std::string animName;
+    for (unsigned int i = 0; i < ref->mBase->mKf.size(); ++i)
+    {
+        //std::cout << ref->mBase->mEditorId << " " << ref->mBase->mKf[i] << std::endl; // FIXME
+        animName = path + ref->mBase->mKf[i];
+        addForeignAnimSource(skeletonName, animName);
+    }
+
+    if (ref->mBase->mKf.size() != 0)
+    {
+        if (skeletonName.find("mistergutsy") != std::string::npos)
+            addForeignAnimSource(skeletonName, path + "mtidle.kf"); // specified ones don't work yet?
+        else
+        {
+            // FIXME: hack for testing, add a randome one again to play it
+            int roll = Misc::Rng::rollDice(ref->mBase->mKf.size());
+            addForeignAnimSource(skeletonName, path+ref->mBase->mKf[roll]);
+        }
+
+        return; // only use the specified ones;
+    }
+
+    // FIXME: fallback anims for demo
+
     //addForeignAnimSource(skeletonName, path + "castself.kf");
     //addForeignAnimSource(skeletonName, path + "backward.kf");
     addForeignAnimSource(skeletonName, path + "idle.kf");
     addForeignAnimSource(skeletonName, path + "forward.kf");
     //addForeignAnimSource(skeletonName, path + "fastforward.kf");  //10/03/20: Storm Atronach not working
     //addForeignAnimSource(skeletonName, path + "runforward.kf");  //10/03/20: Storm Atronach not working
-    for (unsigned int i = 0; i < ref->mBase->mKf.size(); ++i)
+
+    if (skeletonName.find("spine") != std::string::npos)
     {
-        //std::cout << ref->mBase->mKf[i] << std::endl;
-        animName = path + ref->mBase->mKf[i];
-        addForeignAnimSource(skeletonName, animName);
+        addForeignAnimSource(skeletonName, path + "mtidle.kf"); // Super Mutant
+        addForeignAnimSource(skeletonName, path + "idleanims\\specialidle_mtheadrub.kf"); // Super Mutant
+    }
+    if (skeletonName.find("entaur") != std::string::npos)
+        addForeignAnimSource(skeletonName, path + "idleanims\\specialidle_scan.kf"); // Centaur
+    if (skeletonName.find("eathclaw") != std::string::npos)
+        addForeignAnimSource(skeletonName, path + "mtidle.kf"); // Deathclaw
+    if (skeletonName.find("houl") != std::string::npos)
+    {
+        int roll = Misc::Rng::rollDice(4); // [0, 3]
+        if (roll == 0)
+            addForeignAnimSource(skeletonName, path + "idleanims\\specialidle_scan.kf"); // Ghoul
+        else if (roll == 1)
+            addForeignAnimSource(skeletonName, path + "idleanims\\specialidle_crouch2stand.kf"); // Ghoul
+        else if (roll == 2)
+            addForeignAnimSource(skeletonName, path + "locomotion\\mtforward.kf"); // Ghoul
+        else
+        {
+            addForeignAnimSource(skeletonName, path + "idleanims\\specialidle_crouchidle.kf"); // Ghoul
+            //addForeignAnimSource(skeletonName, path + "locomotion\\specialidle_hithead.kf"); // doesn't work?
+            //addForeignAnimSource(skeletonName, path + "locomotion\\specialidle_getupfaceup.kf"); // doesn't work?
+        }
     }
 }
 
@@ -435,6 +480,9 @@ void ForeignCreatureAnimation::addForeignAnimSource(const std::string& model, co
 
     for (std::size_t i = 0; i < invWeap.size(); ++i)
     {
+        if (invWeap[i]->mModel == "")
+            continue; // FIXME: FO3 Centaur
+
         std::string meshName;
 
         meshName = "meshes\\"+invWeap[i]->mModel;
