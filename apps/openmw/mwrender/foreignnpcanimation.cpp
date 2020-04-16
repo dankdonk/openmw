@@ -2634,7 +2634,7 @@ bool ForeignNpcAnimation::equipArmor(const ESM4::Armor* armor, bool isFemale)
 
         mObjectParts[type] = scene;
     }
-    else if (mIsFO3)
+    else if (mIsFO3 || mIsFONV)
     {
         size_t pos = meshName.find_last_of(".");
         //std::cout << meshName.substr(0, pos+1) << "egm" << std::endl;
