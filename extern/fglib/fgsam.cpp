@@ -57,7 +57,46 @@ namespace FgLib
         return std::move(v);
     } ();
 
+    bool FgSam::buildMorphedVertices(std::vector<Ogre::Vector3>& fgMorphVertices,
+                                     const std::vector<Ogre::Vector3>& fgVertices,
+                                     const std::string& nif,
+                                     const std::vector<float>& raceSymCoeff,
+                                     const std::vector<float>& raceAsymCoeff,
+                                     const std::vector<float>& npcSymCoeff,
+                                     const std::vector<float>& npcAsymCoeff) const
+    {
+        FgFile<FgEgm> egmFile;
+        const FgEgm *egm = egmFile.getOrLoadByMeshName(nif);
 
+        if (egm == nullptr)
+            return false; // not possible to recover
+
+        FgFile<FgTri> triFile;
+        const FgTri *tri = triFile.getOrLoadByMeshName(nif);
+
+        if (tri == nullptr)
+            return false; // not possible to recover
+
+        if (tri->needsNifVertices()) // TRI doesn't exist, so nothing populated
+        {
+            std::string name = nif;
+            boost::algorithm::to_lower(name);
+            size_t pos = nif.find_last_of(".");
+            if (pos != std::string::npos && nif.substr(pos+1) == "nif")
+            {
+                name = nif.substr(0, pos+1)+"tri";
+                std::cout << name << std::endl;
+            }
+
+            // use the supplied fgVertices to create a dummy TRI file then store it
+            tri = triFile.replaceFile(boost::algorithm::to_lower_copy(name), std::make_unique<FgTri>(fgVertices));
+        }
+
+        return buildMorphedVerticesImpl(fgMorphVertices,
+                egm, tri, raceSymCoeff, raceAsymCoeff, npcSymCoeff, npcAsymCoeff);
+    }
+
+    // variant for Hat/NoHat hair
     bool FgSam::buildMorphedVertices(std::vector<Ogre::Vector3>& fgMorphVertices,
                                      const std::vector<Ogre::Vector3>& fgVertices,
                                      const std::string& nif,
@@ -74,7 +113,7 @@ namespace FgLib
             return false; // not possible to recover
 
         std::string name = nif;
-        boost::algorithm::to_lower_copy(name);
+        boost::algorithm::to_lower(name);
         size_t pos = nif.find_last_of(".");
         if (pos == std::string::npos || nif.substr(pos+1) != "nif")
             return false;
@@ -82,48 +121,11 @@ namespace FgLib
         if (tri->needsNifVertices())
         {
             name = nif.substr(0, pos+1)+"tri";
-            tri = triFile.addOrReplaceFile(name, std::make_unique<FgTri>(fgVertices));
+            tri = triFile.replaceFile(boost::algorithm::to_lower_copy(name), std::make_unique<FgTri>(fgVertices));
         }
 
         FgFile<FgEgm> egmFile;
         const FgEgm *egm = egmFile.getOrLoadByName(nif.substr(0, pos) + (hat ? "hat.egm" : "nohat.egm"));
-
-        if (egm == nullptr)
-            return false; // not possible to recover
-
-        return buildMorphedVerticesImpl(fgMorphVertices,
-                egm, tri, raceSymCoeff, raceAsymCoeff, npcSymCoeff, npcAsymCoeff);
-    }
-
-    bool FgSam::buildMorphedVertices(std::vector<Ogre::Vector3>& fgMorphVertices,
-                                     const std::vector<Ogre::Vector3>& fgVertices,
-                                     const std::string& nif,
-                                     const std::vector<float>& raceSymCoeff,
-                                     const std::vector<float>& raceAsymCoeff,
-                                     const std::vector<float>& npcSymCoeff,
-                                     const std::vector<float>& npcAsymCoeff) const
-    {
-        FgFile<FgTri> triFile;
-        const FgTri *tri = triFile.getOrLoadByMeshName(nif);
-
-        if (tri == nullptr)
-            return false; // not possible to recover
-
-        if (tri->needsNifVertices())
-        {
-            std::string name = nif;
-            boost::algorithm::to_lower_copy(name);
-            size_t pos = nif.find_last_of(".");
-            if (pos != std::string::npos && nif.substr(pos+1) == "nif")
-            {
-                name = nif.substr(0, pos+1)+"tri";
-            }
-
-            tri = triFile.addOrReplaceFile(name, std::make_unique<FgTri>(fgVertices));
-        }
-
-        FgFile<FgEgm> egmFile;
-        const FgEgm *egm = egmFile.getOrLoadByMeshName(nif);
 
         if (egm == nullptr)
             return false; // not possible to recover
@@ -149,7 +151,9 @@ namespace FgLib
 
         // TODO: maybe just return false rather than throw?
         if (egm->numVertices() != (numVertices + numStatMorphVertices))
+        {
             throw std::runtime_error("SAM: Number of EGM vertices does not match that of TRI");
+        }
 
         fgMorphVertices.resize(numVertices);
 

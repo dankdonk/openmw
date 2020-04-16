@@ -54,7 +54,7 @@ namespace FgLib
         const T* getOrLoadByMeshName(const std::string& base) const;
         const T *getOrLoadByName(const std::string& name) const;
 
-        const T* addOrReplaceFile(const std::string& name, std::unique_ptr<T> fgFile) const;
+        const T* replaceFile(const std::string& name, std::unique_ptr<T> fgFile) const;
     };
 
     template<typename T>
