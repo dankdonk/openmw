@@ -40,6 +40,7 @@
 //     NiBSplineInterpolator
 //         NiBSplineFloatInterpolator <------------- /*NiBSplineInterpolator */
 //         NiBSplinePoint3Interpolator
+//             NiBSplineCompPoint3Interpolator
 //         NiBSplineTransformInterpolator
 //             NiBSplineCompTransformInterpolator
 //     NiBlendInterpolator
@@ -100,6 +101,15 @@ namespace NiBtOgre
         float mUnknown6;
 
         NiBSplinePoint3Interpolator(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
+    };
+
+    // Seen in NIF version 20.2.0.7
+    struct NiBSplineCompPoint3Interpolator : public NiBSplinePoint3Interpolator
+    {
+        float mPosOffset;
+        float mPosHalfRange;
+
+        NiBSplineCompPoint3Interpolator(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
     };
 
     // Seen in NIF version 20.0.0.4, 20.0.0.5

@@ -768,3 +768,10 @@ NiBtOgre::bhkBlendController::bhkBlendController(uint32_t index, NiStream *strea
 {
     stream->read(mUnknown);
 }
+
+// Seen in NIF ver 20.2.0.7 (FONV)
+NiBtOgre::BSRefractionFirePeriodController::BSRefractionFirePeriodController(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
+    : NiTimeController(index, stream, model, data)
+{
+    stream->read(mInterpolatorRef);
+}

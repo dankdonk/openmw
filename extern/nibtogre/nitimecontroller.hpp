@@ -49,7 +49,8 @@
 //                 NiVisController
 //             NiExtraDataController <-------------------- /* not implemented */
 //                 NiFloatExtraDataController
-//             NiFloatInterpController <------------------ /* not implemented */
+//             NiFloatInterpController
+//                 BSRefractionStrengthController
 //                 BSEffectShaderPropertyColorController
 //                 BSEffectShaderPropertyFloatController
 //                 BSLightingShaderPropertyColorController
@@ -78,6 +79,7 @@
 //     NiPathController
 //     NiUVController
 //     bhkBlendController
+//     BSRefractionFirePeriodController
 namespace NiBtOgre
 {
     class NiObjectNET;
@@ -242,6 +244,8 @@ namespace NiBtOgre
     };
 
     typedef NiSingleInterpController BSMaterialEmittanceMultController;
+    typedef NiSingleInterpController NiFloatInterpController;
+    typedef NiFloatInterpController BSRefractionStrengthController;
 
     // Seen in NIF version 20.2.0.7
     class BSEffectShaderPropertyColorController : public NiSingleInterpController
@@ -321,6 +325,15 @@ namespace NiBtOgre
         std::uint32_t mUnknown;
 
         bhkBlendController(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
+    };
+
+    // Seen in NIF ver 20.2.0.7 (FONV)
+    class BSRefractionFirePeriodController : public NiTimeController
+    {
+    public:
+        NiInterpolatorRef mInterpolatorRef;
+
+        BSRefractionFirePeriodController(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
     };
 }
 

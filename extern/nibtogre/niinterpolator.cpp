@@ -69,6 +69,14 @@ NiBtOgre::NiBSplinePoint3Interpolator::NiBSplinePoint3Interpolator(uint32_t inde
     stream->read(mUnknown6);
 }
 
+// Seen in NIF version 20.2.0.7
+NiBtOgre::NiBSplineCompPoint3Interpolator::NiBSplineCompPoint3Interpolator(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
+    : NiBSplinePoint3Interpolator(index, stream, model, data)
+{
+    stream->read(mPosOffset);
+    stream->read(mPosHalfRange);
+}
+
 NiBtOgre::NiBSplineFloatInterpolator::NiBSplineFloatInterpolator(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
     : NiBSplineInterpolator(index, stream, model, data)
 {

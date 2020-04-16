@@ -559,6 +559,46 @@ void NiBtOgre::NiControllerSequence::build(Ogre::Entity *skelBase, NiModelPtr an
 
             controllers.push_back(Ogre::Controller<Ogre::Real>(srcval, dstval, func));
         }
+        else if (ctlrTypeName == "NiFloatExtraDataController")
+        {
+            if (mModel.blockType(interpolatorRef) != "NiFloatInterpolator")
+                throw std::runtime_error("unsupported interpolator: "+mModel.blockType(interpolatorRef));
+
+            // NOTE: Some interpolators do not have any data!  Ignore these controlled blocks.
+            NiFloatInterpolator *interpolator = mModel.getRef<NiFloatInterpolator>(interpolatorRef);
+            if (interpolator->mDataRef < 0) // -1
+                continue;
+
+            NiFloatExtraDataController *controller;
+            if (mControlledBlocks[i].controller2Ref != -1)
+                //controller = mModel.getRef<NiGeomMorpherController>(mControlledBlocks[i].controller2Ref);
+                throw std::logic_error("anim file shouldn't have controllers: "
+                        +mModel.blockType(mControlledBlocks[i].controller2Ref));
+            else
+                controller = static_cast<NiFloatExtraDataController*>(target->findController(ctlrTypeName));
+
+            if (!controller)
+                std::cout << ctlrTypeName << " " << targetName << " has no controller" << std::endl;
+
+            // FIXME: not sure what to do with this (i.e. how to implement head tracking with this)
+            //        maybe rotation angle in radians?
+            continue;
+
+            // FO3 animName = "meshes\\characters\\_male\\locomotion\\mtidle.kf"
+            // controlled block "Bip01 Head" - should be target NiNode block 121 in skeleton.nif
+            // (which has block 125 NifloatExtraDataController)
+            // controller id "HeadTrack"
+        }
+        else if (ctlrTypeName == "NiVisController")
+        {
+            // FIXME: probably turns visibility on/off, but what exactly?
+            continue;
+
+            // FO3 animName = "meshes\\characters\\_male\\locomotion\\mtidle.kf"
+            // controlled block "HeadAnims" block 134
+            // NiBoolInterpolator
+            // (the skeleton has the data and keys? see blocks 138 and 139)
+        }
         else
             std::cout << "unknown controller type " << ctlrTypeName << std::endl;
     }
