@@ -51,10 +51,17 @@ namespace FgLib
     }
 
     template<>
-    const FgTri *FgFile<FgTri>::addOrReplaceFile(const std::string& name, std::unique_ptr<FgTri> fgFile) const
+    const FgTri *FgFile<FgTri>::replaceFile(const std::string& name, std::unique_ptr<FgTri> fgFile) const
     {
-        return sFgFileMap.insert(
-            std::map<std::string, std::unique_ptr<FgTri> >::value_type(name, std::move(fgFile))).first->second.get();
+        std::map<std::string, std::unique_ptr<FgTri> >::iterator lb = sFgFileMap.lower_bound(name);
+        if (lb != sFgFileMap.end() && !(sFgFileMap.key_comp()(name, lb->first)))
+        {
+            // there should be an entry already
+            std::swap(lb->second, fgFile);
+            return lb->second.get();
+        }
+        else
+            return nullptr; // should never be a new entry - throw?
     }
 
     std::map<std::string, std::unique_ptr<FgTri> > FgFile<FgTri>::sFgFileMap;
