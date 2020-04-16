@@ -30,6 +30,8 @@
 #include <memory>
 #include <iostream> // FIXME: debugging only
 
+#include <boost/algorithm/string.hpp>
+
 #include <OgreSkeleton.h>
 #include <OgreBone.h>
 #include <OgreMesh.h>
@@ -172,8 +174,9 @@ NiBtOgre::NiTriBasedGeom *NiBtOgre::NiNode::getSubMeshChildFO3(bool hat)
     {
         std::int32_t nameIndex = mSubMeshChildren[i]->getNameIndex();
         std::string name = mModel.indexToString(nameIndex);
+        boost::algorithm::to_lower(name); // FO3 HairMessy03.NIF uses mixed case :-(
 
-        if ((hat && (name == "Hat")) || (!hat && (name == "NoHat")))
+        if ((hat && (name == "hat")) || (!hat && (name == "nohat")))
             return mSubMeshChildren[i];
     }
 

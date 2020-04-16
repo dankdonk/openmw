@@ -1573,7 +1573,9 @@ void ForeignNpcAnimation::updateFO3NpcBase()
         = static_cast<const MWClass::ForeignNpc&>(mPtr.getClass()).getInventoryStoreFO3(mPtr);
     MWWorld::ContainerStoreIterator invHeadGear = inv.getSlot(MWWorld::InventoryStoreTES4::Slot_TES4_Hair);
 
-    { //----------------------------------------------------------------------
+    { //---------------------------- Hair ------------------------------------ {{{
+
+    bool isFemale = (mNpc->mBaseConfig.fo3.flags & ESM4::Npc::FO3_Female) != 0;
 
     const ESM4::Hair *hair = store.getForeign<ESM4::Hair>().search(mNpc->mHair);
     if (!hair)
@@ -1596,10 +1598,10 @@ void ForeignNpcAnimation::updateFO3NpcBase()
 
     // FO3/FONV allows 2 hair models depending on whether a hat is equipped.
     NiModelPtr model;
-    if (invHeadGear == inv.end())
-        model = modelManager.getByName(mNpc->mEditorId+"_NoHat_"+meshName, group);
-    else
+    if (invHeadGear != inv.end())
         model = modelManager.getByName(mNpc->mEditorId+"_Hat_"+meshName, group);
+    else
+        model = modelManager.getByName(mNpc->mEditorId+"_NoHat_"+meshName, group);
 
     if (!model)
     {
@@ -1659,10 +1661,11 @@ void ForeignNpcAnimation::updateFO3NpcBase()
             mSkelBase->attachObjectToBone(targetBone, it->second, heOrientation, hePosition);
     }
     mObjectParts[ESM4::Armor::TES4_Hair] = scene;
-    } //----------------------------------------------------------------------
+    } //---------------------------------------------------------------------- }}}
 
-    { //------------------------- Head Parts ---------------------------------
+    { //------------------------- Head Parts --------------------------------- {{{
 
+    bool isFemale = (mNpc->mBaseConfig.fo3.flags & ESM4::Npc::FO3_Female) != 0;
     for (int index = ESM4::Race::Head; index < 8; ++index) // FIXME: 8 head parts in FO3/FONV
     {
         // FIXME: ears need texture morphing
@@ -1762,11 +1765,13 @@ void ForeignNpcAnimation::updateFO3NpcBase()
             mHeadParts.push_back(scene);
         }
     }
-    } //----------------------------------------------------------------------
+    } //---------------------------------------------------------------------- }}}
 
-    { //----------------------------------------------------------------------
+    { //------------------------- Body Parts --------------------------------- {{{
 
-    // default meshes for upperbody /lower body/hands/feet are in the same directory as skeleton.nif
+    bool isFemale = (mNpc->mBaseConfig.fo3.flags & ESM4::Npc::FO3_Female) != 0;
+
+    // default meshes for upperbody and hands are in the same directory as skeleton.nif
     const std::vector<ESM4::Race::BodyPart>& bodyParts
         = (isFemale ? mRace->mBodyPartsFemale : mRace->mBodyPartsMale);
 
@@ -1784,12 +1789,12 @@ void ForeignNpcAnimation::updateFO3NpcBase()
         {
             case(0):
             {
-                // FIXME: human upperbody need texture morphing
-                type = ESM4::Armor::FO3_UpperBody;
-                invSlot = MWWorld::InventoryStoreFO3::Slot_FO3_UpperBody;
-                bodyMeshName = meshName;
-                bodyTextureName = textureName;
-                break;
+                //type = ESM4::Armor::FO3_UpperBody;
+                //invSlot = MWWorld::InventoryStoreFO3::Slot_FO3_UpperBody;
+                bodyMeshName = meshName; // save for later
+                bodyTextureName = textureName; // save for later
+                //break;
+                continue; //  wait till we get EGT detail at index 3
             }
             case(1):
             {
@@ -1805,10 +1810,9 @@ void ForeignNpcAnimation::updateFO3NpcBase()
             }
             case(3):
             {
-                invSlot = MWWorld::InventoryStoreFO3::Slot_FO3_UpperBody;
                 // [0x00000003] = {mesh="Characters\\_Male\\UpperBodyHumanMale.egt" texture="" }
-                //std::string texture = "textures\\" + bodyParts[index].mesh;
-                //std::cout << "FO3 " << mNpc->mEditorId << " " << texture << std::endl;
+                invSlot = MWWorld::InventoryStoreFO3::Slot_FO3_UpperBody;
+                type = ESM4::Armor::FO3_UpperBody;
                 break;
             }
             default: break;
@@ -1817,13 +1821,10 @@ void ForeignNpcAnimation::updateFO3NpcBase()
         // FIXME: group "General"
         MWWorld::ContainerStoreIterator invPart
             = static_cast<MWWorld::InventoryStoreFO3&>(inv).getSlot(invSlot);
-        if (index == 0)
+
+        if (index == 3)
         {
-            continue; //  wait till we get EGT detail at index 3
-        }
-        else if (index == 3)
-        {
-            removeIndividualPart((ESM::PartReferenceType)type);
+            removeIndividualPart((ESM::PartReferenceType)ESM4::Armor::FO3_UpperBody);
 
             // initially assume a skinned model
             std::string skeletonName = mObjectRoot->mForeignObj->mModel->getName();
@@ -1876,7 +1877,9 @@ void ForeignNpcAnimation::updateFO3NpcBase()
                     createObject(meshName, "General", mObjectRoot->mForeignObj->mModel, textureName);
         }
     }
-    } //----------------------------------------------------------------------
+    } //---------------------------------------------------------------------- }}}
+
+    { //---------------------------- Head ------------------------------------ {{{
 
     meshName = "meshes\\" + mRace->mHeadParts[ESM4::Race::Head].mesh;
     if (meshName.empty())
@@ -2156,6 +2159,7 @@ void ForeignNpcAnimation::updateFO3NpcBase()
     }
 
     mHeadParts.push_back(scene);
+    } //---------------------------------------------------------------------- }}}
 
     // FIXME: this section below should go to updateParts()
     std::vector<const ESM4::Clothing*> invCloth;
