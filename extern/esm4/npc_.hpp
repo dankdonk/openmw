@@ -201,12 +201,12 @@ namespace ESM4
 
         std::vector<InventoryItem> mInventory;
 
-        FormId mBaseTemplate; // TES5 only
-        FormId mWornArmor;    // TES5 only
+        FormId mBaseTemplate; // FO3/FONV/TES5
+        FormId mWornArmor;    // TES5 only?
 
-        std::vector<float> mSymShapeModeCoefficients;    // should be 50
-        std::vector<float> mAsymShapeModeCoefficients;   // should be 30
-        std::vector<float> mSymTextureModeCoefficients;  // should be 50
+        std::vector<float> mSymShapeModeCoefficients;    // size 0 or 50
+        std::vector<float> mAsymShapeModeCoefficients;   // size 0 or 30
+        std::vector<float> mSymTextureModeCoefficients;  // size 0 or 50
         std::int16_t mFgRace;
 
         Npc();

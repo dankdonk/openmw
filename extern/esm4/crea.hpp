@@ -132,6 +132,9 @@ namespace ESM4
 
         std::vector<InventoryItem> mInventory;
 
+        FormId mBaseTemplate;           // FO3/FONV
+        std::vector<FormId> mBodyParts; // FO3/FONV
+
         Creature();
         virtual ~Creature();
 

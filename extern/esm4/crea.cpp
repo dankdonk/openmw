@@ -185,14 +185,21 @@ void ESM4::Creature::load(ESM4::Reader& reader)
 
                 break;
             }
+            case ESM4::SUB_TPLT: reader.get(mBaseTemplate); break; // FO3
+            case ESM4::SUB_PNAM: // FO3/FONV/TES5
+            {
+                FormId bodyPart;
+                reader.get(bodyPart);
+                mBodyParts.push_back(bodyPart);
+
+                break;
+            }
             case ESM4::SUB_MODT:
             case ESM4::SUB_RNAM:
             case ESM4::SUB_CSDT:
             case ESM4::SUB_OBND: // FO3
             case ESM4::SUB_EAMT: // FO3
             case ESM4::SUB_VTCK: // FO3
-            case ESM4::SUB_TPLT: // FO3
-            case ESM4::SUB_PNAM: // FO3
             case ESM4::SUB_NAM4: // FO3
             case ESM4::SUB_NAM5: // FO3
             case ESM4::SUB_CNAM: // FO3
