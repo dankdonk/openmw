@@ -2238,7 +2238,12 @@ std::string ForeignNpcAnimation::getSkeletonModel(const MWWorld::ESMStore& store
             std::cout <<  "TES5 LVLN: " << mNpc->mEditorId << ","
                       << lvlActor->mEditorId << "," << lvlActor->mModel << std::endl;
 
-            return "meshes\\" + lvlActor->mModel;
+            // FIXME: TES5 mEditorId = "LvlDraugrMissileMale" results in
+            //             mEditorId = "LCharDraugrMissileMale" which has no mModel
+            if (lvlActor->mModel == "")
+                return "";
+            else
+                return "meshes\\" + lvlActor->mModel;
         }
         else
             throw std::runtime_error(mNpc->mEditorId + " TES5 NPC unknown BaseTemplate type");
@@ -2256,6 +2261,8 @@ std::string ForeignNpcAnimation::getSkeletonModel(const MWWorld::ESMStore& store
     }
     else
         return ""; // shouldn't happen
+    // FIXME: TES5 mEditorId = "EncTrollFrost" is somehow considered an NPC
+    // FIXME: TES5 mEditorId = "MS13Arvel", mFullName = "Arvel the Swift" does not have mBaseTemplate
 }
 
 NifOgre::ObjectScenePtr ForeignNpcAnimation::createSkinnedObject(NifOgre::ObjectScenePtr scene,

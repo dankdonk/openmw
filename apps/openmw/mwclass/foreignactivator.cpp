@@ -48,6 +48,11 @@ namespace MWClass
 
     void ForeignActivator::insertObjectRendering (const MWWorld::Ptr& ptr, const std::string& model, MWRender::RenderingInterface& renderingInterface) const
     {
+        // model = "meshes\\Furniture\\FXspiderWebKitDoorSpecial.nif" BleakFallsBarrow01
+        // FIXME: TES5 furniture\fxspiderwebkitdoorspecial.nif crashes Ogre
+        if (model.find("FXspiderWeb") != std::string::npos)
+            return; // std::cout << "stop" << std::endl;
+
         MWWorld::LiveCellRef<ESM4::Activator> *ref = ptr.get<ESM4::Activator>();
 
         if (!model.empty()) {
@@ -57,6 +62,11 @@ namespace MWClass
 
     void ForeignActivator::insertObject(const MWWorld::Ptr& ptr, const std::string& model, MWWorld::PhysicsSystem& physics) const
     {
+        // model = "meshes\\Furniture\\FXspiderWebKitDoorSpecial.nif"
+        // FIXME: TES5 furniture\fxspiderwebkitdoorspecial.nif crashes Ogre
+        if (model.find("FXspiderWeb") != std::string::npos)
+            return; // std::cout << "stop" << std::endl;
+
         if(!model.empty())
             physics.addObject(ptr, model);
     }

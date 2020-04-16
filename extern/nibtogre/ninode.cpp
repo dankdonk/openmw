@@ -83,7 +83,11 @@ NiBtOgre::NiNode::NiNode(uint32_t index, NiStream *stream, const NiModel& model,
         return;
     }
 
-    mNodeName = model.indexToString(NiObjectNET::mNameIndex);
+    // FIXME: TES5 plants\floramushroom02small.nif block 10 does not have a name
+    if (NiObjectNET::mNameIndex == -1)
+        mNodeName = std::to_string(mSelfRef);
+    else
+        mNodeName = model.indexToString(NiObjectNET::mNameIndex);
 
     //stream->readVector<NiAVObjectRef>(mChildren);
     std::uint32_t numChildren = 0;

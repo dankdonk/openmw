@@ -106,7 +106,8 @@ namespace MWClass
 
     void ForeignNpc::insertObject(const MWWorld::Ptr& ptr, const std::string& model, MWWorld::PhysicsSystem& physics) const
     {
-
+        if (model == "")
+            return; // TES5 mEditorId = "EncSkeever"
 
 #if 0 // FIXME: doesn't work for FO3
             const MWWorld::ESMStore &store = MWBase::Environment::get().getWorld()->getStore();

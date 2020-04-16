@@ -358,9 +358,10 @@ NiBtOgre::BSWaterShaderProperty::BSWaterShaderProperty(uint32_t index, NiStream 
 void NiBtOgre::BSWaterShaderProperty::applyMaterialProperty(OgreMaterial& material,
                                                             std::vector<Ogre::Controller<float> >& controllers)
 {
-    // FIXME
+    // FIXME: TES5 water\water1024.nif
     std::cerr << "unhandled BSWaterShader property "
-        << NiObject::mModel.indexToString(NiObjectNET::getNameIndex()) << std::endl;
+        //<< NiObject::mModel.indexToString(NiObjectNET::getNameIndex()) << std::endl;
+        << mModel.getName() << std::endl;
 }
 
 NiBtOgre::NiAlphaProperty::NiAlphaProperty(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)
