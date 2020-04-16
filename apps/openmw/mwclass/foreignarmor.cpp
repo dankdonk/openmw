@@ -74,13 +74,23 @@ namespace MWClass
         assert(ref->mBase != NULL);
 
         // clothing and armor need "ground" models (with physics) unless being worn
-        std::string model = ref->mBase->mModelMale; // FIXME: what about female?
-        if (!model.empty())
+        if (ref->mBase->mIsTES4)
         {
-            size_t pos = Misc::StringUtils::lowerCase(model).find_last_of("."); // pos points at '.'
-            if (pos == std::string::npos || model.substr(pos+1) != "nif") // mModel does not end in ".nif"
-                return "meshes\\" + model.substr(0, pos) + "_gnd.nif";
+            std::string model = ref->mBase->mModelMale; // FIXME: what about female?
+            if (!model.empty())
+            {
+                size_t pos = Misc::StringUtils::lowerCase(model).find_last_of("."); // pos points at '.'
+                if (pos == std::string::npos || model.substr(pos+1) != "nif") // mModel does not end in ".nif"
+                    return "meshes\\" + model.substr(0, pos) + "_gnd.nif";
+            }
         }
+        else if (ref->mBase->mIsFO3 || ref->mBase->mIsFONV)
+        {
+            return "meshes\\" + ref->mBase->mModelMaleWorld;
+        }
+        //else
+            // FIXME TES5
+
         return "";
     }
 
