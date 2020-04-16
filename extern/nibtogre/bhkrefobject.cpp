@@ -1811,7 +1811,7 @@ btCollisionShape *NiBtOgre::bhkRigidBody::getShape(const NiAVObject& target, boo
         if (!(dynamic && useFullTransform))
             btShape->setUserIndex(useFullTransform ? 4 : 0);
         //else
-            //std::cout << "dynamic and fullTransform " << mModel.getName() << std::endl;
+            //std::cout << "dynamic and fullTransform " << mModel.getName() << " " << targetName << std::endl;
 
         return btShape; // nothing futher to do
     }

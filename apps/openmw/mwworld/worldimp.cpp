@@ -1572,6 +1572,25 @@ namespace MWWorld
                 std::vector<Ogre::Bone*> bones = anim->getBones("Open");
                 for (unsigned int i = 0; i < bones.size(); ++i)
                 {
+#if 0
+                    // FIXME: hack to work around FO3 Dungeons\Office\Doors\OffDoorBigMetal01.NIF
+                    //        but breaks other doors
+                    Ogre::Quaternion q;
+                    if (bones[i]->getParent())
+                        q = bones[i]->getParent()->getOrientation();
+                    else
+                        q = bones[i]->getOrientation();
+                    Ogre::Quaternion qb = bones[i]->_getBindingPoseInverseOrientation();
+                    mWorldScene->rotateSubObjectLocalRotation(it->first, bones[i]->getName(), q * qb);
+
+                    Ogre::Vector3 v;
+                    if (bones[i]->getParent())
+                        v = bones[i]->getParent()->getPosition();
+                    else
+                        v = bones[i]->getPosition();
+                    Ogre::Vector3 vb = bones[i]->_getBindingPoseInversePosition();
+                    mWorldScene->moveSubObjectLocalPosition(it->first, bones[i]->getName(), v + vb);
+#else
                     Ogre::Quaternion q = bones[i]->getOrientation();
                     Ogre::Quaternion qb = bones[i]->_getBindingPoseInverseOrientation();
                     mWorldScene->rotateSubObjectLocalRotation(it->first, bones[i]->getName(), q * qb);
@@ -1579,6 +1598,7 @@ namespace MWWorld
                     Ogre::Vector3 v = bones[i]->getPosition();
                     Ogre::Vector3 vb = bones[i]->_getBindingPoseInversePosition();
                     mWorldScene->moveSubObjectLocalPosition(it->first, bones[i]->getName(), v + vb);
+#endif
                 }
 
 
@@ -1604,6 +1624,25 @@ namespace MWWorld
                 std::vector<Ogre::Bone*> bones = anim->getBones("Close");
                 for (unsigned int i = 0; i < bones.size(); ++i)
                 {
+#if 0
+                    // FIXME: hack to work around FO3 Dungeons\Office\Doors\OffDoorBigMetal01.NIF
+                    //        but breaks other doors
+                    Ogre::Quaternion q;
+                    if (bones[i]->getParent())
+                        q = bones[i]->getParent()->getOrientation();
+                    else
+                        q = bones[i]->getOrientation();
+                    Ogre::Quaternion qb = bones[i]->_getBindingPoseInverseOrientation();
+                    mWorldScene->rotateSubObjectLocalRotation(it->first, bones[i]->getName(), q * qb);
+
+                    Ogre::Vector3 v;
+                    if (bones[i]->getParent())
+                        v = bones[i]->getParent()->getPosition();
+                    else
+                        v = bones[i]->getPosition();
+                    Ogre::Vector3 vb = bones[i]->_getBindingPoseInversePosition();
+                    mWorldScene->moveSubObjectLocalPosition(it->first, bones[i]->getName(), v + vb);
+#else
                     Ogre::Quaternion q = bones[i]->getOrientation();
                     Ogre::Quaternion qb = bones[i]->_getBindingPoseInverseOrientation();
                     mWorldScene->rotateSubObjectLocalRotation(it->first, bones[i]->getName(), q * qb);
@@ -1611,6 +1650,7 @@ namespace MWWorld
                     Ogre::Vector3 v = bones[i]->getPosition();
                     Ogre::Vector3 vb = bones[i]->_getBindingPoseInversePosition();
                     mWorldScene->moveSubObjectLocalPosition(it->first, bones[i]->getName(), v + vb);
+#endif
                 }
 
                 if (finished)
