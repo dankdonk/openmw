@@ -19,6 +19,8 @@
 #include <extern/shiny/Main/Factory.hpp>
 #include <extern/shiny/Platforms/Ogre/OgrePlatform.hpp>
 #include <extern/nibtogre/nimodelmanager.hpp>
+#include <extern/esm4/cell.hpp>
+#include <extern/esm4/lgtm.hpp>
 
 #include <openengine/bullet/physic.hpp>
 
@@ -31,6 +33,7 @@
 #include "../mwworld/esmstore.hpp"
 #include "../mwworld/class.hpp"
 #include "../mwworld/cellstore.hpp"
+#include "../mwworld/esmstore.hpp"
 
 #include "../mwbase/world.hpp" // these includes can be removed once the static-hack is gone
 #include "../mwbase/environment.hpp"
@@ -579,8 +582,27 @@ void RenderingManager::setAmbientMode()
 
 void RenderingManager::configureAmbient(MWWorld::CellStore &mCell)
 {
+    const ESM4::LightingTemplate *lgtm = nullptr;
     if (mCell.getCell()->mData.mFlags & ESM::Cell::Interior)
-        mAmbientColor.setAsABGR (mCell.getCell()->mAmbi.mAmbient);
+    {
+        if (mCell.isForeignCell())
+        {
+            const ESM4::Cell *cell = static_cast<const MWWorld::ForeignCell*>(mCell.getCell())->mCell;
+            if (cell->mLightingTemplate != 0)
+            {
+                 const MWWorld::ESMStore& store = MWBase::Environment::get().getWorld()->getStore();
+                 lgtm = store.getForeign<ESM4::LightingTemplate>().search(cell->mLightingTemplate);
+                if (lgtm != 0)
+                {
+                    mAmbientColor.setAsABGR(lgtm->mLighting.ambient*2); // FIXME: too dark otherwise
+                }
+            }
+            else
+                mAmbientColor.setAsARGB (mCell.getCell()->mAmbi.mAmbient);
+        }
+        else
+            mAmbientColor.setAsABGR (mCell.getCell()->mAmbi.mAmbient);
+    }
     setAmbientMode();
 
     // Create a "sun" that shines light downwards. It doesn't look
@@ -593,7 +615,10 @@ void RenderingManager::configureAmbient(MWWorld::CellStore &mCell)
     if (mCell.getCell()->mData.mFlags & ESM::Cell::Interior)
     {
         Ogre::ColourValue colour;
-        colour.setAsABGR (mCell.getCell()->mAmbi.mSunlight);
+        if (lgtm)
+            colour.setAsABGR (lgtm->mLighting.ambient*4); // FIXME
+        else
+            colour.setAsABGR (mCell.getCell()->mAmbi.mSunlight);
         mSun->setDiffuseColour (colour);
         mSun->setDirection(1,-1,-1);
         sunEnable(false);

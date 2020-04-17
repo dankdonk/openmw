@@ -72,6 +72,9 @@ void MWWorld::ForeignCell::preload (ESM4::Reader& reader)
     {
         mData.mFlags |= ESM::Cell::Interior;
 
+        // NOTE: Can't update values from any lighting templates here because during preload
+        //       the World is not built yet (i.e. can't get access to ESMStore).
+        //       Instead do it in RenderingManager::configureAmbient().
         mAmbi.mAmbient = mCell->mLighting.ambient;
         mAmbi.mSunlight = mCell->mLighting.ambient;
         mAmbi.mFog = mCell->mLighting.fogColor;

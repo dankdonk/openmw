@@ -55,6 +55,7 @@
 #include <extern/esm4/info.hpp>
 #include <extern/esm4/qust.hpp>
 #include <extern/esm4/pack.hpp>
+#include <extern/esm4/lgtm.hpp>
 
 #include <components/esm/records.hpp>
 #include "store.hpp"
@@ -141,6 +142,7 @@ namespace MWWorld
         ForeignStore<ESM4::DialogInfo> mForeignDialogInfos;
         ForeignStore<ESM4::Quest>      mForeignQuests;
         ForeignStore<ESM4::AIPackage>  mForeignAIPackages;
+        ForeignStore<ESM4::LightingTemplate> mForeignLightingTemplates;
         // Foreign referenceables
         ForeignStore<ESM4::Activator>  mForeignActivators;
         ForeignStore<ESM4::Apparatus>  mForeignApparatuses;
@@ -764,6 +766,11 @@ namespace MWWorld
     template <>
     inline const ForeignStore<ESM4::AIPackage>& ESMStore::getForeign<ESM4::AIPackage>() const {
         return mForeignAIPackages;
+    }
+
+    template <>
+    inline const ForeignStore<ESM4::LightingTemplate>& ESMStore::getForeign<ESM4::LightingTemplate>() const {
+        return mForeignLightingTemplates;
     }
 
     template <>

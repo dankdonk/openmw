@@ -238,9 +238,9 @@ void ESMStore::loadTes4Group (ESM::ESMReader &esm)
                 hdr.group.label.value == ESM4::REC_SCRL || hdr.group.label.value == ESM4::REC_ARMA ||
                 hdr.group.label.value == ESM4::REC_HDPT || hdr.group.label.value == ESM4::REC_TERM ||
                 hdr.group.label.value == ESM4::REC_TACT || hdr.group.label.value == ESM4::REC_NOTE ||
-                hdr.group.label.value == ESM4::REC_BPTD || hdr.group.label.value == ESM4::REC_SCPT ||
-                hdr.group.label.value == ESM4::REC_DIAL || hdr.group.label.value == ESM4::REC_QUST ||
-                hdr.group.label.value == ESM4::REC_INFO || hdr.group.label.value == ESM4::REC_PACK
+                hdr.group.label.value == ESM4::REC_SCPT || hdr.group.label.value == ESM4::REC_LGTM ||
+                hdr.group.label.value == ESM4::REC_DIAL || hdr.group.label.value == ESM4::REC_INFO ||
+                hdr.group.label.value == ESM4::REC_QUST || hdr.group.label.value == ESM4::REC_PACK
                 )
             {
                 reader.saveGroupStatus();
@@ -596,6 +596,7 @@ void ESMStore::loadTes4Record (ESM::ESMReader& esm)
             break;
         }
 #endif
+        case ESM4::REC_LGTM: reader.getRecordData(); mForeignLightingTemplates.loadTes4(reader); break;
         case ESM4::REC_REGN:
         case ESM4::REC_PHZD: case ESM4::REC_PGRE: // Skyrim only?
         case ESM4::REC_ROAD: case ESM4::REC_NAVM: case ESM4::REC_NAVI:
