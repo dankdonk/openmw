@@ -617,6 +617,7 @@ namespace ESM4
         SUB_PLD2 = MKTAG('P','L','D','2'), // FO3
         SUB_PKFD = MKTAG('P','K','F','D'), // FO3
         SUB_IDLB = MKTAG('I','D','L','B'), // FO3
+        SUB_DALC = MKTAG('D','A','L','C'), // FO3
         SUB_IMPS = MKTAG('I','M','P','S'), // FO3 Anchorage
         SUB_IMPF = MKTAG('I','M','P','F'), // FO3 Anchorage
 
@@ -1035,6 +1036,48 @@ namespace ESM4
         ACBS_TES4 tes4;
         ACBS_FO3  fo3;
         ACBS_TES5 tes5;
+    };
+
+    // guesses only for TES4
+    struct Lighting
+    {                              //               | Aichan Prison values
+        std::uint32_t ambient;     //               | 16 17 19 00 (RGBA)
+        std::uint32_t directional; //               | 00 00 00 00 (RGBA)
+        std::uint32_t fogColor;    //               | 1D 1B 16 00 (RGBA)
+        float         fogNear;     // Fog Near      | 00 00 00 00 = 0.f
+        float         fogFar;      // Fog Far       | 00 80 3B 45 = 3000.f
+        std::int32_t  rotationXY;  // rotation xy   | 00 00 00 00 = 0
+        std::int32_t  rotationZ;   // rotation z    | 00 00 00 00 = 0
+        float         fogDirFade;  // Fog dir fade  | 00 00 80 3F = 1.f
+        float         fogClipDist; // Fog clip dist | 00 80 3B 45 = 3000.f
+        float         fogPower;
+    };
+
+    struct Lighting_TES5
+    {
+        std::uint32_t ambient;
+        std::uint32_t directional;
+        std::uint32_t fogColor;
+        float         fogNear;
+        float         fogFar;
+        std::int32_t  rotationXY;
+        std::int32_t  rotationZ;
+        float         fogDirFade;
+        float         fogClipDist;
+        float         fogPower;
+        std::uint32_t unknown1;
+        std::uint32_t unknown2;
+        std::uint32_t unknown3;
+        std::uint32_t unknown4;
+        std::uint32_t unknown5;
+        std::uint32_t unknown6;
+        std::uint32_t unknown7;
+        std::uint32_t unknown8;
+        std::uint32_t fogColorFar;
+        float         fogMax;
+        float         LightFadeStart;
+        float         LightFadeEnd;
+        std::uint32_t padding;
     };
 
     struct ActorFaction

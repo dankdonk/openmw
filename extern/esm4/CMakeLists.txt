@@ -86,6 +86,7 @@ set(ESM4_SOURCE_FILES
     info.cpp
     pgrd.cpp
     pack.cpp
+    lgtm.cpp
     formid.cpp
     reader.cpp
 )
