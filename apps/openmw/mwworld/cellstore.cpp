@@ -979,9 +979,6 @@ namespace MWWorld
 #endif
                 switch (store.find(record.mBaseObj))
                 {
-                    case MKTAG('R','H','A','I'): std::cout << " hair " << std::endl; break; // FIXME
-                    case MKTAG('S','E','Y','E'): std::cout << " eyes " << std::endl; break; // FIXME
-                    case MKTAG('E','R','A','C'): std::cout << "race" << std::endl; break; // FIXME
                     case MKTAG('N','S','O','U'): mForeignSounds.load(record, deleted, store); break;
 #if 1
                     case MKTAG('I','A','C','T'): mForeignActivators.load(record, deleted, store); break;
@@ -1137,14 +1134,18 @@ namespace MWWorld
                     case MKTAG('T','M','S','T'): // Movable Static
                     case MKTAG('T','T','X','S'): // Texture Set
                     case MKTAG('L','S','C','R'): // Scroll
+                    case MKTAG('A','A','R','M'): // Armor Addon
                     case MKTAG('M','T','E','R'): // Terminal
                     case MKTAG('T','T','A','C'): // Talking Activator
                     case MKTAG('C','A','S','P'): // Acoustic Space
+                    case MKTAG('D','I','M','O'): // Item Mod
+                    case MKTAG('T','P','W','A'): // Placeable Water
+                    case MKTAG('L','S','C','O'): // Static Collection
                          break;
 
                     // FO3 adds ASPC, IDLM, ARMA, MSTT, NOTE, PWAT, SCOL, TACT, TERM and TXST
                     // FONV adds CCRD, IMOD and CMNY
-                    case 0: std::cerr << "Cell refr " + ESM4::formIdToString(record.mBaseObj) + " not found!\n"; break;
+                    case 0: std::cerr << "Cell refr " + record.mEditorId +" "+ ESM4::formIdToString(record.mBaseObj) + " not found!\n"; break;
 
                     default:
                         std::cerr << "WARNING: Ignoring TES4 reference '"
@@ -1367,6 +1368,23 @@ namespace MWWorld
                 //padding.insert(0, reader.getContext().groupStack.size()*2, ' ');
                 //std::cout << padding << ESM4::printName(hdr.record.typeId) << " skipping..." << std::endl;
                 reader.skipRecordData();
+                break;
+            }
+            case ESM4::REC_PGRE: // FO3/FONV
+            {
+#if 0
+                reader.getRecordData();
+                ESM4::PlacedGrenade record;
+                record.load(reader);
+                std::string padding = "";
+                padding.insert(0, reader.getContext().groupStack.size()*2, ' ');
+                std::cout << padding << ESM4::printName(hdr.record.typeId) << " " << record.mEditorId << std::endl;
+#else
+                //std::string padding = "";
+                //padding.insert(0, reader.getContext().groupStack.size()*2, ' ');
+                //std::cout << padding << ESM4::printName(hdr.record.typeId) << " skipping..." << std::endl;
+                reader.skipRecordData();
+#endif
                 break;
             }
             default:

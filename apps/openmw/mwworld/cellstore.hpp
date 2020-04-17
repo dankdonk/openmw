@@ -42,6 +42,9 @@
 #include <extern/esm4/anio.hpp>
 #include <extern/esm4/note.hpp>
 #include <extern/esm4/pgrd.hpp>
+#include <extern/esm4/aspc.hpp>
+#include <extern/esm4/pwat.hpp>
+#include <extern/esm4/scol.hpp>
 
 #include "livecellref.hpp"
 #include "cellreflist.hpp"
@@ -151,7 +154,10 @@ namespace MWWorld
             CellRefList<ESM4::Subspace>         mForeignSubspaces;
             CellRefList<ESM4::SigilStone>       mForeignSigilStones;
             CellRefList<ESM4::LeveledItem>      mForeignLvlItems;
+            CellRefList<ESM4::AcousticSpace>    mAcousticSpaces;
             CellRefList<ESM4::Note>             mForeignNotes;
+            CellRefList<ESM4::PlaceableWater>   mPlaceableWaters;
+            CellRefList<ESM4::StaticCollection> mStaticCollections;
 
             ForeignStore<ESM4::Pathgrid>        mForeignPathgrids;
             ESM::Pathgrid mPathgrid; // FIXME: just a quick workaround
@@ -272,7 +278,9 @@ namespace MWWorld
                     forEachImp (functor, mForeignSubspaces) &&
                     forEachImp (functor, mForeignSigilStones) &&
                     forEachImp (functor, mForeignLvlItems) &&
-                    forEachImp (functor, mForeignNotes);
+                    forEachImp (functor, mForeignNotes) &&
+                    forEachImp (functor, mPlaceableWaters) &&
+                    forEachImp (functor, mStaticCollections);
             }
 
             template<class Functor>

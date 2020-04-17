@@ -88,6 +88,11 @@ set(ESM4_SOURCE_FILES
     pack.cpp
     road.cpp
     lgtm.cpp
+    pgre.cpp
+    imod.cpp
+    aspc.cpp
+    pwat.cpp
+    scol.cpp
     formid.cpp
     reader.cpp
 )

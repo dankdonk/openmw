@@ -182,7 +182,12 @@ namespace ESM4
         REC_WTHR = MKTAG('W','T','H','R'), // Weather
         REC_ACRE = MKTAG('A','C','R','E'), // Placed Creature (TES4 only?)
         REC_PGRD = MKTAG('P','G','R','D'), // Pathgrid (TES4 only?)
-        REC_ROAD = MKTAG('R','O','A','D')  // Road (TES4 only?)
+        REC_ROAD = MKTAG('R','O','A','D'), // Road (TES4 only?)
+        REC_IMOD = MKTAG('I','M','O','D'), // Item Mod
+        REC_PWAT = MKTAG('P','W','A','T'), // Placeable Water
+        REC_SCOL = MKTAG('S','C','O','L'), // Static Collection
+        REC_CCRD = MKTAG('C','C','R','D'), // Caravan Card
+        REC_CMNY = MKTAG('C','M','N','Y')  // Caravan Money
     };
 
     enum SubRecordTypes
@@ -617,6 +622,7 @@ namespace ESM4
         SUB_PLD2 = MKTAG('P','L','D','2'), // FO3
         SUB_PKFD = MKTAG('P','K','F','D'), // FO3
         SUB_IDLB = MKTAG('I','D','L','B'), // FO3
+        SUB_XDCR = MKTAG('X','D','C','R'), // FO3
         SUB_DALC = MKTAG('D','A','L','C'), // FO3
         SUB_IMPS = MKTAG('I','M','P','S'), // FO3 Anchorage
         SUB_IMPF = MKTAG('I','M','P','F'), // FO3 Anchorage
