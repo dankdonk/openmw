@@ -1624,10 +1624,10 @@ void ForeignNpcAnimation::updateFO3NpcBase()
     Ogre::Bone *heBone = mSkelBase->getSkeleton()->getBone(targetBone);
     Ogre::Quaternion heOrientation // fix rotation issue
         = heBone->getOrientation() * Ogre::Quaternion(Ogre::Degree(90), Ogre::Vector3::UNIT_Y)
-                                   * Ogre::Quaternion(Ogre::Degree(-15), Ogre::Vector3::UNIT_X);
+                                   * Ogre::Quaternion(Ogre::Degree(-7.5), Ogre::Vector3::UNIT_X);
 
     // FIXME non-zero for FO3 to make hair fit better
-    Ogre::Vector3 hePosition = Ogre::Vector3(/*up*/0.5f, /*forward*/0.15f, 0.f);
+    Ogre::Vector3 hePosition = Ogre::Vector3(/*up*/0.3f, /*forward*/0.7f, 0.f);
     //Ogre::Vector3 hePosition = Ogre::Vector3(0.5f, -0.2f, 0.f);
 
     std::map<int32_t, Ogre::Entity*>::const_iterator it(scene->mForeignObj->mEntities.begin());
@@ -3471,20 +3471,32 @@ Ogre::Vector3 ForeignNpcAnimation::runAnimation(float timepassed)
         {
             mPoseDuration = 0;
 
-            if (mCurrentAnim == "Happy")
-                mCurrentAnim = "Anger";
-            else if (mCurrentAnim == "Anger")
-#if 0
-                mCurrentAnim = "Fear";
-            else if (mCurrentAnim == "Fear")
-                mCurrentAnim = "Surprise";
-            else if (mCurrentAnim == "Surprise")
-                mCurrentAnim = "Sad";
-            else if (mCurrentAnim == "Sad")
-                mCurrentAnim = "BigAah";
-            else if (mCurrentAnim == "BigAah")
-#endif
-                mCurrentAnim = "Happy";
+            if (mIsTES4)
+            {
+                if (mCurrentAnim == "Happy")
+                    mCurrentAnim = "Anger";
+                else if (mCurrentAnim == "Anger")
+                    mCurrentAnim = "Fear";
+                else if (mCurrentAnim == "Fear")
+                    mCurrentAnim = "Surprise";
+                else if (mCurrentAnim == "Surprise")
+                    mCurrentAnim = "Sad";
+                else if (mCurrentAnim == "Sad")
+                    mCurrentAnim = "BigAah";
+                else if (mCurrentAnim == "BigAah")
+                    mCurrentAnim = "Happy";
+            }
+            else if (mIsFO3 || mIsFONV)
+            {
+                if (mCurrentAnim == "Happy")
+                    mCurrentAnim = "MoodAngry";
+                else if (mCurrentAnim == "MoodAngry")
+                    mCurrentAnim = "MoodNeutral";
+                else if (mCurrentAnim == "MoodNeutral")
+                    mCurrentAnim = "MoodPleasant";
+                else if (mCurrentAnim == "MoodPleasant")
+                    mCurrentAnim = "MoodAngry";
+            }
         }
     }
 //#endif
