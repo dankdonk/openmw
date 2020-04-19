@@ -3780,6 +3780,12 @@ void ForeignNpcAnimation::showWeapons(bool showWeapon)
             MWWorld::ContainerStoreIterator weapStore = inv.getSlot(MWWorld::InventoryStoreTES4::Slot_TES4_Weapon);
             if(weapStore != inv.end())
             {
+#    if 0
+                Ogre::Vector3 glowColor = getEnchantmentColor(*weapStore);
+                std::string mesh = weapStore->getClass().getModel(*weapStore);
+                addOrReplaceIndividualPart(ESM::PRT_Weapon, MWWorld::InventoryStoreTES4::Slot_TES4_Weapon, 1,
+                                           mesh, !weapStore->getClass().getEnchantment(*weapStore).empty(), &glowColor);
+#    else
                 if(weapStore->getTypeName() == typeid(ESM4::Weapon).name())
                 {
                     removeIndividualPart((ESM::PartReferenceType)type);
@@ -3789,13 +3795,14 @@ void ForeignNpcAnimation::showWeapons(bool showWeapon)
                     mObjectParts[type] =
                             createObject(meshName, "General", mObjectRoot->mForeignObj->mModel);
                 }
+#    endif
             }
-            else
-                removeIndividualPart((ESM::PartReferenceType)type);
+            //else // FIXME: show weapon regardless for demo
+                //removeIndividualPart((ESM::PartReferenceType)type);
 #endif
         }
-        else
-            removeIndividualPart((ESM::PartReferenceType)type);
+        //else
+            //removeIndividualPart((ESM::PartReferenceType)type);
     }
     else if (mIsFO3 || mIsFONV)
     {
