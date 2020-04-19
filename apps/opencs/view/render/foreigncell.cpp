@@ -138,7 +138,7 @@ bool CSVRender::ForeignCell::addObjects (const std::vector<ESM4::FormId>& object
                                                  = mDocument.getData().getForeignNpcs();
             const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Creature> >& crea
                                                  = mDocument.getData().getForeignCreatures();
-            const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::LeveledCreature> >& lvlc
+            const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::LevelledCreature> >& lvlc
                                                  = mDocument.getData().getForeignLvlCreatures();
             //
             const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Armor> >& armor
@@ -205,7 +205,7 @@ bool CSVRender::ForeignCell::addObjects (const std::vector<ESM4::FormId>& object
             ESM4::FormId baseObj = refs.getRecord(refs.searchFormId(id)).get().mBaseObj;
             if (lvlc.searchFormId(baseObj) != -1)
             {
-                const CSMForeign::IdRecord<ESM4::LeveledCreature>& lcreature
+                const CSMForeign::IdRecord<ESM4::LevelledCreature>& lcreature
                                                   = lvlc.getRecord(ESM4::formIdToString(baseObj)).get();
                 ESM4::FormId templ = 0;
                 for (unsigned int j = 0; j < lcreature.mLvlObject.size(); ++j)

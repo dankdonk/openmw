@@ -81,7 +81,7 @@ void CSVRender::ForeignObject::update()
     const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Hair> >& hair = mData.getForeignHairs();
     const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Eyes> >& eyes = mData.getForeignEyesSet();
     const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Creature> >& crea = mData.getForeignCreatures();
-    const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::LeveledCreature> >& lvlc = mData.getForeignLvlCreatures();
+    const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::LevelledCreature> >& lvlc = mData.getForeignLvlCreatures();
     const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Static> >& referenceables = mData.getForeignStatics(); // FIXME: use statics only for now
 
     //int index = referenceables.searcFormhId (mReferenceableId);
@@ -150,7 +150,7 @@ void CSVRender::ForeignObject::update()
         }
         else if (lvlc.searchFormId(baseObj) != -1)
         {
-            const CSMForeign::IdRecord<ESM4::LeveledCreature>& lcreature = lvlc.getRecord(ESM4::formIdToString(baseObj)).get();
+            const CSMForeign::IdRecord<ESM4::LevelledCreature>& lcreature = lvlc.getRecord(ESM4::formIdToString(baseObj)).get();
             ESM4::FormId templ = 0;
             for (unsigned int i = lcreature.mLvlObject.size(); i-- > 0;)
             {

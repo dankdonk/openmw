@@ -717,9 +717,9 @@ CSMWorld::Data::Data (ToUTF8::FromType encoding, const ResourcesManager& resourc
     mForeignCreatures.addColumn (new FixedRecordTypeColumn<CSMForeign::IdRecord<ESM4::Creature> >(UniversalId::Type_ForeignCreatures));
     mForeignCreatures.addColumn (new ModelColumn<CSMForeign::IdRecord<ESM4::Creature> >);
 
-    mForeignLvlCreatures.addColumn (new ForeignIdColumn<CSMForeign::IdRecord<ESM4::LeveledCreature> >);
-    mForeignLvlCreatures.addColumn (new RecordStateColumn<CSMForeign::IdRecord<ESM4::LeveledCreature> >);
-    mForeignLvlCreatures.addColumn (new FixedRecordTypeColumn<CSMForeign::IdRecord<ESM4::LeveledCreature> >(UniversalId::Type_ForeignLvlCreatures));
+    mForeignLvlCreatures.addColumn (new ForeignIdColumn<CSMForeign::IdRecord<ESM4::LevelledCreature> >);
+    mForeignLvlCreatures.addColumn (new RecordStateColumn<CSMForeign::IdRecord<ESM4::LevelledCreature> >);
+    mForeignLvlCreatures.addColumn (new FixedRecordTypeColumn<CSMForeign::IdRecord<ESM4::LevelledCreature> >(UniversalId::Type_ForeignLvlCreatures));
 
     mForeignRefs.addColumn (new ForeignIdColumn<CSMForeign::CellRef>/*(true)*/);
     mForeignRefs.addColumn (new RecordStateColumn<CSMForeign::CellRef>);
@@ -1532,12 +1532,12 @@ CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Creature> >& CSMWorld::Data:
     return mForeignCreatures;
 }
 
-const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::LeveledCreature> >& CSMWorld::Data::getForeignLvlCreatures() const
+const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::LevelledCreature> >& CSMWorld::Data::getForeignLvlCreatures() const
 {
     return mForeignLvlCreatures;
 }
 
-CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::LeveledCreature> >& CSMWorld::Data::getForeignLvlCreatures()
+CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::LevelledCreature> >& CSMWorld::Data::getForeignLvlCreatures()
 {
     return mForeignLvlCreatures;
 }

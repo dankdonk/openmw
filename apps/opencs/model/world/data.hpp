@@ -173,7 +173,7 @@ namespace CSMWorld
             CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Hair> > mForeignHairs;
             CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Eyes> > mForeignEyesSet;
             CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Creature> > mForeignCreatures;
-            CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::LeveledCreature> > mForeignLvlCreatures;
+            CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::LevelledCreature> > mForeignLvlCreatures;
             //CSMForeign::RefIdCollection mForeignReferenceables;
             CSMForeign::CellRefCollection<CSMForeign::CellRef> mForeignRefs;
             CSMForeign::CellRefCollection<CSMForeign::CellChar> mForeignChars;
@@ -471,9 +471,9 @@ namespace CSMWorld
 
             CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Creature> >& getForeignCreatures();
 
-            const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::LeveledCreature> >& getForeignLvlCreatures() const;
+            const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::LevelledCreature> >& getForeignLvlCreatures() const;
 
-            CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::LeveledCreature> >& getForeignLvlCreatures();
+            CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::LevelledCreature> >& getForeignLvlCreatures();
 
             const CSMForeign::NavigationCollection& getNavigation() const;
 
