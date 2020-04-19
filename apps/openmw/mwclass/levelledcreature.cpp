@@ -52,56 +52,6 @@ namespace MWClass
 
     void LevelledCreature::insertObjectRendering (const MWWorld::Ptr& ptr, const std::string& model, MWRender::RenderingInterface& renderingInterface) const
     {
-#if 0
-        MWWorld::LiveCellRef<ESM4::LevelledCreature> *ref = ptr.get<ESM4::LevelledCreature>();
-
-        const MWWorld::ESMStore& store = MWBase::Environment::get().getWorld()->getStore();
-        ESM4::FormId creature;
-        for (unsigned int i = 0; i <  ref->mBase->mLvlObject.size(); ++i)
-        {
-            if (ref->mBase->mLvlObject[i].item != 0)
-                creature = ref->mBase->mLvlObject[i].item; // get the higest one
-        }
-
-        const MWWorld::ForeignStore<ESM4::Npc>& npcStore = store.getForeign<ESM4::Npc>();
-        const MWWorld::ForeignStore<ESM4::Creature>& creatureStore = store.getForeign<ESM4::Creature>();
-        const MWWorld::ForeignStore<ESM4::LevelledCreature>& lvlStore = store.getForeign<ESM4::LevelledCreature>();
-
-        std::string lvlModel;
-        if (store.find(creature) == MKTAG('C', 'L', 'V', 'L'))
-        {
-            const ESM4::LevelledCreature *lvl = lvlStore.search(creature);
-            for (unsigned int i = 0; i < lvl->mLvlObject.size(); ++i)
-            {
-                switch (store.find(lvl->mLvlObject[i].item))
-                {
-                    case MKTAG('_','N','P','C'):
-                    {
-                        const ESM4::Npc *npc_ = npcStore.search(lvl->mLvlObject[i].item);
-                        lvlModel = npc_->mModel;
-                        //std::cout << "lvl creature " << i << " " << npc_->mEditorId << std::endl;
-                        break;
-                    }
-                    case MKTAG('A','C','R','E'):
-                    {
-                        const ESM4::Creature *crea = creatureStore.search(lvl->mLvlObject[i].item);
-                        lvlModel = crea->mModel;
-                        //std::cout << "lvl creature " << i << " " << crea->mEditorId << std::endl;
-                        break;
-                    }
-                    default:
-                        std::cout << "lvl creature " << i <<  " ?" << std::endl;
-                        break;
-                }
-            }
-        }
-        else
-            std::cout << "lvl creature lvl object is not a lvlc" << std::endl;
-
-        if (!lvlModel.empty()) {
-            renderingInterface.getObjects().insertModel(ptr, lvlModel/*, !ref->mBase->mPersistent*/); // FIXME
-        }
-#else
         ensureCustomData(ptr);
 
         LevelledCreatureCustomData& customData = dynamic_cast<LevelledCreatureCustomData&> (*ptr.getRefData().getCustomData());
@@ -110,7 +60,7 @@ namespace MWClass
 
         MWWorld::LiveCellRef<ESM4::LevelledCreature> *ref = ptr.get<ESM4::LevelledCreature>();
 
-        // should return the formid of a Creature which ManualRef then uses to find the Creature
+        // should return the formid of a NPC/Creature which ManualRef then uses to find the NPC/Creature
         std::string id = MWMechanics::getTES4LevelledCreature(ref->mBase);
 
         if (!id.empty())
@@ -135,7 +85,6 @@ namespace MWClass
         }
         else
             customData.mSpawn = false;
-#endif
     }
 
     void LevelledCreature::ensureCustomData(const MWWorld::Ptr &ptr) const

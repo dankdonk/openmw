@@ -384,7 +384,7 @@ namespace MWMechanics
         MWWorld::ManualRef ref(MWBase::Environment::get().getWorld()->getStore(), itemId, 1);
 
         std::string typeName = ref.getPtr().getTypeName();
-        if (typeName == typeid(ESM4::Creature).name())
+        if (typeName == typeid(ESM4::Creature).name() || typeName == typeid(ESM4::Npc).name())
         {
             return itemId;
         }
@@ -393,7 +393,10 @@ namespace MWMechanics
             return getTES4LevelledCreature(ref.getPtr().get<ESM4::LevelledCreature>()->mBase);
         }
         else
+        {
+            std::cerr << "LVLC nothing found?" << std::endl;
             return std::string();
+        }
     }
 }
 
