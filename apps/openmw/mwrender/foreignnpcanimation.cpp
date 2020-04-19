@@ -1992,6 +1992,7 @@ void ForeignNpcAnimation::updateFO3NpcBase()
     {
         Ogre::MaterialPtr mat = scene->mMaterialControllerMgr.getWritableMaterial(it->second);
         Ogre::Material::TechniqueIterator techIter = mat->getTechniqueIterator();
+#if 0
         while(techIter.hasMoreElements())
         {
             Ogre::Technique *tech = techIter.getNext();
@@ -2150,7 +2151,7 @@ void ForeignNpcAnimation::updateFO3NpcBase()
 
             } // while pass
         } // while technique
-
+#endif
         it->second->shareSkeletonInstanceWith(mSkelBase); // NOTE: removes all vertex anim from the entity
         mInsert->attachObject(it->second);
     }
@@ -2671,9 +2672,9 @@ bool ForeignNpcAnimation::equipArmor(const ESM4::Armor* armor, bool isFemale)
                 createObject(meshName, "General", mObjectRoot->mForeignObj->mModel);
 
         std::string npcTextureName;
-        if (index = ESM4::Race::UpperBody)
+        if (index == ESM4::Race::UpperBody)
             npcTextureName = mTextureUpperBody->getName();
-        else if (index = ESM4::Race::LowerBody)
+        else if (index == ESM4::Race::LowerBody)
             npcTextureName = mTextureLowerBody->getName();
 
         replaceSkinTexture(scene, npcTextureName); // does nothing if none found
@@ -2698,7 +2699,7 @@ bool ForeignNpcAnimation::equipArmor(const ESM4::Armor* armor, bool isFemale)
 
         hideDismember(mObjectParts[type]);
     }
-    else // hands, feet
+    else // TES4 hands, feet
         mObjectParts[type] =
             createObject(meshName, "General", mObjectRoot->mForeignObj->mModel, raceTexture);
 

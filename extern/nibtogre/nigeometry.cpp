@@ -164,6 +164,17 @@ bool NiBtOgre::NiTriBasedGeom::hasVisibleSkin() const
         if (!property)
             continue;
 
+        // FO3/FONV - note must come before name check since it can be empty
+        if (mModel.blockType(NiAVObject::mProperty[i]) == "BSShaderPPLightingProperty")
+        {
+            BSShaderLightingProperty* property
+                = mModel.getRef<BSShaderLightingProperty>(NiAVObject::mProperty[i]);
+
+            if (property->mShaderType == 14)
+                return true;
+        }
+
+        // TES4
         std::int32_t nameIndex = property->getNameIndex();
         if (nameIndex == -1)
             continue;
