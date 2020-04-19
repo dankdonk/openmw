@@ -1,11 +1,11 @@
-#ifndef GAME_MWCLASS_FOREIGNLEVELEDITEM_H
-#define GAME_MWCLASS_FOREIGNLEVELEDITEM_H
+#ifndef GAME_MWCLASS_SIGILSTONE_H
+#define GAME_MWCLASS_SIGILSTONE_H
 
 #include "../mwworld/class.hpp"
 
 namespace MWClass
 {
-    class ForeignLeveledItem : public MWWorld::Class
+    class SigilStone : public MWWorld::Class
     {
             virtual MWWorld::Ptr copyToCellImpl(const MWWorld::Ptr &ptr, MWWorld::CellStore &cell) const;
 

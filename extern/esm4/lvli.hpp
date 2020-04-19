@@ -36,7 +36,7 @@ namespace ESM4
     class Reader;
     class Writer;
 
-    struct LeveledItem
+    struct LevelledItem
     {
         FormId mFormId;       // from the header
         std::uint32_t mFlags; // from the header, see enum type RecordFlag for details
@@ -52,8 +52,8 @@ namespace ESM4
 
         std::vector<LVLO> mLvlObject;
 
-        LeveledItem();
-        virtual ~LeveledItem();
+        LevelledItem();
+        virtual ~LevelledItem();
 
         bool calcAllLvlLessThanPlayer() const;
         bool calcEachItemInCount() const;

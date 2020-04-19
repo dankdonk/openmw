@@ -256,7 +256,19 @@ namespace MWWorld
             // see operator== in livecellref.hpp, check for matching formId
             typename std::list<LiveRef>::iterator iter =
                 std::find(mList.begin(), mList.end(), ref);
-
+#if 0
+                            for (size_t i = 0; i < ptr->mInventory.size(); ++i)
+                            {
+                                uint32_t type = esmStore.find(ptr->mInventory[i].item);
+                                if (type == MKTAG('K', 'B', 'O', 'O'))
+                                {
+                        const ESM4::Book* note = esmStore.getForeign<ESM4::Book>().search(ptr->mInventory[i].item);
+                        std::cout << ptr->mEditorId << " " << note->mEditorId << std::endl;
+                                }
+                                else
+                                    std::cout << ESM4::printName(type) << std::endl;
+                            }
+#endif
             LiveRef liveCellRef (ref, ptr); // ref is the reference, ptr is the base object
 
             if (deleted)
@@ -407,7 +419,7 @@ namespace MWWorld
         if (LiveCellRef<ESM4::MiscItem>  *ref = mForeignMiscItems.find (id))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM4::Sound>     *ref = mForeignSounds.find (id))
+        if (LiveCellRef<ESM4::Sound>     *ref = mSounds.find (id))
             return Ptr (ref, this);
 
         if (LiveCellRef<ESM4::Static>    *ref = mForeignStatics.find (id))
@@ -516,7 +528,7 @@ namespace MWWorld
         if (LiveCellRef<ESM4::MiscItem>  *ref = mForeignMiscItems.searchViaHandle (handle))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM4::Sound>     *ref = mForeignSounds.searchViaHandle (handle))
+        if (LiveCellRef<ESM4::Sound>     *ref = mSounds.searchViaHandle (handle))
             return Ptr (ref, this);
 
         if (LiveCellRef<ESM4::Static>    *ref = mForeignStatics.searchViaHandle (handle))
@@ -546,10 +558,10 @@ namespace MWWorld
         if (LiveCellRef<ESM4::Creature>  *ref = mForeignCreatures.searchViaHandle (handle))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM4::LeveledCreature> *ref = mForeignLvlCreatures.searchViaHandle (handle))
+        if (LiveCellRef<ESM4::LevelledCreature> *ref = mLevelledCreatures.searchViaHandle (handle))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM4::SoulGem>   *ref = mForeignSoulGems.searchViaHandle (handle))
+        if (LiveCellRef<ESM4::SoulGem>   *ref = mSoulGems.searchViaHandle (handle))
             return Ptr (ref, this);
 
         if (LiveCellRef<ESM4::Key>       *ref = mForeignKeys.searchViaHandle (handle))
@@ -558,16 +570,19 @@ namespace MWWorld
         if (LiveCellRef<ESM4::Potion>    *ref = mForeignPotions.searchViaHandle (handle))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM4::Subspace>  *ref = mForeignSubspaces.searchViaHandle (handle))
+        if (LiveCellRef<ESM4::Subspace>  *ref = mSubspaces.searchViaHandle (handle))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM4::SigilStone> *ref = mForeignSigilStones.searchViaHandle (handle))
+        if (LiveCellRef<ESM4::SigilStone> *ref = mSigilStones.searchViaHandle (handle))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM4::LeveledItem> *ref = mForeignLvlItems.searchViaHandle (handle))
+        if (LiveCellRef<ESM4::LevelledItem> *ref = mLevelledItems.searchViaHandle (handle))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM4::Note>      *ref = mForeignNotes.searchViaHandle (handle))
+        if (LiveCellRef<ESM4::LevelledNpc> *ref = mLevelledNpcs.searchViaHandle (handle))
+            return Ptr (ref, this);
+
+        if (LiveCellRef<ESM4::Note>      *ref = mNotes.searchViaHandle (handle))
             return Ptr (ref, this);
 
         mHasState = oldState;
@@ -577,6 +592,12 @@ namespace MWWorld
 
     Ptr CellStore::searchViaActorId (int id)
     {
+        if (Ptr ptr = ::searchViaActorId (mForeignNpcs, id, this))
+            return ptr;
+
+        if (Ptr ptr = ::searchViaActorId (mForeignCreatures, id, this))
+            return ptr;
+
         if (Ptr ptr = ::searchViaActorId (mNpcs, id, this))
             return ptr;
 
@@ -979,7 +1000,7 @@ namespace MWWorld
 #endif
                 switch (store.find(record.mBaseObj))
                 {
-                    case MKTAG('N','S','O','U'): mForeignSounds.load(record, deleted, store); break;
+                    case MKTAG('N','S','O','U'): mSounds.load(record, deleted, store); break;
 #if 1
                     case MKTAG('I','A','C','T'): mForeignActivators.load(record, deleted, store); break;
 #else
@@ -1036,100 +1057,21 @@ namespace MWWorld
                     case MKTAG('O','A','M','M'): mForeignAmmos.load(record, deleted, store); break;
                     case MKTAG('C','L','V','L'):
                     {
-                        //mForeignLvlCreatures.load(record, deleted, store);
-                        const MWWorld::ForeignStore<ESM4::LeveledCreature>& lvlCreaStore
-                            = store.getForeign<ESM4::LeveledCreature>();
-                        const ESM4::LeveledCreature *lvlBaseObj = lvlCreaStore.search(record.mBaseObj);
-
-                        // FIXME: for now find a random one
-                        ESM4::FormId lvlObjId
-                            = lvlBaseObj->mLvlObject[rand() % lvlBaseObj->mLvlObject.size()].item;
-
-                        uint32_t id = store.find(lvlObjId);
-                        if (id == MKTAG('_','N','P','C'))
-                        {
-                            record.mBaseObj = lvlObjId;
-
-
-                            const ESM4::Npc* npc = store.getForeign<ESM4::Npc>().search(record.mBaseObj);
-                            if (npc && npc->mModel.empty()/* && npc->mBaseTemplate != 0*/)
-                                std::cout << "empty model " << npc->mEditorId << std::endl;
-                            else
-                                std::cout << "has model " << npc->mEditorId << std::endl;
-
-
-
-                            mForeignNpcs.load(record, deleted, store);
-                            break;
-                        }
-                        else if (id == MKTAG('A','C','R','E'))
-                        {
-                            record.mBaseObj = lvlObjId;
-                            mForeignCreatures.load(record, deleted, store);
-                            break;
-                        }
-                        else if (id != MKTAG('C','L','V','L'))
-                        {
-                            std::cout << "lvl creature unknown obj " << std::hex << id << std::endl;
-                            break;
-                        }
-
-                        const ESM4::LeveledCreature *lvlCreature = lvlCreaStore.search(lvlObjId);
-                        if (!lvlCreature)
-                            break;
-
-                        // FIXME: again find a random one
-                        ESM4::FormId lvlObjId2
-                            = lvlCreature->mLvlObject[rand() % lvlCreature->mLvlObject.size()].item;
-
-                        //const MWWorld::ForeignStore<ESM4::Npc>& npcStore
-                            //= store.getForeign<ESM4::Npc>();
-                        //const MWWorld::ForeignStore<ESM4::Creature>& creatureStore
-                            //= store.getForeign<ESM4::Creature>();
-
-                        uint32_t id2 = store.find(lvlObjId2);
-                        //switch (id)//store.find(lvlObjId2))
-                        //{
-                        if (id2 == MKTAG('_','N','P','C'))
-                        {
-                            //const ESM4::Npc *npc_ = npcStore.search(lvlObjId2);
-                            record.mBaseObj = lvlObjId2;
-
-
-                            const ESM4::Npc* npc = store.getForeign<ESM4::Npc>().search(record.mBaseObj);
-                            if (npc && npc->mModel.empty()/* && npc->mBaseTemplate != 0*/) // FIXME:
-                                std::cout << "npc_ empty model " << npc->mEditorId << std::endl;
-                            //else
-                                //std::cout << "npc_ has model " << npc->mEditorId << std::endl;
-
-
-
-                            mForeignNpcs.load(record, deleted, store);
-                            break;
-                        }
-                        else if (id2 == MKTAG('A','C','R','E'))
-                        {
-                            //const ESM4::Creature *crea = creatureStore.search(lvlObjId2);
-                            record.mBaseObj = lvlObjId2;
-                            mForeignCreatures.load(record, deleted, store);
-                            break;
-                        }
-                        else
-                                std::cout << "lvl creature " <<  " ?" << std::endl;
-                        //}
-
-                        break;
+                        mLevelledCreatures.load(record, deleted, store); break; // only TES4
                     }
-                    case MKTAG('M','S','L','G'): mForeignSoulGems.load(record, deleted, store); break;
+                    case MKTAG('M','S','L','G'): mSoulGems.load(record, deleted, store); break;
                     case MKTAG('M','K','E','Y'): mForeignKeys.load(record, deleted, store); break;
                     case MKTAG('H','A','L','C'): mForeignPotions.load(record, deleted, store); break;
-                    case MKTAG('P','S','B','S'): mForeignSubspaces.load(record, deleted, store); break;
-                    case MKTAG('T','S','G','S'): mForeignSigilStones.load(record, deleted, store); break;
-                    case MKTAG('I','L','V','L'): mForeignLvlItems.load(record, deleted, store); break;
-                    case MKTAG('E','N','O','T'): mForeignNotes.load(record, deleted, store); break;
+                    case MKTAG('P','S','B','S'): mSubspaces.load(record, deleted, store); break;
+                    case MKTAG('T','S','G','S'): mSigilStones.load(record, deleted, store); break;
+                    case MKTAG('I','L','V','L'): mLevelledItems.load(record, deleted, store); break;
+                    case MKTAG('E','N','O','T'): mNotes.load(record, deleted, store); break;
+                    case MKTAG('N','L','V','L'): // Leveled NPC
+                    {
+                        mLevelledNpcs.load(record, deleted, store); break; // never occurs?
+                    }
 
                     case MKTAG('E','T','R','E'): //mForeignTrees.load(record, deleted, store); break;
-                    case MKTAG('N','L','V','L'): // Leveled NPC
                     case MKTAG('M','I','D','L'): // Idle Marker
                     case MKTAG('T','M','S','T'): // Movable Static
                     case MKTAG('T','T','X','S'): // Texture Set
@@ -1182,19 +1124,46 @@ namespace MWWorld
 
                 switch (store.find(record.mBaseObj))
                 {
-                    case MKTAG('R','H','A','I'): std::cout << " achr hair " << std::endl; break; // FIXME
-                    case MKTAG('S','E','Y','E'): std::cout << " achr eyes " << std::endl; break; // FIXME
                     case MKTAG('_','N','P','C'):
                     {
-                        // this might be a leveled actor (e.g. FO3) - check if the model is empty
+#if 0
+                        // this might be a levelled actor (e.g. FO3) - check if the model is empty
                         const ESM4::Npc* npc = store.getForeign<ESM4::Npc>().search(record.mBaseObj);
                         //
                         //if ((npc->mBaseConfig.fo3.flags & 0x1) == 0) // FIXME: temp testing
                             //std::cout << npc->mEditorId << " male" << std::endl;
                         //
+                        if (npc && (/*npc->mModel.empty() || */npc->mModel == "marker_creature.nif"))
+                            for (size_t i = 0; i < npc->mInventory.size(); ++i)
+                            {
+                                uint32_t type = store.find(npc->mInventory[i].item);
+                                if (type == MKTAG('K', 'B', 'O', 'O'))
+                                //if (type == MKTAG('E', 'N', 'O', 'T'))
+                                {
+                        const ESM4::Book* note = store.getForeign<ESM4::Book>().search(npc->mInventory[i].item);
+                        std::cout << npc->mEditorId << " " << note->mEditorId << std::endl;
+                                }
+                                else
+                                    std::cout << npc->mEditorId << " " << ESM4::printName(type) << std::endl;
+                            }
                         if (npc && npc->mBaseTemplate != 0
                                 && (npc->mModel.empty() || npc->mModel == "marker_creature.nif"))
                         {
+#if 0
+            if (npc->mBaseTemplate != 0)
+            {
+                // has baseconfig, inventory, hair colour, hair length, race, class; all else 0
+                const ESM4::Race* race = store.getForeign<ESM4::Race>().search(npc->mRace);
+                const ESM4::Npc& newNpc = *npc;
+                std::vector<const ESM4::Npc*> sts;
+                sts.push_back(npc);
+                bool isFemale = (npc->mBaseConfig.fo3.flags & 0x000001) != 0;
+                //if (isFemale)
+                std::cout << "ori " << newNpc.mEditorId << (isFemale? " female" : "") << std::endl;
+                std::cout << race->mEditorId << std::endl;
+                std::cout << ESM4::formIdToString(newNpc.mClass) << std::endl;
+            }
+#endif
                             ESM4::FormId id = npc->mBaseTemplate;
                             uint32_t type = store.find(id);
                             bool found = false;
@@ -1205,11 +1174,35 @@ namespace MWWorld
                                     // FIXME: for TES5 need to check male/female model
                                     record.mBaseObj = id;
                                     found = true;
+#if 0 // 32 64 23 209, inv 2
+            //bool isFemale = (record.mBaseConfig.fo3.flags & 0x000001) != 0;
+            //std::cout << record.mEditorId << (isFemale? " female" : " male") << std::endl;
+            const ESM4::Npc* newNpc = store.getForeign<ESM4::Npc>().search(id);
+            const ESM4::Race* race = store.getForeign<ESM4::Race>().search(newNpc->mRace);
+            std::vector<const ESM4::Npc*> sts;
+            sts.push_back(newNpc);
+            bool isFemale = (newNpc->mBaseConfig.fo3.flags & 0x000001) != 0;
+            std::cout << newNpc->mEditorId << (isFemale? " female" : "") << std::endl;
+            std::cout << race->mEditorId << std::endl;
+            std::cout << ESM4::formIdToString(newNpc->mClass) << std::endl;
+                            for (size_t i = 0; i < newNpc->mInventory.size(); ++i)
+                            {
+                                uint32_t type = store.find(newNpc->mInventory[i].item);
+                                if (type == MKTAG('K', 'B', 'O', 'O'))
+                                //if (type == MKTAG('E', 'N', 'O', 'T'))
+                                {
+                        const ESM4::Book* note = store.getForeign<ESM4::Book>().search(newNpc->mInventory[i].item);
+                        std::cout << newNpc->mEditorId << " " << note->mEditorId << std::endl;
+                                }
+                                else
+                                    std::cout << newNpc->mEditorId << " " << ESM4::printName(type) << std::endl;
+                            }
+#endif
                                 }
                                 else if (type == MKTAG('N', 'L', 'V', 'L'))
                                 {
-                                    const ESM4::LeveledActor* lvlActor
-                                        = store.getForeign<ESM4::LeveledActor>().search(id);
+                                    const ESM4::LevelledNpc* lvlActor
+                                        = store.getForeign<ESM4::LevelledNpc>().search(id);
 
                                     if (lvlActor && lvlActor->mLvlObject.size() != 0)
                                     {
@@ -1218,12 +1211,38 @@ namespace MWWorld
                                         type = store.find(id);
                                     }
                                     else
-                                        throw std::runtime_error ("leveled actor not found!");
+                                        throw std::runtime_error ("levelled actor not found!");
                                 }
                             }
                         }
 
+#endif
+#if 1
                         mForeignNpcs.load(record, deleted, store);
+#else
+        const MWWorld::ForeignStore<ESM4::Npc> &store = esmStore.getForeign<ESM4::Npc>();
+
+        if (const ESM4::Npc *ptr = store.search (record.mBaseObj))
+        {
+            // see operator== in livecellref.hpp, check for matching formId
+            typename std::list<LiveRef>::iterator iter =
+                std::find(mList.begin(), mList.end(), ref);
+
+            LiveRef liveCellRef (ref, ptr); // ref is the reference, ptr is the base object
+
+            if (deleted)
+                liveCellRef.mData.setDeleted(true);
+
+            if (iter != mList.end())
+                *iter = liveCellRef;
+            else
+            {
+                mList.push_back (liveCellRef);
+                //std::cout << "CellRefList::load "
+                    //<< ESM4::formIdToString(mList.back().mBase->mFormId) << std::endl; // FIXME: debug only
+            }
+        }
+#endif
                         break;
                     }
 
@@ -1252,11 +1271,10 @@ namespace MWWorld
 
                 switch (store.find(record.mBaseObj))
                 {
-                    case MKTAG('R','H','A','I'): std::cout << " crea hair " << std::endl; break; // FIXME
-                    case MKTAG('S','E','Y','E'): std::cout << " crea eyes " << std::endl; break; // FIXME
                     case MKTAG('A','C','R','E'):
                     {
-                        // this might be a leveled creature (e.g. FO3) - check if the model is empty
+#if 0
+                        // this might be a levelled creature (e.g. FO3) - check if the model is empty
                         const ESM4::Creature* crea = store.getForeign<ESM4::Creature>().search(record.mBaseObj);
                         if (crea && crea->mBaseTemplate != 0
                                  && (crea->mModel.empty() || crea->mModel == "marker_creature.nif"))
@@ -1273,8 +1291,8 @@ namespace MWWorld
                                 }
                                 else if (type == MKTAG('C', 'L', 'V', 'L'))
                                 {
-                                    const ESM4::LeveledCreature* lvlCrea
-                                        = store.getForeign<ESM4::LeveledCreature>().search(id);
+                                    const ESM4::LevelledCreature* lvlCrea
+                                        = store.getForeign<ESM4::LevelledCreature>().search(id);
 
                                     if (lvlCrea && lvlCrea->mLvlObject.size() != 0)
                                     {
@@ -1283,12 +1301,14 @@ namespace MWWorld
                                         type = store.find(id);
                                     }
                                     else
-                                        throw std::runtime_error ("leveled creature not found!");
+                                        throw std::runtime_error ("levelled creature not found!");
                                 }
                             }
                         }
 
+#else
                         mForeignCreatures.load(record, deleted, store);
+#endif
                         break;
                     }
 

@@ -356,7 +356,10 @@ void ForeignNpcAnimation::updateTES4NpcBase()
     const MWWorld::ESMStore &store = MWBase::Environment::get().getWorld()->getStore();
     std::string skeletonModel = getSkeletonModel(store);
     if (skeletonModel.empty())
+    {
+        std::cout << "empty skeleton model" << std::endl;
         return; // FIXME: perhaps should log an error first
+    }
 
     Misc::StringUtils::lowerCaseInPlace(skeletonModel);
     size_t pos = skeletonModel.find_last_of('\\');
@@ -430,7 +433,8 @@ void ForeignNpcAnimation::updateTES4NpcBase()
         Ogre::Vector3 vbna = bna->getPosition();
         Ogre::Vector3 ins = mInsert->getPosition();
 
-        b->setPosition(vbna+ Ogre::Vector3(0,0,0.f)); // TEMP testing for FO3
+        // 17/04/20 commenting out below doesn't seem to do anything? zBethOffice01
+        //b->setPosition(vbna+ Ogre::Vector3(0,0,0.f)); // TEMP testing for FO3
 //      bna->setPosition(vb);
 
         //Ogre::Bone* rootBone = mObjectRoot->mSkelBase->getSkeleton()->getBone("Scene Root");
@@ -1666,6 +1670,7 @@ void ForeignNpcAnimation::updateFO3NpcBase()
     { //------------------------- Head Parts --------------------------------- {{{
 
     bool isFemale = (mNpc->mBaseConfig.fo3.flags & ESM4::Npc::FO3_Female) != 0;
+    const std::vector<ESM4::Race::BodyPart>&  headParts = (isFemale ? mRace->mHeadPartsFemale : mRace->mHeadParts);
     for (int index = ESM4::Race::Head; index < 8; ++index) // FIXME: 8 head parts in FO3/FONV
     {
         // FIXME: ears need texture morphing
@@ -1680,7 +1685,7 @@ void ForeignNpcAnimation::updateFO3NpcBase()
         if (index == ESM4::Race::Head)
             continue;
 
-        if (mRace->mHeadParts[index].mesh == "")
+        if (headParts[index].mesh == "")
         {
             std::string missing;
             switch (index)
@@ -1702,7 +1707,7 @@ void ForeignNpcAnimation::updateFO3NpcBase()
         }
 
         // Get mesh and texture from RACE except eye textures which are specified in Npc::mEyes
-        meshName = "meshes\\" + mRace->mHeadParts[index].mesh;
+        meshName = "meshes\\" + headParts[index].mesh;
 
         if (index == 6/*EyeLeft*/ || index == 7/*EyeRight*/)
         {
@@ -1720,7 +1725,7 @@ void ForeignNpcAnimation::updateFO3NpcBase()
             textureName = "textures\\" + eyes->mIcon;
         }
         else
-            textureName = "textures\\" + mRace->mHeadParts[index].texture;
+            textureName = "textures\\" + headParts[index].texture;
 
         // TODO: if the texture doesn't exist, then grab it from the mesh (but shouldn't happen, so
         // log an error before proceeding with the fallback)
@@ -1862,8 +1867,8 @@ void ForeignNpcAnimation::updateFO3NpcBase()
                 continue; // texture morph not possible (should throw?)
 
             if (sam.getMorphedTexture(bodyTexturePtr, egt, bodyTextureName, mNpc->mEditorId,
-                                      mRace->mSymTextureModeCoefficients,
-                                      mNpc->mSymTextureModeCoefficients))
+                          (isFemale ? mRace->mSymTextureModeCoeffFemale : mRace->mSymTextureModeCoefficients),
+                          mNpc->mSymTextureModeCoefficients))
             {
                 std::string npcTextureName = bodyTexturePtr->getName();
                 replaceMeshTexture(mObjectParts[type], npcTextureName);
@@ -1881,7 +1886,9 @@ void ForeignNpcAnimation::updateFO3NpcBase()
 
     { //---------------------------- Head ------------------------------------ {{{
 
-    meshName = "meshes\\" + mRace->mHeadParts[ESM4::Race::Head].mesh;
+    bool isFemale = (mNpc->mBaseConfig.fo3.flags & ESM4::Npc::FO3_Female) != 0;
+    const std::vector<ESM4::Race::BodyPart>&  headParts = (isFemale ? mRace->mHeadPartsFemale : mRace->mHeadParts);
+    meshName = "meshes\\" + headParts[ESM4::Race::Head].mesh;
     if (meshName.empty())
     {
         isFemale = (mNpc->mBaseConfig.fo3.flags & ESM4::Npc::FO3_Female) != 0;
@@ -1936,11 +1943,13 @@ void ForeignNpcAnimation::updateFO3NpcBase()
             //return;
     }
 
-    textureName = "textures\\" + mRace->mHeadParts[ESM4::Race::Head].texture;
+    textureName = "textures\\" + headParts[ESM4::Race::Head].texture;
 
     // deprecated
-    const std::vector<float>& sRaceCoeff = mRace->mSymShapeModeCoefficients;
-    const std::vector<float>& sRaceTCoeff = mRace->mSymTextureModeCoefficients;
+    const std::vector<float>& sRaceCoeff
+        = (isFemale ? mRace->mSymShapeModeCoeffFemale : mRace->mSymShapeModeCoefficients);
+    const std::vector<float>& sRaceTCoeff
+        = (isFemale ? mRace->mSymTextureModeCoeffFemale : mRace->mSymTextureModeCoefficients);
     const std::vector<float>& sCoeff = mNpc->mSymShapeModeCoefficients;
     const std::vector<float>& sTCoeff = mNpc->mSymTextureModeCoefficients;
 
@@ -2232,8 +2241,8 @@ std::string ForeignNpcAnimation::getSkeletonModel(const MWWorld::ESMStore& store
         }
         else if (type == MKTAG('N', 'L', 'V', 'L'))
         {
-            const ESM4::LeveledActor* lvlActor
-                = store.getForeign<ESM4::LeveledActor>().search(mNpc->mBaseTemplate);
+            const ESM4::LevelledNpc* lvlActor
+                = store.getForeign<ESM4::LevelledNpc>().search(mNpc->mBaseTemplate);
 
             std::cout <<  "TES5 LVLN: " << mNpc->mEditorId << ","
                       << lvlActor->mEditorId << "," << lvlActor->mModel << std::endl;
@@ -2998,6 +3007,7 @@ void ForeignNpcAnimation::addForeignAnimSource(const std::string& model, const s
         throw std::runtime_error(mNpc->mEditorId + ": could not find NonAccum root");
 
     // FIXME: debugging -------------------------------
+#if 0
     NifOgre::NodeTargetValue<Ogre::Real> *dstval;
     dstval = static_cast<NifOgre::NodeTargetValue<Ogre::Real>*>(controllers[0].getDestination().get());
     Ogre::Node *node = dstval->getNode();
@@ -3015,6 +3025,7 @@ void ForeignNpcAnimation::addForeignAnimSource(const std::string& model, const s
     if (mNonAccumRoot->getName() != "Bip01 NonAccum" || mAccumRoot->getName() != "Bip01")
         std::cout << mAccumRoot->getName() << std::endl;
     // end debugging -------------------------------
+#endif
 
     for (unsigned int i = 0; i < mObjectRoot->mControllers.size(); ++i)
     {

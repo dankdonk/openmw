@@ -1303,7 +1303,9 @@ The diagram from 01/01/2018 needs to be updated:
                                                       ::unprepareImpl()
 
 
-`NiModel::prepareImpl()` creates the NIF data stream and reads the header.  `NiModel::unprepareImpl()` undos `prepareImpl()`.  These are only called by `Ogre::Resource::load()` if NiModel is not manually loaded.  **TODO:** check if we have to call `prepareImpl()` for manual loading as well?
+`NiModel::prepareImpl()` creates the NIF data stream and reads the header.  `NiModel::unprepareImpl()` undos `prepareImpl()`.  These are only called by `Ogre::Resource::load()` if NiModel is not manually loaded.
+
+**TODO:** check if we have to call `prepareImpl()` for manual loading as well?
 
 **NOTE:** consider changing `prepareImpl()` s.t. the NIF file is pre-buffered similar to `Ogre::Mesh::prepareImpl()`.  Below method implements the pre-buffering:
 
@@ -1471,6 +1473,7 @@ Looking at the decompiled [shaders](https://github.com/Alenett/TES-Shaders) agai
 Either way, still need to figure out how to determine the NPC's age just by examininig their FGGS and/or FGTS.  See previous notes from 09/09/2019.
 
 The normal map for `headhuman.dds` must be age-based as well? (i.e. replace, not merge with `headhuman_n.dds`)
+
 **TODO:** experiement and compare the in-game visuals
 
 ## NPC Age
@@ -2984,7 +2987,8 @@ There are 153 grid positions in `tamriel.cmp`, excluding (0,7) at the end.  But 
 
 ## Observations on loading times
 
-For some strange reason Shivering Isles `.lod` files (and maybe others?) take much longer to load than from `Oblivion - Meshes.bsa`.  It might have something to do with the archive.  **TODO:** try with loose files
+For some strange reason Shivering Isles `.lod` files (and maybe others?) take much longer to load than from `Oblivion - Meshes.bsa`.  It might have something to do with the archive.
+**TODO:** try with loose files
 
 The file loading for all the `.lod` files does take quite a while.
 
@@ -3448,7 +3452,8 @@ A combination of info from `NPC_` and `RACE` may be required to reliably detect 
 
 ## Skeleton and `BSX` flags
 
-TES4 versions of NIF has a flag to indicate that it was a skeleton.  Later games doesn't have this flag.  **TODO:** how to reliably detect a `skeleton.nif` without comparing the filename?
+TES4 versions of NIF has a flag to indicate that it was a skeleton.  Later games doesn't have this flag.
+**TODO:** how to reliably detect a `skeleton.nif` without comparing the filename?
 
 # [13/04/2020 - 16/04/2020] Debugging
 
@@ -3641,7 +3646,204 @@ Missing texture `grey.dds` (shouldn't it be `grey.bmp`?) - it's just a thin stri
 
     mName = "meshes\\dungeons\\caves\\lamplight\\lamplightsouvenirdoor.nif#0%LamplightSouvenirDoor"
 
+# [17/04/2020] FO3 Issues (cont.)
 
+Fixed some issues but many more remain.  Some of the outstanding ones include:
+
+  * Lack of interior lighting **FIXED:** FO3/FONV uses `LGTM` records for lighting.  **TODO:** had to multiply by a magic number to make it look right - need to see what is the correct way to interpret the numbers.
+  * Raiders seem to be females only?
+  * Floating animations - creatures only?
+  * Doors with moving child nodes.
+  * UpperBody skin texture (meant to be using shaders but can we simulate?)
+  * UpperBody skin mesh sometimes offset from the rest.
+  * FONV COC "RocketLabTop" one of the lights in a hallway has badly generated collision shape mesh.  The renders are ok, maybe clockwise/anti-clockwise difference?
+  * `188NCRMerchant` has both hair and hat
+
+# [18/04/2020] Chance None in `LVLI`
+
+It seems to run from 0 to 100 in FO3. Lots of them has value 0 and these have the max value in FO3.
+**TODO:** does this mean they *never* get spawned?  But [this page](https://fallout.fandom.com/wiki/Fortune_Finder) seems to indicate the chance for Fortune Finder is 10%?  Or maybe it is 0% chance of *additional* loot until the perk is obtained? (which means we need game logic to handle the dynamic data)
+
+    VendorChestProntoFreeformListGoodStuff
+    VendorChestAhzrukhalChems
+    Ammo308CaliberScrounger
+    Ammo5mmScrounger
+    AmmoElectronChargePackScrounger
+    VendorCaravanChemsBasic2List
+    VendorCaravanChemsBasic1List
+    VendorCaravanApparelBasic2List
+    VendorCaravanApparelBasic1List
+    VendorCaravanJunk2List
+    VendorCaravanJunk1List
+    VendorCaravanWeaponsBasic2List
+    VendorCaravanWeaponsBasic1List
+    AmmoDartScrounger
+    CapsChangeFortuneFinder
+    CapsFortuneFinder
+
+Some `LVLI` in FO3 have these high values.  Accoding to [this page](https://fallout.fandom.com/wiki/Nuka-Cola_Quantum_(Fallout_3)), the chance of finding a Nuka Cola Quantum is 10%.
+
+    LootGrenadeFrag10           90
+    LootArmorMilitary10         90
+    MailboxLetter5percentChance 95
+    LootMirelurkMeat10          90
+    LootMirelurkMeatSoftshell10 90
+    PrewarApparel10             90
+    LootSkillBooks05            95
+    ClutterNukaColaQuantum10    90
+    LootStealthBoy10            90
+    LootAmmoGeneric10           90
+    LootAmmoPowerCells10        90
+    LootAmmoBullets10           90
+    CapsChange10                90
+
+Similarly, `LVLI` with 100 for FONV:
+
+[//]: # (                                                             {{{)
+    Ammo20GaScrounger
+    LootAmmoFatmanScrounger
+    Ammo127mmScrounger
+    Ammo4570Scrounger
+    Ammo25mmGrenadeScrounger
+    Ammo9mmScrounger
+    Ammo50MGScrounger
+    Ammo40mmGrenadeScrounger
+    Ammo357magnumScrounger
+    Ammo22LRScrounger
+    Ammo12GaScrounger
+    VendorChestProntoFreeformListGoodStuff
+    VendorChestAhzrukhalChems
+    Ammo308Scrounger
+    Ammo5mmScrounger
+    AmmoElectronChargePackScrounger
+    VendorCaravanChemsBasic2List
+    VendorCaravanChemsBasic1List
+    VendorCaravanApparelBasic2List
+    VendorCaravanApparelBasic1List
+    VendorCaravanJunk2List
+    VendorCaravanJunk1List
+    VendorCaravanWeaponsBasic2List
+    VendorCaravanWeaponsBasic1List
+    CapsChangeFortuneFinder
+    CapsFortuneFinder
+[//]: # (                                                             }}})
+
+And for TES5:
+
+[//]: # (                                                             {{{)
+    VendorEorlundSkyforgeSteelSet
+    ArmorCompanionsSet
+    LootPerkGoldenTouch
+    AtrFrgDaedricRecipeListChest
+    AtrFrgRecipeListChest
+    AtrFrgDaedricRecipeList
+    AtrFrgRecipeList
+    PerkMasterTraderGold
+    TGLootProwlersProfit
+    MGRitualRestorationBooks
+    MGRitualIllusionBooks
+    MGRitualDestructionBooks
+    MGRitualConjurationBooks
+    MGRitualAlterationBooks
+    VendorGoldFenceStage04
+    VendorGoldFenceStage03
+    VendorGoldFenceStage02
+    VendorGoldFenceStage01
+    PerkInvestorRiftenMagicList
+    PerkInvestorSolitudeMagicList
+    PerkInvestorWhiterunMagicList
+    PerkInvestorFalkreathGeneralList
+    PerkInvestorMorthalApothecaryList
+    PerkInvestorWinterholdGeneralList
+    PerkInvestorDawnstarBlacksmithList
+    PerkInvestorDawnstarApothecaryList
+    PerkInvestorWindhelmBlacksmithList
+    PerkInvestorWindhelmApothecaryList
+    PerkInvestorWindhelmMagicList
+    PerkInvestorWindhelmGeneralList
+    PerkInvestorMarkarthMagicList
+    PerkInvestorMarkarthGeneralList
+    PerkInvestorMarkarthBlacksmithList
+    PerkInvestorMarkarthApothecaryList
+    PerkInvestorRiftenPawnList
+    PerkInvestorRiftenApothecaryList
+    PerkInvestorRiftenBlacksmithList
+    PerkInvestorSolitudeBlacksmithList
+    PerkInvestorSolitudeFletcherList
+    PerkInvestorSolitudeTailorList
+    PerkInvestorSolitudePawnList
+    PerkInvestorSolitudeApothecaryList
+    PerkInvestorWhiterunBlacksmithList
+    PerkInvestorWhiterunHuntingList
+    PerkInvestorWhiterunGeneralList
+    PerkInvestorWhiterunApothecaryList
+    PerkInvestorRiverwoodWhiteriverTraderList
+    PerkInvestorRiverwoodAlvorList
+    LootImperialLuck
+    LItemSpellTOmes50AllRestoration
+    LItemSpellTomes50AllIllusion
+    LitemSpellTomes50AllDestruction
+    LItemSpellTomes50AllConjuration
+    LItemSpellTomes50AllAlteration
+    LItemSpellTomes75AllRestoration
+    LItemSpellTomes75AllIllusion
+    LItemSpellTomes75AllDestruction
+    LItemSpellTomes75AllConjuration
+    LItemSpellTomes75AllAlteration
+    LItemSpellTomes75Alteration
+    LootPerkGoldenTouchChange
+[//]: # (                                                             }}})
+
+For TES4 the max value is 99, although there are a few above 94:
+
+    SE38ItemList98             98
+    SELL1LootWeapon0Magic05    95
+    SELL1LootArmorLightMagic05 95
+    SELL1LootArmorHeavyMagic05 95
+    SELL1LootArmorAllMagic05   95
+    SE38Item3Amber             99
+    LL1LootArmorHeavy05        95
+    LL1LootWeapon0Magic05      95
+    LL1LootArmorLightMagic05   95
+    LL1LootArmorHeavyMagic05   95
+    LL1LootArmorAllMagic05     95
+
+# [18/04/2020] `NPC_` and `CREA` with `marker_creature.nif` model
+
+## Inventory, `LVLN`, `LVLC` and `marker_creatue.nif`
+
+The issue with only females appearing seems to be related to which NPC data is used when a template is used to generate an Npc or a Creature.  The original record may have spcified "male" but when a new record is selected from a template it may have "female".
+
+The only solution here is to properly implement supporting levelled Npc and Creatues. There are some things to consider:
+
+  * Some of the data must come from the original `AHCR` or `REFR` - e.g. position
+
+COC "zBethOffice02"
+**FIXME:** Should have continued until the final Npc was found **FIXED**
+
+    BethRuinsLvlRaiderBoss Hispanic NPC_ with marker_creature.nif and BaseTemplate  0002f723
+    LvlRaider2SpecialVar   Hispanic NPC_ with no model            and BaseTemplate  00029620
+    VarRaider2Flamer                LVLN
+    /* stopped here */
+
+original inventory (this particular new doesn't have any inventory but some may have more than original)
+
+    BOOK BookSkillBigGuns
+    LVLI
+    LVLI
+    LVLI
+    LVLI
+    KEYM
+
+## ManualRef
+
+We can't use the data from one `NPC_` record any more - one has to be created with data from different sources.
+
+OpenMW creates a `ManaualRef` then calls `World::safePlaceObject()` which then calls `World::copyObjectToCell()`.  Some change will be needed since the existing code does not have any concept of worldspace and `World::positionToIndex()` uses different cell sizes. **FIXED**
+
+## Female Head parts and FaceGen coefficients
+
+FO3/FONV provide separate female models and textures for head parts, as well as FaceGen coefficients.  This explains why some male raiders had fenimine facical features. **FIXED**
 
 
 [//]: # (/* spell spelllang=en_au syntax=cpp */)

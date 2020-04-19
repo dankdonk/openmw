@@ -18,6 +18,7 @@
 
 #include "../mwmechanics/creaturestats.hpp"
 #include "../mwmechanics/movement.hpp"
+#include "../mwmechanics/levelledlist.hpp"
 
 namespace
 {
@@ -26,6 +27,15 @@ namespace
         MWMechanics::CreatureStats mCreatureStats;
         MWMechanics::Movement mMovement;
         MWWorld::InventoryStoreTES4 mInventoryStore;
+
+        MWWorld::Ptr *mPlaced;
+
+        ForeignCreatureCustomData() : mPlaced(0) {}
+        ~ForeignCreatureCustomData()
+        {
+            if (mPlaced)
+                delete mPlaced;
+        }
 
         virtual MWWorld::CustomData *clone() const;
     };
@@ -45,32 +55,68 @@ namespace MWClass
 
     void ForeignCreature::insertObjectRendering (const MWWorld::Ptr& ptr, const std::string& model, MWRender::RenderingInterface& renderingInterface) const
     {
-        MWWorld::LiveCellRef<ESM4::Creature> *ref = ptr.get<ESM4::Creature>();
+        // this might be a levelled actor (e.g. FO3) - check if the model is empty
+        const ESM4::Creature *creature = ptr.get<ESM4::Creature>()->mBase;
+        if (creature && creature->mBaseTemplate != 0
+                && (creature->mModel.empty() || creature->mModel == "marker_creature.nif"))
+        {
+            //std::cout << npc->mEditorId << std::endl; // FIXME
 
-        MWRender::Actors& actors = renderingInterface.getActors();
-        actors.insertCreature(ptr, model, false/*(ref->mBase->mFlags & ESM::Creature::Weapon) != 0*/);
-#if 0
-        MWWorld::LiveCellRef<ESM4::Creature> *ref = ptr.get<ESM4::Creature>();
+            // FIXME: save inventory details (and baseconfig?) to update later
 
-        if (!model.empty()) {
-            renderingInterface.getObjects().insertModel(ptr, model/*, !ref->mBase->mPersistent*/); // FIXME
+            std::string id = MWMechanics::getFO3LevelledCreature(creature);
+
+            if (!id.empty())
+            {
+                const MWWorld::ESMStore &store = MWBase::Environment::get().getWorld()->getStore();
+                MWWorld::ManualRef ref(store, id);
+                ref.getPtr().getCellRef().setPosition(ptr.getCellRef().getPosition());
+
+                // FIXME: update inventory details, etc. (probably have to use customData)
+
+                // FIXME: basically we spawn a new one each time, need to keep track and delete the old one
+                //        actually, rather than deleting the old one we should be remembering
+                //        that the ptr already exists
+                ensureCustomData(ptr); // NOTE: this is ptr's custom data, not ref->getPtr()
+                ForeignCreatureCustomData *data
+                    = dynamic_cast<ForeignCreatureCustomData*>(ptr.getRefData().getCustomData());
+
+                if (!data->mPlaced)
+                {
+                    data->mPlaced = &MWBase::Environment::get().getWorld()->safePlaceObject(ref.getPtr(),
+                                   ptr.getCell() , ptr.getCellRef().getPosition());
+                    //std::cout << "placed " << ptr.get<ESM4::Npc>()->mBase->mEditorId << std::endl;
+                }
+                //else
+                    //std::cout << "already placed " << ptr.get<ESM4::Npc>()->mBase->mEditorId << std::endl;
+            }
         }
-#endif
+        else
+        {
+            MWWorld::LiveCellRef<ESM4::Creature> *ref = ptr.get<ESM4::Creature>();
+
+            MWRender::Actors& actors = renderingInterface.getActors();
+            actors.insertCreature(ptr, model, false/*(ref->mBase->mFlags & ESM::Creature::Weapon) != 0*/);
+        }
     }
 
     void ForeignCreature::insertObject(const MWWorld::Ptr& ptr, const std::string& model, MWWorld::PhysicsSystem& physics) const
     {
-        if(!model.empty())
+        if(model.empty())
+            return;
+
+        const ESM4::Creature *creature = ptr.get<ESM4::Creature>()->mBase;
+        if (creature && creature->mBaseTemplate != 0
+                && (creature->mModel.empty() || creature->mModel == "marker_creature.nif"))
+        {
+        }
+        else
         {
             physics.addActor(ptr, model);
             //if (getCreatureStats(ptr).isDead())
                 //MWBase::Environment::get().getWorld()->enableActorCollision(ptr, false);
+            MWBase::Environment::get().getMechanicsManager()->add(ptr);
         }
-        MWBase::Environment::get().getMechanicsManager()->add(ptr);
-#if 0
-        if(!model.empty())
-            physics.addObject(ptr, model);
-#endif
     }
 
     std::string ForeignCreature::getModel(const MWWorld::Ptr &ptr) const

@@ -12,6 +12,7 @@ namespace MWClass
 {
     class ForeignCreature : public MWWorld::Class
     {
+            void ensureCustomData (const MWWorld::Ptr& ptr) const;
             virtual MWWorld::Ptr copyToCellImpl(const MWWorld::Ptr &ptr, MWWorld::CellStore &cell) const;
 
         public:
@@ -32,7 +33,6 @@ namespace MWClass
 
             virtual std::string getModel(const MWWorld::Ptr &ptr) const;
 
-            void ensureCustomData (const MWWorld::Ptr& ptr) const;
             MWWorld::InventoryStore& getInventoryStore (const MWWorld::Ptr& ptr) const;
             MWWorld::InventoryStoreTES4& getInventoryStoreTES4 (const MWWorld::Ptr& ptr) const;
             MWMechanics::CreatureStats& getCreatureStats (const MWWorld::Ptr& ptr) const;

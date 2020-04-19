@@ -94,7 +94,7 @@ namespace ESM4
         REC_EYES = MKTAG('E','Y','E','S'), // Eyes
         REC_FACT = MKTAG('F','A','C','T'), // Faction
         REC_FLOR = MKTAG('F','L','O','R'), // Flora
-        REC_FLST = MKTAG('F','L','S','T'), // Form List (non-leveled list)
+        REC_FLST = MKTAG('F','L','S','T'), // Form List (non-levelled list)
         REC_FSTP = MKTAG('F','S','T','P'), // Footstep
         REC_FSTS = MKTAG('F','S','T','S'), // Footstep Set
         REC_FURN = MKTAG('F','U','R','N'), // Furniture

@@ -20,6 +20,7 @@
 
 #include "../mwmechanics/npcstats.hpp"
 #include "../mwmechanics/movement.hpp"
+#include "../mwmechanics/levelledlist.hpp"
 
 #include "../mwrender/actors.hpp"
 #include "../mwrender/renderinginterface.hpp"
@@ -35,7 +36,9 @@ namespace
         MWWorld::InventoryStore *mInventoryStore;
         int mGameType; // FIXME: make enum
 
-        ForeignNpcCustomData(const ESM4::Npc& npc)
+        MWWorld::Ptr *mPlaced;
+
+        ForeignNpcCustomData(const ESM4::Npc& npc) : mPlaced(0)
         {
             bool isTES5 = false;
             const MWWorld::ESMStore &store = MWBase::Environment::get().getWorld()->getStore();
@@ -65,6 +68,9 @@ namespace
         {
             if (mInventoryStore)
                 delete mInventoryStore;
+
+            if (mPlaced)
+                delete mPlaced;
         }
 
         virtual MWWorld::CustomData *clone() const;
@@ -94,14 +100,44 @@ namespace MWClass
 
     void ForeignNpc::insertObjectRendering (const MWWorld::Ptr& ptr, const std::string& model, MWRender::RenderingInterface& renderingInterface) const
     {
-        renderingInterface.getActors().insertNPC(ptr);
-#if 0
-        MWWorld::LiveCellRef<ESM4::Npc> *ref = ptr.get<ESM4::Npc>();
+        // this might be a levelled actor (e.g. FO3) - check if the model is empty
+        const ESM4::Npc *npc = ptr.get<ESM4::Npc>()->mBase;
+        if (npc && npc->mBaseTemplate != 0
+                && (npc->mModel.empty() || npc->mModel == "marker_creature.nif"))
+        {
+            //std::cout << npc->mEditorId << std::endl; // FIXME
 
-        if (!model.empty()) {
-            renderingInterface.getObjects().insertModel(ptr, model/*, !ref->mBase->mPersistent*/); // FIXME
+            // FIXME: save inventory details (and baseconfig?) to update later
+
+            std::string id = MWMechanics::getFO3LevelledNpc(npc);
+
+            if (!id.empty())
+            {
+                const MWWorld::ESMStore &store = MWBase::Environment::get().getWorld()->getStore();
+                MWWorld::ManualRef ref(store, id);
+                ref.getPtr().getCellRef().setPosition(ptr.getCellRef().getPosition());
+
+                // FIXME: update inventory details, etc. (probably have to use customData)
+
+                // FIXME: basically we spawn a new one each time, need to keep track and delete the old one
+                //        actually, rather than deleting the old one we should be remembering
+                //        that the ptr already exists
+                ensureCustomData(ptr); // NOTE: this is ptr's custom data, not ref->getPtr()
+                ForeignNpcCustomData *data
+                    = dynamic_cast<ForeignNpcCustomData*>(ptr.getRefData().getCustomData());
+
+                if (!data->mPlaced)
+                {
+                    data->mPlaced = &MWBase::Environment::get().getWorld()->safePlaceObject(ref.getPtr(),
+                                   ptr.getCell() , ptr.getCellRef().getPosition());
+                    //std::cout << "placed " << ptr.get<ESM4::Npc>()->mBase->mEditorId << std::endl;
+                }
+                //else
+                    //std::cout << "already placed " << ptr.get<ESM4::Npc>()->mBase->mEditorId << std::endl;
+            }
         }
-#endif
+        else
+            renderingInterface.getActors().insertNPC(ptr);
     }
 
     void ForeignNpc::insertObject(const MWWorld::Ptr& ptr, const std::string& model, MWWorld::PhysicsSystem& physics) const
@@ -124,14 +160,17 @@ namespace MWClass
             }
 
 #endif
-
-
-        physics.addActor(ptr, /*skelModel*/model);
-        MWBase::Environment::get().getMechanicsManager()->add(ptr);
-#if 0
-        if(!model.empty())
-            physics.addObject(ptr, model);
-#endif
+        const ESM4::Npc *npc = ptr.get<ESM4::Npc>()->mBase;
+        if (npc && npc->mBaseTemplate != 0
+                && (npc->mModel.empty() || npc->mModel == "marker_creature.nif"))
+        {
+            //std::cout << npc->mEditorId << std::endl;
+        }
+        else
+        {
+            physics.addActor(ptr, /*skelModel*/model);
+            MWBase::Environment::get().getMechanicsManager()->add(ptr);
+        }
     }
 
     std::string ForeignNpc::getModel(const MWWorld::Ptr &ptr) const

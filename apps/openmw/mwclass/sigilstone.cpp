@@ -1,4 +1,4 @@
-#include "foreignsigilstone.hpp"
+#include "sigilstone.hpp"
 
 #include <extern/esm4/sgst.hpp>
 
@@ -11,12 +11,12 @@
 
 namespace MWClass
 {
-    std::string ForeignSigilStone::getId (const MWWorld::Ptr& ptr) const
+    std::string SigilStone::getId (const MWWorld::Ptr& ptr) const
     {
         return ptr.get<ESM4::SigilStone>()->mBase->mEditorId;
     }
 
-    void ForeignSigilStone::insertObjectRendering (const MWWorld::Ptr& ptr, const std::string& model, MWRender::RenderingInterface& renderingInterface) const
+    void SigilStone::insertObjectRendering (const MWWorld::Ptr& ptr, const std::string& model, MWRender::RenderingInterface& renderingInterface) const
     {
         MWWorld::LiveCellRef<ESM4::SigilStone> *ref = ptr.get<ESM4::SigilStone>();
 
@@ -25,13 +25,13 @@ namespace MWClass
         }
     }
 
-    void ForeignSigilStone::insertObject(const MWWorld::Ptr& ptr, const std::string& model, MWWorld::PhysicsSystem& physics) const
+    void SigilStone::insertObject(const MWWorld::Ptr& ptr, const std::string& model, MWWorld::PhysicsSystem& physics) const
     {
         if(!model.empty())
             physics.addObject(ptr, model);
     }
 
-    std::string ForeignSigilStone::getModel(const MWWorld::Ptr &ptr) const
+    std::string SigilStone::getModel(const MWWorld::Ptr &ptr) const
     {
         MWWorld::LiveCellRef<ESM4::SigilStone> *ref = ptr.get<ESM4::SigilStone>();
         assert(ref->mBase != NULL);
@@ -43,19 +43,19 @@ namespace MWClass
         return "";
     }
 
-    std::string ForeignSigilStone::getName (const MWWorld::Ptr& ptr) const
+    std::string SigilStone::getName (const MWWorld::Ptr& ptr) const
     {
         return "";
     }
 
-    void ForeignSigilStone::registerSelf()
+    void SigilStone::registerSelf()
     {
-        boost::shared_ptr<Class> instance (new ForeignSigilStone);
+        boost::shared_ptr<Class> instance (new SigilStone);
 
         registerClass (typeid (ESM4::SigilStone).name(), instance);
     }
 
-    MWWorld::Ptr ForeignSigilStone::copyToCellImpl(const MWWorld::Ptr &ptr, MWWorld::CellStore &cell) const
+    MWWorld::Ptr SigilStone::copyToCellImpl(const MWWorld::Ptr &ptr, MWWorld::CellStore &cell) const
     {
         MWWorld::LiveCellRef<ESM4::SigilStone> *ref = ptr.get<ESM4::SigilStone>();
 

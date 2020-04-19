@@ -1,5 +1,7 @@
 #include "manualref.hpp"
 
+#include <stdexcept>
+
 #include <extern/esm4/formid.hpp>
 
 #include "esmstore.hpp"
@@ -58,7 +60,9 @@ MWWorld::ManualRef::ManualRef(const MWWorld::ESMStore& store, const std::string&
 {
     if (ESM4::isFormId(name))
     {
-        ESM4::FormId id =ESM4::stringToFormId(name);
+        // TODO: levelled item/creature/npc ManualRef won't be created since the actual id of
+        //       the item/actor will be supplied? maybe used for random spawning?
+        ESM4::FormId id = ESM4::stringToFormId(name);
         switch (store.find(id))
         {
         case MKTAG('A','A','P','P'): create(store.getForeign<ESM4::Apparatus>(), id, mRef, mPtr); break;
@@ -70,15 +74,20 @@ MWWorld::ManualRef::ManualRef(const MWWorld::ESMStore& store, const std::string&
         case MKTAG('C','M','I','S'): create(store.getForeign<ESM4::MiscItem>(), id, mRef, mPtr); break;
         case MKTAG('P','W','E','A'): create(store.getForeign<ESM4::Weapon>(), id, mRef, mPtr); break;
         case MKTAG('O','A','M','M'): create(store.getForeign<ESM4::Ammo>(), id, mRef, mPtr); break;
+        case MKTAG('_','N','P','C'): create(store.getForeign<ESM4::Npc>(), id, mRef, mPtr); break;
+        case MKTAG('A','C','R','E'): create(store.getForeign<ESM4::Creature>(), id, mRef, mPtr); break;
+        case MKTAG('C','L','V','L'): create(store.getForeign<ESM4::LevelledCreature>(), id, mRef, mPtr); break;
         case MKTAG('M','S','L','G'): create(store.getForeign<ESM4::SoulGem>(), id, mRef, mPtr); break;
         case MKTAG('M','K','E','Y'): create(store.getForeign<ESM4::Key>(), id, mRef, mPtr); break;
         case MKTAG('H','A','L','C'): create(store.getForeign<ESM4::Potion>(), id, mRef, mPtr); break;
         case MKTAG('T','S','G','S'): create(store.getForeign<ESM4::SigilStone>(), id, mRef, mPtr); break;
-        case MKTAG('I','L','V','L'): create(store.getForeign<ESM4::LeveledItem>(), id, mRef, mPtr); break;
+        case MKTAG('I','L','V','L'): create(store.getForeign<ESM4::LevelledItem>(), id, mRef, mPtr); break; // TES4 only
+        case MKTAG('N','L','V','L'): create(store.getForeign<ESM4::LevelledNpc>(), id, mRef, mPtr); break;
         case MKTAG('E','N','O','T'): create(store.getForeign<ESM4::Note>(), id, mRef, mPtr); break;
         case MKTAG('L','S','C','R'): create(store.getForeign<ESM4::Scroll>(), id, mRef, mPtr); break;
+        // FIXME: IDLM, MSTT, TERM, etc, etc - are they needed?
         default:
-            throw std::logic_error("failed to create manual cell ref for " + name + " (unknown ID)");
+            throw std::logic_error("failed to create a manual cell ref for " + name + " (unknown ID)");
         }
     }
     else
@@ -117,3 +126,39 @@ MWWorld::ManualRef::ManualRef(const MWWorld::ESMStore& store, const std::string&
 
     mPtr.getRefData().setCount(count);
 }
+
+// TODO: thought about creating a separate constructor for ManualRef but doing so may create a
+//       lot of duplicate code everywhere (not 100% certain, though)
+#if 0
+MWWorld::ManualRef::ManualRef(const MWWorld::ESMStore& store, ESM4::FormId id, const int count)
+{
+    // TODO: levelled item/creature/npc ManualRef won't be created since the actual id of
+    //       the item/actor will be supplied? maybe used for random spawning?
+    switch (store.find(id))
+    {
+        case MKTAG('A','A','P','P'): create(store.getForeign<ESM4::Apparatus>(), id, mRef, mPtr); break;
+        case MKTAG('O','A','R','M'): create(store.getForeign<ESM4::Armor>(), id, mRef, mPtr); break;
+        case MKTAG('K','B','O','O'): create(store.getForeign<ESM4::Book>(), id, mRef, mPtr); break;
+        case MKTAG('T','C','L','O'): create(store.getForeign<ESM4::Clothing>(), id, mRef, mPtr); break;
+        case MKTAG('R','I','N','G'): create(store.getForeign<ESM4::Ingredient>(), id, mRef, mPtr); break;
+        case MKTAG('H','L','I','G'): create(store.getForeign<ESM4::Light>(), id, mRef, mPtr); break;
+        case MKTAG('C','M','I','S'): create(store.getForeign<ESM4::MiscItem>(), id, mRef, mPtr); break;
+        case MKTAG('P','W','E','A'): create(store.getForeign<ESM4::Weapon>(), id, mRef, mPtr); break;
+        case MKTAG('O','A','M','M'): create(store.getForeign<ESM4::Ammo>(), id, mRef, mPtr); break;
+        case MKTAG('_','N','P','C'): create(store.getForeign<ESM4::Npc>(), id, mRef, mPtr); break;
+        case MKTAG('A','C','R','E'): create(store.getForeign<ESM4::Creature>(), id, mRef, mPtr); break;
+        //case MKTAG('C','L','V','L'): create(store.getForeign<ESM4::LevelledCreature>(), id, mRef, mPtr); break;
+        case MKTAG('M','S','L','G'): create(store.getForeign<ESM4::SoulGem>(), id, mRef, mPtr); break;
+        case MKTAG('M','K','E','Y'): create(store.getForeign<ESM4::Key>(), id, mRef, mPtr); break;
+        case MKTAG('H','A','L','C'): create(store.getForeign<ESM4::Potion>(), id, mRef, mPtr); break;
+        case MKTAG('T','S','G','S'): create(store.getForeign<ESM4::SigilStone>(), id, mRef, mPtr); break;
+        //case MKTAG('I','L','V','L'): create(store.getForeign<ESM4::LevelledItem>(), id, mRef, mPtr); break;
+        //case MKTAG('N','L','V','L'): create(store.getForeign<ESM4::LevelledNpc>(), id, mRef, mPtr); break;
+        case MKTAG('E','N','O','T'): create(store.getForeign<ESM4::Note>(), id, mRef, mPtr); break;
+        case MKTAG('L','S','C','R'): create(store.getForeign<ESM4::Scroll>(), id, mRef, mPtr); break;
+        // FIXME: IDLM, MSTT, TERM, etc, etc - are they needed?
+        default:
+            throw std::logic_error("failed to create a manual cell ref for " + ESM4::formIdToString(id) + " (unknown ID)");
+    }
+}
+#endif

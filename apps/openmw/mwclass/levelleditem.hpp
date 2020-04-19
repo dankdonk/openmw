@@ -1,11 +1,11 @@
-#ifndef GAME_MWCLASS_FOREIGNLEVELEDCREATURE_H
-#define GAME_MWCLASS_FOREIGNLEVELEDCREATURE_H
+#ifndef GAME_MWCLASS_LEVELLEDITEM_H
+#define GAME_MWCLASS_LEVELLEDITEM_H
 
 #include "../mwworld/class.hpp"
 
 namespace MWClass
 {
-    class ForeignLeveledCreature : public MWWorld::Class
+    class LevelledItem : public MWWorld::Class
     {
             virtual MWWorld::Ptr copyToCellImpl(const MWWorld::Ptr &ptr, MWWorld::CellStore &cell) const;
 

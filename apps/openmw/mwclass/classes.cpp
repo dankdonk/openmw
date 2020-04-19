@@ -41,14 +41,15 @@
 #include "foreignammo.hpp"
 #include "foreignnpc.hpp"
 #include "foreigncreature.hpp"
-#include "foreignleveledcreature.hpp"
-#include "foreignsoulgem.hpp"
+#include "levelledcreature.hpp"
+#include "soulgem.hpp"
 #include "foreignkey.hpp"
 #include "foreignpotion.hpp"
-#include "foreignsubspace.hpp"
-#include "foreignsigilstone.hpp"
-#include "foreignleveleditem.hpp"
-#include "foreignnote.hpp"
+#include "subspace.hpp"
+#include "sigilstone.hpp"
+#include "levelleditem.hpp"
+#include "levellednpc.hpp"
+#include "note.hpp"
 
 namespace MWClass
 {
@@ -95,13 +96,25 @@ namespace MWClass
         ForeignAmmo::registerSelf();
         ForeignNpc::registerSelf();
         ForeignCreature::registerSelf();
-        ForeignLeveledCreature::registerSelf();
-        ForeignSoulGem::registerSelf();
+        LevelledCreature::registerSelf(); // not used?
+        SoulGem::registerSelf();
         ForeignKey::registerSelf();
         ForeignPotion::registerSelf();
-        ForeignSubspace::registerSelf();
-        ForeignSigilStone::registerSelf();
-        ForeignLeveledItem::registerSelf();
-        ForeignNote::registerSelf();
+        Subspace::registerSelf();
+        SigilStone::registerSelf();
+        LevelledItem::registerSelf();
+        LevelledNpc::registerSelf(); // not used?
+        // FIXME: IdleMarker
+        // FIXME: MovableStatic
+        // FIXME: TextureSet
+        // FIXME: Scroll
+        // FIXME: ArmorAddon
+        // FIXME: Terminal
+        // FIXME: TalkingActivator
+        Note::registerSelf();
+        // FIXME: AcousticSpace
+        // FIXME: ItemMod
+        // FIXME: PlaceableWater
+        // FIXME: StaticCollection
     }
 }

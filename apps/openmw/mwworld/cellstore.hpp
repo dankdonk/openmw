@@ -37,6 +37,7 @@
 #include <extern/esm4/sbsp.hpp>
 #include <extern/esm4/sgst.hpp>
 #include <extern/esm4/lvli.hpp>
+#include <extern/esm4/lvln.hpp>
 #include <extern/esm4/regn.hpp>
 #include <extern/esm4/land.hpp>
 #include <extern/esm4/anio.hpp>
@@ -127,7 +128,7 @@ namespace MWWorld
             CellRefList<ESM::Repair>            mRepairs;
             CellRefList<ESM::Static>            mStatics;
             CellRefList<ESM::Weapon>            mWeapons;
-            CellRefList<ESM4::Sound>            mForeignSounds;
+            CellRefList<ESM4::Sound>            mSounds;
             CellRefList<ESM4::Activator>        mForeignActivators;
             CellRefList<ESM4::Apparatus>        mForeignApparatus;
             CellRefList<ESM4::Armor>            mForeignArmors;
@@ -147,15 +148,16 @@ namespace MWWorld
             CellRefList<ESM4::Ammo>             mForeignAmmos;
             CellRefList<ESM4::Npc>              mForeignNpcs;
             CellRefList<ESM4::Creature>         mForeignCreatures;
-            CellRefList<ESM4::LeveledCreature>  mForeignLvlCreatures;
-            CellRefList<ESM4::SoulGem>          mForeignSoulGems;
+            CellRefList<ESM4::LevelledCreature>  mLevelledCreatures;
+            CellRefList<ESM4::SoulGem>          mSoulGems;
             CellRefList<ESM4::Key>              mForeignKeys;
             CellRefList<ESM4::Potion>           mForeignPotions;
-            CellRefList<ESM4::Subspace>         mForeignSubspaces;
-            CellRefList<ESM4::SigilStone>       mForeignSigilStones;
-            CellRefList<ESM4::LeveledItem>      mForeignLvlItems;
+            CellRefList<ESM4::Subspace>         mSubspaces;
+            CellRefList<ESM4::SigilStone>       mSigilStones;
+            CellRefList<ESM4::LevelledItem>     mLevelledItems;
+            CellRefList<ESM4::LevelledNpc>      mLevelledNpcs;
             CellRefList<ESM4::AcousticSpace>    mAcousticSpaces;
-            CellRefList<ESM4::Note>             mForeignNotes;
+            CellRefList<ESM4::Note>             mNotes;
             CellRefList<ESM4::PlaceableWater>   mPlaceableWaters;
             CellRefList<ESM4::StaticCollection> mStaticCollections;
 
@@ -251,7 +253,7 @@ namespace MWWorld
                     forEachImp (functor, mNpcs) &&
                     forEachImp (functor, mCreatureLists) &&
                     //
-                    forEachImp (functor, mForeignSounds) &&
+                    forEachImp (functor, mSounds) &&
                     forEachImp (functor, mForeignActivators) &&
                     forEachImp (functor, mForeignApparatus) &&
                     forEachImp (functor, mForeignArmors) &&
@@ -271,14 +273,14 @@ namespace MWWorld
                     forEachImp (functor, mForeignAmmos) &&
                     forEachImp (functor, mForeignNpcs) &&
                     forEachImp (functor, mForeignCreatures) &&
-                    forEachImp (functor, mForeignLvlCreatures) &&
-                    forEachImp (functor, mForeignSoulGems) &&
+                    forEachImp (functor, mLevelledCreatures) &&
+                    forEachImp (functor, mSoulGems) &&
                     forEachImp (functor, mForeignKeys) &&
                     forEachImp (functor, mForeignPotions) &&
-                    forEachImp (functor, mForeignSubspaces) &&
-                    forEachImp (functor, mForeignSigilStones) &&
-                    forEachImp (functor, mForeignLvlItems) &&
-                    forEachImp (functor, mForeignNotes) &&
+                    forEachImp (functor, mSubspaces) &&
+                    forEachImp (functor, mSigilStones) &&
+                    forEachImp (functor, mLevelledItems) &&
+                    forEachImp (functor, mNotes) &&
                     forEachImp (functor, mPlaceableWaters) &&
                     forEachImp (functor, mStaticCollections);
             }
@@ -523,6 +525,12 @@ namespace MWWorld
     inline CellRefList<ESM4::Npc>& CellStore::get<ESM4::Npc>()
     {
         return mForeignNpcs;
+    }
+
+    template<>
+    inline CellRefList<ESM4::Creature>& CellStore::get<ESM4::Creature>()
+    {
+        return mForeignCreatures;
     }
 
     bool operator== (const CellStore& left, const CellStore& right);

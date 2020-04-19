@@ -81,15 +81,12 @@ namespace FgLib
         {
             std::string name = nif;
             boost::algorithm::to_lower(name);
-            size_t pos = nif.find_last_of(".");
-            if (pos != std::string::npos && nif.substr(pos+1) == "nif")
-            {
-                name = nif.substr(0, pos+1)+"tri";
-                std::cout << name << std::endl;
-            }
+            size_t pos = name.find_last_of(".");
+            if (pos != std::string::npos && name.substr(pos+1) == "nif")
+                name = name.substr(0, pos+1)+"tri";
 
             // use the supplied fgVertices to create a dummy TRI file then store it
-            tri = triFile.replaceFile(boost::algorithm::to_lower_copy(name), std::make_unique<FgTri>(fgVertices));
+            tri = triFile.replaceFile(name, std::make_unique<FgTri>(fgVertices));
         }
 
         return buildMorphedVerticesImpl(fgMorphVertices,

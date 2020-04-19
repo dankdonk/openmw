@@ -376,9 +376,15 @@ namespace NiBtOgre
 
     void NiModelManager::loadManualMorphedModel(NiModel* pModel, const ModelBuildInfo& bInfo)
     {
-        const std::vector<float>& sRaceCoeff = bInfo.race->mSymShapeModeCoefficients;
-        const std::vector<float>& aRaceCoeff = bInfo.race->mAsymShapeModeCoefficients;
-        const std::vector<float>& sRaceTCoeff = bInfo.race->mSymTextureModeCoefficients;
+        bool isTES4 = bInfo.npc->mIsTES4;
+        bool isFemale = (bInfo.npc->mBaseConfig.tes4.flags & 0x1) != 0; // FIXME: depends on the game
+
+        const std::vector<float>& sRaceCoeff
+            = ((isFemale && !isTES4) ? bInfo.race->mSymShapeModeCoeffFemale : bInfo.race->mSymShapeModeCoefficients);
+        const std::vector<float>& aRaceCoeff
+            = ((isFemale && !isTES4) ? bInfo.race->mAsymShapeModeCoeffFemale : bInfo.race->mAsymShapeModeCoefficients);
+        const std::vector<float>& sRaceTCoeff
+            = ((isFemale && !isTES4) ? bInfo.race->mSymTextureModeCoeffFemale : bInfo.race->mSymTextureModeCoefficients);
         const std::vector<float>& sCoeff = bInfo.npc->mSymShapeModeCoefficients;
         const std::vector<float>& aCoeff = bInfo.npc->mAsymShapeModeCoefficients;
         const std::vector<float>& sTCoeff = bInfo.npc->mSymTextureModeCoefficients;
@@ -758,9 +764,14 @@ namespace NiBtOgre
 
     void NiModelManager::loadManualHairModel(NiModel* pModel, const ModelBuildInfo& bInfo)
     {
-        const std::vector<float>& sRaceCoeff = bInfo.race->mSymShapeModeCoefficients;
-        const std::vector<float>& aRaceCoeff = bInfo.race->mAsymShapeModeCoefficients;
-        const std::vector<float>& sRaceTCoeff = bInfo.race->mSymTextureModeCoefficients;
+        bool isFemale = (bInfo.npc->mBaseConfig.fo3.flags & 0x1) != 0; // FIXME: depends on the game
+
+        const std::vector<float>& sRaceCoeff
+            = (isFemale ? bInfo.race->mSymShapeModeCoeffFemale : bInfo.race->mSymShapeModeCoefficients);
+        const std::vector<float>& aRaceCoeff
+            = (isFemale ? bInfo.race->mAsymShapeModeCoeffFemale : bInfo.race->mAsymShapeModeCoefficients);
+        const std::vector<float>& sRaceTCoeff
+            = (isFemale ? bInfo.race->mSymTextureModeCoeffFemale : bInfo.race->mSymTextureModeCoefficients);
         const std::vector<float>& sCoeff = bInfo.npc->mSymShapeModeCoefficients;
         const std::vector<float>& aCoeff = bInfo.npc->mAsymShapeModeCoefficients;
         const std::vector<float>& sTCoeff = bInfo.npc->mSymTextureModeCoefficients;

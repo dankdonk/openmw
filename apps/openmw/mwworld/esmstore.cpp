@@ -61,8 +61,8 @@ static bool isCacheableForeignRecord(int id)
         id == MKTAG('H','A','L','C') || /* potion */
         id == MKTAG('P','S','B','S') || /* subspace */
         id == MKTAG('T','S','G','S') || /* sigilstone */
-        id == MKTAG('I','L','V','L') || /* leveled item */
-        id == MKTAG('N','L','V','L') || /* leveled actor */
+        id == MKTAG('I','L','V','L') || /* levelled item */
+        id == MKTAG('N','L','V','L') || /* levelled actor */
         id == MKTAG('M','I','D','L') || /* idle marker */
         id == MKTAG('T','M','S','T') || /* movable static */
         id == MKTAG('T','T','X','S') || /* texture set */
@@ -441,7 +441,7 @@ void ESMStore::loadTes4Record (ESM::ESMReader& esm)
                              mForeignIds[id.mId] = MKTAG('_','N','P','C'); break;
         case ESM4::REC_CREA: reader.getRecordData(); id = mForeignCreatures.loadTes4(reader);
                              mForeignIds[id.mId] = MKTAG('A','C','R','E'); break;
-        case ESM4::REC_LVLC: reader.getRecordData(); id = mLvlCreatures.loadTes4(reader);
+        case ESM4::REC_LVLC: reader.getRecordData(); id = mLevelledCreatures.loadTes4(reader);
                              mForeignIds[id.mId] = MKTAG('C','L','V','L'); break;
         case ESM4::REC_SLGM: reader.getRecordData(); id = mSoulGems.loadTes4(reader);
                              mForeignIds[id.mId] = MKTAG('M','S','L','G'); break;
@@ -453,9 +453,9 @@ void ESMStore::loadTes4Record (ESM::ESMReader& esm)
                              mForeignIds[id.mId] = MKTAG('P','S','B','S'); break;
         case ESM4::REC_SGST: reader.getRecordData(); id = mSigilStones.loadTes4(reader);
                              mForeignIds[id.mId] = MKTAG('T','S','G','S'); break;
-        case ESM4::REC_LVLI: reader.getRecordData(); id = mLvlItems.loadTes4(reader); // 12
+        case ESM4::REC_LVLI: reader.getRecordData(); id = mLevelledItems.loadTes4(reader); // 12
                              mForeignIds[id.mId] = MKTAG('I','L','V','L'); break;
-        case ESM4::REC_LVLN: reader.getRecordData(); id = mLvlActors.loadTes4(reader); // 8
+        case ESM4::REC_LVLN: reader.getRecordData(); id = mLevelledNpcs.loadTes4(reader); // 8
                              mForeignIds[id.mId] = MKTAG('N','L','V','L'); break;
         case ESM4::REC_IDLM: reader.getRecordData(); id = mIdleMarkers.loadTes4(reader); // 10
                              mForeignIds[id.mId] = MKTAG('M','I','D','L'); break;

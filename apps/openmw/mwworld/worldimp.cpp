@@ -2123,8 +2123,24 @@ namespace MWWorld
         if (cell->isExterior())
         {
             int cellX, cellY;
-            positionToIndex(pos.pos[0], pos.pos[1], cellX, cellY);
-            cell = mCells.getExterior(cellX, cellY);
+
+            if (cell->isForeignCell())
+            {
+                const int cellSize = 4096;
+
+                cellX = static_cast<int>(std::floor(pos.pos[0] / cellSize));
+                cellY = static_cast<int>(std::floor(pos.pos[1] / cellSize));
+
+                ESM4::FormId worldId = static_cast<const MWWorld::ForeignCell*>(cell->getCell())->mCell->mParent;
+                CellStore *newCell = getWorldCell (worldId, cellX, cellY);
+                if (newCell)
+                    cell = newCell;
+            }
+            else
+            {
+                positionToIndex(pos.pos[0], pos.pos[1], cellX, cellY);
+                cell = mCells.getExterior(cellX, cellY);
+            }
         }
 
         MWWorld::Ptr dropped =

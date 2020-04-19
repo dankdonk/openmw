@@ -1,4 +1,4 @@
-#include "foreignsubspace.hpp"
+#include "subspace.hpp"
 
 #include <extern/esm4/sbsp.hpp>
 
@@ -11,12 +11,12 @@
 
 namespace MWClass
 {
-    std::string ForeignSubspace::getId (const MWWorld::Ptr& ptr) const
+    std::string Subspace::getId (const MWWorld::Ptr& ptr) const
     {
         return ptr.get<ESM4::Subspace>()->mBase->mEditorId;
     }
 
-    void ForeignSubspace::insertObjectRendering (const MWWorld::Ptr& ptr, const std::string& model, MWRender::RenderingInterface& renderingInterface) const
+    void Subspace::insertObjectRendering (const MWWorld::Ptr& ptr, const std::string& model, MWRender::RenderingInterface& renderingInterface) const
     {
         MWWorld::LiveCellRef<ESM4::Subspace> *ref = ptr.get<ESM4::Subspace>();
 
@@ -25,13 +25,13 @@ namespace MWClass
         }
     }
 
-    void ForeignSubspace::insertObject(const MWWorld::Ptr& ptr, const std::string& model, MWWorld::PhysicsSystem& physics) const
+    void Subspace::insertObject(const MWWorld::Ptr& ptr, const std::string& model, MWWorld::PhysicsSystem& physics) const
     {
         if(!model.empty())
             physics.addObject(ptr, model);
     }
 
-    std::string ForeignSubspace::getModel(const MWWorld::Ptr &ptr) const
+    std::string Subspace::getModel(const MWWorld::Ptr &ptr) const
     {
 #if 0
         MWWorld::LiveCellRef<ESM4::Subspace> *ref = ptr.get<ESM4::Subspace>();
@@ -45,19 +45,19 @@ namespace MWClass
         return "";
     }
 
-    std::string ForeignSubspace::getName (const MWWorld::Ptr& ptr) const
+    std::string Subspace::getName (const MWWorld::Ptr& ptr) const
     {
         return "";
     }
 
-    void ForeignSubspace::registerSelf()
+    void Subspace::registerSelf()
     {
-        boost::shared_ptr<Class> instance (new ForeignSubspace);
+        boost::shared_ptr<Class> instance (new Subspace);
 
         registerClass (typeid (ESM4::Subspace).name(), instance);
     }
 
-    MWWorld::Ptr ForeignSubspace::copyToCellImpl(const MWWorld::Ptr &ptr, MWWorld::CellStore &cell) const
+    MWWorld::Ptr Subspace::copyToCellImpl(const MWWorld::Ptr &ptr, MWWorld::CellStore &cell) const
     {
         MWWorld::LiveCellRef<ESM4::Subspace> *ref = ptr.get<ESM4::Subspace>();
 

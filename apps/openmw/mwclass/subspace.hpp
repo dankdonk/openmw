@@ -1,11 +1,11 @@
-#ifndef GAME_MWCLASS_FOREIGNSOULGEM_H
-#define GAME_MWCLASS_FOREIGNSOULGEM_H
+#ifndef GAME_MWCLASS_SUBSPACE_H
+#define GAME_MWCLASS_SUBSPACE_H
 
 #include "../mwworld/class.hpp"
 
 namespace MWClass
 {
-    class ForeignSoulGem : public MWWorld::Class
+    class Subspace : public MWWorld::Class
     {
             virtual MWWorld::Ptr copyToCellImpl(const MWWorld::Ptr &ptr, MWWorld::CellStore &cell) const;
 

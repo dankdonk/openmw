@@ -171,14 +171,14 @@ namespace MWWorld
         ForeignStore<ESM4::Ammo>       mForeignAmmos;
         ForeignStore<ESM4::Npc>        mForeignNpcs;
         ForeignStore<ESM4::Creature>   mForeignCreatures;
-        ForeignStore<ESM4::LeveledCreature> mLvlCreatures;
+        ForeignStore<ESM4::LevelledCreature> mLevelledCreatures;
         ForeignStore<ESM4::SoulGem>    mSoulGems;
         ForeignStore<ESM4::Key>        mForeignKeys;
         ForeignStore<ESM4::Potion>     mForeignPotions;
         ForeignStore<ESM4::Subspace>   mSubspaces;
         ForeignStore<ESM4::SigilStone> mSigilStones;
-        ForeignStore<ESM4::LeveledItem> mLvlItems;
-        ForeignStore<ESM4::LeveledActor> mLvlActors;
+        ForeignStore<ESM4::LevelledItem> mLevelledItems;
+        ForeignStore<ESM4::LevelledNpc> mLevelledNpcs;
         ForeignStore<ESM4::IdleMarker> mIdleMarkers;
         ForeignStore<ESM4::MovableStatic> mMovableStatics;
         ForeignStore<ESM4::TextureSet> mTextureSets;
@@ -339,14 +339,14 @@ namespace MWWorld
             mStores[MKTAG('O','A','M','M')] = &mForeignAmmos;
             mStores[MKTAG('_','N','P','C')] = &mForeignNpcs;
             mStores[MKTAG('A','C','R','E')] = &mForeignCreatures;
-            mStores[MKTAG('C','L','V','L')] = &mLvlCreatures;
+            mStores[MKTAG('C','L','V','L')] = &mLevelledCreatures;
             mStores[MKTAG('M','S','L','G')] = &mSoulGems;
             mStores[MKTAG('M','K','E','Y')] = &mForeignKeys;
             mStores[MKTAG('H','A','L','C')] = &mForeignPotions;
             mStores[MKTAG('P','S','B','S')] = &mSubspaces;
             mStores[MKTAG('T','S','G','S')] = &mSigilStones;
-            mStores[MKTAG('I','L','V','L')] = &mLvlItems;
-            mStores[MKTAG('N','L','V','L')] = &mLvlActors;
+            mStores[MKTAG('I','L','V','L')] = &mLevelledItems;
+            mStores[MKTAG('N','L','V','L')] = &mLevelledNpcs;
             mStores[MKTAG('M','I','D','L')] = &mIdleMarkers;
             mStores[MKTAG('T','M','S','T')] = &mMovableStatics;
             mStores[MKTAG('T','T','X','S')] = &mTextureSets;
@@ -883,8 +883,8 @@ namespace MWWorld
     }
 
     template <>
-    inline const ForeignStore<ESM4::LeveledCreature>& ESMStore::getForeign<ESM4::LeveledCreature>() const {
-        return mLvlCreatures;
+    inline const ForeignStore<ESM4::LevelledCreature>& ESMStore::getForeign<ESM4::LevelledCreature>() const {
+        return mLevelledCreatures;
     }
 
     template <>
@@ -913,13 +913,13 @@ namespace MWWorld
     }
 
     template <>
-    inline const ForeignStore<ESM4::LeveledItem>& ESMStore::getForeign<ESM4::LeveledItem>() const {
-        return mLvlItems;
+    inline const ForeignStore<ESM4::LevelledItem>& ESMStore::getForeign<ESM4::LevelledItem>() const {
+        return mLevelledItems;
     }
 
     template <>
-    inline const ForeignStore<ESM4::LeveledActor>& ESMStore::getForeign<ESM4::LeveledActor>() const {
-        return mLvlActors;
+    inline const ForeignStore<ESM4::LevelledNpc>& ESMStore::getForeign<ESM4::LevelledNpc>() const {
+        return mLevelledNpcs;
     }
 
     template <>

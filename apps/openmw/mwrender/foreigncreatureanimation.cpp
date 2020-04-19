@@ -103,9 +103,14 @@ ForeignCreatureAnimation::ForeignCreatureAnimation(const MWWorld::Ptr &ptr, cons
             // FIXME: all the skinned meshes seems to be offset by this, probably something to do
             // with the binding position
             Ogre::Vector3 vb = b->getPosition();
-            //Ogre::Vector3 ins = mInsert->getPosition();
+            Ogre::Vector3 vbna = bna->getPosition();
+            Ogre::Vector3 ins = mInsert->getPosition();
 
+            // 17/04/20 commenting out below doesn't seem to do anything? OurLadyHope01
+            //          mEditorId "CrSuperMutant1GunA" has vbna ZERO
+            //b->setPosition(vbna+ Ogre::Vector3(0,0,0.f)); // TEMP testing for FO3
             //bna->setPosition(vb);
+            //bna->setPosition(vb.x, vb.y, -vb.z);
 
             //Ogre::Bone* rootBone = mObjectRoot->mSkelBase->getSkeleton()->getBone("Scene Root");
             //Ogre::Vector3 vRoot = rootBone->convertLocalToWorldPosition(rootBone->_getDerivedPosition());
@@ -570,6 +575,8 @@ Ogre::Vector3 ForeignCreatureAnimation::runAnimation(float timepassed)
     return ret;
 }
 
+// called from Actors::insertCreature if ForeignCreature::insertObjectRendering() indicates
+// weapon/shield can be used (maybe not so useful in TES4?)
 ForeignCreatureWeaponAnimation::ForeignCreatureWeaponAnimation(const MWWorld::Ptr &ptr, const std::string& model)
     : Animation(ptr, ptr.getRefData().getBaseNode())
     , mShowWeapons(false)

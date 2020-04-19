@@ -1,4 +1,4 @@
-#include "foreignnote.hpp"
+#include "note.hpp"
 
 #include <extern/esm4/note.hpp>
 
@@ -17,12 +17,12 @@
 
 namespace MWClass
 {
-    std::string ForeignNote::getId (const MWWorld::Ptr& ptr) const
+    std::string Note::getId (const MWWorld::Ptr& ptr) const
     {
         return ptr.get<ESM4::Note>()->mBase->mEditorId;
     }
 
-    void ForeignNote::insertObjectRendering (const MWWorld::Ptr& ptr, const std::string& model, MWRender::RenderingInterface& renderingInterface) const
+    void Note::insertObjectRendering (const MWWorld::Ptr& ptr, const std::string& model, MWRender::RenderingInterface& renderingInterface) const
     {
         MWWorld::LiveCellRef<ESM4::Note> *ref = ptr.get<ESM4::Note>();
 
@@ -31,13 +31,13 @@ namespace MWClass
         }
     }
 
-    void ForeignNote::insertObject(const MWWorld::Ptr& ptr, const std::string& model, MWWorld::PhysicsSystem& physics) const
+    void Note::insertObject(const MWWorld::Ptr& ptr, const std::string& model, MWWorld::PhysicsSystem& physics) const
     {
         if(!model.empty())
             physics.addObject(ptr, model);
     }
 
-    std::string ForeignNote::getModel(const MWWorld::Ptr &ptr) const
+    std::string Note::getModel(const MWWorld::Ptr &ptr) const
     {
         MWWorld::LiveCellRef<ESM4::Note> *ref = ptr.get<ESM4::Note>();
         assert(ref->mBase != NULL);
@@ -49,33 +49,33 @@ namespace MWClass
         return "";
     }
 
-    std::string ForeignNote::getName (const MWWorld::Ptr& ptr) const
+    std::string Note::getName (const MWWorld::Ptr& ptr) const
     {
         return "";
     }
 
-    void ForeignNote::registerSelf()
+    void Note::registerSelf()
     {
-        boost::shared_ptr<Class> instance (new ForeignNote);
+        boost::shared_ptr<Class> instance (new Note);
 
         registerClass (typeid (ESM4::Note).name(), instance);
     }
 
-    MWWorld::Ptr ForeignNote::copyToCellImpl(const MWWorld::Ptr &ptr, MWWorld::CellStore &cell) const
+    MWWorld::Ptr Note::copyToCellImpl(const MWWorld::Ptr &ptr, MWWorld::CellStore &cell) const
     {
         MWWorld::LiveCellRef<ESM4::Note> *ref = ptr.get<ESM4::Note>();
 
         return MWWorld::Ptr(&cell.get<ESM4::Note>().insert(*ref), &cell);
     }
 
-    bool ForeignNote::hasToolTip (const MWWorld::Ptr& ptr) const
+    bool Note::hasToolTip (const MWWorld::Ptr& ptr) const
     {
         MWWorld::LiveCellRef<ESM4::Note> *ref = ptr.get<ESM4::Note>();
 
         return (ref->mBase->mFullName != "");
     }
 
-    MWGui::ToolTipInfo ForeignNote::getToolTipInfo (const MWWorld::Ptr& ptr) const
+    MWGui::ToolTipInfo Note::getToolTipInfo (const MWWorld::Ptr& ptr) const
     {
         MWWorld::LiveCellRef<ESM4::Note> *ref = ptr.get<ESM4::Note>();
 

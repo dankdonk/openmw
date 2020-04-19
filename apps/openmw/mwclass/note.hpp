@@ -1,11 +1,11 @@
-#ifndef GAME_MWCLASS_FOREIGNSUBSPACE_H
-#define GAME_MWCLASS_FOREIGNSUBSPACE_H
+#ifndef GAME_MWCLASS_NOTE_H
+#define GAME_MWCLASS_NOTE_H
 
 #include "../mwworld/class.hpp"
 
 namespace MWClass
 {
-    class ForeignSubspace : public MWWorld::Class
+    class Note : public MWWorld::Class
     {
             virtual MWWorld::Ptr copyToCellImpl(const MWWorld::Ptr &ptr, MWWorld::CellStore &cell) const;
 
@@ -22,6 +22,12 @@ namespace MWClass
             virtual std::string getName (const MWWorld::Ptr& ptr) const;
             ///< \return name (the one that is to be presented to the user; not the internal one);
             /// can return an empty string.
+
+            virtual bool hasToolTip (const MWWorld::Ptr& ptr) const;
+            ///< @return true if this object has a tooltip when focused (default implementation: false)
+
+            virtual MWGui::ToolTipInfo getToolTipInfo (const MWWorld::Ptr& ptr) const;
+            ///< @return the content of the tool tip to be displayed. raises exception if the object has no tooltip.
 
             static void registerSelf();
 

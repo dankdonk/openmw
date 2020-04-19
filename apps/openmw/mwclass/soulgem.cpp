@@ -1,4 +1,4 @@
-#include "foreignsoulgem.hpp"
+#include "soulgem.hpp"
 
 #include <extern/esm4/slgm.hpp>
 
@@ -11,12 +11,12 @@
 
 namespace MWClass
 {
-    std::string ForeignSoulGem::getId (const MWWorld::Ptr& ptr) const
+    std::string SoulGem::getId (const MWWorld::Ptr& ptr) const
     {
         return ptr.get<ESM4::SoulGem>()->mBase->mEditorId;
     }
 
-    void ForeignSoulGem::insertObjectRendering (const MWWorld::Ptr& ptr, const std::string& model, MWRender::RenderingInterface& renderingInterface) const
+    void SoulGem::insertObjectRendering (const MWWorld::Ptr& ptr, const std::string& model, MWRender::RenderingInterface& renderingInterface) const
     {
         MWWorld::LiveCellRef<ESM4::SoulGem> *ref = ptr.get<ESM4::SoulGem>();
 
@@ -25,13 +25,13 @@ namespace MWClass
         }
     }
 
-    void ForeignSoulGem::insertObject(const MWWorld::Ptr& ptr, const std::string& model, MWWorld::PhysicsSystem& physics) const
+    void SoulGem::insertObject(const MWWorld::Ptr& ptr, const std::string& model, MWWorld::PhysicsSystem& physics) const
     {
         if(!model.empty())
             physics.addObject(ptr, model);
     }
 
-    std::string ForeignSoulGem::getModel(const MWWorld::Ptr &ptr) const
+    std::string SoulGem::getModel(const MWWorld::Ptr &ptr) const
     {
         MWWorld::LiveCellRef<ESM4::SoulGem> *ref = ptr.get<ESM4::SoulGem>();
         assert(ref->mBase != NULL);
@@ -43,19 +43,19 @@ namespace MWClass
         return "";
     }
 
-    std::string ForeignSoulGem::getName (const MWWorld::Ptr& ptr) const
+    std::string SoulGem::getName (const MWWorld::Ptr& ptr) const
     {
         return "";
     }
 
-    void ForeignSoulGem::registerSelf()
+    void SoulGem::registerSelf()
     {
-        boost::shared_ptr<Class> instance (new ForeignSoulGem);
+        boost::shared_ptr<Class> instance (new SoulGem);
 
         registerClass (typeid (ESM4::SoulGem).name(), instance);
     }
 
-    MWWorld::Ptr ForeignSoulGem::copyToCellImpl(const MWWorld::Ptr &ptr, MWWorld::CellStore &cell) const
+    MWWorld::Ptr SoulGem::copyToCellImpl(const MWWorld::Ptr &ptr, MWWorld::CellStore &cell) const
     {
         MWWorld::LiveCellRef<ESM4::SoulGem> *ref = ptr.get<ESM4::SoulGem>();
 
