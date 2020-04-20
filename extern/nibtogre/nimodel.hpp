@@ -79,6 +79,34 @@ namespace NiBtOgre
     private:
         const NiModel& mModel;
 
+        //       child index    parent
+        //            |            |
+        //            v            v
+        std::map<NiAVObjectRef, NiNode*> mParentNiNodeMap;
+
+        // During construction various NiObjects may indicate that it has bones.
+        // These are then used as the starting points for NiNode::findBones which recursively
+        // traverses till a skeleton root is found - the main objective is to filter out any
+        // NiNodes that are not needed as bones (to minimise the number of bones).
+        std::vector<NiNodeRef> mBoneTreeLeafIndices; // tempoarily used to find the bones
+
+        //      block index of NiGeomMorpherController
+        //               |       index of controlled block (corresponds to a NiMorphData::Morph)
+        //               |                          |
+        //               v                          v
+        //std::map<NiTimeControllerRef, std::vector<int> > mGeomMorpherControllerMap;
+
+        std::vector<NiNodeRef> mControllerTargetIndices; // for detecting dynamic collision shapes
+
+        // Populated by NiControllerSequence (or NiMultiTargetTransformController).
+        // The targets are usually NiNode or NiTriBasedGeom.
+        // TODO: an example of NiTriBasedGeom target (it might be for vertex anim only)
+        //
+        //       animation name           NiAVObject target (bone) name
+        //            |                        |
+        //            v                        v
+        std::map<std::string, std::vector<std::string> > mAnimNodesMap;
+
     public:
 
         bool mIsSkinned;
@@ -93,33 +121,42 @@ namespace NiBtOgre
         inline bool flameNodesPresentTES4() const { return (mBuildFlags & Flag_FlameNodesPresent)   != 0; }
         inline bool editorMarkerPresent()   const { return (mBuildFlags & Flag_EditorMarkerPresent) != 0; }
 
-        // helper to get pointer to parent NiNode
-        std::map<NiAVObjectRef, NiNode*> mNiNodeMap;
-        void setNiNodeParent(NiAVObjectRef child, NiNode *parent);
-        NiNode *getNiNodeParent(NiAVObjectRef child) const;
+        // Helper methods to get access to the parent NiNode.
+        // WARN: Fragile - relies on the parent blocks in a NIF being present before the child blocks
+        //       which isn't always true (e.g. TES4 architecture\arena\arenaspectatorm01.nif)
+        // TODO: Save these special cases then post proces them before the children accesses mParent
+        NiNode *getNiNodeParent(NiAVObjectRef child) const; // used by NiNode and NiGeometry ctor
+        void setNiNodeParent(NiAVObjectRef child, NiNode *parent); // called by NiNode ctor
 
         std::map<NiNodeRef, NiNode*> mMeshBuildList;
 
-        // during construction various NiObjects may indicate that it has bones
-        // these are then used as the starting points for NiNode::findBones which recursively
-        // traverses till a skeleton root is found - the main objective is to filter out any
-        // NiNodes that are not needed as bones (to minimise the number of bones)
-        std::vector<NiNodeRef> mSkelLeafIndices; // tempoarily used to find the bones
-
-        // adds without checking
-        // NiSkinInstance - bone refs
-        // NiNode - flame nodes, attach light
-        // NiKeyframeController - target refs
-        // NiMultiTargetTransformController - extra target refs (what is this?)
-        // NiTriBasedGeom - hack for testing animation of sub-mesh
-        void addSkelLeafIndex(NiNodeRef leaf) { mSkelLeafIndices.push_back(leaf); }
-
-        std::vector<NiNodeRef> mControllerTargetIndices; // for detecting dynamic collision shapes
-        void addControllerTargetIndex(NiNodeRef target) { mControllerTargetIndices.push_back(target); }
+        // WARN: Adds without checking if it exists already.
+        //       NiSkinInstance - bone refs
+        //       NiNode - flame nodes, attach light
+        //       NiKeyframeController - target refs
+        //       NiTimeController - initial target ref
+        //       NiMultiTargetTransformController - extra target refs
+        //       NiTriBasedGeom - hack for testing animation of sub-mesh
+        inline void addBoneTreeLeafIndex(NiNodeRef leaf) { mBoneTreeLeafIndices.push_back(leaf); }
+        inline bool needsSkeletonBuilt() const { return mBoneTreeLeafIndices.size() > 1; }
+        inline const std::vector<NiNodeRef>& getBoneTreeLeafIndices() const { return mBoneTreeLeafIndices; }
 
         // only adds if none found
         //void addNewSkelLeafIndex(NiNodeRef leaf); // FIXME: not used?
-        //bool hasBoneLeaf(NiNodeRef leaf) const; // FIXME: not used?
+        //bool hasBoneLeaf(NiNodeRef leaf) const;   // FIXME: not used?
+
+        // called by NiTimeController and NiMultiTargetTransformController
+        // TODO: this results in a subset of mBoneTreeLeafIndices - is there a way to combine?
+        inline void addControllerTargetIndex(NiNodeRef target) { mControllerTargetIndices.push_back(target); }
+        inline const std::vector<NiNodeRef>&  getControllerTargets() const { return mControllerTargetIndices; }
+
+        // called by NiMultiTargetTransformController::build() and NiControllerSequence::buildFO3()
+        // TODO: seems too similar to ControllerTargetIndices except keyed by anim name?
+        void addAnimBoneName(const std::string& anim, const std::string& bone);
+
+        inline bool hasNodeAnimation() const { return !mAnimNodesMap.empty(); }
+        inline const std::map<std::string, std::vector<std::string> >&
+            getAnimNodesMap() const { return mAnimNodesMap; }
 
         // The btCollisionShape for btRigidBody corresponds to an Ogre::Entity whose Ogre::SceneNode
         // may be controlled for Ragdoll animations.  So we just really need the NiModel name,
@@ -142,28 +179,6 @@ namespace NiBtOgre
         // id needs to be extracted (without '@#N' where N is a number)
         std::vector<NiNode*> mFlameNodes;
         std::vector<NiNode*> mAttachLights;
-
-        std::map<NiTimeControllerRef, std::vector<int> > mGeomMorpherControllerMap;
-
-        //       animation name  bone name
-        //            |            |
-        //            v            v
-        std::map<std::string, std::vector<std::string> > mAnimBonesMap;
-
-        void setAnimBoneName(const std::string& anim, const std::string& bone)
-        {
-            std::map<std::string, std::vector<std::string> >::iterator lb
-                = mAnimBonesMap.lower_bound(anim);
-
-            if (lb != mAnimBonesMap.end() && !(mAnimBonesMap.key_comp()(anim, lb->first)))
-            {
-                lb->second.push_back(bone);
-            }
-            else // None found, create one
-            {
-                mAnimBonesMap.insert(lb, std::make_pair(anim, std::vector<std::string> { bone }));
-            }
-        }
 
         std::multimap<float, std::string> mTextKeys;
         std::vector<Ogre::Controller<Ogre::Real> > mControllers;
@@ -299,7 +314,7 @@ namespace NiBtOgre
 
         inline bool hideEditorMarkers() const { return !mShowEditorMarkers; }
 
-        NiNode *skeletonRoot();          // returns nullptr if none found
+        NiNode *getSkeletonRoot();          // returns nullptr if none found
 
         inline const NiNode *getRootNode() const { return mRootNode; }; // returns the root NiNode of the model
         std::uint32_t getRootIndex() const; // WARN: will throw if there are more than one
@@ -326,8 +341,6 @@ namespace NiBtOgre
                 NiModel *skeleton,
                 NiModel *bow = nullptr);
         const std::map<std::string, NiAVObjectRef>& getObjectPalette() const { return mObjectPalette; }
-
-        inline bool hasNodeAnimation() const { return !mBuildData.mAnimBonesMap.empty(); }
 
         Ogre::SkeletonPtr getSkeleton() const { return mSkeleton; }
         inline bool hasSkeleton() const { return !mSkeleton.isNull(); }
@@ -371,8 +384,6 @@ namespace NiBtOgre
         void findBoneNodes(bool buildObjectPalette = false, std::size_t rootIndex = 0);
 
         const Ogre::Quaternion getBaseRotation() const;
-
-        const std::vector<NiNodeRef>&  getControllerTargets() const { return mBuildData.mControllerTargetIndices; }
 
         template<class T>
         T *insertDummyBlock(const std::string& blockType); // for landscape LOD meshes

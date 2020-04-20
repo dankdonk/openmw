@@ -989,8 +989,8 @@ NiBtOgre::NiSkinInstance::NiSkinInstance(uint32_t index, NiStream *stream, const
     {
         stream->read(mBoneRefs.at(i));
         // TODO: why do we need a skeleton for a skinned model?  We're going to be using an external one
-        data.addSkelLeafIndex(mBoneRefs.at(i)); // register for building a skeleton
-        if (!data.mIsSkinned && mBoneRefs.at(i) != -1)
+        data.addBoneTreeLeafIndex(mBoneRefs[i]); // register for building a skeleton
+        if (!data.mIsSkinned && mBoneRefs[i] != -1)
             data.mIsSkinned = true;
     }
 }

@@ -1744,7 +1744,7 @@ For skinned body parts for creatures we don't need to worry about the uniqueness
 
   * TRI file exeption commented out
   * Case folding for skeleton and object names are causing no end of troubles.  For now only fold skeleton names.
-  * The use of skeletonRoot() in NiSkeletonLoader is not working
+  * The use of getSkeletonRoot() in NiSkeletonLoader is not working
 
 ## Head parts progress
 
@@ -1949,9 +1949,9 @@ Multiple RigidBodies within one NIF model is managed by `BtRigidBodyCI` which us
                                                                ::mChildren
 
 
-During `NiModel::buildModel()`, `NiMultiTargetTransformController` fills `NiModel::mBuildData::mMovingBoneNameMap`  (for FO3, `NiControllerSequence` does that instead). `BtOgreInst` then uses that to fill `mSkeletonAnimEntities` - unfortunately relying on the `Ogre::Entity`'s `Ogre::Mesh` names to match the `NiNode` names.  Clearly this won't work with specialised meshes with skeleton or NPC's name prepended (but then they won't have any node animations, either).
+During `NiModel::buildModel()`, `NiMultiTargetTransformController` fills `NiModel::mBuildData::mMovingBoneNameMap`  (for FO3, `NiControllerSequence` does that instead). `BtOgreInst` then uses that to fill `mNodeAnimEntities` - unfortunately relying on the `Ogre::Entity`'s `Ogre::Mesh` names to match the `NiNode` names.  Clearly this won't work with specialised meshes with skeleton or NPC's name prepended (but then they won't have any node animations, either).
 
-Whether `mSkeletonAnimEntities` has anything determines whether node animation wil be used (e.g. by doors).
+Whether `mNodeAnimEntities` has anything determines whether node animation wil be used (e.g. by doors).
 
 # [09/03/2020] Fixing bugs
 
@@ -2245,7 +2245,7 @@ Door activation is rather complicated (simplified shown below to get an idea):
           |          | activateAnimatedDoor |         |        |              |          |
           |          |---------------------------------------->|              |          |
           |          |           |          |         |        |              |          |
-          |          |           |  mSkeletonAnimEntities      |              |          |
+          |          |           |      mNodeAnimEntities      |              |          |
           |          |           |          |<-----------------|              |          |
           |          |           |          | Ogre::Entity     |              |          |
           |          |           |          |----------------->|              |          |
@@ -3467,9 +3467,9 @@ Key places where the mesh naming convention is used:
 
   * `NiModel::createMesh()` - creating a mesh with a unique name
   * `NiTriBasedGeom::getMaterial()` - creating a unique name for a material (currently NiNode name is *not* used, but it may be used in future).
-  * `BtOgreInst::buildEntities()` - check `NiModel::mBuildData::mAnimBonesMap` to see if an `Ogre::Entity` should be inserted into `BtOgreInst::mSkeletonAnimEntities` (which is used in many places).
-  * `ForeignActivatorAnimation` ctor - to check against `BtOgreInst::mSkeletonAnimEntities`.
-  * `Animation::getBones()` - to check against `BtOgreInst::mSkeletonAnimEntities`.
+  * `BtOgreInst::buildEntities()` - check `NiModel::mBuildData::mAnimNodesMap` to see if an `Ogre::Entity` should be inserted into `BtOgreInst::mNodeAnimEntities` (which is used in many places).
+  * `ForeignActivatorAnimation` ctor - to check against `BtOgreInst::mNodeAnimEntities`.
+  * `Animation::getBones()` - to check against `BtOgreInst::mNodeAnimEntities`.
   * `Animation::activateAnimatedDoor()` - not currently used
   * `ObjectAnimation` ctor - adding `FlameNode` to bone
   * `ForeignNpcAnimation::replaceSkinTexture()` - to find the corresponding `NiNode` name to check against the results from `NiModel::fillSkinIndices()`.
@@ -3568,7 +3568,7 @@ const std::vector<NiNodeRef>&  ctlrTargets = nimodel->getControllerTargets();
 bool dynamic = std::find(ctlrTargets.begin(), ctlrTargets.end(), targetRef) != ctlrTargets.end();
 ```
 
-But what would be the point of adding the bones?  There aren't any controllers moving them, so unless they are linked to another bone they won't be moving, anyway.  So this option may end up being similar to the other option.
+But what would be the point of adding the bones?  There aren't any controllers moving them, so unless they are linked to another bone they won't be moving, anyway.  So this option may end up being similar to the first option.
 
 ### VGearDoor01
 
@@ -3844,6 +3844,14 @@ OpenMW creates a `ManaualRef` then calls `World::safePlaceObject()` which then c
 ## Female Head parts and FaceGen coefficients
 
 FO3/FONV provide separate female models and textures for head parts, as well as FaceGen coefficients.  This explains why some male raiders had fenimine facical features. **FIXED**
+
+## Visible skin mesh
+
+**FIXME:** Setting the race texture (both diffuse and normal/bump) results in breaking the current FaceGen code.  (and the raiders/fiends look better without FaceGen texture which is too "smooth" for some reason)
+
+# [20/04/2020] Back to doors
+
+
 
 
 [//]: # (/* spell spelllang=en_au syntax=cpp */)

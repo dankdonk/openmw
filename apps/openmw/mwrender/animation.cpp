@@ -528,7 +528,7 @@ bool Animation::hasAnimation(const std::string &anim)
     }
 
     if (!mObjectRoot.isNull() && mObjectRoot->mForeignObj)
-        return mObjectRoot->mForeignObj->hasAnimation(anim);   // HACK for foreign doors/activators
+        return mObjectRoot->mForeignObj->hasNodeAnimation(anim);   // HACK for foreign doors/activators
 
     return false;
 }
@@ -1420,12 +1420,12 @@ Ogre::Vector3 Animation::runAnimation(float duration)
 // this is a hack to get foreign animated doors to work
 bool Animation::addTime(const std::string& anim, float duration)
 {
-    if (mObjectRoot->mForeignObj && mObjectRoot->mForeignObj->mSkeletonAnimEntities.size() > 0)
+    if (mObjectRoot->mForeignObj && mObjectRoot->mForeignObj->mNodeAnimEntityMap.size() > 0)
     {
 #if 0
         std::map<std::string, Ogre::Entity*>::const_iterator it
-            = mObjectRoot->mSkeletonAnimEntities.begin();
-        for (; it != mObjectRoot->mSkeletonAnimEntities.end(); ++it)
+            = mObjectRoot->mNodeAnimEntityMap.begin();
+        for (; it != mObjectRoot->mNodeAnimEntityMap.end(); ++it)
         {
             Ogre::AnimationStateSet *aset = it->second->getAllAnimationStates();
             Ogre::AnimationStateIterator asiter = aset->getAnimationStateIterator();
@@ -1440,8 +1440,8 @@ bool Animation::addTime(const std::string& anim, float duration)
 #else
         // does the anim exist?
         std::map<std::string, std::vector<Ogre::Entity*> >::iterator iter
-            = mObjectRoot->mForeignObj->mSkeletonAnimEntities.find(anim);
-        if (iter != mObjectRoot->mForeignObj->mSkeletonAnimEntities.end())
+            = mObjectRoot->mForeignObj->mNodeAnimEntityMap.find(anim);
+        if (iter != mObjectRoot->mForeignObj->mNodeAnimEntityMap.end())
         {
             bool hasEnded = false;
             // there can be more than one entity being animated, add time to all
@@ -1468,8 +1468,8 @@ std::vector<Ogre::Bone*> Animation::getBones(const std::string& animation) const
     std::vector<Ogre::Bone*> res;
 
     std::map<std::string, std::vector<Ogre::Entity*> >::const_iterator cit
-        = mObjectRoot->mForeignObj->mSkeletonAnimEntities.find(animation);
-    if (cit != mObjectRoot->mForeignObj->mSkeletonAnimEntities.end())
+        = mObjectRoot->mForeignObj->mNodeAnimEntityMap.find(animation);
+    if (cit != mObjectRoot->mForeignObj->mNodeAnimEntityMap.end())
     {
         std::vector<Ogre::Entity*> entityList = cit->second;
         Ogre::SkeletonInstance *skel = entityList[0]->getSkeleton(); // any one will do
@@ -1492,11 +1492,11 @@ std::vector<Ogre::Bone*> Animation::getBones(const std::string& animation) const
 // FIXME: inefficient, refactor
 void Animation::activateAnimatedDoor(const std::string& animation, bool activate)
 {
-    if (mObjectRoot->mForeignObj && mObjectRoot->mForeignObj->mSkeletonAnimEntities.size() > 0)
+    if (mObjectRoot->mForeignObj && mObjectRoot->mForeignObj->mNodeAnimEntityMap.size() > 0)
     {
         std::map<std::string, std::vector<Ogre::Entity*> >::iterator it
-            = mObjectRoot->mForeignObj->mSkeletonAnimEntities.find(animation);
-        if (it != mObjectRoot->mForeignObj->mSkeletonAnimEntities.end())
+            = mObjectRoot->mForeignObj->mNodeAnimEntityMap.find(animation);
+        if (it != mObjectRoot->mForeignObj->mNodeAnimEntityMap.end())
         {
             for (unsigned int i = 0; i < it->second.size(); ++i)
             {
@@ -1526,12 +1526,12 @@ void Animation::activateAnimatedDoor(const std::string& animation, bool activate
 // assumes "Open" and/or "Close" animations exist (caller must ensure)
 int Animation::getAnimatedDoorState() const
 {
-    if (mObjectRoot->mForeignObj && mObjectRoot->mForeignObj->mSkeletonAnimEntities.size() > 0)
+    if (mObjectRoot->mForeignObj && mObjectRoot->mForeignObj->mNodeAnimEntityMap.size() > 0)
     {
         int openState = 0;
         std::map<std::string, std::vector<Ogre::Entity*> >::iterator it
-            = mObjectRoot->mForeignObj->mSkeletonAnimEntities.find("Open");
-        if (it != mObjectRoot->mForeignObj->mSkeletonAnimEntities.end())
+            = mObjectRoot->mForeignObj->mNodeAnimEntityMap.find("Open");
+        if (it != mObjectRoot->mForeignObj->mNodeAnimEntityMap.end())
         {
             if (it->second[0]->hasAnimationState("Open") && it->second[0]->getAnimationState("Open")->getEnabled())
             {
@@ -1555,8 +1555,8 @@ int Animation::getAnimatedDoorState() const
 
         int closeState = 0;
         std::map<std::string, std::vector<Ogre::Entity*> >::iterator it2
-            = mObjectRoot->mForeignObj->mSkeletonAnimEntities.find("Close");
-        if (it2 != mObjectRoot->mForeignObj->mSkeletonAnimEntities.end())
+            = mObjectRoot->mForeignObj->mNodeAnimEntityMap.find("Close");
+        if (it2 != mObjectRoot->mForeignObj->mNodeAnimEntityMap.end())
         {
             if (it2->second[0]->hasAnimationState("Close") && it2->second[0]->getAnimationState("Close")->getEnabled())
             {
@@ -2099,7 +2099,7 @@ bool ObjectAnimation::disableHavokAtStart() const
     // FIXME: there's probably a better way to do this
     // disable havok if no constraints but has node animations (e.g. prison cell gate)
     return !mObjectRoot->mForeignObj->mModel->buildData().hasBhkConstraint() &&
-            mObjectRoot->mForeignObj->mModel->hasNodeAnimation();
+            mObjectRoot->mForeignObj->mModel->buildData().hasNodeAnimation();
 }
 
 class FindEntityTransparency {

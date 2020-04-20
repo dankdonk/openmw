@@ -93,7 +93,7 @@ namespace NiBtOgre
 
         // For NiGeometry children (e.g. NiTriStrips)
         virtual const std::string& getName() const { return mNodeName; }
-        virtual const NiNode& getParentNiNode() const { return *mParent; }
+        const NiNode& getParentNiNode() const { return *mParent; } // not used?
 
         //
         virtual void registerSubMesh(NiTriBasedGeom* geom);
@@ -108,7 +108,7 @@ namespace NiBtOgre
         void addAllBones(Ogre::Skeleton *skeleton, Ogre::Bone *parentBone);
         void buildObjectPalette(std::map<std::string, NiAVObjectRef>& objectPalette, bool first = false);
 
-        virtual const std::vector<NiAVObjectRef>& getChildren() const { return mChildren; }
+        const std::vector<NiAVObjectRef>& getNiNodeChildren() const { return mChildren; }
 
         NiTriBasedGeom *getUniqueSubMeshChild(); // WARN: may throw
         NiTriBasedGeom *getSubMeshChildFO3(bool hat); // WARN: may throw

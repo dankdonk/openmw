@@ -267,7 +267,7 @@ NiBtOgre::NiTimeController::NiTimeController(uint32_t index, NiStream *stream, c
 
     if (mTargetRef != -1) // FO3 Dungeons\Office\Doors\OffDoorMetalSmL01.NIF has only 1 valid ExtraTargetRef
     {
-        data.addSkelLeafIndex(mTargetRef);
+        data.addBoneTreeLeafIndex(mTargetRef);
         data.addControllerTargetIndex(mTargetRef); // FO3 Dungeons\Office\Doors\OffDoorSmL02.NIF
     }
 }
@@ -432,6 +432,7 @@ NiBtOgre::NiMultiTargetTransformController::NiMultiTargetTransformController(uin
 {
     stream->read(mNumExtraTargets);
     mExtraTargetRefs.resize(mNumExtraTargets);
+    //bool hasValidExtraTarget = false; // FO3 MetTurnstile01.nif doesn't really have a node animation
     for (unsigned int i = 0; i < mNumExtraTargets; ++i)
     {
         stream->read(mExtraTargetRefs.at(i));
@@ -439,17 +440,18 @@ NiBtOgre::NiMultiTargetTransformController::NiMultiTargetTransformController(uin
 #if 1
         if (mExtraTargetRefs.at(i) != -1) // Furniture\FXspiderWebKitDoorSpecial.nif (TES5 BleakFallsBarrow)
         {
-            data.addSkelLeafIndex(mExtraTargetRefs.at(i));
-            data.addControllerTargetIndex(mExtraTargetRefs.at(i)); // FO3 Dungeons\Office\Doors\OffDoorSmL02.NIF
+            data.addBoneTreeLeafIndex(mExtraTargetRefs[i]);
+            data.addControllerTargetIndex(mExtraTargetRefs[i]); // FO3 Dungeons\Office\Doors\OffDoorSmL02.NIF
+            //hasValidExtraTarget = true;
         }
 #else
         // FIXME: is there a better way than doing a string comparison each time?
         if (mExtraTargetRefs.at(i) != -1 && model.blockType(mExtraTargetRefs.at(i)) == "NiNode")
         {
-            data.addSkelLeafIndex(mExtraTargetRefs.at(i));
+            data.addBoneTreeLeafIndex(mExtraTargetRefs.at(i));
 
             NiNode *node = model.getRef<NiNode>(mExtraTargetRefs.at(i));
-            const std::vector<NiAVObjectRef>& children = node->getChildren();
+            const std::vector<NiAVObjectRef>& children = node->getNiNodeChildren();
 
             //if (mExtraTargetRefs.at(i) == 182)
                 //std::cout << "stop" << std::endl;
@@ -457,10 +459,20 @@ NiBtOgre::NiMultiTargetTransformController::NiMultiTargetTransformController(uin
             for (unsigned int j = 0; j < children.size(); ++j)
             {
                 if (children[j] != -1 && model.blockType(children[j]) == "NiNode")
-                    data.addSkelLeafIndex(children[j]);
+                    data.addBoneTreeLeafIndex(children[j]);
             }
         }
 #endif
+    }
+
+    // FO3 Dungeons\Office\Doors\OffDoorMetalSmL01.NIF has only 1 valid ExtraTargetRef
+    if (0)//NiTimeController::mTargetRef != -1 /*&& hasValidExtraTarget*/)
+    {
+        if (model.blockType(NiTimeController::mTargetRef) == "NiNode") // FIXME add BSFadeNode?
+        {
+            data.addBoneTreeLeafIndex(mTargetRef);
+            data.addControllerTargetIndex(mTargetRef);
+        }
     }
 }
 
@@ -570,7 +582,7 @@ void NiBtOgre::NiMultiTargetTransformController::build(int32_t nameIndex, NiAVOb
     NiTransformData *data = mModel.getRef<NiTransformData>(interpolator->mDataRef);
 
     // setup data for later
-    mData.setAnimBoneName(animationId, boneName);
+    mData.addAnimBoneName(animationId, boneName);
 
 
     // get all the unique time keys

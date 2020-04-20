@@ -90,7 +90,7 @@ void NiBtOgre::BtRigidBodyCI::loadImpl()
     if (!nimodel) // shouldn't happen, since we need the Entities created already
         throw std::runtime_error("BtRigidBodyCI: NiModel not loaded");
 
-    const std::vector<NiNodeRef>&  ctlrTargets = nimodel->getControllerTargets();
+    const std::vector<NiNodeRef>&  ctlrTargets = nimodel->buildData().getControllerTargets();
 
     //           target NiAVObject ref               bhkSerializable ref (e.g. bhkRigidBody)
     //                   |                                    |

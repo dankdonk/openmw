@@ -46,15 +46,15 @@ NiBtOgre::NiKeyframeController::NiKeyframeController(uint32_t index, NiStream *s
 #if 1
     //if (NiTimeController::mTargetRef != -1) // FIXME creatures\cliffracer\skeleton.nif
     if (model.blockType(NiTimeController::mTargetRef) == "NiNode")
-        data.addSkelLeafIndex(NiTimeController::mTargetRef); // FIXME: do this for old NIF versions only?
+        data.addBoneTreeLeafIndex(NiTimeController::mTargetRef); // FIXME: do this for old NIF versions only?
 #else
     // FIXME: is there a better way than doing a string comparison each time?
     if (model.blockType(NiTimeController::mTargetRef) == "NiNode")
     {
-        data.addSkelLeafIndex(NiTimeController::mTargetRef);
+        data.addBoneTreeLeafIndex(NiTimeController::mTargetRef);
 
         NiNode *node = model.getRef<NiNode>(NiTimeController::mTargetRef);
-        const std::vector<NiAVObjectRef>& children = node->getChildren();
+        const std::vector<NiAVObjectRef>& children = node->getNiNodeChildren();
 
         if (NiTimeController::mTargetRef == 182)
             std::cout << "stop" << std::endl;
@@ -65,7 +65,7 @@ NiBtOgre::NiKeyframeController::NiKeyframeController(uint32_t index, NiStream *s
                 continue;
 
             if (model.blockType(children[i]) == "NiNode")
-                data.addSkelLeafIndex(children[i]);
+                data.addBoneTreeLeafIndex(children[i]);
         }
     }
 #endif

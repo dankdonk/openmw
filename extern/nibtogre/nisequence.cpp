@@ -358,7 +358,7 @@ void NiBtOgre::NiControllerSequence::buildFO3(const NiDefaultAVObjectPalette& ob
         if (!target)
             continue;
         else
-            mData.setAnimBoneName(animName, targetName);
+            mData.addAnimBoneName(animName, targetName);
 
         if (ctlrTypeName == "NiGeomMorpherController")
         {

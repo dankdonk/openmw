@@ -54,8 +54,8 @@ namespace MWRender
                 boneiter.getNext()->setManuallyControlled(true);
 
             std::map<std::string, std::vector<Ogre::Entity*> >::iterator iter
-                = mObjectRoot->mForeignObj->mSkeletonAnimEntities.begin();
-            for (;iter != mObjectRoot->mForeignObj->mSkeletonAnimEntities.end(); ++iter)
+                = mObjectRoot->mForeignObj->mNodeAnimEntityMap.begin();
+            for (;iter != mObjectRoot->mForeignObj->mNodeAnimEntityMap.end(); ++iter)
             {
                 for (size_t i = 0; i < iter->second.size(); ++i)
                 {

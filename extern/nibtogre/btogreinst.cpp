@@ -185,7 +185,7 @@ void NiBtOgre::BtOgreInst::buildEntities()
 
     // FIXME: FO3 characters\_male\skeleton.nif block 134 ("HeadAnims") has a small NiTriShape
     //            and NiTriShapeData which results in the skeleton having a mesh
-    const NiNode* skeletonRoot = mModel->skeletonRoot();
+    const NiNode* skeletonRoot = mModel->getSkeletonRoot();
     const std::vector<std::pair<Ogre::MeshPtr, NiNode*> >& meshes = mModel->getMeshes();
     for (std::size_t i = 0; i < meshes.size(); ++i)
     {
@@ -246,9 +246,9 @@ void NiBtOgre::BtOgreInst::buildEntities()
         if (1)//entity->hasSkeleton() && entity->getSkeleton()->getNumAnimations() > 0)
         {
             // iterate through all the skeletal animations in the NIF
-            std::map<std::string, std::vector<std::string> >::const_iterator it
-                = buildData.mAnimBonesMap.begin();
-            for (; it != buildData.mAnimBonesMap.end(); ++it)
+            const std::map<std::string, std::vector<std::string> >& animNodesMap = buildData.getAnimNodesMap();
+            std::map<std::string, std::vector<std::string> >::const_iterator it = animNodesMap.begin();
+            for (; it != animNodesMap.end(); ++it)
             {
                 // find all the bones for the animation (the same NiNode name is used as the Bone name)
                 //
@@ -257,7 +257,6 @@ void NiBtOgre::BtOgreInst::buildEntities()
                 //size_t pos = iter->second.first.find_last_of('%');
                 //std::string meshName = iter->second.first.substr(pos+1);
                 std::string meshName = entity->getMesh()->getName();
-                //size_t pos = meshName.find_first_of('#');
                 size_t pos = meshName.find_last_of('%');
                 std::string boneName = meshName.substr(pos+1); // discard the NIF file name to get NiNode name
                 for (unsigned int i = 0; i < it->second.size(); ++i)
@@ -265,7 +264,7 @@ void NiBtOgre::BtOgreInst::buildEntities()
                     if (boneName == it->second[i]) // matches the Bone name, update BtOgreInst
                     {
                         std::map<std::string, std::vector<Ogre::Entity*> >& skelMap
-                            = mSkeletonAnimEntities;
+                            = mNodeAnimEntityMap;
 
                         // does the anim entry exist in the map?
                         std::map<std::string, std::vector<Ogre::Entity*> >::iterator lb
@@ -396,14 +395,13 @@ void NiBtOgre::BtOgreInst::buildEntities()
 #endif
 }
 
-bool NiBtOgre::BtOgreInst::hasAnimation(const std::string& animName) const
+// TODO: maybe keep a map rather than search each time? But then this is a map anyway?
+bool NiBtOgre::BtOgreInst::hasNodeAnimation(const std::string& animName) const
 {
-    if (mSkeletonAnimEntities.size() > 0) // "fake skin" node animation
+    if (mNodeAnimEntityMap.size() > 0)
     {
-        return mSkeletonAnimEntities.find(animName) != mSkeletonAnimEntities.end();
+        return mNodeAnimEntityMap.find(animName) != mNodeAnimEntityMap.end();
     }
-    else                                  // controller based node animation
-    {
-        return false;
-    }
+
+    return false;
 }

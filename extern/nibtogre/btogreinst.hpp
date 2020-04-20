@@ -103,8 +103,10 @@ namespace NiBtOgre
 
         Ogre::Entity *mSkeletonRoot; // assume only one
         std::map<NiNodeRef, Ogre::Entity*> mEntities;
+        std::map<NiNodeRef, Ogre::Entity*> mNodeAnimEntities;
+
+        // FIXME: make private and provide access methods
         std::vector<Ogre::Entity*> mVertexAnimEntities;
-        std::map<std::string, std::vector<Ogre::Entity*> > mSkeletonAnimEntities;
 
         //std::multimap<float, std::string> mTextKeys;
         const std::multimap<float, std::string>& modelTextKeys() const { return mModel->getTextKeys(); }
@@ -124,7 +126,11 @@ namespace NiBtOgre
         // for building body parts using the supplied skeleton
         void instantiateBodyPart(Ogre::SceneNode* baseNode, Ogre::Entity* skelBase);
 
-        bool hasAnimation(const std::string& animName) const;
+        bool hasNodeAnimation(const std::string& animName) const;
+
+    //private:
+        // for doors, activators
+        std::map<std::string, std::vector<Ogre::Entity*> > mNodeAnimEntityMap; // key is anim name
 
     private:
         void buildEntities();

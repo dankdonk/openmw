@@ -152,7 +152,7 @@ NiBtOgre::NiTriBasedGeom::NiTriBasedGeom(uint32_t index, NiStream *stream, const
     // FIXME: HACK for testing; may add bones that are not necessary
 //  if (data.mSkelLeafIndices.size() > 0 && (model.blockType(mParent.selfRef()) == "NiNode" ||
 //              model.blockType(mParent.selfRef()) == "BSFadeNode")) // FIXME
-//      data.addSkelLeafIndex(mParent.selfRef()); // may attempt to add bones already added
+//      data.addBoneTreeLeafIndex(mParent.selfRef()); // may attempt to add bones already added
 }
 
 // workaround to identify the sub-mesh with visible skin

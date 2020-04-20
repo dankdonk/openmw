@@ -132,12 +132,12 @@ NiBtOgre::NiNode::NiNode(uint32_t index, NiStream *stream, const NiModel& model,
         if (mNodeName.find("AttachLight") != std::string::npos)
         {
             data.mAttachLights.push_back(this);
-            data.addSkelLeafIndex(mSelfRef);
+            data.addBoneTreeLeafIndex(mSelfRef);
         }
         else if (mNodeName.find("FlameNode") != std::string::npos)
         {
             data.mFlameNodes.push_back(this);
-            data.addSkelLeafIndex(mSelfRef);
+            data.addBoneTreeLeafIndex(mSelfRef);
         }
     }
 }
@@ -269,10 +269,13 @@ NiBtOgre::NiNodeRef NiBtOgre::NiNode::findBones(const NiNodeRef targetRef, const
                 upb = getStringExtraData("UPB");
                 if (upb.find("BoneRoot") != std::string::npos)
                     return targetRef;
-                else if (getName() == "Scene Root")
-                    return targetRef; // FO3 workaround
+                //else if (upb.find("KFAccumRoot") != std::string::npos) // FO3 workaround
+                    //return targetRef;
+                else if (getName() == "Scene Root") // FO3 workaround
+                    return targetRef;
                 else
                     return -1;
+                    //return targetRef;
             }
 #endif
         }
@@ -286,10 +289,10 @@ NiBtOgre::NiNodeRef NiBtOgre::NiNode::findBones(const NiNodeRef targetRef, const
 
         return res;
     }
-    else
+    else // this node has been traversed already; add the caller (i.e. childNode) if not added already
     {
         if (std::find(mChildBoneNodes.begin(), mChildBoneNodes.end(), childNode) == mChildBoneNodes.end())
-            mChildBoneNodes.push_back(childNode); // only if childNode doesn't exist
+            mChildBoneNodes.push_back(childNode);
     }
 
     return -1;
@@ -302,6 +305,7 @@ NiBtOgre::NiNodeRef NiBtOgre::NiNode::findBones(std::int32_t rootIndex)
         return mParent->findBones(rootIndex, NiObject::selfRef());
 
     return -1;
+    //return rootIndex; // FIXME: can't remember why I decided to return -1 before
 }
 
 void NiBtOgre::NiNode::addBones(Ogre::Skeleton *skeleton,
@@ -346,13 +350,13 @@ void NiBtOgre::NiNode::addBones(Ogre::Skeleton *skeleton,
     {
 #if 0
         std::size_t i = 0;
-        for (; i < mData.mSkelLeafIndices.size(); ++i)
+        for (; i < mData.mBoneTreeLeafIndices.size(); ++i)
         {
-            if (NiObject::selfRef()  == mData.mSkelLeafIndices[i])
+            if (NiObject::selfRef()  == mData.mBoneTreeLeafIndices[i])
                 break;
         }
 
-        if (i < mData.mSkelLeafIndices.size())
+        if (i < mData.mBoneTreeLeafIndices.size())
 #else
         // this only works if mObjectPalette was built
         const std::map<std::string, NiAVObjectRef>& objPalette = mModel.getObjectPalette();

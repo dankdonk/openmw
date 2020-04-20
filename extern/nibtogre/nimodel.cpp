@@ -179,13 +179,13 @@ void NiBtOgre::NiModel::createNiObjects()
             // HACK: assume we added a dummy NiNode
             std::size_t i = 0;
             for (; i < mNiObjects.size(); ++i)
-                if (blockType(i) == "NiNode")
+                if (blockType(std::uint32_t(i)) == "NiNode")
                     break;
 
             if (mCurrIndex < mNiObjects.size()-1)
-                mCurrIndex = mNiObjects.size()-1; // cheat
+                mCurrIndex = int(mNiObjects.size()-1); // cheat
 
-            mRoots[0] = i;
+            mRoots[0] = std::uint32_t(i);
         }
 
         mRootNode = getRef<NiNode>(mRoots[0]);
@@ -195,19 +195,22 @@ void NiBtOgre::NiModel::createNiObjects()
 // find the bones, if any (i.e. prepare for the skeleton loader)
 void NiBtOgre::NiModel::findBoneNodes(bool buildObjectPalette, size_t rootIndex)
 {
-    if (mBuildData.mSkelLeafIndices.size() > 1) // TODO: should we allow skeleton with a single bone?
+    if (mBuildData.needsSkeletonBuilt()) // TODO: should we allow skeleton with a single bone?
     {
+        const std::vector<NiNodeRef>& leafIndices = mBuildData.getBoneTreeLeafIndices();
+
         int32_t index;
         NiNode *node;
-        for (std::size_t i = 0; i < mBuildData.mSkelLeafIndices.size(); ++i)
+        for (std::size_t i = 0; i < leafIndices.size(); ++i)
         {
-            index = mBuildData.mSkelLeafIndices[i];
-            // dungeons\ayleidruins\exterior\arwellgrate01.nif has a NiBillboardNode target
-            if (blockType(index) != "NiNode" && blockType(index) != "NiBillboardNode")
+            index = leafIndices[i];
+            std::string name = blockType(index);
+            // TES4 dungeons\ayleidruins\exterior\arwellgrate01.nif has a NiBillboardNode target
+            if (name != "NiNode" && name != "NiBillboardNode" && name != "BSFadeNode")
                 continue; // FIXME: morroblivion\flora\bushes\corkbulb01anim.nif, index 0x20
 
             node = getRef<NiNode>(index);
-            NiNodeRef boneRoot = node->findBones(mRoots[rootIndex]);
+            NiNodeRef boneRoot = node->findBones(mRoots[rootIndex]); // populate NiNode::mChildBoneNodes
             if (boneRoot != -1)
                 mBoneRootNode = getRef<NiNode>(boneRoot); // just overwrite the previous result
 
@@ -250,7 +253,7 @@ void NiBtOgre::NiModel::setSkinTexture(const std::string& texture)
 //
 // FIXME: maybe pass a parameter here indicating static mesh? (create a "static" group?)
 // Or group should come from the classes, e.g. static, misc, furniture, etc
-void NiBtOgre::NiModel::createMesh(bool isMorphed, Ogre::SkeletonPtr skeleton)
+void NiBtOgre::NiModel::createMesh(bool isMorphed, Ogre::SkeletonPtr suppliedSkeleton)
 {
     Ogre::MeshManager& meshManager = Ogre::MeshManager::getSingleton();
     NiMeshLoader& meshLoader = NiModelManager::getSingleton().meshLoader();
@@ -259,15 +262,15 @@ void NiBtOgre::NiModel::createMesh(bool isMorphed, Ogre::SkeletonPtr skeleton)
     //
     // * the same NIF can be used with different externally supplied skeletons
     // * morphed vertices and textures of the same NIF can be used for many NPCs
-    std::string skelName = "";
-    if (skeleton)
-        skelName = boost::to_lower_copy(skeleton->getName());
+    std::string suppliedSkelName = "";
+    if (suppliedSkeleton)
+        suppliedSkelName = boost::to_lower_copy(suppliedSkeleton->getName());
 
     std::string modelName;
-    if (isMorphed || !skeleton)
+    if (isMorphed || !suppliedSkeleton)
         modelName = getName(); // WARN: morphed must have Npc::mEditorId + "_" in getName()
     else
-        modelName = skelName + "_" + getName(); // getName() should return NIF name
+        modelName = suppliedSkelName + "_" + getName(); // getName() should return NIF name
 
     // iterate through the mesh build map
     //
@@ -298,10 +301,10 @@ void NiBtOgre::NiModel::createMesh(bool isMorphed, Ogre::SkeletonPtr skeleton)
 
         Ogre::MeshPtr mesh = meshManager.getByName(/*boost::algorithm::to_lower_copy(meshName)*/meshName, mGroup);
         if (!mesh)
-            mesh = meshLoader.createMesh(meshName, mGroup, this, iter->second->selfRef(), skelName);
+            mesh = meshLoader.createMesh(meshName, mGroup, this, iter->second->selfRef(), suppliedSkelName);
 
-        if (skeleton)
-            mesh->setSkeletonName(skelName);
+        if (suppliedSkeleton)
+            mesh->setSkeletonName(suppliedSkelName);
         else if (mBuildData.isSkeletonTES4() && mSkeleton) // FIXME: FO3, etc, but not yet tested
             mesh->setSkeletonName(mSkeleton->getName()); // Storm Atronach skeleton.nif has its own mesh
         else if (mSkeleton && getName() == "meshes\\characters\\_male\\skeleton.nif") // FIXME: FO3
@@ -329,16 +332,16 @@ void NiBtOgre::NiModel::createMesh(bool isMorphed, Ogre::SkeletonPtr skeleton)
     // e.g. Creatures\StormAtronach\Skeleton.nif (also has normal mesh)
     //
     if (mBuildData.isSkeletonTES4() // FIXME: may also be required for others, but not yet tested
-        || (getName().find("skeleton.nif") != std::string::npos) && // FIXME: FO3
+        || ((getName().find("skeleton.nif") != std::string::npos) && // FIXME: FO3
             //getName() == mNif) // HACK: FO3 avoid being triggerd by skinned model with skeleton name in front
-            getRef<NiObjectNET>(getRootIndex())->hasIntegerExtraData("SkeletonID")) // FO3 triggers too often on its own :-(
+            getRef<NiObjectNET>(getRootIndex())->hasIntegerExtraData("SkeletonID"))) // FO3 triggers too often on its own :-(
     {
         // FIXME: despite the name, maybe this should be "Scene Root" or "BSFadeNode" instead?
         // mModelName != "meshes\\morroblivion\\creatures\\wildlife\\kagouti\\skeleton.nif") // FIXME
 #if 0
         NiNode * rootNode = getRootNode(); // WARN: maybe nullptr if there are multiple roots!
 #else
-        NiNode * rootNode = skeletonRoot();
+        NiNode * rootNode = getSkeletonRoot();
 #endif
         NiNodeRef rootIndex = rootNode->selfRef();
 
@@ -350,8 +353,8 @@ void NiBtOgre::NiModel::createMesh(bool isMorphed, Ogre::SkeletonPtr skeleton)
             if (!mesh)
                 mesh = meshLoader.createMesh(meshName, mGroup, this, rootIndex);
 
-            if (skeleton)
-                mesh->setSkeletonName(skelName);
+            if (suppliedSkeleton)
+                mesh->setSkeletonName(suppliedSkelName);
             else if (mSkeleton)
                 mesh->setSkeletonName(mSkeleton->getName());
 
@@ -361,15 +364,15 @@ void NiBtOgre::NiModel::createMesh(bool isMorphed, Ogre::SkeletonPtr skeleton)
 }
 
 // for building body parts
-void NiBtOgre::NiModel::buildSkinnedModel(Ogre::SkeletonPtr skeleton)
+void NiBtOgre::NiModel::buildSkinnedModel(Ogre::SkeletonPtr suppliedSkeleton)
 {
-    if (mSkeleton && skeleton)
+    if (mSkeleton && suppliedSkeleton)
         throw std::logic_error("NiModel: overwriting its own skeleton");
 
     // for building body parts use the supplied skeleton
     // but don't overwrite an existing one (for Storm Atronach)
     if (!mSkeleton)
-        mSkeleton = skeleton;
+        mSkeleton = suppliedSkeleton;
 
     mNiObjects[getRootIndex()]->build(&mBuildData); // FIXME: what to do with other roots?
 }
@@ -426,7 +429,7 @@ void NiBtOgre::NiModel::buildSkeleton(bool load)
     if (mSkeleton)
         return; // we may already have an externally supplied skeleton
 
-    if (mBuildData.mSkelLeafIndices.size() > 1)
+    if (mBuildData.needsSkeletonBuilt())
     {
         mSkeleton = Ogre::SkeletonManager::getSingleton().getByName(getName(), mGroup);
         if (!mSkeleton)
@@ -537,7 +540,7 @@ void NiBtOgre::NiModel::fillDismemberParts(std::map<std::int32_t, std::vector<st
     }
 }
 
-NiBtOgre::NiNode *NiBtOgre::NiModel::skeletonRoot()
+NiBtOgre::NiNode *NiBtOgre::NiModel::getSkeletonRoot()
 {
     if (!mBoneRootNode)
     {
@@ -580,22 +583,22 @@ void NiBtOgre::BuildData::setNiNodeParent(NiAVObjectRef child, NiNode *parent)
     //if (child == -1) // already checked in NiNode before calling this method
         //return;
 
-    std::map<NiAVObjectRef, NiNode*>::iterator lb = mNiNodeMap.lower_bound(child);
+    std::map<NiAVObjectRef, NiNode*>::iterator lb = mParentNiNodeMap.lower_bound(child);
 
-    if (lb != mNiNodeMap.end() && !(mNiNodeMap.key_comp()(child, lb->first)))
+    if (lb != mParentNiNodeMap.end() && !(mParentNiNodeMap.key_comp()(child, lb->first)))
     {
         if (lb->second != parent)
             throw std::logic_error("NiNode parent map: multiple parents");
         // else the same entry already there for some reason, ignore for now
     }
     else
-        mNiNodeMap.insert(lb, std::make_pair(child, parent)); // None found, create one
+        mParentNiNodeMap.insert(lb, std::make_pair(child, parent)); // None found, create one
 }
 
 NiBtOgre::NiNode *NiBtOgre::BuildData::getNiNodeParent(NiAVObjectRef child) const
 {
-    std::map<NiAVObjectRef, NiNode*>::const_iterator it = mNiNodeMap.find(child);
-    if (it != mNiNodeMap.cend())
+    std::map<NiAVObjectRef, NiNode*>::const_iterator it = mParentNiNodeMap.find(child);
+    if (it != mParentNiNodeMap.cend())
     {
         return it->second;
     }
@@ -621,15 +624,30 @@ NiBtOgre::NiNode *NiBtOgre::BuildData::getNiNodeParent(NiAVObjectRef child) cons
     }
 }
 
+void NiBtOgre::BuildData::addAnimBoneName(const std::string& anim, const std::string& bone)
+{
+    std::map<std::string, std::vector<std::string> >::iterator lb
+        = mAnimNodesMap.lower_bound(anim);
+
+    if (lb != mAnimNodesMap.end() && !(mAnimNodesMap.key_comp()(anim, lb->first)))
+    {
+        lb->second.push_back(bone);
+    }
+    else // None found, create one
+    {
+        mAnimNodesMap.insert(lb, std::make_pair(anim, std::vector<std::string> { bone }));
+    }
+}
+
 #if 0
 void NiBtOgre::BuildData::addNewSkelLeafIndex(NiNodeRef leaf)
 {
-    if (std::find(mSkelLeafIndices.begin(), mSkelLeafIndices.end(), leaf) == mSkelLeafIndices.end())
-        mSkelLeafIndices.push_back(leaf);
+    if (std::find(mBoneTreeLeafIndices.begin(), mBoneTreeLeafIndices.end(), leaf) == mBoneTreeLeafIndices.end())
+        mBoneTreeLeafIndices.push_back(leaf);
 }
 
 bool NiBtOgre::BuildData::hasBoneLeaf(NiNodeRef leaf) const
 {
-     return std::find(mSkelLeafIndices.begin(), mSkelLeafIndices.end(), leaf) != mSkelLeafIndices.end();
+     return std::find(mBoneTreeLeafIndices.begin(), mBoneTreeLeafIndices.end(), leaf) != mBoneTreeLeafIndices.end();
 }
 #endif
