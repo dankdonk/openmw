@@ -269,13 +269,13 @@ NiBtOgre::NiNodeRef NiBtOgre::NiNode::findBones(const NiNodeRef targetRef, const
                 upb = getStringExtraData("UPB");
                 if (upb.find("BoneRoot") != std::string::npos)
                     return targetRef;
-                //else if (upb.find("KFAccumRoot") != std::string::npos) // FO3 workaround
-                    //return targetRef;
+                else if (upb.find("KFAccumRoot") != std::string::npos) // FO3 workaround
+                    return targetRef;
                 else if (getName() == "Scene Root") // FO3 workaround
                     return targetRef;
                 else
-                    return -1;
-                    //return targetRef;
+                    //return -1;
+                    return targetRef;
             }
 #endif
         }
@@ -304,8 +304,8 @@ NiBtOgre::NiNodeRef NiBtOgre::NiNode::findBones(std::int32_t rootIndex)
     if (rootIndex != NiObject::selfRef())
         return mParent->findBones(rootIndex, NiObject::selfRef());
 
-    return -1;
-    //return rootIndex; // FIXME: can't remember why I decided to return -1 before
+    //return -1;
+    return rootIndex; // FIXME: can't remember why I decided to return -1 before
 }
 
 void NiBtOgre::NiNode::addBones(Ogre::Skeleton *skeleton,

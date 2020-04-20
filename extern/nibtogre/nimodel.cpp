@@ -309,6 +309,8 @@ void NiBtOgre::NiModel::createMesh(bool isMorphed, Ogre::SkeletonPtr suppliedSke
             mesh->setSkeletonName(mSkeleton->getName()); // Storm Atronach skeleton.nif has its own mesh
         else if (mSkeleton && getName() == "meshes\\characters\\_male\\skeleton.nif") // FIXME: FO3
             mesh->setSkeletonName(mSkeleton->getName());
+        else if (mSkeleton && !mBuildData.getAnimNodesMap().empty()) // FIXME: testing node animation doors
+            mesh->setSkeletonName(mSkeleton->getName());
 #if 0
         // FIXME: testing VGearDoor01.NIF
         if (mSkeleton && !mesh->hasSkeleton() && getName().find("geardoor") != std::string::npos)
@@ -334,7 +336,9 @@ void NiBtOgre::NiModel::createMesh(bool isMorphed, Ogre::SkeletonPtr suppliedSke
     if (mBuildData.isSkeletonTES4() // FIXME: may also be required for others, but not yet tested
         || ((getName().find("skeleton.nif") != std::string::npos) && // FIXME: FO3
             //getName() == mNif) // HACK: FO3 avoid being triggerd by skinned model with skeleton name in front
-            getRef<NiObjectNET>(getRootIndex())->hasIntegerExtraData("SkeletonID"))) // FO3 triggers too often on its own :-(
+            getRef<NiObjectNET>(getRootIndex())->hasIntegerExtraData("SkeletonID")) // FO3 triggers too often on its own :-(
+        || (mSkeleton && !mBuildData.getAnimNodesMap().empty()) // FIXME testing new door code
+        )
     {
         // FIXME: despite the name, maybe this should be "Scene Root" or "BSFadeNode" instead?
         // mModelName != "meshes\\morroblivion\\creatures\\wildlife\\kagouti\\skeleton.nif") // FIXME

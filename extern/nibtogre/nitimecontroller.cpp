@@ -264,12 +264,6 @@ NiBtOgre::NiTimeController::NiTimeController(uint32_t index, NiStream *stream, c
     stream->read(mStopTime);
 
     stream->read(mTargetRef);
-
-    if (mTargetRef != -1) // FO3 Dungeons\Office\Doors\OffDoorMetalSmL01.NIF has only 1 valid ExtraTargetRef
-    {
-        data.addBoneTreeLeafIndex(mTargetRef);
-        data.addControllerTargetIndex(mTargetRef); // FO3 Dungeons\Office\Doors\OffDoorSmL02.NIF
-    }
 }
 
 // baseclass does nothing?
@@ -432,7 +426,7 @@ NiBtOgre::NiMultiTargetTransformController::NiMultiTargetTransformController(uin
 {
     stream->read(mNumExtraTargets);
     mExtraTargetRefs.resize(mNumExtraTargets);
-    //bool hasValidExtraTarget = false; // FO3 MetTurnstile01.nif doesn't really have a node animation
+    bool hasValidExtraTarget = false; // FO3 MetTurnstile01.nif doesn't really have a node animation
     for (unsigned int i = 0; i < mNumExtraTargets; ++i)
     {
         stream->read(mExtraTargetRefs.at(i));
@@ -442,7 +436,7 @@ NiBtOgre::NiMultiTargetTransformController::NiMultiTargetTransformController(uin
         {
             data.addBoneTreeLeafIndex(mExtraTargetRefs[i]);
             data.addControllerTargetIndex(mExtraTargetRefs[i]); // FO3 Dungeons\Office\Doors\OffDoorSmL02.NIF
-            //hasValidExtraTarget = true;
+            hasValidExtraTarget = true;
         }
 #else
         // FIXME: is there a better way than doing a string comparison each time?
@@ -466,9 +460,10 @@ NiBtOgre::NiMultiTargetTransformController::NiMultiTargetTransformController(uin
     }
 
     // FO3 Dungeons\Office\Doors\OffDoorMetalSmL01.NIF has only 1 valid ExtraTargetRef
-    if (0)//NiTimeController::mTargetRef != -1 /*&& hasValidExtraTarget*/)
+    if (NiTimeController::mTargetRef != -1 && hasValidExtraTarget)
     {
-        if (model.blockType(NiTimeController::mTargetRef) == "NiNode") // FIXME add BSFadeNode?
+        if (model.blockType(NiTimeController::mTargetRef) == "NiNode" ||
+            model.blockType(NiTimeController::mTargetRef) == "BSFadeNode")
         {
             data.addBoneTreeLeafIndex(mTargetRef);
             data.addControllerTargetIndex(mTargetRef);
