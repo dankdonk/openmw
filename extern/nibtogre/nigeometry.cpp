@@ -138,7 +138,9 @@ NiBtOgre::NiTriBasedGeom::NiTriBasedGeom(uint32_t index, NiStream *stream, const
 {
     mMorphVertices.clear();
 
+    // use the data read from NiAVObject to make mLocalTransform
     mLocalTransform.makeTransform(mTranslation, Ogre::Vector3(mScale), Ogre::Quaternion(mRotation));
+
     //  at least one shape's parent is NiTriStrips i.e. the world transform will be required
     //  FIXME: physics shape is a little offset from the render
     //  Furniture\MiddleClass\BearSkinRug01.NIF (0001C7CA)
@@ -666,26 +668,6 @@ bool NiBtOgre::NiTriBasedGeom::buildSubMesh(Ogre::Mesh *mesh, BoundsFinder& boun
         const NiSkinInstance *skinInstance = mModel.getRef<NiSkinInstance>(mSkinInstanceRef);
         const NiSkinData *skinData = mModel.getRef<NiSkinData>(skinInstance->mDataRef);
 
-
-
-        int foreLTwist,foreRTwist, foreL, foreR;
-        for(size_t i = 0; i < skinInstance->mBoneRefs.size(); ++i)
-        {
-            //Ogre::VertexBoneAssignment boneInf;
-            //std::string nodeName = mModel.getRef<NiNode>(skinInstance->mBones[i])->getName();
-            //std::cout << mModel.getName() << " " << nodeName << std::endl;
-            //if (nodeName == "Bip01 R ForeTwist")
-                //foreRTwist = i;
-            //else if (nodeName == "Bip01 L ForeTwist")
-                //foreLTwist = i;
-            //else if (nodeName == "Bip01 L Sholder")
-                //foreL= i;
-            //else if (nodeName == "Bip01 R Sholder")
-                //foreR= i;
-        }
-
-
-
         for(size_t i = 0; i < skinInstance->mBoneRefs.size(); ++i)
         {
             Ogre::VertexBoneAssignment boneInf;
@@ -703,10 +685,9 @@ bool NiBtOgre::NiTriBasedGeom::buildSubMesh(Ogre::Mesh *mesh, BoundsFinder& boun
                 continue;
             if (nodeName == "Bip01 L ForeTwist" || nodeName == "Bip01 R ForeTwist")
                 continue;
-#endif
             if (nodeName == "Bip01 L Sholder" || nodeName == "Bip01 R Sholder")
                 continue;
-
+#endif
 
             boneInf.boneIndex = mModel.getSkeleton()->getBone(/*"#"+std::to_string(skinInstance->mBoneRefs[i])+"%"+*/nodeName)->getHandle();
 
@@ -715,30 +696,6 @@ bool NiBtOgre::NiTriBasedGeom::buildSubMesh(Ogre::Mesh *mesh, BoundsFinder& boun
             {
                 boneInf.vertexIndex = weights[j].vertex;
                 boneInf.weight = weights[j].weight;
-
-
-#if 0 // FIXME: need to get node numbers
-
-            if (nodeName == "Bip01 L ForeTwist")// || nodeName == "Bip01 R ForeTwist")
-            {
-                boneInf.boneIndex = mModel.getSkeleton()->getBone("Bip01 L Forearm")->getHandle();
-                //boneInf.vertexIndex = weights[foreL].vertex;
-                //boneInf.weight = weights[foreL].weight;
-            }
-            else if (nodeName == "Bip01 R ForeTwist")
-            {
-                boneInf.boneIndex = mModel.getSkeleton()->getBone("Bip01 R Forearm")->getHandle();
-                //boneInf.vertexIndex = weights[foreR].vertex;
-                //boneInf.weight = weights[foreR].weight;
-            }
-            //else if (nodeName == "Bip01 L Sholder")
-                //boneInf.boneIndex = mModel.getSkeleton()->getBone("Bip01 L UpperArm")->getHandle();
-            //else if (nodeName == "Bip01 R Sholder")
-                //boneInf.boneIndex = mModel.getSkeleton()->getBone("Bip01 R UpperArm")->getHandle();
-
-#endif
-
-
                 sub->addBoneAssignment(boneInf);
             }
         }
@@ -824,20 +781,21 @@ void NiBtOgre::NiTriBasedGeom::buildFgPoses(Ogre::Mesh *mesh, const FgLib::FgTri
     {
         // need an animation for each emotion, and make the length configurable?
         Ogre::Animation *animation = mesh->createAnimation(diffMorphs[i], endTime/*totalAnimLength*/);
-        Ogre::VertexAnimationTrack* track = animation->createVertexTrack(mSubMeshIndex+1, Ogre::VAT_POSE);
+        Ogre::VertexAnimationTrack* track
+            = animation->createVertexTrack(unsigned short(mSubMeshIndex+1), Ogre::VAT_POSE);
 
         // ------------------------- Base ------------------------
-        Ogre::Pose* pose = mesh->createPose(mSubMeshIndex + 1, "Base");
+        Ogre::Pose* pose = mesh->createPose(Ogre::ushort(mSubMeshIndex + 1), "Base");
         for (std::size_t v = 0; v < vertices.size(); ++v) // vertices in headhuman.nif, etc
             pose->addVertex(v, Ogre::Vector3::ZERO);
 
         // see the comments on animation length above
         Ogre::VertexPoseKeyFrame* keyframe = track->createVertexPoseKeyFrame(0.f/*startTime*/);
         // influence value may require some experiments - maybe for lip sync go up to 1 but for others less?
-        keyframe->addPoseReference(poseIndex + 2*i + 0, 0.f/*influence*/);
+        keyframe->addPoseReference(Ogre::ushort(poseIndex + 2*i + 0), 0.f/*influence*/);
 
         keyframe = track->createVertexPoseKeyFrame(endTime); // WARN: keyframe reused
-        keyframe->addPoseReference(poseIndex + 2*i + 1, 1.f/*influence*/);
+        keyframe->addPoseReference(Ogre::ushort(poseIndex + 2*i + 1), 1.f/*influence*/);
 
         // --------------- pose, e.g. "Happy" --------------------
         const std::pair<float, std::vector<std::int16_t> >& diffMorphVertices
@@ -846,7 +804,7 @@ void NiBtOgre::NiTriBasedGeom::buildFgPoses(Ogre::Mesh *mesh, const FgLib::FgTri
         if (vertices.size()*3 != diffMorphVertices.second.size())
             throw std::runtime_error("NiTriBasedGeom: number of vertices in a pose differ to SubMesh");
 
-        pose = mesh->createPose(mSubMeshIndex + 1, diffMorphs[i]); // WARN: pose reused
+        pose = mesh->createPose(Ogre::ushort(mSubMeshIndex + 1), diffMorphs[i]); // WARN: pose reused
         for (std::size_t v = 0; v < vertices.size(); ++v) // vertices in headhuman.nif, etc
         {
             float scale = diffMorphVertices.first;
@@ -870,10 +828,10 @@ void NiBtOgre::NiTriBasedGeom::buildFgPoses(Ogre::Mesh *mesh, const FgLib::FgTri
         }
 
         keyframe = track->createVertexPoseKeyFrame(0.f/*startTime*/); // WARN: keyframe reused
-        keyframe->addPoseReference(poseIndex + 2*i + 2, 0.f/*influence*/);
+        keyframe->addPoseReference(Ogre::ushort(poseIndex + 2*i + 2), 0.f/*influence*/);
 
         keyframe = track->createVertexPoseKeyFrame(endTime); // WARN: keyframe reused
-        keyframe->addPoseReference(poseIndex + 2*i + 3, 1.f/*influence*/);
+        keyframe->addPoseReference(Ogre::ushort(poseIndex + 2*i + 3), 1.f/*influence*/);
     }
 }
 

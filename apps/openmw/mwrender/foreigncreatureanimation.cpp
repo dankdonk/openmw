@@ -158,7 +158,7 @@ ForeignCreatureAnimation::ForeignCreatureAnimation(const MWWorld::Ptr &ptr, cons
         if (!object)
         {
             object = modelManager.getOrLoadByName(meshName, group);
-            if (object->buildData().mIsSkinned)
+            if (object->buildData().isSkinnedModel()) // does it have an NiSkinInstance?
             {
                 // was skinned after all
                 object.reset();
@@ -209,7 +209,7 @@ ForeignCreatureAnimation::ForeignCreatureAnimation(const MWWorld::Ptr &ptr, cons
 // FIXME: duplicated with ForeignNpcAnimation
 void ForeignCreatureAnimation::hideDismember(NifOgre::ObjectScenePtr scene)
 {
-    if (!scene->mForeignObj->mModel->buildData().mIsSkinned)
+    if (!scene->mForeignObj->mModel->buildData().isSkinnedModel()) // does it have an NiSkinInstance?
         return;
 
     std::map<std::int32_t, std::vector<std::vector<std::uint16_t> > > dismemberBodyPartMap;
@@ -519,7 +519,7 @@ NifOgre::ObjectScenePtr ForeignCreatureAnimation::createObject(const std::string
         // create a vanilla model to test
         model = modelManager.getOrLoadByName(meshName, group);
 
-        if (model->buildData().mIsSkinned)
+        if (model->buildData().isSkinnedModel()) // does it have an NiSkinInstance?
         {
             // was skinned after all
             model.reset();

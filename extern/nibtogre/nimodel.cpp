@@ -195,28 +195,32 @@ void NiBtOgre::NiModel::createNiObjects()
 // find the bones, if any (i.e. prepare for the skeleton loader)
 void NiBtOgre::NiModel::findBoneNodes(bool buildObjectPalette, size_t rootIndex)
 {
-    if (mBuildData.needsSkeletonBuilt()) // TODO: should we allow skeleton with a single bone?
+    if (!mBuildData.needsSkeletonBuilt()) // TODO: should we allow skeleton with a single bone?
+        return;
+
+    const std::vector<NiNodeRef>& leafIndices = mBuildData.getBoneTreeLeafIndices();
+
+    // find the bones
+    int32_t leafIndex;
+    NiNode *leafNode;
+    mBoneRootNode = getRef<NiNode>(mRoots[rootIndex]);
+    for (std::size_t i = 0; i < leafIndices.size(); ++i)
     {
-        const std::vector<NiNodeRef>& leafIndices = mBuildData.getBoneTreeLeafIndices();
+        leafIndex = leafIndices[i];
+        std::string nodeType = blockType(leafIndex);
+        // TES4 dungeons\ayleidruins\exterior\arwellgrate01.nif has a NiBillboardNode target
+        if (nodeType != "NiNode" && nodeType != "NiBillboardNode" && nodeType != "BSFadeNode")
+            continue; // FIXME: morroblivion\flora\bushes\corkbulb01anim.nif, index 0x20
 
-        int32_t index;
-        NiNode *node;
-        for (std::size_t i = 0; i < leafIndices.size(); ++i)
-        {
-            index = leafIndices[i];
-            std::string name = blockType(index);
-            // TES4 dungeons\ayleidruins\exterior\arwellgrate01.nif has a NiBillboardNode target
-            if (name != "NiNode" && name != "NiBillboardNode" && name != "BSFadeNode")
-                continue; // FIXME: morroblivion\flora\bushes\corkbulb01anim.nif, index 0x20
+        leafNode = getRef<NiNode>(leafIndex);
+        NiNodeRef boneRoot = leafNode->findBones(mRoots[rootIndex]); // populate NiNode::mChildBoneNodes
 
-            node = getRef<NiNode>(index);
-            NiNodeRef boneRoot = node->findBones(mRoots[rootIndex]); // populate NiNode::mChildBoneNodes
-            if (boneRoot != -1)
-                mBoneRootNode = getRef<NiNode>(boneRoot); // just overwrite the previous result
+        // is skeleton root is different to scene root?  (-1 means we stopped midway so ignore)
+        if (boneRoot != -1 && boneRoot != rootIndex)
+            mBoneRootNode = getRef<NiNode>(boneRoot);
 
-            if (buildObjectPalette)
-                mObjectPalette[node->getName()] = index;
-        }
+        if (buildObjectPalette)
+            mObjectPalette[leafNode->getName()] = leafIndex;  // note: overwritten if same leaf node
     }
 }
 
@@ -309,8 +313,6 @@ void NiBtOgre::NiModel::createMesh(bool isMorphed, Ogre::SkeletonPtr suppliedSke
             mesh->setSkeletonName(mSkeleton->getName()); // Storm Atronach skeleton.nif has its own mesh
         else if (mSkeleton && getName() == "meshes\\characters\\_male\\skeleton.nif") // FIXME: FO3
             mesh->setSkeletonName(mSkeleton->getName());
-        else if (mSkeleton && !mBuildData.getAnimNodesMap().empty()) // FIXME: testing node animation doors
-            mesh->setSkeletonName(mSkeleton->getName());
 #if 0
         // FIXME: testing VGearDoor01.NIF
         if (mSkeleton && !mesh->hasSkeleton() && getName().find("geardoor") != std::string::npos)
@@ -337,7 +339,7 @@ void NiBtOgre::NiModel::createMesh(bool isMorphed, Ogre::SkeletonPtr suppliedSke
         || ((getName().find("skeleton.nif") != std::string::npos) && // FIXME: FO3
             //getName() == mNif) // HACK: FO3 avoid being triggerd by skinned model with skeleton name in front
             getRef<NiObjectNET>(getRootIndex())->hasIntegerExtraData("SkeletonID")) // FO3 triggers too often on its own :-(
-        || (mSkeleton && !mBuildData.getAnimNodesMap().empty()) // FIXME testing new door code
+        || (mSkeleton)// && !mBuildData.getAnimNodesMap().empty()) // FIXME testing new door code
         )
     {
         // FIXME: despite the name, maybe this should be "Scene Root" or "BSFadeNode" instead?
@@ -548,21 +550,13 @@ NiBtOgre::NiNode *NiBtOgre::NiModel::getSkeletonRoot()
 {
     if (!mBoneRootNode)
     {
-        // FIXME: not even sure why we're building skeletons for skinned models
-        // anyway these don't have "UPB"
-        if (mBuildData.mIsSkinned)
+        // FIXME: not even sure why we're building skeletons for skinned models which uses
+        // external supplied skeleton; anyway these don't have "UPB"
+        if (mBuildData.isSkinnedModel()) // does it have an NiSkinInstance?
         {
-            mBoneRootNode = getRef<NiNode>(mBuildData.mSkeletonRoot);
+            mBoneRootNode = getRef<NiNode>(mBuildData.getSkeletonRoot()); // use the one from NiSkinInstance
 
             return mBoneRootNode;
-        }
-
-        // a bit dumb, won't remember previous unsuccessful search
-        for (std::size_t i = 0; i < mRoots.size(); ++i)
-        {
-            findBoneNodes(false, mRoots[i]);
-            if (mBoneRootNode)
-                break; // more stupidity, won't search if there are any other bone roots
         }
     }
 

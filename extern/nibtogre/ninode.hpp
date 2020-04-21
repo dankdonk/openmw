@@ -76,13 +76,15 @@ namespace NiBtOgre
 
         //void buildTES3(Ogre::SceneNode *sceneNode, BtOgreInst *inst, NiObject *parentNiNode = nullptr);
 
+        NiNodeRef findBones(const NiNodeRef skeletonRoot, const NiNodeRef childNode);
+
         bool isBSBone(const NiNode *node) const;
         std::string getBoneLOD(const NiNode& node) const;
 
     protected:
         std::vector<NiAVObjectRef>      mChildren;
         std::vector<NiDynamicEffectRef> mEffects;
-        std::vector<NiNodeRef> mChildBoneNodes;
+        std::vector<NiNodeRef> mChildBoneNodes; // protected for NiSwitchNode
 
     public:
         NiNode(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data);
@@ -100,7 +102,6 @@ namespace NiBtOgre
         virtual void buildMesh(Ogre::Mesh* mesh);
 
         //
-        NiNodeRef findBones(const NiNodeRef skeletonRoot, const NiNodeRef childNode);
         NiNodeRef findBones(std::int32_t rootIndex);
 
         void addBones(Ogre::Skeleton *skeleton,

@@ -980,19 +980,24 @@ NiBtOgre::NiSkinInstance::NiSkinInstance(uint32_t index, NiStream *stream, const
     std::int32_t rIndex = -1;
     stream->read(rIndex);
     mSkeletonRoot = model.getRef<NiNode>(rIndex);
-    data.mSkeletonRoot = rIndex;
 
     std::uint32_t numBones;
     stream->read(numBones);
     mBoneRefs.resize(numBones);
+    bool hasValidBoneRef = false;
     for (unsigned int i = 0; i < numBones; ++i)
     {
         stream->read(mBoneRefs.at(i));
-        // TODO: why do we need a skeleton for a skinned model?  We're going to be using an external one
+        if (mBoneRefs[i] == -1)
+            continue;
+
+        hasValidBoneRef = true;
+        // NOTE: for a skinned model we're going to be using an external skeleton
         data.addBoneTreeLeafIndex(mBoneRefs[i]); // register for building a skeleton
-        if (!data.mIsSkinned && mBoneRefs[i] != -1)
-            data.mIsSkinned = true;
     }
+
+    if (hasValidBoneRef && rIndex != -1)
+        data.setSkeletonRoot(rIndex);
 }
 
 NiBtOgre::BSDismemberSkinInstance::BSDismemberSkinInstance(uint32_t index, NiStream *stream, const NiModel& model, BuildData& data)

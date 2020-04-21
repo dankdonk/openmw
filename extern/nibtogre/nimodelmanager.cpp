@@ -732,7 +732,7 @@ namespace NiBtOgre
         // build the rest of the model / misc odds and ends
 
         //if (pModel->targetBone() != "") // this should also work
-        if (!pModel->buildData().mIsSkinned)
+        if (!pModel->buildData().isSkinnedModel()) // does it have an NiSkinInstance?
         {
             if (!bInfo.baseTexture.empty())
                 pModel->setSkinTexture(skinTexture);
@@ -808,7 +808,7 @@ namespace NiBtOgre
             }
         }
 
-        if (!pModel->buildData().mIsSkinned)
+        if (!pModel->buildData().isSkinnedModel()) // does it have an NiSkinInstance?
         {
             if (!bInfo.baseTexture.empty())
                 pModel->setSkinTexture(skinTexture);

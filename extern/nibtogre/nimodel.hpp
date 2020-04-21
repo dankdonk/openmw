@@ -107,10 +107,14 @@ namespace NiBtOgre
         //            v                        v
         std::map<std::string, std::vector<std::string> > mAnimNodesMap;
 
+        NiNodeRef mSkeletonRoot; // a copy from NiSkinInstance
+
     public:
 
-        bool mIsSkinned;
-        NiNodeRef mSkeletonRoot;
+        inline NiNodeRef getSkeletonRoot() const { return mSkeletonRoot; }
+        inline void setSkeletonRoot(NiNodeRef nodeRef) { mSkeletonRoot = nodeRef; }
+        inline bool isSkinnedModel() const { return mSkeletonRoot != -1; }
+
         //bool mFlameNodesPresent;
         //bool mEditorMarkerPresent;
 
@@ -136,7 +140,7 @@ namespace NiBtOgre
         //       NiKeyframeController - target refs
         //       NiTimeController - initial target ref
         //       NiMultiTargetTransformController - extra target refs
-        //       NiTriBasedGeom - hack for testing animation of sub-mesh
+        //       (NiTriBasedGeom - hack for testing animation of sub-mesh)
         inline void addBoneTreeLeafIndex(NiNodeRef leaf) { mBoneTreeLeafIndices.push_back(leaf); }
         inline bool needsSkeletonBuilt() const { return mBoneTreeLeafIndices.size() > 1; }
         inline const std::vector<NiNodeRef>& getBoneTreeLeafIndices() const { return mBoneTreeLeafIndices; }
@@ -186,7 +190,7 @@ namespace NiBtOgre
         int mFlags; // some global properties
 
         BuildData(const NiModel& model)
-            : mModel(model), mIsSkinned(false), mSkeletonRoot(0)
+            : mModel(model), mSkeletonRoot(-1)
             , /*mFlameNodesPresent(false), mEditorMarkerPresent(false) ,*/ mBuildFlags(0)
             , mHasBhkConstraint(false)
             , mFlags(0)
@@ -252,7 +256,7 @@ namespace NiBtOgre
 
         bool mShowEditorMarkers; // usually only for OpenCS
 
-        // for skeleton.nif, etc, only
+        // for skeleton.nif, etc; key is the node name
         std::map<std::string, NiAVObjectRef> mObjectPalette;
 
         // default, copy and assignment not allowed

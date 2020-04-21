@@ -197,7 +197,7 @@ void NiBtOgre::NiNode::buildMesh(Ogre::Mesh *mesh)
     // an Ogre::SubMesh for each in mSubMeshGeometry
     for (size_t i = 0; i < mSubMeshChildren.size(); ++i)
     {
-        needTangents |= mSubMeshChildren.at(i)->buildSubMesh(mesh, bounds);
+        needTangents |= mSubMeshChildren[i]->buildSubMesh(mesh, bounds);
     }
 
     // build tangents if at least one of the sub-mesh's material needs them
@@ -221,8 +221,8 @@ void NiBtOgre::NiNode::getSkinIndices(std::vector<std::size_t>& skinIndices) con
 {
     for (size_t i = 0; i < mSubMeshChildren.size(); ++i)
     {
-        if (mSubMeshChildren.at(i)->hasVisibleSkin())
-            skinIndices.push_back(mSubMeshChildren.at(i)->getSubMeshIndex());
+        if (mSubMeshChildren[i]->hasVisibleSkin())
+            skinIndices.push_back(mSubMeshChildren[i]->getSubMeshIndex());
     }
 }
 
@@ -241,47 +241,44 @@ void NiBtOgre::NiNode::getDismemberParts(std::vector<std::vector<std::uint16_t> 
     }
 }
 
-// build a hierarchy of bones (i.e. mChildBoneNodes) so that a skeleton can be built, hopefully
-// a much smaller subset of the NiNode hierarchy
+// Build a hierarchy of bones (i.e. mChildBoneNodes) so that a skeleton can be built, hopefully
+// a much smaller subset of the NiNode hierarchy.
 //
-// recursively traverses the NiNode tree until the specified NiNode is found
-// childNode is the index of the caller of this method (which should be a child of this node)
+// This method recursively traverses the NiNode tree until the specified NiNode is found.
+// The childNode is the index of the caller of this method (which should be a child of this node).
+//
+// If we has been visited already, add the childNode (if not already) then return -1.
 NiBtOgre::NiNodeRef NiBtOgre::NiNode::findBones(const NiNodeRef targetRef, const NiNodeRef childNode)
 {
-    if (mChildBoneNodes.size() == 0) // implies target (hopefully skeleton root) not yet found
+    if (mChildBoneNodes.empty()) // implies the target (hopefully skeleton root) not yet found
     {
         if (NiObject::selfRef() == targetRef) // am I the one?
         {
             mChildBoneNodes.push_back(childNode);
-#if 0
-            return ;
-#else
-            // FIXME: only TES4 has "UPB" with bond info
+
+            // NOTE: only TES4 skeletons have "UPB" with bone info; for these it is
             // most likely that one of the children of mRoots[0] is the skeleton root
             std::string upb = mModel.getRef<NiNode>(childNode)->getStringExtraData("UPB");
             if (upb.find("BoneRoot") != std::string::npos)
             {
-                return childNode;
+                return childNode; // this sets mBoneRootNode to be childNode for getSkeletonRoot()
             }
             else
             {
-                // try myself?
+                // try myself just in case targetRef not mRoots[0] i.e. scene root?
                 upb = getStringExtraData("UPB");
                 if (upb.find("BoneRoot") != std::string::npos)
                     return targetRef;
-                else if (upb.find("KFAccumRoot") != std::string::npos) // FO3 workaround
-                    return targetRef;
-                else if (getName() == "Scene Root") // FO3 workaround
-                    return targetRef;
+                // FO3 workaround, but useless since they are at root anyway
+                //else if (upb.find("KFAccumRoot") != std::string::npos)
+                    //return targetRef;
                 else
-                    //return -1;
-                    return targetRef;
+                    return targetRef; // this sets the root to be also the skeleton root
             }
-#endif
         }
 
         if (mParent == nullptr) // should not happen!
-            throw std::runtime_error("NiNode without parent and Skeleton Root not yet found");
+            throw std::logic_error("NiNode without parent and Skeleton Root not yet found");
 
         // not the target, keep searching recursively
         NiNodeRef res = mParent->findBones(targetRef, NiObject::selfRef());
@@ -293,9 +290,9 @@ NiBtOgre::NiNodeRef NiBtOgre::NiNode::findBones(const NiNodeRef targetRef, const
     {
         if (std::find(mChildBoneNodes.begin(), mChildBoneNodes.end(), childNode) == mChildBoneNodes.end())
             mChildBoneNodes.push_back(childNode);
-    }
 
-    return -1;
+        return -1; // -1 means we never reached the specified targetRef
+    }
 }
 
 NiBtOgre::NiNodeRef NiBtOgre::NiNode::findBones(std::int32_t rootIndex)
@@ -345,7 +342,7 @@ void NiBtOgre::NiNode::addBones(Ogre::Skeleton *skeleton,
 
     Ogre::Bone *bone = nullptr;
 
-    // try to avoid "Scene Root" becoming a bone
+    // try to avoid "Scene Root" becoming a bone (why not?, just to save a node from being created?)
     if (!parentBone) // also most likely mParent == nullptr
     {
 #if 0

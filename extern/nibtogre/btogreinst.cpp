@@ -92,7 +92,7 @@ NiBtOgre::BtOgreInst::~BtOgreInst()
 void NiBtOgre::BtOgreInst::instantiateBodyPart(Ogre::SceneNode *baseNode, Ogre::Entity *skelBase)
 {
     // make a convenience copy
-    mIsSkinned = mModel->buildData().mIsSkinned;
+    mIsSkinned = mModel->buildData().isSkinnedModel(); // does it have an NiSkinInstance?
 
     buildEntities();
 
@@ -162,7 +162,7 @@ void NiBtOgre::BtOgreInst::instantiate()
     // i.e. for each NiNode with a mesh create a child scenenode
 
     // make a convenience copy
-    mIsSkinned = mModel->buildData().mIsSkinned;
+    mIsSkinned = mModel->buildData().isSkinnedModel(); // does it have an NiSkinInstance?
 
     buildEntities();
     //copyControllers();

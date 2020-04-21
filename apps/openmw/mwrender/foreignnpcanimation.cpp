@@ -1841,7 +1841,7 @@ void ForeignNpcAnimation::updateFO3NpcBase()
                         "General", mObjectRoot->mForeignObj->mModel.get(), ""/*raceName, raceTexture*/);
 
             // FIXME: confirm skinned
-            //if (model->buildData().mIsSkinned)
+            //if (model->buildData().isSkinnedModel())
 
             // create an instance of the model
             NifOgre::ObjectScenePtr scene
@@ -2335,7 +2335,7 @@ NifOgre::ObjectScenePtr ForeignNpcAnimation::createMorphedObject(const std::stri
     if (!object)
     {
         object = modelManager.getOrLoadByName(meshName, group);
-        if (object->buildData().mIsSkinned)
+        if (object->buildData().isSkinnedModel())
         {
             // skinned, so go ahead and create a morphed model
             object.reset();
@@ -2354,7 +2354,7 @@ NifOgre::ObjectScenePtr ForeignNpcAnimation::createMorphedObject(const std::stri
     scene->mForeignObj
         = std::make_unique<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(object, mInsert->createChildSceneNode()));
 
-    if (object->buildData().mIsSkinned)
+    if (object->buildData().isSkinnedModel()) // does it have an NiSkinInstance?
     {
         scene->mForeignObj->instantiateBodyPart(mInsert, mSkelBase);
     }
@@ -2444,7 +2444,7 @@ NifOgre::ObjectScenePtr ForeignNpcAnimation::createObject(const std::string& mes
         // create a vanilla model to test
         model = modelManager.getOrLoadByName(meshName, group);
 
-        if (model->buildData().mIsSkinned)
+        if (model->buildData().isSkinnedModel()) // does it have an NiSkinInstance?
         {
             // was skinned after all
             model.reset();
@@ -2467,7 +2467,7 @@ NifOgre::ObjectScenePtr ForeignNpcAnimation::createObject(const std::string& mes
     //    return false; // special handling for morphed model
     //}
 #if 0
-    else if(model->buildData().mIsSkinned) // test if the model is skinned
+    else if (model->buildData().isSkinnedModel()) // does it have an NiSkinInstance?
     {
         mObjectParts[type]
             = createSkinnedObject(scene, meshName, group, mObjectRoot->mForeignObj->mModel);
@@ -2486,7 +2486,7 @@ NifOgre::ObjectScenePtr ForeignNpcAnimation::createObject(const std::string& mes
         scene->mForeignObj
             = std::make_unique<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(model, mInsert->createChildSceneNode()));
 
-    if(model->buildData().mIsSkinned) // test if the model is skinned
+    if(model->buildData().isSkinnedModel()) // does it have an NiSkinInstance?
     {
         scene->mForeignObj->instantiateBodyPart(mInsert, mSkelBase);
     }
@@ -2777,7 +2777,7 @@ void ForeignNpcAnimation::replaceSkinTexture(NifOgre::ObjectScenePtr scene, cons
 
 void ForeignNpcAnimation::hideDismember(NifOgre::ObjectScenePtr scene)
 {
-    if (!scene->mForeignObj->mModel->buildData().mIsSkinned)
+    if (!scene->mForeignObj->mModel->buildData().isSkinnedModel()) // does it have an NiSkinInstance?
         return;
 
     std::map<std::int32_t, std::vector<std::vector<std::uint16_t> > > dismemberBodyPartMap;
