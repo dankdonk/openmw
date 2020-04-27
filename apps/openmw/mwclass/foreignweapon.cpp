@@ -52,16 +52,14 @@ namespace MWClass
 
     std::string ForeignWeapon::getName (const MWWorld::Ptr& ptr) const
     {
-        MWWorld::LiveCellRef<ESM4::Weapon> *ref =
-            ptr.get<ESM4::Weapon>();
+        MWWorld::LiveCellRef<ESM4::Weapon> *ref = ptr.get<ESM4::Weapon>();
 
         return ref->mBase->mFullName;
     }
 
     bool ForeignWeapon::hasToolTip (const MWWorld::Ptr& ptr) const
     {
-        MWWorld::LiveCellRef<ESM4::Weapon> *ref =
-            ptr.get<ESM4::Weapon>();
+        MWWorld::LiveCellRef<ESM4::Weapon> *ref = ptr.get<ESM4::Weapon>();
 
         return (ref->mBase->mFullName != "");
     }
@@ -69,8 +67,7 @@ namespace MWClass
     // FIXME
     MWGui::ToolTipInfo ForeignWeapon::getToolTipInfo (const MWWorld::Ptr& ptr) const
     {
-        MWWorld::LiveCellRef<ESM4::Weapon> *ref =
-            ptr.get<ESM4::Weapon>();
+        MWWorld::LiveCellRef<ESM4::Weapon> *ref = ptr.get<ESM4::Weapon>();
 
         MWGui::ToolTipInfo info;
 
@@ -78,7 +75,8 @@ namespace MWClass
 
         int count = ptr.getRefData().getCount();
 
-        info.icon = ref->mBase->mIcon;
+        info.caption = ref->mBase->mFullName + MWGui::ToolTips::getCountString(ptr.getRefData().getCount());
+        //info.icon = ref->mBase->mIcon;
 
         std::string text;
 

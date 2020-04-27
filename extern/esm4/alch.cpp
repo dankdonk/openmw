@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2016, 2018 cc9cii
+  Copyright (C) 2016, 2018, 2020 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -79,8 +79,14 @@ void ESM4::Potion::load(ESM4::Reader& reader)
                 reader.adjustFormId(mEffect.formId);
                 break;
             }
-            case ESM4::SUB_MODT:
             case ESM4::SUB_ENIT:
+            {
+                reader.get(mItem);
+                reader.adjustFormId(mItem.withdrawl);
+                reader.adjustFormId(mItem.sound);
+                break;
+            }
+            case ESM4::SUB_MODT:
             case ESM4::SUB_EFID:
             case ESM4::SUB_EFIT:
             case ESM4::SUB_CTDA:

@@ -2,12 +2,18 @@
 
 #include <extern/esm4/ammo.hpp>
 
+#include "../mwbase/environment.hpp"
+#include "../mwbase/world.hpp"
+#include "../mwbase/windowmanager.hpp"
+
 #include "../mwworld/ptr.hpp"
 #include "../mwworld/physicssystem.hpp"
 #include "../mwworld/cellstore.hpp"
 
 #include "../mwrender/objects.hpp"
 #include "../mwrender/renderinginterface.hpp"
+
+#include "../mwgui/tooltips.hpp"
 
 namespace MWClass
 {
@@ -45,7 +51,9 @@ namespace MWClass
 
     std::string ForeignAmmo::getName (const MWWorld::Ptr& ptr) const
     {
-        return "";
+        MWWorld::LiveCellRef<ESM4::Ammo> *ref = ptr.get<ESM4::Ammo>();
+
+        return ref->mBase->mFullName;
     }
 
     void ForeignAmmo::registerSelf()
@@ -53,6 +61,35 @@ namespace MWClass
         boost::shared_ptr<Class> instance (new ForeignAmmo);
 
         registerClass (typeid (ESM4::Ammo).name(), instance);
+    }
+
+    bool ForeignAmmo::hasToolTip (const MWWorld::Ptr& ptr) const
+    {
+        MWWorld::LiveCellRef<ESM4::Ammo> *ref = ptr.get<ESM4::Ammo>();
+
+        return (ref->mBase->mFullName != "");
+    }
+
+    MWGui::ToolTipInfo ForeignAmmo::getToolTipInfo (const MWWorld::Ptr& ptr) const
+    {
+        MWWorld::LiveCellRef<ESM4::Ammo> *ref = ptr.get<ESM4::Ammo>();
+
+        MWGui::ToolTipInfo info;
+        info.caption = ref->mBase->mFullName + MWGui::ToolTips::getCountString(ptr.getRefData().getCount());
+        //info.icon = ref->mBase->mIcon;
+
+        std::string text;
+
+        text += MWGui::ToolTips::getValueString(ref->mBase->mData.value, "#{sValue}");
+
+        if (MWBase::Environment::get().getWindowManager()->getFullHelp()) {
+            text += MWGui::ToolTips::getCellRefString(ptr.getCellRef());
+            //text += MWGui::ToolTips::getMiscString(ref->mBase->mScript, "Script");
+        }
+
+        info.text = text;
+
+        return info;
     }
 
     MWWorld::Ptr ForeignAmmo::copyToCellImpl(const MWWorld::Ptr &ptr, MWWorld::CellStore &cell) const

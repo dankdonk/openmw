@@ -109,8 +109,7 @@ namespace MWClass
     // This is required for activations to work
     std::string ForeignDoor::getName (const MWWorld::Ptr& ptr) const
     {
-        MWWorld::LiveCellRef<ESM4::Door> *ref =
-            ptr.get<ESM4::Door>();
+        MWWorld::LiveCellRef<ESM4::Door> *ref = ptr.get<ESM4::Door>();
 
         return ref->mBase->mFullName;
     }

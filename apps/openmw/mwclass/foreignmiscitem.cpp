@@ -84,16 +84,14 @@ namespace MWClass
 
     bool ForeignMiscItem::hasToolTip (const MWWorld::Ptr& ptr) const
     {
-        MWWorld::LiveCellRef<ESM4::MiscItem> *ref =
-            ptr.get<ESM4::MiscItem>();
+        MWWorld::LiveCellRef<ESM4::MiscItem> *ref = ptr.get<ESM4::MiscItem>();
 
         return (ref->mBase->mFullName != "");
     }
 
     MWGui::ToolTipInfo ForeignMiscItem::getToolTipInfo (const MWWorld::Ptr& ptr) const
     {
-        MWWorld::LiveCellRef<ESM4::MiscItem> *ref =
-            ptr.get<ESM4::MiscItem>();
+        MWWorld::LiveCellRef<ESM4::MiscItem> *ref = ptr.get<ESM4::MiscItem>();
 
         MWGui::ToolTipInfo info;
 
@@ -112,7 +110,7 @@ namespace MWClass
             countString = " (" + boost::lexical_cast<std::string>(count) + ")";
 
         info.caption = ref->mBase->mFullName + countString;
-        info.icon = ref->mBase->mIcon;
+        //info.icon = ref->mBase->mIcon;
 
 //      if (ref->mRef.getSoul() != "")
 //      {
@@ -140,8 +138,7 @@ namespace MWClass
 
     int ForeignMiscItem::getValue (const MWWorld::Ptr& ptr) const
     {
-        MWWorld::LiveCellRef<ESM4::MiscItem> *ref =
-            ptr.get<ESM4::MiscItem>();
+        MWWorld::LiveCellRef<ESM4::MiscItem> *ref = ptr.get<ESM4::MiscItem>();
 
         int value = ref->mBase->mData.value;
         if (ptr.getCellRef().getGoldValue() > 1 && ptr.getRefData().getCount() == 1)
