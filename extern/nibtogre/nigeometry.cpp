@@ -148,7 +148,25 @@ NiBtOgre::NiTriBasedGeom::NiTriBasedGeom(uint32_t index, NiStream *stream, const
     if (mCollisionObjectRef != -1)
         NiAVObject::mWorldTransform = NiGeometry::mParent->getWorldTransform() * mLocalTransform;
 
-    mParent->registerSubMesh(this);
+    // do not register if "hidden" e.g. FO3 block 17 "Trigger" in Traps\PressurePlate.NIF
+    bool isHidden = true;
+    std::string typeName;
+    for (std::size_t i = 0; i < NiAVObject::mProperty.size(); ++i)
+    {
+        if (mProperty[i] == -1)
+            continue;
+
+        // NOTE: can't use dynamic casting since the property object may not be constructed yet
+        typeName = model.blockType(mProperty[i]);
+        if (typeName == "NiTexturingProperty" || // TODO: add other property types?
+            typeName == "BSShaderPPLightingProperty" || typeName == "BSShaderNoLightingProperty")
+        {
+            isHidden = false;
+            break;
+        }
+    }
+    if (!isHidden)
+        mParent->registerSubMesh(this);
 
     // if there is node animation in the model include any sub-mesh to be part of the animation
     // FIXME: HACK for testing; may add bones that are not necessary
