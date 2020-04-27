@@ -32,17 +32,17 @@
 #include "reader.hpp"
 //#include "writer.hpp"
 
-ESM4::LeveledItem::LeveledItem() : mFormId(0), mFlags(0), mChanceNone(0), mHasLvlItemFlags(false),
+ESM4::LevelledItem::LevelledItem() : mFormId(0), mFlags(0), mChanceNone(0), mHasLvlItemFlags(false),
     mLvlItemFlags(0), mData(0)
 {
     mEditorId.clear();
 }
 
-ESM4::LeveledItem::~LeveledItem()
+ESM4::LevelledItem::~LevelledItem()
 {
 }
 
-void ESM4::LeveledItem::load(ESM4::Reader& reader)
+void ESM4::LevelledItem::load(ESM4::Reader& reader)
 {
     mFormId = reader.hdr().record.id;
     reader.adjustFormId(mFormId);
@@ -97,7 +97,7 @@ void ESM4::LeveledItem::load(ESM4::Reader& reader)
     }
 }
 
-bool ESM4::LeveledItem::calcAllLvlLessThanPlayer() const
+bool ESM4::LevelledItem::calcAllLvlLessThanPlayer() const
 {
     if (mHasLvlItemFlags)
         return (mLvlItemFlags & 0x01) != 0;
@@ -105,7 +105,7 @@ bool ESM4::LeveledItem::calcAllLvlLessThanPlayer() const
         return (mChanceNone & 0x80) != 0; // FIXME: 0x80 is just a guess
 }
 
-bool ESM4::LeveledItem::calcEachItemInCount() const
+bool ESM4::LevelledItem::calcEachItemInCount() const
 {
     if (mHasLvlItemFlags)
         return (mLvlItemFlags & 0x02) != 0;
@@ -113,7 +113,7 @@ bool ESM4::LeveledItem::calcEachItemInCount() const
         return mData != 0;
 }
 
-std::int8_t ESM4::LeveledItem::chanceNone() const
+std::int8_t ESM4::LevelledItem::chanceNone() const
 {
     if (mHasLvlItemFlags)
         return mChanceNone;
@@ -121,7 +121,7 @@ std::int8_t ESM4::LeveledItem::chanceNone() const
         return (mChanceNone & 0x7f); // FIXME: 0x80 is just a guess
 }
 
-bool ESM4::LeveledItem::useAll() const
+bool ESM4::LevelledItem::useAll() const
 {
     if (mHasLvlItemFlags)
         return (mLvlItemFlags & 0x04) != 0;
@@ -129,10 +129,10 @@ bool ESM4::LeveledItem::useAll() const
         return false;
 }
 
-//void ESM4::LeveledItem::save(ESM4::Writer& writer) const
+//void ESM4::LevelledItem::save(ESM4::Writer& writer) const
 //{
 //}
 
-//void ESM4::LeveledItem::blank()
+//void ESM4::LevelledItem::blank()
 //{
 //}

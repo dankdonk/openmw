@@ -36,7 +36,7 @@ namespace ESM4
     class Reader;
     class Writer;
 
-    struct LeveledCreature
+    struct LevelledCreature
     {
         FormId mFormId;       // from the header
         std::uint32_t mFlags; // from the header, see enum type RecordFlag for details
@@ -56,8 +56,8 @@ namespace ESM4
         bool calcEachItemInCount() const;
         std::int8_t chanceNone() const;
 
-        LeveledCreature();
-        virtual ~LeveledCreature();
+        LevelledCreature();
+        virtual ~LevelledCreature();
 
         virtual void load(ESM4::Reader& reader);
         //virtual void save(ESM4::Writer& writer) const;

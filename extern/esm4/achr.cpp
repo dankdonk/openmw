@@ -76,7 +76,7 @@ void ESM4::ActorCharacter::load(ESM4::Reader& reader)
             case ESM4::SUB_XAPR: // active parent
             case ESM4::SUB_XEZN: // encounter zone
             case ESM4::SUB_XHOR:
-            case ESM4::SUB_XLCM: // leveled creature
+            case ESM4::SUB_XLCM: // levelled creature
             case ESM4::SUB_XLCN: // location
             case ESM4::SUB_XLKR: // location route?
             case ESM4::SUB_XLRT: // location type
