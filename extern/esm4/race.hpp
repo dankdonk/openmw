@@ -129,6 +129,7 @@ namespace ESM4
         std::uint32_t mRaceFlags; // 0x0001 = playable?
 
         std::vector<BodyPart> mHeadParts;       // see HeadPartIndex
+        std::vector<BodyPart> mHeadPartsFemale; // see HeadPartIndex
 
         std::vector<BodyPart> mBodyPartsMale;   // see BodyPartIndex
         std::vector<BodyPart> mBodyPartsFemale; // see BodyPartIndex
@@ -138,9 +139,12 @@ namespace ESM4
 
         float mFaceGenMainClamp;
         float mFaceGenFaceClamp;
-        std::vector<float> mSymShapeModeCoefficients;    // should be 50
-        std::vector<float> mAsymShapeModeCoefficients;   // should be 30
-        std::vector<float> mSymTextureModeCoefficients;  // should be 50
+        std::vector<float> mSymShapeModeCoefficients;   // should be 50
+        std::vector<float> mSymShapeModeCoeffFemale;    // should be 50
+        std::vector<float> mAsymShapeModeCoefficients;  // should be 30
+        std::vector<float> mAsymShapeModeCoeffFemale;   // should be 30
+        std::vector<float> mSymTextureModeCoefficients; // should be 50
+        std::vector<float> mSymTextureModeCoeffFemale;  // should be 50
 
         std::map<FormId, std::int32_t> mDisposition; // race adjustments
         std::vector<FormId> mBonusSpells;            // race ability/power
