@@ -148,6 +148,8 @@ NiBtOgre::NiTriBasedGeom::NiTriBasedGeom(uint32_t index, NiStream *stream, const
     if (mCollisionObjectRef != -1)
         NiAVObject::mWorldTransform = NiGeometry::mParent->getWorldTransform() * mLocalTransform;
 
+    // FIXME: some controller target nodes have dummy meshes - how to distinguish these?
+    // e.g. FO3 block 182 "door_temp10" in UtlDoor01.NIF
     // do not register if "hidden" e.g. FO3 block 17 "Trigger" in Traps\PressurePlate.NIF
     bool isHidden = true;
     std::string typeName;
@@ -165,6 +167,28 @@ NiBtOgre::NiTriBasedGeom::NiTriBasedGeom(uint32_t index, NiStream *stream, const
             break;
         }
     }
+// FIXME: temp disable lighting fx (e.g. fxglowsimpfill....)
+//#if 0
+    bool hasAlpha = false;
+    bool hasStencil = false;
+    for (std::size_t i = 0; i < NiAVObject::mProperty.size(); ++i)
+    {
+        if (mProperty[i] == -1)
+            continue;
+
+        typeName = model.blockType(mProperty[i]);
+        if (typeName == "NiAlphaProperty")
+            hasAlpha = true;
+
+        if (typeName == "NiStencilProperty")
+            hasStencil = true;
+    }
+    if (hasAlpha && hasStencil && model.getName().find("effects") != std::string::npos)
+    {
+        isHidden = true;
+        std::cout << "hiding " << model.getName() << std::endl;
+    }
+//#endif
     if (!isHidden)
         mParent->registerSubMesh(this);
 
