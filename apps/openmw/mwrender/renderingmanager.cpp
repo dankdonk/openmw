@@ -594,7 +594,7 @@ void RenderingManager::configureAmbient(MWWorld::CellStore &mCell)
                  lgtm = store.getForeign<ESM4::LightingTemplate>().search(cell->mLightingTemplate);
                 if (lgtm != 0)
                 {
-                    mAmbientColor.setAsABGR(lgtm->mLighting.ambient*2); // FIXME: too dark otherwise
+                    mAmbientColor.setAsABGR(lgtm->mLighting.ambient);
                 }
             }
             else
