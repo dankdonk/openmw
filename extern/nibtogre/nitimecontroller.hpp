@@ -90,6 +90,14 @@ namespace NiBtOgre
     {
     public:
         NiTimeControllerRef mNextControllerRef;
+        // 0x0??? ????
+        //    ^^^ ^^^^
+        //    ||| |||+- Anim type, 0=APP_TIME 1=APP_INIT
+        //    ||| |++-- Cycle type, 00=Loop 01=Reverse 10=Clamp
+        //    ||| +---- Active
+        //    ||+------ Play backwards
+        //    |+------- Is manager controlled
+        //    +-------- Always seems to be set in Skyrim and Fallout NIFs, unknown function
         std::uint16_t mFlags;
         float mFrequency;
         float mPhase;
@@ -221,8 +229,8 @@ namespace NiBtOgre
         NiTimeControllerRef build(std::multimap<float, std::string>& textKeys,
                 std::vector<Ogre::Controller<float> >& controllers);
 
-        // "fake skin" node animation
-        void build(int32_t nameIndex, NiAVObject* target,
+        // node animation
+        void build(int32_t nameIndex, const NiAVObject* target,
                 NiTransformInterpolator *interpolator, float startTime, float stopTime);
     };
 

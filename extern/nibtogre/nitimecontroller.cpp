@@ -27,7 +27,7 @@
 
 #include <cassert>
 #include <stdexcept>
-//#include <iostream> // FIXME: debugging only
+#include <iostream> // FIXME: debugging only
 
 #include <OgreSkeleton.h>
 #include <OgreKeyFrame.h>
@@ -246,6 +246,62 @@ bool interpolate( T & value, const NiBtOgre::KeyGroup<T>& keyGroup, float time, 
     }
 
     return false;
+}
+
+// FIXME: exact same code in TransformController::Value - make it part of a utility class?
+Ogre::Quaternion interpQuatKey(const NiBtOgre::KeyGroup<Ogre::Quaternion>& keyGroup, uint32_t cycleType, float time)
+{
+    if (time <= keyGroup.indexMap.begin()->first)
+        return keyGroup.keys[keyGroup.indexMap.begin()->second].value;
+
+    std::map<float, int>::const_iterator nextIt = keyGroup.indexMap.lower_bound(time); // >=
+    if (nextIt != keyGroup.indexMap.end())
+    {
+        std::map<float, int>::const_iterator lastIt = nextIt;
+        --lastIt; // point to prev key
+
+        float lastTime = lastIt->first;
+        float nextTime = nextIt->first;
+        float x = (time - lastTime) / (nextTime - lastTime);
+
+        if (keyGroup.interpolation == 5)      // CONST
+        {
+            if ( x < 0.5f ) // step up at half way (or should it be step up at 1.0f instead?)
+                return keyGroup.keys[lastIt->second].value;
+            else
+                return keyGroup.keys[nextIt->second].value;
+        }
+        else if (keyGroup.interpolation == 1) // LINEAR
+        {
+            const Ogre::Quaternion& v1 = keyGroup.keys[lastIt->second].value;
+            const Ogre::Quaternion& v2 = keyGroup.keys[nextIt->second].value;
+
+            Ogre::Quaternion v3 = v1;
+            if (v1.Dot(v2) < 0)
+                v3 = v1.Inverse();
+            return Ogre::Quaternion::nlerp(x, v3, v2, true/*shortestPath*/);
+            //return Ogre::Quaternion::Slerp(x, v3, v2); // TODO: test this
+        }
+        else if (keyGroup.interpolation == 3) // TBC
+        {
+            // FIXME: use linear for now
+            const Ogre::Quaternion& v1 = keyGroup.keys[lastIt->second].value;
+            const Ogre::Quaternion& v2 = keyGroup.keys[nextIt->second].value;
+
+            return Ogre::Quaternion::nlerp(x, v1, v2);
+        }
+        else // quadratic interpolation not supported for QuatKey
+            throw std::runtime_error("interpQuatKey - Unsupported interpolation type "
+                    +std::to_string(keyGroup.interpolation)+" for Quaternion keys");
+    }
+    else // no key has >= time; i.e. time is greater than any of the keys' (TODO: should this happen?)
+    {
+        // FIXME: do we ever get here?
+        if (cycleType == 2) // CYCLE_CLAMP
+            return keyGroup.keys[keyGroup.indexMap.rbegin()->second].value;
+        else
+            return keyGroup.keys[keyGroup.indexMap.begin()->second].value; // wrap around
+    }
 }
 } // anon namespace
 
@@ -533,8 +589,9 @@ void NiBtOgre::NiMultiTargetTransformController::registerTarget(const NiControll
         mTargetInterpolators.push_back(std::make_pair(bone, interpolator));
 }
 
-// "fake skin" node animation
-void NiBtOgre::NiMultiTargetTransformController::build(int32_t nameIndex, NiAVObject* target, NiTransformInterpolator *interpolator, float startTime, float stopTime)
+// node animation
+// nameIndex is the name of NiControllerSequence, i.e. the animation name
+void NiBtOgre::NiMultiTargetTransformController::build(int32_t nameIndex, const NiAVObject* target, NiTransformInterpolator *interpolator, float startTime, float stopTime)
 {
     if ((NiTimeController::mFlags & 0x8) == 0) // not active
         return;
@@ -579,7 +636,6 @@ void NiBtOgre::NiMultiTargetTransformController::build(int32_t nameIndex, NiAVOb
     // setup data for later
     mData.addAnimBoneName(animationId, boneName);
 
-
     // get all the unique time keys
     std::vector<float> timeKeys;
 
@@ -598,6 +654,14 @@ void NiBtOgre::NiMultiTargetTransformController::build(int32_t nameIndex, NiAVOb
         for (unsigned int i = 0; i < frames.size(); ++i) // FIXME: repeated code
             if (std::find(timeKeys.begin(), timeKeys.end(), frames[i].time) == timeKeys.end())
                 timeKeys.push_back(frames[i].time);
+    }
+    else if (data->mRotationType == 1/*LINEAR*/ || data->mRotationType == 3/*TBC*/)
+    {
+        std::vector<Key<Ogre::Quaternion> > frames = data->mQuaternionKeys.keys;
+        for (unsigned int i = 0; i < frames.size(); ++i)
+            if (std::find(timeKeys.begin(), timeKeys.end(), frames[i].time) == timeKeys.end())
+                timeKeys.push_back(frames[i].time);
+        //std::cout << "quat keys " << boneName << " " << frames.size() << std::endl; // FIXME
     }
 
     if (data->mTranslations.keys.size() > 0)
@@ -646,11 +710,25 @@ void NiBtOgre::NiMultiTargetTransformController::build(int32_t nameIndex, NiAVOb
             // values are 0xff7fffff
             //if (interpolator->mRotation.w == -3.40282e+38 || interpolator->mRotation.x == -3.40282e+38 ||
             //    interpolator->mRotation.y == -3.40282e+38 || interpolator->mRotation.z == -3.40282e+38)
-            if (interpolator->mRotation.x < -5000) // some small value
+            if (interpolator->mRotation.x == -FLT_MAX)
                 kf->setRotation(q);
             else
                 kf->setRotation(interpolator->mRotation.Inverse() * q);
         }
+        else if (data->mRotationType == 1/*LINEAR*/ || data->mRotationType == 3/*TBC*/)
+        {
+            if (!data->mQuaternionKeys.keys.empty())
+            {
+                Ogre::Quaternion q = interpQuatKey(data->mQuaternionKeys, 2/*CYCLE_CLAMP*/, time);
+
+                if (interpolator->mRotation.x == -FLT_MAX)
+                    kf->setRotation(q);
+                else
+                    kf->setRotation(interpolator->mRotation.Inverse() * q);
+            }
+        }
+        else
+            std::cout << "rotation type not supported " << boneName << " " << data->mRotationType << std::endl;
 
         //if (boneName == "VDoorDoor01") // FIXME: testing only
             //std::cout << interpolator->mTranslation.x << std::endl;
@@ -672,7 +750,7 @@ void NiBtOgre::NiMultiTargetTransformController::build(int32_t nameIndex, NiAVOb
             //
             // Some interpolator transforms may be invalid
             // mTranslation = {x=-3.40282347e+38 y=-3.40282347e+38 z=-3.40282347e+38 }
-            if (interpolator->mTranslation.x < -5000) // some small value
+            if (interpolator->mTranslation.x == -FLT_MAX)
                 kf->setTranslate(value);
             else
                 kf->setTranslate(-interpolator->mTranslation + value);
