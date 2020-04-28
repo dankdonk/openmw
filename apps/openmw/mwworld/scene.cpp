@@ -305,7 +305,7 @@ namespace MWWorld
         MWBase::Environment::get().getWorld()->getLocalScripts().addCell (cell);
     }
 
-    void Scene::loadForeignCell (CellStore *cell, Loading::Listener* loadingListener)
+    void Scene::loadForeignCell (CellStore *cell, Loading::Listener* loadingListener, uint32_t worldId)
     {
         std::cout << "loading cell " << cell->getCell()->getDescription() << std::endl;
 
@@ -326,6 +326,8 @@ namespace MWWorld
         {
             const ForeignLand *land =
                     MWBase::Environment::get().getWorld()->getStore().get<ForeignLand>().find(cell->getForeignLandId());
+            //if (land)
+                //std::cout << "heightoffset " << land->mHeightMap.heightOffset << std::endl;
 
             // check that this cell has land data at all
             if (land && land->getLandData (ESM4::Land::LAND_VHGT))
@@ -718,7 +720,7 @@ namespace MWWorld
                         std::pair<CellStoreCollection::iterator, bool> result = mActiveCells.insert(cell);
 
                         if (result.second)
-                            loadForeignCell(cell, loadingListener);
+                            loadForeignCell(cell, loadingListener, worldId);
                     }
                     else
                     {

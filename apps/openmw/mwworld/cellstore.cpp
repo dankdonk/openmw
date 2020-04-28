@@ -827,7 +827,7 @@ namespace MWWorld
 
                 loadTes4Group(store, *esm[modType][modIndex]);
             }
-//#if 0
+#if 0
             const ForeignWorld *world
                 = MWBase::Environment::get().getWorld()->getStore().get<ForeignWorld>().find(static_cast<const ForeignCell*>(mCell)->mCell->mParent);
             if (!world)
@@ -842,8 +842,20 @@ namespace MWWorld
 
                 if (parentCell)
                     mForeignLand = parentCell->getForeignLandId();
+
+            const ForeignWorld *parentWorld
+                = MWBase::Environment::get().getWorld()->getStore().get<ForeignWorld>().find(world->mParent);
+                if (mForeignLand && parentWorld)
+                    std::cout << "parent land " << parentWorld->mLandLevel
+                              << " water " << parentWorld->mWaterLevel << std::endl;
             }
-//#endif
+            else
+            {
+                if (mForeignLand)
+                    std::cout << "land " << world->mLandLevel
+                              << " water " << world->mWaterLevel << std::endl;
+            }
+#endif
         }
     }
 
