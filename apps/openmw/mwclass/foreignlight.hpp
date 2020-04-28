@@ -11,17 +11,17 @@ namespace MWClass
 
         public:
 
-            /// Return ID of \a ptr
             virtual std::string getId (const MWWorld::Ptr& ptr) const;
 
             virtual void insertObjectRendering (const MWWorld::Ptr& ptr, const std::string& model, MWRender::RenderingInterface& renderingInterface) const;
-            ///< Add reference into a cell for rendering
 
             virtual void insertObject(const MWWorld::Ptr& ptr, const std::string& model, MWWorld::PhysicsSystem& physics) const;
 
             virtual std::string getName (const MWWorld::Ptr& ptr) const;
-            ///< \return name (the one that is to be presented to the user; not the internal one);
-            /// can return an empty string.
+
+            virtual bool hasToolTip (const MWWorld::Ptr& ptr) const;
+
+            virtual MWGui::ToolTipInfo getToolTipInfo (const MWWorld::Ptr& ptr) const;
 
             virtual std::pair<std::vector<int>, bool> getEquipmentSlots (const MWWorld::Ptr& ptr) const;
 

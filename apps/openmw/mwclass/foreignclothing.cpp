@@ -98,7 +98,7 @@ namespace MWClass
 
         MWGui::ToolTipInfo info;
         info.caption = ref->mBase->mFullName + MWGui::ToolTips::getCountString(ptr.getRefData().getCount());
-        info.icon = ref->mBase->mIconMale; // FIXME: there is also mIconFemale
+        //info.icon = ref->mBase->mIconMale;
 
         std::string text;
 

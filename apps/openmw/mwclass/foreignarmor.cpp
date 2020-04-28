@@ -2,8 +2,6 @@
 
 #include <extern/esm4/armo.hpp>
 
-#include "../mwgui/tooltips.hpp"
-
 #include "../mwbase/environment.hpp"
 #include "../mwbase/world.hpp"
 #include "../mwbase/windowmanager.hpp"
@@ -19,6 +17,8 @@
 
 #include "../mwrender/objects.hpp"
 #include "../mwrender/renderinginterface.hpp"
+
+#include "../mwgui/tooltips.hpp"
 
 namespace MWClass
 {
@@ -119,7 +119,8 @@ namespace MWClass
 
         int count = ptr.getRefData().getCount();
 
-        info.icon = ref->mBase->mIconMale;  // FIXME: there is also mIconFemale
+        info.caption = ref->mBase->mFullName + MWGui::ToolTips::getCountString(ptr.getRefData().getCount());
+        //info.icon = ref->mBase->mIconMale;
 
         std::string text;
 

@@ -4,6 +4,10 @@
 
 #include <extern/esm4/ligh.hpp>
 
+#include "../mwbase/environment.hpp"
+#include "../mwbase/world.hpp"
+#include "../mwbase/windowmanager.hpp"
+
 #include "../mwworld/ptr.hpp"
 #include "../mwworld/physicssystem.hpp"
 #include "../mwworld/cellstore.hpp"
@@ -11,6 +15,8 @@
 
 #include "../mwrender/objects.hpp"
 #include "../mwrender/renderinginterface.hpp"
+
+#include "../mwgui/tooltips.hpp"
 
 namespace MWClass
 {
@@ -58,7 +64,45 @@ namespace MWClass
 
     std::string ForeignLight::getName (const MWWorld::Ptr& ptr) const
     {
-        return "";
+        MWWorld::LiveCellRef<ESM4::Light> *ref = ptr.get<ESM4::Light>();
+
+        return ref->mBase->mFullName;
+    }
+
+    bool ForeignLight::hasToolTip (const MWWorld::Ptr& ptr) const
+    {
+        MWWorld::LiveCellRef<ESM4::Light> *ref = ptr.get<ESM4::Light>();
+
+        return (ref->mBase->mFullName != "");
+    }
+
+    // FIXME
+    MWGui::ToolTipInfo ForeignLight::getToolTipInfo (const MWWorld::Ptr& ptr) const
+    {
+        MWWorld::LiveCellRef<ESM4::Light> *ref = ptr.get<ESM4::Light>();
+
+        MWGui::ToolTipInfo info;
+
+        const MWWorld::ESMStore& store = MWBase::Environment::get().getWorld()->getStore();
+
+        int count = ptr.getRefData().getCount();
+
+        info.caption = ref->mBase->mFullName + MWGui::ToolTips::getCountString(ptr.getRefData().getCount());
+        //info.icon = ref->mBase->mIconMale;
+
+        std::string text;
+
+        text += "\n#{sWeight}: " + MWGui::ToolTips::toString(ref->mBase->mData.weight);
+        text += MWGui::ToolTips::getValueString(getValue(ptr), "#{sValue}");
+
+        if (MWBase::Environment::get().getWindowManager()->getFullHelp()) {
+            text += MWGui::ToolTips::getCellRefString(ptr.getCellRef());
+            //text += MWGui::ToolTips::getMiscString(ref->mBase->mScript, "Script"); // FIXME: need to lookup FormId
+        }
+
+        info.text = text;
+
+        return info;
     }
 
     std::pair<std::vector<int>, bool> ForeignLight::getEquipmentSlots (const MWWorld::Ptr& ptr) const
