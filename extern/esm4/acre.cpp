@@ -77,6 +77,7 @@ void ESM4::ActorCreature::load(ESM4::Reader& reader)
             case ESM4::SUB_XAPD: // FO3
             case ESM4::SUB_XAPR: // FO3
             case ESM4::SUB_XRDS: // FO3
+            case ESM4::SUB_XPRD: // FO3
             case ESM4::SUB_XATO: // FONV
             {
                 //std::cout << "ACRE " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;

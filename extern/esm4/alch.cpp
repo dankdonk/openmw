@@ -27,6 +27,7 @@
 #include "alch.hpp"
 
 #include <stdexcept>
+//#include <iostream> // FIXME
 
 #include "reader.hpp"
 //#include "writer.hpp"
@@ -81,6 +82,14 @@ void ESM4::Potion::load(ESM4::Reader& reader)
             }
             case ESM4::SUB_ENIT:
             {
+                if (subHdr.dataSize == 8) // TES4
+                {
+                    reader.get(&mItem, 8);
+                    mItem.withdrawl = 0;
+                    mItem.sound = 0;
+                    break;
+                }
+
                 reader.get(mItem);
                 reader.adjustFormId(mItem.withdrawl);
                 reader.adjustFormId(mItem.sound);
