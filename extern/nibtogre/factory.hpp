@@ -48,10 +48,10 @@ namespace NiBtOgre
         typedef Type (*Creator)(uint32_t, NiStream*, const NiModel&, BuildData&);
         typedef std::map<Key, Creator> Registry;
 
-        // Define key -> v relationship, return whether this is a new key.
-        bool define(Key const& key, Creator v)
+        // define key -> value relationship, return whether this is a new key
+        bool define(Key const& key, Creator value)
         {
-            return mRegistry.insert(typename Registry::value_type(key, v)).second;
+            return mRegistry.insert(typename Registry::value_type(key, value)).second;
         }
 
         Type create(Key const& key,

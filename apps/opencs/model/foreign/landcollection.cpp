@@ -54,7 +54,7 @@ int CSMForeign::LandCollection::load (ESM4::Reader& reader, bool base)
                reader.grp(2).type == ESM4::Grp_ExteriorSubCell &&
                reader.grp(1).type == ESM4::Grp_CellChild &&
                reader.grp(0).type == ESM4::Grp_CellTemporaryChild &&
-               "LAND record found in an unexpected group heirarchy");
+               "LAND record found in an unexpected group hierarchy");
 //#endif
         ESM4::FormId worldId = reader.currWorld();
         std::map<ESM4::FormId, CoordinateIndex>::iterator lb = mPositionIndex.lower_bound(worldId);
