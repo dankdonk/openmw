@@ -66,6 +66,10 @@ namespace MWSound
 
         float volumeFromType(PlayType type) const;
 
+        Ogre::StringVector mMusicResourceGroups;
+        Ogre::StringVector mForeignMusicResourceGroups;
+        bool mUseForeign; // to avoid modifying startRandomTitle()
+
         SoundManager(const SoundManager &rhs);
         SoundManager& operator=(const SoundManager &rhs);
 
@@ -92,7 +96,7 @@ namespace MWSound
         virtual bool isMusicPlaying();
         ///< Returns true if music is playing
 
-        virtual void playPlaylist(const std::string &playlist);
+        virtual void playPlaylist(const std::string &playlist, bool foreign = false);
         ///< Start playing music from the selected folder
         /// \param name of the folder that contains the playlist
 

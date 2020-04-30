@@ -6,6 +6,7 @@
 
 #include <extern/esm4/land.hpp>
 #include <extern/esm4/cell.hpp>
+#include <extern/esm4/musc.hpp>
 
 #include <components/nif/niffile.hpp>
 #include <components/misc/resourcehelpers.hpp>
@@ -594,8 +595,8 @@ namespace MWWorld
                 currentWorldId = static_cast<const MWWorld::ForeignCell*>(mCurrentCell->getCell())->mCell->mFormId;
         }
 
-        CellStore* current = MWBase::Environment::get().getWorld()->getWorldCell(worldId, X, Y);
-        if (!current) // FIXME
+        CellStore* cell = MWBase::Environment::get().getWorld()->getWorldCell(worldId, X, Y);
+        if (!cell) // FIXME
             return nullptr;
 
         mRendering.enableTerrain(true, worldId);
@@ -611,13 +612,79 @@ namespace MWWorld
         {
             worldChanged = true;
 
-            int current = 0;
+            // FIXME: most ESM4::World doesn't seem to have music for FO3
+            const MWWorld::ESMStore& store = MWBase::Environment::get().getWorld()->getStore();
+            ESM4::FormId currMusicId = 0;
+            if (mCurrentCell && mCurrentCell->isForeignCell())
+            {
+                const ForeignWorld *currWorld = store.get<ForeignWorld>().find(currentWorldId);
+                if (currWorld)
+                    currMusicId = currWorld->mMusic;
+            }
+
+            const ESM4::World *newWorld = store.get<ForeignWorld>().find(worldId);
+            ESM4::FormId newMusicId = 0;
+            if (newWorld)
+                newMusicId = newWorld->mMusic;
+
+            bool playNewMusic = false;
+            if (!mCurrentCell->isForeignCell() || !mCurrentCell->getCell()->isExterior())
+                playNewMusic = true;
+
+            std::string musicFile;
+            if (currMusicId && newMusicId && currMusicId != newMusicId)
+            {
+                const ESM4::Music *newMusic = store.getForeign<ESM4::Music>().search(newMusicId);
+                if (newMusic)
+                    musicFile = newMusic->mMusicFile;
+                else
+                    musicFile = "Explore";
+
+                playNewMusic = true;
+            }
+
+            if (!currMusicId && !newMusicId) // maybe TES4?
+            {
+                uint8_t currMusicType = 0;
+                if (mCurrentCell->isForeignCell())
+                    currMusicType = static_cast<const MWWorld::ForeignCell*>(mCurrentCell->getCell())->mCell->mMusicType;
+
+                uint8_t newMusicType = static_cast<const MWWorld::ForeignCell*>(cell->getCell())->mCell->mMusicType;
+                if (currMusicType != newMusicType || !mCurrentCell->isForeignCell())
+                {
+                    if (newMusicType == 2)
+                        musicFile = "dungeon\\";
+                    if (newMusicType == 1)
+                        musicFile = "public\\";
+                    else
+                        musicFile = "explore\\";
+
+                    playNewMusic = true;
+                }
+            }
+
+            if (playNewMusic)
+            {
+                // FIXME: fade in/out when changing music?
+                if (musicFile.find('.') != std::string::npos)
+                {
+                    std::cout << "world stream Music " << musicFile << std::endl;
+                    MWBase::Environment::get().getSoundManager()->streamMusic(musicFile);
+                }
+                else
+                {
+                    std::size_t pos = musicFile.find_first_of("\\");
+                    if (pos != std::string::npos)
+                    {
+                        std::cout << "world Music " << musicFile.substr(0, pos) << std::endl;
+                        MWBase::Environment::get().getSoundManager()->playPlaylist(musicFile.substr(0, pos), true);
+                    }
+                }
+            }
+
             CellStoreCollection::iterator active = mActiveCells.begin();
             while (active != mActiveCells.end())
-            {
                 unloadCell(active++);
-                ++current;
-            }
 
             // FIXME: need to unload dummy and visible distant
         }
@@ -770,7 +837,7 @@ namespace MWWorld
 //#endif
         }
 
-        MWBase::Environment::get().getWindowManager()->changeCell(current);
+        MWBase::Environment::get().getWindowManager()->changeCell(cell);
 
         mCellChanged = true;
 
@@ -778,7 +845,7 @@ namespace MWWorld
         // If we don't do this, objects that should be disabled will still appear on the map.
         mNeedMapUpdate = true;
 
-        return current;
+        return cell;
     }
 
     //We need the ogre renderer and a scene node.
@@ -905,14 +972,86 @@ namespace MWWorld
 
         std::cout << "Changing to foreign interior\n";
 
+        // Music selection logic (just a guess):
+        //
+        // * if we are coming from TES3, use new interior music
+        // * if we are coming from external, use new interior music
+        // * if we are coming from another interior, use new only if different
+        //   (unless there is no new music? if so continue prev or use "explore" as default?)
+        bool fromAnotherWorld = false;
+        bool playNewMusic = false;
+
+        if (!mCurrentCell->isForeignCell()) // coming from TES3
+            fromAnotherWorld = true;
+
+        if (mCurrentCell->getCell()->isExterior()) // not coming from another interior
+            fromAnotherWorld = true;
+
+        ESM4::FormId currMusicId = 0;
+        if (mCurrentCell && mCurrentCell->isForeignCell())
+            currMusicId = static_cast<const MWWorld::ForeignCell*>(mCurrentCell->getCell())->mCell->mMusic;
+
+        ESM4::FormId newMusicId = static_cast<const MWWorld::ForeignCell*>(cell->getCell())->mCell->mMusic;
+
+        std::string musicFile;
+        if (!fromAnotherWorld) // coming from another interior
+        {
+            // don't change if current music is "carry over"
+            if (currMusicId && newMusicId && currMusicId != newMusicId)
+            {
+                const ESM4::Music *newMusic
+                    = MWBase::Environment::get().getWorld()->getStore().getForeign<ESM4::Music>().search(newMusicId);
+                if (newMusic) // FO3 VaultTecHQ03 doesn't have any cell music or aspc
+                    musicFile = newMusic->mMusicFile;
+
+                playNewMusic = true;
+            }
+        }
+
+        if (!currMusicId && !newMusicId) // maybe TES4?
+        {
+            uint8_t currMusicType = 0;
+            if (mCurrentCell->isForeignCell())
+                currMusicType = static_cast<const MWWorld::ForeignCell*>(mCurrentCell->getCell())->mCell->mMusicType;
+
+            uint8_t newMusicType = static_cast<const MWWorld::ForeignCell*>(cell->getCell())->mCell->mMusicType;
+            if (currMusicType != newMusicType || !mCurrentCell->isForeignCell())
+            {
+                if (newMusicType == 2)
+                    musicFile = "dungeon\\";
+                if (newMusicType == 1)
+                    musicFile = "public\\";
+                else
+                    //musicFile = "explore\\";
+                    musicFile = "dungeon\\"; // default for interior is dungeon or public?
+
+                playNewMusic = true;
+            }
+        }
+
+        // FIXME: fade in/out when changing music?
+        if (fromAnotherWorld || playNewMusic)
+        {
+            if (musicFile.find('.') != std::string::npos) // TODO: does this ever happen?
+            {
+                std::cout << "interior cell stream Music " << musicFile << std::endl;
+                MWBase::Environment::get().getSoundManager()->streamMusic(musicFile);
+            }
+            else
+            {
+                std::size_t pos = musicFile.find_first_of("\\");
+                if (pos != std::string::npos)
+                {
+                    std::cout << "interior cell Music " << musicFile.substr(0, pos) << std::endl;
+                    MWBase::Environment::get().getSoundManager()->playPlaylist(musicFile.substr(0, pos), true);
+                }
+            }
+        }
+
         // unload
-        int current = 0;
         CellStoreCollection::iterator active = mActiveCells.begin();
         while (active!=mActiveCells.end())
-        {
             unloadCell (active++);
-            ++current;
-        }
 
         int refsToLoad = cell->getRefrEstimate(ESM4::Grp_CellTemporaryChild);
         loadingListener->setProgressRange(refsToLoad);
@@ -922,7 +1061,7 @@ namespace MWWorld
         if (result.second)
             loadForeignCell (cell, loadingListener);
 
-        changePlayerCell(cell, position, true);
+        changePlayerCell(cell, position, true); // cell becomes mCurrentCell here
 
         // adjust fog
         mRendering.configureFog(*mCurrentCell);
@@ -948,13 +1087,13 @@ namespace MWWorld
 
         changeCellGrid(x, y);
 
-        CellStore* current = MWBase::Environment::get().getWorld()->getExterior(x, y);
+        CellStore* cell = MWBase::Environment::get().getWorld()->getExterior(x, y);
 // FIXME: testing
 //#if 0
-        if (mCurrentCell && mCurrentCell->isForeignCell() && !current->isForeignCell())
+        if (mCurrentCell && mCurrentCell->isForeignCell() && !cell->isForeignCell())
             throw std::runtime_error("Scene::changeToExteriorCell from TES4 to Morrowind");
 //#endif
-        changePlayerCell(current, position, adjustPlayerPos);
+        changePlayerCell(cell, position, adjustPlayerPos);
 
         mRendering.updateTerrain();
     }

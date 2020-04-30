@@ -5,6 +5,7 @@
 #include <map>
 
 #include <components/misc/rng.hpp>
+#include <components/misc/stringops.hpp>
 
 #include "../mwbase/environment.hpp"
 #include "../mwbase/world.hpp"
@@ -43,6 +44,7 @@ namespace MWSound
         , mListenerDir(1,0,0)
         , mListenerUp(0,0,1)
         , mPausedSoundTypes(0)
+        , mUseForeign(false)
     {
         if(!useSound)
             return;
@@ -85,6 +87,29 @@ namespace MWSound
         catch(std::exception &e)
         {
             std::cout <<"Sound init failed: "<<e.what()<< std::endl;
+        }
+
+        // HACK: to allow playlist directories with same names
+        // TODO: the strings used for matching the game type could be put in the config
+        // (the default playPlaylist is TES3)
+        Ogre::StringVector groups = Ogre::ResourceGroupManager::getSingleton().getResourceGroups();
+        for (std::size_t i = 0; i < groups.size(); ++i)
+        {
+            Ogre::StringVectorPtr list
+                = Ogre::ResourceGroupManager::getSingleton().listResourceLocations(groups[i]);
+            for (std::size_t j = 0; j < list->size(); ++j)
+            {
+                std::string loc = Misc::StringUtils::lowerCase(list->at(j));
+                if (loc.find("morrowind") != std::string::npos)
+                    mMusicResourceGroups.push_back(groups[i]);
+                else if (loc.find("oblivion") != std::string::npos ||
+                         loc.find("fallout") != std::string::npos ||
+                         loc.find("skyrim") != std::string::npos)
+                {
+                    mForeignMusicResourceGroups.push_back(groups[i]);
+                    std::cout << "group " << groups[i] << ", " << list->at(j) << std::endl; // FIXME
+                }
+            }
         }
     }
 
@@ -214,11 +239,11 @@ namespace MWSound
         Ogre::StringVector filelist;
         if (mMusicFiles.find(mCurrentPlaylist) == mMusicFiles.end())
         {
-            Ogre::StringVector groups = Ogre::ResourceGroupManager::getSingleton().getResourceGroups ();
+            Ogre::StringVector& groups = mUseForeign ? mForeignMusicResourceGroups : mMusicResourceGroups;
             for (Ogre::StringVector::iterator it = groups.begin(); it != groups.end(); ++it)
             {
-                Ogre::StringVectorPtr resourcesInThisGroup = mResourceMgr.findResourceNames(*it,
-                                                                                            "Music/"+mCurrentPlaylist+"/*");
+                Ogre::StringVectorPtr resourcesInThisGroup
+                    = mResourceMgr.findResourceNames(*it, "Music/"+mCurrentPlaylist+"/*");
                 filelist.insert(filelist.end(), resourcesInThisGroup->begin(), resourcesInThisGroup->end());
             }
             mMusicFiles[mCurrentPlaylist] = filelist;
@@ -245,8 +270,13 @@ namespace MWSound
         return mMusic && mMusic->isPlaying();
     }
 
-    void SoundManager::playPlaylist(const std::string &playlist)
+    void SoundManager::playPlaylist(const std::string &playlist, bool foreign)
     {
+        if (foreign != mUseForeign) // flush old
+            mMusicFiles.clear();
+
+        mUseForeign = foreign;
+
         mCurrentPlaylist = playlist;
         startRandomTitle();
     }

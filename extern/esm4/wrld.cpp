@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015-2016, 2018-2019 cc9cii
+  Copyright (C) 2015-2016, 2018-2020 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -34,7 +34,7 @@
 
 ESM4::World::World() : mFormId(0), mFlags(0), mParent(0), mWorldFlags(0), mClimate(0), mWater(0),
                        mLandLevel(-2700.f), mWaterLevel(-14000.f),
-                       mMinX(0), mMinY(0), mMaxX(0), mMaxY(0), mSound(0)
+                       mMinX(0), mMinY(0), mMaxX(0), mMaxY(0), mSound(0), mMusic(0)
 {
     mEditorId.clear();
     mFullName.clear();
@@ -130,6 +130,20 @@ void ESM4::World::load(ESM4::Reader& reader)
                 reader.get(mWaterLevel);
                 break;
             }
+            // Only a few worlds in FO3 have music (I'm guessing 00090908 "explore" is the default?)
+            // 00090906 public  WRLD: 00000A74 MegatonWorld
+            // 00090CE7 base    WRLD: 0001A25D DCWorld18 (Arlington National Cemeteray)
+            // 00090CE7 base    WRLD: 0001A266 DCWorld09 (The Mall)
+            // 00090CE7 base    WRLD: 0001A267 DCWorld08 (Pennsylvania Avenue)
+            // 000BAD30 tranquilitylane WRLD: 000244A7 TranquilityLane
+            // 00090CE7 base    WRLD: 000271C0 MonumentWorld (The Washington Monument)
+            // 00090907 dungeon WRLD: 0004C4D1 MamaDolcesWorld (Mama Dolce's Loading Yard)
+            //
+            // FONV has only 3 (note the different format, also can't find the files?):
+            // 00119D2E freeside\freeside_01.mp3 0010BEEA FreesideWorld (Freeside)
+            // 00119D2E freeside\freeside_01.mp3 0012D94D FreesideNorthWorld (Freeside)
+            // 00119D2E freeside\freeside_01.mp3 0012D94E FreesideFortWorld (Old Mormon Fort)
+            case ESM4::SUB_ZNAM: reader.getFormId(mMusic); break;
             case ESM4::SUB_RNAM: // multiple
             case ESM4::SUB_MHDT:
             case ESM4::SUB_LTMP:
@@ -143,7 +157,6 @@ void ESM4::World::load(ESM4::Reader& reader)
             case ESM4::SUB_ONAM:
             case ESM4::SUB_TNAM:
             case ESM4::SUB_UNAM:
-            case ESM4::SUB_ZNAM:
             case ESM4::SUB_XWEM:
             case ESM4::SUB_MODT: // from Dragonborn onwards?
             case ESM4::SUB_INAM: // FO3

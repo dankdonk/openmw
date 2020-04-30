@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015-2016, 2018-2019 cc9cii
+  Copyright (C) 2015-2016, 2018-2020 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -40,8 +40,8 @@
 
 ESM4::Cell::Cell() : mParent(0), mFormId(0), mFlags(0), mCellFlags(0), mX(0), mY(0), mOwner(0),
                      mGlobal(0), mClimate(0), mWater(0), mWaterHeight(0.f),
-                     mLightingTemplate(0), mLightingTemplateFlags(0),
-                     mPreloaded(false)
+                     mLightingTemplate(0), mLightingTemplateFlags(0), mMusic(0), mAcousticSpace(0),
+                     mMusicType(0), mPreloaded(false)
 {
     mEditorId.clear();
     mFullName.clear();
@@ -200,7 +200,7 @@ void ESM4::Cell::load(ESM4::Reader& reader)
 #endif
                 break;
             }
-            case ESM4::SUB_XCLR:
+            case ESM4::SUB_XCLR: // possibly for TES4 only
             {
                 mRegions.resize(subHdr.dataSize/sizeof(FormId));
                 for (std::vector<FormId>::iterator it = mRegions.begin(); it != mRegions.end(); ++it)
@@ -238,8 +238,11 @@ void ESM4::Cell::load(ESM4::Reader& reader)
 
                 break;
             }
+            case ESM4::SUB_XCMT: reader.get(mMusicType); break; // Oblivion only?
             case ESM4::SUB_LTMP: reader.getFormId(mLightingTemplate); break;
             case ESM4::SUB_LNAM: reader.get(mLightingTemplateFlags); break; // seems to always follow LTMP
+            case ESM4::SUB_XCMO: reader.getFormId(mMusic); break;
+            case ESM4::SUB_XCAS: reader.getFormId(mAcousticSpace); break;
             case ESM4::SUB_TVDT:
             case ESM4::SUB_MHDT:
             case ESM4::SUB_XCGD:
@@ -248,13 +251,10 @@ void ESM4::Cell::load(ESM4::Reader& reader)
             case ESM4::SUB_XWCS:
             case ESM4::SUB_XWCU:
             case ESM4::SUB_XWCN:
-            case ESM4::SUB_XCAS:
             case ESM4::SUB_XCIM:
-            case ESM4::SUB_XCMO:
             case ESM4::SUB_XEZN:
             case ESM4::SUB_XWEM:
             case ESM4::SUB_XILL:
-            case ESM4::SUB_XCMT: // Oblivion only?
             case ESM4::SUB_XRNK: // Oblivion only?
             case ESM4::SUB_XCET: // FO3
             case ESM4::SUB_IMPF: // FO3 Zeta

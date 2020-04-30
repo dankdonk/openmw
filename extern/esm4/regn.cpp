@@ -29,7 +29,8 @@
 #include <cassert>
 #include <stdexcept>
 
-#include <iostream> // FIXME: debug only
+//#include <iostream> // FIXME: debug only
+//#include "formid.hpp"
 
 #include "reader.hpp"
 //#include "writer.hpp"
@@ -38,7 +39,7 @@
 #undef NDEBUG
 #endif
 
-ESM4::Region::Region() : mFormId(0), mFlags(0)
+ESM4::Region::Region() : mFormId(0), mFlags(0), mWorldId(0), mEdgeFalloff(0)
 {
     mEditorId.clear();
     mShader.clear();
@@ -108,10 +109,27 @@ void ESM4::Region::load(ESM4::Reader& reader)
                     throw std::runtime_error ("REGN RDMP data read error");
                 break;
             }
-            case ESM4::SUB_RDMD: // Only in Oblivion?
-            case ESM4::SUB_RDSD: // Only in Oblivion?  Possibly the same as RDSA // formId
+            // FO3 only 2: DemoMegatonSound and DC01 (both 0 RDMD)
+            // FONV none
+            case ESM4::SUB_RDMD: // music type; 0 default, 1 public, 2 dungeon
+            {
+#if 0
+                int dummy;
+                reader.get(dummy);
+                std::cout << "REGN " << mEditorId << " " << dummy << std::endl;
+#else
+                reader.skipSubRecordData();
+#endif
+                break;
+            }
+            case ESM4::SUB_RDMO: // not seen in FO3/FONV?
+            {
+                //std::cout << "REGN " << ESM4::printName(subHdr.typeId) << " skipping..."
+                          //<< subHdr.dataSize << std::endl;
+                reader.skipSubRecordData();
+            }
             case ESM4::SUB_RDGS: // Only in Oblivion? (ToddTestRegion1) // formId
-            case ESM4::SUB_RDMO:
+            case ESM4::SUB_RDSD: // Possibly the same as RDSA
             case ESM4::SUB_RDSA:
             case ESM4::SUB_RDWT: // formId
             case ESM4::SUB_RDOT: // formId
@@ -133,7 +151,8 @@ void ESM4::Region::load(ESM4::Reader& reader)
                 //RDAT skipping... following is grass
                 //RDGS skipping... unknown, maybe grass
 
-                //std::cout << "REGN " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
+                //std::cout << "REGN " << ESM4::printName(subHdr.typeId) << " skipping..."
+                          //<< subHdr.dataSize << std::endl;
                 reader.skipSubRecordData(); // FIXME: process the subrecord rather than skip
                 break;
             }
