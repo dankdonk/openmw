@@ -70,7 +70,6 @@ void ESM4::AcousticSpace::load(ESM4::Reader& reader)
                 throw std::runtime_error("ESM4::ASPC::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
         }
     }
-    //std::cout << "ASPC " << mEditorId << ": " << mQuestName << " @ " << mFileName << std::endl;
 }
 
 //void ESM4::AcousticSpace::save(ESM4::Writer& writer) const

@@ -78,7 +78,6 @@ void ESM4::ItemMod::load(ESM4::Reader& reader)
                 //throw std::runtime_error("ESM4::IMOD::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
         }
     }
-    //std::cout << "IMOD " << mEditorId << ": " << mQuestName << " @ " << mFileName << std::endl;
 }
 
 //void ESM4::ItemMod::save(ESM4::Writer& writer) const

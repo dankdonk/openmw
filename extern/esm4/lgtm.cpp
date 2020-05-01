@@ -93,7 +93,6 @@ void ESM4::LightingTemplate::load(ESM4::Reader& reader)
                 throw std::runtime_error("ESM4::LGTM::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
         }
     }
-    //std::cout << "LGTM " << mEditorId << ": " << mQuestName << " @ " << mFileName << std::endl;
 }
 
 //void ESM4::LightingTemplate::save(ESM4::Writer& writer) const

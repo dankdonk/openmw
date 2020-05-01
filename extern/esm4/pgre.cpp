@@ -94,7 +94,6 @@ void ESM4::PlacedGrenade::load(ESM4::Reader& reader)
                 //throw std::runtime_error("ESM4::PGRE::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
         }
     }
-    //std::cout << "PGRE " << mEditorId << ": " << mQuestName << " @ " << mFileName << std::endl;
 }
 
 //void ESM4::PlacedGrenade::save(ESM4::Writer& writer) const
