@@ -1082,9 +1082,10 @@ void Animation::play(const std::string &groupname, int priority, int groups, boo
                     ++textkey;
                 }
             }
-            else if(mPtr.getTypeName() == typeid(ESM4::Npc).name())
+            //else if(mPtr.getTypeName() == typeid(ESM4::Npc).name())
+            else if(mPtr.getTypeName() == typeid(ESM4::Door).name())
             {
-                //std::cout << groupname << std::endl;
+                std::cout << "anim textkey " << groupname << std::endl;
             }
 
             // count down the number of specified loops
@@ -1490,6 +1491,7 @@ std::vector<Ogre::Bone*> Animation::getBones(const std::string& animation) const
 }
 
 // FIXME: inefficient, refactor
+// FIXME: some doors have sound specified in the animation TextKey
 void Animation::activateAnimatedDoor(const std::string& animation, bool activate)
 {
     if (mObjectRoot->mForeignObj && mObjectRoot->mForeignObj->mNodeAnimEntityMap.size() > 0)

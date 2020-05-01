@@ -7,6 +7,8 @@
 #include <components/misc/rng.hpp>
 #include <components/misc/stringops.hpp>
 
+#include <extern/esm4/formid.hpp>
+
 #include "../mwbase/environment.hpp"
 #include "../mwbase/world.hpp"
 #include "../mwbase/statemanager.hpp"
@@ -134,31 +136,62 @@ namespace MWSound
                        float &volume, float &min, float &max)
     {
         MWBase::World* world = MWBase::Environment::get().getWorld();
-        const ESM::Sound *snd = world->getStore().get<ESM::Sound>().find(soundId);
-
-        volume *= static_cast<float>(pow(10.0, (snd->mData.mVolume / 255.0*3348.0 - 3348.0) / 2000.0));
-
-        if(snd->mData.mMinRange == 0 && snd->mData.mMaxRange == 0)
+        if (ESM4::isFormId(soundId))
         {
-            static const float fAudioDefaultMinDistance = world->getStore().get<ESM::GameSetting>().find("fAudioDefaultMinDistance")->getFloat();
-            static const float fAudioDefaultMaxDistance = world->getStore().get<ESM::GameSetting>().find("fAudioDefaultMaxDistance")->getFloat();
-            min = fAudioDefaultMinDistance;
-            max = fAudioDefaultMaxDistance;
+            const MWWorld::ForeignStore<ESM4::Sound>& soundStore = world->getStore().getForeign<ESM4::Sound>();
+            const ESM4::Sound *snd = soundStore.search(ESM4::stringToFormId(soundId));
+
+            volume *= static_cast<float>(pow(10.0, (snd->mData.staticAttenuation / 255.0*3348.0 - 3348.0) / 2000.0));
+
+            if(snd->mData.minAttenuation == 0 && snd->mData.maxAttenuation == 0)
+            {
+                static const float fAudioDefaultMinDistance = world->getStore().get<ESM::GameSetting>().find("fAudioDefaultMinDistance")->getFloat();
+                static const float fAudioDefaultMaxDistance = world->getStore().get<ESM::GameSetting>().find("fAudioDefaultMaxDistance")->getFloat();
+                min = fAudioDefaultMinDistance;
+                max = fAudioDefaultMaxDistance;
+            }
+            else
+            {
+                min = snd->mData.minAttenuation;
+                max = snd->mData.maxAttenuation;
+            }
+
+            static const float fAudioMinDistanceMult = world->getStore().get<ESM::GameSetting>().find("fAudioMinDistanceMult")->getFloat();
+            static const float fAudioMaxDistanceMult = world->getStore().get<ESM::GameSetting>().find("fAudioMaxDistanceMult")->getFloat();
+            min *= fAudioMinDistanceMult;
+            max *= fAudioMaxDistanceMult;
+            min = std::max(min, 1.0f);
+            max = std::max(min, max);
+
+            return "Sound\\"+snd->mSoundFile;
         }
         else
         {
-            min = snd->mData.mMinRange;
-            max = snd->mData.mMaxRange;
+            const ESM::Sound *snd = world->getStore().get<ESM::Sound>().find(soundId);
+            volume *= static_cast<float>(pow(10.0, (snd->mData.mVolume / 255.0*3348.0 - 3348.0) / 2000.0));
+
+            if(snd->mData.mMinRange == 0 && snd->mData.mMaxRange == 0)
+            {
+                static const float fAudioDefaultMinDistance = world->getStore().get<ESM::GameSetting>().find("fAudioDefaultMinDistance")->getFloat();
+                static const float fAudioDefaultMaxDistance = world->getStore().get<ESM::GameSetting>().find("fAudioDefaultMaxDistance")->getFloat();
+                min = fAudioDefaultMinDistance;
+                max = fAudioDefaultMaxDistance;
+            }
+            else
+            {
+                min = snd->mData.mMinRange;
+                max = snd->mData.mMaxRange;
+            }
+
+            static const float fAudioMinDistanceMult = world->getStore().get<ESM::GameSetting>().find("fAudioMinDistanceMult")->getFloat();
+            static const float fAudioMaxDistanceMult = world->getStore().get<ESM::GameSetting>().find("fAudioMaxDistanceMult")->getFloat();
+            min *= fAudioMinDistanceMult;
+            max *= fAudioMaxDistanceMult;
+            min = std::max(min, 1.0f);
+            max = std::max(min, max);
+
+            return "Sound/"+snd->mSound;
         }
-
-        static const float fAudioMinDistanceMult = world->getStore().get<ESM::GameSetting>().find("fAudioMinDistanceMult")->getFloat();
-        static const float fAudioMaxDistanceMult = world->getStore().get<ESM::GameSetting>().find("fAudioMaxDistanceMult")->getFloat();
-        min *= fAudioMinDistanceMult;
-        max *= fAudioMaxDistanceMult;
-        min = std::max(min, 1.0f);
-        max = std::max(min, max);
-
-        return "Sound/"+snd->mSound;
     }
 
     // Gets the combined volume settings for the given sound type

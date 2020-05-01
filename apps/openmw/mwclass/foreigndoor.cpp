@@ -138,8 +138,8 @@ namespace MWClass
         const ESM4::FormId openSoundId = ref->mBase->mOpenSound;
         const ESM4::FormId closeSoundId = ref->mBase->mCloseSound;
 
-        const std::string &openSound = soundStore.search(openSoundId)->mSoundFile;
-        const std::string &closeSound = soundStore.search(closeSoundId)->mSoundFile;
+        std::string openSound = ESM4::formIdToString(openSoundId);
+        std::string closeSound = ESM4::formIdToString(closeSoundId);
         const std::string lockedSound = "LockedDoor";
         const std::string trapActivationSound = "Disarm Trap Fail";
 
@@ -187,7 +187,6 @@ namespace MWClass
 
             if (ptr.getCellRef().getTeleport())
             {
-                //std::cout << "open door" << std::endl;
                 const MWWorld::ESMStore& store = MWBase::Environment::get().getWorld()->getStore();
                 const ESM4::FormId cellId = store.getDoorCellId(ptr.getCellRef().getDestDoorId());
                 const MWWorld::ForeignCell *cell = store.get<MWWorld::ForeignCell>().find(cellId);
@@ -197,13 +196,26 @@ namespace MWClass
                             cellId,
                             ptr.getCellRef().getDoorDest(), true));
 
-                //action->setSound(openSound);  // FIXME: temp disable
+                if (openSoundId)
+                    action->setSound(openSound);
 
                 return action;
             }
             else if (anim->hasAnimation("Open") || anim->hasAnimation("Close"))
             {
                 boost::shared_ptr<MWWorld::Action> action(new MWWorld::ActionDoor(ptr));
+                if (anim->hasAnimation("Open"))
+                    // NOTE: some doors have sound specified in the animation TextKey
+                    // (see MWRender::Animation::handleTextKey() and activateAnimatedDoor())
+                    // e.g. Oblivion\Architecture\Citadel\Interior\CitadelHall\CitadelHallDoor01Anim.NIF
+                    //      sound: DRSSpikedHallOpen, sound: DRSSpikedHallClose
+                    // e.g. Architecture\StoneWall\StoneWallGateDoor01.NIF
+                    //      sound: DRSMetalOpen02, sound: DRSMetalClose02
+                    if (openSoundId)
+                        action->setSound(openSound);
+                else
+                    if (closeSoundId)
+                        action->setSound(closeSound);
                 return action;
             }
             else
@@ -250,16 +262,14 @@ namespace MWClass
 
     bool ForeignDoor::hasToolTip (const MWWorld::Ptr& ptr) const
     {
-        MWWorld::LiveCellRef<ESM4::Door> *ref =
-            ptr.get<ESM4::Door>();
+        MWWorld::LiveCellRef<ESM4::Door> *ref = ptr.get<ESM4::Door>();
 
         return (ref->mBase->mFullName != "");
     }
 
     MWGui::ToolTipInfo ForeignDoor::getToolTipInfo (const MWWorld::Ptr& ptr) const
     {
-        MWWorld::LiveCellRef<ESM4::Door> *ref =
-            ptr.get<ESM4::Door>();
+        MWWorld::LiveCellRef<ESM4::Door> *ref = ptr.get<ESM4::Door>();
 
         MWGui::ToolTipInfo info;
         info.caption = ref->mBase->mFullName;
