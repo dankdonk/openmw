@@ -167,6 +167,13 @@ NiBtOgre::NiTriBasedGeom::NiTriBasedGeom(uint32_t index, NiStream *stream, const
             break;
         }
     }
+
+    if (mModel.nifVer() >= 0x14020007) // FIXME: user version ignored
+    {
+        if (!mBSProperties.empty())
+            isHidden = false; // FIXME: Skyrim workaround
+    }
+
 // FIXME: temp disable lighting fx (e.g. fxglowsimpfill....)
 //#if 0
     bool hasAlpha = false;
