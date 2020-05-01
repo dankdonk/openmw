@@ -107,7 +107,7 @@ namespace MWSound
                          loc.find("skyrim") != std::string::npos)
                 {
                     mForeignMusicResourceGroups.push_back(groups[i]);
-                    std::cout << "group " << groups[i] << ", " << list->at(j) << std::endl; // FIXME
+                    //std::cout << "group " << groups[i] << ", " << list->at(j) << std::endl; // FIXME
                 }
             }
         }

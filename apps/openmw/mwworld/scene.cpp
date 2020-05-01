@@ -6,6 +6,7 @@
 
 #include <extern/esm4/land.hpp>
 #include <extern/esm4/cell.hpp>
+#include <extern/esm4/wrld.hpp>
 #include <extern/esm4/musc.hpp>
 
 #include <components/nif/niffile.hpp>
@@ -657,7 +658,14 @@ namespace MWWorld
                     if (newMusicType == 1)
                         musicFile = "public\\";
                     else
-                        musicFile = "explore\\";
+                    {
+                        if ((newWorld->mWorldFlags & ESM4::World::WLD_Oblivion) != 0 || newWorld->mSound == 2)
+                            musicFile = "dungeon\\";
+                        else if (newWorld->mSound == 1)
+                            musicFile = "public\\";
+                        else
+                            musicFile = "explore\\";
+                    }
 
                     playNewMusic = true;
                 }
@@ -1022,8 +1030,21 @@ namespace MWWorld
                 if (newMusicType == 1)
                     musicFile = "public\\";
                 else
-                    //musicFile = "explore\\";
-                    musicFile = "dungeon\\"; // default for interior is dungeon or public?
+                {
+                    std::uint8_t flags
+                        = static_cast<const MWWorld::ForeignCell*>(cell->getCell())->mCell->mCellFlags;
+
+                    if ((flags & ESM4::CELL_Public) != 0)
+                        musicFile = "public\\";
+                    else if ((flags & ESM4::CELL_HideLand) != 0)
+                    {
+                        std::cout << "Oblivion interior" << std::endl;
+                        musicFile = "dungeon\\";
+                    }
+                    else
+                        musicFile = "dungeon\\"; // default for interior is dungeon?
+                        //musicFile = "explore\\";
+                }
 
                 playNewMusic = true;
             }
