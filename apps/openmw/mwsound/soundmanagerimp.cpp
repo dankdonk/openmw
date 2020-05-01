@@ -139,7 +139,7 @@ namespace MWSound
         if (ESM4::isFormId(soundId))
         {
             const MWWorld::ForeignStore<ESM4::Sound>& soundStore = world->getStore().getForeign<ESM4::Sound>();
-            const ESM4::Sound *snd = soundStore.search(ESM4::stringToFormId(soundId));
+            const ESM4::Sound *snd = soundStore.search(ESM4::stringToFormId(soundId)); // FIXME: TES5 FormId 0003C816
 
             volume *= static_cast<float>(pow(10.0, (snd->mData.staticAttenuation / 255.0*3348.0 - 3348.0) / 2000.0));
 

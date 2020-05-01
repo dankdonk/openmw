@@ -29,7 +29,7 @@
 #include "musc.hpp"
 
 #include <stdexcept>
-#include <iostream> // FIXME: for debugging only
+//#include <iostream> // FIXME: for debugging only
 
 //#include "formid.hpp"
 
@@ -62,14 +62,16 @@ void ESM4::Music::load(ESM4::Reader& reader)
                                  //std::cout << "music: " << formIdToString(mFormId) << " " << mMusicFile << std::endl;
                                  break;
             case ESM4::SUB_ANAM: // FONV float (attenuation in db? loop if positive?)
+            case ESM4::SUB_WNAM: // TES5
+            case ESM4::SUB_PNAM: // TES5
+            case ESM4::SUB_TNAM: // TES5
             {
+                //std::cout << "MUSC " << ESM4::printName(subHdr.typeId) << " skipping..."
+                          //<< subHdr.dataSize << std::endl;
                 reader.skipSubRecordData();
                 break;
             }
             default:
-                //std::cout << "MUSC " << ESM4::printName(subHdr.typeId) << " skipping..."
-                          //<< subHdr.dataSize << std::endl;
-                //reader.skipSubRecordData();
                 throw std::runtime_error("ESM4::MUSC::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
         }
     }

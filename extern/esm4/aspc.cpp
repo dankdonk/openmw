@@ -27,7 +27,7 @@
 #include "aspc.hpp"
 
 #include <stdexcept>
-#include <iostream> // FIXME: for debugging only
+//#include <iostream> // FIXME: for debugging only
 
 #include "reader.hpp"
 //#include "writer.hpp"
@@ -59,6 +59,7 @@ void ESM4::AcousticSpace::load(ESM4::Reader& reader)
             case ESM4::SUB_ANAM:
             case ESM4::SUB_INAM:
             case ESM4::SUB_WNAM:
+            case ESM4::SUB_BNAM: // TES5
             {
                 //std::cout << "ASPC " << ESM4::printName(subHdr.typeId) << " skipping..."
                           //<< subHdr.dataSize << std::endl;
@@ -66,9 +67,6 @@ void ESM4::AcousticSpace::load(ESM4::Reader& reader)
                 break;
             }
             default:
-                //std::cout << "ASPC " << ESM4::printName(subHdr.typeId) << " skipping..."
-                          //<< subHdr.dataSize << std::endl;
-                //reader.skipSubRecordData();
                 throw std::runtime_error("ESM4::ASPC::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
         }
     }

@@ -1002,18 +1002,16 @@ namespace MWWorld
         ESM4::FormId newMusicId = static_cast<const MWWorld::ForeignCell*>(cell->getCell())->mCell->mMusic;
 
         std::string musicFile;
-        if (!fromAnotherWorld) // coming from another interior
+        if (fromAnotherWorld ||
+                // if coming from another interior don't change if current music is "carry over"
+                (currMusicId && newMusicId && currMusicId != newMusicId))
         {
-            // don't change if current music is "carry over"
-            if (currMusicId && newMusicId && currMusicId != newMusicId)
-            {
-                const ESM4::Music *newMusic
-                    = MWBase::Environment::get().getWorld()->getStore().getForeign<ESM4::Music>().search(newMusicId);
-                if (newMusic) // FO3 VaultTecHQ03 doesn't have any cell music or aspc
-                    musicFile = newMusic->mMusicFile;
+            const ESM4::Music *newMusic
+                = MWBase::Environment::get().getWorld()->getStore().getForeign<ESM4::Music>().search(newMusicId);
+            if (newMusic) // FO3 VaultTecHQ03 doesn't have any cell music or aspc
+                musicFile = newMusic->mMusicFile;
 
-                playNewMusic = true;
-            }
+            playNewMusic = true;
         }
 
         if (!currMusicId && !newMusicId) // maybe TES4?
@@ -1149,7 +1147,7 @@ namespace MWWorld
         int xRight  = int((x - 16 + 32) / 32) * 32; // = int((x + 16) / 32) * 32
         int yBottom = int((y - 16 - 32) / 32) * 32; // = int((y - 48) / 32) * 32
         int yTop    = int((y - 16 + 32) / 32) * 32; // = int((y + 16) / 32) * 32
-
+#if 0
         //std::stringstream ss;
         //ss << std::setw(2) << std::setfill('0') << i;
         //std::string mesh = ss.str();
@@ -1188,7 +1186,7 @@ namespace MWWorld
             lodFiles.push_back(mesh);
             mRendering.addLandscape(worldId, x, y, lodFiles.back());
         }
-
+#endif
         // objects
         CellStore *current = updateWorldCellsAtGrid(worldId, x, y);
         if (!current)

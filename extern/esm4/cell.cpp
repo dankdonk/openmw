@@ -187,7 +187,7 @@ void ESM4::Cell::load(ESM4::Reader& reader)
                     else
                     {
                         assert(subHdr.dataSize == 1 && "CELL unexpected DATA flag size");
-                        reader.get((std::uint8_t&)mCellFlags);
+                        reader.get(&mCellFlags, sizeof(std::uint8_t));
                     }
                 else
                 {

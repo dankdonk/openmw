@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015-2016, 2018 cc9cii
+  Copyright (C) 2015-2016, 2018, 2020 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -82,6 +82,7 @@ void ESM4::Region::load(ESM4::Reader& reader)
                     std::cout << padding  << "RPLD: 0x" << std::hex << *it << std::endl;
 #endif
                 }
+
                 break;
             }
             case ESM4::SUB_RDAT:
@@ -127,6 +128,7 @@ void ESM4::Region::load(ESM4::Reader& reader)
                 //std::cout << "REGN " << ESM4::printName(subHdr.typeId) << " skipping..."
                           //<< subHdr.dataSize << std::endl;
                 reader.skipSubRecordData();
+                break;
             }
             case ESM4::SUB_RDGS: // Only in Oblivion? (ToddTestRegion1) // formId
             case ESM4::SUB_RDSD: // Possibly the same as RDSA
@@ -136,6 +138,7 @@ void ESM4::Region::load(ESM4::Reader& reader)
             case ESM4::SUB_RDID: // FONV
             case ESM4::SUB_RDSB: // FONV
             case ESM4::SUB_RDSI: // FONV
+            case ESM4::SUB_NVMI: // TES5
             {
                 //RDAT skipping... following is a map
                 //RDMP skipping... map name

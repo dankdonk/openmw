@@ -244,7 +244,8 @@ void ESMStore::loadTes4Group (ESM::ESMReader &esm)
                 hdr.group.label.value == ESM4::REC_DIAL || hdr.group.label.value == ESM4::REC_INFO ||
                 hdr.group.label.value == ESM4::REC_QUST || hdr.group.label.value == ESM4::REC_PACK ||
                 hdr.group.label.value == ESM4::REC_ASPC || hdr.group.label.value == ESM4::REC_IMOD ||
-                hdr.group.label.value == ESM4::REC_PWAT || hdr.group.label.value == ESM4::REC_SCOL
+                hdr.group.label.value == ESM4::REC_PWAT || hdr.group.label.value == ESM4::REC_SCOL ||
+                hdr.group.label.value == ESM4::REC_MUSC
                 )
             {
                 reader.saveGroupStatus();
@@ -483,7 +484,7 @@ void ESMStore::loadTes4Record (ESM::ESMReader& esm)
                              mForeignIds[id.mId] = MKTAG('D','I','M','O'); break;
         // ---- referenceables end
         // WTHR, CLMT
-        //case ESM4::REC_REGN: reader.getRecordData(); mForeignRegions.loadTes4(reader); break;
+        case ESM4::REC_REGN: reader.getRecordData(); mForeignRegions.loadTes4(reader); break;
         case ESM4::REC_CELL:
         {
             // do not load and just save context
@@ -608,10 +609,11 @@ void ESMStore::loadTes4Record (ESM::ESMReader& esm)
             break;
         }
 #endif
-        case ESM4::REC_LGTM: reader.getRecordData(); mForeignLightingTemplates.loadTes4(reader); break;
+        case ESM4::REC_LGTM: reader.getRecordData(); mLightingTemplates.loadTes4(reader); break;
+        case ESM4::REC_MUSC: reader.getRecordData(); mMusic.loadTes4(reader); break;
         // only gets loaded in CellStore::loadTes4Record()?
         //case ESM4::REC_PGRE: reader.getRecordData(); mForeignGrenades.loadTes4(reader); break;
-        case ESM4::REC_REGN:
+        //case ESM4::REC_REGN:
         case ESM4::REC_PHZD: // Skyrim only?
         case ESM4::REC_ROAD: case ESM4::REC_NAVM: case ESM4::REC_NAVI:
         case ESM4::REC_IDLE:

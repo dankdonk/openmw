@@ -61,6 +61,7 @@
 #include <extern/esm4/imod.hpp>
 #include <extern/esm4/pwat.hpp>
 #include <extern/esm4/scol.hpp>
+#include <extern/esm4/musc.hpp>
 
 #include <components/esm/records.hpp>
 #include "store.hpp"
@@ -149,7 +150,9 @@ namespace MWWorld
         ForeignStore<ESM4::Quest>      mForeignQuests;
         ForeignStore<ESM4::AIPackage>  mForeignAIPackages;
         ForeignStore<ESM4::AnimObject> mForeignAnimObjs;
-        ForeignStore<ESM4::LightingTemplate> mForeignLightingTemplates;
+        ForeignStore<ESM4::LightingTemplate> mLightingTemplates;
+        ForeignStore<ESM4::Music>      mMusic;
+        ForeignStore<ESM4::Region>     mForeignRegions;
         // Foreign referenceables
         ForeignStore<ESM4::Sound>      mForeignSounds;
         ForeignStore<ESM4::Activator>  mForeignActivators;
@@ -364,9 +367,11 @@ namespace MWWorld
 
             mStores[MKTAG('O','A','N','I')] = &mForeignAnimObjs;
 
-            mStores[MKTAG('D','W','R','L')] = &mForeignWorlds;
-            mStores[MKTAG('L','C','E','L')] = &mForeignCells;
-            mStores[MKTAG('D','L','A','N')] = &mForeignLands;
+            // FIXME: do we need these or only referenceables?
+            //mStores[MKTAG('D','W','R','L')] = &mForeignWorlds;
+            //mStores[MKTAG('L','C','E','L')] = &mForeignCells;
+            //mStores[MKTAG('D','L','A','N')] = &mForeignLands;
+            //mStores[MKTAG('N','R','E','G')] = &mForeignRegions;
 
             mPathgrids.setCells(mCells);
         }
@@ -784,7 +789,17 @@ namespace MWWorld
 
     template <>
     inline const ForeignStore<ESM4::LightingTemplate>& ESMStore::getForeign<ESM4::LightingTemplate>() const {
-        return mForeignLightingTemplates;
+        return mLightingTemplates;
+    }
+
+    template <>
+    inline const ForeignStore<ESM4::Music>& ESMStore::getForeign<ESM4::Music>() const {
+        return mMusic;
+    }
+
+    template <>
+    inline const ForeignStore<ESM4::Region>& ESMStore::getForeign<ESM4::Region>() const {
+        return mForeignRegions;
     }
 
     template <>
