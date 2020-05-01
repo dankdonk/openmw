@@ -94,6 +94,8 @@ set(ESM4_SOURCE_FILES
     pwat.cpp
     scol.cpp
     musc.cpp
+    aloc.cpp
+    mset.cpp
     formid.cpp
     reader.cpp
 )

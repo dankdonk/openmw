@@ -62,6 +62,8 @@
 #include <extern/esm4/pwat.hpp>
 #include <extern/esm4/scol.hpp>
 #include <extern/esm4/musc.hpp>
+#include <extern/esm4/aloc.hpp>
+#include <extern/esm4/mset.hpp>
 
 #include <components/esm/records.hpp>
 #include "store.hpp"
@@ -152,6 +154,8 @@ namespace MWWorld
         ForeignStore<ESM4::AnimObject> mForeignAnimObjs;
         ForeignStore<ESM4::LightingTemplate> mLightingTemplates;
         ForeignStore<ESM4::Music>      mMusic;
+        ForeignStore<ESM4::MediaLocationController> mMediaLocCtlr;
+        ForeignStore<ESM4::MediaSet>   mMediaSet;
         ForeignStore<ESM4::Region>     mForeignRegions;
         // Foreign referenceables
         ForeignStore<ESM4::Sound>      mForeignSounds;
@@ -795,6 +799,16 @@ namespace MWWorld
     template <>
     inline const ForeignStore<ESM4::Music>& ESMStore::getForeign<ESM4::Music>() const {
         return mMusic;
+    }
+
+    template <>
+    inline const ForeignStore<ESM4::MediaLocationController>& ESMStore::getForeign<ESM4::MediaLocationController>() const {
+        return mMediaLocCtlr;
+    }
+
+    template <>
+    inline const ForeignStore<ESM4::MediaSet>& ESMStore::getForeign<ESM4::MediaSet>() const {
+        return mMediaSet;
     }
 
     template <>
