@@ -163,7 +163,29 @@ namespace MWSound
             min = std::max(min, 1.0f);
             max = std::max(min, max);
 
-            return "Sound\\"+snd->mSoundFile;
+            std::string soundFile = snd->mSoundFile;
+            // FO3 has weird file naming e.g. sound\fx\drs\metalsheet_01\close\drs_metalsheet_01_close.wav
+            if (soundFile.find('.') != std::string::npos)
+            {
+                return "Sound\\"+soundFile;
+            }
+            else
+            {
+                Ogre::StringVector filelist;
+                Ogre::StringVector& groups = mUseForeign ? mForeignMusicResourceGroups : mMusicResourceGroups;
+                for (Ogre::StringVector::iterator it = groups.begin(); it != groups.end(); ++it)
+                {
+                    Ogre::StringVectorPtr filesInThisGroup
+                        = mResourceMgr.findResourceNames(*it, "Sound\\"+soundFile+"*");
+                    filelist.insert(filelist.end(), filesInThisGroup->begin(), filesInThisGroup->end());
+                }
+
+                if(!filelist.size())
+                    return "";
+
+                int i = Misc::Rng::rollDice(filelist.size());
+                return filelist[i];
+            }
         }
         else
         {

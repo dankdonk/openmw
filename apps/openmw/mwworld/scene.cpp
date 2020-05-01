@@ -621,6 +621,9 @@ namespace MWWorld
                 const ForeignWorld *currWorld = store.get<ForeignWorld>().find(currentWorldId);
                 if (currWorld)
                     currMusicId = currWorld->mMusic;
+
+                if (!currWorld || !currMusicId) // try cell
+                    currMusicId = static_cast<const MWWorld::ForeignCell*>(mCurrentCell->getCell())->mCell->mMusic;
             }
 
             const ESM4::World *newWorld = store.get<ForeignWorld>().find(worldId);
@@ -628,18 +631,21 @@ namespace MWWorld
             if (newWorld)
                 newMusicId = newWorld->mMusic;
 
+            if (!newWorld || !newMusicId) // try cell
+                newMusicId = static_cast<const MWWorld::ForeignCell*>(cell->getCell())->mCell->mMusic;
+
             bool playNewMusic = false;
             if (!mCurrentCell->isForeignCell() || !mCurrentCell->getCell()->isExterior())
                 playNewMusic = true;
 
             std::string musicFile;
-            if (currMusicId && newMusicId && currMusicId != newMusicId)
+            if (playNewMusic || !(currMusicId && newMusicId && currMusicId == newMusicId))
             {
                 const ESM4::Music *newMusic = store.getForeign<ESM4::Music>().search(newMusicId);
                 if (newMusic)
                     musicFile = newMusic->mMusicFile;
                 else
-                    musicFile = "Explore";
+                    musicFile = "Explore\\";
 
                 playNewMusic = true;
             }
