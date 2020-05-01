@@ -833,7 +833,7 @@ namespace MWWorld
             if (!world)
                 continue;
 
-            if (!world->mMapFile.empty()) // don't use parent world's land for FO3/FONV
+            if (world->mMapFile == "") // don't use parent world's land for FO3/FONV
                 continue;
 
             if (world->mParent != 0) // TES4 only?
