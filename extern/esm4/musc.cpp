@@ -23,25 +23,30 @@
   from Tes4Mod:Mod_File_Format and Tes5Mod:File_Formats but also refined by
   trial & error.  See http://en.uesp.net/wiki for details.
 
+  Also see https://tes5edit.github.io/fopdoc/ for FO3/FONV specific details.
+
 */
-#include "aspc.hpp"
+#include "musc.hpp"
 
 #include <stdexcept>
 //#include <iostream> // FIXME: for debugging only
 
+//#include "formid.hpp"
+
 #include "reader.hpp"
 //#include "writer.hpp"
 
-ESM4::AcousticSpace::AcousticSpace() : mFormId(0), mFlags(0)
+ESM4::Music::Music() : mFormId(0), mFlags(0)
 {
     mEditorId.clear();
+    mMusicFile.clear();
 }
 
-ESM4::AcousticSpace::~AcousticSpace()
+ESM4::Music::~Music()
 {
 }
 
-void ESM4::AcousticSpace::load(ESM4::Reader& reader)
+void ESM4::Music::load(ESM4::Reader& reader)
 {
     mFormId = reader.hdr().record.id;
     reader.adjustFormId(mFormId);
@@ -52,30 +57,30 @@ void ESM4::AcousticSpace::load(ESM4::Reader& reader)
         const ESM4::SubRecordHeader& subHdr = reader.subRecordHeader();
         switch (subHdr.typeId)
         {
-            case ESM4::SUB_EDID: reader.getZString(mEditorId);  break;
-            case ESM4::SUB_OBND:
-            case ESM4::SUB_SNAM:
-            case ESM4::SUB_RDAT:
-            case ESM4::SUB_ANAM:
-            case ESM4::SUB_INAM:
-            case ESM4::SUB_WNAM:
-            case ESM4::SUB_BNAM: // TES5
+            case ESM4::SUB_EDID: reader.getZString(mEditorId); break;
+            case ESM4::SUB_FNAM: reader.getZString(mMusicFile);
+                                 //std::cout << "music: " << formIdToString(mFormId) << " " << mMusicFile << std::endl;
+                                 break;
+            case ESM4::SUB_ANAM: // FONV float (attenuation in db? loop if positive?)
+            case ESM4::SUB_WNAM: // TES5
+            case ESM4::SUB_PNAM: // TES5
+            case ESM4::SUB_TNAM: // TES5
             {
-                //std::cout << "ASPC " << ESM4::printName(subHdr.typeId) << " skipping..."
+                //std::cout << "MUSC " << ESM4::printName(subHdr.typeId) << " skipping..."
                           //<< subHdr.dataSize << std::endl;
                 reader.skipSubRecordData();
                 break;
             }
             default:
-                throw std::runtime_error("ESM4::ASPC::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
+                throw std::runtime_error("ESM4::MUSC::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
         }
     }
 }
 
-//void ESM4::AcousticSpace::save(ESM4::Writer& writer) const
+//void ESM4::Music::save(ESM4::Writer& writer) const
 //{
 //}
 
-//void ESM4::AcousticSpace::blank()
+//void ESM4::Music::blank()
 //{
 //}

@@ -187,7 +187,9 @@ namespace ESM4
         REC_PWAT = MKTAG('P','W','A','T'), // Placeable Water
         REC_SCOL = MKTAG('S','C','O','L'), // Static Collection
         REC_CCRD = MKTAG('C','C','R','D'), // Caravan Card
-        REC_CMNY = MKTAG('C','M','N','Y')  // Caravan Money
+        REC_CMNY = MKTAG('C','M','N','Y'), // Caravan Money
+        REC_ALOC = MKTAG('A','L','O','C'), // Audio Location Controller
+        REC_MSET = MKTAG('M','S','E','T')  // Media Set
     };
 
     enum SubRecordTypes
@@ -665,6 +667,7 @@ namespace ESM4
         SUB_WNM5 = MKTAG('W','N','M','5'), // FONV
         SUB_WNM6 = MKTAG('W','N','M','6'), // FONV
         SUB_WNM7 = MKTAG('W','N','M','7'), // FONV
+        SUB_JNAM = MKTAG('J','N','A','M'), // FONV
         SUB_EFSD = MKTAG('E','F','S','D'), // FONV DeadMoney
     };
 
