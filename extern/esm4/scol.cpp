@@ -73,7 +73,6 @@ void ESM4::StaticCollection::load(ESM4::Reader& reader)
                 //throw std::runtime_error("ESM4::SCOL::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
         }
     }
-    //std::cout << "SCOL " << mEditorId << ": " << mQuestName << " @ " << mFileName << std::endl;
 }
 
 //void ESM4::StaticCollection::save(ESM4::Writer& writer) const

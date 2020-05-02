@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2016, 2018 cc9cii
+  Copyright (C) 2016, 2018, 2020 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -27,6 +27,7 @@
 #include "alch.hpp"
 
 #include <stdexcept>
+//#include <iostream> // FIXME
 
 #include "reader.hpp"
 //#include "writer.hpp"
@@ -79,8 +80,22 @@ void ESM4::Potion::load(ESM4::Reader& reader)
                 reader.adjustFormId(mEffect.formId);
                 break;
             }
-            case ESM4::SUB_MODT:
             case ESM4::SUB_ENIT:
+            {
+                if (subHdr.dataSize == 8) // TES4
+                {
+                    reader.get(&mItem, 8);
+                    mItem.withdrawl = 0;
+                    mItem.sound = 0;
+                    break;
+                }
+
+                reader.get(mItem);
+                reader.adjustFormId(mItem.withdrawl);
+                reader.adjustFormId(mItem.sound);
+                break;
+            }
+            case ESM4::SUB_MODT:
             case ESM4::SUB_EFID:
             case ESM4::SUB_EFIT:
             case ESM4::SUB_CTDA:

@@ -71,7 +71,6 @@ void ESM4::PlaceableWater::load(ESM4::Reader& reader)
                 //throw std::runtime_error("ESM4::PWAT::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
         }
     }
-    //std::cout << "PWAT " << mEditorId << ": " << mQuestName << " @ " << mFileName << std::endl;
 }
 
 //void ESM4::PlaceableWater::save(ESM4::Writer& writer) const
