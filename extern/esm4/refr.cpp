@@ -28,14 +28,16 @@
 
 #include <stdexcept>
 
-#include <iostream> // FIXME: debug only
-#include "formid.hpp" // FIXME: debug only
+//#include <iostream> // FIXME: debug only
+
+//#include "formid.hpp" // FIXME: debug only
 
 #include "reader.hpp"
 //#include "writer.hpp"
 
 ESM4::Reference::Reference() : mFormId(0), mFlags(0), mInitiallyDisabled(false), mIsMapMarker(false), mMapMarker(0),
-                               mBaseObj(0), mScale(1.f), mOwner(0), mGlobal(0), mFactionRank(0), mCount(1)
+                               mBaseObj(0), mScale(1.f), mOwner(0), mGlobal(0), mFactionRank(0), mCount(1),
+                               mAudioLocation(0)
 {
     mEditorId.clear();
     mFullName.clear();
@@ -178,7 +180,7 @@ void ESM4::Reference::load(ESM4::Reader& reader)
                 // e.g. some are XMarkerHeading
                 //    XRTM : 000A4DD7 in OblivionRDCavesMiddleA05 (maybe spawn points?)
                 FormId marker;
-                reader.get(marker);
+                reader.getFormId(marker);
                 //std::cout << "REFR " << mEditorId << " XRTM : " << formIdToString(marker) << std::endl;// FIXME
                 break;
             }
@@ -202,10 +204,11 @@ void ESM4::Reference::load(ESM4::Reader& reader)
             case ESM4::SUB_XTRG: // formId
             {
                 FormId id;
-                reader.get(id);
+                reader.getFormId(id);
                 //std::cout << "REFR XRTG : " << formIdToString(id) << std::endl;// FIXME
                 break;
             }
+            case ESM4::SUB_CNAM: reader.getFormId(mAudioLocation); break; // FONV
             // lighting
             case ESM4::SUB_LNAM: // lighting template formId
             case ESM4::SUB_XLIG: // struct, FOV, fade, etc
@@ -271,7 +274,6 @@ void ESM4::Reference::load(ESM4::Reader& reader)
             case ESM4::SUB_SCRO: // FO3
             case ESM4::SUB_RCLR: // FO3
             case ESM4::SUB_BNAM: // FONV
-            case ESM4::SUB_CNAM: // FONV
             case ESM4::SUB_MMRK: // FONV
             case ESM4::SUB_MNAM: // FONV
             case ESM4::SUB_NNAM: // FONV

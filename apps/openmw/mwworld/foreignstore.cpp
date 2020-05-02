@@ -370,6 +370,7 @@ template class MWWorld::ForeignStore<ESM4::LightingTemplate>;
 template class MWWorld::ForeignStore<ESM4::Music>;
 template class MWWorld::ForeignStore<ESM4::MediaLocationController>;
 template class MWWorld::ForeignStore<ESM4::MediaSet>;
+template class MWWorld::ForeignStore<ESM4::DefaultObj>;
 template class MWWorld::ForeignStore<ESM4::Region>;
 template class MWWorld::ForeignStore<ESM4::PlacedGrenade>;
 // Foreign Referenceables

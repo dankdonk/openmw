@@ -246,7 +246,7 @@ void ESMStore::loadTes4Group (ESM::ESMReader &esm)
                 hdr.group.label.value == ESM4::REC_ASPC || hdr.group.label.value == ESM4::REC_IMOD ||
                 hdr.group.label.value == ESM4::REC_PWAT || hdr.group.label.value == ESM4::REC_SCOL ||
                 hdr.group.label.value == ESM4::REC_MUSC || hdr.group.label.value == ESM4::REC_ALOC ||
-                hdr.group.label.value == ESM4::REC_MSET
+                hdr.group.label.value == ESM4::REC_MSET || hdr.group.label.value == ESM4::REC_DOBJ
                 )
             {
                 reader.saveGroupStatus();
@@ -614,6 +614,7 @@ void ESMStore::loadTes4Record (ESM::ESMReader& esm)
         case ESM4::REC_MUSC: reader.getRecordData(); mMusic.loadTes4(reader); break;
         case ESM4::REC_ALOC: reader.getRecordData(); mMediaLocCtlr.loadTes4(reader); break; // FONV
         case ESM4::REC_MSET: reader.getRecordData(); mMediaSet.loadTes4(reader); break; // FONV
+        case ESM4::REC_DOBJ: reader.getRecordData(); mDefaultObj.loadTes4(reader); break; // FONV
         // only gets loaded in CellStore::loadTes4Record()?
         //case ESM4::REC_PGRE: reader.getRecordData(); mForeignGrenades.loadTes4(reader); break;
         //case ESM4::REC_REGN:

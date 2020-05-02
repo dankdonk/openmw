@@ -81,6 +81,8 @@ namespace ESM4
 
         std::uint32_t mCount; // only if > 1 (default 1)
 
+        FormId mAudioLocation;
+
         TeleportDest mDoor;
 
         Reference();

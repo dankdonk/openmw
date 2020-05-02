@@ -23,12 +23,13 @@
   from Tes4Mod:Mod_File_Format and Tes5Mod:File_Formats but also refined by
   trial & error.  See http://en.uesp.net/wiki for details.
 
+  Also see https://tes5edit.github.io/fopdoc/ for FO3/FONV specific details.
+
 */
-#ifndef ESM4_ASPC_H
-#define ESM4_ASPC_H
+#ifndef ESM4_DOBJ_H
+#define ESM4_DOBJ_H
 
 #include <string>
-#include <vector>
 #include <cstdint>
 
 namespace ESM4
@@ -37,23 +38,57 @@ namespace ESM4
     class Writer;
     typedef std::uint32_t FormId;
 
-    struct AcousticSpace
+#pragma pack(push, 1)
+    struct Defaults
+    {
+        FormId stimpack;
+        FormId superStimpack;
+        FormId radX;
+        FormId radAway;
+        FormId morphine;
+        FormId perkParalysis;
+        FormId playerFaction;
+        FormId mysteriousStrangerNPC;
+        FormId mysteriousStrangerFaction;
+        FormId defaultMusic;
+        FormId battleMusic;
+        FormId deathMusic;
+        FormId successMusic;
+        FormId levelUpMusic;
+        FormId playerVoiceMale;
+        FormId playerVoiceMaleChild;
+        FormId playerVoiceFemale;
+        FormId playerVoiceFemaleChild;
+        FormId eatPackageDefaultFood;
+        FormId everyActorAbility;
+        FormId drugWearsOffImageSpace;
+        FormId doctorsBag;
+        FormId missFortuneNPC;
+        FormId missFortuneFaction;
+        FormId meltdownExplosion;
+        FormId unarmedForwardPA;
+        FormId unarmedBackwardPA;
+        FormId unarmedLeftPA;
+        FormId unarmedRightPA;
+        FormId unarmedCrouchPA;
+        FormId unarmedCounterPA;
+        FormId spotterEffect;
+        FormId itemDetectedEfect;
+        FormId cateyeMobileEffectNYI;
+    };
+#pragma pack(pop)
+
+    struct DefaultObj
     {
         FormId mFormId;       // from the header
         std::uint32_t mFlags; // from the header, see enum type RecordFlag for details
 
         std::string mEditorId;
 
-        std::uint32_t mEnvironmentType;
+        Defaults mData;
 
-        // 0 Dawn (5:00 start), 1 Afternoon (8:00), 2 Dusk (18:00), 3 Night (20:00)
-        std::vector<FormId> mAmbientLoopSounds;
-        FormId mRegionSound;
-
-        std::uint32_t mIsInterior; // if true only use mAmbientLoopSounds[0]
-
-        AcousticSpace();
-        virtual ~AcousticSpace();
+        DefaultObj();
+        virtual ~DefaultObj();
 
         virtual void load(ESM4::Reader& reader);
         //virtual void save(ESM4::Writer& writer) const;
@@ -62,4 +97,4 @@ namespace ESM4
     };
 }
 
-#endif // ESM4_ASPC_H
+#endif // ESM4_DOBJ_H

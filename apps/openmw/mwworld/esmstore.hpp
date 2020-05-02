@@ -64,6 +64,7 @@
 #include <extern/esm4/musc.hpp>
 #include <extern/esm4/aloc.hpp>
 #include <extern/esm4/mset.hpp>
+#include <extern/esm4/dobj.hpp>
 
 #include <components/esm/records.hpp>
 #include "store.hpp"
@@ -156,6 +157,7 @@ namespace MWWorld
         ForeignStore<ESM4::Music>      mMusic;
         ForeignStore<ESM4::MediaLocationController> mMediaLocCtlr;
         ForeignStore<ESM4::MediaSet>   mMediaSet;
+        ForeignStore<ESM4::DefaultObj> mDefaultObj;
         ForeignStore<ESM4::Region>     mForeignRegions;
         // Foreign referenceables
         ForeignStore<ESM4::Sound>      mForeignSounds;

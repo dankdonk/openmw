@@ -203,6 +203,14 @@ namespace MWWorld
                 mList.push_back (liveCellRef);
                 //std::cout << "CellRefList::load "
                     //<< ESM4::formIdToString(mList.back().mBase->mFormId) << std::endl; // FIXME: debug only
+
+// FIXME: testing audio markers
+#if 0
+                if (ref.mAudioLocation)
+                    std::cout << "audio loc " << ref.mEditorId << " "
+                        << ref.mPosition.pos.x/4096 << "," << ref.mPosition.pos.y/4096 << " "
+                    << mList.back().mBase->mEditorId << std::endl; // FIXME: debug only
+#endif
             }
         }
         else
@@ -950,6 +958,7 @@ namespace MWWorld
                     std::cout << "Persistent REFR: " << record.mEditorId << " 0x"
                         << ESM4::formIdToString(record.mFormId) << std::endl;
 #endif
+
                 const int cellSize = 4096;
 
                 int newX = static_cast<int>(std::floor(record.mPosition.pos.x / cellSize));

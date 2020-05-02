@@ -29,10 +29,13 @@
 #include <stdexcept>
 //#include <iostream> // FIXME: for debugging only
 
+//#include "formid.hpp" // FIXME:
+
 #include "reader.hpp"
 //#include "writer.hpp"
 
-ESM4::AcousticSpace::AcousticSpace() : mFormId(0), mFlags(0)
+ESM4::AcousticSpace::AcousticSpace() : mFormId(0), mFlags(0), mEnvironmentType(0), mRegionSound(0),
+    mIsInterior(0)
 {
     mEditorId.clear();
 }
@@ -53,13 +56,25 @@ void ESM4::AcousticSpace::load(ESM4::Reader& reader)
         switch (subHdr.typeId)
         {
             case ESM4::SUB_EDID: reader.getZString(mEditorId);  break;
-            case ESM4::SUB_OBND:
+            case ESM4::SUB_ANAM: reader.get(mEnvironmentType); break;
             case ESM4::SUB_SNAM:
-            case ESM4::SUB_RDAT:
-            case ESM4::SUB_ANAM:
-            case ESM4::SUB_INAM:
-            case ESM4::SUB_WNAM:
-            case ESM4::SUB_BNAM: // TES5
+            {
+                FormId id;
+                reader.getFormId(id);
+                mAmbientLoopSounds.push_back(id);
+                break;
+            }
+            case ESM4::SUB_RDAT: reader.getFormId(mRegionSound); break;
+            case ESM4::SUB_INAM: reader.get(mIsInterior); break;
+            case ESM4::SUB_WNAM: // usually 0 for FONV (maybe # of close Actors for Walla to trigger)
+            {
+                std::uint32_t dummy;
+                reader.get(dummy);
+                //std::cout << "WNAM " << mEditorId << " " << dummy << std::endl;
+                break;
+            }
+            case ESM4::SUB_BNAM: // TES5 reverb formid
+            case ESM4::SUB_OBND:
             {
                 //std::cout << "ASPC " << ESM4::printName(subHdr.typeId) << " skipping..."
                           //<< subHdr.dataSize << std::endl;

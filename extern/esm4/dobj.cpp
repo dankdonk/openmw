@@ -26,7 +26,7 @@
   Also see https://tes5edit.github.io/fopdoc/ for FO3/FONV specific details.
 
 */
-#include "musc.hpp"
+#include "dobj.hpp"
 
 #include <stdexcept>
 //#include <iostream> // FIXME: for debugging only
@@ -36,17 +36,16 @@
 #include "reader.hpp"
 //#include "writer.hpp"
 
-ESM4::Music::Music() : mFormId(0), mFlags(0)
+ESM4::DefaultObj::DefaultObj() : mFormId(0), mFlags(0)
 {
     mEditorId.clear();
-    mMusicFile.clear();
 }
 
-ESM4::Music::~Music()
+ESM4::DefaultObj::~DefaultObj()
 {
 }
 
-void ESM4::Music::load(ESM4::Reader& reader)
+void ESM4::DefaultObj::load(ESM4::Reader& reader)
 {
     mFormId = reader.hdr().record.id;
     reader.adjustFormId(mFormId);
@@ -57,30 +56,21 @@ void ESM4::Music::load(ESM4::Reader& reader)
         const ESM4::SubRecordHeader& subHdr = reader.subRecordHeader();
         switch (subHdr.typeId)
         {
-            case ESM4::SUB_EDID: reader.getZString(mEditorId); break;
-            case ESM4::SUB_FNAM: reader.getZString(mMusicFile);
-                                 //std::cout << "music: " << /*formIdToString(mFormId)*/mEditorId << " " << mMusicFile << std::endl;
-                                 break;
-            case ESM4::SUB_ANAM: // FONV float (attenuation in db? loop if positive?)
-            case ESM4::SUB_WNAM: // TES5
-            case ESM4::SUB_PNAM: // TES5
-            case ESM4::SUB_TNAM: // TES5
-            {
-                //std::cout << "MUSC " << ESM4::printName(subHdr.typeId) << " skipping..."
-                          //<< subHdr.dataSize << std::endl;
-                reader.skipSubRecordData();
-                break;
-            }
+            case ESM4::SUB_EDID: reader.getZString(mEditorId); break; // FONV "DefaultObjectManager"
+            case ESM4::SUB_DATA: reader.get(mData); break; // FONV 136/4 = 34 formid
             default:
-                throw std::runtime_error("ESM4::MUSC::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
+                //std::cout << "DOBJ " << ESM4::printName(subHdr.typeId) << " skipping..."
+                          //<< subHdr.dataSize << std::endl;
+                //reader.skipSubRecordData();
+                throw std::runtime_error("ESM4::DOBJ::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
         }
     }
 }
 
-//void ESM4::Music::save(ESM4::Writer& writer) const
+//void ESM4::DefaultObj::save(ESM4::Writer& writer) const
 //{
 //}
 
-//void ESM4::Music::blank()
+//void ESM4::DefaultObj::blank()
 //{
 //}
