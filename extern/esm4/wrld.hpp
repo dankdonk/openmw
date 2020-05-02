@@ -110,6 +110,16 @@ namespace ESM4
         // ----------------------
         FormId mMusic;
 
+        // 0x01 use Land data
+        // 0x02 use LOD data
+        // 0x04 use Map data
+        // 0x08 use Water data
+        // 0x10 use Climate data
+        // 0x20 use Image Space data (Climate for TES5)
+        // 0x40 use SkyCell (TES5)
+        // 0x80 needs water adjustment
+        std::uint16_t mParentUseFlags; // FO3/FONV
+
         // cache formId's of children (e.g. CELL, ROAD)
         std::vector<FormId> mCells;
         std::vector<FormId> mRoads;

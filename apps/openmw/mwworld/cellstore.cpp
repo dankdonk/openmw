@@ -827,16 +827,17 @@ namespace MWWorld
 
                 loadTes4Group(store, *esm[modType][modIndex]);
             }
-//#if 0
+
+            const ESMStore& store = MWBase::Environment::get().getWorld()->getStore();
             const ForeignWorld *world
-                = MWBase::Environment::get().getWorld()->getStore().get<ForeignWorld>().find(static_cast<const ForeignCell*>(mCell)->mCell->mParent);
+                = store.get<ForeignWorld>().find(static_cast<const ForeignCell*>(mCell)->mCell->mParent);
             if (!world)
                 continue;
 
-            if (world->mMapFile == "") // don't use parent world's land for FO3/FONV
+            if ((world->mParentUseFlags & 0x01/*use land data*/) == 0)
                 continue;
 
-            if (world->mParent != 0) // TES4 only?
+            if (world->mParent != 0) // ok, use parent world land but do I have a parent world?
             {
                 CellStore * parentCell
                     = MWBase::Environment::get().getWorld()->getWorldCell(world->mParent,
@@ -846,7 +847,6 @@ namespace MWWorld
                 if (parentCell)
                     mForeignLand = parentCell->getForeignLandId();
             }
-//#endif
         }
     }
 
