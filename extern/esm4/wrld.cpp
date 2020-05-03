@@ -143,6 +143,7 @@ void ESM4::World::load(ESM4::Reader& reader)
             // 00119D2E freeside\freeside_01.mp3 0010BEEA FreesideWorld (Freeside)
             // 00119D2E freeside\freeside_01.mp3 0012D94D FreesideNorthWorld (Freeside)
             // 00119D2E freeside\freeside_01.mp3 0012D94E FreesideFortWorld (Old Mormon Fort)
+            // NOTE: FONV DefaultObjectManager has 00090908 "explore" as the default music
             case ESM4::SUB_ZNAM: reader.getFormId(mMusic); break;
             case ESM4::SUB_RNAM: // multiple
             case ESM4::SUB_MHDT:

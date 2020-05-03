@@ -59,7 +59,7 @@ void ESM4::Music::load(ESM4::Reader& reader)
         {
             case ESM4::SUB_EDID: reader.getZString(mEditorId); break;
             case ESM4::SUB_FNAM: reader.getZString(mMusicFile);
-                                 //std::cout << "music: " << formIdToString(mFormId) << " " << mMusicFile << std::endl;
+                                 //std::cout << "music: " << /*formIdToString(mFormId)*/mEditorId << " " << mMusicFile << std::endl;
                                  break;
             case ESM4::SUB_ANAM: // FONV float (attenuation in db? loop if positive?)
             case ESM4::SUB_WNAM: // TES5

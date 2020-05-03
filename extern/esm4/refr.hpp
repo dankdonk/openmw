@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015-2016, 2018 cc9cii
+  Copyright (C) 2015-2016, 2018, 2020 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -80,6 +80,8 @@ namespace ESM4
         EnableParent mEsp;
 
         std::uint32_t mCount; // only if > 1 (default 1)
+
+        FormId mAudioLocation;
 
         TeleportDest mDoor;
 

@@ -44,7 +44,7 @@ namespace ESM4
     enum CellFlags               // TES4                     TES5
     {                            // -----------------------  ------------------------------------
         CELL_Interior = 0x0001,  // Can't travel from here   Interior
-        CELL_HasWater = 0x0002,  // Has water                Has Water
+        CELL_HasWater = 0x0002,  // Has water (Int)          Has Water (Int)
         CELL_NoTravel = 0x0004,  //                          not Can't Travel From Here(Int only)
         CELL_HideLand = 0x0008,  // Force hide land (Ext)    No LOD Water
                                  // Oblivion interior (Int)
@@ -84,7 +84,9 @@ namespace ESM4
 
         FormId mMusic;         // FO3/FONV
         FormId mAcousticSpace; // FO3/FONV
-        std::uint8_t mMusicType; // TES4: 0 = default, 1 = public, 2 = dungeon
+        // TES4: 0 = default, 1 = public, 2 = dungeon
+        // FO3/FONV have more types (not sure how they are used, however)
+        std::uint8_t mMusicType;
 
         CellGroup *mCellGroup;
 
