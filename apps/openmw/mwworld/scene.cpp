@@ -1,6 +1,7 @@
 #include "scene.hpp"
 
 #include <stdexcept>
+#include <bitset> // FIXME: for testing
 
 #include <OgreSceneNode.h>
 
@@ -8,6 +9,8 @@
 #include <extern/esm4/cell.hpp>
 #include <extern/esm4/wrld.hpp>
 #include <extern/esm4/musc.hpp>
+#include <extern/esm4/aloc.hpp>
+#include <extern/esm4/mset.hpp>
 
 #include <components/nif/niffile.hpp>
 #include <components/misc/resourcehelpers.hpp>
@@ -1001,6 +1004,96 @@ namespace MWWorld
         if (mCurrentCell->getCell()->isExterior()) // not coming from another interior
             fromAnotherWorld = true;
 
+        bool isFONV = false; // FIXME: need better logic
+        // FIXME: for an interior cell we don't need audio marker location?
+        if (cell->getAudioLocation()) // FONV only
+        {
+            const MWWorld::ESMStore& store = MWBase::Environment::get().getWorld()->getStore();
+
+            const ESM4::MediaLocationController *aloc
+                = store.getForeign<ESM4::MediaLocationController>().search(cell->getAudioLocation());
+
+            if (aloc)
+            {
+                isFONV = true;
+                std::cout << "interior music for FONV " << aloc->mEditorId << std::endl;
+
+                // FIXME: using loop option 4 for testing
+                switch (aloc->mMediaFlags.loopingOptions)
+                {
+                    case 0: // loop, use mDayStart/mNightStart
+                    case 1: // random, use mDayStart/mNightStart
+                    case 2: // retrigger, use mDayStart/mNightStart/mRetriggerDelay
+                    case 3: // none (play once only?)
+                    case 4: // loop, use 6:00/23:54
+                    case 5: // random, use 6:00/23:54
+                    case 6: // retrigger, use 6:00/23:54, mRetriggerDelay
+                    case 7: // none (how is this different to case 3?)
+                    default: break;
+                }
+
+                // media set to use
+                if (aloc->mConditionalFaction)
+                {
+                    // FIXME: what happens here?
+                    // (guess) if the conditional faction is found nearby to the player,
+                    // choose between battle/enemy/friend/ally
+                    std::cout << "FONV music faction" << std::endl;
+                }
+                else
+                {
+                    // NOTE: sometimes the specified sets are empty
+                    // e.g. musCtrlAAAntiMusic - "Location"
+                    std::uint16_t sets = aloc->mMediaFlags.factionNotFound;
+                    std::cout << "sets " << sets << std::endl;
+                    const std::vector<ESM4::FormId>& mediaSets
+                        =   (sets == 0) ? aloc->mNeutralSets :
+                           ((sets == 1) ? aloc->mEnemySets   :
+                           ((sets == 2) ? aloc->mAllySets    :
+                           ((sets == 3) ? aloc->mFriendSets  :
+                           /*sets == 4*/  aloc->mLocationSets)));
+
+                    std::cout << "size " << mediaSets.size() << std::endl;
+                    ESM4::FormId mediaSet = 0;
+                    if (mediaSets.size() > 1)
+                    {
+                        int i = Misc::Rng::rollDice(mediaSets.size());
+
+                        mediaSet = mediaSets[i];
+                    }
+                    else if (mediaSets.size() == 1)
+                        mediaSet = mediaSets[0];
+
+                    const ESM4::MediaSet *mset = store.getForeign<ESM4::MediaSet>().search(mediaSet);
+                    if (mset)
+                    {
+                        std::uint8_t enabled = mset->mEnabled;
+                        std::bitset<8> bb(enabled);
+                        std::cout << "media set " << mset->mEditorId
+                            << " type " << mset->mSetType << " enabled " << bb << std::endl;
+                        MWBase::Environment::get().getSoundManager()->streamMusic(mset->mSet2);
+
+                        ESM4::FormId aspcId
+                            = static_cast<const MWWorld::ForeignCell*>(cell->getCell())->mCell->mAcousticSpace;
+                        const ESM4::AcousticSpace *aspc = store.getForeign<ESM4::AcousticSpace>().search(aspcId);
+
+                        if (aspc && aspc->mIsInterior)
+                        {
+                            ESM4::FormId soundId = aspc->mAmbientLoopSounds[0];
+                            const ESM4::Sound *sound = store.getForeign<ESM4::Sound>().search(soundId);
+                            if (sound)
+                            {
+                                std::cout << "sound " << sound->mSoundFile << std::endl;
+                                MWBase::Environment::get().getSoundManager()->playSound(sound->mSoundFile, 1.f, 1.f,
+                                        MWBase::SoundManager::Play_TypeMusic,
+                                        MWBase::SoundManager::Play_Loop);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         ESM4::FormId currMusicId = 0;
         if (mCurrentCell && mCurrentCell->isForeignCell())
             currMusicId = static_cast<const MWWorld::ForeignCell*>(mCurrentCell->getCell())->mCell->mMusic;
@@ -1055,7 +1148,7 @@ namespace MWWorld
         }
 
         // FIXME: fade in/out when changing music?
-        if (fromAnotherWorld || playNewMusic)
+        if (!isFONV && (fromAnotherWorld || playNewMusic)) // FIXME: need better logic
         {
             if (musicFile.find('.') != std::string::npos) // TODO: does this ever happen?
             {

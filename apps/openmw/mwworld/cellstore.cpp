@@ -1010,6 +1010,26 @@ namespace MWWorld
                               << ESM4::formIdToString(record.mFormId) << " NOT visible dist" << std::endl;
                 }
 #endif
+                // unfortunately at this point most of the worlds are not yet loaded and
+                // hence nothing will be found - try interior only
+                //if (record.mBaseObj == 0x23) // AudioMarker
+                if (record.mAudioLocation && !getCell()->isExterior())
+                {
+                    ESM4::FormId worldId
+                        = static_cast<const MWWorld::ForeignCell*>(getCell())->mCell->mParent;
+                    const ForeignWorld *world = store.get<ForeignWorld>().find(worldId);
+                    if (world)
+                    {
+                        std::string worldName = world->mEditorId;
+                        std::cout << "REFR audio " << worldName << std::endl;
+                    }
+                    else // shouldn't be any interior dummy cells
+                        //std::cout << "REFR audio" << (isDummyCell() ? " dummy cell" : "") << std::endl;
+                        std::cout << "REFR audio" << /*15d026*/ ESM4::formIdToString(record.mAudioLocation) << std::endl;
+
+                    mAudioLocation = record.mAudioLocation; // will be processed later when cell becomes active
+                }
+
                 switch (store.find(record.mBaseObj))
                 {
                     case MKTAG('N','S','O','U'): mSounds.load(record, deleted, store); break;

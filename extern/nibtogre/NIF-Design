@@ -3948,9 +3948,15 @@ Summary:
   * use Cell::mMusic if available for FO3/FONV (but don't know how to do folders in FONV, nor " DEFAULT")
   * maybe use the files in Music\OLD\FO3 directory somehow?
   * if no Cell::mMusic then use Cell::mAcousticSpace ambient looping sounds (take note of mIsInterior)
+  * use AudioMarker REFR
 
+# [03/05/2020] Audio Marker - try interior first
 
+Exterior Auido Markers are in the world dummy cells.  We will need some way of determining which is the closest one from the current cell.
 
+Interior Audio Markers are easier.  **TODO:** test if there can be more than one in an interior cell
+
+Above summary bullet points appear incorrect.  FONV seems to rely entirely upon Audio Marker / Media Location Controller to choose the music.
 
 [//]: # (/* spell spelllang=en_au syntax=cpp */)
 [//]: # (/* vim: set ft=markdown tw=0 lbr bri fen fdm=marker fdl=0: */)

@@ -112,7 +112,14 @@ void ESM4::MediaLocationController::load(ESM4::Reader& reader)
                 break;
             }
             case ESM4::SUB_RNAM: reader.getFormId(mConditionalFaction); break;
-            case ESM4::SUB_NAM1: reader.get(mFlags); break;
+            case ESM4::SUB_NAM1:
+            {
+                reader.get(mMediaFlags);
+                std::uint8_t flags = mMediaFlags.loopingOptions;
+                mMediaFlags.loopingOptions = (flags & 0xF0) >> 4;
+                mMediaFlags.factionNotFound = flags & 0x0F;
+                break;
+            }
             case ESM4::SUB_NAM4: reader.get(mLocationDelay); break;
             case ESM4::SUB_NAM7: reader.get(mRetriggerDelay); break;
             case ESM4::SUB_NAM5: reader.get(mDayStart); break;

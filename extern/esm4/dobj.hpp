@@ -38,7 +38,6 @@ namespace ESM4
     class Writer;
     typedef std::uint32_t FormId;
 
-#pragma pack(push, 1)
     struct Defaults
     {
         FormId stimpack;
@@ -62,6 +61,7 @@ namespace ESM4
         FormId eatPackageDefaultFood;
         FormId everyActorAbility;
         FormId drugWearsOffImageSpace;
+        // below FONV only
         FormId doctorsBag;
         FormId missFortuneNPC;
         FormId missFortuneFaction;
@@ -76,7 +76,6 @@ namespace ESM4
         FormId itemDetectedEfect;
         FormId cateyeMobileEffectNYI;
     };
-#pragma pack(pop)
 
     struct DefaultObj
     {

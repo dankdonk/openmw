@@ -39,6 +39,8 @@
 ESM4::DefaultObj::DefaultObj() : mFormId(0), mFlags(0)
 {
     mEditorId.clear();
+
+    std::memset(&mData, 0, sizeof(Defaults));
 }
 
 ESM4::DefaultObj::~DefaultObj()
@@ -56,8 +58,50 @@ void ESM4::DefaultObj::load(ESM4::Reader& reader)
         const ESM4::SubRecordHeader& subHdr = reader.subRecordHeader();
         switch (subHdr.typeId)
         {
-            case ESM4::SUB_EDID: reader.getZString(mEditorId); break; // FONV "DefaultObjectManager"
-            case ESM4::SUB_DATA: reader.get(mData); break; // FONV 136/4 = 34 formid
+            case ESM4::SUB_EDID: reader.getZString(mEditorId); break; // "DefaultObjectManager"
+            case ESM4::SUB_DATA:
+            {
+                reader.getFormId(mData.stimpack);
+                reader.getFormId(mData.superStimpack);
+                reader.getFormId(mData.radX);
+                reader.getFormId(mData.radAway);
+                reader.getFormId(mData.morphine);
+                reader.getFormId(mData.perkParalysis);
+                reader.getFormId(mData.playerFaction);
+                reader.getFormId(mData.mysteriousStrangerNPC);
+                reader.getFormId(mData.mysteriousStrangerFaction);
+                reader.getFormId(mData.defaultMusic);
+                reader.getFormId(mData.battleMusic);
+                reader.getFormId(mData.deathMusic);
+                reader.getFormId(mData.successMusic);
+                reader.getFormId(mData.levelUpMusic);
+                reader.getFormId(mData.playerVoiceMale);
+                reader.getFormId(mData.playerVoiceMaleChild);
+                reader.getFormId(mData.playerVoiceFemale);
+                reader.getFormId(mData.playerVoiceFemaleChild);
+                reader.getFormId(mData.eatPackageDefaultFood);
+                reader.getFormId(mData.everyActorAbility);
+                reader.getFormId(mData.drugWearsOffImageSpace);
+                // below FONV only
+                if (subHdr.dataSize == 136) // FONV 136/4 = 34 formid
+                {
+                    reader.getFormId(mData.doctorsBag);
+                    reader.getFormId(mData.missFortuneNPC);
+                    reader.getFormId(mData.missFortuneFaction);
+                    reader.getFormId(mData.meltdownExplosion);
+                    reader.getFormId(mData.unarmedForwardPA);
+                    reader.getFormId(mData.unarmedBackwardPA);
+                    reader.getFormId(mData.unarmedLeftPA);
+                    reader.getFormId(mData.unarmedRightPA);
+                    reader.getFormId(mData.unarmedCrouchPA);
+                    reader.getFormId(mData.unarmedCounterPA);
+                    reader.getFormId(mData.spotterEffect);
+                    reader.getFormId(mData.itemDetectedEfect);
+                    reader.getFormId(mData.cateyeMobileEffectNYI);
+                }
+
+                break;
+            }
             default:
                 //std::cout << "DOBJ " << ESM4::printName(subHdr.typeId) << " skipping..."
                           //<< subHdr.dataSize << std::endl;

@@ -105,6 +105,7 @@ namespace MWWorld
             bool mIsDummyCell;
             bool mIsVisibleDistCell;
             ESM4::FormId mForeignLand; // ForeignCell only, can't store in mCell due to const ptr
+            ESM4::FormId mAudioLocation; // from REFR, interior only
 
             MWWorld::TimeStamp mLastRespawn;
 
@@ -176,6 +177,7 @@ namespace MWWorld
             inline const bool isDummyCell() const { return mIsDummyCell; }
             inline const bool isVisibleDistCell() const { return mIsVisibleDistCell; }
             void setVisibleDistCell() { mIsVisibleDistCell = true; }
+            inline ESM4::FormId getAudioLocation() const { return mAudioLocation; }
 
             inline ESM4::FormId getForeignLandId() const { return mForeignLand; }
             void loadTes4Record (const MWWorld::ESMStore& store, ESM::ESMReader& esm);
