@@ -3958,5 +3958,161 @@ Interior Audio Markers are easier.  **TODO:** test if there can be more than one
 
 Above summary bullet points appear incorrect.  FONV seems to rely entirely upon Audio Marker / Media Location Controller to choose the music.
 
+# [04/05/2020] Radio - where is the music list?
+
+There are several vCasinoTopsSpeaker Actvators in cell `TOPSCasino`.  The base object points to radion station `vCasinoTopsRadio` which is a Talking Activator.  Its Radio Template is `AMLRadioTheTops` which is a Sound record - the trouble is that it does not list any music.  Instead it has `fx\xxx_placeholder_silence.wav`.  So, it is not clear at all how the music is selected.
+
+Similarly with cell `ULCasino`.
+
+It turns out that the song lists are in INFO.  They are probably linked via script in either ACTI or TACT records.
+
+Since the INFO formid seems to be used by nothing else, it is probably the starting point.  INFO has a quest formid in QSTI - maybe lookup these?  Or maybe it all starts with the dialog "RadioHello"? - but none of the scripts seem to mention it in context of the casino radios.
+
+Maybe the quest id's from DIAL and INFO needs to be matched?  Using `0016B66D`, "vUltraLuxeRadioQuest" as an example - it is found in:
+
+  * DIAL RadioHello - in the quest list
+  * INFO {Song 1 Concerto for 2} - quest id, conditions & subscript global reference
+  * INFO {Song 2 Concerto Grosso in B Minor Allegro} - quest id, conditions & subscript global reference
+  * INFO {Song 3 Concerto Grosso in B Minor Allegro 2} - quest id, conditions & subscript global reference
+  * INFO {Song 4 Flower Duet} - quest id, conditions & subscript global reference
+  * INFO {Song 5 Four Seasons} - quest id, conditions & subscript global reference
+  * INFO {Song 6 Piano Concerto No 21} - quest id, conditions & subscript global reference
+  * INFO {Song 7 Spring Song} - quest id, conditions & subscript global reference
+  * QUST vUltraLuxeRadioQuest formid
+
+They match ok, but what starts it off?  Something must be "choosing" the RadioHello topic to trigger the responses?  Anyway, one of the INFO would be selected based on the conditions.
+
+Noticed that TACT 0016B46E is referred in QUST 0016B66D vUltraLuxeRadioQuest CTDA.  Its model is a terminal (not a vintage radio) and it is positioned under the casino floor, near Mortimer.
+
+So, something kicks off RadioHello (auto-start somehow, or maybe all dialogs run all the time?).  Then DIAL goes through the quests and the associated INFO for the quest.  It then checks the conditions to choose a response.  The first parameter of the INFO condition is the QUST that refers to the TACT to be instantiated (I'm guessing GetIsID means that).
+
+    CELL ULCasino
+         ...
+         REFR 0016B6D4
+              NAME 0016B66A (ACTI vCasinoUltraLuxeSpeaker)
+         REFR 0016B74B
+              XRDO radio station data
+              NAME 0016B46E (TACT vCasinoUltraLuxeRadio)
+         ...
+
+    ACTI 0016B66A vCasinoUltraLuxeSpeaker
+         SCRI 000770C6 (SCPT VintageRadioStartOnSCRIPT)
+         RNAM 0016B46E (TACT vCasinoUltraLuxeRadio)
+
+    SCPT 000770C6 VintageRadioStartOnSCRIPT
+         SCHR header
+         SCDA compiled script
+         SCTX /* init then activate (presumably activate vCasinoUltraLuxeSpeaker) */
+         ...
+
+    scn VintageRadioStartOnSCRIPT                                     {{{)
+
+    short init
+    ref mySelf
+
+    ;**********************************
+
+    Begin onLoad
+
+        if (init == 0)
+            set mySelf to getSelf
+            activate mySelf
+            set init to 1
+        endif
+
+    End
+
+    ;**********************************
+
+    Begin onActivate
+
+        activate
+
+    End
+
+    ;**********************************
+    end                                                               }}})
+
+    TACT 0016B46E vCasinoUltraLuxeRadio
+         SCRI no script
+         VNAM 0000002D voice type
+         INAM 0015D39C radio template (SOUN AMLRadioLarge)
+
+    /* how to link? */
+
+    DIAL 00000126 RadioHello
+         type 7 (radio)
+         mQuests[i]        = 0016B66D <- INFO QSTI and INFO.mSubScripts[0].globReference
+         mQuestsRemoved[i] = ?
+
+    INFO 0016B743 <- this formid only occurs once (as part of this INFO record)
+         QSTI 0016B66D (QUST vUltraLuxeRadioQuest)
+         TRDT.sound 0016B079 (SOUN)
+         SCRO 0016B66D (QUST vUltraLuxeRadioQuest)
+         CTDA 20       not equal to AND
+               0000000
+              3F800000 comparison (1.0)
+              0000004F function 0x4F = 79 (GetQuestVariable)
+              0016B66D param1 (formid of QUST vUltraLuxeRadioQuest)
+              00000001 param2 (variable 1)
+              00000000 run on
+              00000000 reference formid
+         CTDA 20       not equal to AND
+                000000
+              3F800000 comparison (1.0)
+              0000004F function 0x4F = 79 (GetQuestVariable)
+              0016B66D param1 (formid of QUST vUltraLuxeRadioQuest)
+              00000002 param2 (variable 2)
+              00000000 run on
+              00000000 reference formid
+         CTDA 20       not equal to
+                000000
+              3F800000 comparison (1.0)
+              0000004F function 0x4F = 79 (GetQuestVariable)
+              0016B66D param1 (formid of QUST vUltraLuxeRadioQuest)
+              00000003 param2 (variable 3)
+              00000000 run on
+              00000000 reference formid
+
+    INFO 0016B744   00169BDF
+         0016B745   00169BE0
+         0016B746   00169BE2
+         0016B747   00169BE3
+         0016B748   00169BEC
+         ^          ^
+         |          +---- TRDT.sound (formid)
+         +--------------- INFO (formid)
+
+    QUST 0016B66D vUltraLuxeRadioQuest
+         SCRI 0016B66F (SCPT vUltraLuxeRadioQuestSCRIPT) <- this just exposes 3 variables for INFO subScripts
+         DATA flags, priority, delay
+         CTDA 00       equal to
+                000000 padding
+              3F800000 comparison (1.0)
+              00000048 function 0x48 = 72 (GetIsID)
+              0016B46E param1 (formid of a TACT)
+              00000000 param2
+              00000000 run on
+              00000000 reference formid
+
+    QUST 0016B66C vGomorrahRadioQuest
+         SCRI
+         DATA
+         CTDA
+
+    SOUN 0016B079 songs\radionv\mus_concerto_for_2_vl_str_in_d_minor.mp3
+         00169BDF songs\radionv\mus_concerto_grosso_in_b_minor_allegro_01.mp3
+         00169BE0 songs\radionv\mus_concerto_grosso_in_b_minor_allegro_02.mp3
+         00169BE2 songs\radionv\mus_flower_duet_lakm_kpm.mp3
+         00169BE3 songs\radionv\mus_four_seasons_no_4_the_winter.mp3
+         00169BEC songs\radionv\mus_piano_concerto_no_21__elvira_madigan.mp3
+         ^        ^
+         |        +---- FNAM (string mSoundFile <- yes!)
+         +------------- SOUN (formid)
+
+**TODO:** In Fallout.esm `vCasinoTopsRadio` only has EDID, FULL, MODL, OBND, VNAM and INAM.  But in the GECK there are several flags including "Radion Station" and "Cont. Broadcast" - not sure where these come from.
+
+**FIXME:** CTDA needs adjust param1 formid depending on the function (I think?) How to do this without a function type lookup table?
+
 [//]: # (/* spell spelllang=en_au syntax=cpp */)
 [//]: # (/* vim: set ft=markdown tw=0 lbr bri fen fdm=marker fdl=0: */)

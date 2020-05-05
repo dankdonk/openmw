@@ -69,8 +69,8 @@ namespace
             if (mInventoryStore)
                 delete mInventoryStore;
 
-            if (mPlaced)
-                delete mPlaced;
+            //if (mPlaced)
+                //delete mPlaced; // FIXME: exception
         }
 
         virtual MWWorld::CustomData *clone() const;

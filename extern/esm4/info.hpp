@@ -45,6 +45,18 @@ namespace ESM4
 
         std::string mEditorId; // FIXME: no such record for INFO, but keep here to avoid extra work for now
 
+        FormId mQuest;
+        FormId mSound; // unused?
+
+        TargetResponseData mResponseData;
+        std::string mResponse;
+        std::string mNotes;
+        std::string mEdits;
+
+        TargetCondition mTargetCondition;
+
+        ScriptDefinition mScript; // FIXME: ignoring the second one after the NEXT sub-record
+
         DialogInfo();
         virtual ~DialogInfo();
 

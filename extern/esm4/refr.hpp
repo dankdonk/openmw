@@ -60,6 +60,15 @@ namespace ESM4
         std::uint32_t flags; // 0x01 no alarm (only in TES5)
     };
 
+    struct RadioStationData
+    {
+        float rangeRadius;
+        // 0 radius, 1 everywhere, 2 worldspace and linked int, 3 linked int, 4 current cell only
+        std::uint32_t broadcastRange;
+        float staticPercentage;
+        FormId posReference;
+    };
+
     struct Reference
     {
         FormId mFormId;       // from the header
@@ -84,6 +93,8 @@ namespace ESM4
         std::uint32_t mCount; // only if > 1 (default 1)
 
         FormId mAudioLocation;
+
+        RadioStationData mRadio;
 
         TeleportDest mDoor;
 

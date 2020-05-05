@@ -41,6 +41,8 @@
 #include <extern/esm4/regn.hpp>
 #include <extern/esm4/land.hpp>
 #include <extern/esm4/anio.hpp>
+#include <extern/esm4/term.hpp>
+#include <extern/esm4/tact.hpp>
 #include <extern/esm4/note.hpp>
 #include <extern/esm4/pgrd.hpp>
 #include <extern/esm4/aspc.hpp>
@@ -158,6 +160,8 @@ namespace MWWorld
             CellRefList<ESM4::LevelledItem>     mLevelledItems;
             CellRefList<ESM4::LevelledNpc>      mLevelledNpcs;
             CellRefList<ESM4::AcousticSpace>    mAcousticSpaces;
+            CellRefList<ESM4::Terminal>         mTerminals;
+            CellRefList<ESM4::TalkingActivator>  mTalkingActivators;
             CellRefList<ESM4::Note>             mNotes;
             CellRefList<ESM4::PlaceableWater>   mPlaceableWaters;
             CellRefList<ESM4::StaticCollection> mStaticCollections;
@@ -282,6 +286,8 @@ namespace MWWorld
                     forEachImp (functor, mSubspaces) &&
                     forEachImp (functor, mSigilStones) &&
                     forEachImp (functor, mLevelledItems) &&
+                    forEachImp (functor, mTerminals) &&
+                    forEachImp (functor, mTalkingActivators) &&
                     forEachImp (functor, mNotes) &&
                     forEachImp (functor, mPlaceableWaters) &&
                     forEachImp (functor, mStaticCollections);

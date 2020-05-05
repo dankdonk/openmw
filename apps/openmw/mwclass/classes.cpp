@@ -49,6 +49,8 @@
 #include "sigilstone.hpp"
 #include "levelleditem.hpp"
 #include "levellednpc.hpp"
+#include "terminal.hpp"
+#include "talkingactivator.hpp"
 #include "note.hpp"
 
 namespace MWClass
@@ -109,8 +111,8 @@ namespace MWClass
         // FIXME: TextureSet
         // FIXME: Scroll
         // FIXME: ArmorAddon
-        // FIXME: Terminal
-        // FIXME: TalkingActivator
+        Terminal::registerSelf();
+        TalkingActivator::registerSelf();
         Note::registerSelf();
         // FIXME: AcousticSpace
         // FIXME: ItemMod

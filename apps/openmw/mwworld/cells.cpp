@@ -446,7 +446,7 @@ MWWorld::CellStore *MWWorld::Cells::getWorldCell(ESM4::FormId worldId, int x, in
     {
         // found world
         std::pair<CellStoreIndex::iterator, bool> res
-            = lb->second.insert({ std::pair<int, int>(x, y), CellStore(cell, true) });
+            = lb->second.insert({ std::pair<int, int>(x, y), CellStore(cell, true/*foreign*/) });
 
         cellStore = &res.first->second;
 
@@ -462,7 +462,7 @@ MWWorld::CellStore *MWWorld::Cells::getWorldCell(ESM4::FormId worldId, int x, in
         initNewWorld(world);
 
         mForeignWorlds.insert(lb, std::map<ESM4::FormId, CellStoreIndex>::value_type(world->mFormId,
-            { {std::pair<int, int>(x, y), CellStore(cell, true) } }));
+            { {std::pair<int, int>(x, y), CellStore(cell, true/*foreign*/) } }));
 
         CellStoreIndex::iterator iter = mForeignWorlds[worldId].find(std::pair<int, int>(x, y));
         cellStore = &iter->second;

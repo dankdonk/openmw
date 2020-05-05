@@ -1013,6 +1013,7 @@ namespace MWWorld
                 // unfortunately at this point most of the worlds are not yet loaded and
                 // hence nothing will be found - try interior only
                 //if (record.mBaseObj == 0x23) // AudioMarker
+                //if (record.mAudioLocation)
                 if (record.mAudioLocation && !getCell()->isExterior())
                 {
                     ESM4::FormId worldId
@@ -1021,14 +1022,18 @@ namespace MWWorld
                     if (world)
                     {
                         std::string worldName = world->mEditorId;
-                        std::cout << "REFR audio " << worldName << std::endl;
+                        std::cout << "REFR world audio marker " << worldName << std::endl;
                     }
                     else // shouldn't be any interior dummy cells
-                        //std::cout << "REFR audio" << (isDummyCell() ? " dummy cell" : "") << std::endl;
-                        std::cout << "REFR audio" << /*15d026*/ ESM4::formIdToString(record.mAudioLocation) << std::endl;
+                        //std::cout << "REFR audio marker " << (isDummyCell() ? " dummy cell" : "") << std::endl;
+                        std::cout << "REFR " << ESM4::formIdToString(record.mFormId) << " audio marker "
+                                  << /*15d026*/ ESM4::formIdToString(record.mAudioLocation) << std::endl;
 
                     mAudioLocation = record.mAudioLocation; // will be processed later when cell becomes active
                 }
+
+                //if (record.mBaseObj == 0x0016B46E) // TACT in cell ULCasino
+                     //std::cout << "TACT" << std::endl;
 
                 switch (store.find(record.mBaseObj))
                 {
@@ -1097,20 +1102,19 @@ namespace MWWorld
                     case MKTAG('P','S','B','S'): mSubspaces.load(record, deleted, store); break;
                     case MKTAG('T','S','G','S'): mSigilStones.load(record, deleted, store); break;
                     case MKTAG('I','L','V','L'): mLevelledItems.load(record, deleted, store); break;
+                    case MKTAG('M','T','E','R'): mTerminals.load(record, deleted, store); break;
+                    case MKTAG('T','T','A','C'): mTalkingActivators.load(record, deleted, store); break;
                     case MKTAG('E','N','O','T'): mNotes.load(record, deleted, store); break;
                     case MKTAG('N','L','V','L'): // Leveled NPC
                     {
                         mLevelledNpcs.load(record, deleted, store); break; // never occurs?
                     }
-
                     case MKTAG('E','T','R','E'): //mForeignTrees.load(record, deleted, store); break;
                     case MKTAG('M','I','D','L'): // Idle Marker
                     case MKTAG('T','M','S','T'): // Movable Static
                     case MKTAG('T','T','X','S'): // Texture Set
                     case MKTAG('L','S','C','R'): // Scroll
                     case MKTAG('A','A','R','M'): // Armor Addon
-                    case MKTAG('M','T','E','R'): // Terminal
-                    case MKTAG('T','T','A','C'): // Talking Activator
                     case MKTAG('C','A','S','P'): // Acoustic Space
                     case MKTAG('D','I','M','O'): // Item Mod
                     case MKTAG('T','P','W','A'): // Placeable Water

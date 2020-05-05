@@ -27,12 +27,13 @@
 #include "tact.hpp"
 
 #include <stdexcept>
-//#include <iostream> // FIXME: testing only
+#include <iostream> // FIXME: testing only
 
 #include "reader.hpp"
 //#include "writer.hpp"
 
-ESM4::TalkingActivator::TalkingActivator() : mFormId(0), mFlags(0), mScript(0), mVoiceType(0), mSound(0)
+ESM4::TalkingActivator::TalkingActivator() : mFormId(0), mFlags(0), mScript(0), mVoiceType(0), mLoopSound(0),
+    mRadioTemplate(0)
 {
     mEditorId.clear();
     mFullName.clear();
@@ -64,18 +65,29 @@ void ESM4::TalkingActivator::load(ESM4::Reader& reader)
 
                 break;
             }
-            case ESM4::SUB_SCRI: reader.getFormId(mScript); break;
+            case ESM4::SUB_SCRI: reader.getFormId(mScript);
+    //if (mEditorId.find("vUltraLuxeRadioQuestSCRIPT") != std::string::npos) // vUltraLuxeRadioQuestSCRIPT 0016B66F
+                                 //if (mScript == 0x0016B66F)
+                                     //std::cout << mEditorId << std::endl;
+                                 break;
             case ESM4::SUB_VNAM: reader.getFormId(mVoiceType); break;
-            case ESM4::SUB_SNAM: reader.getFormId(mVoiceType); break;
+            case ESM4::SUB_SNAM: reader.getFormId(mLoopSound); break;
+            case ESM4::SUB_INAM: reader.getFormId(mRadioTemplate);
+                                 //std::cout << formIdToString(mRadioTemplate) << std::endl;
+                                 break; // FONV
             case ESM4::SUB_MODL: reader.getZString(mModel); break;
             case ESM4::SUB_DEST: // destruction
             case ESM4::SUB_DSTD: // destruction
             case ESM4::SUB_DSTF: // destruction
-            case ESM4::SUB_MODT: // texture file hash?
             case ESM4::SUB_FNAM:
             case ESM4::SUB_PNAM:
+            {
+                std::cout << "TACT " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
+                reader.skipSubRecordData();
+                break;
+            }
+            case ESM4::SUB_MODT: // texture file hash?
             case ESM4::SUB_OBND:
-            case ESM4::SUB_INAM: // FONV
             {
                 //std::cout << "TACT " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
                 reader.skipSubRecordData();

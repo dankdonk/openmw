@@ -84,7 +84,7 @@ add_openmw_dir (mwclass
     foreigndoor foreigningredient foreignlight foreignmiscitem foreignstatic foreigngrass
     foreigntree foreignflora foreignfurniture foreignweapon foreignammo foreignnpc foreigncreature
     levelledcreature soulgem foreignkey foreignpotion subspace sigilstone
-    levelleditem levellednpc note
+    levelleditem levellednpc terminal talkingactivator note
     )
 
 add_openmw_dir (mwmechanics
