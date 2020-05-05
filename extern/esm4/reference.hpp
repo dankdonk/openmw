@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2016, 2018, 2020 cc9cii
+  Copyright (C) 2020 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -24,8 +24,8 @@
   trial & error.  See http://en.uesp.net/wiki for details.
 
 */
-#ifndef ESM4_DOOR_H
-#define ESM4_DOOR_H
+#ifndef ESM4_REFERENCE_H
+#define ESM4_REFERENCE_H
 
 #include <cstdint>
 #include <string>
@@ -34,43 +34,28 @@
 
 namespace ESM4
 {
-    class Reader;
-    class Writer;
-
-    struct Door
+#pragma pack(push, 1)
+    struct Vector3
     {
-        enum Flags
-        {
-            Flag_OblivionGate  = 0x01,
-            Flag_AutomaticDoor = 0x02,
-            Flag_Hidden        = 0x04,
-            Flag_MinimalUse    = 0x08
-        };
-
-        FormId mFormId;       // from the header
-        std::uint32_t mFlags; // from the header, see enum type RecordFlag for details
-
-        std::string mEditorId;
-        std::string mFullName;
-        std::string mModel;
-
-        float mBoundRadius;
-
-        std::uint8_t mDoorFlags;
-        FormId mScript;
-        FormId mOpenSound;
-        FormId mCloseSound;
-        FormId mLoopSound;
-        FormId mRandomTeleport;
-
-        Door();
-        virtual ~Door();
-
-        virtual void load(ESM4::Reader& reader);
-        //virtual void save(ESM4::Writer& writer) const;
-
-        //void blank();
+        float x;
+        float y;
+        float z;
     };
+
+    // REFR, ACHR, ACRE
+    struct Position
+    {
+        Vector3 pos;
+        Vector3 rot; // angles are in radian, rz applied first and rx applied last
+    };
+
+    // REFR, ACHR, ACRE
+    struct EnableParent
+    {
+        FormId        parent;
+        std::uint32_t flags; //0x0001 = Set Enable State Opposite Parent, 0x0002 = Pop In
+    };
+#pragma pack(pop)
 }
 
-#endif // ESM4_DOOR_H
+#endif // ESM4_REFERENCE_H

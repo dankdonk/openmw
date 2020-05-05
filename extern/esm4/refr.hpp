@@ -27,7 +27,9 @@
 #ifndef ESM4_REFR_H
 #define ESM4_REFR_H
 
-#include "common.hpp" // Position, EnableParent
+#include <cstdint>
+
+#include "reference.hpp" // FormId, Position, EnableParent
 
 namespace ESM4
 {

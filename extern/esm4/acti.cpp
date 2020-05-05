@@ -27,6 +27,7 @@
 #include "acti.hpp"
 
 #include <stdexcept>
+#include <iostream> // FIXME
 
 #include "reader.hpp"
 //#include "writer.hpp"
@@ -64,7 +65,11 @@ void ESM4::Activator::load(ESM4::Reader& reader)
                 break;
             }
             case ESM4::SUB_MODL: reader.getZString(mModel); break;
-            case ESM4::SUB_SCRI: reader.getFormId(mScript); break;
+            case ESM4::SUB_SCRI: reader.getFormId(mScript);
+    //if (mEditorId.find("vUltraLuxeRadioQuestSCRIPT") != std::string::npos) // vUltraLuxeRadioQuestSCRIPT 0016B66F
+                                 if (mScript == 0x0016B66F)
+                                     std::cout << mEditorId << std::endl;
+                                 break;
             case ESM4::SUB_SNAM: reader.getFormId(mSound);  break;
             case ESM4::SUB_MODB: reader.get(mBoundRadius);  break;
             case ESM4::SUB_MODT:

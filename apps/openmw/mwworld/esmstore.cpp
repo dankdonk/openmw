@@ -615,8 +615,8 @@ void ESMStore::loadTes4Record (ESM::ESMReader& esm)
         case ESM4::REC_ALOC: reader.getRecordData(); mMediaLocCtlr.loadTes4(reader); break; // FONV
         case ESM4::REC_MSET: reader.getRecordData(); mMediaSet.loadTes4(reader); break; // FONV
         case ESM4::REC_DOBJ: reader.getRecordData(); mDefaultObj.loadTes4(reader); break; // FONV
-        // only gets loaded in CellStore::loadTes4Record()?
-        //case ESM4::REC_PGRE: reader.getRecordData(); mForeignGrenades.loadTes4(reader); break;
+        // FIXME: should only get loaded in CellStore::loadTes4Record()?
+        case ESM4::REC_PGRE: reader.getRecordData(); mPlacedGrenades.loadTes4(reader); break;
         //case ESM4::REC_REGN:
         case ESM4::REC_PHZD: // Skyrim only?
         case ESM4::REC_ROAD: case ESM4::REC_NAVM: case ESM4::REC_NAVI:

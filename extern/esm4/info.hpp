@@ -27,41 +27,19 @@
 #ifndef ESM4_INFO_H
 #define ESM4_INFO_H
 
-#include <string>
 #include <cstdint>
+#include <string>
+
+#include "formid.hpp"
+#include "script.hpp"
 
 namespace ESM4
 {
     class Reader;
     class Writer;
-    typedef std::uint32_t FormId;
 
     struct DialogInfo
     {
-        // NOTE: these values are for TES4
-        enum EmotionType
-        {
-            EMO_Neutral  = 0,
-            EMO_Anger    = 1,
-            EMO_Disgust  = 2,
-            EMO_Fear     = 3,
-            EMO_Sad      = 4,
-            EMO_Happy    = 5,
-            EMO_Surprise = 6
-        };
-
-#pragma pack(push, 1)
-        struct TRDT
-        {
-            std::int32_t  emoType;
-            std::int32_t  emoValue;
-            std::uint32_t unknown1;
-            std::uint8_t  responseNo;
-            std::uint8_t  unknown2; // probably padding
-            std::uint16_t unknown3; // probably padding
-        };
-#pragma pack(pop)
-
         FormId mFormId;       // from the header
         std::uint32_t mFlags; // from the header, see enum type RecordFlag for details
 

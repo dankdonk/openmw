@@ -117,7 +117,7 @@ void ESM4::MediaLocationController::load(ESM4::Reader& reader)
                 reader.get(mMediaFlags);
                 std::uint8_t flags = mMediaFlags.loopingOptions;
                 mMediaFlags.loopingOptions = (flags & 0xF0) >> 4;
-                mMediaFlags.factionNotFound = flags & 0x0F;
+                mMediaFlags.factionNotFound = flags & 0x0F; // WARN: overwriting data
                 break;
             }
             case ESM4::SUB_NAM4: reader.get(mLocationDelay); break;

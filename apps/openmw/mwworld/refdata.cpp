@@ -4,6 +4,8 @@
 
 #include <components/esm/objectstate.hpp>
 
+#include <extern/esm4/common.hpp>
+
 #include "customdata.hpp"
 #include "cellstore.hpp"
 

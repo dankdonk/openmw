@@ -27,15 +27,16 @@
 #ifndef ESM4_ALOC_H
 #define ESM4_ALOC_H
 
+#include <cstdint>
 #include <string>
 #include <vector>
-#include <cstdint>
+
+#include "formid.hpp"
 
 namespace ESM4
 {
     class Reader;
     class Writer;
-    typedef std::uint32_t FormId;
 
 #pragma pack(push, 1)
     struct MLC_Flags
@@ -44,7 +45,7 @@ namespace ESM4
         // use defaults (6:00/23:54): 4 = loop, 5 = random, 6 = retrigger, 7 = none
         std::uint8_t loopingOptions;
         // 0 = neutral, 1 = enemy, 2 = ally, 3 = friend, 4 = location, 5 = none
-        std::uint8_t factionNotFound;
+        std::uint8_t factionNotFound; // WARN: overwriting whatever is in this
         std::uint16_t unknown; // padding?
     };
 #pragma pack(pop)

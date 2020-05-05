@@ -158,6 +158,7 @@ namespace MWWorld
         ForeignStore<ESM4::MediaLocationController> mMediaLocCtlr;
         ForeignStore<ESM4::MediaSet>   mMediaSet;
         ForeignStore<ESM4::DefaultObj> mDefaultObj;
+        ForeignStore<ESM4::PlacedGrenade> mPlacedGrenades;
         ForeignStore<ESM4::Region>     mForeignRegions;
         // Foreign referenceables
         ForeignStore<ESM4::Sound>      mForeignSounds;

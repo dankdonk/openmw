@@ -27,14 +27,14 @@
 #ifndef ESM4_QUST_H
 #define ESM4_QUST_H
 
-#include <string>
 #include <cstdint>
+
+#include "formid.hpp"
 
 namespace ESM4
 {
     class Reader;
     class Writer;
-    typedef std::uint32_t FormId;
 
     struct Quest
     {

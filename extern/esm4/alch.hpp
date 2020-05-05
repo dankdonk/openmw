@@ -27,7 +27,10 @@
 #ifndef ESM4_ALCH_H
 #define ESM4_ALCH_H
 
-#include "common.hpp"
+#include <cstdint>
+#include <string>
+
+#include "effect.hpp" // FormId, ScriptEffect
 
 namespace ESM4
 {

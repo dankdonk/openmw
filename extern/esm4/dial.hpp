@@ -27,14 +27,16 @@
 #ifndef ESM4_DIAL_H
 #define ESM4_DIAL_H
 
-#include <string>
 #include <cstdint>
+#include <string>
+#include <vector>
+
+#include "formid.hpp"
 
 namespace ESM4
 {
     class Reader;
     class Writer;
-    typedef std::uint32_t FormId;
 
     struct Dialog
     {
@@ -54,11 +56,12 @@ namespace ESM4
         std::uint32_t mFlags; // from the header, see enum type RecordFlag for details
 
         std::string mEditorId;
-        FormId mQuestId;      // QSTI
-        FormId mQuestUnknown; // QSTR
+        std::vector<FormId> mQuests;        // QSTI
+        std::vector<FormId> mQuestsRemoved; // QSTR
         std::string mTopicName;
 
         std::uint8_t mData;   // Type
+        std::uint8_t mDialFlags; // 0x1 rumours, 0x2 top-level (FO3/FONV)
 
         Dialog();
         virtual ~Dialog();

@@ -27,13 +27,14 @@
 #include "dial.hpp"
 
 #include <stdexcept>
-//#include <iostream> // FIXME: for debugging only
+#include <iostream> // FIXME: for debugging only
+
+#include "formid.hpp" // FIXME: for debugging only
 
 #include "reader.hpp"
-//#include "formid.hpp" // FIXME: for debugging only
 //#include "writer.hpp"
 
-ESM4::Dialog::Dialog() : mFormId(0), mFlags(0), mQuestId(0), mQuestUnknown(0), mData(0)
+ESM4::Dialog::Dialog() : mFormId(0), mFlags(0), mData(0), mDialFlags(0)
 {
     mEditorId.clear();
     mTopicName.clear();
@@ -56,17 +57,32 @@ void ESM4::Dialog::load(ESM4::Reader& reader)
         {
             case ESM4::SUB_EDID: reader.getZString(mEditorId);  break;
             case ESM4::SUB_FULL: reader.getZString(mTopicName); break;
-            case ESM4::SUB_DATA:
+            case ESM4::SUB_QSTI:
             {
-                if (subHdr.dataSize != sizeof(mData))
-                    reader.skipSubRecordData(); // FIXME: FO3
-                else
-                    reader.get(mData); // TES4
+                FormId questId;
+                reader.getFormId(questId);
+                mQuests.push_back(questId);
 
                 break;
             }
-            case ESM4::SUB_QSTI: reader.get(mQuestId); break; // FIXME: for FO3 this seems to be a vector
-            case ESM4::SUB_QSTR: reader.get(mQuestUnknown); break;
+            case ESM4::SUB_QSTR:
+            {
+                FormId questRem;
+                reader.getFormId(questRem);
+                mQuestsRemoved.push_back(questRem);
+
+                break;
+            }
+            case ESM4::SUB_DATA:
+            {
+                reader.get(mData); // TES4
+                if (subHdr.dataSize == 2)
+                    reader.get(mDialFlags); // FO3/FONV
+                else if (subHdr.dataSize == 3) // TES5
+                    reader.skipSubRecordData(1); // FIXME
+
+                break;
+            }
             case ESM4::SUB_SCRI:
             case ESM4::SUB_INFC: // FONV
             case ESM4::SUB_INFX: // FONV
@@ -86,9 +102,15 @@ void ESM4::Dialog::load(ESM4::Reader& reader)
                 throw std::runtime_error("ESM4::DIAL::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
         }
     }
-    //if (mQuestUnknown != 0)
-        //std::cout << "DIAL " << mEditorId << ": " << formIdToString(mQuestId)
-                                          //<< ", " << formIdToString(mQuestUnknown) << std::endl;
+#if 0
+    if (mData == 7/*radio*/ && mQuests.size() != 0) // DATA usually comes after QSTI
+    {
+        std::cout << "DIAL " << formIdToString(mFormId) << " " << mEditorId << " " << mTopicName << "\n    QSTI:";
+        for (std::size_t i = 0; i < mQuests.size(); ++i)
+            std::cout << " " << formIdToString(mQuests[i]);
+        std::cout << std::endl;
+    }
+#endif
 }
 
 //void ESM4::Dialog::save(ESM4::Writer& writer) const

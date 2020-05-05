@@ -32,11 +32,12 @@
 #include <string>
 #include <cstdint>
 
+#include "formid.hpp"
+
 namespace ESM4
 {
     class Reader;
     class Writer;
-    typedef std::uint32_t FormId;
 
     struct PlaceableWater
     {

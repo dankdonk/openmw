@@ -27,7 +27,9 @@
 #ifndef ESM4_WRLD_H
 #define ESM4_WRLD_H
 
+#include <cstdint>
 #include <vector>
+#include <string>
 
 #include "common.hpp"
 

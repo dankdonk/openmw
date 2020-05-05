@@ -23,7 +23,6 @@
 #ifndef ESM4_READER_H
 #define ESM4_READER_H
 
-#include <vector>
 #include <map>
 #include <cstddef>
 

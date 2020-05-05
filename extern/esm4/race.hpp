@@ -27,12 +27,12 @@
 #ifndef ESM4_RACE
 #define ESM4_RACE
 
-#include <string>
 #include <cstdint>
-#include <map>
 #include <vector>
+#include <map>
 
-#include "common.hpp" // AttributeValues
+#include "formid.hpp"
+#include "actor.hpp" // AttributeValues
 
 namespace ESM4
 {
