@@ -45,6 +45,11 @@ ESM4::Reference::Reference() : mFormId(0), mFlags(0), mInitiallyDisabled(false),
     mEsp.parent = 0;
     mEsp.flags = 0;
 
+    mRadio.rangeRadius = 0.f;
+    mRadio.broadcastRange = 0;
+    mRadio.staticPercentage = 0.f;
+    mRadio.posReference = 0;
+
     mDoor.destDoor = 0;
 }
 
@@ -209,6 +214,15 @@ void ESM4::Reference::load(ESM4::Reader& reader)
                 break;
             }
             case ESM4::SUB_CNAM: reader.getFormId(mAudioLocation); break; // FONV
+            case ESM4::SUB_XRDO: // FO3
+            {
+                reader.get(mRadio.rangeRadius);
+                reader.get(mRadio.broadcastRange);
+                reader.get(mRadio.staticPercentage);
+                reader.getFormId(mRadio.posReference);
+
+                break;
+            }
             // lighting
             case ESM4::SUB_LNAM: // lighting template formId
             case ESM4::SUB_XLIG: // struct, FOV, fade, etc
@@ -263,7 +277,6 @@ void ESM4::Reference::load(ESM4::Reader& reader)
             case ESM4::SUB_XHLT: // Unofficial Oblivion Patch
             case ESM4::SUB_XCHG: // thievery.exp
             case ESM4::SUB_XHLP: // FO3
-            case ESM4::SUB_XRDO: // FO3
             case ESM4::SUB_XAMT: // FO3
             case ESM4::SUB_XAMC: // FO3
             case ESM4::SUB_XRAD: // FO3

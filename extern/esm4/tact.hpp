@@ -49,7 +49,8 @@ namespace ESM4
 
         FormId mScript;
         FormId mVoiceType;
-        FormId mSound;
+        FormId mLoopSound;     // SOUN
+        FormId mRadioTemplate; // SOUN
 
         TalkingActivator();
         virtual ~TalkingActivator();

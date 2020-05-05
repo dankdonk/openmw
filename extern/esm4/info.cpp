@@ -27,14 +27,24 @@
 #include "info.hpp"
 
 #include <stdexcept>
-//#include <iostream> // FIXME: for debugging only
+#include <iostream> // FIXME: for debugging only
 
 #include "reader.hpp"
 #include "formid.hpp" // FIXME: for debugging only
 //#include "writer.hpp"
 
-ESM4::DialogInfo::DialogInfo() : mFormId(0), mFlags(0)
+ESM4::DialogInfo::DialogInfo() : mFormId(0), mFlags(0), mQuest(0), mSound(0)
 {
+    std::memset(&mResponseData, 0, sizeof(TargetResponseData));
+    mResponse.clear();
+    mNotes.clear();
+    mEdits.clear();
+
+    std::memset(&mTargetCondition, 0, sizeof(TargetCondition));
+
+    std::memset(&mScript.scriptHeader, 0, sizeof(ScriptHeader));
+    mScript.scriptSource.clear();
+    mScript.globReference = 0;
 }
 
 ESM4::DialogInfo::~DialogInfo()
@@ -49,39 +59,107 @@ void ESM4::DialogInfo::load(ESM4::Reader& reader)
 
     mEditorId = formIdToString(mFormId); // FIXME: quick workaround to use existing code
 
+    static ScriptLocalVariableData localVar;
+    bool ignore = false;
+
     while (reader.getSubRecordHeader())
     {
         const ESM4::SubRecordHeader& subHdr = reader.subRecordHeader();
         switch (subHdr.typeId)
         {
-            case ESM4::SUB_DATA: // always 3
-            case ESM4::SUB_QSTI: // FormId quest id
-            case ESM4::SUB_NAME: // FormId add topic
-            case ESM4::SUB_TRDT: // 16 bytes
-            case ESM4::SUB_NAM1: // response text
-            case ESM4::SUB_NAM2: // actor notes
+            case ESM4::SUB_QSTI: reader.getFormId(mQuest); break; // FormId quest id
+            case ESM4::SUB_SNDD: reader.getFormId(mSound); break; // FO3 (not used in FONV?)
+            case ESM4::SUB_TRDT:
+            {
+                if (subHdr.dataSize == 16) // TES4
+                    reader.get(&mResponseData, 16);
+                else
+                {
+                    reader.get(mResponseData);
+                    if (mResponseData.sound)
+                        reader.adjustFormId(mResponseData.sound);
+                }
+
+                break;
+            }
+            case ESM4::SUB_NAM1: reader.getZString(mResponse); break; // response text
+            case ESM4::SUB_NAM2: reader.getZString(mNotes); break; // actor notes
+            case ESM4::SUB_NAM3: reader.getZString(mEdits); break; // not in TES4
+            case ESM4::SUB_CTDA: // FIXME: how to detect if 1st/2nd param is a formid?
+            {
+                if (subHdr.dataSize == 24) // TES4
+                    reader.get(&mTargetCondition, 24);
+                else
+                {
+                    reader.get(mTargetCondition); // FO3/FONV
+                    if (mTargetCondition.reference)
+                        reader.adjustFormId(mTargetCondition.reference);
+                }
+                // FIXME: support TES5
+
+                break;
+            }
+            case ESM4::SUB_SCHR:
+            {
+                if (!ignore)
+                    reader.get(mScript.scriptHeader);
+                else
+                    reader.skipSubRecordData(); // TODO: does the second one ever used?
+
+                break;
+            }
+            case ESM4::SUB_SCDA: reader.skipSubRecordData(); break; // compiled script data
+            case ESM4::SUB_SCTX: reader.getZString(mScript.scriptSource); break;
+            case ESM4::SUB_SCRO: reader.getFormId(mScript.globReference); break;
+            case ESM4::SUB_SLSD:
+            {
+                localVar.clear();
+                reader.get(localVar.index);
+                reader.get(localVar.unknown1);
+                reader.get(localVar.unknown2);
+                reader.get(localVar.unknown3);
+                reader.get(localVar.type);
+                reader.get(localVar.unknown4);
+                // WARN: assumes SCVR will follow immediately
+
+                break;
+            }
+            case ESM4::SUB_SCVR: // assumed always pair with SLSD
+            {
+                reader.getZString(localVar.variableName);
+
+                mScript.localVarData.push_back(localVar);
+
+                break;
+            }
+            case ESM4::SUB_SCRV:
+            {
+                std::uint32_t index;
+                reader.get(index);
+
+                mScript.localRefVarIndex.push_back(index);
+
+                break;
+            }
+            case ESM4::SUB_NEXT: // FO3/FONV marker for next script header
+            {
+                ignore = true;
+
+                break;
+            }
+            case ESM4::SUB_DATA: // always 3 for TES4
+            case ESM4::SUB_NAME: // FormId add topic (not always present)
             case ESM4::SUB_CTDT: // older version of CTDA? 20 bytes
             case ESM4::SUB_SCHD: // 28 bytes
-            case ESM4::SUB_CTDA: // 24 bytes
-            case ESM4::SUB_SCHR: // script data 20 bytes
-            case ESM4::SUB_SCDA: // compiled script data 14 bytes
             case ESM4::SUB_TCLT: // FormId choice
             case ESM4::SUB_TCLF: // FormId
-            case ESM4::SUB_SCTX: // result script source
-            case ESM4::SUB_SCRO: // FormId GLOB reference
             case ESM4::SUB_PNAM: // TES4 DLC
             case ESM4::SUB_TPIC: // TES4 DLC
-            case ESM4::SUB_NAM3: // FO3
-            case ESM4::SUB_ANAM: // FO3
-            case ESM4::SUB_DNAM: // FO3
-            case ESM4::SUB_KNAM: // FO3
-            case ESM4::SUB_NEXT: // FO3
-            case ESM4::SUB_SNDD: // FO3
+            case ESM4::SUB_ANAM: // FO3 speaker formid
+            case ESM4::SUB_DNAM: // FO3 speech challenge
+            case ESM4::SUB_KNAM: // FO3 formid
             case ESM4::SUB_LNAM: // FONV
             case ESM4::SUB_TCFU: // FONV
-            case ESM4::SUB_SLSD: // FONV
-            case ESM4::SUB_SCRV: // FONV
-            case ESM4::SUB_SCVR: // FONV
             case ESM4::SUB_TIFC: // TES5
             case ESM4::SUB_TWAT: // TES5
             case ESM4::SUB_CIS2: // TES5
@@ -92,7 +170,7 @@ void ESM4::DialogInfo::load(ESM4::Reader& reader)
             case ESM4::SUB_BNAM: // TES5
             case ESM4::SUB_SNAM: // TES5
             case ESM4::SUB_ONAM: // TES5
-            case ESM4::SUB_QNAM: // TES5
+            case ESM4::SUB_QNAM: // TES5 for mScript
             case ESM4::SUB_RNAM: // TES5
             {
                 //std::cout << "INFO " << ESM4::printName(subHdr.typeId) << " skipping..."
