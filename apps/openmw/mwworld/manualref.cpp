@@ -63,7 +63,7 @@ MWWorld::ManualRef::ManualRef(const MWWorld::ESMStore& store, const std::string&
         // TODO: levelled item/creature/npc ManualRef won't be created since the actual id of
         //       the item/actor will be supplied? maybe used for random spawning?
         ESM4::FormId id = ESM4::stringToFormId(name);
-        switch (store.find(id))
+        switch (store.getRecordType(id))
         {
         case MKTAG('A','A','P','P'): create(store.getForeign<ESM4::Apparatus>(), id, mRef, mPtr); break;
         case MKTAG('O','A','R','M'): create(store.getForeign<ESM4::Armor>(), id, mRef, mPtr); break;

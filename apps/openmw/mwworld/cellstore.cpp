@@ -977,7 +977,7 @@ namespace MWWorld
 
                 if (record.mEsp.parent != 0)
                 {
-                    int res = store.find(record.mEsp.parent);
+                    int res = store.getRecordType(record.mEsp.parent);
                     if (res == MKTAG('R','R','E','F'))
                         std::cout << "flags " << std::hex << record.mEsp.flags << std::endl;
 
@@ -1035,7 +1035,7 @@ namespace MWWorld
                 //if (record.mBaseObj == 0x0016B46E) // TACT in cell ULCasino
                      //std::cout << "TACT" << std::endl;
 
-                switch (store.find(record.mBaseObj))
+                switch (store.getRecordType(record.mBaseObj))
                 {
                     case MKTAG('N','S','O','U'): mSounds.load(record, deleted, store); break;
 #if 1
@@ -1158,7 +1158,7 @@ namespace MWWorld
                 //if (!record.mEditorId.empty())
                     //std::cout << ESM4::printName(hdr.record.typeId) << ": " << record.mEditorId << std::endl; // FIXME
 
-                switch (store.find(record.mBaseObj))
+                switch (store.getRecordType(record.mBaseObj))
                 {
                     case MKTAG('_','N','P','C'):
                     {
@@ -1305,7 +1305,7 @@ namespace MWWorld
                 //if (!record.mEditorId.empty())
                     //std::cout << ESM4::printName(hdr.record.typeId) << ": " << record.mEditorId << std::endl; // FIXME
 
-                switch (store.find(record.mBaseObj))
+                switch (store.getRecordType(record.mBaseObj))
                 {
                     case MKTAG('A','C','R','E'):
                     {

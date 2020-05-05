@@ -153,7 +153,7 @@ namespace MWMechanics
                 return;
 
             // copy Morrowind behaviour for now
-            if (!MWBase::Environment::get().getWorld()->getStore().find(ESM4::stringToFormId(itemId)))
+            if (!MWBase::Environment::get().getWorld()->getStore().getRecordType(ESM4::stringToFormId(itemId)))
             {
                 std::cerr << "Warning: ignoring nonexistent item '" << itemId << "' in levelled list '" <<
                     ESM4::formIdToString(levItem->mFormId) << "'" << std::endl;
@@ -190,7 +190,7 @@ namespace MWMechanics
         {
             ESM4::FormId base = npc->mBaseTemplate;
             const MWWorld::ESMStore &store = MWBase::Environment::get().getWorld()->getStore();
-            uint32_t type = store.find(base);
+            uint32_t type = store.getRecordType(base);
             if (type == MKTAG('_', 'N', 'P', 'C'))
             {
                 const ESM4::Npc* newNpc = store.getForeign<ESM4::Npc>().search(base);
@@ -226,7 +226,7 @@ namespace MWMechanics
         ESM4::FormId id = ESM4::stringToFormId(npcName);
         const MWWorld::ESMStore &store = MWBase::Environment::get().getWorld()->getStore();
 
-        uint32_t type = store.find(id);
+        uint32_t type = store.getRecordType(id);
         if (type == MKTAG('_', 'N', 'P', 'C'))
         {
             const ESM4::Npc* newNpc = store.getForeign<ESM4::Npc>().search(id);
@@ -262,7 +262,7 @@ namespace MWMechanics
         {
             ESM4::FormId base = creature->mBaseTemplate;
             const MWWorld::ESMStore &store = MWBase::Environment::get().getWorld()->getStore();
-            uint32_t type = store.find(base);
+            uint32_t type = store.getRecordType(base);
             if (type == MKTAG('A', 'C', 'R', 'E'))
             {
                 const ESM4::Creature* newCreature = store.getForeign<ESM4::Creature>().search(base);
@@ -298,7 +298,7 @@ namespace MWMechanics
         ESM4::FormId id = ESM4::stringToFormId(creatureName);
         const MWWorld::ESMStore &store = MWBase::Environment::get().getWorld()->getStore();
 
-        uint32_t type = store.find(id);
+        uint32_t type = store.getRecordType(id);
         if (type == MKTAG('A', 'C', 'R', 'E'))
         {
             const ESM4::Creature* newCreature = store.getForeign<ESM4::Creature>().search(id);
@@ -337,7 +337,7 @@ namespace MWMechanics
             return std::string();
 
         // copy Morrowind behaviour for now
-        if (!MWBase::Environment::get().getWorld()->getStore().find(ESM4::stringToFormId(itemId)))
+        if (!MWBase::Environment::get().getWorld()->getStore().getRecordType(ESM4::stringToFormId(itemId)))
         {
             std::cerr << "Warning: ignoring nonexistent actor '" << itemId << "' in levelled list '" <<
                 ESM4::formIdToString(levActor->mFormId) << "'" << std::endl;
@@ -373,7 +373,7 @@ namespace MWMechanics
             return std::string();
 
         // copy Morrowind behaviour for now
-        if (!MWBase::Environment::get().getWorld()->getStore().find(ESM4::stringToFormId(itemId)))
+        if (!MWBase::Environment::get().getWorld()->getStore().getRecordType(ESM4::stringToFormId(itemId)))
         {
             std::cerr << "Warning: ignoring nonexistent creature '" << itemId << "' in levelled list '" <<
                 ESM4::formIdToString(levCreature->mFormId) << "'" << std::endl;

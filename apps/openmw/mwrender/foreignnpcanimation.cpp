@@ -2231,7 +2231,7 @@ std::string ForeignNpcAnimation::getSkeletonModel(const MWWorld::ESMStore& store
     // FIXME: FO3/FONV some NPCs have mModel = marker_creature.nif
     if (mNpc->mModel.empty() && mNpc->mBaseTemplate != 0) // TES5
     {
-        uint32_t type = store.find(mNpc->mBaseTemplate);
+        uint32_t type = store.getRecordType(mNpc->mBaseTemplate);
 
         if (type == MKTAG('_', 'N', 'P', 'C'))
         {

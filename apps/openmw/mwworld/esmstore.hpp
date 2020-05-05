@@ -243,7 +243,7 @@ namespace MWWorld
         }
 
         // NOTE: returns TES4::RecordTypes
-        int find(ESM4::FormId formId) const
+        int getRecordType(ESM4::FormId formId) const
         {
             std::map<ESM4::FormId, int>::const_iterator it = mForeignIds.find(formId);
             if (it == mForeignIds.end())
