@@ -27,9 +27,12 @@
 #ifndef ESM4_NPC__H
 #define ESM4_NPC__H
 
+#include <cstdint>
+#include <string>
 #include <vector>
 
-#include "common.hpp"
+#include "actor.hpp"
+#include "inventory.hpp"
 
 namespace ESM4
 {

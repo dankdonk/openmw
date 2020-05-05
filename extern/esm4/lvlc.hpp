@@ -27,9 +27,11 @@
 #ifndef ESM4_LVLC_H
 #define ESM4_LVLC_H
 
+#include <cstdint>
 #include <vector>
 
-#include "common.hpp"
+#include "formid.hpp"
+#include "inventory.hpp"
 
 namespace ESM4
 {

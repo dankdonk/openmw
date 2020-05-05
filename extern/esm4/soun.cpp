@@ -27,6 +27,9 @@
 #include "soun.hpp"
 
 #include <stdexcept>
+#include <iostream> // FIXME
+
+#include "formid.hpp"
 
 #include "reader.hpp"
 //#include "writer.hpp"

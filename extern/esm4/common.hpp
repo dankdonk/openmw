@@ -32,6 +32,8 @@
 #include <cstdint>
 #include <string>
 
+#include "formid.hpp"
+
 // From ScummVM's endianness.h but for little endian
 #define MKTAG(a0,a1,a2,a3) ((std::uint32_t)((a0) | ((a1) << 8) | ((a2) << 16) | ((a3) << 24)))
 
@@ -869,8 +871,6 @@ namespace ESM4
         Rec_MultiBound = 0x80000000  // (REFR) MultiBound
     };
 
-    typedef std::uint32_t FormId;
-
 #pragma pack(push, 1)
     // NOTE: the label field of a group is not reliable (http://www.uesp.net/wiki/Tes4Mod:Mod_File_Format)
     union GroupLabel
@@ -935,184 +935,11 @@ namespace ESM4
         Grid   grid;
     };
 
-    struct Vector3
+    struct Vertex
     {
         float x;
         float y;
         float z;
-    };
-
-    typedef Vector3 Vertex;
-
-    // REFR, ACHR, ACRE
-    struct Position
-    {
-        Vector3 pos;
-        Vector3 rot; // angles are in radian, rz applied first and rx applied last
-    };
-
-    // REFR, ACHR, ACRE
-    struct EnableParent
-    {
-        FormId        parent;
-        std::uint32_t flags; //0x0001 = Set Enable State Opposite Parent, 0x0002 = Pop In
-    };
-
-    // LVLC, LVLI
-    struct LVLO
-    {
-        std::int16_t  level;
-        std::uint16_t unknown;  // sometimes missing
-        FormId        item;
-        std::int16_t  count;
-        std::uint16_t unknown2; // sometimes missing
-    };
-
-    struct InventoryItem // NPC_, CREA, CONT
-    {
-        FormId        item;
-        std::uint32_t count;
-    };
-
-    struct AIData        // NPC_, CREA
-    {
-        std::uint8_t  aggression;
-        std::uint8_t  confidence;
-        std::uint8_t  energyLevel;
-        std::uint8_t  responsibility;
-        std::uint32_t aiFlags;
-        std::uint8_t  trainSkill;
-        std::uint8_t  trainLevel;
-        std::uint16_t unknown;
-    };
-
-    struct AttributeValues
-    {
-        std::uint8_t  strength;
-        std::uint8_t  intelligence;
-        std::uint8_t  willpower;
-        std::uint8_t  agility;
-        std::uint8_t  speed;
-        std::uint8_t  endurance;
-        std::uint8_t  personality;
-        std::uint8_t  luck;
-    };
-
-    struct ACBS_TES4
-    {
-        std::uint32_t flags;
-        std::uint16_t baseSpell;
-        std::uint16_t fatigue;
-        std::uint16_t barterGold;
-        std::int16_t  levelOrOffset;
-        std::uint16_t calcMin;
-        std::uint16_t calcMax;
-        std::uint32_t padding1;
-        std::uint32_t padding2;
-    };
-
-    struct ACBS_FO3
-    {
-        std::uint32_t flags;
-        std::uint16_t fatigue;
-        std::uint16_t barterGold;
-        std::int16_t  levelOrMult;
-        std::uint16_t calcMinlevel;
-        std::uint16_t calcMaxlevel;
-        std::uint16_t speedMultiplier;
-        float         karma;
-        std::int16_t  dispositionBase;
-        std::uint16_t templateFlags;
-    };
-
-    struct ACBS_TES5
-    {
-        std::uint32_t flags;
-        std::uint16_t magickaOffset;
-        std::uint16_t staminaOffset;
-        std::uint16_t levelOrMult;     // TODO: check if int16_t
-        std::uint16_t calcMinlevel;
-        std::uint16_t calcMaxlevel;
-        std::uint16_t speedMultiplier;
-        std::uint16_t dispositionBase; // TODO: check if int16_t
-        std::uint16_t templateFlags;
-        std::uint16_t healthOffset;
-        std::uint16_t bleedoutOverride;
-    };
-
-    union ActorBaseConfig
-    {
-        ACBS_TES4 tes4;
-        ACBS_FO3  fo3;
-        ACBS_TES5 tes5;
-    };
-
-    // guesses only for TES4
-    struct Lighting
-    {                              //               | Aichan Prison values
-        std::uint32_t ambient;     //               | 16 17 19 00 (RGBA)
-        std::uint32_t directional; //               | 00 00 00 00 (RGBA)
-        std::uint32_t fogColor;    //               | 1D 1B 16 00 (RGBA)
-        float         fogNear;     // Fog Near      | 00 00 00 00 = 0.f
-        float         fogFar;      // Fog Far       | 00 80 3B 45 = 3000.f
-        std::int32_t  rotationXY;  // rotation xy   | 00 00 00 00 = 0
-        std::int32_t  rotationZ;   // rotation z    | 00 00 00 00 = 0
-        float         fogDirFade;  // Fog dir fade  | 00 00 80 3F = 1.f
-        float         fogClipDist; // Fog clip dist | 00 80 3B 45 = 3000.f
-        float         fogPower;
-    };
-
-    struct Lighting_TES5
-    {
-        std::uint32_t ambient;
-        std::uint32_t directional;
-        std::uint32_t fogColor;
-        float         fogNear;
-        float         fogFar;
-        std::int32_t  rotationXY;
-        std::int32_t  rotationZ;
-        float         fogDirFade;
-        float         fogClipDist;
-        float         fogPower;
-        std::uint32_t unknown1;
-        std::uint32_t unknown2;
-        std::uint32_t unknown3;
-        std::uint32_t unknown4;
-        std::uint32_t unknown5;
-        std::uint32_t unknown6;
-        std::uint32_t unknown7;
-        std::uint32_t unknown8;
-        std::uint32_t fogColorFar;
-        float         fogMax;
-        float         LightFadeStart;
-        float         LightFadeEnd;
-        std::uint32_t padding;
-    };
-
-    struct ActorFaction
-    {
-        FormId       faction;
-        std::int8_t  rank;
-        std::uint8_t unknown1;
-        std::uint8_t unknown2;
-        std::uint8_t unknown3;
-    };
-
-    union EFI_Label
-    {
-        std::uint32_t value;
-        char effect[4];
-    };
-
-    struct ScriptEffect
-    {
-        FormId       formId;       // Script effect (Magic effect must be SEFF)
-        std::int32_t school;       // Magic school. See Magic schools for more information.
-        EFI_Label    visualEffect; // Visual effect name or 0x00000000 if None
-        std::uint8_t flags;        // 0x01 = Hostile
-        std::uint8_t unknown1;
-        std::uint8_t unknown2;
-        std::uint8_t unknown3;
     };
 #pragma pack(pop)
 

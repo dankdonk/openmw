@@ -27,7 +27,9 @@
 #include "qust.hpp"
 
 #include <stdexcept>
-//#include <iostream> // FIXME: for debugging only
+#include <iostream> // FIXME: for debugging only
+
+#include "formid.hpp"
 
 #include "reader.hpp"
 //#include "writer.hpp"
@@ -56,7 +58,9 @@ void ESM4::Quest::load(ESM4::Reader& reader)
         {
             case ESM4::SUB_EDID: reader.getZString(mEditorId);  break;
             case ESM4::SUB_FULL: reader.getZString(mQuestName); break;
-            case ESM4::SUB_ICON: reader.getZString(mFileName);  break;
+            case ESM4::SUB_ICON: reader.getZString(mFileName);
+                                 std::cout << "QUST ICON" << std::endl;
+                                 break;
             case ESM4::SUB_DATA:
             {
                 if (subHdr.dataSize != sizeof(mData))
@@ -130,6 +134,8 @@ void ESM4::Quest::load(ESM4::Reader& reader)
                 throw std::runtime_error("ESM4::QUST::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
         }
     }
+    //if (mEditorId == "vUltraLuxeRadioQuest") // vUltraLuxeRadioQuest 0016B66D
+        //std::cout << mEditorId << " " << formIdToString(mFormId) << std::endl;
     //std::cout << "QUST " << mEditorId << ": " << mQuestName << " @ " << mFileName << std::endl;
 }
 

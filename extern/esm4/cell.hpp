@@ -31,7 +31,8 @@
 #include <string>
 #include <vector>
 
-#include "common.hpp" // Lighting
+#include "formid.hpp"
+#include "lighting.hpp"
 
 namespace ESM4
 {

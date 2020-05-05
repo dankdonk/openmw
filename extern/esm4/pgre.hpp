@@ -29,14 +29,15 @@
 #ifndef ESM4_PGRE_H
 #define ESM4_PGRE_H
 
-#include <string>
 #include <cstdint>
+#include <string>
+
+#include "formid.hpp"
 
 namespace ESM4
 {
     class Reader;
     class Writer;
-    typedef std::uint32_t FormId;
 
     struct PlacedGrenade
     {

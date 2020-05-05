@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2016, 2018, 2020 cc9cii
+  Copyright (C) 2020 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -24,11 +24,12 @@
   trial & error.  See http://en.uesp.net/wiki for details.
 
 */
-#ifndef ESM4_DOOR_H
-#define ESM4_DOOR_H
+#ifndef ESM4_ROAD_H
+#define ESM4_ROAD_H
 
 #include <cstdint>
 #include <string>
+#include <vector>
 
 #include "formid.hpp"
 
@@ -37,34 +38,37 @@ namespace ESM4
     class Reader;
     class Writer;
 
-    struct Door
+    struct Road
     {
-        enum Flags
+#pragma pack(push, 1)
+        // FIXME: duplicated from PGRD
+        struct PGRP
         {
-            Flag_OblivionGate  = 0x01,
-            Flag_AutomaticDoor = 0x02,
-            Flag_Hidden        = 0x04,
-            Flag_MinimalUse    = 0x08
+            float x;
+            float y;
+            float z;
+            std::uint8_t  numLinks;
+            std::uint8_t  unknown1;
+            std::uint16_t unknown2;
         };
+
+        struct PGRR
+        {
+            std::int16_t startNode;
+            std::int16_t endNode;
+        };
+#pragma pack(pop)
 
         FormId mFormId;       // from the header
         std::uint32_t mFlags; // from the header, see enum type RecordFlag for details
 
         std::string mEditorId;
-        std::string mFullName;
-        std::string mModel;
 
-        float mBoundRadius;
+        std::vector<PGRP> mNodes;
+        std::vector<PGRR> mLinks;
 
-        std::uint8_t mDoorFlags;
-        FormId mScript;
-        FormId mOpenSound;
-        FormId mCloseSound;
-        FormId mLoopSound;
-        FormId mRandomTeleport;
-
-        Door();
-        virtual ~Door();
+        Road();
+        virtual ~Road();
 
         virtual void load(ESM4::Reader& reader);
         //virtual void save(ESM4::Writer& writer) const;
@@ -73,4 +77,4 @@ namespace ESM4
     };
 }
 
-#endif // ESM4_DOOR_H
+#endif // ESM4_ROAD_H

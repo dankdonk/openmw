@@ -29,14 +29,15 @@
 #ifndef ESM4_SCOL_H
 #define ESM4_SCOL_H
 
-#include <string>
 #include <cstdint>
+#include <string>
+
+#include "formid.hpp"
 
 namespace ESM4
 {
     class Reader;
     class Writer;
-    typedef std::uint32_t FormId;
 
     struct StaticCollection
     {

@@ -27,9 +27,12 @@
 #ifndef ESM4_CREA_H
 #define ESM4_CREA_H
 
+#include <cstdint>
+#include <string>
 #include <vector>
 
-#include "common.hpp"
+#include "actor.hpp"
+#include "inventory.hpp"
 
 namespace ESM4
 {

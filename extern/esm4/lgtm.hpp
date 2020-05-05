@@ -29,10 +29,11 @@
 #ifndef ESM4_LGTM_H
 #define ESM4_LGTM_H
 
-#include <string>
 #include <cstdint>
+#include <string>
 
-#include "common.hpp" // Lighting
+#include "formid.hpp"
+#include "lighting.hpp"
 
 namespace ESM4
 {

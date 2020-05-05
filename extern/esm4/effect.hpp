@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2016, 2018, 2020 cc9cii
+  Copyright (C) 2020 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -24,53 +24,33 @@
   trial & error.  See http://en.uesp.net/wiki for details.
 
 */
-#ifndef ESM4_DOOR_H
-#define ESM4_DOOR_H
+#ifndef ESM4_EFFECT_H
+#define ESM4_EFFECT_H
 
 #include <cstdint>
-#include <string>
 
 #include "formid.hpp"
 
 namespace ESM4
 {
-    class Reader;
-    class Writer;
-
-    struct Door
+#pragma pack(push, 1)
+    union EFI_Label
     {
-        enum Flags
-        {
-            Flag_OblivionGate  = 0x01,
-            Flag_AutomaticDoor = 0x02,
-            Flag_Hidden        = 0x04,
-            Flag_MinimalUse    = 0x08
-        };
-
-        FormId mFormId;       // from the header
-        std::uint32_t mFlags; // from the header, see enum type RecordFlag for details
-
-        std::string mEditorId;
-        std::string mFullName;
-        std::string mModel;
-
-        float mBoundRadius;
-
-        std::uint8_t mDoorFlags;
-        FormId mScript;
-        FormId mOpenSound;
-        FormId mCloseSound;
-        FormId mLoopSound;
-        FormId mRandomTeleport;
-
-        Door();
-        virtual ~Door();
-
-        virtual void load(ESM4::Reader& reader);
-        //virtual void save(ESM4::Writer& writer) const;
-
-        //void blank();
+        std::uint32_t value;
+        char effect[4];
     };
+
+    struct ScriptEffect
+    {
+        FormId       formId;       // Script effect (Magic effect must be SEFF)
+        std::int32_t school;       // Magic school. See Magic schools for more information.
+        EFI_Label    visualEffect; // Visual effect name or 0x00000000 if None
+        std::uint8_t flags;        // 0x01 = Hostile
+        std::uint8_t unknown1;
+        std::uint8_t unknown2;
+        std::uint8_t unknown3;
+    };
+#pragma pack(pop)
 }
 
-#endif // ESM4_DOOR_H
+#endif // ESM4_EFFECT_H

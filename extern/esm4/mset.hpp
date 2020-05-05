@@ -27,14 +27,15 @@
 #ifndef ESM4_MSET_H
 #define ESM4_MSET_H
 
-#include <string>
 #include <cstdint>
+#include <string>
+
+#include "formid.hpp"
 
 namespace ESM4
 {
     class Reader;
     class Writer;
-    typedef std::uint32_t FormId;
 
     struct MediaSet
     {

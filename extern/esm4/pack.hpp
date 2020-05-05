@@ -27,15 +27,16 @@
 #ifndef ESM4_PACK_H
 #define ESM4_PACK_H
 
-#include <string>
 #include <cstdint>
+#include <string>
 #include <vector>
+
+#include "formid.hpp"
 
 namespace ESM4
 {
     class Reader;
     class Writer;
-    typedef std::uint32_t FormId;
 
     struct AIPackage
     {

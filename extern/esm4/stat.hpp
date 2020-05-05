@@ -31,11 +31,12 @@
 #include <string>
 #include <vector>
 
+#include "formid.hpp"
+
 namespace ESM4
 {
     class Reader;
     class Writer;
-    typedef std::uint32_t FormId;
 
     struct Static
     {

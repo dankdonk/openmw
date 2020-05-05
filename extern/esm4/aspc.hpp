@@ -27,15 +27,16 @@
 #ifndef ESM4_ASPC_H
 #define ESM4_ASPC_H
 
+#include <cstdint>
 #include <string>
 #include <vector>
-#include <cstdint>
+
+#include "formid.hpp"
 
 namespace ESM4
 {
     class Reader;
     class Writer;
-    typedef std::uint32_t FormId;
 
     struct AcousticSpace
     {

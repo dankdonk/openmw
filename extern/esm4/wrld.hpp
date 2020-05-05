@@ -27,7 +27,9 @@
 #ifndef ESM4_WRLD_H
 #define ESM4_WRLD_H
 
+#include <cstdint>
 #include <vector>
+#include <string>
 
 #include "common.hpp"
 
@@ -117,7 +119,7 @@ namespace ESM4
         // 0x10 use Climate data
         // 0x20 use Image Space data (Climate for TES5)
         // 0x40 use SkyCell (TES5)
-        // 0x80 needs water adjustment
+        // 0x80 needs water adjustment (this isn't for parent I think? FONV only set for wastelandnv)
         std::uint16_t mParentUseFlags; // FO3/FONV
 
         // cache formId's of children (e.g. CELL, ROAD)
