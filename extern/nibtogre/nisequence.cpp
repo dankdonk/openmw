@@ -165,7 +165,7 @@ NiBtOgre::NiControllerSequence::NiControllerSequence(uint32_t index, NiStream *s
 // (probably needs to have actions done through 'inst')
 //
 // FIXME: how to get the sound object EditorID lookup? probably need to implement something
-//        similar to getting world using EditorID, i.e. mStore.get<ForeignWorld>().getFormId(world);
+//        similar to getting world using EditorID, i.e. mStore.getForeign<ForeignWorld>().getFormId(world);
 //
 // Each of the Controlled Blocks refer to the target node name via the string palette which
 // in turn needs to be looked up via the object palette in NiControllerManager.  But how to

@@ -60,7 +60,7 @@ namespace MWMechanics
         }
         if (candidates.empty())
             return std::string();
-        std::string item = candidates[Misc::Rng::rollDice(candidates.size())];
+        std::string item = candidates[Misc::Rng::rollDice(int(candidates.size()))];
 
         // Vanilla doesn't fail on nonexistent items in levelled lists
         if (!MWBase::Environment::get().getWorld()->getStore().find(Misc::StringUtils::lowerCase(item)))
@@ -123,7 +123,7 @@ namespace MWMechanics
         if (candidates.empty())
             return std::string();
 
-        return candidates[Misc::Rng::rollDice(candidates.size())];
+        return candidates[Misc::Rng::rollDice(int(candidates.size()))];
     }
 
     inline void getTES4LevelledItem(std::vector<std::string>& ids, const ESM4::LevelledItem* levItem)
@@ -155,7 +155,7 @@ namespace MWMechanics
             // copy Morrowind behaviour for now
             if (!MWBase::Environment::get().getWorld()->getStore().getRecordType(ESM4::stringToFormId(itemId)))
             {
-                std::cerr << "Warning: ignoring nonexistent item '" << itemId << "' in levelled list '" <<
+                std::cerr << "Warning: LVLI ignoring nonexistent item '" << itemId << "' in levelled list '" <<
                     ESM4::formIdToString(levItem->mFormId) << "'" << std::endl;
 
                 return;
@@ -191,14 +191,14 @@ namespace MWMechanics
             ESM4::FormId base = npc->mBaseTemplate;
             const MWWorld::ESMStore &store = MWBase::Environment::get().getWorld()->getStore();
             uint32_t type = store.getRecordType(base);
-            if (type == MKTAG('_', 'N', 'P', 'C'))
+            if (type == ESM4::REC_NPC_)
             {
                 const ESM4::Npc* newNpc = store.getForeign<ESM4::Npc>().search(base);
                 std::cout << "newNpc " << newNpc->mEditorId << std::endl; // FIXME
 
                 return getFO3LevelledNpc(newNpc);
             }
-            else if (type == MKTAG('N', 'L', 'V', 'L'))
+            else if (type == ESM4::REC_LVLN)
             {
                 const ESM4::LevelledNpc* lvlActor = store.getForeign<ESM4::LevelledNpc>().search(base);
                 //std::cout << "newlvl " << lvlActor->mEditorId << std::endl; // FIXME
@@ -227,14 +227,14 @@ namespace MWMechanics
         const MWWorld::ESMStore &store = MWBase::Environment::get().getWorld()->getStore();
 
         uint32_t type = store.getRecordType(id);
-        if (type == MKTAG('_', 'N', 'P', 'C'))
+        if (type == ESM4::REC_NPC_)
         {
             const ESM4::Npc* newNpc = store.getForeign<ESM4::Npc>().search(id);
             std::cout << "newNpc " << newNpc->mEditorId << std::endl; // FIXME
 
             return getFO3LevelledNpc(newNpc);
         }
-        else if (type == MKTAG('N', 'L', 'V', 'L'))
+        else if (type == ESM4::REC_LVLN)
         {
             const ESM4::LevelledNpc* lvlActor = store.getForeign<ESM4::LevelledNpc>().search(id);
             //std::cout << "newlvl " << lvlActor->mEditorId << std::endl; // FIXME
@@ -243,7 +243,7 @@ namespace MWMechanics
         }
         else if (type == 0)
         {
-            std::cerr << "Warning: ignoring nonexistent item '" << npcName << "' in levelled list '" <<
+            std::cerr << "Warning: LVLN ignoring nonexistent item '" << npcName << "' in levelled list '" <<
                 levActor->mEditorId << "'" << std::endl;
 
             return std::string();
@@ -263,14 +263,14 @@ namespace MWMechanics
             ESM4::FormId base = creature->mBaseTemplate;
             const MWWorld::ESMStore &store = MWBase::Environment::get().getWorld()->getStore();
             uint32_t type = store.getRecordType(base);
-            if (type == MKTAG('A', 'C', 'R', 'E'))
+            if (type == ESM4::REC_CREA)
             {
                 const ESM4::Creature* newCreature = store.getForeign<ESM4::Creature>().search(base);
                 std::cout << "newCreature " << newCreature->mEditorId << std::endl; // FIXME
 
                 return getFO3LevelledCreature(newCreature);
             }
-            else if (type == MKTAG('C', 'L', 'V', 'L'))
+            else if (type == ESM4::REC_LVLC)
             {
                 const ESM4::LevelledCreature* lvlCreature = store.getForeign<ESM4::LevelledCreature>().search(base);
                 //std::cout << "newlvl " << lvlCreature->mEditorId << std::endl; // FIXME
@@ -299,14 +299,14 @@ namespace MWMechanics
         const MWWorld::ESMStore &store = MWBase::Environment::get().getWorld()->getStore();
 
         uint32_t type = store.getRecordType(id);
-        if (type == MKTAG('A', 'C', 'R', 'E'))
+        if (type == ESM4::REC_CREA)
         {
             const ESM4::Creature* newCreature = store.getForeign<ESM4::Creature>().search(id);
             std::cout << "newCreature " << newCreature->mEditorId << std::endl; // FIXME
 
             return getFO3LevelledCreature(newCreature);
         }
-        else if (type == MKTAG('C', 'L', 'V', 'L'))
+        else if (type == ESM4::REC_LVLC)
         {
             const ESM4::LevelledCreature* lvlCreature = store.getForeign<ESM4::LevelledCreature>().search(id);
             //std::cout << "newlvl " << lvlCreature->mEditorId << std::endl; // FIXME
@@ -315,7 +315,7 @@ namespace MWMechanics
         }
         else if (type == 0)
         {
-            std::cerr << "Warning: ignoring nonexistent item '" << creatureName << "' in levelled list '" <<
+            std::cerr << "Warning: LVLC ignoring nonexistent item '" << creatureName << "' in levelled list '" <<
                 levCreature->mEditorId << "'" << std::endl;
 
             return std::string();
@@ -375,7 +375,7 @@ namespace MWMechanics
         // copy Morrowind behaviour for now
         if (!MWBase::Environment::get().getWorld()->getStore().getRecordType(ESM4::stringToFormId(itemId)))
         {
-            std::cerr << "Warning: ignoring nonexistent creature '" << itemId << "' in levelled list '" <<
+            std::cerr << "Warning: LVLC ignoring nonexistent creature '" << itemId << "' in levelled list '" <<
                 ESM4::formIdToString(levCreature->mFormId) << "'" << std::endl;
 
             return std::string();

@@ -268,7 +268,7 @@ namespace MWWorld
                             for (size_t i = 0; i < ptr->mInventory.size(); ++i)
                             {
                                 uint32_t type = esmStore.find(ptr->mInventory[i].item);
-                                if (type == MKTAG('K', 'B', 'O', 'O'))
+                                if (type == ESM4::REC_BOOK)
                                 {
                         const ESM4::Book* note = esmStore.getForeign<ESM4::Book>().search(ptr->mInventory[i].item);
                         std::cout << ptr->mEditorId << " " << note->mEditorId << std::endl;
@@ -838,7 +838,7 @@ namespace MWWorld
 
             const ESMStore& store = MWBase::Environment::get().getWorld()->getStore();
             const ForeignWorld *world
-                = store.get<ForeignWorld>().find(static_cast<const ForeignCell*>(mCell)->mCell->mParent);
+                = store.getForeign<ForeignWorld>().find(static_cast<const ForeignCell*>(mCell)->mCell->mParent);
             if (!world)
                 continue;
 
@@ -938,7 +938,7 @@ namespace MWWorld
                         std::cout << "? " << record.mEditorId << std::endl;
                     switch (store.find(record.mEsp.parent))
                     {
-                        case MKTAG('R','R','E','F'): std::cout << "parent refr " << std::endl; break;
+                        case ESM4::REC_REFR: std::cout << "parent refr " << std::endl; break;
                         default: std::cout << std::hex << store.find(record.mEsp.parent) << std::endl; break;
                     }
 #endif
@@ -978,7 +978,7 @@ namespace MWWorld
                 if (record.mEsp.parent != 0)
                 {
                     int res = store.getRecordType(record.mEsp.parent);
-                    if (res == MKTAG('R','R','E','F'))
+                    if (res == ESM4::REC_REFR)
                         std::cout << "flags " << std::hex << record.mEsp.flags << std::endl;
 
                     if ((record.mEsp.parent == 0x000376e0 || record.mEsp.parent == 0x000fc90b ||
@@ -1018,7 +1018,7 @@ namespace MWWorld
                 {
                     ESM4::FormId worldId
                         = static_cast<const MWWorld::ForeignCell*>(getCell())->mCell->mParent;
-                    const ForeignWorld *world = store.get<ForeignWorld>().find(worldId);
+                    const ForeignWorld *world = store.getForeign<ForeignWorld>().find(worldId);
                     if (world)
                     {
                         std::string worldName = world->mEditorId;
@@ -1037,11 +1037,11 @@ namespace MWWorld
 
                 switch (store.getRecordType(record.mBaseObj))
                 {
-                    case MKTAG('N','S','O','U'): mSounds.load(record, deleted, store); break;
+                    case ESM4::REC_SOUN: mSounds.load(record, deleted, store); break;
 #if 1
-                    case MKTAG('I','A','C','T'): mForeignActivators.load(record, deleted, store); break;
+                    case ESM4::REC_ACTI: mForeignActivators.load(record, deleted, store); break;
 #else
-                    case MKTAG('I','A','C','T'):
+                    case ESM4::REC_ACTI):
                     {
                         const MWWorld::ForeignStore<ESM4::Activator>& actiStore
                             = store.getForeign<ESM4::Activator>();
@@ -1053,21 +1053,21 @@ namespace MWWorld
                         break;
                     }
 #endif
-                    case MKTAG('A','A','P','P'): mForeignApparatus.load(record, deleted, store); break;
-                    case MKTAG('O','A','R','M'): mForeignArmors.load(record, deleted, store); break;
-                    case MKTAG('K','B','O','O'): mForeignBooks.load(record, deleted, store); break;
-                    case MKTAG('T','C','L','O'): mForeignClothes.load(record, deleted, store); break;
-                    case MKTAG('T','C','O','N'): mForeignContainers.load(record, deleted, store); break;
-                    case MKTAG('R','D','O','O'):
+                    case ESM4::REC_APPA: mForeignApparatus.load(record, deleted, store); break;
+                    case ESM4::REC_ARMO: mForeignArmors.load(record, deleted, store); break;
+                    case ESM4::REC_BOOK: mForeignBooks.load(record, deleted, store); break;
+                    case ESM4::REC_CLOT: mForeignClothes.load(record, deleted, store); break;
+                    case ESM4::REC_CONT: mForeignContainers.load(record, deleted, store); break;
+                    case ESM4::REC_DOOR:
                     {
                         mForeignDoors.load(record, deleted, store);
                         store.setDoorCell(record.mFormId, reader.currCell());
                         break;
                     }
-                    case MKTAG('R','I','N','G'): mForeignIngredients.load(record, deleted, store); break;
-                    case MKTAG('H','L','I','G'): mForeignLights.load(record, deleted, store); break;
-                    case MKTAG('C','M','I','S'): mForeignMiscItems.load(record, deleted, store); break;
-                    case MKTAG('T','S','T','A'):
+                    case ESM4::REC_INGR: mForeignIngredients.load(record, deleted, store); break;
+                    case ESM4::REC_LIGH: mForeignLights.load(record, deleted, store); break;
+                    case ESM4::REC_MISC: mForeignMiscItems.load(record, deleted, store); break;
+                    case ESM4::REC_STAT:
                                                  mForeignStatics.load(record, deleted, store);
                                                  if (record.mEditorId == "DoorMarker")
                                                      std::cout << "DoorMarker: " << " 0x"
@@ -1086,39 +1086,39 @@ namespace MWWorld
                 }
 #endif
                                                  break;
-                    case MKTAG('S','G','R','A'): mForeignGrasses.load(record, deleted, store); break;
-                    //case MKTAG('E','T','R','E'): mForeignTrees.load(record, deleted, store); break;
-                    case MKTAG('R','F','L','O'): mForeignFloras.load(record, deleted, store); break;
-                    case MKTAG('N','F','U','R'): mForeignFurnitures.load(record, deleted, store); break;
-                    case MKTAG('P','W','E','A'): mForeignWeapons.load(record, deleted, store); break;
-                    case MKTAG('O','A','M','M'): mForeignAmmos.load(record, deleted, store); break;
-                    case MKTAG('C','L','V','L'):
+                    case ESM4::REC_GRAS: mForeignGrasses.load(record, deleted, store); break;
+                    //case ESM4::REC_TREE): mForeignTrees.load(record, deleted, store); break;
+                    case ESM4::REC_FLOR: mForeignFloras.load(record, deleted, store); break;
+                    case ESM4::REC_FURN: mForeignFurnitures.load(record, deleted, store); break;
+                    case ESM4::REC_WEAP: mForeignWeapons.load(record, deleted, store); break;
+                    case ESM4::REC_AMMO: mForeignAmmos.load(record, deleted, store); break;
+                    case ESM4::REC_LVLC:
                     {
                         mLevelledCreatures.load(record, deleted, store); break; // only TES4
                     }
-                    case MKTAG('M','S','L','G'): mSoulGems.load(record, deleted, store); break;
-                    case MKTAG('M','K','E','Y'): mForeignKeys.load(record, deleted, store); break;
-                    case MKTAG('H','A','L','C'): mForeignPotions.load(record, deleted, store); break;
-                    case MKTAG('P','S','B','S'): mSubspaces.load(record, deleted, store); break;
-                    case MKTAG('T','S','G','S'): mSigilStones.load(record, deleted, store); break;
-                    case MKTAG('I','L','V','L'): mLevelledItems.load(record, deleted, store); break;
-                    case MKTAG('M','T','E','R'): mTerminals.load(record, deleted, store); break;
-                    case MKTAG('T','T','A','C'): mTalkingActivators.load(record, deleted, store); break;
-                    case MKTAG('E','N','O','T'): mNotes.load(record, deleted, store); break;
-                    case MKTAG('N','L','V','L'): // Leveled NPC
+                    case ESM4::REC_SLGM: mSoulGems.load(record, deleted, store); break;
+                    case ESM4::REC_KEYM: mForeignKeys.load(record, deleted, store); break;
+                    case ESM4::REC_ALCH: mForeignPotions.load(record, deleted, store); break;
+                    case ESM4::REC_SBSP: mSubspaces.load(record, deleted, store); break;
+                    case ESM4::REC_SGST: mSigilStones.load(record, deleted, store); break;
+                    case ESM4::REC_LVLI: mLevelledItems.load(record, deleted, store); break;
+                    case ESM4::REC_TERM: mTerminals.load(record, deleted, store); break;
+                    case ESM4::REC_TACT: mTalkingActivators.load(record, deleted, store); break;
+                    case ESM4::REC_NOTE: mNotes.load(record, deleted, store); break;
+                    case ESM4::REC_LVLN: // Leveled NPC
                     {
                         mLevelledNpcs.load(record, deleted, store); break; // never occurs?
                     }
-                    case MKTAG('E','T','R','E'): //mForeignTrees.load(record, deleted, store); break;
-                    case MKTAG('M','I','D','L'): // Idle Marker
-                    case MKTAG('T','M','S','T'): // Movable Static
-                    case MKTAG('T','T','X','S'): // Texture Set
-                    case MKTAG('L','S','C','R'): // Scroll
-                    case MKTAG('A','A','R','M'): // Armor Addon
-                    case MKTAG('C','A','S','P'): // Acoustic Space
-                    case MKTAG('D','I','M','O'): // Item Mod
-                    case MKTAG('T','P','W','A'): // Placeable Water
-                    case MKTAG('L','S','C','O'): // Static Collection
+                    case ESM4::REC_TREE: //mForeignTrees.load(record, deleted, store); break;
+                    case ESM4::REC_IDLM: // Idle Marker
+                    case ESM4::REC_MSTT: // Movable Static
+                    case ESM4::REC_TXST: // Texture Set
+                    case ESM4::REC_SCRL: // Scroll
+                    case ESM4::REC_ARMA: // Armor Addon
+                    case ESM4::REC_ASPC: // Acoustic Space
+                    case ESM4::REC_IMOD: // Item Mod
+                    case ESM4::REC_PWAT: // Placeable Water
+                    case ESM4::REC_SCOL: // Static Collection
                          break;
 
                     // FO3 adds ASPC, IDLM, ARMA, MSTT, NOTE, PWAT, SCOL, TACT, TERM and TXST
@@ -1160,7 +1160,7 @@ namespace MWWorld
 
                 switch (store.getRecordType(record.mBaseObj))
                 {
-                    case MKTAG('_','N','P','C'):
+                    case ESM4::REC_NPC_:
                     {
 #if 0
                         // this might be a levelled actor (e.g. FO3) - check if the model is empty
@@ -1173,8 +1173,8 @@ namespace MWWorld
                             for (size_t i = 0; i < npc->mInventory.size(); ++i)
                             {
                                 uint32_t type = store.find(npc->mInventory[i].item);
-                                if (type == MKTAG('K', 'B', 'O', 'O'))
-                                //if (type == MKTAG('E', 'N', 'O', 'T'))
+                                if (type == ESM4::REC_BOOK)
+                              //if (type == ESM4::REC_NOTE)
                                 {
                         const ESM4::Book* note = store.getForeign<ESM4::Book>().search(npc->mInventory[i].item);
                         std::cout << npc->mEditorId << " " << note->mEditorId << std::endl;
@@ -1205,7 +1205,7 @@ namespace MWWorld
                             bool found = false;
 
                             while (!found) {
-                                if (type == MKTAG('_', 'N', 'P', 'C'))
+                                if (type == ESM4::REC_NPC_)
                                 {
                                     // FIXME: for TES5 need to check male/female model
                                     record.mBaseObj = id;
@@ -1224,8 +1224,8 @@ namespace MWWorld
                             for (size_t i = 0; i < newNpc->mInventory.size(); ++i)
                             {
                                 uint32_t type = store.find(newNpc->mInventory[i].item);
-                                if (type == MKTAG('K', 'B', 'O', 'O'))
-                                //if (type == MKTAG('E', 'N', 'O', 'T'))
+                                if (type == ESM4::REC_BOOK)
+                              //if (type == ESM4::REC_NOTE)
                                 {
                         const ESM4::Book* note = store.getForeign<ESM4::Book>().search(newNpc->mInventory[i].item);
                         std::cout << newNpc->mEditorId << " " << note->mEditorId << std::endl;
@@ -1235,7 +1235,7 @@ namespace MWWorld
                             }
 #endif
                                 }
-                                else if (type == MKTAG('N', 'L', 'V', 'L'))
+                                else if (type == ESM4::REC_LVLN)
                                 {
                                     const ESM4::LevelledNpc* lvlActor
                                         = store.getForeign<ESM4::LevelledNpc>().search(id);
@@ -1307,7 +1307,7 @@ namespace MWWorld
 
                 switch (store.getRecordType(record.mBaseObj))
                 {
-                    case MKTAG('A','C','R','E'):
+                    case ESM4::REC_CREA:
                     {
 #if 0
                         // this might be a levelled creature (e.g. FO3) - check if the model is empty
@@ -1320,12 +1320,12 @@ namespace MWWorld
                             bool found = false;
 
                             while (!found) {
-                                if (type == MKTAG('A', 'C', 'R', 'E'))
+                                if (type == ESM4::REC_CREA)
                                 {
                                     record.mBaseObj = id;
                                     found = true;
                                 }
-                                else if (type == MKTAG('C', 'L', 'V', 'L'))
+                                else if (type == ESM4::REC_LVLC)
                                 {
                                     const ESM4::LevelledCreature* lvlCrea
                                         = store.getForeign<ESM4::LevelledCreature>().search(id);
@@ -1381,7 +1381,7 @@ namespace MWWorld
                 // load parent world's land; but that triggers Tamriel to be loaded, is there another way?
 #if 0
                 const ForeignCell *cell = static_cast<const ForeignCell*>(mCell);
-                const ForeignWorld *world = store.get<ForeignWorld>().find(cell->mCell->mParent);
+                const ForeignWorld *world = store.getForeign<ForeignWorld>().find(cell->mCell->mParent);
 
                 if (world && world->mParent != 0)
                 {

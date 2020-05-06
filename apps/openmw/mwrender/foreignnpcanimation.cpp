@@ -2233,14 +2233,14 @@ std::string ForeignNpcAnimation::getSkeletonModel(const MWWorld::ESMStore& store
     {
         uint32_t type = store.getRecordType(mNpc->mBaseTemplate);
 
-        if (type == MKTAG('_', 'N', 'P', 'C'))
+        if (type == ESM4::REC_NPC_)
         {
             if ((mNpc->mBaseConfig.tes5.flags & ESM4::Npc::TES5_Female) != 0)
                 return  "meshes\\" + mRace->mModelFemale; // TODO: check if this can be empty
             else
                 return "meshes\\" + mRace->mModelMale;
         }
-        else if (type == MKTAG('N', 'L', 'V', 'L'))
+        else if (type == ESM4::REC_LVLN)
         {
             const ESM4::LevelledNpc* lvlActor
                 = store.getForeign<ESM4::LevelledNpc>().search(mNpc->mBaseTemplate);

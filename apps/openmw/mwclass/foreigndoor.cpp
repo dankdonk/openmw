@@ -189,7 +189,7 @@ namespace MWClass
             {
                 const MWWorld::ESMStore& store = MWBase::Environment::get().getWorld()->getStore();
                 const ESM4::FormId cellId = store.getDoorCellId(ptr.getCellRef().getDestDoorId());
-                const MWWorld::ForeignCell *cell = store.get<MWWorld::ForeignCell>().find(cellId);
+                const MWWorld::ForeignCell *cell = store.getForeign<MWWorld::ForeignCell>().find(cellId);
 
                 boost::shared_ptr<MWWorld::Action> action(new MWWorld::ActionTeleportForeign(
                             cell->mCell->mEditorId,
@@ -316,7 +316,7 @@ namespace MWClass
 #endif
         {
             const ESM4::FormId cellId = store.getDoorCellId(door.mRef.getDestDoorId());
-            const MWWorld::ForeignCell *cell = store.get<MWWorld::ForeignCell>().find(cellId);
+            const MWWorld::ForeignCell *cell = store.getForeign<MWWorld::ForeignCell>().find(cellId);
 
             if (cell)
             {
@@ -328,7 +328,7 @@ namespace MWClass
                 {
                     // use world name if exists (should it be region?)
                     ESM4::FormId worldId = cell->mCell->mParent;
-                    const MWWorld::ForeignWorld * world = store.get<MWWorld::ForeignWorld>().find(worldId);
+                    const MWWorld::ForeignWorld * world = store.getForeign<MWWorld::ForeignWorld>().find(worldId);
                     if (!world->mFullName.empty())
                         dest = world->mFullName;
                     else if (!world->mEditorId.empty())

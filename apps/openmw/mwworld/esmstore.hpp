@@ -3,70 +3,10 @@
 
 #include <stdexcept>
 
-#include <extern/esm4/hair.hpp>
-#include <extern/esm4/eyes.hpp>
-#include <extern/esm4/race.hpp>
-#include <extern/esm4/achr.hpp>
-#include <extern/esm4/acre.hpp>
-#include <extern/esm4/soun.hpp>
-#include <extern/esm4/ltex.hpp>
-#include <extern/esm4/acti.hpp>
-#include <extern/esm4/appa.hpp>
-#include <extern/esm4/armo.hpp>
-#include <extern/esm4/book.hpp>
-#include <extern/esm4/clot.hpp>
-#include <extern/esm4/cont.hpp>
-#include <extern/esm4/door.hpp>
-#include <extern/esm4/ingr.hpp>
-#include <extern/esm4/ligh.hpp>
-#include <extern/esm4/misc.hpp>
-#include <extern/esm4/stat.hpp>
-#include <extern/esm4/gras.hpp>
-#include <extern/esm4/tree.hpp>
-#include <extern/esm4/flor.hpp>
-#include <extern/esm4/furn.hpp>
-#include <extern/esm4/weap.hpp>
-#include <extern/esm4/ammo.hpp>
-#include <extern/esm4/npc_.hpp>
-#include <extern/esm4/crea.hpp>
-#include <extern/esm4/lvlc.hpp>
-#include <extern/esm4/slgm.hpp>
-#include <extern/esm4/keym.hpp>
-#include <extern/esm4/alch.hpp>
-#include <extern/esm4/sbsp.hpp>
-#include <extern/esm4/sgst.hpp>
-#include <extern/esm4/lvli.hpp>
-#include <extern/esm4/lvln.hpp>
-#include <extern/esm4/idlm.hpp>
-#include <extern/esm4/mstt.hpp>
-#include <extern/esm4/txst.hpp>
-#include <extern/esm4/scrl.hpp>
-#include <extern/esm4/arma.hpp>
-#include <extern/esm4/hdpt.hpp>
-#include <extern/esm4/term.hpp>
-#include <extern/esm4/tact.hpp>
-#include <extern/esm4/note.hpp>
-#include <extern/esm4/bptd.hpp>
-#include <extern/esm4/scpt.hpp>
-#include <extern/esm4/regn.hpp>
-#include <extern/esm4/land.hpp>
-#include <extern/esm4/anio.hpp>
-#include <extern/esm4/dial.hpp>
-#include <extern/esm4/info.hpp>
-#include <extern/esm4/qust.hpp>
-#include <extern/esm4/pack.hpp>
-#include <extern/esm4/lgtm.hpp>
-#include <extern/esm4/pgre.hpp>
-#include <extern/esm4/aspc.hpp>
-#include <extern/esm4/imod.hpp>
-#include <extern/esm4/pwat.hpp>
-#include <extern/esm4/scol.hpp>
-#include <extern/esm4/musc.hpp>
-#include <extern/esm4/aloc.hpp>
-#include <extern/esm4/mset.hpp>
-#include <extern/esm4/dobj.hpp>
-
 #include <components/esm/records.hpp>
+
+#include <extern/esm4/records.hpp>
+
 #include "store.hpp"
 #include "foreignstore.hpp"
 
@@ -135,9 +75,9 @@ namespace MWWorld
         Store<ESM::Attribute>   mAttributes;
 
         // Lists that are foreign
-        Store<MWWorld::ForeignWorld>   mForeignWorlds;
-        Store<MWWorld::ForeignCell>    mForeignCells;
-        Store<MWWorld::ForeignLand>    mForeignLands;
+        ForeignStore<MWWorld::ForeignWorld> mForeignWorlds;
+        ForeignStore<MWWorld::ForeignCell>  mForeignCells;
+        ForeignStore<MWWorld::ForeignLand>  mForeignLands;
         //
         ForeignStore<ESM4::Hair>       mForeignHairs;
         ForeignStore<ESM4::Eyes>       mForeignEyesSet;
@@ -206,7 +146,9 @@ namespace MWWorld
         // maps the id name to the record type.
         std::map<std::string, int> mIds;
         std::map<ESM4::FormId, int> mForeignIds;
+
         std::map<int, StoreBase *> mStores;
+        std::map<int, StoreBase *> mForeignStores;
 
         // Unlike TES3, the destination cell is not specified in the reference record.
         // Need a lookup map to work around this issue.
@@ -317,79 +259,82 @@ namespace MWWorld
             mStores[ESM::REC_STAT] = &mStatics;
             mStores[ESM::REC_WEAP] = &mWeapons;
 
-            // NOTE: to avoid clash with TES3, these are rotated by one
-            // TODO: an alternative is to have mForeignStores so that there is no key clash
-            mStores[MKTAG('R','H','A','I')] = &mForeignHairs;
-            mStores[MKTAG('S','E','Y','E')] = &mForeignEyesSet;
-            mStores[MKTAG('E','R','A','C')] = &mForeignRaces;
-            mStores[MKTAG('D','B','P','T')] = &mForeignBodyParts;
-            mStores[MKTAG('T','H','D','P')] = &mHeadParts;
-            mStores[MKTAG('R','A','C','H')] = &mForeignACharacters;
-            mStores[MKTAG('E','A','C','R')] = &mForeignACreatures;
-            mStores[MKTAG('X','L','T','E')] = &mForeignLandTextures;
-            mStores[MKTAG('T','S','C','P')] = &mForeignScripts;
-            mStores[MKTAG('L','D','I','A')] = &mForeignDialogues;
-            mStores[MKTAG('O','I','N','F')] = &mForeignDialogInfos;
-            mStores[MKTAG('T','Q','U','S')] = &mForeignQuests;
-            mStores[MKTAG('K','P','A','C')] = &mForeignAIPackages;
+            // have mForeignStores so that there is no key clash
+            mForeignStores[ESM4::REC_HAIR] = &mForeignHairs;
+            mForeignStores[ESM4::REC_EYES] = &mForeignEyesSet;
+            mForeignStores[ESM4::REC_RACE] = &mForeignRaces;
+            mForeignStores[ESM4::REC_BPTD] = &mForeignBodyParts;
+            mForeignStores[ESM4::REC_HDPT] = &mHeadParts;
+            mForeignStores[ESM4::REC_ACHR] = &mForeignACharacters;
+            mForeignStores[ESM4::REC_ACRE] = &mForeignACreatures;
+            mForeignStores[ESM4::REC_LTEX] = &mForeignLandTextures;
+            mForeignStores[ESM4::REC_SCPT] = &mForeignScripts;
+            mForeignStores[ESM4::REC_DIAL] = &mForeignDialogues;
+            mForeignStores[ESM4::REC_INFO] = &mForeignDialogInfos;
+            mForeignStores[ESM4::REC_QUST] = &mForeignQuests;
+            mForeignStores[ESM4::REC_PACK] = &mForeignAIPackages;
+            //
+            mForeignStores[ESM4::REC_SOUN] = &mForeignSounds;
+            mForeignStores[ESM4::REC_ACTI] = &mForeignActivators;
+            mForeignStores[ESM4::REC_APPA] = &mForeignApparatuses;
+            mForeignStores[ESM4::REC_ARMO] = &mForeignArmors;
+            mForeignStores[ESM4::REC_BOOK] = &mForeignBooks;
+            mForeignStores[ESM4::REC_CLOT] = &mForeignClothes;
+            mForeignStores[ESM4::REC_CONT] = &mForeignContainers;
+            mForeignStores[ESM4::REC_DOOR] = &mForeignDoors;
+            mForeignStores[ESM4::REC_INGR] = &mForeignIngredients;
+            mForeignStores[ESM4::REC_LIGH] = &mForeignLights;
+            mForeignStores[ESM4::REC_MISC] = &mForeignMiscItems;
+            mForeignStores[ESM4::REC_STAT] = &mForeignStatics;
+            mForeignStores[ESM4::REC_GRAS] = &mForeignGrasses;
+            mForeignStores[ESM4::REC_TREE] = &mForeignTrees;
+            mForeignStores[ESM4::REC_FLOR] = &mForeignFloras;
+            mForeignStores[ESM4::REC_FURN] = &mForeignFurnitures;
+            mForeignStores[ESM4::REC_WEAP] = &mForeignWeapons;
+            mForeignStores[ESM4::REC_AMMO] = &mForeignAmmos;
+            mForeignStores[ESM4::REC_NPC_] = &mForeignNpcs;
+            mForeignStores[ESM4::REC_CREA] = &mForeignCreatures;
+            mForeignStores[ESM4::REC_LVLC] = &mLevelledCreatures;
+            mForeignStores[ESM4::REC_SLGM] = &mSoulGems;
+            mForeignStores[ESM4::REC_KEYM] = &mForeignKeys;
+            mForeignStores[ESM4::REC_ALCH] = &mForeignPotions;
+            mForeignStores[ESM4::REC_SBSP] = &mSubspaces;
+            mForeignStores[ESM4::REC_SGST] = &mSigilStones;
+            mForeignStores[ESM4::REC_LVLI] = &mLevelledItems;
+            mForeignStores[ESM4::REC_LVLN] = &mLevelledNpcs;
+            mForeignStores[ESM4::REC_IDLM] = &mIdleMarkers;
+            mForeignStores[ESM4::REC_MSTT] = &mMovableStatics;
+            mForeignStores[ESM4::REC_TXST] = &mTextureSets;
+            mForeignStores[ESM4::REC_SCRL] = &mForeignScrolls;
+            mForeignStores[ESM4::REC_ARMA] = &mArmorAddons;
+            mForeignStores[ESM4::REC_TERM] = &mTerminals;
+            mForeignStores[ESM4::REC_TACT] = &mTalkingActivators;
+            mForeignStores[ESM4::REC_NOTE] = &mNotes;
+            mForeignStores[ESM4::REC_ASPC] = &mAcousticSpaces;
+            mForeignStores[ESM4::REC_IMOD] = &mItemMods;
+            mForeignStores[ESM4::REC_PWAT] = &mPlaceableWaters;
+            mForeignStores[ESM4::REC_SCOL] = &mStaticCollections;
+          //mForeignStores[ESM4::REC_CCRD] = &mCaravanCard;
+          //mForeignStores[ESM4::REC_CMNY] = &mCaravanMoney;
 
-            mStores[MKTAG('N','S','O','U')] = &mForeignSounds;
-            mStores[MKTAG('I','A','C','T')] = &mForeignActivators;
-            mStores[MKTAG('A','A','P','P')] = &mForeignApparatuses;
-            mStores[MKTAG('O','A','R','M')] = &mForeignArmors;
-            mStores[MKTAG('K','B','O','O')] = &mForeignBooks;
-            mStores[MKTAG('T','C','L','O')] = &mForeignClothes;
-            mStores[MKTAG('T','C','O','N')] = &mForeignContainers;
-            mStores[MKTAG('R','D','O','O')] = &mForeignDoors;
-            mStores[MKTAG('R','I','N','G')] = &mForeignIngredients;
-            mStores[MKTAG('H','L','I','G')] = &mForeignLights;
-            mStores[MKTAG('C','M','I','S')] = &mForeignMiscItems;
-            mStores[MKTAG('T','S','T','A')] = &mForeignStatics;
-            mStores[MKTAG('S','G','R','A')] = &mForeignGrasses;
-            mStores[MKTAG('E','T','R','E')] = &mForeignTrees;
-            mStores[MKTAG('R','F','L','O')] = &mForeignFloras;
-            mStores[MKTAG('N','F','U','R')] = &mForeignFurnitures;
-            mStores[MKTAG('P','W','E','A')] = &mForeignWeapons;
-            mStores[MKTAG('O','A','M','M')] = &mForeignAmmos;
-            mStores[MKTAG('_','N','P','C')] = &mForeignNpcs;
-            mStores[MKTAG('A','C','R','E')] = &mForeignCreatures;
-            mStores[MKTAG('C','L','V','L')] = &mLevelledCreatures;
-            mStores[MKTAG('M','S','L','G')] = &mSoulGems;
-            mStores[MKTAG('M','K','E','Y')] = &mForeignKeys;
-            mStores[MKTAG('H','A','L','C')] = &mForeignPotions;
-            mStores[MKTAG('P','S','B','S')] = &mSubspaces;
-            mStores[MKTAG('T','S','G','S')] = &mSigilStones;
-            mStores[MKTAG('I','L','V','L')] = &mLevelledItems;
-            mStores[MKTAG('N','L','V','L')] = &mLevelledNpcs;
-            mStores[MKTAG('M','I','D','L')] = &mIdleMarkers;
-            mStores[MKTAG('T','M','S','T')] = &mMovableStatics;
-            mStores[MKTAG('T','T','X','S')] = &mTextureSets;
-            mStores[MKTAG('L','S','C','R')] = &mForeignScrolls;
-            mStores[MKTAG('A','A','R','M')] = &mArmorAddons;
-            mStores[MKTAG('M','T','E','R')] = &mTerminals;
-            mStores[MKTAG('T','T','A','C')] = &mTalkingActivators;
-            mStores[MKTAG('E','N','O','T')] = &mNotes;
-            mStores[MKTAG('C','A','S','P')] = &mAcousticSpaces;
-            mStores[MKTAG('D','I','M','O')] = &mItemMods;
-            mStores[MKTAG('T','P','W','A')] = &mPlaceableWaters;
-            mStores[MKTAG('L','S','C','O')] = &mStaticCollections;
-            //mStores[MKTAG('D','C','C','R')] = &mCaravanCard;
-            //mStores[MKTAG('Y','C','M','N')] = &mCaravanMoney;
-
-            mStores[MKTAG('O','A','N','I')] = &mForeignAnimObjs;
+            mForeignStores[ESM4::REC_ANIO] = &mForeignAnimObjs;
 
             // FIXME: do we need these or only referenceables?
-            //mStores[MKTAG('D','W','R','L')] = &mForeignWorlds;
-            //mStores[MKTAG('L','C','E','L')] = &mForeignCells;
-            //mStores[MKTAG('D','L','A','N')] = &mForeignLands;
-            //mStores[MKTAG('N','R','E','G')] = &mForeignRegions;
+          //mForeignStores[ESM4::REC_WRLD] = &mForeignWorlds;
+          //mForeignStores[ESM4::REC_CELL] = &mForeignCells;
+          //mForeignStores[ESM4::REC_LAND] = &mForeignLands;
+          //mForeignStores[ESM4::REC_REGN] = &mForeignRegions;
 
             mPathgrids.setCells(mCells);
+            mForeignIds.clear();
         }
 
         void clearDynamic ()
         {
             for (std::map<int, StoreBase *>::iterator it = mStores.begin(); it != mStores.end(); ++it)
+                it->second->clearDynamic();
+
+            for (std::map<int, StoreBase *>::iterator it = mForeignStores.begin(); it != mForeignStores.end(); ++it)
                 it->second->clearDynamic();
 
             mNpcs.insert(mPlayerTemplate);
@@ -416,10 +361,16 @@ namespace MWWorld
 
         template <class T>
         const ForeignStore<T> &getForeign() const {
-            throw std::runtime_error("Storage for this type not exist");
+            throw std::runtime_error("Storage for this foreign type not exist");
+        }
+
+        template <class T>
+        ForeignStore<T> &getForeignModifiable() {
+            throw std::runtime_error("Storage for this foreign type not exist");
         }
 
         /// Insert a custom record (i.e. with a generated ID that will not clash will pre-existing records)
+        // FIXME: used by WorldImp, we probably need an equivalent for TES4, etc
         template <class T>
         const T *insert(const T &x) {
             std::ostringstream id;
@@ -445,6 +396,7 @@ namespace MWWorld
         }
 
         /// Insert a record with set ID, and allow it to override a pre-existing static record.
+        // FIXME: used by TES3 LVLC and LVLI in WorldImp, we probably need an equivalent for TES4, etc
         template <class T>
         const T *overrideRecord(const T &x) {
             Store<T> &store = const_cast<Store<T> &>(get<T>());
@@ -458,6 +410,7 @@ namespace MWWorld
             return ptr;
         }
 
+        // FIXME: used by TES3 GMST and GLOB in WorldImp, we probably need an equivalent for TES4, etc
         template <class T>
         const T *insertStatic(const T &x) {
             std::ostringstream id;
@@ -684,26 +637,6 @@ namespace MWWorld
     }
 
     template <>
-    inline const Store<ForeignWorld> &ESMStore::get<ForeignWorld>() const {
-        return mForeignWorlds;
-    }
-
-    template <>
-    inline const Store<ForeignCell> &ESMStore::get<ForeignCell>() const {
-        return mForeignCells;
-    }
-
-    template <>
-    inline Store<ForeignLand> &ESMStore::getModifiable<ForeignLand>() {
-        return mForeignLands;
-    }
-
-    template <>
-    inline const Store<ForeignLand> &ESMStore::get<ForeignLand>() const {
-        return mForeignLands;
-    }
-
-    template <>
     inline const Store<ESM::GameSetting> &ESMStore::get<ESM::GameSetting>() const {
         return mGameSettings;
     }
@@ -746,6 +679,26 @@ namespace MWWorld
     template <>
     inline const Store<ESM::Attribute> &ESMStore::get<ESM::Attribute>() const {
         return mAttributes;
+    }
+
+    template <>
+    inline const ForeignStore<ForeignWorld> &ESMStore::getForeign<ForeignWorld>() const {
+        return mForeignWorlds;
+    }
+
+    template <>
+    inline const ForeignStore<ForeignCell> &ESMStore::getForeign<ForeignCell>() const {
+        return mForeignCells;
+    }
+
+    template <>
+    inline ForeignStore<ForeignLand> &ESMStore::getForeignModifiable<ForeignLand>() {
+        return mForeignLands;
+    }
+
+    template <>
+    inline const ForeignStore<ForeignLand> &ESMStore::getForeign<ForeignLand>() const {
+        return mForeignLands;
     }
 
     template <>

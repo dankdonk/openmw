@@ -21,7 +21,7 @@ namespace Foreign
         const MWWorld::ESMStore &esmStore = MWBase::Environment::get().getWorld()->getStore();
 #if 0
         // find the world for the given editor id
-        const MWWorld::ForeignWorld *world = esmStore.get<MWWorld::ForeignWorld>().find(mWorld);
+        const MWWorld::ForeignWorld *world = esmStore.getForeign<MWWorld::ForeignWorld>().find(mWorld);
         if (!world)
             return; // FIXME: maybe exception?
 
@@ -33,7 +33,7 @@ namespace Foreign
             return 0; // FIXME: maybe exception?
 
         // get the cell given the formid
-        const ForeignCell *cell = esmStore.get<ForeignCell>().find(it->second);
+        const ForeignCell *cell = esmStore.getForeign<ForeignCell>().find(it->second);
         if (!cell)
             return 0; // FIXME: maybe exception?
 #endif
@@ -44,7 +44,7 @@ namespace Foreign
             // The cell isn't guaranteed to have Land. This is because the terrain implementation
             // has to wrap the vertices of the last row and column to the next cell, which may be a nonexisting cell
             if (cell)
-                return esmStore.get<MWWorld::ForeignLand>().find(cell->getForeignLandId());
+                return esmStore.getForeign<MWWorld::ForeignLand>().find(cell->getForeignLandId());
             else
                 return 0;
         }
@@ -74,7 +74,7 @@ namespace Foreign
         const MWWorld::ESMStore &esmStore = MWBase::Environment::get().getWorld()->getStore();
 
         // find the world for the given editor id
-        const MWWorld::ForeignWorld *world = esmStore.get<MWWorld::ForeignWorld>().find(mWorld);
+        const MWWorld::ForeignWorld *world = esmStore.getForeign<MWWorld::ForeignWorld>().find(mWorld);
         if (!world)
             return; // FIXME: maybe exception?
 

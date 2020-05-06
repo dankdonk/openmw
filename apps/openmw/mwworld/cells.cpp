@@ -175,7 +175,7 @@ MWWorld::CellStore *MWWorld::Cells::getWorldCell (const std::string& worldName, 
     // -- start of tests
     {
     std::string lowerWorld = Misc::StringUtils::lowerCase(world);
-    const MWWorld::ForeignWorld *foreignWorld = mStore.get<MWWorld::ForeignWorld>().find(lowerWorld);
+    const MWWorld::ForeignWorld *foreignWorld = mStore.getForeign<MWWorld::ForeignWorld>().find(lowerWorld);
     if (!foreignWorld)
         return 0; // FIXME: print an error? maybe it should have been tested before this method was called and we should throw instead
 
@@ -188,7 +188,7 @@ MWWorld::CellStore *MWWorld::Cells::getWorldCell (const std::string& worldName, 
 
         if (it->first.first == x && it->first.second == y)
         {
-            const MWWorld::ForeignCell *foreignCell = mStore.get<MWWorld::ForeignCell>().find(it->second);
+            const MWWorld::ForeignCell *foreignCell = mStore.getForeign<MWWorld::ForeignCell>().find(it->second);
             if (!foreignCell)
                 return 0; // FIXME: print an error? maybe it should have been tested before this method was called and we should throw instead
 
@@ -200,7 +200,7 @@ MWWorld::CellStore *MWWorld::Cells::getWorldCell (const std::string& worldName, 
     }
     // -- end of tests
 #endif
-    ESM4::FormId worldId = mStore.get<ForeignWorld>().getFormId(worldName);
+    ESM4::FormId worldId = mStore.getForeign<ForeignWorld>().getFormId(worldName);
 
     return getWorldCell(worldId, x, y);
 }
@@ -389,7 +389,7 @@ void MWWorld::Cells::initNewWorld(const ForeignWorld *world)
     // check if a dummy cell exists
     // FIXME: this logic needs to change since a new world may be inserted from another
     // place
-    const ForeignCell *dummyCell = mStore.get<ForeignCell>().find(world->getDummyCell());
+    const ForeignCell *dummyCell = mStore.getForeign<ForeignCell>().find(world->getDummyCell());
     if (dummyCell)
     {
         std::pair<std::map<ESM4::FormId, CellStore>::iterator, bool> res =
@@ -402,7 +402,7 @@ void MWWorld::Cells::initNewWorld(const ForeignWorld *world)
     // visibly distant
     // FIXME: this cell won't be found from mStore, need to create one
     // Also, mFormId is probably already used by the dummy cell
-    ForeignWorld *wrld = mStore.get<ForeignWorld>().getWorld(world->mFormId); // get a non-const ptr
+    ForeignWorld *wrld = mStore.getForeign<ForeignWorld>().getWorld(world->mFormId); // get a non-const ptr
     if (!wrld)
         return; // FIXME: maybe exception?
 #endif
@@ -422,7 +422,7 @@ void MWWorld::Cells::initNewWorld(const ForeignWorld *world)
 MWWorld::CellStore *MWWorld::Cells::getWorldCell(ESM4::FormId worldId, int x, int y)
 {
     // find the world for the given form id
-    const ForeignWorld *world = mStore.get<ForeignWorld>().find(worldId);
+    const ForeignWorld *world = mStore.getForeign<ForeignWorld>().find(worldId);
     if (!world)
         return nullptr; // FIXME: maybe exception?
 
@@ -433,7 +433,7 @@ MWWorld::CellStore *MWWorld::Cells::getWorldCell(ESM4::FormId worldId, int x, in
         return nullptr; // FIXME: maybe exception?
 
     // get the cell given the formid
-    const ForeignCell *cell = mStore.get<ForeignCell>().find(it->second);
+    const ForeignCell *cell = mStore.getForeign<ForeignCell>().find(it->second);
     if (!cell)
         return nullptr; // FIXME: maybe exception?
 
@@ -512,7 +512,7 @@ MWWorld::CellStore *MWWorld::Cells::getForeignInterior (const std::string& name)
 
     if (result == mForeignInteriors.end())
     {
-        const ForeignCell *cell = mStore.get<ForeignCell>().find(lowerName);
+        const ForeignCell *cell = mStore.getForeign<ForeignCell>().find(lowerName);
 
         //if (cell) // FIXME: why null?
             result = mForeignInteriors.insert(std::make_pair(lowerName, CellStore(cell, true))).first;

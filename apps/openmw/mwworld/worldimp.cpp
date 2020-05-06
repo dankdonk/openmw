@@ -546,7 +546,7 @@ namespace MWWorld
 
     CellStore *World::getWorldCell (const std::string& world, int x, int y)
     {
-        ESM4::FormId worldId = mStore.get<ForeignWorld>().getFormId(world);
+        ESM4::FormId worldId = mStore.getForeign<ForeignWorld>().getFormId(world);
         return mCells.getWorldCell (worldId, x, y);
     }
 
@@ -1074,7 +1074,7 @@ namespace MWWorld
 
         removeContainerScripts(getPlayerPtr());
 
-        ESM4::FormId worldId = mStore.get<ForeignWorld>().getFormId(world);
+        ESM4::FormId worldId = mStore.getForeign<ForeignWorld>().getFormId(world);
         // FIXME: should check if actually changed (need to store current worldspace formid?
         // FIXME: check for worldId == 0 here? Can happen if openmw.cfg does not load Oblivion.esm for example
         mWorldScene->changeToWorldCell(worldId, position, true);
@@ -2776,12 +2776,12 @@ namespace MWWorld
                 continue; // some doors do not teleport (e.g. animated)
 
             const ESM4::FormId cellId = store.getDoorCellId(it->mRef.getDestDoorId());
-            const MWWorld::ForeignCell *cell = store.get<MWWorld::ForeignCell>().find(cellId);
+            const MWWorld::ForeignCell *cell = store.getForeign<MWWorld::ForeignCell>().find(cellId);
             if (!cell || !cell->isExterior())
                 continue;
 
             // in TES4 all external cell doors are in the dummy cell
-            const ForeignWorld *world = store.get<ForeignWorld>().find(cell->mCell->mParent);
+            const ForeignWorld *world = store.getForeign<ForeignWorld>().find(cell->mCell->mParent);
             if (!world)
                 throw std::runtime_error ("findForeignInteriorPosition: cannot find external world");
 
@@ -2797,7 +2797,7 @@ namespace MWWorld
                     continue;
 
                 const ESM4::FormId cellId = store.getDoorCellId(jt->mRef.getDestDoorId());
-                const MWWorld::ForeignCell *cell = store.get<MWWorld::ForeignCell>().find(cellId);
+                const MWWorld::ForeignCell *cell = store.getForeign<MWWorld::ForeignCell>().find(cellId);
                 if (!cell)
                     continue;
 
@@ -2820,7 +2820,7 @@ namespace MWWorld
                 continue; // some doors do not teleport (e.g. animated)
 
             const ESM4::FormId cellId = store.getDoorCellId(it->mRef.getDestDoorId());
-            const MWWorld::ForeignCell *cell = store.get<MWWorld::ForeignCell>().find(cellId);
+            const MWWorld::ForeignCell *cell = store.getForeign<MWWorld::ForeignCell>().find(cellId);
             if (!cell || cell->isExterior())
                 continue;
 
@@ -2837,7 +2837,7 @@ namespace MWWorld
                     continue;
 
                 const ESM4::FormId cellId = store.getDoorCellId(jt->mRef.getDestDoorId());
-                const MWWorld::ForeignCell *cell = store.get<MWWorld::ForeignCell>().find(cellId);
+                const MWWorld::ForeignCell *cell = store.getForeign<MWWorld::ForeignCell>().find(cellId);
                 if (!cell)
                     continue;
 
@@ -2885,7 +2885,7 @@ namespace MWWorld
     // 2. check worldspace formId and update position within that worldspace
     bool World::findForeignWorldPosition(const std::string& world, ESM::Position& pos)
     {
-        const ForeignCell *cell = mStore.get<ForeignCell>().searchExtByName(world);
+        const ForeignCell *cell = mStore.getForeign<ForeignCell>().searchExtByName(world);
         // NOTE: currently not checking region names
         if (cell != 0)
         {

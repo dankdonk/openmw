@@ -10,10 +10,6 @@
 #include <components/esm/esmwriter.hpp>
 #include <components/esm/util.hpp>
 
-#include "foreignworld.hpp"
-#include "foreigncell.hpp"
-#include "foreignland.hpp"
-
 #include "recordcmp.hpp"
 #include "storebase.hpp"
 
@@ -418,111 +414,6 @@ namespace MWWorld
         }
     }
 #endif
-
-    // FIXME: only one of either TES4 or TES5 allowed (else FormId's may clash)
-    //
-    // One option might be to use a 64bit version of formid to identify which game,
-    // which can also allow more than 255 mods (will need to use some hack such as detecting
-    // the base game from the header dependency/master lists)
-
-    template <>
-    class Store<ForeignWorld> : public StoreBase
-    {
-    private:
-
-        std::map<ESM4::FormId, ForeignWorld*> mWorlds;
-
-    public:
-        //typedef SharedIterator<ForeignWorld> iterator; // FIXME: is this needed?
-
-        virtual ~Store();
-
-        // Would like to make it const, but Store<ForeignCell> needs to update
-        ForeignWorld *getWorld(ESM4::FormId worldId);
-
-        const ForeignWorld *find(ESM4::FormId worldId) const;
-
-        // Assumes editorId to be lower case.
-        const ForeignWorld *find(const std::string& editorId) const; // FIXME: deprecated
-
-        // Returns 0 if not found. Does not assume editorId to be lower case.
-        ESM4::FormId getFormId(const std::string& editorId) const;
-
-        size_t getSize() const;
-        //iterator begin() const; // FIXME: is this needed?
-        //iterator end() const; // FIXME: is this needed?
-
-        // FIXME: need to overload eraseStatic()?
-
-        RecordId load(ESM::ESMReader& esm);
-        void setUp(); // FIXME: is this needed?
-    };
-
-    template <>
-    class Store<MWWorld::ForeignCell> : public StoreBase
-    {
-    private:
-
-        std::map<std::uint64_t, ForeignCell*> mCells;
-
-        std::map<std::string, ESM4::FormId> mEditorIdMap;
-
-        ESM4::FormId mLastPreloadedCell;       // FIXME for testing only
-
-    public:
-
-        virtual ~Store();
-
-        // probably need some search functions here
-        // also utilities e.g. get formId based on EditorId/FullName
-
-        // Used by World::findForeignWorldPosition for teleporting the player, e.g. from
-        // console command COC (center on cell)
-        const MWWorld::ForeignCell *searchExtByName(const std::string &name) const;
-
-        size_t getSize() const;
-
-        void preload(ESM::ESMReader& esm, Store<ForeignWorld>& worlds);
-        void loadVisibleDist(ESMStore& store, ESM::ESMReader& esm, CellStore *cell);
-        void loadDummy(ESMStore& store, ESM::ESMReader& esm, CellStore *cell);
-        void loadTes4Group(ESMStore& store, ESM::ESMReader& esm, CellStore *cell);
-        //void loadTes4Record(ESM::ESMReader& esm, Store<ForeignWorld>& worlds);
-        void updateRefrEstimate(ESM::ESMReader& esm);
-        void incrementRefrCount(ESM::ESMReader& esm);
-
-        RecordId load(ESM::ESMReader& esm) { return RecordId("", false); } // noop
-        RecordId load(ESM::ESMReader& esm, Store<ForeignWorld>& worlds);
-        void setUp(); // FIXME: is this needed?
-
-        const ESM::Cell *find(int x, int y) const; // FIXME: returns wrong cell type
-        const ForeignCell *find(ESM4::FormId formId) const;
-        const ForeignCell *find(const std::string& name) const;
-
-        void testPreload(ESM::ESMReader& esm); // FIXME for testing only
-    };
-
-    template <>
-    class Store<MWWorld::ForeignLand> : public StoreBase
-    {
-    private:
-
-        std::map<ESM4::FormId, ForeignLand*> mLands;
-
-    public:
-
-        virtual ~Store();
-
-        size_t getSize() const;
-
-        RecordId load(ESM::ESMReader& esm);
-        void setUp(); // FIXME: is this needed?
-
-        const ForeignLand *find(ESM4::FormId formId) const;
-
-        ForeignLand *search(ESM4::FormId worldId, int x, int y) const;
-        ForeignLand *find(ESM4::FormId worldId, int x, int y) const;
-    };
-
 } //end namespace
 
 #endif

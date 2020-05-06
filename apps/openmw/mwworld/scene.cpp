@@ -330,7 +330,7 @@ namespace MWWorld
         if (cell->getCell()->isExterior())
         {
             const ForeignLand *land =
-                    MWBase::Environment::get().getWorld()->getStore().get<ForeignLand>().find(cell->getForeignLandId());
+                    MWBase::Environment::get().getWorld()->getStore().getForeign<ForeignLand>().find(cell->getForeignLandId());
             //if (land)
                 //std::cout << "heightoffset " << land->mHeightMap.heightOffset << std::endl;
 
@@ -621,7 +621,7 @@ namespace MWWorld
             ESM4::FormId currMusicId = 0;
             if (mCurrentCell && mCurrentCell->isForeignCell())
             {
-                const ForeignWorld *currWorld = store.get<ForeignWorld>().find(currentWorldId);
+                const ForeignWorld *currWorld = store.getForeign<ForeignWorld>().find(currentWorldId);
                 if (currWorld)
                     currMusicId = currWorld->mMusic;
 
@@ -629,7 +629,7 @@ namespace MWWorld
                     currMusicId = static_cast<const MWWorld::ForeignCell*>(mCurrentCell->getCell())->mCell->mMusic;
             }
 
-            const ESM4::World *newWorld = store.get<ForeignWorld>().find(worldId);
+            const ESM4::World *newWorld = store.getForeign<ForeignWorld>().find(worldId);
             ESM4::FormId newMusicId = 0;
             if (newWorld)
                 newMusicId = newWorld->mMusic;
@@ -1057,7 +1057,7 @@ namespace MWWorld
                     ESM4::FormId mediaSet = 0;
                     if (mediaSets.size() > 1)
                     {
-                        int i = Misc::Rng::rollDice(mediaSets.size());
+                        size_t i = Misc::Rng::rollDice(mediaSets.size());
 
                         mediaSet = mediaSets[i];
                     }
@@ -1128,7 +1128,7 @@ namespace MWWorld
                     musicFile = "public\\";
                 else
                 {
-                    std::uint8_t flags
+                    std::uint16_t flags
                         = static_cast<const MWWorld::ForeignCell*>(cell->getCell())->mCell->mCellFlags;
 
                     if ((flags & ESM4::CELL_Public) != 0)

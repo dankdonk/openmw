@@ -183,7 +183,7 @@ namespace MWSound
                 if(!filelist.size())
                     return "";
 
-                int i = Misc::Rng::rollDice(filelist.size());
+                int i = Misc::Rng::rollDice(int(filelist.size()));
                 return filelist[i];
             }
         }
@@ -309,7 +309,7 @@ namespace MWSound
         if(!filelist.size())
             return;
 
-        int i = Misc::Rng::rollDice(filelist.size());
+        int i = Misc::Rng::rollDice(int(filelist.size()));
 
         // Don't play the same music track twice in a row
         if (filelist[i] == mLastPlayedMusic)

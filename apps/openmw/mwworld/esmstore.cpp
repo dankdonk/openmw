@@ -33,48 +33,49 @@ static bool isCacheableRecord(int id)
 }
 
 // FIXME: not sure what records qualify as 'cacheable' - guess is that they are referenceable records
+//        (if so why aren't REC_GRAS, REC_TREE, REC_FLOR, REC_FURN, etc included?)
 static bool isCacheableForeignRecord(int id)
 {
-    if (id == MKTAG('N','S','O','U') || /* sound */
-        id == MKTAG('I','A','C','T') || /* activator */
-        id == MKTAG('A','A','P','P') || /* apparatus */
-        id == MKTAG('O','A','R','M') || /* armor */
-        id == MKTAG('K','B','O','O') || /* book */
-        id == MKTAG('T','C','L','O') || /* clothing */
-        id == MKTAG('T','C','O','N') || /* container */
-        id == MKTAG('R','D','O','O') || /* door */
-        id == MKTAG('R','I','N','G') || /* ingredient */
-        id == MKTAG('H','L','I','G') || /* light */
-        id == MKTAG('C','M','I','S') || /* misc item */
-        id == MKTAG('T','S','T','A') || /* static */
-        id == MKTAG('S','G','R','A') || /* grass */
-        id == MKTAG('E','T','R','E') || /* tree */
-        id == MKTAG('R','F','L','O') || /* flora */
-        id == MKTAG('N','F','U','R') || /* furniture */
-        id == MKTAG('P','W','E','A') || /* weapon */
-        id == MKTAG('O','A','M','M') || /* ammo */
-        id == MKTAG('_','N','P','C') || /* npc */
-        id == MKTAG('A','C','R','E') || /* creature */
-        id == MKTAG('C','L','V','L') || /* lvlcreature */
-        id == MKTAG('M','S','L','G') || /* soulgem */
-        id == MKTAG('M','K','E','Y') || /* key */
-        id == MKTAG('H','A','L','C') || /* potion */
-        id == MKTAG('P','S','B','S') || /* subspace */
-        id == MKTAG('T','S','G','S') || /* sigilstone */
-        id == MKTAG('I','L','V','L') || /* levelled item */
-        id == MKTAG('N','L','V','L') || /* levelled actor */
-        id == MKTAG('M','I','D','L') || /* idle marker */
-        id == MKTAG('T','M','S','T') || /* movable static */
-        id == MKTAG('T','T','X','S') || /* texture set */
-        id == MKTAG('L','S','C','R') || /* scroll */
-        id == MKTAG('A','A','R','M') || /* armor addon */
-        id == MKTAG('M','T','E','R') || /* terminal */
-        id == MKTAG('T','T','A','C') || /* talking activator */
-        id == MKTAG('E','N','O','T') || /* note */
-        id == MKTAG('C','A','S','P') || /* acoustic space */
-        id == MKTAG('T','P','W','A') || /* placeable water */
-        id == MKTAG('L','S','C','O') || /* static collection */
-        id == MKTAG('D','I','M','O')    /* item mod */
+    if (// id == ESM4::REC_SOUN || /* sound */
+     // id == ESM4::REC_ACTI || /* activator */
+        id == ESM4::REC_APPA || /* apparatus */
+        id == ESM4::REC_ARMO || /* armor */
+        id == ESM4::REC_BOOK || /* book */
+        id == ESM4::REC_CLOT || /* clothing */
+     // id == ESM4::REC_CONT || /* container */
+     // id == ESM4::REC_DOOR || /* door */
+        id == ESM4::REC_INGR || /* ingredient */
+     // id == ESM4::REC_LIGH || /* light */
+     // id == ESM4::REC_MISC || /* misc item */
+     // id == ESM4::REC_STAT || /* static */
+      //id == ESM4::REC_GRAS || /* grass (not in FONV dummy cell) */
+     // id == ESM4::REC_TREE || /* tree */
+      //id == ESM4::REC_FLOR || /* flora */
+     // id == ESM4::REC_FURN || /* furniture */
+        id == ESM4::REC_WEAP || /* weapon */
+      //id == ESM4::REC_AMMO || /* ammo (not in FONV dummy cell) */
+     // id == ESM4::REC_NPC_ || /* npc */
+     // id == ESM4::REC_CREA || /* creature */
+        id == ESM4::REC_LVLC || /* lvlcreature */
+        id == ESM4::REC_SLGM || /* soulgem */
+        id == ESM4::REC_KEYM || /* key */
+        id == ESM4::REC_ALCH || /* potion */
+      //id == ESM4::REC_SBSP || /* subspace (not in FONV dummy cell) */
+        id == ESM4::REC_SGST || /* sigilstone */
+        id == ESM4::REC_LVLI || /* levelled item */
+        id == ESM4::REC_LVLN || /* levelled actor */
+     // id == ESM4::REC_IDLM || /* idle marker */
+     // id == ESM4::REC_MSTT || /* movable static */
+      //id == ESM4::REC_TXST || /* texture set (not in FONV dummy cell) */
+        id == ESM4::REC_SCRL || /* scroll */
+        id == ESM4::REC_ARMA || /* armor addon */
+     // id == ESM4::REC_TERM || /* terminal */
+     // id == ESM4::REC_TACT || /* talking activator */
+        id == ESM4::REC_NOTE || /* note */
+      //id == ESM4::REC_ASPC || /* acoustic space (not in FONV dummy cell) */
+     // id == ESM4::REC_PWAT || /* placeable water */
+      //id == ESM4::REC_SCOL || /* static collection (not in FONV dummy cell) */
+        id == ESM4::REC_IMOD    /* item mod */
         )
     {
         return true;
@@ -385,104 +386,85 @@ void ESMStore::loadTes4Record (ESM::ESMReader& esm)
     {
         // GMST, GLOB, CLAS, FACT
         case ESM4::REC_HDPT: reader.getRecordData(); id = mHeadParts.loadForeign(reader);
-                             mForeignIds[id.mId] = MKTAG('T','H','D','P'); break;
+                             mForeignIds[id.mId] = ESM4::REC_HDPT; break;
         case ESM4::REC_HAIR: reader.getRecordData(); id = mForeignHairs.loadForeign(reader);
-                             mForeignIds[id.mId] = MKTAG('R','H','A','I'); break;
+                             mForeignIds[id.mId] = ESM4::REC_HAIR; break;
         case ESM4::REC_EYES: reader.getRecordData(); id = mForeignEyesSet.loadForeign(reader);
-                             mForeignIds[id.mId] = MKTAG('S','E','Y','E'); break;
+                             mForeignIds[id.mId] = ESM4::REC_EYES; break;
         case ESM4::REC_RACE: reader.getRecordData(); id = mForeignRaces.loadForeign(reader);
-                             mForeignIds[id.mId] = MKTAG('E','R','A','C'); break;
+                             mForeignIds[id.mId] = ESM4::REC_RACE; break;
         case ESM4::REC_BPTD: reader.getRecordData(); id = mForeignBodyParts.loadForeign(reader);
-                             mForeignIds[id.mId] = MKTAG('D','B','P','T'); break;
+                             mForeignIds[id.mId] = ESM4::REC_BPTD; break;
         // SKIL, MGEF
         case ESM4::REC_LTEX: reader.getRecordData(); id = mForeignLandTextures.loadForeign(reader);
-                             mForeignIds[id.mId] = MKTAG('X','L','T','E'); break;
+                             mForeignIds[id.mId] = ESM4::REC_LTEX; break;
         case ESM4::REC_SCPT: reader.getRecordData(); id = mForeignScripts.loadForeign(reader);
-                             mForeignIds[id.mId] = MKTAG('T','S','C','P'); break;
+                             mForeignIds[id.mId] = ESM4::REC_SCPT; break;
         // ENCH, SPEL, BSGN
         // ---- referenceables start
         case ESM4::REC_SOUN: reader.getRecordData(); id = mForeignSounds.loadForeign(reader);
-                             mForeignIds[id.mId] = MKTAG('N','S','O','U'); break;
+                             mForeignIds[id.mId] = ESM4::REC_SOUN; break;
         case ESM4::REC_ACTI: reader.getRecordData(); id = mForeignActivators.loadForeign(reader);
-                             mForeignIds[id.mId] = MKTAG('I','A','C','T'); break;
-        case ESM4::REC_APPA: reader.getRecordData(); id = mForeignApparatuses.loadForeign(reader);
-                             mForeignIds[id.mId] = MKTAG('A','A','P','P'); break;
-        case ESM4::REC_ARMO: reader.getRecordData(); id = mForeignArmors.loadForeign(reader);
-                             mForeignIds[id.mId] = MKTAG('O','A','R','M'); break;
-        case ESM4::REC_BOOK: reader.getRecordData(); id = mForeignBooks.loadForeign(reader);
-                             mForeignIds[id.mId] = MKTAG('K','B','O','O'); break;
-        case ESM4::REC_CLOT: reader.getRecordData(); id = mForeignClothes.loadForeign(reader);
-                             mForeignIds[id.mId] = MKTAG('T','C','L','O'); break;
+                             mForeignIds[id.mId] = ESM4::REC_ACTI; break;
+        case ESM4::REC_APPA: reader.getRecordData(); mForeignApparatuses.loadForeign(reader); break;
+        case ESM4::REC_ARMO: reader.getRecordData(); mForeignArmors.loadForeign(reader); break;
+        case ESM4::REC_BOOK: reader.getRecordData(); mForeignBooks.loadForeign(reader); break;
+        case ESM4::REC_CLOT: reader.getRecordData(); mForeignClothes.loadForeign(reader); break;
         case ESM4::REC_CONT: reader.getRecordData(); id = mForeignContainers.loadForeign(reader);
-                             mForeignIds[id.mId] = MKTAG('T','C','O','N'); break;
+                             mForeignIds[id.mId] = ESM4::REC_CONT; break;
         case ESM4::REC_DOOR: reader.getRecordData(); id = mForeignDoors.loadForeign(reader);
-                             mForeignIds[id.mId] = MKTAG('R','D','O','O'); break;
-        case ESM4::REC_INGR: reader.getRecordData(); id = mForeignIngredients.loadForeign(reader);
-                             mForeignIds[id.mId] = MKTAG('R','I','N','G'); break;
+                             mForeignIds[id.mId] = ESM4::REC_DOOR; break;
+        case ESM4::REC_INGR: reader.getRecordData(); mForeignIngredients.loadForeign(reader); break;
         case ESM4::REC_LIGH: reader.getRecordData(); id = mForeignLights.loadForeign(reader);
-                             mForeignIds[id.mId] = MKTAG('H','L','I','G'); break;
+                             mForeignIds[id.mId] = ESM4::REC_LIGH; break;
         case ESM4::REC_MISC: reader.getRecordData(); id = mForeignMiscItems.loadForeign(reader);
-                             mForeignIds[id.mId] = MKTAG('C','M','I','S'); break;
+                             mForeignIds[id.mId] = ESM4::REC_MISC; break;
         case ESM4::REC_STAT: reader.getRecordData(); id = mForeignStatics.loadForeign(reader);
-                             mForeignIds[id.mId] = MKTAG('T','S','T','A'); break;
+                             mForeignIds[id.mId] = ESM4::REC_STAT; break;
         case ESM4::REC_GRAS: reader.getRecordData(); id = mForeignGrasses.loadForeign(reader);
-                             mForeignIds[id.mId] = MKTAG('S','G','R','A'); break;
+                             mForeignIds[id.mId] = ESM4::REC_GRAS; break;
         case ESM4::REC_TREE: reader.getRecordData(); id = mForeignTrees.loadForeign(reader);
-                             mForeignIds[id.mId] = MKTAG('E','T','R','E'); break;
+                             mForeignIds[id.mId] = ESM4::REC_TREE; break;
         case ESM4::REC_FLOR: reader.getRecordData(); id = mForeignFloras.loadForeign(reader);
-                             mForeignIds[id.mId] = MKTAG('R','F','L','O'); break;
+                             mForeignIds[id.mId] = ESM4::REC_FLOR; break;
         case ESM4::REC_FURN: reader.getRecordData(); id = mForeignFurnitures.loadForeign(reader);
-                             mForeignIds[id.mId] = MKTAG('N','F','U','R'); break;
-        case ESM4::REC_WEAP: reader.getRecordData(); id = mForeignWeapons.loadForeign(reader);
-                             mForeignIds[id.mId] = MKTAG('P','W','E','A'); break;
+                             mForeignIds[id.mId] = ESM4::REC_FURN; break;
+        case ESM4::REC_WEAP: reader.getRecordData(); mForeignWeapons.loadForeign(reader); break;
         case ESM4::REC_AMMO: reader.getRecordData(); id = mForeignAmmos.loadForeign(reader);
-                             mForeignIds[id.mId] = MKTAG('O','A','M','M'); break;
-        // UrielSeptim
-        //case ESM4::REC_NPC_: reader.getRecordData(((hdr.record.id & 0xfffff) == 0x23F2E)?true:false); mForeignNpcs.loadForeign(reader); break;
+                             mForeignIds[id.mId] = ESM4::REC_AMMO; break;
         case ESM4::REC_NPC_: reader.getRecordData(); id = mForeignNpcs.loadForeign(reader);
-                             mForeignIds[id.mId] = MKTAG('_','N','P','C'); break;
+                             mForeignIds[id.mId] = ESM4::REC_NPC_; break;
         case ESM4::REC_CREA: reader.getRecordData(); id = mForeignCreatures.loadForeign(reader);
-                             mForeignIds[id.mId] = MKTAG('A','C','R','E'); break;
-        case ESM4::REC_LVLC: reader.getRecordData(); id = mLevelledCreatures.loadForeign(reader);
-                             mForeignIds[id.mId] = MKTAG('C','L','V','L'); break;
-        case ESM4::REC_SLGM: reader.getRecordData(); id = mSoulGems.loadForeign(reader);
-                             mForeignIds[id.mId] = MKTAG('M','S','L','G'); break;
-        case ESM4::REC_KEYM: reader.getRecordData(); id = mForeignKeys.loadForeign(reader);
-                             mForeignIds[id.mId] = MKTAG('M','K','E','Y'); break;
-        case ESM4::REC_ALCH: reader.getRecordData(); id = mForeignPotions.loadForeign(reader);
-                             mForeignIds[id.mId] = MKTAG('H','A','L','C'); break;
+                             mForeignIds[id.mId] = ESM4::REC_CREA; break;
+        case ESM4::REC_LVLC: reader.getRecordData(); mLevelledCreatures.loadForeign(reader); break;
+        case ESM4::REC_SLGM: reader.getRecordData(); mSoulGems.loadForeign(reader); break;
+        case ESM4::REC_KEYM: reader.getRecordData(); mForeignKeys.loadForeign(reader); break;
+        case ESM4::REC_ALCH: reader.getRecordData(); mForeignPotions.loadForeign(reader); break;
         case ESM4::REC_SBSP: reader.getRecordData(); id = mSubspaces.loadForeign(reader); // 9
-                             mForeignIds[id.mId] = MKTAG('P','S','B','S'); break;
-        case ESM4::REC_SGST: reader.getRecordData(); id = mSigilStones.loadForeign(reader);
-                             mForeignIds[id.mId] = MKTAG('T','S','G','S'); break;
-        case ESM4::REC_LVLI: reader.getRecordData(); id = mLevelledItems.loadForeign(reader); // 12
-                             mForeignIds[id.mId] = MKTAG('I','L','V','L'); break;
-        case ESM4::REC_LVLN: reader.getRecordData(); id = mLevelledNpcs.loadForeign(reader); // 8
-                             mForeignIds[id.mId] = MKTAG('N','L','V','L'); break;
+                             mForeignIds[id.mId] = ESM4::REC_SBSP; break;
+        case ESM4::REC_SGST: reader.getRecordData(); mSigilStones.loadForeign(reader); break;
+        case ESM4::REC_LVLI: reader.getRecordData(); mLevelledItems.loadForeign(reader); break; // 12
+        case ESM4::REC_LVLN: reader.getRecordData(); mLevelledNpcs.loadForeign(reader); break; // 8
         case ESM4::REC_IDLM: reader.getRecordData(); id = mIdleMarkers.loadForeign(reader); // 10
-                             mForeignIds[id.mId] = MKTAG('M','I','D','L'); break;
+                             mForeignIds[id.mId] = ESM4::REC_IDLM; break;
         case ESM4::REC_MSTT: reader.getRecordData(); id = mMovableStatics.loadForeign(reader); // 6
-                             mForeignIds[id.mId] = MKTAG('T','M','S','T'); break;
+                             mForeignIds[id.mId] = ESM4::REC_MSTT; break;
         case ESM4::REC_TXST: reader.getRecordData(); id = mTextureSets.loadForeign(reader);   //1
-                             mForeignIds[id.mId] = MKTAG('T','T','X','S'); break;
-        case ESM4::REC_SCRL: reader.getRecordData(); id = mForeignScrolls.loadForeign(reader);
-                             mForeignIds[id.mId] = MKTAG('L','S','C','R'); break;
-        case ESM4::REC_ARMA: reader.getRecordData(); id = mArmorAddons.loadForeign(reader); // 13
-                             mForeignIds[id.mId] = MKTAG('A','A','R','M'); break;
+                             mForeignIds[id.mId] = ESM4::REC_TXST; break;
+        case ESM4::REC_SCRL: reader.getRecordData(); mForeignScrolls.loadForeign(reader); break;
+        case ESM4::REC_ARMA: reader.getRecordData(); mArmorAddons.loadForeign(reader); break; // 13
         case ESM4::REC_TERM: reader.getRecordData(); id = mTerminals.loadForeign(reader); // 4
-                             mForeignIds[id.mId] = MKTAG('M','T','E','R'); break;
+                             mForeignIds[id.mId] = ESM4::REC_TERM; break;
         case ESM4::REC_TACT: reader.getRecordData(); id = mTalkingActivators.loadForeign(reader); // 3
-                             mForeignIds[id.mId] = MKTAG('T','T','A','C'); break;
-        case ESM4::REC_NOTE: reader.getRecordData(); id = mNotes.loadForeign(reader); // 11
-                             mForeignIds[id.mId] = MKTAG('E','N','O','T'); break;
+                             mForeignIds[id.mId] = ESM4::REC_TACT; break;
+        case ESM4::REC_NOTE: reader.getRecordData(); mNotes.loadForeign(reader); break; // 11
         case ESM4::REC_ASPC: reader.getRecordData(); id = mAcousticSpaces.loadForeign(reader); // 2
-                             mForeignIds[id.mId] = MKTAG('C','A','S','P'); break;
+                             mForeignIds[id.mId] = ESM4::REC_ASPC; break;
         case ESM4::REC_PWAT: reader.getRecordData(); id = mPlaceableWaters.loadForeign(reader); // 7
-                             mForeignIds[id.mId] = MKTAG('T','P','W','A'); break;
+                             mForeignIds[id.mId] = ESM4::REC_PWAT; break;
         case ESM4::REC_SCOL: reader.getRecordData(); id = mStaticCollections.loadForeign(reader); // 5
-                             mForeignIds[id.mId] = MKTAG('L','S','C','O'); break;
-        case ESM4::REC_IMOD: reader.getRecordData(); id = mItemMods.loadForeign(reader);
-                             mForeignIds[id.mId] = MKTAG('D','I','M','O'); break;
+                             mForeignIds[id.mId] = ESM4::REC_SCOL; break;
+        case ESM4::REC_IMOD: reader.getRecordData(); mItemMods.loadForeign(reader); break;
         // ---- referenceables end
         // WTHR, CLMT
         case ESM4::REC_REGN: reader.getRecordData(); mForeignRegions.loadForeign(reader); break;
@@ -646,7 +628,6 @@ void ESMStore::loadTes4Record (ESM::ESMReader& esm)
 void ESMStore::setUp()
 {
     mIds.clear();
-    mForeignIds.clear();
 
     std::map<int, StoreBase *>::iterator storeIt = mStores.begin();
     for (; storeIt != mStores.end(); ++storeIt)
@@ -659,25 +640,31 @@ void ESMStore::setUp()
             storeIt->second->listIdentifier(identifiers);
 
             for (std::vector<std::string>::const_iterator record = identifiers.begin(); record != identifiers.end(); ++record)
-                mIds[*record] = storeIt->first; // FIXME: log duplicates?
+                mIds[*record] = storeIt->first;
         }
-// this does not always work for TES4 since sometimes we need to lookup some object on the fly
-// (e.g. to load visible dist group - need to populate mForeignIds as we read each record
-//#if 0
-        else if (isCacheableForeignRecord(storeIt->first))
-        {
-            std::vector<ESM4::FormId> identifiers;
-            storeIt->second->listForeignIdentifier(identifiers);
-
-            for (std::vector<ESM4::FormId>::const_iterator record = identifiers.begin(); record != identifiers.end(); ++record)
-                mForeignIds[*record] = storeIt->first; // FIXME: log duplicates?
-        }
-//#endif
     }
+
     mSkills.setUp();
     mMagicEffects.setUp();
     mAttributes.setUp();
     mDialogs.setUp();
+
+// this does not always work for TES4 since sometimes we need to lookup some object on the fly in
+// CellStore (e.g. to load visible dist group) - need to populate mForeignIds as we read each record
+// such as STAT, TREE, NPC_, etc
+    std::map<int, StoreBase *>::iterator foreignStoreIt = mForeignStores.begin();
+    for (; foreignStoreIt != mForeignStores.end(); ++foreignStoreIt)
+    {
+        if (isCacheableForeignRecord(foreignStoreIt->first))
+        {
+            std::vector<ESM4::FormId> identifiers;
+            foreignStoreIt->second->listForeignIdentifier(identifiers);
+
+            std::vector<ESM4::FormId>::const_iterator record = identifiers.begin();
+            for (; record != identifiers.end(); ++record)
+                mForeignIds[*record] = foreignStoreIt->first; // FIXME: log duplicates?
+        }
+    }
 }
 
     int ESMStore::countSavedGameRecords() const

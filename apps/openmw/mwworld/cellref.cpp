@@ -289,7 +289,7 @@ namespace MWWorld
 #if 0
             const MWWorld::ESMStore& store = MWBase::Environment::get().getWorld()->getStore();
             const ESM4::FormId cellId = store.getDoorCellId(ref.mDoor.destDoor);
-            const MWWorld::ForeignCell *cell = store.get<MWWorld::ForeignCell>().find(cellId);
+            const MWWorld::ForeignCell *cell = store.getForeign<MWWorld::ForeignCell>().find(cellId);
             if (cell && !cell->mCell->mFullName.empty())
                 mCellRef.mDestCell = cell->mCell->mFullName;
             else if (cell && !cell->mCell->mEditorId.empty())
