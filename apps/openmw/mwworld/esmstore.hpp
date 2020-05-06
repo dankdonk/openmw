@@ -148,7 +148,7 @@ namespace MWWorld
         ForeignStore<ESM4::ActorCreature>  mForeignACreatures;
         ForeignStore<ESM4::LandTexture> mForeignLandTextures;
         ForeignStore<ESM4::Script>     mForeignScripts;
-        ForeignStore<ESM4::Dialog>     mForeignDialogs;
+        ForeignStore<ESM4::Dialogue>     mForeignDialogues;
         ForeignStore<ESM4::DialogInfo> mForeignDialogInfos;
         ForeignStore<ESM4::Quest>      mForeignQuests;
         ForeignStore<ESM4::AIPackage>  mForeignAIPackages;
@@ -210,7 +210,10 @@ namespace MWWorld
 
         // Unlike TES3, the destination cell is not specified in the reference record.
         // Need a lookup map to work around this issue.
+        // FIXME: there must be another way
         mutable std::map<ESM4::FormId, ESM4::FormId> mDoorDestCell;
+        // INFO records follow DIAL
+        ESM4::Dialogue *mCurrentDialogue;
 
         ESM::NPC mPlayerTemplate;
 
@@ -272,7 +275,7 @@ namespace MWWorld
         }
 
         ESMStore()
-          : mDynamicCount(0)
+          : mDynamicCount(0), mCurrentDialogue(0)
         {
             mStores[ESM::REC_ACTI] = &mActivators;
             mStores[ESM::REC_ALCH] = &mPotions;
@@ -315,6 +318,7 @@ namespace MWWorld
             mStores[ESM::REC_WEAP] = &mWeapons;
 
             // NOTE: to avoid clash with TES3, these are rotated by one
+            // TODO: an alternative is to have mForeignStores so that there is no key clash
             mStores[MKTAG('R','H','A','I')] = &mForeignHairs;
             mStores[MKTAG('S','E','Y','E')] = &mForeignEyesSet;
             mStores[MKTAG('E','R','A','C')] = &mForeignRaces;
@@ -324,7 +328,7 @@ namespace MWWorld
             mStores[MKTAG('E','A','C','R')] = &mForeignACreatures;
             mStores[MKTAG('X','L','T','E')] = &mForeignLandTextures;
             mStores[MKTAG('T','S','C','P')] = &mForeignScripts;
-            mStores[MKTAG('L','D','I','A')] = &mForeignDialogs;
+            mStores[MKTAG('L','D','I','A')] = &mForeignDialogues;
             mStores[MKTAG('O','I','N','F')] = &mForeignDialogInfos;
             mStores[MKTAG('T','Q','U','S')] = &mForeignQuests;
             mStores[MKTAG('K','P','A','C')] = &mForeignAIPackages;
@@ -775,8 +779,8 @@ namespace MWWorld
     }
 
     template <>
-    inline const ForeignStore<ESM4::Dialog>& ESMStore::getForeign<ESM4::Dialog>() const {
-        return mForeignDialogs;
+    inline const ForeignStore<ESM4::Dialogue>& ESMStore::getForeign<ESM4::Dialogue>() const {
+        return mForeignDialogues;
     }
 
     template <>

@@ -34,17 +34,17 @@
 #include "reader.hpp"
 //#include "writer.hpp"
 
-ESM4::Dialog::Dialog() : mFormId(0), mFlags(0), mData(0), mDialFlags(0)
+ESM4::Dialogue::Dialogue() : mFormId(0), mFlags(0), mData(0), mDialFlags(0)
 {
     mEditorId.clear();
     mTopicName.clear();
 }
 
-ESM4::Dialog::~Dialog()
+ESM4::Dialogue::~Dialogue()
 {
 }
 
-void ESM4::Dialog::load(ESM4::Reader& reader)
+void ESM4::Dialogue::load(ESM4::Reader& reader)
 {
     mFormId = reader.hdr().record.id;
     reader.adjustFormId(mFormId);
@@ -113,10 +113,10 @@ void ESM4::Dialog::load(ESM4::Reader& reader)
 #endif
 }
 
-//void ESM4::Dialog::save(ESM4::Writer& writer) const
+//void ESM4::Dialogue::save(ESM4::Writer& writer) const
 //{
 //}
 
-//void ESM4::Dialog::blank()
+//void ESM4::Dialogue::blank()
 //{
 //}

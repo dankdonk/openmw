@@ -9,9 +9,11 @@
 #include <extern/esm4/pgrd.hpp> // this one is not in esmstore
 #include <extern/esm4/formid.hpp>
 
-#include <components/misc/rng.hpp>
 #include <stdexcept>
 #include <sstream>
+
+//#define DEBUG_FORMID
+#undef DEBUG_FORMID
 
 namespace MWWorld
 {
@@ -42,151 +44,96 @@ namespace MWWorld
     template<typename T>
     const T *ForeignStore<T>::search(const std::string &id) const
     {
-#if 0
-        T item;
-        item.mEditorId = Misc::StringUtils::lowerCase(id);
-
-        typename Dynamic::const_iterator dit = mDynamic.find(item.mEditorId);
-        if (dit != mDynamic.end()) {
-            return &dit->second;
-        }
-
-        typename std::map<std::string, T>::const_iterator it = mStatic.find(item.mEditorId);
-
-        if (it != mStatic.end() && Misc::StringUtils::ciEqual(it->second.mEditorId, id)) {
-            return &(it->second);
-        }
+#ifdef DEBUG_FORMID
+        ESM4::FormId formId = 0;
+        if (ESM4::isFormId(id))
+            formId = ESM4::stringToFormId(id);
 #else
-        // FIXME: just loop through for now, will need to maintain two maps
-        typename Dynamic::const_iterator dit = mDynamic.begin();
-        for (; dit != mDynamic.end(); ++dit)
-        {
-            if (dit->second.mEditorId == id)
-                return &dit->second;
-        }
-
-        typename Static::const_iterator it = mStatic.begin();
-        for (; it != mStatic.end(); ++it)
-        {
-            if (it->second.mEditorId == id)
-                return &it->second;
-        }
+        ESM4::FormId formId = ESM4::stringToFormId(id);
 #endif
-        return 0;
+        return search(formId);
     }
 
     template<typename T>
     const T *ForeignStore<T>::search(ESM4::FormId id) const
     {
-#if 1
-        T item;
-        // FIXME: just loop through for now, will need to maintain two maps
-        typename Dynamic::const_iterator dit = mDynamic.begin();
-        for (; dit != mDynamic.end(); ++dit)
-        {
-            if (dit->second.mFormId == id)
-                return &dit->second;
-        }
-
-        typename Static::const_iterator it = mStatic.begin();
-        for (; it != mStatic.end(); ++it)
-        {
-            if (it->second.mFormId == id)
-                return &it->second;
-        }
-#else
-        typename std::map<ESM4::FormId, T>::const_iterator dit = mDynamic.find(id);
+        // NOTE: below logic is lifted from MWWorld::Store; the differences are that
+        // FormId is used instead of std::string and hence no need to convert to lowercase
+        typename Dynamic::const_iterator dit = mDynamic.find(id);
         if (dit != mDynamic.end())
             return &dit->second;
 
-        typename std::map<ESM4::FormId, T>::const_iterator it = mStatic.find(id);
-
+        typename Static::const_iterator it = mStatic.find(id);
         if (it != mStatic.end())
             return &(it->second);
-#endif
-        return 0;
+
+        return nullptr;
     }
 
     template<typename T>
     bool ForeignStore<T>::isDynamic(const std::string &id) const
     {
-        typename Dynamic::const_iterator dit = mDynamic.find(id);
+#ifdef DEBUG_FORMID
+        ESM4::FormId formId = 0;
+        if (ESM4::isFormId(id))
+            formId = ESM4::stringToFormId(id);
+#else
+        ESM4::FormId formId = ESM4::stringToFormId(id);
+#endif
+        typename Dynamic::const_iterator dit = mDynamic.find(formId);
         return (dit != mDynamic.end());
     }
-    template<typename T>
-    const T *ForeignStore<T>::searchRandom(const std::string &id) const
-    {
-        // FIXME
-#if 0
-        std::vector<const T*> results;
-        std::for_each(mShared.begin(), mShared.end(), GetForeignRecords<T>(id, &results));
-        if(!results.empty())
-            return results[Misc::Rng::rollDice(results.size())];
-#endif
-        return NULL;
-    }
+
     template<typename T>
     const T *ForeignStore<T>::find(const std::string &id) const
     {
-        const T *ptr = search(id);
-        if (ptr == 0) {
+#ifdef DEBUG_FORMID
+        ESM4::FormId formId = 0;
+        if (ESM4::isFormId(id))
+            formId = ESM4::stringToFormId(id);
+#else
+        ESM4::FormId formId = ESM4::stringToFormId(id);
+#endif
+        const T *ptr = search(formId);
+        if (ptr == nullptr) {
             std::ostringstream msg;
-            // FIXME
-            //msg << T::getRecordType() << " '" << id << "' not found";
+            // FIXME: getRecordType() not implemented
+            msg << /*T::getRecordType() <<*/ " '" << id << "' not found";
             throw std::runtime_error(msg.str());
         }
         return ptr;
     }
+
     template<typename T>
     const T *ForeignStore<T>::findRandom(const std::string &id) const
     {
-        const T *ptr = searchRandom(id);
-        if(ptr == 0)
-        {
-            std::ostringstream msg;
-            // FIXME
-            //msg << T::getRecordType() << " starting with '"<<id<<"' not found";
-            throw std::runtime_error(msg.str());
-        }
-        return ptr;
+        std::ostringstream msg;
+        // FIXME: getRecordType() not implemented
+        msg << /*T::getRecordType() <<*/ " starting with '"<<id<<"' not found";
+        throw std::runtime_error(msg.str());
     }
+
     template<typename T>
     RecordId ForeignStore<T>::load(ESM::ESMReader& esm)
     {
-        T record;
-        bool isDeleted = false;
-        std::string id;
-
         ESM4::Reader& reader = static_cast<ESM::ESM4Reader*>(&esm)->reader();
+        ForeignId result = loadForeign(reader);
 
-        record.load(reader);
-
-        ESM4::formIdToString(record.mFormId, id);
-        isDeleted = (record.mFlags & ESM4::Rec_Deleted) != 0;
-
-        Misc::StringUtils::lowerCaseInPlace(id);
-
-        std::pair<typename Static::iterator, bool> inserted = mStatic.insert(std::make_pair(id, record));
-        if (inserted.second)
-            mShared.push_back(&inserted.first->second);
-        else
-            inserted.first->second = record;
-
-        return RecordId(id, isDeleted);
+        std::string id = ESM4::formIdToString(result.mId);
+        return RecordId(id, result.mIsDeleted); // NOTE: id is uppercase (not that it matters)
     }
+
     template<typename T>
-    ForeignId ForeignStore<T>::loadTes4(ESM4::Reader& reader)
+    ForeignId ForeignStore<T>::loadForeign(ESM4::Reader& reader)
     {
         T record;
         record.load(reader);
 
-        std::string id;
-        ESM4::formIdToString(record.mFormId, id);
-        Misc::StringUtils::lowerCaseInPlace(id);
-
         bool isDeleted = (record.mFlags & ESM4::Rec_Deleted) != 0;
 
-        std::pair<typename Static::iterator, bool> inserted = mStatic.insert(std::make_pair(id, record));
+        std::pair<typename Static::iterator, bool> inserted
+            = mStatic.insert(std::make_pair(record.mFormId, record));
+
         if (inserted.second)
             mShared.push_back(&inserted.first->second);
         else
@@ -194,9 +141,11 @@ namespace MWWorld
 
         return ForeignId(record.mFormId, isDeleted);
     }
+
     template<typename T>
     void ForeignStore<T>::setUp()
     {
+        // FIXME
     }
 
     template<typename T>
@@ -204,6 +153,7 @@ namespace MWWorld
     {
         return mShared.begin();
     }
+
     template<typename T>
     typename ForeignStore<T>::iterator ForeignStore<T>::end() const
     {
@@ -219,8 +169,9 @@ namespace MWWorld
     template<typename T>
     int ForeignStore<T>::getDynamicSize() const
     {
-        return (int) mDynamic.size(); // FIXME: consider making it return size_t
+        return (int) mDynamic.size();
     }
+
     template<typename T>
     void ForeignStore<T>::listForeignIdentifier(std::vector<ESM4::FormId> &list) const
     {
@@ -230,8 +181,11 @@ namespace MWWorld
             list.push_back((*it)->mFormId);
         }
     }
+
     // Used by ESMStore::setUp() to map references to stores (of referenceable object types)
     // Basically pulls all the EditorId strings out of the records and puts them in the list.
+    //
+    // FIXME: is this useful at all?
     template<typename T>
     void ForeignStore<T>::listIdentifier(std::vector<std::string> &list) const
     {
@@ -241,49 +195,59 @@ namespace MWWorld
             list.push_back((*it)->mEditorId);
         }
     }
+
     template<typename T>
     T *ForeignStore<T>::insert(const T &item)
     {
-        std::string id = Misc::StringUtils::lowerCase(item.mEditorId);
         std::pair<typename Dynamic::iterator, bool> result =
-            mDynamic.insert(std::pair<std::string, T>(id, item));
+            mDynamic.insert(std::pair<ESM4::FormId, T>(item.mFormId, item));
+
         T *ptr = &result.first->second;
         if (result.second) {
             mShared.push_back(ptr);
         } else {
             *ptr = item;
         }
+
         return ptr;
     }
+
     template<typename T>
     T *ForeignStore<T>::insertStatic(const T &item)
     {
-        std::string id = Misc::StringUtils::lowerCase(item.mEditorId);
         std::pair<typename Static::iterator, bool> result =
-            mStatic.insert(std::pair<std::string, T>(id, item));
+            mStatic.insert(std::pair<ESM4::FormId, T>(item.mFormId, item));
+
         T *ptr = &result.first->second;
         if (result.second) {
             mShared.push_back(ptr);
         } else {
             *ptr = item;
         }
+
         return ptr;
     }
+
     template<typename T>
     bool ForeignStore<T>::eraseStatic(const std::string &id)
     {
-        T item;
-        item.mEditorId = Misc::StringUtils::lowerCase(id);
+#ifdef DEBUG_FORMID
+        ESM4::FormId formId = 0;
+        if (ESM4::isFormId(id))
+            formId = ESM4::stringToFormId(id);
+#else
+        ESM4::FormId formId = ESM4::stringToFormId(id);
+#endif
 
-        typename std::map<std::string, T>::iterator it = mStatic.find(item.mEditorId);
+        typename std::map<ESM4::FormId, T>::iterator it = mStatic.find(formId);
 
-        if (it != mStatic.end() && Misc::StringUtils::ciEqual(it->second.mEditorId, id)) {
+        if (it != mStatic.end()) {
             // delete from the static part of mShared
             typename std::vector<T *>::iterator sharedIter = mShared.begin();
             typename std::vector<T *>::iterator end = sharedIter + mStatic.size();
 
             while (sharedIter != mShared.end() && sharedIter != end) {
-                if((*sharedIter)->mEditorId == item.mEditorId) {
+                if((*sharedIter)->mFormId == formId) {
                     mShared.erase(sharedIter);
                     break;
                 }
@@ -291,14 +255,27 @@ namespace MWWorld
             }
             mStatic.erase(it);
         }
+
         return true;
     }
 
     template<typename T>
-    bool ForeignStore<T>::erase(const std::string &id)
+    bool ForeignStore<T>::erase(const std::string &id) // FIXME: is this ever used?
     {
-        std::string key = Misc::StringUtils::lowerCase(id);
-        typename Dynamic::iterator it = mDynamic.find(key);
+#ifdef DEBUG_FORMID
+        ESM4::FormId formId = 0;
+        if (ESM4::isFormId(id))
+            formId = ESM4::stringToFormId(id);
+#else
+        ESM4::FormId formId = ESM4::stringToFormId(id);
+#endif
+        return erase(formId);
+    }
+
+    template<typename T>
+    bool ForeignStore<T>::erase(ESM4::FormId formId)
+    {
+        typename Dynamic::iterator it = mDynamic.find(formId);
         if (it == mDynamic.end()) {
             return false;
         }
@@ -316,7 +293,7 @@ namespace MWWorld
     template<typename T>
     bool ForeignStore<T>::erase(const T &item)
     {
-        return erase(item.mEditorId);
+        return erase(item.mFormId);
     }
 
     template<typename T>
@@ -338,16 +315,15 @@ namespace MWWorld
     RecordId ForeignStore<T>::read(ESM::ESMReader& esm)
     {
         T record;
-        bool isDeleted = false;
-        std::string id;
 
         ESM4::Reader& reader = static_cast<ESM::ESM4Reader*>(&esm)->reader();
         record.load(reader);
 
-        ESM4::formIdToString(record.mFormId, id);
-        Misc::StringUtils::lowerCaseInPlace(id); // not sure if case folding is needed here
-        isDeleted = (record.mFlags & ESM4::Rec_Deleted) != 0;
+        bool isDeleted = (record.mFlags & ESM4::Rec_Deleted) != 0;
 
+        insert(record);
+
+        std::string id = ESM4::formIdToString(record.mFormId);
         return RecordId(id, isDeleted);
     }
 }
@@ -359,7 +335,7 @@ template class MWWorld::ForeignStore<ESM4::ActorCharacter>;
 template class MWWorld::ForeignStore<ESM4::ActorCreature>;
 template class MWWorld::ForeignStore<ESM4::LandTexture>;
 template class MWWorld::ForeignStore<ESM4::Script>;
-template class MWWorld::ForeignStore<ESM4::Dialog>;
+template class MWWorld::ForeignStore<ESM4::Dialogue>;
 template class MWWorld::ForeignStore<ESM4::DialogInfo>;
 template class MWWorld::ForeignStore<ESM4::Quest>;
 template class MWWorld::ForeignStore<ESM4::AIPackage>;
@@ -414,5 +390,4 @@ template class MWWorld::ForeignStore<ESM4::AcousticSpace>;
 template class MWWorld::ForeignStore<ESM4::ItemMod>;
 template class MWWorld::ForeignStore<ESM4::PlaceableWater>;
 template class MWWorld::ForeignStore<ESM4::StaticCollection>;
-//
 template class MWWorld::ForeignStore<ESM4::AnimObject>;

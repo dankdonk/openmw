@@ -38,7 +38,7 @@ namespace ESM4
     class Reader;
     class Writer;
 
-    struct Dialog
+    struct Dialogue
     {
         // NOTE: these values are for TES4
         enum Type
@@ -63,8 +63,8 @@ namespace ESM4
         std::uint8_t mData;   // Type
         std::uint8_t mDialFlags; // 0x1 rumours, 0x2 top-level (FO3/FONV)
 
-        Dialog();
-        virtual ~Dialog();
+        Dialogue();
+        virtual ~Dialogue();
 
         virtual void load(ESM4::Reader& reader);
         //virtual void save(ESM4::Writer& writer) const;
