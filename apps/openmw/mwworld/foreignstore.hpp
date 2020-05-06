@@ -12,6 +12,7 @@
 #include "foreignworld.hpp"
 #include "foreigncell.hpp"
 #include "foreignland.hpp"
+#include "foreigndialogue.hpp"
 
 namespace ESM4
 {
@@ -148,6 +149,7 @@ namespace MWWorld
         // FIXME: need to overload eraseStatic()?
 
         RecordId load(ESM::ESMReader& esm);
+        ForeignId loadForeign(ESM4::Reader& reader);
         //void setUp();
     };
 
@@ -195,7 +197,7 @@ namespace MWWorld
     };
 
     template <>
-    class ForeignStore<MWWorld::ForeignLand> : public StoreBase
+    class ForeignStore<ForeignLand> : public StoreBase
     {
     private:
 
@@ -208,6 +210,7 @@ namespace MWWorld
         size_t getSize() const;
 
         RecordId load(ESM::ESMReader& esm);
+        ForeignId loadForeign(ESM4::Reader& reader);
         //void setUp();
 
         const ForeignLand *find(ESM4::FormId formId) const;
@@ -216,6 +219,30 @@ namespace MWWorld
         ForeignLand *find(ESM4::FormId worldId, int x, int y) const;
     };
 
+    template <>
+    class ForeignStore<ForeignDialogue> : public StoreBase
+    {
+    private:
+
+        std::vector<ForeignDialogue*> mDialogues;
+        std::map<ESM4::FormId, std::size_t> mFormIdMap;
+        std::map<std::string, std::size_t> mTopicMap;
+
+    public:
+
+        virtual ~ForeignStore();
+
+        size_t getSize() const;
+
+        RecordId load(ESM::ESMReader& esm);
+        ForeignId loadForeign(ESM4::Reader& reader);
+        //void setUp();
+
+        const ForeignDialogue *find(ESM4::FormId formId) const;
+        const ForeignDialogue *search(ESM4::FormId formId) const;
+
+        const ForeignDialogue *search(const std::string& topic) const;
+    };
 
 } //end namespace
 

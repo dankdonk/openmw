@@ -19,8 +19,6 @@ namespace MWWorld
 
     class ForeignWorld : public ESM4::World
     {
-        static unsigned int sRecordId; // Required by Store<T>
-
         // Keep an index of the cells keyed by their grid position, so that
         // Store<ForeignWorld> can have a search method to find a cell's formId
         // (NOTE: we don't do the same for interior cells since they are not part of a world record)

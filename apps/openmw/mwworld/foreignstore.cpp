@@ -886,15 +886,20 @@ namespace MWWorld
     RecordId ForeignStore<MWWorld::ForeignLand>::load(ESM::ESMReader& esm)
     {
         ESM4::Reader& reader = static_cast<ESM::ESM4Reader*>(&esm)->reader();
+        ForeignId result = loadForeign(reader);
 
-        reader.getRecordData();
+        std::string id = ESM4::formIdToString(result.mId);
+        return RecordId(id, result.mIsDeleted); // NOTE: id is uppercase (not that it matters)
+    }
 
-        MWWorld::ForeignLand *record = new MWWorld::ForeignLand();
+    ForeignId ForeignStore<ForeignLand>::loadForeign(ESM4::Reader& reader)
+    {
+        MWWorld::ForeignLand *record = new ForeignLand();
         bool isDeleted = false; // not used
 
-        record->load(esm, isDeleted);
+        record->load(reader, isDeleted);
 
-        std::pair<std::map<ESM4::FormId, MWWorld::ForeignLand*>::iterator, bool> ret
+        std::pair<std::map<ESM4::FormId, ForeignLand*>::iterator, bool> ret
             = mLands.insert(std::make_pair(record->mFormId, record));
         // Try to overwrite existing record
         // FIXME: should this be merged instead?
@@ -903,10 +908,10 @@ namespace MWWorld
 
         //std::cout << "Land: " << ESM4::formIdToString(record->mFormId) << std::endl; // FIXME: debug
 
-        return RecordId(ESM4::formIdToString(record->mFormId), ((record->mFlags & ESM4::Rec_Deleted) != 0));
+        return ForeignId(record->mFormId, ((record->mFlags & ESM4::Rec_Deleted) != 0));
     }
 
-    const ForeignLand *ForeignStore<MWWorld::ForeignLand>::find(ESM4::FormId formId) const
+    const ForeignLand *ForeignStore<ForeignLand>::find(ESM4::FormId formId) const
     {
         std::map<ESM4::FormId, ForeignLand*>::const_iterator it = mLands.find(formId);
         if (it != mLands.end())
@@ -915,14 +920,101 @@ namespace MWWorld
         return nullptr;
     }
 
-    ForeignLand *ForeignStore<MWWorld::ForeignLand>::search(ESM4::FormId worldId, int x, int y) const
+    ForeignLand *ForeignStore<ForeignLand>::search(ESM4::FormId worldId, int x, int y) const
     {
         return nullptr; // FIXME
     }
 
-    ForeignLand *ForeignStore<MWWorld::ForeignLand>::find(ESM4::FormId worldId, int x, int y) const
+    ForeignLand *ForeignStore<ForeignLand>::find(ESM4::FormId worldId, int x, int y) const
     {
         return nullptr; // FIXME
+    }
+
+    ForeignStore<ForeignDialogue>::~ForeignStore()
+    {
+        std::vector<ForeignDialogue*>::iterator it = mDialogues.begin();
+        for (; it != mDialogues.end(); ++it)
+            delete *it;
+    }
+
+    size_t ForeignStore<ForeignDialogue>::getSize() const
+    {
+        return mDialogues.size();
+    }
+
+    RecordId ForeignStore<ForeignDialogue>::load(ESM::ESMReader& esm)
+    {
+        ESM4::Reader& reader = static_cast<ESM::ESM4Reader*>(&esm)->reader();
+        ForeignId result = loadForeign(reader);
+
+        std::string id = ESM4::formIdToString(result.mId);
+        return RecordId(id, result.mIsDeleted); // NOTE: id is uppercase (not that it matters)
+    }
+
+    ForeignId ForeignStore<ForeignDialogue>::loadForeign(ESM4::Reader& reader)
+    {
+        // FIXME: unique_ptr?
+        ForeignDialogue *record = new ForeignDialogue();
+        record->load(reader);
+
+        bool isDeleted = (record->mFlags & ESM4::Rec_Deleted) != 0;
+#if 0
+        std::pair<std::map<ESM4::FormId, ForeignDialogue*>::iterator, bool> ret
+            = mDialogues.insert(std::make_pair(record->mFormId, record));
+
+        // Trying to overwrite existing record
+        // FIXME: should this be merged instead?
+        if (!ret.second)
+            ret.first->second = record;
+#else
+        std::size_t index = mDialogues.size();
+        mDialogues.push_back(record);
+        mFormIdMap[record->mFormId] = index;
+        mTopicMap[record->mEditorId] = index;
+#endif
+        //std::cout << "Dialogue: " << ESM4::formIdToString(record->mFormId) << std::endl; // FIXME: debug
+
+        return ForeignId(record->mFormId, isDeleted);
+    }
+
+    const ForeignDialogue *ForeignStore<ForeignDialogue>::find(ESM4::FormId formId) const
+    {
+#if 0
+        std::map<ESM4::FormId, ForeignDialogue*>::const_iterator it = mDialogues.find(formId);
+        if (it != mDialogues.end())
+            return it->second;
+#else
+        std::map<ESM4::FormId, std::size_t>::const_iterator it = mFormIdMap.find(formId);
+        if (it != mFormIdMap.end())
+            return mDialogues[it->second];
+#endif
+        std::ostringstream msg;
+        // FIXME: getRecordType() not implemented
+        msg << /*T::getRecordType() <<*/ " '" << ESM4::formIdToString(formId) << "' not found";
+        throw std::runtime_error(msg.str());
+    }
+
+    const ForeignDialogue *ForeignStore<ForeignDialogue>::search(ESM4::FormId formId) const
+    {
+#if 0
+        std::map<ESM4::FormId, ForeignDialogue*>::const_iterator it = mDialogues.find(formId);
+        if (it != mDialogues.end())
+            return it->second;
+#else
+        std::map<ESM4::FormId, std::size_t>::const_iterator it = mFormIdMap.find(formId);
+        if (it != mFormIdMap.end())
+            return mDialogues[it->second];
+#endif
+        return nullptr;
+    }
+
+    const ForeignDialogue *ForeignStore<ForeignDialogue>::search(const std::string& topic) const
+    {
+        std::map<std::string, std::size_t>::const_iterator it = mTopicMap.find(topic);
+        if (it != mTopicMap.end())
+            return mDialogues[it->second];
+
+        return nullptr;
     }
 }
 

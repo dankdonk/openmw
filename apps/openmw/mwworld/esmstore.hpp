@@ -78,6 +78,7 @@ namespace MWWorld
         ForeignStore<MWWorld::ForeignWorld> mForeignWorlds;
         ForeignStore<MWWorld::ForeignCell>  mForeignCells;
         ForeignStore<MWWorld::ForeignLand>  mForeignLands;
+        ForeignStore<MWWorld::ForeignDialogue> mForeignDialogues;
         //
         ForeignStore<ESM4::Hair>       mForeignHairs;
         ForeignStore<ESM4::Eyes>       mForeignEyesSet;
@@ -88,18 +89,16 @@ namespace MWWorld
         ForeignStore<ESM4::ActorCreature>  mForeignACreatures;
         ForeignStore<ESM4::LandTexture> mForeignLandTextures;
         ForeignStore<ESM4::Script>     mForeignScripts;
-        ForeignStore<ESM4::Dialogue>     mForeignDialogues;
-        ForeignStore<ESM4::DialogInfo> mForeignDialogInfos;
         ForeignStore<ESM4::Quest>      mForeignQuests;
         ForeignStore<ESM4::AIPackage>  mForeignAIPackages;
         ForeignStore<ESM4::AnimObject> mForeignAnimObjs;
+        ForeignStore<ESM4::Region>     mForeignRegions;
+        ForeignStore<ESM4::PlacedGrenade> mPlacedGrenades;
         ForeignStore<ESM4::LightingTemplate> mLightingTemplates;
         ForeignStore<ESM4::Music>      mMusic;
-        ForeignStore<ESM4::MediaLocationController> mMediaLocCtlr;
         ForeignStore<ESM4::MediaSet>   mMediaSet;
+        ForeignStore<ESM4::MediaLocationController> mMediaLocCtlr;
         ForeignStore<ESM4::DefaultObj> mDefaultObj;
-        ForeignStore<ESM4::PlacedGrenade> mPlacedGrenades;
-        ForeignStore<ESM4::Region>     mForeignRegions;
         // Foreign referenceables
         ForeignStore<ESM4::Sound>      mForeignSounds;
         ForeignStore<ESM4::Activator>  mForeignActivators;
@@ -155,7 +154,7 @@ namespace MWWorld
         // FIXME: there must be another way
         mutable std::map<ESM4::FormId, ESM4::FormId> mDoorDestCell;
         // INFO records follow DIAL
-        ESM4::Dialogue *mCurrentDialogue;
+        ForeignDialogue *mCurrentDialogue;
 
         ESM::NPC mPlayerTemplate;
 
@@ -259,7 +258,7 @@ namespace MWWorld
             mStores[ESM::REC_STAT] = &mStatics;
             mStores[ESM::REC_WEAP] = &mWeapons;
 
-            // have mForeignStores so that there is no key clash
+            // have a separate store so that there is no key clash
             mForeignStores[ESM4::REC_HAIR] = &mForeignHairs;
             mForeignStores[ESM4::REC_EYES] = &mForeignEyesSet;
             mForeignStores[ESM4::REC_RACE] = &mForeignRaces;
@@ -270,9 +269,14 @@ namespace MWWorld
             mForeignStores[ESM4::REC_LTEX] = &mForeignLandTextures;
             mForeignStores[ESM4::REC_SCPT] = &mForeignScripts;
             mForeignStores[ESM4::REC_DIAL] = &mForeignDialogues;
-            mForeignStores[ESM4::REC_INFO] = &mForeignDialogInfos;
             mForeignStores[ESM4::REC_QUST] = &mForeignQuests;
             mForeignStores[ESM4::REC_PACK] = &mForeignAIPackages;
+            mForeignStores[ESM4::REC_PGRE] = &mPlacedGrenades;
+            mForeignStores[ESM4::REC_LGTM] = &mLightingTemplates;
+            mForeignStores[ESM4::REC_MUSC] = &mMusic;
+            mForeignStores[ESM4::REC_MSET] = &mMediaSet;
+            mForeignStores[ESM4::REC_ALOC] = &mMediaLocCtlr;
+            mForeignStores[ESM4::REC_DOBJ] = &mDefaultObj;
             //
             mForeignStores[ESM4::REC_SOUN] = &mForeignSounds;
             mForeignStores[ESM4::REC_ACTI] = &mForeignActivators;
@@ -732,13 +736,8 @@ namespace MWWorld
     }
 
     template <>
-    inline const ForeignStore<ESM4::Dialogue>& ESMStore::getForeign<ESM4::Dialogue>() const {
+    inline const ForeignStore<ForeignDialogue>& ESMStore::getForeign<ForeignDialogue>() const {
         return mForeignDialogues;
-    }
-
-    template <>
-    inline const ForeignStore<ESM4::DialogInfo>& ESMStore::getForeign<ESM4::DialogInfo>() const {
-        return mForeignDialogInfos;
     }
 
     template <>
@@ -762,13 +761,13 @@ namespace MWWorld
     }
 
     template <>
-    inline const ForeignStore<ESM4::MediaLocationController>& ESMStore::getForeign<ESM4::MediaLocationController>() const {
-        return mMediaLocCtlr;
+    inline const ForeignStore<ESM4::MediaSet>& ESMStore::getForeign<ESM4::MediaSet>() const {
+        return mMediaSet;
     }
 
     template <>
-    inline const ForeignStore<ESM4::MediaSet>& ESMStore::getForeign<ESM4::MediaSet>() const {
-        return mMediaSet;
+    inline const ForeignStore<ESM4::MediaLocationController>& ESMStore::getForeign<ESM4::MediaLocationController>() const {
+        return mMediaLocCtlr;
     }
 
     template <>

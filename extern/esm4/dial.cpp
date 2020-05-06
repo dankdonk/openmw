@@ -29,15 +29,15 @@
 #include <stdexcept>
 #include <iostream> // FIXME: for debugging only
 
-#include "formid.hpp" // FIXME: for debugging only
-
 #include "reader.hpp"
 //#include "writer.hpp"
 
-ESM4::Dialogue::Dialogue() : mFormId(0), mFlags(0), mData(0), mDialFlags(0)
+ESM4::Dialogue::Dialogue() : mFormId(0), mFlags(0), mDialType(0), mDialFlags(0), mPriority(0.f)
 {
     mEditorId.clear();
     mTopicName.clear();
+
+    mTextDumb.clear(); // FIXME: temp name
 }
 
 ESM4::Dialogue::~Dialogue()
@@ -75,7 +75,7 @@ void ESM4::Dialogue::load(ESM4::Reader& reader)
             }
             case ESM4::SUB_DATA:
             {
-                reader.get(mData); // TES4
+                reader.get(mDialType); // TES4
                 if (subHdr.dataSize == 2)
                     reader.get(mDialFlags); // FO3/FONV
                 else if (subHdr.dataSize == 3) // TES5
@@ -83,11 +83,11 @@ void ESM4::Dialogue::load(ESM4::Reader& reader)
 
                 break;
             }
+            case ESM4::SUB_PNAM: reader.get(mPriority); break; // FO3/FONV
+            case ESM4::SUB_TDUM: reader.getZString(mTextDumb); break; // FONV
             case ESM4::SUB_SCRI:
-            case ESM4::SUB_INFC: // FONV
-            case ESM4::SUB_INFX: // FONV
-            case ESM4::SUB_TDUM: // FONV
-            case ESM4::SUB_PNAM: // FO3
+            case ESM4::SUB_INFC: // FONV info connection
+            case ESM4::SUB_INFX: // FONV info index
             case ESM4::SUB_QNAM: // TES5
             case ESM4::SUB_BNAM: // TES5
             case ESM4::SUB_SNAM: // TES5
@@ -102,15 +102,6 @@ void ESM4::Dialogue::load(ESM4::Reader& reader)
                 throw std::runtime_error("ESM4::DIAL::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
         }
     }
-#if 0
-    if (mData == 7/*radio*/ && mQuests.size() != 0) // DATA usually comes after QSTI
-    {
-        std::cout << "DIAL " << formIdToString(mFormId) << " " << mEditorId << " " << mTopicName << "\n    QSTI:";
-        for (std::size_t i = 0; i < mQuests.size(); ++i)
-            std::cout << " " << formIdToString(mQuests[i]);
-        std::cout << std::endl;
-    }
-#endif
 }
 
 //void ESM4::Dialogue::save(ESM4::Writer& writer) const

@@ -186,7 +186,7 @@ namespace MWWorld
             virtual CellStore *getWorldDummyCell (ESM4::FormId worldId);
             virtual CellStore *getWorldVisibleDistCell (ESM4::FormId worldId);
 
-            virtual ESM4::FormId loadForeignLand (ESM::ESMReader& esm);
+            virtual ESM4::FormId loadForeignLand (ESM4::Reader& reader);
 
             virtual CellStore *getForeignInterior (const std::string& name);
 

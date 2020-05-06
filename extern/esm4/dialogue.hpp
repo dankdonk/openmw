@@ -24,51 +24,23 @@
   trial & error.  See http://en.uesp.net/wiki for details.
 
 */
-#ifndef ESM4_QUST_H
-#define ESM4_QUST_H
-
-#include <cstdint>
-
-#include "formid.hpp"
-#include "script.hpp"
+#ifndef ESM4_DIALOGUE_H
+#define ESM4_DIALOGUE_H
 
 namespace ESM4
 {
-    class Reader;
-    class Writer;
-
-    struct Quest
+    enum DialType
     {
-        // NOTE: these values are for TES4
-        enum Flags
-        {
-            Flag_StartGameEnabled     = 0x01,
-            Flag_AllowRepeatConvTopic = 0x04,
-            Flag_AllowRepeatStages    = 0x08
-        };
-
-        FormId mFormId;       // from the header
-        std::uint32_t mFlags; // from the header, see enum type RecordFlag for details
-
-        std::string mEditorId;
-        std::string mQuestName;
-        std::string mFileName; // texture file
-        FormId mQuestScript;
-
-        std::uint16_t mData;   // flags + priority
-
-        std::vector<TargetCondition> mTargetConditions;
-
-        ScriptDefinition mScript;
-
-        Quest();
-        virtual ~Quest();
-
-        virtual void load(ESM4::Reader& reader);
-        //virtual void save(ESM4::Writer& writer) const;
-
-        //void blank();
+        DTYP_Topic         = 0,
+        DTYP_Conversation  = 1,
+        DTYP_Combat        = 2,
+        DTYP_Persuation    = 3,
+        DTYP_Detection     = 4,
+        DTYP_Service       = 5,
+        DTYP_Miscellaneous = 6,
+        // below FO3/FONV
+        DTYP_Radio         = 7
     };
 }
 
-#endif // ESM4_QUST_H
+#endif // ESM4_DIALOGUE_H

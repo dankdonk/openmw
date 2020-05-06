@@ -433,6 +433,9 @@ namespace MWWorld
         if (LiveCellRef<ESM4::Static>    *ref = mForeignStatics.find (id))
             return Ptr (ref, this);
 
+        if (LiveCellRef<ESM4::TalkingActivator> *ref = mTalkingActivators.find (id))
+            return Ptr (ref, this);
+
         mHasState = oldState;
 
         return Ptr();
@@ -588,6 +591,12 @@ namespace MWWorld
             return Ptr (ref, this);
 
         if (LiveCellRef<ESM4::LevelledNpc> *ref = mLevelledNpcs.searchViaHandle (handle))
+            return Ptr (ref, this);
+
+        if (LiveCellRef<ESM4::Terminal> *ref = mTerminals.searchViaHandle (handle))
+            return Ptr (ref, this);
+
+        if (LiveCellRef<ESM4::TalkingActivator> *ref = mTalkingActivators.searchViaHandle (handle))
             return Ptr (ref, this);
 
         if (LiveCellRef<ESM4::Note>      *ref = mNotes.searchViaHandle (handle))
@@ -1376,7 +1385,8 @@ namespace MWWorld
                 //ESM4::ReaderContext ctx = static_cast<ESM::ESM4Reader*>(&esm)->getESM4Context();
 
                 // Load land, note may not be used
-                mForeignLand = MWBase::Environment::get().getWorld()->loadForeignLand(esm);
+                reader.getRecordData();
+                mForeignLand = MWBase::Environment::get().getWorld()->loadForeignLand(reader);
 
                 // load parent world's land; but that triggers Tamriel to be loaded, is there another way?
 #if 0

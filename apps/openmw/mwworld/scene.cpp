@@ -1057,7 +1057,7 @@ namespace MWWorld
                     ESM4::FormId mediaSet = 0;
                     if (mediaSets.size() > 1)
                     {
-                        size_t i = Misc::Rng::rollDice(mediaSets.size());
+                        size_t i = Misc::Rng::rollDice(int(mediaSets.size()));
 
                         mediaSet = mediaSets[i];
                     }
@@ -1087,6 +1087,61 @@ namespace MWWorld
                                 MWBase::Environment::get().getSoundManager()->playSound(sound->mSoundFile, 1.f, 1.f,
                                         MWBase::SoundManager::Play_TypeMusic,
                                         MWBase::SoundManager::Play_Loop);
+                            }
+                        }
+                    }
+                }
+            }
+
+            const ForeignDialogue *dial = store.getForeign<ForeignDialogue>().search("RadioHello");
+
+            if (dial)
+            {
+                isFONV = true;
+
+                const std::map<ESM4::FormId, ESM4::DialogInfo*>& infos =  dial->getInfos();
+                std::map<ESM4::FormId, ESM4::DialogInfo*>::const_iterator it = infos.begin();
+                for (; it != infos.end(); ++it)
+                {
+                    if (it->second->mTargetCondition.functionIndex == ESM4::FUN_GetQuestVariable)
+                    {
+                        // get quest
+                        ESM4::FormId questId = it->second->mTargetCondition.param1; // formid, not adjusted
+
+                        const ESM4::Quest* quest = store.getForeign<ESM4::Quest>().search(questId);
+                        //std::cout << "RadioHello " << ESM4::formIdToString(questId) << std::endl;
+                        if (quest)
+                        {
+                            if (quest->mTargetConditions[0].functionIndex == ESM4::FUN_GetIsID) // FIXME: can have multiple conditions
+                            {
+                                //std::cout << ESM4::formIdToString(quest->mTargetCondition.param1) << std::endl;
+                                Ptr ptr = cell->search(ESM4::formIdToString(quest->mTargetConditions[0].param1));
+                                if (ptr && it->second->mResponseData.sound)
+                                {
+                                    //std::cout << "RadioHello " << it->second->mResponse << std::endl;
+
+            ESM4::FormId newMusicId = it->second->mResponseData.sound;
+            const ESM4::Sound *newMusic
+                = MWBase::Environment::get().getWorld()->getStore().getForeign<ESM4::Sound>().search(newMusicId);
+            if (newMusic) // FO3 VaultTecHQ03 doesn't have any cell music or aspc
+            {
+                std::string musicFile = newMusic->mSoundFile;
+
+                size_t pos = musicFile.find_last_of(".");
+                std::string soundFile = musicFile.substr(0, pos) + "_mono.ogg";
+                soundFile = ESM4::formIdToString(newMusicId);
+
+                //if (!Ogre::ResourceGroupManager::getSingleton().resourceExistsInAnyGroup("Meshes\\" + trimmedModel))
+                std::cout << "interior cell stream Music " << soundFile << std::endl;
+                MWBase::Environment::get().getSoundManager()->playPlaylist("explore", true);
+                MWBase::Environment::get().getSoundManager()->stopMusic();
+                if (mSound)
+                    MWBase::Environment::get().getSoundManager()->stopSound(mSound);
+                mSound = MWBase::Environment::get().getSoundManager()->playSound(soundFile, 1.f, 1.f,
+                                        MWBase::SoundManager::Play_TypeMusic,
+                                        MWBase::SoundManager::Play_Loop);
+            }
+                                }
                             }
                         }
                     }

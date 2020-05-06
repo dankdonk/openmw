@@ -65,16 +65,10 @@ void ESM4::TalkingActivator::load(ESM4::Reader& reader)
 
                 break;
             }
-            case ESM4::SUB_SCRI: reader.getFormId(mScript);
-    //if (mEditorId.find("vUltraLuxeRadioQuestSCRIPT") != std::string::npos) // vUltraLuxeRadioQuestSCRIPT 0016B66F
-                                 //if (mScript == 0x0016B66F)
-                                     //std::cout << mEditorId << std::endl;
-                                 break;
+            case ESM4::SUB_SCRI: reader.getFormId(mScript); break;
             case ESM4::SUB_VNAM: reader.getFormId(mVoiceType); break;
             case ESM4::SUB_SNAM: reader.getFormId(mLoopSound); break;
-            case ESM4::SUB_INAM: reader.getFormId(mRadioTemplate);
-                                 //std::cout << formIdToString(mRadioTemplate) << std::endl;
-                                 break; // FONV
+            case ESM4::SUB_INAM: reader.getFormId(mRadioTemplate); break; // FONV
             case ESM4::SUB_MODL: reader.getZString(mModel); break;
             case ESM4::SUB_DEST: // destruction
             case ESM4::SUB_DSTD: // destruction
@@ -82,7 +76,7 @@ void ESM4::TalkingActivator::load(ESM4::Reader& reader)
             case ESM4::SUB_FNAM:
             case ESM4::SUB_PNAM:
             {
-                std::cout << "TACT " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
+                std::cout << "TACT " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl; // FIXME
                 reader.skipSubRecordData();
                 break;
             }

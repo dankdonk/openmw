@@ -2,14 +2,11 @@
 
 #include <components/esm/esm4reader.hpp>
 
-#include <extern/esm4/formid.hpp>
 #include <extern/esm4/reader.hpp>
 #include <extern/esm4/cell.hpp>
 
 #include "foreigncell.hpp"
 #include "cellstore.hpp"
-
-unsigned int MWWorld::ForeignWorld::sRecordId = ESM4::REC_WRLD;
 
 MWWorld::ForeignWorld::ForeignWorld() : /*mDummyCell(0), */mVisibleDistCell(nullptr), mVisibleDistCellStore(nullptr)
                                       , mDummyCell(nullptr), mDummyCellStore(nullptr)

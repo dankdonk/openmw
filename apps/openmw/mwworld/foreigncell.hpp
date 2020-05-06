@@ -45,8 +45,6 @@ namespace MWWorld
     //
     struct ForeignCell : public ESM::Cell
     {
-        static unsigned int sRecordId;
-
         ESM4::Cell *mCell; // created in preload() and destroyed in dtor
         bool mHasChildren;
 

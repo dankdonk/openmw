@@ -565,10 +565,10 @@ namespace MWWorld
         return mCells.getWorldVisibleDistCell (worldId);
     }
 
-    ESM4::FormId World::loadForeignLand (ESM::ESMReader& esm)
+    ESM4::FormId World::loadForeignLand (ESM4::Reader& reader)
     {
-        RecordId id = mStore.getModifiable<ForeignLand>().load(esm);
-        return ESM4::stringToFormId(id.mId);
+        ForeignId id = mStore.getForeignModifiable<ForeignLand>().loadForeign(reader);
+        return id.mId;
     }
 
     CellStore *World::getForeignInterior (const std::string& name)

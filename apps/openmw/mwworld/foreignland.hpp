@@ -11,12 +11,15 @@ namespace ESM
     class ESMWriter;
 }
 
+namespace ESM4
+{
+    class Reader;
+}
+
 namespace MWWorld
 {
     struct ForeignLand : public ESM4Terrain::Land // NOTE: not derived from ESM4::Land
     {
-        static unsigned int sRecordId;
-
         ForeignLand();
         ~ForeignLand();
 
@@ -24,7 +27,7 @@ namespace MWWorld
         //std::string mCellId; // for region map (#x y for most exterior cells)
         //std::string mCellName; // Cell name
 
-        void load (ESM::ESMReader& esm, bool isDeleted = false);
+        void load (ESM4::Reader& loader, bool isDeleted = false);
         void save (ESM::ESMWriter& esm, bool isDeleted = false) const {} // FIXME: TODO
 
         void blank(); // FIXME: is this needed?

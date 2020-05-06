@@ -25,6 +25,7 @@ namespace Loading
 namespace ESM4
 {
     typedef uint32_t FormId;
+    class Reader;
 }
 
 namespace ESM
@@ -132,7 +133,7 @@ namespace MWBase
             // TES4 LAND records are found in a CELL child group, which is loaded later along
             // with the references.  The reference stores (i.e. CellStore) only have const
             // references to ESMStore and therefore we need a workaround.
-            virtual ESM4::FormId loadForeignLand (ESM::ESMReader& reader) = 0;
+            virtual ESM4::FormId loadForeignLand (ESM4::Reader& reader) = 0;
 
             virtual void useDeathCamera() = 0;
 

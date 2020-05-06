@@ -3,6 +3,8 @@
 
 #include "../mwrender/renderingmanager.hpp"
 
+#include "../mwbase/soundmanager.hpp"
+
 #include "ptr.hpp"
 #include "globals.hpp"
 
@@ -69,6 +71,9 @@ namespace MWWorld
             CellStore *updateWorldCellsAtGrid (ESM4::FormId worldId, int x, int y);
 
             void getGridCenter(int& cellX, int& cellY);
+
+            // FIXME: testing
+            MWBase::SoundPtr mSound;
 
         public:
 

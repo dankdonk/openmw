@@ -6,8 +6,6 @@
 
 #include <components/esm/esm4reader.hpp>
 
-unsigned int MWWorld::ForeignCell::sRecordId = MKTAG('L','C','E','L');
-
 MWWorld::ForeignCell::ForeignCell() : mCell(0), mHasChildren(false),
                                       mIsInterior(false), mHasGrid(false)
 {

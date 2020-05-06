@@ -4038,6 +4038,26 @@ So, something kicks off RadioHello (auto-start somehow, or maybe all dialogs run
          VNAM 0000002D voice type
          INAM 0015D39C radio template (SOUN AMLRadioLarge)
 
+    (unchecking "Cont. Broadcast" and saving to an ESP does not change anything other than record flags)
+         flag 00000200 On Local Map
+              00000400 Quest Item
+              00002000 No Voice Filter
+              00010000 Random Anim Start
+              00020000 Radio Station
+              10000000 Non-Proxy (only valid if Radio Station)
+              40000000 Cont. Broadcast (only valid if Radio Station)
+
+    TACT 0016B46F vCountryRadio
+         SCRI no script
+         VNAM 0000002D voice type
+         INAM 0004EC8A radio template (SOUN AMLRadio)
+         OBND FFEEFFF4 0034FFE9 00130016
+
+    SOUN 0004EC8A AMLRadio
+         FNAM fx\xxx_placeholder_silence.wav
+         RNAM (null)
+         SNDD ...
+
     /* how to link? */
 
     DIAL 00000126 RadioHello
@@ -4100,6 +4120,18 @@ So, something kicks off RadioHello (auto-start somehow, or maybe all dialogs run
          DATA
          CTDA
 
+    QUST 0016B66E vCountryRadioQuest
+         SCRI
+         DATA
+         CTDA 00       equal to
+                000000 padding
+              3F800000 comparison (1.0)
+              00000048 function 0x48 = 72 (GetIsID)
+              0016B46F param1 (formid of a TACT vCountryRadio)
+              00000000 param2
+              00000000 run on
+              00000000 reference formid
+
     SOUN 0016B079 songs\radionv\mus_concerto_for_2_vl_str_in_d_minor.mp3
          00169BDF songs\radionv\mus_concerto_grosso_in_b_minor_allegro_01.mp3
          00169BE0 songs\radionv\mus_concerto_grosso_in_b_minor_allegro_02.mp3
@@ -4113,6 +4145,107 @@ So, something kicks off RadioHello (auto-start somehow, or maybe all dialogs run
 **TODO:** In Fallout.esm `vCasinoTopsRadio` only has EDID, FULL, MODL, OBND, VNAM and INAM.  But in the GECK there are several flags including "Radion Station" and "Cont. Broadcast" - not sure where these come from.
 
 **FIXME:** CTDA needs adjust param1 formid depending on the function (I think?) How to do this without a function type lookup table?
+
+# [05/05/2020] Dialogue Manager
+
+Not sure how to deal with this one. A quick look through the code seems to indicate that the current system is designed around dialogue for the player.
+
+# [06/05/2020] Bit shuffling
+
+Refactored ESMStore and ForeignStore (still a work in progress).
+
+# [07/05/2020] World Dummy Cell design
+
+**NOTE: the interaction diagrams from [31/03/2020 - 02/04/2020] are now outdated**
+
+Current call stack:
+
+     openmw.exe!MWWorld::CellStore::loadTes4Record(const MWWorld::ESMStore & store, ESM::ESMReader & esm) Line 1018	C++
+     openmw.exe!MWWorld::Store<MWWorld::ForeignCell>::loadDummy(MWWorld::ESMStore & store, ESM::ESMReader & esm, MWWorld::CellStore * cell) Line 1481	C++
+     openmw.exe!MWWorld::ESMStore::loadTes4Group(ESM::ESMReader & esm) Line 315	C++
+     openmw.exe!MWWorld::ESMStore::load(ESM::ESMReader & esm, Loading::Listener * listener) Line 140	C++
+     openmw.exe!MWWorld::EsmLoader::load(const boost::filesystem::path & filepath, std::vector<std::vector<std::string,std::allocator<std::string>>,std::allocator<std::vector<std::string,std::allocator<std::string>>>> & contentFiles) Line 62	C++
+     ...
+
+Only `FXInvertedDaylightWorld`, "Holder Space for Inverted Region" does not have a wrld dummy cell.  All others have at least one Audio Marker (except FFEncounterWorld and TestMap01).
+
+**See the notes from 07/04/20 - 08/04/20**
+
+Need a map of REFR/ACHR/ACRE keyed on cell grid.  Maybe per type?  e.g. statics and trees vs npcs and creatures.
+
+So when cell x,y becomes active statics/trees from a configurable distance can be rendered.
+
+Will need to render the models without physics and without making them a `Ptr`, etc, etc.
+
+## Not really a `CellStore`?
+
+`CellStrore` keeps lists of `CellRef`.  However do we want to store `CellRef` or just the base data, especially since many of the statics will only be rendered with a low-poly mesh, anyway?
+
+Maybe keep only the same info the `.lod` files keep?
+
+## Reference types
+
+  * Low-poly mesh terrain for far distance
+  * Terrain (without physics) for medium distance
+  * Terrain for active cells
+  * Low-poly statics/trees for far distance (trees rendering different for Tamriel cf. other worlds)
+  * Statics/trees (without physics) for medium distance
+  * All objcts for active cells
+
+We will need to modify `NiModel` so that simple mesh without FaceGen, animation, etc, are available for LOD.
+
+The relevant `Oblivion.ini` entries for low-poly tree rendering are:
+
+    [General]
+    uGridDistantTreeRange=15
+    uGridDistantCount=25
+    uGridsToLoad=5
+    uGridDistantTreeRangeCity=4
+    uGridDistantCountCity=4
+
+The "counts" are probably for speed tree.
+
+The types seem to be as per below config entries:
+
+    [LOD]
+    ...
+    fLODMultLandscape=1.0000
+    fLODMultTrees=1.3000
+    fLODMultActors=7.0000
+    fLODMultItems=7.0000
+    fLODMultObjects=7.0000
+    ...
+
+Skyrim doesn't have `fLODMultLandscpe` nor `fLODMultTrees` but instead has `fLODFadeOutMultSkyCell`.  That might be referring to its low-poly landscape mesh (remember it has a tree-like structure unlike other games).
+
+    [Display]
+    ...
+    fTreesMidLODSwitchDist=9999999.000
+    ...
+
+    [LOD]
+    fLODFadeOutMultSkyCell=1.0000
+    fLODFadeOutMultObjects=5.0000
+    fLODFadeOutMultItems=1.5000
+    fLODFadeOutMultActors=5.0000
+
+## `.lod` files - only for Oblivion?
+
+FO3, FONV and Skyrim don't have these (well, Skyrim has a few `.lod` files under `lodsettings\` but the contents look like the `.cmp` files from Oblivion).  FO3 and FONV also has `lodsettings\` folder (in Fallout - Misc.bsa) and the filenames are `.dlodsettings` just to make it more complicated.
+
+So the use of `.cmp` files, or equivalent, seem universal.  **This means we need a way to quickly scan the specified locations for lod objects**
+
+  Game     |  BSA              |  Folder     | filename
+  ---------|-------------------|-------------|--------------
+  Oblivion | Oblivion - Meshes | distantlod  | .cmp
+  FO3/FONV | Fallout - Misc    | lodsettings | .dlodsettings
+  Skyrim   | Skyrim - Meshes   | lodsettings | .lod
+
+Note that a DLC can have its own `lodsettings\` folder, e.g. `PointLookout - Main.bsa`
+
+
+
+
 
 [//]: # (/* spell spelllang=en_au syntax=cpp */)
 [//]: # (/* vim: set ft=markdown tw=0 lbr bri fen fdm=marker fdl=0: */)

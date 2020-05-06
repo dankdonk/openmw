@@ -381,6 +381,56 @@ void ESMStore::loadTes4Record (ESM::ESMReader& esm)
     ESM4::Reader& reader = static_cast<ESM::ESM4Reader*>(&esm)->reader();
     const ESM4::RecordHeader& hdr = reader.hdr();
 
+    // TODO: checking for the store isn't really providing a value
+    std::map<int, StoreBase *>::iterator it = mForeignStores.find(hdr.record.typeId);
+    if (it == mForeignStores.end())
+    {
+        switch (hdr.record.typeId)
+        {
+            case ESM4::REC_INFO:
+            {
+                if (mCurrentDialogue)
+                {
+                    reader.getRecordData();
+
+                    // FIXME: how to detect if not the first master ESM?
+                    // maybe use reader.mCtx.modIndex
+                    mCurrentDialogue->loadInfo(reader, false/*esm.getIndex() != 0*/);
+                }
+                else
+                {
+                    std::cerr << "error: foreign info record without dialog" << std::endl;
+                    reader.skipRecordData();
+                }
+
+                return;
+            }
+            case ESM4::REC_WRLD:
+            case ESM4::REC_CELL:
+            case ESM4::REC_REGN:
+            case ESM4::REC_LAND: // can ignore, handled in CellStore
+            case ESM4::REC_REFR:
+            case ESM4::REC_ACHR:
+            case ESM4::REC_ACRE:
+            case ESM4::REC_NAVI: // TODO
+            case ESM4::REC_IDLE: // TODO
+            case ESM4::REC_CCRD: // TODO
+            case ESM4::REC_CMNY: // TODO
+            {
+                break; // handled below
+            }
+            default:
+            {
+                std::cout << "Unsupported TES4 record type: " + ESM4::printName(hdr.record.typeId) << std::endl;
+                reader.skipRecordData();
+
+                return;
+            }
+        }
+    }
+
+    mCurrentDialogue = nullptr;
+
     ForeignId id;
     switch (hdr.record.typeId)
     {
@@ -482,7 +532,7 @@ void ESMStore::loadTes4Record (ESM::ESMReader& esm)
         }
         case ESM4::REC_WRLD:
         {
-            RecordId id = mForeignWorlds.load(esm);
+            RecordId id = mForeignWorlds.load(esm); // FIXME: loadForeign
             if (id.mIsDeleted)
                 mForeignWorlds.eraseStatic(id.mId);
 
@@ -492,11 +542,12 @@ void ESMStore::loadTes4Record (ESM::ESMReader& esm)
         case ESM4::REC_DIAL:
         {
             reader.getRecordData();
-            mForeignDialogues.loadForeign(reader);
+            ForeignId id = mForeignDialogues.loadForeign(reader);
+
+            mCurrentDialogue = const_cast<ForeignDialogue*>(mForeignDialogues.find(id.mId));
 
             break;
         }
-        case ESM4::REC_INFO: reader.getRecordData(); mForeignDialogInfos.loadForeign(reader); break;
         case ESM4::REC_QUST: reader.getRecordData(); mForeignQuests.loadForeign(reader);      break;
         // IDLE
         // CSTY, LSCR, LVSP

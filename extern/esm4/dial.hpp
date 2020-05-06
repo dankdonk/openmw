@@ -32,6 +32,7 @@
 #include <vector>
 
 #include "formid.hpp"
+#include "dialogue.hpp" // DialType
 
 namespace ESM4
 {
@@ -40,28 +41,20 @@ namespace ESM4
 
     struct Dialogue
     {
-        // NOTE: these values are for TES4
-        enum Type
-        {
-            Type_Topic         = 0,
-            Type_Conversation  = 1,
-            Type_Combat        = 2,
-            Type_Persuation    = 3,
-            Type_Detection     = 4,
-            Type_Service       = 5,
-            Type_Miscellaneous = 6
-        };
-
         FormId mFormId;       // from the header
         std::uint32_t mFlags; // from the header, see enum type RecordFlag for details
 
         std::string mEditorId;
-        std::vector<FormId> mQuests;        // QSTI
-        std::vector<FormId> mQuestsRemoved; // QSTR
+        std::vector<FormId> mQuests;
+        std::vector<FormId> mQuestsRemoved;
         std::string mTopicName;
 
-        std::uint8_t mData;   // Type
-        std::uint8_t mDialFlags; // 0x1 rumours, 0x2 top-level (FO3/FONV)
+        std::string mTextDumb; // FIXME: temp name
+
+        std::uint8_t mDialType;  // DialType
+        std::uint8_t mDialFlags; // FO3/FONV: 0x1 rumours, 0x2 top-level
+
+        float mPriority;
 
         Dialogue();
         virtual ~Dialogue();

@@ -32,11 +32,26 @@
 
 #include "formid.hpp"
 #include "script.hpp"
+#include "dialogue.hpp" // DialType
 
 namespace ESM4
 {
     class Reader;
     class Writer;
+
+    enum InfoFlag
+    {
+        INFO_Goodbye         = 0x0001,
+        INFO_Random          = 0x0002,
+        INFO_SayOnce         = 0x0004,
+        INFO_RunImmediately  = 0x0008,
+        INFO_InfoRefusal     = 0x0010,
+        INFO_RandomEnd       = 0x0020,
+        INFO_RunForRumors    = 0x0040,
+        INFO_SpeechChallenge = 0x0080,
+        INFO_SayOnceADay     = 0x0100,
+        INFO_AlwaysDarken    = 0x0200
+    };
 
     struct DialogInfo
     {
@@ -52,6 +67,10 @@ namespace ESM4
         std::string mResponse;
         std::string mNotes;
         std::string mEdits;
+
+        std::uint8_t  mDialType;  // DialType
+        std::uint8_t  mNextSpeaker;
+        std::uint16_t mInfoFlags; // see above enum
 
         TargetCondition mTargetCondition;
 
