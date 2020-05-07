@@ -27,10 +27,7 @@
 #include "refr.hpp"
 
 #include <stdexcept>
-
-//#include <iostream> // FIXME: debug only
-
-//#include "formid.hpp" // FIXME: debug only
+#include <iostream> // FIXME: debug only
 
 #include "reader.hpp"
 //#include "writer.hpp"

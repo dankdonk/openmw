@@ -27,18 +27,20 @@
 #include "qust.hpp"
 
 #include <stdexcept>
-#include <iostream> // FIXME: for debugging only
-
-#include "formid.hpp"
+//#include <iostream> // FIXME: for debugging only
 
 #include "reader.hpp"
 //#include "writer.hpp"
 
-ESM4::Quest::Quest() : mFormId(0), mFlags(0), mQuestScript(0), mData(0)
+ESM4::Quest::Quest() : mFormId(0), mFlags(0), mQuestScript(0)
 {
     mEditorId.clear();
     mQuestName.clear();
     mFileName.clear();
+
+    std::memset(&mScript.scriptHeader, 0, sizeof(ScriptHeader));
+    mScript.scriptSource.clear();
+    mScript.globReference = 0;
 }
 
 ESM4::Quest::~Quest()
@@ -58,27 +60,50 @@ void ESM4::Quest::load(ESM4::Reader& reader)
         {
             case ESM4::SUB_EDID: reader.getZString(mEditorId);  break;
             case ESM4::SUB_FULL: reader.getZString(mQuestName); break;
-            case ESM4::SUB_ICON: reader.getZString(mFileName);
-                                 std::cout << "QUST ICON" << std::endl;
-                                 break;
+            case ESM4::SUB_ICON: reader.getZString(mFileName); break; // TES4 (none in FO3/FONV)
             case ESM4::SUB_DATA:
             {
-                if (subHdr.dataSize != sizeof(mData))
-                    reader.skipSubRecordData(); // FIXME: FO3
+                if (subHdr.dataSize == 2) // TES4
+                {
+                    reader.get(&mData, 2);
+                    mData.questDelay = 0.f; // unused in TES4 but keep it clean
+                }
                 else
-                    reader.get(mData); // TES4
+                    reader.get(mData); // FO3
 
                 break;
             }
             case ESM4::SUB_SCRI: reader.get(mQuestScript); break;
-            case ESM4::SUB_CTDA:
+            case ESM4::SUB_CTDA: // FIXME: how to detect if 1st/2nd param is a formid?
+            {
+                TargetCondition cond;
+
+                if (subHdr.dataSize == 24) // TES4
+                    reader.get(&cond, 24);
+                else if (subHdr.dataSize == 28)
+                {
+                    reader.get(cond); // FO3/FONV
+                    if (cond.reference)
+                        reader.adjustFormId(cond.reference);
+                }
+                else
+                {
+                    // one record with size 20: EDID GenericSupMutBehemoth
+                    reader.skipSubRecordData(); // FIXME
+                }
+                // FIXME: support TES5
+
+                mTargetConditions.push_back(cond);
+
+                break;
+            }
+            case ESM4::SUB_SCHR: reader.get(mScript.scriptHeader); break;
+            case ESM4::SUB_SCDA: reader.skipSubRecordData(); break; // compiled script data
+            case ESM4::SUB_SCTX: reader.getZString(mScript.scriptSource); break;
+            case ESM4::SUB_SCRO: reader.getFormId(mScript.globReference); break;
             case ESM4::SUB_INDX:
             case ESM4::SUB_QSDT:
             case ESM4::SUB_CNAM:
-            case ESM4::SUB_SCHR:
-            case ESM4::SUB_SCDA:
-            case ESM4::SUB_SCTX:
-            case ESM4::SUB_SCRO:
             case ESM4::SUB_QSTA:
             case ESM4::SUB_NNAM: // FO3
             case ESM4::SUB_QOBJ: // FO3
@@ -134,9 +159,6 @@ void ESM4::Quest::load(ESM4::Reader& reader)
                 throw std::runtime_error("ESM4::QUST::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
         }
     }
-    //if (mEditorId == "vUltraLuxeRadioQuest") // vUltraLuxeRadioQuest 0016B66D
-        //std::cout << mEditorId << " " << formIdToString(mFormId) << std::endl;
-    //std::cout << "QUST " << mEditorId << ": " << mQuestName << " @ " << mFileName << std::endl;
 }
 
 //void ESM4::Quest::save(ESM4::Writer& writer) const

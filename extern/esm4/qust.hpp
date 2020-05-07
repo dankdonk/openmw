@@ -30,20 +30,31 @@
 #include <cstdint>
 
 #include "formid.hpp"
+#include "script.hpp" // TargetCondition, ScriptDefinition
 
 namespace ESM4
 {
     class Reader;
     class Writer;
 
+#pragma pack(push, 1)
+    struct QuestData
+    {
+        std::uint8_t flags;
+        std::uint8_t priority;
+        std::uint16_t padding;
+        float questDelay;
+    };
+#pragma pack(pop)
+
     struct Quest
     {
         // NOTE: these values are for TES4
         enum Flags
         {
-            Flag_EnableStartGame      = 0x01,
+            Flag_StartGameEnabled     = 0x01,
             Flag_AllowRepeatConvTopic = 0x04,
-            Flag_AllowRepeatStage     = 0x08
+            Flag_AllowRepeatStages    = 0x08
         };
 
         FormId mFormId;       // from the header
@@ -54,7 +65,11 @@ namespace ESM4
         std::string mFileName; // texture file
         FormId mQuestScript;
 
-        std::uint16_t mData;   // flags + priority
+        QuestData mData;
+
+        std::vector<TargetCondition> mTargetConditions;
+
+        ScriptDefinition mScript;
 
         Quest();
         virtual ~Quest();

@@ -66,7 +66,7 @@ namespace ESM4
         // 0 radius, 1 everywhere, 2 worldspace and linked int, 3 linked int, 4 current cell only
         std::uint32_t broadcastRange;
         float staticPercentage;
-        FormId posReference;
+        FormId posReference; // only used if broadcastRange == 0
     };
 
     struct Reference

@@ -41,14 +41,14 @@ namespace ESM4
     {
         enum Flags
         {
-            Flags_RandomFreqShift = 0x0001,
-            Flags_PlayAtRandom    = 0x0002,
-            Flags_EnvIgnored      = 0x0004,
-            Flags_RandomLocation  = 0x0008,
-            Flags_Loop            = 0x0010,
-            Flags_MenuSound       = 0x0020,
-            Flags_2D              = 0x0040,
-            Flags_360LFE          = 0x0080
+            Flag_RandomFreqShift = 0x0001,
+            Flag_PlayAtRandom    = 0x0002,
+            Flag_EnvIgnored      = 0x0004,
+            Flag_RandomLocation  = 0x0008,
+            Flag_Loop            = 0x0010,
+            Flag_MenuSound       = 0x0020,
+            Flag_2D              = 0x0040,
+            Flag_360LFE          = 0x0080
         };
 
 #pragma pack(push, 1)

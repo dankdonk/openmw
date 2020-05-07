@@ -27,13 +27,13 @@
 #include "info.hpp"
 
 #include <stdexcept>
-#include <iostream> // FIXME: for debugging only
+//#include <iostream> // FIXME: for debugging only
 
 #include "reader.hpp"
-#include "formid.hpp" // FIXME: for debugging only
 //#include "writer.hpp"
 
-ESM4::DialogInfo::DialogInfo() : mFormId(0), mFlags(0), mQuest(0), mSound(0)
+ESM4::DialogInfo::DialogInfo() : mFormId(0), mFlags(0), mQuest(0), mSound(0),
+    mDialType(0), mNextSpeaker(0), mInfoFlags(0)
 {
     std::memset(&mResponseData, 0, sizeof(TargetResponseData));
     mResponse.clear();
@@ -73,7 +73,9 @@ void ESM4::DialogInfo::load(ESM4::Reader& reader)
             {
                 if (subHdr.dataSize == 16) // TES4
                     reader.get(&mResponseData, 16);
-                else
+                else if (subHdr.dataSize == 20) // FO3
+                    reader.get(&mResponseData, 20);
+                else // FO3/FONV
                 {
                     reader.get(mResponseData);
                     if (mResponseData.sound)
@@ -89,7 +91,9 @@ void ESM4::DialogInfo::load(ESM4::Reader& reader)
             {
                 if (subHdr.dataSize == 24) // TES4
                     reader.get(&mTargetCondition, 24);
-                else
+                else if (subHdr.dataSize == 20) // FO3
+                    reader.get(&mTargetCondition, 20);
+                else //if (subHdr.dataSize == 28)
                 {
                     reader.get(mTargetCondition); // FO3/FONV
                     if (mTargetCondition.reference)
@@ -147,7 +151,18 @@ void ESM4::DialogInfo::load(ESM4::Reader& reader)
 
                 break;
             }
-            case ESM4::SUB_DATA: // always 3 for TES4
+            case ESM4::SUB_DATA: // always 3 for TES4 ?
+            {
+                if (subHdr.dataSize == 4) // FO3/FONV
+                {
+                    reader.get(mDialType);
+                    reader.get(mNextSpeaker);
+                    reader.get(mInfoFlags);
+                }
+                else
+                    reader.skipSubRecordData(); // FIXME
+                break;
+            }
             case ESM4::SUB_NAME: // FormId add topic (not always present)
             case ESM4::SUB_CTDT: // older version of CTDA? 20 bytes
             case ESM4::SUB_SCHD: // 28 bytes

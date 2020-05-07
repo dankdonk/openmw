@@ -24,46 +24,23 @@
   trial & error.  See http://en.uesp.net/wiki for details.
 
 */
-#ifndef ESM4_DIAL_H
-#define ESM4_DIAL_H
-
-#include <cstdint>
-#include <string>
-#include <vector>
-
-#include "formid.hpp"
-#include "dialogue.hpp" // DialType
+#ifndef ESM4_DIALOGUE_H
+#define ESM4_DIALOGUE_H
 
 namespace ESM4
 {
-    class Reader;
-    class Writer;
-
-    struct Dialogue
+    enum DialType
     {
-        FormId mFormId;       // from the header
-        std::uint32_t mFlags; // from the header, see enum type RecordFlag for details
-
-        std::string mEditorId;
-        std::vector<FormId> mQuests;
-        std::vector<FormId> mQuestsRemoved;
-        std::string mTopicName;
-
-        std::string mTextDumb; // FIXME: temp name
-
-        std::uint8_t mDialType;  // DialType
-        std::uint8_t mDialFlags; // FO3/FONV: 0x1 rumours, 0x2 top-level
-
-        float mPriority;
-
-        Dialogue();
-        virtual ~Dialogue();
-
-        virtual void load(ESM4::Reader& reader);
-        //virtual void save(ESM4::Writer& writer) const;
-
-        //void blank();
+        DTYP_Topic         = 0,
+        DTYP_Conversation  = 1,
+        DTYP_Combat        = 2,
+        DTYP_Persuation    = 3,
+        DTYP_Detection     = 4,
+        DTYP_Service       = 5,
+        DTYP_Miscellaneous = 6,
+        // below FO3/FONV
+        DTYP_Radio         = 7
     };
 }
 
-#endif // ESM4_DIAL_H
+#endif // ESM4_DIALOGUE_H

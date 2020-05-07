@@ -70,11 +70,12 @@ void ESM4::TalkingActivator::load(ESM4::Reader& reader)
             case ESM4::SUB_SNAM: reader.getFormId(mLoopSound); break;
             case ESM4::SUB_INAM: reader.getFormId(mRadioTemplate); break; // FONV
             case ESM4::SUB_MODL: reader.getZString(mModel); break;
-            case ESM4::SUB_DEST: // destruction
-            case ESM4::SUB_DSTD: // destruction
-            case ESM4::SUB_DSTF: // destruction
+            case ESM4::SUB_DEST: // FO3 destruction
+            case ESM4::SUB_DSTD: // FO3 destruction
+            case ESM4::SUB_DSTF: // FO3 destruction
             case ESM4::SUB_FNAM:
             case ESM4::SUB_PNAM:
+            case ESM4::SUB_MODT: // texture file hash?
             case ESM4::SUB_OBND:
             {
                 //std::cout << "TACT " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
