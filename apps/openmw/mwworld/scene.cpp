@@ -13,6 +13,7 @@
 #include <extern/esm4/mset.hpp>
 
 #include <components/nif/niffile.hpp>
+#include <components/misc/stringops.hpp>
 #include <components/misc/resourcehelpers.hpp>
 
 #include "../mwbase/environment.hpp"
@@ -747,24 +748,15 @@ namespace MWWorld
                         MWBase::Environment::get().getSoundManager()->playPlaylist("explore", true);
                         MWBase::Environment::get().getSoundManager()->stopMusic();
 
-                        // stop previous music
-                        if (mSound)
-                            MWBase::Environment::get().getSoundManager()->stopSound(mSound);
-
                         // play new music
-                        std::string soundFile = ESM4::formIdToString(newMusicId);
+                        std::string soundFile = Misc::StringUtils::lowerCase(newMusic->mSoundFile);
                         std::cout << "interior cell radio Music " << soundFile << std::endl; // FIXME
-                        mSound = MWBase::Environment::get().getSoundManager()->playSound(soundFile, 1.f, 1.f,
-                                                MWBase::SoundManager::Play_TypeMusic,
-                                                MWBase::SoundManager::Play_Loop);
+                        MWBase::Environment::get().getSoundManager()->streamMusic(soundFile);
 
                         isFONV = true;
                     }
                 }
             }
-
-
-
 
             // FIXME: most ESM4::World doesn't seem to have music for FO3
             ESM4::FormId currMusicId = 0;
@@ -795,7 +787,11 @@ namespace MWWorld
             {
                 const ESM4::Music *newMusic = store.getForeign<ESM4::Music>().search(newMusicId);
                 if (newMusic)
+                {
                     musicFile = newMusic->mMusicFile;
+                    if (isFONV)
+                        std::cout << "                   music clash" << std::endl;
+                }
                 else
                     musicFile = "Explore\\";
 
@@ -1165,7 +1161,7 @@ namespace MWWorld
             if (aloc)
             {
                 isFONV = true;
-                std::cout << "interior music for FONV " << aloc->mEditorId << std::endl;
+                std::cout << "FONV: location interior music " << aloc->mEditorId << std::endl;
 
                 // FIXME: using loop option 4 for testing
                 switch (aloc->mMediaFlags.loopingOptions)
@@ -1194,7 +1190,7 @@ namespace MWWorld
                     // NOTE: sometimes the specified sets are empty
                     // e.g. musCtrlAAAntiMusic - "Location"
                     std::uint16_t sets = aloc->mMediaFlags.factionNotFound;
-                    std::cout << "sets " << sets << std::endl;
+                    std::cout << "FONV: location sets " << sets << std::endl;
                     const std::vector<ESM4::FormId>& mediaSets
                         =   (sets == 0) ? aloc->mNeutralSets :
                            ((sets == 1) ? aloc->mEnemySets   :
@@ -1202,7 +1198,7 @@ namespace MWWorld
                            ((sets == 3) ? aloc->mFriendSets  :
                            /*sets == 4*/  aloc->mLocationSets)));
 
-                    std::cout << "size " << mediaSets.size() << std::endl;
+                    std::cout << "FONV: location sets size " << mediaSets.size() << std::endl;
                     ESM4::FormId mediaSet = 0;
                     if (mediaSets.size() > 1)
                     {
@@ -1218,7 +1214,7 @@ namespace MWWorld
                     {
                         std::uint8_t enabled = mset->mEnabled;
                         std::bitset<8> bb(enabled);
-                        std::cout << "media set " << mset->mEditorId
+                        std::cout << "FONV: location media set " << mset->mEditorId
                             << " type " << mset->mSetType << " enabled " << bb << std::endl;
                         MWBase::Environment::get().getSoundManager()->streamMusic(mset->mSet2);
 
@@ -1232,18 +1228,16 @@ namespace MWWorld
                             const ESM4::Sound *sound = store.getForeign<ESM4::Sound>().search(soundId);
                             if (sound)
                             {
-                                // stop previous music
-                                if (mSound)
-                                    MWBase::Environment::get().getSoundManager()->stopSound(mSound);
-
                                 // play new music
-                                std::cout << "sound " << sound->mSoundFile << std::endl;
-                                mSound = MWBase::Environment::get().getSoundManager()->playSound(sound->mSoundFile, 1.f, 1.f,
+                                std::cout << "FONV: location interior music " << sound->mSoundFile << std::endl;
+                                MWBase::Environment::get().getSoundManager()->playSound(sound->mSoundFile, 1.f, 1.f,
                                         MWBase::SoundManager::Play_TypeMusic,
                                         MWBase::SoundManager::Play_Loop);
                             }
                         }
                     }
+                    else
+                        std::cout << "FONV: no location interior music" << std::endl;
                 }
             }
 #if 0
@@ -1327,7 +1321,7 @@ namespace MWWorld
                     {
                         ESM4::FormId questId = quest->mFormId;
                         radioQuests[questId] = acti->mRadioStation;
-                        std::cout << "int cell has acti radio quest " << quest->mEditorId << std::endl;
+                        std::cout << "FONV: radio int cell has acti radio quest " << quest->mEditorId << std::endl;
                     }
                 }
             }
@@ -1344,7 +1338,8 @@ namespace MWWorld
                     {
                         if (radioQuests.find(it->second->mQuest) != radioQuests.end())
                         {
-                            radioInfos[it->second] = it->second->mResponseData.sound;
+                            if (it->second->mResponseData.sound)
+                                radioInfos[it->second] = it->second->mResponseData.sound;
                         }
                     }
                 }
@@ -1366,16 +1361,10 @@ namespace MWWorld
                         MWBase::Environment::get().getSoundManager()->playPlaylist("explore", true);
                         MWBase::Environment::get().getSoundManager()->stopMusic();
 
-                        // stop previous music
-                        if (mSound)
-                            MWBase::Environment::get().getSoundManager()->stopSound(mSound);
-
                         // play new music
-                        std::string soundFile = ESM4::formIdToString(newMusicId);
-                        std::cout << "interior cell radio Music " << soundFile << std::endl; // FIXME
-                        mSound = MWBase::Environment::get().getSoundManager()->playSound(soundFile, 1.f, 1.f,
-                                                MWBase::SoundManager::Play_TypeMusic,
-                                                MWBase::SoundManager::Play_Loop);
+                        std::string soundFile = Misc::StringUtils::lowerCase(newMusic->mSoundFile);
+                        std::cout << "FONV: interior cell radio Music " << soundFile << std::endl; // FIXME
+                        MWBase::Environment::get().getSoundManager()->streamMusic(soundFile);
 
                         isFONV = true;
                     }
@@ -1395,7 +1384,7 @@ namespace MWWorld
                 {
                     const ESM4::Quest *quest = store.getForeign<ESM4::Quest>().searchCondition(tact->mFormId);
                     if (quest)
-                        std::cout << "has tact radio quest " << quest->mEditorId << std::endl;
+                        std::cout << "FONV: has tact radio quest " << quest->mEditorId << std::endl;
                 }
             }
             }
@@ -1416,9 +1405,14 @@ namespace MWWorld
             const ESM4::Music *newMusic
                 = MWBase::Environment::get().getWorld()->getStore().getForeign<ESM4::Music>().search(newMusicId);
             if (newMusic) // FO3 VaultTecHQ03 doesn't have any cell music or aspc
+            {
                 musicFile = newMusic->mMusicFile;
 
-            playNewMusic = true;
+                if (isFONV && musicFile.find('.') != std::string::npos)
+                    std::cout << "music clash " << musicFile << std::endl;
+
+                playNewMusic = true;
+            }
         }
 
         if (!currMusicId && !newMusicId) // maybe TES4?
@@ -1458,10 +1452,6 @@ namespace MWWorld
         // FIXME: fade in/out when changing music?
         if (!isFONV && (fromAnotherWorld || playNewMusic)) // FIXME: need better logic
         {
-            // stop current music
-            if (mSound)
-                MWBase::Environment::get().getSoundManager()->stopSound(mSound);
-
             // play new music
             if (musicFile.find('.') != std::string::npos) // TODO: does this ever happen?
             {

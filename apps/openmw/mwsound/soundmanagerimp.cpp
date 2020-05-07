@@ -262,7 +262,7 @@ namespace MWSound
         mMusic.reset();
     }
 
-    void SoundManager::streamMusicFull(const std::string& filename)
+    void SoundManager::streamMusicFull(const std::string& filename/*, PlayMode mode*/)
     {
         if(!mOutput->isInitialized())
             return;
@@ -276,7 +276,7 @@ namespace MWSound
             decoder->open(filename);
 
             mMusic = mOutput->streamSound(decoder, volumeFromType(Play_TypeMusic),
-                                          1.0f, Play_NoEnv|Play_TypeMusic);
+                                          1.0f, /*mode*/Play_NoEnv|Play_TypeMusic);
         }
         catch(std::exception &e)
         {
@@ -286,7 +286,12 @@ namespace MWSound
 
     void SoundManager::streamMusic(const std::string& filename)
     {
-        streamMusicFull("Music/"+filename);
+        // HACK: quick workaround to avoid changing the interface
+        // FIXME: not sure why looping is not allowed by OpenAL_Output::streamSound()
+        if (filename.find("songs\\") != std::string::npos)
+            streamMusicFull("Sound\\"+filename/*, Play_LoopNoEnv*/);
+        else
+            streamMusicFull("Music/"+filename);
     }
 
     void SoundManager::startRandomTitle()

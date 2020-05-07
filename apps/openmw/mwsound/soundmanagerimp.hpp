@@ -59,7 +59,7 @@ namespace MWSound
 
         std::string lookup(const std::string &soundId,
                   float &volume, float &min, float &max);
-        void streamMusicFull(const std::string& filename);
+        void streamMusicFull(const std::string& filename/*, PlayMode mode=Play_NoEnv*/);
         bool isPlaying(const MWWorld::Ptr &ptr, const std::string &id) const;
         void updateSounds(float duration);
         void updateRegionSound(float duration);

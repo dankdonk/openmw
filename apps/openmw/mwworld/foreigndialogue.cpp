@@ -18,11 +18,11 @@ MWWorld::ForeignDialogue::~ForeignDialogue()
 
 void MWWorld::ForeignDialogue::loadInfo(ESM4::Reader& reader, bool merge)
 {
-    // FIXME: tmp
     ESM4::DialogInfo* info = new ESM4::DialogInfo;
 
     info->load(reader);
 
+    // FIXME: should link?  see INFC/INFX and/or INFO::PNAM
     mInfos.insert(std::pair<ESM4::FormId, ESM4::DialogInfo*>(info->mFormId, info));
 
     //if (std::find(mQuests.begin(), mQuests.end(), info->mQuest) == mQuests.end() &&

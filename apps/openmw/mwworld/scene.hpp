@@ -72,9 +72,6 @@ namespace MWWorld
 
             void getGridCenter(int& cellX, int& cellY);
 
-            // FIXME: testing
-            MWBase::SoundPtr mSound;
-
         public:
 
             Scene (MWRender::RenderingManager& rendering, PhysicsSystem *physics);
