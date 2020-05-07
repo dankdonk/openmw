@@ -52,14 +52,14 @@ static bool isCacheableForeignRecord(int id)
      // id == ESM4::REC_TREE || /* tree */
       //id == ESM4::REC_FLOR || /* flora */
      // id == ESM4::REC_FURN || /* furniture */
-        id == ESM4::REC_WEAP || /* weapon */
+//FO3   id == ESM4::REC_WEAP || /* weapon */
       //id == ESM4::REC_AMMO || /* ammo (not in FONV dummy cell) */
      // id == ESM4::REC_NPC_ || /* npc */
      // id == ESM4::REC_CREA || /* creature */
-        id == ESM4::REC_LVLC || /* lvlcreature */
+//TES4  id == ESM4::REC_LVLC || /* lvlcreature */
         id == ESM4::REC_SLGM || /* soulgem */
-        id == ESM4::REC_KEYM || /* key */
-        id == ESM4::REC_ALCH || /* potion */
+//FO3   id == ESM4::REC_KEYM || /* key */
+//FO3   id == ESM4::REC_ALCH || /* potion */
       //id == ESM4::REC_SBSP || /* subspace (not in FONV dummy cell) */
         id == ESM4::REC_SGST || /* sigilstone */
         id == ESM4::REC_LVLI || /* levelled item */
@@ -457,7 +457,8 @@ void ESMStore::loadTes4Record (ESM::ESMReader& esm)
         case ESM4::REC_ACTI: reader.getRecordData(); id = mForeignActivators.loadForeign(reader);
                              mForeignIds[id.mId] = ESM4::REC_ACTI; break;
         case ESM4::REC_APPA: reader.getRecordData(); mForeignApparatuses.loadForeign(reader); break;
-        case ESM4::REC_ARMO: reader.getRecordData(); mForeignArmors.loadForeign(reader); break;
+        case ESM4::REC_ARMO: reader.getRecordData(); id = mForeignArmors.loadForeign(reader);
+                             mForeignIds[id.mId] = ESM4::REC_ARMO; break;
         case ESM4::REC_BOOK: reader.getRecordData(); mForeignBooks.loadForeign(reader); break;
         case ESM4::REC_CLOT: reader.getRecordData(); mForeignClothes.loadForeign(reader); break;
         case ESM4::REC_CONT: reader.getRecordData(); id = mForeignContainers.loadForeign(reader);
@@ -479,17 +480,21 @@ void ESMStore::loadTes4Record (ESM::ESMReader& esm)
                              mForeignIds[id.mId] = ESM4::REC_FLOR; break;
         case ESM4::REC_FURN: reader.getRecordData(); id = mForeignFurnitures.loadForeign(reader);
                              mForeignIds[id.mId] = ESM4::REC_FURN; break;
-        case ESM4::REC_WEAP: reader.getRecordData(); mForeignWeapons.loadForeign(reader); break;
+        case ESM4::REC_WEAP: reader.getRecordData(); id = mForeignWeapons.loadForeign(reader);
+                             mForeignIds[id.mId] = ESM4::REC_WEAP; break;
         case ESM4::REC_AMMO: reader.getRecordData(); id = mForeignAmmos.loadForeign(reader);
                              mForeignIds[id.mId] = ESM4::REC_AMMO; break;
         case ESM4::REC_NPC_: reader.getRecordData(); id = mForeignNpcs.loadForeign(reader);
                              mForeignIds[id.mId] = ESM4::REC_NPC_; break;
         case ESM4::REC_CREA: reader.getRecordData(); id = mForeignCreatures.loadForeign(reader);
                              mForeignIds[id.mId] = ESM4::REC_CREA; break;
-        case ESM4::REC_LVLC: reader.getRecordData(); mLevelledCreatures.loadForeign(reader); break;
+        case ESM4::REC_LVLC: reader.getRecordData(); id = mLevelledCreatures.loadForeign(reader);
+                             mForeignIds[id.mId] = ESM4::REC_LVLC; break;
         case ESM4::REC_SLGM: reader.getRecordData(); mSoulGems.loadForeign(reader); break;
-        case ESM4::REC_KEYM: reader.getRecordData(); mForeignKeys.loadForeign(reader); break;
-        case ESM4::REC_ALCH: reader.getRecordData(); mForeignPotions.loadForeign(reader); break;
+        case ESM4::REC_KEYM: reader.getRecordData(); id = mForeignKeys.loadForeign(reader);
+                             mForeignIds[id.mId] = ESM4::REC_KEYM; break;
+        case ESM4::REC_ALCH: reader.getRecordData(); id = mForeignPotions.loadForeign(reader);
+                             mForeignIds[id.mId] = ESM4::REC_ALCH; break;
         case ESM4::REC_SBSP: reader.getRecordData(); id = mSubspaces.loadForeign(reader); // 9
                              mForeignIds[id.mId] = ESM4::REC_SBSP; break;
         case ESM4::REC_SGST: reader.getRecordData(); mSigilStones.loadForeign(reader); break;
