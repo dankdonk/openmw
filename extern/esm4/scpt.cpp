@@ -30,8 +30,6 @@
 #include <iostream> // FIXME: debugging only
 #include <iomanip>
 
-#include "formid.hpp"
-
 #include "reader.hpp"
 //#include "writer.hpp"
 
@@ -164,10 +162,6 @@ void ESM4::Script::load(ESM4::Reader& reader)
                 throw std::runtime_error("ESM4::SCPT::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
         }
     }
-    //if (mEditorId.find("vUltraLuxeRadioQuestSCRIPT") != std::string::npos) // vUltraLuxeRadioQuestSCRIPT 0016B66F
-        //std::cout << mEditorId << " " << formIdToString(mFormId) << std::endl;
-    //if (mScript.globReference)// == 0x0016B66D)
-        //std::cout << "SCPT " << mEditorId << std::endl;
 }
 
 //void ESM4::Script::save(ESM4::Writer& writer) const

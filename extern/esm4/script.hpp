@@ -324,7 +324,7 @@ namespace ESM4
         std::uint32_t unknown1;
         std::uint32_t responseNo; // 1 byte + padding
         // below FO3/FONV
-        FormId sound;
+        FormId sound; // when 20 bytes usually 0 but there are exceptions (FO3 INFO FormId = 0x0002241f)
         std::uint32_t flags; // 1 byte + padding (0x01 = use emotion anim)
     };
 

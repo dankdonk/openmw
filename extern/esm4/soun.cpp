@@ -27,9 +27,7 @@
 #include "soun.hpp"
 
 #include <stdexcept>
-#include <iostream> // FIXME
-
-#include "formid.hpp"
+//#include <iostream> // FIXME
 
 #include "reader.hpp"
 //#include "writer.hpp"
@@ -74,16 +72,6 @@ void ESM4::Sound::load(ESM4::Reader& reader)
                 throw std::runtime_error("ESM4::SOUN::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
         }
     }
-    // vUltraLuxeRadioQuest
-    //             SOUN            INFO sound id
-//  if (mFormId == 0x0016B079 || // 0016B743 songs\radionv\mus_concerto_for_2_vl_str_in_d_minor.mp3
-//      mFormId == 0x00169BDF || // 0016B744 songs\radionv\mus_concerto_grosso_in_b_minor_allegro_01.mp3
-//      mFormId == 0x00169BE0 || // 0016B745 songs\radionv\mus_concerto_grosso_in_b_minor_allegro_02.mp3
-//      mFormId == 0x00169BE2 || // 0016B746 songs\radionv\mus_flower_duet_lakm_kpm.mp3
-//      mFormId == 0x00169BE3 || // 0016B747 songs\radionv\mus_four_seasons_no_4_the_winter.mp3
-//      mFormId == 0x00169BEC || // 0016B748 songs\radionv\mus_piano_concerto_no_21__elvira_madigan.mp3
-//      mFormId == 0x00169BEC  ) // 0016B749
-//      std::cout << mSoundFile << " " << formIdToString(mFormId) << std::endl;
 }
 
 //void ESM4::Sound::save(ESM4::Writer& writer) const

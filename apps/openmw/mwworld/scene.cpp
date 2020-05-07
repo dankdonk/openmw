@@ -616,8 +616,157 @@ namespace MWWorld
         {
             worldChanged = true;
 
-            // FIXME: most ESM4::World doesn't seem to have music for FO3
             const MWWorld::ESMStore& store = MWBase::Environment::get().getWorld()->getStore();
+
+            bool isFONV = false;
+
+            // FIXME: need to put this in a function or two, maybe in MWClass::ForeignActivator, etc
+
+            // FONV: check if there are any radio activators in this cell
+            std::map</*ESM4::Quest**/ESM4::FormId, ESM4::FormId> radioQuests;
+            typedef CellRefList<ESM4::Activator>::List ActivatorList;
+            {
+            const ActivatorList& acti = cell->getReadOnly<ESM4::Activator>().mList;
+            for (ActivatorList::const_iterator it = acti.begin(); it != acti.end(); ++it)
+            {
+                const MWWorld::LiveCellRef<ESM4::Activator>& ref = *it;
+                const CellRef& actRef = ref.mRef;
+                const ESM4::Activator *acti = ref.mBase;
+
+                bool hasRadio = acti->mRadioStation != 0;
+
+                //std::cout << acti->mEditorId << std::endl;
+
+                if (hasRadio)
+                {
+                    // look for quests that are "start game enabled" and has a condition
+                    // looking for this activator
+                    const ESM4::Quest *quest = store.getForeign<ESM4::Quest>().searchCondition(acti->mRadioStation);
+                    if (quest)
+                    {
+                        ESM4::FormId questId = quest->mFormId;
+                        radioQuests[questId] = acti->mRadioStation;
+                        std::cout << "world has acti radio quest " << quest->mEditorId << std::endl;
+                    }
+                }
+            }
+            }
+            CellStore *dummy = MWBase::Environment::get().getWorld()->getWorldDummyCell(worldId);
+            {
+            const ActivatorList& acti = dummy->getReadOnly<ESM4::Activator>().mList;
+            for (ActivatorList::const_iterator it = acti.begin(); it != acti.end(); ++it)
+            {
+                const MWWorld::LiveCellRef<ESM4::Activator>& ref = *it;
+                const CellRef& actRef = ref.mRef;
+                const ESM4::Activator *acti = ref.mBase;
+
+                bool hasRadio = acti->mRadioStation != 0;
+
+                //std::cout << acti->mEditorId << std::endl;
+
+                if (hasRadio)
+                {
+                    // look for quests that are "start game enabled" and has a condition
+                    // looking for this activator
+                    const ESM4::Quest *quest = store.getForeign<ESM4::Quest>().searchCondition(acti->mRadioStation);
+                    if (quest)
+                    {
+                        ESM4::FormId questId = quest->mFormId;
+                        radioQuests[questId] = acti->mRadioStation;
+                        std::cout << "dummy has acti radio quest " << quest->mEditorId << std::endl;
+                    }
+                }
+            }
+            }
+
+            typedef CellRefList<ESM4::TalkingActivator>::List TalkingActivatorList;
+            {
+            const TalkingActivatorList& tact = cell->getReadOnly<ESM4::TalkingActivator>().mList;
+            for (TalkingActivatorList::const_iterator it = tact.begin(); it != tact.end(); ++it)
+            {
+                const MWWorld::LiveCellRef<ESM4::TalkingActivator>& ref = *it;
+                const CellRef& tactRef = ref.mRef;
+                const ESM4::TalkingActivator *tact = ref.mBase;
+
+                if ((tact->mFlags & ESM4::TACT_RadioStation) != 0)
+                {
+                    const ESM4::Quest *quest = store.getForeign<ESM4::Quest>().searchCondition(tact->mFormId);
+                    if (quest)
+                        std::cout << "has tact radio quest " << quest->mEditorId << std::endl;
+                }
+            }
+            }
+            {
+            const TalkingActivatorList& tact = dummy->getReadOnly<ESM4::TalkingActivator>().mList;
+            for (TalkingActivatorList::const_iterator it = tact.begin(); it != tact.end(); ++it)
+            {
+                const MWWorld::LiveCellRef<ESM4::TalkingActivator>& ref = *it;
+                const CellRef& tactRef = ref.mRef;
+                const ESM4::TalkingActivator *tact = ref.mBase;
+
+                if ((tact->mFlags & ESM4::TACT_RadioStation) != 0)
+                {
+                    const ESM4::Quest *quest = store.getForeign<ESM4::Quest>().searchCondition(tact->mFormId);
+                    if (quest)
+                        std::cout << "dummy has tact radio quest " << quest->mEditorId << std::endl;
+                }
+            }
+            }
+
+            if (radioQuests.size())
+            {
+                std::map<ESM4::DialogInfo*, ESM4::FormId> radioInfos;
+                const ForeignDialogue *dial = store.getForeign<ForeignDialogue>().search("RadioHello");
+                if (dial)
+                {
+                    const std::map<ESM4::FormId, ESM4::DialogInfo*>& infos =  dial->getInfos();
+                    std::map<ESM4::FormId, ESM4::DialogInfo*>::const_iterator it = infos.begin();
+                    for (; it != infos.end(); ++it)
+                    {
+                        if (radioQuests.find(it->second->mQuest) != radioQuests.end())
+                        {
+                            radioInfos[it->second] = it->second->mResponseData.sound;
+                        }
+                    }
+                }
+
+                if (radioInfos.size())
+                {
+                    //ESM4::FormId newMusicId = radioInfos.rbegin()->second; // FIXME: for now just pick one
+                    std::map<ESM4::DialogInfo*, ESM4::FormId>::iterator it = radioInfos.begin();
+                    size_t i = Misc::Rng::rollDice(int(radioInfos.size()));
+                    for (size_t j = 0; j < i; ++j)
+                        ++it;
+
+                    ESM4::FormId newMusicId = it->second; // FIXME: for now just pick a random one
+
+                    const ESM4::Sound *newMusic = store.getForeign<ESM4::Sound>().search(newMusicId);
+                    if (newMusic) // FO3 VaultTecHQ03 doesn't have any cell music or aspc
+                    {
+                        // stop Morrowind music
+                        MWBase::Environment::get().getSoundManager()->playPlaylist("explore", true);
+                        MWBase::Environment::get().getSoundManager()->stopMusic();
+
+                        // stop previous music
+                        if (mSound)
+                            MWBase::Environment::get().getSoundManager()->stopSound(mSound);
+
+                        // play new music
+                        std::string soundFile = ESM4::formIdToString(newMusicId);
+                        std::cout << "interior cell radio Music " << soundFile << std::endl; // FIXME
+                        mSound = MWBase::Environment::get().getSoundManager()->playSound(soundFile, 1.f, 1.f,
+                                                MWBase::SoundManager::Play_TypeMusic,
+                                                MWBase::SoundManager::Play_Loop);
+
+                        isFONV = true;
+                    }
+                }
+            }
+
+
+
+
+            // FIXME: most ESM4::World doesn't seem to have music for FO3
             ESM4::FormId currMusicId = 0;
             if (mCurrentCell && mCurrentCell->isForeignCell())
             {
@@ -680,7 +829,7 @@ namespace MWWorld
                 }
             }
 
-            if (playNewMusic)
+            if (!isFONV && playNewMusic)
             {
                 // FIXME: fade in/out when changing music?
                 if (musicFile.find('.') != std::string::npos)
@@ -1083,8 +1232,13 @@ namespace MWWorld
                             const ESM4::Sound *sound = store.getForeign<ESM4::Sound>().search(soundId);
                             if (sound)
                             {
+                                // stop previous music
+                                if (mSound)
+                                    MWBase::Environment::get().getSoundManager()->stopSound(mSound);
+
+                                // play new music
                                 std::cout << "sound " << sound->mSoundFile << std::endl;
-                                MWBase::Environment::get().getSoundManager()->playSound(sound->mSoundFile, 1.f, 1.f,
+                                mSound = MWBase::Environment::get().getSoundManager()->playSound(sound->mSoundFile, 1.f, 1.f,
                                         MWBase::SoundManager::Play_TypeMusic,
                                         MWBase::SoundManager::Play_Loop);
                             }
@@ -1092,7 +1246,7 @@ namespace MWWorld
                     }
                 }
             }
-
+#if 0
             const ForeignDialogue *dial = store.getForeign<ForeignDialogue>().search("RadioHello");
 
             if (dial)
@@ -1147,6 +1301,105 @@ namespace MWWorld
                     }
                 }
             }
+#else
+            // FONV: check if there are any radio activators in this cell
+            typedef CellRefList<ESM4::Activator>::List ActivatorList;
+
+            std::map</*ESM4::Quest**/ESM4::FormId, ESM4::FormId> radioQuests;
+            const ActivatorList& acti = cell->getReadOnly<ESM4::Activator>().mList;
+            for (ActivatorList::const_iterator it = acti.begin(); it != acti.end(); ++it)
+            {
+                const MWWorld::LiveCellRef<ESM4::Activator>& ref = *it;
+                const CellRef& actRef = ref.mRef;
+                const ESM4::Activator *acti = ref.mBase;
+
+                bool hasRadio = acti->mRadioStation != 0;
+
+                //std::cout << acti->mEditorId << std::endl;
+
+                if (hasRadio)
+                {
+                    // look for quests that are "start game enabled" and has a condition
+                    // looking for this talking activator
+                    const ESM4::Quest *quest
+                        = store.getForeign<ESM4::Quest>().searchCondition(acti->mRadioStation);
+                    if (quest)
+                    {
+                        ESM4::FormId questId = quest->mFormId;
+                        radioQuests[questId] = acti->mRadioStation;
+                        std::cout << "int cell has acti radio quest " << quest->mEditorId << std::endl;
+                    }
+                }
+            }
+
+            if (radioQuests.size())
+            {
+                std::map<ESM4::DialogInfo*, ESM4::FormId> radioInfos;
+                const ForeignDialogue *dial = store.getForeign<ForeignDialogue>().search("RadioHello");
+                if (dial)
+                {
+                    const std::map<ESM4::FormId, ESM4::DialogInfo*>& infos =  dial->getInfos();
+                    std::map<ESM4::FormId, ESM4::DialogInfo*>::const_iterator it = infos.begin();
+                    for (; it != infos.end(); ++it)
+                    {
+                        if (radioQuests.find(it->second->mQuest) != radioQuests.end())
+                        {
+                            radioInfos[it->second] = it->second->mResponseData.sound;
+                        }
+                    }
+                }
+
+                if (radioInfos.size())
+                {
+                    //ESM4::FormId newMusicId = radioInfos.begin()->second; // FIXME: for now just pick one
+                    std::map<ESM4::DialogInfo*, ESM4::FormId>::iterator it = radioInfos.begin();
+                    size_t i = Misc::Rng::rollDice(int(radioInfos.size()));
+                    for (size_t j = 0; j < i; ++j)
+                        ++it;
+
+                    ESM4::FormId newMusicId = it->second; // FIXME: for now just pick a random one
+
+                    const ESM4::Sound *newMusic = store.getForeign<ESM4::Sound>().search(newMusicId);
+                    if (newMusic) // FO3 VaultTecHQ03 doesn't have any cell music or aspc
+                    {
+                        // stop Morrowind music
+                        MWBase::Environment::get().getSoundManager()->playPlaylist("explore", true);
+                        MWBase::Environment::get().getSoundManager()->stopMusic();
+
+                        // stop previous music
+                        if (mSound)
+                            MWBase::Environment::get().getSoundManager()->stopSound(mSound);
+
+                        // play new music
+                        std::string soundFile = ESM4::formIdToString(newMusicId);
+                        std::cout << "interior cell radio Music " << soundFile << std::endl; // FIXME
+                        mSound = MWBase::Environment::get().getSoundManager()->playSound(soundFile, 1.f, 1.f,
+                                                MWBase::SoundManager::Play_TypeMusic,
+                                                MWBase::SoundManager::Play_Loop);
+
+                        isFONV = true;
+                    }
+                }
+            }
+
+            typedef CellRefList<ESM4::TalkingActivator>::List TalkingActivatorList;
+            {
+            const TalkingActivatorList& tact = cell->getReadOnly<ESM4::TalkingActivator>().mList;
+            for (TalkingActivatorList::const_iterator it = tact.begin(); it != tact.end(); ++it)
+            {
+                const MWWorld::LiveCellRef<ESM4::TalkingActivator>& ref = *it;
+                const CellRef& tactRef = ref.mRef;
+                const ESM4::TalkingActivator *tact = ref.mBase;
+
+                if ((tact->mFlags & ESM4::TACT_RadioStation) != 0)
+                {
+                    const ESM4::Quest *quest = store.getForeign<ESM4::Quest>().searchCondition(tact->mFormId);
+                    if (quest)
+                        std::cout << "has tact radio quest " << quest->mEditorId << std::endl;
+                }
+            }
+            }
+#endif
         }
 
         ESM4::FormId currMusicId = 0;
@@ -1205,6 +1458,11 @@ namespace MWWorld
         // FIXME: fade in/out when changing music?
         if (!isFONV && (fromAnotherWorld || playNewMusic)) // FIXME: need better logic
         {
+            // stop current music
+            if (mSound)
+                MWBase::Environment::get().getSoundManager()->stopSound(mSound);
+
+            // play new music
             if (musicFile.find('.') != std::string::npos) // TODO: does this ever happen?
             {
                 std::cout << "interior cell stream Music " << musicFile << std::endl;

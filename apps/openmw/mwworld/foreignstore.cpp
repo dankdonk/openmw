@@ -1016,6 +1016,91 @@ namespace MWWorld
 
         return nullptr;
     }
+
+    ForeignStore<ESM4::Quest>::~ForeignStore()
+    {
+        std::vector<ESM4::Quest*>::iterator it = mQuests.begin();
+        for (; it != mQuests.end(); ++it)
+            delete *it;
+    }
+
+    size_t ForeignStore<ESM4::Quest>::getSize() const
+    {
+        return mQuests.size();
+    }
+
+    RecordId ForeignStore<ESM4::Quest>::load(ESM::ESMReader& esm)
+    {
+        ESM4::Reader& reader = static_cast<ESM::ESM4Reader*>(&esm)->reader();
+        ForeignId result = loadForeign(reader);
+
+        std::string id = ESM4::formIdToString(result.mId);
+        return RecordId(id, result.mIsDeleted); // NOTE: id is uppercase (not that it matters)
+    }
+
+    ForeignId ForeignStore<ESM4::Quest>::loadForeign(ESM4::Reader& reader)
+    {
+        // FIXME: unique_ptr?
+        ESM4::Quest *record = new ESM4::Quest();
+        record->load(reader);
+
+        bool isDeleted = (record->mFlags & ESM4::Rec_Deleted) != 0;
+        std::size_t index = mQuests.size();
+        mQuests.push_back(record);
+
+        mFormIdMap[record->mFormId] = index;
+        mTopicMap[record->mEditorId] = index;
+
+        for (std::size_t i = 0; i < record->mTargetConditions.size(); ++i)
+        {
+            // FIXME: there are *lots* of function types other than GetIsID
+            if (record->mTargetConditions[i].functionIndex == ESM4::FUN_GetIsID)
+            {
+                mConditionMap[record->mTargetConditions[i].param1] = index;
+            }
+        }
+
+        return ForeignId(record->mFormId, isDeleted);
+    }
+
+    const ESM4::Quest *ForeignStore<ESM4::Quest>::find(ESM4::FormId formId) const
+    {
+        const ESM4::Quest *quest = search(formId);
+        if (quest)
+            return quest;
+
+        std::ostringstream msg;
+        // FIXME: getRecordType() not implemented
+        msg << /*T::getRecordType() <<*/ " '" << ESM4::formIdToString(formId) << "' not found";
+        throw std::runtime_error(msg.str());
+    }
+
+    const ESM4::Quest *ForeignStore<ESM4::Quest>::search(ESM4::FormId formId) const
+    {
+        std::map<ESM4::FormId, std::size_t>::const_iterator it = mFormIdMap.find(formId);
+        if (it != mFormIdMap.end())
+            return mQuests[it->second];
+
+        return nullptr;
+    }
+
+    const ESM4::Quest *ForeignStore<ESM4::Quest>::searchCondition(ESM4::FormId formId) const
+    {
+        std::map<ESM4::FormId, std::size_t>::const_iterator it = mConditionMap.find(formId);
+        if (it != mConditionMap.end())
+            return mQuests[it->second];
+
+        return nullptr;
+    }
+
+    const ESM4::Quest *ForeignStore<ESM4::Quest>::search(const std::string& topic) const
+    {
+        std::map<std::string, std::size_t>::const_iterator it = mTopicMap.find(topic);
+        if (it != mTopicMap.end())
+            return mQuests[it->second];
+
+        return nullptr;
+    }
 }
 
 //template class MWWorld::ForeignStore<MWWorld::ForeignWorld>;

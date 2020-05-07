@@ -7,6 +7,8 @@
 
 #include <components/loadinglistener/loadinglistener.hpp>
 
+#include <extern/esm4/qust.hpp>
+
 #include "storebase.hpp"
 
 #include "foreignworld.hpp"
@@ -242,6 +244,34 @@ namespace MWWorld
         const ForeignDialogue *search(ESM4::FormId formId) const;
 
         const ForeignDialogue *search(const std::string& topic) const;
+    };
+
+    template <>
+    class ForeignStore<ESM4::Quest> : public StoreBase
+    {
+    private:
+
+        std::vector<ESM4::Quest*> mQuests;
+        std::map<ESM4::FormId, std::size_t> mFormIdMap;
+        std::map<ESM4::FormId, std::size_t> mConditionMap;
+        std::map<std::string, std::size_t> mTopicMap;
+
+    public:
+
+        virtual ~ForeignStore();
+
+        size_t getSize() const;
+
+        RecordId load(ESM::ESMReader& esm);
+        ForeignId loadForeign(ESM4::Reader& reader);
+        //void setUp();
+
+        const ESM4::Quest *find(ESM4::FormId formId) const;
+        const ESM4::Quest *search(ESM4::FormId formId) const;
+
+        const ESM4::Quest *searchCondition(ESM4::FormId formId) const;
+
+        const ESM4::Quest *search(const std::string& quest) const;
     };
 
 } //end namespace

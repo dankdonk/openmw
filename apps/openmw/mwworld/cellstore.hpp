@@ -517,6 +517,18 @@ namespace MWWorld
     }
 
     template<>
+    inline const CellRefList<ESM4::Activator>& CellStore::getReadOnly<ESM4::Activator>()
+    {
+        return mForeignActivators;
+    }
+
+    template<>
+    inline const CellRefList<ESM4::TalkingActivator>& CellStore::getReadOnly<ESM4::TalkingActivator>()
+    {
+        return mTalkingActivators;
+    }
+
+    template<>
     inline const CellRefList<ESM4::Door>& CellStore::getReadOnly<ESM4::Door>()
     {
         return mForeignDoors;
@@ -525,19 +537,21 @@ namespace MWWorld
     template<>
     inline CellRefList<ESM4::Static>& CellStore::get<ESM4::Static>()
     {
-        mHasState = true;
+        mHasState = true; // FIXME: what is this used for?
         return mForeignStatics;
     }
 
     template<>
     inline CellRefList<ESM4::Npc>& CellStore::get<ESM4::Npc>()
     {
+        mHasState = true; // FIXME: what is this used for?
         return mForeignNpcs;
     }
 
     template<>
     inline CellRefList<ESM4::Creature>& CellStore::get<ESM4::Creature>()
     {
+        mHasState = true; // FIXME: what is this used for?
         return mForeignCreatures;
     }
 

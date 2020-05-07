@@ -3984,7 +3984,7 @@ They match ok, but what starts it off?  Something must be "choosing" the RadioHe
 
 Noticed that TACT 0016B46E is referred in QUST 0016B66D vUltraLuxeRadioQuest CTDA.  Its model is a terminal (not a vintage radio) and it is positioned under the casino floor, near Mortimer.
 
-So, something kicks off RadioHello (auto-start somehow, or maybe all dialogs run all the time?).  Then DIAL goes through the quests and the associated INFO for the quest.  It then checks the conditions to choose a response.  The first parameter of the INFO condition is the QUST that refers to the TACT to be instantiated (I'm guessing GetIsID means that).
+Guess: So, something kicks off RadioHello (auto-start somehow, or maybe all dialogs run all the time?).  Then DIAL goes through the quests and the associated INFO for the quest.  It then checks the conditions to choose a response.  The first parameter of the INFO condition is the QUST that refers to the TACT to be instantiated (I'm guessing GetIsID means that).
 
     CELL ULCasino
          ...
@@ -4153,6 +4153,28 @@ Not sure how to deal with this one. A quick look through the code seems to indic
 # [06/05/2020] Bit shuffling
 
 Refactored ESMStore and ForeignStore (still a work in progress).
+
+# [07/05/2020] NVRadio
+
+Going back to decyphering the logic.
+
+The quest `vUltraLuxeRadioQuest` has "Start Game Enabled" and "Allow repeated conversation topics" flags.  This may mean that the quest is running all the time but applies to the condition that runs only on `vCasinoUltraLuxeRadio`.  How to implement this?
+
+We can't get the TACT to check all the running quests since the `vCasinoTopsRadio` is in fact in the outside cell - in the vanilla game if you `COC "TopsCasino"` from outside Novac (or even from inside the gift shop) you still hear the radio.
+
+The only other way must be that the quest `TopsRadioQuest` checks that `vCasinoTopsRadio` is **defined** in the game.  Remember that this quest (like many others, e.g. `vCountryRadioQuest`) has the "Start Game Enabled" flag.  But then why bother checking?  Barring a bug it **will** be defined in the game.  As mentioned above, it isn't checking that the TACT is in the current cell, nor checking any proximity (not that I can see).
+
+Maybe the trigger comes from the speakers?
+
+    ACTI 0016B66A vCasinoUltraLuxeSpeaker
+         SCRI 000770C6 (SCPT VintageRadioStartOnSCRIPT)
+         RNAM 0016B46E (TACT vCasinoUltraLuxeRadio)
+
+If so the logic should be:
+
+  * When the current cell changes check the activators in the new cell.
+  * If there are radio stations (i.e. the ones with RNAM) see if there are running quests looking for a matching condition (which should be all of the ones with "Start Game Enabled" flag, probably all the radio ones).
+  * If there is a match, look for "RadioHello" topic for the radio quest.
 
 # [07/05/2020] World Dummy Cell design
 

@@ -30,12 +30,22 @@
 #include <cstdint>
 
 #include "formid.hpp"
-#include "script.hpp"
+#include "script.hpp" // TargetCondition, ScriptDefinition
 
 namespace ESM4
 {
     class Reader;
     class Writer;
+
+#pragma pack(push, 1)
+    struct QuestData
+    {
+        std::uint8_t flags;
+        std::uint8_t priority;
+        std::uint16_t padding;
+        float questDelay;
+    };
+#pragma pack(pop)
 
     struct Quest
     {
@@ -55,7 +65,7 @@ namespace ESM4
         std::string mFileName; // texture file
         FormId mQuestScript;
 
-        std::uint16_t mData;   // flags + priority
+        QuestData mData;
 
         std::vector<TargetCondition> mTargetConditions;
 

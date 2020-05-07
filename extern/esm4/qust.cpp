@@ -29,12 +29,10 @@
 #include <stdexcept>
 #include <iostream> // FIXME: for debugging only
 
-#include "formid.hpp"
-
 #include "reader.hpp"
 //#include "writer.hpp"
 
-ESM4::Quest::Quest() : mFormId(0), mFlags(0), mQuestScript(0), mData(0)
+ESM4::Quest::Quest() : mFormId(0), mFlags(0), mQuestScript(0)
 {
     mEditorId.clear();
     mQuestName.clear();
@@ -62,15 +60,16 @@ void ESM4::Quest::load(ESM4::Reader& reader)
         {
             case ESM4::SUB_EDID: reader.getZString(mEditorId);  break;
             case ESM4::SUB_FULL: reader.getZString(mQuestName); break;
-            case ESM4::SUB_ICON: reader.getZString(mFileName);
-                                 std::cout << "QUST ICON" << std::endl; // FIXME: temp testing
-                                 break;
+            case ESM4::SUB_ICON: reader.getZString(mFileName); break; // TES4 (none in FO3/FONV)
             case ESM4::SUB_DATA:
             {
-                if (subHdr.dataSize != sizeof(mData))
-                    reader.skipSubRecordData(); // FIXME: FO3
+                if (subHdr.dataSize == 2) // TES4
+                {
+                    reader.get(&mData, 2);
+                    mData.questDelay = 0.f; // unused in TES4 but keep it clean
+                }
                 else
-                    reader.get(mData); // TES4
+                    reader.get(mData); // FO3
 
                 break;
             }
@@ -90,7 +89,7 @@ void ESM4::Quest::load(ESM4::Reader& reader)
                 else
                 {
                     // one record with size 20: EDID GenericSupMutBehemoth
-                    reader.skipSubRecordData();
+                    reader.skipSubRecordData(); // FIXME
                 }
                 // FIXME: support TES5
 
@@ -160,9 +159,6 @@ void ESM4::Quest::load(ESM4::Reader& reader)
                 throw std::runtime_error("ESM4::QUST::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
         }
     }
-    //if (mEditorId == "vUltraLuxeRadioQuest") // vUltraLuxeRadioQuest 0016B66D
-        //std::cout << mEditorId << " " << formIdToString(mFormId) << std::endl;
-    //std::cout << "QUST " << mEditorId << ": " << mQuestName << " @ " << mFileName << std::endl;
 }
 
 //void ESM4::Quest::save(ESM4::Writer& writer) const

@@ -851,7 +851,9 @@ namespace MWWorld
             if (!world)
                 continue;
 
-            if ((world->mParentUseFlags & 0x01/*use land data*/) == 0)
+            //if (world->mMapFile == "") // don't use parent world's land for FO3/FONV
+            //if ((world->mParentUseFlags & 0x01/*use land data*/) == 0) // FIXME: doesn't work for TES4
+            if ((world->mWorldFlags & 0x10/*no landscape*/) == 0)
                 continue;
 
             if (world->mParent != 0) // ok, use parent world land but do I have a parent world?

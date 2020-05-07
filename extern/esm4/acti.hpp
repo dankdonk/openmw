@@ -47,9 +47,15 @@ namespace ESM4
         std::string mModel;
 
         FormId mScript;
-        FormId mSound;
+        FormId mLoopingSound;    // SOUN
+        FormId mActivationSound; // SOUN
 
         float mBoundRadius;
+
+        FormId mRadioTemplate; // SOUN
+        FormId mRadioStation;  // TACT
+
+        std::string mActivationPrompt;
 
         Activator();
         virtual ~Activator();

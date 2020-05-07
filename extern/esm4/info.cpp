@@ -30,7 +30,6 @@
 #include <iostream> // FIXME: for debugging only
 
 #include "reader.hpp"
-#include "formid.hpp" // FIXME: for debugging only
 //#include "writer.hpp"
 
 ESM4::DialogInfo::DialogInfo() : mFormId(0), mFlags(0), mQuest(0), mSound(0),
@@ -74,7 +73,9 @@ void ESM4::DialogInfo::load(ESM4::Reader& reader)
             {
                 if (subHdr.dataSize == 16) // TES4
                     reader.get(&mResponseData, 16);
-                else
+                else if (subHdr.dataSize == 20) // FO3
+                    reader.get(&mResponseData, 20);
+                else // FO3/FONV
                 {
                     reader.get(mResponseData);
                     if (mResponseData.sound)
@@ -90,7 +91,9 @@ void ESM4::DialogInfo::load(ESM4::Reader& reader)
             {
                 if (subHdr.dataSize == 24) // TES4
                     reader.get(&mTargetCondition, 24);
-                else
+                else if (subHdr.dataSize == 20) // FO3
+                    reader.get(&mTargetCondition, 20);
+                else //if (subHdr.dataSize == 28)
                 {
                     reader.get(mTargetCondition); // FO3/FONV
                     if (mTargetCondition.reference)
@@ -191,7 +194,10 @@ void ESM4::DialogInfo::load(ESM4::Reader& reader)
                 break;
             }
             default:
-                throw std::runtime_error("ESM4::INFO::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
+                std::cout << "INFO " << ESM4::printName(subHdr.typeId) << " skipping..."
+                        << subHdr.dataSize << std::endl;
+                reader.skipSubRecordData();
+                //throw std::runtime_error("ESM4::INFO::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
         }
     }
 }
