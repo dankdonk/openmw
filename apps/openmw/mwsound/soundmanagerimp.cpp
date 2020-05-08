@@ -499,7 +499,8 @@ namespace MWSound
             // Look up the sound in the ESM data
             float basevol = volumeFromType(type);
             float min, max;
-            std::string file = lookup(soundId, volume, min, max);
+            std::string file = ESM4::isFormId(soundId) ?  lookupForeign(soundId, volume, min, max) :
+                                                          lookup(soundId, volume, min, max);
             const ESM::Position &pos = ptr.getRefData().getPosition();
             const Ogre::Vector3 objpos(pos.pos);
 
