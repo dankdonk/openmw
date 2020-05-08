@@ -59,9 +59,9 @@ namespace MWSound
 
         std::string lookup(const std::string &soundId,
                   float &volume, float &min, float &max);
-        std::string ::lookupForeign(const std::string &soundId,
+        std::string lookupForeign(const std::string &soundId,
                   float &volume, float &min, float &max);
-        void streamMusicFull(const std::string& filename/*, PlayMode mode=Play_NoEnv*/);
+        void streamMusicFull(const std::string& filename);
         bool isPlaying(const MWWorld::Ptr &ptr, const std::string &id) const;
         void updateSounds(float duration);
         void updateRegionSound(float duration);
@@ -91,6 +91,8 @@ namespace MWSound
         virtual void streamMusic(const std::string& filename);
         ///< Play a soundifle
         /// \param filename name of a sound file in "Music/" in the data directory.
+
+        virtual void streamMediaSet(ESM4::FormId msetId);
 
         virtual void startRandomTitle();
         ///< Starts a random track from the current playlist

@@ -5,6 +5,8 @@
 #include <set>
 #include <boost/shared_ptr.hpp>
 
+#include <extern/esm4/formid.hpp>
+
 #include "../mwworld/ptr.hpp"
 
 namespace Ogre
@@ -80,6 +82,8 @@ namespace MWBase
             virtual void streamMusic(const std::string& filename) = 0;
             ///< Play a soundifle
             /// \param filename name of a sound file in "Music/" in the data directory.
+
+            virtual void streamMediaSet(ESM4::FormId msetId) = 0;
 
             virtual void startRandomTitle() = 0;
             ///< Starts a random track from the current playlist

@@ -72,6 +72,9 @@ namespace MWWorld
 
             void getGridCenter(int& cellX, int& cellY);
 
+            std::string mCurrentAmbientSoundId;
+            MWBase::SoundPtr mCurrentAmbientSound;
+
         public:
 
             Scene (MWRender::RenderingManager& rendering, PhysicsSystem *physics);

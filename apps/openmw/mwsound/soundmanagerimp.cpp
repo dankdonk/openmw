@@ -3,6 +3,7 @@
 #include <iostream>
 #include <algorithm>
 #include <map>
+#include <cmath> // fmod
 
 #include <OgreResourceGroupManager.h>
 
@@ -167,6 +168,7 @@ namespace MWSound
 
     std::string SoundManager::lookupForeign(const std::string &soundId, float &volume, float &min, float &max)
     {
+        MWBase::World* world = MWBase::Environment::get().getWorld();
         const MWWorld::ForeignStore<ESM4::Sound>& soundStore = world->getStore().getForeign<ESM4::Sound>();
         // FIXME: TES5 FormId 0003C816
         const ESM4::Sound *snd = soundStore.search(ESM4::stringToFormId(soundId));
@@ -175,7 +177,8 @@ namespace MWSound
 
         // 1454, 0.199526 if integer division by 100 (discards remainder so a little louder)
         // 1454, 0.187499 if floating point division by 100.f
-        std::cout << snd->mData.staticAttenuation << ", " << volume << std::endl; // FIXME
+        //std::cout << snd->mData.staticAttenuation << ", " << volume << std::endl; // FIXME
+        std::cout << "sound volume " << volume << std::endl; // FIXME
 
         if(snd->mData.minAttenuation == 0 && snd->mData.maxAttenuation == 0)
         {
@@ -188,8 +191,8 @@ namespace MWSound
         }
         else
         {
-            min = snd->mData.minAttenuation * 5;
-            max = snd->mData.maxAttenuation * 100;
+            min = float(snd->mData.minAttenuation * 5);
+            max = float(snd->mData.maxAttenuation * 100);
         }
 
         static const float fAudioMinDistanceMult
@@ -211,8 +214,8 @@ namespace MWSound
             if (!Ogre::ResourceGroupManager::getSingleton().resourceExistsInAnyGroup("sound\\"+soundFile) &&
                 soundFile.find(".wav") != std::string::npos)
             {
-                std::cout << "FONV: acoustic space interior loop sound "
-                    << soundFile.substr(0, pos)<<".ogg" << std::endl; // FIXME
+                //std::cout << "FONV: acoustic space interior loop sound "
+                    //<< soundFile.substr(0, pos)<<".ogg" << std::endl; // FIXME
 
                 return "Sound\\"+soundFile.substr(0, pos)+".ogg";
             }
@@ -284,7 +287,7 @@ namespace MWSound
         mMusic.reset();
     }
 
-    void SoundManager::streamMusicFull(const std::string& filename/*, PlayMode mode*/)
+    void SoundManager::streamMusicFull(const std::string& filename)
     {
         if(!mOutput->isInitialized())
             return;
@@ -298,7 +301,7 @@ namespace MWSound
             decoder->open(filename);
 
             mMusic = mOutput->streamSound(decoder, volumeFromType(Play_TypeMusic),
-                                          1.0f, /*mode*/Play_NoEnv|Play_TypeMusic);
+                                          1.0f, Play_NoEnv|Play_TypeMusic);
         }
         catch(std::exception &e)
         {
@@ -308,12 +311,165 @@ namespace MWSound
 
     void SoundManager::streamMusic(const std::string& filename)
     {
-        // HACK: quick workaround to avoid changing the interface
-        // FIXME: not sure why looping is not allowed by OpenAL_Output::streamSound()
-        if (filename.find("songs\\") != std::string::npos)
-            streamMusicFull("Sound\\"+filename/*, Play_LoopNoEnv*/);
-        else
-            streamMusicFull("Music/"+filename);
+        streamMusicFull("Music/"+filename);
+    }
+
+    // FIXME: looping option is not supported, need to implement a workaround
+    // activity 0 = explore, 1 = suspence, 2 = battle start, 3 = battle end
+    //
+    // boundary probably means the ALOC (per cell?) - so % from cell center to edge?
+    void SoundManager::streamMediaSet(ESM4::FormId msetId/*, int activity*/)
+    {
+        if(!mOutput->isInitialized())
+            return;
+
+        MWBase::World* world = MWBase::Environment::get().getWorld();
+        const MWWorld::ForeignStore<ESM4::MediaSet>& store = world->getStore().getForeign<ESM4::MediaSet>();
+        const ESM4::MediaSet *mset = store.search(msetId);
+        if (!mset)
+            return;
+
+        float hour =  std::fmod(world->getTimeStamp().getHour(), 24);
+        float volume = 1.f;
+        std::string musicFile = "";
+        switch (mset->mSetType)
+        {
+            case 0: // battle
+            {
+                // wait time = mset->mTime1
+                // loop fade out = mset->mTime2
+                // recovery time = mset->mTime3
+                //
+                // loop battle = mset->mSet2
+                //
+                // loop db = mset->mLevel8
+                //
+                // intro sound = mset->mSoundIntro
+                // outro sound = mset->mSoundOutro
+                std::cout << "MSET battle not yet supported" << std::endl;
+                break;
+            }
+            case 1: // location
+            {
+                // min time on = mset->mTime1
+                // cross fade overlap = mset->mTime2
+                // layer cross fade time = mset->mTime3
+                //
+                // 0x01 day outer,   0x02 day middle,   0x04 day inner
+                // 0x08 night outer, 0x10 night middle, 0x20 night inner
+                // enabled = mset->mEnabled
+                //
+                // mset->mBoundaryDayOuter;
+                // mset->mBoundaryDayMiddle;
+                // mset->mBoundaryDayInner;
+                // mset->mBoundaryNightOuter;
+                // mset->mBoundaryNightMiddle;
+                // mset->mBoundaryNightInner;
+                //
+                // day outer = mset->mSet2
+                // day middle = mset->mSet3
+                // day inner = mset->mSet4
+                // night outer = mset->mSet5
+                // night middle = mset->mSet6
+                // night inner = mset->mSet7
+                //
+                // day outer db = mset->mLevel8
+                // day middle db = mset->mLevel9
+                // day inner db = mset->mLevel0
+                // night outer db = mset->mLevelA
+                // night middle db = mset->mLevelB
+                // night inner db = mset->mLevelC
+                if (hour >= 6 || hour <= 23 ) // default daytime 6:00 - 23:54
+                {
+                    volume = static_cast<float>(pow(10.0, mset->mLevel8 / 20.f));
+                    std::cout << "mset volume " << volume << std::endl; // FIXME
+                    if ((mset->mEnabled & 0x01) != 0)
+                    {
+                        musicFile = "music\\"+mset->mSet2;
+                    }
+                    //else will throw due to musicFile == ""
+
+                    // FIXME: support boundary distance
+                }
+                else
+                {
+                    volume = static_cast<float>(pow(10.0, mset->mLevelA / 20.f));
+                    std::cout << "mset volume " << volume << std::endl; // FIXME
+                    if ((mset->mEnabled & 0x08) != 0)
+                    {
+                        musicFile = "music\\"+mset->mSet5;
+                    }
+                    //else will throw due to musicFile == ""
+
+                    // FIXME: support boundary distance
+                }
+
+                break;
+            }
+            case 2: // dungeon
+            {
+                // min time on = mset->mTime1
+                // cross fade overlap = mset->mTime2
+                // layer cross fade time = mset->mTime3
+                //
+                // battle = mset->mSet2
+                // explore = mset->mSet3
+                // suspense = mset->mSet4
+                //
+                // battle db = mset->mLevel8
+                // explore db = mset->mLevel9
+                // suspense db = mset->mLevel0
+                //
+                // intro sound = mset->mSoundIntro
+                // outro sound = mset->mSoundOutro
+                volume = static_cast<float>(pow(10.0, mset->mLevel9 / 20.f));
+                std::cout << "mset volume " << volume << std::endl; // FIXME
+                musicFile = "music\\"+mset->mSet3;
+                std::cout << "MSET dungeon only using explore w/o intro/outro" << std::endl;
+
+                break;
+            }
+            case 3: // incidental
+            {
+                // day time min = mset->mTime1
+                // night time min = mset->mTime2
+                // day time max = mset->mTime3
+                // night time max = mset->mTime4
+                //
+                // daytime = mset->mSoundIntro
+                // nighttime = mset->mSoundOutro
+                std::cout << "MSET incidental not yet supported" << std::endl;
+                break;
+            }
+            case -1: // none
+                return;
+            default:
+                break;
+        }
+
+        if (musicFile == mLastPlayedMusic)
+        {
+            std::cout << "MSET continuing old music" << std::endl;
+            return;
+        }
+
+        std::cout << "Playing Media Set " << musicFile << std::endl;
+        mLastPlayedMusic = musicFile;
+        try
+        {
+            stopMusic();
+
+            DecoderPtr decoder = getDecoder();
+            decoder->open(musicFile);
+
+            // FIXME: not sure why looping is not allowed by OpenAL_Output::streamSound()
+            mMusic = mOutput->streamSound(decoder, volume*volumeFromType(Play_TypeMusic),
+                                          1.0f, /*Play_LoopNoEnv*/Play_NoEnv|Play_TypeMusic);
+        }
+        catch(std::exception &e)
+        {
+            std::cout << "Media Set Music Error: " << e.what() << "\n";
+        }
     }
 
     void SoundManager::startRandomTitle()

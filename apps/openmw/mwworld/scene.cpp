@@ -1199,24 +1199,24 @@ namespace MWWorld
                            /*sets == 4*/  aloc->mLocationSets)));
 
                     std::cout << "FONV: location sets size " << mediaSets.size() << std::endl;
-                    ESM4::FormId mediaSet = 0;
+                    ESM4::FormId mediaSetId = 0;
                     if (mediaSets.size() > 1)
                     {
                         size_t i = Misc::Rng::rollDice(int(mediaSets.size()));
 
-                        mediaSet = mediaSets[i];
+                        mediaSetId = mediaSets[i];
                     }
                     else if (mediaSets.size() == 1)
-                        mediaSet = mediaSets[0];
+                        mediaSetId = mediaSets[0];
 
-                    const ESM4::MediaSet *mset = store.getForeign<ESM4::MediaSet>().search(mediaSet);
+                    const ESM4::MediaSet *mset = store.getForeign<ESM4::MediaSet>().search(mediaSetId);
                     if (mset)
                     {
                         std::uint8_t enabled = mset->mEnabled;
                         std::bitset<8> bb(enabled);
                         std::cout << "FONV: location media set " << mset->mEditorId
                             << " type " << mset->mSetType << " enabled " << bb << std::endl;
-                        MWBase::Environment::get().getSoundManager()->streamMusic(mset->mSet2);
+                        MWBase::Environment::get().getSoundManager()->streamMediaSet(mediaSetId);
 
                         ESM4::FormId aspcId
                             = static_cast<const MWWorld::ForeignCell*>(cell->getCell())->mCell->mAcousticSpace;
@@ -1228,11 +1228,27 @@ namespace MWWorld
                             const ESM4::Sound *sound = store.getForeign<ESM4::Sound>().search(soundId);
                             if (sound)
                             {
-                                // play new music
-                                std::cout << "FONV: location interior music " << sound->mSoundFile << std::endl;
-                                MWBase::Environment::get().getSoundManager()->playSound(sound->mSoundFile, 1.f, 1.f,
-                                        MWBase::SoundManager::Play_TypeMusic,
-                                        MWBase::SoundManager::Play_Loop);
+                                // play new ambient sound
+                                std::string ambientSoundId = ESM4::formIdToString(soundId);
+                                if (ambientSoundId != mCurrentAmbientSoundId)
+                                {
+                                    if (mCurrentAmbientSoundId != "")
+                                        MWBase::Environment::get().getSoundManager()->stopSound(mCurrentAmbientSound);
+
+                                    mCurrentAmbientSound =
+                                        MWBase::Environment::get().getSoundManager()->playSound(
+                                            ambientSoundId, 1.f, 1.f,
+                                            MWBase::SoundManager::Play_TypeMusic,
+                                            MWBase::SoundManager::Play_Loop);
+
+                                    mCurrentAmbientSoundId = ambientSoundId;
+
+                                    std::cout << "Playing Acoustic Space ambient loop sound "
+                                        << sound->mSoundFile << std::endl; // FIXME
+                                }
+                                else
+                                    std::cout << "Acoustic Space continuing old ambient loop sound"
+                                        << std::endl; // FIXME
                             }
                         }
                     }
