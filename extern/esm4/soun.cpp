@@ -57,6 +57,12 @@ void ESM4::Sound::load(ESM4::Reader& reader)
             case ESM4::SUB_FNAM: reader.getZString(mSoundFile); break;
             case ESM4::SUB_SNDX: reader.get(mData); break;
             case ESM4::SUB_SNDD:
+            {
+                reader.get(mData);
+                reader.get(mExtra);
+
+                break;
+            }
             case ESM4::SUB_OBND: // TES5 only
             case ESM4::SUB_SDSC: // TES5 only
             case ESM4::SUB_ANAM: // FO3

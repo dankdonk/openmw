@@ -54,15 +54,28 @@ namespace ESM4
 #pragma pack(push, 1)
         struct SNDX
         {
-            std::uint8_t  minAttenuation;
-            std::uint8_t  maxAttenuation;
+            std::uint8_t  minAttenuation; // distance?
+            std::uint8_t  maxAttenuation; // distance?
             std::int8_t   freqAdjustment; // %, signed
-            std::uint8_t  unknown;
+            std::uint8_t  unknown; // probably padding
             std::uint16_t flags;
-            std::uint16_t unknown2;
+            std::uint16_t unknown2; // probably padding
             std::uint16_t staticAttenuation; // divide by 100 to get value in dB
             std::uint8_t  stopTime;  // multipy vy 1440/256 to get value in minutes
             std::uint8_t  startTime; // multipy vy 1440/256 to get value in minutes
+        };
+
+        struct SoundData
+        {
+            std::int16_t attenuationPoint1;
+            std::int16_t attenuationPoint2;
+            std::int16_t attenuationPoint3;
+            std::int16_t attenuationPoint4;
+            std::int16_t attenuationPoint5;
+            std::int16_t reverbAttenuationControl;
+            std::int32_t priority;
+            std::int32_t x;
+            std::int32_t y;
         };
 #pragma pack(pop)
 
@@ -73,6 +86,7 @@ namespace ESM4
 
         std::string mSoundFile;
         SNDX mData;
+        SoundData mExtra;
 
         Sound();
         virtual ~Sound();

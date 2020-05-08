@@ -4,6 +4,8 @@
 #include <algorithm>
 #include <map>
 
+#include <OgreResourceGroupManager.h>
+
 #include <components/misc/rng.hpp>
 #include <components/misc/stringops.hpp>
 
@@ -136,83 +138,103 @@ namespace MWSound
                        float &volume, float &min, float &max)
     {
         MWBase::World* world = MWBase::Environment::get().getWorld();
-        if (ESM4::isFormId(soundId))
+        const ESM::Sound *snd = world->getStore().get<ESM::Sound>().find(soundId);
+
+        volume *= static_cast<float>(pow(10.0, (snd->mData.mVolume / 255.0*3348.0 - 3348.0) / 2000.0));
+
+        if(snd->mData.mMinRange == 0 && snd->mData.mMaxRange == 0)
         {
-            const MWWorld::ForeignStore<ESM4::Sound>& soundStore = world->getStore().getForeign<ESM4::Sound>();
-            const ESM4::Sound *snd = soundStore.search(ESM4::stringToFormId(soundId)); // FIXME: TES5 FormId 0003C816
-
-            volume *= static_cast<float>(pow(10.0, (snd->mData.staticAttenuation / 255.0*3348.0 - 3348.0) / 2000.0));
-
-            if(snd->mData.minAttenuation == 0 && snd->mData.maxAttenuation == 0)
-            {
-                static const float fAudioDefaultMinDistance = world->getStore().get<ESM::GameSetting>().find("fAudioDefaultMinDistance")->getFloat();
-                static const float fAudioDefaultMaxDistance = world->getStore().get<ESM::GameSetting>().find("fAudioDefaultMaxDistance")->getFloat();
-                min = fAudioDefaultMinDistance;
-                max = fAudioDefaultMaxDistance;
-            }
-            else
-            {
-                min = snd->mData.minAttenuation;
-                max = snd->mData.maxAttenuation;
-            }
-
-            static const float fAudioMinDistanceMult = world->getStore().get<ESM::GameSetting>().find("fAudioMinDistanceMult")->getFloat();
-            static const float fAudioMaxDistanceMult = world->getStore().get<ESM::GameSetting>().find("fAudioMaxDistanceMult")->getFloat();
-            min *= fAudioMinDistanceMult;
-            max *= fAudioMaxDistanceMult;
-            min = std::max(min, 1.0f);
-            max = std::max(min, max);
-
-            std::string soundFile = snd->mSoundFile;
-            // FO3 has weird file naming e.g. sound\fx\drs\metalsheet_01\close\drs_metalsheet_01_close.wav
-            if (soundFile.find('.') != std::string::npos)
-            {
-                return "Sound\\"+soundFile;
-            }
-            else
-            {
-                Ogre::StringVector filelist;
-                Ogre::StringVector& groups = mUseForeign ? mForeignMusicResourceGroups : mMusicResourceGroups;
-                for (Ogre::StringVector::iterator it = groups.begin(); it != groups.end(); ++it)
-                {
-                    Ogre::StringVectorPtr filesInThisGroup
-                        = mResourceMgr.findResourceNames(*it, "Sound\\"+soundFile+"*");
-                    filelist.insert(filelist.end(), filesInThisGroup->begin(), filesInThisGroup->end());
-                }
-
-                if(!filelist.size())
-                    return "";
-
-                int i = Misc::Rng::rollDice(int(filelist.size()));
-                return filelist[i];
-            }
+            static const float fAudioDefaultMinDistance = world->getStore().get<ESM::GameSetting>().find("fAudioDefaultMinDistance")->getFloat();
+            static const float fAudioDefaultMaxDistance = world->getStore().get<ESM::GameSetting>().find("fAudioDefaultMaxDistance")->getFloat();
+            min = fAudioDefaultMinDistance;
+            max = fAudioDefaultMaxDistance;
         }
         else
         {
-            const ESM::Sound *snd = world->getStore().get<ESM::Sound>().find(soundId);
-            volume *= static_cast<float>(pow(10.0, (snd->mData.mVolume / 255.0*3348.0 - 3348.0) / 2000.0));
+            min = snd->mData.mMinRange;
+            max = snd->mData.mMaxRange;
+        }
 
-            if(snd->mData.mMinRange == 0 && snd->mData.mMaxRange == 0)
+        static const float fAudioMinDistanceMult = world->getStore().get<ESM::GameSetting>().find("fAudioMinDistanceMult")->getFloat();
+        static const float fAudioMaxDistanceMult = world->getStore().get<ESM::GameSetting>().find("fAudioMaxDistanceMult")->getFloat();
+        min *= fAudioMinDistanceMult;
+        max *= fAudioMaxDistanceMult;
+        min = std::max(min, 1.0f);
+        max = std::max(min, max);
+
+        return "Sound/"+snd->mSound;
+    }
+
+    std::string SoundManager::lookupForeign(const std::string &soundId, float &volume, float &min, float &max)
+    {
+        const MWWorld::ForeignStore<ESM4::Sound>& soundStore = world->getStore().getForeign<ESM4::Sound>();
+        // FIXME: TES5 FormId 0003C816
+        const ESM4::Sound *snd = soundStore.search(ESM4::stringToFormId(soundId));
+
+        volume *= static_cast<float>(pow(10.0, (-snd->mData.staticAttenuation / 100) / 20.f));
+
+        // 1454, 0.199526 if integer division by 100 (discards remainder so a little louder)
+        // 1454, 0.187499 if floating point division by 100.f
+        std::cout << snd->mData.staticAttenuation << ", " << volume << std::endl; // FIXME
+
+        if(snd->mData.minAttenuation == 0 && snd->mData.maxAttenuation == 0)
+        {
+            static const float fAudioDefaultMinDistance
+                = world->getStore().get<ESM::GameSetting>().find("fAudioDefaultMinDistance")->getFloat();
+            static const float fAudioDefaultMaxDistance
+                = world->getStore().get<ESM::GameSetting>().find("fAudioDefaultMaxDistance")->getFloat();
+            min = fAudioDefaultMinDistance;
+            max = fAudioDefaultMaxDistance;
+        }
+        else
+        {
+            min = snd->mData.minAttenuation * 5;
+            max = snd->mData.maxAttenuation * 100;
+        }
+
+        static const float fAudioMinDistanceMult
+            = world->getStore().get<ESM::GameSetting>().find("fAudioMinDistanceMult")->getFloat();
+        static const float fAudioMaxDistanceMult
+            = world->getStore().get<ESM::GameSetting>().find("fAudioMaxDistanceMult")->getFloat();
+        min *= fAudioMinDistanceMult;
+        max *= fAudioMaxDistanceMult;
+        min = std::max(min, 1.0f);
+        max = std::max(min, max);
+
+        std::string soundFile = snd->mSoundFile;
+        // FO3 has weird file naming e.g. sound\fx\drs\metalsheet_01\close\drs_metalsheet_01_close.wav
+        std::size_t pos = soundFile.find('.');
+        if (pos != std::string::npos)
+        {
+            // FIXME: hacky workaround to handle some files that are specified in
+            // FalloutNV.esm as ".wav" but only ".ogg" found in "Fallout - Sound.bsa"
+            if (!Ogre::ResourceGroupManager::getSingleton().resourceExistsInAnyGroup("sound\\"+soundFile) &&
+                soundFile.find(".wav") != std::string::npos)
             {
-                static const float fAudioDefaultMinDistance = world->getStore().get<ESM::GameSetting>().find("fAudioDefaultMinDistance")->getFloat();
-                static const float fAudioDefaultMaxDistance = world->getStore().get<ESM::GameSetting>().find("fAudioDefaultMaxDistance")->getFloat();
-                min = fAudioDefaultMinDistance;
-                max = fAudioDefaultMaxDistance;
+                std::cout << "FONV: acoustic space interior loop sound "
+                    << soundFile.substr(0, pos)<<".ogg" << std::endl; // FIXME
+
+                return "Sound\\"+soundFile.substr(0, pos)+".ogg";
             }
             else
+                return "Sound\\"+soundFile;
+        }
+        else
+        {
+            Ogre::StringVector filelist;
+            Ogre::StringVector& groups = mUseForeign ? mForeignMusicResourceGroups : mMusicResourceGroups;
+            for (Ogre::StringVector::iterator it = groups.begin(); it != groups.end(); ++it)
             {
-                min = snd->mData.mMinRange;
-                max = snd->mData.mMaxRange;
+                Ogre::StringVectorPtr filesInThisGroup
+                    = mResourceMgr.findResourceNames(*it, "Sound\\"+soundFile+"*");
+                filelist.insert(filelist.end(), filesInThisGroup->begin(), filesInThisGroup->end());
             }
 
-            static const float fAudioMinDistanceMult = world->getStore().get<ESM::GameSetting>().find("fAudioMinDistanceMult")->getFloat();
-            static const float fAudioMaxDistanceMult = world->getStore().get<ESM::GameSetting>().find("fAudioMaxDistanceMult")->getFloat();
-            min *= fAudioMinDistanceMult;
-            max *= fAudioMaxDistanceMult;
-            min = std::max(min, 1.0f);
-            max = std::max(min, max);
+            if(!filelist.size())
+                return "";
 
-            return "Sound/"+snd->mSound;
+            int i = Misc::Rng::rollDice(int(filelist.size()));
+            return filelist[i];
         }
     }
 
@@ -453,7 +475,8 @@ namespace MWSound
         {
             float basevol = volumeFromType(type);
             float min, max;
-            std::string file = lookup(soundId, volume, min, max);
+            std::string file = ESM4::isFormId(soundId) ?  lookupForeign(soundId, volume, min, max) :
+                                                          lookup(soundId, volume, min, max);
 
             sound = mOutput->playSound(file, volume, basevol, pitch, mode|type, offset);
             mActiveSounds[sound] = std::make_pair(MWWorld::Ptr(), soundId);
