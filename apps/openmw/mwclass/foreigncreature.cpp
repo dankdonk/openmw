@@ -33,8 +33,8 @@ namespace
         ForeignCreatureCustomData() : mPlaced(0) {}
         ~ForeignCreatureCustomData()
         {
-            if (mPlaced)
-                delete mPlaced;
+            //if (mPlaced)
+                //delete mPlaced; // FIXME: crash at exit
         }
 
         virtual MWWorld::CustomData *clone() const;

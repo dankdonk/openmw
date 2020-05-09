@@ -408,6 +408,7 @@ void ESMStore::loadTes4Record (ESM::ESMReader& esm)
             case ESM4::REC_WRLD:
             case ESM4::REC_CELL:
             case ESM4::REC_REGN:
+            case ESM4::REC_ROAD:
             case ESM4::REC_LAND: // can ignore, handled in CellStore
             case ESM4::REC_REFR:
             case ESM4::REC_ACHR:

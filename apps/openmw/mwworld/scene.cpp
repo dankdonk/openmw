@@ -599,6 +599,8 @@ namespace MWWorld
             else
                 currentWorldId = static_cast<const MWWorld::ForeignCell*>(mCurrentCell->getCell())->mCell->mFormId;
         }
+        else
+            MWBase::Environment::get().getSoundManager()->initForeign();
 
         CellStore* cell = MWBase::Environment::get().getWorld()->getWorldCell(worldId, X, Y);
         if (!cell) // FIXME

@@ -48,14 +48,22 @@ namespace MWWorld
     template<typename T>
     const T *ForeignStore<T>::search(const std::string &id) const
     {
-#ifdef DEBUG_FORMID
-        ESM4::FormId formId = 0;
-        if (ESM4::isFormId(id))
-            formId = ESM4::stringToFormId(id);
-#else
-        ESM4::FormId formId = ESM4::stringToFormId(id);
-#endif
-        return search(formId);
+        // FIXME: just loop through for now, will need to maintain two maps
+        typename Dynamic::const_iterator dit = mDynamic.begin();
+        for (; dit != mDynamic.end(); ++dit)
+        {
+            if (dit->second.mEditorId == id)
+                return &dit->second;
+        }
+
+        typename Static::const_iterator it = mStatic.begin();
+        for (; it != mStatic.end(); ++it)
+        {
+            if (it->second.mEditorId == id)
+                return &it->second;
+        }
+
+        return nullptr;
     }
 
     template<typename T>
