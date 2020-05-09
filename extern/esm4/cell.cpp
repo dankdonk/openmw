@@ -56,6 +56,8 @@ ESM4::Cell::Cell() : mParent(0), mFormId(0), mFlags(0), mCellFlags(0), mX(0), mY
     mLighting.fogDirFade = 0.f;
     mLighting.fogClipDist = 0.f;
     mLighting.fogPower = FLT_MAX; // hack way to detect TES4
+
+    mRegions.clear();
 }
 
 ESM4::Cell::~Cell()
