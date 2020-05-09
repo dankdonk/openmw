@@ -11,6 +11,7 @@
 #include <components/misc/stringops.hpp>
 
 #include <extern/esm4/formid.hpp>
+#include <extern/esm4/cell.hpp>
 
 #include "../mwbase/environment.hpp"
 #include "../mwbase/world.hpp"
@@ -18,6 +19,8 @@
 
 #include "../mwworld/esmstore.hpp"
 #include "../mwworld/cellstore.hpp"
+#include "../mwworld/foreigncell.hpp"
+
 #ifdef MKTAG /* ESM4 dragged in by esmstore.hpp and cellstore.hpp */
 #undef MKTAG
 #endif
@@ -49,6 +52,10 @@ namespace MWSound
         , mListenerDir(1,0,0)
         , mListenerUp(0,0,1)
         , mPausedSoundTypes(0)
+        , mTimeToNextEnvSound(0.f)
+        , mTotal(0.f)
+        , mTimePassed(0.f)
+        , mEnvSoundDuration(FLT_MAX)
         , mUseForeign(false)
     {
         if(!useSound)
@@ -178,7 +185,7 @@ namespace MWSound
         // 1454, 0.199526 if integer division by 100 (discards remainder so a little louder)
         // 1454, 0.187499 if floating point division by 100.f
         //std::cout << snd->mData.staticAttenuation << ", " << volume << std::endl; // FIXME
-        std::cout << "sound volume " << volume << std::endl; // FIXME
+        //std::cout << "sound volume " << volume << std::endl; // FIXME
 
         if(snd->mData.minAttenuation == 0 && snd->mData.maxAttenuation == 0)
         {
@@ -206,13 +213,14 @@ namespace MWSound
 
         std::string soundFile = snd->mSoundFile;
         // FO3 has weird file naming e.g. sound\fx\drs\metalsheet_01\close\drs_metalsheet_01_close.wav
+#if 1
         std::size_t pos = soundFile.find('.');
         if (pos != std::string::npos)
         {
             // FIXME: hacky workaround to handle some files that are specified in
             // FalloutNV.esm as ".wav" but only ".ogg" found in "Fallout - Sound.bsa"
-            if (!Ogre::ResourceGroupManager::getSingleton().resourceExistsInAnyGroup("sound\\"+soundFile) &&
-                soundFile.find(".wav") != std::string::npos)
+            if (soundFile.find(".wav") != std::string::npos &&
+                    !mResourceMgr.resourceExistsInAnyGroup("sound\\"+soundFile))
             {
                 //std::cout << "FONV: acoustic space interior loop sound "
                     //<< soundFile.substr(0, pos)<<".ogg" << std::endl; // FIXME
@@ -225,7 +233,7 @@ namespace MWSound
         else
         {
             Ogre::StringVector filelist;
-            Ogre::StringVector& groups = mUseForeign ? mForeignMusicResourceGroups : mMusicResourceGroups;
+            Ogre::StringVector& groups = mForeignMusicResourceGroups;
             for (Ogre::StringVector::iterator it = groups.begin(); it != groups.end(); ++it)
             {
                 Ogre::StringVectorPtr filesInThisGroup
@@ -239,6 +247,41 @@ namespace MWSound
             int i = Misc::Rng::rollDice(int(filelist.size()));
             return filelist[i];
         }
+#else
+        std::size_t pos = soundFile.find('.');
+        std::string searchPattern;
+        if (pos != std::string::npos)
+        {
+            // FIXME: hacky workaround to handle some files that are specified in
+            // FalloutNV.esm as ".wav" but only ".ogg" found in "Fallout - Sound.bsa"
+            if (soundFile.find(".wav") != std::string::npos)
+            {
+                //std::cout << "FONV: acoustic space interior loop sound "
+                    //<< soundFile.substr(0, pos)<<".ogg" << std::endl; // FIXME
+
+                searchPattern = "Sound\\"+soundFile.substr(0, pos)+"*";
+            }
+            else
+                return "Sound\\"+soundFile;
+        }
+        else
+            searchPattern ="Sound\\"+soundFile+"*";
+
+        Ogre::StringVector filelist;
+        Ogre::StringVector& groups = mForeignMusicResourceGroups;
+        for (Ogre::StringVector::iterator it = groups.begin(); it != groups.end(); ++it)
+        {
+            Ogre::StringVectorPtr filesInThisGroup
+                = mResourceMgr.findResourceNames(*it, searchPattern);
+            filelist.insert(filelist.end(), filesInThisGroup->begin(), filesInThisGroup->end());
+        }
+
+        if(!filelist.size())
+            return "";
+
+        int i = Misc::Rng::rollDice(int(filelist.size()));
+        return filelist[i];
+#endif
     }
 
     // Gets the combined volume settings for the given sound type
@@ -329,7 +372,7 @@ namespace MWSound
         if (!mset)
             return;
 
-        float hour =  std::fmod(world->getTimeStamp().getHour(), 24);
+        double hour =  std::fmod(world->getTimeStamp().getHour(), 24);
         float volume = 1.f;
         std::string musicFile = "";
         switch (mset->mSetType)
@@ -472,6 +515,11 @@ namespace MWSound
         }
     }
 
+    // TODO
+    void SoundManager::streamRadioSound(ESM4::FormId soundId)
+    {
+    }
+
     void SoundManager::startRandomTitle()
     {
         Ogre::StringVector filelist;
@@ -508,15 +556,43 @@ namespace MWSound
         return mMusic && mMusic->isPlaying();
     }
 
-    void SoundManager::playPlaylist(const std::string &playlist, bool foreign)
+    void SoundManager::playPlaylist(const std::string &playlist)
     {
-        if (foreign != mUseForeign) // flush old
-            mMusicFiles.clear();
-
-        mUseForeign = foreign;
-
         mCurrentPlaylist = playlist;
         startRandomTitle();
+    }
+
+    void SoundManager::initRegion()
+    {
+        if (!mUseForeign)
+            return;
+
+        // region sounds
+        mTimeToNextEnvSound = 0.f;
+        mTotal = 0.f;
+        mTimePassed = 0.f;
+
+        updateForeignRegionSound(-FLT_MAX);
+    }
+
+    void SoundManager::initForeign()
+    {
+        if (mUseForeign)
+            return;
+
+        // stop Morrwind music
+        stopMusic();
+
+        // flush old playlist
+        mMusicFiles.clear();
+
+        for (SoundMap::iterator iter(mActiveSounds.begin()); iter != mActiveSounds.end(); ++iter)
+        {
+            iter->first->stop();
+        }
+        mActiveSounds.clear();
+
+        mUseForeign = true;
     }
 
     void SoundManager::say(const MWWorld::Ptr &ptr, const std::string& filename)
@@ -880,6 +956,129 @@ namespace MWSound
         }
     }
 
+    void SoundManager::updateForeignRegionSound(float duration)
+    {
+        mTimePassed += duration;
+
+        if (mTimePassed >= mEnvSoundDuration)
+        {
+            stopSound(mEnvSound);
+            mEnvSoundDuration = FLT_MAX;
+        }
+
+        // FO3/FONV uses (audio) region sounds in interiors
+        if((mTimePassed < mTimeToNextEnvSound) && duration != -FLT_MAX)
+            return;
+
+        MWBase::World *world = MWBase::Environment::get().getWorld();
+        const MWWorld::Ptr player = world->getPlayerPtr();
+        const MWWorld::CellStore *newCell = player.getCell();
+        if (!newCell->isForeignCell()/* && duration != -FLT_MAX*/)
+            return; // shouldn't happen, but check just in case
+
+        float a = Misc::Rng::rollClosedProbability();
+        // NOTE: We should use the "Minimum Time Between Environmental Sounds" and
+        // "Maximum Time Between Environmental Sounds" fallback settings here.
+        mTimeToNextEnvSound = 5.0f*a + 15.0f*(1.0f-a);
+        mTimePassed = 0;
+
+        const MWWorld::ESMStore& store = world->getStore();
+
+        // cache retrieved data and update only if the cell changes
+        // (can't use regionName and takes too much processing to get audioRegion)
+        if (mCurrentCell != newCell)
+        {
+            const MWWorld::ForeignCell *foreignCell
+                = static_cast<const MWWorld::ForeignCell*>(newCell->getCell());
+
+            const ESM4::AcousticSpace *aspc
+                = store.getForeign<ESM4::AcousticSpace>().search(foreignCell->mCell->mAcousticSpace);
+            if (!aspc)
+                return; // FIXME: throw?
+#if 0
+            if (aspc->mIsInterior) // FIXME: exterior?
+            {
+                std::string soundId = ESM4::formIdToString(aspc->mAmbientLoopSounds[0]); // index 0 for interior
+
+                if (soundId != mCurrentIntAmbientLoop)
+                {
+                    stopSound(mCurrentIntAmbientLoop);
+                    mCurrentIntAmbientLoop = soundId;
+                    // FIXME: stop playing ambient sound to test issues
+                    //playSound(soundId, 1.f, 1.f, Play_TypeSfx, Play_Loop);
+                }
+            }
+#endif
+            mCurrentCell = newCell;
+
+            const ESM4::Region *audioRegion
+                = store.getForeign<ESM4::Region>().search(aspc->mSoundRegion);
+            if (!audioRegion || audioRegion->mData.type != ESM4::Region::RDAT_Sound)
+                return; // FIXME: throw?
+
+            if (mAudioRegion != audioRegion)
+            {
+                mAudioRegion = audioRegion;
+                mTotal = 0;
+            }
+        }
+
+        const std::vector<ESM4::Region::RegionSound> sounds = mAudioRegion->mSounds;
+        if (mTotal == 0.f)
+        {
+            for (std::size_t i = 0; i < sounds.size(); ++i)
+                mTotal += (int)sounds[i].chance;
+
+            if (mTotal == 0.f)
+                return;
+        }
+
+        int r = Misc::Rng::rollDice((int)mTotal);
+        int pos = 0;
+
+        for (std::size_t i = 0; i < sounds.size(); ++i)
+        {
+            //std::cout << r - pos << " " << int(sounds[i].chance) << std::endl;
+            // chance values seen in AudioIntTopsRooms region
+            // 0x00030d40 = 200000
+            // 0x000493e0 = 300000
+            // 0x00061a80 = 400000
+            if (r - pos < int(sounds[i].chance))
+            {
+                const ESM4::Sound *sound = store.getForeign<ESM4::Sound>().search(sounds[i].sound);
+                if (sound)
+                {
+                    float offsetPercent = 0.f;
+                    if (sound->mData.startTime)
+                    {
+                        // TODO: how to get % of total for 'offset'?  is this correct?
+                        offsetPercent = sound->mData.stopTime / 256.f;
+                        //std::cout << "sound start " << sound->mData.startTime/256.f << std::endl; // FIXME
+                    }
+
+                    if (sound->mData.stopTime)
+                    {
+                        mEnvSoundDuration = sound->mData.stopTime / 256.f;
+                        //std::cout << "sound stop " << sound->mData.stopTime/256.f << std::endl; // FIXME
+                    }
+
+                    PlayMode mode
+                        = ((sound->mData.flags & ESM4::Sound::Flag_Loop) != 0) ?  Play_Loop : Play_Normal;
+
+                    std::string envSoundId = ESM4::formIdToString(sounds[i].sound);
+                    mEnvSound = playSound(envSoundId, 1.f, 1.0f, Play_TypeSfx, mode, offsetPercent);
+
+                    mActiveSounds[mEnvSound] = std::make_pair(MWWorld::Ptr(), envSoundId);
+
+                    //std::cout << "Acoustic Space region sound " << sound->mSoundFile << std::endl; // FIXME
+
+                    break;
+                }
+            }
+            pos += sounds[i].chance;
+        }
+    }
+
     void SoundManager::updateSounds(float duration)
     {
         static float timePassed = 0.0;
@@ -963,7 +1162,10 @@ namespace MWSound
             MWBase::StateManager::State_NoGame)
         {
             updateSounds(duration);
-            updateRegionSound(duration);
+            if (mUseForeign)
+                updateForeignRegionSound(duration);
+            else
+                updateRegionSound(duration);
         }
     }
 

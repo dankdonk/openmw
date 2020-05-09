@@ -4154,7 +4154,7 @@ Not sure how to deal with this one. A quick look through the code seems to indic
 
 Refactored ESMStore and ForeignStore (still a work in progress).
 
-# [07/05/2020] NVRadio
+# [07/05/2020 - 08/05/2020] NVRadio
 
 Going back to decyphering the logic.
 
@@ -4176,7 +4176,11 @@ If so the logic should be:
   * If there are radio stations (i.e. the ones with RNAM) see if there are running quests looking for a matching condition (which should be all of the ones with "Start Game Enabled" flag, probably all the radio ones).
   * If there is a match, look for "RadioHello" topic for the radio quest.
 
-# [08/05/2020] World Dummy Cell design
+**FIXME:** SoundManager crash at exit
+**FIXME:** Momentary stutter (i.e. low FPS) when env sound is played
+**TODO:** env sound start point - not sure if the supplied value is the % of the length
+
+# [09/05/2020] World Dummy Cell design
 
 **NOTE: the interaction diagrams from [31/03/2020 - 02/04/2020] are now outdated**
 

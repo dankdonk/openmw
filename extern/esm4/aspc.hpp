@@ -49,7 +49,7 @@ namespace ESM4
 
         // 0 Dawn (5:00 start), 1 Afternoon (8:00), 2 Dusk (18:00), 3 Night (20:00)
         std::vector<FormId> mAmbientLoopSounds;
-        FormId mRegionSound;
+        FormId mSoundRegion;
 
         std::uint32_t mIsInterior; // if true only use mAmbientLoopSounds[0]
 

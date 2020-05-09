@@ -816,7 +816,7 @@ const CachedSound& OpenAL_Output::getBuffer(const std::string &fname)
     mBufferCacheMemSize += bufsize;
 
     // NOTE: Max buffer cache: 15MB
-    while(mBufferCacheMemSize > 15*1024*1024)
+    while(mBufferCacheMemSize > 60*1024*1024) // increased for FONV
     {
         if(mUnusedBuffers.empty())
         {

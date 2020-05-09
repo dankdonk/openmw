@@ -61,8 +61,8 @@ namespace ESM4
             std::uint16_t flags;
             std::uint16_t unknown2; // probably padding
             std::uint16_t staticAttenuation; // divide by 100 to get value in dB
-            std::uint8_t  stopTime;  // multipy vy 1440/256 to get value in minutes
-            std::uint8_t  startTime; // multipy vy 1440/256 to get value in minutes
+            std::uint8_t  stopTime;  // multiply by 1440/256 to get value in minutes
+            std::uint8_t  startTime; // multiply by 1440/256 to get value in minutes
         };
 
         struct SoundData

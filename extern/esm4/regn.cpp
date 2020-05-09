@@ -44,8 +44,6 @@ ESM4::Region::Region() : mFormId(0), mFlags(0), mWorldId(0), mEdgeFalloff(0)
     mEditorId.clear();
     mShader.clear();
     mMapName.clear();
-    //mData.unknown = 1; // FIXME: temp use to indicate not loaded
-    mData.resize(8);
 }
 
 ESM4::Region::~Region()
@@ -57,8 +55,6 @@ void ESM4::Region::load(ESM4::Reader& reader)
     mFormId = reader.hdr().record.id;
     reader.adjustFormId(mFormId);
     mFlags  = reader.hdr().record.flags;
-
-    RDAT_Types next = RDAT_None;
 
     while (reader.getSubRecordHeader())
     {
@@ -85,24 +81,10 @@ void ESM4::Region::load(ESM4::Reader& reader)
 
                 break;
             }
-            case ESM4::SUB_RDAT:
-            {
-                RDAT rdat;
-                reader.get(rdat);
-
-                next = static_cast<RDAT_Types>(rdat.type);
-
-                mData[rdat.type].type = rdat.type;
-                mData[rdat.type].flag = rdat.flag;
-                mData[rdat.type].priority = rdat.priority;
-                mData[rdat.type].unknown = rdat.unknown;
-
-                break;
-            }
+            case ESM4::SUB_RDAT: reader.get(mData); break;
             case ESM4::SUB_RDMP:
             {
-                assert(next == RDAT_Map && "REGN unexpected data type");
-                next = RDAT_None;
+                assert(mData.type == RDAT_Map && "REGN unexpected data type");
 
                 if (reader.hasLocalizedStrings())
                     reader.getLocalizedString(mMapName);
@@ -130,8 +112,21 @@ void ESM4::Region::load(ESM4::Reader& reader)
                 reader.skipSubRecordData();
                 break;
             }
-            case ESM4::SUB_RDGS: // Only in Oblivion? (ToddTestRegion1) // formId
             case ESM4::SUB_RDSD: // Possibly the same as RDSA
+            {
+                //assert(mData.type == RDAT_Map && "REGN unexpected data type");
+                if (mData.type != RDAT_Sound)
+                    throw std::runtime_error("ESM4::REGN::load - unexpected data type " +
+                                              ESM4::printName(subHdr.typeId));
+
+                std::size_t numSounds = subHdr.dataSize / sizeof(RegionSound);
+                mSounds.resize(numSounds);
+                for (std::size_t i = 0; i < numSounds; ++i)
+                    reader.get(mSounds.at(i));
+
+                break;
+            }
+            case ESM4::SUB_RDGS: // Only in Oblivion? (ToddTestRegion1) // formId
             case ESM4::SUB_RDSA:
             case ESM4::SUB_RDWT: // formId
             case ESM4::SUB_RDOT: // formId

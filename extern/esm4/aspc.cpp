@@ -29,12 +29,10 @@
 #include <stdexcept>
 //#include <iostream> // FIXME: for debugging only
 
-//#include "formid.hpp" // FIXME:
-
 #include "reader.hpp"
 //#include "writer.hpp"
 
-ESM4::AcousticSpace::AcousticSpace() : mFormId(0), mFlags(0), mEnvironmentType(0), mRegionSound(0),
+ESM4::AcousticSpace::AcousticSpace() : mFormId(0), mFlags(0), mEnvironmentType(0), mSoundRegion(0),
     mIsInterior(0)
 {
     mEditorId.clear();
@@ -64,7 +62,7 @@ void ESM4::AcousticSpace::load(ESM4::Reader& reader)
                 mAmbientLoopSounds.push_back(id);
                 break;
             }
-            case ESM4::SUB_RDAT: reader.getFormId(mRegionSound); break;
+            case ESM4::SUB_RDAT: reader.getFormId(mSoundRegion); break;
             case ESM4::SUB_INAM: reader.get(mIsInterior); break;
             case ESM4::SUB_WNAM: // usually 0 for FONV (maybe # of close Actors for Walla to trigger)
             {

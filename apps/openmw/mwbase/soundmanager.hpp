@@ -83,7 +83,8 @@ namespace MWBase
             ///< Play a soundifle
             /// \param filename name of a sound file in "Music/" in the data directory.
 
-            virtual void streamMediaSet(ESM4::FormId msetId) = 0;
+            virtual void streamMediaSet(ESM4::FormId msetId) {/*default does nothing*/}
+            virtual void streamRadioSound(ESM4::FormId soundId) {/*default does nothing*/}
 
             virtual void startRandomTitle() = 0;
             ///< Starts a random track from the current playlist
@@ -91,7 +92,7 @@ namespace MWBase
             virtual bool isMusicPlaying() = 0;
             ///< Returns true if music is playing
 
-            virtual void playPlaylist(const std::string &playlist, bool foreign = false) = 0;
+            virtual void playPlaylist(const std::string &playlist) = 0;
             ///< Start playing music from the selected folder
             /// \param name of the folder that contains the playlist
 
@@ -171,6 +172,9 @@ namespace MWBase
             virtual void updatePtr (const MWWorld::Ptr& old, const MWWorld::Ptr& updated) = 0;
 
             virtual void clear() = 0;
+
+            virtual void initForeign() {/*default does nothing*/}
+            virtual void initRegion() {/*default does nothing*/}
     };
 }
 

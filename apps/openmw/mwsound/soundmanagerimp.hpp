@@ -14,6 +14,16 @@
 
 #include "../mwbase/soundmanager.hpp"
 
+namespace ESM4
+{
+    struct Region;
+}
+
+namespace MWWorld
+{
+    class CellStore;
+}
+
 namespace MWSound
 {
     class Sound_Output;
@@ -44,6 +54,8 @@ namespace MWSound
         boost::shared_ptr<Sound> mMusic;
         std::string mCurrentPlaylist;
 
+        const MWWorld::CellStore *mCurrentCell;
+        const ESM4::Region *mAudioRegion;
         typedef std::pair<MWWorld::Ptr,std::string> PtrIDPair;
         typedef std::map<MWBase::SoundPtr,PtrIDPair> SoundMap;
         SoundMap mActiveSounds;
@@ -65,6 +77,13 @@ namespace MWSound
         bool isPlaying(const MWWorld::Ptr &ptr, const std::string &id) const;
         void updateSounds(float duration);
         void updateRegionSound(float duration);
+        void updateForeignRegionSound(float duration);
+
+        float mTimeToNextEnvSound;
+        float mTotal;
+        float mTimePassed;
+        float mEnvSoundDuration;
+        MWBase::SoundPtr mEnvSound;
 
         float volumeFromType(PlayType type) const;
 
@@ -93,6 +112,7 @@ namespace MWSound
         /// \param filename name of a sound file in "Music/" in the data directory.
 
         virtual void streamMediaSet(ESM4::FormId msetId);
+        virtual void streamRadioSound(ESM4::FormId soundId);
 
         virtual void startRandomTitle();
         ///< Starts a random track from the current playlist
@@ -100,7 +120,7 @@ namespace MWSound
         virtual bool isMusicPlaying();
         ///< Returns true if music is playing
 
-        virtual void playPlaylist(const std::string &playlist, bool foreign = false);
+        virtual void playPlaylist(const std::string &playlist);
         ///< Start playing music from the selected folder
         /// \param name of the folder that contains the playlist
 
@@ -180,6 +200,9 @@ namespace MWSound
         virtual void updatePtr (const MWWorld::Ptr& old, const MWWorld::Ptr& updated);
 
         virtual void clear();
+
+        virtual void initForeign();
+        virtual void initRegion();
     };
 }
 

@@ -73,7 +73,9 @@ namespace MWWorld
             void getGridCenter(int& cellX, int& cellY);
 
             std::string mCurrentAmbientSoundId;
+            std::string mCurrentRadioSoundId;
             MWBase::SoundPtr mCurrentAmbientSound;
+            MWBase::SoundPtr mCurrentRadioSound;
 
         public:
 
