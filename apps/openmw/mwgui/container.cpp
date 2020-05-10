@@ -3,6 +3,8 @@
 #include <MyGUI_InputManager.h>
 #include <MyGUI_Button.h>
 
+#include <extern/esm4/cont.hpp> // for close sound
+
 #include "../mwbase/environment.hpp"
 #include "../mwbase/world.hpp"
 #include "../mwbase/soundmanager.hpp"
@@ -200,6 +202,17 @@ namespace MWGui
 
     void ContainerWindow::exit()
     {
+        if (mPtr.getTypeName() == typeid(ESM4::Container).name())
+        {
+            MWWorld::LiveCellRef<ESM4::Container> *ref = mPtr.get<ESM4::Container>();
+
+            const ESM4::FormId closeSoundId = ref->mBase->mCloseSound;
+            std::string closeSound = ESM4::formIdToString(closeSoundId);
+            // FIXME: if the sound is long the window does not close from "space" key
+            if (closeSoundId)
+                MWBase::Environment::get().getSoundManager()->playSound (closeSound, 1.f, 1.f);
+        }
+
         if(mDragAndDrop == NULL || !mDragAndDrop->mIsOnDragAndDrop)
         {
             MWBase::Environment::get().getWindowManager()->removeGuiMode(GM_Container);

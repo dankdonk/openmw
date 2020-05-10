@@ -11,6 +11,7 @@
 #include "../mwworld/ptr.hpp"
 #include "../mwworld/physicssystem.hpp"
 #include "../mwworld/cellstore.hpp"
+#include "../mwworld/esmstore.hpp"
 #include "../mwworld/action.hpp"
 #include "../mwworld/actionapply.hpp"
 
@@ -41,36 +42,11 @@ namespace MWClass
             physics.addObject(ptr, model);
     }
 
-    std::string ForeignPotion::getModel(const MWWorld::Ptr &ptr) const
-    {
-        MWWorld::LiveCellRef<ESM4::Potion> *ref = ptr.get<ESM4::Potion>();
-        assert(ref->mBase != NULL);
-
-        const std::string &model = ref->mBase->mModel;
-        if (!model.empty()) {
-            return "meshes\\" + model;
-        }
-        return "";
-    }
-
     std::string ForeignPotion::getName (const MWWorld::Ptr& ptr) const
     {
         MWWorld::LiveCellRef<ESM4::Potion> *ref = ptr.get<ESM4::Potion>();
 
         return ref->mBase->mFullName;
-    }
-
-    boost::shared_ptr<MWWorld::Action> ForeignPotion::activate (const MWWorld::Ptr& ptr,
-        const MWWorld::Ptr& actor) const
-    {
-        return defaultItemActivate(ptr, actor);
-    }
-
-    void ForeignPotion::registerSelf()
-    {
-        boost::shared_ptr<Class> instance (new ForeignPotion);
-
-        registerClass (typeid (ESM4::Potion).name(), instance);
     }
 
     bool ForeignPotion::hasToolTip (const MWWorld::Ptr& ptr) const
@@ -122,6 +98,12 @@ namespace MWClass
         return info;
     }
 
+    boost::shared_ptr<MWWorld::Action> ForeignPotion::activate (const MWWorld::Ptr& ptr,
+        const MWWorld::Ptr& actor) const
+    {
+        return defaultItemActivate(ptr, actor);
+    }
+
     boost::shared_ptr<MWWorld::Action> ForeignPotion::use (const MWWorld::Ptr& ptr) const
     {
         MWWorld::LiveCellRef<ESM4::Potion> *ref = ptr.get<ESM4::Potion>();
@@ -134,10 +116,96 @@ namespace MWClass
         return action;
     }
 
+    int ForeignPotion::getValue (const MWWorld::Ptr& ptr) const
+    {
+        MWWorld::LiveCellRef<ESM4::Potion> *ref = ptr.get<ESM4::Potion>();
+
+        int value = ref->mBase->mItem.value;
+        if (ptr.getCellRef().getGoldValue() > 1 && ptr.getRefData().getCount() == 1)
+            value = ptr.getCellRef().getGoldValue();
+
+        return value;
+    }
+
+    std::string ForeignPotion::getUpSoundId (const MWWorld::Ptr& ptr) const
+    {
+        MWWorld::LiveCellRef<ESM4::Potion> *ref = ptr.get<ESM4::Potion>();
+        if (ref->mBase->mPickUpSound)
+            return ESM4::formIdToString(ref->mBase->mPickUpSound); // FONV
+        else
+        {
+            // FIXME: another way to get the sound formid?
+            const MWWorld::ESMStore& store = MWBase::Environment::get().getWorld()->getStore();
+            const ESM4::Sound *sound = store.getForeign<ESM4::Sound>().search("ITMPotionUp"); // TES4
+            if (sound)
+                return ESM4::formIdToString(sound->mFormId);
+            else
+            {
+                sound = store.getForeign<ESM4::Sound>().search("ITMBottleUp"); // FO3?
+                if (sound)
+                    return ESM4::formIdToString(sound->mFormId);
+            }
+        }
+
+        return "";
+    }
+
+    std::string ForeignPotion::getDownSoundId (const MWWorld::Ptr& ptr) const
+    {
+        MWWorld::LiveCellRef<ESM4::Potion> *ref = ptr.get<ESM4::Potion>();
+        if (ref->mBase->mDropSound)
+            return ESM4::formIdToString(ref->mBase->mDropSound); // FONV
+        else
+        {
+            // FIXME: another way to get the sound formid?
+            const MWWorld::ESMStore& store = MWBase::Environment::get().getWorld()->getStore();
+            const ESM4::Sound *sound = store.getForeign<ESM4::Sound>().search("ITMPotionDown"); // TES4
+            if (sound)
+                return ESM4::formIdToString(sound->mFormId);
+            else
+            {
+                sound = store.getForeign<ESM4::Sound>().search("ITMBottleDown"); // FO3?
+                if (sound)
+                    return ESM4::formIdToString(sound->mFormId);
+            }
+        }
+
+        return "";
+    }
+
+    std::string ForeignPotion::getInventoryIcon (const MWWorld::Ptr& ptr) const
+    {
+        MWWorld::LiveCellRef<ESM4::Potion> *ref = ptr.get<ESM4::Potion>();
+
+        if (ref->mBase->mMiniIcon != "")
+            return ref->mBase->mMiniIcon;
+        else
+            return ref->mBase->mIcon;
+    }
+
+    std::string ForeignPotion::getModel(const MWWorld::Ptr &ptr) const
+    {
+        MWWorld::LiveCellRef<ESM4::Potion> *ref = ptr.get<ESM4::Potion>();
+        assert(ref->mBase != NULL);
+
+        const std::string &model = ref->mBase->mModel;
+        if (!model.empty()) {
+            return "meshes\\" + model;
+        }
+        return "";
+    }
+
     MWWorld::Ptr ForeignPotion::copyToCellImpl(const MWWorld::Ptr &ptr, MWWorld::CellStore &cell) const
     {
         MWWorld::LiveCellRef<ESM4::Potion> *ref = ptr.get<ESM4::Potion>();
 
         return MWWorld::Ptr(&cell.get<ESM4::Potion>().insert(*ref), &cell);
+    }
+
+    void ForeignPotion::registerSelf()
+    {
+        boost::shared_ptr<Class> instance (new ForeignPotion);
+
+        registerClass (typeid (ESM4::Potion).name(), instance);
     }
 }

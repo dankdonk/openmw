@@ -23,17 +23,25 @@ namespace MWClass
 
             virtual MWGui::ToolTipInfo getToolTipInfo (const MWWorld::Ptr& ptr) const;
 
+            virtual boost::shared_ptr<MWWorld::Action> activate (const MWWorld::Ptr& ptr, const MWWorld::Ptr& actor) const;
+
             virtual std::pair<std::vector<int>, bool> getEquipmentSlots (const MWWorld::Ptr& ptr) const;
 
             virtual int getValue (const MWWorld::Ptr& ptr) const;
 
+            virtual std::string getUpSoundId (const MWWorld::Ptr& ptr) const;
+
+            virtual std::string getDownSoundId (const MWWorld::Ptr& ptr) const;
+
             virtual float getArmorRating (const MWWorld::Ptr& ptr) const;
 
-            static void registerSelf();
+            virtual std::string getInventoryIcon (const MWWorld::Ptr& ptr) const;
+
+            virtual std::string getModel(const MWWorld::Ptr &ptr) const;
 
             virtual std::pair<int, std::string> canBeEquipped(const MWWorld::Ptr &ptr, const MWWorld::Ptr &npc) const;
 
-            virtual std::string getModel(const MWWorld::Ptr &ptr) const;
+            static void registerSelf();
     };
 }
 

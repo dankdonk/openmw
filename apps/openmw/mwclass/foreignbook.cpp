@@ -2,8 +2,6 @@
 
 #include <extern/esm4/book.hpp>
 
-#include "../mwgui/tooltips.hpp"
-
 #include "../mwbase/environment.hpp"
 #include "../mwbase/world.hpp"
 #include "../mwbase/windowmanager.hpp"
@@ -11,9 +9,13 @@
 #include "../mwworld/ptr.hpp"
 #include "../mwworld/physicssystem.hpp"
 #include "../mwworld/cellstore.hpp"
+#include "../mwworld/esmstore.hpp"
+#include "../mwworld/action.hpp"
 
 #include "../mwrender/objects.hpp"
 #include "../mwrender/renderinginterface.hpp"
+
+#include "../mwgui/tooltips.hpp"
 
 namespace MWClass
 {
@@ -37,42 +39,24 @@ namespace MWClass
             physics.addObject(ptr, model);
     }
 
-    std::string ForeignBook::getModel(const MWWorld::Ptr &ptr) const
-    {
-        MWWorld::LiveCellRef<ESM4::Book> *ref = ptr.get<ESM4::Book>();
-        assert(ref->mBase != NULL);
-
-        const std::string &model = ref->mBase->mModel;
-        if (!model.empty()) {
-            return "meshes\\" + model;
-        }
-        return "";
-    }
-
     std::string ForeignBook::getName (const MWWorld::Ptr& ptr) const
     {
-        return "";
-    }
-
-    void ForeignBook::registerSelf()
-    {
-        boost::shared_ptr<Class> instance (new ForeignBook);
-
-        registerClass (typeid (ESM4::Book).name(), instance);
-    }
-
-    MWWorld::Ptr ForeignBook::copyToCellImpl(const MWWorld::Ptr &ptr, MWWorld::CellStore &cell) const
-    {
         MWWorld::LiveCellRef<ESM4::Book> *ref = ptr.get<ESM4::Book>();
 
-        return MWWorld::Ptr(&cell.get<ESM4::Book>().insert(*ref), &cell);
+        if (ref->mBase->mFullName != "")
+            return ref->mBase->mFullName;
+        else
+            return ref->mBase->mEditorId; // FO3 BookGeneric
     }
 
     bool ForeignBook::hasToolTip (const MWWorld::Ptr& ptr) const
     {
         MWWorld::LiveCellRef<ESM4::Book> *ref = ptr.get<ESM4::Book>();
 
-        return (ref->mBase->mFullName != "");
+        if (ref->mBase->mFullName != "")
+            return true;
+        else
+            return (ref->mBase->mEditorId != ""); // FO3 BookGeneric
     }
 
     MWGui::ToolTipInfo ForeignBook::getToolTipInfo (const MWWorld::Ptr& ptr) const
@@ -98,5 +82,109 @@ namespace MWClass
         info.text = text;
 
         return info;
+    }
+
+    boost::shared_ptr<MWWorld::Action> ForeignBook::activate (const MWWorld::Ptr& ptr,
+            const MWWorld::Ptr& actor) const
+    {
+        return defaultItemActivate(ptr, actor);
+    }
+
+    int ForeignBook::getValue (const MWWorld::Ptr& ptr) const
+    {
+        MWWorld::LiveCellRef<ESM4::Book> *ref = ptr.get<ESM4::Book>();
+
+        int value = ref->mBase->mData.value;
+        if (ptr.getCellRef().getGoldValue() > 1 && ptr.getRefData().getCount() == 1)
+            value = ptr.getCellRef().getGoldValue();
+
+        return value;
+    }
+
+    std::string ForeignBook::getUpSoundId (const MWWorld::Ptr& ptr) const
+    {
+        MWWorld::LiveCellRef<ESM4::Book> *ref = ptr.get<ESM4::Book>();
+        if (ref->mBase->mPickUpSound)
+            return ESM4::formIdToString(ref->mBase->mPickUpSound);
+        else
+        {
+            // FIXME: another way to get the sound formid?
+            // FIXME: how to differentiate scroll?
+            const MWWorld::ESMStore& store = MWBase::Environment::get().getWorld()->getStore();
+            const ESM4::Sound *sound = store.getForeign<ESM4::Sound>().search("ITMBookUp"); // TES4
+            if (sound)
+                return ESM4::formIdToString(sound->mFormId);
+            else
+            {
+                sound = store.getForeign<ESM4::Sound>().search("UIItemGenericUp"); // FO3?
+                if (sound)
+                    return ESM4::formIdToString(sound->mFormId);
+            }
+        }
+
+        return "";
+    }
+
+    std::string ForeignBook::getDownSoundId (const MWWorld::Ptr& ptr) const
+    {
+        MWWorld::LiveCellRef<ESM4::Book> *ref = ptr.get<ESM4::Book>();
+        if (ref->mBase->mDropSound)
+            return ESM4::formIdToString(ref->mBase->mDropSound);
+        else
+        {
+            // FIXME: another way to get the sound formid?
+            // FIXME: how to differentiate scroll?
+            const MWWorld::ESMStore& store = MWBase::Environment::get().getWorld()->getStore();
+            const ESM4::Sound *sound = store.getForeign<ESM4::Sound>().search("ITMBookDown"); // TES4
+            if (sound)
+                return ESM4::formIdToString(sound->mFormId);
+            else
+            {
+                sound = store.getForeign<ESM4::Sound>().search("UIItemGenericDown"); // FO3?
+                if (sound)
+                    return ESM4::formIdToString(sound->mFormId);
+            }
+        }
+
+        return "";
+    }
+
+    std::string ForeignBook::getInventoryIcon (const MWWorld::Ptr& ptr) const
+    {
+        MWWorld::LiveCellRef<ESM4::Book> *ref = ptr.get<ESM4::Book>();
+
+        if (ref->mBase->mIcon == "")
+        {
+            //std::cout << "Book ICON missing, using junk " << ref->mBase->mEditorId << std::endl; // FIXME
+            return "interface\\icons\\pipboyimages\\items\\item_junk.dds"; // FIXME: FO3
+        }
+
+        return ref->mBase->mIcon;
+    }
+
+    std::string ForeignBook::getModel(const MWWorld::Ptr &ptr) const
+    {
+        MWWorld::LiveCellRef<ESM4::Book> *ref = ptr.get<ESM4::Book>();
+        assert(ref->mBase != NULL);
+
+        const std::string &model = ref->mBase->mModel;
+        if (!model.empty()) {
+            return "meshes\\" + model;
+        }
+        return "";
+    }
+
+    void ForeignBook::registerSelf()
+    {
+        boost::shared_ptr<Class> instance (new ForeignBook);
+
+        registerClass (typeid (ESM4::Book).name(), instance);
+    }
+
+    MWWorld::Ptr ForeignBook::copyToCellImpl(const MWWorld::Ptr &ptr, MWWorld::CellStore &cell) const
+    {
+        MWWorld::LiveCellRef<ESM4::Book> *ref = ptr.get<ESM4::Book>();
+
+        return MWWorld::Ptr(&cell.get<ESM4::Book>().insert(*ref), &cell);
     }
 }

@@ -11,6 +11,8 @@
 #include "../mwworld/ptr.hpp"
 #include "../mwworld/physicssystem.hpp"
 #include "../mwworld/cellstore.hpp"
+#include "../mwworld/esmstore.hpp"
+#include "../mwworld/action.hpp"
 #include "../mwworld/inventorystoretes4.hpp"
 
 #include "../mwrender/objects.hpp"
@@ -93,6 +95,12 @@ namespace MWClass
         return info;
     }
 
+    boost::shared_ptr<MWWorld::Action> ForeignWeapon::activate (const MWWorld::Ptr& ptr,
+            const MWWorld::Ptr& actor) const
+    {
+        return defaultItemActivate(ptr, actor);
+    }
+
     std::pair<std::vector<int>, bool> ForeignWeapon::getEquipmentSlots (const MWWorld::Ptr& ptr) const
     {
         MWWorld::LiveCellRef<ESM4::Weapon> *ref = ptr.get<ESM4::Weapon>();
@@ -120,11 +128,6 @@ namespace MWClass
         return std::make_pair (slots_, stack);
     }
 
-    std::pair<int, std::string> ForeignWeapon::canBeEquipped(const MWWorld::Ptr &ptr, const MWWorld::Ptr &npc) const
-    {
-        return std::make_pair(1,""); // FIXME: for testing alway equip
-    }
-
     int ForeignWeapon::getValue (const MWWorld::Ptr& ptr) const
     {
         MWWorld::LiveCellRef<ESM4::Weapon> *ref =
@@ -135,6 +138,57 @@ namespace MWClass
             value = ptr.getCellRef().getGoldValue();
 
         return value;
+    }
+
+    std::string ForeignWeapon::getUpSoundId (const MWWorld::Ptr& ptr) const
+    {
+        MWWorld::LiveCellRef<ESM4::Weapon> *ref = ptr.get<ESM4::Weapon>();
+        if (ref->mBase->mPickUpSound)
+            return ESM4::formIdToString(ref->mBase->mDropSound); // FONV
+        else
+        {
+            // FIXME: another way to get the sound formid?
+            // FIXME: how to differentiate other weapon types?
+            const MWWorld::ESMStore& store = MWBase::Environment::get().getWorld()->getStore();
+            const ESM4::Sound *sound = store.getForeign<ESM4::Sound>().search("ITMWeaponBladeUp"); // TES4
+            if (sound)
+                return ESM4::formIdToString(sound->mFormId);
+        }
+
+        return "";
+    }
+
+    std::string ForeignWeapon::getDownSoundId (const MWWorld::Ptr& ptr) const
+    {
+        MWWorld::LiveCellRef<ESM4::Weapon> *ref = ptr.get<ESM4::Weapon>();
+        if (ref->mBase->mDropSound)
+            return ESM4::formIdToString(ref->mBase->mDropSound); // FONV
+        else
+        {
+            // FIXME: another way to get the sound formid?
+            // FIXME: how to differentiate other weapon types?
+            const MWWorld::ESMStore& store = MWBase::Environment::get().getWorld()->getStore();
+            const ESM4::Sound *sound = store.getForeign<ESM4::Sound>().search("ITMWeaponBladeDown"); // TES4
+            if (sound)
+                return ESM4::formIdToString(sound->mFormId);
+        }
+
+        return "";
+    }
+
+    std::string ForeignWeapon::getInventoryIcon (const MWWorld::Ptr& ptr) const
+    {
+        MWWorld::LiveCellRef<ESM4::Weapon> *ref = ptr.get<ESM4::Weapon>();
+
+        if (ref->mBase->mMiniIcon != "")
+            return ref->mBase->mMiniIcon;
+        else
+            return ref->mBase->mIcon;
+    }
+
+    std::pair<int, std::string> ForeignWeapon::canBeEquipped(const MWWorld::Ptr &ptr, const MWWorld::Ptr &npc) const
+    {
+        return std::make_pair(1,""); // FIXME: for testing always equip
     }
 
     void ForeignWeapon::registerSelf()

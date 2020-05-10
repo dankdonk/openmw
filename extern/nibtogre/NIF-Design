@@ -4176,11 +4176,32 @@ If so the logic should be:
   * If there are radio stations (i.e. the ones with RNAM) see if there are running quests looking for a matching condition (which should be all of the ones with "Start Game Enabled" flag, probably all the radio ones).
   * If there is a match, look for "RadioHello" topic for the radio quest.
 
+# [09/05/2020] Region sounds
+
 **FIXME:** SoundManager crash at exit
 **FIXME:** Momentary stutter (i.e. low FPS) when env sound is played
+**FIXME:** TES4 external cells env sounds
+
 **TODO:** env sound start point - not sure if the supplied value is the % of the length
 
-# [09/05/2020] World Dummy Cell design
+# [10/05/2020] Containers and sound effects
+
+To get containers to work with the Morrowind UI, we need a few methods to be implemented in addition to the usual:
+
+```cpp
+    virtual int getValue (const MWWorld::Ptr& ptr) const;
+    virtual std::string getUpSoundId (const MWWorld::Ptr& ptr) const;
+    virtual std::string getDownSoundId (const MWWorld::Ptr& ptr) const;
+    virtual std::string getInventoryIcon (const MWWorld::Ptr& ptr) const;
+```
+
+For picking up objects in TES4, had to hard-code editor id's to choose the sound formid.  Not sure how else to get the correct sound.
+
+FO3 container sounds are specified as text keys in the NIF models. **FIXME**
+
+FONV seems to specify the open/close sounds for some (e.g. cash register) but need to fallback to checking text keys for others (e.g. filing cabinets).
+
+# [11/05/2020] World Dummy Cell design
 
 **NOTE: the interaction diagrams from [31/03/2020 - 02/04/2020] are now outdated**
 

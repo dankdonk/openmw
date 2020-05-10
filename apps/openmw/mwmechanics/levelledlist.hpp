@@ -173,8 +173,9 @@ namespace MWMechanics
             else
             {
 //#if 0
+                // FO3 COC "SuperDuperMart" sometime spawns BookGeneric05, etc
                 if (ref.getPtr().getTypeName() == typeid(ESM4::Book).name())
-                    std::cout << ref.getPtr().get<ESM4::Book>()->mBase->mEditorId << std::endl; // FIXME:
+                    std::cout << "leveled book " << ref.getPtr().get<ESM4::Book>()->mBase->mEditorId << std::endl; // FIXME:
 //#endif
                 ids.push_back(itemId);
             }

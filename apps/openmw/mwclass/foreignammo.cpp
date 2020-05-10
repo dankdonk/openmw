@@ -9,6 +9,8 @@
 #include "../mwworld/ptr.hpp"
 #include "../mwworld/physicssystem.hpp"
 #include "../mwworld/cellstore.hpp"
+#include "../mwworld/esmstore.hpp"
+#include "../mwworld/action.hpp"
 
 #include "../mwrender/objects.hpp"
 #include "../mwrender/renderinginterface.hpp"
@@ -37,30 +39,11 @@ namespace MWClass
             physics.addObject(ptr, model);
     }
 
-    std::string ForeignAmmo::getModel(const MWWorld::Ptr &ptr) const
-    {
-        MWWorld::LiveCellRef<ESM4::Ammo> *ref = ptr.get<ESM4::Ammo>();
-        assert(ref->mBase != NULL);
-
-        const std::string &model = ref->mBase->mModel;
-        if (!model.empty()) {
-            return "meshes\\" + model;
-        }
-        return "";
-    }
-
     std::string ForeignAmmo::getName (const MWWorld::Ptr& ptr) const
     {
         MWWorld::LiveCellRef<ESM4::Ammo> *ref = ptr.get<ESM4::Ammo>();
 
         return ref->mBase->mFullName;
-    }
-
-    void ForeignAmmo::registerSelf()
-    {
-        boost::shared_ptr<Class> instance (new ForeignAmmo);
-
-        registerClass (typeid (ESM4::Ammo).name(), instance);
     }
 
     bool ForeignAmmo::hasToolTip (const MWWorld::Ptr& ptr) const
@@ -90,6 +73,98 @@ namespace MWClass
         info.text = text;
 
         return info;
+    }
+
+    boost::shared_ptr<MWWorld::Action> ForeignAmmo::activate (const MWWorld::Ptr& ptr,
+            const MWWorld::Ptr& actor) const
+    {
+        return defaultItemActivate(ptr, actor);
+    }
+
+    int ForeignAmmo::getValue (const MWWorld::Ptr& ptr) const
+    {
+        MWWorld::LiveCellRef<ESM4::Ammo> *ref = ptr.get<ESM4::Ammo>();
+
+        int value = ref->mBase->mData.value;
+        if (ptr.getCellRef().getGoldValue() > 1 && ptr.getRefData().getCount() == 1)
+            value = ptr.getCellRef().getGoldValue();
+
+        return value;
+    }
+
+    std::string ForeignAmmo::getUpSoundId (const MWWorld::Ptr& ptr) const
+    {
+        MWWorld::LiveCellRef<ESM4::Ammo> *ref = ptr.get<ESM4::Ammo>();
+        if (ref->mBase->mPickUpSound)
+            return ESM4::formIdToString(ref->mBase->mPickUpSound); // FONV
+        else
+        {
+            // FIXME: another way to get the sound formid?
+            const MWWorld::ESMStore& store = MWBase::Environment::get().getWorld()->getStore();
+            const ESM4::Sound *sound = store.getForeign<ESM4::Sound>().search("ITMAmmoUp"); // TES4
+            if (sound)
+                return ESM4::formIdToString(sound->mFormId);
+            else
+            {
+                sound = store.getForeign<ESM4::Sound>().search("ITMAmmunitionUp"); // FO3?
+                if (sound)
+                    return ESM4::formIdToString(sound->mFormId);
+            }
+        }
+
+        return "";
+    }
+
+    std::string ForeignAmmo::getDownSoundId (const MWWorld::Ptr& ptr) const
+    {
+        MWWorld::LiveCellRef<ESM4::Ammo> *ref = ptr.get<ESM4::Ammo>();
+        if (ref->mBase->mDropSound)
+            return ESM4::formIdToString(ref->mBase->mDropSound); // FONV
+        else
+        {
+            // FIXME: another way to get the sound formid?
+            const MWWorld::ESMStore& store = MWBase::Environment::get().getWorld()->getStore();
+            const ESM4::Sound *sound = store.getForeign<ESM4::Sound>().search("ITMAmmoDown"); // TES4
+            if (sound)
+                return ESM4::formIdToString(sound->mFormId);
+            else
+            {
+                sound = store.getForeign<ESM4::Sound>().search("ITMAmmunitionDown"); // FO3?
+                if (sound)
+                    return ESM4::formIdToString(sound->mFormId);
+            }
+        }
+
+        return "";
+    }
+
+    std::string ForeignAmmo::getInventoryIcon (const MWWorld::Ptr& ptr) const
+    {
+        MWWorld::LiveCellRef<ESM4::Ammo> *ref = ptr.get<ESM4::Ammo>();
+
+        if (ref->mBase->mMiniIcon != "")
+            return ref->mBase->mMiniIcon;
+        else
+            return ref->mBase->mIcon;
+    }
+
+    std::string ForeignAmmo::getModel(const MWWorld::Ptr &ptr) const
+    {
+        MWWorld::LiveCellRef<ESM4::Ammo> *ref = ptr.get<ESM4::Ammo>();
+        assert(ref->mBase != NULL);
+
+        const std::string &model = ref->mBase->mModel;
+        if (!model.empty()) {
+            return "meshes\\" + model;
+        }
+        return "";
+    }
+
+    void ForeignAmmo::registerSelf()
+    {
+        boost::shared_ptr<Class> instance (new ForeignAmmo);
+
+        registerClass (typeid (ESM4::Ammo).name(), instance);
     }
 
     MWWorld::Ptr ForeignAmmo::copyToCellImpl(const MWWorld::Ptr &ptr, MWWorld::CellStore &cell) const

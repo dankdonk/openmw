@@ -2,8 +2,6 @@
 
 #include <extern/esm4/clot.hpp>
 
-#include "../mwgui/tooltips.hpp"
-
 #include "../mwbase/environment.hpp"
 #include "../mwbase/world.hpp"
 #include "../mwbase/windowmanager.hpp"
@@ -13,10 +11,14 @@
 #include "../mwworld/ptr.hpp"
 #include "../mwworld/physicssystem.hpp"
 #include "../mwworld/cellstore.hpp"
+#include "../mwworld/esmstore.hpp"
+#include "../mwworld/action.hpp"
 #include "../mwworld/inventorystoretes4.hpp"
 
 #include "../mwrender/objects.hpp"
 #include "../mwrender/renderinginterface.hpp"
+
+#include "../mwgui/tooltips.hpp"
 
 namespace MWClass
 {
@@ -119,6 +121,12 @@ namespace MWClass
         return info;
     }
 
+    boost::shared_ptr<MWWorld::Action> ForeignClothing::activate (const MWWorld::Ptr& ptr,
+            const MWWorld::Ptr& actor) const
+    {
+        return defaultItemActivate(ptr, actor);
+    }
+
     std::pair<std::vector<int>, bool> ForeignClothing::getEquipmentSlots (const MWWorld::Ptr& ptr) const
     {
         MWWorld::LiveCellRef<ESM4::Clothing> *ref = ptr.get<ESM4::Clothing>();
@@ -160,16 +168,42 @@ namespace MWClass
         return value;
     }
 
-    float ForeignClothing::getArmorRating (const MWWorld::Ptr& ptr) const
+    std::string ForeignClothing::getUpSoundId (const MWWorld::Ptr& ptr) const
     {
-        return 0;
+        // FIXME: another way to get the sound formid?
+        // FIXME: how to differentiate ring/amulet/etc?
+        const MWWorld::ESMStore& store = MWBase::Environment::get().getWorld()->getStore();
+        const ESM4::Sound *sound = store.getForeign<ESM4::Sound>().search("ITMClothingUp");
+        if (sound)
+            return ESM4::formIdToString(sound->mFormId);
+
+        return "";
     }
 
-    void ForeignClothing::registerSelf()
+    std::string ForeignClothing::getDownSoundId (const MWWorld::Ptr& ptr) const
     {
-        boost::shared_ptr<Class> instance (new ForeignClothing);
+        // FIXME: another way to get the sound formid?
+        // FIXME: how to differentiate ring/amulet/etc?
+        const MWWorld::ESMStore& store = MWBase::Environment::get().getWorld()->getStore();
+        const ESM4::Sound *sound = store.getForeign<ESM4::Sound>().search("ITMClothingDown");
+        if (sound)
+            return ESM4::formIdToString(sound->mFormId);
 
-        registerClass (typeid (ESM4::Clothing).name(), instance);
+        return "";
+    }
+
+    float ForeignClothing::getArmorRating (const MWWorld::Ptr& ptr) const
+    {
+        MWWorld::LiveCellRef<ESM4::Clothing> *ref = ptr.get<ESM4::Clothing>();
+
+        return 0.f; // FIXME ref->mBase->mData.armor / 100.f;
+    }
+
+    std::string ForeignClothing::getInventoryIcon (const MWWorld::Ptr& ptr) const
+    {
+        MWWorld::LiveCellRef<ESM4::Clothing> *ref = ptr.get<ESM4::Clothing>();
+
+        return ref->mBase->mIconMale; // FIXME: is there a way to check if female?
     }
 
     std::pair<int, std::string> ForeignClothing::canBeEquipped(const MWWorld::Ptr &ptr, const MWWorld::Ptr &npc) const
@@ -208,5 +242,12 @@ namespace MWClass
         MWWorld::LiveCellRef<ESM4::Clothing> *ref = ptr.get<ESM4::Clothing>();
 
         return MWWorld::Ptr(&cell.get<ESM4::Clothing>().insert(*ref), &cell);
+    }
+
+    void ForeignClothing::registerSelf()
+    {
+        boost::shared_ptr<Class> instance (new ForeignClothing);
+
+        registerClass (typeid (ESM4::Clothing).name(), instance);
     }
 }

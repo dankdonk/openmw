@@ -33,7 +33,8 @@
 //#include "writer.hpp"
 
 ESM4::Armor::Armor() : mFormId(0), mFlags(0), mIsTES4(false), mIsFO3(false), mIsFONV(false),
-                       mBoundRadius(0.f), mArmorFlags(0), mGeneralFlags(0), mARMA(0)
+                       mPickUpSound(0), mDropSound(0), mBoundRadius(0.f),
+                       mArmorFlags(0), mGeneralFlags(0), mARMA(0)
 {
     mEditorId.clear();
     mFullName.clear();
@@ -43,7 +44,9 @@ ESM4::Armor::Armor() : mFormId(0), mFlags(0), mIsTES4(false), mIsFO3(false), mIs
     mModelFemaleWorld.clear();
     mText.clear();
     mIconMale.clear();
+    mMiniIconMale.clear();
     mIconFemale.clear();
+    mMiniIconFemale.clear();
 
     mData.armor = 0;
     mData.value = 0;
@@ -120,7 +123,9 @@ void ESM4::Armor::load(ESM4::Reader& reader)
             case ESM4::SUB_MOD3: reader.getZString(mModelFemale); break;
             case ESM4::SUB_MOD4: reader.getZString(mModelFemaleWorld); break;
             case ESM4::SUB_ICON: reader.getZString(mIconMale);   break;
+            case ESM4::SUB_MICO: reader.getZString(mMiniIconMale);   break;
             case ESM4::SUB_ICO2: reader.getZString(mIconFemale); break;
+            case ESM4::SUB_MIC2: reader.getZString(mMiniIconFemale); break;
             case ESM4::SUB_BMDT:
             {
                 if (subHdr.dataSize == 8) // FO3
@@ -177,6 +182,8 @@ void ESM4::Armor::load(ESM4::Reader& reader)
 
                 break;
             }
+            case ESM4::SUB_YNAM: reader.getFormId(mPickUpSound); break;
+            case ESM4::SUB_ZNAM: reader.getFormId(mDropSound); break;
             case ESM4::SUB_MODT:
             case ESM4::SUB_MO2B:
             case ESM4::SUB_MO3B:
@@ -187,8 +194,6 @@ void ESM4::Armor::load(ESM4::Reader& reader)
             case ESM4::SUB_MO4T:
             case ESM4::SUB_MO4S:
             case ESM4::SUB_OBND:
-            case ESM4::SUB_YNAM:
-            case ESM4::SUB_ZNAM:
             case ESM4::SUB_RNAM:
             case ESM4::SUB_KSIZ:
             case ESM4::SUB_KWDA:
@@ -198,8 +203,6 @@ void ESM4::Armor::load(ESM4::Reader& reader)
             case ESM4::SUB_BIDS:
             case ESM4::SUB_ETYP:
             case ESM4::SUB_BMCT:
-            case ESM4::SUB_MICO:
-            case ESM4::SUB_MIC2:
             case ESM4::SUB_EAMT:
             case ESM4::SUB_EITM:
             case ESM4::SUB_VMAD:

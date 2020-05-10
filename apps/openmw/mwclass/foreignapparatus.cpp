@@ -9,6 +9,8 @@
 #include "../mwworld/ptr.hpp"
 #include "../mwworld/physicssystem.hpp"
 #include "../mwworld/cellstore.hpp"
+#include "../mwworld/esmstore.hpp"
+#include "../mwworld/action.hpp"
 
 #include "../mwrender/objects.hpp"
 #include "../mwrender/renderinginterface.hpp"
@@ -35,18 +37,6 @@ namespace MWClass
     {
         if(!model.empty())
             physics.addObject(ptr, model);
-    }
-
-    std::string ForeignApparatus::getModel(const MWWorld::Ptr &ptr) const
-    {
-        MWWorld::LiveCellRef<ESM4::Apparatus> *ref = ptr.get<ESM4::Apparatus>();
-        assert(ref->mBase != NULL);
-
-        const std::string &model = ref->mBase->mModel;
-        if (!model.empty()) {
-            return "meshes\\" + model;
-        }
-        return "";
     }
 
     std::string ForeignApparatus::getName (const MWWorld::Ptr& ptr) const
@@ -92,6 +82,12 @@ namespace MWClass
         return info;
     }
 
+    boost::shared_ptr<MWWorld::Action> ForeignApparatus::activate (const MWWorld::Ptr& ptr,
+            const MWWorld::Ptr& actor) const
+    {
+        return defaultItemActivate(ptr, actor);
+    }
+
     int ForeignApparatus::getValue (const MWWorld::Ptr& ptr) const
     {
         MWWorld::LiveCellRef<ESM4::Apparatus> *ref = ptr.get<ESM4::Apparatus>();
@@ -101,6 +97,47 @@ namespace MWClass
             value = ptr.getCellRef().getGoldValue();
 
         return value;
+    }
+
+    std::string ForeignApparatus::getUpSoundId (const MWWorld::Ptr& ptr) const
+    {
+        // FIXME: another way to get the sound formid?
+        const MWWorld::ESMStore& store = MWBase::Environment::get().getWorld()->getStore();
+        const ESM4::Sound *sound = store.getForeign<ESM4::Sound>().search("ITMApparatusUp");
+        if (sound)
+            return ESM4::formIdToString(sound->mFormId);
+        else
+            return "";
+    }
+
+    std::string ForeignApparatus::getDownSoundId (const MWWorld::Ptr& ptr) const
+    {
+        // FIXME: another way to get the sound formid?
+        const MWWorld::ESMStore& store = MWBase::Environment::get().getWorld()->getStore();
+        const ESM4::Sound *sound = store.getForeign<ESM4::Sound>().search("ITMApparatusDown");
+        if (sound)
+            return ESM4::formIdToString(sound->mFormId);
+        else
+            return "";
+    }
+
+    std::string ForeignApparatus::getInventoryIcon (const MWWorld::Ptr& ptr) const
+    {
+        MWWorld::LiveCellRef<ESM4::Apparatus> *ref = ptr.get<ESM4::Apparatus>();
+
+        return ref->mBase->mIcon;
+    }
+
+    std::string ForeignApparatus::getModel(const MWWorld::Ptr &ptr) const
+    {
+        MWWorld::LiveCellRef<ESM4::Apparatus> *ref = ptr.get<ESM4::Apparatus>();
+        assert(ref->mBase != NULL);
+
+        const std::string &model = ref->mBase->mModel;
+        if (!model.empty()) {
+            return "meshes\\" + model;
+        }
+        return "";
     }
 
     void ForeignApparatus::registerSelf()

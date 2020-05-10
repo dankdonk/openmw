@@ -85,6 +85,7 @@ MWWorld::ManualRef::ManualRef(const MWWorld::ESMStore& store, const std::string&
             case ESM4::REC_LVLN: create(store.getForeign<ESM4::LevelledNpc>(), id, mRef, mPtr); break;
             case ESM4::REC_NOTE: create(store.getForeign<ESM4::Note>(), id, mRef, mPtr); break;
             case ESM4::REC_SCRL: create(store.getForeign<ESM4::Scroll>(), id, mRef, mPtr); break;
+            case ESM4::REC_CMNY: break;// create(store.getForeign<ESM4::CasinoMoney>(), id, mRef, mPtr); break;
             // FIXME: IDLM, MSTT, TERM, etc, etc - are they needed?
             default:
                 throw std::logic_error("failed to create a manual cell ref for " + name + " (unknown ID)");

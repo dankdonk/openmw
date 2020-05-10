@@ -49,6 +49,7 @@ namespace MWWorld
     const T *ForeignStore<T>::search(const std::string &id) const
     {
         // FIXME: just loop through for now, will need to maintain two maps
+        // FIXME: what happens if there are more than one record with the same editor id?
         typename Dynamic::const_iterator dit = mDynamic.begin();
         for (; dit != mDynamic.end(); ++dit)
         {

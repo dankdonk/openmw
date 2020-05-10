@@ -11,21 +11,32 @@ namespace MWClass
 
         public:
 
-            /// Return ID of \a ptr
             virtual std::string getId (const MWWorld::Ptr& ptr) const;
 
             virtual void insertObjectRendering (const MWWorld::Ptr& ptr, const std::string& model, MWRender::RenderingInterface& renderingInterface) const;
-            ///< Add reference into a cell for rendering
 
             virtual void insertObject(const MWWorld::Ptr& ptr, const std::string& model, MWWorld::PhysicsSystem& physics) const;
 
             virtual std::string getName (const MWWorld::Ptr& ptr) const;
-            ///< \return name (the one that is to be presented to the user; not the internal one);
-            /// can return an empty string.
 
-            static void registerSelf();
+            virtual bool hasToolTip (const MWWorld::Ptr& ptr) const;
+
+            virtual MWGui::ToolTipInfo getToolTipInfo (const MWWorld::Ptr& ptr) const;
+
+            virtual boost::shared_ptr<MWWorld::Action> activate (const MWWorld::Ptr& ptr, const MWWorld::Ptr& actor) const;
+            virtual boost::shared_ptr<MWWorld::Action> use (const MWWorld::Ptr& ptr) const;
+
+            virtual int getValue (const MWWorld::Ptr& ptr) const;
+
+            virtual std::string getUpSoundId (const MWWorld::Ptr& ptr) const;
+
+            virtual std::string getDownSoundId (const MWWorld::Ptr& ptr) const;
+
+            virtual std::string getInventoryIcon (const MWWorld::Ptr& ptr) const;
 
             virtual std::string getModel(const MWWorld::Ptr &ptr) const;
+
+            static void registerSelf();
     };
 }
 

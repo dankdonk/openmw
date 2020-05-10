@@ -529,9 +529,58 @@ namespace MWWorld
     }
 
     template<>
+    inline  CellRefList<ESM4::Apparatus>& CellStore::get<ESM4::Apparatus>()
+    {
+        mHasState = true; // FIXME: what is this used for?
+        return mForeignApparatus;
+    }
+
+    template<>
+    inline  CellRefList<ESM4::Armor>& CellStore::get<ESM4::Armor>()
+    {
+        mHasState = true; // FIXME: what is this used for?
+        return mForeignArmors;
+    }
+
+    template<>
+    inline  CellRefList<ESM4::Book>& CellStore::get<ESM4::Book>()
+    {
+        mHasState = true; // FIXME: what is this used for?
+        return mForeignBooks;
+    }
+
+    template<>
+    inline  CellRefList<ESM4::Clothing>& CellStore::get<ESM4::Clothing>()
+    {
+        mHasState = true; // FIXME: what is this used for?
+        return mForeignClothes;
+    }
+
+    template<>
     inline const CellRefList<ESM4::Door>& CellStore::getReadOnly<ESM4::Door>()
     {
         return mForeignDoors;
+    }
+
+    template<>
+    inline  CellRefList<ESM4::Ingredient>& CellStore::get<ESM4::Ingredient>()
+    {
+        mHasState = true; // FIXME: what is this used for?
+        return mForeignIngredients;
+    }
+
+    template<>
+    inline  CellRefList<ESM4::Light>& CellStore::get<ESM4::Light>()
+    {
+        mHasState = true; // FIXME: what is this used for?
+        return mForeignLights;
+    }
+
+    template<>
+    inline  CellRefList<ESM4::MiscItem>& CellStore::get<ESM4::MiscItem>()
+    {
+        mHasState = true; // FIXME: what is this used for?
+        return mForeignMiscItems;
     }
 
     template<>
@@ -539,6 +588,20 @@ namespace MWWorld
     {
         mHasState = true; // FIXME: what is this used for?
         return mForeignStatics;
+    }
+
+    template<>
+    inline CellRefList<ESM4::Weapon>& CellStore::get<ESM4::Weapon>()
+    {
+        mHasState = true; // FIXME: what is this used for?
+        return mForeignWeapons;
+    }
+
+    template<>
+    inline CellRefList<ESM4::Ammo>& CellStore::get<ESM4::Ammo>()
+    {
+        mHasState = true; // FIXME: what is this used for?
+        return mForeignAmmos;
     }
 
     template<>
@@ -553,6 +616,41 @@ namespace MWWorld
     {
         mHasState = true; // FIXME: what is this used for?
         return mForeignCreatures;
+    }
+
+    template<>
+    inline CellRefList<ESM4::SoulGem>& CellStore::get<ESM4::SoulGem>()
+    {
+        mHasState = true; // FIXME: what is this used for?
+        return mSoulGems;
+    }
+
+    template<>
+    inline CellRefList<ESM4::Key>& CellStore::get<ESM4::Key>()
+    {
+        mHasState = true; // FIXME: what is this used for?
+        return mForeignKeys;
+    }
+
+    template<>
+    inline CellRefList<ESM4::Potion>& CellStore::get<ESM4::Potion>()
+    {
+        mHasState = true; // FIXME: what is this used for?
+        return mForeignPotions;
+    }
+
+    template<>
+    inline CellRefList<ESM4::SigilStone>& CellStore::get<ESM4::SigilStone>()
+    {
+        mHasState = true; // FIXME: what is this used for?
+        return mSigilStones;
+    }
+
+    template<>
+    inline CellRefList<ESM4::Note>& CellStore::get<ESM4::Note>()
+    {
+        mHasState = true; // FIXME: what is this used for?
+        return mNotes;
     }
 
     bool operator== (const CellStore& left, const CellStore& right);

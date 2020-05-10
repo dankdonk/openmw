@@ -11,6 +11,8 @@
 #include "../mwworld/ptr.hpp"
 #include "../mwworld/physicssystem.hpp"
 #include "../mwworld/cellstore.hpp"
+#include "../mwworld/esmstore.hpp"
+#include "../mwworld/action.hpp"
 #include "../mwworld/inventorystoretes4.hpp"
 #include "../mwworld/inventorystorefo3.hpp"
 #include "../mwworld/inventorystoretes5.hpp"
@@ -68,32 +70,6 @@ namespace MWClass
         }
     }
 
-    std::string ForeignArmor::getModel(const MWWorld::Ptr &ptr) const
-    {
-        MWWorld::LiveCellRef<ESM4::Armor> *ref = ptr.get<ESM4::Armor>();
-        assert(ref->mBase != NULL);
-
-        // clothing and armor need "ground" models (with physics) unless being worn
-        if (ref->mBase->mIsTES4)
-        {
-            std::string model = ref->mBase->mModelMale; // FIXME: what about female?
-            if (!model.empty())
-            {
-                size_t pos = Misc::StringUtils::lowerCase(model).find_last_of("."); // pos points at '.'
-                if (pos == std::string::npos || model.substr(pos+1) != "nif") // mModel does not end in ".nif"
-                    return "meshes\\" + model.substr(0, pos) + "_gnd.nif";
-            }
-        }
-        else if (ref->mBase->mIsFO3 || ref->mBase->mIsFONV)
-        {
-            return "meshes\\" + ref->mBase->mModelMaleWorld;
-        }
-        //else
-            // FIXME TES5
-
-        return "";
-    }
-
     std::string ForeignArmor::getName (const MWWorld::Ptr& ptr) const
     {
         MWWorld::LiveCellRef<ESM4::Armor> *ref = ptr.get<ESM4::Armor>();
@@ -135,6 +111,12 @@ namespace MWClass
         info.text = text;
 
         return info;
+    }
+
+    boost::shared_ptr<MWWorld::Action> ForeignArmor::activate (const MWWorld::Ptr& ptr,
+            const MWWorld::Ptr& actor) const
+    {
+        return defaultItemActivate(ptr, actor);
     }
 
     std::pair<std::vector<int>, bool> ForeignArmor::getEquipmentSlots (const MWWorld::Ptr& ptr) const
@@ -250,6 +232,42 @@ namespace MWClass
         return value;
     }
 
+    std::string ForeignArmor::getUpSoundId (const MWWorld::Ptr& ptr) const
+    {
+        MWWorld::LiveCellRef<ESM4::Armor> *ref = ptr.get<ESM4::Armor>();
+        if (ref->mBase->mPickUpSound)
+            return ESM4::formIdToString(ref->mBase->mPickUpSound); // FONV
+        else
+        {
+            // FIXME: another way to get the sound formid?
+            // FIXME: how to differentiate heavy armor?
+            const MWWorld::ESMStore& store = MWBase::Environment::get().getWorld()->getStore();
+            const ESM4::Sound *sound = store.getForeign<ESM4::Sound>().search("ITMArmorLightUp");
+            if (sound)
+                return ESM4::formIdToString(sound->mFormId);
+        }
+
+        return "";
+    }
+
+    std::string ForeignArmor::getDownSoundId (const MWWorld::Ptr& ptr) const
+    {
+        MWWorld::LiveCellRef<ESM4::Armor> *ref = ptr.get<ESM4::Armor>();
+        if (ref->mBase->mDropSound)
+            return ESM4::formIdToString(ref->mBase->mDropSound); // FONV
+        else
+        {
+            // FIXME: another way to get the sound formid?
+            // FIXME: how to differentiate heavy armor?
+            const MWWorld::ESMStore& store = MWBase::Environment::get().getWorld()->getStore();
+            const ESM4::Sound *sound = store.getForeign<ESM4::Sound>().search("ITMArmorLightDown");
+            if (sound)
+                return ESM4::formIdToString(sound->mFormId);
+        }
+
+        return "";
+    }
+
     float ForeignArmor::getArmorRating (const MWWorld::Ptr& ptr) const
     {
         MWWorld::LiveCellRef<ESM4::Armor> *ref = ptr.get<ESM4::Armor>();
@@ -257,11 +275,40 @@ namespace MWClass
         return ref->mBase->mData.armor / 100.f;
     }
 
-    void ForeignArmor::registerSelf()
+    std::string ForeignArmor::getInventoryIcon (const MWWorld::Ptr& ptr) const
     {
-        boost::shared_ptr<Class> instance (new ForeignArmor);
+        MWWorld::LiveCellRef<ESM4::Armor> *ref = ptr.get<ESM4::Armor>();
 
-        registerClass (typeid (ESM4::Armor).name(), instance);
+        if (ref->mBase->mMiniIconMale != "")
+            return ref->mBase->mMiniIconMale;
+        else
+            return ref->mBase->mIconMale; // FIXME: is there a way to check if female?
+    }
+
+    std::string ForeignArmor::getModel(const MWWorld::Ptr &ptr) const
+    {
+        MWWorld::LiveCellRef<ESM4::Armor> *ref = ptr.get<ESM4::Armor>();
+        assert(ref->mBase != NULL);
+
+        // clothing and armor need "ground" models (with physics) unless being worn
+        if (ref->mBase->mIsTES4)
+        {
+            std::string model = ref->mBase->mModelMale; // FIXME: what about female?
+            if (!model.empty())
+            {
+                size_t pos = Misc::StringUtils::lowerCase(model).find_last_of("."); // pos points at '.'
+                if (pos == std::string::npos || model.substr(pos+1) != "nif") // mModel does not end in ".nif"
+                    return "meshes\\" + model.substr(0, pos) + "_gnd.nif";
+            }
+        }
+        else if (ref->mBase->mIsFO3 || ref->mBase->mIsFONV)
+        {
+            return "meshes\\" + ref->mBase->mModelMaleWorld;
+        }
+        //else
+            // FIXME TES5
+
+        return "";
     }
 
     // Armor and Weapon have "health" - a character will not wear the item if the health is zero.
@@ -324,6 +371,13 @@ namespace MWClass
             }
         }
         return std::make_pair(1,"");
+    }
+
+    void ForeignArmor::registerSelf()
+    {
+        boost::shared_ptr<Class> instance (new ForeignArmor);
+
+        registerClass (typeid (ESM4::Armor).name(), instance);
     }
 
     MWWorld::Ptr ForeignArmor::copyToCellImpl(const MWWorld::Ptr &ptr, MWWorld::CellStore &cell) const

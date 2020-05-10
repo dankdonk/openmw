@@ -18,14 +18,58 @@
 #include "../mwworld/nullaction.hpp"
 #include "../mwworld/failedaction.hpp"
 #include "../mwworld/containerstore.hpp"
+#include "../mwworld/customdata.hpp"
 
 #include "../mwrender/objects.hpp"
 #include "../mwrender/renderinginterface.hpp"
 
 #include "../mwgui/tooltips.hpp"
 
+namespace
+{
+    struct ForeignContainerCustomData : public MWWorld::CustomData
+    {
+        MWWorld::ContainerStore mContainerStore;
+
+        virtual MWWorld::CustomData *clone() const;
+    };
+
+    MWWorld::CustomData *ForeignContainerCustomData::clone() const
+    {
+        return new ForeignContainerCustomData (*this);
+    }
+}
+
 namespace MWClass
 {
+    void ForeignContainer::ensureCustomData (const MWWorld::Ptr& ptr) const
+    {
+        if (!ptr.getRefData().getCustomData())
+        {
+            std::auto_ptr<ForeignContainerCustomData> data (new ForeignContainerCustomData);
+
+            MWWorld::LiveCellRef<ESM4::Container> *ref = ptr.get<ESM4::Container>();
+
+            // make ESM4 inventory look like ESM::InventoryList so that we can pass it to
+            // mInventoryStore.fill()
+            ESM::InventoryList inventory;
+            for (unsigned int i = 0; i < ref->mBase->mInventory.size(); ++i)
+            {
+                ESM::ContItem item;
+                item.mCount = ref->mBase->mInventory.at(i).count;
+                item.mItem.assign(ESM4::formIdToString(ref->mBase->mInventory.at(i).item)); // FIXME
+
+                inventory.mList.push_back(item);
+            }
+
+            // this "fills" the inventory with iterators for quick access?
+            data->mContainerStore.fill(inventory, getId(ptr));
+
+            // store the data
+            ptr.getRefData().setCustomData (data.release());
+        }
+    }
+
     std::string ForeignContainer::getId (const MWWorld::Ptr& ptr) const
     {
         return ptr.get<ESM4::Container>()->mBase->mEditorId;
@@ -46,18 +90,6 @@ namespace MWClass
             physics.addObject(ptr, model);
     }
 
-    std::string ForeignContainer::getModel(const MWWorld::Ptr &ptr) const
-    {
-        MWWorld::LiveCellRef<ESM4::Container> *ref = ptr.get<ESM4::Container>();
-        assert(ref->mBase != NULL);
-
-        const std::string &model = ref->mBase->mModel;
-        if (!model.empty()) {
-            return "meshes\\" + model;
-        }
-        return "";
-    }
-
     std::string ForeignContainer::getName (const MWWorld::Ptr& ptr) const
     {
         MWWorld::LiveCellRef<ESM4::Container> *ref = ptr.get<ESM4::Container>();
@@ -65,29 +97,52 @@ namespace MWClass
         return ref->mBase->mFullName;
     }
 
-    void ForeignContainer::registerSelf()
+    bool ForeignContainer::hasToolTip (const MWWorld::Ptr& ptr) const
     {
-        boost::shared_ptr<Class> instance (new ForeignContainer);
+        MWWorld::LiveCellRef<ESM4::Container> *ref = ptr.get<ESM4::Container>();
 
-        registerClass (typeid (ESM4::Container).name(), instance);
+        return (ref->mBase->mFullName != "");
+    }
+
+    MWGui::ToolTipInfo ForeignContainer::getToolTipInfo (const MWWorld::Ptr& ptr) const
+    {
+        MWWorld::LiveCellRef<ESM4::Container> *ref =
+            ptr.get<ESM4::Container>();
+
+        MWGui::ToolTipInfo info;
+        info.caption = ref->mBase->mFullName;
+
+        std::string text;
+        if (ptr.getCellRef().getLockLevel() > 0)
+            text += "\n#{sLockLevel}: " + MWGui::ToolTips::toString(ptr.getCellRef().getLockLevel());
+        else if (ptr.getCellRef().getLockLevel() < 0)
+            text += "\n#{sUnlocked}";
+        if (ptr.getCellRef().getTrap() != "")
+            text += "\n#{sTrapped}";
+
+        if (MWBase::Environment::get().getWindowManager()->getFullHelp()) {
+            text += MWGui::ToolTips::getCellRefString(ptr.getCellRef());
+            //text += MWGui::ToolTips::getMiscString(ref->mBase->mScript, "Script");
+        }
+
+        info.text = text;
+
+        return info;
     }
 
     boost::shared_ptr<MWWorld::Action> ForeignContainer::activate (const MWWorld::Ptr& ptr,
         const MWWorld::Ptr& actor) const
     {
+        MWWorld::LiveCellRef<ESM4::Container> *ref = ptr.get<ESM4::Container>();
+
+        const ESM4::FormId openSoundId = ref->mBase->mOpenSound;
+        const ESM4::FormId closeSoundId = ref->mBase->mCloseSound;
+
+        std::string openSound = ESM4::formIdToString(openSoundId);
+        std::string closeSound = ESM4::formIdToString(closeSoundId);
+
         if (!MWBase::Environment::get().getWindowManager()->isAllowed(MWGui::GW_Inventory))
             return boost::shared_ptr<MWWorld::Action> (new MWWorld::NullAction ());
-
-        if(actor.getClass().isNpc() && actor.getClass().getNpcStats(actor).isWerewolf())
-        {
-            const MWWorld::ESMStore &store = MWBase::Environment::get().getWorld()->getStore();
-            //const ESM::Sound *sound = store.get<ESM::Sound>().searchRandom("WolfContainer");
-
-            boost::shared_ptr<MWWorld::Action> action(new MWWorld::FailedAction("#{sWerewolfRefusal}"));
-            //if(sound) action->setSound(sound->mId);
-
-            return action;
-        }
 
         const std::string lockedSound = "LockedChest";
         const std::string trapActivationSound = "Disarm Trap Fail";
@@ -127,55 +182,51 @@ namespace MWClass
             if(ptr.getCellRef().getTrap().empty())
             {
                 boost::shared_ptr<MWWorld::Action> action (new MWWorld::ActionOpen(ptr));
+                if (openSoundId) // FO3 containers seems to use text key during animation (like some doors)
+                    action->setSound(openSound);
                 return action;
             }
             else
             {
                 // Activate trap
                 boost::shared_ptr<MWWorld::Action> action(new MWWorld::ActionTrap(actor, ptr.getCellRef().getTrap(), ptr));
-                action->setSound(trapActivationSound);
+                //action->setSound(trapActivationSound);
                 return action;
             }
         }
         else
         {
             boost::shared_ptr<MWWorld::Action> action(new MWWorld::FailedAction);
-            action->setSound(lockedSound);
+            //action->setSound(lockedSound);
             return action;
         }
     }
 
-    bool ForeignContainer::hasToolTip (const MWWorld::Ptr& ptr) const
+    MWWorld::ContainerStore& ForeignContainer::getContainerStore (const MWWorld::Ptr& ptr)
+        const
     {
-        MWWorld::LiveCellRef<ESM4::Container> *ref = ptr.get<ESM4::Container>();
+        ensureCustomData (ptr);
 
-        return (ref->mBase->mFullName != "");
+        return dynamic_cast<ForeignContainerCustomData&> (*ptr.getRefData().getCustomData()).mContainerStore;
     }
 
-    MWGui::ToolTipInfo ForeignContainer::getToolTipInfo (const MWWorld::Ptr& ptr) const
+    std::string ForeignContainer::getModel(const MWWorld::Ptr &ptr) const
     {
-        MWWorld::LiveCellRef<ESM4::Container> *ref =
-            ptr.get<ESM4::Container>();
+        MWWorld::LiveCellRef<ESM4::Container> *ref = ptr.get<ESM4::Container>();
+        assert(ref->mBase != NULL);
 
-        MWGui::ToolTipInfo info;
-        info.caption = ref->mBase->mFullName;
-
-        std::string text;
-        if (ptr.getCellRef().getLockLevel() > 0)
-            text += "\n#{sLockLevel}: " + MWGui::ToolTips::toString(ptr.getCellRef().getLockLevel());
-        else if (ptr.getCellRef().getLockLevel() < 0)
-            text += "\n#{sUnlocked}";
-        if (ptr.getCellRef().getTrap() != "")
-            text += "\n#{sTrapped}";
-
-        if (MWBase::Environment::get().getWindowManager()->getFullHelp()) {
-            text += MWGui::ToolTips::getCellRefString(ptr.getCellRef());
-            //text += MWGui::ToolTips::getMiscString(ref->mBase->mScript, "Script");
+        const std::string &model = ref->mBase->mModel;
+        if (!model.empty()) {
+            return "meshes\\" + model;
         }
+        return "";
+    }
 
-        info.text = text;
+    void ForeignContainer::registerSelf()
+    {
+        boost::shared_ptr<Class> instance (new ForeignContainer);
 
-        return info;
+        registerClass (typeid (ESM4::Container).name(), instance);
     }
 
     MWWorld::Ptr ForeignContainer::copyToCellImpl(const MWWorld::Ptr &ptr, MWWorld::CellStore &cell) const

@@ -15,6 +15,20 @@
 #include <components/esm/loadrepa.hpp>
 #include <components/esm/loadweap.hpp>
 
+#include <extern/esm4/alch.hpp>
+#include <extern/esm4/appa.hpp>
+#include <extern/esm4/ammo.hpp>
+#include <extern/esm4/armo.hpp>
+#include <extern/esm4/book.hpp>
+#include <extern/esm4/clot.hpp>
+#include <extern/esm4/ingr.hpp>
+#include <extern/esm4/ligh.hpp>
+#include <extern/esm4/misc.hpp>
+#include <extern/esm4/weap.hpp>
+#include <extern/esm4/slgm.hpp>
+#include <extern/esm4/sgst.hpp>
+#include <extern/esm4/note.hpp>
+
 #include "../mwworld/class.hpp"
 #include "../mwworld/nullaction.hpp"
 
@@ -36,6 +50,19 @@ namespace
         mapping.push_back( typeid(ESM::Lockpick).name() );
         mapping.push_back( typeid(ESM::Repair).name() );
         mapping.push_back( typeid(ESM::Probe).name() );
+        mapping.push_back( typeid(ESM4::Ammo).name() );
+        mapping.push_back( typeid(ESM4::Weapon).name() );
+        mapping.push_back( typeid(ESM4::Armor).name() );
+        mapping.push_back( typeid(ESM4::Clothing).name() );
+        mapping.push_back( typeid(ESM4::Potion).name() );
+        mapping.push_back( typeid(ESM4::Ingredient).name() );
+        mapping.push_back( typeid(ESM4::Apparatus).name() );
+        mapping.push_back( typeid(ESM4::Book).name() );
+        mapping.push_back( typeid(ESM4::Light).name() );
+        mapping.push_back( typeid(ESM4::MiscItem).name() );
+        mapping.push_back( typeid(ESM4::SoulGem).name() );
+        mapping.push_back( typeid(ESM4::SigilStone).name() );
+        mapping.push_back( typeid(ESM4::Note).name() );
 
         assert( std::find(mapping.begin(), mapping.end(), type1) != mapping.end() );
         assert( std::find(mapping.begin(), mapping.end(), type2) != mapping.end() );
@@ -96,12 +123,18 @@ namespace MWGui
 
         int category = 0;
         if (base.getTypeName() == typeid(ESM::Armor).name()
-                || base.getTypeName() == typeid(ESM::Clothing).name())
+                || base.getTypeName() == typeid(ESM::Clothing).name()
+                || base.getTypeName() == typeid(ESM4::Armor).name()
+                || base.getTypeName() == typeid(ESM4::Clothing).name())
             category = Category_Apparel;
-        else if (base.getTypeName() == typeid(ESM::Weapon).name())
+        else if (base.getTypeName() == typeid(ESM::Weapon).name()
+                     || base.getTypeName() == typeid(ESM4::Ammo).name()
+                     || base.getTypeName() == typeid(ESM4::Weapon).name())
             category = Category_Weapon;
         else if (base.getTypeName() == typeid(ESM::Ingredient).name()
-                     || base.getTypeName() == typeid(ESM::Potion).name())
+                     || base.getTypeName() == typeid(ESM::Potion).name()
+                     || base.getTypeName() == typeid(ESM4::Ingredient).name()
+                     || base.getTypeName() == typeid(ESM4::Potion).name())
             category = Category_Magic;
         else if (base.getTypeName() == typeid(ESM::Miscellaneous).name()
                  || base.getTypeName() == typeid(ESM::Ingredient).name()
@@ -110,7 +143,14 @@ namespace MWGui
                  || base.getTypeName() == typeid(ESM::Light).name()
                  || base.getTypeName() == typeid(ESM::Apparatus).name()
                  || base.getTypeName() == typeid(ESM::Book).name()
-                 || base.getTypeName() == typeid(ESM::Probe).name())
+                 || base.getTypeName() == typeid(ESM::Probe).name()
+                 || base.getTypeName() == typeid(ESM4::MiscItem).name()
+                 || base.getTypeName() == typeid(ESM4::Light).name()
+                 || base.getTypeName() == typeid(ESM4::Apparatus).name()
+                 || base.getTypeName() == typeid(ESM4::Book).name()
+                 || base.getTypeName() == typeid(ESM4::SoulGem).name()
+                 || base.getTypeName() == typeid(ESM4::SigilStone).name()
+                 || base.getTypeName() == typeid(ESM4::Note).name())
             category = Category_Misc;
 
         if (item.mFlags & ItemStack::Flag_Enchanted)
@@ -119,19 +159,27 @@ namespace MWGui
         if (!(category & mCategory))
             return false;
 
-        if ((mFilter & Filter_OnlyIngredients) && base.getTypeName() != typeid(ESM::Ingredient).name())
+        if ((mFilter & Filter_OnlyIngredients) && (base.getTypeName() != typeid(ESM::Ingredient).name() ||
+                                                   base.getTypeName() != typeid(ESM4::Ingredient).name()))
             return false;
+
         if ((mFilter & Filter_OnlyEnchanted) && !(item.mFlags & ItemStack::Flag_Enchanted))
             return false;
+
         if ((mFilter & Filter_OnlyChargedSoulstones) && (base.getTypeName() != typeid(ESM::Miscellaneous).name()
                                                      || base.getCellRef().getSoul() == ""))
             return false;
+
         if ((mFilter & Filter_OnlyEnchantable) && (item.mFlags & ItemStack::Flag_Enchanted
                                                || (base.getTypeName() != typeid(ESM::Armor).name()
                                                    && base.getTypeName() != typeid(ESM::Clothing).name()
                                                    && base.getTypeName() != typeid(ESM::Weapon).name()
-                                                   && base.getTypeName() != typeid(ESM::Book).name())))
+                                                   && base.getTypeName() != typeid(ESM::Book).name()
+                                                   && base.getTypeName() != typeid(ESM4::Armor).name()
+                                                   && base.getTypeName() != typeid(ESM4::Clothing).name()
+                                                   && base.getTypeName() != typeid(ESM4::Weapon).name())))
             return false;
+
         if ((mFilter & Filter_OnlyEnchantable) && base.getTypeName() == typeid(ESM::Book).name()
                 && !base.get<ESM::Book>()->mBase->mData.mIsScroll)
             return false;

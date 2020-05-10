@@ -202,7 +202,7 @@ void ESM4::Cell::load(ESM4::Reader& reader)
 #endif
                 break;
             }
-            case ESM4::SUB_XCLR: // possibly for TES4 only
+            case ESM4::SUB_XCLR: // for exterior cells
             {
                 mRegions.resize(subHdr.dataSize/sizeof(FormId));
                 for (std::vector<FormId>::iterator it = mRegions.begin(); it != mRegions.end(); ++it)

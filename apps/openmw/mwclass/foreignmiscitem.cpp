@@ -4,8 +4,6 @@
 
 #include <extern/esm4/misc.hpp>
 
-#include "../mwgui/tooltips.hpp"
-
 #include "../mwbase/environment.hpp"
 #include "../mwbase/world.hpp"
 #include "../mwbase/windowmanager.hpp"
@@ -13,9 +11,13 @@
 #include "../mwworld/ptr.hpp"
 #include "../mwworld/physicssystem.hpp"
 #include "../mwworld/cellstore.hpp"
+#include "../mwworld/esmstore.hpp"
+#include "../mwworld/action.hpp"
 
 #include "../mwrender/objects.hpp"
 #include "../mwrender/renderinginterface.hpp"
+
+#include "../mwgui/tooltips.hpp"
 
 namespace
 {
@@ -51,35 +53,11 @@ namespace MWClass
             physics.addObject(ptr, model);
     }
 
-    std::string ForeignMiscItem::getModel(const MWWorld::Ptr &ptr) const
-    {
-        MWWorld::LiveCellRef<ESM4::MiscItem> *ref = ptr.get<ESM4::MiscItem>();
-        assert(ref->mBase != NULL);
-
-        const std::string &model = ref->mBase->mModel;
-        if (!model.empty()) {
-            return "meshes\\" + model;
-        }
-        return "";
-    }
-
     std::string ForeignMiscItem::getName (const MWWorld::Ptr& ptr) const
     {
-        return "";
-    }
-
-    void ForeignMiscItem::registerSelf()
-    {
-        boost::shared_ptr<Class> instance (new ForeignMiscItem);
-
-        registerClass (typeid (ESM4::MiscItem).name(), instance);
-    }
-
-    MWWorld::Ptr ForeignMiscItem::copyToCellImpl(const MWWorld::Ptr &ptr, MWWorld::CellStore &cell) const
-    {
         MWWorld::LiveCellRef<ESM4::MiscItem> *ref = ptr.get<ESM4::MiscItem>();
 
-        return MWWorld::Ptr(&cell.get<ESM4::MiscItem>().insert(*ref), &cell);
+        return ref->mBase->mFullName;
     }
 
     bool ForeignMiscItem::hasToolTip (const MWWorld::Ptr& ptr) const
@@ -136,6 +114,12 @@ namespace MWClass
         return info;
     }
 
+    boost::shared_ptr<MWWorld::Action> ForeignMiscItem::activate (const MWWorld::Ptr& ptr,
+            const MWWorld::Ptr& actor) const
+    {
+        return defaultItemActivate(ptr, actor);
+    }
+
     int ForeignMiscItem::getValue (const MWWorld::Ptr& ptr) const
     {
         MWWorld::LiveCellRef<ESM4::MiscItem> *ref = ptr.get<ESM4::MiscItem>();
@@ -151,5 +135,89 @@ namespace MWClass
 //      }
 
         return value;
+    }
+
+    std::string ForeignMiscItem::getUpSoundId (const MWWorld::Ptr& ptr) const
+    {
+        MWWorld::LiveCellRef<ESM4::MiscItem> *ref = ptr.get<ESM4::MiscItem>();
+        if (ref->mBase->mPickUpSound)
+            return ESM4::formIdToString(ref->mBase->mPickUpSound); // FONV
+        else
+        {
+            // FIXME: another way to get the sound formid?
+            // FIXME: how to differentiate gold/welkyndstone/lockpick?
+            const MWWorld::ESMStore& store = MWBase::Environment::get().getWorld()->getStore();
+            const ESM4::Sound *sound = store.getForeign<ESM4::Sound>().search("ITMGenericUp"); // TES4
+            if (sound)
+                return ESM4::formIdToString(sound->mFormId);
+            else
+            {
+                sound = store.getForeign<ESM4::Sound>().search("UIItemGenericUp"); // FO3?
+                if (sound)
+                    return ESM4::formIdToString(sound->mFormId);
+            }
+        }
+
+        return "";
+    }
+
+    std::string ForeignMiscItem::getDownSoundId (const MWWorld::Ptr& ptr) const
+    {
+        MWWorld::LiveCellRef<ESM4::MiscItem> *ref = ptr.get<ESM4::MiscItem>();
+        if (ref->mBase->mDropSound)
+            return ESM4::formIdToString(ref->mBase->mDropSound); // FONV
+        else
+        {
+            // FIXME: another way to get the sound formid?
+            // FIXME: how to differentiate gold/welkyndstone/lockpick?
+            const MWWorld::ESMStore& store = MWBase::Environment::get().getWorld()->getStore();
+            const ESM4::Sound *sound = store.getForeign<ESM4::Sound>().search("ITMGenericDown"); // TES4
+            if (sound)
+                return ESM4::formIdToString(sound->mFormId);
+            else
+            {
+                sound = store.getForeign<ESM4::Sound>().search("UIItemGenericDown"); // FO3?
+                if (sound)
+                    return ESM4::formIdToString(sound->mFormId);
+            }
+        }
+
+        return "";
+    }
+
+    std::string ForeignMiscItem::getInventoryIcon (const MWWorld::Ptr& ptr) const
+    {
+        MWWorld::LiveCellRef<ESM4::MiscItem> *ref = ptr.get<ESM4::MiscItem>();
+
+        if (ref->mBase->mMiniIcon != "")
+            return ref->mBase->mMiniIcon;
+        else
+            return ref->mBase->mIcon;
+    }
+
+    std::string ForeignMiscItem::getModel(const MWWorld::Ptr &ptr) const
+    {
+        MWWorld::LiveCellRef<ESM4::MiscItem> *ref = ptr.get<ESM4::MiscItem>();
+        assert(ref->mBase != NULL);
+
+        const std::string &model = ref->mBase->mModel;
+        if (!model.empty()) {
+            return "meshes\\" + model;
+        }
+        return "";
+    }
+
+    void ForeignMiscItem::registerSelf()
+    {
+        boost::shared_ptr<Class> instance (new ForeignMiscItem);
+
+        registerClass (typeid (ESM4::MiscItem).name(), instance);
+    }
+
+    MWWorld::Ptr ForeignMiscItem::copyToCellImpl(const MWWorld::Ptr &ptr, MWWorld::CellStore &cell) const
+    {
+        MWWorld::LiveCellRef<ESM4::MiscItem> *ref = ptr.get<ESM4::MiscItem>();
+
+        return MWWorld::Ptr(&cell.get<ESM4::MiscItem>().insert(*ref), &cell);
     }
 }

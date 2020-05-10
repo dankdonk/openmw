@@ -7,6 +7,8 @@ namespace MWClass
 {
     class ForeignContainer : public MWWorld::Class
     {
+            void ensureCustomData (const MWWorld::Ptr& ptr) const;
+
             virtual MWWorld::Ptr copyToCellImpl(const MWWorld::Ptr &ptr, MWWorld::CellStore &cell) const;
 
         public:
@@ -23,6 +25,8 @@ namespace MWClass
 
             virtual boost::shared_ptr<MWWorld::Action> activate (const MWWorld::Ptr& ptr,
                 const MWWorld::Ptr& actor) const;
+
+            virtual MWWorld::ContainerStore& getContainerStore (const MWWorld::Ptr& ptr) const;
 
             virtual bool hasToolTip (const MWWorld::Ptr& ptr) const;
 

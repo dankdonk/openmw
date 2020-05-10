@@ -11,6 +11,8 @@
 #include "../mwworld/ptr.hpp"
 #include "../mwworld/physicssystem.hpp"
 #include "../mwworld/cellstore.hpp"
+#include "../mwworld/esmstore.hpp"
+#include "../mwworld/action.hpp"
 #include "../mwworld/inventorystoretes4.hpp"
 
 #include "../mwrender/objects.hpp"
@@ -50,18 +52,6 @@ namespace MWClass
             physics.addObject(ptr, model);
     }
 
-    std::string ForeignLight::getModel(const MWWorld::Ptr &ptr) const
-    {
-        MWWorld::LiveCellRef<ESM4::Light> *ref = ptr.get<ESM4::Light>();
-        assert(ref->mBase != NULL);
-
-        const std::string &model = ref->mBase->mModel;
-        if (!model.empty()) {
-            return "meshes\\" + model;
-        }
-        return "";
-    }
-
     std::string ForeignLight::getName (const MWWorld::Ptr& ptr) const
     {
         MWWorld::LiveCellRef<ESM4::Light> *ref = ptr.get<ESM4::Light>();
@@ -83,8 +73,6 @@ namespace MWClass
 
         MWGui::ToolTipInfo info;
 
-        const MWWorld::ESMStore& store = MWBase::Environment::get().getWorld()->getStore();
-
         int count = ptr.getRefData().getCount();
 
         info.caption = ref->mBase->mFullName + MWGui::ToolTips::getCountString(ptr.getRefData().getCount());
@@ -105,6 +93,12 @@ namespace MWClass
         return info;
     }
 
+    boost::shared_ptr<MWWorld::Action> ForeignLight::activate (const MWWorld::Ptr& ptr,
+            const MWWorld::Ptr& actor) const
+    {
+        return defaultItemActivate(ptr, actor);
+    }
+
     std::pair<std::vector<int>, bool> ForeignLight::getEquipmentSlots (const MWWorld::Ptr& ptr) const
     {
         MWWorld::LiveCellRef<ESM4::Light> *ref = ptr.get<ESM4::Light>();
@@ -117,12 +111,42 @@ namespace MWClass
         return std::make_pair (slots_, false);
     }
 
-    void ForeignLight::registerSelf()
+    int ForeignLight::getValue (const MWWorld::Ptr& ptr) const
     {
-        boost::shared_ptr<Class> instance (new ForeignLight);
+        MWWorld::LiveCellRef<ESM4::Light> *ref = ptr.get<ESM4::Light>();
 
-        registerClass (typeid (ESM4::Light).name(), instance);
+        return ref->mBase->mData.value;
     }
+
+    std::string ForeignLight::getUpSoundId (const MWWorld::Ptr& ptr) const
+    {
+        // FIXME: another way to get the sound formid?
+        const MWWorld::ESMStore& store = MWBase::Environment::get().getWorld()->getStore();
+        const ESM4::Sound *sound = store.getForeign<ESM4::Sound>().search("ITMGenericUp");
+        if (sound)
+            return ESM4::formIdToString(sound->mFormId);
+
+        return "";
+    }
+
+    std::string ForeignLight::getDownSoundId (const MWWorld::Ptr& ptr) const
+    {
+        // FIXME: another way to get the sound formid?
+        const MWWorld::ESMStore& store = MWBase::Environment::get().getWorld()->getStore();
+        const ESM4::Sound *sound = store.getForeign<ESM4::Sound>().search("ITMGenericDown");
+        if (sound)
+            return ESM4::formIdToString(sound->mFormId);
+
+        return "";
+    }
+
+    std::string ForeignLight::getInventoryIcon (const MWWorld::Ptr& ptr) const
+    {
+        MWWorld::LiveCellRef<ESM4::Light> *ref = ptr.get<ESM4::Light>();
+
+        return ref->mBase->mIcon;
+    }
+
 
     std::pair<int, std::string> ForeignLight::canBeEquipped(const MWWorld::Ptr &ptr, const MWWorld::Ptr &npc) const
     {
@@ -145,6 +169,25 @@ namespace MWClass
 //          return std::make_pair(3,"");
 //      }
         return std::make_pair(1,"");
+    }
+
+    std::string ForeignLight::getModel(const MWWorld::Ptr &ptr) const
+    {
+        MWWorld::LiveCellRef<ESM4::Light> *ref = ptr.get<ESM4::Light>();
+        assert(ref->mBase != NULL);
+
+        const std::string &model = ref->mBase->mModel;
+        if (!model.empty()) {
+            return "meshes\\" + model;
+        }
+        return "";
+    }
+
+    void ForeignLight::registerSelf()
+    {
+        boost::shared_ptr<Class> instance (new ForeignLight);
+
+        registerClass (typeid (ESM4::Light).name(), instance);
     }
 
     MWWorld::Ptr ForeignLight::copyToCellImpl(const MWWorld::Ptr &ptr, MWWorld::CellStore &cell) const

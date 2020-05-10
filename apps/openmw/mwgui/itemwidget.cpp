@@ -77,7 +77,12 @@ namespace MWGui
 
     void ItemWidget::setIcon(const MWWorld::Ptr &ptr)
     {
-        setIcon(Misc::ResourceHelpers::correctIconPath(ptr.getClass().getInventoryIcon(ptr)));
+        if (ptr.getClass().getInventoryIcon(ptr).find("ipboy") != std::string::npos) // hack FONV
+            setIcon("textures\\" + ptr.getClass().getInventoryIcon(ptr));
+        else if (ptr.getTypeName().find("ESM4::") != std::string::npos) // hack TES4
+            setIcon("textures\\menus\\icons\\"+ptr.getClass().getInventoryIcon(ptr));
+        else
+            setIcon(Misc::ResourceHelpers::correctIconPath(ptr.getClass().getInventoryIcon(ptr)));
     }
 
 
