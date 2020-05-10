@@ -70,6 +70,10 @@ namespace ESM4
         std::string mModel;
         std::string mText;
         std::string mIcon;
+        std::string mMiniIcon;
+
+        FormId mPickUpSound;
+        FormId mDropSound;
 
         float mBoundRadius;
 

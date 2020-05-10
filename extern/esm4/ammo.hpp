@@ -59,6 +59,10 @@ namespace ESM4
         std::string mModel;
         std::string mText;
         std::string mIcon; // inventory
+        std::string mMiniIcon; // inventory
+
+        FormId mPickUpSound;
+        FormId mDropSound;
 
         float mBoundRadius;
 

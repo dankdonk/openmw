@@ -162,7 +162,12 @@ namespace ESM4
         std::string mModelFemaleWorld;
         std::string mText;
         std::string mIconMale;
+        std::string mMiniIconMale;
         std::string mIconFemale;
+        std::string mMiniIconFemale;
+
+        FormId mPickUpSound;
+        FormId mDropSound;
 
         std::string mModel; // FIXME: for OpenCS
 

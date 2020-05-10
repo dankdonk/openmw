@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2016, 2018 cc9cii
+  Copyright (C) 2016, 2018, 2020 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -58,8 +58,13 @@ void ESM4::Sound::load(ESM4::Reader& reader)
             case ESM4::SUB_SNDX: reader.get(mData); break;
             case ESM4::SUB_SNDD:
             {
-                reader.get(mData);
-                reader.get(mExtra);
+                if (subHdr.dataSize == 8)
+                    reader.get(&mData, 8);
+                else
+                {
+                    reader.get(mData);
+                    reader.get(mExtra);
+                }
 
                 break;
             }
@@ -70,7 +75,8 @@ void ESM4::Sound::load(ESM4::Reader& reader)
             case ESM4::SUB_HNAM: // FO3
             case ESM4::SUB_RNAM: // FONV
             {
-                //std::cout << "SOUN " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
+                //std::cout << "SOUN " << ESM4::printName(subHdr.typeId) << " skipping..."
+                          //<< subHdr.dataSize << std::endl;
                 reader.skipSubRecordData();
                 break;
             }

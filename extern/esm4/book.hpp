@@ -98,6 +98,9 @@ namespace ESM4
 
         Data mData;
 
+        FormId mPickUpSound;
+        FormId mDropSound;
+
         Book();
         virtual ~Book();
 

@@ -45,6 +45,7 @@ namespace ESM4
         std::string mEditorId;
         std::string mFullName;
         std::string mModel;
+        std::string mIcon;
 
         Note();
         virtual ~Note();
