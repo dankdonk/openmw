@@ -36,7 +36,7 @@ namespace ESM4
 {
     class Reader;
 
-    struct Subspace
+    struct SubSpace
     {
         struct Dimension
         {
@@ -51,8 +51,8 @@ namespace ESM4
         std::string mEditorId;
         Dimension mDimension;
 
-        Subspace();
-        virtual ~Subspace();
+        SubSpace();
+        virtual ~SubSpace();
 
         virtual void load(Reader& reader);
         //virtual void save(Writer& writer) const;

@@ -3,7 +3,6 @@
 #include <iostream>
 #include <algorithm>
 
-#include <extern/esm4/formid.hpp>
 #include <extern/esm4/cell.hpp>
 #include <extern/esm4/refr.hpp>
 #include <extern/esm4/achr.hpp>
@@ -409,31 +408,76 @@ namespace MWWorld
 
         //
 
-        if (LiveCellRef<ESM4::Activator> *ref = mForeignActivators.find (id))
+        if (LiveCellRef<ESM4::Sound>      *ref = mSounds.find (id))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM4::Container> *ref = mForeignContainers.find (id))
+        if (LiveCellRef<ESM4::Activator>  *ref = mForeignActivators.find (id))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM4::Book>      *ref = mForeignBooks.find (id))
+        if (LiveCellRef<ESM4::Armor>      *ref = mForeignArmors.find (id))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM4::Door>      *ref = mForeignDoors.find (id))
+        if (LiveCellRef<ESM4::Book>       *ref = mForeignBooks.find (id))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM4::Light>     *ref = mForeignLights.find (id))
+        if (LiveCellRef<ESM4::Clothing>    *ref = mForeignClothes.find (id))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM4::MiscItem>  *ref = mForeignMiscItems.find (id))
+        if (LiveCellRef<ESM4::Container>  *ref = mForeignContainers.find (id))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM4::Sound>     *ref = mSounds.find (id))
+        if (LiveCellRef<ESM4::Door>       *ref = mForeignDoors.find (id))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM4::Static>    *ref = mForeignStatics.find (id))
+        if (LiveCellRef<ESM4::Ingredient> *ref = mForeignIngredients.find (id))
+            return Ptr (ref, this);
+
+        if (LiveCellRef<ESM4::Light>      *ref = mForeignLights.find (id))
+            return Ptr (ref, this);
+
+        if (LiveCellRef<ESM4::MiscItem>   *ref = mForeignMiscItems.find (id))
+            return Ptr (ref, this);
+
+        if (LiveCellRef<ESM4::Static>     *ref = mForeignStatics.find (id))
+            return Ptr (ref, this);
+
+        if (LiveCellRef<ESM4::Tree>       *ref = mForeignTrees.find (id))
+            return Ptr (ref, this);
+
+        if (LiveCellRef<ESM4::Flora>      *ref = mForeignFloras.find (id))
+            return Ptr (ref, this);
+
+        if (LiveCellRef<ESM4::Furniture>  *ref = mForeignFurnitures.find (id))
+            return Ptr (ref, this);
+
+        if (LiveCellRef<ESM4::Weapon>     *ref = mForeignWeapons.find (id))
+            return Ptr (ref, this);
+
+        if (LiveCellRef<ESM4::Ammunition> *ref = mAmmunitions.find (id))
+            return Ptr (ref, this);
+
+        //if (LiveCellRef<ESM4::IdleMarker> *ref = mIdleMarkers.find (id))
+            //return Ptr (ref, this);
+
+        if (LiveCellRef<ESM4::Key>        *ref = mForeignKeys.find (id))
+            return Ptr (ref, this);
+
+        if (LiveCellRef<ESM4::Potion>     *ref = mForeignPotions.find (id))
+            return Ptr (ref, this);
+
+        if (LiveCellRef<ESM4::SubSpace>   *ref = mSubSpaces.find (id))
+            return Ptr (ref, this);
+
+        //if (LiveCellRef<ESM4::MovableStatic> *ref = mMovableStatics.find (id))
+            //return Ptr (ref, this);
+
+        if (LiveCellRef<ESM4::Terminal>   *ref = mTerminals.find (id))
             return Ptr (ref, this);
 
         if (LiveCellRef<ESM4::TalkingActivator> *ref = mTalkingActivators.find (id))
+            return Ptr (ref, this);
+
+        if (LiveCellRef<ESM4::PlaceableWater> *ref = mPlaceableWaters.find (id))
             return Ptr (ref, this);
 
         mHasState = oldState;
@@ -509,6 +553,9 @@ namespace MWWorld
 
         //
 
+        if (LiveCellRef<ESM4::Sound>     *ref = mSounds.searchViaHandle (handle))
+            return Ptr (ref, this);
+
         if (LiveCellRef<ESM4::Activator> *ref = mForeignActivators.searchViaHandle (handle))
             return Ptr (ref, this);
 
@@ -539,16 +586,13 @@ namespace MWWorld
         if (LiveCellRef<ESM4::MiscItem>  *ref = mForeignMiscItems.searchViaHandle (handle))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM4::Sound>     *ref = mSounds.searchViaHandle (handle))
-            return Ptr (ref, this);
-
         if (LiveCellRef<ESM4::Static>    *ref = mForeignStatics.searchViaHandle (handle))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM4::Grass>     *ref = mForeignGrasses.searchViaHandle (handle))
+        if (LiveCellRef<ESM4::Tree>      *ref = mForeignTrees.searchViaHandle (handle))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM4::Tree>      *ref = mForeignTrees.searchViaHandle (handle))
+        if (LiveCellRef<ESM4::Grass>     *ref = mForeignGrasses.searchViaHandle (handle))
             return Ptr (ref, this);
 
         if (LiveCellRef<ESM4::Flora>     *ref = mForeignFloras.searchViaHandle (handle))
@@ -581,7 +625,7 @@ namespace MWWorld
         if (LiveCellRef<ESM4::Potion>    *ref = mForeignPotions.searchViaHandle (handle))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM4::Subspace>  *ref = mSubspaces.searchViaHandle (handle))
+        if (LiveCellRef<ESM4::SubSpace>  *ref = mSubSpaces.searchViaHandle (handle))
             return Ptr (ref, this);
 
         if (LiveCellRef<ESM4::SigilStone> *ref = mSigilStones.searchViaHandle (handle))
@@ -1110,7 +1154,7 @@ namespace MWWorld
                     case ESM4::REC_SLGM: mSoulGems.load(record, deleted, store); break;
                     case ESM4::REC_KEYM: mForeignKeys.load(record, deleted, store); break;
                     case ESM4::REC_ALCH: mForeignPotions.load(record, deleted, store); break;
-                    case ESM4::REC_SBSP: mSubspaces.load(record, deleted, store); break;
+                    case ESM4::REC_SBSP: mSubSpaces.load(record, deleted, store); break;
                     case ESM4::REC_SGST: mSigilStones.load(record, deleted, store); break;
                     case ESM4::REC_LVLI: mLevelledItems.load(record, deleted, store); break;
                     case ESM4::REC_TERM: mTerminals.load(record, deleted, store); break;

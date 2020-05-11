@@ -124,7 +124,7 @@ namespace MWWorld
         ForeignStore<ESM4::SoulGem>    mSoulGems;
         ForeignStore<ESM4::Key>        mForeignKeys;
         ForeignStore<ESM4::Potion>     mForeignPotions;
-        ForeignStore<ESM4::Subspace>   mSubspaces;
+        ForeignStore<ESM4::SubSpace>   mSubSpaces;
         ForeignStore<ESM4::SigilStone> mSigilStones;
         ForeignStore<ESM4::LevelledItem> mLevelledItems;
         ForeignStore<ESM4::LevelledNpc> mLevelledNpcs;
@@ -302,7 +302,7 @@ namespace MWWorld
             mForeignStores[ESM4::REC_SLGM] = &mSoulGems;
             mForeignStores[ESM4::REC_KEYM] = &mForeignKeys;
             mForeignStores[ESM4::REC_ALCH] = &mForeignPotions;
-            mForeignStores[ESM4::REC_SBSP] = &mSubspaces;
+            mForeignStores[ESM4::REC_SBSP] = &mSubSpaces;
             mForeignStores[ESM4::REC_SGST] = &mSigilStones;
             mForeignStores[ESM4::REC_LVLI] = &mLevelledItems;
             mForeignStores[ESM4::REC_LVLN] = &mLevelledNpcs;
@@ -891,8 +891,8 @@ namespace MWWorld
     }
 
     template <>
-    inline const ForeignStore<ESM4::Subspace>& ESMStore::getForeign<ESM4::Subspace>() const {
-        return mSubspaces;
+    inline const ForeignStore<ESM4::SubSpace>& ESMStore::getForeign<ESM4::SubSpace>() const {
+        return mSubSpaces;
     }
 
     template <>

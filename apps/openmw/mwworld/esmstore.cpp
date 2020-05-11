@@ -496,7 +496,7 @@ void ESMStore::loadTes4Record (ESM::ESMReader& esm)
                              mForeignIds[id.mId] = ESM4::REC_KEYM; break;
         case ESM4::REC_ALCH: reader.getRecordData(); id = mForeignPotions.loadForeign(reader);
                              mForeignIds[id.mId] = ESM4::REC_ALCH; break;
-        case ESM4::REC_SBSP: reader.getRecordData(); id = mSubspaces.loadForeign(reader); // 9
+        case ESM4::REC_SBSP: reader.getRecordData(); id = mSubSpaces.loadForeign(reader); // 9
                              mForeignIds[id.mId] = ESM4::REC_SBSP; break;
         case ESM4::REC_SGST: reader.getRecordData(); mSigilStones.loadForeign(reader); break;
         case ESM4::REC_LVLI: reader.getRecordData(); mLevelledItems.loadForeign(reader); break; // 12

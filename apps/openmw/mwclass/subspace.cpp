@@ -11,27 +11,32 @@
 
 namespace MWClass
 {
-    std::string Subspace::getId (const MWWorld::Ptr& ptr) const
+    std::string SubSpace::getId (const MWWorld::Ptr& ptr) const
     {
-        return ptr.get<ESM4::Subspace>()->mBase->mEditorId;
+        return ptr.get<ESM4::SubSpace>()->mBase->mEditorId;
     }
 
-    void Subspace::insertObjectRendering (const MWWorld::Ptr& ptr, const std::string& model, MWRender::RenderingInterface& renderingInterface) const
+    void SubSpace::insertObjectRendering (const MWWorld::Ptr& ptr, const std::string& model, MWRender::RenderingInterface& renderingInterface) const
     {
-        MWWorld::LiveCellRef<ESM4::Subspace> *ref = ptr.get<ESM4::Subspace>();
+        MWWorld::LiveCellRef<ESM4::SubSpace> *ref = ptr.get<ESM4::SubSpace>();
 
         if (!model.empty()) {
             renderingInterface.getObjects().insertModel(ptr, model/*, !ref->mBase->mPersistent*/); // FIXME
         }
     }
 
-    void Subspace::insertObject(const MWWorld::Ptr& ptr, const std::string& model, MWWorld::PhysicsSystem& physics) const
+    void SubSpace::insertObject(const MWWorld::Ptr& ptr, const std::string& model, MWWorld::PhysicsSystem& physics) const
     {
         if(!model.empty())
             physics.addObject(ptr, model);
     }
 
-    std::string Subspace::getModel(const MWWorld::Ptr &ptr) const
+    std::string SubSpace::getName (const MWWorld::Ptr& ptr) const
+    {
+        return "";
+    }
+
+    std::string SubSpace::getModel(const MWWorld::Ptr &ptr) const
     {
 #if 0
         MWWorld::LiveCellRef<ESM4::Subspace> *ref = ptr.get<ESM4::Subspace>();
@@ -45,22 +50,17 @@ namespace MWClass
         return "";
     }
 
-    std::string Subspace::getName (const MWWorld::Ptr& ptr) const
+    void SubSpace::registerSelf()
     {
-        return "";
+        boost::shared_ptr<Class> instance (new SubSpace);
+
+        registerClass (typeid (ESM4::SubSpace).name(), instance);
     }
 
-    void Subspace::registerSelf()
+    MWWorld::Ptr SubSpace::copyToCellImpl(const MWWorld::Ptr &ptr, MWWorld::CellStore &cell) const
     {
-        boost::shared_ptr<Class> instance (new Subspace);
+        MWWorld::LiveCellRef<ESM4::SubSpace> *ref = ptr.get<ESM4::SubSpace>();
 
-        registerClass (typeid (ESM4::Subspace).name(), instance);
-    }
-
-    MWWorld::Ptr Subspace::copyToCellImpl(const MWWorld::Ptr &ptr, MWWorld::CellStore &cell) const
-    {
-        MWWorld::LiveCellRef<ESM4::Subspace> *ref = ptr.get<ESM4::Subspace>();
-
-        return MWWorld::Ptr(&cell.get<ESM4::Subspace>().insert(*ref), &cell);
+        return MWWorld::Ptr(&cell.get<ESM4::SubSpace>().insert(*ref), &cell);
     }
 }

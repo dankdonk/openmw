@@ -90,6 +90,7 @@ namespace MWWorld
             CellRefList<ESM::Repair>            mRepairs;
             CellRefList<ESM::Static>            mStatics;
             CellRefList<ESM::Weapon>            mWeapons;
+            //
             CellRefList<ESM4::Sound>            mSounds;
             CellRefList<ESM4::Activator>        mForeignActivators;
             CellRefList<ESM4::Apparatus>        mForeignApparatus;
@@ -114,7 +115,7 @@ namespace MWWorld
             CellRefList<ESM4::SoulGem>          mSoulGems;
             CellRefList<ESM4::Key>              mForeignKeys;
             CellRefList<ESM4::Potion>           mForeignPotions;
-            CellRefList<ESM4::Subspace>         mSubspaces;
+            CellRefList<ESM4::SubSpace>         mSubSpaces;
             CellRefList<ESM4::SigilStone>       mSigilStones;
             CellRefList<ESM4::LevelledItem>     mLevelledItems;
             CellRefList<ESM4::LevelledNpc>      mLevelledNpcs;
@@ -242,7 +243,7 @@ namespace MWWorld
                     forEachImp (functor, mSoulGems) &&
                     forEachImp (functor, mForeignKeys) &&
                     forEachImp (functor, mForeignPotions) &&
-                    forEachImp (functor, mSubspaces) &&
+                    forEachImp (functor, mSubSpaces) &&
                     forEachImp (functor, mSigilStones) &&
                     forEachImp (functor, mLevelledItems) &&
                     forEachImp (functor, mTerminals) &&

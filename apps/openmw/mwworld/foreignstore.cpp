@@ -1162,7 +1162,7 @@ template class MWWorld::ForeignStore<ESM4::LevelledCreature>;
 template class MWWorld::ForeignStore<ESM4::SoulGem>;
 template class MWWorld::ForeignStore<ESM4::Key>;
 template class MWWorld::ForeignStore<ESM4::Potion>;
-template class MWWorld::ForeignStore<ESM4::Subspace>;
+template class MWWorld::ForeignStore<ESM4::SubSpace>;
 template class MWWorld::ForeignStore<ESM4::SigilStone>;
 template class MWWorld::ForeignStore<ESM4::LevelledItem>;
 template class MWWorld::ForeignStore<ESM4::LevelledNpc>;

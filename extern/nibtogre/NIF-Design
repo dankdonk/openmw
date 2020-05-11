@@ -4205,7 +4205,7 @@ FONV seems to specify the open/close sounds for some (e.g. cash register) but ne
 
 **NOTE: the interaction diagrams from [31/03/2020 - 02/04/2020] are now outdated**
 
-Current call stack:
+Current call stack: (NOTE: loadDummy is now in ForeignStore)
 
      openmw.exe!MWWorld::CellStore::loadTes4Record(const MWWorld::ESMStore & store, ESM::ESMReader & esm) Line 1018	C++
      openmw.exe!MWWorld::Store<MWWorld::ForeignCell>::loadDummy(MWWorld::ESMStore & store, ESM::ESMReader & esm, MWWorld::CellStore * cell) Line 1481	C++
@@ -4288,7 +4288,39 @@ So the use of `.cmp` files, or equivalent, seem universal.  **This means we need
 
 Note that a DLC can have its own `lodsettings\` folder, e.g. `PointLookout - Main.bsa`
 
+## Record types
 
+Record types found in Oblivion.esm world dummy cell:
+
+    REFR SOUN
+    REFR ACTI
+    REFR CONT
+    REFR DOOR
+    REFR LIGH
+    REFR MISC
+    REFR STAT
+    REFR TREE
+    REFR FLOR
+    REFR FURN
+    REFR WEAP
+    ACHR NPC_
+    ACRE CREA
+    REFR LVLC
+    REFR SBSP
+
+Additional record types found in Fallout3.esm:
+
+    REFR ARMO
+    REFR AMMO
+    REFR KEYM
+    REFR ALCH
+    REFR IDLM
+    REFR MSTT
+    REFR TERM
+    REFR TACT
+    REFR PWAT
+
+For LOD, start with DOOR, STAT and TREE (maybe FLOR, MSTT and PWAT later).  Others (e.g. ACTI, FURN, TERM and TACT) are probably too small.
 
 
 

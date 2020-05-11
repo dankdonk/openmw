@@ -5,7 +5,7 @@
 
 namespace MWClass
 {
-    class Subspace : public MWWorld::Class
+    class SubSpace : public MWWorld::Class
     {
             virtual MWWorld::Ptr copyToCellImpl(const MWWorld::Ptr &ptr, MWWorld::CellStore &cell) const;
 

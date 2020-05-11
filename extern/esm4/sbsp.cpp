@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2016, 2018 cc9cii
+  Copyright (C) 2016, 2018, 2020 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -31,7 +31,7 @@
 #include "reader.hpp"
 //#include "writer.hpp"
 
-ESM4::Subspace::Subspace() : mFormId(0), mFlags(0)
+ESM4::SubSpace::SubSpace() : mFormId(0), mFlags(0)
 {
     mEditorId.clear();
 
@@ -40,11 +40,11 @@ ESM4::Subspace::Subspace() : mFormId(0), mFlags(0)
     mDimension.z = 0.f;
 }
 
-ESM4::Subspace::~Subspace()
+ESM4::SubSpace::~SubSpace()
 {
 }
 
-void ESM4::Subspace::load(ESM4::Reader& reader)
+void ESM4::SubSpace::load(ESM4::Reader& reader)
 {
     mFormId = reader.hdr().record.id;
     reader.adjustFormId(mFormId);
@@ -69,10 +69,10 @@ void ESM4::Subspace::load(ESM4::Reader& reader)
     }
 }
 
-//void ESM4::Subspace::save(ESM4::Writer& writer) const
+//void ESM4::SubSpace::save(ESM4::Writer& writer) const
 //{
 //}
 
-//void ESM4::Subspace::blank()
+//void ESM4::SubSpace::blank()
 //{
 //}
