@@ -30,9 +30,10 @@
 #include <extern/esm4/lvlc.hpp>
 #include <extern/esm4/ltex.hpp>
 #include <extern/esm4/land.hpp>
+#include <extern/esm4/common.hpp>
 
 unsigned int CSMForeign::IdRecord<ESM4::Activator>::sRecordId  = ESM4::REC_ACTI;
-unsigned int CSMForeign::IdRecord<ESM4::Ammo>::sRecordId       = ESM4::REC_AMMO;
+unsigned int CSMForeign::IdRecord<ESM4::Ammunition>::sRecordId = ESM4::REC_AMMO;
 unsigned int CSMForeign::IdRecord<ESM4::AnimObject>::sRecordId = ESM4::REC_ANIO;
 unsigned int CSMForeign::IdRecord<ESM4::Apparatus>::sRecordId  = ESM4::REC_APPA;
 unsigned int CSMForeign::IdRecord<ESM4::Armor>::sRecordId      = ESM4::REC_ARMO;

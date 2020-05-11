@@ -661,10 +661,10 @@ CSMWorld::Data::Data (ToUTF8::FromType encoding, const ResourcesManager& resourc
     mForeignDoors.addColumn (new FixedRecordTypeColumn<CSMForeign::IdRecord<ESM4::Door> >(UniversalId::Type_ForeignDoors));
     mForeignDoors.addColumn (new ModelColumn<CSMForeign::IdRecord<ESM4::Door> >);
 
-    mForeignAmmos.addColumn (new ForeignIdColumn<CSMForeign::IdRecord<ESM4::Ammo> >);
-    mForeignAmmos.addColumn (new RecordStateColumn<CSMForeign::IdRecord<ESM4::Ammo> >);
-    mForeignAmmos.addColumn (new FixedRecordTypeColumn<CSMForeign::IdRecord<ESM4::Ammo> >(UniversalId::Type_ForeignAmmos));
-    mForeignAmmos.addColumn (new ModelColumn<CSMForeign::IdRecord<ESM4::Ammo> >);
+    mForeignAmmos.addColumn (new ForeignIdColumn<CSMForeign::IdRecord<ESM4::Ammunition> >);
+    mForeignAmmos.addColumn (new RecordStateColumn<CSMForeign::IdRecord<ESM4::Ammunition> >);
+    mForeignAmmos.addColumn (new FixedRecordTypeColumn<CSMForeign::IdRecord<ESM4::Ammunition> >(UniversalId::Type_ForeignAmmos));
+    mForeignAmmos.addColumn (new ModelColumn<CSMForeign::IdRecord<ESM4::Ammunition> >);
 
     mForeignClothings.addColumn (new ForeignIdColumn<CSMForeign::IdRecord<ESM4::Clothing> >);
     mForeignClothings.addColumn (new RecordStateColumn<CSMForeign::IdRecord<ESM4::Clothing> >);
@@ -1422,12 +1422,12 @@ CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Door> >& CSMWorld::Data::get
     return mForeignDoors;
 }
 
-const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Ammo> >& CSMWorld::Data::getForeignAmmos() const
+const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Ammunition> >& CSMWorld::Data::getForeignAmmos() const
 {
     return mForeignAmmos;
 }
 
-CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Ammo> >& CSMWorld::Data::getForeignAmmos()
+CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Ammunition> >& CSMWorld::Data::getForeignAmmos()
 {
     return mForeignAmmos;
 }

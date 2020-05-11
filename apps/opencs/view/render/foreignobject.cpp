@@ -70,7 +70,7 @@ void CSVRender::ForeignObject::update()
     const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Sound> >& sound = mData.getForeignSounds();
     const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Weapon> >& weap = mData.getForeignWeapons();
     const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Door> >& door = mData.getForeignDoors();
-    const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Ammo> >& ammo = mData.getForeignAmmos();
+    const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Ammunition> >& ammo = mData.getForeignAmmos();
     const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Clothing> >& cloth = mData.getForeignClothings();
     const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Potion> >& potion = mData.getForeignPotions();
     const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Apparatus> >& appa = mData.getForeignApparatuses();

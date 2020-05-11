@@ -162,7 +162,7 @@ namespace CSMWorld
             CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Sound> > mForeignSounds;
             CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Weapon> > mForeignWeapons;
             CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Door> > mForeignDoors;
-            CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Ammo> > mForeignAmmos;
+            CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Ammunition> > mForeignAmmos;
             CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Clothing> > mForeignClothings;
             CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Potion> > mForeignPotions;
             CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Apparatus> > mForeignApparatuses;
@@ -427,9 +427,9 @@ namespace CSMWorld
 
             CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Door> >& getForeignDoors();
 
-            const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Ammo> >& getForeignAmmos() const;
+            const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Ammunition> >& getForeignAmmos() const;
 
-            CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Ammo> >& getForeignAmmos();
+            CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Ammunition> >& getForeignAmmos();
 
             const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Clothing> >& getForeignClothings() const;
 

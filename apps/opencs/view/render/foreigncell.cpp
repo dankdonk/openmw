@@ -145,7 +145,7 @@ bool CSVRender::ForeignCell::addObjects (const std::vector<ESM4::FormId>& object
                                                  = mDocument.getData().getForeignArmors();
             const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Weapon> >& weap
                                                  = mDocument.getData().getForeignWeapons();
-            const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Ammo> >& ammo
+            const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Ammunition> >& ammo
                                                  = mDocument.getData().getForeignAmmos();
             const CSMForeign::IdCollection<CSMForeign::IdRecord<ESM4::Clothing> >& cloth
                                                  = mDocument.getData().getForeignClothings();

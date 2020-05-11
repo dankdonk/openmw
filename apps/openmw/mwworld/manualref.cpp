@@ -145,7 +145,7 @@ MWWorld::ManualRef::ManualRef(const MWWorld::ESMStore& store, ESM4::FormId id, c
         case ESM4::REC_LIGH: create(store.getForeign<ESM4::Light>(), id, mRef, mPtr); break;
         case ESM4::REC_MISC: create(store.getForeign<ESM4::MiscItem>(), id, mRef, mPtr); break;
         case ESM4::REC_WEAP: create(store.getForeign<ESM4::Weapon>(), id, mRef, mPtr); break;
-        case ESM4::REC_AMMO: create(store.getForeign<ESM4::Ammo>(), id, mRef, mPtr); break;
+        case ESM4::REC_AMMO: create(store.getForeign<ESM4::Ammunition>(), id, mRef, mPtr); break;
         case ESM4::REC_NPC_: create(store.getForeign<ESM4::Npc>(), id, mRef, mPtr); break;
         case ESM4::REC_CREA: create(store.getForeign<ESM4::Creature>(), id, mRef, mPtr); break;
       //case ESM4::REC_LVLC: create(store.getForeign<ESM4::LevelledCreature>(), id, mRef, mPtr); break;
