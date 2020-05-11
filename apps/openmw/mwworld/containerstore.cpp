@@ -367,7 +367,7 @@ MWWorld::ContainerStoreIterator MWWorld::ContainerStore::addNewStack (const Ptr&
         case Type_ForeignKey: foreignKeys.mList.push_back (*ptr.get<ESM4::Key>()); it = ContainerStoreIterator(this, --foreignKeys.mList.end()); break;
         case Type_SigilStone: sigilStones.mList.push_back (*ptr.get<ESM4::SigilStone>()); it = ContainerStoreIterator(this, --sigilStones.mList.end()); break;
         case Type_ForeignWeapon: foreignWeapons.mList.push_back (*ptr.get<ESM4::Weapon>()); it = ContainerStoreIterator(this, --foreignWeapons.mList.end()); break;
-        case Type_ForeignAmmo: foreignAmmos.mList.push_back (*ptr.get<ESM4::Ammo>()); it = ContainerStoreIterator(this, --foreignAmmos.mList.end()); break;
+        case Type_Ammunition: ammunitions.mList.push_back (*ptr.get<ESM4::Ammunition>()); it = ContainerStoreIterator(this, --ammunitions.mList.end()); break;
         case Type_Note: notes.mList.push_back (*ptr.get<ESM4::Note>()); it = ContainerStoreIterator(this, --notes.mList.end()); break;
         //case Type_ItemMod: itemMods.mList.push_back (*ptr.get<ESM4::ItemMod>()); it = ContainerStoreIterator(this, --itemMods.mList.end()); break;
     }
@@ -631,8 +631,8 @@ int MWWorld::ContainerStore::getType (const Ptr& ptr)
     if (ptr.getTypeName() == typeid(ESM4::Weapon).name())
         return Type_ForeignWeapon;
 
-    if (ptr.getTypeName() == typeid(ESM4::Ammo).name())
-        return Type_ForeignAmmo;
+    if (ptr.getTypeName() == typeid(ESM4::Ammunition).name())
+        return Type_Ammunition;
 
     if (ptr.getTypeName() == typeid(ESM4::SoulGem).name())
         return Type_SoulGem;
@@ -863,8 +863,8 @@ MWWorld::ContainerStoreIterator::ContainerStoreIterator (ContainerStore *contain
     : mType(MWWorld::ContainerStore::Type_SigilStone), mMask(MWWorld::ContainerStore::Type_All), mContainer(container), mSigilStone(iterator){}
 MWWorld::ContainerStoreIterator::ContainerStoreIterator (ContainerStore *container, MWWorld::CellRefList<ESM4::Weapon>::List::iterator iterator)
     : mType(MWWorld::ContainerStore::Type_ForeignWeapon), mMask(MWWorld::ContainerStore::Type_All), mContainer(container), mForeignWeapon(iterator){}
-MWWorld::ContainerStoreIterator::ContainerStoreIterator (ContainerStore *container, MWWorld::CellRefList<ESM4::Ammo>::List::iterator iterator)
-    : mType(MWWorld::ContainerStore::Type_ForeignAmmo), mMask(MWWorld::ContainerStore::Type_All), mContainer(container), mForeignAmmo(iterator){}
+MWWorld::ContainerStoreIterator::ContainerStoreIterator (ContainerStore *container, MWWorld::CellRefList<ESM4::Ammunition>::List::iterator iterator)
+    : mType(MWWorld::ContainerStore::Type_Ammunition), mMask(MWWorld::ContainerStore::Type_All), mContainer(container), mAmmunition(iterator){}
 //MWWorld::ContainerStoreIterator::ContainerStoreIterator (ContainerStore *container, MWWorld::CellRefList<ESM4::LevelledItem>::List::iterator iterator)
 //    : mType(MWWorld::ContainerStore::Type_LevelledItem), mMask(MWWorld::ContainerStore::Type_All), mContainer(container), mLevelledItem(iterator){}
 MWWorld::ContainerStoreIterator::ContainerStoreIterator(ContainerStore *container, MWWorld::CellRefList<ESM4::Note>::List::iterator iterator)
@@ -1025,10 +1025,10 @@ bool MWWorld::ContainerStoreIterator::resetIterator()
             mForeignWeapon = mContainer->foreignWeapons.mList.begin();
             return mForeignWeapon!=mContainer->foreignWeapons.mList.end();
 
-        case ContainerStore::Type_ForeignAmmo:
+        case ContainerStore::Type_Ammunition:
 
-            mForeignAmmo = mContainer->foreignAmmos.mList.begin();
-            return mForeignAmmo!=mContainer->foreignAmmos.mList.end();
+            mAmmunition = mContainer->ammunitions.mList.begin();
+            return mAmmunition!=mContainer->ammunitions.mList.end();
 
         //case ContainerStore::Type_LevelledItem:
 
@@ -1173,10 +1173,10 @@ bool MWWorld::ContainerStoreIterator::incIterator()
             ++mForeignWeapon;
             return mForeignWeapon==mContainer->foreignWeapons.mList.end();
 
-        case ContainerStore::Type_ForeignAmmo:
+        case ContainerStore::Type_Ammunition:
 
-            ++mForeignAmmo;
-            return mForeignAmmo==mContainer->foreignAmmos.mList.end();
+            ++mAmmunition;
+            return mAmmunition==mContainer->ammunitions.mList.end();
 
         case ContainerStore::Type_Note:
 
@@ -1229,7 +1229,7 @@ MWWorld::Ptr MWWorld::ContainerStoreIterator::operator*() const
         case ContainerStore::Type_ForeignKey: ptr = MWWorld::Ptr (&*mForeignKey, 0); break;
         case ContainerStore::Type_SigilStone: ptr = MWWorld::Ptr (&*mSigilStone, 0); break;
         case ContainerStore::Type_ForeignWeapon: ptr = MWWorld::Ptr (&*mForeignWeapon, 0); break;
-        case ContainerStore::Type_ForeignAmmo: ptr = MWWorld::Ptr (&*mForeignAmmo, 0); break;
+        case ContainerStore::Type_Ammunition: ptr = MWWorld::Ptr (&*mAmmunition, 0); break;
         //case ContainerStore::Type_LevelledItem: ptr = MWWorld::Ptr (&*mLevelledItem, 0); break;
         case ContainerStore::Type_Note: ptr = MWWorld::Ptr (&*mNote, 0); break;
         //case ContainerStore::Type_ItemMod: ptr = MWWorld::Ptr (&*mItemMod, 0); break;
@@ -1297,7 +1297,7 @@ bool MWWorld::ContainerStoreIterator::isEqual (const ContainerStoreIterator& ite
         case ContainerStore::Type_ForeignKey: return mForeignKey==iter.mForeignKey;
         case ContainerStore::Type_SigilStone: return mSigilStone==iter.mSigilStone;
         case ContainerStore::Type_ForeignWeapon: return mForeignWeapon==iter.mForeignWeapon;
-        case ContainerStore::Type_ForeignAmmo: return mForeignAmmo==iter.mForeignAmmo;
+        case ContainerStore::Type_Ammunition: return mAmmunition==iter.mAmmunition;
         //case ContainerStore::Type_LevelledItem: return mLevelledItem==iter.mLevelledItem;
         case ContainerStore::Type_Note: return mNote==iter.mNote;
         //case ContainerStore::Type_ItemMod: return mItemMod==iter.mItemMod;
@@ -1351,7 +1351,7 @@ void MWWorld::ContainerStoreIterator::copy(const ContainerStoreIterator& src)
         case MWWorld::ContainerStore::Type_ForeignKey: mForeignKey = src.mForeignKey; break;
         case MWWorld::ContainerStore::Type_SigilStone: mSigilStone = src.mSigilStone; break;
         case MWWorld::ContainerStore::Type_ForeignWeapon: mForeignWeapon = src.mForeignWeapon; break;
-        case MWWorld::ContainerStore::Type_ForeignAmmo: mForeignAmmo = src.mForeignAmmo; break;
+        case MWWorld::ContainerStore::Type_Ammunition: mAmmunition = src.mAmmunition; break;
         //case MWWorld::ContainerStore::Type_LevelledItem: mLevelledItem = src.mLevelledItem; break;
         case MWWorld::ContainerStore::Type_Note: mNote = src.mNote; break;
         //case MWWorld::ContainerStore::Type_ItemMod: mItemMod = src.mItemMod; break;

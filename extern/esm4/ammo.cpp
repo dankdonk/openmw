@@ -31,7 +31,7 @@
 #include "reader.hpp"
 //#include "writer.hpp"
 
-ESM4::Ammo::Ammo() : mFormId(0), mFlags(0), mPickUpSound(0), mDropSound(0), mBoundRadius(0.f)
+ESM4::Ammunition::Ammunition() : mFormId(0), mFlags(0), mPickUpSound(0), mDropSound(0), mBoundRadius(0.f)
 {
     mEditorId.clear();
     mFullName.clear();
@@ -41,11 +41,11 @@ ESM4::Ammo::Ammo() : mFormId(0), mFlags(0), mPickUpSound(0), mDropSound(0), mBou
     mMiniIcon.clear();
 }
 
-ESM4::Ammo::~Ammo()
+ESM4::Ammunition::~Ammunition()
 {
 }
 
-void ESM4::Ammo::load(ESM4::Reader& reader)
+void ESM4::Ammunition::load(ESM4::Reader& reader)
 {
     mFormId = reader.hdr().record.id;
     reader.adjustFormId(mFormId);
@@ -145,10 +145,10 @@ void ESM4::Ammo::load(ESM4::Reader& reader)
     }
 }
 
-//void ESM4::Ammo::save(ESM4::Writer& writer) const
+//void ESM4::Ammunition::save(ESM4::Writer& writer) const
 //{
 //}
 
-//void ESM4::Ammo::blank()
+//void ESM4::Ammunition::blank()
 //{
 //}

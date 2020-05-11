@@ -76,7 +76,7 @@ namespace MWWorld
             static const int Type_ForeignKey        = 0x200000;
             static const int Type_SigilStone        = 0x400000;
             static const int Type_ForeignWeapon     = 0x800000;
-            static const int Type_ForeignAmmo      = 0x1000000;
+            static const int Type_Ammunition       = 0x1000000;
             static const int Type_Note             = 0x2000000;
             static const int Type_LevelledItem     = 0x4000000; // unused?
             static const int Type_ItemMod          = 0x8000000;
@@ -117,7 +117,7 @@ namespace MWWorld
             MWWorld::CellRefList<ESM4::Key>              foreignKeys;
             MWWorld::CellRefList<ESM4::SigilStone>       sigilStones;
             MWWorld::CellRefList<ESM4::Weapon>           foreignWeapons;
-            MWWorld::CellRefList<ESM4::Ammo>             foreignAmmos;
+            MWWorld::CellRefList<ESM4::Ammunition>       ammunitions;
             MWWorld::CellRefList<ESM4::Note>             notes;
             //MWWorld::CellRefList<ESM4::ItemMod>          itemMods;
             // FIXME: CCRD, CMNY, CHIP (LVLI, MSTT and STAT as well?)
@@ -275,7 +275,7 @@ namespace MWWorld
             MWWorld::CellRefList<ESM4::Key>::List::iterator mForeignKey;
             MWWorld::CellRefList<ESM4::SigilStone>::List::iterator mSigilStone;
             MWWorld::CellRefList<ESM4::Weapon>::List::iterator mForeignWeapon;
-            MWWorld::CellRefList<ESM4::Ammo>::List::iterator mForeignAmmo;
+            MWWorld::CellRefList<ESM4::Ammunition>::List::iterator mAmmunition;
             MWWorld::CellRefList<ESM4::Note>::List::iterator mNote;
             //MWWorld::CellRefList<ESM4::ItemMod>::List::iterator mItemMod;
 
@@ -313,7 +313,7 @@ namespace MWWorld
             ContainerStoreIterator (ContainerStore *container, MWWorld::CellRefList<ESM4::Key>::List::iterator);
             ContainerStoreIterator (ContainerStore *container, MWWorld::CellRefList<ESM4::SigilStone>::List::iterator);
             ContainerStoreIterator (ContainerStore *container, MWWorld::CellRefList<ESM4::Weapon>::List::iterator);
-            ContainerStoreIterator (ContainerStore *container, MWWorld::CellRefList<ESM4::Ammo>::List::iterator);
+            ContainerStoreIterator (ContainerStore *container, MWWorld::CellRefList<ESM4::Ammunition>::List::iterator);
             ContainerStoreIterator (ContainerStore *container, MWWorld::CellRefList<ESM4::Note>::List::iterator);
             //ContainerStoreIterator (ContainerStore *container, MWWorld::CellRefList<ESM4::ItemMod>::List::iterator);
 

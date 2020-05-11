@@ -117,7 +117,7 @@ namespace MWWorld
         ForeignStore<ESM4::Flora>      mForeignFloras;
         ForeignStore<ESM4::Furniture>  mForeignFurnitures;
         ForeignStore<ESM4::Weapon>     mForeignWeapons;
-        ForeignStore<ESM4::Ammo>       mForeignAmmos;
+        ForeignStore<ESM4::Ammunition> mAmmunitions;
         ForeignStore<ESM4::Npc>        mForeignNpcs;
         ForeignStore<ESM4::Creature>   mForeignCreatures;
         ForeignStore<ESM4::LevelledCreature> mLevelledCreatures;
@@ -295,7 +295,7 @@ namespace MWWorld
             mForeignStores[ESM4::REC_FLOR] = &mForeignFloras;
             mForeignStores[ESM4::REC_FURN] = &mForeignFurnitures;
             mForeignStores[ESM4::REC_WEAP] = &mForeignWeapons;
-            mForeignStores[ESM4::REC_AMMO] = &mForeignAmmos;
+            mForeignStores[ESM4::REC_AMMO] = &mAmmunitions;
             mForeignStores[ESM4::REC_NPC_] = &mForeignNpcs;
             mForeignStores[ESM4::REC_CREA] = &mForeignCreatures;
             mForeignStores[ESM4::REC_LVLC] = &mLevelledCreatures;
@@ -856,8 +856,8 @@ namespace MWWorld
     }
 
     template <>
-    inline const ForeignStore<ESM4::Ammo>& ESMStore::getForeign<ESM4::Ammo>() const {
-        return mForeignAmmos;
+    inline const ForeignStore<ESM4::Ammunition>& ESMStore::getForeign<ESM4::Ammunition>() const {
+        return mAmmunitions;
     }
 
     template <>

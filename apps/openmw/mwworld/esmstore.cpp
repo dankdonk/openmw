@@ -483,7 +483,7 @@ void ESMStore::loadTes4Record (ESM::ESMReader& esm)
                              mForeignIds[id.mId] = ESM4::REC_FURN; break;
         case ESM4::REC_WEAP: reader.getRecordData(); id = mForeignWeapons.loadForeign(reader);
                              mForeignIds[id.mId] = ESM4::REC_WEAP; break;
-        case ESM4::REC_AMMO: reader.getRecordData(); id = mForeignAmmos.loadForeign(reader);
+        case ESM4::REC_AMMO: reader.getRecordData(); id = mAmmunitions.loadForeign(reader);
                              mForeignIds[id.mId] = ESM4::REC_AMMO; break;
         case ESM4::REC_NPC_: reader.getRecordData(); id = mForeignNpcs.loadForeign(reader);
                              mForeignIds[id.mId] = ESM4::REC_NPC_; break;

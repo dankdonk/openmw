@@ -1155,7 +1155,7 @@ template class MWWorld::ForeignStore<ESM4::Tree>;
 template class MWWorld::ForeignStore<ESM4::Flora>;
 template class MWWorld::ForeignStore<ESM4::Furniture>;
 template class MWWorld::ForeignStore<ESM4::Weapon>;
-template class MWWorld::ForeignStore<ESM4::Ammo>;
+template class MWWorld::ForeignStore<ESM4::Ammunition>;
 template class MWWorld::ForeignStore<ESM4::Npc>;
 template class MWWorld::ForeignStore<ESM4::Creature>;
 template class MWWorld::ForeignStore<ESM4::LevelledCreature>;

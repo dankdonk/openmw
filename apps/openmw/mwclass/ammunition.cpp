@@ -1,4 +1,4 @@
-#include "foreignammo.hpp"
+#include "ammunition.hpp"
 
 #include <extern/esm4/ammo.hpp>
 
@@ -21,12 +21,12 @@ namespace MWClass
 {
     std::string ForeignAmmo::getId (const MWWorld::Ptr& ptr) const
     {
-        return ptr.get<ESM4::Ammo>()->mBase->mEditorId;
+        return ptr.get<ESM4::Ammunition>()->mBase->mEditorId;
     }
 
     void ForeignAmmo::insertObjectRendering (const MWWorld::Ptr& ptr, const std::string& model, MWRender::RenderingInterface& renderingInterface) const
     {
-        MWWorld::LiveCellRef<ESM4::Ammo> *ref = ptr.get<ESM4::Ammo>();
+        MWWorld::LiveCellRef<ESM4::Ammunition> *ref = ptr.get<ESM4::Ammunition>();
 
         if (!model.empty()) {
             renderingInterface.getObjects().insertModel(ptr, model/*, !ref->mBase->mPersistent*/); // FIXME
@@ -41,21 +41,21 @@ namespace MWClass
 
     std::string ForeignAmmo::getName (const MWWorld::Ptr& ptr) const
     {
-        MWWorld::LiveCellRef<ESM4::Ammo> *ref = ptr.get<ESM4::Ammo>();
+        MWWorld::LiveCellRef<ESM4::Ammunition> *ref = ptr.get<ESM4::Ammunition>();
 
         return ref->mBase->mFullName;
     }
 
     bool ForeignAmmo::hasToolTip (const MWWorld::Ptr& ptr) const
     {
-        MWWorld::LiveCellRef<ESM4::Ammo> *ref = ptr.get<ESM4::Ammo>();
+        MWWorld::LiveCellRef<ESM4::Ammunition> *ref = ptr.get<ESM4::Ammunition>();
 
         return (ref->mBase->mFullName != "");
     }
 
     MWGui::ToolTipInfo ForeignAmmo::getToolTipInfo (const MWWorld::Ptr& ptr) const
     {
-        MWWorld::LiveCellRef<ESM4::Ammo> *ref = ptr.get<ESM4::Ammo>();
+        MWWorld::LiveCellRef<ESM4::Ammunition> *ref = ptr.get<ESM4::Ammunition>();
 
         MWGui::ToolTipInfo info;
         info.caption = ref->mBase->mFullName + MWGui::ToolTips::getCountString(ptr.getRefData().getCount());
@@ -83,7 +83,7 @@ namespace MWClass
 
     int ForeignAmmo::getValue (const MWWorld::Ptr& ptr) const
     {
-        MWWorld::LiveCellRef<ESM4::Ammo> *ref = ptr.get<ESM4::Ammo>();
+        MWWorld::LiveCellRef<ESM4::Ammunition> *ref = ptr.get<ESM4::Ammunition>();
 
         int value = ref->mBase->mData.value;
         if (ptr.getCellRef().getGoldValue() > 1 && ptr.getRefData().getCount() == 1)
@@ -94,7 +94,7 @@ namespace MWClass
 
     std::string ForeignAmmo::getUpSoundId (const MWWorld::Ptr& ptr) const
     {
-        MWWorld::LiveCellRef<ESM4::Ammo> *ref = ptr.get<ESM4::Ammo>();
+        MWWorld::LiveCellRef<ESM4::Ammunition> *ref = ptr.get<ESM4::Ammunition>();
         if (ref->mBase->mPickUpSound)
             return ESM4::formIdToString(ref->mBase->mPickUpSound); // FONV
         else
@@ -117,7 +117,7 @@ namespace MWClass
 
     std::string ForeignAmmo::getDownSoundId (const MWWorld::Ptr& ptr) const
     {
-        MWWorld::LiveCellRef<ESM4::Ammo> *ref = ptr.get<ESM4::Ammo>();
+        MWWorld::LiveCellRef<ESM4::Ammunition> *ref = ptr.get<ESM4::Ammunition>();
         if (ref->mBase->mDropSound)
             return ESM4::formIdToString(ref->mBase->mDropSound); // FONV
         else
@@ -140,7 +140,7 @@ namespace MWClass
 
     std::string ForeignAmmo::getInventoryIcon (const MWWorld::Ptr& ptr) const
     {
-        MWWorld::LiveCellRef<ESM4::Ammo> *ref = ptr.get<ESM4::Ammo>();
+        MWWorld::LiveCellRef<ESM4::Ammunition> *ref = ptr.get<ESM4::Ammunition>();
 
         if (ref->mBase->mMiniIcon != "")
             return ref->mBase->mMiniIcon;
@@ -150,7 +150,7 @@ namespace MWClass
 
     std::string ForeignAmmo::getModel(const MWWorld::Ptr &ptr) const
     {
-        MWWorld::LiveCellRef<ESM4::Ammo> *ref = ptr.get<ESM4::Ammo>();
+        MWWorld::LiveCellRef<ESM4::Ammunition> *ref = ptr.get<ESM4::Ammunition>();
         assert(ref->mBase != NULL);
 
         const std::string &model = ref->mBase->mModel;
@@ -164,13 +164,13 @@ namespace MWClass
     {
         boost::shared_ptr<Class> instance (new ForeignAmmo);
 
-        registerClass (typeid (ESM4::Ammo).name(), instance);
+        registerClass (typeid (ESM4::Ammunition).name(), instance);
     }
 
     MWWorld::Ptr ForeignAmmo::copyToCellImpl(const MWWorld::Ptr &ptr, MWWorld::CellStore &cell) const
     {
-        MWWorld::LiveCellRef<ESM4::Ammo> *ref = ptr.get<ESM4::Ammo>();
+        MWWorld::LiveCellRef<ESM4::Ammunition> *ref = ptr.get<ESM4::Ammunition>();
 
-        return MWWorld::Ptr(&cell.get<ESM4::Ammo>().insert(*ref), &cell);
+        return MWWorld::Ptr(&cell.get<ESM4::Ammunition>().insert(*ref), &cell);
     }
 }

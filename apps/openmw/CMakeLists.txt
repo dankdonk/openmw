@@ -82,7 +82,7 @@ add_openmw_dir (mwclass
     foreignsound
     foreignactivator foreignapparatus foreignarmor foreignbook foreignclothing foreigncontainer
     foreigndoor foreigningredient foreignlight foreignmiscitem foreignstatic foreigngrass
-    foreigntree foreignflora foreignfurniture foreignweapon foreignammo foreignnpc foreigncreature
+    foreigntree foreignflora foreignfurniture foreignweapon ammunition foreignnpc foreigncreature
     levelledcreature soulgem foreignkey foreignpotion subspace sigilstone
     levelleditem levellednpc terminal talkingactivator note
     )

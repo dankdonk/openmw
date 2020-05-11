@@ -37,7 +37,7 @@ namespace ESM4
     class Reader;
     class Writer;
 
-    struct Ammo
+    struct Ammunition
     {
         struct Data // FIXME: TES5 projectile, damage (float)
         {
@@ -71,8 +71,8 @@ namespace ESM4
 
         Data mData;
 
-        Ammo();
-        virtual ~Ammo();
+        Ammunition();
+        virtual ~Ammunition();
 
         virtual void load(ESM4::Reader& reader);
         //virtual void save(ESM4::Writer& writer) const;

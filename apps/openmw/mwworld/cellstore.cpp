@@ -560,7 +560,7 @@ namespace MWWorld
         if (LiveCellRef<ESM4::Weapon>    *ref = mForeignWeapons.searchViaHandle (handle))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM4::Ammo>      *ref = mForeignAmmos.searchViaHandle (handle))
+        if (LiveCellRef<ESM4::Ammunition> *ref = mAmmunitions.searchViaHandle (handle))
             return Ptr (ref, this);
 
         if (LiveCellRef<ESM4::Npc>       *ref = mForeignNpcs.searchViaHandle (handle))
@@ -1102,7 +1102,7 @@ namespace MWWorld
                     case ESM4::REC_FLOR: mForeignFloras.load(record, deleted, store); break;
                     case ESM4::REC_FURN: mForeignFurnitures.load(record, deleted, store); break;
                     case ESM4::REC_WEAP: mForeignWeapons.load(record, deleted, store); break;
-                    case ESM4::REC_AMMO: mForeignAmmos.load(record, deleted, store); break;
+                    case ESM4::REC_AMMO: mAmmunitions.load(record, deleted, store); break;
                     case ESM4::REC_LVLC:
                     {
                         mLevelledCreatures.load(record, deleted, store); break; // only TES4

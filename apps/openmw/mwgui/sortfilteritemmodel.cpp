@@ -50,7 +50,7 @@ namespace
         mapping.push_back( typeid(ESM::Lockpick).name() );
         mapping.push_back( typeid(ESM::Repair).name() );
         mapping.push_back( typeid(ESM::Probe).name() );
-        mapping.push_back( typeid(ESM4::Ammo).name() );
+        mapping.push_back( typeid(ESM4::Ammunition).name() );
         mapping.push_back( typeid(ESM4::Weapon).name() );
         mapping.push_back( typeid(ESM4::Armor).name() );
         mapping.push_back( typeid(ESM4::Clothing).name() );
@@ -128,7 +128,7 @@ namespace MWGui
                 || base.getTypeName() == typeid(ESM4::Clothing).name())
             category = Category_Apparel;
         else if (base.getTypeName() == typeid(ESM::Weapon).name()
-                     || base.getTypeName() == typeid(ESM4::Ammo).name()
+                     || base.getTypeName() == typeid(ESM4::Ammunition).name()
                      || base.getTypeName() == typeid(ESM4::Weapon).name())
             category = Category_Weapon;
         else if (base.getTypeName() == typeid(ESM::Ingredient).name()
