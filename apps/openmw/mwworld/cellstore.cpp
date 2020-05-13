@@ -67,6 +67,23 @@ namespace
         return MWWorld::Ptr();
     }
 
+    // FIXME: can this be more efficient?
+    template<typename T>
+    MWWorld::Ptr searchViaActorId (MWWorld::CellRefVect<T>& actorList, int actorId,
+        MWWorld::CellStore *cell)
+    {
+        for (typename MWWorld::CellRefVect<T>::List::iterator iter (actorList.mList.begin());
+             iter!=actorList.mList.end(); ++iter)
+        {
+            MWWorld::Ptr actor (&*iter, cell);
+
+            if (actor.getClass().getCreatureStats (actor).matchesActorId (actorId) && actor.getRefData().getCount() > 0)
+                return actor;
+        }
+
+        return MWWorld::Ptr();
+    }
+
     template<typename RecordType, typename T>
     void writeReferenceCollection (ESM::ESMWriter& writer,
         const MWWorld::CellRefList<T>& collection)
@@ -180,17 +197,17 @@ namespace MWWorld
     }
 
     template <typename X>
-    void CellRefList<X>::load(ESM4::Reference &ref, bool deleted, const MWWorld::ESMStore &esmStore)
+    void CellRefVect<X>::load(ESM4::Reference &ref, bool deleted, const MWWorld::ESMStore &esmStore)
     {
         const MWWorld::ForeignStore<X> &store = esmStore.getForeign<X>();
 
-        if (const X *ptr = store.search (ref.mBaseObj))
+        if (const X *ptr = store.search(ref.mBaseObj))
         {
             // see operator== in livecellref.hpp, check for matching formId
             typename std::list<LiveRef>::iterator iter =
                 std::find(mList.begin(), mList.end(), ref);
 
-            LiveRef liveCellRef (ref, ptr); // ref is the reference, ptr is the base object
+            LiveRef liveCellRef(ref, ptr); // ref is the reference, ptr is the base object
 
             if (deleted)
                 liveCellRef.mData.setDeleted(true);
@@ -221,7 +238,7 @@ namespace MWWorld
     }
 
     template <typename X>
-    void CellRefList<X>::load(ESM4::ActorCreature &ref, bool deleted, const MWWorld::ESMStore &esmStore)
+    void CellRefVect<X>::load(ESM4::ActorCreature &ref, bool deleted, const MWWorld::ESMStore &esmStore)
     {
         const MWWorld::ForeignStore<X> &store = esmStore.getForeign<X>();
 
@@ -254,7 +271,7 @@ namespace MWWorld
     }
 
     template <typename X>
-    void CellRefList<X>::load(ESM4::ActorCharacter &ref, bool deleted, const MWWorld::ESMStore &esmStore)
+    void CellRefVect<X>::load(ESM4::ActorCharacter &ref, bool deleted, const MWWorld::ESMStore &esmStore)
     {
         const MWWorld::ForeignStore<X> &store = esmStore.getForeign<X>();
 
@@ -288,6 +305,14 @@ namespace MWWorld
                 mList.push_back (liveCellRef);
                 //std::cout << "CellRefList::load "
                     //<< ESM4::formIdToString(mList.back().mBase->mFormId) << std::endl; // FIXME: debug only
+
+// FIXME: testing audio markers
+#if 0
+                if (ref.mAudioLocation)
+                    std::cout << "audio loc " << ref.mEditorId << " "
+                        << ref.mPosition.pos.x/4096 << "," << ref.mPosition.pos.y/4096 << " "
+                    << mList.back().mBase->mEditorId << std::endl; // FIXME: debug only
+#endif
             }
         }
         else

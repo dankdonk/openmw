@@ -90,44 +90,43 @@ namespace MWWorld
             CellRefList<ESM::Repair>            mRepairs;
             CellRefList<ESM::Static>            mStatics;
             CellRefList<ESM::Weapon>            mWeapons;
-
             //
-            CellRefList<ESM4::Sound>            mSounds;
-            CellRefList<ESM4::Activator>        mForeignActivators;
-            CellRefList<ESM4::Apparatus>        mForeignApparatus;
-            CellRefList<ESM4::Armor>            mForeignArmors;
-            CellRefList<ESM4::Book>             mForeignBooks;
-            CellRefList<ESM4::Clothing>         mForeignClothes;
-            CellRefList<ESM4::Container>        mForeignContainers;
-            CellRefList<ESM4::Door>             mForeignDoors;
-            CellRefList<ESM4::Ingredient>       mForeignIngredients;
-            CellRefList<ESM4::Light>            mForeignLights;
-            CellRefList<ESM4::MiscItem>         mForeignMiscItems;
-            CellRefList<ESM4::Static>           mForeignStatics;
-            CellRefList<ESM4::Grass>            mForeignGrasses;
-            CellRefList<ESM4::Tree>             mForeignTrees;
-            CellRefList<ESM4::Flora>            mForeignFloras;
-            CellRefList<ESM4::Furniture>        mForeignFurnitures;
-            CellRefList<ESM4::Weapon>           mForeignWeapons;
-            CellRefList<ESM4::Ammunition>       mAmmunitions;
-            CellRefList<ESM4::Npc>              mForeignNpcs;
-            CellRefList<ESM4::Creature>         mForeignCreatures;
-            CellRefList<ESM4::LevelledCreature>  mLevelledCreatures;
-            CellRefList<ESM4::IdleMarker>       mIdleMarkers;
-            CellRefList<ESM4::SoulGem>          mSoulGems;
-            CellRefList<ESM4::Key>              mForeignKeys;
-            CellRefList<ESM4::Potion>           mForeignPotions;
-            CellRefList<ESM4::SubSpace>         mSubSpaces;
-            CellRefList<ESM4::SigilStone>       mSigilStones;
-            CellRefList<ESM4::LevelledItem>     mLevelledItems;
-            CellRefList<ESM4::LevelledNpc>      mLevelledNpcs;
-            CellRefList<ESM4::AcousticSpace>    mAcousticSpaces;
-            CellRefList<ESM4::MovableStatic>    mMovableStatics;
-            CellRefList<ESM4::Terminal>         mTerminals;
-            CellRefList<ESM4::TalkingActivator>  mTalkingActivators;
-            CellRefList<ESM4::Note>             mNotes;
-            CellRefList<ESM4::PlaceableWater>   mPlaceableWaters;
-            CellRefList<ESM4::StaticCollection> mStaticCollections;
+            CellRefVect<ESM4::Sound>            mSounds;
+            CellRefVect<ESM4::Activator>        mForeignActivators;
+            CellRefVect<ESM4::Apparatus>        mForeignApparatus;
+            CellRefVect<ESM4::Armor>            mForeignArmors;
+            CellRefVect<ESM4::Book>             mForeignBooks;
+            CellRefVect<ESM4::Clothing>         mForeignClothes;
+            CellRefVect<ESM4::Container>        mForeignContainers;
+            CellRefVect<ESM4::Door>             mForeignDoors;
+            CellRefVect<ESM4::Ingredient>       mForeignIngredients;
+            CellRefVect<ESM4::Light>            mForeignLights;
+            CellRefVect<ESM4::MiscItem>         mForeignMiscItems;
+            CellRefVect<ESM4::Static>           mForeignStatics;
+            CellRefVect<ESM4::Grass>            mForeignGrasses;
+            CellRefVect<ESM4::Tree>             mForeignTrees;
+            CellRefVect<ESM4::Flora>            mForeignFloras;
+            CellRefVect<ESM4::Furniture>        mForeignFurnitures;
+            CellRefVect<ESM4::Weapon>           mForeignWeapons;
+            CellRefVect<ESM4::Ammunition>       mAmmunitions;
+            CellRefVect<ESM4::Npc>              mForeignNpcs;
+            CellRefVect<ESM4::Creature>         mForeignCreatures;
+            CellRefVect<ESM4::LevelledCreature>  mLevelledCreatures;
+            CellRefVect<ESM4::IdleMarker>       mIdleMarkers;
+            CellRefVect<ESM4::SoulGem>          mSoulGems;
+            CellRefVect<ESM4::Key>              mForeignKeys;
+            CellRefVect<ESM4::Potion>           mForeignPotions;
+            CellRefVect<ESM4::SubSpace>         mSubSpaces;
+            CellRefVect<ESM4::SigilStone>       mSigilStones;
+            CellRefVect<ESM4::LevelledItem>     mLevelledItems;
+            CellRefVect<ESM4::LevelledNpc>      mLevelledNpcs;
+            CellRefVect<ESM4::AcousticSpace>    mAcousticSpaces;
+            CellRefVect<ESM4::MovableStatic>    mMovableStatics;
+            CellRefVect<ESM4::Terminal>         mTerminals;
+            CellRefVect<ESM4::TalkingActivator>  mTalkingActivators;
+            CellRefVect<ESM4::Note>             mNotes;
+            CellRefVect<ESM4::PlaceableWater>   mPlaceableWaters;
+            CellRefVect<ESM4::StaticCollection> mStaticCollections;
 
             ForeignStore<ESM4::Pathgrid>        mForeignPathgrids;
             ESM::Pathgrid mPathgrid; // FIXME: just a quick workaround
@@ -265,6 +264,8 @@ namespace MWWorld
                     forEachImp (functor, mContainers) &&
                     forEachImp (functor, mCreatures) &&
                     forEachImp (functor, mNpcs);
+
+                // FIXME: foreign
             }
 
             bool isExterior() const;
@@ -297,13 +298,13 @@ namespace MWWorld
             }
 
             template <class T>
-            CellRefList<T>& getForeign() {
+            CellRefVect<T>& getForeign() {
                 throw std::runtime_error ("Storage for type " + std::string(typeid(T).name()) + " does not exist in cells");
             }
 
             template <class T>
-            const CellRefList<T>& getForeignReadOnly() {
-                throw std::runtime_error ("Read Only CellRefList access not available for type " + std::string(typeid(T).name()) );
+            const CellRefVect<T>& getForeignReadOnly() {
+                throw std::runtime_error ("Read Only CellRefVect access not available for type " + std::string(typeid(T).name()) );
             }
 
             bool isPointConnected(const int start, const int end) const;
@@ -490,150 +491,150 @@ namespace MWWorld
     }
 
     template<>
-    inline const CellRefList<ESM4::Activator>& CellStore::getForeignReadOnly<ESM4::Activator>()
+    inline const CellRefVect<ESM4::Activator>& CellStore::getForeignReadOnly<ESM4::Activator>()
     {
         return mForeignActivators;
     }
 
     template<>
-    inline CellRefList<ESM4::Apparatus>& CellStore::getForeign<ESM4::Apparatus>()
+    inline CellRefVect<ESM4::Apparatus>& CellStore::getForeign<ESM4::Apparatus>()
     {
         mHasState = true; // FIXME: what is this used for?
         return mForeignApparatus;
     }
 
     template<>
-    inline CellRefList<ESM4::Armor>& CellStore::getForeign<ESM4::Armor>()
+    inline CellRefVect<ESM4::Armor>& CellStore::getForeign<ESM4::Armor>()
     {
         mHasState = true; // FIXME: what is this used for?
         return mForeignArmors;
     }
 
     template<>
-    inline CellRefList<ESM4::Book>& CellStore::getForeign<ESM4::Book>()
+    inline CellRefVect<ESM4::Book>& CellStore::getForeign<ESM4::Book>()
     {
         mHasState = true; // FIXME: what is this used for?
         return mForeignBooks;
     }
 
     template<>
-    inline CellRefList<ESM4::Clothing>& CellStore::getForeign<ESM4::Clothing>()
+    inline CellRefVect<ESM4::Clothing>& CellStore::getForeign<ESM4::Clothing>()
     {
         mHasState = true; // FIXME: what is this used for?
         return mForeignClothes;
     }
 
     template<>
-    inline CellRefList<ESM4::Door>& CellStore::getForeign<ESM4::Door>()
+    inline CellRefVect<ESM4::Door>& CellStore::getForeign<ESM4::Door>()
     {
         mHasState = true; // FIXME: what is this used for?
         return mForeignDoors;
     }
 
     template<>
-    inline const CellRefList<ESM4::Door>& CellStore::getForeignReadOnly<ESM4::Door>()
+    inline const CellRefVect<ESM4::Door>& CellStore::getForeignReadOnly<ESM4::Door>()
     {
         return mForeignDoors;
     }
 
     template<>
-    inline CellRefList<ESM4::Ingredient>& CellStore::getForeign<ESM4::Ingredient>()
+    inline CellRefVect<ESM4::Ingredient>& CellStore::getForeign<ESM4::Ingredient>()
     {
         mHasState = true; // FIXME: what is this used for?
         return mForeignIngredients;
     }
 
     template<>
-    inline CellRefList<ESM4::Light>& CellStore::getForeign<ESM4::Light>()
+    inline CellRefVect<ESM4::Light>& CellStore::getForeign<ESM4::Light>()
     {
         mHasState = true; // FIXME: what is this used for?
         return mForeignLights;
     }
 
     template<>
-    inline CellRefList<ESM4::MiscItem>& CellStore::getForeign<ESM4::MiscItem>()
+    inline CellRefVect<ESM4::MiscItem>& CellStore::getForeign<ESM4::MiscItem>()
     {
         mHasState = true; // FIXME: what is this used for?
         return mForeignMiscItems;
     }
 
     template<>
-    inline CellRefList<ESM4::Static>& CellStore::getForeign<ESM4::Static>()
+    inline CellRefVect<ESM4::Static>& CellStore::getForeign<ESM4::Static>()
     {
         mHasState = true; // FIXME: what is this used for?
         return mForeignStatics;
     }
 
     template<>
-    inline const CellRefList<ESM4::Static>& CellStore::getForeignReadOnly<ESM4::Static>()
+    inline const CellRefVect<ESM4::Static>& CellStore::getForeignReadOnly<ESM4::Static>()
     {
         return mForeignStatics;
     }
 
     template<>
-    inline CellRefList<ESM4::Weapon>& CellStore::getForeign<ESM4::Weapon>()
+    inline CellRefVect<ESM4::Weapon>& CellStore::getForeign<ESM4::Weapon>()
     {
         mHasState = true; // FIXME: what is this used for?
         return mForeignWeapons;
     }
 
     template<>
-    inline CellRefList<ESM4::Ammunition>& CellStore::getForeign<ESM4::Ammunition>()
+    inline CellRefVect<ESM4::Ammunition>& CellStore::getForeign<ESM4::Ammunition>()
     {
         mHasState = true; // FIXME: what is this used for?
         return mAmmunitions;
     }
 
     template<>
-    inline CellRefList<ESM4::Npc>& CellStore::getForeign<ESM4::Npc>()
+    inline CellRefVect<ESM4::Npc>& CellStore::getForeign<ESM4::Npc>()
     {
         mHasState = true; // FIXME: what is this used for?
         return mForeignNpcs;
     }
 
     template<>
-    inline CellRefList<ESM4::Creature>& CellStore::getForeign<ESM4::Creature>()
+    inline CellRefVect<ESM4::Creature>& CellStore::getForeign<ESM4::Creature>()
     {
         mHasState = true; // FIXME: what is this used for?
         return mForeignCreatures;
     }
 
     template<>
-    inline CellRefList<ESM4::SoulGem>& CellStore::getForeign<ESM4::SoulGem>()
+    inline CellRefVect<ESM4::SoulGem>& CellStore::getForeign<ESM4::SoulGem>()
     {
         mHasState = true; // FIXME: what is this used for?
         return mSoulGems;
     }
 
     template<>
-    inline CellRefList<ESM4::Key>& CellStore::getForeign<ESM4::Key>()
+    inline CellRefVect<ESM4::Key>& CellStore::getForeign<ESM4::Key>()
     {
         mHasState = true; // FIXME: what is this used for?
         return mForeignKeys;
     }
 
     template<>
-    inline CellRefList<ESM4::Potion>& CellStore::getForeign<ESM4::Potion>()
+    inline CellRefVect<ESM4::Potion>& CellStore::getForeign<ESM4::Potion>()
     {
         mHasState = true; // FIXME: what is this used for?
         return mForeignPotions;
     }
 
     template<>
-    inline CellRefList<ESM4::SigilStone>& CellStore::getForeign<ESM4::SigilStone>()
+    inline CellRefVect<ESM4::SigilStone>& CellStore::getForeign<ESM4::SigilStone>()
     {
         mHasState = true; // FIXME: what is this used for?
         return mSigilStones;
     }
 
     template<>
-    inline const CellRefList<ESM4::TalkingActivator>& CellStore::getForeignReadOnly<ESM4::TalkingActivator>()
+    inline const CellRefVect<ESM4::TalkingActivator>& CellStore::getForeignReadOnly<ESM4::TalkingActivator>()
     {
         return mTalkingActivators;
     }
 
     template<>
-    inline CellRefList<ESM4::Note>& CellStore::getForeign<ESM4::Note>()
+    inline CellRefVect<ESM4::Note>& CellStore::getForeign<ESM4::Note>()
     {
         mHasState = true; // FIXME: what is this used for?
         return mNotes;

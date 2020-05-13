@@ -2744,8 +2744,8 @@ namespace MWWorld
     // NOTE: since CellRef ctor no longer populates mDestCell, getDestCell() will always return ""
     bool World::findForeignInteriorPosition(const std::string &name, ESM::Position &pos)
     {
-        typedef MWWorld::CellRefList<ESM4::Door>::List DoorList;
-        typedef MWWorld::CellRefList<ESM4::Static>::List StaticList;
+        typedef MWWorld::CellRefVect<ESM4::Door>::List DoorList;
+        typedef MWWorld::CellRefVect<ESM4::Static>::List StaticList;
 
         pos.rot[0] = pos.rot[1] = pos.rot[2] = 0;
         pos.pos[0] = pos.pos[1] = pos.pos[2] = 0;

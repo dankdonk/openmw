@@ -732,7 +732,7 @@ namespace MWWorld
 
             // FONV: check if there are any radio activators in this cell
             std::map</*ESM4::Quest**/ESM4::FormId, ESM4::FormId> radioQuests;
-            typedef CellRefList<ESM4::Activator>::List ActivatorList;
+            typedef CellRefVect<ESM4::Activator>::List ActivatorList;
             {
             const ActivatorList& acti = cell->getForeignReadOnly<ESM4::Activator>().mList;
             for (ActivatorList::const_iterator it = acti.begin(); it != acti.end(); ++it)
@@ -787,7 +787,7 @@ namespace MWWorld
             }
             }
 
-            typedef CellRefList<ESM4::TalkingActivator>::List TalkingActivatorList;
+            typedef CellRefVect<ESM4::TalkingActivator>::List TalkingActivatorList;
             {
             const TalkingActivatorList& tact = cell->getForeignReadOnly<ESM4::TalkingActivator>().mList;
             for (TalkingActivatorList::const_iterator it = tact.begin(); it != tact.end(); ++it)
@@ -1452,7 +1452,7 @@ namespace MWWorld
             }
 #else
             // FONV: check if there are any radio activators in this cell
-            typedef CellRefList<ESM4::Activator>::List ActivatorList;
+            typedef CellRefVect<ESM4::Activator>::List ActivatorList;
 
             std::map</*ESM4::Quest**/ESM4::FormId, ESM4::FormId> radioQuests;
             const ActivatorList& acti = cell->getForeignReadOnly<ESM4::Activator>().mList;
@@ -1548,7 +1548,7 @@ namespace MWWorld
             }
 
             // FIXME: not needed?
-            typedef CellRefList<ESM4::TalkingActivator>::List TalkingActivatorList;
+            typedef CellRefVect<ESM4::TalkingActivator>::List TalkingActivatorList;
             {
             const TalkingActivatorList& tact = cell->getForeignReadOnly<ESM4::TalkingActivator>().mList;
             for (TalkingActivatorList::const_iterator it = tact.begin(); it != tact.end(); ++it)
