@@ -4189,10 +4189,10 @@ If so the logic should be:
 To get containers to work with the Morrowind UI, we need a few methods to be implemented in addition to the usual:
 
 ```cpp
-    virtual int getValue (const MWWorld::Ptr& ptr) const;
-    virtual std::string getUpSoundId (const MWWorld::Ptr& ptr) const;
-    virtual std::string getDownSoundId (const MWWorld::Ptr& ptr) const;
-    virtual std::string getInventoryIcon (const MWWorld::Ptr& ptr) const;
+virtual int getValue (const MWWorld::Ptr& ptr) const;
+virtual std::string getUpSoundId (const MWWorld::Ptr& ptr) const;
+virtual std::string getDownSoundId (const MWWorld::Ptr& ptr) const;
+virtual std::string getInventoryIcon (const MWWorld::Ptr& ptr) const;
 ```
 
 For picking up objects in TES4, had to hard-code editor id's to choose the sound formid.  Not sure how else to get the correct sound.
@@ -4352,9 +4352,23 @@ OpenMW code relies on `Ptr` and `CellStore` relationship.  It is looking like to
 
 ## A new base class or inherit from `CellStore`?
 
-Or another option is to find a way to index `std::list`.
+Or another option is to find a way to index `std::list` (impossible?).
+
+Or simply do away with `std::list` - if we assume that there won't be many insert/delete in a cell, we can simply keep adding to a vector and mark any deleted records as such (vector deletion won't be very efficient).
+
+Note that insertions occurs from the classes, calld from `World::copyObjectToCell()` and `World::moveObject()`, e.g.:
+
+```cpp
+MWWorld::Ptr ForeignActivator::copyToCellImpl(const MWWorld::Ptr &ptr, MWWorld::CellStore &cell) const
+{
+    MWWorld::LiveCellRef<ESM4::Activator> *ref = ptr.get<ESM4::Activator>();
+
+    return MWWorld::Ptr(&cell.getForeign<ESM4::Activator>().insert(*ref), &cell);
+}
+```
 
 
+**FIXME:** need to add code to update the indices in `CellStore` after the insertion.
 
 
 [//]: # (/* spell spelllang=en_au syntax=cpp */)

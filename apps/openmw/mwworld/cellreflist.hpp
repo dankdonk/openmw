@@ -54,20 +54,21 @@ namespace MWWorld
             return 0;
         }
     };
-#if 0
+
     struct CellRefStoreBase
     {
         virtual ~CellRefStoreBase() {}
 
         //virtual LiveCellRefBase *find(const ESM4::FormId id) = 0;
-        virtual LiveRef *find (const std::string& name) = 0;
-        virtual std::vector<LiveCellRefBase*> search(std::int32_t x, std::int32_t y, std::size_t range = 0, std::size_t range2 = 0) = 0;
-        //virtual LiveCellRefBase *searchViaHandle(const std::string& handle) = 0;
-        LiveCellRef<X> *searchViaHandle (const std::string& handle) = 0;
+        virtual LiveCellRefBase *find(const std::string& id) = 0;
+        //virtual LiveRef *find (const std::string& name) = 0;
+        //virtual std::vector<LiveCellRefBase*> search(std::int32_t x, std::int32_t y, std::size_t range = 0, std::size_t range2 = 0) = 0;
+        virtual LiveCellRefBase *searchViaHandle(const std::string& handle) = 0;
+        //LiveCellRef<X> *searchViaHandle (const std::string& handle) = 0;
     };
-#endif
+
     template <typename X>
-    struct CellRefVect //: public CellRefStoreBase
+    struct CellRefVect : public CellRefStoreBase
     {
         typedef LiveCellRef<X> LiveRef;
         typedef std::list<LiveRef> List;
@@ -90,8 +91,9 @@ namespace MWWorld
         void load(ESM4::ActorCreature& ref, bool deleted, const ESMStore& esmStore);
         void load(ESM4::ActorCharacter& ref, bool deleted, const ESMStore& esmStore);
 
-        //LiveRef* find(const ESM4::FormId id)
-        LiveRef *find (const std::string& name)
+        //LiveCellRefBase *find(const ESM4::FormId id)
+        LiveCellRefBase *find(const std::string& name)
+        //LiveRef *find (const std::string& name)
         {
 #if 0
             std::map<ESM4::FormId, std::size_t>::const_iterator iter = mIdMap.find(id);
@@ -168,8 +170,8 @@ namespace MWWorld
         }
 
         // this is looking for Ogre::SceneNode handles
-        //LiveCellRefBase *searchViaHandle(const std::string& handle)
-        LiveCellRef<X> *searchViaHandle (const std::string& handle)
+        LiveCellRefBase *searchViaHandle(const std::string& handle)
+        //LiveCellRef<X> *searchViaHandle (const std::string& handle)
         {
             // FIXME: need a handle map?
             for (typename List::iterator iter(mList.begin()); iter != mList.end(); ++iter)

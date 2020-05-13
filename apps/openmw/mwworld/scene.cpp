@@ -1799,8 +1799,8 @@ namespace MWWorld
     {
         //InsertFunctor functor (cell, rescale, *loadingListener, *mPhysics, mRendering);
         //cell.forEach (functor);
-        InsertDummyFunctor functor2(cell, rescale, *loadingListener, mPhysics, mRendering);
-        cell.forEachForeign(functor2, 0, 0, 0, 0);
+        InsertDummyFunctor functor(cell, rescale, *loadingListener, mPhysics, mRendering);
+        cell.forEachForeign(functor, 0, 0, 0, 0);
     }
 
     void Scene::addObjectToScene (const Ptr& ptr)

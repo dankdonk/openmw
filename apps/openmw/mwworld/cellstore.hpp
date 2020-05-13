@@ -128,6 +128,12 @@ namespace MWWorld
             CellRefVect<ESM4::PlaceableWater>   mPlaceableWaters;
             CellRefVect<ESM4::StaticCollection> mStaticCollections;
 
+            std::map<int/*store type*/, CellRefStoreBase*> mStores;
+            std::map<ESM4::FormId, int> mStoreTypes;
+            int getStoreType(ESM4::FormId formId) const;
+
+            std::map<std::string, ESM4::FormId> mSceneNodeMap; // for searching via handle
+
             ForeignStore<ESM4::Pathgrid>        mForeignPathgrids;
             ESM::Pathgrid mPathgrid; // FIXME: just a quick workaround
             void buildTES3Pathgrid();
@@ -154,10 +160,12 @@ namespace MWWorld
             bool hasState() const;
             ///< Does this cell have state that needs to be stored in a saved game file?
 
+            bool hasFormId (ESM4::FormId formId) const;
             bool hasId (const std::string& id) const;
             ///< May return true for deleted IDs when in preload state. Will return false, if cell is
             /// unloaded.
 
+            //Ptr search (ESM4::FormId formId);
             Ptr search (const std::string& id);
             ///< Will return an empty Ptr if cell is not loaded. Does not check references in
             /// containers.
