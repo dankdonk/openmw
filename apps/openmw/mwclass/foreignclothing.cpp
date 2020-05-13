@@ -237,17 +237,17 @@ namespace MWClass
         return std::make_pair (1, "");
     }
 
-    MWWorld::Ptr ForeignClothing::copyToCellImpl(const MWWorld::Ptr &ptr, MWWorld::CellStore &cell) const
-    {
-        MWWorld::LiveCellRef<ESM4::Clothing> *ref = ptr.get<ESM4::Clothing>();
-
-        return MWWorld::Ptr(&cell.get<ESM4::Clothing>().insert(*ref), &cell);
-    }
-
     void ForeignClothing::registerSelf()
     {
         boost::shared_ptr<Class> instance (new ForeignClothing);
 
         registerClass (typeid (ESM4::Clothing).name(), instance);
+    }
+
+    MWWorld::Ptr ForeignClothing::copyToCellImpl(const MWWorld::Ptr &ptr, MWWorld::CellStore &cell) const
+    {
+        MWWorld::LiveCellRef<ESM4::Clothing> *ref = ptr.get<ESM4::Clothing>();
+
+        return MWWorld::Ptr(&cell.getForeign<ESM4::Clothing>().insert(*ref), &cell);
     }
 }

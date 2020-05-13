@@ -125,6 +125,95 @@ namespace
 
         return true;
     }
+
+    // FIXME: modify InsertFunctor rather than duplicate much of the code? the only change is
+    // lack of mPhysics
+    struct InsertDummyFunctor
+    {
+        MWWorld::CellStore& mCell;
+        bool mRescale;
+        Loading::Listener& mLoadingListener;
+        MWWorld::PhysicsSystem *mPhysics;
+        MWRender::RenderingManager& mRendering;
+
+        InsertDummyFunctor (MWWorld::CellStore& cell, bool rescale, Loading::Listener& loadingListener,
+            MWWorld::PhysicsSystem *physics, MWRender::RenderingManager& rendering);
+
+        bool operator() (const MWWorld::Ptr& ptr);
+    };
+
+    InsertDummyFunctor::InsertDummyFunctor (MWWorld::CellStore& cell, bool rescale,
+        Loading::Listener& loadingListener, MWWorld::PhysicsSystem *physics,
+        MWRender::RenderingManager& rendering)
+    : mCell (cell), mRescale (rescale), mLoadingListener (loadingListener),
+      mPhysics (physics), mRendering (rendering)
+    {}
+
+    bool InsertDummyFunctor::operator() (const MWWorld::Ptr& ptr)
+    {
+        if (mRescale)
+        {
+            if (ptr.getCellRef().getScale()<0.5)
+                ptr.getCellRef().setScale(0.5);
+            else if (ptr.getCellRef().getScale()>2)
+                ptr.getCellRef().setScale(2);
+        }
+
+        if (!ptr.getRefData().isDeleted() && ptr.getRefData().isEnabled())
+        {
+            try
+            {
+                 //if (ptr.getTypeName() == typeid(ESM4::Static).name()) // FIXME
+                     //std::cout << "static" << std::endl;
+
+                //addObject(ptr, *mPhysics, mRendering);
+                std::string model = ptr.getClass().getModel(ptr);
+                mRendering.addObject(ptr, model);
+                if (mPhysics)
+                    ptr.getClass().insertObject (ptr, model, *mPhysics);
+
+                //updateObjectLocalRotation(ptr, mPhysics, mRendering);
+                if (ptr.getRefData().getBaseNode() != NULL)
+                {
+                    Ogre::Quaternion worldRotQuat(Ogre::Radian(ptr.getRefData().getPosition().rot[2]), Ogre::Vector3::NEGATIVE_UNIT_Z);
+                    if (!ptr.getClass().isActor())
+                        worldRotQuat = Ogre::Quaternion(Ogre::Radian(ptr.getRefData().getPosition().rot[0]), Ogre::Vector3::NEGATIVE_UNIT_X)*
+                                Ogre::Quaternion(Ogre::Radian(ptr.getRefData().getPosition().rot[1]), Ogre::Vector3::NEGATIVE_UNIT_Y)* worldRotQuat;
+
+                    float x = ptr.getRefData().getLocalRotation().rot[0];
+                    float y = ptr.getRefData().getLocalRotation().rot[1];
+                    float z = ptr.getRefData().getLocalRotation().rot[2];
+
+                    Ogre::Quaternion rot(Ogre::Radian(z), Ogre::Vector3::NEGATIVE_UNIT_Z);
+                    if (!ptr.getClass().isActor())
+                        rot = Ogre::Quaternion(Ogre::Radian(x), Ogre::Vector3::NEGATIVE_UNIT_X)*
+                        Ogre::Quaternion(Ogre::Radian(y), Ogre::Vector3::NEGATIVE_UNIT_Y)*rot;
+
+                    ptr.getRefData().getBaseNode()->setOrientation(worldRotQuat*rot);
+                    if (mPhysics)
+                        mPhysics->rotateObject(ptr);
+                }
+
+                //
+                if (ptr.getRefData().getBaseNode())
+                {
+                    float scale = ptr.getCellRef().getScale();
+                    ptr.getClass().adjustScale(ptr, scale);
+                    mRendering.scaleObject(ptr, Ogre::Vector3(scale));
+                }
+                ptr.getClass().adjustPosition(ptr, false);
+            }
+            catch (const std::exception& e)
+            {
+                std::string error ("error during rendering: ");
+                std::cerr << error + e.what() << std::endl;
+            }
+        }
+
+        mLoadingListener.increaseProgress (1);
+
+        return true;
+    }
 }
 
 
@@ -321,7 +410,7 @@ namespace MWWorld
         // FIXME: these shouldn't be Refs and needs to move near LOD landscape below
         if (cell->isDummyCell() || cell->isVisibleDistCell())
         {
-            insertCell (*cell, true, loadingListener);
+            insertForeignCell (*cell, true, loadingListener);
             return;
         }
 
@@ -353,7 +442,7 @@ namespace MWWorld
 
         // ... then references. This is important for adjustPosition to work correctly.
         /// \todo rescale depending on the state of a new GMST
-        insertCell (*cell, true, loadingListener);
+        insertForeignCell (*cell, true, loadingListener);
 
         // NOTE: this also calls Debugging to add active cells for Pathgrids
         mRendering.cellAdded (cell); // calls mTerrain->loadCell()
@@ -375,11 +464,27 @@ namespace MWWorld
         MWBase::Environment::get().getWorld()->getLocalScripts().addCell (cell); // FIXME
     }
 
+    void Scene::loadDummyCell (CellStore *cell, int x, int y, Loading::Listener* loadingListener)
+    {
+#if 0
+        // FIXME: do we need x, y ?
+        std::size_t range = 2;
+        InsertDummyFunctor functor (*cell, true/*rescale*/, *loadingListener, mPhysics, mRendering);
+        cell->forEach (functor, x, y, range, 0);
+
+        range = 6;
+        InsertDummyFunctor functor2 (*cell, true/*rescale*/, *loadingListener, 0, mRendering);
+        cell->forEach (functor2, x, y, range, 2);
+
+        //mDummyStore = cell;
+#endif
+    }
+
     void Scene::loadVisibleDist (CellStore *cell, Loading::Listener* loadingListener)
     {
         //std::cout << "loading visible distant " << cell->getCell()->getDescription() << std::endl;
 
-        insertCell (*cell, true, loadingListener);
+        insertForeignCell (*cell, true, loadingListener);
     }
 
     void Scene::changeToVoid()
@@ -629,7 +734,7 @@ namespace MWWorld
             std::map</*ESM4::Quest**/ESM4::FormId, ESM4::FormId> radioQuests;
             typedef CellRefList<ESM4::Activator>::List ActivatorList;
             {
-            const ActivatorList& acti = cell->getReadOnly<ESM4::Activator>().mList;
+            const ActivatorList& acti = cell->getForeignReadOnly<ESM4::Activator>().mList;
             for (ActivatorList::const_iterator it = acti.begin(); it != acti.end(); ++it)
             {
                 const MWWorld::LiveCellRef<ESM4::Activator>& ref = *it;
@@ -656,7 +761,7 @@ namespace MWWorld
             }
             CellStore *dummy = MWBase::Environment::get().getWorld()->getWorldDummyCell(worldId);
             {
-            const ActivatorList& acti = dummy->getReadOnly<ESM4::Activator>().mList;
+            const ActivatorList& acti = dummy->getForeignReadOnly<ESM4::Activator>().mList;
             for (ActivatorList::const_iterator it = acti.begin(); it != acti.end(); ++it)
             {
                 const MWWorld::LiveCellRef<ESM4::Activator>& ref = *it;
@@ -684,7 +789,7 @@ namespace MWWorld
 
             typedef CellRefList<ESM4::TalkingActivator>::List TalkingActivatorList;
             {
-            const TalkingActivatorList& tact = cell->getReadOnly<ESM4::TalkingActivator>().mList;
+            const TalkingActivatorList& tact = cell->getForeignReadOnly<ESM4::TalkingActivator>().mList;
             for (TalkingActivatorList::const_iterator it = tact.begin(); it != tact.end(); ++it)
             {
                 const MWWorld::LiveCellRef<ESM4::TalkingActivator>& ref = *it;
@@ -700,7 +805,7 @@ namespace MWWorld
             }
             }
             {
-            const TalkingActivatorList& tact = dummy->getReadOnly<ESM4::TalkingActivator>().mList;
+            const TalkingActivatorList& tact = dummy->getForeignReadOnly<ESM4::TalkingActivator>().mList;
             for (TalkingActivatorList::const_iterator it = tact.begin(); it != tact.end(); ++it)
             {
                 const MWWorld::LiveCellRef<ESM4::TalkingActivator>& ref = *it;
@@ -1350,7 +1455,7 @@ namespace MWWorld
             typedef CellRefList<ESM4::Activator>::List ActivatorList;
 
             std::map</*ESM4::Quest**/ESM4::FormId, ESM4::FormId> radioQuests;
-            const ActivatorList& acti = cell->getReadOnly<ESM4::Activator>().mList;
+            const ActivatorList& acti = cell->getForeignReadOnly<ESM4::Activator>().mList;
             for (ActivatorList::const_iterator it = acti.begin(); it != acti.end(); ++it)
             {
                 const MWWorld::LiveCellRef<ESM4::Activator>& ref = *it;
@@ -1445,7 +1550,7 @@ namespace MWWorld
             // FIXME: not needed?
             typedef CellRefList<ESM4::TalkingActivator>::List TalkingActivatorList;
             {
-            const TalkingActivatorList& tact = cell->getReadOnly<ESM4::TalkingActivator>().mList;
+            const TalkingActivatorList& tact = cell->getForeignReadOnly<ESM4::TalkingActivator>().mList;
             for (TalkingActivatorList::const_iterator it = tact.begin(); it != tact.end(); ++it)
             {
                 const MWWorld::LiveCellRef<ESM4::TalkingActivator>& ref = *it;
@@ -1687,6 +1792,12 @@ namespace MWWorld
     {
         InsertFunctor functor (cell, rescale, *loadingListener, *mPhysics, mRendering);
         cell.forEach (functor);
+    }
+
+    void Scene::insertForeignCell (CellStore &cell, bool rescale, Loading::Listener* loadingListener)
+    {
+        InsertFunctor functor (cell, rescale, *loadingListener, *mPhysics, mRendering);
+        cell.forEach (functor/*, 0, 0, 0, 0*/);
     }
 
     void Scene::addObjectToScene (const Ptr& ptr)

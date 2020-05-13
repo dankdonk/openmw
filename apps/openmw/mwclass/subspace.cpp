@@ -61,6 +61,6 @@ namespace MWClass
     {
         MWWorld::LiveCellRef<ESM4::SubSpace> *ref = ptr.get<ESM4::SubSpace>();
 
-        return MWWorld::Ptr(&cell.get<ESM4::SubSpace>().insert(*ref), &cell);
+        return MWWorld::Ptr(&cell.getForeign<ESM4::SubSpace>().insert(*ref), &cell);
     }
 }

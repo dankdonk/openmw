@@ -90,6 +90,7 @@ namespace MWWorld
             CellRefList<ESM::Repair>            mRepairs;
             CellRefList<ESM::Static>            mStatics;
             CellRefList<ESM::Weapon>            mWeapons;
+
             //
             CellRefList<ESM4::Sound>            mSounds;
             CellRefList<ESM4::Activator>        mForeignActivators;
@@ -112,6 +113,7 @@ namespace MWWorld
             CellRefList<ESM4::Npc>              mForeignNpcs;
             CellRefList<ESM4::Creature>         mForeignCreatures;
             CellRefList<ESM4::LevelledCreature>  mLevelledCreatures;
+            CellRefList<ESM4::IdleMarker>       mIdleMarkers;
             CellRefList<ESM4::SoulGem>          mSoulGems;
             CellRefList<ESM4::Key>              mForeignKeys;
             CellRefList<ESM4::Potion>           mForeignPotions;
@@ -120,6 +122,7 @@ namespace MWWorld
             CellRefList<ESM4::LevelledItem>     mLevelledItems;
             CellRefList<ESM4::LevelledNpc>      mLevelledNpcs;
             CellRefList<ESM4::AcousticSpace>    mAcousticSpaces;
+            CellRefList<ESM4::MovableStatic>    mMovableStatics;
             CellRefList<ESM4::Terminal>         mTerminals;
             CellRefList<ESM4::TalkingActivator>  mTalkingActivators;
             CellRefList<ESM4::Note>             mNotes;
@@ -290,6 +293,16 @@ namespace MWWorld
 
             template <class T>
             const CellRefList<T>& getReadOnly() {
+                throw std::runtime_error ("Read Only CellRefList access not available for type " + std::string(typeid(T).name()) );
+            }
+
+            template <class T>
+            CellRefList<T>& getForeign() {
+                throw std::runtime_error ("Storage for type " + std::string(typeid(T).name()) + " does not exist in cells");
+            }
+
+            template <class T>
+            const CellRefList<T>& getForeignReadOnly() {
                 throw std::runtime_error ("Read Only CellRefList access not available for type " + std::string(typeid(T).name()) );
             }
 
@@ -477,137 +490,150 @@ namespace MWWorld
     }
 
     template<>
-    inline const CellRefList<ESM4::Activator>& CellStore::getReadOnly<ESM4::Activator>()
+    inline const CellRefList<ESM4::Activator>& CellStore::getForeignReadOnly<ESM4::Activator>()
     {
         return mForeignActivators;
     }
 
     template<>
-    inline const CellRefList<ESM4::TalkingActivator>& CellStore::getReadOnly<ESM4::TalkingActivator>()
-    {
-        return mTalkingActivators;
-    }
-
-    template<>
-    inline CellRefList<ESM4::Apparatus>& CellStore::get<ESM4::Apparatus>()
+    inline CellRefList<ESM4::Apparatus>& CellStore::getForeign<ESM4::Apparatus>()
     {
         mHasState = true; // FIXME: what is this used for?
         return mForeignApparatus;
     }
 
     template<>
-    inline CellRefList<ESM4::Armor>& CellStore::get<ESM4::Armor>()
+    inline CellRefList<ESM4::Armor>& CellStore::getForeign<ESM4::Armor>()
     {
         mHasState = true; // FIXME: what is this used for?
         return mForeignArmors;
     }
 
     template<>
-    inline CellRefList<ESM4::Book>& CellStore::get<ESM4::Book>()
+    inline CellRefList<ESM4::Book>& CellStore::getForeign<ESM4::Book>()
     {
         mHasState = true; // FIXME: what is this used for?
         return mForeignBooks;
     }
 
     template<>
-    inline CellRefList<ESM4::Clothing>& CellStore::get<ESM4::Clothing>()
+    inline CellRefList<ESM4::Clothing>& CellStore::getForeign<ESM4::Clothing>()
     {
         mHasState = true; // FIXME: what is this used for?
         return mForeignClothes;
     }
 
     template<>
-    inline const CellRefList<ESM4::Door>& CellStore::getReadOnly<ESM4::Door>()
+    inline CellRefList<ESM4::Door>& CellStore::getForeign<ESM4::Door>()
+    {
+        mHasState = true; // FIXME: what is this used for?
+        return mForeignDoors;
+    }
+
+    template<>
+    inline const CellRefList<ESM4::Door>& CellStore::getForeignReadOnly<ESM4::Door>()
     {
         return mForeignDoors;
     }
 
     template<>
-    inline CellRefList<ESM4::Ingredient>& CellStore::get<ESM4::Ingredient>()
+    inline CellRefList<ESM4::Ingredient>& CellStore::getForeign<ESM4::Ingredient>()
     {
         mHasState = true; // FIXME: what is this used for?
         return mForeignIngredients;
     }
 
     template<>
-    inline CellRefList<ESM4::Light>& CellStore::get<ESM4::Light>()
+    inline CellRefList<ESM4::Light>& CellStore::getForeign<ESM4::Light>()
     {
         mHasState = true; // FIXME: what is this used for?
         return mForeignLights;
     }
 
     template<>
-    inline CellRefList<ESM4::MiscItem>& CellStore::get<ESM4::MiscItem>()
+    inline CellRefList<ESM4::MiscItem>& CellStore::getForeign<ESM4::MiscItem>()
     {
         mHasState = true; // FIXME: what is this used for?
         return mForeignMiscItems;
     }
 
     template<>
-    inline CellRefList<ESM4::Static>& CellStore::get<ESM4::Static>()
+    inline CellRefList<ESM4::Static>& CellStore::getForeign<ESM4::Static>()
     {
         mHasState = true; // FIXME: what is this used for?
         return mForeignStatics;
     }
 
     template<>
-    inline CellRefList<ESM4::Weapon>& CellStore::get<ESM4::Weapon>()
+    inline const CellRefList<ESM4::Static>& CellStore::getForeignReadOnly<ESM4::Static>()
+    {
+        return mForeignStatics;
+    }
+
+    template<>
+    inline CellRefList<ESM4::Weapon>& CellStore::getForeign<ESM4::Weapon>()
     {
         mHasState = true; // FIXME: what is this used for?
         return mForeignWeapons;
     }
 
     template<>
-    inline CellRefList<ESM4::Ammunition>& CellStore::get<ESM4::Ammunition>()
+    inline CellRefList<ESM4::Ammunition>& CellStore::getForeign<ESM4::Ammunition>()
     {
         mHasState = true; // FIXME: what is this used for?
         return mAmmunitions;
     }
 
     template<>
-    inline CellRefList<ESM4::Npc>& CellStore::get<ESM4::Npc>()
+    inline CellRefList<ESM4::Npc>& CellStore::getForeign<ESM4::Npc>()
     {
         mHasState = true; // FIXME: what is this used for?
         return mForeignNpcs;
     }
 
     template<>
-    inline CellRefList<ESM4::Creature>& CellStore::get<ESM4::Creature>()
+    inline CellRefList<ESM4::Creature>& CellStore::getForeign<ESM4::Creature>()
     {
         mHasState = true; // FIXME: what is this used for?
         return mForeignCreatures;
     }
 
     template<>
-    inline CellRefList<ESM4::SoulGem>& CellStore::get<ESM4::SoulGem>()
+    inline CellRefList<ESM4::SoulGem>& CellStore::getForeign<ESM4::SoulGem>()
     {
         mHasState = true; // FIXME: what is this used for?
         return mSoulGems;
     }
 
     template<>
-    inline CellRefList<ESM4::Key>& CellStore::get<ESM4::Key>()
+    inline CellRefList<ESM4::Key>& CellStore::getForeign<ESM4::Key>()
     {
         mHasState = true; // FIXME: what is this used for?
         return mForeignKeys;
     }
 
     template<>
-    inline CellRefList<ESM4::Potion>& CellStore::get<ESM4::Potion>()
+    inline CellRefList<ESM4::Potion>& CellStore::getForeign<ESM4::Potion>()
     {
         mHasState = true; // FIXME: what is this used for?
         return mForeignPotions;
     }
 
     template<>
-    inline CellRefList<ESM4::SigilStone>& CellStore::get<ESM4::SigilStone>()
+    inline CellRefList<ESM4::SigilStone>& CellStore::getForeign<ESM4::SigilStone>()
     {
         mHasState = true; // FIXME: what is this used for?
         return mSigilStones;
     }
 
     template<>
-    inline CellRefList<ESM4::Note>& CellStore::get<ESM4::Note>()
+    inline const CellRefList<ESM4::TalkingActivator>& CellStore::getForeignReadOnly<ESM4::TalkingActivator>()
+    {
+        return mTalkingActivators;
+    }
+
+    template<>
+    inline CellRefList<ESM4::Note>& CellStore::getForeign<ESM4::Note>()
     {
         mHasState = true; // FIXME: what is this used for?
         return mNotes;

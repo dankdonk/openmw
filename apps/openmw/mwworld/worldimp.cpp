@@ -2754,7 +2754,7 @@ namespace MWWorld
         if (!cellStore)
             return false;
 
-        const StaticList &statics = cellStore->get<ESM4::Static>().mList;
+        const StaticList &statics = cellStore->getForeignReadOnly<ESM4::Static>().mList;
         StaticList::const_iterator iter;
         for (iter = statics.begin(); iter != statics.end(); ++iter)
         {
@@ -2769,7 +2769,7 @@ namespace MWWorld
 
         // try to find the door that connects to an external cell
         const MWWorld::ESMStore& store = MWBase::Environment::get().getWorld()->getStore();
-        const DoorList &doors = cellStore->getReadOnly<ESM4::Door>().mList;
+        const DoorList &doors = cellStore->getForeignReadOnly<ESM4::Door>().mList;
         for (DoorList::const_iterator it = doors.begin(); it != doors.end(); ++it)
         {
             if (!it->mRef.getTeleport())
@@ -2790,7 +2790,7 @@ namespace MWWorld
                 throw std::runtime_error ("findForeignInteriorPosition: world does not have a dummy cell");
 
             // find a door leading to our current cell and use its destination as the position
-            const DoorList &doors = dummy->getReadOnly<ESM4::Door>().mList;
+            const DoorList &doors = dummy->getForeignReadOnly<ESM4::Door>().mList;
             for (DoorList::const_reverse_iterator jt = doors.rbegin(); jt != doors.rend(); ++jt)
             {
                 if (!it->mRef.getTeleport())
@@ -2830,7 +2830,7 @@ namespace MWWorld
 
             // find a door leading to our current cell and use its destination as the position
             MWWorld::CellStore *source = getForeignInterior(cell->mCell->mEditorId);
-            const DoorList &doors = source->getReadOnly<ESM4::Door>().mList;
+            const DoorList &doors = source->getForeignReadOnly<ESM4::Door>().mList;
             for (DoorList::const_iterator jt = doors.begin(); jt != doors.end(); ++jt)
             {
                 if (!it->mRef.getTeleport())

@@ -59,6 +59,6 @@ namespace MWClass
     {
         MWWorld::LiveCellRef<ESM4::Flora> *ref = ptr.get<ESM4::Flora>();
 
-        return MWWorld::Ptr(&cell.get<ESM4::Flora>().insert(*ref), &cell);
+        return MWWorld::Ptr(&cell.getForeign<ESM4::Flora>().insert(*ref), &cell);
     }
 }

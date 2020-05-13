@@ -114,20 +114,6 @@ namespace MWClass
         return ref->mBase->mFullName;
     }
 
-    void ForeignDoor::registerSelf()
-    {
-        boost::shared_ptr<Class> instance (new ForeignDoor);
-
-        registerClass (typeid (ESM4::Door).name(), instance);
-    }
-
-    MWWorld::Ptr ForeignDoor::copyToCellImpl(const MWWorld::Ptr &ptr, MWWorld::CellStore &cell) const
-    {
-        MWWorld::LiveCellRef<ESM4::Door> *ref = ptr.get<ESM4::Door>();
-
-        return MWWorld::Ptr(&cell.get<ESM4::Door>().insert(*ref), &cell);
-    }
-
     boost::shared_ptr<MWWorld::Action> ForeignDoor::activate (const MWWorld::Ptr& ptr,
         const MWWorld::Ptr& actor) const
     {
@@ -385,5 +371,19 @@ namespace MWClass
 
         ESM::DoorState& state2 = dynamic_cast<ESM::DoorState&>(state);
         state2.mDoorState = customData.mDoorState;
+    }
+
+    void ForeignDoor::registerSelf()
+    {
+        boost::shared_ptr<Class> instance (new ForeignDoor);
+
+        registerClass (typeid (ESM4::Door).name(), instance);
+    }
+
+    MWWorld::Ptr ForeignDoor::copyToCellImpl(const MWWorld::Ptr &ptr, MWWorld::CellStore &cell) const
+    {
+        MWWorld::LiveCellRef<ESM4::Door> *ref = ptr.get<ESM4::Door>();
+
+        return MWWorld::Ptr(&cell.getForeign<ESM4::Door>().insert(*ref), &cell);
     }
 }

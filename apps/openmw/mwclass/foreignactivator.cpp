@@ -91,20 +91,6 @@ namespace MWClass
         return ref->mBase->mFullName;
     }
 
-    void ForeignActivator::registerSelf()
-    {
-        boost::shared_ptr<Class> instance (new ForeignActivator);
-
-        registerClass (typeid (ESM4::Activator).name(), instance);
-    }
-
-    MWWorld::Ptr ForeignActivator::copyToCellImpl(const MWWorld::Ptr &ptr, MWWorld::CellStore &cell) const
-    {
-        MWWorld::LiveCellRef<ESM4::Activator> *ref = ptr.get<ESM4::Activator>();
-
-        return MWWorld::Ptr(&cell.get<ESM4::Activator>().insert(*ref), &cell);
-    }
-
     std::string ForeignActivator::getScript (const MWWorld::Ptr& ptr) const
     {
         MWWorld::LiveCellRef<ESM4::Activator> *ref = ptr.get<ESM4::Activator>();
@@ -195,5 +181,19 @@ namespace MWClass
 
         ESM::DoorState& state2 = dynamic_cast<ESM::DoorState&>(state);
         state2.mDoorState = customData.mDoorState;
+    }
+
+    void ForeignActivator::registerSelf()
+    {
+        boost::shared_ptr<Class> instance (new ForeignActivator);
+
+        registerClass (typeid (ESM4::Activator).name(), instance);
+    }
+
+    MWWorld::Ptr ForeignActivator::copyToCellImpl(const MWWorld::Ptr &ptr, MWWorld::CellStore &cell) const
+    {
+        MWWorld::LiveCellRef<ESM4::Activator> *ref = ptr.get<ESM4::Activator>();
+
+        return MWWorld::Ptr(&cell.getForeign<ESM4::Activator>().insert(*ref), &cell);
     }
 }

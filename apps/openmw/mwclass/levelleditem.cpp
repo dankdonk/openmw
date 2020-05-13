@@ -61,6 +61,6 @@ namespace MWClass
     {
         MWWorld::LiveCellRef<ESM4::LevelledItem> *ref = ptr.get<ESM4::LevelledItem>();
 
-        return MWWorld::Ptr(&cell.get<ESM4::LevelledItem>().insert(*ref), &cell);
+        return MWWorld::Ptr(&cell.getForeign<ESM4::LevelledItem>().insert(*ref), &cell);
     }
 }

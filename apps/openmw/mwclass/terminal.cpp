@@ -56,20 +56,6 @@ namespace MWClass
         return ref->mBase->mFullName;
     }
 
-    void Terminal::registerSelf()
-    {
-        boost::shared_ptr<Class> instance (new Terminal);
-
-        registerClass (typeid (ESM4::Terminal).name(), instance);
-    }
-
-    MWWorld::Ptr Terminal::copyToCellImpl(const MWWorld::Ptr &ptr, MWWorld::CellStore &cell) const
-    {
-        MWWorld::LiveCellRef<ESM4::Terminal> *ref = ptr.get<ESM4::Terminal>();
-
-        return MWWorld::Ptr(&cell.get<ESM4::Terminal>().insert(*ref), &cell);
-    }
-
     bool Terminal::hasToolTip (const MWWorld::Ptr& ptr) const
     {
         MWWorld::LiveCellRef<ESM4::Terminal> *ref = ptr.get<ESM4::Terminal>();
@@ -98,5 +84,19 @@ namespace MWClass
         info.text = text;
 
         return info;
+    }
+
+    void Terminal::registerSelf()
+    {
+        boost::shared_ptr<Class> instance (new Terminal);
+
+        registerClass (typeid (ESM4::Terminal).name(), instance);
+    }
+
+    MWWorld::Ptr Terminal::copyToCellImpl(const MWWorld::Ptr &ptr, MWWorld::CellStore &cell) const
+    {
+        MWWorld::LiveCellRef<ESM4::Terminal> *ref = ptr.get<ESM4::Terminal>();
+
+        return MWWorld::Ptr(&cell.getForeign<ESM4::Terminal>().insert(*ref), &cell);
     }
 }

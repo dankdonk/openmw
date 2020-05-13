@@ -277,20 +277,6 @@ namespace MWClass
         return info;
     }
 
-    void ForeignNpc::registerSelf()
-    {
-        boost::shared_ptr<Class> instance (new ForeignNpc);
-
-        registerClass (typeid (ESM4::Npc).name(), instance);
-    }
-
-    MWWorld::Ptr ForeignNpc::copyToCellImpl(const MWWorld::Ptr &ptr, MWWorld::CellStore &cell) const
-    {
-        MWWorld::LiveCellRef<ESM4::Npc> *ref = ptr.get<ESM4::Npc>();
-
-        return MWWorld::Ptr(&cell.get<ESM4::Npc>().insert(*ref), &cell);
-    }
-
     int ForeignNpc::getSkill(const MWWorld::Ptr& ptr, int skill) const
     {
         // FIXME
@@ -671,5 +657,19 @@ namespace MWClass
         MWWorld::LiveCellRef<ESM4::Npc> *ref = ptr.get<ESM4::Npc>();
         //return ref->mBase->getFactionRank();
         return 10;
+    }
+
+    void ForeignNpc::registerSelf()
+    {
+        boost::shared_ptr<Class> instance (new ForeignNpc);
+
+        registerClass (typeid (ESM4::Npc).name(), instance);
+    }
+
+    MWWorld::Ptr ForeignNpc::copyToCellImpl(const MWWorld::Ptr &ptr, MWWorld::CellStore &cell) const
+    {
+        MWWorld::LiveCellRef<ESM4::Npc> *ref = ptr.get<ESM4::Npc>();
+
+        return MWWorld::Ptr(&cell.getForeign<ESM4::Npc>().insert(*ref), &cell);
     }
 }

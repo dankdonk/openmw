@@ -69,6 +69,6 @@ namespace MWClass
     {
         MWWorld::LiveCellRef<ESM4::Static> *ref = ptr.get<ESM4::Static>();
 
-        return MWWorld::Ptr(&cell.get<ESM4::Static>().insert(*ref), &cell);
+        return MWWorld::Ptr(&cell.getForeign<ESM4::Static>().insert(*ref), &cell);
     }
 }

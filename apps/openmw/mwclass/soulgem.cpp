@@ -159,6 +159,6 @@ namespace MWClass
     {
         MWWorld::LiveCellRef<ESM4::SoulGem> *ref = ptr.get<ESM4::SoulGem>();
 
-        return MWWorld::Ptr(&cell.get<ESM4::SoulGem>().insert(*ref), &cell);
+        return MWWorld::Ptr(&cell.getForeign<ESM4::SoulGem>().insert(*ref), &cell);
     }
 }

@@ -195,17 +195,17 @@ namespace MWClass
         return "";
     }
 
-    MWWorld::Ptr ForeignPotion::copyToCellImpl(const MWWorld::Ptr &ptr, MWWorld::CellStore &cell) const
-    {
-        MWWorld::LiveCellRef<ESM4::Potion> *ref = ptr.get<ESM4::Potion>();
-
-        return MWWorld::Ptr(&cell.get<ESM4::Potion>().insert(*ref), &cell);
-    }
-
     void ForeignPotion::registerSelf()
     {
         boost::shared_ptr<Class> instance (new ForeignPotion);
 
         registerClass (typeid (ESM4::Potion).name(), instance);
+    }
+
+    MWWorld::Ptr ForeignPotion::copyToCellImpl(const MWWorld::Ptr &ptr, MWWorld::CellStore &cell) const
+    {
+        MWWorld::LiveCellRef<ESM4::Potion> *ref = ptr.get<ESM4::Potion>();
+
+        return MWWorld::Ptr(&cell.getForeign<ESM4::Potion>().insert(*ref), &cell);
     }
 }

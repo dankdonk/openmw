@@ -146,20 +146,6 @@ namespace MWClass
         return "";
     }
 
-    void ForeignCreature::registerSelf()
-    {
-        boost::shared_ptr<Class> instance (new ForeignCreature);
-
-        registerClass (typeid (ESM4::Creature).name(), instance);
-    }
-
-    MWWorld::Ptr ForeignCreature::copyToCellImpl(const MWWorld::Ptr &ptr, MWWorld::CellStore &cell) const
-    {
-        MWWorld::LiveCellRef<ESM4::Creature> *ref = ptr.get<ESM4::Creature>();
-
-        return MWWorld::Ptr(&cell.get<ESM4::Creature>().insert(*ref), &cell);
-    }
-
     void ForeignCreature::ensureCustomData (const MWWorld::Ptr& ptr) const
     {
         if (!ptr.getRefData().getCustomData())
@@ -237,5 +223,19 @@ namespace MWClass
         ensureCustomData (ptr);
 
         return dynamic_cast<ForeignCreatureCustomData&> (*ptr.getRefData().getCustomData()).mMovement;
+    }
+
+    void ForeignCreature::registerSelf()
+    {
+        boost::shared_ptr<Class> instance (new ForeignCreature);
+
+        registerClass (typeid (ESM4::Creature).name(), instance);
+    }
+
+    MWWorld::Ptr ForeignCreature::copyToCellImpl(const MWWorld::Ptr &ptr, MWWorld::CellStore &cell) const
+    {
+        MWWorld::LiveCellRef<ESM4::Creature> *ref = ptr.get<ESM4::Creature>();
+
+        return MWWorld::Ptr(&cell.getForeign<ESM4::Creature>().insert(*ref), &cell);
     }
 }
