@@ -1,11 +1,12 @@
 #ifndef OPENMW_MWWORLD_CELLREF_H
 #define OPENMW_MWWORLD_CELLREF_H
 
+#include <extern/esm4/formid.hpp>
+
 #include <components/esm/cellref.hpp>
 
 namespace ESM4
 {
-    typedef uint32_t FormId;
     struct Reference;
     struct ActorCreature;
     struct ActorCharacter;

@@ -237,9 +237,6 @@ namespace MWWorld
                     forEachImp (functor, mForeignFurnitures) &&
                     forEachImp (functor, mForeignWeapons) &&
                     forEachImp (functor, mAmmunitions) &&
-                    forEachImp (functor, mForeignNpcs) &&
-                    forEachImp (functor, mForeignCreatures) &&
-                    forEachImp (functor, mLevelledCreatures) &&
                     forEachImp (functor, mSoulGems) &&
                     forEachImp (functor, mForeignKeys) &&
                     forEachImp (functor, mForeignPotions) &&
@@ -250,7 +247,10 @@ namespace MWWorld
                     forEachImp (functor, mTalkingActivators) &&
                     forEachImp (functor, mNotes) &&
                     forEachImp (functor, mPlaceableWaters) &&
-                    forEachImp (functor, mStaticCollections);
+                    forEachImp (functor, mStaticCollections) &&
+                    forEachImp (functor, mForeignNpcs) &&
+                    forEachImp (functor, mForeignCreatures) &&
+                    forEachImp (functor, mLevelledCreatures);
             }
 
             template<class Functor>
@@ -489,28 +489,28 @@ namespace MWWorld
     }
 
     template<>
-    inline  CellRefList<ESM4::Apparatus>& CellStore::get<ESM4::Apparatus>()
+    inline CellRefList<ESM4::Apparatus>& CellStore::get<ESM4::Apparatus>()
     {
         mHasState = true; // FIXME: what is this used for?
         return mForeignApparatus;
     }
 
     template<>
-    inline  CellRefList<ESM4::Armor>& CellStore::get<ESM4::Armor>()
+    inline CellRefList<ESM4::Armor>& CellStore::get<ESM4::Armor>()
     {
         mHasState = true; // FIXME: what is this used for?
         return mForeignArmors;
     }
 
     template<>
-    inline  CellRefList<ESM4::Book>& CellStore::get<ESM4::Book>()
+    inline CellRefList<ESM4::Book>& CellStore::get<ESM4::Book>()
     {
         mHasState = true; // FIXME: what is this used for?
         return mForeignBooks;
     }
 
     template<>
-    inline  CellRefList<ESM4::Clothing>& CellStore::get<ESM4::Clothing>()
+    inline CellRefList<ESM4::Clothing>& CellStore::get<ESM4::Clothing>()
     {
         mHasState = true; // FIXME: what is this used for?
         return mForeignClothes;
@@ -523,21 +523,21 @@ namespace MWWorld
     }
 
     template<>
-    inline  CellRefList<ESM4::Ingredient>& CellStore::get<ESM4::Ingredient>()
+    inline CellRefList<ESM4::Ingredient>& CellStore::get<ESM4::Ingredient>()
     {
         mHasState = true; // FIXME: what is this used for?
         return mForeignIngredients;
     }
 
     template<>
-    inline  CellRefList<ESM4::Light>& CellStore::get<ESM4::Light>()
+    inline CellRefList<ESM4::Light>& CellStore::get<ESM4::Light>()
     {
         mHasState = true; // FIXME: what is this used for?
         return mForeignLights;
     }
 
     template<>
-    inline  CellRefList<ESM4::MiscItem>& CellStore::get<ESM4::MiscItem>()
+    inline CellRefList<ESM4::MiscItem>& CellStore::get<ESM4::MiscItem>()
     {
         mHasState = true; // FIXME: what is this used for?
         return mForeignMiscItems;

@@ -39,7 +39,7 @@ namespace
 
         ESM::CellRef cellRef;
         cellRef.mRefNum.unset();
-        cellRef.mRefID = ESM4::formIdToString(id); // FIXME
+        cellRef.mRefID = ESM4::formIdToString(id); // FIXME how to generate a unique id for a spawned ref?
         cellRef.mScale = 1;
         cellRef.mFactionRank = 0;
         cellRef.mChargeInt = -1;

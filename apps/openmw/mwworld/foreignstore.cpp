@@ -686,7 +686,6 @@ namespace MWWorld
                 reader.getRecordHeader();
 
                 cell->loadTes4Record(store, esm);
-                //loadTes4Group(store, esm, cell);
                 //listener->setProgress(static_cast<size_t>(esm.getFileOffset() / (float)esm.getFileSize() * 1000));
             }
 
@@ -708,38 +707,11 @@ namespace MWWorld
 
         if (hdr.record.typeId != ESM4::REC_GRUP)
             return cell->loadTes4Record(store, esm);
-            //return loadTes4Record(esm, worlds); // FIXME: call CellStore::loadTes4Record instead?
 
         // should not happen, throw?
         std::cout << "ForeignStore<ForeignCell>::loadTes4Group unexpected group" << std::endl;
     }
 
-#if 0
-    // FIXME: deprecated
-    void ForeignStore<MWWorld::ForeignCell>::loadTes4Record(ESM::ESMReader& esm, ForeignStore<MWWorld::ForeignWorld>& worlds)
-    {
-        ESM4::Reader& reader = static_cast<ESM::ESM4Reader*>(&esm)->reader();
-        const ESM4::RecordHeader& hdr = reader.hdr();
-
-        switch (hdr.record.typeId)
-        {
-            case ESM4::REC_REFR:
-            case ESM4::REC_ACRE:
-            case ESM4::REC_ACHR:
-            {
-                reader.skipRecordData();
-                break;
-            }
-            default:
-            {
-                std::cout << "ForeignStore<ForeignCell> Unexpected TES4 record type: " + ESM4::printName(hdr.record.typeId)
-                          << std::endl;
-                reader.skipRecordData();
-                break;
-            }
-        }
-    }
-#endif
     void ForeignStore<MWWorld::ForeignCell>::updateRefrEstimate(ESM::ESMReader& esm)
     {
         ESM4::Reader& reader = static_cast<ESM::ESM4Reader*>(&esm)->reader();
@@ -1137,7 +1109,7 @@ template class MWWorld::ForeignStore<ESM4::MediaSet>;
 template class MWWorld::ForeignStore<ESM4::DefaultObj>;
 template class MWWorld::ForeignStore<ESM4::Region>;
 template class MWWorld::ForeignStore<ESM4::PlacedGrenade>;
-// Foreign Referenceables
+// Referenceables
 template class MWWorld::ForeignStore<ESM4::Sound>;
 template class MWWorld::ForeignStore<ESM4::Activator>;
 template class MWWorld::ForeignStore<ESM4::Apparatus>;

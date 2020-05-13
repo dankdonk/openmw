@@ -4322,6 +4322,39 @@ Additional record types found in Fallout3.esm:
 
 For LOD, start with DOOR, STAT and TREE (maybe FLOR, MSTT and PWAT later).  Others (e.g. ACTI, FURN, TERM and TACT) are probably too small.
 
+# [12/05/2020] World Dummy Cell implementation
+
+Initial attempt is to create a new class `DummyStore` which is fashion on `CellStore`.
+
+The first issue is that the actors defined in the dummy cell are no longer in a game "cell" (in fact they were never in it - I just failed to notice it).  I will need to devise some scheme to place them in the appropriate active cell.  Current code simply assumes that a `Ptr` will be associated with a `CellStore`.
+
+So, we have a couple of options:
+
+  1. Make `DummyStore` a `CellStore` (presumably via inheritance)
+  2. Instantiate actors then move them to active cells.
+
+**TODO:** This leads to the question of how to deal with actors that are not in an active cell - they all have schedules, etc.
+
+## Persistent but only for References?
+
+There are actors in dummy cells.  These actors can move to another cell - that means the dummy cell now has "state" info which needs to be saved.
+
+# [13/05/2020] World Dummy Cell - back to `CellStore`?
+
+OpenMW code relies on `Ptr` and `CellStore` relationship.  It is looking like too much effort to break that.  One example is unloading cells in `MWWorld::Scene` - `CellStoreCollection::iterator` is used to call functor `ListAndResetHandles`.  Either `DummyStore` has to implement something similar or it has to fit into `CellStoreCollection`.
+
+ * Objects::mCellSceneNodes is used for choosing which `Ogre::SceneNode` to use for inserting a new child scenenode and when updating Ptr movements between CellStore (called by `World::moveObject()`).
+            if(world->isUnderwater(ptr.getCell(), pos) || world->isWalkingOnWater(ptr)) /* get correct sounds, update drowning */
+            MWWorld::Ptr placed = MWBase::Environment::get().getWorld()->safePlaceObject(ref.getPtr(), ptr.getCell() , ptr.getCellRef().getPosition());
+        const std::string& playerCell = MWBase::Environment::get().getWorld()->getCellName(player.getCell());
+        if (!mPtr.getCell()->isExterior()) /* gui travel window, getting region when waiting, update actor head tracking (apparently done different when exterior), updating actors for sun damage, various AI packages */
+        pathfinding, etc, etc
+
+## A new base class or inherit from `CellStore`?
+
+Or another option is to find a way to index `std::list`.
+
+
 
 
 [//]: # (/* spell spelllang=en_au syntax=cpp */)

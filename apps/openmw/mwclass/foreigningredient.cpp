@@ -117,6 +117,8 @@ namespace MWClass
         const ESM4::Sound *sound = store.getForeign<ESM4::Sound>().search("ITMIngredientDown");
         if (sound)
             return ESM4::formIdToString(sound->mFormId);
+
+        return "";
     }
 
     std::string ForeignIngredient::getInventoryIcon (const MWWorld::Ptr& ptr) const

@@ -589,10 +589,10 @@ namespace MWWorld
         if (LiveCellRef<ESM4::Static>    *ref = mForeignStatics.searchViaHandle (handle))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM4::Tree>      *ref = mForeignTrees.searchViaHandle (handle))
+        if (LiveCellRef<ESM4::Grass>     *ref = mForeignGrasses.searchViaHandle (handle))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM4::Grass>     *ref = mForeignGrasses.searchViaHandle (handle))
+        if (LiveCellRef<ESM4::Tree>      *ref = mForeignTrees.searchViaHandle (handle))
             return Ptr (ref, this);
 
         if (LiveCellRef<ESM4::Flora>     *ref = mForeignFloras.searchViaHandle (handle))

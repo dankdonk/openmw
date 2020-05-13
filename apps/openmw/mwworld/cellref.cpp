@@ -2,7 +2,6 @@
 
 //#include <iostream> // FIXME: for debugging only
 
-#include <extern/esm4/formid.hpp>
 #include <extern/esm4/refr.hpp>
 #include <extern/esm4/acre.hpp>
 #include <extern/esm4/achr.hpp>
@@ -12,7 +11,6 @@
 
 #include "../mwbase/environment.hpp"
 #include "../mwbase/world.hpp"
-//#include "../mwbase/windowmanager.hpp"
 
 #include "../mwworld/esmstore.hpp"
 
@@ -248,22 +246,16 @@ namespace MWWorld
         return mChanged;
     }
 
-    // This may not be required?  see LiveCellRef constructor
     CellRef::CellRef (const ESM4::Reference& ref)
     {
-#if 0
-        if (ref.mEditorId.empty())
-        {
-            mCellRef.mRefID = ESM4::formIdToString(ref.mFormId);
-            std::cout << "CellRef:: empty editor id, using " << mCellRef.mRefID << std::endl;
-        }
-        else
-            mCellRef.mRefID = ref.mEditorId; // almost all references have this
-#endif
+        // FIXME: how to generate a unique formid for a spawned item?
+        // keep a static value somewhere?
+        //mFormId = ref.mFormId | 0xff000000; // if spawned?
         mFormId = ref.mFormId;
         mDestDoorId = 0;
 
-        mCellRef.mRefID = ESM4::formIdToString(ref.mBaseObj);
+        // pretend to be a TES3 ref
+        mCellRef.mRefID = ESM4::formIdToString(ref.mFormId);
 
         mCellRef.mPos.pos[0] = ref.mPosition.pos.x;
         mCellRef.mPos.pos[1] = ref.mPosition.pos.y;
@@ -274,6 +266,7 @@ namespace MWWorld
 
         mCellRef.mScale = ref.mScale;
 
+        // FIXME: is there another solution for doors?
         if (ref.mDoor.destDoor != 0)
         {
             mCellRef.mTeleport = true;
@@ -308,7 +301,7 @@ namespace MWWorld
     {
         mFormId = ref.mFormId;
 
-        mCellRef.mRefID = ESM4::formIdToString(ref.mBaseObj);
+        mCellRef.mRefID = ESM4::formIdToString(ref.mFormId);
 
         mCellRef.mPos.pos[0] = ref.mPosition.pos.x;
         mCellRef.mPos.pos[1] = ref.mPosition.pos.y;
@@ -326,7 +319,7 @@ namespace MWWorld
     {
         mFormId = ref.mFormId;
 
-        mCellRef.mRefID = ESM4::formIdToString(ref.mBaseObj);
+        mCellRef.mRefID = ESM4::formIdToString(ref.mFormId);
 
         mCellRef.mPos.pos[0] = ref.mPosition.pos.x;
         mCellRef.mPos.pos[1] = ref.mPosition.pos.y;
@@ -345,9 +338,9 @@ namespace MWWorld
         return mFormId;
     }
 
+    // FIXME: is there another solution for doors?
     ESM4::FormId CellRef::getDestDoorId () const
     {
         return mDestDoorId;
     }
-
 }

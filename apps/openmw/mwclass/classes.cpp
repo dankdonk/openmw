@@ -38,7 +38,7 @@
 #include "foreignflora.hpp"
 #include "foreignfurniture.hpp"
 #include "foreignweapon.hpp"
-#include "foreignammo.hpp"
+#include "ammunition.hpp"
 #include "foreignnpc.hpp"
 #include "foreigncreature.hpp"
 #include "levelledcreature.hpp"
@@ -102,7 +102,7 @@ namespace MWClass
         SoulGem::registerSelf();
         ForeignKey::registerSelf();
         ForeignPotion::registerSelf();
-        Subspace::registerSelf();
+        SubSpace::registerSelf();
         SigilStone::registerSelf();
         LevelledItem::registerSelf();
         LevelledNpc::registerSelf(); // not used?
