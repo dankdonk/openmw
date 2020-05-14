@@ -2,11 +2,14 @@
 #define GAME_MWWORLD_CELLREFLIST_H
 
 #include <list>
+#include <vector>
+#include <map>
 
 #include "livecellref.hpp"
 
 namespace MWWorld
 {
+#if 1
     /// \brief Collection of references of one type
     template <typename X>
     struct CellRefList
@@ -14,6 +17,16 @@ namespace MWWorld
         typedef LiveCellRef<X> LiveRef;
         typedef std::list<LiveRef> List;
         List mList;
+
+        typedef std::vector<LiveRef> Vect;
+        Vect mVect;
+
+        //std::map<ESM4::FormId, List::iterator> mFormIdMap;
+        typedef std::map<ESM4::FormId, LiveCellRefBase*> FormIdMap;
+        FormIdMap mFormIdMap;
+
+        typedef std::map<std::pair<std::int32_t, std::int32_t>, std::vector<LiveCellRefBase*> > GridMap;
+        GridMap mGridMap;
 
         /// Search for the given reference in the given reclist from
         /// ESMStore. Insert the reference into the list if a match is
@@ -23,9 +36,9 @@ namespace MWWorld
         /// so we need to pass the instantiation of the method to the linker, when
         /// all methods are known.
         void load (ESM::CellRef &ref, bool deleted, const MWWorld::ESMStore &esmStore);
-        void load (ESM4::Reference &ref, bool deleted, const MWWorld::ESMStore &esmStore);
-        void load (ESM4::ActorCreature &ref, bool deleted, const MWWorld::ESMStore &esmStore);
-        void load (ESM4::ActorCharacter &ref, bool deleted, const MWWorld::ESMStore &esmStore);
+        void load (ESM4::Reference &ref, bool deleted, const MWWorld::ESMStore &esmStore, bool dummy = false);
+        void load (ESM4::ActorCreature &ref, bool deleted, const MWWorld::ESMStore &esmStore, bool dummy = false);
+        void load (ESM4::ActorCharacter &ref, bool deleted, const MWWorld::ESMStore &esmStore, bool dummy = false);
 
         LiveRef *find (const std::string& name)
         {
@@ -54,7 +67,7 @@ namespace MWWorld
             return 0;
         }
     };
-
+#else
     struct CellRefStoreBase
     {
         virtual ~CellRefStoreBase() {}
@@ -68,11 +81,11 @@ namespace MWWorld
     };
 
     template <typename X>
-    struct CellRefVect : public CellRefStoreBase
+    struct CellRefList : public CellRefStoreBase
     {
         typedef LiveCellRef<X> LiveRef;
-        typedef std::list<LiveRef> List;
-        //typedef std::vector<LiveRef> List;
+        //typedef std::list<LiveRef> List;
+        typedef std::vector<LiveRef> List;
         List mList;
 
         typedef std::map<std::pair<std::int32_t, std::int32_t>, std::vector<std::size_t> > GridMap;
@@ -87,6 +100,7 @@ namespace MWWorld
         /// and the build will fail with an ugly three-way cyclic header dependence
         /// so we need to pass the instantiation of the method to the linker, when
         /// all methods are known.
+        void load (ESM::CellRef &ref, bool deleted, const MWWorld::ESMStore &esmStore);
         void load(ESM4::Reference& ref, bool deleted, const ESMStore& esmStore);
         void load(ESM4::ActorCreature& ref, bool deleted, const ESMStore& esmStore);
         void load(ESM4::ActorCharacter& ref, bool deleted, const ESMStore& esmStore);
@@ -186,6 +200,7 @@ namespace MWWorld
             return 0;
         }
     };
+#endif
 }
 
 #endif

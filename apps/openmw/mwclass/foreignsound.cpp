@@ -20,6 +20,7 @@ namespace MWClass
     {
         MWWorld::LiveCellRef<ESM4::Sound> *ref = ptr.get<ESM4::Sound>();
 
+        // FIXME: do SOUN ever have a model?
         if (!model.empty()) {
             renderingInterface.getObjects().insertModel(ptr, model/*, !ref->mBase->mPersistent*/); // FIXME
         }

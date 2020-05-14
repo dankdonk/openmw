@@ -253,7 +253,7 @@ namespace MWClass
     {
         //FIXME
         //return !ptr.getClass().getCreatureStats(ptr).getAiSequence().isInCombat() || getCreatureStats(ptr).isDead();
-        return true;
+        return false;
     }
 
     MWGui::ToolTipInfo ForeignNpc::getToolTipInfo (const MWWorld::Ptr& ptr) const
@@ -637,7 +637,7 @@ namespace MWClass
     {
         MWWorld::LiveCellRef<ESM4::Npc> *ref = ptr.get<ESM4::Npc>();
         //return ref->mBase->mAiData.mFight;
-        return 5;
+        return 5; // FIXME
     }
 
     bool ForeignNpc::isBipedal(const MWWorld::Ptr &ptr) const
@@ -649,14 +649,14 @@ namespace MWClass
     {
         MWWorld::LiveCellRef<ESM4::Npc> *ref = ptr.get<ESM4::Npc>();
         //return ref->mBase->mFaction;
-        return "foreign faction";
+        return "foreign faction"; // FIXME
     }
 
     int ForeignNpc::getPrimaryFactionRank (const MWWorld::Ptr& ptr) const
     {
         MWWorld::LiveCellRef<ESM4::Npc> *ref = ptr.get<ESM4::Npc>();
         //return ref->mBase->getFactionRank();
-        return 10;
+        return 10; // FIXME
     }
 
     void ForeignNpc::registerSelf()

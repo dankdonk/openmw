@@ -4367,8 +4367,20 @@ MWWorld::Ptr ForeignActivator::copyToCellImpl(const MWWorld::Ptr &ptr, MWWorld::
 }
 ```
 
-
 **FIXME:** need to add code to update the indices in `CellStore` after the insertion.
+
+# [13/05/2020 - 14/05/2020] World Dummy Cell - world of issues
+
+Spent most of 13/05/20 debugging weird issues where physics would not work sometimes, etc.  Had to re-implement in small increments to track down the cause.  Strangely, for the physics issue, had to insert the "foreign" objects in `CellStore::forEach()` - still no idea why this is needed.
+
+Another: `ACHR` with formid 0006C35E in Vilverin results in "Error in framelistener: Bad LiveCellRef cast to struct ESM4::Npc from struct ESM4::Npc".  Its base object is an `NPC_` with formid 0006C35D, and editor id "VilverinBanditFurnitureKhajiit".
+
+**TODO:** can't remember how levelled actors are generated
+
+**TODO:** trees are not inserted as index map insertion was way too long
+
+
+
 
 
 [//]: # (/* spell spelllang=en_au syntax=cpp */)

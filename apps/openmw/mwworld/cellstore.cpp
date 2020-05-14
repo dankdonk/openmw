@@ -66,13 +66,13 @@ namespace
 
         return MWWorld::Ptr();
     }
-
+#if 0
     // FIXME: can this be more efficient?
     template<typename T>
-    MWWorld::Ptr searchViaActorId (MWWorld::CellRefVect<T>& actorList, int actorId,
+    MWWorld::Ptr searchViaActorId (MWWorld::CellRefList<T>& actorList, int actorId,
         MWWorld::CellStore *cell)
     {
-        for (typename MWWorld::CellRefVect<T>::List::iterator iter (actorList.mList.begin());
+        for (typename MWWorld::CellRefList<T>::List::iterator iter (actorList.mList.begin());
              iter!=actorList.mList.end(); ++iter)
         {
             MWWorld::Ptr actor (&*iter, cell);
@@ -83,7 +83,7 @@ namespace
 
         return MWWorld::Ptr();
     }
-
+#endif
     template<typename RecordType, typename T>
     void writeReferenceCollection (ESM::ESMWriter& writer,
         const MWWorld::CellRefList<T>& collection)
@@ -197,10 +197,10 @@ namespace MWWorld
     }
 
     template <typename X>
-    void CellRefVect<X>::load(ESM4::Reference &ref, bool deleted, const MWWorld::ESMStore &esmStore)
+    void CellRefList<X>::load(ESM4::Reference &ref, bool deleted, const MWWorld::ESMStore &esmStore, bool dummy)
     {
         const MWWorld::ForeignStore<X> &store = esmStore.getForeign<X>();
-
+#if 0
         if (const X *ptr = store.search(ref.mBaseObj))
         {
             // see operator== in livecellref.hpp, check for matching formId
@@ -235,13 +235,71 @@ namespace MWWorld
                 << "Error: could not resolve foreign cell reference " << ref.mEditorId
                 << " (dropping reference)" << std::endl;
         }
+#else
+        if (const X *base = store.search(ref.mBaseObj))
+        {
+            FormIdMap::const_iterator iter = mFormIdMap.find(ref.mFormId);
+
+            LiveRef liveCellRef (ref, base); // ref is the reference, base is the base object
+
+            if (deleted)
+                liveCellRef.mData.setDeleted(true);
+
+            if (iter != mFormIdMap.end())
+                std::cout << "refr replace" << std::endl; // FIXME
+                //mList[iter->first] = std::move(liveCellRef); // replace
+            else
+            {
+                mList.push_back(std::move(liveCellRef)); // insert
+
+                //std::size_t index = mList.size() -1;
+                LiveCellRefBase *refPtr = &mList.back();
+                mFormIdMap[ref.mFormId] = refPtr;//index;
+
+                // TODO: skip GridMap for non-dummy cells? need a new variable passed in from CellStore
+                if (dummy)
+                {
+                    const int cellSize = 4096; // FIXME: hard coded cell size
+
+                    std::int32_t x = std::int32_t(ref.mPosition.pos.x / cellSize);
+                    std::int32_t y = std::int32_t(ref.mPosition.pos.y / cellSize);
+                    std::pair<std::int32_t, std::int32_t> grid(x, y);
+
+                    GridMap::iterator lb = mGridMap.lower_bound(grid);
+
+                    if (lb != mGridMap.end() && !(mGridMap.key_comp()(grid, lb->first)))
+                        lb->second.push_back(refPtr); // found, add
+                    else // none found, insert new grid
+                        mGridMap.insert(lb, std::make_pair(grid, std::vector<LiveCellRefBase*> { refPtr }));
+                }
+
+                //std::cout << "CellRefList::load "
+                    //<< ESM4::formIdToString(mList.back().mBase->mFormId) << std::endl; // FIXME: debug only
+
+// FIXME: testing audio markers
+#if 0
+                if (ref.mAudioLocation)
+                    std::cout << "audio loc " << ref.mEditorId << " "
+                        << ref.mPosition.pos.x/4096 << "," << ref.mPosition.pos.y/4096 << " "
+                    << mList.back().mBase->mEditorId << std::endl; // FIXME: debug only
+#endif
+            }
+        }
+        else
+        {
+            std::cerr
+                << "Error: could not resolve foreign cell reference "
+                << ((ref.mEditorId != "") ? ref.mEditorId : ESM4::formIdToString(ref.mFormId))
+                << " (dropping reference)" << std::endl;
+        }
+#endif
     }
 
     template <typename X>
-    void CellRefVect<X>::load(ESM4::ActorCreature &ref, bool deleted, const MWWorld::ESMStore &esmStore)
+    void CellRefList<X>::load(ESM4::ActorCreature &ref, bool deleted, const MWWorld::ESMStore &esmStore, bool dummy)
     {
         const MWWorld::ForeignStore<X> &store = esmStore.getForeign<X>();
-
+#if 0
         if (const X *ptr = store.search (ref.mBaseObj))
         {
             // see operator== in livecellref.hpp, check for matching formId
@@ -268,13 +326,63 @@ namespace MWWorld
                 << "Error: could not resolve foreign cell reference " << ref.mEditorId
                 << " (dropping reference)" << std::endl;
         }
+#else
+        if (const X *base = store.search(ref.mBaseObj))
+        {
+            FormIdMap::const_iterator iter = mFormIdMap.find(ref.mFormId);
+
+            LiveRef liveCellRef (ref, base); // ref is the reference, base is the base object
+
+            if (deleted)
+                liveCellRef.mData.setDeleted(true);
+
+            if (iter != mFormIdMap.end())
+                std::cout << "crea replace" << std::endl; // FIXME
+                //mList[iter->first] = std::move(liveCellRef); // replace
+            else
+            {
+                mList.push_back(std::move(liveCellRef)); // insert
+
+                //std::size_t index = mList.size() -1;
+                LiveCellRefBase *refPtr = &mList.back();
+                mFormIdMap[ref.mFormId] = refPtr;//index;
+
+                // TODO: skip GridMap for non-dummy cells? need a new variable passed in from CellStore
+                if (dummy)
+                {
+                    const int cellSize = 4096; // FIXME: hard coded cell size
+
+                    std::int32_t x = std::int32_t(ref.mPosition.pos.x / cellSize);
+                    std::int32_t y = std::int32_t(ref.mPosition.pos.y / cellSize);
+                    std::pair<std::int32_t, std::int32_t> grid(x, y);
+
+                    GridMap::iterator lb = mGridMap.lower_bound(grid);
+
+                    if (lb != mGridMap.end() && !(mGridMap.key_comp()(grid, lb->first)))
+                        lb->second.push_back(refPtr); // found, add
+                    else // none found, insert new grid
+                        mGridMap.insert(lb, std::make_pair(grid, std::vector<LiveCellRefBase*> { refPtr }));
+                }
+
+                //std::cout << "CellRefList::load "
+                    //<< ESM4::formIdToString(mList.back().mBase->mFormId) << std::endl; // FIXME: debug only
+            }
+        }
+        else
+        {
+            std::cerr
+                << "Error: could not resolve foreign cell reference "
+                << ((ref.mEditorId != "") ? ref.mEditorId : ESM4::formIdToString(ref.mFormId))
+                << " (dropping reference)" << std::endl;
+        }
+#endif
     }
 
     template <typename X>
-    void CellRefVect<X>::load(ESM4::ActorCharacter &ref, bool deleted, const MWWorld::ESMStore &esmStore)
+    void CellRefList<X>::load(ESM4::ActorCharacter &ref, bool deleted, const MWWorld::ESMStore &esmStore, bool dummy)
     {
         const MWWorld::ForeignStore<X> &store = esmStore.getForeign<X>();
-
+#if 0
         if (const X *ptr = store.search (ref.mBaseObj))
         {
             // see operator== in livecellref.hpp, check for matching formId
@@ -305,14 +413,6 @@ namespace MWWorld
                 mList.push_back (liveCellRef);
                 //std::cout << "CellRefList::load "
                     //<< ESM4::formIdToString(mList.back().mBase->mFormId) << std::endl; // FIXME: debug only
-
-// FIXME: testing audio markers
-#if 0
-                if (ref.mAudioLocation)
-                    std::cout << "audio loc " << ref.mEditorId << " "
-                        << ref.mPosition.pos.x/4096 << "," << ref.mPosition.pos.y/4096 << " "
-                    << mList.back().mBase->mEditorId << std::endl; // FIXME: debug only
-#endif
             }
         }
         else
@@ -321,6 +421,69 @@ namespace MWWorld
                 << "Error: could not resolve foreign cell reference " << ref.mEditorId
                 << " (dropping reference)" << std::endl;
         }
+#else
+        if (const X *base = store.search(ref.mBaseObj))
+        {
+            FormIdMap::const_iterator iter = mFormIdMap.find(ref.mFormId);
+#if 0
+            for (size_t i = 0; i < ptr->mInventory.size(); ++i)
+            {
+                uint32_t type = esmStore.find(ptr->mInventory[i].item);
+                if (type == ESM4::REC_BOOK)
+                {
+                    const ESM4::Book* note = esmStore.getForeign<ESM4::Book>().search(ptr->mInventory[i].item);
+                    std::cout << ptr->mEditorId << " " << note->mEditorId << std::endl;
+                }
+                else
+                    std::cout << ESM4::printName(type) << std::endl;
+            }
+#endif
+
+            LiveRef liveCellRef (ref, base); // ref is the reference, base is the base object
+
+            if (deleted)
+                liveCellRef.mData.setDeleted(true);
+
+            if (iter != mFormIdMap.end())
+                std::cout << "npc replace" << std::endl; // FIXME
+                //mList[iter->first] = std::move(liveCellRef); // replace
+            else
+            {
+                mList.push_back(std::move(liveCellRef)); // insert
+
+                //std::size_t index = mList.size() -1;
+                LiveCellRefBase *refPtr = &mList.back();
+                mFormIdMap[ref.mFormId] = refPtr;//index;
+
+                // TODO: skip GridMap for non-dummy cells? need a new variable passed in from CellStore
+                if (dummy)
+                {
+                    const int cellSize = 4096; // FIXME: hard coded cell size
+
+                    std::int32_t x = std::int32_t(ref.mPosition.pos.x / cellSize);
+                    std::int32_t y = std::int32_t(ref.mPosition.pos.y / cellSize);
+                    std::pair<std::int32_t, std::int32_t> grid(x, y);
+
+                    GridMap::iterator lb = mGridMap.lower_bound(grid);
+
+                    if (lb != mGridMap.end() && !(mGridMap.key_comp()(grid, lb->first)))
+                        lb->second.push_back(refPtr); // found, add
+                    else // none found, insert new grid
+                        mGridMap.insert(lb, std::make_pair(grid, std::vector<LiveCellRefBase*> { refPtr }));
+                }
+
+                //std::cout << "CellRefList::load "
+                    //<< ESM4::formIdToString(mList.back().mBase->mFormId) << std::endl; // FIXME: debug only
+            }
+        }
+        else
+        {
+            std::cerr
+                << "Error: could not resolve foreign cell reference "
+                << ((ref.mEditorId != "") ? ref.mEditorId : ESM4::formIdToString(ref.mFormId))
+                << " (dropping reference)" << std::endl;
+        }
+#endif
     }
 
     template<typename X> bool operator==(const LiveCellRef<X>& ref, int pRefnum)
@@ -336,7 +499,7 @@ namespace MWWorld
             mWaterLevel = cell->mWater;
         else
             mWaterLevel = 0.f; // FIXME: should lookup formid and determine?
-
+#if 0
         mStores[ESM4::REC_SOUN] = &mSounds;
         mStores[ESM4::REC_ACTI] = &mForeignActivators;
         mStores[ESM4::REC_APPA] = &mForeignApparatus;
@@ -379,6 +542,7 @@ namespace MWWorld
         mStores[ESM4::REC_SCOL] = &mStaticCollections;
       //mStores[ESM4::REC_CCRD] = &mCaravanCard;
       //mStores[ESM4::REC_CMNY] = &mCaravanMoney;
+#endif
     }
 
     const ESM::Cell *CellStore::getCell() const
@@ -498,76 +662,76 @@ namespace MWWorld
 
         //
 
-        if (LiveCellRefBase      *ref = mSounds.find (id))
+        if (LiveCellRef<ESM4::Sound>      *ref = mSounds.find (id))
             return Ptr (ref, this);
 
-        if (LiveCellRefBase  *ref = mForeignActivators.find (id))
+        if (LiveCellRef<ESM4::Activator>  *ref = mForeignActivators.find (id))
             return Ptr (ref, this);
 
-        if (LiveCellRefBase      *ref = mForeignArmors.find (id))
+        if (LiveCellRef<ESM4::Armor>      *ref = mForeignArmors.find (id))
             return Ptr (ref, this);
 
-        if (LiveCellRefBase       *ref = mForeignBooks.find (id))
+        if (LiveCellRef<ESM4::Book>       *ref = mForeignBooks.find (id))
             return Ptr (ref, this);
 
-        if (LiveCellRefBase    *ref = mForeignClothes.find (id))
+        if (LiveCellRef<ESM4::Clothing>    *ref = mForeignClothes.find (id))
             return Ptr (ref, this);
 
-        if (LiveCellRefBase  *ref = mForeignContainers.find (id))
+        if (LiveCellRef<ESM4::Container>  *ref = mForeignContainers.find (id))
             return Ptr (ref, this);
 
-        if (LiveCellRefBase       *ref = mForeignDoors.find (id))
+        if (LiveCellRef<ESM4::Door>       *ref = mForeignDoors.find (id))
             return Ptr (ref, this);
 
-        if (LiveCellRefBase *ref = mForeignIngredients.find (id))
+        if (LiveCellRef<ESM4::Ingredient> *ref = mForeignIngredients.find (id))
             return Ptr (ref, this);
 
-        if (LiveCellRefBase      *ref = mForeignLights.find (id))
+        if (LiveCellRef<ESM4::Light>      *ref = mForeignLights.find (id))
             return Ptr (ref, this);
 
-        if (LiveCellRefBase   *ref = mForeignMiscItems.find (id))
+        if (LiveCellRef<ESM4::MiscItem>   *ref = mForeignMiscItems.find (id))
             return Ptr (ref, this);
 
-        if (LiveCellRefBase     *ref = mForeignStatics.find (id))
+        if (LiveCellRef<ESM4::Static>     *ref = mForeignStatics.find (id))
             return Ptr (ref, this);
 
-        if (LiveCellRefBase       *ref = mForeignTrees.find (id))
+        if (LiveCellRef<ESM4::Tree>       *ref = mForeignTrees.find (id))
             return Ptr (ref, this);
 
-        if (LiveCellRefBase      *ref = mForeignFloras.find (id))
+        if (LiveCellRef<ESM4::Flora>      *ref = mForeignFloras.find (id))
             return Ptr (ref, this);
 
-        if (LiveCellRefBase  *ref = mForeignFurnitures.find (id))
+        if (LiveCellRef<ESM4::Furniture>  *ref = mForeignFurnitures.find (id))
             return Ptr (ref, this);
 
-        if (LiveCellRefBase     *ref = mForeignWeapons.find (id))
+        if (LiveCellRef<ESM4::Weapon>     *ref = mForeignWeapons.find (id))
             return Ptr (ref, this);
 
-        if (LiveCellRefBase *ref = mAmmunitions.find (id))
+        if (LiveCellRef<ESM4::Ammunition> *ref = mAmmunitions.find (id))
             return Ptr (ref, this);
 
-        if (LiveCellRefBase *ref = mIdleMarkers.find (id))
+        if (LiveCellRef<ESM4::IdleMarker> *ref = mIdleMarkers.find (id))
             return Ptr (ref, this);
 
-        if (LiveCellRefBase        *ref = mForeignKeys.find (id))
+        if (LiveCellRef<ESM4::Key>        *ref = mForeignKeys.find (id))
             return Ptr (ref, this);
 
-        if (LiveCellRefBase     *ref = mForeignPotions.find (id))
+        if (LiveCellRef<ESM4::Potion>     *ref = mForeignPotions.find (id))
             return Ptr (ref, this);
 
-        if (LiveCellRefBase   *ref = mSubSpaces.find (id))
+        if (LiveCellRef<ESM4::SubSpace>   *ref = mSubSpaces.find (id))
             return Ptr (ref, this);
 
-        if (LiveCellRefBase *ref = mMovableStatics.find (id))
+        if (LiveCellRef<ESM4::MovableStatic> *ref = mMovableStatics.find (id))
             return Ptr (ref, this);
 
-        if (LiveCellRefBase   *ref = mTerminals.find (id))
+        if (LiveCellRef<ESM4::Terminal>   *ref = mTerminals.find (id))
             return Ptr (ref, this);
 
-        if (LiveCellRefBase *ref = mTalkingActivators.find (id))
+        if (LiveCellRef<ESM4::TalkingActivator> *ref = mTalkingActivators.find (id))
             return Ptr (ref, this);
 
-        if (LiveCellRefBase *ref = mPlaceableWaters.find (id))
+        if (LiveCellRef<ESM4::PlaceableWater> *ref = mPlaceableWaters.find (id))
             return Ptr (ref, this);
 
         mHasState = oldState;
@@ -581,7 +745,7 @@ namespace MWWorld
 
         mHasState = true;
 
-        if (LiveCellRefBase *ref = mActivators.searchViaHandle (handle))
+        if (LiveCellRef<ESM::Activator> *ref = mActivators.searchViaHandle (handle))
             return Ptr (ref, this);
 
         if (LiveCellRef<ESM::Potion> *ref = mPotions.searchViaHandle (handle))
@@ -643,97 +807,97 @@ namespace MWWorld
 
         //
 
-        if (LiveCellRefBase     *ref = mSounds.searchViaHandle (handle))
+        if (LiveCellRef<ESM4::Sound>     *ref = mSounds.searchViaHandle (handle))
             return Ptr (ref, this);
 
-        if (LiveCellRefBase *ref = mForeignActivators.searchViaHandle (handle))
+        if (LiveCellRef<ESM4::Activator> *ref = mForeignActivators.searchViaHandle (handle))
             return Ptr (ref, this);
 
-        if (LiveCellRefBase *ref = mForeignApparatus.searchViaHandle (handle))
+        if (LiveCellRef<ESM4::Apparatus> *ref = mForeignApparatus.searchViaHandle (handle))
             return Ptr (ref, this);
 
-        if (LiveCellRefBase     *ref = mForeignArmors.searchViaHandle (handle))
+        if (LiveCellRef<ESM4::Armor>     *ref = mForeignArmors.searchViaHandle (handle))
             return Ptr (ref, this);
 
-        if (LiveCellRefBase      *ref = mForeignBooks.searchViaHandle (handle))
+        if (LiveCellRef<ESM4::Book>      *ref = mForeignBooks.searchViaHandle (handle))
             return Ptr (ref, this);
 
-        if (LiveCellRefBase  *ref = mForeignClothes.searchViaHandle (handle))
+        if (LiveCellRef<ESM4::Clothing>  *ref = mForeignClothes.searchViaHandle (handle))
             return Ptr (ref, this);
 
-        if (LiveCellRefBase *ref = mForeignContainers.searchViaHandle (handle))
+        if (LiveCellRef<ESM4::Container> *ref = mForeignContainers.searchViaHandle (handle))
             return Ptr (ref, this);
 
-        if (LiveCellRefBase      *ref = mForeignDoors.searchViaHandle (handle))
+        if (LiveCellRef<ESM4::Door>      *ref = mForeignDoors.searchViaHandle (handle))
             return Ptr (ref, this);
 
-        if (LiveCellRefBase *ref = mForeignIngredients.searchViaHandle (handle))
+        if (LiveCellRef<ESM4::Ingredient> *ref = mForeignIngredients.searchViaHandle (handle))
             return Ptr (ref, this);
 
-        if (LiveCellRefBase     *ref = mForeignLights.searchViaHandle (handle))
+        if (LiveCellRef<ESM4::Light>     *ref = mForeignLights.searchViaHandle (handle))
             return Ptr (ref, this);
 
-        if (LiveCellRefBase  *ref = mForeignMiscItems.searchViaHandle (handle))
+        if (LiveCellRef<ESM4::MiscItem>  *ref = mForeignMiscItems.searchViaHandle (handle))
             return Ptr (ref, this);
 
-        if (LiveCellRefBase    *ref = mForeignStatics.searchViaHandle (handle))
+        if (LiveCellRef<ESM4::Static>    *ref = mForeignStatics.searchViaHandle (handle))
             return Ptr (ref, this);
 
-        if (LiveCellRefBase     *ref = mForeignGrasses.searchViaHandle (handle))
+        if (LiveCellRef<ESM4::Grass>     *ref = mForeignGrasses.searchViaHandle (handle))
             return Ptr (ref, this);
 
-        if (LiveCellRefBase      *ref = mForeignTrees.searchViaHandle (handle))
+        if (LiveCellRef<ESM4::Tree>      *ref = mForeignTrees.searchViaHandle (handle))
             return Ptr (ref, this);
 
-        if (LiveCellRefBase     *ref = mForeignFloras.searchViaHandle (handle))
+        if (LiveCellRef<ESM4::Flora>     *ref = mForeignFloras.searchViaHandle (handle))
             return Ptr (ref, this);
 
-        if (LiveCellRefBase *ref = mForeignFurnitures.searchViaHandle (handle))
+        if (LiveCellRef<ESM4::Furniture> *ref = mForeignFurnitures.searchViaHandle (handle))
             return Ptr (ref, this);
 
-        if (LiveCellRefBase    *ref = mForeignWeapons.searchViaHandle (handle))
+        if (LiveCellRef<ESM4::Weapon>    *ref = mForeignWeapons.searchViaHandle (handle))
             return Ptr (ref, this);
 
-        if (LiveCellRefBase *ref = mAmmunitions.searchViaHandle (handle))
+        if (LiveCellRef<ESM4::Ammunition> *ref = mAmmunitions.searchViaHandle (handle))
             return Ptr (ref, this);
 
-        if (LiveCellRefBase       *ref = mForeignNpcs.searchViaHandle (handle))
+        if (LiveCellRef<ESM4::Npc>       *ref = mForeignNpcs.searchViaHandle (handle))
             return Ptr (ref, this);
 
-        if (LiveCellRefBase  *ref = mForeignCreatures.searchViaHandle (handle))
+        if (LiveCellRef<ESM4::Creature>  *ref = mForeignCreatures.searchViaHandle (handle))
             return Ptr (ref, this);
 
-        if (LiveCellRefBase *ref = mLevelledCreatures.searchViaHandle (handle))
+        if (LiveCellRef<ESM4::LevelledCreature> *ref = mLevelledCreatures.searchViaHandle (handle))
             return Ptr (ref, this);
 
-        if (LiveCellRefBase   *ref = mSoulGems.searchViaHandle (handle))
+        if (LiveCellRef<ESM4::SoulGem>   *ref = mSoulGems.searchViaHandle (handle))
             return Ptr (ref, this);
 
-        if (LiveCellRefBase       *ref = mForeignKeys.searchViaHandle (handle))
+        if (LiveCellRef<ESM4::Key>       *ref = mForeignKeys.searchViaHandle (handle))
             return Ptr (ref, this);
 
-        if (LiveCellRefBase    *ref = mForeignPotions.searchViaHandle (handle))
+        if (LiveCellRef<ESM4::Potion>    *ref = mForeignPotions.searchViaHandle (handle))
             return Ptr (ref, this);
 
-        if (LiveCellRefBase  *ref = mSubSpaces.searchViaHandle (handle))
+        if (LiveCellRef<ESM4::SubSpace>  *ref = mSubSpaces.searchViaHandle (handle))
             return Ptr (ref, this);
 
-        if (LiveCellRefBase *ref = mSigilStones.searchViaHandle (handle))
+        if (LiveCellRef<ESM4::SigilStone> *ref = mSigilStones.searchViaHandle (handle))
             return Ptr (ref, this);
 
-        if (LiveCellRefBase *ref = mLevelledItems.searchViaHandle (handle))
+        if (LiveCellRef<ESM4::LevelledItem> *ref = mLevelledItems.searchViaHandle (handle))
             return Ptr (ref, this);
 
-        if (LiveCellRefBase *ref = mLevelledNpcs.searchViaHandle (handle))
+        if (LiveCellRef<ESM4::LevelledNpc> *ref = mLevelledNpcs.searchViaHandle (handle))
             return Ptr (ref, this);
 
-        if (LiveCellRefBase *ref = mTerminals.searchViaHandle (handle))
+        if (LiveCellRef<ESM4::Terminal> *ref = mTerminals.searchViaHandle (handle))
             return Ptr (ref, this);
 
-        if (LiveCellRefBase *ref = mTalkingActivators.searchViaHandle (handle))
+        if (LiveCellRef<ESM4::TalkingActivator> *ref = mTalkingActivators.searchViaHandle (handle))
             return Ptr (ref, this);
 
-        if (LiveCellRefBase      *ref = mNotes.searchViaHandle (handle))
+        if (LiveCellRef<ESM4::Note>      *ref = mNotes.searchViaHandle (handle))
             return Ptr (ref, this);
 
         mHasState = oldState;
@@ -1209,10 +1373,10 @@ namespace MWWorld
 
                 switch (store.getRecordType(record.mBaseObj))
                 {
-                    case ESM4::REC_SOUN: mSounds.load(record, deleted, store);
+                    case ESM4::REC_SOUN: mSounds.load(record, deleted, store, mIsDummyCell);
                                          mStoreTypes[record.mFormId] = ESM4::REC_SOUN; break;
 #if 1
-                    case ESM4::REC_ACTI: mForeignActivators.load(record, deleted, store);
+                    case ESM4::REC_ACTI: mForeignActivators.load(record, deleted, store, mIsDummyCell);
                                          mStoreTypes[record.mFormId] = ESM4::REC_ACTI; break;
 #else
                     case ESM4::REC_ACTI):
@@ -1227,15 +1391,15 @@ namespace MWWorld
                         break;
                     }
 #endif
-                    case ESM4::REC_APPA: mForeignApparatus.load(record, deleted, store);
+                    case ESM4::REC_APPA: mForeignApparatus.load(record, deleted, store, mIsDummyCell);
                                          mStoreTypes[record.mFormId] = ESM4::REC_APPA; break;
-                    case ESM4::REC_ARMO: mForeignArmors.load(record, deleted, store);
+                    case ESM4::REC_ARMO: mForeignArmors.load(record, deleted, store, mIsDummyCell);
                                          mStoreTypes[record.mFormId] = ESM4::REC_ARMO; break;
-                    case ESM4::REC_BOOK: mForeignBooks.load(record, deleted, store);
+                    case ESM4::REC_BOOK: mForeignBooks.load(record, deleted, store, mIsDummyCell);
                                          mStoreTypes[record.mFormId] = ESM4::REC_BOOK; break;
-                    case ESM4::REC_CLOT: mForeignClothes.load(record, deleted, store);
+                    case ESM4::REC_CLOT: mForeignClothes.load(record, deleted, store, mIsDummyCell);
                                          mStoreTypes[record.mFormId] = ESM4::REC_CLOT; break;
-                    case ESM4::REC_CONT: mForeignContainers.load(record, deleted, store);
+                    case ESM4::REC_CONT: mForeignContainers.load(record, deleted, store, mIsDummyCell);
                                          mStoreTypes[record.mFormId] = ESM4::REC_CONT; break;
                     case ESM4::REC_DOOR:
                     {
@@ -1244,14 +1408,14 @@ namespace MWWorld
                         mStoreTypes[record.mFormId] = ESM4::REC_DOOR;
                         break;
                     }
-                    case ESM4::REC_INGR: mForeignIngredients.load(record, deleted, store);
+                    case ESM4::REC_INGR: mForeignIngredients.load(record, deleted, store, mIsDummyCell);
                                          mStoreTypes[record.mFormId] = ESM4::REC_INGR; break;
-                    case ESM4::REC_LIGH: mForeignLights.load(record, deleted, store);
+                    case ESM4::REC_LIGH: mForeignLights.load(record, deleted, store, mIsDummyCell);
                                          mStoreTypes[record.mFormId] = ESM4::REC_LIGH; break;
-                    case ESM4::REC_MISC: mForeignMiscItems.load(record, deleted, store);
+                    case ESM4::REC_MISC: mForeignMiscItems.load(record, deleted, store, mIsDummyCell);
                                          mStoreTypes[record.mFormId] = ESM4::REC_MISC; break;
                     case ESM4::REC_STAT:
-                                                 mForeignStatics.load(record, deleted, store);
+                                                 mForeignStatics.load(record, deleted, store, mIsDummyCell);
                                                  if (record.mEditorId == "DoorMarker")
                                                      std::cout << "DoorMarker: " << " 0x"
                                                          << ESM4::formIdToString(record.mFormId) << std::endl;
@@ -1270,44 +1434,44 @@ namespace MWWorld
                 }
 #endif
                                                  break;
-                    case ESM4::REC_GRAS: mForeignGrasses.load(record, deleted, store);
+                    case ESM4::REC_GRAS: mForeignGrasses.load(record, deleted, store, mIsDummyCell);
                                          mStoreTypes[record.mFormId] = ESM4::REC_GRAS; break;
-                    //case ESM4::REC_TREE: mForeignTrees.load(record, deleted, store);
+                    //case ESM4::REC_TREE: mForeignTrees.load(record, deleted, store, mIsDummyCell);
                                          //mStoreTypes[record.mFormId] = ESM4::REC_TREE; break;
-                    case ESM4::REC_FLOR: mForeignFloras.load(record, deleted, store);
+                    case ESM4::REC_FLOR: mForeignFloras.load(record, deleted, store, mIsDummyCell);
                                          mStoreTypes[record.mFormId] = ESM4::REC_FLOR; break;
                     case ESM4::REC_FURN: mForeignFurnitures.load(record, deleted, store);
                                          mStoreTypes[record.mFormId] = ESM4::REC_FURN; break;
-                    case ESM4::REC_WEAP: mForeignWeapons.load(record, deleted, store);
+                    case ESM4::REC_WEAP: mForeignWeapons.load(record, deleted, store, mIsDummyCell);
                                          mStoreTypes[record.mFormId] = ESM4::REC_WEAP; break;
-                    case ESM4::REC_AMMO: mAmmunitions.load(record, deleted, store);
+                    case ESM4::REC_AMMO: mAmmunitions.load(record, deleted, store, mIsDummyCell);
                                          mStoreTypes[record.mFormId] = ESM4::REC_AMMO; break;
                     case ESM4::REC_LVLC:
                     {
-                                         mLevelledCreatures.load(record, deleted, store); // only TES4
+                                         mLevelledCreatures.load(record, deleted, store, mIsDummyCell); // only TES4
                                          mStoreTypes[record.mFormId] = ESM4::REC_LVLC; break;
                     }
-                    case ESM4::REC_SLGM: mSoulGems.load(record, deleted, store);
+                    case ESM4::REC_SLGM: mSoulGems.load(record, deleted, store, mIsDummyCell);
                                          mStoreTypes[record.mFormId] = ESM4::REC_SLGM; break;
-                    case ESM4::REC_KEYM: mForeignKeys.load(record, deleted, store);
+                    case ESM4::REC_KEYM: mForeignKeys.load(record, deleted, store, mIsDummyCell);
                                          mStoreTypes[record.mFormId] = ESM4::REC_KEYM; break;
-                    case ESM4::REC_ALCH: mForeignPotions.load(record, deleted, store);
+                    case ESM4::REC_ALCH: mForeignPotions.load(record, deleted, store, mIsDummyCell);
                                          mStoreTypes[record.mFormId] = ESM4::REC_ALCH; break;
-                    case ESM4::REC_SBSP: mSubSpaces.load(record, deleted, store);
+                    case ESM4::REC_SBSP: mSubSpaces.load(record, deleted, store, mIsDummyCell);
                                          mStoreTypes[record.mFormId] = ESM4::REC_SBSP; break;
-                    case ESM4::REC_SGST: mSigilStones.load(record, deleted, store);
+                    case ESM4::REC_SGST: mSigilStones.load(record, deleted, store, mIsDummyCell);
                                          mStoreTypes[record.mFormId] = ESM4::REC_SGST; break;
-                    case ESM4::REC_LVLI: mLevelledItems.load(record, deleted, store);
+                    case ESM4::REC_LVLI: mLevelledItems.load(record, deleted, store, mIsDummyCell);
                                          mStoreTypes[record.mFormId] = ESM4::REC_LVLI; break;
-                    case ESM4::REC_TERM: mTerminals.load(record, deleted, store);
+                    case ESM4::REC_TERM: mTerminals.load(record, deleted, store, mIsDummyCell);
                                          mStoreTypes[record.mFormId] = ESM4::REC_TERM; break;
-                    case ESM4::REC_TACT: mTalkingActivators.load(record, deleted, store);
+                    case ESM4::REC_TACT: mTalkingActivators.load(record, deleted, store, mIsDummyCell);
                                          mStoreTypes[record.mFormId] = ESM4::REC_TACT; break;
-                    case ESM4::REC_NOTE: mNotes.load(record, deleted, store);
+                    case ESM4::REC_NOTE: mNotes.load(record, deleted, store, mIsDummyCell);
                                          mStoreTypes[record.mFormId] = ESM4::REC_NOTE; break;
                     case ESM4::REC_LVLN: // Leveled NPC
                     {
-                                         mLevelledNpcs.load(record, deleted, store); // never occurs?
+                                         mLevelledNpcs.load(record, deleted, store, mIsDummyCell); // never occurs?
                                          mStoreTypes[record.mFormId] = ESM4::REC_LVLN; break;
                     }
                     case ESM4::REC_TREE: // FIXME
@@ -1455,7 +1619,7 @@ namespace MWWorld
 
 #endif
 #if 1
-                        mForeignNpcs.load(record, deleted, store);
+                        mForeignNpcs.load(record, deleted, store, mIsDummyCell);
                         mStoreTypes[record.mFormId] = ESM4::REC_NPC_;
 #else
         const MWWorld::ForeignStore<ESM4::Npc> &store = esmStore.getForeign<ESM4::Npc>();
@@ -1545,7 +1709,7 @@ namespace MWWorld
                         }
 
 #else
-                        mForeignCreatures.load(record, deleted, store);
+                        mForeignCreatures.load(record, deleted, store, mIsDummyCell);
                         mStoreTypes[record.mFormId] = ESM4::REC_CREA;
 #endif
                         break;

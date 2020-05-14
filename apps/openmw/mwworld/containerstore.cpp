@@ -38,6 +38,7 @@ namespace
         return sum;
     }
 
+    // TODO: keep mIdMap?
     template<typename T>
     MWWorld::Ptr searchId (MWWorld::CellRefList<T>& list, const std::string& id,
         MWWorld::ContainerStore *store)
