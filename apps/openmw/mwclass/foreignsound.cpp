@@ -63,6 +63,9 @@ namespace MWClass
     {
         MWWorld::LiveCellRef<ESM4::Sound> *ref = ptr.get<ESM4::Sound>();
 
-        return MWWorld::Ptr(cell.getForeign<ESM4::Sound>().insert(*ref), &cell);
+        MWWorld::Ptr newPtr(cell.getForeign<ESM4::Sound>().insert(*ref), &cell);
+        cell.addObject(newPtr.getBase()->mRef.getFormId(), ESM4::REC_SOUN);
+
+        return std::move(newPtr);
     }
 }

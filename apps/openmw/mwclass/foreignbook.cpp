@@ -185,6 +185,9 @@ namespace MWClass
     {
         MWWorld::LiveCellRef<ESM4::Book> *ref = ptr.get<ESM4::Book>();
 
-        return MWWorld::Ptr(cell.getForeign<ESM4::Book>().insert(*ref), &cell);
+        MWWorld::Ptr newPtr(cell.getForeign<ESM4::Book>().insert(*ref), &cell);
+        cell.addObject(newPtr.getBase()->mRef.getFormId(), ESM4::REC_BOOK);
+
+        return std::move(newPtr);
     }
 }

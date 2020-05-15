@@ -1242,6 +1242,12 @@ namespace MWWorld
                 bool newCellActive = mWorldScene->isCellActive(*newCell);
                 if (!currCellActive && newCellActive)
                 {
+                    if (currCell)
+                    {
+                        ESM4::FormId formId = ptr.getBase()->mRef.getFormId();
+                        currCell->removeObject(ptr.getBase()->mData.getHandle(), formId); // FIXME: is this necessary?
+                    }
+
                     newPtr = ptr.getClass().copyToCell(ptr, *newCell, pos);
                     mWorldScene->addObjectToScene(newPtr);
 
@@ -1250,6 +1256,11 @@ namespace MWWorld
                         mLocalScripts.add(script, newPtr);
                     }
                     addContainerScripts(newPtr, newCell);
+
+                    LiveCellRefBase *ref = newPtr.getBase();
+                    ESM4::FormId formId = ref->mRef.getFormId();
+                    if (ref->mData.getBaseNode())
+                        newCell->addHandle(ref->mData.getHandle(), formId);
                 }
                 else if (!newCellActive && currCellActive)
                 {
@@ -1258,13 +1269,41 @@ namespace MWWorld
                     removeContainerScripts (ptr);
                     haveToMove = false;
 
+                    if (currCell)
+                    {
+                        ESM4::FormId formId = ptr.getBase()->mRef.getFormId();
+                        currCell->removeObject(ptr.getBase()->mData.getHandle(), formId);
+                    }
+
                     newPtr = ptr.getClass().copyToCell(ptr, *newCell);
                     newPtr.getRefData().setBaseNode(0);
+
+                    //LiveCellRefBase *ref = newPtr.getBase();
+                    //ESM4::FormId formId = ref->mRef.getFormId();
+                    //newCell->addHandle("", formId);
                 }
                 else if (!currCellActive && !newCellActive)
+                {
+                    if (currCell)
+                    {
+                        ESM4::FormId formId = ptr.getBase()->mRef.getFormId();
+                        currCell->removeObject(ptr.getBase()->mData.getHandle(), formId); // FIXME: is this necessary?
+                    }
+
                     newPtr = ptr.getClass().copyToCell(ptr, *newCell);
+
+                    //LiveCellRefBase *ref = newPtr.getBase();
+                    //ESM4::FormId formId = ref->mRef.getFormId();
+                    //newCell->addHandle("", formId);
+                }
                 else // both cells active
                 {
+                    if (currCell)
+                    {
+                        ESM4::FormId formId = ptr.getBase()->mRef.getFormId();
+                        currCell->removeObject(ptr.getBase()->mData.getHandle(), formId);
+                    }
+
                     newPtr = ptr.getClass().copyToCell(ptr, *newCell, pos);
 
                     mRendering->updateObjectCell(ptr, newPtr);
@@ -1283,6 +1322,11 @@ namespace MWWorld
                         mLocalScripts.add(script, newPtr);
                         addContainerScripts (newPtr, newCell);
                     }
+
+                    LiveCellRefBase *ref = newPtr.getBase();
+                    ESM4::FormId formId = ref->mRef.getFormId();
+                    if (ref->mData.getBaseNode())
+                        newCell->addHandle(ref->mData.getHandle(), formId);
                 }
                 ptr.getRefData().setCount(0);
             }
@@ -2143,6 +2187,13 @@ namespace MWWorld
             }
         }
 
+        CellStore *currCell = object.isInCell() ? object.getCell() : nullptr;
+        if (currCell)
+        {
+            ESM4::FormId formId = object.getBase()->mRef.getFormId();
+            currCell->removeObject(object.getBase()->mData.getHandle(), formId);
+        }
+
         MWWorld::Ptr dropped =
             object.getClass().copyToCell(object, *cell, pos);
 
@@ -2165,6 +2216,11 @@ namespace MWWorld
             }
             addContainerScripts(dropped, cell);
         }
+
+        LiveCellRefBase *ref = dropped.getBase();
+        ESM4::FormId formId = ref->mRef.getFormId();
+        if (ref->mData.getBaseNode())
+            cell->addHandle(ref->mData.getHandle(), formId);
 
         return dropped;
     }

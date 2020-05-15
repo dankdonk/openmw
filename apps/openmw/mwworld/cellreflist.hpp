@@ -140,9 +140,14 @@ namespace MWWorld
             return refPtr;
         }
 
-        // FIXME: keep a handle map?
+        // this method is looking for Ogre::SceneNode handles which is created in
+        // Objects::insertBegin() and Actors::insertBegin()
+        //
+        // unfortunately it needs to be manually maintained when objects and actors move to
+        // different cells - see World::copyObjectToCell() and World::moveObject()
         LiveCellRefBase *searchViaHandle(const std::string& handle)
         {
+            // FIXME: keep a handle map for optimisation?
             for (typename List::iterator iter (mList.begin()); iter != mList.end(); ++iter)
                 if (iter->mData.getBaseNode() &&
                     iter->mData.getHandle() == handle)
@@ -261,8 +266,9 @@ namespace MWWorld
             // FIXME: need a handle map?
             for (typename List::iterator iter(mList.begin()); iter != mList.end(); ++iter)
             {
+                // handle is set in Objects::insertBegin() and Actors::insertBegin()
                 if (iter->mData.getBaseNode() &&
-                    iter->mData.getHandle() == handle) // usually set during Objects::insertBegin()
+                    iter->mData.getHandle() == handle)
                 {
                     return &*iter;
                 }

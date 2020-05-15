@@ -59,6 +59,9 @@ namespace MWClass
     {
         MWWorld::LiveCellRef<ESM4::Furniture> *ref = ptr.get<ESM4::Furniture>();
 
-        return MWWorld::Ptr(cell.getForeign<ESM4::Furniture>().insert(*ref), &cell);
+        MWWorld::Ptr newPtr(cell.getForeign<ESM4::Furniture>().insert(*ref), &cell);
+        cell.addObject(newPtr.getBase()->mRef.getFormId(), ESM4::REC_FURN);
+
+        return std::move(newPtr);
     }
 }

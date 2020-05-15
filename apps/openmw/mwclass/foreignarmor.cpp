@@ -384,6 +384,9 @@ namespace MWClass
     {
         MWWorld::LiveCellRef<ESM4::Armor> *ref = ptr.get<ESM4::Armor>();
 
-        return MWWorld::Ptr(cell.getForeign<ESM4::Armor>().insert(*ref), &cell);
+        MWWorld::Ptr newPtr(cell.getForeign<ESM4::Armor>().insert(*ref), &cell);
+        cell.addObject(newPtr.getBase()->mRef.getFormId(), ESM4::REC_ARMO);
+
+        return std::move(newPtr);
     }
 }

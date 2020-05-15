@@ -202,6 +202,9 @@ namespace MWClass
     {
         MWWorld::LiveCellRef<ESM4::Weapon> *ref = ptr.get<ESM4::Weapon>();
 
-        return MWWorld::Ptr(cell.getForeign<ESM4::Weapon>().insert(*ref), &cell);
+        MWWorld::Ptr newPtr(cell.getForeign<ESM4::Weapon>().insert(*ref), &cell);
+        cell.addObject(newPtr.getBase()->mRef.getFormId(), ESM4::REC_WEAP);
+
+        return std::move(newPtr);
     }
 }

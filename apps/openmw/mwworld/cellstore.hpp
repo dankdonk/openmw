@@ -144,6 +144,10 @@ namespace MWWorld
 
             CellStore (const ESM::Cell *cell_, bool isForeignCell = false, bool isDummyCell = false);
             //~CellStore ();
+            CellStore (const CellStore& other);
+            CellStore& operator=(const CellStore& other) = delete;
+            //CellStore (CellStore&& other); // move
+            //CellStore& operator=(CellStore&& other); // move
 
             const ESM::Cell *getCell() const;
             inline const bool isForeignCell() const { return mIsForeignCell; }
@@ -170,6 +174,11 @@ namespace MWWorld
             Ptr search (const std::string& id);
             ///< Will return an empty Ptr if cell is not loaded. Does not check references in
             /// containers.
+
+            // TODO: manual updates are error prone - is there another way?
+            void removeObject (const std::string& handle, ESM4::FormId formId);
+            void addHandle (const std::string& handle, ESM4::FormId formId); // update mSceneNodeMap
+            void addObject (ESM4::FormId formId, int); // update mForeignIds and mStoreTypes
 
             Ptr searchViaHandle (const std::string& handle);
             ///< Will return an empty Ptr if cell is not loaded.
@@ -229,7 +238,7 @@ namespace MWWorld
                     forEachImp (functor, mCreatures) &&
                     forEachImp (functor, mNpcs) &&
                     forEachImp (functor, mCreatureLists) &&
-//#if 0
+#if 1
                     // FIXME: don't understand why this is needed here
                     // (RigidBodyState::mSceneNode ends up with no parent)
                     forEachImpForeign(functor, 0, 0, 0, 0, mSounds) &&
@@ -264,7 +273,7 @@ namespace MWWorld
                     forEachImpForeign(functor, 0, 0, 0, 0, mForeignNpcs) &&
                     forEachImpForeign(functor, 0, 0, 0, 0, mForeignCreatures) &&
                     forEachImpForeign(functor, 0, 0, 0, 0, mLevelledCreatures);
-//#endif
+#endif
             }
 
             // FIXME: not sure why Creatures and NPCs are handled last.
@@ -387,12 +396,13 @@ namespace MWWorld
             bool forEachImpForeign(Functor& functor,
                     int x, int y, std::size_t range, std::size_t exclude, List& vect)
             {
-#if 1
+#if 0
                 for (typename List::List::iterator iter (vect.mList.begin()); iter!=vect.mList.end();
                     ++iter)
                 {
                     if (iter->mData.isDeletedByContentFile())
                         continue;
+
                     if (!functor (MWWorld::Ptr(&*iter, this)))
                         return false;
                 }
@@ -400,24 +410,23 @@ namespace MWWorld
 #else
                 if (range == 0 && exclude == 0) // FIXME: hack for non-dummy
                 {
-                    for (std::vector<LiveCellRef<X> >::iterator iter(vect.mList.begin());
+                    for (typename List::List::iterator iter(vect.mList.begin());
                             iter != vect.mList.end(); ++iter)
                     {
                         if (iter->mData.isDeletedByContentFile())
                             continue;
 
-                        MWWorld::Ptr ptr(&*iter, this);
-                        bool res = functor(ptr); // we should have an Ogre::SceneNode handle after this
-                        if (!res)
+                        // should have an Ogre::SceneNode handle after this;
+                        // see Objects::insertBegin() and Actors::insertBegin()
+                        if (!functor(MWWorld::Ptr(&*iter, this)))
                             return false;
 
                         ESM4::FormId formId = (*iter).mRef.getFormId();
-
                         mForeignIds.push_back(formId);  // for hasFormId()
 
                         if ((*iter).mData.getBaseNode())
                         {
-                            std::string handle = (*iter).mData.getHandle(); // see Objects::insertBegin()
+                            std::string handle = (*iter).mData.getHandle();
                             mSceneNodeMap[handle] = formId; // for searchViaHandle()
                         }
                     }
@@ -429,20 +438,20 @@ namespace MWWorld
                     for (std::vector<LiveCellRefBase*>::iterator iter(sublist.begin());
                             iter != sublist.end(); ++iter)
                     {
-                        if (static_cast<LiveCellRef<X>*>(*iter)->mData.isDeletedByContentFile())
+                        if ((*iter)->mData.isDeletedByContentFile())
                             continue;
 
-                        //ESM::Position pos = (*iter)->mRef.getPosition();
-                        //CellStore *cell
-                        //    = MWBase::Environment::get().getWorld()->getWorldCell(mWorldId, pos.pos[0], pos.pos[1]);
-
-                        MWWorld::Ptr ptr(*iter, this/*cell*/);
-                        bool res = functor(ptr); // we should have an Ogre::SceneNode handle after this
-                        if (!res)
+                        // should have an Ogre::SceneNode handle after this;
+                        // see Objects::insertBegin() and Actors::insertBegin()
+                        //MWWorld::Ptr ptr(*iter, this);
+                        //if (!functor(ptr))
+                        if (!functor(MWWorld::Ptr(*iter, this)))
+                        {
+                            //std::cout << "forEachImpForeign no ptr" << std::endl;
                             return false;
+                        }
 
                         ESM4::FormId formId = (*iter)->mRef.getFormId();
-
                         mForeignIds.push_back(formId);  // for hasFormId()
 
                         if (exclude == 0 && // do this for those with collision shapes only ?
@@ -451,8 +460,6 @@ namespace MWWorld
                             std::string handle = (*iter)->mData.getHandle(); // see Objects::insertBegin()
                             mSceneNodeMap[handle] = formId; // for searchViaHandle()
                         }
-
-                        //MWBase::Environment::get().getWorld()->moveObject(ptr, cell, pos.pos[0], pos.pos[1], pos.pos[2]);
                     }
                 }
 

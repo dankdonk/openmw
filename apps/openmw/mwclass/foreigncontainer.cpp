@@ -233,6 +233,9 @@ namespace MWClass
     {
         MWWorld::LiveCellRef<ESM4::Container> *ref = ptr.get<ESM4::Container>();
 
-        return MWWorld::Ptr(cell.getForeign<ESM4::Container>().insert(*ref), &cell);
+        MWWorld::Ptr newPtr(cell.getForeign<ESM4::Container>().insert(*ref), &cell);
+        cell.addObject(newPtr.getBase()->mRef.getFormId(), ESM4::REC_CONT);
+
+        return std::move(newPtr);
     }
 }

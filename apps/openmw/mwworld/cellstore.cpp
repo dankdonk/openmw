@@ -388,8 +388,9 @@ namespace MWWorld
     }
 
     CellStore::CellStore (const ESM::Cell *cell, bool isForeignCell, bool isDummyCell)
-      : mCell (cell), mState (State_Unloaded), mHasState (false), mLastRespawn(0,0),
-        mIsForeignCell(isForeignCell), mIsDummyCell(isDummyCell), mIsVisibleDistCell(false), mForeignLand(0)
+      : mCell (cell), mState (State_Unloaded), mHasState (false),
+        mIsForeignCell(isForeignCell), mIsDummyCell(isDummyCell), mIsVisibleDistCell(false), mForeignLand(0),
+        mLastRespawn(0,0)
     {
         if (!mIsForeignCell)
             mWaterLevel = cell->mWater;
@@ -445,6 +446,222 @@ namespace MWWorld
     {
     }
 #endif
+
+    // FIXME: not sure why a copy constructor is needed
+    CellStore::CellStore (const CellStore& other)
+      : mCell(other.mCell), mState(other.mState), mHasState(other.mHasState), mWaterLevel(other.mWaterLevel),
+        mIsForeignCell(other.mIsForeignCell), mIsDummyCell(other.mIsDummyCell),
+        mIsVisibleDistCell(other.mIsVisibleDistCell), mForeignLand(other.mForeignLand),
+        mLastRespawn(other.mLastRespawn)
+    {
+        mActivators = other.mActivators;
+        mPotions = other.mPotions;
+        mAppas = other.mAppas;
+        mArmors = other.mArmors;
+        mBooks = other.mBooks;
+        mClothes = other.mClothes;
+        mContainers = other.mContainers;
+        mCreatures = other.mCreatures;
+        mDoors = other.mDoors;
+        mIngreds = other.mIngreds;
+        mCreatureLists = other.mCreatureLists;
+        mItemLists = other.mItemLists;
+        mLights = other.mLights;
+        mLockpicks = other.mLockpicks;
+        mMiscItems = other.mMiscItems;
+        mNpcs = other.mNpcs;
+        mProbes = other.mProbes;
+        mRepairs = other.mRepairs;
+        mStatics = other.mStatics;
+        mWeapons = other.mWeapons;
+
+        mSounds = other.mSounds;
+        mForeignActivators = other.mForeignActivators;
+        mForeignApparatus = other.mForeignApparatus;
+        mForeignArmors = other.mForeignArmors;
+        mForeignBooks = other.mForeignBooks;
+        mForeignClothes = other.mForeignClothes;
+        mForeignContainers = other.mForeignContainers;
+        mForeignDoors = other.mForeignDoors;
+        mForeignIngredients = other.mForeignIngredients;
+        mForeignLights = other.mForeignLights;
+        mForeignMiscItems = other.mForeignMiscItems;
+        mForeignStatics = other.mForeignStatics;
+        mForeignGrasses = other.mForeignGrasses;
+        mForeignTrees = other.mForeignTrees;
+        mForeignFloras = other.mForeignFloras;
+        mForeignFurnitures = other.mForeignFurnitures;
+        mForeignWeapons = other.mForeignWeapons;
+        mAmmunitions = other.mAmmunitions;
+        mForeignNpcs = other.mForeignNpcs;
+        mForeignCreatures = other.mForeignCreatures;
+        mLevelledCreatures = other.mLevelledCreatures;
+        mIdleMarkers = other.mIdleMarkers;
+        mSoulGems = other.mSoulGems;
+        mForeignKeys = other.mForeignKeys;
+        mForeignPotions = other.mForeignPotions;
+        mSubSpaces = other.mSubSpaces;
+        mSigilStones = other.mSigilStones;
+        mLevelledItems = other.mLevelledItems;
+        mLevelledNpcs = other.mLevelledNpcs;
+        mMovableStatics = other.mMovableStatics;
+      //mTextureSets = other.mTextureSets;
+      //mForeignScrolls = other.mForeignScrolls;
+      //mArmorAddons = other.mArmorAddons;
+        mAcousticSpaces = other.mAcousticSpaces;
+        mTerminals = other.mTerminals;
+        mTalkingActivators = other.mTalkingActivators;
+        mNotes = other.mNotes;
+      //mItemMods = other.mItemMods;
+        mPlaceableWaters = other.mPlaceableWaters;
+        mStaticCollections = other.mStaticCollections;
+      //mCaravanCard = other.mCaravanCard;
+      //mCaravanMoney = other.mCaravanMoney;
+
+        mStores = other.mStores;
+        mStoreTypes = other.mStoreTypes;
+        mSceneNodeMap = other.mSceneNodeMap;
+
+        mForeignPathgrids = other.mForeignPathgrids;
+        mPathgrid = other.mPathgrid;
+        mPathgridGraph = other.mPathgridGraph;
+
+        mStores[ESM4::REC_SOUN] = &mSounds;
+        mStores[ESM4::REC_ACTI] = &mForeignActivators;
+        mStores[ESM4::REC_APPA] = &mForeignApparatus;
+        mStores[ESM4::REC_ARMO] = &mForeignArmors;
+        mStores[ESM4::REC_BOOK] = &mForeignBooks;
+        mStores[ESM4::REC_CLOT] = &mForeignClothes;
+        mStores[ESM4::REC_CONT] = &mForeignContainers;
+        mStores[ESM4::REC_DOOR] = &mForeignDoors;
+        mStores[ESM4::REC_INGR] = &mForeignIngredients;
+        mStores[ESM4::REC_LIGH] = &mForeignLights;
+        mStores[ESM4::REC_MISC] = &mForeignMiscItems;
+        mStores[ESM4::REC_STAT] = &mForeignStatics;
+        mStores[ESM4::REC_GRAS] = &mForeignGrasses;
+        mStores[ESM4::REC_TREE] = &mForeignTrees;
+        mStores[ESM4::REC_FLOR] = &mForeignFloras;
+        mStores[ESM4::REC_FURN] = &mForeignFurnitures;
+        mStores[ESM4::REC_WEAP] = &mForeignWeapons;
+        mStores[ESM4::REC_AMMO] = &mAmmunitions;
+        mStores[ESM4::REC_NPC_] = &mForeignNpcs;
+        mStores[ESM4::REC_CREA] = &mForeignCreatures;
+        mStores[ESM4::REC_LVLC] = &mLevelledCreatures;
+        mStores[ESM4::REC_IDLM] = &mIdleMarkers;
+        mStores[ESM4::REC_SLGM] = &mSoulGems;
+        mStores[ESM4::REC_KEYM] = &mForeignKeys;
+        mStores[ESM4::REC_ALCH] = &mForeignPotions;
+        mStores[ESM4::REC_SBSP] = &mSubSpaces;
+        mStores[ESM4::REC_SGST] = &mSigilStones;
+        mStores[ESM4::REC_LVLI] = &mLevelledItems;
+        mStores[ESM4::REC_LVLN] = &mLevelledNpcs;
+        mStores[ESM4::REC_MSTT] = &mMovableStatics;
+      //mStores[ESM4::REC_TXST] = &mTextureSets;
+      //mStores[ESM4::REC_SCRL] = &mForeignScrolls;
+      //mStores[ESM4::REC_ARMA] = &mArmorAddons;
+        mStores[ESM4::REC_ASPC] = &mAcousticSpaces;
+        mStores[ESM4::REC_TERM] = &mTerminals;
+        mStores[ESM4::REC_TACT] = &mTalkingActivators;
+        mStores[ESM4::REC_NOTE] = &mNotes;
+      //mStores[ESM4::REC_IMOD] = &mItemMods;
+        mStores[ESM4::REC_PWAT] = &mPlaceableWaters;
+        mStores[ESM4::REC_SCOL] = &mStaticCollections;
+      //mStores[ESM4::REC_CCRD] = &mCaravanCard;
+      //mStores[ESM4::REC_CMNY] = &mCaravanMoney;
+    }
+#if 0
+    CellStore& CellStore::operator=(const CellStore& other)
+    {
+        if (this != &other)
+        {
+             mCell = other.mCell;
+             mState = other.mState;
+             mHasState = other.mHasState;
+             mWaterLevel = other.mWaterLevel;
+             mIsForeignCell = other.mIsForeignCell;
+             mIsDummyCell = other.mIsDummyCell;
+             mIsVisibleDistCell = other.mIsVisibleDistCell;
+             mForeignLand = other.mForeignLand;
+             mAudioLocation = other.mAudioLocation;
+             mLastRespawn = other.mLastRespawn;
+
+            /*boost::shared_ptr<ESM::FogState>*/ mFogState = other.mFogState
+
+            /*std::vector<std::string>*/ mIds = std::move(other.mIds);
+            /*std::vector<ESM4::FormId>*/ mForeignIds = std::move(other.mForeignIds);
+
+            /*CellRefList<ESM::Activator>*/       mActivators = std::move(other.mActivators);
+            /*CellRefList<ESM::Potion>*/          mPotions = std::move(other.mPotions);
+            /*CellRefList<ESM::Apparatus>*/       mAppas = std::move(other.mAppas);
+            /*CellRefList<ESM::Armor>*/           mArmors = std::move(other.mArmors);
+            /*CellRefList<ESM::Book>*/            mBooks = std::move(other.mBooks);
+            /*CellRefList<ESM::Clothing>*/        mClothes = std::move(other.mClothes);
+            /*CellRefList<ESM::Container>*/       mContainers = std::move(other.mContainers);
+            /*CellRefList<ESM::Creature>*/        mCreatures = std::move(other.mCreatures);
+            /*CellRefList<ESM::Door>*/            mDoors = std::move(other.mDoors);
+            /*CellRefList<ESM::Ingredient>*/      mIngreds = std::move(other.mIngreds);
+            /*CellRefList<ESM::CreatureLevList>*/ mCreatureLists = std::move(other.mCreatureLists);
+            /*CellRefList<ESM::ItemLevList>*/     mItemLists = std::move(other.mItemLists);
+            /*CellRefList<ESM::Light>*/           mLights = std::move(other.mLights);
+            /*CellRefList<ESM::Lockpick>*/        mLockpicks = std::move(other.mLockpicks);
+            /*CellRefList<ESM::Miscellaneous>*/   mMiscItems = std::move(other.mMiscItems);
+            /*CellRefList<ESM::NPC>*/             mNpcs = std::move(other.mNpcs);
+            /*CellRefList<ESM::Probe>*/           mProbes = std::move(other.mProbes);
+            /*CellRefList<ESM::Repair>*/          mRepairs = std::move(other.mRepairs);
+            /*CellRefList<ESM::Static>*/          mStatics = std::move(other.mStatics);
+            /*CellRefList<ESM::Weapon>*/          mWeapons = std::move(other.mWeapons);
+            //
+            /*CellRefVect<ESM4::Sound>*/          mSounds = std::move(other.mSounds);
+            /*CellRefVect<ESM4::Activator>*/ mForeignActivators = std::move(other.mForeignActivators);
+            /*CellRefVect<ESM4::Apparatus>*/ mForeignApparatus = std::move(other.mForeignApparatus);
+            /*CellRefVect<ESM4::Armor>*/ mForeignArmors = std::move(other.mForeignArmors);
+            /*CellRefVect<ESM4::Book>*/ mForeignBooks = std::move(other.mForeignBooks);
+            /*CellRefVect<ESM4::Clothing>*/ mForeignClothes = std::move(other.mForeignClothes);
+            /*CellRefVect<ESM4::Container>*/ mForeignContainers = std::move(other.mForeignContainers);
+            /*CellRefVect<ESM4::Door>*/ mForeignDoors = std::move(other.mForeignDoors);
+            /*CellRefVect<ESM4::Ingredient>*/ mForeignIngredients = std::move(other.mForeignIngredients);
+            /*CellRefVect<ESM4::Light>*/ mForeignLights = std::move(other.mForeignLights);
+            /*CellRefVect<ESM4::MiscItem>*/ mForeignMiscItems = std::move(other.mForeignMiscItems);
+            /*CellRefVect<ESM4::Static>*/ mForeignStatics = std::move(other.mForeignStatics);
+            /*CellRefVect<ESM4::Grass>*/ mForeignGrasses = std::move(other.mForeignGrasses);
+            /*CellRefVect<ESM4::Tree>*/ mForeignTrees = std::move(other.mForeignTrees);
+            /*CellRefVect<ESM4::Flora>*/ mForeignFloras = std::move(other.mForeignFloras);
+            /*CellRefVect<ESM4::Furniture>*/ mForeignFurnitures = std::move(other.mForeignFurnitures);
+            /*CellRefVect<ESM4::Weapon>*/ mForeignWeapons = std::move(other.mForeignWeapons);
+            /*CellRefVect<ESM4::Ammunition>*/ mAmmunitions = std::move(other.mAmmunitions);
+            /*CellRefVect<ESM4::Npc>*/ mForeignNpcs = std::move(other.mForeignNpcs);
+            /*CellRefVect<ESM4::Creature>*/ mForeignCreatures = std::move(other.mForeignCreatures);
+            /*CellRefVect<ESM4::LevelledCreature>*/ mLevelledCreatures = std::move(other.mLevelledCreatures);
+            /*CellRefVect<ESM4::IdleMarker>*/ mIdleMarkers = std::move(other.mIdleMarkers);
+            /*CellRefVect<ESM4::SoulGem>*/ mSoulGems = std::move(other.mSoulGems);
+            /*CellRefVect<ESM4::Key>*/ mForeignKeys = std::move(other.mForeignKeys);
+            /*CellRefVect<ESM4::Potion>*/ mForeignPotions = std::move(other.mForeignPotions);
+            /*CellRefVect<ESM4::SubSpace>*/ mSubSpaces = std::move(other.mSubSpaces);
+            /*CellRefVect<ESM4::SigilStone>*/ mSigilStones = std::move(other.mSigilStones);
+            /*CellRefVect<ESM4::LevelledItem>*/ mLevelledItems = std::move(other.mLevelledItems);
+            /*CellRefVect<ESM4::LevelledNpc>*/ mLevelledNpcs = std::move(other.mLevelledNpcs);
+            /*CellRefVect<ESM4::AcousticSpace>*/ mAcousticSpaces = std::move(other.mAcousticSpaces);
+            /*CellRefVect<ESM4::MovableStatic>*/ mMovableStatics = std::move(other.mMovableStatics);
+            /*CellRefVect<ESM4::Terminal>*/ mTerminals = std::move(other.mTerminals);
+            /*CellRefVect<ESM4::TalkingActivator>*/ mTalkingActivators = std::move(other.mTalkingActivators);
+            /*CellRefVect<ESM4::Note>*/ mNotes = std::move(other.mNotes);
+            /*CellRefVect<ESM4::PlaceableWater>*/ mPlaceableWaters = std::move(other.mPlaceableWaters);
+            /*CellRefVect<ESM4::StaticCollection>*/ mStaticCollections = std::move(other.mStaticCollections);
+
+            /*std::map<int, CellRefStoreBase*>*/ mStores = std::move(other.mStores);
+            /*std::map<ESM4::FormId, int>*/ mStoreTypes = std::move(other.mStoreTypes);
+
+            /*std::map<std::string, ESM4::FormId>*/ mSceneNodeMap = std::move(other.mSceneNodeMap);
+
+            /*ForeignStore<ESM4::Pathgrid>*/        mForeignPathgrids = std::move(other.mForeignPathgrids);
+            /*ESM::Pathgrid*/ mPathgrid = std::move(other.mPathgrid);
+
+            /*MWMechanics::PathgridGraph*/ mPathgridGraph = std::move(other.mPathgridGraph);
+        }
+
+        return *this;
+    }
+#endif
     const ESM::Cell *CellStore::getCell() const
     {
         return mCell;
@@ -491,7 +708,7 @@ namespace MWWorld
 
         // FIXME: why is this done?  shouldn't they all have an entry in mFormids?  for
         // dynamically created ones? if so why not create a new list of dynamic ids?
-        return const_cast<CellStore *> (this)->search(formId).isEmpty(); // FIXME
+        return const_cast<CellStore *> (this)->search(formId).isEmpty();
     }
 
     Ptr CellStore::search(ESM4::FormId formId)
@@ -734,74 +951,65 @@ namespace MWWorld
         return Ptr();
     }
 
+    void CellStore::removeObject (const std::string& handle, ESM4::FormId formId)
+    {
+        return; // FIXME
+
+        std::map<std::string, ESM4::FormId>::iterator handleIter = mSceneNodeMap.find(handle);
+        if (handleIter != mSceneNodeMap.end())
+            mSceneNodeMap.erase(handleIter);
+
+        std::map<ESM4::FormId, int>::iterator typeIter = mStoreTypes.find(formId);
+        if (typeIter != mStoreTypes.end())
+            mStoreTypes.erase(typeIter);
+    }
+
+    void CellStore::addHandle (const std::string& handle, ESM4::FormId formId)
+    {
+        if (handle != "")
+        {
+            mSceneNodeMap[handle] = formId; // for searchViaHandle()
+            //std::cout << "adding handle" << std::endl;
+        }
+    }
+
+    void CellStore::addObject (ESM4::FormId formId, int storeType)
+    {
+        mForeignIds.push_back(formId); // for hasFormId()
+        mStoreTypes[formId] = storeType;
+    }
+
     Ptr CellStore::searchViaHandle (const std::string& handle)
     {
         bool oldState = mHasState;
 
         mHasState = true;
+#if 1
+        // mSceneNodeMap is populated in forEachImpForeign()
+        std::map<std::string, ESM4::FormId>::const_iterator handleIter = mSceneNodeMap.find(handle);
+        if (handleIter != mSceneNodeMap.end())
+        {
+            ESM4::FormId formId = handleIter->second;
 
-        if (LiveCellRefBase *ref = mActivators.searchViaHandle (handle))
-            return Ptr (ref, this);
+            int storeType = getStoreType(formId);
+            //std::cout << "type " << ESM4::printName(storeType) << std::endl;
 
-        if (LiveCellRefBase *ref = mPotions.searchViaHandle (handle))
-            return Ptr (ref, this);
+            std::map<int, CellRefStoreBase*>::const_iterator iter = mStores.find(storeType);
+            if (iter == mStores.end())
+            {
+                mHasState = oldState;
+                throw std::runtime_error ("CellStore: store not found for "+ESM4::printName(storeType));
+            }
 
-        if (LiveCellRefBase *ref = mAppas.searchViaHandle (handle))
-            return Ptr (ref, this);
+            //CellRefStoreBase *store = iter->second;
+            //if (!store)
+                //std::cout << "stop " << ESM4::printName(iter->first) << std::endl; // FIXME
 
-        if (LiveCellRefBase *ref = mArmors.searchViaHandle (handle))
-            return Ptr (ref, this);
-
-        if (LiveCellRefBase *ref = mBooks.searchViaHandle (handle))
-            return Ptr (ref, this);
-
-        if (LiveCellRefBase *ref = mClothes.searchViaHandle (handle))
-            return Ptr (ref, this);
-
-        if (LiveCellRefBase *ref = mContainers.searchViaHandle (handle))
-            return Ptr (ref, this);
-
-        if (LiveCellRefBase *ref = mCreatures.searchViaHandle (handle))
-            return Ptr (ref, this);
-
-        if (LiveCellRefBase *ref = mDoors.searchViaHandle (handle))
-            return Ptr (ref, this);
-
-        if (LiveCellRefBase *ref = mIngreds.searchViaHandle (handle))
-            return Ptr (ref, this);
-
-        if (LiveCellRefBase *ref = mCreatureLists.searchViaHandle (handle))
-            return Ptr (ref, this);
-
-        if (LiveCellRefBase *ref = mItemLists.searchViaHandle (handle))
-            return Ptr (ref, this);
-
-        if (LiveCellRefBase *ref = mLights.searchViaHandle (handle))
-            return Ptr (ref, this);
-
-        if (LiveCellRefBase *ref = mLockpicks.searchViaHandle (handle))
-            return Ptr (ref, this);
-
-        if (LiveCellRefBase *ref = mMiscItems.searchViaHandle (handle))
-            return Ptr (ref, this);
-
-        if (LiveCellRefBase *ref = mNpcs.searchViaHandle (handle))
-            return Ptr (ref, this);
-
-        if (LiveCellRefBase *ref = mProbes.searchViaHandle (handle))
-            return Ptr (ref, this);
-
-        if (LiveCellRefBase *ref = mRepairs.searchViaHandle (handle))
-            return Ptr (ref, this);
-
-        if (LiveCellRefBase *ref = mStatics.searchViaHandle (handle))
-            return Ptr (ref, this);
-
-        if (LiveCellRefBase *ref = mWeapons.searchViaHandle (handle))
-            return Ptr (ref, this);
-
-        //
-
+            LiveCellRefBase *liveRef = iter->second->searchViaHandle(handle); // FIXME: can we search via formid?
+            if (liveRef)
+                return Ptr(liveRef, this);
+        }
+#else
         if (LiveCellRefBase     *ref = mSounds.searchViaHandle (handle))
             return Ptr (ref, this);
 
@@ -894,6 +1102,66 @@ namespace MWWorld
 
         if (LiveCellRefBase      *ref = mNotes.searchViaHandle (handle))
             return Ptr (ref, this);
+#endif
+        if (LiveCellRefBase *ref = mActivators.searchViaHandle (handle))
+            return Ptr (ref, this);
+
+        if (LiveCellRefBase *ref = mPotions.searchViaHandle (handle))
+            return Ptr (ref, this);
+
+        if (LiveCellRefBase *ref = mAppas.searchViaHandle (handle))
+            return Ptr (ref, this);
+
+        if (LiveCellRefBase *ref = mArmors.searchViaHandle (handle))
+            return Ptr (ref, this);
+
+        if (LiveCellRefBase *ref = mBooks.searchViaHandle (handle))
+            return Ptr (ref, this);
+
+        if (LiveCellRefBase *ref = mClothes.searchViaHandle (handle))
+            return Ptr (ref, this);
+
+        if (LiveCellRefBase *ref = mContainers.searchViaHandle (handle))
+            return Ptr (ref, this);
+
+        if (LiveCellRefBase *ref = mCreatures.searchViaHandle (handle))
+            return Ptr (ref, this);
+
+        if (LiveCellRefBase *ref = mDoors.searchViaHandle (handle))
+            return Ptr (ref, this);
+
+        if (LiveCellRefBase *ref = mIngreds.searchViaHandle (handle))
+            return Ptr (ref, this);
+
+        if (LiveCellRefBase *ref = mCreatureLists.searchViaHandle (handle))
+            return Ptr (ref, this);
+
+        if (LiveCellRefBase *ref = mItemLists.searchViaHandle (handle))
+            return Ptr (ref, this);
+
+        if (LiveCellRefBase *ref = mLights.searchViaHandle (handle))
+            return Ptr (ref, this);
+
+        if (LiveCellRefBase *ref = mLockpicks.searchViaHandle (handle))
+            return Ptr (ref, this);
+
+        if (LiveCellRefBase *ref = mMiscItems.searchViaHandle (handle))
+            return Ptr (ref, this);
+
+        if (LiveCellRefBase *ref = mNpcs.searchViaHandle (handle))
+            return Ptr (ref, this);
+
+        if (LiveCellRefBase *ref = mProbes.searchViaHandle (handle))
+            return Ptr (ref, this);
+
+        if (LiveCellRefBase *ref = mRepairs.searchViaHandle (handle))
+            return Ptr (ref, this);
+
+        if (LiveCellRefBase *ref = mStatics.searchViaHandle (handle))
+            return Ptr (ref, this);
+
+        if (LiveCellRefBase *ref = mWeapons.searchViaHandle (handle))
+            return Ptr (ref, this);
 
         mHasState = oldState;
 
@@ -930,7 +1198,7 @@ namespace MWWorld
 
     int CellStore::count() const
     {
-        return
+        return int(
             mActivators.mList.size()
             + mPotions.mList.size()
             + mAppas.mList.size()
@@ -976,7 +1244,7 @@ namespace MWWorld
             + mForeignKeys.mList.size()
             + mForeignPotions.mList.size()
             + mSubSpaces.mList.size()
-            + mLevelledItems.mList.size();
+            + mLevelledItems.mList.size());
           // TERM, TACT, etc
     }
 
