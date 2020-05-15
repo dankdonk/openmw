@@ -4,6 +4,7 @@
 #include <list>
 #include <vector>
 #include <map>
+#include <stdexcept>
 
 #include "livecellref.hpp"
 
@@ -14,7 +15,7 @@ namespace MWWorld
     {
         virtual ~CellRefStoreBase() {}
 
-        virtual LiveCellRefBase *find(const ESM4::FormId id) { return nullptr; }
+        virtual LiveCellRefBase *find(const ESM4::FormId formId) { return nullptr; }
         virtual LiveCellRefBase *find(const std::string& name) = 0;
         virtual std::vector<LiveCellRefBase*> search(std::int32_t x, std::int32_t y,
                 std::size_t range = 0, std::size_t exclude = 0) { return std::vector<LiveCellRefBase*>(); }
@@ -23,7 +24,7 @@ namespace MWWorld
 
     /// \brief Collection of references of one type
     template <typename X>
-    struct CellRefList
+    struct CellRefList : public CellRefStoreBase
     {
         typedef LiveCellRef<X> LiveRef;
         typedef std::list<LiveRef> List;
@@ -36,7 +37,7 @@ namespace MWWorld
         typedef std::map<ESM4::FormId, LiveCellRefBase*> FormIdMap;
         FormIdMap mFormIdMap;
 
-        typedef std::map<std::pair<std::int32_t, std::int32_t>, std::vector<LiveCellRefBase*> > GridMap;
+        typedef std::map<std::pair<std::int32_t, std::int32_t>, std::vector<ESM4::FormId> > GridMap;
         GridMap mGridMap;
 
         /// Search for the given reference in the given reclist from
@@ -51,19 +52,80 @@ namespace MWWorld
         void load (ESM4::ActorCreature &ref, bool deleted, const MWWorld::ESMStore &esmStore, bool dummy = false);
         void load (ESM4::ActorCharacter &ref, bool deleted, const MWWorld::ESMStore &esmStore, bool dummy = false);
 
-        LiveCellRefBase *find (const std::string& name)
+        LiveCellRefBase *find(const ESM4::FormId formId)
+        {
+            FormIdMap::const_iterator iter = mFormIdMap.find(formId);
+            if (iter == mFormIdMap.end())
+                return nullptr;
+
+            LiveCellRefBase *ref = iter->second;
+
+            // TODO: keep deleted refs separately?
+            // TODO: why return if hasContentFile()?
+            if (!ref->mData.isDeletedByContentFile() &&
+                (ref->mRef.hasContentFile() || ref->mData.getCount() > 0))
+            {
+                return ref;
+            }
+
+            return nullptr;
+        }
+
+        LiveCellRefBase *find(const std::string& name)
         {
             for (typename List::iterator iter (mList.begin()); iter!=mList.end(); ++iter)
                 if (!iter->mData.isDeletedByContentFile()
                         && (iter->mRef.hasContentFile() || iter->mData.getCount() > 0)
                         && iter->mRef.getRefId() == name)
+                {
                     return &*iter;
+                }
 
-            return 0;
+            return nullptr;
+        }
+
+        std::vector<LiveCellRefBase*> search(std::int32_t x, std::int32_t y,
+                std::size_t range = 0, std::size_t exclude = 0)
+        {
+            if (exclude > range)
+                throw std::logic_error("The excluded area is larger than the included range.");
+
+            std::vector<LiveCellRefBase*> res;
+
+            for (std::int32_t i = x - std::int32_t(range); i <= x + std::int32_t(range); ++i)
+            {
+                for (std::int32_t j = y - std::int32_t(range); j <= y + std::int32_t(range); ++j)
+                {
+                    if (exclude != 0 && i >= x - exclude && i <= x + exclude)
+                    {
+                        //std::cout << "ignoring x " << i << std::endl; // FIXME
+                        continue;
+                    }
+                    //if (exclude != 0)
+                        //std::cout << "processing x" << i << std::endl; // FIXME
+
+                    if (exclude != 0 && j >= y - exclude && j <= y + exclude)
+                        continue;
+
+                    GridMap::const_iterator iter = mGridMap.find(std::make_pair(i, j));
+
+                    if (iter != mGridMap.end())
+                    {
+                        for (std::size_t k = 0; k < iter->second.size(); ++k)
+                        {
+                            // TODO: check deleted? check count? check hasContentFile()?
+                            LiveCellRefBase* ref = find(iter->second[k]);
+                            res.push_back(ref);
+                        }
+                    }
+                }
+            }
+
+            return res;
         }
 
         // used by copyToCellImpl()
-        LiveCellRefBase *insert (const LiveRef &item)
+        LiveCellRefBase *insert(const LiveRef &item)
         {
             ESM4::FormId formId = item.mRef.getFormId();
 
@@ -72,20 +134,21 @@ namespace MWWorld
             LiveCellRefBase *refPtr = &mList.back();
             mFormIdMap[formId] = refPtr;
 
-            // NOTE: assumed that it is not possible to insert records to a dummy cell,
+            // WARN: assumed that it is not possible to insert records to a dummy cell,
             //       hence not updating GridMap
 
             return refPtr;
         }
 
-        LiveCellRefBase *searchViaHandle (const std::string& handle)
+        // FIXME: keep a handle map?
+        LiveCellRefBase *searchViaHandle(const std::string& handle)
         {
-            for (typename List::iterator iter (mList.begin()); iter!=mList.end(); ++iter)
+            for (typename List::iterator iter (mList.begin()); iter != mList.end(); ++iter)
                 if (iter->mData.getBaseNode() &&
-                    iter->mData.getHandle()==handle)
+                    iter->mData.getHandle() == handle)
                     return &*iter;
 
-            return 0;
+            return nullptr;
         }
     };
 #else
@@ -126,11 +189,9 @@ namespace MWWorld
         void load(ESM4::ActorCreature& ref, bool deleted, const ESMStore& esmStore);
         void load(ESM4::ActorCharacter& ref, bool deleted, const ESMStore& esmStore);
 
-        //LiveCellRefBase *find(const ESM4::FormId id)
-        LiveCellRefBase *find(const std::string& name)
+        LiveCellRefBase *find(const ESM4::FormId id)
         //LiveRef *find (const std::string& name)
         {
-#if 0
             std::map<ESM4::FormId, std::size_t>::const_iterator iter = mIdMap.find(id);
             if (iter == mIdMap.end())
                 return nullptr;
@@ -146,18 +207,8 @@ namespace MWWorld
             }
 
             return nullptr;
-#else
-            for (typename List::iterator iter (mList.begin()); iter!=mList.end(); ++iter)
-                if (!iter->mData.isDeletedByContentFile()
-                        && (iter->mRef.hasContentFile() || iter->mData.getCount() > 0)
-                        && iter->mRef.getRefId() == name)
-                    return &*iter;
-
-            return 0;
-#endif
         }
 
-#if 0
         std::vector<LiveCellRefBase*> search(std::int32_t x, std::int32_t y, std::size_t range = 0, std::size_t exclude = 0)
         {
             if (exclude > range)
@@ -196,7 +247,6 @@ namespace MWWorld
 
             return res;
         }
-#endif
 
         LiveRef &insert (const LiveRef& item)
         {

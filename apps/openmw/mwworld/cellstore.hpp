@@ -128,7 +128,7 @@ namespace MWWorld
             CellRefList<ESM4::PlaceableWater>   mPlaceableWaters;
             CellRefList<ESM4::StaticCollection> mStaticCollections;
 
-            //std::map<int/*store type*/, CellRefStoreBase*> mStores;
+            std::map<int/*store type*/, CellRefStoreBase*> mStores;
             std::map<ESM4::FormId, int> mStoreTypes;
             int getStoreType(ESM4::FormId formId) const;
 
@@ -143,6 +143,7 @@ namespace MWWorld
         public:
 
             CellStore (const ESM::Cell *cell_, bool isForeignCell = false, bool isDummyCell = false);
+            //~CellStore ();
 
             const ESM::Cell *getCell() const;
             inline const bool isForeignCell() const { return mIsForeignCell; }
@@ -165,7 +166,7 @@ namespace MWWorld
             ///< May return true for deleted IDs when in preload state. Will return false, if cell is
             /// unloaded.
 
-            //Ptr search (ESM4::FormId formId);
+            Ptr search (ESM4::FormId formId);
             Ptr search (const std::string& id);
             ///< Will return an empty Ptr if cell is not loaded. Does not check references in
             /// containers.
@@ -228,7 +229,9 @@ namespace MWWorld
                     forEachImp (functor, mCreatures) &&
                     forEachImp (functor, mNpcs) &&
                     forEachImp (functor, mCreatureLists) &&
+//#if 0
                     // FIXME: don't understand why this is needed here
+                    // (RigidBodyState::mSceneNode ends up with no parent)
                     forEachImpForeign(functor, 0, 0, 0, 0, mSounds) &&
                     forEachImpForeign(functor, 0, 0, 0, 0, mForeignActivators) &&
                     forEachImpForeign(functor, 0, 0, 0, 0, mForeignApparatus) &&
@@ -261,6 +264,7 @@ namespace MWWorld
                     forEachImpForeign(functor, 0, 0, 0, 0, mForeignNpcs) &&
                     forEachImpForeign(functor, 0, 0, 0, 0, mForeignCreatures) &&
                     forEachImpForeign(functor, 0, 0, 0, 0, mLevelledCreatures);
+//#endif
             }
 
             // FIXME: not sure why Creatures and NPCs are handled last.

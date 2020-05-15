@@ -200,42 +200,7 @@ namespace MWWorld
     void CellRefList<X>::load(ESM4::Reference &ref, bool deleted, const MWWorld::ESMStore &esmStore, bool dummy)
     {
         const MWWorld::ForeignStore<X> &store = esmStore.getForeign<X>();
-#if 0
-        if (const X *ptr = store.search(ref.mBaseObj))
-        {
-            // see operator== in livecellref.hpp, check for matching formId
-            typename std::list<LiveRef>::iterator iter =
-                std::find(mList.begin(), mList.end(), ref);
 
-            LiveRef liveCellRef(ref, ptr); // ref is the reference, ptr is the base object
-
-            if (deleted)
-                liveCellRef.mData.setDeleted(true);
-
-            if (iter != mList.end())
-                *iter = liveCellRef;
-            else
-            {
-                mList.push_back (liveCellRef);
-                //std::cout << "CellRefList::load "
-                    //<< ESM4::formIdToString(mList.back().mBase->mFormId) << std::endl; // FIXME: debug only
-
-// FIXME: testing audio markers
-#if 0
-                if (ref.mAudioLocation)
-                    std::cout << "audio loc " << ref.mEditorId << " "
-                        << ref.mPosition.pos.x/4096 << "," << ref.mPosition.pos.y/4096 << " "
-                    << mList.back().mBase->mEditorId << std::endl; // FIXME: debug only
-#endif
-            }
-        }
-        else
-        {
-            std::cerr
-                << "Error: could not resolve foreign cell reference " << ref.mEditorId
-                << " (dropping reference)" << std::endl;
-        }
-#else
         if (const X *base = store.search(ref.mBaseObj))
         {
             FormIdMap::const_iterator iter = mFormIdMap.find(ref.mFormId);
@@ -268,9 +233,9 @@ namespace MWWorld
                     GridMap::iterator lb = mGridMap.lower_bound(grid);
 
                     if (lb != mGridMap.end() && !(mGridMap.key_comp()(grid, lb->first)))
-                        lb->second.push_back(refPtr); // found, add
+                        lb->second.push_back(ref.mFormId); // found, add
                     else // none found, insert new grid
-                        mGridMap.insert(lb, std::make_pair(grid, std::vector<LiveCellRefBase*> { refPtr }));
+                        mGridMap.insert(lb, std::make_pair(grid, std::vector<ESM4::FormId> { ref.mFormId }));
                 }
 
                 //std::cout << "CellRefList::load "
@@ -292,41 +257,13 @@ namespace MWWorld
                 << ((ref.mEditorId != "") ? ref.mEditorId : ESM4::formIdToString(ref.mFormId))
                 << " (dropping reference)" << std::endl;
         }
-#endif
     }
 
     template <typename X>
     void CellRefList<X>::load(ESM4::ActorCreature &ref, bool deleted, const MWWorld::ESMStore &esmStore, bool dummy)
     {
         const MWWorld::ForeignStore<X> &store = esmStore.getForeign<X>();
-#if 0
-        if (const X *ptr = store.search (ref.mBaseObj))
-        {
-            // see operator== in livecellref.hpp, check for matching formId
-            typename std::list<LiveRef>::iterator iter =
-                std::find(mList.begin(), mList.end(), ref);
 
-            LiveRef liveCellRef (ref, ptr); // ref is the reference, ptr is the base object
-
-            if (deleted)
-                liveCellRef.mData.setDeleted(true);
-
-            if (iter != mList.end())
-                *iter = liveCellRef;
-            else
-            {
-                mList.push_back (liveCellRef);
-                //std::cout << "CellRefList::load "
-                    //<< ESM4::formIdToString(mList.back().mBase->mFormId) << std::endl; // FIXME: debug only
-            }
-        }
-        else
-        {
-            std::cerr
-                << "Error: could not resolve foreign cell reference " << ref.mEditorId
-                << " (dropping reference)" << std::endl;
-        }
-#else
         if (const X *base = store.search(ref.mBaseObj))
         {
             FormIdMap::const_iterator iter = mFormIdMap.find(ref.mFormId);
@@ -359,9 +296,9 @@ namespace MWWorld
                     GridMap::iterator lb = mGridMap.lower_bound(grid);
 
                     if (lb != mGridMap.end() && !(mGridMap.key_comp()(grid, lb->first)))
-                        lb->second.push_back(refPtr); // found, add
+                        lb->second.push_back(ref.mFormId); // found, add
                     else // none found, insert new grid
-                        mGridMap.insert(lb, std::make_pair(grid, std::vector<LiveCellRefBase*> { refPtr }));
+                        mGridMap.insert(lb, std::make_pair(grid, std::vector<ESM4::FormId> { ref.mFormId }));
                 }
 
                 //std::cout << "CellRefList::load "
@@ -375,53 +312,13 @@ namespace MWWorld
                 << ((ref.mEditorId != "") ? ref.mEditorId : ESM4::formIdToString(ref.mFormId))
                 << " (dropping reference)" << std::endl;
         }
-#endif
     }
 
     template <typename X>
     void CellRefList<X>::load(ESM4::ActorCharacter &ref, bool deleted, const MWWorld::ESMStore &esmStore, bool dummy)
     {
         const MWWorld::ForeignStore<X> &store = esmStore.getForeign<X>();
-#if 0
-        if (const X *ptr = store.search (ref.mBaseObj))
-        {
-            // see operator== in livecellref.hpp, check for matching formId
-            typename std::list<LiveRef>::iterator iter =
-                std::find(mList.begin(), mList.end(), ref);
-#if 0
-                            for (size_t i = 0; i < ptr->mInventory.size(); ++i)
-                            {
-                                uint32_t type = esmStore.find(ptr->mInventory[i].item);
-                                if (type == ESM4::REC_BOOK)
-                                {
-                        const ESM4::Book* note = esmStore.getForeign<ESM4::Book>().search(ptr->mInventory[i].item);
-                        std::cout << ptr->mEditorId << " " << note->mEditorId << std::endl;
-                                }
-                                else
-                                    std::cout << ESM4::printName(type) << std::endl;
-                            }
-#endif
-            LiveRef liveCellRef (ref, ptr); // ref is the reference, ptr is the base object
 
-            if (deleted)
-                liveCellRef.mData.setDeleted(true);
-
-            if (iter != mList.end())
-                *iter = liveCellRef;
-            else
-            {
-                mList.push_back (liveCellRef);
-                //std::cout << "CellRefList::load "
-                    //<< ESM4::formIdToString(mList.back().mBase->mFormId) << std::endl; // FIXME: debug only
-            }
-        }
-        else
-        {
-            std::cerr
-                << "Error: could not resolve foreign cell reference " << ref.mEditorId
-                << " (dropping reference)" << std::endl;
-        }
-#else
         if (const X *base = store.search(ref.mBaseObj))
         {
             FormIdMap::const_iterator iter = mFormIdMap.find(ref.mFormId);
@@ -467,9 +364,9 @@ namespace MWWorld
                     GridMap::iterator lb = mGridMap.lower_bound(grid);
 
                     if (lb != mGridMap.end() && !(mGridMap.key_comp()(grid, lb->first)))
-                        lb->second.push_back(refPtr); // found, add
+                        lb->second.push_back(ref.mFormId); // found, add
                     else // none found, insert new grid
-                        mGridMap.insert(lb, std::make_pair(grid, std::vector<LiveCellRefBase*> { refPtr }));
+                        mGridMap.insert(lb, std::make_pair(grid, std::vector<ESM4::FormId> { ref.mFormId }));
                 }
 
                 //std::cout << "CellRefList::load "
@@ -483,7 +380,6 @@ namespace MWWorld
                 << ((ref.mEditorId != "") ? ref.mEditorId : ESM4::formIdToString(ref.mFormId))
                 << " (dropping reference)" << std::endl;
         }
-#endif
     }
 
     template<typename X> bool operator==(const LiveCellRef<X>& ref, int pRefnum)
@@ -499,7 +395,7 @@ namespace MWWorld
             mWaterLevel = cell->mWater;
         else
             mWaterLevel = 0.f; // FIXME: should lookup formid and determine?
-#if 0
+
         mStores[ESM4::REC_SOUN] = &mSounds;
         mStores[ESM4::REC_ACTI] = &mForeignActivators;
         mStores[ESM4::REC_APPA] = &mForeignApparatus;
@@ -542,9 +438,13 @@ namespace MWWorld
         mStores[ESM4::REC_SCOL] = &mStaticCollections;
       //mStores[ESM4::REC_CCRD] = &mCaravanCard;
       //mStores[ESM4::REC_CMNY] = &mCaravanMoney;
-#endif
     }
 
+#if 0
+    CellStore::~CellStore()
+    {
+    }
+#endif
     const ESM::Cell *CellStore::getCell() const
     {
         return mCell;
@@ -591,7 +491,102 @@ namespace MWWorld
 
         // FIXME: why is this done?  shouldn't they all have an entry in mFormids?  for
         // dynamically created ones? if so why not create a new list of dynamic ids?
-        //return const_cast<CellStore *> (this)->search(formId).isEmpty(); // FIXME
+        return const_cast<CellStore *> (this)->search(formId).isEmpty(); // FIXME
+    }
+
+    Ptr CellStore::search(ESM4::FormId formId)
+    {
+        bool oldState = mHasState;
+
+        mHasState = true;
+#if 1
+        int storeType = getStoreType(formId);
+
+        std::map<int, CellRefStoreBase*>::const_iterator iter = mStores.find(storeType);
+        if (iter != mStores.end())
+        {
+            LiveCellRefBase *liveRef = iter->second->find(formId);
+
+            return Ptr(liveRef, this);
+        }
+#else
+        if (LiveCellRef<ESM4::Sound>      *ref = mSounds.find (id))
+            return Ptr (ref, this);
+
+        if (LiveCellRef<ESM4::Activator>  *ref = mForeignActivators.find (id))
+            return Ptr (ref, this);
+
+        if (LiveCellRef<ESM4::Armor>      *ref = mForeignArmors.find (id))
+            return Ptr (ref, this);
+
+        if (LiveCellRef<ESM4::Book>       *ref = mForeignBooks.find (id))
+            return Ptr (ref, this);
+
+        if (LiveCellRef<ESM4::Clothing>    *ref = mForeignClothes.find (id))
+            return Ptr (ref, this);
+
+        if (LiveCellRef<ESM4::Container>  *ref = mForeignContainers.find (id))
+            return Ptr (ref, this);
+
+        if (LiveCellRef<ESM4::Door>       *ref = mForeignDoors.find (id))
+            return Ptr (ref, this);
+
+        if (LiveCellRef<ESM4::Ingredient> *ref = mForeignIngredients.find (id))
+            return Ptr (ref, this);
+
+        if (LiveCellRef<ESM4::Light>      *ref = mForeignLights.find (id))
+            return Ptr (ref, this);
+
+        if (LiveCellRef<ESM4::MiscItem>   *ref = mForeignMiscItems.find (id))
+            return Ptr (ref, this);
+
+        if (LiveCellRef<ESM4::Static>     *ref = mForeignStatics.find (id))
+            return Ptr (ref, this);
+
+        // GRAS
+
+        if (LiveCellRef<ESM4::Tree>       *ref = mForeignTrees.find (id))
+            return Ptr (ref, this);
+
+        if (LiveCellRef<ESM4::Flora>      *ref = mForeignFloras.find (id))
+            return Ptr (ref, this);
+
+        if (LiveCellRef<ESM4::Furniture>  *ref = mForeignFurnitures.find (id))
+            return Ptr (ref, this);
+
+        if (LiveCellRef<ESM4::Weapon>     *ref = mForeignWeapons.find (id))
+            return Ptr (ref, this);
+
+        if (LiveCellRef<ESM4::Ammunition> *ref = mAmmunitions.find (id))
+            return Ptr (ref, this);
+
+        if (LiveCellRef<ESM4::IdleMarker> *ref = mIdleMarkers.find (id))
+            return Ptr (ref, this);
+
+        if (LiveCellRef<ESM4::Key>        *ref = mForeignKeys.find (id))
+            return Ptr (ref, this);
+
+        if (LiveCellRef<ESM4::Potion>     *ref = mForeignPotions.find (id))
+            return Ptr (ref, this);
+
+        if (LiveCellRef<ESM4::SubSpace>   *ref = mSubSpaces.find (id))
+            return Ptr (ref, this);
+
+        if (LiveCellRef<ESM4::MovableStatic> *ref = mMovableStatics.find (id))
+            return Ptr (ref, this);
+
+        if (LiveCellRef<ESM4::Terminal>   *ref = mTerminals.find (id))
+            return Ptr (ref, this);
+
+        if (LiveCellRef<ESM4::TalkingActivator> *ref = mTalkingActivators.find (id))
+            return Ptr (ref, this);
+
+        if (LiveCellRef<ESM4::PlaceableWater> *ref = mPlaceableWaters.find (id))
+            return Ptr (ref, this);
+#endif
+        mHasState = oldState;
+
+        return Ptr();
     }
 
     Ptr CellStore::search(const std::string& id)
