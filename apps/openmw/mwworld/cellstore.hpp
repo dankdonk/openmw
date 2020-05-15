@@ -144,10 +144,10 @@ namespace MWWorld
 
             CellStore (const ESM::Cell *cell_, bool isForeignCell = false, bool isDummyCell = false);
             //~CellStore ();
-            CellStore (const CellStore& other);
+            CellStore (const CellStore& other) = delete;
             CellStore& operator=(const CellStore& other) = delete;
-            //CellStore (CellStore&& other); // move
-            //CellStore& operator=(CellStore&& other); // move
+            CellStore (CellStore&& other); // move
+            CellStore& operator=(CellStore&& other); // move
 
             const ESM::Cell *getCell() const;
             inline const bool isForeignCell() const { return mIsForeignCell; }

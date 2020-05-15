@@ -43,7 +43,8 @@ namespace MWWorld
             // Fortunately, all of TES4 worlds have EditorIds but others may not.
             //mutable std::map<std::string, std::map<std::pair<int, int>, CellStore> > mForeignWorlds;
             std::map<ESM4::FormId, std::map<std::pair<int, int>, CellStore> > mForeignWorlds;
-            std::map<ESM4::FormId, CellStore> mForeignDummys;      // key is ForeignWorld FormId
+            // We don't own the dummy CellStore*, they belong to the respective ForeginWorld's
+            std::map<ESM4::FormId, CellStore*> mForeignDummys;      // key is ForeignWorld FormId
             // FIXME: probably need to be for each cell rather than each world
             std::map<ESM4::FormId, CellStore> mForeignVisibleDist; // key is ForeignWorld FormId
             std::map<std::string, std::vector<std::pair<std::int16_t, std::int16_t> > > mVisibleDistStatics;

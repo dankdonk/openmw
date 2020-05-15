@@ -2810,7 +2810,7 @@ namespace MWWorld
         if (!cellStore)
             return false;
 
-        const StaticList &statics = cellStore->getForeignReadOnly<ESM4::Static>().mList;
+        const StaticList& statics = cellStore->getForeignReadOnly<ESM4::Static>().mList;
         StaticList::const_iterator iter;
         for (iter = statics.begin(); iter != statics.end(); ++iter)
         {
@@ -2825,13 +2825,16 @@ namespace MWWorld
 
         // try to find the door that connects to an external cell
         const MWWorld::ESMStore& store = MWBase::Environment::get().getWorld()->getStore();
-        const DoorList &doors = cellStore->getForeignReadOnly<ESM4::Door>().mList;
+        const DoorList& doors = cellStore->getForeignReadOnly<ESM4::Door>().mList;
         for (DoorList::const_iterator it = doors.begin(); it != doors.end(); ++it)
         {
             if (!it->mRef.getTeleport())
                 continue; // some doors do not teleport (e.g. animated)
 
             const ESM4::FormId cellId = store.getDoorCellId(it->mRef.getDestDoorId());
+            if (cellId == 0)
+                continue;
+
             const MWWorld::ForeignCell *cell = store.getForeign<MWWorld::ForeignCell>().find(cellId);
             if (!cell || !cell->isExterior())
                 continue;
@@ -2846,13 +2849,16 @@ namespace MWWorld
                 throw std::runtime_error ("findForeignInteriorPosition: world does not have a dummy cell");
 
             // find a door leading to our current cell and use its destination as the position
-            const DoorList &doors = dummy->getForeignReadOnly<ESM4::Door>().mList;
+            const DoorList& doors = dummy->getForeignReadOnly<ESM4::Door>().mList;
             for (DoorList::const_reverse_iterator jt = doors.rbegin(); jt != doors.rend(); ++jt)
             {
                 if (!it->mRef.getTeleport())
                     continue;
 
                 const ESM4::FormId cellId = store.getDoorCellId(jt->mRef.getDestDoorId());
+                if (cellId == 0)
+                    continue;
+
                 const MWWorld::ForeignCell *cell = store.getForeign<MWWorld::ForeignCell>().find(cellId);
                 if (!cell)
                     continue;
