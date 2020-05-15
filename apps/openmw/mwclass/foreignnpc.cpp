@@ -670,6 +670,6 @@ namespace MWClass
     {
         MWWorld::LiveCellRef<ESM4::Npc> *ref = ptr.get<ESM4::Npc>();
 
-        return MWWorld::Ptr(&cell.getForeign<ESM4::Npc>().insert(*ref), &cell);
+        return MWWorld::Ptr(cell.getForeign<ESM4::Npc>().insert(*ref), &cell);
     }
 }

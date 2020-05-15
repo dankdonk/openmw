@@ -218,6 +218,6 @@ namespace MWClass
     {
         MWWorld::LiveCellRef<ESM4::MiscItem> *ref = ptr.get<ESM4::MiscItem>();
 
-        return MWWorld::Ptr(&cell.getForeign<ESM4::MiscItem>().insert(*ref), &cell);
+        return MWWorld::Ptr(cell.getForeign<ESM4::MiscItem>().insert(*ref), &cell);
     }
 }

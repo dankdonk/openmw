@@ -149,7 +149,7 @@ namespace MWClass
         MWWorld::LiveCellRef<ESM::Apparatus> *ref =
             ptr.get<ESM::Apparatus>();
 
-        return MWWorld::Ptr(&cell.get<ESM::Apparatus>().insert(*ref), &cell);
+        return MWWorld::Ptr(cell.get<ESM::Apparatus>().insert(*ref), &cell);
     }
 
     bool Apparatus::canSell (const MWWorld::Ptr& item, int npcServices) const

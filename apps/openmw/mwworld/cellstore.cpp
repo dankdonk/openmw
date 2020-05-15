@@ -600,138 +600,138 @@ namespace MWWorld
 
         mHasState = true;
 
-        if (LiveCellRef<ESM::Activator> *ref = mActivators.find (id))
+        if (LiveCellRefBase *ref = mActivators.find (id))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM::Potion> *ref = mPotions.find (id))
+        if (LiveCellRefBase *ref = mPotions.find (id))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM::Apparatus> *ref = mAppas.find (id))
+        if (LiveCellRefBase *ref = mAppas.find (id))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM::Armor> *ref = mArmors.find (id))
+        if (LiveCellRefBase *ref = mArmors.find (id))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM::Book> *ref = mBooks.find (id))
+        if (LiveCellRefBase *ref = mBooks.find (id))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM::Clothing> *ref = mClothes.find (id))
+        if (LiveCellRefBase *ref = mClothes.find (id))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM::Container> *ref = mContainers.find (id))
+        if (LiveCellRefBase *ref = mContainers.find (id))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM::Creature> *ref = mCreatures.find (id))
+        if (LiveCellRefBase *ref = mCreatures.find (id))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM::Door> *ref = mDoors.find (id))
+        if (LiveCellRefBase *ref = mDoors.find (id))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM::Ingredient> *ref = mIngreds.find (id))
+        if (LiveCellRefBase *ref = mIngreds.find (id))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM::CreatureLevList> *ref = mCreatureLists.find (id))
+        if (LiveCellRefBase *ref = mCreatureLists.find (id))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM::ItemLevList> *ref = mItemLists.find (id))
+        if (LiveCellRefBase *ref = mItemLists.find (id))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM::Light> *ref = mLights.find (id))
+        if (LiveCellRefBase *ref = mLights.find (id))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM::Lockpick> *ref = mLockpicks.find (id))
+        if (LiveCellRefBase *ref = mLockpicks.find (id))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM::Miscellaneous> *ref = mMiscItems.find (id))
+        if (LiveCellRefBase *ref = mMiscItems.find (id))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM::NPC> *ref = mNpcs.find (id))
+        if (LiveCellRefBase *ref = mNpcs.find (id))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM::Probe> *ref = mProbes.find (id))
+        if (LiveCellRefBase *ref = mProbes.find (id))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM::Repair> *ref = mRepairs.find (id))
+        if (LiveCellRefBase *ref = mRepairs.find (id))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM::Static> *ref = mStatics.find (id))
+        if (LiveCellRefBase *ref = mStatics.find (id))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM::Weapon> *ref = mWeapons.find (id))
+        if (LiveCellRefBase *ref = mWeapons.find (id))
             return Ptr (ref, this);
 
         //
 
-        if (LiveCellRef<ESM4::Sound>      *ref = mSounds.find (id))
+        if (LiveCellRefBase      *ref = mSounds.find (id))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM4::Activator>  *ref = mForeignActivators.find (id))
+        if (LiveCellRefBase  *ref = mForeignActivators.find (id))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM4::Armor>      *ref = mForeignArmors.find (id))
+        if (LiveCellRefBase      *ref = mForeignArmors.find (id))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM4::Book>       *ref = mForeignBooks.find (id))
+        if (LiveCellRefBase       *ref = mForeignBooks.find (id))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM4::Clothing>    *ref = mForeignClothes.find (id))
+        if (LiveCellRefBase    *ref = mForeignClothes.find (id))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM4::Container>  *ref = mForeignContainers.find (id))
+        if (LiveCellRefBase  *ref = mForeignContainers.find (id))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM4::Door>       *ref = mForeignDoors.find (id))
+        if (LiveCellRefBase       *ref = mForeignDoors.find (id))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM4::Ingredient> *ref = mForeignIngredients.find (id))
+        if (LiveCellRefBase *ref = mForeignIngredients.find (id))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM4::Light>      *ref = mForeignLights.find (id))
+        if (LiveCellRefBase      *ref = mForeignLights.find (id))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM4::MiscItem>   *ref = mForeignMiscItems.find (id))
+        if (LiveCellRefBase   *ref = mForeignMiscItems.find (id))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM4::Static>     *ref = mForeignStatics.find (id))
+        if (LiveCellRefBase     *ref = mForeignStatics.find (id))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM4::Tree>       *ref = mForeignTrees.find (id))
+        if (LiveCellRefBase       *ref = mForeignTrees.find (id))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM4::Flora>      *ref = mForeignFloras.find (id))
+        if (LiveCellRefBase      *ref = mForeignFloras.find (id))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM4::Furniture>  *ref = mForeignFurnitures.find (id))
+        if (LiveCellRefBase  *ref = mForeignFurnitures.find (id))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM4::Weapon>     *ref = mForeignWeapons.find (id))
+        if (LiveCellRefBase     *ref = mForeignWeapons.find (id))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM4::Ammunition> *ref = mAmmunitions.find (id))
+        if (LiveCellRefBase *ref = mAmmunitions.find (id))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM4::IdleMarker> *ref = mIdleMarkers.find (id))
+        if (LiveCellRefBase *ref = mIdleMarkers.find (id))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM4::Key>        *ref = mForeignKeys.find (id))
+        if (LiveCellRefBase        *ref = mForeignKeys.find (id))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM4::Potion>     *ref = mForeignPotions.find (id))
+        if (LiveCellRefBase     *ref = mForeignPotions.find (id))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM4::SubSpace>   *ref = mSubSpaces.find (id))
+        if (LiveCellRefBase   *ref = mSubSpaces.find (id))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM4::MovableStatic> *ref = mMovableStatics.find (id))
+        if (LiveCellRefBase *ref = mMovableStatics.find (id))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM4::Terminal>   *ref = mTerminals.find (id))
+        if (LiveCellRefBase   *ref = mTerminals.find (id))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM4::TalkingActivator> *ref = mTalkingActivators.find (id))
+        if (LiveCellRefBase *ref = mTalkingActivators.find (id))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM4::PlaceableWater> *ref = mPlaceableWaters.find (id))
+        if (LiveCellRefBase *ref = mPlaceableWaters.find (id))
             return Ptr (ref, this);
 
         mHasState = oldState;
@@ -745,159 +745,159 @@ namespace MWWorld
 
         mHasState = true;
 
-        if (LiveCellRef<ESM::Activator> *ref = mActivators.searchViaHandle (handle))
+        if (LiveCellRefBase *ref = mActivators.searchViaHandle (handle))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM::Potion> *ref = mPotions.searchViaHandle (handle))
+        if (LiveCellRefBase *ref = mPotions.searchViaHandle (handle))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM::Apparatus> *ref = mAppas.searchViaHandle (handle))
+        if (LiveCellRefBase *ref = mAppas.searchViaHandle (handle))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM::Armor> *ref = mArmors.searchViaHandle (handle))
+        if (LiveCellRefBase *ref = mArmors.searchViaHandle (handle))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM::Book> *ref = mBooks.searchViaHandle (handle))
+        if (LiveCellRefBase *ref = mBooks.searchViaHandle (handle))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM::Clothing> *ref = mClothes.searchViaHandle (handle))
+        if (LiveCellRefBase *ref = mClothes.searchViaHandle (handle))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM::Container> *ref = mContainers.searchViaHandle (handle))
+        if (LiveCellRefBase *ref = mContainers.searchViaHandle (handle))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM::Creature> *ref = mCreatures.searchViaHandle (handle))
+        if (LiveCellRefBase *ref = mCreatures.searchViaHandle (handle))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM::Door> *ref = mDoors.searchViaHandle (handle))
+        if (LiveCellRefBase *ref = mDoors.searchViaHandle (handle))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM::Ingredient> *ref = mIngreds.searchViaHandle (handle))
+        if (LiveCellRefBase *ref = mIngreds.searchViaHandle (handle))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM::CreatureLevList> *ref = mCreatureLists.searchViaHandle (handle))
+        if (LiveCellRefBase *ref = mCreatureLists.searchViaHandle (handle))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM::ItemLevList> *ref = mItemLists.searchViaHandle (handle))
+        if (LiveCellRefBase *ref = mItemLists.searchViaHandle (handle))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM::Light> *ref = mLights.searchViaHandle (handle))
+        if (LiveCellRefBase *ref = mLights.searchViaHandle (handle))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM::Lockpick> *ref = mLockpicks.searchViaHandle (handle))
+        if (LiveCellRefBase *ref = mLockpicks.searchViaHandle (handle))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM::Miscellaneous> *ref = mMiscItems.searchViaHandle (handle))
+        if (LiveCellRefBase *ref = mMiscItems.searchViaHandle (handle))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM::NPC> *ref = mNpcs.searchViaHandle (handle))
+        if (LiveCellRefBase *ref = mNpcs.searchViaHandle (handle))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM::Probe> *ref = mProbes.searchViaHandle (handle))
+        if (LiveCellRefBase *ref = mProbes.searchViaHandle (handle))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM::Repair> *ref = mRepairs.searchViaHandle (handle))
+        if (LiveCellRefBase *ref = mRepairs.searchViaHandle (handle))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM::Static> *ref = mStatics.searchViaHandle (handle))
+        if (LiveCellRefBase *ref = mStatics.searchViaHandle (handle))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM::Weapon> *ref = mWeapons.searchViaHandle (handle))
+        if (LiveCellRefBase *ref = mWeapons.searchViaHandle (handle))
             return Ptr (ref, this);
 
         //
 
-        if (LiveCellRef<ESM4::Sound>     *ref = mSounds.searchViaHandle (handle))
+        if (LiveCellRefBase     *ref = mSounds.searchViaHandle (handle))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM4::Activator> *ref = mForeignActivators.searchViaHandle (handle))
+        if (LiveCellRefBase *ref = mForeignActivators.searchViaHandle (handle))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM4::Apparatus> *ref = mForeignApparatus.searchViaHandle (handle))
+        if (LiveCellRefBase *ref = mForeignApparatus.searchViaHandle (handle))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM4::Armor>     *ref = mForeignArmors.searchViaHandle (handle))
+        if (LiveCellRefBase     *ref = mForeignArmors.searchViaHandle (handle))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM4::Book>      *ref = mForeignBooks.searchViaHandle (handle))
+        if (LiveCellRefBase      *ref = mForeignBooks.searchViaHandle (handle))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM4::Clothing>  *ref = mForeignClothes.searchViaHandle (handle))
+        if (LiveCellRefBase  *ref = mForeignClothes.searchViaHandle (handle))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM4::Container> *ref = mForeignContainers.searchViaHandle (handle))
+        if (LiveCellRefBase *ref = mForeignContainers.searchViaHandle (handle))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM4::Door>      *ref = mForeignDoors.searchViaHandle (handle))
+        if (LiveCellRefBase      *ref = mForeignDoors.searchViaHandle (handle))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM4::Ingredient> *ref = mForeignIngredients.searchViaHandle (handle))
+        if (LiveCellRefBase *ref = mForeignIngredients.searchViaHandle (handle))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM4::Light>     *ref = mForeignLights.searchViaHandle (handle))
+        if (LiveCellRefBase     *ref = mForeignLights.searchViaHandle (handle))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM4::MiscItem>  *ref = mForeignMiscItems.searchViaHandle (handle))
+        if (LiveCellRefBase  *ref = mForeignMiscItems.searchViaHandle (handle))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM4::Static>    *ref = mForeignStatics.searchViaHandle (handle))
+        if (LiveCellRefBase    *ref = mForeignStatics.searchViaHandle (handle))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM4::Grass>     *ref = mForeignGrasses.searchViaHandle (handle))
+        if (LiveCellRefBase     *ref = mForeignGrasses.searchViaHandle (handle))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM4::Tree>      *ref = mForeignTrees.searchViaHandle (handle))
+        if (LiveCellRefBase      *ref = mForeignTrees.searchViaHandle (handle))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM4::Flora>     *ref = mForeignFloras.searchViaHandle (handle))
+        if (LiveCellRefBase     *ref = mForeignFloras.searchViaHandle (handle))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM4::Furniture> *ref = mForeignFurnitures.searchViaHandle (handle))
+        if (LiveCellRefBase *ref = mForeignFurnitures.searchViaHandle (handle))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM4::Weapon>    *ref = mForeignWeapons.searchViaHandle (handle))
+        if (LiveCellRefBase    *ref = mForeignWeapons.searchViaHandle (handle))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM4::Ammunition> *ref = mAmmunitions.searchViaHandle (handle))
+        if (LiveCellRefBase *ref = mAmmunitions.searchViaHandle (handle))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM4::Npc>       *ref = mForeignNpcs.searchViaHandle (handle))
+        if (LiveCellRefBase       *ref = mForeignNpcs.searchViaHandle (handle))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM4::Creature>  *ref = mForeignCreatures.searchViaHandle (handle))
+        if (LiveCellRefBase  *ref = mForeignCreatures.searchViaHandle (handle))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM4::LevelledCreature> *ref = mLevelledCreatures.searchViaHandle (handle))
+        if (LiveCellRefBase *ref = mLevelledCreatures.searchViaHandle (handle))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM4::SoulGem>   *ref = mSoulGems.searchViaHandle (handle))
+        if (LiveCellRefBase   *ref = mSoulGems.searchViaHandle (handle))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM4::Key>       *ref = mForeignKeys.searchViaHandle (handle))
+        if (LiveCellRefBase       *ref = mForeignKeys.searchViaHandle (handle))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM4::Potion>    *ref = mForeignPotions.searchViaHandle (handle))
+        if (LiveCellRefBase    *ref = mForeignPotions.searchViaHandle (handle))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM4::SubSpace>  *ref = mSubSpaces.searchViaHandle (handle))
+        if (LiveCellRefBase  *ref = mSubSpaces.searchViaHandle (handle))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM4::SigilStone> *ref = mSigilStones.searchViaHandle (handle))
+        if (LiveCellRefBase *ref = mSigilStones.searchViaHandle (handle))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM4::LevelledItem> *ref = mLevelledItems.searchViaHandle (handle))
+        if (LiveCellRefBase *ref = mLevelledItems.searchViaHandle (handle))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM4::LevelledNpc> *ref = mLevelledNpcs.searchViaHandle (handle))
+        if (LiveCellRefBase *ref = mLevelledNpcs.searchViaHandle (handle))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM4::Terminal> *ref = mTerminals.searchViaHandle (handle))
+        if (LiveCellRefBase *ref = mTerminals.searchViaHandle (handle))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM4::TalkingActivator> *ref = mTalkingActivators.searchViaHandle (handle))
+        if (LiveCellRefBase *ref = mTalkingActivators.searchViaHandle (handle))
             return Ptr (ref, this);
 
-        if (LiveCellRef<ESM4::Note>      *ref = mNotes.searchViaHandle (handle))
+        if (LiveCellRefBase      *ref = mNotes.searchViaHandle (handle))
             return Ptr (ref, this);
 
         mHasState = oldState;

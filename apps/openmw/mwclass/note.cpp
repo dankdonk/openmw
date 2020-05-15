@@ -127,6 +127,6 @@ namespace MWClass
     {
         MWWorld::LiveCellRef<ESM4::Note> *ref = ptr.get<ESM4::Note>();
 
-        return MWWorld::Ptr(&cell.getForeign<ESM4::Note>().insert(*ref), &cell);
+        return MWWorld::Ptr(cell.getForeign<ESM4::Note>().insert(*ref), &cell);
     }
 }

@@ -97,6 +97,6 @@ namespace MWClass
     {
         MWWorld::LiveCellRef<ESM4::TalkingActivator> *ref = ptr.get<ESM4::TalkingActivator>();
 
-        return MWWorld::Ptr(&cell.getForeign<ESM4::TalkingActivator>().insert(*ref), &cell);
+        return MWWorld::Ptr(cell.getForeign<ESM4::TalkingActivator>().insert(*ref), &cell);
     }
 }

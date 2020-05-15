@@ -215,7 +215,7 @@ namespace MWClass
         MWWorld::LiveCellRef<ESM::Light> *ref =
             ptr.get<ESM::Light>();
 
-        return MWWorld::Ptr(&cell.get<ESM::Light>().insert(*ref), &cell);
+        return MWWorld::Ptr(cell.get<ESM::Light>().insert(*ref), &cell);
     }
 
     bool Light::canSell (const MWWorld::Ptr& item, int npcServices) const

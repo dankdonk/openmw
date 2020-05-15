@@ -10,6 +10,17 @@
 namespace MWWorld
 {
 #if 1
+    struct CellRefStoreBase
+    {
+        virtual ~CellRefStoreBase() {}
+
+        virtual LiveCellRefBase *find(const ESM4::FormId id) { return nullptr; }
+        virtual LiveCellRefBase *find(const std::string& name) = 0;
+        virtual std::vector<LiveCellRefBase*> search(std::int32_t x, std::int32_t y,
+                std::size_t range = 0, std::size_t exclude = 0) { return std::vector<LiveCellRefBase*>(); }
+        virtual LiveCellRefBase *searchViaHandle(const std::string& handle) = 0;
+    };
+
     /// \brief Collection of references of one type
     template <typename X>
     struct CellRefList
@@ -40,7 +51,7 @@ namespace MWWorld
         void load (ESM4::ActorCreature &ref, bool deleted, const MWWorld::ESMStore &esmStore, bool dummy = false);
         void load (ESM4::ActorCharacter &ref, bool deleted, const MWWorld::ESMStore &esmStore, bool dummy = false);
 
-        LiveRef *find (const std::string& name)
+        LiveCellRefBase *find (const std::string& name)
         {
             for (typename List::iterator iter (mList.begin()); iter!=mList.end(); ++iter)
                 if (!iter->mData.isDeletedByContentFile()
@@ -51,13 +62,23 @@ namespace MWWorld
             return 0;
         }
 
-        LiveRef &insert (const LiveRef &item)
+        // used by copyToCellImpl()
+        LiveCellRefBase *insert (const LiveRef &item)
         {
+            ESM4::FormId formId = item.mRef.getFormId();
+
             mList.push_back(item);
-            return mList.back();
+
+            LiveCellRefBase *refPtr = &mList.back();
+            mFormIdMap[formId] = refPtr;
+
+            // NOTE: assumed that it is not possible to insert records to a dummy cell,
+            //       hence not updating GridMap
+
+            return refPtr;
         }
 
-        LiveCellRef<X> *searchViaHandle (const std::string& handle)
+        LiveCellRefBase *searchViaHandle (const std::string& handle)
         {
             for (typename List::iterator iter (mList.begin()); iter!=mList.end(); ++iter)
                 if (iter->mData.getBaseNode() &&

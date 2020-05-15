@@ -206,6 +206,6 @@ namespace MWClass
     {
         MWWorld::LiveCellRef<ESM4::Potion> *ref = ptr.get<ESM4::Potion>();
 
-        return MWWorld::Ptr(&cell.getForeign<ESM4::Potion>().insert(*ref), &cell);
+        return MWWorld::Ptr(cell.getForeign<ESM4::Potion>().insert(*ref), &cell);
     }
 }

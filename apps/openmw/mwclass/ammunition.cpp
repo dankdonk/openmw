@@ -171,6 +171,6 @@ namespace MWClass
     {
         MWWorld::LiveCellRef<ESM4::Ammunition> *ref = ptr.get<ESM4::Ammunition>();
 
-        return MWWorld::Ptr(&cell.getForeign<ESM4::Ammunition>().insert(*ref), &cell);
+        return MWWorld::Ptr(cell.getForeign<ESM4::Ammunition>().insert(*ref), &cell);
     }
 }

@@ -384,6 +384,6 @@ namespace MWClass
     {
         MWWorld::LiveCellRef<ESM4::Door> *ref = ptr.get<ESM4::Door>();
 
-        return MWWorld::Ptr(&cell.getForeign<ESM4::Door>().insert(*ref), &cell);
+        return MWWorld::Ptr(cell.getForeign<ESM4::Door>().insert(*ref), &cell);
     }
 }

@@ -248,6 +248,6 @@ namespace MWClass
     {
         MWWorld::LiveCellRef<ESM4::Clothing> *ref = ptr.get<ESM4::Clothing>();
 
-        return MWWorld::Ptr(&cell.getForeign<ESM4::Clothing>().insert(*ref), &cell);
+        return MWWorld::Ptr(cell.getForeign<ESM4::Clothing>().insert(*ref), &cell);
     }
 }
