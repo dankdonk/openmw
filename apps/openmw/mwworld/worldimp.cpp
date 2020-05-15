@@ -1242,11 +1242,11 @@ namespace MWWorld
                 bool newCellActive = mWorldScene->isCellActive(*newCell);
                 if (!currCellActive && newCellActive)
                 {
-                    if (currCell)
-                    {
-                        ESM4::FormId formId = ptr.getBase()->mRef.getFormId();
-                        currCell->removeObject(ptr.getBase()->mData.getHandle(), formId); // FIXME: is this necessary?
-                    }
+                  //if (currCell)
+                  //{
+                  //    ESM4::FormId formId = ptr.getBase()->mRef.getFormId();
+                  //    currCell->removeObject(ptr.getBase()->mData.getHandle(), formId); // FIXME: is this necessary?
+                  //}
 
                     newPtr = ptr.getClass().copyToCell(ptr, *newCell, pos);
                     mWorldScene->addObjectToScene(newPtr);
@@ -1260,7 +1260,7 @@ namespace MWWorld
                     LiveCellRefBase *ref = newPtr.getBase();
                     ESM4::FormId formId = ref->mRef.getFormId();
                     if (ref->mData.getBaseNode())
-                        newCell->addHandle(ref->mData.getHandle(), formId);
+                        newCell->addHandleIndex(ref->mData.getHandle(), formId);
                 }
                 else if (!newCellActive && currCellActive)
                 {
@@ -1272,36 +1272,28 @@ namespace MWWorld
                     if (currCell)
                     {
                         ESM4::FormId formId = ptr.getBase()->mRef.getFormId();
-                        currCell->removeObject(ptr.getBase()->mData.getHandle(), formId);
+                        currCell->removeObjectIndex(ptr.getBase()->mData.getHandle(), formId);
                     }
 
                     newPtr = ptr.getClass().copyToCell(ptr, *newCell);
                     newPtr.getRefData().setBaseNode(0);
-
-                    //LiveCellRefBase *ref = newPtr.getBase();
-                    //ESM4::FormId formId = ref->mRef.getFormId();
-                    //newCell->addHandle("", formId);
                 }
                 else if (!currCellActive && !newCellActive)
                 {
-                    if (currCell)
-                    {
-                        ESM4::FormId formId = ptr.getBase()->mRef.getFormId();
-                        currCell->removeObject(ptr.getBase()->mData.getHandle(), formId); // FIXME: is this necessary?
-                    }
+                  //if (currCell)
+                  //{
+                  //    ESM4::FormId formId = ptr.getBase()->mRef.getFormId();
+                  //    currCell->removeObject(ptr.getBase()->mData.getHandle(), formId); // FIXME: is this necessary?
+                  //}
 
                     newPtr = ptr.getClass().copyToCell(ptr, *newCell);
-
-                    //LiveCellRefBase *ref = newPtr.getBase();
-                    //ESM4::FormId formId = ref->mRef.getFormId();
-                    //newCell->addHandle("", formId);
                 }
                 else // both cells active
                 {
                     if (currCell)
                     {
                         ESM4::FormId formId = ptr.getBase()->mRef.getFormId();
-                        currCell->removeObject(ptr.getBase()->mData.getHandle(), formId);
+                        currCell->removeObjectIndex(ptr.getBase()->mData.getHandle(), formId);
                     }
 
                     newPtr = ptr.getClass().copyToCell(ptr, *newCell, pos);
@@ -1326,7 +1318,7 @@ namespace MWWorld
                     LiveCellRefBase *ref = newPtr.getBase();
                     ESM4::FormId formId = ref->mRef.getFormId();
                     if (ref->mData.getBaseNode())
-                        newCell->addHandle(ref->mData.getHandle(), formId);
+                        newCell->addHandleIndex(ref->mData.getHandle(), formId);
                 }
                 ptr.getRefData().setCount(0);
             }
@@ -2191,7 +2183,7 @@ namespace MWWorld
         if (currCell)
         {
             ESM4::FormId formId = object.getBase()->mRef.getFormId();
-            currCell->removeObject(object.getBase()->mData.getHandle(), formId);
+            currCell->removeObjectIndex(object.getBase()->mData.getHandle(), formId);
         }
 
         MWWorld::Ptr dropped =
@@ -2220,7 +2212,7 @@ namespace MWWorld
         LiveCellRefBase *ref = dropped.getBase();
         ESM4::FormId formId = ref->mRef.getFormId();
         if (ref->mData.getBaseNode())
-            cell->addHandle(ref->mData.getHandle(), formId);
+            cell->addHandleIndex(ref->mData.getHandle(), formId);
 
         return dropped;
     }

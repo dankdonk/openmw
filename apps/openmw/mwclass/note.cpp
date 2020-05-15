@@ -128,7 +128,7 @@ namespace MWClass
         MWWorld::LiveCellRef<ESM4::Note> *ref = ptr.get<ESM4::Note>();
 
         MWWorld::Ptr newPtr(cell.getForeign<ESM4::Note>().insert(*ref), &cell);
-        cell.addObject(newPtr.getBase()->mRef.getFormId(), ESM4::REC_NOTE);
+        cell.addObjectIndex(newPtr.getBase()->mRef.getFormId(), ESM4::REC_NOTE);
 
         return std::move(newPtr);
     }

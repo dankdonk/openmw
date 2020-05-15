@@ -385,7 +385,7 @@ namespace MWClass
         MWWorld::LiveCellRef<ESM4::Door> *ref = ptr.get<ESM4::Door>();
 
         MWWorld::Ptr newPtr(cell.getForeign<ESM4::Door>().insert(*ref), &cell);
-        cell.addObject(newPtr.getBase()->mRef.getFormId(), ESM4::REC_DOOR);
+        cell.addObjectIndex(newPtr.getBase()->mRef.getFormId(), ESM4::REC_DOOR);
 
         return std::move(newPtr);
     }

@@ -249,7 +249,7 @@ namespace MWClass
         MWWorld::LiveCellRef<ESM4::Clothing> *ref = ptr.get<ESM4::Clothing>();
 
         MWWorld::Ptr newPtr(cell.getForeign<ESM4::Clothing>().insert(*ref), &cell);
-        cell.addObject(newPtr.getBase()->mRef.getFormId(), ESM4::REC_CLOT);
+        cell.addObjectIndex(newPtr.getBase()->mRef.getFormId(), ESM4::REC_CLOT);
 
         return std::move(newPtr);
     }

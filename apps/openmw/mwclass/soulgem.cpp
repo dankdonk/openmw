@@ -160,7 +160,7 @@ namespace MWClass
         MWWorld::LiveCellRef<ESM4::SoulGem> *ref = ptr.get<ESM4::SoulGem>();
 
         MWWorld::Ptr newPtr(cell.getForeign<ESM4::SoulGem>().insert(*ref), &cell);
-        cell.addObject(newPtr.getBase()->mRef.getFormId(), ESM4::REC_SLGM);
+        cell.addObjectIndex(newPtr.getBase()->mRef.getFormId(), ESM4::REC_SLGM);
 
         return std::move(newPtr);
     }

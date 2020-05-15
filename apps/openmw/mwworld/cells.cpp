@@ -45,15 +45,9 @@ MWWorld::CellStore *MWWorld::Cells::getCellStore (const ESM::Cell *cell)
 
         if (result==mExteriors.end())
         {
-#if 0
-            result = mExteriors.insert (std::make_pair (
-                std::make_pair (cell->getGridX(), cell->getGridY()), std::move(CellStore (cell)))).first;
-#else
             result = mExteriors.emplace(std::piecewise_construct,
                                         std::forward_as_tuple(cell->getGridX(), cell->getGridY()),
                                         std::forward_as_tuple(CellStore (cell))).first;
-#endif
-
         }
 
         return &result->second;
@@ -128,14 +122,9 @@ MWWorld::CellStore *MWWorld::Cells::getExterior (int x, int y)
 
             cell = MWBase::Environment::get().getWorld()->createRecord (record);
         }
-#if 0
-        result = mExteriors.insert (std::make_pair (
-            std::make_pair (x, y), std::move(CellStore (cell)))).first;
-#else
         result = mExteriors.emplace(std::piecewise_construct,
                                     std::forward_as_tuple(x, y),
                                     std::forward_as_tuple(CellStore (cell))).first;
-#endif
     }
 
     if (result->second.getState()!=CellStore::State_Loaded)
@@ -456,15 +445,11 @@ MWWorld::CellStore *MWWorld::Cells::getWorldCell(ESM4::FormId worldId, int x, in
     if (lb != mForeignWorlds.end() && !(mForeignWorlds.key_comp()(worldId, lb->first)))
     {
         // found world
-#if 0
-        std::pair<CellStoreIndex::iterator, bool> res
-            = lb->second.insert({ std::pair<int, int>(x, y), std::move(CellStore(cell, true/*foreign*/)) });
-#else
         std::pair<CellStoreIndex::iterator, bool> res
             = lb->second.emplace(std::piecewise_construct,
                                  std::forward_as_tuple(x, y),
                                  std::forward_as_tuple(CellStore(cell, true/*foreign*/)));
-#endif
+
         cellStore = &res.first->second;
 
         // There may be a CellStore already at that location!
@@ -477,10 +462,7 @@ MWWorld::CellStore *MWWorld::Cells::getWorldCell(ESM4::FormId worldId, int x, in
     else // insert a new world
     {
         initNewWorld(world);
-#if 0
-        mForeignWorlds.insert(lb, std::map<ESM4::FormId, CellStoreIndex>::value_type(world->mFormId,
-            { {std::pair<int, int>(x, y), std::move(CellStore(cell, true/*foreign*/)) } }));
-#else
+
         CellStoreIndex ci;
         ci.emplace(std::piecewise_construct,
             std::forward_as_tuple(x, y),
@@ -488,7 +470,6 @@ MWWorld::CellStore *MWWorld::Cells::getWorldCell(ESM4::FormId worldId, int x, in
 
         mForeignWorlds.insert(lb,
                 std::map<ESM4::FormId, CellStoreIndex>::value_type(world->mFormId, std::move(ci)));
-#endif
 
         CellStoreIndex::iterator iter = mForeignWorlds[worldId].find(std::pair<int, int>(x, y));
         cellStore = &iter->second;

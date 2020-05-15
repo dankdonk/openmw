@@ -207,7 +207,7 @@ namespace MWClass
         MWWorld::LiveCellRef<ESM4::Potion> *ref = ptr.get<ESM4::Potion>();
 
         MWWorld::Ptr newPtr(cell.getForeign<ESM4::Potion>().insert(*ref), &cell);
-        cell.addObject(newPtr.getBase()->mRef.getFormId(), ESM4::REC_ALCH);
+        cell.addObjectIndex(newPtr.getBase()->mRef.getFormId(), ESM4::REC_ALCH);
 
         return std::move(newPtr);
     }

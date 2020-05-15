@@ -176,9 +176,9 @@ namespace MWWorld
             /// containers.
 
             // TODO: manual updates are error prone - is there another way?
-            void removeObject (const std::string& handle, ESM4::FormId formId);
-            void addHandle (const std::string& handle, ESM4::FormId formId); // update mSceneNodeMap
-            void addObject (ESM4::FormId formId, int); // update mForeignIds and mStoreTypes
+            void removeObjectIndex (const std::string& handle, ESM4::FormId formId);
+            void addHandleIndex (const std::string& handle, ESM4::FormId formId); // update mSceneNodeMap
+            void addObjectIndex (ESM4::FormId formId, int); // update mForeignIds and mStoreTypes
 
             Ptr searchViaHandle (const std::string& handle);
             ///< Will return an empty Ptr if cell is not loaded.
@@ -396,18 +396,6 @@ namespace MWWorld
             bool forEachImpForeign(Functor& functor,
                     int x, int y, std::size_t range, std::size_t exclude, List& vect)
             {
-#if 0
-                for (typename List::List::iterator iter (vect.mList.begin()); iter!=vect.mList.end();
-                    ++iter)
-                {
-                    if (iter->mData.isDeletedByContentFile())
-                        continue;
-
-                    if (!functor (MWWorld::Ptr(&*iter, this)))
-                        return false;
-                }
-                return true;
-#else
                 if (range == 0 && exclude == 0) // FIXME: hack for non-dummy
                 {
                     for (typename List::List::iterator iter(vect.mList.begin());
@@ -464,7 +452,6 @@ namespace MWWorld
                 }
 
                 return true;
-#endif
             }
 
             /// Run through references and store IDs

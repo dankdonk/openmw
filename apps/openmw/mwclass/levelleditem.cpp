@@ -62,7 +62,7 @@ namespace MWClass
         MWWorld::LiveCellRef<ESM4::LevelledItem> *ref = ptr.get<ESM4::LevelledItem>();
 
         MWWorld::Ptr newPtr(cell.getForeign<ESM4::LevelledItem>().insert(*ref), &cell);
-        cell.addObject(newPtr.getBase()->mRef.getFormId(), ESM4::REC_LVLI);
+        cell.addObjectIndex(newPtr.getBase()->mRef.getFormId(), ESM4::REC_LVLI);
 
         return std::move(newPtr);
     }

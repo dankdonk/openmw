@@ -60,7 +60,7 @@ namespace MWClass
         MWWorld::LiveCellRef<ESM4::Grass> *ref = ptr.get<ESM4::Grass>();
 
         MWWorld::Ptr newPtr(cell.getForeign<ESM4::Grass>().insert(*ref), &cell);
-        cell.addObject(newPtr.getBase()->mRef.getFormId(), ESM4::REC_GRAS);
+        cell.addObjectIndex(newPtr.getBase()->mRef.getFormId(), ESM4::REC_GRAS);
 
         return std::move(newPtr);
     }

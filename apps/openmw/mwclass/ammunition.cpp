@@ -172,7 +172,7 @@ namespace MWClass
         MWWorld::LiveCellRef<ESM4::Ammunition> *ref = ptr.get<ESM4::Ammunition>();
 
         MWWorld::Ptr newPtr(cell.getForeign<ESM4::Ammunition>().insert(*ref), &cell);
-        cell.addObject(newPtr.getBase()->mRef.getFormId(), ESM4::REC_AMMO);
+        cell.addObjectIndex(newPtr.getBase()->mRef.getFormId(), ESM4::REC_AMMO);
 
         return std::move(newPtr);
     }

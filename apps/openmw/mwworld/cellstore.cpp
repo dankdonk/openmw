@@ -441,143 +441,6 @@ namespace MWWorld
       //mStores[ESM4::REC_CMNY] = &mCaravanMoney;
     }
 
-#if 0
-    CellStore::~CellStore()
-    {
-    }
-#endif
-#if 0
-    // FIXME: a copy constructor is needed when creating a new CellStore:
-    //
-    // Cells::getCellStore(), Cells::getExterior() and Cells::getInterior()
-    // Cells::initNewWorld() for creating a dummy cell and visibly dist cell
-    // Cells::getWorldCell() and Cells::getForeignInterior()
-    //
-    // Maybe a move constructor is better?
-    //
-    CellStore::CellStore (const CellStore& other)
-      : mCell(other.mCell), mState(other.mState), mHasState(other.mHasState), mWaterLevel(other.mWaterLevel),
-        mIsForeignCell(other.mIsForeignCell), mIsDummyCell(other.mIsDummyCell),
-        mIsVisibleDistCell(other.mIsVisibleDistCell), mForeignLand(other.mForeignLand),
-        mLastRespawn(other.mLastRespawn)
-    {
-        mActivators = other.mActivators;
-        mPotions = other.mPotions;
-        mAppas = other.mAppas;
-        mArmors = other.mArmors;
-        mBooks = other.mBooks;
-        mClothes = other.mClothes;
-        mContainers = other.mContainers;
-        mCreatures = other.mCreatures;
-        mDoors = other.mDoors;
-        mIngreds = other.mIngreds;
-        mCreatureLists = other.mCreatureLists;
-        mItemLists = other.mItemLists;
-        mLights = other.mLights;
-        mLockpicks = other.mLockpicks;
-        mMiscItems = other.mMiscItems;
-        mNpcs = other.mNpcs;
-        mProbes = other.mProbes;
-        mRepairs = other.mRepairs;
-        mStatics = other.mStatics;
-        mWeapons = other.mWeapons;
-
-        mSounds = other.mSounds;
-        mForeignActivators = other.mForeignActivators;
-        mForeignApparatus = other.mForeignApparatus;
-        mForeignArmors = other.mForeignArmors;
-        mForeignBooks = other.mForeignBooks;
-        mForeignClothes = other.mForeignClothes;
-        mForeignContainers = other.mForeignContainers;
-        mForeignDoors = other.mForeignDoors;
-        mForeignIngredients = other.mForeignIngredients;
-        mForeignLights = other.mForeignLights;
-        mForeignMiscItems = other.mForeignMiscItems;
-        mForeignStatics = other.mForeignStatics;
-        mForeignGrasses = other.mForeignGrasses;
-        mForeignTrees = other.mForeignTrees;
-        mForeignFloras = other.mForeignFloras;
-        mForeignFurnitures = other.mForeignFurnitures;
-        mForeignWeapons = other.mForeignWeapons;
-        mAmmunitions = other.mAmmunitions;
-        mForeignNpcs = other.mForeignNpcs;
-        mForeignCreatures = other.mForeignCreatures;
-        mLevelledCreatures = other.mLevelledCreatures;
-        mIdleMarkers = other.mIdleMarkers;
-        mSoulGems = other.mSoulGems;
-        mForeignKeys = other.mForeignKeys;
-        mForeignPotions = other.mForeignPotions;
-        mSubSpaces = other.mSubSpaces;
-        mSigilStones = other.mSigilStones;
-        mLevelledItems = other.mLevelledItems;
-        mLevelledNpcs = other.mLevelledNpcs;
-        mMovableStatics = other.mMovableStatics;
-      //mTextureSets = other.mTextureSets;
-      //mForeignScrolls = other.mForeignScrolls;
-      //mArmorAddons = other.mArmorAddons;
-        mAcousticSpaces = other.mAcousticSpaces;
-        mTerminals = other.mTerminals;
-        mTalkingActivators = other.mTalkingActivators;
-        mNotes = other.mNotes;
-      //mItemMods = other.mItemMods;
-        mPlaceableWaters = other.mPlaceableWaters;
-        mStaticCollections = other.mStaticCollections;
-      //mCaravanCard = other.mCaravanCard;
-      //mCaravanMoney = other.mCaravanMoney;
-
-        mStores = other.mStores;
-        mStoreTypes = other.mStoreTypes;
-        mSceneNodeMap = other.mSceneNodeMap;
-
-        mForeignPathgrids = other.mForeignPathgrids;
-        mPathgrid = other.mPathgrid;
-        mPathgridGraph = other.mPathgridGraph;
-
-        mStores[ESM4::REC_SOUN] = &mSounds;
-        mStores[ESM4::REC_ACTI] = &mForeignActivators;
-        mStores[ESM4::REC_APPA] = &mForeignApparatus;
-        mStores[ESM4::REC_ARMO] = &mForeignArmors;
-        mStores[ESM4::REC_BOOK] = &mForeignBooks;
-        mStores[ESM4::REC_CLOT] = &mForeignClothes;
-        mStores[ESM4::REC_CONT] = &mForeignContainers;
-        mStores[ESM4::REC_DOOR] = &mForeignDoors;
-        mStores[ESM4::REC_INGR] = &mForeignIngredients;
-        mStores[ESM4::REC_LIGH] = &mForeignLights;
-        mStores[ESM4::REC_MISC] = &mForeignMiscItems;
-        mStores[ESM4::REC_STAT] = &mForeignStatics;
-        mStores[ESM4::REC_GRAS] = &mForeignGrasses;
-        mStores[ESM4::REC_TREE] = &mForeignTrees;
-        mStores[ESM4::REC_FLOR] = &mForeignFloras;
-        mStores[ESM4::REC_FURN] = &mForeignFurnitures;
-        mStores[ESM4::REC_WEAP] = &mForeignWeapons;
-        mStores[ESM4::REC_AMMO] = &mAmmunitions;
-        mStores[ESM4::REC_NPC_] = &mForeignNpcs;
-        mStores[ESM4::REC_CREA] = &mForeignCreatures;
-        mStores[ESM4::REC_LVLC] = &mLevelledCreatures;
-        mStores[ESM4::REC_IDLM] = &mIdleMarkers;
-        mStores[ESM4::REC_SLGM] = &mSoulGems;
-        mStores[ESM4::REC_KEYM] = &mForeignKeys;
-        mStores[ESM4::REC_ALCH] = &mForeignPotions;
-        mStores[ESM4::REC_SBSP] = &mSubSpaces;
-        mStores[ESM4::REC_SGST] = &mSigilStones;
-        mStores[ESM4::REC_LVLI] = &mLevelledItems;
-        mStores[ESM4::REC_LVLN] = &mLevelledNpcs;
-        mStores[ESM4::REC_MSTT] = &mMovableStatics;
-      //mStores[ESM4::REC_TXST] = &mTextureSets;
-      //mStores[ESM4::REC_SCRL] = &mForeignScrolls;
-      //mStores[ESM4::REC_ARMA] = &mArmorAddons;
-        mStores[ESM4::REC_ASPC] = &mAcousticSpaces;
-        mStores[ESM4::REC_TERM] = &mTerminals;
-        mStores[ESM4::REC_TACT] = &mTalkingActivators;
-        mStores[ESM4::REC_NOTE] = &mNotes;
-      //mStores[ESM4::REC_IMOD] = &mItemMods;
-        mStores[ESM4::REC_PWAT] = &mPlaceableWaters;
-        mStores[ESM4::REC_SCOL] = &mStaticCollections;
-      //mStores[ESM4::REC_CCRD] = &mCaravanCard;
-      //mStores[ESM4::REC_CMNY] = &mCaravanMoney;
-    }
-#endif
-//#if 0
     CellStore::CellStore (CellStore&& other)
     {
         *this = std::move(other);
@@ -715,7 +578,7 @@ namespace MWWorld
 
         return *this;
     }
-//#endif
+
     const ESM::Cell *CellStore::getCell() const
     {
         return mCell;
@@ -852,86 +715,12 @@ namespace MWWorld
         if (LiveCellRefBase *ref = mWeapons.find (id))
             return Ptr (ref, this);
 
-        //
-#if 0
-        if (LiveCellRefBase      *ref = mSounds.find (id))
-            return Ptr (ref, this);
-
-        if (LiveCellRefBase  *ref = mForeignActivators.find (id))
-            return Ptr (ref, this);
-
-        if (LiveCellRefBase      *ref = mForeignArmors.find (id))
-            return Ptr (ref, this);
-
-        if (LiveCellRefBase       *ref = mForeignBooks.find (id))
-            return Ptr (ref, this);
-
-        if (LiveCellRefBase    *ref = mForeignClothes.find (id))
-            return Ptr (ref, this);
-
-        if (LiveCellRefBase  *ref = mForeignContainers.find (id))
-            return Ptr (ref, this);
-
-        if (LiveCellRefBase       *ref = mForeignDoors.find (id))
-            return Ptr (ref, this);
-
-        if (LiveCellRefBase *ref = mForeignIngredients.find (id))
-            return Ptr (ref, this);
-
-        if (LiveCellRefBase      *ref = mForeignLights.find (id))
-            return Ptr (ref, this);
-
-        if (LiveCellRefBase   *ref = mForeignMiscItems.find (id))
-            return Ptr (ref, this);
-
-        if (LiveCellRefBase     *ref = mForeignStatics.find (id))
-            return Ptr (ref, this);
-
-        if (LiveCellRefBase       *ref = mForeignTrees.find (id))
-            return Ptr (ref, this);
-
-        if (LiveCellRefBase      *ref = mForeignFloras.find (id))
-            return Ptr (ref, this);
-
-        if (LiveCellRefBase  *ref = mForeignFurnitures.find (id))
-            return Ptr (ref, this);
-
-        if (LiveCellRefBase     *ref = mForeignWeapons.find (id))
-            return Ptr (ref, this);
-
-        if (LiveCellRefBase *ref = mAmmunitions.find (id))
-            return Ptr (ref, this);
-
-        if (LiveCellRefBase *ref = mIdleMarkers.find (id))
-            return Ptr (ref, this);
-
-        if (LiveCellRefBase        *ref = mForeignKeys.find (id))
-            return Ptr (ref, this);
-
-        if (LiveCellRefBase     *ref = mForeignPotions.find (id))
-            return Ptr (ref, this);
-
-        if (LiveCellRefBase   *ref = mSubSpaces.find (id))
-            return Ptr (ref, this);
-
-        if (LiveCellRefBase *ref = mMovableStatics.find (id))
-            return Ptr (ref, this);
-
-        if (LiveCellRefBase   *ref = mTerminals.find (id))
-            return Ptr (ref, this);
-
-        if (LiveCellRefBase *ref = mTalkingActivators.find (id))
-            return Ptr (ref, this);
-
-        if (LiveCellRefBase *ref = mPlaceableWaters.find (id))
-            return Ptr (ref, this);
-#endif
         mHasState = oldState;
 
         return Ptr();
     }
 
-    void CellStore::removeObject (const std::string& handle, ESM4::FormId formId)
+    void CellStore::removeObjectIndex (const std::string& handle, ESM4::FormId formId)
     {
         return; // FIXME
 
@@ -944,7 +733,7 @@ namespace MWWorld
             mStoreTypes.erase(typeIter);
     }
 
-    void CellStore::addHandle (const std::string& handle, ESM4::FormId formId)
+    void CellStore::addHandleIndex (const std::string& handle, ESM4::FormId formId)
     {
         if (handle != "")
         {
@@ -953,7 +742,7 @@ namespace MWWorld
         }
     }
 
-    void CellStore::addObject (ESM4::FormId formId, int storeType)
+    void CellStore::addObjectIndex (ESM4::FormId formId, int storeType)
     {
         mForeignIds.push_back(formId); // for hasFormId()
         mStoreTypes[formId] = storeType;

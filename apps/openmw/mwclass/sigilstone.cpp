@@ -148,7 +148,7 @@ namespace MWClass
         MWWorld::LiveCellRef<ESM4::SigilStone> *ref = ptr.get<ESM4::SigilStone>();
 
         MWWorld::Ptr newPtr(cell.getForeign<ESM4::SigilStone>().insert(*ref), &cell);
-        cell.addObject(newPtr.getBase()->mRef.getFormId(), ESM4::REC_SGST);
+        cell.addObjectIndex(newPtr.getBase()->mRef.getFormId(), ESM4::REC_SGST);
 
         return std::move(newPtr);
     }
