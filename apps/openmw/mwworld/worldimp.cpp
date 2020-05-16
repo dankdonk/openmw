@@ -820,6 +820,11 @@ namespace MWWorld
 
             if(mWorldScene->getActiveCells().find (reference.getCell()) != mWorldScene->getActiveCells().end() && reference.getRefData().getCount())
                 mWorldScene->addObjectToScene (reference);
+
+            // FIXME: add indices as required
+                //LiveCellRefBase *ref = reference.getBase();
+                //if (ref->mData.getBaseNode())
+                    //reference.getCell()->addHandleIndex(ref->mData.getHandle(), ref->mRef.getFormId());
         }
     }
 
@@ -1188,6 +1193,11 @@ namespace MWWorld
                 if (!script.empty())
                     mLocalScripts.add(script, ptr);
                 addContainerScripts(ptr, ptr.getCell());
+
+                // FIXME add indices as required
+                //LiveCellRefBase *ref = ptr.getBase();
+                //if (ref->mData.getBaseNode())
+                    //ptr.getCell()->addHandleIndex(ref->mData.getHandle(), ref->mRef.getFormId());
             }
         }
     }
@@ -1242,12 +1252,6 @@ namespace MWWorld
                 bool newCellActive = mWorldScene->isCellActive(*newCell);
                 if (!currCellActive && newCellActive)
                 {
-                  //if (currCell)
-                  //{
-                  //    ESM4::FormId formId = ptr.getBase()->mRef.getFormId();
-                  //    currCell->removeObject(ptr.getBase()->mData.getHandle(), formId); // FIXME: is this necessary?
-                  //}
-
                     newPtr = ptr.getClass().copyToCell(ptr, *newCell, pos);
                     mWorldScene->addObjectToScene(newPtr);
 
@@ -1257,10 +1261,10 @@ namespace MWWorld
                     }
                     addContainerScripts(newPtr, newCell);
 
+                    // update handle map for object id via getFacedObject
                     LiveCellRefBase *ref = newPtr.getBase();
-                    ESM4::FormId formId = ref->mRef.getFormId();
                     if (ref->mData.getBaseNode())
-                        newCell->addHandleIndex(ref->mData.getHandle(), formId);
+                        newCell->addHandleIndex(ref->mData.getHandle(), ref->mRef.getFormId());
                 }
                 else if (!newCellActive && currCellActive)
                 {
@@ -1279,15 +1283,7 @@ namespace MWWorld
                     newPtr.getRefData().setBaseNode(0);
                 }
                 else if (!currCellActive && !newCellActive)
-                {
-                  //if (currCell)
-                  //{
-                  //    ESM4::FormId formId = ptr.getBase()->mRef.getFormId();
-                  //    currCell->removeObject(ptr.getBase()->mData.getHandle(), formId); // FIXME: is this necessary?
-                  //}
-
                     newPtr = ptr.getClass().copyToCell(ptr, *newCell);
-                }
                 else // both cells active
                 {
                     if (currCell)
@@ -1315,10 +1311,10 @@ namespace MWWorld
                         addContainerScripts (newPtr, newCell);
                     }
 
+                    // update handle map for object id via getFacedObject
                     LiveCellRefBase *ref = newPtr.getBase();
-                    ESM4::FormId formId = ref->mRef.getFormId();
                     if (ref->mData.getBaseNode())
-                        newCell->addHandleIndex(ref->mData.getHandle(), formId);
+                        newCell->addHandleIndex(ref->mData.getHandle(), ref->mRef.getFormId());
                 }
                 ptr.getRefData().setCount(0);
             }
@@ -2201,6 +2197,12 @@ namespace MWWorld
         if (mWorldScene->isCellActive(*cell)) {
             if (dropped.getRefData().isEnabled()) {
                 mWorldScene->addObjectToScene(dropped);
+
+                // update handle map for object id via getFacedObject
+                // TODO: update even if not enabled?
+                LiveCellRefBase *ref = dropped.getBase();
+                if (ref->mData.getBaseNode())
+                    cell->addHandleIndex(ref->mData.getHandle(), ref->mRef.getFormId());
             }
             std::string script = dropped.getClass().getScript(dropped);
             if (!script.empty()) {
@@ -2208,11 +2210,6 @@ namespace MWWorld
             }
             addContainerScripts(dropped, cell);
         }
-
-        LiveCellRefBase *ref = dropped.getBase();
-        ESM4::FormId formId = ref->mRef.getFormId();
-        if (ref->mData.getBaseNode())
-            cell->addHandleIndex(ref->mData.getHandle(), formId);
 
         return dropped;
     }

@@ -12,6 +12,8 @@ namespace MWWorld
 {
     struct CellRefStoreBase
     {
+        //int mStoreType; // TODO: unused for now
+
         virtual ~CellRefStoreBase() {}
 
         virtual LiveCellRefBase *find(const ESM4::FormId formId) { return nullptr; }
@@ -31,10 +33,6 @@ namespace MWWorld
         typedef std::list<LiveRef> List;
         List mList;
 
-        typedef std::vector<LiveRef> Vect;
-        Vect mVect;
-
-        //std::map<ESM4::FormId, List::iterator> mFormIdMap;
         typedef std::map<ESM4::FormId, LiveCellRefBase*> FormIdMap;
         FormIdMap mFormIdMap;
 
@@ -144,11 +142,10 @@ namespace MWWorld
         // this method is looking for Ogre::SceneNode handles which is created in
         // Objects::insertBegin() and Actors::insertBegin()
         //
-        // unfortunately it needs to be manually maintained when objects and actors move to
-        // different cells - see World::copyObjectToCell() and World::moveObject()
+        // unfortunately the handle map needs to be manually maintained when objects and actors
+        // move to different cells - see World::copyObjectToCell() and World::moveObject()
         LiveCellRefBase *searchViaHandle(const std::string& handle)
         {
-            // FIXME: keep a handle map for optimisation?
             for (typename List::iterator iter (mList.begin()); iter != mList.end(); ++iter)
                 if (iter->mData.getBaseNode() &&
                     iter->mData.getHandle() == handle)

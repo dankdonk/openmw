@@ -4,6 +4,9 @@
 #include <algorithm>
 #include <stdexcept>
 #include <string>
+#include <vector>
+#include <map>
+#include <unordered_map>
 #include <typeinfo>
 #include <boost/shared_ptr.hpp>
 
@@ -132,7 +135,7 @@ namespace MWWorld
             std::map<ESM4::FormId, int> mStoreTypes;
             int getStoreType(ESM4::FormId formId) const;
 
-            std::map<std::string, ESM4::FormId> mSceneNodeMap; // for searching via handle
+            std::unordered_map<std::string, ESM4::FormId> mSceneNodeMap; // for searching via handle
 
             ForeignStore<ESM4::Pathgrid>        mForeignPathgrids;
             ESM::Pathgrid mPathgrid; // FIXME: just a quick workaround
@@ -217,7 +220,7 @@ namespace MWWorld
             {
                 mHasState = true;
 
-                return
+                return (!mIsForeignCell ? (
                     forEachImp (functor, mActivators) &&
                     forEachImp (functor, mPotions) &&
                     forEachImp (functor, mAppas) &&
@@ -237,10 +240,10 @@ namespace MWWorld
                     forEachImp (functor, mWeapons) &&
                     forEachImp (functor, mCreatures) &&
                     forEachImp (functor, mNpcs) &&
-                    forEachImp (functor, mCreatureLists) &&
-#if 1
-                    // FIXME: don't understand why this is needed here
-                    // (RigidBodyState::mSceneNode ends up with no parent)
+                    forEachImp (functor, mCreatureLists)
+                    ) : (
+                    // in order to use ListAndResetHandles in Scene::unloadCell()
+                    // we need to add below stores
                     forEachImpForeign(functor, 0, 0, 0, 0, mSounds) &&
                     forEachImpForeign(functor, 0, 0, 0, 0, mForeignActivators) &&
                     forEachImpForeign(functor, 0, 0, 0, 0, mForeignApparatus) &&
@@ -272,8 +275,8 @@ namespace MWWorld
                     forEachImpForeign(functor, 0, 0, 0, 0, mStaticCollections) &&
                     forEachImpForeign(functor, 0, 0, 0, 0, mForeignNpcs) &&
                     forEachImpForeign(functor, 0, 0, 0, 0, mForeignCreatures) &&
-                    forEachImpForeign(functor, 0, 0, 0, 0, mLevelledCreatures);
-#endif
+                    forEachImpForeign(functor, 0, 0, 0, 0, mLevelledCreatures)
+                    ));
             }
 
             // FIXME: not sure why Creatures and NPCs are handled last.
@@ -417,6 +420,7 @@ namespace MWWorld
                             std::string handle = (*iter).mData.getHandle();
                             mSceneNodeMap[handle] = formId; // for searchViaHandle()
                         }
+                        // some (e.g. REFR with a SOUN baseObj) do not have a NIF model hence no BaseNode
                     }
                 }
                 else
@@ -445,9 +449,10 @@ namespace MWWorld
                         if (exclude == 0 && // do this for those with collision shapes only ?
                                 (*iter)->mData.getBaseNode()) // and if it was actually created
                         {
-                            std::string handle = (*iter)->mData.getHandle(); // see Objects::insertBegin()
+                            std::string handle = (*iter)->mData.getHandle();
                             mSceneNodeMap[handle] = formId; // for searchViaHandle()
                         }
+                        // some (e.g. REFR with a SOUN baseObj) do not have a NIF model hence no BaseNode
                     }
                 }
 

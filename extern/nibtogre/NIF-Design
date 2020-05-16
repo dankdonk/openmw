@@ -4343,12 +4343,11 @@ There are actors in dummy cells.  These actors can move to another cell - that m
 
 OpenMW code relies on `Ptr` and `CellStore` relationship.  It is looking like too much effort to break that.  One example is unloading cells in `MWWorld::Scene` - `CellStoreCollection::iterator` is used to call functor `ListAndResetHandles`.  Either `DummyStore` has to implement something similar or it has to fit into `CellStoreCollection`.
 
- * Objects::mCellSceneNodes is used for choosing which `Ogre::SceneNode` to use for inserting a new child scenenode and when updating Ptr movements between CellStore (called by `World::moveObject()`).
-            if(world->isUnderwater(ptr.getCell(), pos) || world->isWalkingOnWater(ptr)) /* get correct sounds, update drowning */
-            MWWorld::Ptr placed = MWBase::Environment::get().getWorld()->safePlaceObject(ref.getPtr(), ptr.getCell() , ptr.getCellRef().getPosition());
-        const std::string& playerCell = MWBase::Environment::get().getWorld()->getCellName(player.getCell());
-        if (!mPtr.getCell()->isExterior()) /* gui travel window, getting region when waiting, update actor head tracking (apparently done different when exterior), updating actors for sun damage, various AI packages */
-        pathfinding, etc, etc
+    * Objects::mCellSceneNodes is used for choosing which `Ogre::SceneNode` to use for inserting a new child scenenode and when updating Ptr movements between CellStore (called by `World::moveObject()`).
+    * if(world->isUnderwater(ptr.getCell(), pos) || world->isWalkingOnWater(ptr)) /* get correct sounds, update drowning */
+    * MWWorld::Ptr placed = MWBase::Environment::get().getWorld()->safePlaceObject(ref.getPtr(), ptr.getCell() , ptr.getCellRef().getPosition());
+    * const std::string& playerCell = MWBase::Environment::get().getWorld()->getCellName(player.getCell());
+    * if (!mPtr.getCell()->isExterior()) /* gui travel window, getting region when waiting, update actor head tracking (apparently done different when exterior), updating actors for sun damage, various AI packages */ pathfinding, etc, etc
 
 ## A new base class or inherit from `CellStore`?
 
@@ -4369,18 +4368,62 @@ MWWorld::Ptr ForeignActivator::copyToCellImpl(const MWWorld::Ptr &ptr, MWWorld::
 
 **FIXME:** need to add code to update the indices in `CellStore` after the insertion.
 
-# [13/05/2020 - 14/05/2020] World Dummy Cell - world of issues
+# [13/05/2020 - 15/05/2020] World Dummy Cell - world of issues
 
-Spent most of 13/05/20 debugging weird issues where physics would not work sometimes, etc.  Had to re-implement in small increments to track down the cause.  Strangely, for the physics issue, had to insert the "foreign" objects in `CellStore::forEach()` - still no idea why this is needed.
+Spent most of 13/05/20 debugging weird issues where physics would not work sometimes, etc.  Had to re-implement in small increments to track down the cause.  Strangely, for the physics issue, had to insert the "foreign" objects in `CellStore::forEach()` - still no idea why this is needed. **FIXED: 16/05/20**
 
-Another: `ACHR` with formid 0006C35E in Vilverin results in "Error in framelistener: Bad LiveCellRef cast to struct ESM4::Npc from struct ESM4::Npc".  Its base object is an `NPC_` with formid 0006C35D, and editor id "VilverinBanditFurnitureKhajiit".
+Another: `ACHR` with formid 0006C35E in Vilverin results in "Error in framelistener: Bad LiveCellRef cast to struct ESM4::Npc from struct ESM4::Npc".  Its base object is an `NPC_` with formid 0006C35D, and editor id "VilverinBanditFurnitureKhajiit". **FIXED: 15/05/20** not really "fixed", but to resolve this had to keep using std::list in `CellRefList`
 
 **TODO:** can't remember how levelled actors are generated
 
 **TODO:** trees are not inserted as index map insertion was way too long
 
+**TODO:** replace objects should be marked as such **DONE** actually replaced
 
+**FIXME:** `PhysicsSystem::addObjecta()` never clears `handleToMesh[]` (also noted on 04/03/20)
 
+# [16/05/2020] Physics issues and `CellStore::forEach()`
+
+A crash happens in `RigidBodyState::setWorldTransform()` where `mSceneNode->getParentSceneNode()` returns a nullptr.  Need to investigate how `mSceneNode` is set.
+
+It looks like the issue might be that sometimes the physics collision shapes are not being deleted.
+
+    CellStore *Scene::updateWorldCellsAtGrid (ESM4::FormId worldId, int X, int Y)
+    void Scene::changeToForeignInteriorCell (const std::string& cellName, const ESM::Position& position)
+    void Scene::changeCellGrid (int X, int Y)
+    void Scene::changeToInteriorCell (const std::string& cellName, const ESM::Position& position)
+    void Scene::changeToVoid()
+        void Scene::unloadCell (CellStoreCollection::iterator iter)
+            mPhysics->removeObject (node->getName());
+
+    MWWorld::Ptr World::moveObject(const Ptr &ptr, CellStore* newCell, float x, float y, float z)
+    void World::disable (const Ptr& reference)
+    void World::deleteObject (const Ptr& ptr)
+        void Scene::removeObjectFromScene (const Ptr& ptr)
+            mPhysics->removeObject (ptr.getRefData().getHandle());
+
+First guess would be either `updateWorldCellsAtGrid()` or `changeToForeignInteriorCell()` doing something different.  To test, disable loading the dummy cell and visibly distant cell in `updateWorldCellsAtGrid()`.  Surprisingly the issue persists.  The testing sequence:
+
+  1. COW "ICMarketDistrict" 8 17
+  2. COC "Vilverin" (doors don't work without dummy cell being loaded)
+  3. COW "ICMarketDistrict" 8 17
+  4. COC "ICMarketDistrictAFightingChance"
+  5. go outside using an internal door
+  4. COC "ICMarketDistrictThreeBrothersTradeGoods"
+
+By using the console command `TCG` some of the items that looks to be from "A Fighting Chance" can be seen in "Three Brothers Trade Goods".  So it might have been using the door to go out from "A Fighting Chance"?  If so the culpit would be`updateWorldCellsAtGrid()`.  Going out the door from "A Fighting Chance" is the block of code with the condition `if (worldId != currentWorldId)`.
+
+Ok, the issue is this block of code.  Because the handles from foreign `CellRefList<X>` are not being collected in the `functor`, they never get removed.
+
+```cpp
+void Scene::unloadCell (CellStoreCollection::iterator iter)
+{
+    std::cout << "Unloading cell\n";
+    ListAndResetHandles functor;
+
+    (*iter)->forEach<ListAndResetHandles>(functor);
+    {
+```
 
 
 [//]: # (/* spell spelllang=en_au syntax=cpp */)

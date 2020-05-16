@@ -467,16 +467,13 @@ namespace MWWorld
     void Scene::loadDummyCell (CellStore *cell, int x, int y, Loading::Listener* loadingListener)
     {
 #if 0
-        // FIXME: do we need x, y ?
         std::size_t range = 2;
         InsertDummyFunctor functor (*cell, true/*rescale*/, *loadingListener, mPhysics, mRendering);
-        cell->forEach (functor, x, y, range, 0);
+        cell->forEachForeign (functor, x, y, range, 0);
 
         range = 6;
         InsertDummyFunctor functor2 (*cell, true/*rescale*/, *loadingListener, 0, mRendering);
-        cell->forEach (functor2, x, y, range, 2);
-
-        //mDummyStore = cell;
+        cell->forEachForeign (functor2, x, y, range, 2);
 #endif
     }
 
@@ -1108,6 +1105,7 @@ namespace MWWorld
                 if (result.second)
                 {
 //                  std::cout << "dummy " << std::endl;
+                    //loadDummyCell(dummy, X, Y, loadingListener);
                     loadForeignCell(dummy, loadingListener);
                 }
             }

@@ -210,9 +210,25 @@ namespace MWWorld
             if (deleted)
                 liveCellRef.mData.setDeleted(true);
 
-            if (iter != mFormIdMap.end())
+            if (iter != mFormIdMap.end()) // exists, replace
+            {
+                // there are a couple of options here (choosing option 1 for now):
+                // 1. actually replace, but to do that will need to search again
+                // 2. mark the record as replaced by setting ref.mData.disable() and also
+                //    setting the formid in ref.mRef to be 0
                 std::cout << "refr replace" << std::endl; // FIXME
-                //mList[iter->first] = std::move(liveCellRef); // replace
+
+                typename std::list<LiveRef>::iterator listIter =
+                    std::find(mList.begin(), mList.end(), ref);
+
+                if (listIter != mList.end())
+                    *listIter = std::move(liveCellRef);
+                else
+                    throw std::runtime_error ("CellStore: could not find "+ESM4::formIdToString(ref.mFormId));
+
+                // update index map with a new pointer
+                mFormIdMap[ref.mFormId] = &*listIter;
+            }
             else
             {
                 mList.push_back(std::move(liveCellRef)); // insert
@@ -273,9 +289,21 @@ namespace MWWorld
             if (deleted)
                 liveCellRef.mData.setDeleted(true);
 
-            if (iter != mFormIdMap.end())
+            if (iter != mFormIdMap.end()) // exists, replace
+            {
                 std::cout << "crea replace" << std::endl; // FIXME
-                //mList[iter->first] = std::move(liveCellRef); // replace
+
+                typename std::list<LiveRef>::iterator listIter =
+                    std::find(mList.begin(), mList.end(), ref);
+
+                if (listIter != mList.end())
+                    *listIter = std::move(liveCellRef);
+                else
+                    throw std::runtime_error ("CellStore: could not find "+ESM4::formIdToString(ref.mFormId));
+
+                // update index map with a new pointer
+                mFormIdMap[ref.mFormId] = &*listIter;
+            }
             else
             {
                 mList.push_back(std::move(liveCellRef)); // insert
@@ -341,9 +369,21 @@ namespace MWWorld
             if (deleted)
                 liveCellRef.mData.setDeleted(true);
 
-            if (iter != mFormIdMap.end())
+            if (iter != mFormIdMap.end()) // exists, replace
+            {
                 std::cout << "npc replace" << std::endl; // FIXME
-                //mList[iter->first] = std::move(liveCellRef); // replace
+
+                typename std::list<LiveRef>::iterator listIter =
+                    std::find(mList.begin(), mList.end(), ref);
+
+                if (listIter != mList.end())
+                    *listIter = std::move(liveCellRef);
+                else
+                    throw std::runtime_error ("CellStore: could not find "+ESM4::formIdToString(ref.mFormId));
+
+                // update index map with a new pointer
+                mFormIdMap[ref.mFormId] = &*listIter;
+            }
             else
             {
                 mList.push_back(std::move(liveCellRef)); // insert
@@ -722,9 +762,7 @@ namespace MWWorld
 
     void CellStore::removeObjectIndex (const std::string& handle, ESM4::FormId formId)
     {
-        return; // FIXME
-
-        std::map<std::string, ESM4::FormId>::iterator handleIter = mSceneNodeMap.find(handle);
+        std::unordered_map<std::string, ESM4::FormId>::iterator handleIter = mSceneNodeMap.find(handle);
         if (handleIter != mSceneNodeMap.end())
             mSceneNodeMap.erase(handleIter);
 
@@ -754,8 +792,8 @@ namespace MWWorld
 
         mHasState = true;
 
-        // mSceneNodeMap is populated in forEachImpForeign()
-        std::map<std::string, ESM4::FormId>::const_iterator handleIter = mSceneNodeMap.find(handle);
+        // mSceneNodeMap is populated in forEachImpForeign() and addHandleIndex()
+        std::unordered_map<std::string, ESM4::FormId>::const_iterator handleIter = mSceneNodeMap.find(handle);
         if (handleIter != mSceneNodeMap.end())
         {
             ESM4::FormId formId = handleIter->second;
@@ -770,11 +808,7 @@ namespace MWWorld
                 throw std::runtime_error ("CellStore: store not found for "+ESM4::printName(storeType));
             }
 
-            //CellRefStoreBase *store = iter->second;
-            //if (!store)
-                //std::cout << "stop " << ESM4::printName(iter->first) << std::endl; // FIXME
-
-            LiveCellRefBase *liveRef = iter->second->searchViaHandle(handle); // FIXME: can we search via formid?
+            LiveCellRefBase *liveRef = iter->second->find(formId);
             if (liveRef)
                 return Ptr(liveRef, this);
         }
