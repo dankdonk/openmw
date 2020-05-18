@@ -62,7 +62,7 @@ namespace MWWorld
             State mState;
             bool mHasState;
             std::vector<std::string> mIds;
-            std::vector<ESM4::FormId> mForeignIds;
+            std::vector<ESM4::FormId> mForeignIds; // FIXME: currently unused
             float mWaterLevel;
             //
             bool mIsForeignCell;
@@ -136,6 +136,9 @@ namespace MWWorld
             int getStoreType(ESM4::FormId formId) const;
 
             std::unordered_map<std::string, ESM4::FormId> mSceneNodeMap; // for searching via handle
+
+            //std::vector<LiveCellRefBase*> mDummyActive;
+            //std::vector<LiveCellRefBase*> mDummyVisible;
 
             ForeignStore<ESM4::Pathgrid>        mForeignPathgrids;
             ESM::Pathgrid mPathgrid; // FIXME: just a quick workaround
@@ -244,38 +247,38 @@ namespace MWWorld
                     ) : (
                     // in order to use ListAndResetHandles in Scene::unloadCell()
                     // we need to add below stores
-                    forEachImpForeign(functor, 0, 0, 0, 0, mSounds) &&
-                    forEachImpForeign(functor, 0, 0, 0, 0, mForeignActivators) &&
-                    forEachImpForeign(functor, 0, 0, 0, 0, mForeignApparatus) &&
-                    forEachImpForeign(functor, 0, 0, 0, 0, mForeignArmors) &&
-                    forEachImpForeign(functor, 0, 0, 0, 0, mForeignBooks) &&
-                    forEachImpForeign(functor, 0, 0, 0, 0, mForeignClothes) &&
-                    forEachImpForeign(functor, 0, 0, 0, 0, mForeignContainers) &&
-                    forEachImpForeign(functor, 0, 0, 0, 0, mForeignDoors) &&
-                    forEachImpForeign(functor, 0, 0, 0, 0, mForeignIngredients) &&
-                    forEachImpForeign(functor, 0, 0, 0, 0, mForeignLights) &&
-                    forEachImpForeign(functor, 0, 0, 0, 0, mForeignMiscItems) &&
-                    forEachImpForeign(functor, 0, 0, 0, 0, mForeignStatics) &&
-                    forEachImpForeign(functor, 0, 0, 0, 0, mForeignGrasses) &&
-                    forEachImpForeign(functor, 0, 0, 0, 0, mForeignTrees) &&
-                    forEachImpForeign(functor, 0, 0, 0, 0, mForeignFloras) &&
-                    forEachImpForeign(functor, 0, 0, 0, 0, mForeignFurnitures) &&
-                    forEachImpForeign(functor, 0, 0, 0, 0, mForeignWeapons) &&
-                    forEachImpForeign(functor, 0, 0, 0, 0, mAmmunitions) &&
-                    forEachImpForeign(functor, 0, 0, 0, 0, mSoulGems) &&
-                    forEachImpForeign(functor, 0, 0, 0, 0, mForeignKeys) &&
-                    forEachImpForeign(functor, 0, 0, 0, 0, mForeignPotions) &&
-                    forEachImpForeign(functor, 0, 0, 0, 0, mSubSpaces) &&
-                    forEachImpForeign(functor, 0, 0, 0, 0, mSigilStones) &&
-                    forEachImpForeign(functor, 0, 0, 0, 0, mLevelledItems) &&
-                    forEachImpForeign(functor, 0, 0, 0, 0, mTerminals) &&
-                    forEachImpForeign(functor, 0, 0, 0, 0, mTalkingActivators) &&
-                    forEachImpForeign(functor, 0, 0, 0, 0, mNotes) &&
-                    forEachImpForeign(functor, 0, 0, 0, 0, mPlaceableWaters) &&
-                    forEachImpForeign(functor, 0, 0, 0, 0, mStaticCollections) &&
-                    forEachImpForeign(functor, 0, 0, 0, 0, mForeignNpcs) &&
-                    forEachImpForeign(functor, 0, 0, 0, 0, mForeignCreatures) &&
-                    forEachImpForeign(functor, 0, 0, 0, 0, mLevelledCreatures)
+                    forEachImpForeign (functor, 0, 0, 0, 0, mSounds) &&
+                    forEachImpForeign (functor, 0, 0, 0, 0, mForeignActivators) &&
+                    forEachImpForeign (functor, 0, 0, 0, 0, mForeignApparatus) &&
+                    forEachImpForeign (functor, 0, 0, 0, 0, mForeignArmors) &&
+                    forEachImpForeign (functor, 0, 0, 0, 0, mForeignBooks) &&
+                    forEachImpForeign (functor, 0, 0, 0, 0, mForeignClothes) &&
+                    forEachImpForeign (functor, 0, 0, 0, 0, mForeignContainers) &&
+                    forEachImpForeign (functor, 0, 0, 0, 0, mForeignDoors) &&
+                    forEachImpForeign (functor, 0, 0, 0, 0, mForeignIngredients) &&
+                    forEachImpForeign (functor, 0, 0, 0, 0, mForeignLights) &&
+                    forEachImpForeign (functor, 0, 0, 0, 0, mForeignMiscItems) &&
+                    forEachImpForeign (functor, 0, 0, 0, 0, mForeignStatics) &&
+                    forEachImpForeign (functor, 0, 0, 0, 0, mForeignGrasses) &&
+                    forEachImpForeign (functor, 0, 0, 0, 0, mForeignTrees) &&
+                    forEachImpForeign (functor, 0, 0, 0, 0, mForeignFloras) &&
+                    forEachImpForeign (functor, 0, 0, 0, 0, mForeignFurnitures) &&
+                    forEachImpForeign (functor, 0, 0, 0, 0, mForeignWeapons) &&
+                    forEachImpForeign (functor, 0, 0, 0, 0, mAmmunitions) &&
+                    forEachImpForeign (functor, 0, 0, 0, 0, mSoulGems) &&
+                    forEachImpForeign (functor, 0, 0, 0, 0, mForeignKeys) &&
+                    forEachImpForeign (functor, 0, 0, 0, 0, mForeignPotions) &&
+                    forEachImpForeign (functor, 0, 0, 0, 0, mSubSpaces) &&
+                    forEachImpForeign (functor, 0, 0, 0, 0, mSigilStones) &&
+                    forEachImpForeign (functor, 0, 0, 0, 0, mLevelledItems) &&
+                    forEachImpForeign (functor, 0, 0, 0, 0, mTerminals) &&
+                    forEachImpForeign (functor, 0, 0, 0, 0, mTalkingActivators) &&
+                    forEachImpForeign (functor, 0, 0, 0, 0, mNotes) &&
+                    forEachImpForeign (functor, 0, 0, 0, 0, mPlaceableWaters) &&
+                    forEachImpForeign (functor, 0, 0, 0, 0, mStaticCollections) &&
+                    forEachImpForeign (functor, 0, 0, 0, 0, mForeignNpcs) &&
+                    forEachImpForeign (functor, 0, 0, 0, 0, mForeignCreatures) &&
+                    forEachImpForeign (functor, 0, 0, 0, 0, mLevelledCreatures)
                     ));
             }
 
@@ -286,38 +289,38 @@ namespace MWWorld
                 mHasState = true;
 
                 return
-                    forEachImpForeign(functor, x, y, range, exclude, mSounds) &&
-                    forEachImpForeign(functor, x, y, range, exclude, mForeignActivators) &&
-                    forEachImpForeign(functor, x, y, range, exclude, mForeignApparatus) &&
-                    forEachImpForeign(functor, x, y, range, exclude, mForeignArmors) &&
-                    forEachImpForeign(functor, x, y, range, exclude, mForeignBooks) &&
-                    forEachImpForeign(functor, x, y, range, exclude, mForeignClothes) &&
-                    forEachImpForeign(functor, x, y, range, exclude, mForeignContainers) &&
-                    forEachImpForeign(functor, x, y, range, exclude, mForeignDoors) &&
-                    forEachImpForeign(functor, x, y, range, exclude, mForeignIngredients) &&
-                    forEachImpForeign(functor, x, y, range, exclude, mForeignLights) &&
-                    forEachImpForeign(functor, x, y, range, exclude, mForeignMiscItems) &&
-                    forEachImpForeign(functor, x, y, range, exclude, mForeignStatics) &&
-                    forEachImpForeign(functor, x, y, range, exclude, mForeignGrasses) &&
-                    forEachImpForeign(functor, x, y, range, exclude, mForeignTrees) &&
-                    forEachImpForeign(functor, x, y, range, exclude, mForeignFloras) &&
-                    forEachImpForeign(functor, x, y, range, exclude, mForeignFurnitures) &&
-                    forEachImpForeign(functor, x, y, range, exclude, mForeignWeapons) &&
-                    forEachImpForeign(functor, x, y, range, exclude, mAmmunitions) &&
-                    forEachImpForeign(functor, x, y, range, exclude, mSoulGems) &&
-                    forEachImpForeign(functor, x, y, range, exclude, mForeignKeys) &&
-                    forEachImpForeign(functor, x, y, range, exclude, mForeignPotions) &&
-                    forEachImpForeign(functor, x, y, range, exclude, mSubSpaces) &&
-                    forEachImpForeign(functor, x, y, range, exclude, mSigilStones) &&
-                    forEachImpForeign(functor, x, y, range, exclude, mLevelledItems) &&
-                    forEachImpForeign(functor, x, y, range, exclude, mTerminals) &&
-                    forEachImpForeign(functor, x, y, range, exclude, mTalkingActivators) &&
-                    forEachImpForeign(functor, x, y, range, exclude, mNotes) &&
-                    forEachImpForeign(functor, x, y, range, exclude, mPlaceableWaters) &&
-                    forEachImpForeign(functor, x, y, range, exclude, mStaticCollections) &&
-                    forEachImpForeign(functor, x, y, range, exclude, mForeignNpcs) &&
-                    forEachImpForeign(functor, x, y, range, exclude, mForeignCreatures) &&
-                    forEachImpForeign(functor, x, y, range, exclude, mLevelledCreatures);
+                    forEachImpForeign (functor, x, y, range, exclude, mSounds) &&
+                    forEachImpForeign (functor, x, y, range, exclude, mForeignActivators) &&
+                    forEachImpForeign (functor, x, y, range, exclude, mForeignApparatus) &&
+                    forEachImpForeign (functor, x, y, range, exclude, mForeignArmors) &&
+                    forEachImpForeign (functor, x, y, range, exclude, mForeignBooks) &&
+                    forEachImpForeign (functor, x, y, range, exclude, mForeignClothes) &&
+                    forEachImpForeign (functor, x, y, range, exclude, mForeignContainers) &&
+                    forEachImpForeign (functor, x, y, range, exclude, mForeignDoors) &&
+                    forEachImpForeign (functor, x, y, range, exclude, mForeignIngredients) &&
+                    forEachImpForeign (functor, x, y, range, exclude, mForeignLights) &&
+                    forEachImpForeign (functor, x, y, range, exclude, mForeignMiscItems) &&
+                    forEachImpForeign (functor, x, y, range, exclude, mForeignStatics) &&
+                    forEachImpForeign (functor, x, y, range, exclude, mForeignGrasses) &&
+                    forEachImpForeign (functor, x, y, range, exclude, mForeignTrees) &&
+                    forEachImpForeign (functor, x, y, range, exclude, mForeignFloras) &&
+                    forEachImpForeign (functor, x, y, range, exclude, mForeignFurnitures) &&
+                    forEachImpForeign (functor, x, y, range, exclude, mForeignWeapons) &&
+                    forEachImpForeign (functor, x, y, range, exclude, mAmmunitions) &&
+                    forEachImpForeign (functor, x, y, range, exclude, mSoulGems) &&
+                    forEachImpForeign (functor, x, y, range, exclude, mForeignKeys) &&
+                    forEachImpForeign (functor, x, y, range, exclude, mForeignPotions) &&
+                    forEachImpForeign (functor, x, y, range, exclude, mSubSpaces) &&
+                    forEachImpForeign (functor, x, y, range, exclude, mSigilStones) &&
+                    forEachImpForeign (functor, x, y, range, exclude, mLevelledItems) &&
+                    forEachImpForeign (functor, x, y, range, exclude, mTerminals) &&
+                    forEachImpForeign (functor, x, y, range, exclude, mTalkingActivators) &&
+                    forEachImpForeign (functor, x, y, range, exclude, mNotes) &&
+                    forEachImpForeign (functor, x, y, range, exclude, mPlaceableWaters) &&
+                    forEachImpForeign (functor, x, y, range, exclude, mStaticCollections) &&
+                    forEachImpForeign (functor, x, y, range, exclude, mForeignNpcs) &&
+                    forEachImpForeign (functor, x, y, range, exclude, mForeignCreatures) &&
+                    forEachImpForeign (functor, x, y, range, exclude, mLevelledCreatures);
             }
 
             template<class Functor>
@@ -413,7 +416,8 @@ namespace MWWorld
                             return false;
 
                         ESM4::FormId formId = (*iter).mRef.getFormId();
-                        mForeignIds.push_back(formId);  // for hasFormId()
+                        // FIXME: currently unused because getPtr() only uses hasId()
+                      //mForeignIds.push_back(formId);  // for hasFormId()
 
                         if ((*iter).mData.getBaseNode())
                         {
@@ -423,7 +427,7 @@ namespace MWWorld
                         // some (e.g. REFR with a SOUN baseObj) do not have a NIF model hence no BaseNode
                     }
                 }
-                else
+                else // dummy cell
                 {
                     std::vector<LiveCellRefBase*> sublist = vect.search(x, y, range, exclude);
 
@@ -435,25 +439,32 @@ namespace MWWorld
 
                         // should have an Ogre::SceneNode handle after this;
                         // see Objects::insertBegin() and Actors::insertBegin()
-                        //MWWorld::Ptr ptr(*iter, this);
-                        //if (!functor(ptr))
-                        if (!functor(MWWorld::Ptr(*iter, this)))
-                        {
-                            //std::cout << "forEachImpForeign no ptr" << std::endl;
+                        MWWorld::Ptr ptr(*iter, this);
+                        if (!functor(ptr))
+                        //if (!functor(MWWorld::Ptr(*iter, this)))
                             return false;
-                        }
+
+                        //if (ptr.getTypeName() == typeid(ESM4::Door).name())
+                            //std::cout << "dummy insert door " << std::endl;
 
                         ESM4::FormId formId = (*iter)->mRef.getFormId();
-                        mForeignIds.push_back(formId);  // for hasFormId()
+                        // FIXME: currently unused because getPtr() only uses hasId()
+                      //mForeignIds.push_back(formId);  // for hasFormId()
 
-                        if (exclude == 0 && // do this for those with collision shapes only ?
+                        // update index for searchViaHandle()
+                        if (exclude == 0 && // for those with collision shapes only
                                 (*iter)->mData.getBaseNode()) // and if it was actually created
                         {
                             std::string handle = (*iter)->mData.getHandle();
-                            mSceneNodeMap[handle] = formId; // for searchViaHandle()
+                            mSceneNodeMap[handle] = formId;
                         }
                         // some (e.g. REFR with a SOUN baseObj) do not have a NIF model hence no BaseNode
                     }
+
+                    //if (exclude == 0)
+                        //vect.mDummyActive.swap(sublist);
+                    //else
+                        //vect.mDummyVisible.swap(sublist);
                 }
 
                 return true;

@@ -504,7 +504,8 @@ namespace MWWorld
             mFogState = std::move(other.mFogState);
 
             mIds = std::move(other.mIds);
-            mForeignIds = std::move(other.mForeignIds);
+            // FIXME: currently unused because getPtr() only uses hasId()
+          //mForeignIds = std::move(other.mForeignIds);
 
             mActivators = std::move(other.mActivators);
             mPotions = std::move(other.mPotions);
@@ -634,6 +635,13 @@ namespace MWWorld
         return mHasState;
     }
 
+    // this is only used by MWWorld::Cells::getPtr() (and a few places in OpenCS) but:
+    //
+    // Cells::getPtr() itself is called by World::searchPtr(const std::string& name, bool activeOnly)
+    // in return used by MechanicsManager::isAllowedToUse(), InterpreterContext::getReferenceImp(),
+    // MWScript::ExplicitRef::operator() and some AI classes/methods.
+    //
+    // TODO: probably worth making it efficient, but how to make the caller use formid?
     bool CellStore::hasId (const std::string& id) const
     {
         if (mState==State_Unloaded)
@@ -655,15 +663,18 @@ namespace MWWorld
             return it->second;
     }
 
+    // FIXME: currently unused because getPtr() only uses hasId()
     bool CellStore::hasFormId(ESM4::FormId formId) const
     {
         if (mState == State_Unloaded)
             return false;
 
+        // FIXME: for binary_search to work properly mForeignIds needs to be sorted first
+        // (note that mIds does get sorted in listRefs())
         if (mState == State_Preloaded)
             return std::binary_search(mForeignIds.begin(), mForeignIds.end(), formId);
 
-        // FIXME: why is this done?  shouldn't they all have an entry in mFormids?  for
+        // FIXME: why is this done?  shouldn't they all have an entry in mFormIds?  is it for
         // dynamically created ones? if so why not create a new list of dynamic ids?
         return const_cast<CellStore *> (this)->search(formId).isEmpty();
     }
@@ -769,6 +780,11 @@ namespace MWWorld
         std::map<ESM4::FormId, int>::iterator typeIter = mStoreTypes.find(formId);
         if (typeIter != mStoreTypes.end())
             mStoreTypes.erase(typeIter);
+
+        // TODO: mark it with 0xFFFFFFFF instead?
+      //std::vector<ESM4::FormId>::iteroator idIter = mForeignIds.find(formId);
+      //if (idIter != mForeignIds.end())
+      //    mForeignIds.erase(idIter);
     }
 
     void CellStore::addHandleIndex (const std::string& handle, ESM4::FormId formId)
@@ -782,7 +798,8 @@ namespace MWWorld
 
     void CellStore::addObjectIndex (ESM4::FormId formId, int storeType)
     {
-        mForeignIds.push_back(formId); // for hasFormId()
+        // FIXME: currently unused because getPtr() only uses hasId()
+      //mForeignIds.push_back(formId); // for hasFormId()
         mStoreTypes[formId] = storeType;
     }
 
@@ -996,8 +1013,9 @@ namespace MWWorld
         {
             if (mState!=State_Loaded)
             {
-                if (mState == State_Preloaded)
-                    mForeignIds.clear();
+                // FIXME: currently unused because getPtr() only uses hasId()
+              //if (mState == State_Preloaded)
+              //    mForeignIds.clear();
 
                 loadForeignRefs(store, esm);
 
@@ -1376,7 +1394,7 @@ namespace MWWorld
                                          mStoreTypes[record.mFormId] = ESM4::REC_CONT; break;
                     case ESM4::REC_DOOR:
                     {
-                        mForeignDoors.load(record, deleted, store);
+                        mForeignDoors.load(record, deleted, store, mIsDummyCell);
                         store.setDoorCell(record.mFormId, reader.currCell());
                         mStoreTypes[record.mFormId] = ESM4::REC_DOOR;
                         break;
@@ -1413,7 +1431,7 @@ namespace MWWorld
                                          //mStoreTypes[record.mFormId] = ESM4::REC_TREE; break;
                     case ESM4::REC_FLOR: mForeignFloras.load(record, deleted, store, mIsDummyCell);
                                          mStoreTypes[record.mFormId] = ESM4::REC_FLOR; break;
-                    case ESM4::REC_FURN: mForeignFurnitures.load(record, deleted, store);
+                    case ESM4::REC_FURN: mForeignFurnitures.load(record, deleted, store, mIsDummyCell);
                                          mStoreTypes[record.mFormId] = ESM4::REC_FURN; break;
                     case ESM4::REC_WEAP: mForeignWeapons.load(record, deleted, store, mIsDummyCell);
                                          mStoreTypes[record.mFormId] = ESM4::REC_WEAP; break;

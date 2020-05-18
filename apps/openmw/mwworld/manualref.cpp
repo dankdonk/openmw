@@ -60,6 +60,9 @@ MWWorld::ManualRef::ManualRef(const MWWorld::ESMStore& store, const std::string&
 {
     if (ESM4::isFormId(name))
     {
+        // FIXME: what formid to use for spawned objects?  Maybe keep a static variable here
+        // and just use a mod id of 0xff000000?
+        //
         // TODO: levelled item/creature/npc ManualRef won't be created since the actual id of
         //       the item/actor will be supplied? maybe used for random spawning?
         ESM4::FormId id = ESM4::stringToFormId(name);

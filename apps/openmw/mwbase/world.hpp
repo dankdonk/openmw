@@ -320,13 +320,11 @@ namespace MWBase
             virtual MWWorld::Ptr safePlaceObject(const MWWorld::Ptr& ptr, MWWorld::CellStore* cell, ESM::Position pos) = 0;
             ///< place an object in a "safe" location (ie not in the void, etc).
 
-            virtual void indexToPosition (int cellX, int cellY, float &x, float &y, bool centre = false)
+            virtual void indexToPosition (int cellX, int cellY, float &x, float &y, bool centre = false, bool foreign = false)
                 const = 0;
             ///< Convert cell numbers to position.
-            virtual void indexToWorldPosition (const std::string& world, int cellX, int cellY,
-                    float &x, float &y, bool centre = false) const = 0;
 
-            virtual void positionToIndex (float x, float y, int &cellX, int &cellY) const = 0;
+            virtual void positionToIndex (float x, float y, int &cellX, int &cellY, bool foreign = false) const = 0;
             ///< Convert position to cell numbers
 
             virtual void queueMovement(const MWWorld::Ptr &ptr, const Ogre::Vector3 &velocity) = 0;

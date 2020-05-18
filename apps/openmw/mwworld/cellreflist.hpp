@@ -36,6 +36,9 @@ namespace MWWorld
         typedef std::map<ESM4::FormId, LiveCellRefBase*> FormIdMap;
         FormIdMap mFormIdMap;
 
+        //std::vector<LiveCellRefBase*> mDummyActive;
+        //std::vector<LiveCellRefBase*> mDummyVisible;
+
         typedef std::map<std::pair<std::int32_t, std::int32_t>, std::vector<ESM4::FormId> > GridMap;
         GridMap mGridMap;
 

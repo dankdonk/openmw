@@ -34,7 +34,7 @@
 namespace
 {
 
-    void addObject(const MWWorld::Ptr& ptr, MWWorld::PhysicsSystem& physics,
+    void addObject(const MWWorld::Ptr& ptr, MWWorld::PhysicsSystem *physics,
                    MWRender::RenderingManager& rendering)
     {
         std::string model = Misc::ResourceHelpers::correctActorModelPath(ptr.getClass().getModel(ptr));
@@ -42,10 +42,11 @@ namespace
         if (id == "prisonmarker" || id == "divinemarker" || id == "templemarker" || id == "northmarker")
             model = ""; // marker objects that have a hardcoded function in the game logic, should be hidden from the player
         rendering.addObject(ptr, model);
-        ptr.getClass().insertObject (ptr, model, physics);
+        if (physics)
+            ptr.getClass().insertObject (ptr, model, *physics);
     }
 
-    void updateObjectLocalRotation (const MWWorld::Ptr& ptr, MWWorld::PhysicsSystem& physics,
+    void updateObjectLocalRotation (const MWWorld::Ptr& ptr, MWWorld::PhysicsSystem *physics,
                                     MWRender::RenderingManager& rendering)
     {
         if (ptr.getRefData().getBaseNode() != NULL)
@@ -65,7 +66,8 @@ namespace
                 Ogre::Quaternion(Ogre::Radian(y), Ogre::Vector3::NEGATIVE_UNIT_Y)*rot;
 
             ptr.getRefData().getBaseNode()->setOrientation(worldRotQuat*rot);
-            physics.rotateObject(ptr);
+            if (physics)
+                physics->rotateObject(ptr);
         }
     }
 
@@ -74,17 +76,17 @@ namespace
         MWWorld::CellStore& mCell;
         bool mRescale;
         Loading::Listener& mLoadingListener;
-        MWWorld::PhysicsSystem& mPhysics;
+        MWWorld::PhysicsSystem *mPhysics;
         MWRender::RenderingManager& mRendering;
 
         InsertFunctor (MWWorld::CellStore& cell, bool rescale, Loading::Listener& loadingListener,
-            MWWorld::PhysicsSystem& physics, MWRender::RenderingManager& rendering);
+            MWWorld::PhysicsSystem *physics, MWRender::RenderingManager& rendering);
 
         bool operator() (const MWWorld::Ptr& ptr);
     };
 
     InsertFunctor::InsertFunctor (MWWorld::CellStore& cell, bool rescale,
-        Loading::Listener& loadingListener, MWWorld::PhysicsSystem& physics,
+        Loading::Listener& loadingListener, MWWorld::PhysicsSystem *physics,
         MWRender::RenderingManager& rendering)
     : mCell (cell), mRescale (rescale), mLoadingListener (loadingListener),
       mPhysics (physics), mRendering (rendering)
@@ -222,7 +224,7 @@ namespace MWWorld
 
     void Scene::updateObjectLocalRotation (const Ptr& ptr)
     {
-        ::updateObjectLocalRotation(ptr, *mPhysics, mRendering);
+        ::updateObjectLocalRotation(ptr, mPhysics, mRendering);
     }
 
     void Scene::moveSubObjectLocalPosition (const MWWorld::Ptr& ptr,
@@ -252,16 +254,27 @@ namespace MWWorld
         int maxY = std::numeric_limits<int>::min();
         int minX = std::numeric_limits<int>::max();
         int minY = std::numeric_limits<int>::max();
+
         CellStoreCollection::iterator iter = mActiveCells.begin();
         while (iter!=mActiveCells.end())
         {
-            assert ((*iter)->getCell()->isExterior());
-            int x = (*iter)->getCell()->getGridX();
-            int y = (*iter)->getCell()->getGridY();
+            const CellStore* cellstore = (*iter);
+            const ESM::Cell* cell = cellstore->getCell();
+
+            assert(cell->isExterior());
+            if (cellstore->isDummyCell() || cellstore->isVisibleDistCell())
+            {
+                ++iter; // ignore, these have grid(0, 0) which interferes with min/max
+                continue;
+            }
+
+            int x = cell->getGridX();
+            int y = cell->getGridY();
             maxX = std::max(x, maxX);
             maxY = std::max(y, maxY);
             minX = std::min(x, minX);
             minY = std::min(y, minY);
+
             ++iter;
         }
         cellX = (minX + maxX) / 2;
@@ -272,7 +285,8 @@ namespace MWWorld
     {
         if (mNeedMapUpdate)
         {
-            // Note: exterior cell maps must be updated, even if they were visited before, because the set of surrounding cells might be different
+            // Note: exterior cell maps must be updated, even if they were visited before,
+            // because the set of surrounding cells might be different
             // (and objects in a different cell can "bleed" into another cells map if they cross the border)
             for (CellStoreCollection::iterator active = mActiveCells.begin(); active!=mActiveCells.end(); ++active)
                 mRendering.requestMap(*active);
@@ -311,6 +325,8 @@ namespace MWWorld
                 }
 
                 mPhysics->removeObject (node->getName());
+
+                // no need to update CellStore indices as the cell is being unloaded anyway
             }
         }
 
@@ -466,15 +482,13 @@ namespace MWWorld
 
     void Scene::loadDummyCell (CellStore *cell, int x, int y, Loading::Listener* loadingListener)
     {
-#if 0
         std::size_t range = 2;
-        InsertDummyFunctor functor (*cell, true/*rescale*/, *loadingListener, mPhysics, mRendering);
+        InsertFunctor functor (*cell, true/*rescale*/, *loadingListener, mPhysics, mRendering);
         cell->forEachForeign (functor, x, y, range, 0);
 
         range = 6;
-        InsertDummyFunctor functor2 (*cell, true/*rescale*/, *loadingListener, 0, mRendering);
+        InsertFunctor functor2 (*cell, true/*rescale*/, *loadingListener, nullptr, mRendering);
         cell->forEachForeign (functor2, x, y, range, 2);
-#endif
     }
 
     void Scene::loadVisibleDist (CellStore *cell, Loading::Listener* loadingListener)
@@ -498,12 +512,14 @@ namespace MWWorld
         if (!mCurrentCell || !mCurrentCell->isExterior())
             return;
 
-        // figure out the center of the current cell grid (*not* necessarily mCurrentCell, which is the cell the player is in)
+        // figure out the center of the current cell grid (*not* necessarily mCurrentCell,
+        // which is the cell the player is in)
         int cellX, cellY;
         getGridCenter(cellX, cellY);
-        float centerX, centerY;
+
         if (!mCurrentCell->isForeignCell())
         {
+            float centerX, centerY;
             MWBase::Environment::get().getWorld()->indexToPosition(cellX, cellY, centerX, centerY, true);
             const float maxDistance = 8192/2 + 1024; // 1/2 cell size + threshold
             float distance = std::max(std::abs(centerX-pos.x), std::abs(centerY-pos.y));
@@ -517,24 +533,15 @@ namespace MWWorld
         }
         else // ForeignCell
         {
-            // FIXME: indexToPosition needs to be worldspace-aware
-            MWBase::Environment::get().getWorld()->indexToWorldPosition("", cellX, cellY, centerX, centerY, true);
-            const float maxDistance = (4096/2 + 512)/2; // 1/2 cell size + threshold
+            float centerX, centerY;
+            MWBase::Environment::get().getWorld()->indexToPosition(cellX, cellY, centerX, centerY,
+                                                                   true/*center*/, true/*foreign*/);
+            const float maxDistance = 4096/2 + 512; // 1/2 cell size + threshold
             float distance = std::max(std::abs(centerX-pos.x), std::abs(centerY-pos.y));
             if (distance > maxDistance)
             {
                 int newX, newY;
-                //MWBase::Environment::get().getWorld()->positionToIndex(pos.x, pos.y, newX, newY);
-                {
-                    const int cellSize = 4096;
-
-                    newX = static_cast<int>(std::floor(pos.x / cellSize));
-                    newY = static_cast<int>(std::floor(pos.y / cellSize));
-                }
-
-                // If we're still in the same cell, don't change even if gone past max distance?
-                //if (mCurrentCell->getCell()->getGridX() == newX && mCurrentCell->getCell()->getGridY() == newY)
-                    //return;
+                MWBase::Environment::get().getWorld()->positionToIndex(pos.x, pos.y, newX, newY, true/*foreign*/);
 
                 ESM4::FormId worldId
                     = static_cast<const MWWorld::ForeignCell*>(mCurrentCell->getCell())->mCell->mParent;
@@ -649,6 +656,12 @@ namespace MWWorld
         if (mCurrentCell && mCurrentCell == cell) // mCurrentCell can be nullptr (at the start only?)
             return;
 
+        if (mCurrentCell && cell) // FIXME
+            std::cout << "changePlayerCell " << mCurrentCell->getCell()->getGridX() << ","
+                                             << mCurrentCell->getCell()->getGridY() << " to "
+                                             << cell->getCell()->getGridX() << ","
+                                             << cell->getCell()->getGridY() << std::endl;
+
         // NOTE: we can detect the change of world space here
 
         mCurrentCell = cell; // if cell->isForeignCell(), mCell->mParent is the world FormId
@@ -682,6 +695,14 @@ namespace MWWorld
 
     // loads cells and associated references to mActiveCells as required, based on exterior
     // grid size and player position (cellstore contains cell pointer and refs)
+    //
+    // should only be called when an update is needed and shouldn't be often;
+    // called by playerMoved() and changeToWorldCell() which is in turn called by
+    // World::changeToForeignWorldCell() and World::moveObject()
+    //
+    // FIXME:
+    // hence can't update the dummy cell objects here? (that needs to be updated each time?)
+    // but why not update the same girds as the other active cells?
     CellStore *Scene::updateWorldCellsAtGrid (ESM4::FormId worldId, int X, int Y)
     {
         Loading::Listener* loadingListener = MWBase::Environment::get().getWindowManager()->getLoadingScreen();
@@ -706,7 +727,9 @@ namespace MWWorld
 
         CellStore* cell = MWBase::Environment::get().getWorld()->getWorldCell(worldId, X, Y);
         if (!cell) // FIXME
-            return nullptr;
+            return nullptr; // throw instead?
+
+        //std::cout << "updateWorldCellsAtGrid" << std::endl; // FIXME
 
         mRendering.enableTerrain(true, worldId);
 
@@ -980,6 +1003,8 @@ namespace MWWorld
         }
         else
         {
+            std::cout << "updateWorldCellsAtGrid, current cell " << X << "," << Y << std::endl; // FIXME
+
             CellStoreCollection::iterator active = mActiveCells.begin();
             while (active != mActiveCells.end())
             {
@@ -1096,17 +1121,19 @@ namespace MWWorld
         // check for dummy cell
         // FIXME: having the dummy cell results in *all* the doors being rendered!  Need to be
         // able to limit rendering based on the ref's position
-        if (worldChanged && !mActiveCells.empty())
+        if (/*worldChanged && */!mActiveCells.empty())
         {
+            // FIXME: any way to make this more efficient?
             CellStore *dummy = MWBase::Environment::get().getWorld()->getWorldDummyCell(worldId);
             if (dummy)
             {
-                std::pair<CellStoreCollection::iterator, bool> result = mActiveCells.insert(dummy);
-                if (result.second)
+                if (worldChanged)
+                    std::pair<CellStoreCollection::iterator, bool> result = mActiveCells.insert(dummy);
+                if (1)//result.second)
                 {
-//                  std::cout << "dummy " << std::endl;
-                    //loadDummyCell(dummy, X, Y, loadingListener);
-                    loadForeignCell(dummy, loadingListener);
+                    std::cout << "Loading dummy at " << X << "," << Y << std::endl;
+                    loadDummyCell(dummy, X, Y, loadingListener);
+                    //loadForeignCell(dummy, loadingListener);
                 }
             }
             else // create a new one
@@ -1788,13 +1815,13 @@ namespace MWWorld
 
     void Scene::insertCell (CellStore &cell, bool rescale, Loading::Listener* loadingListener)
     {
-        InsertFunctor functor (cell, rescale, *loadingListener, *mPhysics, mRendering);
+        InsertFunctor functor (cell, rescale, *loadingListener, mPhysics, mRendering);
         cell.forEach (functor);
     }
 
     void Scene::insertForeignCell (CellStore &cell, bool rescale, Loading::Listener* loadingListener)
     {
-        InsertDummyFunctor functor(cell, rescale, *loadingListener, mPhysics, mRendering);
+        InsertFunctor functor(cell, rescale, *loadingListener, mPhysics, mRendering);
         cell.forEachForeign(functor, 0, 0, 0, 0);
     }
 
@@ -1802,7 +1829,7 @@ namespace MWWorld
     {
         try
         {
-            addObject(ptr, *mPhysics, mRendering);
+            addObject(ptr, mPhysics, mRendering);
             MWBase::Environment::get().getWorld()->rotateObject(ptr, 0, 0, 0, true);
             MWBase::Environment::get().getWorld()->scaleObject(ptr, ptr.getCellRef().getScale());
         }
@@ -1816,8 +1843,31 @@ namespace MWWorld
     {
         MWBase::Environment::get().getMechanicsManager()->remove (ptr);
         MWBase::Environment::get().getSoundManager()->stopSound3D (ptr);
+#if 1
+        // update CellStore indices first
+        CellStore *cell = ptr.getCell();
+        if (cell)
+        {
+            ESM4::FormId formId = ptr.getBase()->mRef.getFormId();
+            cell->removeObjectIndex(ptr.getBase()->mData.getHandle(), formId);
+        }
+
+        // ragdoll objects have physics objects attached to child SceneNodes
+        Ogre::SceneNode* node = ptr.getRefData().getBaseNode();
+        Ogre::Node::ChildNodeIterator childIter = node->getChildIterator();
+        while (childIter.hasMoreElements())
+        {
+            mPhysics->removeObject (childIter.current()->first);
+            childIter.getNext();
+        }
+        mPhysics->removeObject (node->getName());
+
+        // finally
+        mRendering.removeObject (ptr);
+#else
         mPhysics->removeObject (ptr.getRefData().getHandle());
         mRendering.removeObject (ptr);
+#endif
     }
 
     bool Scene::isCellActive(const CellStore &cell)

@@ -4378,9 +4378,9 @@ Another: `ACHR` with formid 0006C35E in Vilverin results in "Error in frameliste
 
 **TODO:** trees are not inserted as index map insertion was way too long
 
-**TODO:** replace objects should be marked as such **DONE** actually replaced
+**TODO:** replace objects should be marked as such **DONE** actually replaced rather than marking the record
 
-**FIXME:** `PhysicsSystem::addObjecta()` never clears `handleToMesh[]` (also noted on 04/03/20)
+**FIXME:** `PhysicsSystem::addObject()` never clears `handleToMesh[]` (also noted on 04/03/20)
 
 # [16/05/2020] Physics issues and `CellStore::forEach()`
 
@@ -4422,8 +4422,36 @@ void Scene::unloadCell (CellStoreCollection::iterator iter)
     ListAndResetHandles functor;
 
     (*iter)->forEach<ListAndResetHandles>(functor);
-    {
 ```
+
+# [16/05/2020 - 18/05/2020] Updating the Dummy Cell
+
+As the player moves around the external cells the dummy cell needs to be updated - references within a certain distance needs to be instantiated and others removed.
+
+We need a search function that will return:
+
+  * all the records that needs to be instantiated
+  * all the records that needs to be visible without physics
+
+We then need to compare against the current set of records to decide which ones to remove, which ones to create and which ones will remain as they are.
+
+## Cell loading time
+
+Not all objects require indexing - statics and trees in a cell will probably only require sequential access for creating and deleting them (unless they're in a dummy cell, in which case they need to be indexed for grid positions).  Actors and inventory items, however, would be different.   This will provide a minor reduction in cell loading times.  To do this some thought needs to go into how to deal with getting object formid while in console mode - either bulk create indices (for statics, etc) for the current cell when the console is invoked, or make it a debug option to enable at the start time.  Or maybe even create a special console command to update the indices.  Yet another approach might be to have the loading done in a separate thread so that a little longer loading time does not matter at all.
+
+## Updating Dummy cell objects
+
+Removing objects as they become far away from the player's current cell appears non-trivial.  Current OpenMW code calls `Scene::unloadCell` which then calls a number of managers including mechanics manager, sound manager, physics, scripts, etc.
+
+I had thought about trying to avoid writing specific code to remove the objects by placing the objects in other active cells, but then they will no longer be "persistent" and will have re-create them each time?  Also, what about the visibly dist objects without physics (they aren't in active cells)?
+
+So I will have to implement something like `unloadObjects()` or similar.  Because of the need to access the managers, it will need to be called from `MWWorld::Scene`.  A broad outline would be:
+
+  * get which objects need to be removed from they dummy CellStore
+  * update the indices while getting the objects (e.g. for the handles, formid, store type, etc)
+  * remove the objects
+
+It turns out that there's already `void Scene::removeObjectFromScene (const Ptr& ptr)` which can be used if there'a functor that returns all the objects that needs to be removed.  It's a shame that a `Ptr` needs to be constructed for each object - maybe another method that will accept a `LiveCellRefBase*` should be created?  It also doesn't deal with physics child objects (yet).
 
 
 [//]: # (/* spell spelllang=en_au syntax=cpp */)

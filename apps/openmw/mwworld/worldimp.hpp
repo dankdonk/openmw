@@ -379,14 +379,11 @@ namespace MWWorld
 
             virtual float getMaxActivationDistance();
 
-            virtual void indexToPosition (int cellX, int cellY, float &x, float &y, bool centre = false)
-                const;
+            virtual void indexToPosition (int cellX, int cellY, float &x, float &y, bool centre = false,
+                                          bool foreign = false) const;
             ///< Convert cell numbers to position.
 
-            virtual void indexToWorldPosition (const std::string& world, int cellX, int cellY, float &x,
-                    float &y, bool centre = false) const;
-
-            virtual void positionToIndex (float x, float y, int &cellX, int &cellY) const;
+            virtual void positionToIndex (float x, float y, int &cellX, int &cellY, bool foreign = false) const;
             ///< Convert position to cell numbers
 
             virtual void queueMovement(const Ptr &ptr, const Ogre::Vector3 &velocity);

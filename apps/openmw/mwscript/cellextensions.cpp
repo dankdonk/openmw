@@ -106,7 +106,7 @@ namespace MWScript
                     ESM::Position pos;
                     MWBase::World *world = MWBase::Environment::get().getWorld();
                     world->getPlayer().setTeleported(true);
-                    world->indexToWorldPosition (worldspace, x, y, pos.pos[0], pos.pos[1], false/*center*/);
+                    world->indexToPosition (x, y, pos.pos[0], pos.pos[1], false/*center*/, true/*foreign*/);
                     pos.pos[2] = 0;
                     pos.rot[0] = pos.rot[1] = pos.rot[2] = 0;
 

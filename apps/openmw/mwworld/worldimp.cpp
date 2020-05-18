@@ -1273,11 +1273,12 @@ namespace MWWorld
                     removeContainerScripts (ptr);
                     haveToMove = false;
 
-                    if (currCell)
-                    {
-                        ESM4::FormId formId = ptr.getBase()->mRef.getFormId();
-                        currCell->removeObjectIndex(ptr.getBase()->mData.getHandle(), formId);
-                    }
+                    // NOTE: moved to removeObjectFromScene
+                    //if (currCell)
+                    //{
+                    //    ESM4::FormId formId = ptr.getBase()->mRef.getFormId();
+                    //    currCell->removeObjectIndex(ptr.getBase()->mData.getHandle(), formId);
+                    //}
 
                     newPtr = ptr.getClass().copyToCell(ptr, *newCell);
                     newPtr.getRefData().setBaseNode(0);
@@ -1504,9 +1505,9 @@ namespace MWWorld
         return copyObjectToCell(ptr,cell,pos,false);
     }
 
-    void World::indexToPosition (int cellX, int cellY, float &x, float &y, bool centre) const
+    void World::indexToPosition (int cellX, int cellY, float &x, float &y, bool centre, bool foreign) const
     {
-        const int cellSize = 8192;
+        const int cellSize = (foreign ? 4096 : 8192);
 
         x = static_cast<float>(cellSize * cellX);
         y = static_cast<float>(cellSize * cellY);
@@ -1518,25 +1519,9 @@ namespace MWWorld
         }
     }
 
-    // FIXME: this is probably not needed?  it seem the only difference is the cell size
-    void World::indexToWorldPosition (const std::string& world, int cellX, int cellY,
-            float &x, float &y, bool centre) const
+    void World::positionToIndex (float x, float y, int &cellX, int &cellY, bool foreign) const
     {
-        const int cellSize = 4096;
-
-        x = static_cast<float>(cellSize * cellX);
-        y = static_cast<float>(cellSize * cellY);
-
-        if (centre)
-        {
-            x += cellSize/2;
-            y += cellSize/2;
-        }
-    }
-
-    void World::positionToIndex (float x, float y, int &cellX, int &cellY) const
-    {
-        const int cellSize = 8192;
+        const int cellSize = (foreign ? 4096 : 8192);
 
         cellX = static_cast<int>(std::floor(x / cellSize));
         cellY = static_cast<int>(std::floor(y / cellSize));
