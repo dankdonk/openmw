@@ -63,7 +63,7 @@ namespace MWWorld
             bool mNeedMapUpdate;
 
             void insertCell (CellStore &cell, bool rescale, Loading::Listener* loadingListener);
-            void insertForeignCell (CellStore &cell, bool rescale, Loading::Listener* loadingListener);
+            //void insertForeignCell (CellStore &cell, bool rescale, Loading::Listener* loadingListener);
 
             // Load and unload cells as necessary to create a cell grid with "X" and "Y" in the center
             void changeCellGrid (int X, int Y);

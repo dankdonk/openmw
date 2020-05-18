@@ -98,7 +98,7 @@ namespace MWClass
         MWWorld::LiveCellRef<ESM4::TalkingActivator> *ref = ptr.get<ESM4::TalkingActivator>();
 
         MWWorld::Ptr newPtr(cell.getForeign<ESM4::TalkingActivator>().insert(*ref), &cell);
-        cell.addObjectIndex(newPtr.getBase()->mRef.getFormId(), ESM4::REC_TACT);
+        cell.updateLookupMaps(newPtr.getBase()->mRef.getFormId(), ref, ESM4::REC_TACT);
 
         return std::move(newPtr);
     }

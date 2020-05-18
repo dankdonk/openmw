@@ -60,7 +60,7 @@ namespace MWClass
         MWWorld::LiveCellRef<ESM4::Furniture> *ref = ptr.get<ESM4::Furniture>();
 
         MWWorld::Ptr newPtr(cell.getForeign<ESM4::Furniture>().insert(*ref), &cell);
-        cell.addObjectIndex(newPtr.getBase()->mRef.getFormId(), ESM4::REC_FURN);
+        cell.updateLookupMaps(newPtr.getBase()->mRef.getFormId(), ref, ESM4::REC_FURN);
 
         return std::move(newPtr);
     }

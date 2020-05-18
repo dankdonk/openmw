@@ -771,7 +771,7 @@ namespace MWWorld
         return Ptr();
     }
 
-    void CellStore::removeObjectIndex (const std::string& handle, ESM4::FormId formId)
+    void CellStore::removeLookupKeys (const std::string& handle, ESM4::FormId formId)
     {
         std::unordered_map<std::string, ESM4::FormId>::iterator handleIter = mSceneNodeMap.find(handle);
         if (handleIter != mSceneNodeMap.end())
@@ -787,7 +787,7 @@ namespace MWWorld
       //    mForeignIds.erase(idIter);
     }
 
-    void CellStore::addHandleIndex (const std::string& handle, ESM4::FormId formId)
+    void CellStore::updateHandleMap (const std::string& handle, ESM4::FormId formId)
     {
         if (handle != "")
         {
@@ -796,11 +796,16 @@ namespace MWWorld
         }
     }
 
-    void CellStore::addObjectIndex (ESM4::FormId formId, int storeType)
+    void CellStore::updateLookupMaps (ESM4::FormId formId, LiveCellRefBase *ref, int storeType)
     {
         // FIXME: currently unused because getPtr() only uses hasId()
-      //mForeignIds.push_back(formId); // for hasFormId()
-        mStoreTypes[formId] = storeType;
+        //mForeignIds.push_back(formId); // for hasFormId()
+
+        if (storeType != -1)
+            mStoreTypes[formId] = storeType;
+
+        if (ref && ref->mData.getBaseNode())
+            mSceneNodeMap[ref->mData.getHandle()] = formId; // for searchViaHandle()
     }
 
     Ptr CellStore::searchViaHandle (const std::string& handle)
@@ -809,7 +814,7 @@ namespace MWWorld
 
         mHasState = true;
 
-        // mSceneNodeMap is populated in forEachImpForeign() and addHandleIndex()
+        // mSceneNodeMap is populated in forEachImpForeign() and updateHandleMap()
         std::unordered_map<std::string, ESM4::FormId>::const_iterator handleIter = mSceneNodeMap.find(handle);
         if (handleIter != mSceneNodeMap.end())
         {

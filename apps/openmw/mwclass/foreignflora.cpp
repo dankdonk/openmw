@@ -60,7 +60,7 @@ namespace MWClass
         MWWorld::LiveCellRef<ESM4::Flora> *ref = ptr.get<ESM4::Flora>();
 
         MWWorld::Ptr newPtr(cell.getForeign<ESM4::Flora>().insert(*ref), &cell);
-        cell.addObjectIndex(newPtr.getBase()->mRef.getFormId(), ESM4::REC_FLOR);
+        cell.updateLookupMaps(newPtr.getBase()->mRef.getFormId(), ref, ESM4::REC_FLOR);
 
         return std::move(newPtr);
     }

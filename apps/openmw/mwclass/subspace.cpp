@@ -62,7 +62,7 @@ namespace MWClass
         MWWorld::LiveCellRef<ESM4::SubSpace> *ref = ptr.get<ESM4::SubSpace>();
 
         MWWorld::Ptr newPtr(cell.getForeign<ESM4::SubSpace>().insert(*ref), &cell);
-        cell.addObjectIndex(newPtr.getBase()->mRef.getFormId(), ESM4::REC_SBSP);
+        cell.updateLookupMaps(newPtr.getBase()->mRef.getFormId(), ref, ESM4::REC_SBSP);
 
         return std::move(newPtr);
     }

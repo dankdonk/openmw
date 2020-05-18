@@ -195,7 +195,7 @@ namespace MWClass
         MWWorld::LiveCellRef<ESM4::Activator> *ref = ptr.get<ESM4::Activator>();
 
         MWWorld::Ptr newPtr(cell.getForeign<ESM4::Activator>().insert(*ref), &cell);
-        cell.addObjectIndex(newPtr.getBase()->mRef.getFormId(), ESM4::REC_ACTI);
+        cell.updateLookupMaps(newPtr.getBase()->mRef.getFormId(), ref, ESM4::REC_ACTI);
 
         return std::move(newPtr);
     }

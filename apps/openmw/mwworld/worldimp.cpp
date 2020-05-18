@@ -824,7 +824,7 @@ namespace MWWorld
             // FIXME: add indices as required
                 //LiveCellRefBase *ref = reference.getBase();
                 //if (ref->mData.getBaseNode())
-                    //reference.getCell()->addHandleIndex(ref->mData.getHandle(), ref->mRef.getFormId());
+                    //reference.getCell()->updateHandleMap(ref->mData.getHandle(), ref->mRef.getFormId());
         }
     }
 
@@ -1197,7 +1197,7 @@ namespace MWWorld
                 // FIXME add indices as required
                 //LiveCellRefBase *ref = ptr.getBase();
                 //if (ref->mData.getBaseNode())
-                    //ptr.getCell()->addHandleIndex(ref->mData.getHandle(), ref->mRef.getFormId());
+                    //ptr.getCell()->updateHandleMap(ref->mData.getHandle(), ref->mRef.getFormId());
             }
         }
     }
@@ -1264,7 +1264,7 @@ namespace MWWorld
                     // update handle map for object id via getFacedObject
                     LiveCellRefBase *ref = newPtr.getBase();
                     if (ref->mData.getBaseNode())
-                        newCell->addHandleIndex(ref->mData.getHandle(), ref->mRef.getFormId());
+                        newCell->updateHandleMap(ref->mData.getHandle(), ref->mRef.getFormId());
                 }
                 else if (!newCellActive && currCellActive)
                 {
@@ -1277,7 +1277,7 @@ namespace MWWorld
                     //if (currCell)
                     //{
                     //    ESM4::FormId formId = ptr.getBase()->mRef.getFormId();
-                    //    currCell->removeObjectIndex(ptr.getBase()->mData.getHandle(), formId);
+                    //    currCell->removeLookupKeys(ptr.getBase()->mData.getHandle(), formId);
                     //}
 
                     newPtr = ptr.getClass().copyToCell(ptr, *newCell);
@@ -1290,7 +1290,7 @@ namespace MWWorld
                     if (currCell)
                     {
                         ESM4::FormId formId = ptr.getBase()->mRef.getFormId();
-                        currCell->removeObjectIndex(ptr.getBase()->mData.getHandle(), formId);
+                        currCell->removeLookupKeys(ptr.getBase()->mData.getHandle(), formId);
                     }
 
                     newPtr = ptr.getClass().copyToCell(ptr, *newCell, pos);
@@ -1315,7 +1315,7 @@ namespace MWWorld
                     // update handle map for object id via getFacedObject
                     LiveCellRefBase *ref = newPtr.getBase();
                     if (ref->mData.getBaseNode())
-                        newCell->addHandleIndex(ref->mData.getHandle(), ref->mRef.getFormId());
+                        newCell->updateHandleMap(ref->mData.getHandle(), ref->mRef.getFormId());
                 }
                 ptr.getRefData().setCount(0);
             }
@@ -2164,7 +2164,7 @@ namespace MWWorld
         if (currCell)
         {
             ESM4::FormId formId = object.getBase()->mRef.getFormId();
-            currCell->removeObjectIndex(object.getBase()->mData.getHandle(), formId);
+            currCell->removeLookupKeys(object.getBase()->mData.getHandle(), formId);
         }
 
         MWWorld::Ptr dropped =
@@ -2187,7 +2187,7 @@ namespace MWWorld
                 // TODO: update even if not enabled?
                 LiveCellRefBase *ref = dropped.getBase();
                 if (ref->mData.getBaseNode())
-                    cell->addHandleIndex(ref->mData.getHandle(), ref->mRef.getFormId());
+                    cell->updateHandleMap(ref->mData.getHandle(), ref->mRef.getFormId());
             }
             std::string script = dropped.getClass().getScript(dropped);
             if (!script.empty()) {

@@ -671,7 +671,7 @@ namespace MWClass
         MWWorld::LiveCellRef<ESM4::Npc> *ref = ptr.get<ESM4::Npc>();
 
         MWWorld::Ptr newPtr(cell.getForeign<ESM4::Npc>().insert(*ref), &cell);
-        cell.addObjectIndex(newPtr.getBase()->mRef.getFormId(), ESM4::REC_NPC_);
+        cell.updateLookupMaps(newPtr.getBase()->mRef.getFormId(), ref, ESM4::REC_NPC_);
 
         return std::move(newPtr);
     }

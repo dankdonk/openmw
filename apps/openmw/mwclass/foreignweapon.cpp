@@ -203,7 +203,7 @@ namespace MWClass
         MWWorld::LiveCellRef<ESM4::Weapon> *ref = ptr.get<ESM4::Weapon>();
 
         MWWorld::Ptr newPtr(cell.getForeign<ESM4::Weapon>().insert(*ref), &cell);
-        cell.addObjectIndex(newPtr.getBase()->mRef.getFormId(), ESM4::REC_WEAP);
+        cell.updateLookupMaps(newPtr.getBase()->mRef.getFormId(), ref, ESM4::REC_WEAP);
 
         return std::move(newPtr);
     }

@@ -98,7 +98,7 @@ namespace MWClass
         MWWorld::LiveCellRef<ESM4::Terminal> *ref = ptr.get<ESM4::Terminal>();
 
         MWWorld::Ptr newPtr(cell.getForeign<ESM4::Terminal>().insert(*ref), &cell);
-        cell.addObjectIndex(newPtr.getBase()->mRef.getFormId(), ESM4::REC_TERM);
+        cell.updateLookupMaps(newPtr.getBase()->mRef.getFormId(), ref, ESM4::REC_TERM);
 
         return std::move(newPtr);
     }
