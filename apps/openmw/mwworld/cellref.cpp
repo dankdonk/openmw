@@ -256,6 +256,8 @@ namespace MWWorld
 
         // pretend to be a TES3 ref
         mCellRef.mRefID = ESM4::formIdToString(ref.mFormId);
+        if (ref.mEditorId != "")
+            mCellRef.mRefID = ref.mEditorId; // FIXME: for testing doors
 
         mCellRef.mPos.pos[0] = ref.mPosition.pos.x;
         mCellRef.mPos.pos[1] = ref.mPosition.pos.y;

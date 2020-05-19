@@ -51,6 +51,13 @@ namespace MWWorld
                 State_Unloaded, State_Preloaded, State_Loaded
             };
 
+            enum DummyMode
+            {
+                DUM_Insert = 0,
+                DUM_Remove = 1,
+                DUM_Clear  = 2
+            };
+
         private:
 
             // Even though fog actually belongs to the player and not cells,
@@ -285,43 +292,44 @@ namespace MWWorld
 
             // FIXME: not sure why Creatures and NPCs are handled last.
             template<class Functor>
-            bool forEachDummy (Functor& functor, int x = 0, int y = 0, size_t range = 0, size_t exclude = 0)
+            bool forEachDummy (Functor& functor, int mode,
+                    int x, int y, size_t range = 0, size_t exclude = 0)
             {
                 mHasState = true;
 
                 return
-                    forEachDummyImp (functor, mSounds,             x, y, range, exclude) &&
-                    forEachDummyImp (functor, mForeignActivators,  x, y, range, exclude) &&
-                    forEachDummyImp (functor, mForeignApparatus,   x, y, range, exclude) &&
-                    forEachDummyImp (functor, mForeignArmors,      x, y, range, exclude) &&
-                    forEachDummyImp (functor, mForeignBooks,       x, y, range, exclude) &&
-                    forEachDummyImp (functor, mForeignClothes,     x, y, range, exclude) &&
-                    forEachDummyImp (functor, mForeignContainers,  x, y, range, exclude) &&
-                    forEachDummyImp (functor, mForeignDoors,       x, y, range, exclude) &&
-                    forEachDummyImp (functor, mForeignIngredients, x, y, range, exclude) &&
-                    forEachDummyImp (functor, mForeignLights,      x, y, range, exclude) &&
-                    forEachDummyImp (functor, mForeignMiscItems,   x, y, range, exclude) &&
-                    forEachDummyImp (functor, mForeignStatics,     x, y, range, exclude) &&
-                    forEachDummyImp (functor, mForeignGrasses,     x, y, range, exclude) &&
-                    forEachDummyImp (functor, mForeignTrees,       x, y, range, exclude) &&
-                    forEachDummyImp (functor, mForeignFloras,      x, y, range, exclude) &&
-                    forEachDummyImp (functor, mForeignFurnitures,  x, y, range, exclude) &&
-                    forEachDummyImp (functor, mForeignWeapons,     x, y, range, exclude) &&
-                    forEachDummyImp (functor, mAmmunitions,        x, y, range, exclude) &&
-                    forEachDummyImp (functor, mSoulGems,           x, y, range, exclude) &&
-                    forEachDummyImp (functor, mForeignKeys,        x, y, range, exclude) &&
-                    forEachDummyImp (functor, mForeignPotions,     x, y, range, exclude) &&
-                    forEachDummyImp (functor, mSubSpaces,          x, y, range, exclude) &&
-                    forEachDummyImp (functor, mSigilStones,        x, y, range, exclude) &&
-                    forEachDummyImp (functor, mLevelledItems,      x, y, range, exclude) &&
-                    forEachDummyImp (functor, mTerminals,          x, y, range, exclude) &&
-                    forEachDummyImp (functor, mTalkingActivators,  x, y, range, exclude) &&
-                    forEachDummyImp (functor, mNotes,              x, y, range, exclude) &&
-                    forEachDummyImp (functor, mPlaceableWaters,    x, y, range, exclude) &&
-                    forEachDummyImp (functor, mStaticCollections,  x, y, range, exclude) &&
-                    forEachDummyImp (functor, mForeignNpcs,        x, y, range, exclude) &&
-                    forEachDummyImp (functor, mForeignCreatures,   x, y, range, exclude) &&
-                    forEachDummyImp (functor, mLevelledCreatures,  x, y, range, exclude);
+                    forEachDummyImp (functor, mSounds,             mode, x, y, range, exclude) &&
+                    forEachDummyImp (functor, mForeignActivators,  mode, x, y, range, exclude) &&
+                    forEachDummyImp (functor, mForeignApparatus,   mode, x, y, range, exclude) &&
+                    forEachDummyImp (functor, mForeignArmors,      mode, x, y, range, exclude) &&
+                    forEachDummyImp (functor, mForeignBooks,       mode, x, y, range, exclude) &&
+                    forEachDummyImp (functor, mForeignClothes,     mode, x, y, range, exclude) &&
+                    forEachDummyImp (functor, mForeignContainers,  mode, x, y, range, exclude) &&
+                    forEachDummyImp (functor, mForeignDoors,       mode, x, y, range, exclude) &&
+                    forEachDummyImp (functor, mForeignIngredients, mode, x, y, range, exclude) &&
+                    forEachDummyImp (functor, mForeignLights,      mode, x, y, range, exclude) &&
+                    forEachDummyImp (functor, mForeignMiscItems,   mode, x, y, range, exclude) &&
+                    forEachDummyImp (functor, mForeignStatics,     mode, x, y, range, exclude) &&
+                    forEachDummyImp (functor, mForeignGrasses,     mode, x, y, range, exclude) &&
+                    forEachDummyImp (functor, mForeignTrees,       mode, x, y, range, exclude) &&
+                    forEachDummyImp (functor, mForeignFloras,      mode, x, y, range, exclude) &&
+                    forEachDummyImp (functor, mForeignFurnitures,  mode, x, y, range, exclude) &&
+                    forEachDummyImp (functor, mForeignWeapons,     mode, x, y, range, exclude) &&
+                    forEachDummyImp (functor, mAmmunitions,        mode, x, y, range, exclude) &&
+                    forEachDummyImp (functor, mSoulGems,           mode, x, y, range, exclude) &&
+                    forEachDummyImp (functor, mForeignKeys,        mode, x, y, range, exclude) &&
+                    forEachDummyImp (functor, mForeignPotions,     mode, x, y, range, exclude) &&
+                    forEachDummyImp (functor, mSubSpaces,          mode, x, y, range, exclude) &&
+                    forEachDummyImp (functor, mSigilStones,        mode, x, y, range, exclude) &&
+                    forEachDummyImp (functor, mLevelledItems,      mode, x, y, range, exclude) &&
+                    forEachDummyImp (functor, mTerminals,          mode, x, y, range, exclude) &&
+                    forEachDummyImp (functor, mTalkingActivators,  mode, x, y, range, exclude) &&
+                    forEachDummyImp (functor, mNotes,              mode, x, y, range, exclude) &&
+                    forEachDummyImp (functor, mPlaceableWaters,    mode, x, y, range, exclude) &&
+                    forEachDummyImp (functor, mStaticCollections,  mode, x, y, range, exclude) &&
+                    forEachDummyImp (functor, mForeignNpcs,        mode, x, y, range, exclude) &&
+                    forEachDummyImp (functor, mForeignCreatures,   mode, x, y, range, exclude) &&
+                    forEachDummyImp (functor, mLevelledCreatures,  mode, x, y, range, exclude);
             }
 
             template<class Functor>
@@ -388,8 +396,7 @@ namespace MWWorld
             template<class Functor, class List>
             bool forEachImp (Functor& functor, List& list)
             {
-                for (typename List::List::iterator iter (list.mList.begin()); iter!=list.mList.end();
-                    ++iter)
+                for (typename List::List::iterator iter(list.mList.begin()); iter != list.mList.end(); ++iter)
                 {
                     if (iter->mData.isDeletedByContentFile())
                         continue;
@@ -397,159 +404,175 @@ namespace MWWorld
                     if (!functor (MWWorld::Ptr(&*iter, this)))
                         return false;
                 }
+
                 return true;
             }
 
+            // WARN: exclude == 0 has a special meaning (i.e. has physics)
             template<class Functor, class List>
-            bool forEachDummyImp(Functor& functor, List& vect,
-                    int x = 0, int y = 0, std::size_t range = 0, std::size_t exclude = 0, bool insert = true)
+            bool forEachDummyImp(Functor& functor, List& vect, int mode,
+                    int x, int y, std::size_t range = 0, std::size_t exclude = 0)
             {
-// index update is now triggered from the caller (i.e. MWWorld::Scene)
-#if 0
-                //if (range == 0 && exclude == 0) // FIXME: hack for non-dummy
-                if (!mIsDummyCell)
+                if (mode == DUM_Clear)
                 {
-                    for (typename List::List::iterator iter(vect.mList.begin());
-                            iter != vect.mList.end(); ++iter)
-                    {
-                        if (iter->mData.isDeletedByContentFile())
-                            continue;
+                    //for (SubList::iterator iter(vect.mDummyActive.begin()); iter != vect.mDummyActive.end(); ++iter)
+                            //functor(MWWorld::Ptr(*iter, this));
 
-                        // should have an Ogre::SceneNode handle after this;
-                        // see Objects::insertBegin() and Actors::insertBegin()
-                        if (!functor(MWWorld::Ptr(&*iter, this)))
-                            return false;
+                    //for (SubList::iterator iter(vect.mDummyVisible.begin()); iter != vect.mDummyVisible.end(); ++iter)
+                            //functor(MWWorld::Ptr(*iter, this));
 
-                        ESM4::FormId formId = (*iter).mRef.getFormId();
-                        // FIXME: currently unused because getPtr() only uses hasId()
-                      //mForeignIds.push_back(formId);  // for hasFormId()
+                    //std::cout << "about to clear vect" << std::endl; // FIXME
+                    vect.mDummyActive.clear();
+                    vect.mDummyVisible.clear();
 
-                        if ((*iter).mData.getBaseNode())
-                        {
-                            std::string handle = (*iter).mData.getHandle();
-                            mSceneNodeMap[handle] = formId; // for searchViaHandle()
-                        }
-                        // some (e.g. REFR with a SOUN baseObj) do not have a NIF model hence no BaseNode
-                    }
+                    return true;
                 }
-                else // dummy cell
-#endif
-                {
-                    std::vector<LiveCellRefBase*> sublist = vect.search(x, y, range, exclude);
 
-                    // remove objects no longer needed
+                typedef std::vector<LiveCellRefBase*> SubList;
+
+                SubList newlist = vect.search(x, y, range, exclude);
+                SubList& currlist = (exclude == 0 ? vect.mDummyActive : vect.mDummyVisible);
+
+                if (mode == DUM_Insert)
+                {
+#if 1
+                    for (SubList::iterator iter(newlist.begin()); iter != newlist.end(); ++iter)
+                    {
+                        // insert only if it isn't already there
+                        // NOTE: currlist may have deleted items and they won't be inserted
+                        // (but then is it possible to have it deleted and inserted at the same
+                        // time? if so seems like a logic error)
+                        if (std::find(currlist.begin(), currlist.end(), *iter) == currlist.end())
+                        {
+                            if ((*iter)->mData.isDeletedByContentFile())
+                                continue;
+
+                            // should have an Ogre::SceneNode handle after this;
+                            // see Objects::insertBegin() and Actors::insertBegin()
+                            if (!functor(MWWorld::Ptr(*iter, this)))
+                                return false;
+                        }
+                    }
+
+                    currlist.swap(newlist);
+#    if 0
+                    // FIXME
+                    for (SubList::iterator iter(currlist.begin()); iter != currlist.end(); ++iter)
+                    {
+                        MWWorld::Ptr ptr(*iter, this); // FIXME: testing
+                        if (ptr.getTypeName() == typeid(ESM4::Door).name())
+                        {
+                            std::cout << "currlist after insert " << ptr.getBase()->mRef.getRefId() << std::endl;
+                        }
+                    }
+#    endif
+#else
                     if (exclude == 0) // those with physics
                     {
-                        for (std::vector<LiveCellRefBase*>::iterator iter(vect.mDummyActive.begin());
-                            iter != vect.mDummyActive.end(); ++iter)
+                        for (std::vector<LiveCellRefBase*>::iterator iter(newlist.begin());
+                                iter != newlist.end(); ++iter)
                         {
-                            if (std::find(sublist.begin(), sublist.end(), *iter) == sublist.end())
+                            // insert only if it isn't already there
+                            if (std::find(vect.mDummyActive.begin(), vect.mDummyActive.end(), *iter)
+                                    == vect.mDummyActive.end())
                             {
-                                // used to be, but no longer
+                                if ((*iter)->mData.isDeletedByContentFile())
+                                    continue;
 
-                                // get the SceneNode and handle from the object (how?)
-                                //
-                                // use the SceneNode to remove the physics object
-                                // (how to get access to PhysicsSystem *mPhysics ?)
-                                // remove handle from mSceneNodeMap
-                                //
-                                // need modified Objects::removeCell() and Actors::removeCell()
-                                //
-                                // remove formid from mStoreTypes and mForeignIds
-
-
-
-
-
-
-
-                                //ListAndResetHandles functor;
-
-
-          //Ogre::SceneNode* handle = ptr.getRefData().getBaseNode();
-          //if (handle)
-          //    mHandles.push_back (handle);
-
-          //ptr.getRefData().setBaseNode(0);
-
-
-
-
-                              //(*iter)->forEach<ListAndResetHandles>(functor);
-                              //{
-                              //    // silence annoying g++ warning
-                              //    for (std::vector<Ogre::SceneNode*>::const_iterator iter2 (functor.mHandles.begin());
-                              //        iter2!=functor.mHandles.end(); ++iter2)
-                              //    {
-                              //        Ogre::SceneNode* node = *iter2;
-
-                              //        // ragdoll objects have physics objects attached to child SceneNodes
-                              //        Ogre::Node::ChildNodeIterator childIter = node->getChildIterator();
-                              //        while (childIter.hasMoreElements())
-                              //        {
-                              //            mPhysics->removeObject (childIter.current()->first);
-                              //            childIter.getNext();
-                              //        }
-
-                              //        mPhysics->removeObject (node->getName());
-
-                              //        removeLookupKeys(object.getBase()->mData.getHandle(), formId);
-                              //    }
-                              //}
-
-
-
-
-
+                                // should have an Ogre::SceneNode handle after this;
+                                // see Objects::insertBegin() and Actors::insertBegin()
+                                if (!functor(MWWorld::Ptr(*iter, this)))
+                                    return false;
                             }
                         }
                     }
                     else // those without physics
                     {
-                        for (std::vector<LiveCellRefBase*>::iterator iter(vect.mDummyVisible.begin());
-                            iter != vect.mDummyVisible.end(); ++iter)
+                        for (std::vector<LiveCellRefBase*>::iterator iter(newlist.begin());
+                                iter != newlist.end(); ++iter)
                         {
-                            if (std::find(sublist.begin(), sublist.end(), *iter) == sublist.end())
+                            // insert only if it isn't already there
+                            if (std::find(vect.mDummyVisible.begin(), vect.mDummyVisible.end(), *iter)
+                                    == vect.mDummyVisible.end())
                             {
-                                // used to be, but no longer
+                                if ((*iter)->mData.isDeletedByContentFile())
+                                    continue;
+
+                                // should have an Ogre::SceneNode handle after this;
+                                // see Objects::insertBegin() and Actors::insertBegin()
+                                if (!functor(MWWorld::Ptr(*iter, this)))
+                                    return false;
+                            }
+                        }
+                    }
+#endif
+                }
+                else /*mode == DUM_Remove*/ // remove objects no longer needed
+                {
+#if 1
+                    for (SubList::iterator iter(currlist.begin()); iter != currlist.end(); ++iter)
+                    {
+#    if 0
+                        MWWorld::Ptr ptr(*iter, this); // FIXME: testing
+                        if (ptr.getTypeName() == typeid(ESM4::Door).name())
+                        {
+                            std::cout << "checking currlist " << ptr.getBase()->mRef.getRefId() << std::endl;
+                        }
+#    endif
+                        if (std::find(newlist.begin(), newlist.end(), *iter) == newlist.end())
+                        {
+                            // used to be, but no longer
+                            if (!functor(MWWorld::Ptr(*iter, this)))
+                                return false;
+                        }
+                        else // FIXME
+                        {
+                            MWWorld::Ptr ptr(*iter, this); // FIXME: testing
+                            if (ptr.getTypeName() == typeid(ESM4::Door).name())
+                            {
+                                std::cout << "leaving in currlist " << ptr.getBase()->mRef.getRefId() << std::endl;
                             }
                         }
                     }
 
-                    for (std::vector<LiveCellRefBase*>::iterator iter(sublist.begin());
-                            iter != sublist.end(); ++iter)
+                    // TODO: if newlist has objects not in currlist, then when we come to
+                    // "insert" later it will look as if we already have it; and if we don't
+                    // delete it from currlist then when we come to "insert" we won't be able
+                    // to insert the same (i.e. deleted) objects - which seems like a logic
+                    // error
+                    //currlist.swap(newlist);
+#else
+                    if (exclude == 0) // those with physics
                     {
-                        if ((*iter)->mData.isDeletedByContentFile())
-                            continue;
-
-                        // should have an Ogre::SceneNode handle after this;
-                        // see Objects::insertBegin() and Actors::insertBegin()
-                        MWWorld::Ptr ptr(*iter, this);
-                        if (!functor(ptr))
-                        //if (!functor(MWWorld::Ptr(*iter, this)))
-                            return false;
-
-                        //if (ptr.getTypeName() == typeid(ESM4::Door).name())
-                            //std::cout << "dummy insert door " << std::endl;
-
-                        ESM4::FormId formId = (*iter)->mRef.getFormId();
-                        // FIXME: currently unused because getPtr() only uses hasId()
-                      //mForeignIds.push_back(formId);  // for hasFormId()
-
-                        // update index for searchViaHandle()
-                        if (exclude == 0 && // for those with collision shapes only
-                                (*iter)->mData.getBaseNode()) // and if it was actually created
+                        for (std::vector<LiveCellRefBase*>::iterator iter(vect.mDummyActive.begin());
+                                iter != vect.mDummyActive.end(); ++iter)
                         {
-                            std::string handle = (*iter)->mData.getHandle();
-                            mSceneNodeMap[handle] = formId;
+                            if (std::find(newlist.begin(), newlist.end(), *iter) == newlist.end())
+                            {
+                                // used to be, but no longer
+                                if (!functor(MWWorld::Ptr(*iter, this)))
+                                    return false;
+                            }
                         }
-                        // some (e.g. REFR with a SOUN baseObj) do not have a NIF model hence no BaseNode
-                    }
 
-                    if (exclude == 0)
-                        vect.mDummyActive.swap(sublist);
-                    else
-                        vect.mDummyVisible.swap(sublist);
+                        vect.mDummyActive.swap(newlist);
+                    }
+                    else // those without physics
+                    {
+                        for (std::vector<LiveCellRefBase*>::iterator iter(vect.mDummyVisible.begin());
+                                iter != vect.mDummyVisible.end(); ++iter)
+                        {
+                            if (std::find(newlist.begin(), newlist.end(), *iter) == newlist.end())
+                            {
+                                // used to be, but no longer
+                                if (!functor(MWWorld::Ptr(*iter, this)))
+                                    return false;
+                            }
+                        }
+
+                        vect.mDummyVisible.swap(newlist);
+                    }
+#endif
                 }
 
                 return true;

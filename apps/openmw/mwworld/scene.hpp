@@ -89,7 +89,7 @@ namespace MWWorld
             void loadCell (CellStore *cell, Loading::Listener* loadingListener);
 
             void loadForeignCell (CellStore *cell, Loading::Listener* loadingListener, uint32_t worldId = 0);
-            void loadDummyCell (CellStore *cell, int x, int y, Loading::Listener* loadingListener);
+            void updateDummyCell (CellStore *cell, int x, int y, Loading::Listener* loadingListener);
             void loadVisibleDist (CellStore *cell, Loading::Listener* loadingListener);
 
             void playerMoved (const Ogre::Vector3& pos);

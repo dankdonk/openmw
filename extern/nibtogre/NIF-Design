@@ -4424,7 +4424,7 @@ void Scene::unloadCell (CellStoreCollection::iterator iter)
     (*iter)->forEach<ListAndResetHandles>(functor);
 ```
 
-# [16/05/2020 - 18/05/2020] Updating the Dummy Cell
+# [16/05/2020 - 19/05/2020] Updating the Dummy Cell
 
 As the player moves around the external cells the dummy cell needs to be updated - references within a certain distance needs to be instantiated and others removed.
 
@@ -4455,6 +4455,7 @@ It turns out that there's already `void Scene::removeObjectFromScene (const Ptr&
 
 **FIXME:** `CellStore::hasFormId()` is not being used
 **FIXME:** `CellStore::preload()` does not support newer games
+**FIXME:** distant landscape near Namira's shrine (11, 34) has a gap
 
 
 [//]: # (/* spell spelllang=en_au syntax=cpp */)

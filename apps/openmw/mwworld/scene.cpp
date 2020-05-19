@@ -29,7 +29,7 @@
 #include "class.hpp"
 #include "cellfunctors.hpp"
 #include "cellstore.hpp"
-//#include "foreigncell.hpp"
+#include "foreigncell.hpp" // FIXME: for testing ony
 
 namespace
 {
@@ -116,9 +116,17 @@ namespace
                 }
                 ptr.getClass().adjustPosition (ptr, false);
 
+                if (ptr.getTypeName() == typeid(ESM4::Door).name()) // FIXME: debugging only
+                    std::cout << "inserting " << ptr.getBase()->mRef.getRefId() << std::endl;
+
                 // these should already have mStoreTypes updated during CellStore::loadTes4Record()
                 if (mCell.isForeignCell())
-                    mCell.updateLookupMaps(ptr.getBase()->mRef.getFormId(), ptr.getBase());
+                {
+                    if (mPhysics)
+                        mCell.updateLookupMaps(ptr.getBase()->mRef.getFormId(), ptr.getBase());
+                    else
+                        mCell.updateLookupMaps(ptr.getBase()->mRef.getFormId(), nullptr); // no handle map
+                }
             }
             catch (const std::exception& e)
             {
@@ -143,10 +151,17 @@ namespace
     {
         mRefs.push_back(ptr);
 
+        //Ptr ptr = visitor2.mRefs[i];
+        if (ptr.getTypeName() == typeid(ESM4::Door).name()) // FIXME
+        {
+            // FIXME: testing
+            // well, it is actuallly being deleted later but...
+            std::cout << "deleting " << ptr.getBase()->mRef.getRefId() << std::endl;
+        }
+
         return true;
     }
 }
-
 
 namespace MWWorld
 {
@@ -268,6 +283,18 @@ namespace MWWorld
                 );
             if (land && land->mDataTypes&ESM::Land::DATA_VHGT)
                 mPhysics->removeHeightField ((*iter)->getCell()->getGridX(), (*iter)->getCell()->getGridY());
+        }
+
+        if ((*iter)->isDummyCell())
+        {
+            std::cout << "about to clear dummy cell " // FIXME
+                << static_cast<const MWWorld::ForeignCell*>((*iter)->getCell())->mCell->mEditorId << std::endl;
+
+            ListFunctor visitor;
+            (*iter)->forEachDummy<ListFunctor>(visitor, CellStore::DUM_Clear, 0, 0);
+
+            //for (std::size_t i = 0; i < visitor.mRefs.size(); ++i)
+                //removeObjectFromScene(visitor.mRefs[i]);
         }
 
         mRendering.removeCell(*iter);
@@ -409,24 +436,36 @@ namespace MWWorld
         MWBase::Environment::get().getWorld()->getLocalScripts().addCell (cell); // FIXME
     }
 
-    void Scene::loadDummyCell (CellStore *cell, int x, int y, Loading::Listener* loadingListener)
+    // NOTE: delete before insert
+    // WARN: exclude == 0 has a special meaning (i.e. has physics)
+    // FIXME: range and exclude values are hard-coded for the moment
+    void Scene::updateDummyCell (CellStore *cell, int x, int y, Loading::Listener* loadingListener)
     {
-        std::size_t range = 2;
-        InsertFunctor functor (*cell, true/*rescale*/, *loadingListener, mPhysics, mRendering);
-        cell->forEachDummy (functor, x, y, range, 0);
+        // remove without physics
+        ListFunctor visitor;
+        cell->forEachDummy<ListFunctor>(visitor, CellStore::DUM_Remove, x, y, 6, 3);
+        for (std::size_t i = 0; i < visitor.mRefs.size(); ++i)
+            removeObjectFromScene(visitor.mRefs[i]);
 
+        // remove with physics
+        ListFunctor visitor2;
+        cell->forEachDummy<ListFunctor>(visitor2, CellStore::DUM_Remove, x, y, 3, 0);
+        for (std::size_t i = 0; i < visitor2.mRefs.size(); ++i)
+            removeObjectFromScene(visitor2.mRefs[i]);
+
+        std::cout << "about to insert dummy with physics" << std::endl; // FIXME
+
+        // insert with physics
+        std::size_t range = 3;
+        InsertFunctor functor (*cell, true/*rescale*/, *loadingListener, mPhysics, mRendering);
+        cell->forEachDummy (functor, CellStore::DUM_Insert, x, y, range, 0);
+
+        std::cout << "about to insert dummy without physics" << std::endl; // FIXME
+
+        // insert without physics
         range = 6;
         InsertFunctor functor2 (*cell, true/*rescale*/, *loadingListener, nullptr, mRendering);
-        cell->forEachDummy (functor2, x, y, range, 2);
-
-        ListFunctor visitor;
-        cell->forEachDummy<ListFunctor>(visitor, x, y, 6, 2); // FIXME: just experimenting
-
-        std::cout << "delete size " << visitor.mRefs.size() << std::endl;
-        for (std::size_t i = 0; i < visitor.mRefs.size(); ++i)
-        {
-            std::cout << "delete " << ESM4::formIdToString(visitor.mRefs[i].getBase()->mRef.getFormId()) << std::endl;
-        }
+        cell->forEachDummy (functor2, CellStore::DUM_Insert, x, y, range, 3);
     }
 
     void Scene::loadVisibleDist (CellStore *cell, Loading::Listener* loadingListener)
@@ -667,9 +706,84 @@ namespace MWWorld
         if (!cell) // FIXME
             return nullptr; // throw instead?
 
-        //std::cout << "updateWorldCellsAtGrid" << std::endl; // FIXME
-
         mRendering.enableTerrain(true, worldId);
+
+
+        // FIXME: delete before adding
+        // FIXME: support FO3/FONV file names
+
+//#if 0
+        // add landscape LOD mesh here
+        //
+        // first, get a list of applicable grid positions based on the player's current grid
+        // but what if the current grid is at the edge of the landscape LOD mesh?
+        // in extreme case right at the corner?  do we then load 4?
+        //
+        // maybe keep loading at half way point, e.g. -48, -16, 16, 48
+        //
+        // Looks like it's <formid dec>.<x bottom left><y bottom left><size>.nif
+        //
+        //0,0 : 32,0 : 0,32 : 32,32
+        //mRendering.addLandscape(worldId, x, y, "meshes\\landscape\\lod\\60.00.00.32.nif");
+        // 0,32: 32,32: 0,59: 32,59
+        //mRendering.addLandscape(worldId, x, y, "meshes\\landscape\\lod\\60.00.32.32.nif");
+        // -64,32 : -64:59 : -32:32 : -32,59
+        //mRendering.addLandscape(worldId, x, y, "meshes\\landscape\\lod\\60.-64.32.32.nif");
+
+        int xLeft   = int((X - 16 - 32) / 32) * 32; // = int((x - 48) / 32) * 32
+        int xRight  = int((X - 16 + 32) / 32) * 32; // = int((x + 16) / 32) * 32
+        int yBottom = int((Y - 16 - 32) / 32) * 32; // = int((y - 48) / 32) * 32
+        int yTop    = int((Y - 16 + 32) / 32) * 32; // = int((y + 16) / 32) * 32
+
+        //std::stringstream ss;
+        //ss << std::setw(2) << std::setfill('0') << i;
+        //std::string mesh = ss.str();
+        std::vector<std::string> lodFiles;
+        std::string mesh = "meshes\\landscape\\lod\\"+std::to_string(worldId)
+                            +"."+((xLeft==0)? "0":"")+std::to_string(xLeft)
+                            +"."+((yBottom==0)? "0":"")+std::to_string(yBottom)+".32.nif";
+
+        //std::cout << mesh << std::endl; // FIXME
+        if (Ogre::ResourceGroupManager::getSingleton().resourceExistsInAnyGroup(mesh))
+        {
+            lodFiles.push_back(mesh);
+            mRendering.addLandscape(worldId, X, Y, lodFiles.back());
+        }
+
+        mesh = "meshes\\landscape\\lod\\"+std::to_string(worldId)
+                            +"."+((xLeft==0)? "0":"")+std::to_string(xLeft)
+                            +"."+((yTop==0)? "0":"")+std::to_string(yTop)+".32.nif";
+
+        //std::cout << mesh << std::endl; // FIXME
+        if (Ogre::ResourceGroupManager::getSingleton().resourceExistsInAnyGroup(mesh))
+        {
+            lodFiles.push_back(mesh);
+            mRendering.addLandscape(worldId, X, Y, lodFiles.back());
+        }
+
+        mesh = "meshes\\landscape\\lod\\"+std::to_string(worldId)
+                            +"."+((xRight==0)? "0":"")+std::to_string(xRight)
+                            +"."+((yBottom==0)? "0":"")+std::to_string(yBottom)+".32.nif";
+
+        //std::cout << mesh << std::endl; // FIXME
+        if (Ogre::ResourceGroupManager::getSingleton().resourceExistsInAnyGroup(mesh))
+        {
+            lodFiles.push_back(mesh);
+            mRendering.addLandscape(worldId, X, Y, lodFiles.back());
+        }
+        mesh = "meshes\\landscape\\lod\\"+std::to_string(worldId)
+                            +"."+((xRight==0)? "0":"")+std::to_string(xRight)
+                            +"."+((yTop==0)? "0":"")+std::to_string(yTop)+".32.nif";
+
+        //std::cout << mesh << std::endl; // FIXME
+        if (Ogre::ResourceGroupManager::getSingleton().resourceExistsInAnyGroup(mesh))
+        {
+            lodFiles.push_back(mesh);
+            mRendering.addLandscape(worldId, X, Y, lodFiles.back());
+        }
+//#endif
+
+        //std::cout << "updateWorldCellsAtGrid" << std::endl; // FIXME
 
         std::string loadingExteriorText = "#{sLoadingMessage3}";
         loadingListener->setLabel(loadingExteriorText);
@@ -952,7 +1066,7 @@ namespace MWWorld
                     if ((*active)->isDummyCell() || (*active)->isVisibleDistCell())
                     {
                         ++active;
-                        continue;
+                        continue; // dummy cell objects are removed elsewhere
                     }
 
                     if (std::abs(X - (*active)->getCell()->getGridX()) <= halfGridSize &&
@@ -982,7 +1096,7 @@ namespace MWWorld
 
                     if (x == (*iter)->getCell()->getGridX() &&
                         y == (*iter)->getCell()->getGridY() &&
-                        !(*iter)->isDummyCell() &&
+                        !(*iter)->isDummyCell() && // FIXME: count only the grids to be loaded?
                         !(*iter)->isVisibleDistCell())
                         break;
 
@@ -1070,7 +1184,7 @@ namespace MWWorld
                 if (1)//result.second)
                 {
                     std::cout << "Loading dummy at " << X << "," << Y << std::endl;
-                    loadDummyCell(dummy, X, Y, loadingListener);
+                    updateDummyCell(dummy, X, Y, loadingListener);
                     //loadForeignCell(dummy, loadingListener);
                 }
             }
@@ -1666,71 +1780,13 @@ namespace MWWorld
         // FIXME: How to handle TES4 style terrain?  Add updateTES4Terrain() method to RenderingManager?
         int x = 0;
         int y = 0;
-        const int cellSize = 4096;
 
-        x = static_cast<int>(std::floor(position.pos[0] / cellSize));
-        y = static_cast<int>(std::floor(position.pos[1] / cellSize));
+        MWBase::Environment::get().getWorld()->positionToIndex(position.pos[0], position.pos[1], x, y, true/*foreign*/);
+        //const int cellSize = 4096;
 
-        // FIXME: add landscape LOD mesh here?
-        // first, get a list of applicable grid positions based on the player's current grid
-        // but what if the current grid is at the edge of the landscape LOD mesh?
-        // in extreme case right at the corner?  do we then load 4?
-        //
-        // maybe keep loading at half way point, e.g. -48, -16, 16, 48
-        //
-        // Looks like it's <formid dec>.<x bottom left><y bottom left><size>.nif
-        //
-        //0,0 : 32,0 : 0,32 : 32,32
-        //mRendering.addLandscape(worldId, x, y, "meshes\\landscape\\lod\\60.00.00.32.nif");
-        // 0,32: 32,32: 0,59: 32,59
-        //mRendering.addLandscape(worldId, x, y, "meshes\\landscape\\lod\\60.00.32.32.nif");
-        // -64,32 : -64:59 : -32:32 : -32,59
-        //mRendering.addLandscape(worldId, x, y, "meshes\\landscape\\lod\\60.-64.32.32.nif");
+        //x = static_cast<int>(std::floor(position.pos[0] / cellSize));
+        //y = static_cast<int>(std::floor(position.pos[1] / cellSize));
 
-        int xLeft   = int((x - 16 - 32) / 32) * 32; // = int((x - 48) / 32) * 32
-        int xRight  = int((x - 16 + 32) / 32) * 32; // = int((x + 16) / 32) * 32
-        int yBottom = int((y - 16 - 32) / 32) * 32; // = int((y - 48) / 32) * 32
-        int yTop    = int((y - 16 + 32) / 32) * 32; // = int((y + 16) / 32) * 32
-#if 0
-        //std::stringstream ss;
-        //ss << std::setw(2) << std::setfill('0') << i;
-        //std::string mesh = ss.str();
-        std::vector<std::string> lodFiles;
-        std::string mesh = "meshes\\landscape\\lod\\"+std::to_string(worldId)
-                            +"."+((xLeft==0)? "0":"")+std::to_string(xLeft)+"."+((yBottom==0)? "0":"")+std::to_string(yBottom)+".32.nif";
-        std::cout << mesh << std::endl;
-        if (Ogre::ResourceGroupManager::getSingleton().resourceExistsInAnyGroup(mesh))
-        {
-            lodFiles.push_back(mesh);
-            mRendering.addLandscape(worldId, x, y, lodFiles.back());
-        }
-
-        mesh = "meshes\\landscape\\lod\\"+std::to_string(worldId)
-                            +"."+((xLeft==0)? "0":"")+std::to_string(xLeft)+"."+((yTop==0)? "0":"")+std::to_string(yTop)+".32.nif";
-        std::cout << mesh << std::endl;
-        if (Ogre::ResourceGroupManager::getSingleton().resourceExistsInAnyGroup(mesh))
-        {
-            lodFiles.push_back(mesh);
-            mRendering.addLandscape(worldId, x, y, lodFiles.back());
-        }
-
-        mesh = "meshes\\landscape\\lod\\"+std::to_string(worldId)
-                            +"."+((xRight==0)? "0":"")+std::to_string(xRight)+"."+((yBottom==0)? "0":"")+std::to_string(yBottom)+".32.nif";
-        std::cout << mesh << std::endl;
-        if (Ogre::ResourceGroupManager::getSingleton().resourceExistsInAnyGroup(mesh))
-        {
-            lodFiles.push_back(mesh);
-            mRendering.addLandscape(worldId, x, y, lodFiles.back());
-        }
-        mesh = "meshes\\landscape\\lod\\"+std::to_string(worldId)
-                            +"."+((xRight==0)? "0":"")+std::to_string(xRight)+"."+((yTop==0)? "0":"")+std::to_string(yTop)+".32.nif";
-        std::cout << mesh << std::endl;
-        if (Ogre::ResourceGroupManager::getSingleton().resourceExistsInAnyGroup(mesh))
-        {
-            lodFiles.push_back(mesh);
-            mRendering.addLandscape(worldId, x, y, lodFiles.back());
-        }
-#endif
         // objects
         CellStore *current = updateWorldCellsAtGrid(worldId, x, y);
         if (!current)
@@ -1781,7 +1837,7 @@ namespace MWWorld
     {
         MWBase::Environment::get().getMechanicsManager()->remove (ptr);
         MWBase::Environment::get().getSoundManager()->stopSound3D (ptr);
-#if 1
+
         // update CellStore indices first
         CellStore *cell = ptr.getCell();
         if (cell)
@@ -1792,20 +1848,19 @@ namespace MWWorld
 
         // ragdoll objects have physics objects attached to child SceneNodes
         Ogre::SceneNode* node = ptr.getRefData().getBaseNode();
-        Ogre::Node::ChildNodeIterator childIter = node->getChildIterator();
-        while (childIter.hasMoreElements())
+        if (node)
         {
-            mPhysics->removeObject (childIter.current()->first);
-            childIter.getNext();
+            Ogre::Node::ChildNodeIterator childIter = node->getChildIterator();
+            while (childIter.hasMoreElements())
+            {
+                mPhysics->removeObject (childIter.current()->first);
+                childIter.getNext();
+            }
+            mPhysics->removeObject (node->getName());
         }
-        mPhysics->removeObject (node->getName());
 
         // finally
         mRendering.removeObject (ptr);
-#else
-        mPhysics->removeObject (ptr.getRefData().getHandle());
-        mRendering.removeObject (ptr);
-#endif
     }
 
     bool Scene::isCellActive(const CellStore &cell)
