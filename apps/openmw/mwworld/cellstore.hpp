@@ -144,9 +144,6 @@ namespace MWWorld
 
             std::unordered_map<std::string, ESM4::FormId> mSceneNodeMap; // for searching via handle
 
-            //std::vector<LiveCellRefBase*> mDummyActive;
-            //std::vector<LiveCellRefBase*> mDummyVisible;
-
             ForeignStore<ESM4::Pathgrid>        mForeignPathgrids;
             ESM::Pathgrid mPathgrid; // FIXME: just a quick workaround
             void buildTES3Pathgrid();
@@ -415,13 +412,6 @@ namespace MWWorld
             {
                 if (mode == DUM_Clear)
                 {
-                    //for (SubList::iterator iter(vect.mDummyActive.begin()); iter != vect.mDummyActive.end(); ++iter)
-                            //functor(MWWorld::Ptr(*iter, this));
-
-                    //for (SubList::iterator iter(vect.mDummyVisible.begin()); iter != vect.mDummyVisible.end(); ++iter)
-                            //functor(MWWorld::Ptr(*iter, this));
-
-                    //std::cout << "about to clear vect" << std::endl; // FIXME
                     vect.mDummyActive.clear();
                     vect.mDummyVisible.clear();
 
@@ -435,7 +425,6 @@ namespace MWWorld
 
                 if (mode == DUM_Insert)
                 {
-#if 1
                     for (SubList::iterator iter(newlist.begin()); iter != newlist.end(); ++iter)
                     {
                         // insert only if it isn't already there
@@ -455,124 +444,25 @@ namespace MWWorld
                     }
 
                     currlist.swap(newlist);
-#    if 0
-                    // FIXME
-                    for (SubList::iterator iter(currlist.begin()); iter != currlist.end(); ++iter)
-                    {
-                        MWWorld::Ptr ptr(*iter, this); // FIXME: testing
-                        if (ptr.getTypeName() == typeid(ESM4::Door).name())
-                        {
-                            std::cout << "currlist after insert " << ptr.getBase()->mRef.getRefId() << std::endl;
-                        }
-                    }
-#    endif
-#else
-                    if (exclude == 0) // those with physics
-                    {
-                        for (std::vector<LiveCellRefBase*>::iterator iter(newlist.begin());
-                                iter != newlist.end(); ++iter)
-                        {
-                            // insert only if it isn't already there
-                            if (std::find(vect.mDummyActive.begin(), vect.mDummyActive.end(), *iter)
-                                    == vect.mDummyActive.end())
-                            {
-                                if ((*iter)->mData.isDeletedByContentFile())
-                                    continue;
-
-                                // should have an Ogre::SceneNode handle after this;
-                                // see Objects::insertBegin() and Actors::insertBegin()
-                                if (!functor(MWWorld::Ptr(*iter, this)))
-                                    return false;
-                            }
-                        }
-                    }
-                    else // those without physics
-                    {
-                        for (std::vector<LiveCellRefBase*>::iterator iter(newlist.begin());
-                                iter != newlist.end(); ++iter)
-                        {
-                            // insert only if it isn't already there
-                            if (std::find(vect.mDummyVisible.begin(), vect.mDummyVisible.end(), *iter)
-                                    == vect.mDummyVisible.end())
-                            {
-                                if ((*iter)->mData.isDeletedByContentFile())
-                                    continue;
-
-                                // should have an Ogre::SceneNode handle after this;
-                                // see Objects::insertBegin() and Actors::insertBegin()
-                                if (!functor(MWWorld::Ptr(*iter, this)))
-                                    return false;
-                            }
-                        }
-                    }
-#endif
                 }
-                else /*mode == DUM_Remove*/ // remove objects no longer needed
+                else /*mode == DUM_Remove*/
                 {
-#if 1
+                    // list no longer needed objects for removing
                     for (SubList::iterator iter(currlist.begin()); iter != currlist.end(); ++iter)
                     {
-#    if 0
-                        MWWorld::Ptr ptr(*iter, this); // FIXME: testing
-                        if (ptr.getTypeName() == typeid(ESM4::Door).name())
-                        {
-                            std::cout << "checking currlist " << ptr.getBase()->mRef.getRefId() << std::endl;
-                        }
-#    endif
                         if (std::find(newlist.begin(), newlist.end(), *iter) == newlist.end())
                         {
                             // used to be, but no longer
                             if (!functor(MWWorld::Ptr(*iter, this)))
                                 return false;
                         }
-                        else // FIXME
-                        {
-                            MWWorld::Ptr ptr(*iter, this); // FIXME: testing
-                            if (ptr.getTypeName() == typeid(ESM4::Door).name())
-                            {
-                                std::cout << "leaving in currlist " << ptr.getBase()->mRef.getRefId() << std::endl;
-                            }
-                        }
                     }
 
-                    // TODO: if newlist has objects not in currlist, then when we come to
+                    // NOTE: if newlist has objects not in currlist, then when we come to
                     // "insert" later it will look as if we already have it; and if we don't
                     // delete it from currlist then when we come to "insert" we won't be able
-                    // to insert the same (i.e. deleted) objects - which seems like a logic
-                    // error
+                    // to insert the same (i.e. deleted) objects - which seems like a logic error
                     //currlist.swap(newlist);
-#else
-                    if (exclude == 0) // those with physics
-                    {
-                        for (std::vector<LiveCellRefBase*>::iterator iter(vect.mDummyActive.begin());
-                                iter != vect.mDummyActive.end(); ++iter)
-                        {
-                            if (std::find(newlist.begin(), newlist.end(), *iter) == newlist.end())
-                            {
-                                // used to be, but no longer
-                                if (!functor(MWWorld::Ptr(*iter, this)))
-                                    return false;
-                            }
-                        }
-
-                        vect.mDummyActive.swap(newlist);
-                    }
-                    else // those without physics
-                    {
-                        for (std::vector<LiveCellRefBase*>::iterator iter(vect.mDummyVisible.begin());
-                                iter != vect.mDummyVisible.end(); ++iter)
-                        {
-                            if (std::find(newlist.begin(), newlist.end(), *iter) == newlist.end())
-                            {
-                                // used to be, but no longer
-                                if (!functor(MWWorld::Ptr(*iter, this)))
-                                    return false;
-                            }
-                        }
-
-                        vect.mDummyVisible.swap(newlist);
-                    }
-#endif
                 }
 
                 return true;

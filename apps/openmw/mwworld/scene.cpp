@@ -116,9 +116,6 @@ namespace
                 }
                 ptr.getClass().adjustPosition (ptr, false);
 
-                if (ptr.getTypeName() == typeid(ESM4::Door).name()) // FIXME: debugging only
-                    std::cout << "inserting " << ptr.getBase()->mRef.getRefId() << std::endl;
-
                 // these should already have mStoreTypes updated during CellStore::loadTes4Record()
                 if (mCell.isForeignCell())
                 {
@@ -292,9 +289,6 @@ namespace MWWorld
 
             ListFunctor visitor;
             (*iter)->forEachDummy<ListFunctor>(visitor, CellStore::DUM_Clear, 0, 0);
-
-            //for (std::size_t i = 0; i < visitor.mRefs.size(); ++i)
-                //removeObjectFromScene(visitor.mRefs[i]);
         }
 
         mRendering.removeCell(*iter);
@@ -453,14 +447,14 @@ namespace MWWorld
         for (std::size_t i = 0; i < visitor2.mRefs.size(); ++i)
             removeObjectFromScene(visitor2.mRefs[i]);
 
-        std::cout << "about to insert dummy with physics" << std::endl; // FIXME
+        //std::cout << "about to insert dummy with physics" << std::endl; // FIXME
 
         // insert with physics
         std::size_t range = 3;
         InsertFunctor functor (*cell, true/*rescale*/, *loadingListener, mPhysics, mRendering);
         cell->forEachDummy (functor, CellStore::DUM_Insert, x, y, range, 0);
 
-        std::cout << "about to insert dummy without physics" << std::endl; // FIXME
+        //std::cout << "about to insert dummy without physics" << std::endl; // FIXME
 
         // insert without physics
         range = 6;
@@ -1782,10 +1776,6 @@ namespace MWWorld
         int y = 0;
 
         MWBase::Environment::get().getWorld()->positionToIndex(position.pos[0], position.pos[1], x, y, true/*foreign*/);
-        //const int cellSize = 4096;
-
-        //x = static_cast<int>(std::floor(position.pos[0] / cellSize));
-        //y = static_cast<int>(std::floor(position.pos[1] / cellSize));
 
         // objects
         CellStore *current = updateWorldCellsAtGrid(worldId, x, y);
@@ -1812,12 +1802,6 @@ namespace MWWorld
         InsertFunctor functor (cell, rescale, *loadingListener, mPhysics, mRendering);
         cell.forEach (functor);
     }
-
-    //void Scene::insertForeignCell (CellStore &cell, bool rescale, Loading::Listener* loadingListener)
-    //{
-    //    InsertFunctor functor(cell, rescale, *loadingListener, mPhysics, mRendering);
-    //    cell.forEach (functor);
-    //}
 
     void Scene::addObjectToScene (const Ptr& ptr)
     {

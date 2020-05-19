@@ -99,12 +99,7 @@ namespace MWWorld
                 for (std::int32_t j = y - std::int32_t(range); j <= y + std::int32_t(range); ++j)
                 {
                     if (exclude != 0 && i >= x - exclude && i <= x + exclude)
-                    {
-                        //std::cout << "ignoring x " << i << std::endl; // FIXME
                         continue;
-                    }
-                    //if (exclude != 0)
-                        //std::cout << "processing x" << i << std::endl; // FIXME
 
                     if (exclude != 0 && j >= y - exclude && j <= y + exclude)
                         continue;
