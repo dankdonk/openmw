@@ -309,6 +309,21 @@ void RenderingManager::addLandscape(ESM4::FormId id, int x, int y, const std::st
     mObjects->insertLandscapeModel(id, x, y, model);
 }
 
+void RenderingManager::removeLandscape(ESM4::FormId id, int x, int y)
+{
+    mObjects->removeLandscapeModel(id, x, y);
+}
+
+void RenderingManager::removeLandscape(ESM4::FormId id)
+{
+    mObjects->removeLandscapeModel(id);
+}
+
+void RenderingManager::hideLandscape(ESM4::FormId id, int x, int y, int range)
+{
+    mObjects->hideLandscapeModel(id, x, y, range);
+}
+
 void
 RenderingManager::updateObjectCell(const MWWorld::Ptr &old, const MWWorld::Ptr &cur)
 {

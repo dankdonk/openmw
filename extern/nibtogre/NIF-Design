@@ -3130,9 +3130,9 @@ xRight = int((x - 16 + 32) / 32) * 32; // = int((x + 16) / 32) * 32
 
 For loading cells, visibly distant objects and LOD landscape, hysteresis should be introduced to stop constant loading/unloading at specific points in the map.  i.e. loading and unloading occurs at different points
 
-In order to avoid keeping an unreasonable number of blocks around (again, in pathological cases), we can make the unloading happen *before* loading. i.e. (2,10) - (14,14) = (-12,-4)  As the player character goes up the map, the player will reach ((2,15).  At that point y bottom for unloading will be (15 -14 -32)/32 = 0 -31/32.
+In order to avoid keeping an unreasonable number of blocks around (again, in pathological cases), we can make the unloading happen *before* loading. e.g. 2 cells before midpoint would be (2,10) - (14,14) = (-12,-4)  As the player character goes up the map, the player will reach ((2,15).  At that point y bottom for unloading will be (15 -14 -32)/32 = 0 -31/32.
 
-Testing for (0,0), unloading:
+Testing for (0,0), unloading (note -14 rather than -16):
 
     trigger point | add block distance | divide by block size
     --------------|------------------------------------------
@@ -4455,7 +4455,28 @@ It turns out that there's already `void Scene::removeObjectFromScene (const Ptr&
 
 **FIXME:** `CellStore::hasFormId()` is not being used
 **FIXME:** `CellStore::preload()` does not support newer games
-**FIXME:** distant landscape near Namira's shrine (11, 34) has a gap
+
+# [20/05/2020] LOD Landscape
+
+## Hysteresis revisited
+
+**FIXME:** distant landscape near Namira's shrine (11, 34) has a gap **FIXED**
+**FIXME:** going from AnvilWorld to outside does not add LOD landscape mesh
+
+Unlike the notes from 06/04/2020, I now think the loading should happen *before* unloading.
+
+IDEA: assuming this method gets called each time the player's cell changes, put priority based on distance and add/delete one at a time - which means 4 cell changes are required before they are fully refreshed at a "corner" case.
+
+## Viewing distance
+
+With range 2, try:
+
+    max viewing distance = 152600
+    viewing distance = 139600
+
+FPS is around 27 at (12, 1) with range 2, going up to around 31 with range 1;
+
+
 
 
 [//]: # (/* spell spelllang=en_au syntax=cpp */)

@@ -223,23 +223,17 @@ void Objects::insertLandscapeModel(ESM4::FormId worldId, int x, int y, const std
     //if (!landscape)
         //landscape = modelManager.createLandscapeModel(mesh, "General");
 
-#if 0
-    // Ogre::SceneManager needed to destroy created Ogre::Entity
-    //if (!mLandscape)
-        mLandscapes.push_back(new NiBtOgre::BtOgreInst(landscape, insert->createChildSceneNode())); // great grandchild for sub-object
-    mLandscapes.back()->instantiate();
-#else
     NifOgre::ObjectScenePtr scene
         = NifOgre::ObjectScenePtr (new NifOgre::ObjectScene(insert->getCreator()));
 
     scene->mForeignObj
         = std::make_unique<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(landscape, insert->createChildSceneNode()));
     scene->mForeignObj->instantiate();
-#endif
 
     std::map<int32_t, Ogre::Entity*>::iterator it(scene->mForeignObj->mEntities.begin());
     for (; it != scene->mForeignObj->mEntities.end(); ++it)
     {
+#if 0
         Ogre::MaterialPtr mat = scene->mMaterialControllerMgr.getWritableMaterial(it->second);
         Ogre::Material::TechniqueIterator techIter = mat->getTechniqueIterator();
         while(techIter.hasMoreElements())
@@ -252,18 +246,23 @@ void Objects::insertLandscapeModel(ESM4::FormId worldId, int x, int y, const std
                 // actually means alpha value less than 192 will be rejected (confusing)
                 pass->setAlphaRejectSettings(Ogre::CMPF_GREATER_EQUAL, 0xC0/*192*/, true);
 
-                Ogre::TextureUnitState *tex = pass->getTextureUnitState(0);
-                std::string texName = tex->getTextureName();
+                //Ogre::TextureUnitState *tex = pass->getTextureUnitState(0);
+                //std::string texName = tex->getTextureName();
+                std::string modelName = scene->mForeignObj->mModel->getName();
+                std::size_t pos = modelName.find_last_of("\\");
+                std::size_t pos2 = modelName.find_last_of(".");
+                std::string texName
+                    = "textures\\landscapelod\\generated" + modelName.substr(pos, pos2-pos) + ".dds";
 
                 // base texture
                 Ogre::TexturePtr texAlpha = Ogre::TextureManager::getSingleton().getByName(
                        texName, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
 
                 // the original texture, e.g. 60.00.00.32.dds seems to have an alpha channel
-                //if (texAlpha->hasAlpha())
-                //    std::cout << texName << " has alpha" << std::endl;
-                //else
-                //    std::cout << texName << " no alpha" << std::endl;
+                if (texAlpha->hasAlpha())
+                    std::cout << texName << " has alpha" << std::endl;
+                else
+                    std::cout << texName << " no alpha" << std::endl;
 
                 // try to retrieve previously created texture
                 Ogre::TexturePtr alphaTexture = Ogre::TextureManager::getSingleton().getByName(
@@ -303,8 +302,10 @@ void Objects::insertLandscapeModel(ESM4::FormId worldId, int x, int y, const std
                     for (size_t j = 0; j < texAlpha->getHeight(); ++j) // x
                     {
                         // testing blanking cell (12, 1), remembering we have 32x32 block
-                        if (i > 0 * 32 && i < 3 * 32 && j > 11 * 32 && j < 14 * 32)
+                        if (i > 0 * 32 && i < 4 * 32 && j > 10 * 32 && j < 15 * 32)
                             *(pDest+3) = 5;//*(pDest+3);
+                        else
+                            *(pDest+3) = 193;
 
                         pDest += 4;
                     }
@@ -312,18 +313,34 @@ void Objects::insertLandscapeModel(ESM4::FormId worldId, int x, int y, const std
 
                 pass->removeTextureUnitState(0);
                 Ogre::TextureUnitState *newTUS = pass->createTextureUnitState("alpha_"+texName);
-                tex->setColourOperation(Ogre::LBO_ALPHA_BLEND);
+                //tex->setColourOperation(Ogre::LBO_ALPHA_BLEND);
+                newTUS->setColourOperation(Ogre::LBO_ALPHA_BLEND);
             }
         }
-#if 0
-        insert->attachObject(it->second);
-#else
+#endif
         uniqueID = uniqueID+1;
         Ogre::StaticGeometry *sg = mRenderer.getScene()->createStaticGeometry("sg" + Ogre::StringConverter::toString(uniqueID));
         sg->setOrigin(Ogre::Vector3::ZERO);
-        std::map<std::pair<int, int>, Ogre::StaticGeometry*> lodMap;
-        lodMap[std::pair<int,int>(x,y)] = sg;
-        mStaticGeometryLandscape[worldId] = lodMap;
+
+        std::map<ESM4::FormId, std::map<std::pair<int, int>, Ogre::StaticGeometry*> >::iterator
+            sgIter = mStaticGeometryLandscape.find(worldId);
+        if (sgIter != mStaticGeometryLandscape.end())
+        {
+            std::map<std::pair<int, int>, Ogre::StaticGeometry*>& lodMap
+                = mStaticGeometryLandscape[worldId];
+
+            lodMap[std::pair<int,int>(x,y)] = sg;
+        }
+        else
+        {
+            std::map<std::pair<int, int>, Ogre::StaticGeometry*> lodMap;
+            lodMap[std::pair<int,int>(x,y)] = sg;
+
+            mStaticGeometryLandscape[worldId] = lodMap;
+        }
+
+        //std::cout << "adding landscape model " << ESM4::formIdToString(worldId) << " at " // FIXME
+                  //<< x << "," << y << std::endl;
 
         // TODO: test with different values
         sg->setRegionDimensions(Ogre::Vector3(2048,2048,2048));
@@ -338,17 +355,226 @@ void Objects::insertLandscapeModel(ESM4::FormId worldId, int x, int y, const std
         sg->build();
 
         //insert->getCreator()->destroyEntity(it->second);
-#endif
     }
 
-    mLandscapeScene.push_back(scene);
+    std::map<ESM4::FormId, std::map<std::pair<int, int>, NifOgre::ObjectScenePtr> >::iterator
+        sceneIter = mLandscapeScene.find(worldId);
+    if (sceneIter != mLandscapeScene.end())
+    {
+        std::map<std::pair<int, int>, NifOgre::ObjectScenePtr>& sceneMap
+            = mLandscapeScene[worldId];
+
+        sceneMap[std::pair<int, int>(x, y)] = scene;
+    }
+    else
+    {
+        std::map<std::pair<int, int>, NifOgre::ObjectScenePtr> sceneMap;
+        sceneMap[std::pair<int,int>(x,y)] = scene;
+
+        mLandscapeScene[worldId] = sceneMap;
+    }
+}
+
+// FIXME: does not work across 32x32 blocks
+void Objects::hideLandscapeModel(ESM4::FormId worldId, int x, int y, int range)
+{
+    std::map<ESM4::FormId, std::map<std::pair<int, int>, NifOgre::ObjectScenePtr> >::iterator
+        iter = mLandscapeScene.find(worldId);
+
+    if (iter != mLandscapeScene.end())
+    {
+        // convert x, y to landscape co-ordinates
+        int X = int(x / 32) * 32; // FIXME: check FO3/FONV
+        int Y = int(y / 32) * 32;
+
+        std::map<std::pair<int, int>, NifOgre::ObjectScenePtr>::iterator sceneIter
+            = iter->second.find(std::pair<int, int>(X, Y));
+        if (sceneIter != iter->second.end())
+        {
+            //std::cout << "hiding landscape model " << ESM4::formIdToString(worldId) << " at "
+                      //<< X << "," << Y << " (" << x << "," << y << ")" << std::endl; // FIXME
+
+            NifOgre::ObjectScenePtr& scene = sceneIter->second;
+
+            std::map<int32_t, Ogre::Entity*>::iterator it(scene->mForeignObj->mEntities.begin());
+            for (; it != scene->mForeignObj->mEntities.end(); ++it)
+            {
+                Ogre::MaterialPtr mat = scene->mMaterialControllerMgr.getWritableMaterial(it->second);
+                Ogre::Material::TechniqueIterator techIter = mat->getTechniqueIterator();
+                while(techIter.hasMoreElements())
+                {
+                    Ogre::Technique *tech = techIter.getNext();
+                    Ogre::Technique::PassIterator passes = tech->getPassIterator();
+                    while(passes.hasMoreElements())
+                    {
+                        Ogre::Pass *pass = passes.getNext();
+                        // actually means alpha value less than 192 will be rejected (confusing)
+                        pass->setAlphaRejectSettings(Ogre::CMPF_GREATER_EQUAL, 0xC0/*192*/, true);
+
+                        // e.g. TES4 textures\landscapelod\generated\60.00.00.32.dds
+                        // FIXME: how to support FO3/FONV file names?
+                        //        get it from mForeignObj->mModel?
+                        //        get it from ESM4::Cell as a parameter to this method?
+                        std::string modelName = sceneIter->second->mForeignObj->mModel->getName();
+                        std::size_t pos = modelName.find_last_of("\\");
+                        std::size_t pos2 = modelName.find_last_of(".");
+                        std::string texName
+                            = "textures\\landscapelod\\generated" + modelName.substr(pos, pos2-pos) + ".dds";
+
+                        // base texture
+                        Ogre::TexturePtr texAlpha = Ogre::TextureManager::getSingleton().getByName(
+                               texName, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+
+                        // the original texture, e.g. 60.00.00.32.dds seems to have an alpha channel
+                      //if (texAlpha->hasAlpha())
+                      //    std::cout << texName << " has alpha" << std::endl;
+                      //else
+                      //    std::cout << texName << " no alpha" << std::endl;
+
+                        // try to retrieve previously created texture
+                        Ogre::TexturePtr alphaTexture = Ogre::TextureManager::getSingleton().getByName(
+                               "alpha_" + texName,
+                               Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+                        if (!alphaTexture)
+                        {
+                            // create a blank one
+                            alphaTexture = Ogre::TextureManager::getSingleton().createManual(
+                                "alpha_" + texName, // name
+                                Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
+                                Ogre::TEX_TYPE_2D,  // type
+                                texAlpha->getWidth(), texAlpha->getHeight(), // width & height
+                                0,                  // number of mipmaps; FIXME: should be 2? or 1?
+                                Ogre::PF_BYTE_RGBA,
+                                Ogre::TU_DEFAULT);  // usage; should be TU_DYNAMIC_WRITE_ONLY_DISCARDABLE for
+                                                    // textures updated very often (e.g. each frame)
+                        }
+
+                        // dest
+                        Ogre::HardwarePixelBufferSharedPtr pixelBuffer = alphaTexture->getBuffer();
+                        pixelBuffer->unlock(); // prepare for blit()
+                        // src
+                        Ogre::HardwarePixelBufferSharedPtr pixelBufferSrc
+                            = Ogre::static_pointer_cast<Ogre::Texture>(texAlpha)->getBuffer();
+                        pixelBufferSrc->unlock(); // prepare for blit()
+                        // if source and destination dimensions don't match, scaling is done
+                        pixelBuffer->blit(pixelBufferSrc);
+
+                        pixelBuffer->lock(Ogre::HardwareBuffer::HBL_NORMAL); // for best performance use HBL_DISCARD!
+                        const Ogre::PixelBox& pixelBox = pixelBuffer->getCurrentLock();
+                        uint8_t *pDest = static_cast<uint8_t*>(pixelBox.data);
+
+                        //std::size_t pixPerCell = texAlpha->getWidth() / 32; // should be 32
+                        for (size_t i = 0; i < texAlpha->getWidth(); ++i) // y
+                        {
+                            for (size_t j = 0; j < texAlpha->getHeight(); ++j) // x
+                            {
+                                // testing blanking cell (12, 1), remembering we have 32x32 block
+                                if (1)//i > 0 * 32 && i < 3 * 32 && j > 11 * 32 && j < 14 * 32)
+                                //if (i > std::max((y-range), 0) * 32 && i < std::min((y+range), 32) * 32
+                                //        && j > std::max((x-range), 0) * 32 && j < std::min((x+range), 32) * 32)
+                                {
+                                    // some value less than 192
+                                    *(pDest+3) = 5;
+                                }
+                                else
+                                    *(pDest+3) = 193;
+
+                                pDest += 4;
+                            }
+                        }
+
+                        //Ogre::Pass::TextureUnitStates tus = pass->getTextureUnitStates();
+                        //std::cout << "num texture unit states is " << tus.size() << std::endl;
+
+                        pass->removeTextureUnitState(0);
+                        Ogre::TextureUnitState *newTUS = pass->createTextureUnitState("alpha_"+texName);
+                        //newTUS->setColourOperation(Ogre::LBO_ALPHA_BLEND);
+                        //std::cout << "tus name is " << newTUS->getName() << std::endl;
+                    }
+                }
+            }
+        }
+    }
 }
 
 // IDEA: put world in a FIFO and keep the last one (so that if one pops into a store to offload
 // some loot and come back out we don't have to reload all the landscape for that world)
-void Objects::deleteLandscapeModel(ESM4::FormId worldId, int x, int y, const std::string &mesh)
+void Objects::removeLandscapeModel(ESM4::FormId worldId, int x, int y)
 {
-    // FIXME: need something other than mesh name?
+    std::map<ESM4::FormId, std::map<std::pair<int, int>, Ogre::StaticGeometry*> >::iterator
+        iter = mStaticGeometryLandscape.find(worldId);
+
+    if (iter != mStaticGeometryLandscape.end())
+    {
+        //std::map<std::pair<int, int>, Ogre::StaticGeometry*>& lodMap = iter->second;
+        std::map<std::pair<int, int>, Ogre::StaticGeometry*>::iterator gridIter
+            = iter->second.find(std::pair<int, int>(x, y));
+        if (gridIter != iter->second.end())
+        {
+            std::cout << "removing landscape model " << ESM4::formIdToString(worldId) << " at " // FIXME
+                      << x << "," << y << std::endl;
+
+            Ogre::StaticGeometry *sg = gridIter->second;
+
+            iter->second.erase(gridIter);
+            mRenderer.getScene()->destroyStaticGeometry(sg);
+        }
+    }
+
+    // delete scene from mLandscapeScene
+    std::map<ESM4::FormId, std::map<std::pair<int, int>, NifOgre::ObjectScenePtr> >::iterator
+        worldIter = mLandscapeScene.find(worldId);
+
+    if (worldIter != mLandscapeScene.end())
+    {
+        std::map<std::pair<int, int>, NifOgre::ObjectScenePtr>::iterator sceneIter
+            = worldIter->second.find(std::pair<int, int>(x, y));
+        if (sceneIter != worldIter->second.end())
+        {
+            worldIter->second.erase(sceneIter);
+        }
+    }
+}
+
+// FIXME: this code ia almost the same as above
+void Objects::removeLandscapeModel(ESM4::FormId worldId)
+{
+    std::map<ESM4::FormId, std::map<std::pair<int, int>, Ogre::StaticGeometry*> >::iterator
+        iter = mStaticGeometryLandscape.find(worldId);
+
+    if (iter != mStaticGeometryLandscape.end())
+    {
+        //std::map<std::pair<int, int>, Ogre::StaticGeometry*>& lodMap = iter->second;
+        std::map<std::pair<int, int>, Ogre::StaticGeometry*>::iterator gridIter
+            = iter->second.begin();
+        for (; gridIter != iter->second.end(); ++gridIter)
+        {
+            int x = gridIter->first.first;
+            int y = gridIter->first.second;
+
+            std::cout << "removing landscape model " << ESM4::formIdToString(worldId) << " at "
+                      << x << "," << y << std::endl;
+
+            Ogre::StaticGeometry *sg = gridIter->second;
+
+            iter->second.erase(gridIter);
+            mRenderer.getScene()->destroyStaticGeometry(sg);
+        }
+    }
+
+    // delete scene from mLandscapeScene
+    std::map<ESM4::FormId, std::map<std::pair<int, int>, NifOgre::ObjectScenePtr> >::iterator
+        worldIter = mLandscapeScene.find(worldId);
+
+    if (worldIter != mLandscapeScene.end())
+    {
+        std::map<std::pair<int, int>, NifOgre::ObjectScenePtr>::iterator sceneIter
+            = worldIter->second.begin();
+        for (; sceneIter != worldIter->second.end(); ++sceneIter)
+        {
+            worldIter->second.erase(sceneIter);
+        }
+    }
 }
 
 bool Objects::deleteObject (const MWWorld::Ptr& ptr)

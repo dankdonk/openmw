@@ -45,7 +45,7 @@ class Objects{
     Ogre::SceneNode* mRootNode;
     //std::map<ESM4::FormId, std::map<std::pair<int, int>, NiBtOgre::BtOgreInst *> > mLandscapes;
     std::vector<NiBtOgre::BtOgreInst*> mLandscapes; // FIXME: temp testing
-    std::vector<NifOgre::ObjectScenePtr> mLandscapeScene;
+    std::map<ESM4::FormId, std::map<std::pair<int, int>, NifOgre::ObjectScenePtr> > mLandscapeScene;
 
     static int uniqueID;
 
@@ -62,7 +62,9 @@ public:
     //void insertModel(const MWWorld::Ptr& ptr, const std::string &model, bool batch=false);
     const std::map<std::int32_t, Ogre::SceneNode*> *insertModel(const MWWorld::Ptr& ptr, const std::string &model, bool batch=false);
     void insertLandscapeModel(ESM4::FormId worldId, int x, int y, const std::string &mesh);
-    void deleteLandscapeModel(ESM4::FormId worldId, int x, int y, const std::string &mesh);
+    void removeLandscapeModel(ESM4::FormId worldId, int x, int y);
+    void removeLandscapeModel(ESM4::FormId worldId);
+    void hideLandscapeModel(ESM4::FormId worldId, int x, int y, int range);
 
     void insertLight(const MWWorld::Ptr& ptr);
 

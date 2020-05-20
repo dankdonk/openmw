@@ -77,6 +77,9 @@ namespace MWWorld
             MWBase::SoundPtr mCurrentAmbientSound;
             MWBase::SoundPtr mCurrentRadioSound;
 
+            std::vector<std::pair<int, int> > mCurrentLandscapes;
+            void updateTES4LODLandscapeAtGrid (ESM4::FormId worldId, int X, int Y);
+
         public:
 
             Scene (MWRender::RenderingManager& rendering, PhysicsSystem *physics);

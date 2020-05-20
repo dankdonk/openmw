@@ -126,7 +126,9 @@ public:
     void rotateObject (const MWWorld::Ptr& ptr);
 
     void addLandscape(ESM4::FormId worldId, int x, int y, const std::string& model);
-    void removeLandscape(ESM4::FormId worldId, int x, int y, const std::string& model);
+    void removeLandscape(ESM4::FormId worldId, int x, int y);
+    void removeLandscape(ESM4::FormId worldId);
+    void hideLandscape(ESM4::FormId worldId, int x, int y, int range);
 
     void setWaterHeight(float height);
     void setWaterEnabled(bool enabled);
