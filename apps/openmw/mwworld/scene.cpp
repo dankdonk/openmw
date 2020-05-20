@@ -42,8 +42,11 @@ namespace
         if (id == "prisonmarker" || id == "divinemarker" || id == "templemarker" || id == "northmarker")
             model = ""; // marker objects that have a hardcoded function in the game logic, should be hidden from the player
         rendering.addObject(ptr, model);
-        if (physics)
+        if (physics
+                && ptr.getBase()->mData.getBaseNode()) // FIXME: workaround for oblivion gates
+        {
             ptr.getClass().insertObject (ptr, model, *physics);
+        }
     }
 
     void updateObjectLocalRotation (const MWWorld::Ptr& ptr, MWWorld::PhysicsSystem *physics,
@@ -106,7 +109,19 @@ namespace
         {
             try
             {
+                if (ptr.getTypeName() == typeid(ESM4::Door).name()) // FIXME: debugging only
+                {
+                    std::cout << "inserting " << ptr.getBase()->mRef.getRefId() << std::endl;
+
+                    //if (ptr.getBase()->mRef.getRefId() == "MQ11CheydinhalGate")
+                        //std::cout << "stop" << std::endl;
+                }
+
                 addObject(ptr, mPhysics, mRendering);
+
+                if (mPhysics && !ptr.getBase()->mData.getBaseNode() && ptr.getTypeName() == typeid(ESM4::Door).name())
+                    std::cout << "no basenode " << ptr.getBase()->mRef.getRefId() << std::endl;
+
                 updateObjectLocalRotation(ptr, mPhysics, mRendering);
                 if (ptr.getRefData().getBaseNode())
                 {
@@ -115,9 +130,6 @@ namespace
                     mRendering.scaleObject(ptr, Ogre::Vector3(scale));
                 }
                 ptr.getClass().adjustPosition (ptr, false);
-
-                if (ptr.getTypeName() == typeid(ESM4::Door).name()) // FIXME: debugging only
-                    std::cout << "inserting " << ptr.getBase()->mRef.getRefId() << std::endl;
 
                 // these should already have mStoreTypes updated during CellStore::loadTes4Record()
                 if (mCell.isForeignCell())
@@ -288,13 +300,6 @@ namespace MWWorld
         {
             ListFunctor visitor;
             (*iter)->forEachDummy<ListFunctor>(visitor, CellStore::DUM_Clear, 0, 0);
-
-          //std::vector<std::pair<int, int> >::iterator gridIter = mCurrentLandscapes.begin();
-          //for (; gridIter != mCurrentLandscapes.end(); ++gridIter)
-          //    mRendering.removeLandscape(worldId, gridIter->first, gridIter->second);
-
-            // FIXME: piggyback on dummy clearign to remove LOD landscapes
-            //mCurrentLandscapes.clear();
         }
 
         mRendering.removeCell(*iter);
@@ -704,7 +709,7 @@ namespace MWWorld
         //const ForeignCell *cell
                 //ESM4::FormId parentWorldId
                     //= static_cast<const MWWorld::ForeignCell*>(mCurrentCell->getCell())->mCell->mParent;
-        // TODO: check if the LOD mesh can do the job instead
+        // TODO: check if the LOD mesh can do the job instead (but then we'll need physics?)
 
         ESM4::FormId currentWorldId = 0;
         if (mCurrentCell->isForeignCell())
@@ -722,8 +727,6 @@ namespace MWWorld
             return nullptr; // throw instead?
 
         mRendering.enableTerrain(true, worldId);
-
-        //updateTES4LODLandscapeAtGrid (worldId, X, Y);
 
         //std::cout << "updateWorldCellsAtGrid" << std::endl; // FIXME
 
@@ -1267,20 +1270,27 @@ namespace MWWorld
         mNeedMapUpdate = true;
     }
 
+    // either from the console or a teleport door
     void Scene::changeToForeignInteriorCell (const std::string& cellName, const ESM::Position& position)
     {
         CellStore *cell = MWBase::Environment::get().getWorld()->getForeignInterior(cellName);
-        if (!cell) // FIXME: why null?
+        if (!cell) // probably a typo from the console
             return;
 
         bool loadcell = (mCurrentCell == NULL);
         if(!loadcell)
             loadcell = *mCurrentCell != *cell;
 
+        // don't want landscape LOD for interiors
         if (loadcell && mCurrentCell && mCurrentCell->isForeignCell())
         {
             ESM4::FormId worldId
                 = static_cast<const MWWorld::ForeignCell*>(mCurrentCell->getCell())->mCell->mParent;
+
+            const MWWorld::ESMStore& store = MWBase::Environment::get().getWorld()->getStore();
+            const ForeignWorld *world = store.getForeign<ForeignWorld>().find(worldId);
+            if (world && world->mParent)
+                worldId = world->mParent; // use parent world e.g. Cheydinhal
 
             mRendering.removeLandscape(worldId);
             mCurrentLandscapes.clear();
@@ -1856,6 +1866,7 @@ namespace MWWorld
     }
 
     // FIXME: support FO3/FONV file names
+    //
     // TES4: <formid in dec>.<x bottom left><y bottom left><size>.nif
     // e.g. landscape\lod\60.00.00.32.nif
     //      textures\landscapelod\generated\60.00.00.32.dds
@@ -1866,21 +1877,19 @@ namespace MWWorld
         const MWWorld::ESMStore& store = MWBase::Environment::get().getWorld()->getStore();
         const ForeignWorld *world = store.getForeign<ForeignWorld>().find(worldId);
         if (world && world->mParent)
-        {
             worldId = world->mParent; // use parent world e.g. Cheydinhal
-        }
 
-        // how many landscape LOD blocks around the player cell (2 looks better at the cost of
-        // a few FPS, 3 is max for TES4)
+        // how many landscape LOD blocks around the player cell
+        // (2 looks better at the cost of a few FPS, 3 is max for TES4)
         const int range = 2;
 
         // add: if my cell to the block's midpoint is less than half way (32/2 = 16)
         // delete: if my cell to the block's midpoint is more than half way + hysteresis
         //
-        int xLeft   = int((x - 16 - (32 * range)) / 32); // * 32;
-        int xRight  = int((x - 16 + (32 * range)) / 32); // * 32;
-        int yBottom = int((y - 16 - (32 * range)) / 32); // * 32;
-        int yTop    = int((y - 16 + (32 * range)) / 32); // * 32;
+        int xLeft   = int((x - 16 - (32 * range)) / 32);
+        int xRight  = int((x - 16 + (32 * range)) / 32);
+        int yBottom = int((y - 16 - (32 * range)) / 32);
+        int yTop    = int((y - 16 + (32 * range)) / 32);
 
         std::vector<std::pair<int, int> > addLandscapes;
         for (int i = xLeft; i <= xRight; ++i)
@@ -1888,11 +1897,10 @@ namespace MWWorld
             for (int j = yBottom; j <= yTop; ++j)
             {
                 addLandscapes.push_back(std::pair<int, int>(i*32, j*32));
-                //std::cout << "add " << i*32 << "," << j*32 << std::endl;
             }
         }
 
-        const int hysteresis = 2; // FIXME: picked a a number for testing
+        const int hysteresis = 2; // TODO: picked a number for testing, need to experiment
 
         // assuming hysteresis == 2, range == 1
         //
@@ -1913,80 +1921,9 @@ namespace MWWorld
             for (int j = yKeepBottom; j <= yKeepTop; ++j)
             {
                 keepLandscapes.push_back(std::pair<int, int>(i*32, j*32));
-                //std::cout << "keep " << i*32 << "," << j*32 << std::endl;
             }
         }
-#if 0
-        std::vector<std::string> lodFiles; // FIXME: can't remember what this was for
 
-        std::string mesh = "meshes\\landscape\\lod\\"+std::to_string(worldId)
-                            +"."+((xLeft==0)? "0":"")+std::to_string(xLeft)
-                            +"."+((yBottom==0)? "0":"")+std::to_string(yBottom)+".32.nif";
-
-        //std::cout << mesh << std::endl; // FIXME
-        if (std::find(mCurrentLandscapes.begin(), mCurrentLandscapes.end(), std::pair<int, int>(xLeft, yBottom))
-                == mCurrentLandscapes.end()) // only add if not already
-        {
-            if (Ogre::ResourceGroupManager::getSingleton().resourceExistsInAnyGroup(mesh))
-            {
-                lodFiles.push_back(mesh);
-                mRendering.addLandscape(worldId, xLeft, yBottom, lodFiles.back());
-            }
-
-            mCurrentLandscapes.push_back(std::pair<int, int>(xLeft, yBottom));
-        }
-
-        mesh = "meshes\\landscape\\lod\\"+std::to_string(worldId)
-                            +"."+((xLeft==0)? "0":"")+std::to_string(xLeft)
-                            +"."+((yTop==0)? "0":"")+std::to_string(yTop)+".32.nif";
-
-        //std::cout << mesh << std::endl; // FIXME
-        if (std::find(mCurrentLandscapes.begin(), mCurrentLandscapes.end(), std::pair<int, int>(xLeft, yTop))
-                == mCurrentLandscapes.end()) // only add if not already
-        {
-            if (Ogre::ResourceGroupManager::getSingleton().resourceExistsInAnyGroup(mesh))
-            {
-                lodFiles.push_back(mesh);
-                mRendering.addLandscape(worldId, xLeft, yTop, lodFiles.back());
-            }
-
-            mCurrentLandscapes.push_back(std::pair<int, int>(xLeft, yTop));
-        }
-
-        mesh = "meshes\\landscape\\lod\\"+std::to_string(worldId)
-                            +"."+((xRight==0)? "0":"")+std::to_string(xRight)
-                            +"."+((yBottom==0)? "0":"")+std::to_string(yBottom)+".32.nif";
-
-        //std::cout << mesh << std::endl; // FIXME
-        if (std::find(mCurrentLandscapes.begin(), mCurrentLandscapes.end(), std::pair<int, int>(xRight, yBottom))
-                == mCurrentLandscapes.end()) // only add if not already
-        {
-            if (Ogre::ResourceGroupManager::getSingleton().resourceExistsInAnyGroup(mesh))
-            {
-                lodFiles.push_back(mesh);
-                mRendering.addLandscape(worldId, xRight, yBottom, lodFiles.back());
-            }
-
-            mCurrentLandscapes.push_back(std::pair<int, int>(xRight, yBottom));
-        }
-
-        mesh = "meshes\\landscape\\lod\\"+std::to_string(worldId)
-                            +"."+((xRight==0)? "0":"")+std::to_string(xRight)
-                            +"."+((yTop==0)? "0":"")+std::to_string(yTop)+".32.nif";
-
-        //std::cout << mesh << std::endl; // FIXME
-        if (std::find(mCurrentLandscapes.begin(), mCurrentLandscapes.end(), std::pair<int, int>(xRight, yTop))
-                == mCurrentLandscapes.end()) // only add if not already
-        {
-            if (Ogre::ResourceGroupManager::getSingleton().resourceExistsInAnyGroup(mesh))
-            {
-                lodFiles.push_back(mesh);
-                mRendering.addLandscape(worldId, xRight, yTop, lodFiles.back());
-            }
-
-            mCurrentLandscapes.push_back(std::pair<int, int>(xRight, yTop));
-        }
-#else
         std::vector<std::pair<int, int> >::iterator addIter = addLandscapes.begin();
         for (; addIter != addLandscapes.end(); ++addIter)
         {
@@ -2001,29 +1938,25 @@ namespace MWWorld
             {
                 if (Ogre::ResourceGroupManager::getSingleton().resourceExistsInAnyGroup(mesh))
                 {
-                    std::cout << "adding " << mesh << std::endl; // FIXME
+                    //std::cout << "adding " << mesh << std::endl; // FIXME
 
+                    // not in the curent list, add
                     mRendering.addLandscape(worldId, gridX, gridY, mesh);
-
+                    // keep the curent list up to date
                     mCurrentLandscapes.push_back(std::pair<int, int>(gridX, gridY));
                 }
             }
         }
-#endif
-        // now remove if we are too far away
+
+        // now remove the mesh if we are too far away
         std::vector<std::pair<int, int> >::iterator gridIter = mCurrentLandscapes.begin();
         for (; gridIter != mCurrentLandscapes.end();)
         {
             if (std::find(keepLandscapes.begin(), keepLandscapes.end(), *gridIter) == keepLandscapes.end())
             {
-                // FIXME
-                //std::cout << "removing landscape grid " << gridIter->first << "," << gridIter->second
-                //    << " boundary " << xKeepLeft << "," << xKeepRight << "," << yKeepBottom << "," << yKeepTop
-                //    << std::endl;
-
                 // not in the "keep" list, remove
                 mRendering.removeLandscape(worldId, gridIter->first, gridIter->second);
-
+                // keep the curent list up to date
                 mCurrentLandscapes.erase(gridIter++);
             }
             else

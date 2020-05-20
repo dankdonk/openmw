@@ -801,6 +801,8 @@ namespace MWWorld
         // FIXME: currently unused because getPtr() only uses hasId()
         //mForeignIds.push_back(formId); // for hasFormId()
 
+        // storeType -1 is called from Scene::InsertFunctor
+        // (for these we should have the formids already from load)
         if (storeType != -1)
             mStoreTypes[formId] = storeType;
 
@@ -834,6 +836,8 @@ namespace MWWorld
             if (liveRef)
                 return Ptr(liveRef, this);
         }
+        //else if (mIsForeignCell)
+            //std::cout << "handle not found" << std::endl; // FIXME: why does this happen?
 
         if (LiveCellRefBase *ref = mActivators.searchViaHandle (handle))
             return Ptr (ref, this);

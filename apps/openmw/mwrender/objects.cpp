@@ -90,6 +90,9 @@ void Objects::insertBegin(const MWWorld::Ptr& ptr)
     insert->setOrientation(xr*yr*zr);
 
     ptr.getRefData().setBaseNode(insert);
+
+    //if (ptr.getTypeName() == typeid(ESM4::Door).name()) // FIXME: debugging only
+        //std::cout << "got basenode " << ptr.getBase()->mRef.getRefId() << std::endl;
 }
 
 void Objects::insertLight(const MWWorld::Ptr &ptr)

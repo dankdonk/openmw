@@ -4461,7 +4461,7 @@ It turns out that there's already `void Scene::removeObjectFromScene (const Ptr&
 ## Hysteresis revisited
 
 **FIXME:** distant landscape near Namira's shrine (11, 34) has a gap **FIXED**
-**FIXME:** going from AnvilWorld to outside does not add LOD landscape mesh
+**FIXME:** going from AnvilWorld to outside does not add LOD landscape mesh **FIXED**
 
 Unlike the notes from 06/04/2020, I now think the loading should happen *before* unloading.
 

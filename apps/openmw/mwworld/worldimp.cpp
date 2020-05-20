@@ -1265,6 +1265,8 @@ namespace MWWorld
                     LiveCellRefBase *ref = newPtr.getBase();
                     if (ref->mData.getBaseNode())
                         newCell->updateHandleMap(ref->mData.getHandle(), ref->mRef.getFormId());
+                    else
+                        throw std::runtime_error("can't find basenode"); // FIXME: temp debugging only
                 }
                 else if (!newCellActive && currCellActive)
                 {
@@ -1316,6 +1318,8 @@ namespace MWWorld
                     LiveCellRefBase *ref = newPtr.getBase();
                     if (ref->mData.getBaseNode())
                         newCell->updateHandleMap(ref->mData.getHandle(), ref->mRef.getFormId());
+                    else
+                        throw std::runtime_error("can't find basenode"); // FIXME: temp debugging only
                 }
                 ptr.getRefData().setCount(0);
             }
@@ -2188,6 +2192,8 @@ namespace MWWorld
                 LiveCellRefBase *ref = dropped.getBase();
                 if (ref->mData.getBaseNode())
                     cell->updateHandleMap(ref->mData.getHandle(), ref->mRef.getFormId());
+                else
+                    throw std::runtime_error("can't find basenode"); // FIXME: temp debugging only
             }
             std::string script = dropped.getClass().getScript(dropped);
             if (!script.empty()) {
