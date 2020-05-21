@@ -35,13 +35,37 @@ namespace
 {
 
     void addObject(const MWWorld::Ptr& ptr, MWWorld::PhysicsSystem *physics,
-                   MWRender::RenderingManager& rendering)
+                   MWRender::RenderingManager& rendering, bool dist = false)
     {
         std::string model = Misc::ResourceHelpers::correctActorModelPath(ptr.getClass().getModel(ptr));
         std::string id = ptr.getClass().getId(ptr);
         if (id == "prisonmarker" || id == "divinemarker" || id == "templemarker" || id == "northmarker")
             model = ""; // marker objects that have a hardcoded function in the game logic, should be hidden from the player
-        rendering.addObject(ptr, model);
+
+        if (dist)
+        {
+            std::size_t pos = model.find_last_of(".");
+            std::string farModel = model.substr(0, pos) + "_far.nif";
+#if 0
+            if (Ogre::ResourceGroupManager::getSingleton().resourceExistsInAnyGroup(farModel))
+                rendering.addObject(ptr, farModel);
+            else
+                rendering.addObject(ptr, model);
+#else
+            try
+            {
+                rendering.addObject(ptr, farModel);
+            }
+            catch (std::exception& e)
+            {
+                std::cout << "no far model " << model << std::endl;
+                rendering.addObject(ptr, model);
+            }
+#endif
+        }
+        else
+            rendering.addObject(ptr, model);
+
         if (physics
                 && ptr.getBase()->mData.getBaseNode()) // FIXME: workaround for oblivion gates
         {
@@ -81,18 +105,19 @@ namespace
         Loading::Listener& mLoadingListener;
         MWWorld::PhysicsSystem *mPhysics;
         MWRender::RenderingManager& mRendering;
+        bool mDist;
 
         InsertFunctor (MWWorld::CellStore& cell, bool rescale, Loading::Listener& loadingListener,
-            MWWorld::PhysicsSystem *physics, MWRender::RenderingManager& rendering);
+            MWWorld::PhysicsSystem *physics, MWRender::RenderingManager& rendering, bool dist = false);
 
         bool operator() (const MWWorld::Ptr& ptr);
     };
 
     InsertFunctor::InsertFunctor (MWWorld::CellStore& cell, bool rescale,
         Loading::Listener& loadingListener, MWWorld::PhysicsSystem *physics,
-        MWRender::RenderingManager& rendering)
+        MWRender::RenderingManager& rendering, bool dist)
     : mCell (cell), mRescale (rescale), mLoadingListener (loadingListener),
-      mPhysics (physics), mRendering (rendering)
+      mPhysics (physics), mRendering (rendering), mDist(dist)
     {}
 
     bool InsertFunctor::operator() (const MWWorld::Ptr& ptr)
@@ -114,7 +139,7 @@ namespace
               //    std::cout << "inserting " << ptr.getBase()->mRef.getRefId() << std::endl;
               //}
 
-                addObject(ptr, mPhysics, mRendering);
+                addObject(ptr, mPhysics, mRendering, mDist);
 
               //if (mPhysics && !ptr.getBase()->mData.getBaseNode() && ptr.getTypeName() == typeid(ESM4::Door).name())
               //    std::cout << "no basenode " << ptr.getBase()->mRef.getRefId() << std::endl;
@@ -291,15 +316,22 @@ namespace MWWorld
                 );
             if (land && land->mDataTypes&ESM::Land::DATA_VHGT)
                 mPhysics->removeHeightField ((*iter)->getCell()->getGridX(), (*iter)->getCell()->getGridY());
-
+//#if 0
             if ((*iter)->isForeignCell())
             {
                 ESM4::FormId worldId
                     = static_cast<const MWWorld::ForeignCell*>((*iter)->getCell())->mCell->mParent;
 
-                mRendering.updateLandscape(worldId,
+                ESM4::FormId landWorldId = worldId;
+                const MWWorld::ESMStore& store = MWBase::Environment::get().getWorld()->getStore();
+                const ForeignWorld *world = store.getForeign<ForeignWorld>().find(worldId);
+                if (world && world->mParent)
+                    landWorldId = world->mParent; // use parent world e.g. Cheydinhal
+
+                mRendering.updateLandscape(landWorldId,
                         (*iter)->getCell()->getGridX(), (*iter)->getCell()->getGridY(), false/*hide*/);
             }
+//#endif
         }
 
         if ((*iter)->isDummyCell())
@@ -416,20 +448,20 @@ namespace MWWorld
                 const ESM4Terrain::LandData *data = land->getLandData (ESM4::Land::LAND_VHGT);
                 mPhysics->addHeightField(data->mHeights,
                         cell->getCell()->getGridX(), cell->getCell()->getGridY(), 0, worldsize / (verts-1), verts);
-
-                updateTES4LODLandscapeAtGrid (worldId, cell->getCell()->getGridX(),
-                                                       cell->getCell()->getGridY()); // FIXME: testing
-
-                ESM4::FormId landWorldId = worldId;
-                const MWWorld::ESMStore& store = MWBase::Environment::get().getWorld()->getStore();
-                const ForeignWorld *world = store.getForeign<ForeignWorld>().find(worldId);
-                if (world && world->mParent)
-                    landWorldId = world->mParent; // use parent world e.g. Cheydinhal
-
-                mRendering.updateLandscape(landWorldId, cell->getCell()->getGridX(), cell->getCell()->getGridY());
             }
             else
                 std::cerr << "Heightmap for " << cell->getCell()->getDescription() << " not found" << std::endl;
+
+            updateTES4LODLandscapeAtGrid (worldId, cell->getCell()->getGridX(),
+                                                   cell->getCell()->getGridY()); // FIXME: testing
+
+            ESM4::FormId landWorldId = worldId;
+            const MWWorld::ESMStore& store = MWBase::Environment::get().getWorld()->getStore();
+            const ForeignWorld *world = store.getForeign<ForeignWorld>().find(worldId);
+            if (world && world->mParent)
+                landWorldId = world->mParent; // use parent world e.g. Cheydinhal
+
+            mRendering.updateLandscape(landWorldId, cell->getCell()->getGridX(), cell->getCell()->getGridY());
         }
 
         cell->respawn(); // FIXME: needs respawnTes4()
@@ -494,7 +526,7 @@ namespace MWWorld
     {
         //std::cout << "loading visible distant " << cell->getCell()->getDescription() << std::endl; // FIXME
 
-        insertCell (*cell, true, loadingListener);
+        insertVisibleDistCell (*cell, true, loadingListener);
     }
 
     void Scene::changeToVoid()
@@ -674,9 +706,6 @@ namespace MWWorld
             ESM4::FormId worldId
                 = static_cast<const MWWorld::ForeignCell*>(mCurrentCell->getCell())->mCell->mParent;
 
-            // FIXME: testing
-            //mRendering.updateLandscape(worldId, cell->getCell()->getGridX(), cell->getCell()->getGridY());
-
             updateTES4LODLandscapeAtGrid (worldId, cell->getCell()->getGridX(),
                 cell->getCell()->getGridY()); // FIXME: is this the best place to call?
         }
@@ -777,7 +806,6 @@ namespace MWWorld
             {
                 mRendering.removeLandscape(currentWorldId); // landscapeWorldId should also work
                 mCurrentLandscapes.clear();
-                //updateTES4LODLandscapeAtGrid(worldId, x, y);
             }
 
             bool isFONV = false;
@@ -1183,8 +1211,31 @@ namespace MWWorld
                 std::pair<CellStoreCollection::iterator, bool> result = mActiveCells.insert(dist);
                 if (result.second)
                 {
+                    std::cout << "Loading visibly dist" << std::endl;
                     loadVisibleDist(dist, loadingListener); // FIXME: temp disable for testing
                 }
+
+
+
+
+
+
+                // FIXME: quick hack for testing
+                //ESM4::FormId worldId
+                    //= static_cast<const MWWorld::ForeignCell*>(cell->getCell())->mCell->mParent;
+                //CellStore *dist = MWBase::Environment::get().getWorld()->getWorldVisibleDistCell(worldId);
+                //if (dist)
+                {
+                    ListFunctor visitor;
+                    dist->forEachDummy<ListFunctor>(visitor, CellStore::DUM_Insert, X, Y, 1, 0);
+                    for (std::size_t i = 0; i < visitor.mRefs.size(); ++i)
+                        removeObjectFromScene(visitor.mRefs[i]);
+                }
+
+
+
+
+
             }
 //#endif
         }
@@ -1807,6 +1858,12 @@ namespace MWWorld
         cell.forEach (functor);
     }
 
+    void Scene::insertVisibleDistCell (CellStore &cell, bool rescale, Loading::Listener* loadingListener)
+    {
+        InsertFunctor functor (cell, rescale, *loadingListener, nullptr, mRendering, true/*dist*/);
+        cell.forEach (functor);
+    }
+
     void Scene::addObjectToScene (const Ptr& ptr)
     {
         try
@@ -1967,18 +2024,40 @@ namespace MWWorld
         }
 
         // now remove the mesh if we are too far away
+        std::vector<std::pair<int, int> > deleteLandscapes;
         std::vector<std::pair<int, int> >::iterator gridIter = mCurrentLandscapes.begin();
-        for (; gridIter != mCurrentLandscapes.end();)
+        for (; gridIter != mCurrentLandscapes.end(); ++gridIter)
         {
             if (std::find(keepLandscapes.begin(), keepLandscapes.end(), *gridIter) == keepLandscapes.end())
             {
                 // not in the "keep" list, remove
                 mRendering.removeLandscape(worldId, gridIter->first, gridIter->second);
                 // keep the curent list up to date
-                mCurrentLandscapes.erase(gridIter++);
+                deleteLandscapes.push_back(*gridIter);
+                //mCurrentLandscapes.erase(gridIter++);
             }
-            else
-                ++gridIter;
+        }
+
+        // testing to see if this fixes the odd "unhiding" (doesn't work)
+      //{
+      //ESM4::FormId landWorldId = worldId;
+      //const MWWorld::ESMStore& store = MWBase::Environment::get().getWorld()->getStore();
+      //const ForeignWorld *world = store.getForeign<ForeignWorld>().find(worldId);
+      //if (world && world->mParent)
+      //    landWorldId = world->mParent;
+      //mRendering.updateLandscape(landWorldId, x, y); // hide
+      //}
+
+        // workaround for occasional crash erasing the vector with iterators
+        size_t before = mCurrentLandscapes.size(); // FIXME
+        // FIXME: do this better
+        std::vector<std::pair<int, int> >::iterator delIter = deleteLandscapes.begin();
+        for (; delIter != deleteLandscapes.end(); ++delIter)
+        {
+            mCurrentLandscapes.erase(remove(mCurrentLandscapes.begin(),
+                        mCurrentLandscapes.end(), *delIter), mCurrentLandscapes.end());
+
+            //std::cout << "before " << before << " after " << mCurrentLandscapes.size() << std::endl; // FIXME
         }
     }
 }

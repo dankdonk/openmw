@@ -197,7 +197,7 @@ namespace MWWorld
     }
 
     template <typename X>
-    void CellRefList<X>::load(ESM4::Reference &ref, bool deleted, const MWWorld::ESMStore &esmStore, bool dummy)
+    void CellRefList<X>::load(ESM4::Reference &ref, bool deleted, const MWWorld::ESMStore &esmStore, bool mapGrid)
     {
         const MWWorld::ForeignStore<X> &store = esmStore.getForeign<X>();
 
@@ -238,7 +238,7 @@ namespace MWWorld
                 mFormIdMap[ref.mFormId] = refPtr;//index;
 
                 // TODO: skip GridMap for non-dummy cells? need a new variable passed in from CellStore
-                if (dummy)
+                if (mapGrid)
                 {
                     const int cellSize = 4096; // FIXME: hard coded cell size
 
@@ -777,9 +777,10 @@ namespace MWWorld
         if (handleIter != mSceneNodeMap.end())
             mSceneNodeMap.erase(handleIter);
 
-        std::map<ESM4::FormId, int>::iterator typeIter = mStoreTypes.find(formId);
-        if (typeIter != mStoreTypes.end())
-            mStoreTypes.erase(typeIter);
+        // TODO: don't remove the formid from mStoreTypes
+        //std::map<ESM4::FormId, int>::iterator typeIter = mStoreTypes.find(formId);
+        //if (typeIter != mStoreTypes.end())
+            //mStoreTypes.erase(typeIter);
 
         // TODO: mark it with 0xFFFFFFFF instead?
       //std::vector<ESM4::FormId>::iteroator idIter = mForeignIds.find(formId);
@@ -1371,12 +1372,14 @@ namespace MWWorld
                 //if (record.mBaseObj == 0x0016B46E) // TACT in cell ULCasino
                      //std::cout << "TACT" << std::endl;
 
+                bool mapGrid = mIsDummyCell || mIsVisibleDistCell;
+
                 switch (store.getRecordType(record.mBaseObj))
                 {
-                    case ESM4::REC_SOUN: mSounds.load(record, deleted, store, mIsDummyCell);
+                    case ESM4::REC_SOUN: mSounds.load(record, deleted, store, mapGrid);
                                          mStoreTypes[record.mFormId] = ESM4::REC_SOUN; break;
 #if 1
-                    case ESM4::REC_ACTI: mForeignActivators.load(record, deleted, store, mIsDummyCell);
+                    case ESM4::REC_ACTI: mForeignActivators.load(record, deleted, store, mapGrid);
                                          mStoreTypes[record.mFormId] = ESM4::REC_ACTI; break;
 #else
                     case ESM4::REC_ACTI):
@@ -1391,31 +1394,31 @@ namespace MWWorld
                         break;
                     }
 #endif
-                    case ESM4::REC_APPA: mForeignApparatus.load(record, deleted, store, mIsDummyCell);
+                    case ESM4::REC_APPA: mForeignApparatus.load(record, deleted, store, mapGrid);
                                          mStoreTypes[record.mFormId] = ESM4::REC_APPA; break;
-                    case ESM4::REC_ARMO: mForeignArmors.load(record, deleted, store, mIsDummyCell);
+                    case ESM4::REC_ARMO: mForeignArmors.load(record, deleted, store, mapGrid);
                                          mStoreTypes[record.mFormId] = ESM4::REC_ARMO; break;
-                    case ESM4::REC_BOOK: mForeignBooks.load(record, deleted, store, mIsDummyCell);
+                    case ESM4::REC_BOOK: mForeignBooks.load(record, deleted, store, mapGrid);
                                          mStoreTypes[record.mFormId] = ESM4::REC_BOOK; break;
-                    case ESM4::REC_CLOT: mForeignClothes.load(record, deleted, store, mIsDummyCell);
+                    case ESM4::REC_CLOT: mForeignClothes.load(record, deleted, store, mapGrid);
                                          mStoreTypes[record.mFormId] = ESM4::REC_CLOT; break;
-                    case ESM4::REC_CONT: mForeignContainers.load(record, deleted, store, mIsDummyCell);
+                    case ESM4::REC_CONT: mForeignContainers.load(record, deleted, store, mapGrid);
                                          mStoreTypes[record.mFormId] = ESM4::REC_CONT; break;
                     case ESM4::REC_DOOR:
                     {
-                        mForeignDoors.load(record, deleted, store, mIsDummyCell);
+                        mForeignDoors.load(record, deleted, store, mapGrid);
                         store.setDoorCell(record.mFormId, reader.currCell());
                         mStoreTypes[record.mFormId] = ESM4::REC_DOOR;
                         break;
                     }
-                    case ESM4::REC_INGR: mForeignIngredients.load(record, deleted, store, mIsDummyCell);
+                    case ESM4::REC_INGR: mForeignIngredients.load(record, deleted, store, mapGrid);
                                          mStoreTypes[record.mFormId] = ESM4::REC_INGR; break;
-                    case ESM4::REC_LIGH: mForeignLights.load(record, deleted, store, mIsDummyCell);
+                    case ESM4::REC_LIGH: mForeignLights.load(record, deleted, store, mapGrid);
                                          mStoreTypes[record.mFormId] = ESM4::REC_LIGH; break;
-                    case ESM4::REC_MISC: mForeignMiscItems.load(record, deleted, store, mIsDummyCell);
+                    case ESM4::REC_MISC: mForeignMiscItems.load(record, deleted, store, mapGrid);
                                          mStoreTypes[record.mFormId] = ESM4::REC_MISC; break;
                     case ESM4::REC_STAT:
-                                                 mForeignStatics.load(record, deleted, store, mIsDummyCell);
+                                                 mForeignStatics.load(record, deleted, store, mapGrid);
                                                  if (record.mEditorId == "DoorMarker")
                                                      std::cout << "DoorMarker: " << " 0x"
                                                          << ESM4::formIdToString(record.mFormId) << std::endl;
@@ -1434,44 +1437,44 @@ namespace MWWorld
                 }
 #endif
                                                  break;
-                    case ESM4::REC_GRAS: mForeignGrasses.load(record, deleted, store, mIsDummyCell);
+                    case ESM4::REC_GRAS: mForeignGrasses.load(record, deleted, store, mapGrid);
                                          mStoreTypes[record.mFormId] = ESM4::REC_GRAS; break;
-                    //case ESM4::REC_TREE: mForeignTrees.load(record, deleted, store, mIsDummyCell);
+                    //case ESM4::REC_TREE: mForeignTrees.load(record, deleted, store, mapGrid);
                                          //mStoreTypes[record.mFormId] = ESM4::REC_TREE; break;
-                    case ESM4::REC_FLOR: mForeignFloras.load(record, deleted, store, mIsDummyCell);
+                    case ESM4::REC_FLOR: mForeignFloras.load(record, deleted, store, mapGrid);
                                          mStoreTypes[record.mFormId] = ESM4::REC_FLOR; break;
-                    case ESM4::REC_FURN: mForeignFurnitures.load(record, deleted, store, mIsDummyCell);
+                    case ESM4::REC_FURN: mForeignFurnitures.load(record, deleted, store, mapGrid);
                                          mStoreTypes[record.mFormId] = ESM4::REC_FURN; break;
-                    case ESM4::REC_WEAP: mForeignWeapons.load(record, deleted, store, mIsDummyCell);
+                    case ESM4::REC_WEAP: mForeignWeapons.load(record, deleted, store, mapGrid);
                                          mStoreTypes[record.mFormId] = ESM4::REC_WEAP; break;
-                    case ESM4::REC_AMMO: mAmmunitions.load(record, deleted, store, mIsDummyCell);
+                    case ESM4::REC_AMMO: mAmmunitions.load(record, deleted, store, mapGrid);
                                          mStoreTypes[record.mFormId] = ESM4::REC_AMMO; break;
                     case ESM4::REC_LVLC:
                     {
-                                         mLevelledCreatures.load(record, deleted, store, mIsDummyCell); // only TES4
+                                         mLevelledCreatures.load(record, deleted, store, mapGrid); // only TES4
                                          mStoreTypes[record.mFormId] = ESM4::REC_LVLC; break;
                     }
-                    case ESM4::REC_SLGM: mSoulGems.load(record, deleted, store, mIsDummyCell);
+                    case ESM4::REC_SLGM: mSoulGems.load(record, deleted, store, mapGrid);
                                          mStoreTypes[record.mFormId] = ESM4::REC_SLGM; break;
-                    case ESM4::REC_KEYM: mForeignKeys.load(record, deleted, store, mIsDummyCell);
+                    case ESM4::REC_KEYM: mForeignKeys.load(record, deleted, store, mapGrid);
                                          mStoreTypes[record.mFormId] = ESM4::REC_KEYM; break;
-                    case ESM4::REC_ALCH: mForeignPotions.load(record, deleted, store, mIsDummyCell);
+                    case ESM4::REC_ALCH: mForeignPotions.load(record, deleted, store, mapGrid);
                                          mStoreTypes[record.mFormId] = ESM4::REC_ALCH; break;
-                    case ESM4::REC_SBSP: mSubSpaces.load(record, deleted, store, mIsDummyCell);
+                    case ESM4::REC_SBSP: mSubSpaces.load(record, deleted, store, mapGrid);
                                          mStoreTypes[record.mFormId] = ESM4::REC_SBSP; break;
-                    case ESM4::REC_SGST: mSigilStones.load(record, deleted, store, mIsDummyCell);
+                    case ESM4::REC_SGST: mSigilStones.load(record, deleted, store, mapGrid);
                                          mStoreTypes[record.mFormId] = ESM4::REC_SGST; break;
-                    case ESM4::REC_LVLI: mLevelledItems.load(record, deleted, store, mIsDummyCell);
+                    case ESM4::REC_LVLI: mLevelledItems.load(record, deleted, store, mapGrid);
                                          mStoreTypes[record.mFormId] = ESM4::REC_LVLI; break;
-                    case ESM4::REC_TERM: mTerminals.load(record, deleted, store, mIsDummyCell);
+                    case ESM4::REC_TERM: mTerminals.load(record, deleted, store, mapGrid);
                                          mStoreTypes[record.mFormId] = ESM4::REC_TERM; break;
-                    case ESM4::REC_TACT: mTalkingActivators.load(record, deleted, store, mIsDummyCell);
+                    case ESM4::REC_TACT: mTalkingActivators.load(record, deleted, store, mapGrid);
                                          mStoreTypes[record.mFormId] = ESM4::REC_TACT; break;
-                    case ESM4::REC_NOTE: mNotes.load(record, deleted, store, mIsDummyCell);
+                    case ESM4::REC_NOTE: mNotes.load(record, deleted, store, mapGrid);
                                          mStoreTypes[record.mFormId] = ESM4::REC_NOTE; break;
                     case ESM4::REC_LVLN: // Leveled NPC
                     {
-                                         mLevelledNpcs.load(record, deleted, store, mIsDummyCell); // never occurs?
+                                         mLevelledNpcs.load(record, deleted, store, mapGrid); // never occurs?
                                          mStoreTypes[record.mFormId] = ESM4::REC_LVLN; break;
                     }
                     case ESM4::REC_TREE: // FIXME

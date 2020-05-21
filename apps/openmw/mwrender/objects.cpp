@@ -216,15 +216,8 @@ void Objects::insertLandscapeModel(ESM4::FormId worldId, int x, int y, const std
 
     Ogre::SceneNode* insert = cellnode->createChildSceneNode(); // grandchild for object level
 
-    //insert->setPosition();
-    //insert->setOrientation();
-    //insert->setScale();
-
     NiBtOgre::NiModelManager& modelManager = NiBtOgre::NiModelManager::getSingleton();
     NiModelPtr landscape = modelManager.getOrLoadByName(mesh, "General");
-    //NiModelPtr landscape = modelManager.getByName(mesh, "General");
-    //if (!landscape)
-        //landscape = modelManager.createLandscapeModel(mesh, "General");
 
     NifOgre::ObjectScenePtr scene
         = NifOgre::ObjectScenePtr (new NifOgre::ObjectScene(insert->getCreator()));
@@ -236,8 +229,8 @@ void Objects::insertLandscapeModel(ESM4::FormId worldId, int x, int y, const std
     std::map<int32_t, Ogre::Entity*>::iterator it(scene->mForeignObj->mEntities.begin());
     for (; it != scene->mForeignObj->mEntities.end(); ++it)
     {
-//#if 0
         Ogre::MaterialPtr mat = scene->mMaterialControllerMgr.getWritableMaterial(it->second);
+#if 0
         Ogre::Material::TechniqueIterator techIter = mat->getTechniqueIterator();
         while(techIter.hasMoreElements())
         {
@@ -246,11 +239,10 @@ void Objects::insertLandscapeModel(ESM4::FormId worldId, int x, int y, const std
             while(passes.hasMoreElements())
             {
                 Ogre::Pass *pass = passes.getNext();
+
                 // actually means alpha value less than 192 will be rejected (confusing)
                 pass->setAlphaRejectSettings(Ogre::CMPF_GREATER_EQUAL, 0xC0/*192*/, true);
 
-                //Ogre::TextureUnitState *tex = pass->getTextureUnitState(0);
-                //std::string texName = tex->getTextureName();
                 std::string modelName = scene->mForeignObj->mModel->getName();
                 std::size_t pos = modelName.find_last_of("\\");
                 std::size_t pos2 = modelName.find_last_of(".");
@@ -260,12 +252,6 @@ void Objects::insertLandscapeModel(ESM4::FormId worldId, int x, int y, const std
                 // base texture
                 Ogre::TexturePtr texAlpha = Ogre::TextureManager::getSingleton().getByName(
                        texName, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
-
-                // the original texture, e.g. 60.00.00.32.dds seems to have an alpha channel
-              //if (texAlpha->hasAlpha())
-              //    std::cout << texName << " has alpha" << std::endl;
-              //else
-              //    std::cout << texName << " no alpha" << std::endl;
 
                 // try to retrieve previously created texture
                 Ogre::TexturePtr alphaTexture = Ogre::TextureManager::getSingleton().getByName(
@@ -285,13 +271,15 @@ void Objects::insertLandscapeModel(ESM4::FormId worldId, int x, int y, const std
                                             // textures updated very often (e.g. each frame)
                 }
 
-                // dest
-                Ogre::HardwarePixelBufferSharedPtr pixelBuffer = alphaTexture->getBuffer();
-                pixelBuffer->unlock(); // prepare for blit()
                 // src
                 Ogre::HardwarePixelBufferSharedPtr pixelBufferSrc
                     = Ogre::static_pointer_cast<Ogre::Texture>(texAlpha)->getBuffer();
                 pixelBufferSrc->unlock(); // prepare for blit()
+
+                // dest
+                Ogre::HardwarePixelBufferSharedPtr pixelBuffer = alphaTexture->getBuffer();
+                pixelBuffer->unlock(); // prepare for blit()
+
                 // if source and destination dimensions don't match, scaling is done
                 pixelBuffer->blit(pixelBufferSrc);
 
@@ -304,10 +292,9 @@ void Objects::insertLandscapeModel(ESM4::FormId worldId, int x, int y, const std
                 {
                     for (size_t j = 0; j < texAlpha->getHeight(); ++j) // x
                     {
-                        // testing blanking cell (12, 1), remembering we have 32x32 block
-                        //if (i > 0 * 32 && i < 4 * 32 && j > 10 * 32 && j < 15 * 32)
+                        // FIXME: no idea why this is needed
                         if (i == 0 && j == 0) // just one pixel
-                            *(pDest+3) = 5;//*(pDest+3);
+                            *(pDest+3) = 5;
                         else
                             *(pDest+3) = 193;
 
@@ -315,13 +302,12 @@ void Objects::insertLandscapeModel(ESM4::FormId worldId, int x, int y, const std
                     }
                 }
 
-                pass->removeTextureUnitState(0);
                 Ogre::TextureUnitState *newTUS = pass->createTextureUnitState("alpha_"+texName);
-                //tex->setColourOperation(Ogre::LBO_ALPHA_BLEND);
                 newTUS->setColourOperation(Ogre::LBO_ALPHA_BLEND);
+                pass->removeTextureUnitState(1);
             }
         }
-//#endif
+#endif
         uniqueID = uniqueID+1;
         Ogre::StaticGeometry *sg = mRenderer.getScene()->createStaticGeometry("sg" + Ogre::StringConverter::toString(uniqueID));
         sg->setOrigin(Ogre::Vector3::ZERO);
@@ -343,8 +329,8 @@ void Objects::insertLandscapeModel(ESM4::FormId worldId, int x, int y, const std
             mStaticGeometryLandscape[worldId] = lodMap;
         }
 
-        std::cout << "adding landscape model " << ESM4::formIdToString(worldId) << " at " // FIXME
-                  << x << "," << y << std::endl;
+        //std::cout << "adding landscape model " << ESM4::formIdToString(worldId) << " at " // FIXME
+                  //<< x << "," << y << std::endl;
 
         // TODO: test with different values
         sg->setRegionDimensions(Ogre::Vector3(2048,2048,2048));
@@ -379,9 +365,9 @@ void Objects::insertLandscapeModel(ESM4::FormId worldId, int x, int y, const std
     }
 }
 
-// FIXME: range does not work across multiple 32x32 blocks (e.g. half in one and half in the other)
-//void Objects::hideLandscapeModel(ESM4::FormId worldId, int x, int y, int range)
-
+// FIXME: there is a strange bug where after the first time the landscape LOD are added the
+// "unhiding" seems to done to the wrong cell(s).  But once the "faulty" cell is unloaded then
+// loaded again, the issue no longer occurs.
 void Objects::updateLandscapeTexture(ESM4::FormId worldId, int x, int y, bool hide)
 {
     std::map<ESM4::FormId, std::map<std::pair<int, int>, NifOgre::ObjectScenePtr> >::iterator
@@ -393,20 +379,15 @@ void Objects::updateLandscapeTexture(ESM4::FormId worldId, int x, int y, bool hi
         int X = int((x >= 0 ? x /*+ 32*/ : x - 32) / 32) * 32; // FIXME: check FO3/FONV
         int Y = int((y >= 0 ? y /*+ 32*/ : y - 32) / 32) * 32;
 
-        //int xLeft   = int((x - 16 - 32) / 32) * 32;
-        //int xRight  = int((x - 16 + 32) / 32) * 32;
-        //int yBottom = int((y - 16 - 32) / 32) * 32;
-        //int yTop    = int((y - 16 + 32) / 32) * 32;
-
-        x = std::abs(X - x);
-        y = std::abs(Y - y);
+        int newX = std::abs(x - X);
+        int newY = std::abs(y - Y);
 
         std::map<std::pair<int, int>, NifOgre::ObjectScenePtr>::iterator sceneIter
             = iter->second.find(std::pair<int, int>(X, Y));
         if (sceneIter != iter->second.end())
         {
-            std::cout << "updating landscape model " << ESM4::formIdToString(worldId) << " at "
-                      << X << "," << Y << " (" << x << "," << y << ")" << std::endl; // FIXME
+            //std::cout << "updating landscape model " << ESM4::formIdToString(worldId) << " at "
+                      //<< X << "," << Y << " (" << newX << "," << newY << ")" << std::endl; // FIXME
 
             NifOgre::ObjectScenePtr& scene = sceneIter->second;
 
@@ -422,6 +403,7 @@ void Objects::updateLandscapeTexture(ESM4::FormId worldId, int x, int y, bool hi
                     while(passes.hasMoreElements())
                     {
                         Ogre::Pass *pass = passes.getNext();
+
                         // actually means alpha value less than 192 will be rejected (confusing)
                         pass->setAlphaRejectSettings(Ogre::CMPF_GREATER_EQUAL, 0xC0/*192*/, true);
 
@@ -436,22 +418,13 @@ void Objects::updateLandscapeTexture(ESM4::FormId worldId, int x, int y, bool hi
                             = "textures\\landscapelod\\generated" + modelName.substr(pos, pos2-pos) + ".dds";
 
                         // base texture
-#if 0
-                        Ogre::TexturePtr texAlpha = Ogre::TextureManager::getSingleton().getByName(
-                               texName, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
-#else
                         Ogre::TextureUnitState *tex = pass->getTextureUnitState(0);
                         std::string textureName = tex->getTextureName();
                         Ogre::TexturePtr texAlpha = Ogre::TextureManager::getSingleton().getByName(
                                textureName, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
-#endif
 
-                        // the original texture, e.g. 60.00.00.32.dds seems to have an alpha channel
-                      //if (texAlpha->hasAlpha())
-                      //    std::cout << texName << " has alpha" << std::endl;
-                      //else
-                      //    std::cout << texName << " no alpha" << std::endl;
-                      std::cout << (hide ? "hiding " : "unhiding ") << texName << std::endl;
+                        //std::cout << (hide ? "hiding " : "unhiding ")
+                            //<< x << "," << y << " " << texName << std::endl; // FIXME
 
                         // try to retrieve previously created texture
                         Ogre::TexturePtr alphaTexture = Ogre::TextureManager::getSingleton().getByName(
@@ -483,36 +456,29 @@ void Objects::updateLandscapeTexture(ESM4::FormId worldId, int x, int y, bool hi
                         // if source and destination dimensions don't match, scaling is done
                         pixelBuffer->blit(pixelBufferSrc);
 
-                        //pixelBufferSrc->lock(Ogre::HardwareBuffer::HBL_NORMAL);
                         pixelBuffer->lock(Ogre::HardwareBuffer::HBL_NORMAL); // for best performance use HBL_DISCARD!
-
-                        //const Ogre::PixelBox& pixelBoxSrc = pixelBufferSrc->getCurrentLock();
                         const Ogre::PixelBox& pixelBox = pixelBuffer->getCurrentLock();
-
-                        //uint8_t *pSrc = static_cast<uint8_t*>(pixelBoxSrc.data);
                         uint8_t *pDest = static_cast<uint8_t*>(pixelBox.data);
 
-                        //std::size_t pixPerCell = texAlpha->getWidth() / 32; // should be 32
-                        for (size_t i = 0; i < texAlpha->getWidth(); ++i) // y
+                        //std::cout << "x range " << newX << " to " << (newX+1) << std::endl; // FIXME
+                        //std::cout << "y range " << newY << " to " << (newY+1) << std::endl; // FIXME
+
+                        for (size_t i = 0; i < texAlpha->getWidth(); ++i) // y axis
                         {
-                            for (size_t j = 0; j < texAlpha->getHeight(); ++j) // x
+                            for (size_t j = 0; j < texAlpha->getHeight(); ++j) // x axis
                             {
-                                //if (i > std::max((y-1), 0) * 32 && i < std::min((y+1), 32) * 32
-                                        //&& j > std::max((x-1), 0) * 32 && j < std::min((x+1), 32) * 32)
-                                if (i >= (y * 32) && i <= std::min((y+1), 32) * 32
-                                        && j >= (x * 32) && j <= std::min((x+1), 32) * 32)
+                                if (i >= (newY * 32) && i < (newY+1) * 32
+                                        && j >= (newX * 32) && j < (newX+1) * 32)
                                 {
                                     if (hide)
                                         *(pDest+3) = 5; // some value less than 192
                                     else
-                                        *(pDest+3) = 193; //*(pSrc+3);
+                                        *(pDest+3) = 193;
                                 }
 
-                                //pSrc += 4;
                                 pDest += 4;
                             }
                         }
-                        //pixelBufferSrc->unlock();
                         pixelBuffer->unlock();
 
                         pass->removeTextureUnitState(0);
