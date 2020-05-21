@@ -43,8 +43,6 @@ class Objects{
     PtrAnimationMap mObjects;
 
     Ogre::SceneNode* mRootNode;
-    //std::map<ESM4::FormId, std::map<std::pair<int, int>, NiBtOgre::BtOgreInst *> > mLandscapes;
-    std::vector<NiBtOgre::BtOgreInst*> mLandscapes; // FIXME: temp testing
     std::map<ESM4::FormId, std::map<std::pair<int, int>, NifOgre::ObjectScenePtr> > mLandscapeScene;
 
     static int uniqueID;

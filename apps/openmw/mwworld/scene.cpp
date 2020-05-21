@@ -56,9 +56,9 @@ namespace
             {
                 rendering.addObject(ptr, farModel);
             }
-            catch (std::exception& e)
+            catch (std::exception&)
             {
-                std::cout << "no far model " << model << std::endl;
+                //std::cout << "no far model " << model << std::endl;
                 rendering.addObject(ptr, model);
             }
 #endif
@@ -497,7 +497,7 @@ namespace MWWorld
     {
         // remove without physics
         ListFunctor visitor;
-        cell->forEachDummy<ListFunctor>(visitor, CellStore::DUM_Remove, x, y, 6, 4);
+        cell->forEachDummy<ListFunctor>(visitor, CellStore::DUM_Remove, x, y, 16, 4);
         for (std::size_t i = 0; i < visitor.mRefs.size(); ++i)
             removeObjectFromScene(visitor.mRefs[i]);
 
@@ -516,10 +516,11 @@ namespace MWWorld
 
         //std::cout << "about to insert dummy without physics" << std::endl; // FIXME
 
+        // FIXME: breaks animation
         // insert without physics
-        range = 6;
+        range = 16;
         InsertFunctor functor2 (*cell, true/*rescale*/, *loadingListener, nullptr, mRendering);
-        cell->forEachDummy (functor2, CellStore::DUM_Insert, x, y, range, 4);
+        cell->forEachStatic (functor2, CellStore::DUM_Insert, x, y, range, 4);
     }
 
     void Scene::loadVisibleDist (CellStore *cell, Loading::Listener* loadingListener)
@@ -1227,7 +1228,7 @@ namespace MWWorld
                 //if (dist)
                 {
                     ListFunctor visitor;
-                    dist->forEachDummy<ListFunctor>(visitor, CellStore::DUM_Insert, X, Y, 1, 0);
+                    dist->forEachDummy<ListFunctor>(visitor, CellStore::DUM_Insert, X, Y, 2, 0);
                     for (std::size_t i = 0; i < visitor.mRefs.size(); ++i)
                         removeObjectFromScene(visitor.mRefs[i]);
                 }

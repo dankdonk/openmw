@@ -292,8 +292,6 @@ namespace MWWorld
             bool forEachDummy (Functor& functor, int mode,
                     int x, int y, size_t range = 0, size_t exclude = 0)
             {
-                mHasState = true;
-
                 return
                     forEachDummyImp (functor, mSounds,             mode, x, y, range, exclude) &&
                     forEachDummyImp (functor, mForeignActivators,  mode, x, y, range, exclude) &&
@@ -327,6 +325,22 @@ namespace MWWorld
                     forEachDummyImp (functor, mForeignNpcs,        mode, x, y, range, exclude) &&
                     forEachDummyImp (functor, mForeignCreatures,   mode, x, y, range, exclude) &&
                     forEachDummyImp (functor, mLevelledCreatures,  mode, x, y, range, exclude);
+            }
+
+            template<class Functor>
+            bool forEachStatic (Functor& functor, int mode,
+                    int x, int y, size_t range = 0, size_t exclude = 0)
+            {
+                return
+                  //forEachDummyImp (functor, mForeignActivators,  mode, x, y, range, exclude) &&
+                    forEachDummyImp (functor, mForeignDoors,       mode, x, y, range, exclude) &&
+                  //forEachDummyImp (functor, mForeignLights,      mode, x, y, range, exclude) &&
+                    forEachDummyImp (functor, mForeignStatics,     mode, x, y, range, exclude) &&
+                  //forEachDummyImp (functor, mForeignGrasses,     mode, x, y, range, exclude) &&
+                  //forEachDummyImp (functor, mForeignTrees,       mode, x, y, range, exclude) &&
+                    forEachDummyImp (functor, mForeignFloras,      mode, x, y, range, exclude);
+                  //forEachDummyImp (functor, mTalkingActivators,  mode, x, y, range, exclude) &&
+                  //forEachDummyImp (functor, mStaticCollections,  mode, x, y, range, exclude) &&
             }
 
             template<class Functor>

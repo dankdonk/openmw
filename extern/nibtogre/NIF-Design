@@ -3531,7 +3531,7 @@ We need a special handling for FO3.  **FIXED**
 
 ## FO3 Land level
 
-The ground level just outside `OurLadyHope01` is too low.
+The ground level just outside `OurLadyHope01` is too low. **FIXED**
 
 ## Always female
 
@@ -4456,7 +4456,7 @@ It turns out that there's already `void Scene::removeObjectFromScene (const Ptr&
 **FIXME:** `CellStore::hasFormId()` is not being used
 **FIXME:** `CellStore::preload()` does not support newer games
 
-# [20/05/2020] LOD Landscape
+# [20/05/2020 - 21/05/2020] LOD Landscape
 
 ## Hysteresis revisited
 
@@ -4476,6 +4476,15 @@ With range 2, try:
 
 FPS is around 27 at (12, 1) with range 2, going up to around 31 with range 1;
 
+## FO3/FONV Landscape LOD
+
+Looking at the BSA files the block size appear to be 4 x 4 cells.
+
+# [22/05/2020] Distant Statics
+
+**FIXME:** animation broken since ee64b18bb1552374aae498b1e7ea0263be11bbb0 - disabling the "insert without physics" in the dummy cell stops the crash **FIXED:** well, avoided by not loading any actors without physics.
+
+Had an idea about distant statics - along with implementing the visibly distant statics with `.lod` and `.cmp` files, a modified CellStore could be used to load just the statics and trees (and terrain?) without any physics.  It may even be possible to simplify the terrain mesh on the fly.
 
 
 

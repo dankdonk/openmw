@@ -40,11 +40,20 @@ int Objects::uniqueID = 0;
 
 Objects::~Objects()
 {
-    // FIXME: delete landscape
-    for (std::size_t i = 0; i < mLandscapes.size(); ++i)
-    {
-        delete mLandscapes[i];
-    }
+    // delete scene from mLandscapeScene
+    //std::map<ESM4::FormId, std::map<std::pair<int, int>, NifOgre::ObjectScenePtr> >::iterator
+    //    worldIter = mLandscapeScene.begin();
+
+    //for (;worldIter != mLandscapeScene.end(); ++worldIter)
+    //{
+    //    std::map<std::pair<int, int>, NifOgre::ObjectScenePtr>::iterator sceneIter
+    //        = worldIter->second.begin();
+    //    for (; sceneIter != worldIter->second.end(); ++sceneIter)
+    //    {
+    //        // FIXME: need to delete shared pointer? (NifOgre::ObjectScenePtr)
+    //        worldIter->second.erase(sceneIter);
+    //    }
+    //}
 }
 
 void Objects::setRootNode(Ogre::SceneNode* root)
@@ -210,7 +219,6 @@ const std::map<std::int32_t, Ogre::SceneNode*> *Objects::insertModel(const MWWor
 
 void Objects::insertLandscapeModel(ESM4::FormId worldId, int x, int y, const std::string &mesh)
 {
-    // FIXME: need something similar to mObjects to keep track of SceneNodes, etc
     Ogre::SceneNode* root = mRootNode;
     Ogre::SceneNode* cellnode = root->createChildSceneNode(); // child for cell level
 
@@ -229,85 +237,9 @@ void Objects::insertLandscapeModel(ESM4::FormId worldId, int x, int y, const std
     std::map<int32_t, Ogre::Entity*>::iterator it(scene->mForeignObj->mEntities.begin());
     for (; it != scene->mForeignObj->mEntities.end(); ++it)
     {
+        // FIXME: have no idea why this is needed
         Ogre::MaterialPtr mat = scene->mMaterialControllerMgr.getWritableMaterial(it->second);
-#if 0
-        Ogre::Material::TechniqueIterator techIter = mat->getTechniqueIterator();
-        while(techIter.hasMoreElements())
-        {
-            Ogre::Technique *tech = techIter.getNext();
-            Ogre::Technique::PassIterator passes = tech->getPassIterator();
-            while(passes.hasMoreElements())
-            {
-                Ogre::Pass *pass = passes.getNext();
 
-                // actually means alpha value less than 192 will be rejected (confusing)
-                pass->setAlphaRejectSettings(Ogre::CMPF_GREATER_EQUAL, 0xC0/*192*/, true);
-
-                std::string modelName = scene->mForeignObj->mModel->getName();
-                std::size_t pos = modelName.find_last_of("\\");
-                std::size_t pos2 = modelName.find_last_of(".");
-                std::string texName
-                    = "textures\\landscapelod\\generated" + modelName.substr(pos, pos2-pos) + ".dds";
-
-                // base texture
-                Ogre::TexturePtr texAlpha = Ogre::TextureManager::getSingleton().getByName(
-                       texName, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
-
-                // try to retrieve previously created texture
-                Ogre::TexturePtr alphaTexture = Ogre::TextureManager::getSingleton().getByName(
-                       "alpha_" + texName,
-                       Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
-                if (!alphaTexture)
-                {
-                    // create a blank one
-                    alphaTexture = Ogre::TextureManager::getSingleton().createManual(
-                        "alpha_" + texName, // name
-                        Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
-                        Ogre::TEX_TYPE_2D,  // type
-                        texAlpha->getWidth(), texAlpha->getHeight(), // width & height
-                        0,                  // number of mipmaps; FIXME: should be 2? or 1?
-                        Ogre::PF_BYTE_RGBA,
-                        Ogre::TU_DEFAULT);  // usage; should be TU_DYNAMIC_WRITE_ONLY_DISCARDABLE for
-                                            // textures updated very often (e.g. each frame)
-                }
-
-                // src
-                Ogre::HardwarePixelBufferSharedPtr pixelBufferSrc
-                    = Ogre::static_pointer_cast<Ogre::Texture>(texAlpha)->getBuffer();
-                pixelBufferSrc->unlock(); // prepare for blit()
-
-                // dest
-                Ogre::HardwarePixelBufferSharedPtr pixelBuffer = alphaTexture->getBuffer();
-                pixelBuffer->unlock(); // prepare for blit()
-
-                // if source and destination dimensions don't match, scaling is done
-                pixelBuffer->blit(pixelBufferSrc);
-
-                pixelBuffer->lock(Ogre::HardwareBuffer::HBL_NORMAL); // for best performance use HBL_DISCARD!
-                const Ogre::PixelBox& pixelBox = pixelBuffer->getCurrentLock();
-                uint8_t *pDest = static_cast<uint8_t*>(pixelBox.data);
-
-                std::size_t pixPerCell = texAlpha->getWidth() / 32; // should be 32
-                for (size_t i = 0; i < texAlpha->getWidth(); ++i) // y
-                {
-                    for (size_t j = 0; j < texAlpha->getHeight(); ++j) // x
-                    {
-                        // FIXME: no idea why this is needed
-                        if (i == 0 && j == 0) // just one pixel
-                            *(pDest+3) = 5;
-                        else
-                            *(pDest+3) = 193;
-
-                        pDest += 4;
-                    }
-                }
-
-                Ogre::TextureUnitState *newTUS = pass->createTextureUnitState("alpha_"+texName);
-                newTUS->setColourOperation(Ogre::LBO_ALPHA_BLEND);
-                pass->removeTextureUnitState(1);
-            }
-        }
-#endif
         uniqueID = uniqueID+1;
         Ogre::StaticGeometry *sg = mRenderer.getScene()->createStaticGeometry("sg" + Ogre::StringConverter::toString(uniqueID));
         sg->setOrigin(Ogre::Vector3::ZERO);
@@ -339,12 +271,8 @@ void Objects::insertLandscapeModel(ESM4::FormId worldId, int x, int y, const std
         sg->setRenderQueueGroup(RQG_Main);
 
         Ogre::Node *node = (it->second)->getParentNode();
-        //if ((it->second)->isVisible())
-            //sg->addEntity(it->second, node->_getDerivedPosition(), node->_getDerivedOrientation(), node->_getDerivedScale());
-            sg->addEntity(it->second, Ogre::Vector3::ZERO);
+        sg->addEntity(it->second, Ogre::Vector3::ZERO);
         sg->build();
-
-        //insert->getCreator()->destroyEntity(it->second);
     }
 
     std::map<ESM4::FormId, std::map<std::pair<int, int>, NifOgre::ObjectScenePtr> >::iterator
@@ -365,6 +293,7 @@ void Objects::insertLandscapeModel(ESM4::FormId worldId, int x, int y, const std
     }
 }
 
+// FIXME: FO3/FONV support
 // FIXME: there is a strange bug where after the first time the landscape LOD are added the
 // "unhiding" seems to done to the wrong cell(s).  But once the "faulty" cell is unloaded then
 // loaded again, the issue no longer occurs.
@@ -376,7 +305,7 @@ void Objects::updateLandscapeTexture(ESM4::FormId worldId, int x, int y, bool hi
     if (iter != mLandscapeScene.end())
     {
         // convert x, y to landscape co-ordinates
-        int X = int((x >= 0 ? x /*+ 32*/ : x - 32) / 32) * 32; // FIXME: check FO3/FONV
+        int X = int((x >= 0 ? x /*+ 32*/ : x - 32) / 32) * 32; // FIXME: check FO3/FONV (4x4 blocks?)
         int Y = int((y >= 0 ? y /*+ 32*/ : y - 32) / 32) * 32;
 
         int newX = std::abs(x - X);
@@ -419,6 +348,12 @@ void Objects::updateLandscapeTexture(ESM4::FormId worldId, int x, int y, bool hi
 
                         // base texture
                         Ogre::TextureUnitState *tex = pass->getTextureUnitState(0);
+
+                        // FIXME: no idea what is adding another technique;
+                        //        just workaround for now by avoiding it
+                        if (mat->getNumTechniques() != 2 && tex->getName() != "hide")
+                            continue; // FIXME: temp testing
+
                         std::string textureName = tex->getTextureName();
                         Ogre::TexturePtr texAlpha = Ogre::TextureManager::getSingleton().getByName(
                                textureName, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
@@ -483,6 +418,7 @@ void Objects::updateLandscapeTexture(ESM4::FormId worldId, int x, int y, bool hi
 
                         pass->removeTextureUnitState(0);
                         Ogre::TextureUnitState *newTUS = pass->createTextureUnitState("alpha_"+texName);
+                        newTUS->setName("hide"); // NOTE: keeps re-setting it :-(
                         //newTUS->setColourOperation(Ogre::LBO_ALPHA_BLEND);
                     }
                 }
