@@ -128,7 +128,7 @@ public:
     void addLandscape(ESM4::FormId worldId, int x, int y, const std::string& model);
     void removeLandscape(ESM4::FormId worldId, int x, int y);
     void removeLandscape(ESM4::FormId worldId);
-    void hideLandscape(ESM4::FormId worldId, int x, int y, int range);
+    void updateLandscape(ESM4::FormId worldId, int x, int y, bool hide = true);
 
     void setWaterHeight(float height);
     void setWaterEnabled(bool enabled);

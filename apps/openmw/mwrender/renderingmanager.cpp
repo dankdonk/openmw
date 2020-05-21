@@ -319,9 +319,9 @@ void RenderingManager::removeLandscape(ESM4::FormId id)
     mObjects->removeLandscapeModel(id);
 }
 
-void RenderingManager::hideLandscape(ESM4::FormId id, int x, int y, int range)
+void RenderingManager::updateLandscape(ESM4::FormId id, int x, int y, bool hide)
 {
-    mObjects->hideLandscapeModel(id, x, y, range);
+    mObjects->updateLandscapeTexture(id, x, y, hide);
 }
 
 void

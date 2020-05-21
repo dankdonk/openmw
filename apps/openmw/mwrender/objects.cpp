@@ -236,7 +236,7 @@ void Objects::insertLandscapeModel(ESM4::FormId worldId, int x, int y, const std
     std::map<int32_t, Ogre::Entity*>::iterator it(scene->mForeignObj->mEntities.begin());
     for (; it != scene->mForeignObj->mEntities.end(); ++it)
     {
-#if 0
+//#if 0
         Ogre::MaterialPtr mat = scene->mMaterialControllerMgr.getWritableMaterial(it->second);
         Ogre::Material::TechniqueIterator techIter = mat->getTechniqueIterator();
         while(techIter.hasMoreElements())
@@ -262,10 +262,10 @@ void Objects::insertLandscapeModel(ESM4::FormId worldId, int x, int y, const std
                        texName, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
 
                 // the original texture, e.g. 60.00.00.32.dds seems to have an alpha channel
-                if (texAlpha->hasAlpha())
-                    std::cout << texName << " has alpha" << std::endl;
-                else
-                    std::cout << texName << " no alpha" << std::endl;
+              //if (texAlpha->hasAlpha())
+              //    std::cout << texName << " has alpha" << std::endl;
+              //else
+              //    std::cout << texName << " no alpha" << std::endl;
 
                 // try to retrieve previously created texture
                 Ogre::TexturePtr alphaTexture = Ogre::TextureManager::getSingleton().getByName(
@@ -305,7 +305,8 @@ void Objects::insertLandscapeModel(ESM4::FormId worldId, int x, int y, const std
                     for (size_t j = 0; j < texAlpha->getHeight(); ++j) // x
                     {
                         // testing blanking cell (12, 1), remembering we have 32x32 block
-                        if (i > 0 * 32 && i < 4 * 32 && j > 10 * 32 && j < 15 * 32)
+                        //if (i > 0 * 32 && i < 4 * 32 && j > 10 * 32 && j < 15 * 32)
+                        if (i == 0 && j == 0) // just one pixel
                             *(pDest+3) = 5;//*(pDest+3);
                         else
                             *(pDest+3) = 193;
@@ -320,7 +321,7 @@ void Objects::insertLandscapeModel(ESM4::FormId worldId, int x, int y, const std
                 newTUS->setColourOperation(Ogre::LBO_ALPHA_BLEND);
             }
         }
-#endif
+//#endif
         uniqueID = uniqueID+1;
         Ogre::StaticGeometry *sg = mRenderer.getScene()->createStaticGeometry("sg" + Ogre::StringConverter::toString(uniqueID));
         sg->setOrigin(Ogre::Vector3::ZERO);
@@ -342,8 +343,8 @@ void Objects::insertLandscapeModel(ESM4::FormId worldId, int x, int y, const std
             mStaticGeometryLandscape[worldId] = lodMap;
         }
 
-        //std::cout << "adding landscape model " << ESM4::formIdToString(worldId) << " at " // FIXME
-                  //<< x << "," << y << std::endl;
+        std::cout << "adding landscape model " << ESM4::formIdToString(worldId) << " at " // FIXME
+                  << x << "," << y << std::endl;
 
         // TODO: test with different values
         sg->setRegionDimensions(Ogre::Vector3(2048,2048,2048));
@@ -378,8 +379,10 @@ void Objects::insertLandscapeModel(ESM4::FormId worldId, int x, int y, const std
     }
 }
 
-// FIXME: does not work across 32x32 blocks
-void Objects::hideLandscapeModel(ESM4::FormId worldId, int x, int y, int range)
+// FIXME: range does not work across multiple 32x32 blocks (e.g. half in one and half in the other)
+//void Objects::hideLandscapeModel(ESM4::FormId worldId, int x, int y, int range)
+
+void Objects::updateLandscapeTexture(ESM4::FormId worldId, int x, int y, bool hide)
 {
     std::map<ESM4::FormId, std::map<std::pair<int, int>, NifOgre::ObjectScenePtr> >::iterator
         iter = mLandscapeScene.find(worldId);
@@ -387,15 +390,23 @@ void Objects::hideLandscapeModel(ESM4::FormId worldId, int x, int y, int range)
     if (iter != mLandscapeScene.end())
     {
         // convert x, y to landscape co-ordinates
-        int X = int(x / 32) * 32; // FIXME: check FO3/FONV
-        int Y = int(y / 32) * 32;
+        int X = int((x >= 0 ? x /*+ 32*/ : x - 32) / 32) * 32; // FIXME: check FO3/FONV
+        int Y = int((y >= 0 ? y /*+ 32*/ : y - 32) / 32) * 32;
+
+        //int xLeft   = int((x - 16 - 32) / 32) * 32;
+        //int xRight  = int((x - 16 + 32) / 32) * 32;
+        //int yBottom = int((y - 16 - 32) / 32) * 32;
+        //int yTop    = int((y - 16 + 32) / 32) * 32;
+
+        x = std::abs(X - x);
+        y = std::abs(Y - y);
 
         std::map<std::pair<int, int>, NifOgre::ObjectScenePtr>::iterator sceneIter
             = iter->second.find(std::pair<int, int>(X, Y));
         if (sceneIter != iter->second.end())
         {
-            //std::cout << "hiding landscape model " << ESM4::formIdToString(worldId) << " at "
-                      //<< X << "," << Y << " (" << x << "," << y << ")" << std::endl; // FIXME
+            std::cout << "updating landscape model " << ESM4::formIdToString(worldId) << " at "
+                      << X << "," << Y << " (" << x << "," << y << ")" << std::endl; // FIXME
 
             NifOgre::ObjectScenePtr& scene = sceneIter->second;
 
@@ -425,14 +436,22 @@ void Objects::hideLandscapeModel(ESM4::FormId worldId, int x, int y, int range)
                             = "textures\\landscapelod\\generated" + modelName.substr(pos, pos2-pos) + ".dds";
 
                         // base texture
+#if 0
                         Ogre::TexturePtr texAlpha = Ogre::TextureManager::getSingleton().getByName(
                                texName, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+#else
+                        Ogre::TextureUnitState *tex = pass->getTextureUnitState(0);
+                        std::string textureName = tex->getTextureName();
+                        Ogre::TexturePtr texAlpha = Ogre::TextureManager::getSingleton().getByName(
+                               textureName, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+#endif
 
                         // the original texture, e.g. 60.00.00.32.dds seems to have an alpha channel
                       //if (texAlpha->hasAlpha())
                       //    std::cout << texName << " has alpha" << std::endl;
                       //else
                       //    std::cout << texName << " no alpha" << std::endl;
+                      std::cout << (hide ? "hiding " : "unhiding ") << texName << std::endl;
 
                         // try to retrieve previously created texture
                         Ogre::TexturePtr alphaTexture = Ogre::TextureManager::getSingleton().getByName(
@@ -446,24 +465,31 @@ void Objects::hideLandscapeModel(ESM4::FormId worldId, int x, int y, int range)
                                 Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
                                 Ogre::TEX_TYPE_2D,  // type
                                 texAlpha->getWidth(), texAlpha->getHeight(), // width & height
-                                0,                  // number of mipmaps; FIXME: should be 2? or 1?
+                                0,                  // number of mipmaps;
                                 Ogre::PF_BYTE_RGBA,
                                 Ogre::TU_DEFAULT);  // usage; should be TU_DYNAMIC_WRITE_ONLY_DISCARDABLE for
                                                     // textures updated very often (e.g. each frame)
                         }
 
-                        // dest
-                        Ogre::HardwarePixelBufferSharedPtr pixelBuffer = alphaTexture->getBuffer();
-                        pixelBuffer->unlock(); // prepare for blit()
                         // src
                         Ogre::HardwarePixelBufferSharedPtr pixelBufferSrc
                             = Ogre::static_pointer_cast<Ogre::Texture>(texAlpha)->getBuffer();
                         pixelBufferSrc->unlock(); // prepare for blit()
+
+                        // dest
+                        Ogre::HardwarePixelBufferSharedPtr pixelBuffer = alphaTexture->getBuffer();
+                        pixelBuffer->unlock(); // prepare for blit()
+
                         // if source and destination dimensions don't match, scaling is done
                         pixelBuffer->blit(pixelBufferSrc);
 
+                        //pixelBufferSrc->lock(Ogre::HardwareBuffer::HBL_NORMAL);
                         pixelBuffer->lock(Ogre::HardwareBuffer::HBL_NORMAL); // for best performance use HBL_DISCARD!
+
+                        //const Ogre::PixelBox& pixelBoxSrc = pixelBufferSrc->getCurrentLock();
                         const Ogre::PixelBox& pixelBox = pixelBuffer->getCurrentLock();
+
+                        //uint8_t *pSrc = static_cast<uint8_t*>(pixelBoxSrc.data);
                         uint8_t *pDest = static_cast<uint8_t*>(pixelBox.data);
 
                         //std::size_t pixPerCell = texAlpha->getWidth() / 32; // should be 32
@@ -471,28 +497,27 @@ void Objects::hideLandscapeModel(ESM4::FormId worldId, int x, int y, int range)
                         {
                             for (size_t j = 0; j < texAlpha->getHeight(); ++j) // x
                             {
-                                // testing blanking cell (12, 1), remembering we have 32x32 block
-                                if (1)//i > 0 * 32 && i < 3 * 32 && j > 11 * 32 && j < 14 * 32)
-                                //if (i > std::max((y-range), 0) * 32 && i < std::min((y+range), 32) * 32
-                                //        && j > std::max((x-range), 0) * 32 && j < std::min((x+range), 32) * 32)
+                                //if (i > std::max((y-1), 0) * 32 && i < std::min((y+1), 32) * 32
+                                        //&& j > std::max((x-1), 0) * 32 && j < std::min((x+1), 32) * 32)
+                                if (i >= (y * 32) && i <= std::min((y+1), 32) * 32
+                                        && j >= (x * 32) && j <= std::min((x+1), 32) * 32)
                                 {
-                                    // some value less than 192
-                                    *(pDest+3) = 5;
+                                    if (hide)
+                                        *(pDest+3) = 5; // some value less than 192
+                                    else
+                                        *(pDest+3) = 193; //*(pSrc+3);
                                 }
-                                else
-                                    *(pDest+3) = 193;
 
+                                //pSrc += 4;
                                 pDest += 4;
                             }
                         }
-
-                        //Ogre::Pass::TextureUnitStates tus = pass->getTextureUnitStates();
-                        //std::cout << "num texture unit states is " << tus.size() << std::endl;
+                        //pixelBufferSrc->unlock();
+                        pixelBuffer->unlock();
 
                         pass->removeTextureUnitState(0);
                         Ogre::TextureUnitState *newTUS = pass->createTextureUnitState("alpha_"+texName);
                         //newTUS->setColourOperation(Ogre::LBO_ALPHA_BLEND);
-                        //std::cout << "tus name is " << newTUS->getName() << std::endl;
                     }
                 }
             }

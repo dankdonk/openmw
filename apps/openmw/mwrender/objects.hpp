@@ -64,7 +64,7 @@ public:
     void insertLandscapeModel(ESM4::FormId worldId, int x, int y, const std::string &mesh);
     void removeLandscapeModel(ESM4::FormId worldId, int x, int y);
     void removeLandscapeModel(ESM4::FormId worldId);
-    void hideLandscapeModel(ESM4::FormId worldId, int x, int y, int range);
+    void updateLandscapeTexture(ESM4::FormId worldId, int x, int y, bool hide = true);
 
     void insertLight(const MWWorld::Ptr& ptr);
 

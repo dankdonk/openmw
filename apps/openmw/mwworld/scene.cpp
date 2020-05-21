@@ -109,18 +109,15 @@ namespace
         {
             try
             {
-                if (ptr.getTypeName() == typeid(ESM4::Door).name()) // FIXME: debugging only
-                {
-                    std::cout << "inserting " << ptr.getBase()->mRef.getRefId() << std::endl;
-
-                    //if (ptr.getBase()->mRef.getRefId() == "MQ11CheydinhalGate")
-                        //std::cout << "stop" << std::endl;
-                }
+              //if (ptr.getTypeName() == typeid(ESM4::Door).name()) // FIXME: debugging only
+              //{
+              //    std::cout << "inserting " << ptr.getBase()->mRef.getRefId() << std::endl;
+              //}
 
                 addObject(ptr, mPhysics, mRendering);
 
-                if (mPhysics && !ptr.getBase()->mData.getBaseNode() && ptr.getTypeName() == typeid(ESM4::Door).name())
-                    std::cout << "no basenode " << ptr.getBase()->mRef.getRefId() << std::endl;
+              //if (mPhysics && !ptr.getBase()->mData.getBaseNode() && ptr.getTypeName() == typeid(ESM4::Door).name())
+              //    std::cout << "no basenode " << ptr.getBase()->mRef.getRefId() << std::endl;
 
                 updateObjectLocalRotation(ptr, mPhysics, mRendering);
                 if (ptr.getRefData().getBaseNode())
@@ -167,7 +164,7 @@ namespace
         {
             // FIXME: testing
             // well, it is actuallly being deleted later but...
-            std::cout << "deleting " << ptr.getBase()->mRef.getRefId() << std::endl;
+            //std::cout << "deleting " << ptr.getBase()->mRef.getRefId() << std::endl;
         }
 
         return true;
@@ -294,6 +291,15 @@ namespace MWWorld
                 );
             if (land && land->mDataTypes&ESM::Land::DATA_VHGT)
                 mPhysics->removeHeightField ((*iter)->getCell()->getGridX(), (*iter)->getCell()->getGridY());
+
+            if ((*iter)->isForeignCell())
+            {
+                ESM4::FormId worldId
+                    = static_cast<const MWWorld::ForeignCell*>((*iter)->getCell())->mCell->mParent;
+
+                mRendering.updateLandscape(worldId,
+                        (*iter)->getCell()->getGridX(), (*iter)->getCell()->getGridY(), false/*hide*/);
+            }
         }
 
         if ((*iter)->isDummyCell())
@@ -410,6 +416,17 @@ namespace MWWorld
                 const ESM4Terrain::LandData *data = land->getLandData (ESM4::Land::LAND_VHGT);
                 mPhysics->addHeightField(data->mHeights,
                         cell->getCell()->getGridX(), cell->getCell()->getGridY(), 0, worldsize / (verts-1), verts);
+
+                updateTES4LODLandscapeAtGrid (worldId, cell->getCell()->getGridX(),
+                                                       cell->getCell()->getGridY()); // FIXME: testing
+
+                ESM4::FormId landWorldId = worldId;
+                const MWWorld::ESMStore& store = MWBase::Environment::get().getWorld()->getStore();
+                const ForeignWorld *world = store.getForeign<ForeignWorld>().find(worldId);
+                if (world && world->mParent)
+                    landWorldId = world->mParent; // use parent world e.g. Cheydinhal
+
+                mRendering.updateLandscape(landWorldId, cell->getCell()->getGridX(), cell->getCell()->getGridY());
             }
             else
                 std::cerr << "Heightmap for " << cell->getCell()->getDescription() << " not found" << std::endl;
@@ -458,14 +475,14 @@ namespace MWWorld
         for (std::size_t i = 0; i < visitor2.mRefs.size(); ++i)
             removeObjectFromScene(visitor2.mRefs[i]);
 
-        std::cout << "about to insert dummy with physics" << std::endl; // FIXME
+        //std::cout << "about to insert dummy with physics" << std::endl; // FIXME
 
         // insert with physics
         std::size_t range = 4;
         InsertFunctor functor (*cell, true/*rescale*/, *loadingListener, mPhysics, mRendering);
         cell->forEachDummy (functor, CellStore::DUM_Insert, x, y, range, 0);
 
-        std::cout << "about to insert dummy without physics" << std::endl; // FIXME
+        //std::cout << "about to insert dummy without physics" << std::endl; // FIXME
 
         // insert without physics
         range = 6;
@@ -657,7 +674,8 @@ namespace MWWorld
             ESM4::FormId worldId
                 = static_cast<const MWWorld::ForeignCell*>(mCurrentCell->getCell())->mCell->mParent;
 
-            mRendering.hideLandscape(worldId, cell->getCell()->getGridX(), cell->getCell()->getGridY(), 1);
+            // FIXME: testing
+            //mRendering.updateLandscape(worldId, cell->getCell()->getGridX(), cell->getCell()->getGridY());
 
             updateTES4LODLandscapeAtGrid (worldId, cell->getCell()->getGridX(),
                 cell->getCell()->getGridY()); // FIXME: is this the best place to call?
