@@ -66,12 +66,12 @@ namespace MWWorld
       mCustomData (0),
       mChanged(false) // Loading from ESM/ESP files FIXME: assume unchanged for now
     {
-        mPosition.pos[0] = cellRef.mPosition.pos.x;
-        mPosition.pos[1] = cellRef.mPosition.pos.y;
-        mPosition.pos[2] = cellRef.mPosition.pos.z;
-        mPosition.rot[0] = cellRef.mPosition.rot.x;
-        mPosition.rot[1] = cellRef.mPosition.rot.y;
-        mPosition.rot[2] = cellRef.mPosition.rot.z;
+        mPosition.pos[0] = cellRef.mPlacement.pos.x;
+        mPosition.pos[1] = cellRef.mPlacement.pos.y;
+        mPosition.pos[2] = cellRef.mPlacement.pos.z;
+        mPosition.rot[0] = cellRef.mPlacement.rot.x;
+        mPosition.rot[1] = cellRef.mPlacement.rot.y;
+        mPosition.rot[2] = cellRef.mPlacement.rot.z;
 
         mLocalRotation.rot[0]=0;
         mLocalRotation.rot[1]=0;
@@ -85,12 +85,12 @@ namespace MWWorld
       mCustomData (0),
       mChanged(false) // Loading from ESM/ESP files FIXME: assume unchanged for now
     {
-        mPosition.pos[0] = cellRef.mPosition.pos.x;
-        mPosition.pos[1] = cellRef.mPosition.pos.y;
-        mPosition.pos[2] = cellRef.mPosition.pos.z;
-        mPosition.rot[0] = cellRef.mPosition.rot.x;
-        mPosition.rot[1] = cellRef.mPosition.rot.y;
-        mPosition.rot[2] = cellRef.mPosition.rot.z;
+        mPosition.pos[0] = cellRef.mPlacement.pos.x;
+        mPosition.pos[1] = cellRef.mPlacement.pos.y;
+        mPosition.pos[2] = cellRef.mPlacement.pos.z;
+        mPosition.rot[0] = cellRef.mPlacement.rot.x;
+        mPosition.rot[1] = cellRef.mPlacement.rot.y;
+        mPosition.rot[2] = cellRef.mPlacement.rot.z;
 
         mLocalRotation.rot[0]=0;
         mLocalRotation.rot[1]=0;
@@ -105,12 +105,12 @@ namespace MWWorld
       mCustomData (0),
       mChanged(false) // Loading from ESM/ESP files FIXME: assume unchanged for now
     {
-        mPosition.pos[0] = cellRef.mPosition.pos.x;
-        mPosition.pos[1] = cellRef.mPosition.pos.y;
-        mPosition.pos[2] = cellRef.mPosition.pos.z;
-        mPosition.rot[0] = cellRef.mPosition.rot.x;
-        mPosition.rot[1] = cellRef.mPosition.rot.y;
-        mPosition.rot[2] = cellRef.mPosition.rot.z;
+        mPosition.pos[0] = cellRef.mPlacement.pos.x;
+        mPosition.pos[1] = cellRef.mPlacement.pos.y;
+        mPosition.pos[2] = cellRef.mPlacement.pos.z;
+        mPosition.rot[0] = cellRef.mPlacement.rot.x;
+        mPosition.rot[1] = cellRef.mPlacement.rot.y;
+        mPosition.rot[2] = cellRef.mPlacement.rot.z;
 
         mLocalRotation.rot[0]=0;
         mLocalRotation.rot[1]=0;

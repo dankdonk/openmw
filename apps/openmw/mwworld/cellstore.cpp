@@ -242,8 +242,8 @@ namespace MWWorld
                 {
                     const int cellSize = 4096; // FIXME: hard coded cell size
 
-                    std::int32_t x = std::int32_t(ref.mPosition.pos.x / cellSize);
-                    std::int32_t y = std::int32_t(ref.mPosition.pos.y / cellSize);
+                    std::int32_t x = std::int32_t(ref.mPlacement.pos.x / cellSize);
+                    std::int32_t y = std::int32_t(ref.mPlacement.pos.y / cellSize);
                     std::pair<std::int32_t, std::int32_t> grid(x, y);
 
                     GridMap::iterator lb = mGridMap.lower_bound(grid);
@@ -317,8 +317,8 @@ namespace MWWorld
                 {
                     const int cellSize = 4096; // FIXME: hard coded cell size
 
-                    std::int32_t x = std::int32_t(ref.mPosition.pos.x / cellSize);
-                    std::int32_t y = std::int32_t(ref.mPosition.pos.y / cellSize);
+                    std::int32_t x = std::int32_t(ref.mPlacement.pos.x / cellSize);
+                    std::int32_t y = std::int32_t(ref.mPlacement.pos.y / cellSize);
                     std::pair<std::int32_t, std::int32_t> grid(x, y);
 
                     GridMap::iterator lb = mGridMap.lower_bound(grid);
@@ -397,8 +397,8 @@ namespace MWWorld
                 {
                     const int cellSize = 4096; // FIXME: hard coded cell size
 
-                    std::int32_t x = std::int32_t(ref.mPosition.pos.x / cellSize);
-                    std::int32_t y = std::int32_t(ref.mPosition.pos.y / cellSize);
+                    std::int32_t x = std::int32_t(ref.mPlacement.pos.x / cellSize);
+                    std::int32_t y = std::int32_t(ref.mPlacement.pos.y / cellSize);
                     std::pair<std::int32_t, std::int32_t> grid(x, y);
 
                     GridMap::iterator lb = mGridMap.lower_bound(grid);
@@ -1298,8 +1298,8 @@ namespace MWWorld
 
                 const int cellSize = 4096;
 
-                int newX = static_cast<int>(std::floor(record.mPosition.pos.x / cellSize));
-                int newY = static_cast<int>(std::floor(record.mPosition.pos.y / cellSize));
+                int newX = static_cast<int>(std::floor(record.mPlacement.pos.x / cellSize));
+                int newY = static_cast<int>(std::floor(record.mPlacement.pos.y / cellSize));
 
 
 

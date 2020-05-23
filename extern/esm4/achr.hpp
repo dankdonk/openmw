@@ -29,7 +29,7 @@
 
 #include <cstdint>
 
-#include "reference.hpp" // FormId, Position, EnableParent
+#include "reference.hpp" // FormId, Placement, EnableParent
 
 namespace ESM4
 {
@@ -45,7 +45,7 @@ namespace ESM4
         std::string mFullName;
         FormId      mBaseObj;
 
-        Position mPosition;
+        Placement mPlacement;
         float    mScale;      // default 1.f
         FormId   mOwner;
         FormId   mGlobal;

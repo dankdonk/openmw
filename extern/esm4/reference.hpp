@@ -43,7 +43,7 @@ namespace ESM4
     };
 
     // REFR, ACHR, ACRE
-    struct Position
+    struct Placement
     {
         Vector3 pos;
         Vector3 rot; // angles are in radian, rz applied first and rx applied last
@@ -56,6 +56,13 @@ namespace ESM4
         std::uint32_t flags; //0x0001 = Set Enable State Opposite Parent, 0x0002 = Pop In
     };
 #pragma pack(pop)
+
+    struct LODReference
+    {
+        FormId baseObj;
+        Placement placement;
+        float scale;
+    };
 }
 
 #endif // ESM4_REFERENCE_H

@@ -100,7 +100,7 @@ void ESM4::Reference::load(ESM4::Reader& reader)
                     //std::cout << mEditorId << std::endl;
                 break;
             }
-            case ESM4::SUB_DATA: reader.get(mPosition); break;
+            case ESM4::SUB_DATA: reader.get(mPlacement); break;
             case ESM4::SUB_XSCL: reader.get(mScale);    break;
             case ESM4::SUB_XOWN: reader.getFormId(mOwner);    break;
             case ESM4::SUB_XGLB: reader.getFormId(mGlobal);   break;

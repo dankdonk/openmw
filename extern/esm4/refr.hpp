@@ -29,7 +29,7 @@
 
 #include <cstdint>
 
-#include "reference.hpp" // FormId, Position, EnableParent
+#include "reference.hpp" // FormId, Placement, EnableParent
 
 namespace ESM4
 {
@@ -56,7 +56,7 @@ namespace ESM4
     struct TeleportDest
     {
         FormId   destDoor;
-        Position destPos;
+        Placement destPos;
         std::uint32_t flags; // 0x01 no alarm (only in TES5)
     };
 
@@ -78,7 +78,7 @@ namespace ESM4
         std::string mFullName;
         FormId      mBaseObj;
 
-        Position mPosition;
+        Placement mPlacement;
         float    mScale;      // default 1.f
         FormId   mOwner;
         FormId   mGlobal;

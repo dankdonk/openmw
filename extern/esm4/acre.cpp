@@ -57,7 +57,7 @@ void ESM4::ActorCreature::load(ESM4::Reader& reader)
         {
             case ESM4::SUB_EDID: reader.getZString(mEditorId); break;
             case ESM4::SUB_NAME: reader.getFormId(mBaseObj);   break;
-            case ESM4::SUB_DATA: reader.get(mPosition);        break;
+            case ESM4::SUB_DATA: reader.get(mPlacement);       break;
             case ESM4::SUB_XSCL: reader.get(mScale);           break;
             case ESM4::SUB_XESP:
             {

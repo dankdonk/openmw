@@ -259,12 +259,12 @@ namespace MWWorld
         if (ref.mEditorId != "")
             mCellRef.mRefID = ref.mEditorId; // FIXME: for testing doors
 
-        mCellRef.mPos.pos[0] = ref.mPosition.pos.x;
-        mCellRef.mPos.pos[1] = ref.mPosition.pos.y;
-        mCellRef.mPos.pos[2] = ref.mPosition.pos.z;
-        mCellRef.mPos.rot[0] = ref.mPosition.rot.x;
-        mCellRef.mPos.rot[1] = ref.mPosition.rot.y;
-        mCellRef.mPos.rot[2] = ref.mPosition.rot.z;
+        mCellRef.mPos.pos[0] = ref.mPlacement.pos.x;
+        mCellRef.mPos.pos[1] = ref.mPlacement.pos.y;
+        mCellRef.mPos.pos[2] = ref.mPlacement.pos.z;
+        mCellRef.mPos.rot[0] = ref.mPlacement.rot.x;
+        mCellRef.mPos.rot[1] = ref.mPlacement.rot.y;
+        mCellRef.mPos.rot[2] = ref.mPlacement.rot.z;
 
         mCellRef.mScale = ref.mScale;
 
@@ -305,12 +305,12 @@ namespace MWWorld
 
         mCellRef.mRefID = ESM4::formIdToString(ref.mFormId);
 
-        mCellRef.mPos.pos[0] = ref.mPosition.pos.x;
-        mCellRef.mPos.pos[1] = ref.mPosition.pos.y;
-        mCellRef.mPos.pos[2] = ref.mPosition.pos.z;
-        mCellRef.mPos.rot[0] = ref.mPosition.rot.x;
-        mCellRef.mPos.rot[1] = ref.mPosition.rot.y;
-        mCellRef.mPos.rot[2] = ref.mPosition.rot.z;
+        mCellRef.mPos.pos[0] = ref.mPlacement.pos.x;
+        mCellRef.mPos.pos[1] = ref.mPlacement.pos.y;
+        mCellRef.mPos.pos[2] = ref.mPlacement.pos.z;
+        mCellRef.mPos.rot[0] = ref.mPlacement.rot.x;
+        mCellRef.mPos.rot[1] = ref.mPlacement.rot.y;
+        mCellRef.mPos.rot[2] = ref.mPlacement.rot.z;
 
         mCellRef.mScale = ref.mScale;
 
@@ -323,12 +323,12 @@ namespace MWWorld
 
         mCellRef.mRefID = ESM4::formIdToString(ref.mFormId);
 
-        mCellRef.mPos.pos[0] = ref.mPosition.pos.x;
-        mCellRef.mPos.pos[1] = ref.mPosition.pos.y;
-        mCellRef.mPos.pos[2] = ref.mPosition.pos.z;
-        mCellRef.mPos.rot[0] = ref.mPosition.rot.x;
-        mCellRef.mPos.rot[1] = ref.mPosition.rot.y;
-        mCellRef.mPos.rot[2] = ref.mPosition.rot.z;
+        mCellRef.mPos.pos[0] = ref.mPlacement.pos.x;
+        mCellRef.mPos.pos[1] = ref.mPlacement.pos.y;
+        mCellRef.mPos.pos[2] = ref.mPlacement.pos.z;
+        mCellRef.mPos.rot[0] = ref.mPlacement.rot.x;
+        mCellRef.mPos.rot[1] = ref.mPlacement.rot.y;
+        mCellRef.mPos.rot[2] = ref.mPlacement.rot.z;
 
         mCellRef.mScale = ref.mScale;
 
