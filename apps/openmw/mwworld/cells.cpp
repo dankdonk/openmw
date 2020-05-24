@@ -476,20 +476,22 @@ MWWorld::CellStore *MWWorld::Cells::getWorldCellGrid(ESM4::FormId worldId, std::
         cellStore = &iter->second;
     }
 
-    if (cellStore->getState() != CellStore::State_Loaded)
-    {
-        // Multiple plugin support for landscape data is much easier than for references. The last plugin wins.
-        cellStore->load(mStore, mReader); // load() updates State_Loaded
+    // FIXME: can't load here becasue not all mod files would have been loaded when the world is first created
 
-        // inherit parent world's land?
-        // save context
-        //ESM4::ReaderContext ctx = mReader
+    //if (cellStore->getState() != CellStore::State_Loaded)
+    //{
+    //    // Multiple plugin support for landscape data is much easier than for references. The last plugin wins.
+    //    cellStore->load(mStore, mReader); // load() updates State_Loaded
 
-        // restore context
+    //    // inherit parent world's land?
+    //    // save context
+    //    //ESM4::ReaderContext ctx = mReader
 
-        //if (lb->first->mParent != 0)
-        // FIXME: TODO weather, etc
-    }
+    //    // restore context
+
+    //    //if (lb->first->mParent != 0)
+    //    // FIXME: TODO weather, etc
+    //}
 
     return cellStore;
 }
@@ -522,15 +524,7 @@ MWWorld::CellStore *MWWorld::Cells::getForeignInterior (const std::string& name)
     {
         const ForeignCell *cell = mStore.getForeign<ForeignCell>().find(lowerName);
 
-        //if (cell) // FIXME: why null?
-            result = mForeignInteriors.insert(std::make_pair(lowerName, std::move(CellStore(cell, true)))).first;
-        //else
-            //return 0;
-    }
-
-    if (result->second.getState() != CellStore::State_Loaded)
-    {
-        result->second.load(mStore, mReader);
+        result = mForeignInteriors.insert(std::make_pair(lowerName, std::move(CellStore(cell, true)))).first;
     }
 
     return &result->second;

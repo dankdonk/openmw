@@ -19,9 +19,9 @@ namespace MWWorld
 
     class ForeignWorld : public ESM4::World
     {
-        // Keep an index of the cells keyed by their grid position, so that
-        // Store<ForeignWorld> can have a search method to find a cell's formId
-        // (NOTE: we don't do the same for interior cells since they are not part of a world record)
+    private:
+        // Keep an index of the cells keyed by their grid position (but not for interior cells),
+        // so that Store<ForeignWorld> can have a search method to find a cell's formid.
         std::map<std::pair<std::int16_t, std::int16_t>, ESM4::FormId> mCellGridMap;
         //ESM4::FormId mDummyCell;
         ForeignCell *mVisibleDistCell;
@@ -47,6 +47,7 @@ namespace MWWorld
 
         const std::map<std::pair<std::int16_t, std::int16_t>, ESM4::FormId>& getCellGridMap() const;
 
+        // FIXME: this is broken since there can be more than one
         CellStore *getVisibleDistCell();
         CellStore *getVisibleDistCell() const;
 

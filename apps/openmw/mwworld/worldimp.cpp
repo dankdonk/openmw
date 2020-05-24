@@ -547,12 +547,17 @@ namespace MWWorld
     CellStore *World::getWorldCell (const std::string& world, int x, int y)
     {
         ESM4::FormId worldId = mStore.getForeign<ForeignWorld>().getFormId(world);
-        return mCells.getWorldCellGrid (worldId, x, y);
+
+        return mCells.getWorldCellGrid(worldId, x, y);
     }
 
     CellStore *World::getWorldCell (ESM4::FormId worldId, int x, int y)
     {
-        return mCells.getWorldCellGrid (worldId, x, y);
+        CellStore *exterior = mCells.getWorldCellGrid(worldId, x, y);
+        if (exterior && exterior->getState() != CellStore::State_Loaded)
+            exterior->load(mStore, mEsm);
+
+        return exterior;
     }
 
     CellStore *World::getWorldDummyCell (ESM4::FormId worldId)
@@ -562,7 +567,7 @@ namespace MWWorld
 
     CellStore *World::getWorldVisibleDistCell (ESM4::FormId worldId)
     {
-        return mCells.getWorldVisibleDistCell (worldId, 0, 0); // FIXME
+        return mCells.getWorldVisibleDistCell (worldId, 0, 0); // FIXME there can be more than one
     }
 
     ESM4::FormId World::loadForeignLand (ESM4::Reader& reader)
@@ -573,7 +578,12 @@ namespace MWWorld
 
     CellStore *World::getForeignInterior (const std::string& name)
     {
-        return mCells.getForeignInterior (name);
+        CellStore *interior = mCells.getForeignInterior(name);
+
+        if (interior->getState() != CellStore::State_Loaded)
+            interior->load(mStore, mEsm);
+
+        return interior;
     }
 
     void World::useDeathCamera()
