@@ -527,7 +527,8 @@ void ESMStore::loadTes4Record (ESM::ESMReader& esm)
         case ESM4::REC_REGN: reader.getRecordData(); mForeignRegions.loadForeign(reader); break;
         case ESM4::REC_CELL:
         {
-            // do not load and just save context
+            // do not load the refs and just save the context (but the Cell record itself is loaded)
+            // TODO: if we pass this pointer some loading might be possible (e.g. lighting templates)
             mForeignCells.preload(esm, mForeignWorlds);
             // FIXME: deal with deleted recods
 

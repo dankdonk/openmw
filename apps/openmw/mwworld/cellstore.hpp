@@ -26,6 +26,7 @@
 namespace ESM4
 {
     union RecordHeader;
+    class Reader;
 }
 
 namespace ESM
@@ -74,7 +75,7 @@ namespace MWWorld
             //
             bool mIsForeignCell;
             bool mIsDummyCell;
-            bool mIsVisibleDistCell;
+            bool mIsVisibleDistCell; // FIXME: deprecated
             ESM4::FormId mForeignLand; // ForeignCell only, can't store in mCell due to const ptr
             ESM4::FormId mAudioLocation; // from REFR, interior only
 
@@ -167,7 +168,7 @@ namespace MWWorld
             inline ESM4::FormId getAudioLocation() const { return mAudioLocation; }
 
             inline ESM4::FormId getForeignLandId() const { return mForeignLand; }
-            void loadTes4Record (const MWWorld::ESMStore& store, ESM::ESMReader& esm);
+            void loadTes4Record (const MWWorld::ESMStore& store, ESM4::Reader& reader);
             void setLoadedState();
 
             State getState() const;
@@ -292,6 +293,8 @@ namespace MWWorld
             bool forEachDummy (Functor& functor, int mode,
                     int x, int y, size_t range = 0, size_t exclude = 0)
             {
+                mHasState = true; // only if actors/objects move?
+
                 return
                     forEachDummyImp (functor, mSounds,             mode, x, y, range, exclude) &&
                     forEachDummyImp (functor, mForeignActivators,  mode, x, y, range, exclude) &&
@@ -335,12 +338,13 @@ namespace MWWorld
                   //forEachDummyImp (functor, mForeignActivators,  mode, x, y, range, exclude) &&
                     forEachDummyImp (functor, mForeignDoors,       mode, x, y, range, exclude) &&
                   //forEachDummyImp (functor, mForeignLights,      mode, x, y, range, exclude) &&
+                  //forEachDummyImp (functor, mForeignMiscItems,   mode, x, y, range, exclude) &&
                     forEachDummyImp (functor, mForeignStatics,     mode, x, y, range, exclude) &&
                   //forEachDummyImp (functor, mForeignGrasses,     mode, x, y, range, exclude) &&
                   //forEachDummyImp (functor, mForeignTrees,       mode, x, y, range, exclude) &&
                     forEachDummyImp (functor, mForeignFloras,      mode, x, y, range, exclude);
                   //forEachDummyImp (functor, mTalkingActivators,  mode, x, y, range, exclude) &&
-                  //forEachDummyImp (functor, mStaticCollections,  mode, x, y, range, exclude) &&
+                  //forEachDummyImp (functor, mPlaceableWaters,    mode, x, y, range, exclude) &&
             }
 
             template<class Functor>

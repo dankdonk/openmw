@@ -74,6 +74,9 @@ namespace ESM4
         FormId mFormId;       // from the header
         std::uint32_t mFlags; // from the header, see enum type RecordFlag for details
 
+        // Grp_CellPersistentChild, Grp_CellTemporaryChild or Grp_CellVisibleDistChild
+        std::int32_t mGroupType;
+
         std::string mEditorId;
         std::string mFullName;
         FormId      mBaseObj;

@@ -686,6 +686,11 @@ namespace MWWorld
     }
 
     template <>
+    inline ForeignStore<ForeignWorld> &ESMStore::getForeignModifiable<ForeignWorld>() {
+        return mForeignWorlds;
+    }
+
+    template <>
     inline const ForeignStore<ForeignWorld> &ESMStore::getForeign<ForeignWorld>() const {
         return mForeignWorlds;
     }

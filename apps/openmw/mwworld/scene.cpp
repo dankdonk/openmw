@@ -44,6 +44,13 @@ namespace
 
         if (dist)
         {
+            // FIXME: temp testing
+            //int newX, newY;
+            //MWBase::Environment::get().getWorld()->positionToIndex(ptr.getRefData().getPosition().pos[0],
+            //        ptr.getRefData().getPosition().pos[1], newX, newY);
+            //std::cout << "dist cell (" << newX << "," << newY << ")" << std::endl;
+            // end testing
+
             std::size_t pos = model.find_last_of(".");
             std::string farModel = model.substr(0, pos) + "_far.nif";
 #if 0
@@ -316,6 +323,8 @@ namespace MWWorld
                 );
             if (land && land->mDataTypes&ESM::Land::DATA_VHGT)
                 mPhysics->removeHeightField ((*iter)->getCell()->getGridX(), (*iter)->getCell()->getGridY());
+
+            // update landscape LOD
 //#if 0
             if ((*iter)->isForeignCell())
             {
@@ -1128,6 +1137,7 @@ namespace MWWorld
             }
         }
 
+        // FIXME: this gets a loaded dummy cell, which defeats the purpose of getting the refsToLoad
         CellStore *dummy = MWBase::Environment::get().getWorld()->getWorldDummyCell(worldId);
         if (dummy)
             refsToLoad += dummy->getPersistentRefrCount();
@@ -1213,7 +1223,7 @@ namespace MWWorld
                 if (result.second)
                 {
                     std::cout << "Loading visibly dist" << std::endl;
-                    loadVisibleDist(dist, loadingListener); // FIXME: temp disable for testing
+                    //loadVisibleDist(dist, loadingListener); // FIXME: temp disable for testing
                 }
 
 

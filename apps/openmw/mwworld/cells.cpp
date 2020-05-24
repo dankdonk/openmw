@@ -169,7 +169,7 @@ MWWorld::CellStore *MWWorld::Cells::getCell (const ESM::CellId& id)
 }
 
 // in line with COE to COW
-MWWorld::CellStore *MWWorld::Cells::getWorldCell (const std::string& worldName, int x, int y)
+MWWorld::CellStore *MWWorld::Cells::getWorldCellGrid (const std::string& worldName, std::int16_t x, std::int16_t y)
 {
 #if 0
     // -- start of tests
@@ -202,7 +202,7 @@ MWWorld::CellStore *MWWorld::Cells::getWorldCell (const std::string& worldName, 
 #endif
     ESM4::FormId worldId = mStore.getForeign<ForeignWorld>().getFormId(worldName);
 
-    return getWorldCell(worldId, x, y);
+    return getWorldCellGrid(worldId, x, y);
 }
 
 void MWWorld::Cells::initNewWorld(const ForeignWorld *world)
@@ -419,7 +419,7 @@ void MWWorld::Cells::initNewWorld(const ForeignWorld *world)
     }
 }
 
-MWWorld::CellStore *MWWorld::Cells::getWorldCell(ESM4::FormId worldId, int x, int y)
+MWWorld::CellStore *MWWorld::Cells::getWorldCellGrid(ESM4::FormId worldId, std::int16_t x, std::int16_t y)
 {
     // find the world for the given form id
     const ForeignWorld *world = mStore.getForeign<ForeignWorld>().find(worldId);
@@ -427,8 +427,10 @@ MWWorld::CellStore *MWWorld::Cells::getWorldCell(ESM4::FormId worldId, int x, in
         return nullptr; // FIXME: maybe exception?
 
     // now find the cell's formid for the given x, y
-    const std::map<std::pair<int, int>, ESM4::FormId>& cellGridMap = world->getCellGridMap();
-    std::map<std::pair<int, int>, ESM4::FormId>::const_iterator it = cellGridMap.find(std::make_pair(x, y));
+    const std::map<std::pair<std::int16_t, std::int16_t>, ESM4::FormId>& cellGridMap = world->getCellGridMap();
+    std::map<std::pair<std::int16_t, std::int16_t>, ESM4::FormId>::const_iterator it
+        = cellGridMap.find(std::make_pair(x, y));
+
     if (it == cellGridMap.end())
         return nullptr; // FIXME: maybe exception?
 
@@ -437,15 +439,14 @@ MWWorld::CellStore *MWWorld::Cells::getWorldCell(ESM4::FormId worldId, int x, in
     if (!cell)
         return nullptr; // FIXME: maybe exception?
 
-    typedef std::map<std::pair<int, int>, CellStore> CellStoreIndex;
     CellStore *cellStore;
 
     // does the world exist?
-    std::map<ESM4::FormId, CellStoreIndex>::iterator lb = mForeignWorlds.lower_bound(worldId);
-    if (lb != mForeignWorlds.end() && !(mForeignWorlds.key_comp()(worldId, lb->first)))
+    std::map<ESM4::FormId, CellGridMap>::iterator lb = mForeignExteriors.lower_bound(worldId);
+    if (lb != mForeignExteriors.end() && !(mForeignExteriors.key_comp()(worldId, lb->first)))
     {
         // found world
-        std::pair<CellStoreIndex::iterator, bool> res
+        std::pair<CellGridMap::iterator, bool> res
             = lb->second.emplace(std::piecewise_construct,
                                  std::forward_as_tuple(x, y),
                                  std::forward_as_tuple(CellStore(cell, true/*foreign*/)));
@@ -461,17 +462,17 @@ MWWorld::CellStore *MWWorld::Cells::getWorldCell(ESM4::FormId worldId, int x, in
     }
     else // insert a new world
     {
-        initNewWorld(world);
+        initNewWorld(world); // also inserts the dummy cell (but not loaded)
 
-        CellStoreIndex ci;
+        CellGridMap ci;
         ci.emplace(std::piecewise_construct,
             std::forward_as_tuple(x, y),
             std::forward_as_tuple(CellStore(cell, true/*foreign*/)));
 
-        mForeignWorlds.insert(lb,
-                std::map<ESM4::FormId, CellStoreIndex>::value_type(world->mFormId, std::move(ci)));
+        mForeignExteriors.insert(lb,
+                std::map<ESM4::FormId, CellGridMap>::value_type(world->mFormId, std::move(ci)));
 
-        CellStoreIndex::iterator iter = mForeignWorlds[worldId].find(std::pair<int, int>(x, y));
+        CellGridMap::iterator iter = mForeignExteriors[worldId].find(std::pair<int, int>(x, y));
         cellStore = &iter->second;
     }
 
@@ -499,16 +500,16 @@ MWWorld::CellStore *MWWorld::Cells::getWorldDummyCell (ESM4::FormId worldId)
     if (it != mForeignDummys.end())
         return it->second;
 
-    return 0;
+    return nullptr;
 }
 
-MWWorld::CellStore *MWWorld::Cells::getWorldVisibleDistCell (ESM4::FormId worldId)
+MWWorld::CellStore *MWWorld::Cells::getWorldVisibleDistCell (ESM4::FormId worldId, std::int16_t x, std::int16_t y)
 {
     std::map<ESM4::FormId, CellStore>::iterator it = mForeignVisibleDist.find(worldId);
     if (it != mForeignVisibleDist.end())
         return &it->second;
 
-    return 0;
+    return nullptr;
 }
 
 // If one does not exist insert in mForeignInteriors. Load as required.

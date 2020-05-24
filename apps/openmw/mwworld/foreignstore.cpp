@@ -442,7 +442,7 @@ namespace MWWorld
 
     ForeignStore<MWWorld::ForeignCell>::~ForeignStore()
     {
-        std::map<std::uint64_t, MWWorld::ForeignCell*>::iterator it = mCells.begin();
+        std::map<ESM4::FormId, MWWorld::ForeignCell*>::iterator it = mCells.begin();
         for (; it != mCells.end(); ++it)
             delete it->second;
     }
@@ -515,7 +515,7 @@ namespace MWWorld
         MWWorld::ForeignCell *cell = new MWWorld::ForeignCell(); // deleted in dtor
 
         ESM4::FormId id = reader.hdr().record.id;
-        std::map<std::uint64_t, MWWorld::ForeignCell*>::iterator lb = mCells.lower_bound(id);
+        std::map<ESM4::FormId, MWWorld::ForeignCell*>::iterator lb = mCells.lower_bound(id);
         if (lb != mCells.end() && !(mCells.key_comp()(id, lb->first)))
         {
             std::cout << "CELL modified " << ESM4::formIdToString(id) << std::endl; // FIXME: for testing
@@ -540,7 +540,7 @@ namespace MWWorld
             // partially load cell record
             cell->preload(reader);
 
-            mCells.insert(lb, std::make_pair(std::uint64_t(id), cell));
+            mCells.insert(lb, std::make_pair(id, cell));
 
             if (cell->mHasChildren)
                 cell->addFileContext(ctx);
@@ -644,7 +644,7 @@ namespace MWWorld
     void ForeignStore<MWWorld::ForeignCell>::testPreload(ESM::ESMReader& esm)
     {
         //FIXME below is for testing only
-        std::map<std::uint64_t, MWWorld::ForeignCell*>::iterator it = mCells.find(mLastPreloadedCell);
+        std::map<ESM4::FormId, MWWorld::ForeignCell*>::iterator it = mCells.find(mLastPreloadedCell);
         if (it != mCells.end())
             it->second->testPreload(esm);
         else
@@ -670,11 +670,12 @@ namespace MWWorld
     {
         if (cell->getState() != CellStore::State_Loaded)
         {
+            ESM4::Reader& reader = static_cast<ESM::ESM4Reader*>(&esm)->reader();
+
             while (esm.hasMoreRecs())
             {
-                ESM4::Reader& reader = static_cast<ESM::ESM4Reader*>(&esm)->reader();
-
                 reader.checkGroupStatus();
+
                 if (reader.getContext().groupStack.back().first.type != ESM4::Grp_CellPersistentChild)
                 {
                     // must have popped groupStack
@@ -685,7 +686,7 @@ namespace MWWorld
 
                 reader.getRecordHeader();
 
-                cell->loadTes4Record(store, esm);
+                cell->loadTes4Record(store, reader);
                 //listener->setProgress(static_cast<size_t>(esm.getFileOffset() / (float)esm.getFileSize() * 1000));
             }
 
@@ -706,7 +707,7 @@ namespace MWWorld
         const ESM4::RecordHeader& hdr = reader.hdr();
 
         if (hdr.record.typeId != ESM4::REC_GRUP)
-            return cell->loadTes4Record(store, esm);
+            return cell->loadTes4Record(store, reader);
 
         // should not happen, throw?
         std::cout << "ForeignStore<ForeignCell>::loadTes4Group unexpected group" << std::endl;
@@ -721,7 +722,7 @@ namespace MWWorld
         std::uint64_t modId(reader.getContext().modIndex);
         modId <<= 8;
         modId |= currCell;
-        std::map<std::uint64_t, MWWorld::ForeignCell*>::iterator it = mCells.find(modId);
+        std::map<ESM4::FormId, MWWorld::ForeignCell*>::iterator it = mCells.find(currCell);
         if (it == mCells.end())
             return;
 
@@ -742,7 +743,7 @@ namespace MWWorld
         std::uint64_t modId(reader.getContext().modIndex);
         modId <<= 8;
         modId |= currCell;
-        std::map<std::uint64_t, MWWorld::ForeignCell*>::iterator it = mCells.find(modId);
+        std::map<ESM4::FormId, MWWorld::ForeignCell*>::iterator it = mCells.find(currCell);
         if (it == mCells.end())
             return;
 
@@ -799,11 +800,12 @@ namespace MWWorld
         return RecordId("", false);
     }
 
+    // FIXME: how is this different to find(const std::string& name) ?
     const ForeignCell *ForeignStore<MWWorld::ForeignCell>::searchExtByName(const std::string &name) const
     {
-        ForeignCell *cell = 0;
+        ForeignCell *cell = nullptr;
 
-        std::map<std::uint64_t, MWWorld::ForeignCell*>::const_iterator it = mCells.begin();
+        std::map<ESM4::FormId, MWWorld::ForeignCell*>::const_iterator it = mCells.begin();
         for (;it != mCells.end(); ++it)
         {
             if (!it->second->mIsInterior && Misc::StringUtils::ciEqual(it->second->mCell->mEditorId, name))
@@ -829,7 +831,7 @@ namespace MWWorld
     const ESM::Cell *ForeignStore<MWWorld::ForeignCell>::find(int x, int y) const
     {
         // FIXME: some dummy for now
-        const ESM::Cell *ptr = 0;
+        const ESM::Cell *ptr = nullptr;
         return ptr;
     }
 
@@ -840,16 +842,17 @@ namespace MWWorld
         if (it != mEditorIdMap.end())
             return find(it->second);
 
-        return 0;
+        return nullptr;
     }
 
+    // WARNING: the supplied formid needs to have the correct modindex
     const MWWorld::ForeignCell *ForeignStore<MWWorld::ForeignCell>::find(ESM4::FormId formId) const
     {
-        std::map<std::uint64_t, MWWorld::ForeignCell*>::const_iterator it = mCells.find(std::uint64_t(formId));
+        std::map<ESM4::FormId, MWWorld::ForeignCell*>::const_iterator it = mCells.find(formId);
         if (it != mCells.end())
             return it->second;
 
-        return 0;
+        return nullptr;
     }
 
     ForeignStore<MWWorld::ForeignLand>::~ForeignStore()

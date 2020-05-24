@@ -40,15 +40,15 @@ void MWWorld::ForeignWorld::load(ESM::ESMReader& esm, bool isDeleted)
     //mName = mFullName;
 }
 
-bool MWWorld::ForeignWorld::updateCellGridMap(int x, int y, ESM4::FormId id)
+bool MWWorld::ForeignWorld::updateCellGridMap(std::int16_t x, std::int16_t y, ESM4::FormId id)
 {
-    std::pair<std::map<std::pair<int, int>, ESM4::FormId>::iterator, bool> ret
+    std::pair<std::map<std::pair<std::int16_t, std::int16_t>, ESM4::FormId>::iterator, bool> ret
         = mCellGridMap.insert (std::make_pair(std::make_pair(x, y), id));
 
     return ret.second;
 }
 
-const std::map<std::pair<int, int>, ESM4::FormId>& MWWorld::ForeignWorld::getCellGridMap() const
+const std::map<std::pair<std::int16_t, std::int16_t>, ESM4::FormId>& MWWorld::ForeignWorld::getCellGridMap() const
 {
     return mCellGridMap;
 }

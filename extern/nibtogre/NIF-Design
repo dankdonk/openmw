@@ -4235,7 +4235,7 @@ Will need to render the models without physics and without making them a `Ptr`, 
   * Terrain for active cells
   * Low-poly statics/trees for far distance (trees rendering different for Tamriel cf. other worlds)
   * Statics/trees (without physics) for medium distance
-  * All objcts for active cells
+  * All objects for active cells
 
 We will need to modify `NiModel` so that simple mesh without FaceGen, animation, etc, are available for LOD.
 
@@ -4480,11 +4480,33 @@ FPS is around 27 at (12, 1) with range 2, going up to around 31 with range 1;
 
 Looking at the BSA files the block size appear to be 4 x 4 cells.
 
-# [22/05/2020] Distant Statics
+# [22/05/2020 - 23/05/2020] Distant Statics
 
 **FIXME:** animation broken since ee64b18bb1552374aae498b1e7ea0263be11bbb0 - disabling the "insert without physics" in the dummy cell stops the crash **FIXED:** well, avoided by not loading any actors without physics.
 
-Had an idea about distant statics - along with implementing the visibly distant statics with `.lod` and `.cmp` files, a modified CellStore could be used to load just the statics and trees (and terrain?) without any physics.  It may even be possible to simplify the terrain mesh on the fly.
+Had an idea about distant statics - along with implementing the visibly distant statics with `.lod` and `.cmp` files, a modified CellStore could be used to load just the statics and trees (and terrain?) without any physics.  It may even be possible to simplify the terrain mesh on the fly. **NOTE:** it tuns out that vanilla doen't bother adding statics (e.g. rocks) beyond the loaced cells.
+
+## `.lod` files in TES4
+
+The positions of some entries seem incorrect.  e.g. see the left tower sunken too low - COW "OblivionMQKvatch" 0 0
+
+I'm also guessing that scale of 0.f actually means 1.f and it has to be divided by 100 to get the actual scale?
+
+Maybe abandon the use of the `.lod` files and use the entries in the visibly distant cell groups, based on the grids indicated in the `.cmp` files, instead?
+
+## Oblivion comparison
+
+It's depressing - the console command TDT shows approx 250 FPS without trees (bEnableTrees=0) :-(
+
+## FO3 and FONV
+
+These don't seem to have "visibly distant" cell groups at all.
+
+The landscape LOD low-poly meshes seem to be organised in 4x4, 16x16 and 32x32 cell blocks.  Quad tree?
+
+## CellStore rethink
+
+Rather than keep separate CellStores for visibly distant objects, maybe keep all the objects in one CellStore but keep separate indices for temporary, persistent and visibly distant child groups.
 
 
 

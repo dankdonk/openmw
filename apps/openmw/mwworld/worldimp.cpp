@@ -547,12 +547,12 @@ namespace MWWorld
     CellStore *World::getWorldCell (const std::string& world, int x, int y)
     {
         ESM4::FormId worldId = mStore.getForeign<ForeignWorld>().getFormId(world);
-        return mCells.getWorldCell (worldId, x, y);
+        return mCells.getWorldCellGrid (worldId, x, y);
     }
 
     CellStore *World::getWorldCell (ESM4::FormId worldId, int x, int y)
     {
-        return mCells.getWorldCell (worldId, x, y);
+        return mCells.getWorldCellGrid (worldId, x, y);
     }
 
     CellStore *World::getWorldDummyCell (ESM4::FormId worldId)
@@ -562,7 +562,7 @@ namespace MWWorld
 
     CellStore *World::getWorldVisibleDistCell (ESM4::FormId worldId)
     {
-        return mCells.getWorldVisibleDistCell (worldId);
+        return mCells.getWorldVisibleDistCell (worldId, 0, 0); // FIXME
     }
 
     ESM4::FormId World::loadForeignLand (ESM4::Reader& reader)

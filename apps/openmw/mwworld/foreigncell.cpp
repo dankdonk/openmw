@@ -62,6 +62,9 @@ void MWWorld::ForeignCell::preload (ESM4::Reader& reader)
     if (reader.hasCellGrid())
         mHasGrid = true;
 
+    if (mCell) // if a mod is overwriting the cell record, discard everything
+        delete mCell;
+
     mCell = new ESM4::Cell; // deleted in dtor
 
     mHasChildren = mCell->preload(reader);
@@ -73,6 +76,8 @@ void MWWorld::ForeignCell::preload (ESM4::Reader& reader)
         // NOTE: Can't update values from any lighting templates here because during preload
         //       the World is not built yet (i.e. can't get access to ESMStore).
         //       Instead do it in RenderingManager::configureAmbient().
+        // TODO: we can pass in ESMStore as a parameter (but lighting templates may not have
+        //       been loaded yet?)
         mAmbi.mAmbient = mCell->mLighting.ambient;
         mAmbi.mSunlight = mCell->mLighting.ambient;
         mAmbi.mFog = mCell->mLighting.fogColor;

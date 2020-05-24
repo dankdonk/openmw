@@ -1021,7 +1021,7 @@ namespace MWWorld
         }
         else // mForeignCell
         {
-            if (mState!=State_Loaded)
+            if (mState != State_Loaded)
             {
                 // FIXME: currently unused because getPtr() only uses hasId()
               //if (mState == State_Preloaded)
@@ -1203,11 +1203,11 @@ namespace MWWorld
         const ESM4::RecordHeader& hdr = reader.hdr();
 
         if (hdr.record.typeId != ESM4::REC_GRUP)
-            return loadTes4Record(store, esm);
+            return loadTes4Record(store, reader);
 
         switch (hdr.group.type)
         {
-            case ESM4::Grp_CellChild:
+            case ESM4::Grp_CellChild: // World dummy cell
             case ESM4::Grp_CellPersistentChild:
             case ESM4::Grp_CellTemporaryChild:
             case ESM4::Grp_CellVisibleDistChild:
@@ -1247,10 +1247,10 @@ namespace MWWorld
         return;
     }
 
-    void CellStore::loadTes4Record (const MWWorld::ESMStore& store, ESM::ESMReader& esm)
+    void CellStore::loadTes4Record (const MWWorld::ESMStore& store, ESM4::Reader& reader)
     {
         // Assumes that the reader has just read the record header only.
-        ESM4::Reader& reader = static_cast<ESM::ESM4Reader*>(&esm)->reader();
+        //ESM4::Reader& reader = static_cast<ESM::ESM4Reader*>(&esm)->reader();
         const ESM4::RecordHeader& hdr = reader.hdr();
 
         switch (hdr.record.typeId)
@@ -1290,7 +1290,8 @@ namespace MWWorld
                     //std::cout << "REFR: " << record.mEditorId << std::endl; // FIXME
 
 #if 0
-                if (reader.grp().type == ESM4::Grp_CellPersistentChild)
+                //if (reader.grp().type == ESM4::Grp_CellPersistentChild)
+                if (record.mGroupType == ESM4::Grp_CellPersistentChild)
                     //if (record.mIsMapMarker)
                     std::cout << "Persistent REFR: " << record.mEditorId << " 0x"
                         << ESM4::formIdToString(record.mFormId) << std::endl;
@@ -1418,25 +1419,49 @@ namespace MWWorld
                     case ESM4::REC_MISC: mForeignMiscItems.load(record, deleted, store, mapGrid);
                                          mStoreTypes[record.mFormId] = ESM4::REC_MISC; break;
                     case ESM4::REC_STAT:
-                                                 mForeignStatics.load(record, deleted, store, mapGrid);
-                                                 if (record.mEditorId == "DoorMarker")
-                                                     std::cout << "DoorMarker: " << " 0x"
-                                                         << ESM4::formIdToString(record.mFormId) << std::endl;
-                                         mStoreTypes[record.mFormId] = ESM4::REC_STAT;
+                    {
+                        mForeignStatics.load(record, deleted, store, mapGrid);
+                        mStoreTypes[record.mFormId] = ESM4::REC_STAT;
 #if 0
-                //if (reader.getContext().currWorld == 0x0001D0BC && reader.getContext().groupStack.back().first.type == ESM4::Grp_CellVisibleDistChild)
-                if (reader.getContext().currWorld == 0x0000003C &&
-                        reader.getContext().groupStack.back().first.type == ESM4::Grp_CellPersistentChild)
-                {
-                    std::string padding = ""; // FIXME: debugging only
-                    padding.insert(0, reader.getContext().groupStack.size()*2, ' ');
-                    std::cout << padding << "CellStore REFR " << record.mEditorId << " "
-                              //<< ESM4::formIdToString(reader.getContext().currCell) << " visible dist "
-                              << ESM4::formIdToString(reader.getContext().currCell) << " persistent "
-                              << ESM4::formIdToString(record.mBaseObj) << std::endl;
-                }
+                        if (mIsVisibleDistCell) // FIXME
+                        {
+                            const ForeignStore<ESM4::Static>& stat = store.getForeign<ESM4::Static>();
+                            const ESM4::Static *statObj = stat.search(record.mBaseObj);
+                            // world not loaded at this point
+                            //ESM4::FormId worldId
+                                //= static_cast<const MWWorld::ForeignCell*>(getCell())->mCell->mParent;
+                            //const ForeignStore<ForeignWorld>& wrld = store.getForeign<ForeignWorld>();
+                            //const ForeignWorld *distWrld = wrld.find(worldId);
+                            if (statObj)
+                                std::cout << "Visible Dist static "
+                                    << ESM4::formIdToString(reader.getContext().currWorld) << " "
+                                    << ESM4::formIdToString(reader.getContext().currCell) << " ("
+                                    << reader.currCellGrid().grid.x << ","
+                                    << reader.currCellGrid().grid.y << ") "
+                                    << statObj->mEditorId << std::endl;
+                        }
 #endif
-                                                 break;
+#if 0
+                        if (record.mEditorId == "DoorMarker") // FIXME
+                             std::cout << "DoorMarker: " << " 0x"
+                                 << ESM4::formIdToString(record.mFormId) << std::endl;
+#endif
+#if 0
+                        //if (reader.getContext().currWorld == 0x0001D0BC &&
+                            //reader.getContext().groupStack.back().first.type == ESM4::Grp_CellVisibleDistChild)
+                        if (reader.getContext().currWorld == 0x0000003C &&
+                            reader.getContext().groupStack.back().first.type == ESM4::Grp_CellPersistentChild)
+                        {
+                            std::string padding = ""; // FIXME: debugging only
+                            padding.insert(0, reader.getContext().groupStack.size()*2, ' ');
+                            std::cout << padding << "CellStore REFR " << record.mEditorId << " "
+                                  //<< ESM4::formIdToString(reader.getContext().currCell) << " visible dist "
+                                  << ESM4::formIdToString(reader.getContext().currCell) << " persistent "
+                                  << ESM4::formIdToString(record.mBaseObj) << std::endl;
+                        }
+#endif
+                        break;
+                    }
                     case ESM4::REC_GRAS: mForeignGrasses.load(record, deleted, store, mapGrid);
                                          mStoreTypes[record.mFormId] = ESM4::REC_GRAS; break;
                     //case ESM4::REC_TREE: mForeignTrees.load(record, deleted, store, mapGrid);
@@ -1780,7 +1805,7 @@ namespace MWWorld
                 else
                 {
                     reader.getRecordData();
-                    mForeignPathgrids.load(esm);
+                    mForeignPathgrids.loadForeign(reader);
 
                     mPathgridGraph.load(this);
                     buildTES3Pathgrid(); // FIXME: just a workaround

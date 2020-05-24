@@ -38,11 +38,12 @@ namespace MWWorld
             mutable std::map<std::string, CellStore> mInteriors;
             mutable std::map<std::pair<int, int>, CellStore> mExteriors;
             //
+            typedef std::map<std::pair<std::int16_t, std::int16_t>, CellStore> CellGridMap;
+            // TODO: use formid instead for interiors?
             std::map<std::string, CellStore> mForeignInteriors;
             // FIXME: string or formId?
             // Fortunately, all of TES4 worlds have EditorIds but others may not.
-            //mutable std::map<std::string, std::map<std::pair<int, int>, CellStore> > mForeignWorlds;
-            std::map<ESM4::FormId, std::map<std::pair<int, int>, CellStore> > mForeignWorlds;
+            std::map<ESM4::FormId, CellGridMap> mForeignExteriors;
             // We don't own the dummy CellStore*, they belong to the respective ForeginWorld's
             std::map<ESM4::FormId, CellStore*> mForeignDummys;      // key is ForeignWorld FormId
             // FIXME: probably need to be for each cell rather than each world
@@ -74,10 +75,12 @@ namespace MWWorld
 
             CellStore *getCell (const ESM::CellId& id);
 
-            CellStore *getWorldCell (const std::string& world, int x, int y);
-            CellStore *getWorldCell (ESM4::FormId worldId, int x, int y);
+            CellStore *getWorldCellGrid (const std::string& world, std::int16_t x, std::int16_t y);
+            CellStore *getWorldCellGrid (ESM4::FormId worldId, std::int16_t x, std::int16_t y);
+            //CellStore *getWorldCell (ESM4::FormId cellId); // TODO
+            //const CellStore *getWorldDummyCell (ESM4::FormId worldId) const; // deprecated
             CellStore *getWorldDummyCell (ESM4::FormId worldId);
-            CellStore *getWorldVisibleDistCell (ESM4::FormId worldId);
+            CellStore *getWorldVisibleDistCell (ESM4::FormId worldId, std::int16_t x, std::int16_t y);
             CellStore *getForeignInterior (const std::string& name);
 
             Ptr getPtr (const std::string& name, CellStore& cellStore, bool searchInContainers = false);

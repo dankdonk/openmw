@@ -78,8 +78,8 @@ namespace Foreign
         if (!world)
             return; // FIXME: maybe exception?
 
-        const std::map<std::pair<int, int>, ESM4::FormId>& cellGridMap = world->getCellGridMap();
-        std::map<std::pair<int, int>, ESM4::FormId>::const_iterator it = cellGridMap.begin();
+        const std::map<std::pair<std::int16_t, std::int16_t>, ESM4::FormId>& cellGridMap = world->getCellGridMap();
+        std::map<std::pair<std::int16_t, std::int16_t>, ESM4::FormId>::const_iterator it = cellGridMap.begin();
         for (; it != cellGridMap.end(); ++it)
         {
             if (it->first.first < minX)

@@ -32,7 +32,8 @@
 #include "reader.hpp"
 //#include "writer.hpp"
 
-ESM4::Reference::Reference() : mFormId(0), mFlags(0), mInitiallyDisabled(false), mIsMapMarker(false), mMapMarker(0),
+ESM4::Reference::Reference() : mFormId(0), mFlags(0), mGroupType(-1),
+                               mInitiallyDisabled(false), mIsMapMarker(false), mMapMarker(0),
                                mBaseObj(0), mScale(1.f), mOwner(0), mGlobal(0), mFactionRank(0), mCount(1),
                                mAudioLocation(0)
 {
@@ -59,6 +60,8 @@ void ESM4::Reference::load(ESM4::Reader& reader)
     mFormId = reader.hdr().record.id;
     reader.adjustFormId(mFormId);
     mFlags  = reader.hdr().record.flags;
+    mGroupType = reader.grp().type;
+
     // TODO: Let the engine apply this? Saved games?
     //mInitiallyDisabled = ((mFlags & ESM4::Rec_Disabled) != 0) ? true : false;
     std::uint32_t esmVer = reader.esmVersion();

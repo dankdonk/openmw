@@ -160,7 +160,8 @@ namespace MWWorld
     {
     private:
 
-        std::map<std::uint64_t, ForeignCell*> mCells;
+        // the key is formid adjusted with modindex
+        std::map<ESM4::FormId, ForeignCell*> mCells;
 
         std::map<std::string, ESM4::FormId> mEditorIdMap;
 
