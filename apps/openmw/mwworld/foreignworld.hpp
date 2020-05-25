@@ -41,19 +41,21 @@ namespace MWWorld
         ForeignWorld();
         ~ForeignWorld();
 
-        // returns false if insert fails (e.g. index already exists)
-        bool updateCellGridMap(std::int16_t x, std::int16_t y, ESM4::FormId id);
+        // returns false if insert fails (i.e. grid already exists)
+        // throws if the formid is different for the same grid (when insert fails)
+        bool updateCellGridMap(std::int16_t x, std::int16_t y, ESM4::FormId formId);
         //bool setDummyCell(ESM4::FormId id);
+        bool setDummyCell(ForeignCell *cell);
 
         const std::map<std::pair<std::int16_t, std::int16_t>, ESM4::FormId>& getCellGridMap() const;
+        ESM4::FormId getCellId(std::int16_t x, std::int16_t y) const;
 
         // FIXME: this is broken since there can be more than one
         CellStore *getVisibleDistCell();
         CellStore *getVisibleDistCell() const;
 
-        CellStore *getDummyCell();
-        CellStore *getDummyCell() const;
-        //ESM4::FormId getDummyCell() const { return mDummyCell; }
+        ForeignCell *getDummyCell();
+        ForeignCell *getDummyCell() const;
 
         void load (ESM::ESMReader& esm, bool isDeleted = false);
         void save (ESM::ESMWriter& esm, bool isDeleted = false) const {} // FIXME: TODO

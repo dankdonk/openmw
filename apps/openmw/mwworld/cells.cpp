@@ -374,16 +374,24 @@ void MWWorld::Cells::initNewWorld(const ForeignWorld *world)
             }
         }
     }
-
-    CellStore *dummyCell = const_cast<ForeignWorld*>(world)->getDummyCell();
-    if (dummyCell)
+    // FIXME: doesn't belong here?
+//#if 0
+    std::map<ESM4::FormId, CellStore>::iterator lb = mForeignDummys.lower_bound(world->mFormId);
+    if (lb != mForeignDummys.end() && !(mForeignDummys.key_comp()(world->mFormId, lb->first)))
     {
-        std::pair<std::map<ESM4::FormId, CellStore*>::iterator, bool> res =
-            mForeignDummys.insert({ world->mFormId, dummyCell });
-
-        //if (res.second)
-            //res.first->second.load(mStore, mReader);
+        throw std::runtime_error("Dummy cell already exists for this world");
     }
+    else
+    {
+        const ForeignCell *dummyCell = world->getDummyCell();
+        if (dummyCell)
+        {
+            mForeignDummys.insert(lb, { world->mFormId, CellStore(dummyCell, true/*foreign*/, true/*dummy*/) });
+        }
+        else
+            throw std::runtime_error("Dummy cell not found for this world");
+    }
+//#endif
 #if 0
     // sanity check: find the world for the given form i
     // check if a dummy cell exists
@@ -419,6 +427,11 @@ void MWWorld::Cells::initNewWorld(const ForeignWorld *world)
     }
 }
 
+// NOTE: creates a new CellStore if it doesn't exist but do not load (can't load here becasue
+//       not all mod files would have been loaded when the world is first created)
+//
+//       the caller needs to load() if required
+//
 MWWorld::CellStore *MWWorld::Cells::getWorldCellGrid(ESM4::FormId worldId, std::int16_t x, std::int16_t y)
 {
     // find the world for the given form id
@@ -498,9 +511,9 @@ MWWorld::CellStore *MWWorld::Cells::getWorldCellGrid(ESM4::FormId worldId, std::
 
 MWWorld::CellStore *MWWorld::Cells::getWorldDummyCell (ESM4::FormId worldId)
 {
-    std::map<ESM4::FormId, CellStore*>::iterator it = mForeignDummys.find(worldId);
+    std::map<ESM4::FormId, CellStore>::iterator it = mForeignDummys.find(worldId);
     if (it != mForeignDummys.end())
-        return it->second;
+        return &it->second;
 
     return nullptr;
 }

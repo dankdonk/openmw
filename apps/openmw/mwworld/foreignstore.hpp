@@ -182,7 +182,7 @@ namespace MWWorld
 
         void preload(ESM::ESMReader& esm, ForeignStore<ForeignWorld>& worlds);
         void loadVisibleDist(ESMStore& store, ESM::ESMReader& esm, CellStore *cell);
-        void loadDummy(ESMStore& store, ESM::ESMReader& esm, CellStore *cell);
+        void loadDummy(ESMStore& store, ESM::ESMReader& esm, CellStore *cell); // FIXME: deprecated
         void loadTes4Group(ESMStore& store, ESM::ESMReader& esm, CellStore *cell);
         //void loadTes4Record(ESM::ESMReader& esm, ForeignStore<ForeignWorld>& worlds);
         void updateRefrEstimate(ESM::ESMReader& esm);

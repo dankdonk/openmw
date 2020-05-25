@@ -562,7 +562,13 @@ namespace MWWorld
 
     CellStore *World::getWorldDummyCell (ESM4::FormId worldId)
     {
-        return mCells.getWorldDummyCell (worldId);
+        CellStore *dummy = mCells.getWorldDummyCell(worldId);
+        //const ForeignCell *cell = static_cast<const ForeignCell*>(dummy->getCell());
+
+        if (dummy->getState() != CellStore::State_Loaded)
+            dummy->load(mStore, mEsm);
+
+        return dummy;
     }
 
     CellStore *World::getWorldVisibleDistCell (ESM4::FormId worldId)
@@ -2834,7 +2840,7 @@ namespace MWWorld
             if (!world)
                 throw std::runtime_error ("findForeignInteriorPosition: cannot find external world");
 
-            MWWorld::CellStore *dummy = world->getDummyCell();
+            MWWorld::CellStore *dummy = getWorldDummyCell(world->mFormId);
             if (!dummy)
                 throw std::runtime_error ("findForeignInteriorPosition: world does not have a dummy cell");
 

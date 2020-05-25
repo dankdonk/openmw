@@ -15,11 +15,11 @@ MWWorld::ForeignWorld::ForeignWorld() : /*mDummyCell(0), */mVisibleDistCell(null
 
 MWWorld::ForeignWorld::~ForeignWorld()
 {
-    if (mDummyCellStore)
-        delete mDummyCellStore;
+    //if (mDummyCellStore)
+        //delete mDummyCellStore;
 
-    if (mDummyCell)
-        delete mDummyCell;
+    //if (mDummyCell)
+        //delete mDummyCell;
 
     if (mVisibleDistCellStore)
         delete mVisibleDistCellStore;
@@ -40,10 +40,20 @@ void MWWorld::ForeignWorld::load(ESM::ESMReader& esm, bool isDeleted)
     //mName = mFullName;
 }
 
-bool MWWorld::ForeignWorld::updateCellGridMap(std::int16_t x, std::int16_t y, ESM4::FormId id)
+bool MWWorld::ForeignWorld::updateCellGridMap(std::int16_t x, std::int16_t y, ESM4::FormId formId)
+//bool MWWorld::ForeignWorld::updateCellGridMap(ForeignCell *cell)
 {
     std::pair<std::map<std::pair<std::int16_t, std::int16_t>, ESM4::FormId>::iterator, bool> ret
-        = mCellGridMap.insert (std::make_pair(std::make_pair(x, y), id));
+        = mCellGridMap.insert(std::make_pair(std::make_pair(x, y), formId));
+
+    // should be the same formid, check just in case
+    if (!ret.second)
+    {
+        ESM4::FormId oldId = ret.first->second;
+
+        if (oldId != formId)
+            throw std::runtime_error("Cell GridMap different formid found");
+    }
 
     return ret.second;
 }
@@ -53,17 +63,33 @@ const std::map<std::pair<std::int16_t, std::int16_t>, ESM4::FormId>& MWWorld::Fo
     return mCellGridMap;
 }
 
-#if 0
-bool MWWorld::ForeignWorld::setDummyCell(ESM4::FormId id)
+ESM4::FormId MWWorld::ForeignWorld::getCellId(std::int16_t x, std::int16_t y) const
+{
+    std::map<std::pair<std::int16_t, std::int16_t>, ESM4::FormId>::const_iterator it
+        = mCellGridMap.find(std::make_pair(x, y));
+
+    if (it != mCellGridMap.end())
+        return it->second;
+
+    return 0;
+}
+
+bool MWWorld::ForeignWorld::setDummyCell(ForeignCell *cell)
 {
     if (mDummyCell)
-        return false;
+    {
+        if (cell->mCell->mFormId != mDummyCell->mCell->mFormId)
+            throw std::runtime_error("Dummy cell different formid found");
 
-    mDummyCell = id;
+        return false;
+    }
+
+    mDummyCell = cell;
+
     return true;
 }
-#endif
 
+// FIXME: this is broken, since there can be one for each exterior cell
 MWWorld::CellStore *MWWorld::ForeignWorld::getVisibleDistCell()
 {
     if (!mVisibleDistCell)
@@ -88,28 +114,14 @@ MWWorld::CellStore *MWWorld::ForeignWorld::getVisibleDistCell() const
     return mVisibleDistCellStore;
 }
 
-MWWorld::CellStore *MWWorld::ForeignWorld::getDummyCell()
+MWWorld::ForeignCell *MWWorld::ForeignWorld::getDummyCell()
 {
-    if (!mDummyCell)
-    {
-        // FIXME: if we add a new ctor to CellStore we don't need a ForeignCell?
-        mDummyCell = new ForeignCell(); // deleted in dtor
-        mDummyCell->mCell = new  ESM4::Cell();
-
-        // TODO: populate it with some other dummy entries?
-        mDummyCell->mCell->mX = 0;
-        mDummyCell->mCell->mY = 0;
-
-        mDummyCellStore = new  CellStore(mDummyCell, true/*isForeignCell*/, true/*isDummy*/);
-        //mDummyCellStore->setVisibleDistCell();
-    }
-
-    return mDummyCellStore;
+    return mDummyCell;
 }
 
-MWWorld::CellStore *MWWorld::ForeignWorld::getDummyCell() const
+MWWorld::ForeignCell *MWWorld::ForeignWorld::getDummyCell() const
 {
-    return mDummyCellStore;
+    return mDummyCell;
 }
 
 void MWWorld::ForeignWorld::blank()

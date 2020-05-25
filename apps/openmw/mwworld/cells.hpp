@@ -41,13 +41,16 @@ namespace MWWorld
             typedef std::map<std::pair<std::int16_t, std::int16_t>, CellStore> CellGridMap;
             // TODO: use formid instead for interiors?
             std::map<std::string, CellStore> mForeignInteriors;
-            // FIXME: string or formId?
-            // Fortunately, all of TES4 worlds have EditorIds but others may not.
+            // string or formId?  All of TES4 worlds have EditorIds but other games may not.
             std::map<ESM4::FormId, CellGridMap> mForeignExteriors;
-            // We don't own the dummy CellStore*, they belong to the respective ForeginWorld's
-            std::map<ESM4::FormId, CellStore*> mForeignDummys;      // key is ForeignWorld FormId
+
+            // one per world (note some don't have dummy cells)
+            std::map<ESM4::FormId, CellStore> mForeignDummys; // key is ForeignWorld FormId
+
             // FIXME: probably need to be for each cell rather than each world
-            std::map<ESM4::FormId, CellStore> mForeignVisibleDist; // key is ForeignWorld FormId
+            // key is ForeignWorld FormId
+            std::map<ESM4::FormId, CellStore> mForeignVisibleDist;
+            // key is the foreign world's EditorId in lower case
             std::map<std::string, std::vector<std::pair<std::int16_t, std::int16_t> > > mVisibleDistStatics;
             void initNewWorld(const ForeignWorld *world);
 

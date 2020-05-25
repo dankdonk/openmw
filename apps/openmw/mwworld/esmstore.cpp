@@ -308,11 +308,12 @@ void ESMStore::loadTes4Group (ESM::ESMReader &esm)
                 break;
             }
 
-            CellStore *cell = world->getDummyCell();
+            //reader.skipGroup();
+            loadTes4Group(esm);
 
             //std::cout << "Loading world dummy cell " << world->mEditorId << std::endl; // FIXME
             // must load the whole group or else we'll lose track of where we are
-            mForeignCells.loadDummy(*this, esm, cell);
+            //mForeignCells.loadDummy(*this, esm, cell);
 #endif
             break;
         }

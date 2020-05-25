@@ -607,6 +607,10 @@ namespace MWWorld
                 std::cout << "Cell parent formid mismatch, " << std::hex << worldId
                           << " label " << groupLabel.value << std::endl;
 #endif
+
+            // ignore if one already exists (note above we re-loaded the record when the same formid was found)
+            //world->setDummyCellId(cell->mCell->mFormId);
+            world->setDummyCell(cell);
         }
         else if (groupType == ESM4::Grp_InteriorSubCell) // interior cell
         {
@@ -664,6 +668,8 @@ namespace MWWorld
         }
     }
 
+    // FIXME: deprecated
+#if 0
     void ForeignStore<MWWorld::ForeignCell>::loadDummy(ESMStore& store, ESM::ESMReader& esm, CellStore *cell)
     {
         if (cell->getState() != CellStore::State_Loaded)
@@ -694,7 +700,7 @@ namespace MWWorld
         else
             std::cout << "attempt to load 2nd time" << std::endl;
     }
-
+#endif
     // FIXME: this is the 3rd time the same code (almost) is being repeated, not even counting
     // OpenCS. Here, ESMStore and CellStore.  Need to move them out to something like ESMLoader.
     void ForeignStore<MWWorld::ForeignCell>::loadTes4Group(ESMStore& store, ESM::ESMReader& esm, CellStore *cell)
