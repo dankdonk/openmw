@@ -45,13 +45,14 @@ namespace MWWorld
             std::map<ESM4::FormId, CellGridMap> mForeignExteriors;
 
             // one per world (note some don't have dummy cells)
-            std::map<ESM4::FormId, CellStore> mForeignDummys; // key is ForeignWorld FormId
+            std::map<ESM4::FormId, CellStore> mForeignDummys; // key is the foreign world's FormId
 
-            // FIXME: probably need to be for each cell rather than each world
-            // key is ForeignWorld FormId
+            // FIXME: need to be for each cell rather than each world
+            // key is the foreign world's FormId
             std::map<ESM4::FormId, CellStore> mForeignVisibleDist;
             // key is the foreign world's EditorId in lower case
-            std::map<std::string, std::vector<std::pair<std::int16_t, std::int16_t> > > mVisibleDistStatics;
+            std::map<std::string, std::vector<std::pair<std::int16_t, std::int16_t> > > mVisibleDistStaticGrids;
+
             void initNewWorld(const ForeignWorld *world);
 
             std::vector<std::pair<std::string, CellStore *> > mIdCache;

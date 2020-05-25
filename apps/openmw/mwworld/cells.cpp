@@ -263,15 +263,19 @@ void MWWorld::Cells::initNewWorld(const ForeignWorld *world)
             if (pos != std::string::npos)
             {
                 std::string worldEditorId = (*it2).substr(11, pos-11); // 11 for 'distantlod\'
+                if (Misc::StringUtils::lowerCase(world->mEditorId) == worldEditorId)
+                    const_cast<ForeignWorld*>(world)->addVisibleDistGrids(*it2, locations[i]); // FIXME const
 
+#if 0
                 //std::cout << locations[i] << " " << *it2 << std::endl;
 
                 Ogre::DataStreamPtr file = groupMgr.openResource(*it2, locations[i]);
 
                 std::map<std::string, std::vector<std::pair<std::int16_t, std::int16_t> > >::iterator lb
-                    = mVisibleDistStatics.lower_bound(worldEditorId);
+                    = mVisibleDistStaticGrids.lower_bound(worldEditorId);
 
-                if (lb != mVisibleDistStatics.end() && !(mVisibleDistStatics.key_comp()(worldEditorId, lb->first)))
+                if (lb != mVisibleDistStaticGrids.end()
+                        && !(mVisibleDistStaticGrids.key_comp()(worldEditorId, lb->first)))
                 {
 #if 0
                     while (!file->eof())
@@ -283,7 +287,8 @@ void MWWorld::Cells::initNewWorld(const ForeignWorld *world)
                         //std::cout << "(" << x << "," << y << ")" << std::endl;
                     }
 #else
-                    //throw std::runtime_error ("initNewWorld repeat");  // FIXME: redesign so that it doesn't get called many times
+                    // FIXME: redesign so that it doesn't get called many times
+                    //throw std::runtime_error ("initNewWorld repeat");
 #endif
                 }
                 else // world EditorId not found, create an entry
@@ -299,8 +304,9 @@ void MWWorld::Cells::initNewWorld(const ForeignWorld *world)
                     }
                     // FIXME: either don't bother with the last entry or do something with it
                     //std::cout << worldEditorId << std::endl;
-                    mVisibleDistStatics.insert(lb, std::make_pair(worldEditorId, grid));
+                    mVisibleDistStaticGrids.insert(lb, std::make_pair(worldEditorId, grid));
                 }
+#endif
             }
             else
             {
@@ -331,7 +337,7 @@ void MWWorld::Cells::initNewWorld(const ForeignWorld *world)
                 {
                     ESM4::FormId baseObj;
 
-                    // these should be a vector as there can be many instances
+                    // FIXME: these should be a vector as there can be many instances
                     float posX;
                     float posY;
                     float posZ;

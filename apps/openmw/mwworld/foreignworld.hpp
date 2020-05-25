@@ -5,6 +5,7 @@
 #include <map>
 
 #include <extern/esm4/wrld.hpp>
+#include <extern/esm4/reference.hpp> // LODReference
 
 namespace ESM
 {
@@ -23,11 +24,16 @@ namespace MWWorld
         // Keep an index of the cells keyed by their grid position (but not for interior cells),
         // so that Store<ForeignWorld> can have a search method to find a cell's formid.
         std::map<std::pair<std::int16_t, std::int16_t>, ESM4::FormId> mCellGridMap;
-        //ESM4::FormId mDummyCell;
+        ESM4::FormId mDummyCellId;
         ForeignCell *mVisibleDistCell;
         CellStore *mVisibleDistCellStore;
         ForeignCell *mDummyCell;
-        CellStore *mDummyCellStore;
+        CellStore *mDummyCellStore; // we don't own this one
+
+        // from ".cmp" files
+        std::vector<std::pair<std::int16_t, std::int16_t> > mVisibleDistGrids;
+        // from ".lod" files based on the grids in mVisibleDistGrids
+        std::map<std::pair<std::int16_t, std::int16_t>, std::vector<ESM4::LODReference> > mVisibleDistRefs;
 
         // Rather than using ESM4::WorldGroup, keep some variables here
         // (assumed only one per world)
@@ -44,7 +50,10 @@ namespace MWWorld
         // returns false if insert fails (i.e. grid already exists)
         // throws if the formid is different for the same grid (when insert fails)
         bool updateCellGridMap(std::int16_t x, std::int16_t y, ESM4::FormId formId);
-        //bool setDummyCell(ESM4::FormId id);
+
+        // returns false if insert fails (i.e. formid already exists)
+        // throws if the formid is different (when insert fails)
+        bool setDummyCellId(ESM4::FormId formId); // FIXME deprecated
         bool setDummyCell(ForeignCell *cell);
 
         const std::map<std::pair<std::int16_t, std::int16_t>, ESM4::FormId>& getCellGridMap() const;
@@ -56,6 +65,12 @@ namespace MWWorld
 
         ForeignCell *getDummyCell();
         ForeignCell *getDummyCell() const;
+
+        void addVisibleDistGrids(const std::string& cmpFile, const std::string& group);
+        // FIXME: maybe better to get a list of references instead? or even a "load" method?
+        inline const std::vector<std::pair<std::int16_t, std::int16_t> >&
+                getVisibleDistGrids() const { return mVisibleDistGrids; }
+        const std::vector<ESM4::LODReference> *getVisibleDistRefs(std::int16_t x, std::int16_t y) const;
 
         void load (ESM::ESMReader& esm, bool isDeleted = false);
         void save (ESM::ESMWriter& esm, bool isDeleted = false) const {} // FIXME: TODO

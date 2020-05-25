@@ -668,39 +668,6 @@ namespace MWWorld
         }
     }
 
-    // FIXME: deprecated
-#if 0
-    void ForeignStore<MWWorld::ForeignCell>::loadDummy(ESMStore& store, ESM::ESMReader& esm, CellStore *cell)
-    {
-        if (cell->getState() != CellStore::State_Loaded)
-        {
-            ESM4::Reader& reader = static_cast<ESM::ESM4Reader*>(&esm)->reader();
-
-            while (esm.hasMoreRecs())
-            {
-                reader.checkGroupStatus();
-
-                if (reader.getContext().groupStack.back().first.type != ESM4::Grp_CellPersistentChild)
-                {
-                    // must have popped groupStack
-                    cell->setLoadedState();
-
-                    return;
-                }
-
-                reader.getRecordHeader();
-
-                cell->loadTes4Record(store, reader);
-                //listener->setProgress(static_cast<size_t>(esm.getFileOffset() / (float)esm.getFileSize() * 1000));
-            }
-
-            //cell->setLoadedState(); // should never get here
-            throw std::runtime_error ("ForeignStore<ForeignCell>::loadDummy: logic error");
-        }
-        else
-            std::cout << "attempt to load 2nd time" << std::endl;
-    }
-#endif
     // FIXME: this is the 3rd time the same code (almost) is being repeated, not even counting
     // OpenCS. Here, ESMStore and CellStore.  Need to move them out to something like ESMLoader.
     void ForeignStore<MWWorld::ForeignCell>::loadTes4Group(ESMStore& store, ESM::ESMReader& esm, CellStore *cell)

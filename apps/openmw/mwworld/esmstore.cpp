@@ -286,10 +286,10 @@ void ESMStore::loadTes4Group (ESM::ESMReader &esm)
 //#if 0
             // This test shows that Oblivion.esm does not have any persistent cell child
             // groups under exterior world sub-block group.  Haven't checked other files yet.
-             if (reader.grp(0).type == ESM4::Grp_CellPersistentChild &&
-                 reader.grp(1).type == ESM4::Grp_CellChild &&
-                 !(reader.grp(2).type == ESM4::Grp_WorldChild || reader.grp(2).type == ESM4::Grp_InteriorSubCell))
-                 std::cout << "Unexpected persistent child group in exterior subcell" << std::endl;
+            if (reader.grp(0).type == ESM4::Grp_CellPersistentChild &&
+                reader.grp(1).type == ESM4::Grp_CellChild &&
+                !(reader.grp(2).type == ESM4::Grp_WorldChild || reader.grp(2).type == ESM4::Grp_InteriorSubCell))
+                std::cout << "Unexpected persistent child group in exterior subcell" << std::endl;
 //#endif
 #if 0
             // If hdr.group.type == ESM4::Grp_CellPersistentChild, we are about to
@@ -299,21 +299,36 @@ void ESMStore::loadTes4Group (ESM::ESMReader &esm)
             // The records from other groups are skipped as per below.
             loadTes4Group(esm);
 #else
-            // do we have a dummy CellStore for this world?  if not create one
-            ESM4::FormId worldId = reader.getContext().currWorld;
-            ForeignWorld *world = mForeignWorlds.getWorld(worldId); // get a non-const ptr
-            if (!worldId || !world)
+            //if (reader.grp(0).type != ESM4::Grp_CellPersistentChild || reader.grp(1).type != ESM4::Grp_CellChild)
+            if (reader.grp(1).type != ESM4::Grp_CellChild)
+               throw std::runtime_error ("Unexpected group hierarchy in CellPersistentChild");
+
+            // NOTE: dummy cell no longer loaded here
+            if (reader.grp(2).type == ESM4::Grp_WorldChild)
+            {
+                // do we have a dummy CellStore for this world?  if not create one
+                //ESM4::FormId worldId = reader.currWorld(); // set by ESM4::World after adjustment
+
+                // a dummy cell should have been preloaded when we encountered a REC_CELL earlier
+                // (see ForeignStore<MWWorld::ForeignCell>::preload())
+                //ESM4::FormId dummyCellId = reader.currCell(); // set by ESM4::Cell after adjustment
+
+                //std::cout << "Loading world dummy cell " << world->mEditorId << std::endl; // FIXME
+                //ForeignWorld *world = mForeignWorlds.getWorld(worldId); // get a non-const ptr
+
+                // must load the whole group or else we'll lose track of where we are in the ESM
+                //mForeignCells.loadDummy(*this, esm, cell);
+                loadTes4Group(esm); // FIXME: testing
+                //reader.skipGroup(); // FIXME: testing
+                break;
+            }
+            else if (reader.grp(2).type == ESM4::Grp_InteriorSubCell)
             {
                 loadTes4Group(esm); // interior
                 break;
             }
-
-            //reader.skipGroup();
-            loadTes4Group(esm);
-
-            //std::cout << "Loading world dummy cell " << world->mEditorId << std::endl; // FIXME
-            // must load the whole group or else we'll lose track of where we are
-            //mForeignCells.loadDummy(*this, esm, cell);
+            else
+                throw std::runtime_error ("Unexpected group hierarchy in CellPersistentChild");
 #endif
             break;
         }

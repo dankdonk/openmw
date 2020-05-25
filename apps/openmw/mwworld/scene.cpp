@@ -1227,6 +1227,56 @@ namespace MWWorld
                 }
 
 
+                InsertFunctor functor (*dist, true, *loadingListener, nullptr, mRendering);
+                //ListFunctor functor;
+                const MWWorld::ESMStore& store = MWBase::Environment::get().getWorld()->getStore();
+                const MWWorld::ForeignStore<ESM4::Static> &statStore = store.getForeign<ESM4::Static>();
+
+
+                const ForeignWorld *newWorld = store.getForeign<ForeignWorld>().find(worldId);
+                const ForeignWorld *visWorld = newWorld;
+                if (newWorld && newWorld->mParent)
+                    visWorld = store.getForeign<ForeignWorld>().find(newWorld->mParent);
+
+                for (int i = X-32; i < X+32; ++i)
+                {
+                    for (int j = Y-32; j < Y+32; ++j)
+                    {
+                        if (i > X-2 && i < X+2 && j > Y-2 && j < Y+2)
+                            continue;
+
+                        //std::cout << "world " << visWorld->mEditorId << std::endl; // FIXME
+                        const std::vector<ESM4::LODReference> *refs = visWorld->getVisibleDistRefs(i, j);
+                        if (!refs)
+                            continue;
+
+                        //std::cout << "(" << i << "," << j << ") refs size " << refs->size() << std::endl; // FIXME
+                        for (size_t k = 0; k < refs->size(); ++k)
+                        {
+                            const ESM4::Static *base = statStore.search(refs->at(k).baseObj);
+                            ESM4::Reference r;
+                            r.mFormId = 0xffff0000 + k;
+                            r.mPlacement = refs->at(k).placement;  // FIXME: sometimes these are wrong
+                            r.mScale = refs->at(k).scale == 0.f ? 1.f : refs->at(k).scale / 100; // FIXME: scale broken
+
+                            LiveCellRef<ESM4::Static> liveCellRef (r, base);
+                            //std::cout << "base " << base->mEditorId << std::endl;
+                            functor (Ptr(&liveCellRef, dist));
+                        }
+
+                        // compare with the visible distant objects
+
+
+
+
+
+
+
+
+
+                    }
+                }
+
 
 
 
