@@ -2950,11 +2950,11 @@ We will need a lightweight class (in comparison to Ptr) to represent LOD trees. 
 ## LOD strategy outline
 
   * Load the ESM/ESP files but don't load any references.
-  * Scan the `meshes\landscape\lod` directory and build a map of low-poly land meshes for the worlds that has them.  They seem to be (mostly) in 32 x 32 cells in size.  There are some odd ones in Tamriel - they might be larger ones.
-  * Scan the `distantlod` directory and build a map of visibly distant objects (statics and trees, not sure if there is anything else).  The `.cmp` file has the list of the cell grid positions for the world.  The `.lod` files have the details of the objects, enough to make a REFR, for the cells.  There should be a `_far` variant of these objects.
+  * Scan the `meshes\landscape\lod` directory and build a map of low-poly land meshes for the worlds that has them.  They seem to be in 32 x 32 cells in size.  There are some odd ones in Tamriel - **TODO:** check again
+  * Scan the `distantlod` directory and build a map of visibly distant objects (statics and trees, not sure if there is anything else).  The `.cmp` file has the list of the cell grid positions for the world.  The `.lod` files have the details of the objects, enough to make a REFR, for the cells.  There should be a `_far` variant of these objects (there are some that don't).
   * The number of cells loaded for visible distant child groups are larger than the cells with everything loaded. When the REFR from the visibly distant child groups are loaded, they should replace the low-poly versions.
   * When a player enters a world cell grid(x, y), cells around that grid needs to be loaded (but not using `Scene::insertCell()`).  A larger group for visibly distant and a smaller group for everything.
-  * **TODO:** Not so sure how to treat the REFR in the dummy cell, especially the doors. i.e. how to decide when to render it?
+  * **TODO:** Not so sure how to treat the REFR in the dummy cell, especially the doors. i.e. how to decide when to render it? **DONE: 22/05/20**
 
 The low-poly land meshes only have `NiTriStrips` and `NiTriStripsData` blocks.  In order to use the existing codebase, a dummy `NiNode` will need to be inserted at the root.
 
@@ -2964,7 +2964,7 @@ The low-poly land meshes only have `NiTriStrips` and `NiTriStripsData` blocks.  
 
 Worlds such as ICMarketDistrict seems to require the parent world's LAND.  It also needs the parent world's visibly distant REFR such as the White-Gold Tower (possibly the low-poly version).
 
-**TODO:** `Cells::getWorldCell()` needs to change as it is auto-loading any new `CellStore` and also calling `initWorld()`.  This results in unnecessarily loading parent world's dummy cell when just the land and visibly distant statics may be required.  See the interaction diagram circa [31/03/2020 - 02/04/2020].
+**TODO:** `Cells::getWorldCell()` needs to change as it is auto-loading any new `CellStore` and also calling `initWorld()`.  This results in unnecessarily loading parent world's dummy cell when just the land and visibly distant statics may be required.  See the interaction diagram circa [31/03/2020 - 02/04/2020]. **DONE: 25/05/20**
 
 ## When to parse and load the `.lod` and `.cmp` files
 
@@ -4366,7 +4366,7 @@ MWWorld::Ptr ForeignActivator::copyToCellImpl(const MWWorld::Ptr &ptr, MWWorld::
 }
 ```
 
-**FIXME:** need to add code to update the indices in `CellStore` after the insertion.
+**FIXME:** need to add code to update the indices in `CellStore` after the insertion. **FIXED:** updateLookupMaps()
 
 # [13/05/2020 - 15/05/2020] World Dummy Cell - world of issues
 
@@ -4454,7 +4454,7 @@ So I will have to implement something like `unloadObjects()` or similar.  Becaus
 It turns out that there's already `void Scene::removeObjectFromScene (const Ptr& ptr)` which can be used if there'a functor that returns all the objects that needs to be removed.  It's a shame that a `Ptr` needs to be constructed for each object - maybe another method that will accept a `LiveCellRefBase*` should be created?  It also doesn't deal with physics child objects (yet).
 
 **FIXME:** `CellStore::hasFormId()` is not being used
-**FIXME:** `CellStore::preload()` does not support newer games
+**FIXME:** `CellStore::preload()` does not support newer games (TES4, FO3, FONV, etc)
 
 # [20/05/2020 - 21/05/2020] LOD Landscape
 
@@ -4474,13 +4474,18 @@ With range 2, try:
     max viewing distance = 152600
     viewing distance = 139600
 
+or to be a little closer to vanilla:
+
+    max viewing distance = 142600
+    viewing distance = 99600
+
 FPS is around 27 at (12, 1) with range 2, going up to around 31 with range 1;
 
 ## FO3/FONV Landscape LOD
 
-Looking at the BSA files the block size appear to be 4 x 4 cells.
+Looking at the BSA files the block size appear to be 16x16, 8x8 and 4x4 cells.  Possibly some kind of quad-tree.
 
-# [22/05/2020 - 23/05/2020] Distant Statics
+# [22/05/2020 - 25/05/2020] Distant Statics
 
 **FIXME:** animation broken since ee64b18bb1552374aae498b1e7ea0263be11bbb0 - disabling the "insert without physics" in the dummy cell stops the crash **FIXED:** well, avoided by not loading any actors without physics.
 
@@ -4502,12 +4507,67 @@ It's depressing - the console command TDT shows approx 250 FPS without trees (bE
 
 These don't seem to have "visibly distant" cell groups at all.
 
-The landscape LOD low-poly meshes seem to be organised in 4x4, 16x16 and 32x32 cell blocks.  Quad tree?
+The landscape LOD low-poly meshes seem to be organised in 4x4, 8x8, 16x16 and 32x32 cell blocks.  Quad tree of some sort?
 
 ## CellStore rethink
 
 Rather than keep separate CellStores for visibly distant objects, maybe keep all the objects in one CellStore but keep separate indices for temporary, persistent and visibly distant child groups.
 
+# [25/05/2020 - 26/05/2020] Distant Statics again
+
+Spent the last few days getting side tracked on dummy cell code refactoring (and being stumpted by hidden bugs).
+
+Given the position (and scale?) issues with the `.lod` files a new implementation will be attempted.  Instead of using the data in the `.lod` files, use the visibly distant cell group children of the cells indicated in the `.cmp` file for the world.
+
+We can even try to mimic the quad-tree like landscape LOD in FO3/FONV, i.e. add more statics based on distance
+
+    |                              |                               |
+    | (-32,32)                     | (0,32)                        | (32,32)
+    +------------------------------+---------------+---------------+--------
+    |                              |               |               |
+    |                              |               |               |
+    |                              |               |               |
+    |                              |               |               |
+    |                              |               |               |
+    |                              |               |               |
+    |                              +---------------+-------+-------+
+    |                              |               |       |       |
+    |                              |               |       |       |
+    |                              |               |       |       |
+    |                              |               +-------+---+---+
+    |                              |               |       | @ |   |
+    |                              |               |       +---+---+
+    | (-32,0)                      | (0,0)         |       |   |   | (32,0)
+    +------------------------------+---------------+-------+---+---+--------
+    |                              |                               |
+    |                              |                               |
+    |                              |                               |
+    |                              |                               |
+    |                              |                               |
+    |                              |                               |
+    |                              |                               |
+    |                              |                               |
+    |                              |                               |
+    |                              |                               |
+    |                              |                               |
+    |                              |                               |
+    |                              |                               |
+    | (-32,-32)                    | (0,-32)                       | (32,-32)
+    +------------------------------+-------------------------------+--------
+
+Above diagram assumes (to be tested) that the loaded terrain can be next to either 4x4 or 8x8 landscape LOD mesh.  It could be that the loaded terrain can only be next to a 4x4 mesh - which will result in 4x4-1 = 15 level4 blocks and no real need for level8 blocks.  i.e. given that level8 blocks exist the initial assumption might be the correct one.
+
+Looking at FONV watelandnv there are 16 level32 blocks, 64 level16 blocks, 256 level8 blocks and *lots* of level4 blocks.
+
+## FIXME
+
+**FIXME:** COC "FortVariela" mesh name "meshes\\dungeons\\misc\\necrotapestryskinned01.nif#0%NecroTapestrySkinned01" Results in `Ogre::Mesh::softwareVertexBlend()` throwing an exception due to the lack of blend weights, etc.
+
+This one is a skinned mesh, one of those that relies on Havok to move the self-made skeleton. The issue must be that we are reporting to Ogre that the mesh has animation even though it relies on Havok for animation instead.
+
+I suspect Ogre tries to animate all `Ogre::Entity` that has a skeleton or has vertex animation (see `Entity::_updateRenderQueue()`).  So this is tricky - we want to have a skeleton for Havok animation but that will confuse Ogre.
+
+Worked around by stop setting the skeleton name for skinned meshes (see `NiBtOgre::NiTriBasedGeom::buildSubMesh()`).  Seems ok but not sure if this will break something else.
 
 
 [//]: # (/* spell spelllang=en_au syntax=cpp */)

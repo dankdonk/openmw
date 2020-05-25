@@ -702,7 +702,9 @@ bool NiBtOgre::NiTriBasedGeom::buildSubMesh(Ogre::Mesh *mesh, BoundsFinder& boun
         // In case of a Mesh, a list of NiGeometry for that NiNode is required.
 
         // FIXME: move this to NiModel?
-        mesh->setSkeletonName(mModel.getSkeleton()->getName());
+        // FIXME: commented out to stop skinned but havok animated entities triggering Ogre animation
+        //        see dungeons\misc\necrotapestryskinned01.nif
+        //mesh->setSkeletonName(mModel.getSkeleton()->getName());
 
         // build skeleton on demand; need to check for each mSkinInstanceRef
         //
