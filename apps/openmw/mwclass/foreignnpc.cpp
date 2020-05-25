@@ -79,13 +79,6 @@ namespace
     MWWorld::CustomData *ForeignNpcCustomData::clone() const
     {
         ForeignNpcCustomData *clone = new ForeignNpcCustomData (*this);
-        switch (mGameType)
-        {
-            case 0: clone->mInventoryStore = new MWWorld::InventoryStoreTES4(); break;
-            case 1: clone->mInventoryStore = new MWWorld::InventoryStoreFO3(); break;
-            case 2: clone->mInventoryStore = new MWWorld::InventoryStoreTES5(); break;
-            default: break;
-        }
 
         return clone;
     }

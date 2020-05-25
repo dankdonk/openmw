@@ -506,7 +506,7 @@ namespace MWWorld
     {
         // remove without physics
         ListFunctor visitor;
-        cell->forEachDummy<ListFunctor>(visitor, CellStore::DUM_Remove, x, y, 16, 4);
+        cell->forEachStatic<ListFunctor>(visitor, CellStore::DUM_Remove, x, y, 16, 4);
         for (std::size_t i = 0; i < visitor.mRefs.size(); ++i)
             removeObjectFromScene(visitor.mRefs[i]);
 

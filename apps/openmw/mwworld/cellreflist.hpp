@@ -110,9 +110,12 @@ namespace MWWorld
                     {
                         for (std::size_t k = 0; k < iter->second.size(); ++k)
                         {
-                            // TODO: check deleted? check count? check hasContentFile()?
+                            // find() may return a nullptr after checking deleted, count etc;
+                            // count is set to 0 when an actor in a dummy cell gets moved to another
+                            // - see World::moveObject()
                             LiveCellRefBase* ref = find(iter->second[k]);
-                            res.push_back(ref);
+                            if (ref)
+                                res.push_back(ref);
                         }
                     }
                 }

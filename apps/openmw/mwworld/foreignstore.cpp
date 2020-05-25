@@ -506,38 +506,42 @@ namespace MWWorld
         // cell->mCell->mFormId 0x00165F2C                    PGRD FormId 0x00175BCA
         // cell->mCell->mFormId 0x0001BD1E ICMarketDistrict02 PGRD FormId 0x0001C2C9
         // cell->mCell->mFormId 0x0001BD20 ICMarketDistrict03 PGRD FormId 0x0001C2CA
-        MWWorld::ForeignCell *cell = new MWWorld::ForeignCell(); // deleted in dtor
 
-        ESM4::FormId id = reader.hdr().record.id;
-        std::map<ESM4::FormId, MWWorld::ForeignCell*>::iterator lb = mCells.lower_bound(id);
-        if (lb != mCells.end() && !(mCells.key_comp()(id, lb->first)))
+        MWWorld::ForeignCell *cell;
+
+        ESM4::FormId formId = reader.hdr().record.id;
+        reader.adjustFormId(formId); // ensure mod index is correct TODO: test
+
+        std::map<ESM4::FormId, MWWorld::ForeignCell*>::iterator lb = mCells.lower_bound(formId);
+        if (lb != mCells.end() && !(mCells.key_comp()(formId, lb->first)))
         {
-            std::cout << "CELL modified " << ESM4::formIdToString(id) << std::endl; // FIXME: for testing
+            cell = lb->second;
 
-            // HACK: need to store these cells from MODs somehow, so add the mod index the
-            // FormId to differentiate it from the base that is being modified
-            std::uint64_t modId(ctx.modIndex);
-            modId <<= 8;
-            modId |= id;
-
-            lb->second->addFileContext(ctx);
-
-            // no need to preload but how to skip?
+            // load cell record again, overwriting the previous
+            // TODO: assumed that none of the previous sub-records are kept
             cell->preload(reader);
 
-            mCells.insert(lb, std::make_pair(modId, cell));
+            // update the context with adjusted formid - since we won't be re-loading the CELL
+            // record after context restoration, ctx.currCell won't be correct
+            ctx.currCell = cell->mCell->mFormId;
 
-            return;
-        }
-        else // none found
-        {
-            // load cell record but no references
-            cell->preload(reader);
-
-            mCells.insert(lb, std::make_pair(id, cell));
+            std::cout << "CELL replaced " << ESM4::formIdToString(formId) << std::endl; // FIXME: for testing
 
             if (cell->mHasChildren)
                 cell->addFileContext(ctx);
+        }
+        else // cell none found
+        {
+            cell = new MWWorld::ForeignCell(); // deleted in dtor
+
+            cell->preload(reader); // load cell record but no references
+
+            ctx.currCell = cell->mCell->mFormId; // update the context with adjusted formid
+
+            if (cell->mHasChildren)
+                cell->addFileContext(ctx);
+
+            mCells.insert(lb, std::make_pair(formId, cell));
         }
 
         // FIXME: cleanup the mess of logic below, may need to refactor using a function or two

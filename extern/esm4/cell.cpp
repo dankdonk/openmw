@@ -109,8 +109,9 @@ void ESM4::Cell::load(ESM4::Reader& reader)
     if (mPreloaded)
         return;
 
-    // FIXME: we may need to call setCurrCell (and maybe setCurrCellGrid?) again before loading
+    // WARN: we need to call setCurrCell (and maybe setCurrCellGrid?) again before loading
     // cell child groups if we are loading them after restoring the context
+    // (may be easier to update the context before saving?)
     init(reader);
     reader.setCurrCell(mFormId); // save for LAND (and other children) to access later
     std::uint32_t esmVer = reader.esmVersion();
