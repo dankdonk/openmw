@@ -39,6 +39,8 @@ namespace MWWorld
         const ESM::RefNum& getRefNum() const;
 
         ESM4::FormId getFormId() const;
+        std::uint32_t getFlags() const { return mFlags; }
+        ESM4::FormId getBaseObj() const { return mBaseObj; } // FIXME: for testing visibly dist
 
         // teleport destination door
         ESM4::FormId getDestDoorId() const;
@@ -132,7 +134,9 @@ namespace MWWorld
         bool mChanged;
         ESM::CellRef mCellRef;
         ESM4::FormId mFormId;
-        ESM4::FormId mDestDoorId;
+        ESM4::FormId mDestDoorId; // FIXME: don't want this here
+        std::uint32_t mFlags;
+        ESM4::FormId mBaseObj;
     };
 
 }

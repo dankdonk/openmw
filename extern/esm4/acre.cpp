@@ -31,7 +31,7 @@
 #include "reader.hpp"
 //#include "writer.hpp"
 
-ESM4::ActorCreature::ActorCreature() : mFormId(0), mFlags(0), mGroupType(-1),
+ESM4::ActorCreature::ActorCreature() : mFormId(0), mFlags(0),
                                        mInitiallyDisabled(false), mBaseObj(0), mScale(1.f),
                                        mOwner(0), mGlobal(0), mFactionRank(0)
 {
@@ -50,7 +50,6 @@ void ESM4::ActorCreature::load(ESM4::Reader& reader)
     mFormId = reader.hdr().record.id;
     reader.adjustFormId(mFormId);
     mFlags  = reader.hdr().record.flags;
-    mGroupType = reader.grp().type;
 
     while (reader.getSubRecordHeader())
     {

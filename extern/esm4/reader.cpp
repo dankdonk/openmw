@@ -473,7 +473,6 @@ bool ESM4::Reader::getZString(std::string& str, Ogre::DataStreamPtr filestream)
     boost::scoped_array<char> buf(new char[size]);
     if (filestream->read(buf.get(), size) == (size_t)size)
     {
-
         if (buf[size - 1] != 0)
         {
             str.assign(buf.get(), size);

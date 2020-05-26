@@ -252,6 +252,10 @@ namespace MWWorld
         // keep a static value somewhere?
         //mFormId = ref.mFormId | 0xff000000; // if spawned?
         mFormId = ref.mFormId;
+
+        mFlags = ref.mFlags;
+        mBaseObj = ref.mBaseObj;
+
         mDestDoorId = 0;
 
         // pretend to be a TES3 ref
@@ -303,6 +307,9 @@ namespace MWWorld
     {
         mFormId = ref.mFormId;
 
+        mFlags = ref.mFlags;
+        mBaseObj = ref.mBaseObj;
+
         mCellRef.mRefID = ESM4::formIdToString(ref.mFormId);
 
         mCellRef.mPos.pos[0] = ref.mPlacement.pos.x;
@@ -320,6 +327,9 @@ namespace MWWorld
     CellRef::CellRef (const ESM4::ActorCharacter& ref)
     {
         mFormId = ref.mFormId;
+
+        mFlags = ref.mFlags;
+        mBaseObj = ref.mBaseObj;
 
         mCellRef.mRefID = ESM4::formIdToString(ref.mFormId);
 
