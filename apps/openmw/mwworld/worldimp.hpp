@@ -184,7 +184,6 @@ namespace MWWorld
             virtual CellStore *getWorldCell (const std::string& world, int x, int y); // convenience method
             virtual CellStore *getWorldCell (ESM4::FormId worldId, int x, int y); // loads if not loaded
             virtual CellStore *getWorldDummyCell (ESM4::FormId worldId); // loads if not loaded
-            virtual CellStore *getWorldVisibleDistCell (ESM4::FormId worldId); // FIXME: deprecated
 
             virtual ESM4::FormId loadForeignLand (ESM4::Reader& reader);
 

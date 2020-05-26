@@ -216,7 +216,7 @@ namespace MWWorld
                 // 1. actually replace, but to do that will need to search again
                 // 2. mark the record as replaced by setting ref.mData.disable() and also
                 //    setting the formid in ref.mRef to be 0
-                std::cout << "refr replace" << std::endl; // FIXME
+                std::cout << "REFR " << ESM4::formIdToString(ref.mFormId) << " replaced" << std::endl; // FIXME
 
                 typename std::list<LiveRef>::iterator listIter =
                     std::find(mList.begin(), mList.end(), ref);
@@ -429,7 +429,7 @@ namespace MWWorld
 
     CellStore::CellStore (const ESM::Cell *cell, bool isForeignCell, bool isDummyCell)
       : mCell (cell), mState (State_Unloaded), mHasState (false),
-        mIsForeignCell(isForeignCell), mIsDummyCell(isDummyCell), mIsVisibleDistCell(false), mForeignLand(0),
+        mIsForeignCell(isForeignCell), mIsDummyCell(isDummyCell), mForeignLand(0),
         mLastRespawn(0,0)
     {
         if (!mIsForeignCell)
@@ -496,7 +496,6 @@ namespace MWWorld
             mWaterLevel = other.mWaterLevel;
             mIsForeignCell = other.mIsForeignCell;
             mIsDummyCell = other.mIsDummyCell;
-            mIsVisibleDistCell = other.mIsVisibleDistCell;
             mForeignLand = other.mForeignLand;
             mAudioLocation = other.mAudioLocation;
             mLastRespawn = other.mLastRespawn;
@@ -1373,7 +1372,12 @@ namespace MWWorld
                 //if (record.mBaseObj == 0x0016B46E) // TACT in cell ULCasino
                      //std::cout << "TACT" << std::endl;
 
-                bool mapGrid = mIsDummyCell || mIsVisibleDistCell;
+                // FIXME: replace REFR even if the baseObj is missing?
+                if (!record.mBaseObj)
+                    break;
+
+                // FIXME: for vis dist testing (see scene.cpp)
+                bool mapGrid = mIsDummyCell || true;
 
                 switch (store.getRecordType(record.mBaseObj))
                 {
@@ -1422,25 +1426,6 @@ namespace MWWorld
                     {
                         mForeignStatics.load(record, deleted, store, mapGrid);
                         mStoreTypes[record.mFormId] = ESM4::REC_STAT;
-#if 0
-                        if (mIsVisibleDistCell) // FIXME
-                        {
-                            const ForeignStore<ESM4::Static>& stat = store.getForeign<ESM4::Static>();
-                            const ESM4::Static *statObj = stat.search(record.mBaseObj);
-                            // world not loaded at this point
-                            //ESM4::FormId worldId
-                                //= static_cast<const MWWorld::ForeignCell*>(getCell())->mCell->mParent;
-                            //const ForeignStore<ForeignWorld>& wrld = store.getForeign<ForeignWorld>();
-                            //const ForeignWorld *distWrld = wrld.find(worldId);
-                            if (statObj)
-                                std::cout << "Visible Dist static "
-                                    << ESM4::formIdToString(reader.getContext().currWorld) << " "
-                                    << ESM4::formIdToString(reader.getContext().currCell) << " ("
-                                    << reader.currCellGrid().grid.x << ","
-                                    << reader.currCellGrid().grid.y << ") "
-                                    << statObj->mEditorId << std::endl;
-                        }
-#endif
 #if 0
                         if (record.mEditorId == "DoorMarker") // FIXME
                              std::cout << "DoorMarker: " << " 0x"
@@ -1516,7 +1501,7 @@ namespace MWWorld
 
                     // FO3 adds ASPC, IDLM, ARMA, MSTT, NOTE, PWAT, SCOL, TACT, TERM and TXST
                     // FONV adds CCRD, IMOD and CMNY
-                    case 0: std::cerr << "Cell refr " + record.mEditorId +" "+ ESM4::formIdToString(record.mBaseObj) + " not found!\n"; break;
+                    case 0: std::cerr << "Cell refr " + ESM4::formIdToString(record.mFormId) +" "+ ESM4::formIdToString(record.mBaseObj) + " not found!\n"; break;
 
                     default:
                         std::cerr << "WARNING: Ignoring TES4 reference '"

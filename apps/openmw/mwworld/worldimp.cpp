@@ -560,20 +560,14 @@ namespace MWWorld
         return exterior;
     }
 
-    CellStore *World::getWorldDummyCell (ESM4::FormId worldId)
+    CellStore *World::getWorldDummyCell(ESM4::FormId worldId)
     {
         CellStore *dummy = mCells.getWorldDummyCell(worldId);
-        //const ForeignCell *cell = static_cast<const ForeignCell*>(dummy->getCell());
 
         if (dummy->getState() != CellStore::State_Loaded)
             dummy->load(mStore, mEsm);
 
         return dummy;
-    }
-
-    CellStore *World::getWorldVisibleDistCell (ESM4::FormId worldId)
-    {
-        return mCells.getWorldVisibleDistCell (worldId, 0, 0); // FIXME there can be more than one
     }
 
     ESM4::FormId World::loadForeignLand (ESM4::Reader& reader)

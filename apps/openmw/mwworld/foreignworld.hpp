@@ -59,10 +59,6 @@ namespace MWWorld
         const std::map<std::pair<std::int16_t, std::int16_t>, ESM4::FormId>& getCellGridMap() const;
         ESM4::FormId getCellId(std::int16_t x, std::int16_t y) const;
 
-        // FIXME: this is broken since there can be more than one
-        CellStore *getVisibleDistCell();
-        CellStore *getVisibleDistCell() const;
-
         ForeignCell *getDummyCell();
         ForeignCell *getDummyCell() const;
 

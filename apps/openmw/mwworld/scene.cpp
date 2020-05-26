@@ -31,6 +31,8 @@
 #include "cellstore.hpp"
 #include "foreigncell.hpp" // FIXME: for testing ony
 
+#define TEST_LOD_VS_REFR
+
 namespace
 {
 
@@ -246,7 +248,7 @@ namespace MWWorld
             const ESM::Cell* cell = cellstore->getCell();
 
             assert(cell->isExterior());
-            if (cellstore->isDummyCell() || cellstore->isVisibleDistCell())
+            if (cellstore->isDummyCell())
             {
                 ++iter; // ignore, these have grid(0, 0) which interferes with min/max
                 continue;
@@ -1084,7 +1086,7 @@ namespace MWWorld
                 if ((*active)->getCell()->isExterior() && // FIXME: should this be an assert instead?
                     (*active)->isForeignCell())
                 {
-                    if ((*active)->isDummyCell() || (*active)->isVisibleDistCell())
+                    if ((*active)->isDummyCell())
                     {
                         ++active;
                         continue; // dummy cell objects are removed elsewhere
@@ -1117,8 +1119,7 @@ namespace MWWorld
 
                     if (x == (*iter)->getCell()->getGridX() &&
                         y == (*iter)->getCell()->getGridY() &&
-                        !(*iter)->isDummyCell() && // FIXME: count only the grids to be loaded?
-                        !(*iter)->isVisibleDistCell())
+                        !(*iter)->isDummyCell()) // FIXME: count only the grids to be loaded?
                         break;
 
                     ++iter;
@@ -1160,8 +1161,7 @@ namespace MWWorld
 
                     if (x == (*iter)->getCell()->getGridX() &&
                         y == (*iter)->getCell()->getGridY() &&
-                        !(*iter)->isDummyCell() &&
-                        !(*iter)->isVisibleDistCell())
+                        !(*iter)->isDummyCell())
                         break;
 
                     ++iter;
@@ -1201,21 +1201,17 @@ namespace MWWorld
             CellStore *dummy = MWBase::Environment::get().getWorld()->getWorldDummyCell(worldId);
             if (dummy)
             {
-                if (worldChanged)
+                if (worldChanged) // TODO: a bit fragile relying on this condition
                     std::pair<CellStoreCollection::iterator, bool> result = mActiveCells.insert(dummy);
-                if (1)//result.second)
-                {
-                    std::cout << "Loading dummy at " << X << "," << Y << std::endl;
-                    updateDummyCell(dummy, X, Y, loadingListener);
-                    //loadForeignCell(dummy, loadingListener);
-                }
+
+                std::cout << "Updating dummy at " << X << "," << Y << std::endl;
+                updateDummyCell(dummy, X, Y, loadingListener);
             }
-            else // create a new one
-            {
-            }
-//#if 0
-            // FIXME: having one visible distant per world is not going to work, especially
-            // with trees
+            else
+                std::cout << "Scene: this world lacks a dummy cell "
+                          << ESM4::formIdToString(worldId) << std::endl;
+#if 0
+            // FIXME: having one visible distant per world is not going to work, especially with trees
             CellStore *dist = MWBase::Environment::get().getWorld()->getWorldVisibleDistCell(worldId);
             if (dist)
             {
@@ -1225,80 +1221,132 @@ namespace MWWorld
                     std::cout << "Loading visibly dist" << std::endl;
                     //loadVisibleDist(dist, loadingListener); // FIXME: temp disable for testing
                 }
+            }
+#endif
+            // .cmp and .lod based visible distant implementation
+            InsertFunctor functor(*dummy, true, *loadingListener, nullptr, mRendering); // WARN: reusing dummy
+            const MWWorld::ESMStore& store = MWBase::Environment::get().getWorld()->getStore();
+            const MWWorld::ForeignStore<ESM4::Static> &statStore = store.getForeign<ESM4::Static>();
 
+            const ForeignWorld *newWorld = store.getForeign<ForeignWorld>().find(worldId);
+            const ForeignWorld *visWorld = newWorld;
+            if (newWorld && newWorld->mParent)
+                visWorld = store.getForeign<ForeignWorld>().find(newWorld->mParent);
 
-                InsertFunctor functor (*dist, true, *loadingListener, nullptr, mRendering);
-                //ListFunctor functor;
-                const MWWorld::ESMStore& store = MWBase::Environment::get().getWorld()->getStore();
-                const MWWorld::ForeignStore<ESM4::Static> &statStore = store.getForeign<ESM4::Static>();
-
-
-                const ForeignWorld *newWorld = store.getForeign<ForeignWorld>().find(worldId);
-                const ForeignWorld *visWorld = newWorld;
-                if (newWorld && newWorld->mParent)
-                    visWorld = store.getForeign<ForeignWorld>().find(newWorld->mParent);
-
-                for (int i = X-32; i < X+32; ++i)
+            for (int i = X-32; i < X+32; ++i)
+            {
+                for (int j = Y-32; j < Y+32; ++j)
                 {
-                    for (int j = Y-32; j < Y+32; ++j)
+                    if (i > X-2 && i < X+2 && j > Y-2 && j < Y+2) // ignore 2 cells around player
+                        continue;
+
+                    //std::cout << "world " << visWorld->mEditorId << std::endl; // FIXME
+                    const std::vector<ESM4::LODReference> *refs = visWorld->getVisibleDistRefs(i, j);
+                    if (!refs)
+                        continue;
+
+                    //std::cout << "(" << i << "," << j << ") refs size " << refs->size() << std::endl; // FIXME
+                    for (size_t k = 0; k < refs->size(); ++k)
                     {
-                        if (i > X-2 && i < X+2 && j > Y-2 && j < Y+2)
-                            continue;
+                        const ESM4::Static *base = statStore.search(refs->at(k).baseObj);
+                        ESM4::Reference r;
+                        r.mFormId = 0xffff0000 + k; // FIXME: need to be able to assign unique formid
+                        r.mPlacement = refs->at(k).placement;  // FIXME: sometimes these are wrong
+                        r.mScale = refs->at(k).scale == 0.f ? 1.f : int(refs->at(k).scale) / 100.f; // FIXME: scale sometimes broken
 
-                        //std::cout << "world " << visWorld->mEditorId << std::endl; // FIXME
-                        const std::vector<ESM4::LODReference> *refs = visWorld->getVisibleDistRefs(i, j);
-                        if (!refs)
-                            continue;
+                        LiveCellRef<ESM4::Static> liveCellRef (r, base);
+                        //std::cout << "base " << base->mEditorId << std::endl;
+                        functor(Ptr(&liveCellRef, dummy)); // FIXME: testing (see below)
+                    }
+#ifdef TEST_LOD_VS_REFR
+                    // compare with the visible distant objects
+                    ListFunctor visitor;
+                    ESM4::FormId visId = worldId;
+                    if (newWorld && newWorld->mParent)
+                        visId = newWorld->mParent;
 
-                        //std::cout << "(" << i << "," << j << ") refs size " << refs->size() << std::endl; // FIXME
-                        for (size_t k = 0; k < refs->size(); ++k)
+                    // FIXME: trouble here - the retrieved CellStore is not loaded as a visibly
+                    //        distant, hence nothing will be returned by the visitor;
+                    //        for now, hacked CellStore to always update GridMap
+                    CellStore *dist = MWBase::Environment::get().getWorld()->getWorldCell(visId, i, j);
+
+                    dist->forEachStatic<ListFunctor>(visitor, CellStore::DUM_Insert, i, j, 1, 0); // 1 cell
+
+                    // FIXME: trouble with this comparison is that different REFR can have the same baseObj
+                    for (size_t k = 0; k < refs->size(); ++k)
+                    {
+                        bool found = false;
+                        const ESM4::Placement p1 = refs->at(k).placement;
+                        for (std::size_t v = 0; v < visitor.mRefs.size(); ++v)
                         {
-                            const ESM4::Static *base = statStore.search(refs->at(k).baseObj);
-                            ESM4::Reference r;
-                            r.mFormId = 0xffff0000 + k;
-                            r.mPlacement = refs->at(k).placement;  // FIXME: sometimes these are wrong
-                            r.mScale = refs->at(k).scale == 0.f ? 1.f : refs->at(k).scale / 100; // FIXME: scale broken
+                            const ESM::Position p2 = visitor.mRefs[v].getBase()->mRef.getPosition();
+                            if ((visitor.mRefs[v].getBase()->mRef.getFlags() & ESM4::Rec_DistVis) != 0 &&
+                                refs->at(k).baseObj == visitor.mRefs[v].getBase()->mRef.getBaseObj())
+                            {
+                                if (abs(p1.pos.x) - abs(p2.pos[0]) < 1.f &&
+                                    abs(p1.pos.y) - abs(p2.pos[1]) < 1.f &&
+                                    abs(p1.pos.z) - abs(p2.pos[2]) < 1.f)
+                                {
+                                    if (int(refs->at(k).scale) / 100.f != visitor.mRefs[v].getBase()->mRef.getScale())
+                                    {
+                                        const ESM4::Static *base = statStore.search(refs->at(k).baseObj);
+                                        std::cout << "found but scale differ "
+                                            //<< ESM4::formIdToString(refs->at(k).baseObj) << " "
+                                            << base->mEditorId << " "
+                                            << int(refs->at(k).scale) / 100.f << " "
+                                            << visitor.mRefs[v].getBase()->mRef.getScale()
+                                            << std::endl;
+                                    }
+                                    //else
+                                        //std::cout << "found" << std::endl;
 
-                            LiveCellRef<ESM4::Static> liveCellRef (r, base);
-                            //std::cout << "base " << base->mEditorId << std::endl;
-                            functor (Ptr(&liveCellRef, dist));
+                                    found = true;
+                                    break;
+                                }
+
+                                //functor(visitor.mRefs[v]); // FIXME: testing (see above)
+                            }
                         }
 
-                        // compare with the visible distant objects
+                        if (!found)
+                        {
+                            std::cout << "none found " << i << "," << j << " "
+                                << ESM4::formIdToString(refs->at(k).baseObj)
+                                << " " << p1.pos.x << "," << p1.pos.y << "," << p1.pos.z
+                                << std::endl;
 
-
-
-
-
-
-
-
-
+                            for (std::size_t v = 0; v < visitor.mRefs.size(); ++v)
+                            {
+                                if ((visitor.mRefs[v].getBase()->mRef.getFlags() & ESM4::Rec_DistVis) != 0 &&
+                                    refs->at(k).baseObj == visitor.mRefs[v].getBase()->mRef.getBaseObj())
+                                {
+                                    const ESM::Position p2 = visitor.mRefs[v].getBase()->mRef.getPosition();
+                                    std::cout << "diff " << i << "," << j << " "
+                                        << ESM4::formIdToString(refs->at(k).baseObj) << " "
+                                        << ESM4::formIdToString(visitor.mRefs[v].getBase()->mRef.getFormId()) << " "
+                                        << p1.pos.x << "," << p1.pos.y << "," << p1.pos.z << " "
+                                        << p2.pos[0] << "," << p2.pos[1] << "," << p2.pos[2] << " "
+                                        << int(refs->at(k).scale) / 100.f << " "
+                                        << visitor.mRefs[v].getBase()->mRef.getScale()
+                                        << std::endl;
+                                }
+                            }
+                        }
                     }
+                    // clear after testing
+                    dist->forEachStatic<ListFunctor>(visitor, CellStore::DUM_Clear, i, j, 0, 0);
+#endif
                 }
-
-
-
-
-
-                // FIXME: quick hack for testing
-                //ESM4::FormId worldId
-                    //= static_cast<const MWWorld::ForeignCell*>(cell->getCell())->mCell->mParent;
-                //CellStore *dist = MWBase::Environment::get().getWorld()->getWorldVisibleDistCell(worldId);
-                //if (dist)
-                {
-                    ListFunctor visitor;
-                    dist->forEachDummy<ListFunctor>(visitor, CellStore::DUM_Insert, X, Y, 2, 0);
-                    for (std::size_t i = 0; i < visitor.mRefs.size(); ++i)
-                        removeObjectFromScene(visitor.mRefs[i]);
-                }
-
-
-
-
-
             }
-//#endif
+
+            // FIXME: quick hack for testing removal
+            // FIXME: need to do properly like dummy
+            //{
+            //ListFunctor visitor;
+            //dummy->forEachDummy<ListFunctor>(visitor, CellStore::DUM_Insert, X, Y, 2, 0);
+            //for (std::size_t i = 0; i < visitor.mRefs.size(); ++i)
+            //    removeObjectFromScene(visitor.mRefs[i]);
+            //}
         }
 
         MWBase::Environment::get().getWindowManager()->changeCell(cell);

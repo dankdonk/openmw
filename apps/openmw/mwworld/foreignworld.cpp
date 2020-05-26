@@ -112,31 +112,6 @@ bool MWWorld::ForeignWorld::setDummyCellId(ESM4::FormId formId)
     return true;
 }
 
-// FIXME: this is broken, since there can be one for each exterior cell
-MWWorld::CellStore *MWWorld::ForeignWorld::getVisibleDistCell()
-{
-    if (!mVisibleDistCell)
-    {
-        // FIXME: if we add a new ctor to CellStore we don't need a ForeignCell?
-        mVisibleDistCell = new ForeignCell(); // deleted in dtor
-        mVisibleDistCell->mCell = new  ESM4::Cell();
-
-        // TODO: populate it with some other dummy entries?
-        mVisibleDistCell->mCell->mX = 0;
-        mVisibleDistCell->mCell->mY = 0;
-
-        mVisibleDistCellStore = new  CellStore(mVisibleDistCell, true/*isForeignCell*/, false/*isDummy*/);
-        mVisibleDistCellStore->setVisibleDistCell();
-    }
-
-    return mVisibleDistCellStore;
-}
-
-MWWorld::CellStore *MWWorld::ForeignWorld::getVisibleDistCell() const
-{
-    return mVisibleDistCellStore;
-}
-
 MWWorld::ForeignCell *MWWorld::ForeignWorld::getDummyCell()
 {
     return mDummyCell;
@@ -147,6 +122,7 @@ MWWorld::ForeignCell *MWWorld::ForeignWorld::getDummyCell() const
     return mDummyCell;
 }
 
+// added from Cells::initNewWorld()
 void MWWorld::ForeignWorld::addVisibleDistGrids(const std::string& cmpFile, const std::string& group)
 {
     std::size_t pos = cmpFile.find(".cmp");
@@ -155,7 +131,7 @@ void MWWorld::ForeignWorld::addVisibleDistGrids(const std::string& cmpFile, cons
 
     std::string worldEditorId = cmpFile.substr(11, pos-11); // 11 for 'distantlod\'
 
-    //std::cout << worldEditorId << " " << group << std::endl; // FIXME
+    //std::cout << worldEditorId << " " << group << " " << cmpFile << std::endl; // FIXME
 
     const Ogre::ResourceGroupManager& groupMgr = Ogre::ResourceGroupManager::getSingleton();
     Ogre::DataStreamPtr file = groupMgr.openResource(cmpFile, group);

@@ -75,7 +75,7 @@ namespace MWWorld
             //
             bool mIsForeignCell;
             bool mIsDummyCell;
-            bool mIsVisibleDistCell; // FIXME: deprecated
+
             ESM4::FormId mForeignLand; // ForeignCell only, can't store in mCell due to const ptr
             ESM4::FormId mAudioLocation; // from REFR, interior only
 
@@ -163,8 +163,7 @@ namespace MWWorld
             const ESM::Cell *getCell() const;
             inline const bool isForeignCell() const { return mIsForeignCell; }
             inline const bool isDummyCell() const { return mIsDummyCell; }
-            inline const bool isVisibleDistCell() const { return mIsVisibleDistCell; }
-            void setVisibleDistCell() { mIsVisibleDistCell = true; }
+
             inline ESM4::FormId getAudioLocation() const { return mAudioLocation; }
 
             inline ESM4::FormId getForeignLandId() const { return mForeignLand; }

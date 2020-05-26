@@ -525,7 +525,7 @@ namespace MWWorld
             // record after context restoration, ctx.currCell won't be correct
             ctx.currCell = cell->mCell->mFormId;
 
-            std::cout << "CELL replaced " << ESM4::formIdToString(formId) << std::endl; // FIXME: for testing
+            //std::cout << "CELL replaced " << ESM4::formIdToString(formId) << std::endl; // FIXME: for testing
 
             if (cell->mHasChildren)
                 cell->addFileContext(ctx);
@@ -635,8 +635,9 @@ namespace MWWorld
             if (!res.second) // checking just in case
             {
                 const ForeignCell *oldCell = find(Misc::StringUtils::lowerCase(cell->mCell->mEditorId));
-                if (oldCell->mCell->mFormId != cell->mCell->mFormId)
-                    throw std::runtime_error("Cell with different formid has the same editor id");
+                if (oldCell->mCell->mFormId != cell->mCell->mFormId) // FIXME
+                    std::cout << "Cell with different formid has the same editor id" << std::endl; // AylidWorld (Knights.esp)
+                    //throw std::runtime_error("Cell with different formid has the same editor id");
             }
         }
 

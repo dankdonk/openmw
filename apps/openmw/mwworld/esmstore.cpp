@@ -291,33 +291,18 @@ void ESMStore::loadTes4Group (ESM::ESMReader &esm)
                 !(reader.grp(2).type == ESM4::Grp_WorldChild || reader.grp(2).type == ESM4::Grp_InteriorSubCell))
                 std::cout << "Unexpected persistent child group in exterior subcell" << std::endl;
 //#endif
-#if 0
             // If hdr.group.type == ESM4::Grp_CellPersistentChild, we are about to
             // partially load the persistent records such as REFR, ACHR and ACRE, if any.
             // (well, actually only examining for doors for the moment)
             //
             // The records from other groups are skipped as per below.
-            loadTes4Group(esm);
-#else
-            //if (reader.grp(0).type != ESM4::Grp_CellPersistentChild || reader.grp(1).type != ESM4::Grp_CellChild)
+
             if (reader.grp(1).type != ESM4::Grp_CellChild)
                throw std::runtime_error ("Unexpected group hierarchy in CellPersistentChild");
 
             // NOTE: dummy cell no longer loaded here
             if (reader.grp(2).type == ESM4::Grp_WorldChild)
             {
-                // do we have a dummy CellStore for this world?  if not create one
-                //ESM4::FormId worldId = reader.currWorld(); // set by ESM4::World after adjustment
-
-                // a dummy cell should have been preloaded when we encountered a REC_CELL earlier
-                // (see ForeignStore<MWWorld::ForeignCell>::preload())
-                //ESM4::FormId dummyCellId = reader.currCell(); // set by ESM4::Cell after adjustment
-
-                //std::cout << "Loading world dummy cell " << world->mEditorId << std::endl; // FIXME
-                //ForeignWorld *world = mForeignWorlds.getWorld(worldId); // get a non-const ptr
-
-                // must load the whole group or else we'll lose track of where we are in the ESM
-                //mForeignCells.loadDummy(*this, esm, cell);
                 loadTes4Group(esm); // FIXME: testing
                 //reader.skipGroup(); // FIXME: testing
                 break;
@@ -329,28 +314,13 @@ void ESMStore::loadTes4Group (ESM::ESMReader &esm)
             }
             else
                 throw std::runtime_error ("Unexpected group hierarchy in CellPersistentChild");
-#endif
+
             break;
         }
         case ESM4::Grp_CellVisibleDistChild:
         {
-            // do we have a Visible Distant CellStore for this world?  if not create one
-            ESM4::FormId worldId = reader.getContext().currWorld;
-            ForeignWorld *world = mForeignWorlds.getWorld(worldId); // get a non-const ptr
-            if (!worldId || !world)
-            {
-                reader.skipGroup(); // FIXME: maybe interior?
-                break;
-            }
-
-            CellStore *cell = world->getVisibleDistCell();
-
-            reader.adjustGRUPFormId();  // not needed or even shouldn't be done? (only labels anyway)
-            reader.saveGroupStatus();
-
-            // must load the whole group or else we'll lose track of where we are
-            mForeignCells.loadVisibleDist(*this, esm, cell);
-
+            // these are loaded later along with cell temporary child group
+            reader.skipGroup();
             break;
         }
         case ESM4::Grp_CellTemporaryChild:

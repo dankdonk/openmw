@@ -47,9 +47,6 @@ namespace MWWorld
             // one per world (note some don't have dummy cells)
             std::map<ESM4::FormId, CellStore> mForeignDummys; // key is the foreign world's FormId
 
-            // FIXME: need to be for each cell rather than each world
-            // key is the foreign world's FormId
-            std::map<ESM4::FormId, CellStore> mForeignVisibleDist;
             // key is the foreign world's EditorId in lower case
             std::map<std::string, std::vector<std::pair<std::int16_t, std::int16_t> > > mVisibleDistStaticGrids;
 
@@ -82,9 +79,9 @@ namespace MWWorld
             CellStore *getWorldCellGrid (const std::string& world, std::int16_t x, std::int16_t y);
             CellStore *getWorldCellGrid (ESM4::FormId worldId, std::int16_t x, std::int16_t y);
             //CellStore *getWorldCell (ESM4::FormId cellId); // TODO
-            //const CellStore *getWorldDummyCell (ESM4::FormId worldId) const; // deprecated
+
             CellStore *getWorldDummyCell (ESM4::FormId worldId);
-            CellStore *getWorldVisibleDistCell (ESM4::FormId worldId, std::int16_t x, std::int16_t y);
+
             CellStore *getForeignInterior (const std::string& name);
 
             Ptr getPtr (const std::string& name, CellStore& cellStore, bool searchInContainers = false);
