@@ -213,8 +213,10 @@ void MWWorld::Cells::initNewWorld(const ForeignWorld *world)
 
     const Ogre::ResourceGroupManager& groupMgr = Ogre::ResourceGroupManager::getSingleton();
     const Ogre::StringVector groups = groupMgr.getResourceGroups();
-    Ogre::StringVector::const_iterator it = groups.begin();
-    for (; it != groups.end(); ++it)
+
+    // FIXME: how to ensure the data directory is read *after* the BSA archives?
+    Ogre::StringVector::const_reverse_iterator it = groups.rbegin();
+    for (; it != groups.rend(); ++it)
     {
         // FIXME: this probably ignores loose files
         if (1)//(*it).find("TES4BSA") != std::string::npos)
