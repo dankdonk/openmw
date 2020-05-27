@@ -4569,6 +4569,10 @@ I suspect Ogre tries to animate all `Ogre::Entity` that has a skeleton or has ve
 
 Worked around by stop setting the skeleton name for skinned meshes (see `NiBtOgre::NiTriBasedGeom::buildSubMesh()`).  Seems ok but not sure if this will break something else.
 
+**FIXME:** loading terrain and landscape LOD near the "32" cells boundary appear broken.  Test by going into Cheydinhal starting from COC "Tamriel" 27 22
+
+**FIXME:** door mRefID="AnutwyllExRef", mFormId = 0x00017571, mBaseObj = 0x0002eed2 seems to have an empty AABB Seems to be related to the experimental change in `CellRefList::search()`. Reverted the change for now, needs more testing and debugging.
+
 
 [//]: # (/* spell spelllang=en_au syntax=cpp */)
 [//]: # (/* vim: set ft=markdown tw=0 lbr bri fen fdm=marker fdl=0: */)

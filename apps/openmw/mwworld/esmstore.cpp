@@ -565,7 +565,7 @@ void ESMStore::loadTes4Record (ESM::ESMReader& esm)
                 // FIXME: detect duplicates?
             }
 #if 0
-            if ((record.mFlags & ESM4::Rec_DistVis) != 0 && reader.getContext().groupStack.back().first.type != ESM4::Grp_CellVisibleDistChild)
+            if ((record.mFlags & ESM4::Rec_VisDistant) != 0 && reader.getContext().groupStack.back().first.type != ESM4::Grp_CellVisibleDistChild)
             {
                 std::string padding = ""; // FIXME: debugging only
                 padding.insert(0, reader.getContext().groupStack.size()*2, ' ');
@@ -573,7 +573,7 @@ void ESMStore::loadTes4Record (ESM::ESMReader& esm)
                           << ESM4::formIdToString(record.mFormId) << " visible dist" << std::endl;
             }
 
-            if ((record.mFlags & ESM4::Rec_DistVis) == 0 && reader.getContext().groupStack.back().first.type == ESM4::Grp_CellVisibleDistChild)
+            if ((record.mFlags & ESM4::Rec_VisDistant) == 0 && reader.getContext().groupStack.back().first.type == ESM4::Grp_CellVisibleDistChild)
             {
                 std::string padding = ""; // FIXME: debugging only
                 padding.insert(0, reader.getContext().groupStack.size()*2, ' ');

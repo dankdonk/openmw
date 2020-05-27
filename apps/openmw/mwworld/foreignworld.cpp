@@ -22,12 +22,6 @@ MWWorld::ForeignWorld::ForeignWorld() : mDummyCellId(0), mVisibleDistCell(nullpt
 
 MWWorld::ForeignWorld::~ForeignWorld()
 {
-    //if (mDummyCellStore)
-        //delete mDummyCellStore;
-
-    //if (mDummyCell)
-        //delete mDummyCell;
-
     if (mVisibleDistCellStore)
         delete mVisibleDistCellStore;
 

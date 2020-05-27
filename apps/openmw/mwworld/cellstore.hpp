@@ -52,11 +52,11 @@ namespace MWWorld
                 State_Unloaded, State_Preloaded, State_Loaded
             };
 
-            enum DummyMode
+            enum VisitorMode
             {
-                DUM_Insert = 0,
-                DUM_Remove = 1,
-                DUM_Clear  = 2
+                VIS_Insert     = 0x01,
+                VIS_Remove     = 0x02,
+                VIS_Clear      = 0x04
             };
 
         private:
@@ -427,7 +427,7 @@ namespace MWWorld
             bool forEachDummyImp(Functor& functor, List& vect, int mode,
                     int x, int y, std::size_t range = 0, std::size_t exclude = 0)
             {
-                if (mode == DUM_Clear)
+                if ((mode & VIS_Clear) != 0)
                 {
                     vect.mDummyActive.clear();
                     vect.mDummyVisible.clear();
@@ -437,10 +437,10 @@ namespace MWWorld
 
                 typedef std::vector<LiveCellRefBase*> SubList;
 
-                SubList newlist = vect.search(x, y, range, exclude);
+                SubList newlist = vect.search(x, y, range, exclude, (mode & SCH_All));
                 SubList& currlist = (exclude == 0 ? vect.mDummyActive : vect.mDummyVisible);
 
-                if (mode == DUM_Insert)
+                if ((mode & VIS_Insert) != 0)
                 {
                     for (SubList::iterator iter(newlist.begin()); iter != newlist.end(); ++iter)
                     {
@@ -462,7 +462,7 @@ namespace MWWorld
 
                     currlist.swap(newlist);
                 }
-                else /*mode == DUM_Remove*/
+                else /*(mode & VIS_Remove) != 0*/
                 {
                     // list no longer needed objects for removing
                     for (SubList::iterator iter(currlist.begin()); iter != currlist.end(); ++iter)

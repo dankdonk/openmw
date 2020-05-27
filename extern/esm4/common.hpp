@@ -850,7 +850,7 @@ namespace ESM4
         Rec_DispMenu   = 0x00000400, // (LSCR) Displays in Main Menu
         Rec_Disabled   = 0x00000800, // Initially disabled
         Rec_Ignored    = 0x00001000, // Ignored
-        Rec_DistVis    = 0x00008000, // Visible when distant
+        Rec_VisDistant = 0x00008000, // Visible when distant
         Rec_RandAnim   = 0x00010000, // (ACTI) Random Animation Start
         Rec_Danger     = 0x00020000, // (ACTI) Dangerous / Off limits (Interior cell)
                                      //   Dangerous Can't be set withough Ignore Object Interaction

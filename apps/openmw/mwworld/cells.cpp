@@ -384,11 +384,6 @@ void MWWorld::Cells::initNewWorld(const ForeignWorld *world)
 //#if 0
     std::map<ESM4::FormId, CellStore>::iterator lb = mForeignDummys.lower_bound(world->mFormId);
     if (lb == mForeignDummys.end() || (mForeignDummys.key_comp()(world->mFormId, lb->first)))
-    //{
-        // FIXME: we may have done this from getWorldDummyCell()
-        //throw std::runtime_error("Dummy cell already exists for this world");
-    //}
-    //else
     {
         const ForeignCell *dummyCell = world->getDummyCell();
         if (dummyCell)
@@ -399,29 +394,6 @@ void MWWorld::Cells::initNewWorld(const ForeignWorld *world)
             throw std::runtime_error("Dummy cell not found for this world");
     }
 //#endif
-#if 0
-    // sanity check: find the world for the given form i
-    // check if a dummy cell exists
-    // FIXME: this logic needs to change since a new world may be inserted from another
-    // place
-    const ForeignCell *dummyCell = mStore.getForeign<ForeignCell>().find(world->getDummyCell());
-    if (dummyCell)
-    {
-        std::pair<std::map<ESM4::FormId, CellStore>::iterator, bool> res =
-            mForeignDummys.insert({ world->mFormId, CellStore(dummyCell, true, true) });
-
-        if (res.second)
-            res.first->second.load(mStore, mReader);
-    }
-#if 0
-    // visibly distant
-    // FIXME: this cell won't be found from mStore, need to create one
-    // Also, mFormId is probably already used by the dummy cell
-    ForeignWorld *wrld = mStore.getForeign<ForeignWorld>().getWorld(world->mFormId); // get a non-const ptr
-    if (!wrld)
-        return; // FIXME: maybe exception?
-#endif
-#endif
 }
 
 // NOTE: creates a new CellStore if it doesn't exist but do not load (can't load here becasue

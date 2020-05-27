@@ -6,21 +6,38 @@
 #include <map>
 #include <stdexcept>
 
+#include <extern/esm4/common.hpp> // Rec_Persistent, Rec_VisDistant
+
 #include "livecellref.hpp"
 
 namespace MWWorld
 {
+    enum SearchMask
+    {
+        SCH_Persistent = 0x10,
+        SCH_VisDistant = 0x20,
+        SCH_Temporary  = 0x40,
+        SCH_All        = 0x70
+    };
+
     struct CellRefStoreBase
     {
         //int mStoreType; // TODO: unused for now
 
         virtual ~CellRefStoreBase() {}
 
-        virtual LiveCellRefBase *find(const ESM4::FormId formId) { return nullptr; }
+        virtual LiveCellRefBase *find(const ESM4::FormId formId, int mask = SCH_All)
+        {
+            return nullptr;
+        }
+
         virtual LiveCellRefBase *find(const std::string& name) = 0;
 
         virtual std::vector<LiveCellRefBase*> search(std::int32_t x, std::int32_t y,
-                std::size_t range = 0, std::size_t exclude = 0) { return std::vector<LiveCellRefBase*>(); }
+                std::size_t range = 0, std::size_t exclude = 0, int mask = SCH_All)
+        {
+            return std::vector<LiveCellRefBase*>(); // empty
+        }
 
         virtual LiveCellRefBase *searchViaHandle(const std::string& handle) = 0;
     };
@@ -54,7 +71,7 @@ namespace MWWorld
         void load (ESM4::ActorCreature &ref, bool deleted, const MWWorld::ESMStore &esmStore, bool dummy = false);
         void load (ESM4::ActorCharacter &ref, bool deleted, const MWWorld::ESMStore &esmStore, bool dummy = false);
 
-        LiveCellRefBase *find(const ESM4::FormId formId)
+        LiveCellRefBase *find(const ESM4::FormId formId, int mask = SCH_All)
         {
             FormIdMap::const_iterator iter = mFormIdMap.find(formId);
             if (iter == mFormIdMap.end())
@@ -67,7 +84,21 @@ namespace MWWorld
             if (!ref->mData.isDeletedByContentFile() &&
                 (ref->mRef.hasContentFile() || ref->mData.getCount() > 0))
             {
-                return ref;
+                // TODO: allow both persistent and visibly distant at the same time?
+                std::uint32_t flags = ref->mRef.getFlags();
+                if ((mask == SCH_All) // all
+                    ||
+                    (mask == SCH_Persistent && ((flags & ESM4::Rec_Persistent) != 0 && // only persistent
+                                                (flags & ESM4::Rec_VisDistant) == 0))
+                    ||
+                    (mask == SCH_VisDistant && ((flags & ESM4::Rec_Persistent) == 0 && // only vis distant
+                                                (flags & ESM4::Rec_VisDistant) != 0))
+                    ||
+                    (mask == SCH_Temporary  && ((flags & ESM4::Rec_Persistent) == 0 && // only temporary
+                                                (flags & ESM4::Rec_VisDistant) == 0)))
+                {
+                    return ref;
+                }
             }
 
             return nullptr;
@@ -87,7 +118,7 @@ namespace MWWorld
         }
 
         std::vector<LiveCellRefBase*> search(std::int32_t x, std::int32_t y,
-                std::size_t range = 0, std::size_t exclude = 0)
+                std::size_t range = 0, std::size_t exclude = 0, int mask = SCH_All)
         {
             if (exclude > range)
                 throw std::logic_error("The excluded area is larger than the included range.");
@@ -98,11 +129,17 @@ namespace MWWorld
             {
                 for (std::int32_t j = y - std::int32_t(range); j <= y + std::int32_t(range); ++j)
                 {
+#if 0
+                    std::int32_t distSq = (x - i) * (x - i) + (y - j) * (y - j);
+                    if (exclude != 0 && distSq < exclude)
+                        continue;
+#else
                     if (exclude != 0 && i >= x - exclude && i <= x + exclude)
                         continue;
 
                     if (exclude != 0 && j >= y - exclude && j <= y + exclude)
                         continue;
+#endif
 
                     GridMap::const_iterator iter = mGridMap.find(std::make_pair(i, j));
 
@@ -113,7 +150,7 @@ namespace MWWorld
                             // find() may return a nullptr after checking deleted, count etc;
                             // count is set to 0 when an actor in a dummy cell gets moved to another
                             // - see World::moveObject()
-                            LiveCellRefBase* ref = find(iter->second[k]);
+                            LiveCellRefBase* ref = find(iter->second[k], mask);
                             if (ref)
                                 res.push_back(ref);
                         }

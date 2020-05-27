@@ -31,8 +31,6 @@
 #include "cellstore.hpp"
 #include "foreigncell.hpp" // FIXME: for testing ony
 
-#define TEST_LOD_VS_REFR
-
 namespace
 {
 
@@ -143,15 +141,7 @@ namespace
         {
             try
             {
-              //if (ptr.getTypeName() == typeid(ESM4::Door).name()) // FIXME: debugging only
-              //{
-              //    std::cout << "inserting " << ptr.getBase()->mRef.getRefId() << std::endl;
-              //}
-
                 addObject(ptr, mPhysics, mRendering, mDist);
-
-              //if (mPhysics && !ptr.getBase()->mData.getBaseNode() && ptr.getTypeName() == typeid(ESM4::Door).name())
-              //    std::cout << "no basenode " << ptr.getBase()->mRef.getRefId() << std::endl;
 
                 updateObjectLocalRotation(ptr, mPhysics, mRendering);
                 if (ptr.getRefData().getBaseNode())
@@ -193,13 +183,6 @@ namespace
     bool ListFunctor::operator() (const MWWorld::Ptr& ptr)
     {
         mRefs.push_back(ptr);
-
-        if (ptr.getTypeName() == typeid(ESM4::Door).name()) // FIXME
-        {
-            // FIXME: testing
-            // well, it is actuallly being deleted later but...
-            //std::cout << "deleting " << ptr.getBase()->mRef.getRefId() << std::endl;
-        }
 
         return true;
     }
@@ -291,7 +274,7 @@ namespace MWWorld
 
     void Scene::unloadCell (CellStoreCollection::iterator iter)
     {
-        std::cout << "Unloading cell\n";
+        //std::cout << "Unloading cell\n"; // FIXME
         ListAndResetHandles functor;
 
         (*iter)->forEach<ListAndResetHandles>(functor);
@@ -348,7 +331,7 @@ namespace MWWorld
         if ((*iter)->isDummyCell())
         {
             ListFunctor visitor;
-            (*iter)->forEachDummy<ListFunctor>(visitor, CellStore::DUM_Clear, 0, 0);
+            (*iter)->forEachDummy<ListFunctor>(visitor, CellStore::VIS_Clear, 0, 0);
         }
 
         mRendering.removeCell(*iter);
@@ -359,6 +342,10 @@ namespace MWWorld
 
         MWBase::Environment::get().getSoundManager()->stopSound (*iter);
         mActiveCells.erase(*iter);
+
+        CellStoreCollection::iterator visIter = mVisDistCells.find(*iter);
+        if (visIter != mVisDistCells.end())
+            mVisDistCells.erase(visIter);
     }
 
     void Scene::loadCell (CellStore *cell, Loading::Listener* loadingListener)
@@ -433,13 +420,6 @@ namespace MWWorld
         float verts = ESM4::Land::VERTS_PER_SIDE; // number of vertices per side
         float worldsize = ESM4::Land::REAL_SIZE;  // cell terrain size in world coords
 
-        // FIXME: these shouldn't be Refs and needs to move near LOD landscape below
-        if (0)//cell->isDummyCell() || cell->isVisibleDistCell())
-        {
-            insertCell (*cell, true, loadingListener);
-            return;
-        }
-
         // FIXME: some detailed terrain without physics for LOD should be loaded
 
         // Load terrain physics first...
@@ -463,6 +443,7 @@ namespace MWWorld
             else
                 std::cerr << "Heightmap for " << cell->getCell()->getDescription() << " not found" << std::endl;
 
+            // FIXME: calculation around the "32" boundary is not correct, try Cheydinhal
             updateTES4LODLandscapeAtGrid (worldId, cell->getCell()->getGridX(),
                                                    cell->getCell()->getGridY()); // FIXME: testing
 
@@ -508,13 +489,13 @@ namespace MWWorld
     {
         // remove without physics
         ListFunctor visitor;
-        cell->forEachStatic<ListFunctor>(visitor, CellStore::DUM_Remove, x, y, 16, 4);
+        cell->forEachStatic<ListFunctor>(visitor, CellStore::VIS_Remove|SCH_Persistent, x, y, 16, 4);
         for (std::size_t i = 0; i < visitor.mRefs.size(); ++i)
             removeObjectFromScene(visitor.mRefs[i]);
 
         // remove with physics
         ListFunctor visitor2;
-        cell->forEachDummy<ListFunctor>(visitor2, CellStore::DUM_Remove, x, y, 4, 0);
+        cell->forEachDummy<ListFunctor>(visitor2, CellStore::VIS_Remove|SCH_Persistent, x, y, 4, 0);
         for (std::size_t i = 0; i < visitor2.mRefs.size(); ++i)
             removeObjectFromScene(visitor2.mRefs[i]);
 
@@ -523,7 +504,7 @@ namespace MWWorld
         // insert with physics
         std::size_t range = 4;
         InsertFunctor functor (*cell, true/*rescale*/, *loadingListener, mPhysics, mRendering);
-        cell->forEachDummy (functor, CellStore::DUM_Insert, x, y, range, 0);
+        cell->forEachDummy (functor, CellStore::VIS_Insert|SCH_Persistent, x, y, range, 0);
 
         //std::cout << "about to insert dummy without physics" << std::endl; // FIXME
 
@@ -531,7 +512,7 @@ namespace MWWorld
         // insert without physics
         range = 16;
         InsertFunctor functor2 (*cell, true/*rescale*/, *loadingListener, nullptr, mRendering);
-        cell->forEachStatic (functor2, CellStore::DUM_Insert, x, y, range, 4);
+        cell->forEachStatic (functor2, CellStore::VIS_Insert|SCH_Persistent, x, y, range, 4);
     }
 
     void Scene::loadVisibleDist (CellStore *cell, Loading::Listener* loadingListener)
@@ -547,6 +528,9 @@ namespace MWWorld
         while (active!=mActiveCells.end())
             unloadCell (active++);
         assert(mActiveCells.empty());
+        CellStoreCollection::iterator visDist = mVisDistCells.begin();
+        while (visDist!=mVisDistCells.end())
+            unloadCell (visDist++);
         mCurrentCell = NULL;
     }
 
@@ -1074,7 +1058,10 @@ namespace MWWorld
             while (active != mActiveCells.end())
                 unloadCell(active++);
 
-            // FIXME: need to unload dummy and visible distant
+            // unload visible distant upon change of world
+            CellStoreCollection::iterator visDist = mVisDistCells.begin();
+            while (visDist != mVisDistCells.end())
+                unloadCell(visDist++);
         }
         else
         {
@@ -1210,21 +1197,10 @@ namespace MWWorld
             else
                 std::cout << "Scene: this world lacks a dummy cell "
                           << ESM4::formIdToString(worldId) << std::endl;
-#if 0
-            // FIXME: having one visible distant per world is not going to work, especially with trees
-            CellStore *dist = MWBase::Environment::get().getWorld()->getWorldVisibleDistCell(worldId);
-            if (dist)
-            {
-                std::pair<CellStoreCollection::iterator, bool> result = mActiveCells.insert(dist);
-                if (result.second)
-                {
-                    std::cout << "Loading visibly dist" << std::endl;
-                    //loadVisibleDist(dist, loadingListener); // FIXME: temp disable for testing
-                }
-            }
-#endif
+
             // .cmp and .lod based visible distant implementation
-            InsertFunctor functor(*dummy, true, *loadingListener, nullptr, mRendering); // WARN: reusing dummy
+            // WARN: reusing dummy cell here
+            InsertFunctor functor(*dummy, true, *loadingListener, nullptr, mRendering, true/*dist*/);
             const MWWorld::ESMStore& store = MWBase::Environment::get().getWorld()->getStore();
             const MWWorld::ForeignStore<ESM4::Static> &statStore = store.getForeign<ESM4::Static>();
 
@@ -1233,6 +1209,11 @@ namespace MWWorld
             if (newWorld && newWorld->mParent)
                 visWorld = store.getForeign<ForeignWorld>().find(newWorld->mParent);
 
+            // delete
+            const std::vector<std::pair<std::int16_t, std::int16_t> >& cmpGrids
+                = visWorld->getVisibleDistGrids();
+            std::vector<std::pair<std::int16_t, std::int16_t> > newGrids;
+#if 0
             for (int i = X-32; i < X+32; ++i)
             {
                 for (int j = Y-32; j < Y+32; ++j)
@@ -1240,9 +1221,73 @@ namespace MWWorld
                     if (i > X-2 && i < X+2 && j > Y-2 && j < Y+2) // ignore 2 cells around player
                         continue;
 
+                    if (std::find(cmpGrids.begin(), cmpGrids.end(), std::pair<std::int16_t, std::int16_t>(i, j)) == cmpGrids.end())
+                        continue;
+
+                    newGrids.push_back(std::pair<std::int16_t, std::int16_t>(i, j));
+                }
+            }
+#else
+            const int range = 20;
+            const int exclude = 2;
+            // FIXME: skip the last one? i.e. (0, 7)
+            std::vector<std::pair<std::int16_t, std::int16_t> >::const_iterator cmpIter = cmpGrids.begin();
+            for (; cmpIter != cmpGrids.end(); ++cmpIter)
+            {
+                std::int16_t visX = cmpIter->first;
+                std::int16_t visY = cmpIter->second;
+                int distSq = (X - visX) * (X - visX) + (Y - visY) * (Y - visY);
+                //if (((visX >= X-range && visX < X-exclude) || (visX >= X+exclude && visX < X+range)) &&
+                    //((visY >= Y-range && visY < Y-exclude) || (visY >= Y+exclude && visY < Y+range)))
+                if (distSq > 2 && distSq < range*range*2)
+                {
+                    //std::cout << "num cmp vis dist grids " << visX << "," << visY << std::endl; // FIXME
+                    newGrids.push_back(*cmpIter);
+                }
+            }
+#endif
+            //std::cout << "num new vis dist grids " << newGrids.size() << std::endl; // FIXME
+
+            ListFunctor functor2;
+            CellStoreCollection::iterator visDist = mVisDistCells.begin();
+            while (visDist != mVisDistCells.end())
+            {
+                int visX = (*visDist)->getCell()->getGridX();
+                int visY = (*visDist)->getCell()->getGridY();
+                std::pair<std::int16_t, std::int16_t> grid(visX, visY);
+                if (std::find(newGrids.begin(), newGrids.end(), grid) == newGrids.end())
+                {
+                    // no longer in the list
+                    std::cout << "about to unload vis dist " << visX << "," << visY << std::endl; // FIXME
+                    unloadCell(visDist++);
+                }
+                else
+                    ++visDist;
+            }
+
+            // insert
+#if 0
+            for (int i = X-32; i < X+32; ++i)
+            {
+                for (int j = Y-32; j < Y+32; ++j)
+                {
+                    if (i > X-2 && i < X+2 && j > Y-2 && j < Y+2) // ignore 2 cells around player
+                        continue;
+
+                    if (std::find(cmpGrids.begin(), cmpGrids.end(), std::pair<std::int16_t, std::int16_t>(i, j)) == cmpGrids.end())
+                        continue;
+#else
+            int insertCount = 0; // FIXME: testing
+            std::vector<std::pair<std::int16_t, std::int16_t> >::const_iterator gridIter = newGrids.begin();
+            for (; gridIter != newGrids.end(); ++gridIter)
+            {
+                std::int16_t i = gridIter->first;
+                std::int16_t j = gridIter->second;
+#endif
+
                     //std::cout << "world " << visWorld->mEditorId << std::endl; // FIXME
                     const std::vector<ESM4::LODReference> *refs = visWorld->getVisibleDistRefs(i, j);
-                    if (!refs)
+                    if (!refs || refs->empty())
                         continue;
 
                     //std::cout << "(" << i << "," << j << ") refs size " << refs->size() << std::endl; // FIXME
@@ -1256,9 +1301,9 @@ namespace MWWorld
 
                         LiveCellRef<ESM4::Static> liveCellRef (r, base);
                         //std::cout << "base " << base->mEditorId << std::endl;
-                        functor(Ptr(&liveCellRef, dummy)); // FIXME: testing (see below)
+                        //functor(Ptr(&liveCellRef, dummy)); // FIXME: testing (see below)
                     }
-#ifdef TEST_LOD_VS_REFR
+#if 1
                     // compare with the visible distant objects
                     ListFunctor visitor;
                     ESM4::FormId visId = worldId;
@@ -1270,7 +1315,17 @@ namespace MWWorld
                     //        for now, hacked CellStore to always update GridMap
                     CellStore *dist = MWBase::Environment::get().getWorld()->getWorldCell(visId, i, j);
 
-                    dist->forEachStatic<ListFunctor>(visitor, CellStore::DUM_Insert, i, j, 1, 0); // 1 cell
+                    std::pair<CellStoreCollection::iterator, bool> result = mVisDistCells.insert(dist);
+                    if (result.second) // FIXME log if false?
+                    {
+                        dist->forEachStatic<ListFunctor>(visitor, CellStore::VIS_Insert|SCH_VisDistant, i, j, 1, 0); // 1 cell
+                        insertCount++;
+                    }
+                    else
+                    {
+                        //std::cout << "vis dist insert failed" << std::endl;
+                        continue;
+                    }
 
                     // FIXME: trouble with this comparison is that different REFR can have the same baseObj
                     for (size_t k = 0; k < refs->size(); ++k)
@@ -1280,13 +1335,16 @@ namespace MWWorld
                         for (std::size_t v = 0; v < visitor.mRefs.size(); ++v)
                         {
                             const ESM::Position p2 = visitor.mRefs[v].getBase()->mRef.getPosition();
-                            if ((visitor.mRefs[v].getBase()->mRef.getFlags() & ESM4::Rec_DistVis) != 0 &&
+                            if ((visitor.mRefs[v].getBase()->mRef.getFlags() & ESM4::Rec_VisDistant) != 0 &&
                                 refs->at(k).baseObj == visitor.mRefs[v].getBase()->mRef.getBaseObj())
                             {
+                                // check position (TODO: check rotation)
+                                // WARN: we tolerate 1.f difference for each x, y, z
                                 if (abs(p1.pos.x) - abs(p2.pos[0]) < 1.f &&
                                     abs(p1.pos.y) - abs(p2.pos[1]) < 1.f &&
                                     abs(p1.pos.z) - abs(p2.pos[2]) < 1.f)
                                 {
+                                    // check scale
                                     if (int(refs->at(k).scale) / 100.f != visitor.mRefs[v].getBase()->mRef.getScale())
                                     {
                                         const ESM4::Static *base = statStore.search(refs->at(k).baseObj);
@@ -1297,14 +1355,12 @@ namespace MWWorld
                                             << visitor.mRefs[v].getBase()->mRef.getScale()
                                             << std::endl;
                                     }
-                                    //else
-                                        //std::cout << "found" << std::endl;
 
                                     found = true;
-                                    break;
-                                }
+                                    functor(visitor.mRefs[v]); // FIXME: testing (see above)
 
-                                //functor(visitor.mRefs[v]); // FIXME: testing (see above)
+                                    continue;
+                                }
                             }
                         }
 
@@ -1317,7 +1373,7 @@ namespace MWWorld
 
                             for (std::size_t v = 0; v < visitor.mRefs.size(); ++v)
                             {
-                                if ((visitor.mRefs[v].getBase()->mRef.getFlags() & ESM4::Rec_DistVis) != 0 &&
+                                if ((visitor.mRefs[v].getBase()->mRef.getFlags() & ESM4::Rec_VisDistant) != 0 &&
                                     refs->at(k).baseObj == visitor.mRefs[v].getBase()->mRef.getBaseObj())
                                 {
                                     const ESM::Position p2 = visitor.mRefs[v].getBase()->mRef.getPosition();
@@ -1334,20 +1390,13 @@ namespace MWWorld
                         }
                     }
                     // clear after testing
-                    dist->forEachStatic<ListFunctor>(visitor, CellStore::DUM_Clear, i, j, 0, 0);
+                    dist->forEachStatic<ListFunctor>(visitor, CellStore::VIS_Clear, i, j, 0, 0);
 #endif
                 }
-            }
-
-            // FIXME: quick hack for testing removal
-            // FIXME: need to do properly like dummy
-            //{
-            //ListFunctor visitor;
-            //dummy->forEachDummy<ListFunctor>(visitor, CellStore::DUM_Insert, X, Y, 2, 0);
-            //for (std::size_t i = 0; i < visitor.mRefs.size(); ++i)
-            //    removeObjectFromScene(visitor.mRefs[i]);
+                if (insertCount)
+                    std::cout << "vis dist inserted " << insertCount << std::endl; // FIXME: testing
             //}
-        }
+        } //if (/*worldChanged && */!mActiveCells.empty())
 
         MWBase::Environment::get().getWindowManager()->changeCell(cell);
 
@@ -1886,6 +1935,10 @@ namespace MWWorld
         while (active!=mActiveCells.end())
             unloadCell (active++);
 
+        CellStoreCollection::iterator visDist = mVisDistCells.begin();
+        while (visDist != mVisDistCells.end())
+            unloadCell (visDist++);
+
         int refsToLoad = cell->getRefrEstimate(ESM4::Grp_CellTemporaryChild);
         loadingListener->setProgressRange(refsToLoad);
 
@@ -2049,6 +2102,8 @@ namespace MWWorld
         return Ptr();
     }
 
+    // FIXME: calculation around the "32" boundary is not correct, try Cheydinhal
+    //
     // FIXME: support FO3/FONV file names
     //
     // TES4: <formid in dec>.<x bottom left><y bottom left><size>.nif

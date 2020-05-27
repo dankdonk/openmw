@@ -56,6 +56,7 @@ namespace MWWorld
             //OEngine::Render::OgreRenderer& mRenderer;
             CellStore* mCurrentCell; // the cell the player is in
             CellStoreCollection mActiveCells;
+            CellStoreCollection mVisDistCells;
             bool mCellChanged;
             PhysicsSystem *mPhysics;
             MWRender::RenderingManager& mRendering;
