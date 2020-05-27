@@ -371,8 +371,8 @@ void OMW::Engine::prepareEngine (Settings::Manager & settings)
     mOgre->createWindow("OpenMW", windowSettings);
 
     // useLooseFiles is set false, since it will be done below
-    Bsa::registerResources (mFileCollections, mArchives, false, mFSStrict);
-    Bsa::registerResources (mFileCollections, mTES4Archives, /*useLooseFiles*/true, mFSStrict, /*isTes4*/true);
+    Bsa::registerResources (mFileCollections, mTES4Archives, /*useLooseFiles*/false, mFSStrict, /*isTes4*/true);
+    Bsa::registerResources (mFileCollections, mArchives, true, mFSStrict);
 
     // Create input and UI first to set up a bootstrapping environment for
     // showing a loading screen and keeping the window responsive while doing so

@@ -47,7 +47,7 @@ void Bsa::registerResources (const Files::Collections& collections,
                 rgManager.createResourceGroup (groupName);
 #else
             // Last BSA has the highest priority
-            std::string groupName = (isTes4 ? "TES4BSA" : "DataBSA") + Ogre::StringConverter::toString(archives.size()-i, 8, '0');
+            std::string groupName = (isTes4 ? "DataBSATES4" : "DataBSA") + Ogre::StringConverter::toString(archives.size()-i, 8, '0');
 
             Ogre::ResourceGroupManager::getSingleton ().createResourceGroup (groupName);
 #endif

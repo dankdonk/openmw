@@ -1213,21 +1213,7 @@ namespace MWWorld
             const std::vector<std::pair<std::int16_t, std::int16_t> >& cmpGrids
                 = visWorld->getVisibleDistGrids();
             std::vector<std::pair<std::int16_t, std::int16_t> > newGrids;
-#if 0
-            for (int i = X-32; i < X+32; ++i)
-            {
-                for (int j = Y-32; j < Y+32; ++j)
-                {
-                    if (i > X-2 && i < X+2 && j > Y-2 && j < Y+2) // ignore 2 cells around player
-                        continue;
 
-                    if (std::find(cmpGrids.begin(), cmpGrids.end(), std::pair<std::int16_t, std::int16_t>(i, j)) == cmpGrids.end())
-                        continue;
-
-                    newGrids.push_back(std::pair<std::int16_t, std::int16_t>(i, j));
-                }
-            }
-#else
             const int range = 20;
             const int exclude = 2;
             // FIXME: skip the last one? i.e. (0, 7)
@@ -1245,7 +1231,7 @@ namespace MWWorld
                     newGrids.push_back(*cmpIter);
                 }
             }
-#endif
+
             //std::cout << "num new vis dist grids " << newGrids.size() << std::endl; // FIXME
 
             ListFunctor functor2;
@@ -1266,136 +1252,128 @@ namespace MWWorld
             }
 
             // insert
-#if 0
-            for (int i = X-32; i < X+32; ++i)
-            {
-                for (int j = Y-32; j < Y+32; ++j)
-                {
-                    if (i > X-2 && i < X+2 && j > Y-2 && j < Y+2) // ignore 2 cells around player
-                        continue;
-
-                    if (std::find(cmpGrids.begin(), cmpGrids.end(), std::pair<std::int16_t, std::int16_t>(i, j)) == cmpGrids.end())
-                        continue;
-#else
             int insertCount = 0; // FIXME: testing
             std::vector<std::pair<std::int16_t, std::int16_t> >::const_iterator gridIter = newGrids.begin();
             for (; gridIter != newGrids.end(); ++gridIter)
             {
                 std::int16_t i = gridIter->first;
                 std::int16_t j = gridIter->second;
+
+                //std::cout << "world " << visWorld->mEditorId << std::endl; // FIXME
+                const std::vector<ESM4::LODReference> *refs = visWorld->getVisibleDistRefs(i, j);
+                if (!refs || refs->empty())
+                    continue;
+
+                //std::cout << "(" << i << "," << j << ") refs size " << refs->size() << std::endl; // FIXME
+#if 0
+                for (size_t k = 0; k < refs->size(); ++k)
+                {
+                    const ESM4::Static *base = statStore.search(refs->at(k).baseObj);
+                    ESM4::Reference r;
+                    r.mFormId = 0xffff0000 + k; // FIXME: need to be able to assign unique formid
+                    // FIXME: sometimes these are wrong
+                    r.mPlacement = refs->at(k).placement;
+                    // FIXME: scale sometimes broken
+                    r.mScale = refs->at(k).scale == 0.f ? 1.f : int(refs->at(k).scale) / 100.f;
+
+                    LiveCellRef<ESM4::Static> liveCellRef (r, base);
+                    //std::cout << "base " << base->mEditorId << std::endl;
+                    //functor(Ptr(&liveCellRef, dummy)); // FIXME: testing (see below)
+                }
 #endif
+                // compare with the visible distant objects
+                ListFunctor visitor;
+                ESM4::FormId visId = worldId;
+                if (newWorld && newWorld->mParent)
+                    visId = newWorld->mParent;
 
-                    //std::cout << "world " << visWorld->mEditorId << std::endl; // FIXME
-                    const std::vector<ESM4::LODReference> *refs = visWorld->getVisibleDistRefs(i, j);
-                    if (!refs || refs->empty())
-                        continue;
+                // FIXME: trouble here - the retrieved CellStore is not loaded as a visibly
+                //        distant, hence nothing will be returned by the visitor;
+                //        for now, hacked CellStore to always update GridMap
+                CellStore *dist = MWBase::Environment::get().getWorld()->getWorldCell(visId, i, j);
 
-                    //std::cout << "(" << i << "," << j << ") refs size " << refs->size() << std::endl; // FIXME
-                    for (size_t k = 0; k < refs->size(); ++k)
+                std::pair<CellStoreCollection::iterator, bool> result = mVisDistCells.insert(dist);
+                if (result.second)
+                {
+                    // just 1 cell
+                    dist->forEachStatic<ListFunctor>(visitor, CellStore::VIS_Insert|SCH_VisDistant, i, j, 1, 0);
+                    insertCount++;
+                }
+                else
+                {
+                    //std::cout << "vis dist insert failed" << std::endl;
+                    continue;
+                }
+
+                // FIXME: trouble with this comparison is that different REFR can have the same baseObj
+                for (size_t k = 0; k < refs->size(); ++k)
+                {
+                    bool found = false;
+                    const ESM4::Placement p1 = refs->at(k).placement;
+                    for (std::size_t v = 0; v < visitor.mRefs.size(); ++v)
                     {
-                        const ESM4::Static *base = statStore.search(refs->at(k).baseObj);
-                        ESM4::Reference r;
-                        r.mFormId = 0xffff0000 + k; // FIXME: need to be able to assign unique formid
-                        r.mPlacement = refs->at(k).placement;  // FIXME: sometimes these are wrong
-                        r.mScale = refs->at(k).scale == 0.f ? 1.f : int(refs->at(k).scale) / 100.f; // FIXME: scale sometimes broken
-
-                        LiveCellRef<ESM4::Static> liveCellRef (r, base);
-                        //std::cout << "base " << base->mEditorId << std::endl;
-                        //functor(Ptr(&liveCellRef, dummy)); // FIXME: testing (see below)
-                    }
-#if 1
-                    // compare with the visible distant objects
-                    ListFunctor visitor;
-                    ESM4::FormId visId = worldId;
-                    if (newWorld && newWorld->mParent)
-                        visId = newWorld->mParent;
-
-                    // FIXME: trouble here - the retrieved CellStore is not loaded as a visibly
-                    //        distant, hence nothing will be returned by the visitor;
-                    //        for now, hacked CellStore to always update GridMap
-                    CellStore *dist = MWBase::Environment::get().getWorld()->getWorldCell(visId, i, j);
-
-                    std::pair<CellStoreCollection::iterator, bool> result = mVisDistCells.insert(dist);
-                    if (result.second) // FIXME log if false?
-                    {
-                        dist->forEachStatic<ListFunctor>(visitor, CellStore::VIS_Insert|SCH_VisDistant, i, j, 1, 0); // 1 cell
-                        insertCount++;
-                    }
-                    else
-                    {
-                        //std::cout << "vis dist insert failed" << std::endl;
-                        continue;
-                    }
-
-                    // FIXME: trouble with this comparison is that different REFR can have the same baseObj
-                    for (size_t k = 0; k < refs->size(); ++k)
-                    {
-                        bool found = false;
-                        const ESM4::Placement p1 = refs->at(k).placement;
-                        for (std::size_t v = 0; v < visitor.mRefs.size(); ++v)
+                        const ESM::Position p2 = visitor.mRefs[v].getBase()->mRef.getPosition();
+                        if ((visitor.mRefs[v].getBase()->mRef.getFlags() & ESM4::Rec_VisDistant) != 0 &&
+                            refs->at(k).baseObj == visitor.mRefs[v].getBase()->mRef.getBaseObj())
                         {
-                            const ESM::Position p2 = visitor.mRefs[v].getBase()->mRef.getPosition();
-                            if ((visitor.mRefs[v].getBase()->mRef.getFlags() & ESM4::Rec_VisDistant) != 0 &&
-                                refs->at(k).baseObj == visitor.mRefs[v].getBase()->mRef.getBaseObj())
+                            // check position (TODO: check rotation)
+                            // WARN: we tolerate 1.f difference for each x, y, z
+                            if (abs(p1.pos.x) - abs(p2.pos[0]) < 1.f &&
+                                abs(p1.pos.y) - abs(p2.pos[1]) < 1.f &&
+                                abs(p1.pos.z) - abs(p2.pos[2]) < 1.f)
                             {
-                                // check position (TODO: check rotation)
-                                // WARN: we tolerate 1.f difference for each x, y, z
-                                if (abs(p1.pos.x) - abs(p2.pos[0]) < 1.f &&
-                                    abs(p1.pos.y) - abs(p2.pos[1]) < 1.f &&
-                                    abs(p1.pos.z) - abs(p2.pos[2]) < 1.f)
+                                // check scale
+                                if (int(refs->at(k).scale) / 100.f != visitor.mRefs[v].getBase()->mRef.getScale())
                                 {
-                                    // check scale
-                                    if (int(refs->at(k).scale) / 100.f != visitor.mRefs[v].getBase()->mRef.getScale())
-                                    {
-                                        const ESM4::Static *base = statStore.search(refs->at(k).baseObj);
-                                        std::cout << "found but scale differ "
-                                            //<< ESM4::formIdToString(refs->at(k).baseObj) << " "
-                                            << base->mEditorId << " "
-                                            << int(refs->at(k).scale) / 100.f << " "
-                                            << visitor.mRefs[v].getBase()->mRef.getScale()
-                                            << std::endl;
-                                    }
-
-                                    found = true;
-                                    functor(visitor.mRefs[v]); // FIXME: testing (see above)
-
-                                    continue;
-                                }
-                            }
-                        }
-
-                        if (!found)
-                        {
-                            std::cout << "none found " << i << "," << j << " "
-                                << ESM4::formIdToString(refs->at(k).baseObj)
-                                << " " << p1.pos.x << "," << p1.pos.y << "," << p1.pos.z
-                                << std::endl;
-
-                            for (std::size_t v = 0; v < visitor.mRefs.size(); ++v)
-                            {
-                                if ((visitor.mRefs[v].getBase()->mRef.getFlags() & ESM4::Rec_VisDistant) != 0 &&
-                                    refs->at(k).baseObj == visitor.mRefs[v].getBase()->mRef.getBaseObj())
-                                {
-                                    const ESM::Position p2 = visitor.mRefs[v].getBase()->mRef.getPosition();
-                                    std::cout << "diff " << i << "," << j << " "
-                                        << ESM4::formIdToString(refs->at(k).baseObj) << " "
-                                        << ESM4::formIdToString(visitor.mRefs[v].getBase()->mRef.getFormId()) << " "
-                                        << p1.pos.x << "," << p1.pos.y << "," << p1.pos.z << " "
-                                        << p2.pos[0] << "," << p2.pos[1] << "," << p2.pos[2] << " "
+                                    const ESM4::Static *base = statStore.search(refs->at(k).baseObj);
+                                    std::cout << "found but scale differ "
+                                        //<< ESM4::formIdToString(refs->at(k).baseObj) << " "
+                                        << base->mEditorId << " "
                                         << int(refs->at(k).scale) / 100.f << " "
                                         << visitor.mRefs[v].getBase()->mRef.getScale()
                                         << std::endl;
                                 }
+
+                                found = true;
+                                functor(visitor.mRefs[v]); // FIXME: testing (see above)
+
+                                continue;
                             }
                         }
                     }
-                    // clear after testing
-                    dist->forEachStatic<ListFunctor>(visitor, CellStore::VIS_Clear, i, j, 0, 0);
-#endif
+//#if 0
+                    if (!found)
+                    {
+                        std::cout << "none found " << i << "," << j << " "
+                            << ESM4::formIdToString(refs->at(k).baseObj)
+                            << " " << p1.pos.x << "," << p1.pos.y << "," << p1.pos.z
+                            << std::endl;
+
+                        for (std::size_t v = 0; v < visitor.mRefs.size(); ++v)
+                        {
+                            if ((visitor.mRefs[v].getBase()->mRef.getFlags() & ESM4::Rec_VisDistant) != 0 &&
+                                refs->at(k).baseObj == visitor.mRefs[v].getBase()->mRef.getBaseObj())
+                            {
+                                const ESM::Position p2 = visitor.mRefs[v].getBase()->mRef.getPosition();
+                                std::cout << "diff " << i << "," << j << " "
+                                    << ESM4::formIdToString(refs->at(k).baseObj) << " "
+                                    << ESM4::formIdToString(visitor.mRefs[v].getBase()->mRef.getFormId()) << " "
+                                    << p1.pos.x << "," << p1.pos.y << "," << p1.pos.z << " "
+                                    << p2.pos[0] << "," << p2.pos[1] << "," << p2.pos[2] << " "
+                                    << int(refs->at(k).scale) / 100.f << " "
+                                    << visitor.mRefs[v].getBase()->mRef.getScale()
+                                    << std::endl;
+                            }
+                        }
+                    }
                 }
-                if (insertCount)
-                    std::cout << "vis dist inserted " << insertCount << std::endl; // FIXME: testing
-            //}
+//#endif
+                // clear after testing
+                dist->forEachStatic<ListFunctor>(visitor, CellStore::VIS_Clear, i, j, 0, 0);
+            }
+
+            if (insertCount)
+                std::cout << "vis dist inserted " << insertCount << std::endl; // FIXME: testing
         } //if (/*worldChanged && */!mActiveCells.empty())
 
         MWBase::Environment::get().getWindowManager()->changeCell(cell);
