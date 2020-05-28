@@ -1,6 +1,6 @@
 #include "foreignworld.hpp"
 
-#include <iostream> // FIXME: testing only
+//#include <iostream> // FIXME: testing only
 
 #include <OgreResourceGroupManager.h>
 
@@ -15,18 +15,12 @@
 #include "esmstore.hpp"
 #include "cellstore.hpp"
 
-MWWorld::ForeignWorld::ForeignWorld() : mDummyCellId(0), mVisibleDistCell(nullptr), mVisibleDistCellStore(nullptr)
-                                      , mDummyCell(nullptr), mDummyCellStore(nullptr)
+MWWorld::ForeignWorld::ForeignWorld() : mDummyCell(nullptr)
 {
 }
 
 MWWorld::ForeignWorld::~ForeignWorld()
 {
-    if (mVisibleDistCellStore)
-        delete mVisibleDistCellStore;
-
-    if (mVisibleDistCell)
-        delete mVisibleDistCell;
 }
 
 void MWWorld::ForeignWorld::load(ESM::ESMReader& esm, bool isDeleted)
@@ -63,6 +57,7 @@ const std::map<std::pair<std::int16_t, std::int16_t>, ESM4::FormId>& MWWorld::Fo
     return mCellGridMap;
 }
 
+// not used
 ESM4::FormId MWWorld::ForeignWorld::getCellId(std::int16_t x, std::int16_t y) const
 {
     std::map<std::pair<std::int16_t, std::int16_t>, ESM4::FormId>::const_iterator it
@@ -87,28 +82,6 @@ bool MWWorld::ForeignWorld::setDummyCell(ForeignCell *cell)
     mDummyCell = cell;
 
     return true;
-}
-
-// FIXME: deprecated
-bool MWWorld::ForeignWorld::setDummyCellId(ESM4::FormId formId)
-{
-    if (mDummyCellId)
-    {
-        // should be the same, check just in case
-        if (formId != mDummyCellId)
-            throw std::runtime_error("Dummy cell different formid found");
-
-        return false;
-    }
-
-    mDummyCellId = formId;
-
-    return true;
-}
-
-MWWorld::ForeignCell *MWWorld::ForeignWorld::getDummyCell()
-{
-    return mDummyCell;
 }
 
 MWWorld::ForeignCell *MWWorld::ForeignWorld::getDummyCell() const
