@@ -3315,31 +3315,36 @@ Each of these also have LOD meshes but their naming convensions are a little dif
 
 # [11/04/2020] Terrain cont.
 
-Some notes from way back in January 2016:
+Some notes from way back in January 2016 (corrected):
 
         Texture       mTextures[4]; // 0 = bottom left. 1 = bottom right. 2 = upper-left. 3 = upper-right
 
-         33 +----------------+-----------------+
-         32 |                |                 |
-         31 |                |                 |
-            |                |                 |
-          . |                |                 |
-          . |       2        |        3        |
-          . |                |                 |
-          . |                |                 |
-            |                |                 |
-            +----------------+-----------------+
-         16 |                |                 |
-         15 |                |                 |
-          . |                |                 |
-          . |                |                 |
-          . |       0        |        1        |
-          . |                |                 |
-          2 |                |                 |
-          1 |                |                 |
-          0 +----------------+-----------------+
-                          111                333
-            0123  ......  456      .....     123
+            ///////////////// ////////////////   <-- discard texture row?
+           +-----------------+----------------+/
+        32 |\                |                |/
+        31 |\                |                |/
+           |\     17x16      |      16x16     |/
+         . |\                |                |/
+         . |\       2        |        3       |/
+         . |\                |                |/
+         . |\                |                |/
+        17 |\                |                |/
+           +-----------------+----------------+
+        16 |\                |                |/
+        15 |\                |                |/
+         . |\     17x17      |      16x17     |/
+         . |\                |                |/
+         . |\       0        |        1       |/
+         . |\                |                |/
+         2 |\                |                |/
+         1 |\                |                |/
+         0 |\\\\\\\\\\\\\\\\\|\\\\\\\\\\\\\\\\|/ <-- this row of vertices is a copy of cell below
+           +-----------------+----------------+
+                          111 1             33 ^
+            0123  ......  456 7    .....    12 |
+            ^                                 discard texture column?
+            |
+           this column of vertices is a copy of the cell to the left
 
 
 Existing implementation:
@@ -4343,11 +4348,11 @@ There are actors in dummy cells.  These actors can move to another cell - that m
 
 OpenMW code relies on `Ptr` and `CellStore` relationship.  It is looking like too much effort to break that.  One example is unloading cells in `MWWorld::Scene` - `CellStoreCollection::iterator` is used to call functor `ListAndResetHandles`.  Either `DummyStore` has to implement something similar or it has to fit into `CellStoreCollection`.
 
-    * Objects::mCellSceneNodes is used for choosing which `Ogre::SceneNode` to use for inserting a new child scenenode and when updating Ptr movements between CellStore (called by `World::moveObject()`).
-    * if(world->isUnderwater(ptr.getCell(), pos) || world->isWalkingOnWater(ptr)) /* get correct sounds, update drowning */
-    * MWWorld::Ptr placed = MWBase::Environment::get().getWorld()->safePlaceObject(ref.getPtr(), ptr.getCell() , ptr.getCellRef().getPosition());
-    * const std::string& playerCell = MWBase::Environment::get().getWorld()->getCellName(player.getCell());
-    * if (!mPtr.getCell()->isExterior()) /* gui travel window, getting region when waiting, update actor head tracking (apparently done different when exterior), updating actors for sun damage, various AI packages */ pathfinding, etc, etc
+  * Objects::mCellSceneNodes is used for choosing which `Ogre::SceneNode` to use for inserting a new child scenenode and when updating Ptr movements between CellStore (called by `World::moveObject()`).
+  * if(world->isUnderwater(ptr.getCell(), pos) || world->isWalkingOnWater(ptr)) /* get correct sounds, update drowning */
+  * MWWorld::Ptr placed = MWBase::Environment::get().getWorld()->safePlaceObject(ref.getPtr(), ptr.getCell() , ptr.getCellRef().getPosition());
+  * const std::string& playerCell = MWBase::Environment::get().getWorld()->getCellName(player.getCell());
+  * if (!mPtr.getCell()->isExterior()) /* gui travel window, getting region when waiting, update actor head tracking (apparently done different when exterior), updating actors for sun damage, various AI packages */ pathfinding, etc, etc
 
 ## A new base class or inherit from `CellStore`?
 
@@ -4513,7 +4518,7 @@ The landscape LOD low-poly meshes seem to be organised in 4x4, 8x8, 16x16 and 32
 
 Rather than keep separate CellStores for visibly distant objects, maybe keep all the objects in one CellStore but keep separate indices for temporary, persistent and visibly distant child groups.
 
-# [25/05/2020 - 26/05/2020] Distant Statics again
+# [25/05/2020 - 27/05/2020] Distant Statics again
 
 Spent the last few days getting side tracked on dummy cell code refactoring (and being stumpted by hidden bugs).
 
@@ -4572,6 +4577,96 @@ Worked around by stop setting the skeleton name for skinned meshes (see `NiBtOgr
 **FIXME:** loading terrain and landscape LOD near the "32" cells boundary appear broken.  Test by going into Cheydinhal starting from COC "Tamriel" 27 22
 
 **FIXME:** door mRefID="AnutwyllExRef", mFormId = 0x00017571, mBaseObj = 0x0002eed2 seems to have an empty AABB Seems to be related to the experimental change in `CellRefList::search()`. Reverted the change for now, needs more testing and debugging.
+
+# [28/05/2020 - 2/06/2020] Terrain texture
+
+Terrain is one of the first things on TES4 to be implemented, in OpenCS, way back in 2015.  I cannot remember why the TES4 terrain related classes were structured in such a convoluted way (possibly to support both OpenCS and OpenMW?).  To get an idea:
+
+          Terrain::Storage -------------------o Terrain::World
+                 ^                                 ^     ^
+                 |                                 |     |
+        ESMTerrain::Storage                       /       \
+                 ^                               /         \
+                 |                              /           \
+                 |                Terrain::TerrainGrid  Terrain::DefaultWorld
+        MWRender::TerrainStorage           o                     o
+                                           |                     |
+                                  Terrain::GridElement  Terrain::QuadTreeNode
+                                           o                     o
+                                           |                     |
+                                     Terrain::Chunk        Terrain::Chunk
+
+
+                ESM4::Land                     Terrain::Storage              Terrain::TerrainGrid
+                    ^                                 ^                               ^
+                    |                                 |                               |
+              ESM4Terrain::Land              ESM4Terrain::Storage         ESM4::Terrain::TerrainGrid
+                  ^    ^                           ^     ^                (maybe inherit directly
+                  |    |                           |     |                 from Terrain::World?)
+                 /      \                         /       \
+                /        \                       /         \
+               /          \                     /           \
+        CSMForeign::    MWWorld::       CSVForeign::       Foreign::
+        Land            ForeignLand     TerrainStorage     TerrainStorage
+
+
+## Texture Quadrants
+
+How to implement this?  Either create a `SceneNode` for each quadrant or we need to create a composite texture for each layer, including the base.
+
+The initial result of trying a composite texture is not so good - it looks like each of the base textures need to be loaded and then each pixel copied across.  Can't figure out how to use `blit()` since each of the `Ogre::HardwarePixelBuffer` for the texture has box dimention of (0,0,1,1)?
+
+Also, once the pixels are copied across the texture details are lost (kinda like how the FaceGen texture details being lost).  Not sure why, but it may be due to the texture format being used?
+
+May have to try creating 4 separate quadrants.
+
+## Lack of Base Texture
+
+How to handle this?  Is there a default texture?  Looking at a few samples when there is no base texture there aren't any other texture for that quadrant, either.  e.g. Tamriel 5 15, LAND 0x000075DB which I think is near Talos Plaza
+
+For now, we'll try using `TerrainHDDirt01.dds` 0x000008C0 as the default base texture. (in the CS that's what the "-NONE-" selection looks like)
+
+## TerrainGid, DefaultWorld or TES4World?
+
+Or both?  Start with TerrainGrid, but some code from DefaultWorld and/or QuadTreeNode will be needed (e.g. for composite texture).
+
+Not sure at this stage whether another one, e.g. `Terrain::TES4World` will need to be created.  For now will try to fit in with existing implementation.
+
+That means, for TerrainGrid, we need to modify ESM4Terrain::Storage to supply blendmaps and layerList, but with composite textures.  This may turn out to be overly complicated.  Will still need to check for unique textures in case they are used in different layers in the same cell.
+
+## Indexing differences
+
+Ogre::PixeBox starts at **top** left corner while the VTXT sub-record starts at **bottom** left corner.  Not so sure about the textures.
+
+## Unique textures
+
+Due to TES4 applying textures per quadrant, they may need to be combined into one.  Not sure of the performance impact of doing so - but typically there's only 9 or so cells loaded at one time so hopefully any impact won't be too noticeable.
+
+Alternatively, we can try to keep one texture per layer (but scaled and indexed according to the quad position) - in pathological case that could end up being 9 x 4 = 36 layers if not combining the additional layer textures.
+
+Some quick testing suggests that many cells have up to 13 unique textures (on top of the base textures).  It also shows that the unique textures are not always at the same layer (e.g. see LAND 0x0000757F, texture 0x0x0004f9e3 are sometimes on layer 0 and other times on layer 1).
+
+So the choice is between:
+
+  1. composite base and up to 13? layers, or
+  2. composite base and up to 9 composite layers
+
+The first implementation to try is option 1.
+
+## Texture mapping
+
+The landscape textures for each quadrant are 512x512 but the a quadrant's size is 2048x2048.  Are the textures meant to "stretch" to fit one per quadrant or repeat 4x4 times?  Looking at the CS - the broken Wayshrine in cell (12,1), there are roughly 3 repeating patterns for the diameter of the Wayshrine.  That implies the textures are not "stretched" but "wrapped".
+
+## BufferCache size
+
+This needs to change (i.e. smaller) for the quads.
+
+## Odd issues that needs fixing
+
+The `Ogre::AxisAlignedBox` calculation appear incorrect, causing strange culling problems (quad render disappearing when not directly looking at it).  For now work around the issue by making the AABB larger (the cell size).  The issue might be due to box orientation being different to the positions of the quads.
+
+Similar issue exists with the position of the `SceneNode` for the quads.
+
 
 
 [//]: # (/* spell spelllang=en_au syntax=cpp */)

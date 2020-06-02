@@ -5,14 +5,16 @@
 
 #include "land.hpp"
 #include <extern/esm4/ltex.hpp>
+#include <extern/esm4/formid.hpp>
 
-namespace ESM4
+namespace Terrain
 {
-    typedef std::uint32_t FormId;
+    class QuadTreeNode;
 }
 
 namespace ESM4Terrain
 {
+    // FIXME: not using the intended base class interface... why bother inherit from it?
 
     /// @brief Feeds data from ESM terrain records (ESM::Land, ESM::LandTexture)
     ///        into the terrain component, converting it on the fly as needed.
@@ -21,10 +23,11 @@ namespace ESM4Terrain
     private:
 
         // Not implemented in this class, because we need different Store implementations for game and editor
-        virtual const Land* getLand (int cellX, int cellY)= 0;
-        virtual const ESM4::LandTexture* getLandTexture(ESM4::FormId formId, short plugin) = 0;
+        virtual const Land* getLand (int cellX, int cellY) = 0;
+        virtual const ESM4::LandTexture* getLandTexture(ESM4::FormId formId) = 0;
 
     public:
+        //~Storage() { if (mRootNode) delete mRootNode; }
 
         /// Data is loaded first, if necessary. Will return a 0-pointer if there is no data for
         /// any of the data types specified via \a flags. Will also return a 0-pointer if there
@@ -45,6 +48,8 @@ namespace ESM4Terrain
         /// @return true if there was data available for this terrain chunk
         virtual bool getMinMaxHeights (float size, const Ogre::Vector2& center, float& min, float& max);
 
+        bool getMinMaxQuadHeights(const Ogre::Vector2 &center, float &min, float &max, int quad);
+
         /// Fill vertex buffers for a terrain chunk.
         /// @note May be called from background threads. Make sure to only call thread-safe functions from here!
         /// @note returned colors need to be in render-system specific format! Use RenderSystem::convertColourValue.
@@ -61,6 +66,12 @@ namespace ESM4Terrain
                                 std::vector<float>& normals,
                                 std::vector<Ogre::uint8>& colours);
 
+        void fillQuadVertexBuffers (const Ogre::Vector2& center, Terrain::Alignment align,
+                                std::vector<float>& positions,
+                                std::vector<float>& normals,
+                                std::vector<Ogre::uint8>& colours,
+                                int quad);
+
         /// Create textures holding layer blend values for a terrain chunk.
         /// @note The terrain chunk shouldn't be larger than one cell since otherwise we might
         ///       have to do a ridiculous amount of different layers. For larger chunks, composite maps should be used.
@@ -75,6 +86,10 @@ namespace ESM4Terrain
         virtual void getBlendmaps (float chunkSize, const Ogre::Vector2& chunkCenter, bool pack,
                            std::vector<Ogre::PixelBox>& blendmaps,
                            std::vector<Terrain::LayerInfo>& layerList);
+
+        void getQuadBlendmaps (const Ogre::Vector2& chunkCenter, bool pack,
+                           std::vector<Ogre::PixelBox>& blendmaps,
+                           std::vector<Terrain::LayerInfo>& layerList, int quad);
 
         /// Retrieve pixel data for textures holding layer blend values for terrain chunks and layer texture information.
         /// This variant is provided to eliminate the overhead of virtual function calls when retrieving a large number of blendmaps at once.
@@ -121,6 +136,8 @@ namespace ESM4Terrain
         void getBlendmapsImpl (float chunkSize, const Ogre::Vector2& chunkCenter, bool pack,
                            std::vector<Ogre::PixelBox>& blendmaps,
                            std::vector<Terrain::LayerInfo>& layerList);
+
+        //Terrain::QuadTreeNode *mRootNode;
     };
 
 }

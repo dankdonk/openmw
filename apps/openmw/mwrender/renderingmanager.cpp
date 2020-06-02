@@ -1097,7 +1097,7 @@ void RenderingManager::enableTerrain(bool enable, ESM4::FormId worldId)
             else if (!worldId)
                 mTerrain = new Terrain::TerrainGrid(mRendering.getScene(), new MWRender::TerrainStorage(false), RV_Terrain,
                                                 Settings::Manager::getBool("shader", "Terrain"), Terrain::Align_XY);
-            else // foreignLand
+            else // foreignLand (never gets here if we start from Morrowind)
                 mTerrain = new Terrain::DefaultWorld(mRendering.getScene(), new Foreign::TerrainStorage(true), RV_Terrain,
                                                 Settings::Manager::getBool("shader", "Terrain"), Terrain::Align_XY, 1, 64);
             mTerrain->applyMaterials(Settings::Manager::getBool("enabled", "Shadows"),
@@ -1106,7 +1106,7 @@ void RenderingManager::enableTerrain(bool enable, ESM4::FormId worldId)
         }
         else if ((worldId != 0 && !dynamic_cast<ESM4Terrain::TerrainGrid*>(mTerrain)) // must be coming from MW
                  ||
-                 (worldId != 0 && dynamic_cast<ESM4Terrain::TerrainGrid*>(mTerrain) && dynamic_cast<ESM4Terrain::TerrainGrid*>(mTerrain)->getWorld() != worldId)) // changed world
+                 (worldId != 0 && dynamic_cast<ESM4Terrain::TerrainGrid*>(mTerrain) && dynamic_cast<ESM4Terrain::TerrainGrid*>(mTerrain)->getWorldId() != worldId)) // changed world
         {
             delete mTerrain;
 

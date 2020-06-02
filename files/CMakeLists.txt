@@ -32,6 +32,8 @@ set(MATERIAL_FILES
     sun.shaderset
     terrain.shader
     terrain.shaderset
+    tes4terrain.shader
+    tes4terrain.shaderset
     underwater.h
     water.mat
     water.shader

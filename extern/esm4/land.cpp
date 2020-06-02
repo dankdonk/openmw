@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2015-2016, 2018 cc9cii
+  Copyright (C) 2015-2016, 2018, 2020 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -72,6 +72,8 @@ void ESM4::Land::load(ESM4::Reader& reader)
     TxtLayer layer;
     std::int8_t currentAddQuad = -1; // for VTXT following ATXT
 
+    //std::map<FormId, int> uniqueTextures; // FIXME: for temp testing only
+
     while (reader.getSubRecordHeader())
     {
         const ESM4::SubRecordHeader& subHdr = reader.subRecordHeader();
@@ -114,7 +116,7 @@ void ESM4::Land::load(ESM4::Reader& reader)
                     assert(base.quadrant < 4 && base.quadrant >= 0 && "base texture quadrant index error");
 
                     reader.adjustFormId(base.formId);
-                    mTextures[base.quadrant].base = base;  // FIXME: any way to avoid double-copying?
+                    mTextures[base.quadrant].base = std::move(base);
 #if 0
                     std::cout << "Base Texture formid: 0x"
                         << std::hex << mTextures[base.quadrant].base.formId
@@ -128,21 +130,31 @@ void ESM4::Land::load(ESM4::Reader& reader)
                 if (currentAddQuad != -1)
                 {
                     // FIXME: sometimes there are no VTXT following an ATXT?  Just add a dummy one for now
-                    //std::cout << "ESM4::Land VTXT empty layer " << (int)layer.additional.layer << std::endl;
+                    std::cout << "ESM4::Land VTXT empty layer " << (int)layer.texture.layerIndex << std::endl;
                     mTextures[currentAddQuad].layers.push_back(layer);
                 }
-                reader.get(layer.additional);
-                reader.adjustFormId(layer.additional.formId);
-                assert(layer.additional.quadrant < 4 && layer.additional.quadrant >= 0
+                reader.get(layer.texture);
+                reader.adjustFormId(layer.texture.formId);
+                assert(layer.texture.quadrant < 4 && layer.texture.quadrant >= 0
                        && "additional texture quadrant index error");
 #if 0
-                std::cout << "Additional Texture formId: 0x"
-                    << std::hex << layer.additional.formId
-                    << ", quad " << std::dec << (int)layer.additional.quadrant << std::endl;
-                std::cout << "Additional Texture layer: "
-                    << std::dec << (int)layer.additional.layer << std::endl;
+                FormId txt = layer.texture.formId;
+                std::map<FormId, int>::iterator lb = uniqueTextures.lower_bound(txt);
+                if (lb != uniqueTextures.end() && !(uniqueTextures.key_comp()(txt, lb->first)))
+                {
+                    lb->second += 1;
+                }
+                else
+                    uniqueTextures.insert(lb, std::make_pair(txt, 1));
 #endif
-                currentAddQuad = layer.additional.quadrant;
+#if 0
+                std::cout << "Additional Texture formId: 0x"
+                    << std::hex << layer.texture.formId
+                    << ", quad " << std::dec << (int)layer.texture.quadrant << std::endl;
+                std::cout << "Additional Texture layer: "
+                    << std::dec << (int)layer.texture.layerIndex << std::endl;
+#endif
+                currentAddQuad = layer.texture.quadrant;
                 break;
             }
             case ESM4::SUB_VTXT:
@@ -168,7 +180,7 @@ void ESM4::Land::load(ESM4::Reader& reader)
 
                 // Assumed that the layers are added in the correct sequence
                 // FIXME: Knights.esp doesn't seem to observe this - investigate more
-                //assert(layer.additional.layer == mTextures[currentAddQuad].layers.size()-1
+                //assert(layer.texture.layerIndex == mTextures[currentAddQuad].layers.size()-1
                         //&& "additional texture layer index error");
 
                 currentAddQuad = -1;
@@ -204,13 +216,36 @@ void ESM4::Land::load(ESM4::Reader& reader)
     {
         if (mTextures[i].base.formId == 0)
         {
-            //std::cout << "ESM::LAND " << ESM4::formIdToString(mFormId) << " missing base, quad " << i << std::endl;
+            //std::cout << "ESM4::LAND " << ESM4::formIdToString(mFormId) << " missing base, quad " << i << std::endl;
+            //std::cout << "layers " << mTextures[i].layers.size() << std::endl;
+            // NOTE: can't set the default here since FO3/FONV may have different defaults
+            //mTextures[i].base.formId = 0x000008C0; // TerrainHDDirt01.dds
             missing = true;
         }
+        //else
+        //{
+        //    std::cout << "ESM4::LAND " << ESM4::formIdToString(mFormId) << " base, quad " << i << std::endl;
+        //    std::cout << "layers " << mTextures[i].layers.size() << std::endl;
+        //}
     }
     // at least one of the quadrants do not have a base texture, return without setting the flag
     if (!missing)
         mDataTypes |= LAND_VTEX;
+#if 0
+    if (mFormId == 0x0000757F) // this one has 13 unique textures (on top of base)
+        std::cout << "stop" << std::endl;
+
+    int count = 0;
+    std::map<FormId, int>::const_iterator it = uniqueTextures.begin();
+    for (; it != uniqueTextures.end(); ++it)
+    {
+        if (it->second > count)
+            count = it->second;
+    }
+
+    std::cout << "ESM4::LAND " << ESM4::formIdToString(mFormId)
+              << " unique textures " << uniqueTextures.size() << " max " << count << std::endl;
+#endif
 }
 
 //void ESM4::Land::save(ESM4::Writer& writer) const

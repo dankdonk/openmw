@@ -20,12 +20,12 @@ void CSMForeign::CellChar::load(ESM4::Reader& reader)
     mId = ESM4::formIdToString(mFormId);
     mRefID = ESM4::formIdToString(mBaseObj);
 
-    mPos.pos[0] = mPosition.pos.x;
-    mPos.pos[1] = mPosition.pos.y;
-    mPos.pos[2] = mPosition.pos.z;
-    mPos.rot[0] = mPosition.rot.x;
-    mPos.rot[1] = mPosition.rot.y;
-    mPos.rot[2] = mPosition.rot.z;
+    mPos.pos[0] = mPlacement.pos.x;
+    mPos.pos[1] = mPlacement.pos.y;
+    mPos.pos[2] = mPlacement.pos.z;
+    mPos.rot[0] = mPlacement.rot.x;
+    mPos.rot[1] = mPlacement.rot.y;
+    mPos.rot[2] = mPlacement.rot.z;
 }
 
 void CSMForeign::CellChar::blank()

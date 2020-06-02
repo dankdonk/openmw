@@ -18,6 +18,8 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
+ *
+ * Modified by cc9cii 2020
  */
 #include "terraingrid.hpp"
 
@@ -27,22 +29,30 @@
 #include <OgreTextureManager.h>
 
 #include <components/terrain/chunk.hpp>
-//#include "storage.hpp"
+
+#include "storage.hpp"
 
 namespace ESM4Terrain
 {
-
 TerrainGrid::TerrainGrid(Ogre::SceneManager *sceneMgr,
     Terrain::Storage *storage, int visibilityFlags, bool shaders, Terrain::Alignment align, ESM4::FormId world)
     : Terrain::TerrainGrid(sceneMgr, storage, visibilityFlags, shaders, align), mWorld(world)
 {
+    mRootNode = mSceneMgr->getRootSceneNode()->createChildSceneNode(); // FIXME: use the parent's one instead?
 }
 
 TerrainGrid::~TerrainGrid()
 {
+    while (!mGrid.empty())
+    {
+        unloadCell(mGrid.begin()->first.first, mGrid.begin()->first.second);
+    }
+
+    mSceneMgr->destroySceneNode(mRootNode);
 }
 
-#if 0
+// called by RenderingManager::enableTerrain(bool enable, ESM4::FormId worldId)
+// and RenderingManager::frameStarted(float dt, bool paused)
 void TerrainGrid::update(const Ogre::Vector3 &cameraPos)
 {
 }
@@ -79,7 +89,7 @@ void TerrainGrid::update(const Ogre::Vector3 &cameraPos)
 // If 1 chunk, not sure how to load the textures, and whether any future processing will affect it
 void TerrainGrid::loadCell(int x, int y)
 {
-    Tes4Grid::iterator it = mGrid.find(std::make_pair(x, y);
+    Tes4Grid::iterator it = mGrid.find(std::make_pair(x, y));
     if (it != mGrid.end())
         return; // already loaded
 
@@ -88,9 +98,9 @@ void TerrainGrid::loadCell(int x, int y)
 
     // FIXME: how to get TES4 data without changing the interface?  mStorage is a pointer
     // to the base class, so may need to resort to down-casting
-    ESM4Terrain::Storage* storage = static_cast<ESM4Terrain::Storage*>(mStorage);
+    ESM4Terrain::Storage* storage = static_cast<ESM4Terrain::Storage*>(World::mStorage);
 
-    // there are 4 quadrants: 0 = bottom left. 1 = bottom right. 2 = upper-left. 3 = upper-right
+    // there are 4 quadrants: 0 = bottom left. 1 = bottom right. 2 = top left. 3 = top right
     for (int i = 0; i < 4; ++i)
     {
         // (y+1)*4096 +---------------+
@@ -106,19 +116,67 @@ void TerrainGrid::loadCell(int x, int y)
 
         // FIXME: ? why add 0.5f here?
         //
-        // But noticed that Storage::getminmaxHeights() and Storage::fillVertexBuffers()
+        // But noticed that Storage::getMinMaxHeights() and Storage::fillVertexBuffers()
         // subtract Vector2(size/2.f, size2/f) to get origin, where size is 1 when called from
         // TerrainGrid::loadCell()
         Ogre::Vector2 center(x+0.5f, y+0.5f);
         float minH, maxH;
-        if (!mStorage->getMinMaxQuadHeights(1, center, minH, maxH, i))
+        if (!storage->getMinMaxQuadHeights(center, minH, maxH, i)) // FIXME: use origin rather than center?
             return; // no terrain defined
 
-        // FIXME: below should be different for each quadrant
-        Ogre::Vector3 min (-0.5f*mStorage->getCellWorldSize(),
+        Ogre::Vector3 min, max;
+        // below should be different for each quadrant
+        switch (i)
+        {
+            case 0:
+            {
+                min = Ogre::Vector3(-0.5f*World::mStorage->getCellWorldSize(),
+                                    -0.5f*World::mStorage->getCellWorldSize(),
+                                    minH);
+                max = Ogre::Vector3(0,
+                                    0,
+                                    maxH);
+                break;
+            }
+            case 1:
+            {
+                min = Ogre::Vector3(0,
+                                    -0.5f*World::mStorage->getCellWorldSize(),
+                                    minH);
+                max = Ogre::Vector3(0.5f*World::mStorage->getCellWorldSize(),
+                                    0,
+                                    maxH);
+                break;
+            }
+            case 2:
+            {
+                min = Ogre::Vector3(-0.5f*World::mStorage->getCellWorldSize(),
+                                    0,
+                                    minH);
+                max = Ogre::Vector3(0,
+                                    0.5f*World::mStorage->getCellWorldSize(),
+                                    maxH);
+                break;
+            }
+            case 3:
+            {
+                min = Ogre::Vector3(0,
+                                    0,
+                                    minH);
+                max = Ogre::Vector3(0.5f*World::mStorage->getCellWorldSize(),
+                                    0.5f*World::mStorage->getCellWorldSize(),
+                                    maxH);
+                break;
+            }
+            default:
+                break;
+        }
+
+        // FIXME: workaround for strange culling
+        min = Ogre::Vector3(-0.5f*mStorage->getCellWorldSize(),
                            -0.5f*mStorage->getCellWorldSize(),
                            minH);
-        Ogre::Vector3 max (0.5f*mStorage->getCellWorldSize(),
+        max = Ogre::Vector3(0.5f*mStorage->getCellWorldSize(),
                            0.5f*mStorage->getCellWorldSize(),
                            maxH);
 
@@ -126,18 +184,50 @@ void TerrainGrid::loadCell(int x, int y)
 
         Terrain::GridElement element;
 
-        Ogre::Vector2 worldCenter = center*mStorage->getCellWorldSize();
-        // ---------
+        Ogre::Vector2 worldCenter = center*World::mStorage->getCellWorldSize();
 
+        // this needs to be per quadrant
+        switch (i)
+        {
+            case 0:
+            {
+                element.mSceneNode
+                    = mRootNode->createChildSceneNode(Ogre::Vector3(worldCenter.x-1024, worldCenter.y-1024, 0));
 
+                break;
+            }
+            case 2: // FIXME: why reverse?
+            {
+                element.mSceneNode
+                    = mRootNode->createChildSceneNode(Ogre::Vector3(worldCenter.x+1024, worldCenter.y-1024, 0));
 
+                break;
+            }
+            case 1: // FIXME: why reverse?
+            {
+                element.mSceneNode
+                    = mRootNode->createChildSceneNode(Ogre::Vector3(worldCenter.x-1024, worldCenter.y+1024, 0));
 
-        element.mSceneNode = mRootNode->createChildSceneNode(Ogre::Vector3(worldCenter.x, worldCenter.y, 0));
+                break;
+            }
+            case 3:
+            {
+                element.mSceneNode
+                    = mRootNode->createChildSceneNode(Ogre::Vector3(worldCenter.x+1024, worldCenter.y+1024, 0));
+
+                break;
+            }
+            default:
+                break;
+        }
+        //element.mSceneNode = mRootNode->createChildSceneNode(Ogre::Vector3(worldCenter.x, worldCenter.y, 0));
 
         std::vector<float> positions;
         std::vector<float> normals;
         std::vector<Ogre::uint8> colours;
-        mStorage->fillVertexBuffers(0, 1, center, mAlign, positions, normals, colours);
+        storage->fillQuadVertexBuffers(center, mAlign, positions, normals, colours, i);
+        //FIXME: for testing old behaviour
+        //storage->fillVertexBuffers(0, 1, center, mAlign, positions, normals, colours);
 
         element.mChunk = new Terrain::Chunk(mCache.getUVBuffer(), bounds, positions, normals, colours);
         element.mChunk->setIndexBuffer(mCache.getIndexBuffer(0));
@@ -146,7 +236,7 @@ void TerrainGrid::loadCell(int x, int y)
 
         std::vector<Ogre::PixelBox> blendmaps;
         std::vector<Terrain::LayerInfo> layerList;
-        mStorage->getBlendmaps(1, center, mShaders, blendmaps, layerList);
+        storage->getQuadBlendmaps(center, mShaders, blendmaps, layerList, i); // FIXME: center or cell?
 
         element.mMaterialGenerator.setLayerList(layerList);
 
@@ -170,32 +260,38 @@ void TerrainGrid::loadCell(int x, int y)
         updateMaterial(element);
 
         elements[i] = element;
+        // FIXME: for testing old behaviour
         //mGrid[std::make_pair(x,y)] = element;
     }
-    mGrid.insert(std::make_pair(std::make_pair(x,y), elements));
+    mGrid.insert(std::make_pair(std::make_pair(x,y), std::move(elements)));
 }
 
 void TerrainGrid::unloadCell(int x, int y)
 {
-    Grid::iterator it = mGrid.find(std::make_pair(x,y));
+    Tes4Grid::iterator it = mGrid.find(std::make_pair(x, y));
     if (it == mGrid.end())
         return;
 
-    GridElement& element = it->second;
-    delete element.mChunk;
-    element.mChunk = NULL;
+    std::vector<Terrain::GridElement>& quads = it->second;
 
-    const std::vector<Ogre::TexturePtr>& blendmaps = element.mMaterialGenerator.getBlendmapList();
-    for (std::vector<Ogre::TexturePtr>::const_iterator it = blendmaps.begin(); it != blendmaps.end(); ++it)
-        Ogre::TextureManager::getSingleton().remove((*it)->getName());
+    for (std::size_t i = 0; i < quads.size(); ++i)
+    {
+        Terrain::GridElement& element = quads[i];
+        delete element.mChunk;
+        element.mChunk = NULL;
 
-    mSceneMgr->destroySceneNode(element.mSceneNode);
-    element.mSceneNode = NULL;
+        const std::vector<Ogre::TexturePtr>& blendmaps = element.mMaterialGenerator.getBlendmapList();
+        for (std::vector<Ogre::TexturePtr>::const_iterator it = blendmaps.begin(); it != blendmaps.end(); ++it)
+            Ogre::TextureManager::getSingleton().remove((*it)->getName());
+
+        mSceneMgr->destroySceneNode(element.mSceneNode);
+        element.mSceneNode = NULL;
+    }
 
     mGrid.erase(it);
 }
 
-void TerrainGrid::updateMaterial(GridElement &element)
+void TerrainGrid::updateMaterial(Terrain::GridElement &element)
 {
     element.mMaterialGenerator.enableShadows(getShadowsEnabled());
     element.mMaterialGenerator.enableSplitShadows(getSplitShadowsEnabled());
@@ -206,9 +302,13 @@ void TerrainGrid::applyMaterials(bool shadows, bool splitShadows)
 {
     mShadows = shadows;
     mSplitShadows = splitShadows;
-    for (Grid::iterator it = mGrid.begin(); it != mGrid.end(); ++it)
+    for (Tes4Grid::iterator it = mGrid.begin(); it != mGrid.end(); ++it)
     {
-        updateMaterial(it->second);
+        std::vector<Terrain::GridElement>& quads = it->second;
+        for (std::size_t i = 0; i < quads.size(); ++i)
+        {
+            updateMaterial(quads[i]);
+        }
     }
 }
 
@@ -228,20 +328,27 @@ Ogre::AxisAlignedBox TerrainGrid::getWorldBoundingBox (const Ogre::Vector2& cent
     int cellX = static_cast<int>(std::floor(center.x));
     int cellY = static_cast<int>(std::floor(center.y));
 
-    Grid::iterator it = mGrid.find(std::make_pair(cellX, cellY));
+    Tes4Grid::iterator it = mGrid.find(std::make_pair(cellX, cellY));
     if (it == mGrid.end())
         return Ogre::AxisAlignedBox::BOX_NULL;
 
-    Terrain::Chunk* chunk = it->second.mChunk;
-    Ogre::SceneNode* node = it->second.mSceneNode;
-    Ogre::AxisAlignedBox box = chunk->getBoundingBox();
-    box = Ogre::AxisAlignedBox(box.getMinimum() + node->getPosition(), box.getMaximum() + node->getPosition());
-    return box;
+    Ogre::AxisAlignedBox bigBox(Ogre::AxisAlignedBox::BOX_NULL);
+    std::vector<Terrain::GridElement>& quads = it->second;
+    for (std::size_t i = 0; i < quads.size(); ++i)
+    {
+        Terrain::Chunk* chunk = quads[i].mChunk;
+        Ogre::SceneNode* node = quads[i].mSceneNode;
+        Ogre::AxisAlignedBox box = chunk->getBoundingBox();
+
+        // need to combine the 4 boxes
+        bigBox.merge(Ogre::AxisAlignedBox(box.getMinimum() + node->getPosition(),
+                                          box.getMaximum() + node->getPosition()));
+        return bigBox;
+    }
 }
 
 void TerrainGrid::syncLoad()
 {
 
 }
-#endif
-}
+} // namesapce ESM4Terrain

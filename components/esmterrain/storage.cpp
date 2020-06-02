@@ -516,6 +516,7 @@ namespace ESMTerrain
         Terrain::LayerInfo info;
         info.mParallax = false;
         info.mSpecular = false;
+        info.mIsTes4 = false;
         info.mDiffuseMap = texture;
         std::string texture_ = texture;
         boost::replace_last(texture_, ".", "_nh.");

@@ -18,6 +18,8 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
+ *
+ * Modified to work with TES4 by cc9cii 2020
  */
 #include "material.hpp"
 
@@ -59,6 +61,7 @@ namespace Terrain
 
     MaterialGenerator::MaterialGenerator()
         : mShaders(true)
+        //: mShaders(false) // FIXME: temp testing
         , mShadows(false)
         , mSplitShadows(false)
         , mNormalMapping(true)
@@ -109,14 +112,6 @@ namespace Terrain
             }
             else
             {
-                // struct Terrain::LayerInfo
-                // {
-                //     std::string mDiffuseMap;
-                //     std::string mNormalMap;
-                //     bool mParallax; // Height info in normal map alpha channel?
-                //     bool mSpecular; // Specular info in diffuse map alpha channel?
-                // };
-                // std::vector<Terrain::LayerInfo> mLayerList;
                 assert(mLayerList.size() == mBlendmapList.size()+1);
                 std::vector<Ogre::TexturePtr>::iterator blend = mBlendmapList.begin();
                 for (std::vector<LayerInfo>::iterator layer = mLayerList.begin(); layer != mLayerList.end(); ++layer)
@@ -131,7 +126,7 @@ namespace Terrain
 
                     Ogre::TextureUnitState* tus;
 
-                    if (!first)
+                    if (!first && blend != mBlendmapList.end())
                     {
                         pass->setSceneBlending(Ogre::SBT_TRANSPARENT_ALPHA);
                         pass->setDepthFunction(Ogre::CMPF_EQUAL);
@@ -146,7 +141,12 @@ namespace Terrain
                         tus->setIsAlpha(true);
                         tus->setTextureAddressingMode(Ogre::TextureUnitState::TAM_CLAMP);
 
-                        float scale = (16/(16.f+1.f));
+                        // TES4: why the scales? and why extra 1.f in the divisor?
+                        float scale;
+                        if (layer->mIsTes4)
+                            scale = (6/(7.f));
+                        else
+                            scale = (16/(16.f+1.f));
                         tus->setTextureScale(1.f/scale,1.f/scale);
                     }
 
@@ -157,9 +157,13 @@ namespace Terrain
                                                   Ogre::LBS_TEXTURE,
                                                   Ogre::LBS_CURRENT);
 
-                    tus->setTextureScale(1/16.f,1/16.f);
+                    if (layer->mIsTes4)
+                        tus->setTextureScale(float(1/ESM4::Land::QUAD_TEXTURE_PER_SIDE),
+                                             float(1/ESM4::Land::QUAD_TEXTURE_PER_SIDE));
+                    else
+                        tus->setTextureScale(1/16.f,1/16.f);
 
-                    if (!first)
+                    if (!first && blend != mBlendmapList.end())
                         ++blend;
                 }
 
@@ -266,8 +270,16 @@ namespace Terrain
 
 
                     sh::MaterialInstancePass* p = material->createPass ();
-                    p->setProperty ("vertex_program", sh::makeProperty<sh::StringValue>(new sh::StringValue("terrain_vertex")));
-                    p->setProperty ("fragment_program", sh::makeProperty<sh::StringValue>(new sh::StringValue("terrain_fragment")));
+                    if (layerOffset == 0 && mLayerList[0].mIsTes4)
+                    {
+                        p->setProperty ("vertex_program", sh::makeProperty<sh::StringValue>(new sh::StringValue("tes4_terrain_vertex")));
+                        p->setProperty ("fragment_program", sh::makeProperty<sh::StringValue>(new sh::StringValue("tes4_terrain_fragment")));
+                    }
+                    else
+                    {
+                        p->setProperty ("vertex_program", sh::makeProperty<sh::StringValue>(new sh::StringValue("terrain_vertex")));
+                        p->setProperty ("fragment_program", sh::makeProperty<sh::StringValue>(new sh::StringValue("terrain_fragment")));
+                    }
                     if (layerOffset != 0)
                     {
                         p->setProperty ("scene_blend", sh::makeProperty(new sh::StringValue("alpha_blend")));

@@ -18,6 +18,8 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
+ *
+ * Based on Terrain::TerrainGrid by cc9cii 2016, 2020
  */
 #ifndef COMPONENTS_ESM4TERRAIN_TERRAINGRID_H
 #define COMPONENTS_ESM4TERRAIN_TERRAINGRID_H
@@ -28,20 +30,17 @@
 #include <components/terrain/terraingrid.hpp>
 //#include <components/terrain/material.hpp>
 
+#include <extern/esm4/formid.hpp>
+
 namespace Terrain
 {
     class Chunk;
 }
 
-namespace ESM4
-{
-    typedef std::uint32_t FormId;
-}
-
 namespace ESM4Terrain
 {
     /// @brief Simple terrain implementation that loads cells in a grid, with no LOD
-    class TerrainGrid : public Terrain::TerrainGrid
+    class TerrainGrid : public Terrain::TerrainGrid // FIXME: inherit World instead?
     {
     public:
         /// @note takes ownership of \a storage
@@ -56,9 +55,8 @@ namespace ESM4Terrain
                 ESM4::FormId world);
         ~TerrainGrid();
 
-        ESM4::FormId getWorld() const { return mWorld; }
+        inline ESM4::FormId getWorldId() const { return mWorld; }
 
-#if 0
         /// Update chunk LODs according to this camera position
         virtual void update (const Ogre::Vector3& cameraPos);
 
@@ -83,14 +81,16 @@ namespace ESM4Terrain
         /// Wait until all background loading is complete.
         virtual void syncLoad();
 
-#endif
     private:
-        //void updateMaterial (Terrain::GridElement& element);
+        void updateMaterial (Terrain::GridElement& element);
 
         ESM4::FormId mWorld;
 
         typedef std::map<std::pair<int, int>, std::vector<Terrain::GridElement> > Tes4Grid;
         Tes4Grid mGrid;
+
+        Ogre::SceneNode* mRootNode;
+        bool mVisible;
     };
 }
 

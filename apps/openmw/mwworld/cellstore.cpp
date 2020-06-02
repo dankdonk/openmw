@@ -1736,7 +1736,7 @@ namespace MWWorld
                 }
                 break;
             }
-            case ESM4::REC_LAND:
+            case ESM4::REC_LAND: // Cell temporary child group for exterior cells
             {
 
                 // Can't store land record in CellStore if we want to keep it around rather

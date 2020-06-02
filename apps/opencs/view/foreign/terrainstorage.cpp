@@ -24,7 +24,7 @@ namespace CSVForeign
         return &land;
     }
 
-    const ESM4::LandTexture* TerrainStorage::getLandTexture(ESM4::FormId formId, short plugin)
+    const ESM4::LandTexture* TerrainStorage::getLandTexture(ESM4::FormId formId)
     {
         int numRecords = mData.getLandTextures().getSize();
 

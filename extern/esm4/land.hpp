@@ -59,8 +59,9 @@ namespace ESM4
 
         static const int HEIGHT_SCALE = 8;
 
-        //number of textures per side of a land quadrant
-        static const int QUAD_TEXTURE_PER_SIDE = 16;
+        // number of textures per side of a land quadrant
+        // (for TES4 - based on vanilla observations)
+        static const int QUAD_TEXTURE_PER_SIDE = 6;
 
 #pragma pack(push,1)
         struct VHGT
@@ -74,7 +75,7 @@ namespace ESM4
         struct BTXT
         {
             FormId        formId;
-            std::uint8_t  quadrant; // 0 = bottom left. 1 = bottom right. 2 = upper-left. 3 = upper-right
+            std::uint8_t  quadrant; // 0 = bottom left, 1 = bottom right, 2 = top left, 3 = top right
             std::uint8_t  unknown1;
             std::uint16_t unknown2;
         };
@@ -82,9 +83,9 @@ namespace ESM4
         struct ATXT
         {
             FormId        formId;
-            std::uint8_t  quadrant; // 0 = bottom left. 1 = bottom right. 2 = upper-left. 3 = upper-right
+            std::uint8_t  quadrant; // 0 = bottom left, 1 = bottom right, 2 = top left, 3 = top right
             std::uint8_t  unknown;
-            std::uint16_t layer;    // texture layer, 0..7
+            std::uint16_t layerIndex; // texture layer, 0..7
         };
 
         struct VTXT
@@ -98,8 +99,8 @@ namespace ESM4
 
         struct TxtLayer
         {
-            ATXT          additional;
-            std::vector<VTXT> data; // FIXME: is this UV map?
+            ATXT          texture;
+            std::vector<VTXT> data; // alpha data
         };
 
         struct Texture
@@ -119,7 +120,7 @@ namespace ESM4
         signed char   mVertNorm[VERTS_PER_SIDE * VERTS_PER_SIDE * 3]; // from VNML subrecord
         signed char   mVertColr[VERTS_PER_SIDE * VERTS_PER_SIDE * 3]; // from VCLR subrecord
         VHGT          mHeightMap;
-        Texture       mTextures[4]; // 0 = bottom left. 1 = bottom right. 2 = upper-left. 3 = upper-right
+        Texture       mTextures[4]; // 0 = bottom left, 1 = bottom right, 2 = top left, 3 = top right
         std::vector<FormId> mIds;   // land texture (LTEX) formids
 
         Land();

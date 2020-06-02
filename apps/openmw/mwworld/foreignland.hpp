@@ -18,7 +18,7 @@ namespace ESM4
 
 namespace MWWorld
 {
-    struct ForeignLand : public ESM4Terrain::Land // NOTE: not derived from ESM4::Land
+    struct ForeignLand : public ESM4Terrain::Land // NOTE: not directly derived from ESM4::Land
     {
         ForeignLand();
         ~ForeignLand();

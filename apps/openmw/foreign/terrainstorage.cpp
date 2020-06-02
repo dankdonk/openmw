@@ -1,21 +1,26 @@
 #include "terrainstorage.hpp"
 
+#include "../mwbase/world.hpp"
 #include "../mwbase/environment.hpp"
 
-#include "../mwbase/world.hpp"
-#include "../mwworld/foreignland.hpp"
 #include "../mwworld/esmstore.hpp"
+#include "../mwworld/foreignland.hpp"
+
 
 #include "../mwworld/cellstore.hpp"
 
 namespace Foreign
 {
 
+    // called from RenderingManager::enableTerrain(bool enable, ESM4::FormId worldId)
     TerrainStorage::TerrainStorage(ESM4::FormId world)
         : mWorld(world)
     {
     }
 
+    // NOTE: CellStore *World::getWorldCell (ESM4::FormId worldId, int x, int y)
+    // loads as required (LAND formid comes from loaded CellStore) and we may need a
+    // neighbouring land info (whose terrain and objects may not be loaded)
     const ESM4Terrain::Land* TerrainStorage::getLand(int cellX, int cellY)
     {
         const MWWorld::ESMStore &esmStore = MWBase::Environment::get().getWorld()->getStore();
@@ -37,7 +42,8 @@ namespace Foreign
         if (!cell)
             return 0; // FIXME: maybe exception?
 #endif
-        if (!(cellX == 6 && cellY == -65) && !(cellX == 7 && cellY == -65)) // FIXME
+        // FIXME: can't remember why these particular cells are excluded
+        //if (!(cellX == 6 && cellY == -65) && !(cellX == 7 && cellY == -65))
         {
             MWWorld::CellStore *cell = MWBase::Environment::get().getWorld()->getWorldCell(mWorld, cellX, cellY);
 
@@ -48,23 +54,16 @@ namespace Foreign
             else
                 return 0;
         }
-        else
-            return 0;
+        //else
+            //return 0;
     }
 
-    const ESM4::LandTexture* TerrainStorage::getLandTexture(ESM4::FormId formId, short plugin)
+    // FIXME: not needed?
+    const ESM4::LandTexture* TerrainStorage::getLandTexture(ESM4::FormId formId)
     {
-        //int numRecords = mData.getLandTextures().getSize();
+        const MWWorld::ESMStore &esmStore = MWBase::Environment::get().getWorld()->getStore();
 
-        //for (int i = 0; i < numRecords; ++i)
-        //{
-#if 0 // FIXME
-            const CSMForeign::IdRecord<ESM4::LandTexture>* ltex = &mData.getForeignLandTextures().getRecord(i).get();
-            if (ltex->mFormId == formId/* && ltex->mPluginIndex == plugin*/)
-                return ltex;
-#endif
-        //}
-        return NULL;
+        return esmStore.getForeign<ESM4::LandTexture>().search(formId);
     }
 
     void TerrainStorage::getBounds(float &minX, float &maxX, float &minY, float &maxY)
@@ -73,7 +72,7 @@ namespace Foreign
 
         const MWWorld::ESMStore &esmStore = MWBase::Environment::get().getWorld()->getStore();
 
-        // find the world for the given editor id
+        // find the world for the given formid
         const MWWorld::ForeignWorld *world = esmStore.getForeign<MWWorld::ForeignWorld>().find(mWorld);
         if (!world)
             return; // FIXME: maybe exception?
@@ -95,13 +94,6 @@ namespace Foreign
         // since grid coords are at cell origin, we need to add 1 cell
         maxX += 1;
         maxY += 1;
-#if 0 // crash tamriel -8 0
-        // FIXME
-        minX = -10;
-        minY = -10;
-        maxX = 10;
-        maxY = 10;
-#endif
     }
 
 }
