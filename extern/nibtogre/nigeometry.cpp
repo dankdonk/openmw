@@ -110,7 +110,7 @@ NiBtOgre::NiGeometry::NiGeometry(uint32_t index, NiStream *stream, const NiModel
         }
     }
 
-    // special case for landscape LOD mesh
+    // special case for landscape LOD mesh (normally NiNode or BSFadeNode should have selfRef() == 0)
     if (NiObject::selfRef() == 0)
     {
         if (mNameIndex == -1)

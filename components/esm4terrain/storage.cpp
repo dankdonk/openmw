@@ -3,6 +3,7 @@
 #include <set>
 #include <iostream>
 #include <cassert>
+#include <stdexcept>
 
 #ifdef NDEBUG // FIXME: debuggigng only
 #undef NDEBUG
@@ -25,14 +26,10 @@
 
 #include <components/terrain/quadtreenode.hpp>
 #include <components/misc/resourcehelpers.hpp>
+//#include <components/misc/stringops.hpp>
 
 #include <extern/esm4/land.hpp>
 #include <extern/esm4/ltex.hpp>
-
-// FIXME: this causes trouble with OpenCS
-//#include "../../apps/openmw/mwbase/environment.hpp"
-//#include "../../apps/openmw/mwbase/world.hpp"
-//#include "../../apps/openmw/mwworld/esmstore.hpp"
 
 #include "../terrain/quadtreenode.hpp"
 
@@ -170,7 +167,7 @@ namespace ESM4Terrain
 
                 break;
             }
-            case 1: // bottom right
+            case 2: // bottom right // why the swap? (else strange culling)
             {
                 rowStart = 0;
                 colStart = int(ESM4::Land::VERTS_PER_SIDE / 2); // 16, repeat the last of the left quad
@@ -180,7 +177,7 @@ namespace ESM4Terrain
 
                 break;
             }
-            case 2: // top left
+            case 1: // top left // why the swap? (else strange culling)
             {
                 rowStart = int(ESM4::Land::VERTS_PER_SIDE / 2); // 16, repeat the last of bottom quad
                 colStart = 0;
@@ -205,13 +202,14 @@ namespace ESM4Terrain
         }
 
         // FIXME: pass this in as a parameter rather than calling it 4 times?
+        // FIXME: do this at the same time as filling the vertex buffers?
         if (const LandData *data = getLandData (cellX, cellY, ESM4::Land::LAND_VHGT))
         {
             min = std::numeric_limits<float>::max();
             max = -std::numeric_limits<float>::max();
-            for (int row = rowStart; row < rowEnd; ++row)
+            for (int col = colStart; col < colEnd; ++col)
             {
-                for (int col = colStart; col < colEnd; ++col)
+                for (int row = rowStart; row < rowEnd; ++row)
                 {
                     float h = data->mHeights[col*ESM4::Land::VERTS_PER_SIDE+row];
                     if (h > max)
@@ -385,7 +383,7 @@ namespace ESM4Terrain
 
                 break;
             }
-            case 1: // bottom right
+            case 2: // bottom right // FIXME: why reverse?
             {
                 rowStart = 0;
                 colStart = int(ESM4::Land::VERTS_PER_SIDE / 2); // 16, repeat the last of the left quad
@@ -395,7 +393,7 @@ namespace ESM4Terrain
 
                 break;
             }
-            case 2: // top left
+            case 1: // top left // FIXME: why reverse?
             {
                 rowStart = int(ESM4::Land::VERTS_PER_SIDE / 2); // 16, repeat the last of the bottom quad
                 colStart = 0;
@@ -418,11 +416,24 @@ namespace ESM4Terrain
             default:
                 return; // FIXME: throw?
         }
-        //rowStart += ((int)origin.x - startCellX) * ESM4::Land::VERTS_PER_SIDE;
-        //colStart += ((int)origin.y - startCellY) * ESM4::Land::VERTS_PER_SIDE;
-        //int rowEnd = rowStart + ESM4::Land::VERTS_PER_SIDE;
-        //int colEnd = colStart + ESM4::Land::VERTS_PER_SIDE;
 
+        // ESM4::Land::mLandData.mHeights start at the bottom left hand corner
+        //
+        //               row
+        //                |
+        //                v
+        // 1056 ..1088   32
+        // 1023 ..1055   31
+        //      ..
+        //   99 .. 131    3
+        //   66 ..  98    2
+        //   33 ..  65    1
+        //    0 ..  32    0
+        //
+        //    0 ..  32  <- col
+        //
+        // row and col represent cell space (i.e. mHeights, mVertNorm and mVertColr)
+        // vertX and vertY represent quad space
         vertY = 0;
         for (int col = colStart; col < colEnd; col += 1)
         {
@@ -437,12 +448,6 @@ namespace ESM4Terrain
                 // y
                 positions[static_cast<unsigned int>(vertX*numVerts * 3 + vertY * 3 + 1)]
                     = ((vertY / float(numVerts - 1) - 0.5f) * 2048);
-
-                assert(row >= 0 && row < ESM4::Land::VERTS_PER_SIDE);
-                assert(col >= 0 && col < ESM4::Land::VERTS_PER_SIDE);
-
-                assert (vertX < numVerts);
-                assert (vertY < numVerts);
 
                 float height = -1024; // FIXME: where did this number come from?
                 if (land && (land->mDataTypes & ESM4::Land::LAND_VHGT) != 0)
@@ -460,6 +465,8 @@ namespace ESM4Terrain
                 }
                 else
                     normal = Ogre::Vector3(0,0,1);
+
+                // FIXME: not sure if below normal fixes for Morrowind also applies to TES4
 
                 // Normals apparently don't connect seamlessly between cells
                 if (col == ESM4::Land::VERTS_PER_SIDE-1 || row == ESM4::Land::VERTS_PER_SIDE-1)
@@ -489,6 +496,8 @@ namespace ESM4Terrain
                     color.g = 1;
                     color.b = 1;
                 }
+
+                // FIXME: not sure if below colour fixes for Morrowind also applies to TES4
 
                 // Unlike normals, colors mostly connect seamlessly between cells, but not always...
                 if (col == ESM4::Land::VERTS_PER_SIDE-1 || row == ESM4::Land::VERTS_PER_SIDE-1)
@@ -655,32 +664,6 @@ namespace ESM4Terrain
     //        x, y = texture pos in cell?
     Storage::UniqueTextureId Storage::getVtexIndexAt(int cellX, int cellY, int x, int y)
     {
-#if 0 // TES3
-        // For the first/last row/column, we need to get the texture from the neighbour cell
-        // to get consistent blending at the borders
-        --x;
-        if (x < 0)
-        {
-            --cellX; // get neighbouring cell
-            x += ESM::Land::LAND_TEXTURE_SIZE;
-        }
-        if (y >= ESM::Land::LAND_TEXTURE_SIZE) // Y appears to be wrapped from the other side because why the hell not?
-        {
-            ++cellY; // get neighbouring cell
-            y -= ESM::Land::LAND_TEXTURE_SIZE;
-        }
-
-        assert(x < ESM::Land::LAND_TEXTURE_SIZE);
-        assert(y < ESM::Land::LAND_TEXTURE_SIZE);
-
-        if (const ESM::Land::LandData *data = getLandData (cellX, cellY, ESM::Land::DATA_VTEX))
-        {
-            int tex = data->mTextures[y * ESM::Land::LAND_TEXTURE_SIZE + x];
-            if (tex == 0)
-                return std::make_pair(0,0); // vtex 0 is always the base texture, regardless of plugin
-            return std::make_pair(tex, getLand (cellX, cellY)->mPlugin);
-        }
-#else // TES4
         if (const Land *data = getLand(cellX, cellY))
         {
             int tex = 0;// data->mTextures[y * ESM4::Land::LAND_TEXTURE_SIZE + x]; // FIXME
@@ -688,14 +671,13 @@ namespace ESM4Terrain
                 return std::make_pair(0,0); // no blending for base texture
             return std::make_pair(tex, 0);
         }
-#endif
         else
             return std::make_pair(0,0);
     }
 
     std::string Storage::getTextureName(UniqueTextureId id) // pair<texture id, plugin id>
     {
-        static const std::string defaultTexture = "textures\\_land_default.dds";
+        static const std::string defaultTexture = "textures\\landscape\\terrainhddirt01.dds"; // TES4 default
         if (id.first == 0)
             return defaultTexture; // Not sure if the default texture really is hardcoded?
 
@@ -732,25 +714,30 @@ namespace ESM4Terrain
         getBlendmapsImpl(chunkSize, chunkCenter, pack, blendmaps, layerList);
     }
 
+    // FIXME: rather than chunkCenter get the origin
     void Storage::getQuadBlendmaps(const Ogre::Vector2 &chunkCenter,
         bool pack, std::vector<Ogre::PixelBox> &blendmaps, std::vector<Terrain::LayerInfo> &layerList, int quad)
     {
-        // VTXT info indicates texture size is 17x17 - but the cell grid is 33x33?
-        // (cf. TES3 has 65x65 cell)
-        // do we discard one row and column?
+        //pack = false; // FIXME: temp testing
 
+        // VTXT info indicates texture size is 17x17 - but the cell grid is 33x33
+        // (cf. TES3 has 65x65 cell) do we discard one row and column or overlap?
+        //
+        // NOTE: each base texture does not completely "fill" a quadrant.  The observations in
+        // TES4 vanilla indicates that the texture repeats (or "wraps") 6 times each side
+        //
         //     ///////////////// ////////////////   <-- discard texture row?
         //    +-----------------+----------------+/
-        // 32 |\                |                |/
-        // 31 |\                |                |/
-        //    |\     17x16      |      16x16     |/
-        //  . |\                |                |/
-        //  . |\       2        |        3       |/
-        //  . |\                |                |/
-        //  . |\                |                |/
-        // 17 |\                |                |/
+        // 32 |\               \|                |/
+        // 31 |\               \|                |/
+        //    |\     17x16     \|      16x16     |/
+        //  . |\               \|                |/
+        //  . |\       2       \|        3       |/
+        //  . |\               \|                |/
+        //  . |\               \<---------------------- overlap column instead?
+        // 17 |\               \|                |/
         //    +-----------------+----------------+
-        // 16 |\               X|                |/ <-- X = chunkCenter (33/2 = 16.5)
+        // 16 |\                |\\\\\\\\\\\\\\\\|<---- overlap row instead?
         // 15 |\                |                |/
         //  . |\     17x17      |      16x17     |/
         //  . |\                |                |/
@@ -758,7 +745,7 @@ namespace ESM4Terrain
         //  . |\                |                |/
         //  2 |\                |                |/
         //  1 |\                |                |/
-        //  0 |\\\\\\\\\\\\\\\\\|\\\\\\\\\\\\\\\\|/ <-- this row of vertices is a copy of cell below
+        //  0 |\\\\\\\\\\\\\\\\\|\\\\\\\\\\\\\\\\|<---- this row of vertices is a copy of cell below
         //    +-----------------+----------------+
         //                   111 1             33 ^
         //     0123  ......  456 7    .....    12 |
@@ -767,384 +754,150 @@ namespace ESM4Terrain
         //    this column of vertices is a copy of the cell to the left
         //
 
-        // just for some helper functions
-        //if (!mRootNode)
-            //mRootNode = new Terrain::QuadTreeNode(nullptr, Terrain::Root, 1.f, Ogre::Vector2(0.5f, 0.5f), NULL);
-
         Ogre::Vector2 origin = chunkCenter - Ogre::Vector2(1/2.f, 1/2.f);
         int cellX = static_cast<int>(std::floor(origin.x));
         int cellY = static_cast<int>(std::floor(origin.y));
 
         // 16 textures per side of land for Morrowind and 2 textures per side for Oblivion?
-        int realTextureSize = 16/*ESM4::Land::LAND_TEXTURE_SIZE*/+1; // add 1 to wrap around next cell
+        const int realTextureSize = 16 + 1; // add 1 to wrap around next cell
 
-        // for TES3, chunkSize 1, chunkCenter (12.5, 1.5):
-        // cellX = 12
-        // cellY = 1
-        int rowStart = ((int)origin.x - cellX) * realTextureSize; // should be 0 if chunkSize == 1
-        int colStart = ((int)origin.y - cellY) * realTextureSize; // should be 0 if chunkSize == 1
-        int rowEnd = rowStart + 1/*(int)chunkSize*/ * (realTextureSize-1) + 1; // realTextureSize if chunkSize == 1
-        int colEnd = colStart + 1/*(int)chunkSize*/ * (realTextureSize-1) + 1; // realTextureSize if chunkSize == 1
-
-        // Texture       mTextures[4]; // 0 = bottom left. 1 = bottom right. 2 = upper-left. 3 = upper-right
-        //
-        //    +-----------------+----------------+
-        // 32 |\                |                |
-        // 31 |\                |                |
-        //    |\                |                |
-        //  . |\                |                |
-        //  . |\       2        |        3       |
-        //  . |\                |                |
-        //  . |\                |                |
-        // 17 |\                |                |
-        //    +-----------------+----------------+
-        // 16 |\                |                |
-        // 15 |\                |                |
-        //  . |\                |                |
-        //  . |\                |                |
-        //  . |\       0        |        1       |
-        //  . |\                |                |
-        //  2 |\                |                |
-        //  1 |\                |                |
-        //  0 |\\\\\\\\\\\\\\\\\|\\\\\\\\\\\\\\\\| <-- this row is a copy of cell below
-        //    +-----------------+----------------+
-        //                   111 1             33
-        //     0123  ......  456 7    .....    12
-        //     ^
-        //     |
-        //    this column is a copy of the cell to the left
-        //
-        const ESM4::Land *land = getLand (cellX, cellY); // Foreign::TerrainStorage knows the world
+        const ESM4::Land *land = getLand (cellX, cellY); // Foreign::TerrainStorage has the worldid
         if (!land)
             return; // FIXME maybe return default textures?  throw an exception? assert?
 
         //std::cout << "land " << ESM4::formIdToString(land->mFormId) << std::endl; // FIXME
 
-        // NOTE:  each base texture does not completely "fill" a quadrant.  Rather, the
-        // textures repeat (or "wrap") 3 times each side based on observations with vanilla
-        std::string bottomLeft = ESM4::formIdToString(land->mTextures[0].base.formId);
-        std::string bottomRight = ESM4::formIdToString(land->mTextures[1].base.formId);
-        std::string topLeft = ESM4::formIdToString(land->mTextures[2].base.formId);
-        std::string topRight = ESM4::formIdToString(land->mTextures[3].base.formId);
-        std::string uniqueName = "terrain/"+bottomLeft+"_"+bottomRight+"_"+topLeft+"_"+topRight;
+        ESM4::FormId baseTextureId = land->mTextures[quad].base.formId;
+        if (baseTextureId == 0)
+            baseTextureId = 0x000008C0; // TES4: TerrainHDDirt01.dds
 
-        //std::string uniqueBase;
-        //if (land->mTextures[quad].base.formId != 0)
-        //    uniqueBase = "terrain/"+ESM4::formIdToString(land->mTextures[quad].base.formId);
-        //else
-        //    uniqueBase = "terrain/"+ESM4::formIdToString(0x000008C0); // TerrainHDDirt01.dds
-
-        Ogre::TexturePtr baseTex = Ogre::TextureManager::getSingleton().getByName(
-               uniqueName, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
-
-        //const MWWorld::ESMStore &store = MWBase::Environment::get().getWorld()->getStore();
-        std::string blTextureFile;
-        if (!baseTex)
-        {
-            const ESM4::LandTexture *blTex
-                //= store.getForeign<ESM4::LandTexture>().search(land->mTextures[0].base.formId);
-                = getLandTexture(land->mTextures[0].base.formId);
-            const ESM4::LandTexture *brTex
-                = getLandTexture(land->mTextures[1].base.formId);
-            const ESM4::LandTexture *tlTex
-                = getLandTexture(land->mTextures[2].base.formId);
-            const ESM4::LandTexture *trTex
-                = getLandTexture(land->mTextures[3].base.formId);
-            if (!trTex)
-                trTex = getLandTexture(0x000008C0);
-            blTextureFile = "textures\\landscape\\"+blTex->mTextureFile;
-            std::string brTextureFile = "textures\\landscape\\"+brTex->mTextureFile;
-            std::string tlTextureFile = "textures\\landscape\\"+tlTex->mTextureFile;
-            std::string trTextureFile = "textures\\landscape\\"+trTex->mTextureFile;
-
-            // WARN: assume that all 4 base textures have the same type and dimensions
-            Ogre::TexturePtr blTexture
-                = Ogre::static_pointer_cast<Ogre::Texture>(Ogre::TextureManager::getSingleton().createOrRetrieve(
-                   blTextureFile, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME).first);
-            blTexture->load();
-            Ogre::TexturePtr brTexture
-                = Ogre::static_pointer_cast<Ogre::Texture>(Ogre::TextureManager::getSingleton().createOrRetrieve(
-                   brTextureFile, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME).first);
-            brTexture->load();
-            Ogre::TexturePtr tlTexture
-                = Ogre::static_pointer_cast<Ogre::Texture>(Ogre::TextureManager::getSingleton().createOrRetrieve(
-                   tlTextureFile, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME).first);
-            tlTexture->load();
-            Ogre::TexturePtr trTexture
-                = Ogre::static_pointer_cast<Ogre::Texture>(Ogre::TextureManager::getSingleton().createOrRetrieve(
-                   trTextureFile, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME).first);
-            trTexture->load();
-
-            //if (!blTexture)
-            //{
-            //    std::cout << "couldn't create trial texture" << std::endl;
-            //    return; // FIXME: throw?
-            //}
-
-            // create a blank one
-            baseTex = Ogre::TextureManager::getSingleton().createManual(
-                uniqueName, // name
-                Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
-                blTexture->getTextureType(),  // type
-                //blTexture->getWidth()*2, blTexture->getHeight()*2, // width & height
-                blTexture->getWidth(), blTexture->getHeight(), // width & height
-                1, // depth
-                0,                  // number of mipmaps; FIXME: should be 2? or 1?
-                //blTexture->getFromat(),
-                Ogre::PF_A8R8G8B8,
-                //Ogre::TU_DYNAMIC_WRITE_ONLY);
-                //Ogre::TU_STATIC);
-                Ogre::TU_DEFAULT);
-
-            Ogre::TexturePtr srcTextureBL = Ogre::TextureManager::getSingleton().getByName(
-                   "tempBufferBL",
-                   Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
-            if (!srcTextureBL)
-            {
-                srcTextureBL = Ogre::TextureManager::getSingleton().createManual(
-                    "tempBufferBL",
-                    Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
-                    blTexture->getTextureType(),  // type
-                    blTexture->getWidth(), blTexture->getHeight(), // width & height
-                    1, // depth
-                    0,
-                    //blTexture->getFormat(),
-                    //Ogre::PF_BYTE_RGBA,
-                    Ogre::PF_A8R8G8B8,
-                    Ogre::TU_DEFAULT);
-            }
-
-            Ogre::TexturePtr srcTextureBR = Ogre::TextureManager::getSingleton().getByName(
-                   "tempBufferBR",
-                   Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
-            if (!srcTextureBR)
-            {
-                srcTextureBR = Ogre::TextureManager::getSingleton().createManual(
-                    "tempBufferBR",
-                    Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
-                    brTexture->getTextureType(),  // type
-                    brTexture->getWidth(), blTexture->getHeight(), // width & height
-                    0,
-                    Ogre::PF_BYTE_RGBA,
-                    Ogre::TU_STATIC);
-            }
-
-            Ogre::TexturePtr srcTextureTL = Ogre::TextureManager::getSingleton().getByName(
-                   "tempBufferTL",
-                   Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
-            if (!srcTextureTL)
-            {
-                srcTextureTL = Ogre::TextureManager::getSingleton().createManual(
-                    "tempBufferTL",
-                    Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
-                    tlTexture->getTextureType(),  // type
-                    tlTexture->getWidth(), blTexture->getHeight(), // width & height
-                    0,
-                    Ogre::PF_BYTE_RGBA,
-                    Ogre::TU_STATIC);
-            }
-
-            Ogre::TexturePtr srcTextureTR = Ogre::TextureManager::getSingleton().getByName(
-                   "tempBufferTR",
-                   Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
-            if (!srcTextureTR)
-            {
-                srcTextureTR = Ogre::TextureManager::getSingleton().createManual(
-                    "tempBufferTR",
-                    Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
-                    trTexture->getTextureType(),  // type
-                    trTexture->getWidth(), blTexture->getHeight(), // width & height
-                    0,
-                    Ogre::PF_BYTE_RGBA,
-                    Ogre::TU_STATIC);
-            }
-
-            Ogre::HardwarePixelBufferSharedPtr pixelBufferDest = baseTex->getBuffer();
-            //pixelBufferDest->unlock(); // prepare for blit()
-            //pixelBufferDest->blit(blTexture->getBuffer()); // FIXME: temp testing
-
-            Ogre::HardwarePixelBufferSharedPtr pixelBufferSrcBL = srcTextureBL->getBuffer();
-            pixelBufferSrcBL->unlock(); // prepare for blit()
-            pixelBufferSrcBL->blit(blTexture->getBuffer());
-
-            Ogre::HardwarePixelBufferSharedPtr pixelBufferSrcBR = srcTextureBR->getBuffer();
-            pixelBufferSrcBR->unlock(); // prepare for blit()
-            pixelBufferSrcBR->blit(brTexture->getBuffer());
-
-            Ogre::HardwarePixelBufferSharedPtr pixelBufferSrcTL = srcTextureTL->getBuffer();
-            pixelBufferSrcTL->unlock(); // prepare for blit()
-            pixelBufferSrcTL->blit(tlTexture->getBuffer());
-
-            Ogre::HardwarePixelBufferSharedPtr pixelBufferSrcTR = srcTextureTR->getBuffer();
-            pixelBufferSrcTR->unlock(); // prepare for blit()
-            pixelBufferSrcTR->blit(trTexture->getBuffer());
-
-            // Lock the pixel buffer and get a pixel box
-            pixelBufferDest->lock(Ogre::HardwareBuffer::HBL_NORMAL);
-            pixelBufferSrcBL->lock(Ogre::HardwareBuffer::HBL_NORMAL);
-            pixelBufferSrcBR->lock(Ogre::HardwareBuffer::HBL_NORMAL);
-            pixelBufferSrcTL->lock(Ogre::HardwareBuffer::HBL_NORMAL);
-            pixelBufferSrcTR->lock(Ogre::HardwareBuffer::HBL_NORMAL);
-
-            const Ogre::PixelBox& pixelBoxDest = pixelBufferDest->getCurrentLock();
-            const Ogre::PixelBox& pixelBoxSrcBL = pixelBufferSrcBL->getCurrentLock();
-            const Ogre::PixelBox& pixelBoxSrcBR = pixelBufferSrcBR->getCurrentLock();
-            const Ogre::PixelBox& pixelBoxSrcTL = pixelBufferSrcTL->getCurrentLock();
-            const Ogre::PixelBox& pixelBoxSrcTR = pixelBufferSrcTR->getCurrentLock();
-
-            uint32_t *pDest = static_cast<uint32_t*>(pixelBoxDest.data);
-            uint32_t *pSrcBL = static_cast<uint32_t*>(pixelBoxSrcBL.data);
-            uint8_t *pSrcBR = static_cast<uint8_t*>(pixelBoxSrcBR.data);
-            uint8_t *pSrcTL = static_cast<uint8_t*>(pixelBoxSrcTL.data);
-            uint8_t *pSrcTR = static_cast<uint8_t*>(pixelBoxSrcTR.data);
-
-            size_t quadHeight = blTexture->getHeight();
-            size_t quadWidth = blTexture->getWidth();
-            std::cout << blTextureFile << " height " << quadHeight << ", width " << quadWidth << std::endl;
-            //size_t count = 0;
-
-            //uint8_t *src;
-
-            // pixel box starts at top left (do we need to transpose the textures?)
-            //for (size_t y = 0; y < quadHeight*2; ++y)
-            for (size_t y = 0; y < quadHeight; ++y)
-            {
-                //for (size_t x = 0; x < quadWidth*2; ++x)
-                for (size_t x = 0; x < quadWidth; ++x)
-                {
-                    //if (y < quadHeight && x < quadWidth)
-                    //    src = pSrcTL;
-                    //else if (y < quadHeight)
-                    //    src = pSrcTR;
-                    //else if (x < quadWidth)
-                    //    src = pSrcBL;
-                    //else
-                    //    src = pSrcBR;
-
-                    *pDest++ = *pSrcBL++;
-                    //*(pDest+0) = *(pSrcBL+0); // B
-                    //*(pDest+1) = *(pSrcBL+1); // G
-                    //*(pDest+2) = *(pSrcBL+2); // R
-                    //*(pDest+3) = *(pSrcBL+3); // A
-                    //pDest += 4;
-                    //src += 4;
-                    //count++;
-                    //if (count >= ((0x200*0x200)-2))
-                        //std::cout << "count " << count << " "<< x << "," << y << std::endl;
-                }
-            }
-
-            pixelBufferDest->unlock();
-            pixelBufferSrcBL->unlock();
-            pixelBufferSrcBR->unlock();
-            pixelBufferSrcTL->unlock();
-            pixelBufferSrcTR->unlock();
-
-            //baseTex->load();
-
-
-
-
-#if 0
-            pixelBufferDest->blit(pixelBufferSrc, Ogre::Box(0, blTexture->getHeight(), blTexture->getWidth(), 0),
-                    Ogre::Box(0, blTexture->getHeight(), blTexture->getWidth(), 0));
-            pixelBufferSrc->lock(Ogre::HardwareBuffer::HBL_DISCARD);
-
-            pixelBufferSrc = brTexture->getBuffer();
-            pixelBufferSrc->unlock(); // prepare for blit()
-
-            pixelBufferDest->blit(pixelBufferSrc, Ogre::Box(0, brTexture->getHeight(), brTexture->getWidth(), 0),
-                    Ogre::Box(blTexture->getWidth(), blTexture->getHeight(), blTexture->getWidth()*2, 0));
-
-            pixelBufferSrc = tlTexture->getBuffer();
-            pixelBufferSrc->unlock(); // prepare for blit()
-
-            pixelBufferDest->blit(pixelBufferSrc, Ogre::Box(0, tlTexture->getHeight(), tlTexture->getWidth(), 0),
-                    Ogre::Box(0, blTexture->getHeight()*2, blTexture->getWidth(), blTexture->getHeight()));
-
-            pixelBufferSrc = trTexture->getBuffer();
-            pixelBufferSrc->unlock(); // prepare for blit()
-
-            pixelBufferDest->blit(pixelBufferSrc, Ogre::Box(0, trTexture->getHeight(), trTexture->getWidth(), 0),
-                    Ogre::Box(blTexture->getWidth(), blTexture->getHeight()*2,
-                              blTexture->getWidth()*2, blTexture->getHeight()));
-
-            pixelBufferDest->lock(Ogre::HardwareBuffer::HBL_READ_ONLY);
-#endif
-        }
-
-        // TES4: we're going to use BTXT instead of _land_default.dds
-        std::set<UniqueTextureId> textureIndices;
-        textureIndices.insert(std::make_pair(0,0));
-
-        // 17x17 for chunkSize==1, see above notes
-        //
-        // 4*16+1=65 <- what is the relationship with the cell size?
-        // maybe TES3 allows different texture for each 4x4 vertices?
-        //
-        // but if so we need to change to use different texture for each 16x16 vertices
-        // (of up to 9 layers)
-        // y 0..16 and x 0..16 for chunkSize == 1
-        //
-        // typedef std::pair<std::uint32_t, short> UniqueTextureId;
-        //                       ^            ^
-        //                       |            |
-        //                 texture index  plugin index
-#if 0
-#endif
-        //Ogre::MaterialPtr material = mMaterialGenerator->generateForCompositeMapRTT();
-#if 0
-        static int count = 0;
-        std::stringstream name;
-        name << "tes4terrain/mat" << count++;
-
-        Ogre::MaterialPtr mat = Ogre::MaterialManager::getSingleton().create(name.str(),
-                                                           Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
-        Ogre::Technique* technique = mat->getTechnique(0);
-        technique->removeAllPasses();
-
-        //assert(mLayerList.size() == mBlendmapList.size()+1);
-        //std::vector<Ogre::TexturePtr>::iterator blend = mBlendmapList.begin();
-        //for (std::vector<LayerInfo>::iterator layer = mLayerList.begin(); layer != mLayerList.end(); ++layer)
-        {
-            Ogre::Pass* pass = technique->createPass();
-            pass->setLightingEnabled(false);
-            pass->setVertexColourTracking(Ogre::TVC_NONE);
-            // TODO: How to handle fog?
-            pass->setFog(true, Ogre::FOG_NONE);
-
-            //bool first = (layer == mLayerList.begin());
-
-            Ogre::TextureUnitState* tus;
-
-            // Add the actual layer texture on top of the alpha map.
-            // TES4: diffuse tus created
-            tus = pass->createTextureUnitState(layer->mDiffuseMap); // FIXME: get the texture from land
-
-            // TES4: why scale at 1/16? is it because 16 textures per side are used?
-            // if so won't the scaled down texture positions be incorrect? (maybe the
-            // blend maps take care of that?)
-            //tus->setTextureScale(1/16.f,1/16.f);
-
-        }
-
-        if (1)
-        {
-            Ogre::Pass* lightingPass = technique->createPass();
-            lightingPass->setSceneBlending(Ogre::SBT_MODULATE);
-            lightingPass->setVertexColourTracking(Ogre::TVC_AMBIENT|Ogre::TVC_DIFFUSE);
-            lightingPass->setFog(true, Ogre::FOG_NONE);
-        }
-#endif
-        //Ogre::TRect<float> area(0,0,1,1)
-        //makeQuad(sceneMgr, area.left, area.top, area.right, area.bottom, mat);
-        const ESM4::LandTexture *baseTexture;
-        if (land->mTextures[quad].base.formId != 0)
-            baseTexture = getLandTexture(land->mTextures[quad].base.formId);
+        const ESM4::LandTexture *baseTexture = getLandTexture(baseTextureId);
+        std::string baseTextureFile;
+        if (baseTexture)
+            baseTextureFile = "textures\\landscape\\"+baseTexture->mTextureFile;
         else
-            baseTexture = getLandTexture(0x000008C0); // TerrainHDDirt01.dds
-        std::string baseTextureFile = "textures\\landscape\\"+baseTexture->mTextureFile;
+            throw std::runtime_error("cannot find base land texture");
+            //baseTextureFile = "textures\\landscape\\terrainhddirt01.dds"; // TES4 default
 
+        const int blendmapSize = realTextureSize; // 17
+        Ogre::PixelFormat format = pack ? Ogre::PF_A8B8G8R8 : Ogre::PF_A8;
+        int channels = pack ? 4 : 1;
+
+        std::size_t numLayers = land->mTextures[quad].layers.size();
+        std::size_t numBlends = pack? std::ceil(numLayers / 4) : numLayers;
+
+        // Ogre::PixelBox starts at top left corner while VTXT data starts at bottom left corner
+        // i.e. the VTXT positions 0..288 needs to be converted
+        //
+        // VTXT data    PixelBox
+        // position     index      y'
+        //
+        // 272 ..288     0 .. 16   0
+        //     ..          ..
+        //  51 .. 67   221 ..237  13
+        //  34 .. 50   238 ..254  14
+        //  17 .. 33   255 ..271  15
+        //   0 .. 16   272 ..288  16
+        //
+        // y  = floor(position / 17)
+        // y' = 17 - 1 - y
+        // x  = position % 17
+        //
+        // e.g. position = 275, y = 16, y' = 0,  x = 3
+        //      position = 50,  y = 2,  y' = 14, x = 16
+        //
+        Ogre::uchar *pData = nullptr;
+        for (std::size_t i = 0; i < numLayers; ++i)
+        {
+            //if (i > 0) continue; // FIXME
+
+            std::size_t blendIndex = pack ? static_cast<std::size_t>(std::floor(i / 4.f)) : i;
+            std::size_t currChannel = pack ? std::max(0, int(i % 4)) : 0;
+
+            if (currChannel == 0)
+            {
+                pData = OGRE_ALLOC_T(Ogre::uchar, blendmapSize*blendmapSize*channels, Ogre::MEMCATEGORY_GENERAL);
+                memset(pData, 0, blendmapSize*blendmapSize*channels); // 0 is fully transparent
+            }
+
+            const std::vector<ESM4::Land::VTXT>& data = land->mTextures[quad].layers[i].data;
+            for (std::size_t j = 0; j < data.size(); ++j)
+            {
+                int position = data[j].position;
+                //position = 288 - position; // FIXME: temp testing
+
+                std::size_t y = /*17 - 1 - */int(position / 17);
+                std::size_t x = position % 17;
+                pData[y*blendmapSize*channels + x*channels + currChannel] = int(data[j].opacity * 255);
+            }
+
+            if (currChannel == 3 || i == numLayers - 1)
+            {
+                blendmaps.push_back(Ogre::PixelBox(blendmapSize, blendmapSize, 1, format, pData));
+                //                                 width         height        depth
+            }
+        }
+
+        Terrain::LayerInfo li;
+
+        li.mDiffuseMap = baseTextureFile;
+        std::size_t pos = baseTextureFile.find_last_of(".");
+        if (pos != std::string::npos)
+            li.mNormalMap = baseTextureFile.substr(0, pos) + "_n.dds";
+        else
+            li.mNormalMap.clear();
+        li.mParallax = false;
+        li.mSpecular = false;
+        li.mIsTes4 = true;
+
+        layerList.push_back(std::move(li));
+
+        for (std::size_t i = 0; i < numLayers; ++i)
+        {
+            //if (i >= 0) continue; // FIXME
+
+            const ESM4::Land::ATXT& additional = land->mTextures[quad].layers[i].texture;
+            if (additional.quadrant != quad)
+                //std::cout << "ATXT quadrant mismatch" << std::endl;
+                throw std::runtime_error("ATXT quadrant mismatch");
+
+            if (additional.layerIndex != i)
+                //std::cout << "ATXT layer mismatch" << std::endl;
+                throw std::runtime_error("ATXT layer mismatch");
+
+            ESM4::FormId textureId = additional.formId;
+            if (textureId == 0)
+            {
+                textureId = 0x000008C0; // TES4: TerrainHDDirt01.dds
+                std::cout << "ATXT layer null" << std::endl;
+                //throw std::runtime_error("ATXT layer null");
+            }
+
+            std::string textureFile;
+            const ESM4::LandTexture *texture = getLandTexture(textureId);
+            if (texture)
+                textureFile = "textures\\landscape\\"+texture->mTextureFile;
+            //else // FIXME: throw instead?
+
+            li.mDiffuseMap = textureFile;
+            std::size_t pos = textureFile.find_last_of(".");
+            if (pos != std::string::npos)
+                li.mNormalMap = textureFile.substr(0, pos) + "_n.dds";
+            else
+                li.mNormalMap.clear();
+            li.mParallax = false;
+            li.mSpecular = false;
+            li.mIsTes4 = true;
+
+            layerList.push_back(std::move(li));
+        }
+
+
+
+
+
+
+#if 0
         std::map<UniqueTextureId, int> textureIndicesMap;
         for (std::set<UniqueTextureId>::iterator it = textureIndices.begin(); it != textureIndices.end(); ++it)
         {
@@ -1172,15 +925,16 @@ namespace ESM4Terrain
                 Terrain::LayerInfo li;
 
                 li.mDiffuseMap = baseTextureFile;
-                //li.mDiffuseMap = uniqueName;
-                //li.mDiffuseMap = blTextureFile;
-                //li.mDiffuseMap = "tempBufferBL";
-                li.mNormalMap = ""; // FIXME
+                std::size_t pos = baseTextureFile.find_last_of(".");
+                if (pos != std::string::npos)
+                    li.mNormalMap = baseTextureFile.substr(0, pos) + "_n.dds";
+                else
+                    li.mNormalMap.clear();
                 li.mParallax = false;
                 li.mSpecular = false;
                 li.mIsTes4 = true;
 
-                layerList.push_back(li);
+                layerList.push_back(std::move(li));
             }
             else
                 layerList.push_back(getLayerInfo(getTextureName(*it)));
@@ -1188,12 +942,11 @@ namespace ESM4Terrain
         int numTextures = (int)textureIndices.size();
         int numBlendmaps = pack ? static_cast<int>(std::ceil((numTextures - 1) / 4.f)) : (numTextures - 1);
 
-        int channels = pack ? 4 : 1;
+        //int channels = pack ? 4 : 1;
         // FIXME: what is the logic behind blendmapSize? TES3: blendmapsize = (17-1)*1 + 1 = 17
-        //
-        const int blendmapSize = (realTextureSize-1) * 1/*(int)chunkSize*/ + 1;
+        //const int blendmapSize = (realTextureSize-1) * 1/*(int)chunkSize*/ + 1;
 
-        for (int i=0; i<numBlendmaps; ++i)
+        for (int i = 0; i < numBlendmaps; ++i)
         {
             Ogre::PixelFormat format = pack ? Ogre::PF_A8B8G8R8 : Ogre::PF_A8;
             //                                         ^ ^ ^ ^             ^
@@ -1204,9 +957,9 @@ namespace ESM4Terrain
             memset(pData, 0, blendmapSize*blendmapSize*channels);
 
             // y 0..16 and x 0..16 for chunkSize == 1 (i.e. 17x17)
-            for (int y=0; y<blendmapSize; ++y)
+            for (int y = 0; y < blendmapSize; ++y)
             {
-                for (int x=0; x<blendmapSize; ++x)
+                for (int x = 0; x < blendmapSize; ++x)
                 {
                     // FIXME: why get this again?
                     UniqueTextureId id = getVtexIndexAt(cellX, cellY, x+rowStart, y+colStart);
@@ -1225,6 +978,7 @@ namespace ESM4Terrain
             //                                 width         height        depth
             blendmaps.push_back(Ogre::PixelBox(blendmapSize, blendmapSize, 1, format, pData));
         }
+#endif
     }
 
     // called by Terrain::TerrainGrid::loadCell()
@@ -1269,10 +1023,6 @@ namespace ESM4Terrain
         // Q: also each quad may have a differnt base texture
         // maybe TerrainGrid class itself may need to change?
 
-
-
-
-
         // Save the used texture indices so we know the total number of textures
         // and number of required blend maps
         std::set<UniqueTextureId> textureIndices;
@@ -1312,7 +1062,7 @@ namespace ESM4Terrain
         // Second iteration - create and fill in the blend maps
         const int blendmapSize = (realTextureSize-1) * (int)chunkSize + 1;
 
-        for (int i=0; i<numBlendmaps; ++i)
+        for (int i = 0; i < numBlendmaps; ++i)
         {
             Ogre::PixelFormat format = pack ? Ogre::PF_A8B8G8R8 : Ogre::PF_A8;
 
@@ -1320,9 +1070,9 @@ namespace ESM4Terrain
                             OGRE_ALLOC_T(Ogre::uchar, blendmapSize*blendmapSize*channels, Ogre::MEMCATEGORY_GENERAL);
             memset(pData, 0, blendmapSize*blendmapSize*channels);
 
-            for (int y=0; y<blendmapSize; ++y)
+            for (int y = 0; y < blendmapSize; ++y)
             {
-                for (int x=0; x<blendmapSize; ++x)
+                for (int x = 0; x < blendmapSize; ++x)
                 {
                     UniqueTextureId id = getVtexIndexAt(cellX, cellY, x+rowStart, y+colStart);
                     assert(textureIndicesMap.find(id) != textureIndicesMap.end());
@@ -1515,9 +1265,6 @@ namespace ESM4Terrain
     int Storage::getCellVertices()
     {
         return int(ESM4::Land::VERTS_PER_SIDE / 2) + 1; // int(33 / 2) + 1 = int(16.5) + 1 = 17
-
-        //FIXME: for testing old behaviour
-        //return ESM4::Land::VERTS_PER_SIDE;
     }
 
 }

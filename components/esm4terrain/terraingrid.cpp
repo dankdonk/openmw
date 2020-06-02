@@ -173,12 +173,14 @@ void TerrainGrid::loadCell(int x, int y)
         }
 
         // FIXME: workaround for strange culling
+//#if 0
         min = Ogre::Vector3(-0.5f*mStorage->getCellWorldSize(),
                            -0.5f*mStorage->getCellWorldSize(),
                            minH);
         max = Ogre::Vector3(0.5f*mStorage->getCellWorldSize(),
                            0.5f*mStorage->getCellWorldSize(),
                            maxH);
+//#endif
 
         Ogre::AxisAlignedBox bounds(min, max);
 
@@ -196,14 +198,14 @@ void TerrainGrid::loadCell(int x, int y)
 
                 break;
             }
-            case 2: // FIXME: why reverse?
+            case 1: // FIXME: why reverse? (now done in fillQuadVertexBuffers)
             {
                 element.mSceneNode
                     = mRootNode->createChildSceneNode(Ogre::Vector3(worldCenter.x+1024, worldCenter.y-1024, 0));
 
                 break;
             }
-            case 1: // FIXME: why reverse?
+            case 2: // FIXME: why reverse? (now done in fillQuadVertexBuffers)
             {
                 element.mSceneNode
                     = mRootNode->createChildSceneNode(Ogre::Vector3(worldCenter.x-1024, worldCenter.y+1024, 0));
@@ -249,7 +251,7 @@ void TerrainGrid::loadCell(int x, int y)
                 + Ogre::StringConverter::toString(count++), Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
                 Ogre::TEX_TYPE_2D, it->getWidth(), it->getHeight(), 0, it->format);
 
-            Ogre::DataStreamPtr stream(new Ogre::MemoryDataStream(it->data, it->getWidth()*it->getHeight()*Ogre::PixelUtil::getNumElemBytes(it->format), true));
+            Ogre::DataStreamPtr stream(OGRE_NEW Ogre::MemoryDataStream(it->data, it->getWidth()*it->getHeight()*Ogre::PixelUtil::getNumElemBytes(it->format), true));
             map->loadRawData(stream, it->getWidth(), it->getHeight(), it->format);
             blendTextures.push_back(map);
         }

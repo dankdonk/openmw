@@ -136,8 +136,6 @@ namespace ESM4Terrain
         void getBlendmapsImpl (float chunkSize, const Ogre::Vector2& chunkCenter, bool pack,
                            std::vector<Ogre::PixelBox>& blendmaps,
                            std::vector<Terrain::LayerInfo>& layerList);
-
-        //Terrain::QuadTreeNode *mRootNode;
     };
 
 }

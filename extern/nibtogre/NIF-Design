@@ -4667,6 +4667,15 @@ The `Ogre::AxisAlignedBox` calculation appear incorrect, causing strange culling
 
 Similar issue exists with the position of the `SceneNode` for the quads.
 
+For some reason the quad positions 1 (bottom right) and 2 (top left) need to be swapped to get the correct heights and weird culling issues (actually culling issues stil exist, but even the workaround sometimes fails without the swap).  See `getMinMaxQuadHeights()` and `fillQuadVertexBuffers()`.
+
+The order of VTXT values does not match the expectation.  The position indices are supposed to start from the bottom left corner, but it seems to start from the top left corner instead.  See `getQuadBlendmaps()`.
+
+## Unrelated FIXME
+
+Container store related to foreign NPC custom data crash at exit.
+
+
 
 
 [//]: # (/* spell spelllang=en_au syntax=cpp */)

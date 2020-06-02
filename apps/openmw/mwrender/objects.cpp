@@ -217,12 +217,12 @@ const std::map<std::int32_t, Ogre::SceneNode*> *Objects::insertModel(const MWWor
         return nullptr;
 }
 
-void Objects::insertLandscapeModel(ESM4::FormId worldId, int x, int y, const std::string &mesh)
+void Objects::insertLandscapeModel(ESM4::FormId worldId, int x, int y, const std::string& mesh)
 {
-    Ogre::SceneNode* root = mRootNode;
-    Ogre::SceneNode* cellnode = root->createChildSceneNode(); // child for cell level
+    Ogre::SceneNode *root = mRootNode;
+    Ogre::SceneNode *cellnode = root->createChildSceneNode(); // child for cell level
 
-    Ogre::SceneNode* insert = cellnode->createChildSceneNode(); // grandchild for object level
+    Ogre::SceneNode *insert = cellnode->createChildSceneNode(); // grandchild for object level
 
     NiBtOgre::NiModelManager& modelManager = NiBtOgre::NiModelManager::getSingleton();
     NiModelPtr landscape = modelManager.getOrLoadByName(mesh, "General");
