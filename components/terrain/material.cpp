@@ -93,6 +93,7 @@ namespace Terrain
     {
         assert(!renderCompositeMap || !displayCompositeMap);
 
+        const int QUAD_TEXTURE_PER_SIDE = 6;
         static int count = 0;
         std::stringstream name;
         name << "terrain/mat" << count++;
@@ -144,7 +145,7 @@ namespace Terrain
                         // TES4: why the scales? and why extra 1.f in the divisor?
                         float scale;
                         if (layer->mIsTes4)
-                            scale = (6/(7.f));
+                            scale = (QUAD_TEXTURE_PER_SIDE/(QUAD_TEXTURE_PER_SIDE + 1.f));
                         else
                             scale = (16/(16.f+1.f));
                         tus->setTextureScale(1.f/scale,1.f/scale);
@@ -158,8 +159,7 @@ namespace Terrain
                                                   Ogre::LBS_CURRENT);
 
                     if (layer->mIsTes4)
-                        tus->setTextureScale(float(1/ESM4::Land::QUAD_TEXTURE_PER_SIDE),
-                                             float(1/ESM4::Land::QUAD_TEXTURE_PER_SIDE));
+                        tus->setTextureScale(float(1/QUAD_TEXTURE_PER_SIDE), float(1/QUAD_TEXTURE_PER_SIDE));
                     else
                         tus->setTextureScale(1/16.f,1/16.f);
 
