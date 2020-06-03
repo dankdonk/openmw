@@ -353,7 +353,8 @@ float3 TSnormal = float3(0,0,1);
 // rescale UV to directly map edge vertices to texel centers - this is
 // important to get correct blending at cell transitions
 // TODO: parameterize texel size
-float2 blendUV = (UV - 0.5) * (6.0 / (6.0+1.0)) + 0.5;
+//float2 blendUV = (UV - 0.5) * (6.0 / (6.0+1.0)) + 0.5;
+float2 blendUV = UV;
 @shForeach(@shPropertyString(num_blendmaps))
         float4 blendValues@shIterator = shSaturate(shSample(blendMap@shIterator, blendUV));
 @shEndForeach
@@ -361,6 +362,7 @@ float2 blendUV = (UV - 0.5) * (6.0 / (6.0+1.0)) + 0.5;
 
         float4 albedo = float4(0,0,0,1);
 
+        // TODO: reversing Y doesn't seem to do anything observable?
         float2 layerUV = float2(UV.x, 1.0-UV.y) * 6.0; // Reverse Y, required to get proper tangents
         float2 thisLayerUV;
         float4 normalTex;
@@ -376,7 +378,7 @@ float2 blendUV = (UV - 0.5) * (6.0 / (6.0+1.0)) + 0.5;
 #if @shPropertyBool(use_normal_map_@shIterator)
         normalTex = shSample(normalMap@shIterator, thisLayerUV);
 #if @shIterator == 0 && IS_FIRST_PASS
-        TSnormal = normalize(normalTex.xyz * 2.0 - 1.0);
+        TSnormal = normalize(normalTex.xyz * 2.0 - 1.0); // TODO: not sure why subtract 1.0
 #else
         TSnormal = shLerp(TSnormal, normalTex.xyz * 2.0 - 1.0, blendValues@shPropertyString(blendmap_component_@shIterator));
 #endif
@@ -494,6 +496,7 @@ albedo = shLerp(albedo, diffuseTex, blendValues@shPropertyString(blendmap_compon
 #if IS_FIRST_PASS
         shOutputColour(0).a = 1.0;
 #else
+        // TODO: previousAlpha doesn't seem to do anything?
         shOutputColour(0).a = 1.0-previousAlpha;
 #endif
     }

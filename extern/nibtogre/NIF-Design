@@ -4663,13 +4663,17 @@ This needs to change (i.e. smaller) for the quads.
 
 ## Odd issues that needs fixing
 
-The `Ogre::AxisAlignedBox` calculation appear incorrect, causing strange culling problems (quad render disappearing when not directly looking at it).  For now work around the issue by making the AABB larger (the cell size).  The issue might be due to box orientation being different to the positions of the quads.
+  1. The `Ogre::AxisAlignedBox` calculation appear incorrect, causing strange culling problems (quad render disappearing when not directly looking at it).  For now work around the issue by making the AABB larger (the cell size).  The issue might be due to box orientation being different to the positions of the quads.
 
-Similar issue exists with the position of the `SceneNode` for the quads.
+  2. Similar issue exists with the position of the `SceneNode` for the quads.
 
-For some reason the quad positions 1 (bottom right) and 2 (top left) need to be swapped to get the correct heights and weird culling issues (actually culling issues stil exist, but even the workaround sometimes fails without the swap).  See `getMinMaxQuadHeights()` and `fillQuadVertexBuffers()`.
+  3. For some reason the quad positions 1 (bottom right) and 2 (top left) need to be swapped to get the correct heights and weird culling issues (actually culling issues stil exist, but even the workaround sometimes fails without the swap).  See `getMinMaxQuadHeights()` and `fillQuadVertexBuffers()`.
 
-The order of VTXT values does not match the expectation.  The position indices are supposed to start from the bottom left corner, but it seems to start from the top left corner instead.  See `getQuadBlendmaps()`.
+  4. The order of VTXT values does not match the expectation.  The position indices are supposed to start from the bottom left corner, but it seems to start from the top left corner instead.  See `getQuadBlendmaps()`.
+
+  5. The layers for cell (27,21) seems to be mixed up - small pebbles are seen in the middle when the large ones should be.
+
+  6. Non-shader version no longer works.
 
 ## Unrelated FIXME
 

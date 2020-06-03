@@ -718,8 +718,6 @@ namespace ESM4Terrain
     void Storage::getQuadBlendmaps(const Ogre::Vector2 &chunkCenter,
         bool pack, std::vector<Ogre::PixelBox> &blendmaps, std::vector<Terrain::LayerInfo> &layerList, int quad)
     {
-        //pack = false; // FIXME: temp testing
-
         // VTXT info indicates texture size is 17x17 - but the cell grid is 33x33
         // (cf. TES3 has 65x65 cell) do we discard one row and column or overlap?
         //
@@ -758,36 +756,27 @@ namespace ESM4Terrain
         int cellX = static_cast<int>(std::floor(origin.x));
         int cellY = static_cast<int>(std::floor(origin.y));
 
-        // 16 textures per side of land for Morrowind and 2 textures per side for Oblivion?
-        const int realTextureSize = 16 + 1; // add 1 to wrap around next cell
-
         const ESM4::Land *land = getLand (cellX, cellY); // Foreign::TerrainStorage has the worldid
         if (!land)
-            return; // FIXME maybe return default textures?  throw an exception? assert?
+            return; // FIXME: throw an exception? assert?
 
         //std::cout << "land " << ESM4::formIdToString(land->mFormId) << std::endl; // FIXME
 
-        ESM4::FormId baseTextureId = land->mTextures[quad].base.formId;
-        if (baseTextureId == 0)
-            baseTextureId = 0x000008C0; // TES4: TerrainHDDirt01.dds
+        //pack = false; // FIXME: temp testing
 
-        const ESM4::LandTexture *baseTexture = getLandTexture(baseTextureId);
-        std::string baseTextureFile;
-        if (baseTexture)
-            baseTextureFile = "textures\\landscape\\"+baseTexture->mTextureFile;
-        else
-            throw std::runtime_error("cannot find base land texture");
-            //baseTextureFile = "textures\\landscape\\terrainhddirt01.dds"; // TES4 default
-
-        const int blendmapSize = realTextureSize; // 17
+        const int realTextureSize = 17;
+        const int blendmapSize = realTextureSize;
         Ogre::PixelFormat format = pack ? Ogre::PF_A8B8G8R8 : Ogre::PF_A8;
         int channels = pack ? 4 : 1;
 
         std::size_t numLayers = land->mTextures[quad].layers.size();
-        std::size_t numBlends = pack? std::ceil(numLayers / 4) : numLayers;
+        std::size_t numBlends = pack? std::ceil(numLayers / 4.f) : numLayers;
 
         // Ogre::PixelBox starts at top left corner while VTXT data starts at bottom left corner
         // i.e. the VTXT positions 0..288 needs to be converted
+        //
+        // FIXME: but the observed behaviour is different - either VTXT starts at top left
+        //        corner, or Ogre::PixelBox is being interpreted differently by the shader
         //
         // VTXT data    PixelBox
         // position     index      y'
@@ -805,14 +794,14 @@ namespace ESM4Terrain
         //
         // e.g. position = 275, y = 16, y' = 0,  x = 3
         //      position = 50,  y = 2,  y' = 14, x = 16
-        //
+#if 0
+        if (cellX == 27 && cellY == 22)// && quad == 1)
+            std::cout << "stop" << std::endl;
+#endif
         Ogre::uchar *pData = nullptr;
-        for (std::size_t i = 0; i < numLayers; ++i)
+        for (std::size_t i = 0; i < numLayers; ++i) // FIXME: use numBlends instead?
         {
-            //if (i > 0) continue; // FIXME
-
-            std::size_t blendIndex = pack ? static_cast<std::size_t>(std::floor(i / 4.f)) : i;
-            std::size_t currChannel = pack ? std::max(0, int(i % 4)) : 0;
+            std::size_t currChannel = pack ? int(i % 4) : 0;
 
             if (currChannel == 0)
             {
@@ -824,10 +813,9 @@ namespace ESM4Terrain
             for (std::size_t j = 0; j < data.size(); ++j)
             {
                 int position = data[j].position;
-                //position = 288 - position; // FIXME: temp testing
 
-                std::size_t y = /*17 - 1 - */int(position / 17);
-                std::size_t x = position % 17;
+                std::size_t y = /*realTextureSize - 1 - */int(position / realTextureSize); // ? why ?
+                std::size_t x = position % realTextureSize;
                 pData[y*blendmapSize*channels + x*channels + currChannel] = int(data[j].opacity * 255);
             }
 
@@ -838,8 +826,25 @@ namespace ESM4Terrain
             }
         }
 
-        Terrain::LayerInfo li;
+        // base texture
+        ESM4::FormId baseTextureId = land->mTextures[quad].base.formId;
+        if (baseTextureId == 0)
+            baseTextureId = 0x000008C0; // TES4: TerrainHDDirt01.dds
 
+        const ESM4::LandTexture *baseTexture = getLandTexture(baseTextureId);
+        std::string baseTextureFile;
+        if (baseTexture)
+            baseTextureFile = "textures\\landscape\\"+baseTexture->mTextureFile;
+        else
+            throw std::runtime_error("cannot find base land texture");
+
+        Terrain::LayerInfo li;
+#if 0
+        if (cellX == 27 && cellY == 22)// && quad == 1)
+        {
+            std::cout << "quad " << quad << " base " << baseTextureFile << std::endl; // FIXME
+        }
+#endif
         li.mDiffuseMap = baseTextureFile;
         std::size_t pos = baseTextureFile.find_last_of(".");
         if (pos != std::string::npos)
@@ -852,25 +857,22 @@ namespace ESM4Terrain
 
         layerList.push_back(std::move(li));
 
+        // additional textures
         for (std::size_t i = 0; i < numLayers; ++i)
         {
-            //if (i >= 0) continue; // FIXME
-
             const ESM4::Land::ATXT& additional = land->mTextures[quad].layers[i].texture;
             if (additional.quadrant != quad)
-                //std::cout << "ATXT quadrant mismatch" << std::endl;
                 throw std::runtime_error("ATXT quadrant mismatch");
 
             if (additional.layerIndex != i)
-                //std::cout << "ATXT layer mismatch" << std::endl;
                 throw std::runtime_error("ATXT layer mismatch");
 
             ESM4::FormId textureId = additional.formId;
             if (textureId == 0)
             {
                 textureId = 0x000008C0; // TES4: TerrainHDDirt01.dds
-                std::cout << "ATXT layer null" << std::endl;
-                //throw std::runtime_error("ATXT layer null");
+                std::cout << "ATXT layer null, cell " << cellX << "," << cellY
+                          << " quad " << quad << " layer " << i << std::endl; // FIXME
             }
 
             std::string textureFile;
@@ -878,7 +880,13 @@ namespace ESM4Terrain
             if (texture)
                 textureFile = "textures\\landscape\\"+texture->mTextureFile;
             //else // FIXME: throw instead?
-
+            //throw std::runtime_error("ATXT layer null");
+#if 0
+            if (cellX == 27 && cellY == 22)// && quad == 1)
+            {
+                std::cout << "quad " << quad << " layer " << i << " " << textureFile << std::endl; // FIXME
+            }
+#endif
             li.mDiffuseMap = textureFile;
             std::size_t pos = textureFile.find_last_of(".");
             if (pos != std::string::npos)
@@ -891,94 +899,6 @@ namespace ESM4Terrain
 
             layerList.push_back(std::move(li));
         }
-
-
-
-
-
-
-#if 0
-        std::map<UniqueTextureId, int> textureIndicesMap;
-        for (std::set<UniqueTextureId>::iterator it = textureIndices.begin(); it != textureIndices.end(); ++it)
-        {
-            int size = (int)textureIndicesMap.size();
-            textureIndicesMap[*it] = size;
-            // NOTE: layerList is one of the parameters getBlendmapsImpl()
-            //
-            // getLayerInfo() returns Terrain::LayerInfo
-            //
-            // struct Terrain::LayerInfo
-            // {
-            //     std::string mDiffuseMap;
-            //     std::string mNormalMap;
-            //     bool mParallax; // Height info in normal map alpha channel?
-            //     bool mSpecular; // Specular info in diffuse map alpha channel?
-            // };
-            //
-            // but I think TES4 textures are organised differently?
-            // where are the parallax and specula textures?  are they one of the 9 layers?
-            // looking at the diffuse texture there isn't an alpha channel (which might have
-            // been used for parallax), same with normal texture
-            //
-            if (it == textureIndices.begin())
-            {
-                Terrain::LayerInfo li;
-
-                li.mDiffuseMap = baseTextureFile;
-                std::size_t pos = baseTextureFile.find_last_of(".");
-                if (pos != std::string::npos)
-                    li.mNormalMap = baseTextureFile.substr(0, pos) + "_n.dds";
-                else
-                    li.mNormalMap.clear();
-                li.mParallax = false;
-                li.mSpecular = false;
-                li.mIsTes4 = true;
-
-                layerList.push_back(std::move(li));
-            }
-            else
-                layerList.push_back(getLayerInfo(getTextureName(*it)));
-        }
-        int numTextures = (int)textureIndices.size();
-        int numBlendmaps = pack ? static_cast<int>(std::ceil((numTextures - 1) / 4.f)) : (numTextures - 1);
-
-        //int channels = pack ? 4 : 1;
-        // FIXME: what is the logic behind blendmapSize? TES3: blendmapsize = (17-1)*1 + 1 = 17
-        //const int blendmapSize = (realTextureSize-1) * 1/*(int)chunkSize*/ + 1;
-
-        for (int i = 0; i < numBlendmaps; ++i)
-        {
-            Ogre::PixelFormat format = pack ? Ogre::PF_A8B8G8R8 : Ogre::PF_A8;
-            //                                         ^ ^ ^ ^             ^
-            //                                         4 channels          1 channel
-
-            Ogre::uchar* pData =
-                            OGRE_ALLOC_T(Ogre::uchar, blendmapSize*blendmapSize*channels, Ogre::MEMCATEGORY_GENERAL);
-            memset(pData, 0, blendmapSize*blendmapSize*channels);
-
-            // y 0..16 and x 0..16 for chunkSize == 1 (i.e. 17x17)
-            for (int y = 0; y < blendmapSize; ++y)
-            {
-                for (int x = 0; x < blendmapSize; ++x)
-                {
-                    // FIXME: why get this again?
-                    UniqueTextureId id = getVtexIndexAt(cellX, cellY, x+rowStart, y+colStart);
-
-                    assert(textureIndicesMap.find(id) != textureIndicesMap.end());
-                    int layerIndex = textureIndicesMap.find(id)->second;
-                    int blendIndex = (pack ? static_cast<int>(std::floor((layerIndex - 1) / 4.f)) : layerIndex - 1);
-                    int channel = pack ? std::max(0, (layerIndex-1) % 4) : 0;
-
-                    if (blendIndex == i)
-                        pData[y*blendmapSize*channels + x*channels + channel] = 255;
-                    else
-                        pData[y*blendmapSize*channels + x*channels + channel] = 0;
-                }
-            }
-            //                                 width         height        depth
-            blendmaps.push_back(Ogre::PixelBox(blendmapSize, blendmapSize, 1, format, pData));
-        }
-#endif
     }
 
     // called by Terrain::TerrainGrid::loadCell()
