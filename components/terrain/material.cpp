@@ -270,7 +270,7 @@ namespace Terrain
 
 
                     sh::MaterialInstancePass* p = material->createPass ();
-                    if (layerOffset == 0 && mLayerList[0].mIsTes4)
+                    if (mLayerList[0].mIsTes4) // just check the base
                     {
                         p->setProperty ("vertex_program", sh::makeProperty<sh::StringValue>(new sh::StringValue("tes4_terrain_vertex")));
                         p->setProperty ("fragment_program", sh::makeProperty<sh::StringValue>(new sh::StringValue("tes4_terrain_fragment")));

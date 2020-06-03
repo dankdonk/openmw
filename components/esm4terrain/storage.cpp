@@ -794,10 +794,6 @@ namespace ESM4Terrain
         //
         // e.g. position = 275, y = 16, y' = 0,  x = 3
         //      position = 50,  y = 2,  y' = 14, x = 16
-#if 0
-        if (cellX == 27 && cellY == 22)// && quad == 1)
-            std::cout << "stop" << std::endl;
-#endif
         Ogre::uchar *pData = nullptr;
         for (std::size_t i = 0; i < numLayers; ++i) // FIXME: use numBlends instead?
         {
@@ -839,12 +835,6 @@ namespace ESM4Terrain
             throw std::runtime_error("cannot find base land texture");
 
         Terrain::LayerInfo li;
-#if 0
-        if (cellX == 27 && cellY == 22)// && quad == 1)
-        {
-            std::cout << "quad " << quad << " base " << baseTextureFile << std::endl; // FIXME
-        }
-#endif
         li.mDiffuseMap = baseTextureFile;
         std::size_t pos = baseTextureFile.find_last_of(".");
         if (pos != std::string::npos)
@@ -881,17 +871,14 @@ namespace ESM4Terrain
                 textureFile = "textures\\landscape\\"+texture->mTextureFile;
             //else // FIXME: throw instead?
             //throw std::runtime_error("ATXT layer null");
-#if 0
-            if (cellX == 27 && cellY == 22)// && quad == 1)
-            {
-                std::cout << "quad " << quad << " layer " << i << " " << textureFile << std::endl; // FIXME
-            }
-#endif
             li.mDiffuseMap = textureFile;
             std::size_t pos = textureFile.find_last_of(".");
+// TODO: apply normals for additional textures?
+//#if 0
             if (pos != std::string::npos)
                 li.mNormalMap = textureFile.substr(0, pos) + "_n.dds";
             else
+//#endif
                 li.mNormalMap.clear();
             li.mParallax = false;
             li.mSpecular = false;
