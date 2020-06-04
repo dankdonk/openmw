@@ -35,7 +35,7 @@
 ESM4::TextureSet::TextureSet() : mFormId(0), mFlags(0)
 {
     mEditorId.clear();
-    mColorMap.clear();
+    mDiffuse.clear();
     mNormalMap.clear();
     mEnvMask.clear();
     mToneMap.clear();
@@ -61,7 +61,7 @@ void ESM4::TextureSet::load(ESM4::Reader& reader)
         switch (subHdr.typeId)
         {
             case ESM4::SUB_EDID: reader.getZString(mEditorId); break;
-            case ESM4::SUB_TX00: reader.getZString(mColorMap); break;
+            case ESM4::SUB_TX00: reader.getZString(mDiffuse); break;
             case ESM4::SUB_TX01: reader.getZString(mNormalMap); break;
             case ESM4::SUB_TX02: reader.getZString(mEnvMask); break;
             case ESM4::SUB_TX03: reader.getZString(mToneMap); break;

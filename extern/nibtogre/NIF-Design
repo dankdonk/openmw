@@ -4578,7 +4578,7 @@ Worked around by stop setting the skeleton name for skinned meshes (see `NiBtOgr
 
 **FIXME:** door mRefID="AnutwyllExRef", mFormId = 0x00017571, mBaseObj = 0x0002eed2 seems to have an empty AABB Seems to be related to the experimental change in `CellRefList::search()`. Reverted the change for now, needs more testing and debugging.
 
-# [28/05/2020 - 2/06/2020] Terrain texture
+# [28/05/2020 - 3/06/2020] Terrain texture
 
 Terrain is one of the first things on TES4 to be implemented, in OpenCS, way back in 2015.  I cannot remember why the TES4 terrain related classes were structured in such a convoluted way (possibly to support both OpenCS and OpenMW?).  To get an idea:
 
@@ -4661,19 +4661,31 @@ The landscape textures for each quadrant are 512x512 but the a quadrant's size i
 
 This needs to change (i.e. smaller) for the quads.
 
-## Odd issues that needs fixing
+## Issues that need investigations and/or fixing
 
   1. The `Ogre::AxisAlignedBox` calculation appear incorrect, causing strange culling problems (quad render disappearing when not directly looking at it).  For now work around the issue by making the AABB larger (the cell size).  The issue might be due to box orientation being different to the positions of the quads.
 
-  2. Similar issue exists with the position of the `SceneNode` for the quads.
+  2. ~~Similar issue exists with the position of the `SceneNode` for the quads.~~ **FIXED:** well, not fixed but the issue moved to `fillQuadVertexBuffers()`, see below.  (if done here then the quads appear wrong)
 
   3. For some reason the quad positions 1 (bottom right) and 2 (top left) need to be swapped to get the correct heights and weird culling issues (actually culling issues stil exist, but even the workaround sometimes fails without the swap).  See `getMinMaxQuadHeights()` and `fillQuadVertexBuffers()`.
 
   4. The order of VTXT values does not match the expectation.  The position indices are supposed to start from the bottom left corner, but it seems to start from the top left corner instead.  See `getQuadBlendmaps()`.
 
-  5. The layers for cell (27,21) seems to be mixed up - small pebbles are seen in the middle when the large ones should be.
+  5. ~~The layers for cell (27,21) seems to be mixed up - small pebbles are seen in the middle when the large ones should be.~~ **FIXED:** the issue was using wrong texture scaling for additional passes, due to the initial experimental code haniging around unnoticed
 
-  6. Non-shader version no longer works.
+  6. Non-shader version of terrain material no longer works.
+
+  7. Cell -9 19 terrain in TES4 looks odd (see screenshot)
+
+  8. `ESM4::LandTexture::mTextureSpecular` is not used (maybe only applies to the base texture?)  Similarly, potential grass is not handled.
+
+  9. FO3 and FONV use `TXST` record for the land texture, using one more level of indirection.
+
+  10. FO3 and FONV use `_lod.nif` rather than `_far.nif` for the low-poly mesh.  Not sure how to distinguish TES4 and FO3/FONV.
+
+  11. Not sure what is the correct default texture for FO3/FONV.
+
+  12. There are some very dark patches e.g. COC "WastelandNV" -9 3 Load base texture and 2 additional layers (0 and 1) to see the difference.  Also see just outside Anvil gates.  It could be some textures are somehow rendered very dark by Ogre.
 
 ## Unrelated FIXME
 

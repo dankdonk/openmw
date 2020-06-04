@@ -297,7 +297,17 @@ void ForeignCreatureAnimation::addAnimSource(const std::string &skeletonName)
     if (skeletonName.find("entaur") != std::string::npos)
         addForeignAnimSource(skeletonName, path + "idleanims\\specialidle_scan.kf"); // Centaur
     if (skeletonName.find("eathclaw") != std::string::npos)
-        addForeignAnimSource(skeletonName, path + "mtidle.kf"); // Deathclaw
+    {
+        //addForeignAnimSource(skeletonName, path + "locomotion\\mtforward.kf"); // doesn't work?
+        int roll = Misc::Rng::rollDice(2);
+        if (roll == 0)
+            addForeignAnimSource(skeletonName, path + "idleanims\\specialidle_hithead.kf");
+        else if (roll == 1)
+            //addForeignAnimSource(skeletonName, path + "idleanims\\specialidle_hittorso.kf");
+            addForeignAnimSource(skeletonName, path + "locomotion\\hurt\\mtforward_hurt.kf");
+        else if (roll == 2)
+            addForeignAnimSource(skeletonName, path + "mtidle.kf"); // Deathclaw
+    }
     if (skeletonName.find("houl") != std::string::npos)
     {
         int roll = Misc::Rng::rollDice(4); // [0, 3]

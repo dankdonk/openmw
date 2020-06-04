@@ -52,7 +52,9 @@ namespace
             // end testing
 
             std::size_t pos = model.find_last_of(".");
-            std::string farModel = model.substr(0, pos) + "_far.nif";
+            // FIXME: how to choose between games?
+            //std::string farModel = model.substr(0, pos) + "_far.nif";
+            std::string farModel = model.substr(0, pos) + "_lod.nif"; // FIXME FONV
 #if 0
             if (Ogre::ResourceGroupManager::getSingleton().resourceExistsInAnyGroup(farModel))
                 rendering.addObject(ptr, farModel);
@@ -65,7 +67,7 @@ namespace
             }
             catch (std::exception&)
             {
-                //std::cout << "no far model " << model << std::endl;
+                std::cout << "no far model " << model << std::endl;
                 rendering.addObject(ptr, model);
             }
 #endif
@@ -1215,7 +1217,7 @@ namespace MWWorld
             std::vector<std::pair<std::int16_t, std::int16_t> > newGrids;
 
             const int range = 20;
-            const int exclude = 2;
+            const int exclude = 1;
             // FIXME: skip the last one? i.e. (0, 7)
             std::vector<std::pair<std::int16_t, std::int16_t> >::const_iterator cmpIter = cmpGrids.begin();
             for (; cmpIter != cmpGrids.end(); ++cmpIter)

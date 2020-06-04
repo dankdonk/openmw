@@ -21,7 +21,7 @@ namespace Foreign
     // NOTE: CellStore *World::getWorldCell (ESM4::FormId worldId, int x, int y)
     // loads as required (LAND formid comes from loaded CellStore) and we may need a
     // neighbouring land info (whose terrain and objects may not be loaded)
-    const ESM4Terrain::Land* TerrainStorage::getLand(int cellX, int cellY)
+    const ESM4Terrain::Land *TerrainStorage::getLand(int cellX, int cellY)
     {
         const MWWorld::ESMStore &esmStore = MWBase::Environment::get().getWorld()->getStore();
 #if 0
@@ -58,12 +58,19 @@ namespace Foreign
             //return 0;
     }
 
-    // FIXME: not needed?
-    const ESM4::LandTexture* TerrainStorage::getLandTexture(ESM4::FormId formId)
+    const ESM4::LandTexture *TerrainStorage::getLandTexture(ESM4::FormId formId)
     {
         const MWWorld::ESMStore &esmStore = MWBase::Environment::get().getWorld()->getStore();
 
         return esmStore.getForeign<ESM4::LandTexture>().search(formId);
+    }
+
+    // FIXME: incorporate this into getLandTexture() instead?
+    const ESM4::TextureSet *TerrainStorage::getTextureSet(ESM4::FormId formId)
+    {
+        const MWWorld::ESMStore &esmStore = MWBase::Environment::get().getWorld()->getStore();
+
+        return esmStore.getForeign<ESM4::TextureSet>().search(formId);
     }
 
     void TerrainStorage::getBounds(float &minX, float &maxX, float &minY, float &maxY)

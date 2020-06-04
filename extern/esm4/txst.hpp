@@ -44,8 +44,8 @@ namespace ESM4
 
         std::string mEditorId;
 
-        std::string mColorMap;
-        std::string mNormalMap;
+        std::string mDiffuse; // includes alpha info
+        std::string mNormalMap; // includes specular info (alpha channel)
         std::string mEnvMask;
         std::string mToneMap;
         std::string mDetailMap;

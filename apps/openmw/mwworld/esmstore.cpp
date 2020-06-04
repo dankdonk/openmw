@@ -298,7 +298,18 @@ void ESMStore::loadTes4Group (ESM::ESMReader &esm)
             // The records from other groups are skipped as per below.
 
             if (reader.grp(1).type != ESM4::Grp_CellChild)
-               throw std::runtime_error ("Unexpected group hierarchy in CellPersistentChild");
+            {
+                // if this group (CellPersistentChild) was empty, reader.saveGroupStatus()
+                // above would have popped the GroupStack and the previous group will no longer
+                // be CellChild
+
+                // FIXME: come up with a better test, e.g. check if empty somehow? check the
+                // size of the stack before/after? etc
+                std::cout << "type " << reader.grp(1).type << std::endl; // FIXME
+
+                break; // return instead?
+                //throw std::runtime_error ("Unexpected group hierarchy in CellPersistentChild");
+            }
 
             // NOTE: dummy cell no longer loaded here
             if (reader.grp(2).type == ESM4::Grp_WorldChild)

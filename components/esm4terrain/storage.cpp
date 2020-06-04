@@ -30,6 +30,7 @@
 
 #include <extern/esm4/land.hpp>
 #include <extern/esm4/ltex.hpp>
+#include <extern/esm4/txst.hpp>
 
 #include "../terrain/quadtreenode.hpp"
 
@@ -824,8 +825,10 @@ namespace ESM4Terrain
 
         // base texture
         ESM4::FormId baseTextureId = land->mTextures[quad].base.formId;
+        // FIXME: how to choose between games?
         if (baseTextureId == 0)
-            baseTextureId = 0x000008C0; // TES4: TerrainHDDirt01.dds
+            //baseTextureId = 0x000008C0; // TES4: TerrainHDDirt01.dds
+            baseTextureId = 0x00000A0D; // FONV: Dirt01.dds
 
         const ESM4::LandTexture *baseTexture = getLandTexture(baseTextureId);
         std::string baseTextureFile;
@@ -833,6 +836,18 @@ namespace ESM4Terrain
             baseTextureFile = "textures\\landscape\\"+baseTexture->mTextureFile;
         else
             throw std::runtime_error("cannot find base land texture");
+
+        // FIXME: needs better logic to detect FO3/FONV
+        if (baseTexture->mTextureFile == "")
+        {
+            if (baseTexture->mTexture) // FO3/FONV
+            {
+                const ESM4::TextureSet *baseTexSet = getTextureSet(baseTexture->mTexture);
+                baseTextureFile = "textures\\"+baseTexSet->mDiffuse;
+
+                //std::cout << "num layers " << land->mTextures[quad].layers.size() << std::endl;
+            }
+        }
 
         Terrain::LayerInfo li;
         li.mDiffuseMap = baseTextureFile;
@@ -850,6 +865,9 @@ namespace ESM4Terrain
         // additional textures
         for (std::size_t i = 0; i < numLayers; ++i)
         {
+            //if (i > 1)
+                //continue; // FIXME: testing dark patches
+
             const ESM4::Land::ATXT& additional = land->mTextures[quad].layers[i].texture;
             if (additional.quadrant != quad)
                 throw std::runtime_error("ATXT quadrant mismatch");
@@ -860,7 +878,9 @@ namespace ESM4Terrain
             ESM4::FormId textureId = additional.formId;
             if (textureId == 0)
             {
-                textureId = 0x000008C0; // TES4: TerrainHDDirt01.dds
+                // FIXME: how to choose between games?
+                //textureId = 0x000008C0; // TES4: TerrainHDDirt01.dds
+                textureId = 0x00000A0D; // FONV: Dirt01.dds
                 std::cout << "ATXT layer null, cell " << cellX << "," << cellY
                           << " quad " << quad << " layer " << i << std::endl; // FIXME
             }
@@ -869,6 +889,23 @@ namespace ESM4Terrain
             const ESM4::LandTexture *texture = getLandTexture(textureId);
             if (texture)
                 textureFile = "textures\\landscape\\"+texture->mTextureFile;
+            else
+                std::cout << "no land texture in esmstore " << cellX << "," << cellY
+                          << " quad " << quad << " layer " << i << std::endl; // FIXME
+
+            // FIXME: needs better logic to detect FO3/FONV
+            if ((texture && texture->mTextureFile == "" && textureId)/* || !texture*/)
+            {
+                const ESM4::TextureSet *texSet = getTextureSet(texture->mTexture);
+                if (texSet)
+                {
+                    textureFile = "textures\\"+texSet->mDiffuse;
+                }
+                else
+                    std::cout << "stop" << std::endl;
+            }
+
+
             //else // FIXME: throw instead?
             //throw std::runtime_error("ATXT layer null");
             li.mDiffuseMap = textureFile;

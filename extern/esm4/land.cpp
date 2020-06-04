@@ -231,21 +231,6 @@ void ESM4::Land::load(ESM4::Reader& reader)
     // at least one of the quadrants do not have a base texture, return without setting the flag
     if (!missing)
         mDataTypes |= LAND_VTEX;
-#if 0
-    if (mFormId == 0x0000757F) // this one has 13 unique textures (on top of base)
-        std::cout << "stop" << std::endl;
-
-    int count = 0;
-    std::map<FormId, int>::const_iterator it = uniqueTextures.begin();
-    for (; it != uniqueTextures.end(); ++it)
-    {
-        if (it->second > count)
-            count = it->second;
-    }
-
-    std::cout << "ESM4::LAND " << ESM4::formIdToString(mFormId)
-              << " unique textures " << uniqueTextures.size() << " max " << count << std::endl;
-#endif
 }
 
 //void ESM4::Land::save(ESM4::Writer& writer) const

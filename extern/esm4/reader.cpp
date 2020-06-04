@@ -315,7 +315,7 @@ void ESM4::Reader::saveGroupStatus()
     if (mRecordHeader.group.groupSize == (std::uint32_t)mCtx.recHeaderSize)
     {
 #if 0
-        std::cout << padding << "Igorning record group " // FIXME: debugging only
+        std::cout << padding << "Ignoring record group " // FIXME: debugging only
             << ESM4::printLabel(mRecordHeader.group.label, mRecordHeader.group.type)
             << " (empty)" << std::endl;
 #endif

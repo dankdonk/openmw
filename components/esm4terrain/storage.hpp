@@ -3,9 +3,15 @@
 
 #include <components/terrain/storage.hpp>
 
-#include "land.hpp"
-#include <extern/esm4/ltex.hpp>
 #include <extern/esm4/formid.hpp>
+
+#include "land.hpp"
+
+namespace ESM4
+{
+    struct LandTexture;
+    struct TextureSet;
+}
 
 namespace Terrain
 {
@@ -23,8 +29,9 @@ namespace ESM4Terrain
     private:
 
         // Not implemented in this class, because we need different Store implementations for game and editor
-        virtual const Land* getLand (int cellX, int cellY) = 0;
-        virtual const ESM4::LandTexture* getLandTexture(ESM4::FormId formId) = 0;
+        virtual const Land *getLand (int cellX, int cellY) = 0;
+        virtual const ESM4::LandTexture *getLandTexture(ESM4::FormId formId) = 0;
+        virtual const ESM4::TextureSet *getTextureSet(ESM4::FormId formId) = 0;
 
     public:
         //~Storage() { if (mRootNode) delete mRootNode; }
