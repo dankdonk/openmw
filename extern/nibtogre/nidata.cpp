@@ -838,18 +838,6 @@ NiBtOgre::NiKeyframeData::NiKeyframeData(uint32_t index, NiStream *stream, const
 
     if (mRotationType != 4) // not XYZ_ROTATION_KEY (i.e. LINEAR, QUADRATIC, TBC, CONSTANT)
     {
-//      mQuaternionKeys.resize(numRotationKeys);
-//      for (unsigned int i = 0; i < numRotationKeys; ++i)
-//      {
-//          stream->read(mQuaternionKeys.at(i).time);
-//          stream->read(mQuaternionKeys.at(i).value);
-//          if (mRotationType == 3/* TBC_KEY */)
-//          {
-//              stream->read(mQuaternionKeys.at(i).tension);
-//              stream->read(mQuaternionKeys.at(i).bias);
-//              stream->read(mQuaternionKeys.at(i).continuity);
-//          }
-//      }
         mQuaternionKeys.interpolation = mRotationType; // TODO: check not quadratic?
         for(unsigned int i = 0; i < numRotationKeys; ++i)
         {

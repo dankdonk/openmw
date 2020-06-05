@@ -38,6 +38,7 @@
 #include <OgreAnimationTrack.h>
 
 #include "niobject.hpp"
+#include "nistream.hpp" // FIXME: not sure why this is needed for Key<Ogre::Quaternion>::read()
 
 // Based on NifTools/NifSkope/doc/index.html
 //
@@ -288,10 +289,23 @@ namespace NiBtOgre
                 // FIXME: Morroblivion\Creatures\Kwama\KwamaForager\forward.kf
                 throw std::runtime_error("NiBtOgre::Key::interpolation is 0"); // FIXME: better message
             }
-            else
+            else // FIXME: Morrowblivion morroblivion\creatures\kwama\scrib\idle.kf
                 throw std::runtime_error("NiBtOgre::Key::interpolation unknown value"); // FIXME: better message
         }
     };
+
+    template<>
+    void Key<Ogre::Quaternion>::read(NiStream *stream, KeyType interpolation)
+    {
+        stream->read(time);
+        stream->read(value);
+        if (interpolation == 3 /* TBC */)
+        {
+            stream->read(tension);
+            stream->read(bias);
+            stream->read(continuity);
+        }
+    }
 
     template<typename T>
     struct KeyGroup
