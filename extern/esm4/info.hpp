@@ -31,7 +31,7 @@
 #include <string>
 
 #include "formid.hpp"
-#include "script.hpp"
+#include "script.hpp" // TargetCondition
 #include "dialogue.hpp" // DialType
 
 namespace ESM4
@@ -73,6 +73,7 @@ namespace ESM4
         std::uint16_t mInfoFlags; // see above enum
 
         TargetCondition mTargetCondition;
+        FormId mParam3; // TES5 only
 
         ScriptDefinition mScript; // FIXME: ignoring the second one after the NEXT sub-record
 

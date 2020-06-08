@@ -331,12 +331,12 @@ namespace ESM4
     struct TargetCondition
     {
         std::uint32_t condition; // ConditionTypeAndFlag + padding
-        float comparison;
+        float comparison; // WARN: can be GLOB FormId if flag set
         std::uint32_t functionIndex;
         std::uint32_t param1; // FIXME: if formid needs modindex adjustment or not?
         std::uint32_t param2;
         std::uint32_t runOn; // 0 subject, 1 target, 2 reference, 3 combat target, 4 linked reference
-        // below FO3/FONV
+        // below FO3/FONV/TES5
         FormId reference;
     };
 

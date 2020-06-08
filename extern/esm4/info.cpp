@@ -33,7 +33,7 @@
 //#include "writer.hpp"
 
 ESM4::DialogInfo::DialogInfo() : mFormId(0), mFlags(0), mQuest(0), mSound(0),
-    mDialType(0), mNextSpeaker(0), mInfoFlags(0)
+    mDialType(0), mNextSpeaker(0), mInfoFlags(0), mParam3(0)
 {
     std::memset(&mResponseData, 0, sizeof(TargetResponseData));
     mResponse.clear();
@@ -93,13 +93,21 @@ void ESM4::DialogInfo::load(ESM4::Reader& reader)
                     reader.get(&mTargetCondition, 24);
                 else if (subHdr.dataSize == 20) // FO3
                     reader.get(&mTargetCondition, 20);
-                else //if (subHdr.dataSize == 28)
+                else if (subHdr.dataSize == 28)
                 {
                     reader.get(mTargetCondition); // FO3/FONV
                     if (mTargetCondition.reference)
                         reader.adjustFormId(mTargetCondition.reference);
                 }
-                // FIXME: support TES5
+                else // TES5
+                {
+                    reader.get(&mTargetCondition, 20);
+                    if (subHdr.dataSize == 36)
+                        reader.getFormId(mParam3);
+                    reader.get(mTargetCondition.runOn);
+                    reader.getFormId(mTargetCondition.reference);
+                    reader.skipSubRecordData(4); // unknown
+                }
 
                 break;
             }

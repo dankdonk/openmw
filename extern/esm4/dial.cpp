@@ -32,7 +32,8 @@
 #include "reader.hpp"
 //#include "writer.hpp"
 
-ESM4::Dialogue::Dialogue() : mFormId(0), mFlags(0), mDialType(0), mDialFlags(0), mPriority(0.f)
+ESM4::Dialogue::Dialogue() : mFormId(0), mFlags(0), mDoAllBeforeRepeat(false),
+                             mDialType(0), mDialFlags(0), mPriority(0.f)
 {
     mEditorId.clear();
     mTopicName.clear();
@@ -75,11 +76,21 @@ void ESM4::Dialogue::load(ESM4::Reader& reader)
             }
             case ESM4::SUB_DATA:
             {
-                reader.get(mDialType); // TES4
-                if (subHdr.dataSize == 2)
-                    reader.get(mDialFlags); // FO3/FONV
-                else if (subHdr.dataSize == 3) // TES5
-                    reader.skipSubRecordData(1); // FIXME
+                if (subHdr.dataSize == 4) // TES5
+                {
+                    std::uint8_t dummy;
+                    reader.get(dummy);
+                    if (dummy != 0)
+                        mDoAllBeforeRepeat = true;
+                }
+
+                reader.get(mDialType); // TES4/FO3/FONV/TES5
+
+                if (subHdr.dataSize >= 2) // FO3/FONV/TES5
+                    reader.get(mDialFlags);
+
+                if (subHdr.dataSize >= 3) // TES5
+                    reader.skipSubRecordData(1); // unknown
 
                 break;
             }
