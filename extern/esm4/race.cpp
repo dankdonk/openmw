@@ -37,6 +37,7 @@
 ESM4::Race::Race() : mFormId(0), mFlags(0), mIsTES5(false)
                    , mHeightMale(1.f), mHeightFemale(1.f), mWeightMale(1.f), mWeightFemale(1.f)
                    , mRaceFlags(0), mFaceGenMainClamp(0.f), mFaceGenFaceClamp(0.f), mNumKeywords(0)
+                   , mSkin(0)
 {
     mEditorId.clear();
     mFullName.clear();
@@ -49,6 +50,10 @@ ESM4::Race::Race() : mFormId(0), mFlags(0), mIsTES5(false)
 
     mVNAM.resize(2);
     mDefaultHair.resize(2);
+
+    mBodyTemplate.bodyPart = 0;
+    mBodyTemplate.flags = 0;
+    mBodyTemplate.type = 0;
 }
 
 ESM4::Race::~Race()
@@ -67,7 +72,7 @@ void ESM4::Race::load(ESM4::Reader& reader)
     bool isFO3 = false;
 
     bool isMale = false;
-    bool headpart = true;
+    int curr_part = -1; // 0 = head, 1 = body, 2 = egt, 3 = hkx
     std::uint32_t currentIndex = 0xffffffff;
 
     while (reader.getSubRecordHeader())
@@ -123,7 +128,7 @@ void ESM4::Race::load(ESM4::Reader& reader)
             case ESM4::SUB_SPLO: // bonus spell formid (TES5 may have SPCT and multiple SPLO)
             {
                 FormId magic;
-                reader.get(magic);
+                reader.getFormId(magic);
                 mBonusSpells.push_back(magic);
 //              std::cout << "RACE " << printName(subHdr.typeId) << " " << formIdToString(magic) << std::endl;
 
@@ -313,15 +318,21 @@ void ESM4::Race::load(ESM4::Reader& reader)
             //
             case ESM4::SUB_NAM0: // start marker head data /* 1 */
             {
-                headpart = true;
-                // FIXME TES5
+                curr_part = 0; // head part
+
                 if (isFO3 || isFONV)
                 {
                     mHeadParts.resize(8);
                     mHeadPartsFemale.resize(8);
                 }
-                else
+                else if (isTES4)
                     mHeadParts.resize(9); // assumed based on Construction Set
+                else
+                {
+                    mHeadPartIdsMale.resize(5);
+                    mHeadPartIdsFemale.resize(5);
+                }
+
                 currentIndex = 0xffffffff;
                 break;
             }
@@ -344,19 +355,33 @@ void ESM4::Race::load(ESM4::Reader& reader)
             }
             case ESM4::SUB_MODL:
             {
-                if (headpart)
+                if (curr_part == 0) // head part
                 {
                     if (isMale || isTES4)
                         reader.getZString(mHeadParts[currentIndex].mesh);
                     else
                         reader.getZString(mHeadPartsFemale[currentIndex].mesh); // TODO: check TES4
+
+                    // TES5 keeps head part formid in mHeadPartIdsMale and mHeadPartIdsFemale
                 }
-                else
+                else if (curr_part == 1) // body part
                 {
                     if (isMale)
                         reader.getZString(mBodyPartsMale[currentIndex].mesh);
                     else
                         reader.getZString(mBodyPartsFemale[currentIndex].mesh);
+
+                    // TES5 seems to have no body parts at all, instead keep EGT models
+                }
+                else if (curr_part == 2) // egt
+                {
+                    //std::cout << mEditorId << " egt " << currentIndex << std::endl; // FIXME
+                    reader.skipSubRecordData();  // FIXME TES5 egt
+                }
+                else
+                {
+                    //std::cout << mEditorId << " hkx " << currentIndex << std::endl; // FIXME
+                    reader.skipSubRecordData();  // FIXME TES5 hkx
                 }
 
                 break;
@@ -364,42 +389,51 @@ void ESM4::Race::load(ESM4::Reader& reader)
             case ESM4::SUB_MODB: reader.skipSubRecordData(); break; // always 0x0000?
             case ESM4::SUB_ICON:
             {
-                if (headpart)
+                if (curr_part == 0) // head part
                 {
                     if (isMale || isTES4)
                         reader.getZString(mHeadParts[currentIndex].texture);
                     else
                         reader.getZString(mHeadPartsFemale[currentIndex].texture); // TODO: check TES4
                 }
-                else
+                else if (curr_part == 1) // body part
                 {
                     if (isMale)
                         reader.getZString(mBodyPartsMale[currentIndex].texture);
                     else
                         reader.getZString(mBodyPartsFemale[currentIndex].texture);
                 }
+                else
+                    reader.skipSubRecordData();  // FIXME TES5
 
                 break;
             }
             //
             case ESM4::SUB_NAM1: // start marker body data /* 4 */
             {
-                headpart = false; // body part
-                // FIXME TES5
+
                 if (isFO3 || isFONV)
                 {
+                    curr_part = 1; // body part
+
                     mBodyPartsMale.resize(4);
                     mBodyPartsFemale.resize(4);
                 }
-                else
+                else if (isTES4)
                 {
+                    curr_part = 1; // body part
+
                     mBodyPartsMale.resize(5);   // 0 = upper body, 1 = legs, 2 = hands, 3 = feet, 4 = tail
                     mBodyPartsFemale.resize(5); // 0 = upper body, 1 = legs, 2 = hands, 3 = feet, 4 = tail
                 }
+                else // TES5
+                    curr_part = 2; // for TES5 NAM1 indicates the start of EGT model
+
                 if (isTES4)
                     currentIndex = 4; // FIXME: argonian tail mesh without preceeding INDX
                 else
                     currentIndex = 0xffffffff;
+
                 break;
             }
             case ESM4::SUB_MNAM: isMale = true; break;  /* 2, 5, 7 */
@@ -527,21 +561,98 @@ void ESM4::Race::load(ESM4::Reader& reader)
             {
                 std::uint32_t formid;
                 for (unsigned int i = 0; i < mNumKeywords; ++i)
-                    reader.get(formid);
+                    reader.getFormId(formid);
                 break;
             }
             //
             case ESM4::SUB_WNAM: // ARMO FormId
+            {
+                reader.getFormId(mSkin);
+                //std::cout << mEditorId << " skin " << formIdToString(mSkin) << std::endl; // FIXME
+                break;
+            }
             case ESM4::SUB_BODT: // body template
+            {
+                reader.get(mBodyTemplate.bodyPart);
+                reader.get(mBodyTemplate.flags);
+                reader.get(mBodyTemplate.unknown1);
+                reader.get(mBodyTemplate.unknown2);
+                reader.get(mBodyTemplate.unknown3);
+                reader.get(mBodyTemplate.type);
+
+                break;
+            }
+            case ESM4::SUB_HEAD: // TES5
+            {
+                FormId formId;
+                reader.getFormId(formId);
+
+                // FIXME: no order? head, mouth, eyes, brow, hair
+                if (isMale)
+                    mHeadPartIdsMale[currentIndex] = formId;
+                else
+                    mHeadPartIdsFemale[currentIndex] = formId;
+
+                //std::cout << mEditorId << (isMale ? " male head " : " female head ")
+                        //<< formIdToString(formId) << " " << currentIndex << std::endl; // FIXME
+
+                break;
+            }
+            case ESM4::SUB_NAM3: // start of hkx model
+            {
+                curr_part = 3; // for TES5 NAM3 indicates the start of hkx model
+
+                break;
+            }
+            // Not sure for what this is used - maybe to indicate which slots are in use? e.g.:
+            //
+            // ManakinRace HEAD
+            // ManakinRace Hair
+            // ManakinRace BODY
+            // ManakinRace Hands
+            // ManakinRace Forearms
+            // ManakinRace Amulet
+            // ManakinRace Ring
+            // ManakinRace Feet
+            // ManakinRace Calves
+            // ManakinRace SHIELD
+            // ManakinRace
+            // ManakinRace LongHair
+            // ManakinRace Circlet
+            // ManakinRace
+            // ManakinRace
+            // ManakinRace
+            // ManakinRace
+            // ManakinRace
+            // ManakinRace
+            // ManakinRace
+            // ManakinRace DecapitateHead
+            // ManakinRace Decapitate
+            // ManakinRace
+            // ManakinRace
+            // ManakinRace
+            // ManakinRace
+            // ManakinRace
+            // ManakinRace
+            // ManakinRace
+            // ManakinRace
+            // ManakinRace
+            // ManakinRace FX0
+            case ESM4::SUB_NAME: // TES5 biped object names (x32)
+            {
+                std::string name;
+                reader.getZString(name);
+                //std::cout << mEditorId << " " << name << std::endl;
+
+                break;
+            }
             case ESM4::SUB_MTNM: // movement type
             case ESM4::SUB_ATKD: // attack data
             case ESM4::SUB_ATKE: // attach event
             case ESM4::SUB_GNAM: // body part data
-            case ESM4::SUB_NAM3: // start of hkx model
             case ESM4::SUB_NAM4: // material type
             case ESM4::SUB_NAM5: // unarmed impact?
             case ESM4::SUB_LNAM: // close loot sound
-            case ESM4::SUB_NAME: // biped object names (x32)
             case ESM4::SUB_QNAM: // equipment slot formid
             case ESM4::SUB_HCLF: // default hair colour
             case ESM4::SUB_UNES: // unarmed equipment slot formid
@@ -556,7 +667,6 @@ void ESM4::Race::load(ESM4::Reader& reader)
             case ESM4::SUB_PHWT:
             case ESM4::SUB_AHCF:
             case ESM4::SUB_AHCM:
-            case ESM4::SUB_HEAD:
             case ESM4::SUB_MPAI:
             case ESM4::SUB_MPAV:
             case ESM4::SUB_DFTF:

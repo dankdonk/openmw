@@ -29,6 +29,7 @@
 
 #include <cstdint>
 #include <string>
+#include <vector>
 
 #include "formid.hpp"
 
@@ -43,6 +44,15 @@ namespace ESM4
         std::uint32_t mFlags; // from the header, see enum type RecordFlag for details
 
         std::string mEditorId;
+
+        std::string mModelMale;
+        std::string mModelFemale;
+
+        FormId mTextureMale;
+        FormId mTextureFemale;
+
+        FormId mRacePrimary;
+        std::vector<FormId> mRaces;
 
         ArmorAddon();
         virtual ~ArmorAddon();

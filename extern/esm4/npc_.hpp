@@ -176,13 +176,14 @@ namespace ESM4
 
         FormId mRace;
         FormId mClass;
-        FormId mHair;
+        FormId mHair; // not for TES5, see mHeadParts
         FormId mEyes;
 
-        std::vector<FormId> mHeadParts; // FO3/FONV
+        std::vector<FormId> mHeadParts; // FO3/FONV/TES5
 
         float mHairLength;
-        HairColour mHairColour;
+        HairColour mHairColour; // TES4/FO3/FONV
+        FormId mHairColourId; // TES5
 
         FormId mDeathItem;
         std::vector<FormId> mSpell;
@@ -206,6 +207,9 @@ namespace ESM4
 
         FormId mBaseTemplate; // FO3/FONV/TES5
         FormId mWornArmor;    // TES5 only?
+
+        FormId mDefaultOutfit; // TES5 OTFT
+        FormId mSleepOutfit;   // TES5 OTFT
 
         std::vector<float> mSymShapeModeCoefficients;    // size 0 or 50
         std::vector<float> mAsymShapeModeCoefficients;   // size 0 or 30

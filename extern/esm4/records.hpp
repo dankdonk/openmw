@@ -64,5 +64,8 @@
 #include <extern/esm4/aloc.hpp>
 #include <extern/esm4/mset.hpp>
 #include <extern/esm4/dobj.hpp>
+#include <extern/esm4/clfm.hpp>
+#include <extern/esm4/otft.hpp>
+#include <extern/esm4/flst.hpp>
 
 #endif // ESM4_RECORDS_H

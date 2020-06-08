@@ -32,11 +32,13 @@
 #include "reader.hpp"
 //#include "writer.hpp"
 
-ESM4::HeadPart::HeadPart() : mFormId(0), mFlags(0), mData(0), mAdditionalPart(0)
+ESM4::HeadPart::HeadPart() : mFormId(0), mFlags(0), mData(0), mAdditionalPart(0), mBaseTexture(0)
 {
     mEditorId.clear();
     mFullName.clear();
     mModel.clear();
+
+    mTriFile.resize(3);
 }
 
 ESM4::HeadPart::~HeadPart()
@@ -48,6 +50,8 @@ void ESM4::HeadPart::load(ESM4::Reader& reader)
     mFormId = reader.hdr().record.id;
     reader.adjustFormId(mFormId);
     mFlags  = reader.hdr().record.flags;
+
+    std::uint32_t type;
 
     while (reader.getSubRecordHeader())
     {
@@ -66,14 +70,28 @@ void ESM4::HeadPart::load(ESM4::Reader& reader)
             }
             case ESM4::SUB_DATA: reader.get(mData); break;
             case ESM4::SUB_MODL: reader.getZString(mModel); break;
-            case ESM4::SUB_HNAM: reader.get(mAdditionalPart); break;
+            case ESM4::SUB_HNAM: reader.getFormId(mAdditionalPart); break;
+            case ESM4::SUB_NAM0: // TES5
+            {
+                reader.get(type);
+
+                break;
+            }
+            case ESM4::SUB_NAM1: // TES5
+            {
+                std::string file;
+                reader.getZString(file);
+
+                // FIXME: check type >= 0 && type < 3
+                mTriFile[type] = std::move(file);
+
+                break;
+            }
+            case ESM4::SUB_TNAM: reader.getFormId(mBaseTexture); break;
             case ESM4::SUB_PNAM:
             case ESM4::SUB_MODS:
             case ESM4::SUB_MODT:
-            case ESM4::SUB_NAM0:
-            case ESM4::SUB_NAM1:
             case ESM4::SUB_RNAM:
-            case ESM4::SUB_TNAM:
             {
                 //std::cout << "HDPT " << ESM4::printName(subHdr.typeId) << " skipping..." << std::endl;
                 reader.skipSubRecordData();

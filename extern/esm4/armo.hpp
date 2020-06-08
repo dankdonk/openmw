@@ -29,6 +29,7 @@
 
 #include <cstdint>
 #include <string>
+#include <vector>
 
 #include "formid.hpp"
 
@@ -179,7 +180,7 @@ namespace ESM4
         std::uint16_t mEnchantmentPoints;
         FormId        mEnchantment;
 
-        FormId mARMA;
+        std::vector<FormId> mAddOns; // TES5 ARMA
         Data mData;
 
         Armor();

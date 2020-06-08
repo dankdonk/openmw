@@ -32,9 +32,13 @@
 #include "reader.hpp"
 //#include "writer.hpp"
 
-ESM4::ArmorAddon::ArmorAddon() : mFormId(0), mFlags(0)
+ESM4::ArmorAddon::ArmorAddon() : mFormId(0), mFlags(0), mTextureMale(0), mTextureFemale(0),
+                                 mRacePrimary(0)
 {
     mEditorId.clear();
+
+    mModelMale.clear();
+    mModelFemale.clear();
 }
 
 ESM4::ArmorAddon::~ArmorAddon()
@@ -53,7 +57,29 @@ void ESM4::ArmorAddon::load(ESM4::Reader& reader)
         switch (subHdr.typeId)
         {
             case ESM4::SUB_EDID: reader.getZString(mEditorId); break;
-            case ESM4::SUB_RNAM:
+            case ESM4::SUB_MOD2: reader.getZString(mModelMale); break;
+            case ESM4::SUB_MOD3: reader.getZString(mModelFemale); break;
+            case ESM4::SUB_MOD4:
+            case ESM4::SUB_MOD5:
+            {
+                std::string model;
+                reader.getZString(model);
+
+                //std::cout << mEditorId << " " << ESM4::printName(subHdr.typeId) << " " << model << std::endl;
+
+                break;
+            }
+            case ESM4::SUB_NAM0: reader.getFormId(mTextureMale); break;
+            case ESM4::SUB_NAM1: reader.getFormId(mTextureFemale); break;
+            case ESM4::SUB_RNAM: reader.getFormId(mRacePrimary); break;
+            case ESM4::SUB_MODL:
+            {
+                FormId formId;
+                reader.getFormId(formId);
+                mRaces.push_back(formId);
+
+                break;
+            }
             case ESM4::SUB_BODT:
             case ESM4::SUB_DNAM:
             case ESM4::SUB_MO2S:
@@ -63,13 +89,6 @@ void ESM4::ArmorAddon::load(ESM4::Reader& reader)
             case ESM4::SUB_MO4S:
             case ESM4::SUB_MO4T:
             case ESM4::SUB_MO5T:
-            case ESM4::SUB_MOD2:
-            case ESM4::SUB_MOD3:
-            case ESM4::SUB_MOD4:
-            case ESM4::SUB_MOD5:
-            case ESM4::SUB_MODL:
-            case ESM4::SUB_NAM0:
-            case ESM4::SUB_NAM1:
             case ESM4::SUB_NAM2:
             case ESM4::SUB_NAM3:
             case ESM4::SUB_SNDD:

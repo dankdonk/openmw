@@ -34,7 +34,7 @@
 
 ESM4::Armor::Armor() : mFormId(0), mFlags(0), mIsTES4(false), mIsFO3(false), mIsFONV(false),
                        mPickUpSound(0), mDropSound(0), mBoundRadius(0.f),
-                       mArmorFlags(0), mGeneralFlags(0), mARMA(0)
+                       mArmorFlags(0), mGeneralFlags(0)
 {
     mEditorId.clear();
     mFullName.clear();
@@ -109,7 +109,10 @@ void ESM4::Armor::load(ESM4::Reader& reader)
                 //if (esmVer == ESM4::VER_094 || esmVer == ESM4::VER_170 || isFONV)
                 if (subHdr.dataSize == 4) // FO3 has zstring even though VER_094
                 {
-                    reader.get(mARMA); // FormId
+                    FormId formId;
+                    reader.getFormId(formId);
+
+                    mAddOns.push_back(formId);
                 }
                 else
                 {
@@ -194,7 +197,7 @@ void ESM4::Armor::load(ESM4::Reader& reader)
             case ESM4::SUB_MO4T:
             case ESM4::SUB_MO4S:
             case ESM4::SUB_OBND:
-            case ESM4::SUB_RNAM:
+            case ESM4::SUB_RNAM: // race formid
             case ESM4::SUB_KSIZ:
             case ESM4::SUB_KWDA:
             case ESM4::SUB_TNAM:

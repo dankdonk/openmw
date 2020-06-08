@@ -28,6 +28,7 @@
 #define ESM4_HDPT_H
 
 #include <cstdint>
+#include <vector>
 
 #include "formid.hpp"
 
@@ -48,6 +49,9 @@ namespace ESM4
         std::uint8_t mData;
 
         FormId mAdditionalPart;
+
+        std::vector<std::string> mTriFile;
+        FormId mBaseTexture;
 
         HeadPart();
         virtual ~HeadPart();

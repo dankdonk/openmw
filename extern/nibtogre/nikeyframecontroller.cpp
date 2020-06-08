@@ -73,7 +73,8 @@ NiBtOgre::NiKeyframeController::NiKeyframeController(uint32_t index, NiStream *s
 
 NiBtOgre::NiTimeControllerRef NiBtOgre::NiKeyframeController::build(std::vector<Ogre::Controller<float> > & controllers, Ogre::Mesh *mesh)
 {
-    return -1;
+    //return -1;
+    return NiTimeController::mNextControllerRef;
 }
 
 void NiBtOgre::NiKeyframeController::build(NiAVObject* target, const NiTransformInterpolator& interpolator, std::vector<Ogre::Controller<float> >& controllers)

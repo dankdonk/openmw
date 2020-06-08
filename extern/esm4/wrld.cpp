@@ -72,6 +72,9 @@ void ESM4::World::load(ESM4::Reader& reader)
 
     std::uint32_t subSize = 0; // for XXXX sub record
 
+    bool isTES5 = false;
+    bool usingDefaultLevels = true;
+
     while (reader.getSubRecordHeader())
     {
         const ESM4::SubRecordHeader& subHdr = reader.subRecordHeader();
@@ -81,7 +84,11 @@ void ESM4::World::load(ESM4::Reader& reader)
             case ESM4::SUB_FULL: // Name of the worldspace
             {
                 if (reader.hasLocalizedStrings())
+                {
                     reader.getLocalizedString(mFullName);
+
+                    isTES5 = true; // FIXME: needs more testing
+                }
                 else if (!reader.getZString(mFullName))
                     throw std::runtime_error ("WRLD FULL data read error");
 
@@ -128,6 +135,8 @@ void ESM4::World::load(ESM4::Reader& reader)
             {
                 reader.get(mLandLevel);  //  -2700.f for TES5
                 reader.get(mWaterLevel); // -14000.f for TES5
+                usingDefaultLevels = false;
+
                 break;
             }
             // Only a few worlds in FO3 have music (I'm guessing 00090908 "explore" is the default?)
@@ -190,6 +199,12 @@ void ESM4::World::load(ESM4::Reader& reader)
             }
             default:
                 throw std::runtime_error("ESM4::WRLD::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
+        }
+
+        if (isTES5 && usingDefaultLevels)
+        {
+            mLandLevel = -2700.f;
+            mWaterLevel = -14000.f;
         }
     }
 }

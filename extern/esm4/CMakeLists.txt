@@ -97,6 +97,9 @@ set(ESM4_SOURCE_FILES
     aloc.cpp
     mset.cpp
     dobj.cpp
+    clfm.cpp
+    otft.cpp
+    flst.cpp
     formid.cpp
     reader.cpp
 )

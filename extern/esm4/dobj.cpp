@@ -102,6 +102,13 @@ void ESM4::DefaultObj::load(ESM4::Reader& reader)
 
                 break;
             }
+            case ESM4::SUB_DNAM:
+            {
+                //std::cout << "DOBJ " << ESM4::printName(subHdr.typeId) << " skipping..."
+                          //<< subHdr.dataSize << std::endl;
+                reader.skipSubRecordData();
+                break;
+            }
             default:
                 //std::cout << "DOBJ " << ESM4::printName(subHdr.typeId) << " skipping..."
                           //<< subHdr.dataSize << std::endl;

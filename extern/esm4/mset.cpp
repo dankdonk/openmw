@@ -104,7 +104,6 @@ void ESM4::MediaSet::load(ESM4::Reader& reader)
                 throw std::runtime_error("ESM4::MSET::load - Unknown subrecord " + ESM4::printName(subHdr.typeId));
         }
     }
-    //std::cout << "MSET " << mEditorId << ": " << mQuestName << " @ " << mFileName << std::endl;
 }
 
 //void ESM4::MediaSet::save(ESM4::Writer& writer) const

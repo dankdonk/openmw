@@ -35,9 +35,10 @@
 //#include "writer.hpp"
 
 ESM4::Npc::Npc() : mFormId(0), mFlags(0), mIsTES4(false), mIsFONV(false), mRace(0), mClass(0), mHair(0),
-                   mEyes(0), mHairLength(0.f), mDeathItem(0),
+                   mEyes(0), mHairLength(0.f), mHairColourId(0), mDeathItem(0),
                    mScript(0), mCombatStyle(0), mSoundBase(0), mSound(0), mSoundChance(0),
-                   mFootWeight(0.f), mBoundRadius(0.f), mBaseTemplate(0), mWornArmor(0), mFgRace(0)
+                   mFootWeight(0.f), mBoundRadius(0.f), mBaseTemplate(0), mWornArmor(0), mFgRace(0),
+                   mDefaultOutfit(0), mSleepOutfit(0)
 {
     mEditorId.clear();
     mFullName.clear();
@@ -75,7 +76,7 @@ void ESM4::Npc::load(ESM4::Reader& reader)
         switch (subHdr.typeId)
         {
             case ESM4::SUB_EDID: reader.getZString(mEditorId); break;
-            case ESM4::SUB_MODL: reader.getZString(mModel);    break;
+            case ESM4::SUB_MODL: reader.getZString(mModel);    break; // not for TES5, see Race
             case ESM4::SUB_FULL:
             {
                 if (reader.hasLocalizedStrings())
@@ -115,7 +116,7 @@ void ESM4::Npc::load(ESM4::Reader& reader)
             }
             case ESM4::SUB_RNAM: reader.getFormId(mRace);      break;
             case ESM4::SUB_CNAM: reader.getFormId(mClass);     break;
-            case ESM4::SUB_HNAM: reader.getFormId(mHair);      break;
+            case ESM4::SUB_HNAM: reader.getFormId(mHair);      break; // not for TES5
             case ESM4::SUB_ENAM: reader.getFormId(mEyes);      break;
             //
             case ESM4::SUB_INAM: reader.getFormId(mDeathItem); break;
@@ -229,17 +230,30 @@ void ESM4::Npc::load(ESM4::Reader& reader)
             case ESM4::SUB_PNAM: // FO3/FONV/TES5
             {
                 FormId headPart;
-                reader.get(headPart);
+                reader.getFormId(headPart);
                 mHeadParts.push_back(headPart);
 
                 break;
             }
+            case ESM4::SUB_HCLF: // TES5 hair colour
+            {
+                reader.getFormId(mHairColourId);
+
+                break;
+            }
+            case ESM4::SUB_COCT: // TES5
+            {
+                std::uint32_t count;
+                reader.get(count);
+
+                break;
+            }
+            case ESM4::SUB_DOFT: reader.getFormId(mDefaultOutfit); break;
+            case ESM4::SUB_SOFT: reader.getFormId(mSleepOutfit); break;
             case ESM4::SUB_ATKR:
-            case ESM4::SUB_COCT:
             case ESM4::SUB_CRIF:
             case ESM4::SUB_CSDT:
             case ESM4::SUB_DNAM:
-            case ESM4::SUB_DOFT:
             case ESM4::SUB_DPLT:
             case ESM4::SUB_ECOR:
             case ESM4::SUB_ANAM:
@@ -249,7 +263,6 @@ void ESM4::Npc::load(ESM4::Reader& reader)
             case ESM4::SUB_DSTD:
             case ESM4::SUB_DSTF:
             case ESM4::SUB_FTST:
-            case ESM4::SUB_HCLF: // hair colour?
             case ESM4::SUB_KSIZ:
             case ESM4::SUB_KWDA:
             case ESM4::SUB_NAM5:
@@ -262,7 +275,6 @@ void ESM4::Npc::load(ESM4::Reader& reader)
             case ESM4::SUB_PRKR:
             case ESM4::SUB_PRKZ:
             case ESM4::SUB_QNAM:
-            case ESM4::SUB_SOFT:
             case ESM4::SUB_SPCT:
             case ESM4::SUB_TIAS:
             case ESM4::SUB_TINC:
