@@ -289,6 +289,15 @@ namespace FgLib
         return "";
     }
 
+    std::string FgSam::getTES5NpcDetailTexture_0(const std::string& npcFormIdString) const
+    {
+        std::string textureFile = "textures\\actors\\facemods\\skyrim.esm\\"+npcFormIdString+"0.dds";
+        if (Ogre::ResourceGroupManager::getSingleton().resourceExistsInAnyGroup(textureFile))
+            return textureFile;
+
+        return "";
+    }
+
     bool FgSam::getMorphedTexture(Ogre::TexturePtr& morphTexture,
                                     const std::string& mesh,
                                     const std::string& texture,
@@ -418,7 +427,6 @@ namespace FgLib
             pDest += 4;
         }
 
-        // Unlock the pixel buffer
         pixelBuffer->unlock();
 
         return true;

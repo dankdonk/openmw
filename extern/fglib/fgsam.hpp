@@ -65,6 +65,7 @@ namespace FgLib
         std::string getTES4NpcDetailTexture_0(const std::string& npcFormIdString) const;
         std::string getFO3NpcDetailTexture_0(const std::string& npcFormIdString) const;
         std::string getFONVNpcDetailTexture_0(const std::string& npcFormIdString) const;
+        std::string getTES5NpcDetailTexture_0(const std::string& npcFormIdString) const;
 
         // returns true if TRI and EGM files are found (or loaded) to build the morphed vertices
         //
