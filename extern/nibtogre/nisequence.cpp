@@ -532,7 +532,8 @@ void NiBtOgre::NiControllerSequence::build(Ogre::Entity *skelBase, NiModelPtr an
             else
                 controller = static_cast<NiTransformController*>(target->findController(ctlrTypeName));
 
-            if (!controller)
+            // FIXME: TES5 skeletons do not have controllers
+            if (0)//!controller)
             {
                 std::cout << "NiSequence: missing controller " << ctlrTypeName << std::endl;
                 continue;

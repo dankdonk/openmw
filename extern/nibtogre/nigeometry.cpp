@@ -320,7 +320,7 @@ std::string NiBtOgre::NiTriBasedGeom::getMaterial()
     // if an external texture was supplied, overwrite texture property but only if it is an exposed skin
     std::string skinTexture = mParent->getSkinTexture();
     bool useExt = false;
-    if (!skinTexture.empty() &&
+    if (!skinTexture.empty() && skinTexture != "textures\\" &&
         mOgreMaterial.texName.find(NiTexturingProperty::Texture_Base) != mOgreMaterial.texName.end())
     {
         // WARN: we rely on getMaterial() being called *after* the sub-meshes have been built

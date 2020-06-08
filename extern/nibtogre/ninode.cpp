@@ -140,6 +140,14 @@ NiBtOgre::NiNode::NiNode(uint32_t index, NiStream *stream, const NiModel& model,
             data.addBoneTreeLeafIndex(mSelfRef);
         }
     }
+
+    // FIXME: hack for TES5 skeleton
+    if (stream->nifVer() >= 0x14020007 // from 20.2.0.7
+        &&
+       (data.isSkeletonTES5()))// || getName() == "skeleton.nif"))
+    {
+        data.addBoneTreeLeafIndex(mSelfRef);
+    }
 }
 
 void NiBtOgre::NiNode::registerSubMesh(NiTriBasedGeom* geom)
@@ -204,9 +212,16 @@ void NiBtOgre::NiNode::buildMesh(Ogre::Mesh *mesh)
     // TODO: is it possible to use the ones in the NIF files?
     if (needTangents)
     {
+        try // FIXME: TES5 some NiTriShapeData don't have any normals? See femalebody_1.nif
+        {
         unsigned short src, dest;
         if (!mesh->suggestTangentVectorBuildParams(Ogre::VES_TANGENT, src, dest))
             mesh->buildTangentVectors(Ogre::VES_TANGENT, src, dest);
+        }
+        catch(...)
+        {
+            std::cout << "exception building tangent vectors " << mModel.getName() << std::endl;
+        }
     }
 
     if (mSubMeshChildren.size())

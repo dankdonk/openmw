@@ -175,31 +175,47 @@ namespace MWSound
 
     std::string SoundManager::lookupForeign(const std::string &soundId, float &volume, float &min, float &max)
     {
+        std::string soundFile;
+
         MWBase::World* world = MWBase::Environment::get().getWorld();
+        static const float fAudioDefaultMinDistance
+            = world->getStore().get<ESM::GameSetting>().find("fAudioDefaultMinDistance")->getFloat();
+        static const float fAudioDefaultMaxDistance
+            = world->getStore().get<ESM::GameSetting>().find("fAudioDefaultMaxDistance")->getFloat();
+        min = fAudioDefaultMinDistance;
+        max = fAudioDefaultMaxDistance;
+
         const MWWorld::ForeignStore<ESM4::Sound>& soundStore = world->getStore().getForeign<ESM4::Sound>();
-        // FIXME: TES5 FormId 0003C816
         const ESM4::Sound *snd = soundStore.search(ESM4::stringToFormId(soundId));
-
-        volume *= static_cast<float>(pow(10.0, (-snd->mData.staticAttenuation / 100) / 20.f));
-
-        // 1454, 0.199526 if integer division by 100 (discards remainder so a little louder)
-        // 1454, 0.187499 if floating point division by 100.f
-        //std::cout << snd->mData.staticAttenuation << ", " << volume << std::endl; // FIXME
-        //std::cout << "sound volume " << volume << std::endl; // FIXME
-
-        if(snd->mData.minAttenuation == 0 && snd->mData.maxAttenuation == 0)
+        if (snd)
         {
-            static const float fAudioDefaultMinDistance
-                = world->getStore().get<ESM::GameSetting>().find("fAudioDefaultMinDistance")->getFloat();
-            static const float fAudioDefaultMaxDistance
-                = world->getStore().get<ESM::GameSetting>().find("fAudioDefaultMaxDistance")->getFloat();
-            min = fAudioDefaultMinDistance;
-            max = fAudioDefaultMaxDistance;
+            volume *= static_cast<float>(pow(10.0, (-snd->mData.staticAttenuation / 100) / 20.f));
+
+            // 1454, 0.199526 if integer division by 100 (discards remainder so a little louder)
+            // 1454, 0.187499 if floating point division by 100.f
+            //std::cout << snd->mData.staticAttenuation << ", " << volume << std::endl; // FIXME
+            //std::cout << "sound volume " << volume << std::endl; // FIXME
+
+            if(!(snd->mData.minAttenuation == 0 && snd->mData.maxAttenuation == 0))
+            {
+                min = float(snd->mData.minAttenuation * 5);
+                max = float(snd->mData.maxAttenuation * 100);
+            }
+
+            soundFile = snd->mSoundFile;
         }
-        else
+        else // e.g. TES5 FormId 0003C816
         {
-            min = float(snd->mData.minAttenuation * 5);
-            max = float(snd->mData.maxAttenuation * 100);
+            // FIXME: is there another way to avoid searching twice?
+            const MWWorld::ForeignStore<ESM4::SoundReference>& sndrStore
+                = world->getStore().getForeign<ESM4::SoundReference>();
+            const ESM4::SoundReference *sndr = sndrStore.search(ESM4::stringToFormId(soundId));
+
+            volume *= static_cast<float>(pow(10.0, (-sndr->mData.staticAttenuation / 100) / 20.f));
+
+            // FIXME: maybe sndr->mData.dBVariance is meant to be used for min/max here?
+
+            soundFile = sndr->mSoundFile;
         }
 
         static const float fAudioMinDistanceMult
@@ -211,7 +227,6 @@ namespace MWSound
         min = std::max(min, 1.0f);
         max = std::max(min, max);
 
-        std::string soundFile = snd->mSoundFile;
         // FO3 has weird file naming e.g. sound\fx\drs\metalsheet_01\close\drs_metalsheet_01_close.wav
 #if 1
         std::size_t pos = soundFile.find('.');
@@ -1011,6 +1026,12 @@ namespace MWSound
 #endif
             mCurrentCell = newCell;
 
+            if (!aspc->mSoundRegion)
+            {
+                mAudioRegion = 0;
+                return; // TES5 WhiteRunBreezeHome has no region sound
+            }
+
             const ESM4::Region *audioRegion
                 = store.getForeign<ESM4::Region>().search(aspc->mSoundRegion);
             if (!audioRegion || audioRegion->mData.type != ESM4::Region::RDAT_Sound)
@@ -1022,6 +1043,9 @@ namespace MWSound
                 mTotal = 0;
             }
         }
+
+        if (!mAudioRegion)
+            return; // TES5
 
         const std::vector<ESM4::Region::RegionSound> sounds = mAudioRegion->mSounds;
         if (mTotal == 0.f)

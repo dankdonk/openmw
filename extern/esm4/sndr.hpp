@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2016, 2018, 2020 cc9cii
+  Copyright (C) 2020 cc9cii
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -24,47 +24,57 @@
   trial & error.  See http://en.uesp.net/wiki for details.
 
 */
-#ifndef ESM4_DOOR_H
-#define ESM4_DOOR_H
+#ifndef ESM4_SNDR_H
+#define ESM4_SNDR_H
 
 #include <cstdint>
 #include <string>
 
 #include "formid.hpp"
+#include "script.hpp" // TargetCondition
 
 namespace ESM4
 {
     class Reader;
     class Writer;
 
-    struct Door
+#pragma pack(push, 1)
+    struct LoopInfo
     {
-        enum Flags
-        {
-            Flag_OblivionGate  = 0x01,
-            Flag_AutomaticDoor = 0x02,
-            Flag_Hidden        = 0x04,
-            Flag_MinimalUse    = 0x08
-        };
+        std::uint16_t flags;
+        std::uint8_t unknown;
+        std::uint8_t rumble;
+    };
 
+    struct SoundInfo
+    {
+        std::int8_t frequencyAdjustment; // %, signed
+        std::uint8_t frequencyVariance;  // %
+        std::uint8_t priority;           // default 128
+        std::uint8_t dBVriance;
+        std::uint16_t staticAttenuation; // divide by 100 to get value in dB
+    };
+#pragma pack(pop)
+
+    struct SoundReference
+    {
         FormId mFormId;       // from the header
         std::uint32_t mFlags; // from the header, see enum type RecordFlag for details
 
         std::string mEditorId;
-        std::string mFullName;
-        std::string mModel;
 
-        float mBoundRadius;
+        FormId mSoundCategory; // SNCT
+        FormId mSoundId; // another SNDR
+        FormId mOutputModel; // SOPM
 
-        std::uint8_t mDoorFlags;
-        FormId mScript;
-        FormId mOpenSound;  // SNDR for TES5, SOUN for others
-        FormId mCloseSound; // SNDR for TES5, SOUN for others
-        FormId mLoopSound;
-        FormId mRandomTeleport;
+        std::string mSoundFile;
+        LoopInfo mLoopInfo;
+        SoundInfo mData;
 
-        Door();
-        virtual ~Door();
+        TargetCondition mTargetCondition;
+
+        SoundReference();
+        virtual ~SoundReference();
 
         virtual void load(ESM4::Reader& reader);
         //virtual void save(ESM4::Writer& writer) const;
@@ -73,4 +83,4 @@ namespace ESM4
     };
 }
 
-#endif // ESM4_DOOR_H
+#endif // ESM4_SNDR_H

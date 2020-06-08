@@ -50,6 +50,8 @@
 
 #include "bhkrefobject.hpp"
 
+#include "bsobjects.hpp" // FIXME: should choose a better name
+
 namespace NiBtOgre
 {
     NiObject::Factory NiObject::mFactory;
@@ -280,7 +282,7 @@ namespace NiBtOgre
       //NiObject::define<BSSegmentedTriShape>("BSSegmentedTriShape");
       //NiObject::define<BSTreadTransfController>("BSTreadTransfController");
       //NiObject::define<BSTreadTransfInterpolator>("BSTreadTransfInterpolator");
-      //NiObject::define<NiAdditionalGeometryData>("NiAdditionalGeometryData");
+      NiObject::define<NiAdditionalGeometryData>("NiAdditionalGeometryData");
       NiObject::define<NiBSplineCompPoint3Interpolator>("NiBSplineCompPoint3Interpolator");
       NiObject::define<NiLightColorController>("NiLightColorController");
       //NiObject::define<NiLightDimmerController>("NiLightDimmerController");

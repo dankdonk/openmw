@@ -416,6 +416,13 @@ NiBtOgre::NiIntegerExtraData::NiIntegerExtraData(uint32_t index, NiStream *strea
             if ((mIntegerData & 0x20) != 0)
                 data.mBuildFlags |= Flag_EditorMarkerPresent;
         }
+
+        // FIXME: testing TES5
+        if (stream->nifVer() >= 0x14020007) // from 20.2.0.7
+        {
+            if ((mIntegerData & 0x04) != 0)
+                data.mBuildFlags |= Flag_IsSkeleton; // Nifskope says this indicates a ragdoll
+        }
 #endif
     }
 }

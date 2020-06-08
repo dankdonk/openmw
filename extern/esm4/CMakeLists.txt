@@ -100,6 +100,7 @@ set(ESM4_SOURCE_FILES
     clfm.cpp
     otft.cpp
     flst.cpp
+    sndr.cpp
     formid.cpp
     reader.cpp
 )

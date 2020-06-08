@@ -105,7 +105,9 @@ void ESM4::DialogInfo::load(ESM4::Reader& reader)
                     if (subHdr.dataSize == 36)
                         reader.getFormId(mParam3);
                     reader.get(mTargetCondition.runOn);
-                    reader.getFormId(mTargetCondition.reference);
+                    reader.get(mTargetCondition.reference);
+                    if (mTargetCondition.reference)
+                        reader.adjustFormId(mTargetCondition.reference);
                     reader.skipSubRecordData(4); // unknown
                 }
 

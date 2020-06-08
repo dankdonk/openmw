@@ -189,6 +189,9 @@ void NiBtOgre::BtOgreInst::buildEntities()
     const std::vector<std::pair<Ogre::MeshPtr, NiNode*> >& meshes = mModel->getMeshes();
     for (std::size_t i = 0; i < meshes.size(); ++i)
     {
+        if (!meshes[i].first)
+            continue; // FIXME: TES5 mModelName = "meshes\\effects\\fxambwaterfallsalmon02.nif"
+
         Ogre::Entity *entity = mBaseSceneNode->getCreator()->createEntity(meshes[i].first);
 
         // FIXME: don't want skeleton.nif to be visible?

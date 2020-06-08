@@ -1084,6 +1084,7 @@ template class MWWorld::ForeignStore<ESM4::MediaSet>;
 template class MWWorld::ForeignStore<ESM4::DefaultObj>;
 template class MWWorld::ForeignStore<ESM4::Region>;
 template class MWWorld::ForeignStore<ESM4::PlacedGrenade>;
+template class MWWorld::ForeignStore<ESM4::SoundReference>;
 // Referenceables
 template class MWWorld::ForeignStore<ESM4::Sound>;
 template class MWWorld::ForeignStore<ESM4::Activator>;

@@ -290,7 +290,7 @@ Ogre::Quaternion NiBtOgre::TransformController::Value::interpQuatKey (
             else
                 return keyGroup.keys[nextIt->second].value;
         }
-        else if (keyGroup.interpolation == 1) // LINEAR
+        else if (keyGroup.interpolation == 1 || keyGroup.interpolation == 2) // LINEAR // FIXME: TES5
         {
             const Ogre::Quaternion& v1 = keyGroup.keys[lastIt->second].value;
             const Ogre::Quaternion& v2 = keyGroup.keys[nextIt->second].value;

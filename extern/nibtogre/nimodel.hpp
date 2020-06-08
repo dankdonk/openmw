@@ -122,6 +122,7 @@ namespace NiBtOgre
         inline bool havokEnabled()          const { return (mBuildFlags & Flag_EnableHavok)         != 0; }
         inline bool animEnabled()           const { return (mBuildFlags & Flag_EnableAnimation)     != 0; }
         inline bool isSkeletonTES4()        const { return (mBuildFlags & Flag_IsSkeleton)          != 0; }
+        inline bool isSkeletonTES5()        const { return (mBuildFlags & Flag_IsSkeleton)          != 0; }
         inline bool flameNodesPresentTES4() const { return (mBuildFlags & Flag_FlameNodesPresent)   != 0; }
         inline bool editorMarkerPresent()   const { return (mBuildFlags & Flag_EditorMarkerPresent) != 0; }
 

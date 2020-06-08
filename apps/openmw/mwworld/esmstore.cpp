@@ -247,7 +247,8 @@ void ESMStore::loadTes4Group (ESM::ESMReader &esm)
                 hdr.group.label.value == ESM4::REC_ASPC || hdr.group.label.value == ESM4::REC_IMOD ||
                 hdr.group.label.value == ESM4::REC_PWAT || hdr.group.label.value == ESM4::REC_SCOL ||
                 hdr.group.label.value == ESM4::REC_MUSC || hdr.group.label.value == ESM4::REC_ALOC ||
-                hdr.group.label.value == ESM4::REC_MSET || hdr.group.label.value == ESM4::REC_DOBJ
+                hdr.group.label.value == ESM4::REC_MSET || hdr.group.label.value == ESM4::REC_DOBJ ||
+                hdr.group.label.value == ESM4::REC_SNDR
                 )
             {
                 reader.saveGroupStatus();
@@ -661,6 +662,7 @@ void ESMStore::loadTes4Record (ESM::ESMReader& esm)
         case ESM4::REC_DOBJ: reader.getRecordData(); mDefaultObj.loadForeign(reader); break; // FONV
         // FIXME: should only get loaded in CellStore::loadTes4Record()?
         case ESM4::REC_PGRE: reader.getRecordData(); mPlacedGrenades.loadForeign(reader); break;
+        case ESM4::REC_SNDR: reader.getRecordData(); mSoundReferences.loadForeign(reader); break;
         //case ESM4::REC_REGN:
         case ESM4::REC_PHZD: // Skyrim only?
         case ESM4::REC_ROAD: case ESM4::REC_NAVM: case ESM4::REC_NAVI:
