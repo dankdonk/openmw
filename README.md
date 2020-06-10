@@ -17,7 +17,7 @@ Font Licenses:
 Wrong Way, Go Back
 ------------------
 
-This is a fork of an old version of OpenMW.  This version is probably not what you are looking for.  It is still stuck on Ogre 1.9 and hence does not have any of the recent graphics enhancements.  I suggest you use the [official release](https://github.com/OpenMW/openmw) instead.
+This is a fork of an old version of OpenMW.  This version is probably not what you are looking for.  It is still stuck on Ogre 1.10 and hence does not have any of the recent graphics enhancements.  I suggest you use the [official release](https://github.com/OpenMW/openmw) instead.
 
 Getting Started
 ---------------
@@ -106,11 +106,9 @@ Command line options
 Changes
 -------
 
-Some of the differences with the official release are listed below.  They are almost all to do with OpenCS.
+Some of the differences with the official release are listed below.  Initial changes are mostly to do with OpenCS:
 
 * Various minor bug fixes.
-* Experimental support of loading TES4/TES5 records (coming soon).
-* Experimental support of navMesh (coming soon).
 * C++11 features are used (or at least those available on MSVC 2013 onwards).
 * Loading time improvements.
 * Loading progress bar changes.
@@ -124,4 +122,62 @@ Some of the differences with the official release are listed below.  They are al
 * User preferences setting to save the window state (position, geometry, etc) at the time of exit.
 * User preferences setting to workaround some X window managers not keeping pre-maximised state.
 * Use opencs.ini to store window states between sessions.
+
+Enhancements for both OpenMW and OpenCS:
+
+* Hash based lookup for TES3 BSA files.
+* TES4/TES5 BSA support.
+* Loading TES4/TES5 records (incomplete).
+* Experimental support of using multiple versions of ESM files concurrently in OpenMW (this branch)
+* Experimental support of loading newer NIF records (this branch).
+* Experimental support of NavMesh (eventually, but OpenMW already has this).
+
+openmw.cfg example
+------------------
+
+      ...
+      fallback-archive=Morrowind.bsa
+      fallback-archive=Tribunal.bsa
+      fallback-archive=Bloodmoon.bsa
+      #fallback-archive=TR_Data.bsa
+      fallback-tes4archive=Oblivion - Meshes.bsa
+      fallback-tes4archive=Oblivion - Textures - Compressed.bsa
+      fallback-tes4archive=Oblivion - Misc.bsa
+      fallback-tes4archive=Oblivion - Sounds.bsa
+      fallback-tes4archive=Oblivion - Voices1.bsa
+      fallback-tes4archive=Oblivion - Voices2.bsa
+      fallback-tes4archive=DLCBattlehornCastle.bsa
+      fallback-tes4archive=DLCFrostcrag.bsa
+      fallback-tes4archive=DLCHorseArmor.bsa
+      fallback-tes4archive=Knights.bsa
+      fallback-tes4archive=DLCOrrery.bsa
+      fallback-tes4archive=DLCShiveringIsles - Meshes.bsa
+      fallback-tes4archive=DLCShiveringIsles - Sounds.bsa
+      fallback-tes4archive=DLCShiveringIsles - Textures.bsa
+      fallback-tes4archive=DLCShiveringIsles - Voices.bsa
+      fallback-tes4archive=DLCThievesDen.bsa
+      fallback-tes4archive=DLCVileLair.bsa
+      #fallback-tes4archive=Skyrim - Textures.bsa
+      #fallback-tes4archive=Dragonborn.bsa
+      #fallback-tes4archive=Dawnguard.bsa
+      ...
+      data="C:/Program Files (x86)/Bethesda Softworks/Morrowind/Data Files"
+      data="C:/Program Files (x86)/Bethesda Softworks/Oblivion/Data"
+      ...
+      content=Oblivion.esm
+      ...
+
+Build Dependencies
+------------------
+
+The development was done using MSVC 2013 then MSVC Community 2015, Version 14.0.25431.01 Update 3 then MS Visual Studio Community 2017, Version 15.9.4.  Currently using Community 2019, Version 16.6.2.  The code may or may not compile under linux/gcc (probably not).
+
+* boost-1_73
+* Ogre 1.10.11
+* ffmpeg-4.1
+* MyGUI-3.2.2
+* SDL-2.0.9
+* libpng-1.6.36
+* zlib 1.2.11
+* Qt5
 
