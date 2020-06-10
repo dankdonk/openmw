@@ -158,6 +158,18 @@ NiBtOgre::NiControllerSequence::NiControllerSequence(uint32_t index, NiStream *s
     //}
 }
 
+/*
+ * **************************** DO NOT USE AS IS *******************************
+ *
+ * This method and NiMultiTargetTransformController::build() was designed to use
+ * Ogre's vertex animation code.  However, they only work for simple animations
+ * e.g. Oblivion's doors.  Complex animations that include child nodes without
+ * controllers (some doors and activators in FO3/FONV and the activator for the
+ * enterance to Benirus Manor's sealed portal).
+ *
+ * *****************************************************************************
+ */
+
 // Each of the NiControlSequences are "playable" animations.
 //
 // mTextKeysRef holds text keys such as 'start' 'end' or sound triggers: 'sound: TRPGearsClaws' in
@@ -312,6 +324,14 @@ void NiBtOgre::NiControllerSequence::build(const NiDefaultAVObjectPalette *objec
             //std::cout << "unknown controller type " << ctlrTypeName << std::endl;
     }
 }
+
+/*
+ * **************************** DO NOT USE AS IS *******************************
+ *
+ * This method was never tested.
+ *
+ * *****************************************************************************
+ */
 
 // the fake skinned animation hack doesn't seem to work on some newer animations
 // (e.g. Dungeons\Vault\Halls\VDoor01.NIF, Dungeons\Vault\RoomU\VGearDoor01.NIF)

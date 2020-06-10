@@ -212,11 +212,16 @@ void NiBtOgre::NiNode::buildMesh(Ogre::Mesh *mesh)
     // TODO: is it possible to use the ones in the NIF files?
     if (needTangents)
     {
-        try // FIXME: TES5 some NiTriShapeData don't have any normals? See femalebody_1.nif
+        // FIXME: TES5 some NiTriShapeData don't have any normals? See femalebody_1.nif
+        // FIXME: remove the try/catch block by testing the sub-meshs
+        //        if one of the sub-meshes has BSLightingShaderProperty with flag
+        //        Model_Space_Normals set then there will not be any normals and Ogre will
+        //        throw an exception
+        try
         {
-        unsigned short src, dest;
-        if (!mesh->suggestTangentVectorBuildParams(Ogre::VES_TANGENT, src, dest))
-            mesh->buildTangentVectors(Ogre::VES_TANGENT, src, dest);
+            unsigned short src, dest;
+            if (!mesh->suggestTangentVectorBuildParams(Ogre::VES_TANGENT, src, dest))
+                mesh->buildTangentVectors(Ogre::VES_TANGENT, src, dest);
         }
         catch(...)
         {

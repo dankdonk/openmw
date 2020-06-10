@@ -589,6 +589,18 @@ void NiBtOgre::NiMultiTargetTransformController::registerTarget(const NiControll
         mTargetInterpolators.push_back(std::make_pair(bone, interpolator));
 }
 
+/*
+ * **************************** DO NOT USE AS IS *******************************
+ *
+ * This method and NiBtOgre::NiControllerSequence::build() was designed to use
+ * Ogre's vertex animation code.  However, they only work for simple animations
+ * e.g. Oblivion's doors.  Complex animations that include child nodes without
+ * controllers (some doors and activators in FO3/FONV and the activator for the
+ * enterance to Benirus Manor's sealed portal).
+ *
+ * *****************************************************************************
+ */
+
 // node animation
 // nameIndex is the name of NiControllerSequence, i.e. the animation name
 void NiBtOgre::NiMultiTargetTransformController::build(int32_t nameIndex, const NiAVObject* target, NiTransformInterpolator *interpolator, float startTime, float stopTime)

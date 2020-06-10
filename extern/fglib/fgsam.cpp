@@ -352,6 +352,16 @@ namespace FgLib
         return getMorphedTexture(morphTexture, egt, texture, npcName, raceSymCoeff, npcSymCoeff);
     }
 
+/*
+ * **************************** DO NOT USE AS IS *******************************
+ *
+ * This is just temporary code to demo FaceGen.  Actual shaders from Oblivion
+ * work very differently.  Doesn't work for FO3/FONV at all and haven't tried
+ * Skyrim.
+ *
+ * *****************************************************************************
+ */
+
     bool FgSam::getMorphedTexture(Ogre::TexturePtr& morphTexture,
                                     const FgEgt *egt,
                                     const std::string& texture,

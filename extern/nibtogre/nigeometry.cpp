@@ -248,6 +248,17 @@ void NiBtOgre::NiTriBasedGeom::fillBodyParts(std::vector<std::uint16_t>& bodyPar
         bodyParts.push_back(skinInstance->mPartitions[i].bodyPart);
 }
 
+/*
+ * **************************** DO NOT USE AS IS *******************************
+ *
+ * All of the material handling code, including the class OgreMaterial, are
+ * just temporary and were never intended to stay as they are.  At some point
+ * the NIF code was going to be ported to some other rendering engine and it
+ * would have been (mostly) a waste of time to work on this.
+ *
+ * *****************************************************************************
+ */
+
 // Can't remember why I wanted SubEntityController (a base class maybe?)
 // But it can be useful (map with sub-entity index) for BtOgreInst to associate them later.
 // Should keep such a map in the NiModel tree somewhere so that a retrieved one from the cache
@@ -655,6 +666,27 @@ bool NiBtOgre::NiTriBasedGeom::buildSubMesh(Ogre::Mesh *mesh, BoundsFinder& boun
         sub->indexData->indexCount = srcIdx->size();
         sub->indexData->indexStart = 0;
     }
+
+/*
+ * **************************** DO NOT USE AS IS *******************************
+ *
+ * Current handling of skinned sub-meshes are flawed.
+ *
+ * 1. It cannot handle weights from a bone offset (i.e. take NiSkinData and Bone
+ *    List SkinTransforms into account) which breaks many animations including
+ *    the Spider Daedra.  I believe all the head models use this but currently
+ *    worked around by attaching to the head bone.
+ *
+ *    However Skyrim's FaceGen head models won't work without a proper fix.
+ *    e.g. actors\character\facegendata\facegeom\skyrim.esm\00013277.nif
+ *
+ * 2. It doesn't use Skin Partition. Fortunately most of Oblivion's models use
+ *    only one partition so the impact is minor up to now, but Skyrim may be
+ *    different.  The intention was to move to hardware skinning and pass up to
+ *    4 bones to the shaders but never got around to it.
+ *
+ * *****************************************************************************
+ */
 
     //$ find . -type f -print0 | xargs -0 strings -f | grep -E 'NiSkinData'
     //./architecture/arena/arenaspectatorf01.nif: NiSkinData    <-- ControllerSequence
