@@ -43,7 +43,8 @@ namespace MWRender
     Refraction::~Refraction()
     {
         mRenderTarget->removeListener(this);
-        Ogre::TextureManager::getSingleton().remove("WaterRefraction");
+        Ogre::TextureManager::getSingleton().remove("WaterRefraction",
+                Ogre::ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME);
         mParentCamera->getSceneManager()->destroyCamera(mCamera);
         mParentCamera->getSceneManager()->removeRenderQueueListener(this);
     }

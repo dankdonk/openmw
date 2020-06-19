@@ -217,7 +217,7 @@ namespace MWWorld
         }
 
         ESMStore()
-          : mDynamicCount(0), mCurrentDialogue(0)
+          : mCurrentDialogue(0), mDynamicCount(0)
         {
             mStores[ESM::REC_ACTI] = &mActivators;
             mStores[ESM::REC_ALCH] = &mPotions;

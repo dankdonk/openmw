@@ -199,14 +199,14 @@ IF(BOOST_STATIC)
 endif()
 
 find_package(OGRE REQUIRED)
-if (${OGRE_VERSION} VERSION_LESS "1.9")
-    message(FATAL_ERROR "OpenMW requires Ogre 1.9 or later, please install the latest stable version from http://ogre3d.org")
-endif()
+#if (${OGRE_VERSION} VERSION_LESS "1.9")
+#    message(FATAL_ERROR "OpenMW requires Ogre 1.9 or later, please install the latest stable version from http://ogre3d.org")
+#endif()
 
-find_package(MyGUI REQUIRED)
-if (${MYGUI_VERSION} VERSION_LESS "3.2.1")
-    message(FATAL_ERROR "OpenMW requires MyGUI 3.2.1 or later, please install the latest version from http://mygui.info")
-endif()
+#find_package(MyGUI REQUIRED)
+#if (${MYGUI_VERSION} VERSION_LESS "3.2.1")
+#    message(FATAL_ERROR "OpenMW requires MyGUI 3.2.1 or later, please install the latest version from http://mygui.info")
+#endif()
 
 find_package(Boost REQUIRED COMPONENTS ${BOOST_COMPONENTS})
 find_package(SDL2 REQUIRED)
@@ -372,10 +372,10 @@ if (NOT WIN32 AND NOT APPLE)
     configure_file(${OpenMW_SOURCE_DIR}/files/openmw-cs.desktop
         "${OpenMW_BINARY_DIR}/openmw-cs.desktop")
 endif()
-
+#-Wabi-tag -D_GLIBCXX_USE_CX11_ABI=0
 # CXX Compiler settings
 if (CMAKE_CXX_COMPILER_ID STREQUAL GNU OR CMAKE_CXX_COMPILER_ID STREQUAL Clang)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wno-unused-parameter -std=c++98 -pedantic -Wno-long-long")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wno-unused-parameter -std=c++14 -pedantic -Wno-long-long")
 
     if (CMAKE_CXX_COMPILER_ID STREQUAL Clang AND NOT APPLE)
         execute_process(COMMAND ${CMAKE_C_COMPILER} --version OUTPUT_VARIABLE CLANG_VERSION)
