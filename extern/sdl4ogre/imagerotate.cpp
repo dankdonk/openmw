@@ -56,7 +56,7 @@ void ImageRotate::rotate(const std::string& sourceImage, const std::string& dest
 
     // retrieve image width and height
     TexturePtr sourceTexture = TextureManager::getSingleton().getByName(sourceImage,
-                Ogre::ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME);
+                Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
     unsigned int width = sourceTexture->getWidth();
     unsigned int height = sourceTexture->getHeight();
 
@@ -92,9 +92,9 @@ void ImageRotate::rotate(const std::string& sourceImage, const std::string& dest
 
     // remove all the junk we've created
     TextureManager::getSingleton().remove(destImageRot,
-                Ogre::ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME);
+                Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
     MaterialManager::getSingleton().remove("ImageRotateMaterial",
-                Ogre::ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME);
+                Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
     root->destroySceneManager(sceneMgr);
     delete rect;
 }

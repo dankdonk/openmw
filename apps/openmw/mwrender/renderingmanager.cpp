@@ -911,7 +911,7 @@ void RenderingManager::processChangedSettings(const Settings::CategorySettingVec
 void RenderingManager::setMenuTransparency(float val)
 {
     Ogre::TexturePtr tex = Ogre::TextureManager::getSingleton().getByName("transparent.png",
-                Ogre::ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME);
+                Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
     std::vector<Ogre::uint32> buffer;
     buffer.resize(1);
     buffer[0] = (int(255*val) << 24) | (255 << 16) | (255 << 8) | 255;
@@ -1048,7 +1048,7 @@ void RenderingManager::screenshot(Image &image, int w, int h)
     rt->copyContentsToMemory(image.getPixelBox()); // getPixelBox returns a box sharing the same memory as the image
 
     Ogre::TextureManager::getSingleton().remove(tempName,
-                Ogre::ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME);
+                Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
     mRendering.getCamera()->setAspectRatio(oldAspect);
 }
 

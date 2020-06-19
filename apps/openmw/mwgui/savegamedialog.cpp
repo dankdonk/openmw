@@ -370,7 +370,7 @@ namespace MWGui
         const std::string textureName = "@savegame_screenshot";
         Ogre::TexturePtr texture;
         texture = Ogre::TextureManager::getSingleton().getByName(textureName,
-                Ogre::ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME);
+                Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
         mScreenshot->setImageTexture("");
         if (!texture)
         {

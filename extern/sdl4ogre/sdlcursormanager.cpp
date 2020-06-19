@@ -94,7 +94,7 @@ namespace SFO
         ImageRotate::rotate(tex->getName(), tempName, static_cast<float>(-rotDegrees));
 
         Ogre::TexturePtr resultTexture = Ogre::TextureManager::getSingleton().getByName(tempName,
-                Ogre::ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME);
+                Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
 
         // now blit to memory
         Ogre::Image destImage;

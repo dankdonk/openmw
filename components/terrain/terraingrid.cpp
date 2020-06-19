@@ -134,7 +134,7 @@ void TerrainGrid::unloadCell(int x, int y)
     const std::vector<Ogre::TexturePtr>& blendmaps = element.mMaterialGenerator.getBlendmapList();
     for (std::vector<Ogre::TexturePtr>::const_iterator it = blendmaps.begin(); it != blendmaps.end(); ++it)
         Ogre::TextureManager::getSingleton().remove((*it)->getName(),
-                Ogre::ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME);
+                Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
 
     mSceneMgr->destroySceneNode(element.mSceneNode);
     element.mSceneNode = NULL;

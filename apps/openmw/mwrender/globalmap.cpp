@@ -37,7 +37,7 @@ namespace MWRender
     GlobalMap::~GlobalMap()
     {
         Ogre::TextureManager::getSingleton().remove(mOverlayTexture->getName(),
-                Ogre::ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME);
+                Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
     }
 
     void GlobalMap::render (Loading::Listener* loadingListener)
@@ -185,7 +185,7 @@ namespace MWRender
 
         Ogre::TexturePtr localMapTexture = Ogre::TextureManager::getSingleton().getByName("Cell_"
             + boost::lexical_cast<std::string>(cellX) + "_" + boost::lexical_cast<std::string>(cellY),
-                Ogre::ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME);
+                Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
 
         if (localMapTexture)
         {
@@ -314,6 +314,6 @@ namespace MWRender
             mOverlayTexture->convertToImage(mOverlayImage);
 
         Ogre::TextureManager::getSingleton().remove("@temp",
-                Ogre::ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME);
+                Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
     }
 }

@@ -751,7 +751,7 @@ void VideoState::deinit()
     if (mTexture)
     {
         Ogre::TextureManager::getSingleton().remove(mTexture->getName(),
-                Ogre::ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME);
+                Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
         mTexture.reset();
     }
 }

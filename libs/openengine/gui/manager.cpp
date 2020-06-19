@@ -1,7 +1,7 @@
 #include "manager.hpp"
 #include "loglistener.hpp"
 
-#include <Bites/OgreWindowEventUtilities.h>
+#include <OgreWindowEventUtilities.h>
 
 #include <MyGUI_Gui.h>
 #include <MyGUI_OgrePlatform.h>
@@ -487,7 +487,7 @@ public:
         if (item == mTextures.end())
         {
             Ogre::TexturePtr texture = (Ogre::TexturePtr)Ogre::TextureManager::getSingleton().getByName(_name,
-                Ogre::ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME);
+                Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
             if (texture)
             {
                 ITexture* result = createTexture(_name);

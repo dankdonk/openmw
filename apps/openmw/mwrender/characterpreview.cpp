@@ -111,7 +111,7 @@ namespace MWRender
             delete mAnimation;
             Ogre::Root::getSingleton().destroySceneManager(mSceneMgr);
             Ogre::TextureManager::getSingleton().remove(mName,
-                Ogre::ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME);
+                Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
         }
     }
 

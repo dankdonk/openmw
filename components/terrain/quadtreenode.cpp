@@ -415,7 +415,7 @@ void QuadTreeNode::unload(bool recursive)
         if (mCompositeMap)
         {
             Ogre::TextureManager::getSingleton().remove(mCompositeMap->getName(),
-                Ogre::ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME);
+                Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
             mCompositeMap.reset();
         }
 

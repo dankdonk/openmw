@@ -97,7 +97,7 @@ namespace Terrain
             sh::Factory::getInstance().destroyMaterialInstance(mMaterial->getName());
 #endif
             Ogre::MaterialManager::getSingleton().remove(mMaterial->getName(),
-                Ogre::ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME);
+                Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
         }
         OGRE_DELETE mVertexData;
         OGRE_DELETE mIndexData;
@@ -112,7 +112,7 @@ namespace Terrain
             sh::Factory::getInstance().destroyMaterialInstance(mMaterial->getName());
 #endif
             Ogre::MaterialManager::getSingleton().remove(mMaterial->getName(),
-                Ogre::ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME);
+                Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
         }
 
         mMaterial = material;

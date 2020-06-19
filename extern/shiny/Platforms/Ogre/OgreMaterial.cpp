@@ -44,7 +44,7 @@ namespace sh
 	{
 		if (mMaterial)
 			Ogre::MaterialManager::getSingleton().remove(mMaterial->getName(),
-                Ogre::ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME);
+                Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
 	}
 
 	boost::shared_ptr<Pass> OgreMaterial::createPass (const std::string& configuration, unsigned short lodIndex)

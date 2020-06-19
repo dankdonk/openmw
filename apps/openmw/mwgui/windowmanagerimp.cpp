@@ -1148,7 +1148,7 @@ namespace MWGui
             std::string tex_name = imgSet->getIndexInfo(0,0).texture;
 
             Ogre::TexturePtr tex = Ogre::TextureManager::getSingleton().getByName(tex_name,
-                Ogre::ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME);
+                Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
 
             //everything looks good, send it to the cursor manager
             if(tex)

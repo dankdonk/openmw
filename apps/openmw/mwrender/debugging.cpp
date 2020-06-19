@@ -93,10 +93,8 @@ void Debugging::destroyGridMaterials()
 {
     if (mGridMatsCreated)
     {
-        MaterialManager::getSingleton().remove(PATHGRID_POINT_MATERIAL,
-                Ogre::ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME);
-        MaterialManager::getSingleton().remove(PATHGRID_LINE_MATERIAL,
-                Ogre::ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME);
+        MaterialManager::getSingleton().remove(PATHGRID_POINT_MATERIAL, DEBUGGING_GROUP);
+        MaterialManager::getSingleton().remove(PATHGRID_LINE_MATERIAL, DEBUGGING_GROUP);
         mGridMatsCreated = false;
     }
 }
