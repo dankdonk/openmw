@@ -3,6 +3,7 @@
 #include <cmath>
 #include <iostream> // FIXME: testing only
 
+#include <OgreRoot.h> // FIXME: for linux crash workaround
 #include <OgreSceneNode.h>
 #include <OgreSceneManager.h>
 #include <OgreEntity.h>
@@ -230,8 +231,13 @@ void Objects::insertLandscapeModel(ESM4::FormId worldId, int x, int y, const std
     NifOgre::ObjectScenePtr scene
         = NifOgre::ObjectScenePtr (new NifOgre::ObjectScene(insert->getCreator()));
 
+#if defined(__GNUC__) && __GNUC__ < 8
+    scene->mForeignObj
+        = std::unique_ptr<NiBtOgre::BtOgreInst>(new NiBtOgre::BtOgreInst(landscape, insert->createChildSceneNode()));
+#else
     scene->mForeignObj
         = std::make_unique<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(landscape, insert->createChildSceneNode()));
+#endif
     scene->mForeignObj->instantiate();
 
     std::map<int32_t, Ogre::Entity*>::iterator it(scene->mForeignObj->mEntities.begin());
@@ -299,6 +305,10 @@ void Objects::insertLandscapeModel(ESM4::FormId worldId, int x, int y, const std
 // loaded again, the issue no longer occurs.
 void Objects::updateLandscapeTexture(ESM4::FormId worldId, int x, int y, bool hide)
 {
+    // FIXME: linux crash workaround
+    if (Ogre::Root::getSingleton().getRenderSystem()->getName().find("OpenGL") != std::string::npos)
+        return;
+
     std::map<ESM4::FormId, std::map<std::pair<int, int>, NifOgre::ObjectScenePtr> >::iterator
         iter = mLandscapeScene.find(worldId);
 
@@ -373,11 +383,14 @@ void Objects::updateLandscapeTexture(ESM4::FormId worldId, int x, int y, bool hi
                                 Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
                                 Ogre::TEX_TYPE_2D,  // type
                                 texAlpha->getWidth(), texAlpha->getHeight(), // width & height
+                                1,
                                 0,                  // number of mipmaps;
                                 Ogre::PF_BYTE_RGBA,
                                 Ogre::TU_DEFAULT);  // usage; should be TU_DYNAMIC_WRITE_ONLY_DISCARDABLE for
                                                     // textures updated very often (e.g. each frame)
                         }
+
+                        // FIXME: one of the unlock() calls throws an exception in linux
 
                         // src
                         Ogre::HardwarePixelBufferSharedPtr pixelBufferSrc
@@ -486,9 +499,10 @@ void Objects::removeLandscapeModel(ESM4::FormId worldId)
                       << x << "," << y << std::endl;
 
             Ogre::StaticGeometry *sg = gridIter->second;
+            if (sg)
+                mRenderer.getScene()->destroyStaticGeometry(sg);
 
             iter->second.erase(gridIter);
-            mRenderer.getScene()->destroyStaticGeometry(sg);
         }
     }
 

@@ -6,6 +6,7 @@
 
 //#include <boost/thread/recursive_mutex.hpp>
 
+#include <OgreRoot.h> // FIXME: for linux crash workaround
 #include <OgreSceneManager.h>
 #include <OgreEntity.h>
 #include <OgreParticleSystem.h>
@@ -527,8 +528,13 @@ void ForeignNpcAnimation::updateTES4NpcBase()
 
         NifOgre::ObjectScenePtr scene
             = NifOgre::ObjectScenePtr (new NifOgre::ObjectScene(mInsert->getCreator()));
+#if defined(__GNUC__) && __GNUC__ < 8
+        scene->mForeignObj
+            = std::unique_ptr<NiBtOgre::BtOgreInst>(new NiBtOgre::BtOgreInst(model, mInsert->createChildSceneNode()));
+#else
         scene->mForeignObj
             = std::make_unique<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(model, mInsert->createChildSceneNode()));
+#endif
         scene->mForeignObj->instantiate();
 
         std::string targetBone = model->getTargetBone();
@@ -912,8 +918,13 @@ void ForeignNpcAnimation::updateTES4NpcBase()
     }
 
     NifOgre::ObjectScenePtr scene = NifOgre::ObjectScenePtr (new NifOgre::ObjectScene(mInsert->getCreator()));
+#if defined(__GNUC__) && __GNUC__ < 8
+    scene->mForeignObj
+        = std::unique_ptr<NiBtOgre::BtOgreInst>(new NiBtOgre::BtOgreInst(model, mInsert->createChildSceneNode()));
+#else
     scene->mForeignObj
         = std::make_unique<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(model, mInsert->createChildSceneNode()));
+#endif
     scene->mForeignObj->instantiate();
 
     //std::string targetBone = model->getTargetBone();
@@ -924,7 +935,9 @@ void ForeignNpcAnimation::updateTES4NpcBase()
     std::map<int32_t, Ogre::Entity*>::const_iterator it(scene->mForeignObj->mEntities.begin());
     for (; it != scene->mForeignObj->mEntities.end(); ++it)
     {
-        if (mRace->mEditorId != "Dremora") // don't morph Dremora textures
+        // FIXME: linux crash workaround
+        if (Ogre::Root::getSingleton().getRenderSystem()->getName().find("OpenGL") == std::string::npos &&
+            mRace->mEditorId != "Dremora") // don't morph Dremora textures
         {
         Ogre::MaterialPtr mat = scene->mMaterialControllerMgr.getWritableMaterial(it->second);
         Ogre::Material::TechniqueIterator techIter = mat->getTechniqueIterator();
@@ -1188,6 +1201,7 @@ void ForeignNpcAnimation::updateTES4NpcBase()
                         Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
                         Ogre::TEX_TYPE_2D,  // type
                         egt->numRows(), egt->numColumns(), // width & height
+                        1,
                         0,                  // number of mipmaps; FIXME: should be 2? or 1?
                         Ogre::PF_BYTE_RGBA,
                         Ogre::TU_DEFAULT);  // usage; should be TU_DYNAMIC_WRITE_ONLY_DISCARDABLE for
@@ -1230,6 +1244,7 @@ void ForeignNpcAnimation::updateTES4NpcBase()
                             Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
                             Ogre::TEX_TYPE_2D,
                             egt->numRows(), egt->numColumns(),
+                            1,
                             0,
                             Ogre::PF_BYTE_RGBA,
                             Ogre::TU_DEFAULT);
@@ -1278,6 +1293,7 @@ void ForeignNpcAnimation::updateTES4NpcBase()
                             Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
                             Ogre::TEX_TYPE_2D,
                             egt->numRows(), egt->numColumns(),
+                            1,
                             0,
                             Ogre::PF_BYTE_RGBA,
                             Ogre::TU_DEFAULT);
@@ -1285,7 +1301,7 @@ void ForeignNpcAnimation::updateTES4NpcBase()
                     // FIXME: this one should be passed to a shader, along with the "_1" variant
                     Ogre::TexturePtr faceDetailTexture = Ogre::TextureManager::getSingleton().getByName(
                             faceDetailFile, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
-                    if (faceDetailTexture.isNull())
+                    if (!faceDetailTexture)
                     {
                         faceDetailTexture = Ogre::TextureManager::getSingleton().create(
                             faceDetailFile, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
@@ -1616,8 +1632,13 @@ void ForeignNpcAnimation::updateFO3NpcBase()
 
     NifOgre::ObjectScenePtr scene
         = NifOgre::ObjectScenePtr (new NifOgre::ObjectScene(mInsert->getCreator()));
+#if defined(__GNUC__) && __GNUC__ < 8
+    scene->mForeignObj
+        = std::unique_ptr<NiBtOgre::BtOgreInst>(new NiBtOgre::BtOgreInst(model, mInsert->createChildSceneNode()));
+#else
     scene->mForeignObj
         = std::make_unique<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(model, mInsert->createChildSceneNode()));
+#endif
     scene->mForeignObj->instantiate();
 
     std::string targetBone = model->getTargetBone();
@@ -1847,8 +1868,13 @@ void ForeignNpcAnimation::updateFO3NpcBase()
             NifOgre::ObjectScenePtr scene
                 = NifOgre::ObjectScenePtr (new NifOgre::ObjectScene(mInsert->getCreator()));
 
+#if defined(__GNUC__) && __GNUC__ < 8
+            scene->mForeignObj
+                = std::unique_ptr<NiBtOgre::BtOgreInst>(new NiBtOgre::BtOgreInst(model, mInsert->createChildSceneNode()));
+#else
             scene->mForeignObj
                 = std::make_unique<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(model, mInsert->createChildSceneNode()));
+#endif
             scene->mForeignObj->instantiateBodyPart(mInsert, mSkelBase);
 
             hideDismember(scene);
@@ -1978,8 +2004,13 @@ void ForeignNpcAnimation::updateFO3NpcBase()
     }
 
     NifOgre::ObjectScenePtr scene = NifOgre::ObjectScenePtr (new NifOgre::ObjectScene(mInsert->getCreator()));
+#if defined(__GNUC__) && __GNUC__ < 8
+    scene->mForeignObj
+        = std::unique_ptr<NiBtOgre::BtOgreInst>(new NiBtOgre::BtOgreInst(model, mInsert->createChildSceneNode()));
+#else
     scene->mForeignObj
         = std::make_unique<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(model, mInsert->createChildSceneNode()));
+#endif
     scene->mForeignObj->instantiate();
 
     //std::string targetBone = model->getTargetBone();
@@ -2287,8 +2318,13 @@ NifOgre::ObjectScenePtr ForeignNpcAnimation::createSkinnedObject(NifOgre::Object
         object = modelManager.createSkinnedModel(meshName, group, skeletonModel.get(),""/*FIXME*/);
 
     // create an instance of the model
+#if defined(__GNUC__) && __GNUC__ < 8
+    scene->mForeignObj
+        = std::unique_ptr<NiBtOgre::BtOgreInst>(new NiBtOgre::BtOgreInst(object, mInsert->createChildSceneNode()));
+#else
     scene->mForeignObj
         = std::make_unique<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(object, mInsert->createChildSceneNode()));
+#endif
 
     scene->mForeignObj->instantiateBodyPart(mInsert, mSkelBase);
 
@@ -2351,8 +2387,13 @@ NifOgre::ObjectScenePtr ForeignNpcAnimation::createMorphedObject(const std::stri
     std::string targetBone = object->getTargetBone();
 
     // create an instance of the model
+#if defined(__GNUC__) && __GNUC__ < 8
+    scene->mForeignObj
+        = std::unique_ptr<NiBtOgre::BtOgreInst>(new NiBtOgre::BtOgreInst(object, mInsert->createChildSceneNode()));
+#else
     scene->mForeignObj
         = std::make_unique<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(object, mInsert->createChildSceneNode()));
+#endif
 
     if (object->buildData().isSkinnedModel()) // does it have an NiSkinInstance?
     {
@@ -2483,8 +2524,13 @@ NifOgre::ObjectScenePtr ForeignNpcAnimation::createObject(const std::string& mes
             throw std::runtime_error("createObject: No target bone to attach part");
 
 #endif
+#if defined(__GNUC__) && __GNUC__ < 8
+        scene->mForeignObj
+            = std::unique_ptr<NiBtOgre::BtOgreInst>(new NiBtOgre::BtOgreInst(model, mInsert->createChildSceneNode()));
+#else
         scene->mForeignObj
             = std::make_unique<NiBtOgre::BtOgreInst>(NiBtOgre::BtOgreInst(model, mInsert->createChildSceneNode()));
+#endif
 
     if(model->buildData().isSkinnedModel()) // does it have an NiSkinInstance?
     {
@@ -2926,7 +2972,7 @@ void ForeignNpcAnimation::addForeignAnimSource(const std::string& model, const s
     if (!skeleton)
         skeleton = modelManager.createSkeletonModel(model, group);
 
-    assert(!skeleton.isNull() && "skeleton.nif should have been built already");
+    assert(skeleton && "skeleton.nif should have been built already");
     NiModelPtr anim = NiBtOgre::NiModelManager::getSingleton().getOrLoadByName(animName, group);
 
     // Animation::AnimSource : public Ogre::AnimationAlloc
