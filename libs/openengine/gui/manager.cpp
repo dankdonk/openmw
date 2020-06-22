@@ -1,7 +1,7 @@
 #include "manager.hpp"
 #include "loglistener.hpp"
 
-#include <Bites/OgreWindowEventUtilities.h>
+#include <OgreWindowEventUtilities.h>
 
 #include <MyGUI_Gui.h>
 #include <MyGUI_OgrePlatform.h>
