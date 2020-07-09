@@ -392,7 +392,7 @@ public:
         {
             OgreTexture* texture = static_cast<OgreTexture*>(_texture);
             Ogre::TexturePtr texture_ptr = texture->getOgreTexture();
-            if (texture_ptr)
+            if (!texture_ptr.isNull())
             {
                 mRenderSystem->_setTexture(0, true, texture_ptr);
                 mRenderSystem->_setTextureUnitFiltering(0, Ogre::FO_LINEAR, Ogre::FO_LINEAR, Ogre::FO_NONE);
@@ -485,7 +485,7 @@ public:
         if (item == mTextures.end())
         {
             Ogre::TexturePtr texture = (Ogre::TexturePtr)Ogre::TextureManager::getSingleton().getByName(_name);
-            if (texture)
+            if (!texture.isNull())
             {
                 ITexture* result = createTexture(_name);
                 static_cast<OgreTexture*>(result)->setOgreTexture(texture);
