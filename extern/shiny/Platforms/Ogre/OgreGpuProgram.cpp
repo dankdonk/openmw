@@ -45,7 +45,7 @@ namespace sh
 
 	bool OgreGpuProgram::getSupported()
 	{
-		return (mProgram && mProgram->isSupported());
+		return (!mProgram.isNull() && mProgram->isSupported());
 	}
 
 	void OgreGpuProgram::setAutoConstant (const std::string& name, const std::string& autoConstantName, const std::string& extraInfo)
