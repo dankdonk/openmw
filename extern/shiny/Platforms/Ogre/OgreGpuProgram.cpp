@@ -39,7 +39,7 @@ namespace sh
 		mProgram->setSource(source);
 		mProgram->load();
 
-		if (!mProgram || !mProgram->isSupported())
+		if (mProgram.isNull() || !mProgram->isSupported())
 			std::cerr << "Failed to compile shader \"" << name << "\". Consider the OGRE log for more information." << std::endl;
 	}
 
